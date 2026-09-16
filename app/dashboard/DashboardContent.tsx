@@ -16,6 +16,7 @@ import {
   Users,
   Clock,
   Building2,
+  AlertCircle,
 } from "lucide-react";
 import { getUserOrganizations } from "@/app/actions/organizations";
 import { createClient } from "@/lib/supabase/client";
@@ -104,6 +105,7 @@ export default function DashboardContent() {
   const [stats, setStats] = useState({ total: 0, active: 0, passes: 0, checkedIn: 0 });
   const [events, setEvents] = useState<EventRow[]>([]);
   const [orgs, setOrgs] = useState<OrgRow[]>([]);
+  const [loadError, setLoadError] = useState("");
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
@@ -111,44 +113,53 @@ export default function DashboardContent() {
     setGreeting(getGreeting());
 
     async function load() {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          setLoaded(true);
+          return;
+        }
 
-      const [{ data: profile }, { data: eventRows }, { data: sub }, memberships] = await Promise.all([
-        supabase.from("profiles").select("full_name").eq("user_id", user.id).single(),
-        supabase.from("events").select("id, name, venue, event_date, status")
-          .eq("organizer_id", user.id).order("created_at", { ascending: false }),
-        supabase.from("subscriptions").select("plan:plans(slug)").eq("user_id", user.id).eq("status", "active").single(),
-        getUserOrganizations(),
-      ]);
+        const [{ data: profile }, { data: eventRows }, { data: sub }, memberships] = await Promise.all([
+          supabase.from("profiles").select("full_name").eq("user_id", user.id).single(),
+          supabase.from("events").select("id, name, venue, event_date, status")
+            .eq("organizer_id", user.id).order("created_at", { ascending: false }),
+          supabase.from("subscriptions").select("plan:plans(slug)").eq("user_id", user.id).eq("status", "active").single(),
+          getUserOrganizations(),
+        ]);
 
-      const allIds = eventRows?.map((e) => e.id) ?? [];
-      const [{ count: totalPasses }, { count: totalCheckedIn }] = await Promise.all([
-        allIds.length
-          ? supabase.from("passes").select("*", { count: "exact", head: true }).in("event_id", allIds)
-          : Promise.resolve({ count: 0 }),
-        allIds.length
-          ? supabase.from("check_ins").select("*", { count: "exact", head: true }).in("event_id", allIds)
-          : Promise.resolve({ count: 0 }),
-      ]);
+        const allIds = eventRows?.map((e) => e.id) ?? [];
+        const [{ count: totalPasses }, { count: totalCheckedIn }] = await Promise.all([
+          allIds.length
+            ? supabase.from("passes").select("*", { count: "exact", head: true }).in("event_id", allIds)
+            : Promise.resolve({ count: 0 }),
+          allIds.length
+            ? supabase.from("check_ins").select("*", { count: "exact", head: true }).in("event_id", allIds)
+            : Promise.resolve({ count: 0 }),
+        ]);
 
-      const slug = (sub?.plan as unknown as { slug: string } | null)?.slug ?? "free";
-      setFirstName(profile?.full_name?.split(" ")[0] ?? "there");
-      setPlanSlug(slug);
-      setStats({
-        total: allIds.length,
-        active: eventRows?.filter((e) => e.status === "active").length ?? 0,
-        passes: totalPasses ?? 0,
-        checkedIn: totalCheckedIn ?? 0,
-      });
-      setEvents((eventRows ?? []).slice(0, 6));
-      setOrgs(
-        (memberships ?? []).map((m) => {
-          return { slug: m.org.slug, name: m.org.name, brand_color: m.org.brand_color, role: m.role };
-        })
-      );
-      setLoaded(true);
+        const slug = (sub?.plan as unknown as { slug: string } | null)?.slug ?? "free";
+        setFirstName(profile?.full_name?.split(" ")[0] ?? "there");
+        setPlanSlug(slug);
+        setStats({
+          total: allIds.length,
+          active: eventRows?.filter((e) => e.status === "active").length ?? 0,
+          passes: totalPasses ?? 0,
+          checkedIn: totalCheckedIn ?? 0,
+        });
+        setEvents((eventRows ?? []).slice(0, 6));
+        setOrgs(
+          (memberships ?? []).map((m) => {
+            return { slug: m.org.slug, name: m.org.name, brand_color: m.org.brand_color, role: m.role };
+          })
+        );
+        setLoaded(true);
+      } catch (error) {
+        console.error("Failed to load dashboard", error);
+        setLoadError("We couldn't load your dashboard data. Refresh the page or sign in again.");
+        setLoaded(true);
+      }
     }
     load();
   }, []);
@@ -192,6 +203,13 @@ export default function DashboardContent() {
           New event
         </Link>
       </div>
+
+      {loadError && (
+        <div className="flex items-start gap-3 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+          <p>{loadError}</p>
+        </div>
+      )}
 
       {/* ── Stats grid ───────────────────────────────────────────── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
