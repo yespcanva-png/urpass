@@ -33,8 +33,10 @@ export default function UpgradeCelebration() {
   const [exiting, setExiting] = useState(false);
   const [dismissed, setDismissed] = useState(false);
 
-  const [particles] = useState<Particle[]>(() =>
-    Array.from({ length: 28 }, (_, i) => {
+  const [particles, setParticles] = useState<Particle[]>([]);
+
+  useEffect(() => {
+    setParticles(Array.from({ length: 28 }, (_, i) => {
       const angle = (i / 28) * 360 + randomBetween(-8, 8);
       const rad = (angle * Math.PI) / 180;
       const distance = randomBetween(120, 280);
@@ -49,8 +51,8 @@ export default function UpgradeCelebration() {
         top: "50%",
         left: "50%",
       };
-    })
-  );
+    }));
+  }, []);
 
   useEffect(() => {
     if (!isUpgraded || dismissed) return;
