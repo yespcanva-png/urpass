@@ -1,8 +1,9 @@
 import { createClient } from "@supabase/supabase-js";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
+import { getSupabaseUrl } from "@/lib/supabase/config";
 
 function adminClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const url = getSupabaseUrl();
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) {
     throw new Error("Missing Supabase admin environment variables");
