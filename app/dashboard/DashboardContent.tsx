@@ -98,6 +98,8 @@ function EventSkeleton() {
 
 export default function DashboardContent() {
   const [firstName, setFirstName] = useState("");
+  const [dateLabel, setDateLabel] = useState("Today");
+  const [greeting, setGreeting] = useState("Welcome");
   const [planSlug, setPlanSlug] = useState("free");
   const [stats, setStats] = useState({ total: 0, active: 0, passes: 0, checkedIn: 0 });
   const [events, setEvents] = useState<EventRow[]>([]);
@@ -105,6 +107,9 @@ export default function DashboardContent() {
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
+    setDateLabel(formatDate());
+    setGreeting(getGreeting());
+
     async function load() {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
@@ -168,10 +173,10 @@ export default function DashboardContent() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-xs font-semibold tracking-widest uppercase text-neutral-400 mb-1">
-            {formatDate()}
+            {dateLabel}
           </p>
           <h1 className="text-2xl font-bold tracking-tight text-neutral-900">
-            {getGreeting()}{firstName ? `, ${firstName}` : ""} 👋
+            {greeting}{firstName ? `, ${firstName}` : ""} 👋
           </h1>
           <p className="text-sm text-neutral-400 mt-1">
             Here&apos;s what&apos;s happening across your events
