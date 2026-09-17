@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient as createSupabaseAdmin } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
+import { getSupabaseUrl } from "@/lib/supabase/config";
+import { notifyOwnerNewUser, sendUserWelcomeEmail } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +17,7 @@ interface GoogleTokenInfo {
 
 function adminClient() {
   return createSupabaseAdmin(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    getSupabaseUrl(),
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
     { auth: { autoRefreshToken: false, persistSession: false } }
   );
@@ -91,7 +93,7 @@ export async function GET(req: NextRequest) {
         },
       });
     } else {
-      const { error: createErr } = await admin.auth.admin.createUser({
+      const { data: createdUser, error: createErr } = await admin.auth.admin.createUser({
         email: info.email,
         email_confirm: true,
         user_metadata: {
@@ -104,6 +106,15 @@ export async function GET(req: NextRequest) {
         console.error("[google-callback] createUser error:", createErr);
         return NextResponse.redirect(`${appUrl}/login?error=google_auth_failed&step=create`);
       }
+      void Promise.allSettled([
+        notifyOwnerNewUser({
+          name: info.name,
+          email: info.email,
+          provider: "google",
+          userId: createdUser.user?.id,
+        }),
+        sendUserWelcomeEmail({ to: info.email, name: info.name }),
+      ]);
     }
 
     // Generate a one-time token and verify it via the server client (sets session cookies)

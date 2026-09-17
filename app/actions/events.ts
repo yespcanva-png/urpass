@@ -8,10 +8,11 @@ import { redirect } from "next/navigation";
 import { generateApplySlug } from "@/lib/utils";
 import { getUserPlan } from "@/lib/plan";
 import { recordApiUsage } from "@/lib/api-usage";
+import { getSupabaseUrl } from "@/lib/supabase/config";
 
 function adminClient() {
   return createAdminClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    getSupabaseUrl(),
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 }

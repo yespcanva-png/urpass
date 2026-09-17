@@ -6,10 +6,11 @@ import { orgSchema, type OrgInput } from "@/lib/validations/organization";
 import { getUserPlan } from "@/lib/plan";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { getSupabaseUrl } from "@/lib/supabase/config";
 
 function adminClient() {
   return createAdminClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    getSupabaseUrl(),
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
     { auth: { autoRefreshToken: false, persistSession: false } }
   );
@@ -147,7 +148,7 @@ export async function getUserOrganizations() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return [];
 
-  const { data } = await adminClient()
+  const { data } = await supabase
     .from("organization_members")
     .select("role, organization:organizations(*)")
     .eq("user_id", user.id)

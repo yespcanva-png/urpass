@@ -5,16 +5,23 @@ import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { attendeeSchema, type AttendeeInput } from "@/lib/validations/attendee";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { sendApplicationConfirmationEmail, sendApprovalEmail, sendPassEmail } from "@/lib/email";
+import {
+  notifyOwnerPaymentSuccess,
+  sendApplicationConfirmationEmail,
+  sendApprovalEmail,
+  sendPassEmail,
+  sendUserPaymentSuccessEmail,
+} from "@/lib/email";
 import { getUserPlan } from "@/lib/plan";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { sendWebhooks } from "@/lib/webhooks";
 import { recordApiUsage } from "@/lib/api-usage";
+import { getSupabaseUrl } from "@/lib/supabase/config";
 import crypto from "crypto";
 
 function adminClient() {
   return createAdminClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    getSupabaseUrl(),
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 }
@@ -527,6 +534,25 @@ export async function submitApplication(
           razorpay_payment_id: payment.paymentId,
           razorpay_order_id: payment.orderId,
         }).catch(() => {});
+        const itemName = selectedTicketType ? `${event.name} — ${selectedTicketType.name}` : event.name;
+        Promise.allSettled([
+          notifyOwnerPaymentSuccess({
+            kind: "ticket",
+            buyerName: parsed.data.name,
+            buyerEmail: parsed.data.email,
+            itemName,
+            amountPaise: paymentAmountPaise,
+            paymentId: payment.paymentId,
+            orderId: payment.orderId,
+          }),
+          sendUserPaymentSuccessEmail({
+            to: parsed.data.email,
+            name: parsed.data.name,
+            itemName,
+            amountPaise: paymentAmountPaise,
+            kind: "ticket",
+          }),
+        ]).catch((err: unknown) => console.error("[email]", err));
       }
 
       return { passToken: pass.pass_token };
@@ -569,6 +595,26 @@ export async function submitApplication(
       .from("ticket_orders")
       .update({ attendee_id: newAttendee.id })
       .eq("razorpay_order_id", payment.orderId);
+
+    const itemName = selectedTicketType ? `${event.name} — ${selectedTicketType.name}` : event.name;
+    Promise.allSettled([
+      notifyOwnerPaymentSuccess({
+        kind: "ticket",
+        buyerName: parsed.data.name,
+        buyerEmail: parsed.data.email,
+        itemName,
+        amountPaise: paymentAmountPaise,
+        paymentId: payment.paymentId,
+        orderId: payment.orderId,
+      }),
+      sendUserPaymentSuccessEmail({
+        to: parsed.data.email,
+        name: parsed.data.name,
+        itemName,
+        amountPaise: paymentAmountPaise,
+        kind: "ticket",
+      }),
+    ]).catch((err: unknown) => console.error("[email]", err));
   }
 
   sendApplicationConfirmationEmail({

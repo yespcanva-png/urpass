@@ -8,6 +8,7 @@ import {
   type PaymentVerificationInput,
 } from "@/lib/razorpay";
 import { createInvoiceForPayment } from "@/lib/invoices";
+import { notifyOwnerPaymentSuccess, sendUserPaymentSuccessEmail } from "@/lib/email";
 
 type ActionResult = { error: string } | undefined;
 
@@ -33,6 +34,7 @@ export async function activateEventPass(
 
   const registrationLimit = PASS_REG_LIMITS[passType];
   const priceRupees       = PASS_PRICES[passType];
+  let orderAmountPaise    = Math.round(priceRupees * 1.18 * 100);
 
   if (!registrationLimit || !priceRupees) {
     return { error: "Invalid pass type." };
@@ -61,6 +63,7 @@ export async function activateEventPass(
     if (!order) {
       return { error: "Payment verification failed: order not found on gateway." };
     }
+    orderAmountPaise = Number(order.amount ?? orderAmountPaise);
 
     const notes = (order.notes ?? {}) as Record<string, string>;
     if (notes.user_id && notes.user_id !== user.id) {
@@ -106,4 +109,26 @@ export async function activateEventPass(
     customerEmail: user.email,
     customerName: user.user_metadata?.full_name,
   });
+
+  const itemName = `Event Pass (${passType.replace("_", " ").toUpperCase()})`;
+  void Promise.allSettled([
+    notifyOwnerPaymentSuccess({
+      kind: "event_pass",
+      buyerName: user.user_metadata?.full_name,
+      buyerEmail: user.email,
+      itemName,
+      amountPaise: orderAmountPaise,
+      paymentId: payment.paymentId,
+      orderId: payment.orderId,
+    }),
+    user.email
+      ? sendUserPaymentSuccessEmail({
+          to: user.email,
+          name: user.user_metadata?.full_name,
+          itemName,
+          amountPaise: orderAmountPaise,
+          kind: "event_pass",
+        })
+      : Promise.resolve(),
+  ]).catch((err: unknown) => console.error("[email]", err));
 }

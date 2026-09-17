@@ -10,13 +10,15 @@ import {
   type PaymentVerificationInput,
 } from "@/lib/razorpay";
 import { createInvoiceForPayment } from "@/lib/invoices";
+import { getSupabaseUrl } from "@/lib/supabase/config";
+import { notifyOwnerPaymentSuccess, sendUserPaymentSuccessEmail } from "@/lib/email";
 
 type ActionResult = { error: string } | undefined;
 type BillingCycle = "monthly" | "annual";
 
 function adminClient() {
   return createAdminClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    getSupabaseUrl(),
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 }
@@ -124,6 +126,7 @@ export async function activatePaidSubscription(
   let verifiedPaymentId: string | null = null;
   let orderBasePaise = 0;
   let orderDiscountPaise = 0;
+  let orderAmountPaise = 0;
 
   if (planSlug !== "free") {
     if (!payment || typeof payment === "string" || !payment.orderId || !payment.paymentId || !payment.signature) {
@@ -149,6 +152,7 @@ export async function activatePaidSubscription(
       if (!order) {
         return { error: "Payment verification failed: order not found on gateway." };
       }
+      orderAmountPaise = Number(order.amount ?? 0);
 
       const notes = (order.notes ?? {}) as Record<string, string>;
       if (notes.user_id && notes.user_id !== user.id) {
@@ -223,6 +227,28 @@ export async function activatePaidSubscription(
       billingPeriodStart: periodStart,
       billingPeriodEnd: periodEnd(cycle),
     });
+
+    const itemName = `${planSlug.toUpperCase()} Plan (${cycle})`;
+    void Promise.allSettled([
+      notifyOwnerPaymentSuccess({
+        kind: "subscription",
+        buyerName: user.user_metadata?.full_name,
+        buyerEmail: user.email,
+        itemName,
+        amountPaise: orderAmountPaise,
+        paymentId: verifiedPaymentId,
+        orderId: typeof payment === "object" ? payment.orderId : undefined,
+      }),
+      user.email
+        ? sendUserPaymentSuccessEmail({
+            to: user.email,
+            name: user.user_metadata?.full_name,
+            itemName,
+            amountPaise: orderAmountPaise,
+            kind: "subscription",
+          })
+        : Promise.resolve(),
+    ]).catch((err: unknown) => console.error("[email]", err));
   }
 
   // Record coupon redemption
