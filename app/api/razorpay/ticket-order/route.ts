@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import Razorpay from "razorpay";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
+import { getSupabaseUrl } from "@/lib/supabase/config";
+import { notifyOwnerPaymentAttempt } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 
 function adminClient() {
   return createAdminClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    getSupabaseUrl(),
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 }
@@ -106,6 +108,7 @@ export async function POST(req: NextRequest) {
       ticket_type_id: ticketTypeId ?? "",
       buyer_name: buyerName,
       buyer_email: buyerEmail,
+      ticket_name: ticketName,
       type: "ticket",
     },
   });
@@ -120,6 +123,15 @@ export async function POST(req: NextRequest) {
     buyer_email: buyerEmail,
     status: "created",
   });
+
+  notifyOwnerPaymentAttempt({
+    kind: "ticket",
+    buyerName,
+    buyerEmail,
+    itemName: ticketName,
+    amountPaise,
+    orderId: order.id,
+  }).catch((err: unknown) => console.error("[email]", err));
 
   return NextResponse.json({
     orderId: order.id,

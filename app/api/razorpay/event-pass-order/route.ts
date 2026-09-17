@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Razorpay from "razorpay";
 import { createClient } from "@/lib/supabase/server";
+import { notifyOwnerPaymentAttempt } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 
@@ -64,12 +65,23 @@ export async function POST(req: NextRequest) {
         registration_limit: PASS_REG_LIMITS[passType],
         base_paise:         basePaise,
         gst_paise:          gstPaise,
+        customer_name:      user.user_metadata?.full_name ?? "",
+        customer_email:     user.email ?? "",
       },
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Failed to create order";
     return NextResponse.json({ error: msg }, { status: 502 });
   }
+
+  notifyOwnerPaymentAttempt({
+    kind: "event_pass",
+    buyerName: user.user_metadata?.full_name,
+    buyerEmail: user.email,
+    itemName: PASS_NAMES[passType],
+    amountPaise: totalPaise,
+    orderId: order.id,
+  }).catch((err: unknown) => console.error("[email]", err));
 
   return NextResponse.json({
     orderId:  order.id,

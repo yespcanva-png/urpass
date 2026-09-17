@@ -2,13 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import { createClient } from "@supabase/supabase-js";
 import { createInvoiceForPayment } from "@/lib/invoices";
+import { getSupabaseUrl } from "@/lib/supabase/config";
+import { notifyOwnerPaymentSuccess, sendUserPaymentSuccessEmail } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 
 // Use service-role client — webhook runs outside user session
 function adminClient() {
   return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    getSupabaseUrl(),
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 }
@@ -73,18 +75,33 @@ export async function POST(req: NextRequest) {
     const razorpayOrderId: string = payment.order_id;
     if (!razorpayOrderId) return NextResponse.json({ received: true });
 
-    const { error } = await supabase
+    const { data: paidOrders, error } = await supabase
       .from("ticket_orders")
       .update({
         status: "paid",
         razorpay_payment_id: payment.id,
         updated_at: new Date().toISOString(),
       })
-      .eq("razorpay_order_id", razorpayOrderId);
+      .eq("razorpay_order_id", razorpayOrderId)
+      .eq("status", "created")
+      .select("buyer_name, buyer_email, amount");
 
     if (error) {
       console.error("ticket_orders update failed:", error.message);
       return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    const paidOrder = paidOrders?.[0];
+    if (paidOrder) {
+      void notifyOwnerPaymentSuccess({
+        kind: "ticket",
+        buyerName: paidOrder.buyer_name,
+        buyerEmail: paidOrder.buyer_email,
+        itemName: notes.ticket_name || "Paid event ticket",
+        amountPaise: paidOrder.amount,
+        paymentId: payment.id,
+        orderId: razorpayOrderId,
+      }).catch((err: unknown) => console.error("[email]", err));
     }
 
     return NextResponse.json({ received: true });
@@ -113,6 +130,28 @@ export async function POST(req: NextRequest) {
         payment_id: payment.id,
         status: "available",
       });
+
+      const itemName = `Event Pass (${passType.replace("_", " ").toUpperCase()})`;
+      void Promise.allSettled([
+        notifyOwnerPaymentSuccess({
+          kind: "event_pass",
+          buyerName: notes.customer_name,
+          buyerEmail: notes.customer_email || payment.email,
+          itemName,
+          amountPaise: payment.amount,
+          paymentId: payment.id,
+          orderId: payment.order_id,
+        }),
+        (notes.customer_email || payment.email)
+          ? sendUserPaymentSuccessEmail({
+              to: notes.customer_email || payment.email,
+              name: notes.customer_name,
+              itemName,
+              amountPaise: payment.amount,
+              kind: "event_pass",
+            })
+          : Promise.resolve(),
+      ]).catch((err: unknown) => console.error("[email]", err));
     }
 
     void createInvoiceForPayment({
@@ -205,6 +244,30 @@ export async function POST(req: NextRequest) {
     billingPeriodStart: periodStart,
     billingPeriodEnd: periodEnd,
   });
+
+  if (!isDuplicatePayment) {
+    const itemName = `${(notes.plan_slug || "Subscription").toString().toUpperCase()} Plan (${billingCycle})`;
+    void Promise.allSettled([
+      notifyOwnerPaymentSuccess({
+        kind: "subscription",
+        buyerName: notes.customer_name,
+        buyerEmail: notes.customer_email || payment.email,
+        itemName,
+        amountPaise: payment.amount,
+        paymentId: payment.id,
+        orderId: payment.order_id,
+      }),
+      (notes.customer_email || payment.email)
+        ? sendUserPaymentSuccessEmail({
+            to: notes.customer_email || payment.email,
+            name: notes.customer_name,
+            itemName,
+            amountPaise: payment.amount,
+            kind: "subscription",
+          })
+        : Promise.resolve(),
+    ]).catch((err: unknown) => console.error("[email]", err));
+  }
 
   return NextResponse.json({ received: true });
 }
