@@ -14,6 +14,8 @@ export default function EventSubNav({ eventId }: { eventId: string }) {
     { label: "Pass Design", href: `${base}/pass-design`, exact: false },
     { label: "Attendees",   href: `${base}/attendees`,   exact: false },
     { label: "Check-ins",   href: `${base}/checkins`,    exact: false },
+    { label: "Analytics",   href: `${base}/analytics`,   exact: false },
+    { label: "Feedback",    href: `${base}/feedback`,    exact: false },
     { label: "Settings",    href: `${base}/settings`,    exact: false },
   ];
 

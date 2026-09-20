@@ -19,6 +19,7 @@ import {
   Clock,
   Building2,
   AlertCircle,
+  BarChart3,
 } from "lucide-react";
 import { getUserOrganizations } from "@/app/actions/organizations";
 import { createClient } from "@/lib/supabase/client";
@@ -172,9 +173,10 @@ export default function DashboardContent() {
   ];
 
   const quickActions = [
-    { label: "New event",    href: "/create-event",     icon: Plus,     primary: true },
-    { label: "Open scanner", href: "/scan",              icon: ScanLine, primary: false },
-    { label: "All events",   href: "/dashboard/events", icon: Calendar, primary: false },
+    { label: "New event",    href: "/create-event",        icon: Plus,      primary: true },
+    { label: "Analytics",    href: "/dashboard/analytics", icon: BarChart3, primary: false },
+    { label: "Open scanner", href: "/scan",                 icon: ScanLine,  primary: false },
+    { label: "All events",   href: "/dashboard/events",    icon: Calendar,  primary: false },
   ];
 
   return (
@@ -223,7 +225,7 @@ export default function DashboardContent() {
         <p className="text-[10px] font-bold tracking-widest uppercase text-neutral-400 mb-3">
           Quick actions
         </p>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {quickActions.map(({ label, href, icon: Icon, primary }) => (
             <Link
               key={href}

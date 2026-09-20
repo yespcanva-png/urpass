@@ -13,10 +13,16 @@ import {
   ScanLine,
   Ticket,
   Plus,
+  BarChart3,
+  TrendingUp,
+  Download,
+  ArrowUpRight,
+  LifeBuoy,
 } from "lucide-react";
 import CopyLinkButton from "@/components/event/CopyLinkButton";
 import { createClient } from "@/lib/supabase/client";
 import EventCommunicationsCard from "@/components/event/EventCommunicationsCard";
+import EventAttendeeFeedbackCard from "@/components/event/EventAttendeeFeedbackCard";
 
 type PassStatus = "not_generated" | "generated" | "checked_in";
 type AppStatus = "pending" | "approved" | "rejected";
@@ -29,6 +35,20 @@ interface Attendee {
   application_status: AppStatus;
   pass_status: PassStatus;
   created_at: string;
+}
+
+interface CheckinRecord {
+  id: string;
+  attendee_id: string;
+  checked_in_at: string;
+  gate_id: string | null;
+  check_in_method: string | null;
+  gate?: { name: string } | { name: string }[] | null;
+}
+
+interface ScannerGateRecord {
+  id: string;
+  name: string;
 }
 
 interface Event {
@@ -84,7 +104,11 @@ function avatarColor(name: string) {
 
 export default function EventOverview({ event, initialAttendees = [] }: Props) {
   const [attendees, setAttendees] = useState<Attendee[]>(initialAttendees);
+  const [checkins, setCheckins] = useState<CheckinRecord[]>([]);
+  const [gates, setGates] = useState<ScannerGateRecord[]>([]);
   const [live, setLive] = useState(false);
+  const [hoveredBarIndex, setHoveredBarIndex] = useState<number | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
   const [ticketTypes, setTicketTypes] = useState<{id: string; name: string; price: number; status: string}[]>([]);
 
   useEffect(() => {
@@ -95,17 +119,31 @@ export default function EventOverview({ event, initialAttendees = [] }: Props) {
       .eq("event_id", event.id)
       .order("created_at", { ascending: false })
       .then(({ data }) => { if (data) setAttendees(data); });
+
     supabase
       .from("ticket_types")
       .select("id, name, price, status")
       .eq("event_id", event.id)
       .order("position", { ascending: true })
       .then(({ data }) => { if (data) setTicketTypes(data); });
+
+    supabase
+      .from("check_ins")
+      .select("id, attendee_id, checked_in_at, gate_id, check_in_method, gate:scanner_gates(name)")
+      .eq("event_id", event.id)
+      .order("checked_in_at", { ascending: false })
+      .then(({ data }) => { if (data) setCheckins((data ?? []) as unknown as CheckinRecord[]); });
+
+    supabase
+      .from("scanner_gates")
+      .select("id, name")
+      .eq("event_id", event.id)
+      .then(({ data }) => { if (data) setGates(data ?? []); });
   }, [event.id]);
 
   useEffect(() => {
     const supabase = createClient();
-    const channel = supabase
+    const attendeeChannel = supabase
       .channel(`event-overview-${event.id}`)
       .on(
         "postgres_changes",
@@ -124,22 +162,165 @@ export default function EventOverview({ event, initialAttendees = [] }: Props) {
       )
       .subscribe((status) => setLive(status === "SUBSCRIBED"));
 
-    return () => { supabase.removeChannel(channel); };
+    const checkinChannel = supabase
+      .channel(`event-overview-checkins-${event.id}`)
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "check_ins", filter: `event_id=eq.${event.id}` },
+        (payload) => {
+          const entry = payload.new as CheckinRecord;
+          setCheckins((prev) => [entry, ...prev]);
+          setAttendees((prev) =>
+            prev.map((a) => (a.id === entry.attendee_id ? { ...a, pass_status: "checked_in" as const } : a))
+          );
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(attendeeChannel);
+      supabase.removeChannel(checkinChannel);
+    };
   }, [event.id]);
 
-  const total          = attendees.length;
-  const approved       = attendees.filter((a) => a.application_status === "approved").length;
-  const pending        = attendees.filter((a) => a.application_status === "pending").length;
-  const rejected       = attendees.filter((a) => a.application_status === "rejected").length;
+  const total = attendees.length;
+  const approved = attendees.filter((a) => a.application_status === "approved").length;
+  const pending = attendees.filter((a) => a.application_status === "pending").length;
+  const rejected = attendees.filter((a) => a.application_status === "rejected").length;
   const passesGenerated = attendees.filter(
     (a) => a.pass_status === "generated" || a.pass_status === "checked_in"
   ).length;
-  const checkedIn      = attendees.filter((a) => a.pass_status === "checked_in").length;
+  const checkedIn = Math.max(attendees.filter((a) => a.pass_status === "checked_in").length, checkins.length);
 
   const capacityPct = event.attendee_limit > 0
     ? Math.min(100, Math.round((approved / event.attendee_limit) * 100))
     : 0;
   const atCapacity = event.attendee_limit > 0 && approved >= event.attendee_limit;
+
+  // Key Analytics Calculations
+  const turnoutRate = approved > 0 ? Math.round((checkedIn / approved) * 100) : 0;
+  const noShowRate = approved > 0 ? Math.max(0, 100 - turnoutRate) : 0;
+  const acceptanceRate = total > 0 ? Math.round((approved / total) * 100) : 0;
+  const passDeliveryRate = approved > 0 ? Math.round((passesGenerated / approved) * 100) : 0;
+
+  // Hourly velocity curve
+  const hourCounts = new Map<number, number>();
+  let minHour = 9;
+  let maxHour = 18;
+  if (checkins.length > 0) {
+    const hours = checkins.map((c) => new Date(c.checked_in_at).getHours());
+    minHour = Math.max(0, Math.min(...hours) - 1);
+    maxHour = Math.min(23, Math.max(...hours) + 1);
+  }
+  for (let h = minHour; h <= maxHour; h++) {
+    hourCounts.set(h, 0);
+  }
+  checkins.forEach((c) => {
+    const h = new Date(c.checked_in_at).getHours();
+    hourCounts.set(h, (hourCounts.get(h) ?? 0) + 1);
+  });
+
+  let peakVelocity = 0;
+  let peakHour = minHour;
+  const sortedHours = Array.from(hourCounts.keys()).sort((a, b) => a - b);
+  const hourlyBars = sortedHours.map((h) => {
+    const count = hourCounts.get(h) ?? 0;
+    if (count > peakVelocity) {
+      peakVelocity = count;
+      peakHour = h;
+    }
+    const h12 = h % 12 || 12;
+    const ampm = h >= 12 ? "PM" : "AM";
+    const nextH = (h + 1) % 24;
+    const nextH12 = nextH % 12 || 12;
+    const nextAmpm = nextH >= 12 ? "PM" : "AM";
+    return {
+      hour: h,
+      label: `${h12} ${ampm}`,
+      range: `${h12}:00 ${ampm} – ${nextH12}:00 ${nextAmpm}`,
+      count,
+      pct: checkedIn > 0 ? Math.round((count / checkedIn) * 100) : 0,
+    };
+  });
+
+  const peakH12 = peakHour % 12 || 12;
+  const peakAmpm = peakHour >= 12 ? "PM" : "AM";
+  const nextPeakH = (peakHour + 1) % 24;
+  const nextPeakH12 = nextPeakH % 12 || 12;
+  const nextPeakAmpm = nextPeakH >= 12 ? "PM" : "AM";
+  const peakTimeLabel = `${peakH12}:00 ${peakAmpm} – ${nextPeakH12}:00 ${nextPeakAmpm}`;
+  const maxBarScans = Math.max(1, ...hourlyBars.map((b) => b.count));
+
+  // Pass tier breakdown
+  const checkinAttendeeIds = new Set(checkins.map((c) => c.attendee_id));
+  const passTypeStats = attendees.reduce<Record<string, { total: number; checkedIn: number }>>((acc, a) => {
+    const pt = a.pass_type || "participant";
+    if (!acc[pt]) acc[pt] = { total: 0, checkedIn: 0 };
+    acc[pt].total++;
+    if (checkinAttendeeIds.has(a.id) || a.pass_status === "checked_in") {
+      acc[pt].checkedIn++;
+    }
+    return acc;
+  }, {});
+
+  // Method breakdown
+  const methodStats = { qr: 0, manual: 0, search: 0 };
+  checkins.forEach((c) => {
+    const m = (c.check_in_method ?? "qr") as "qr" | "manual" | "search";
+    if (m === "manual") methodStats.manual++;
+    else if (m === "search") methodStats.search++;
+    else methodStats.qr++;
+  });
+
+  function handleExportCSV() {
+    setIsExporting(true);
+    try {
+      const headers = [
+        "Attendee Name",
+        "Email",
+        "Pass Type",
+        "Application Status",
+        "Pass Status",
+        "Checked In",
+        "Check-in Time (IST)",
+        "Check-in Method",
+      ];
+      const checkinMap = new Map<string, CheckinRecord>();
+      checkins.forEach((c) => checkinMap.set(c.attendee_id, c));
+
+      const rows = attendees.map((a) => {
+        const c = checkinMap.get(a.id);
+        const checkinTime = c
+          ? new Date(c.checked_in_at).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })
+          : "N/A";
+        return [
+          `"${a.name.replace(/"/g, '""')}"`,
+          `"${a.email.replace(/"/g, '""')}"`,
+          `"${a.pass_type.replace(/"/g, '""')}"`,
+          `"${a.application_status}"`,
+          `"${a.pass_status}"`,
+          c ? "Yes" : "No",
+          `"${checkinTime}"`,
+          c?.check_in_method ? c.check_in_method.toUpperCase() : "N/A",
+        ].join(",");
+      });
+
+      const csvContent =
+        "data:text/csv;charset=utf-8," +
+        encodeURIComponent([headers.join(","), ...rows].join("\n"));
+      const link = document.createElement("a");
+      link.setAttribute("href", csvContent);
+      link.setAttribute(
+        "download",
+        `analytics-${event.name.toLowerCase().replace(/[^a-z0-9]/g, "-")}-${Date.now()}.csv`
+      );
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } finally {
+      setIsExporting(false);
+    }
+  }
 
   const previewAttendees = attendees.slice(0, 10);
 
@@ -166,6 +347,20 @@ export default function EventOverview({ event, initialAttendees = [] }: Props) {
             <ScanLine className="w-4 h-4" />
             Check-ins
           </Link>
+          <Link
+            href={`/event/${event.id}/analytics`}
+            className="flex items-center gap-2 bg-white border border-neutral-200 shadow-sm rounded-xl px-4 py-2 text-sm font-medium text-brand hover:border-brand/40 hover:shadow-md transition-all"
+          >
+            <BarChart3 className="w-4 h-4 text-brand" />
+            Analytics
+          </Link>
+          <a
+            href="#event-support-form"
+            className="flex items-center gap-2 bg-white border border-neutral-200 shadow-sm rounded-xl px-4 py-2 text-sm font-medium text-neutral-700 hover:border-neutral-300 hover:shadow-md transition-all"
+          >
+            <LifeBuoy className="w-4 h-4 text-neutral-500" />
+            Creator Support
+          </a>
         </div>
 
         <div className="flex items-center gap-1.5 text-xs">
@@ -257,6 +452,234 @@ export default function EventOverview({ event, initialAttendees = [] }: Props) {
         </div>
       </div>
 
+      {/* ── Event Attendance Analytics & Gate Velocity ──────────── */}
+      <div className="bg-white rounded-3xl shadow-sm p-6 mb-5 border border-neutral-100">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-brand-50 text-brand flex items-center justify-center shrink-0 border border-brand-100/60">
+              <BarChart3 className="w-4 h-4 text-brand" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-base font-bold text-neutral-900 tracking-tight">
+                  Attendance Analytics &amp; Velocity
+                </h3>
+                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
+                  <span className={`w-1.5 h-1.5 rounded-full ${live ? "bg-emerald-500 animate-pulse" : "bg-neutral-400"}`} />
+                  {live ? "Live sync active" : "Syncing"}
+                </span>
+              </div>
+              <p className="text-xs text-neutral-400 mt-0.5">
+                Real-time door arrival curve, rush hour peaks, and attendee conversion
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2.5 shrink-0">
+            <button
+              onClick={handleExportCSV}
+              disabled={isExporting || total === 0}
+              className="flex items-center gap-1.5 text-xs font-semibold text-neutral-700 bg-neutral-50 hover:bg-neutral-100 border border-neutral-200/80 px-3.5 py-2 rounded-xl transition-all shadow-2xs hover:shadow-xs active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+              title="Download audit-ready CSV of all attendees and check-in records"
+            >
+              <Download className="w-3.5 h-3.5 text-neutral-500" />
+              Export CSV
+            </button>
+            <Link
+              href={`/event/${event.id}/analytics`}
+              className="flex items-center gap-1.5 text-xs font-semibold text-white px-3.5 py-2 rounded-xl transition-all shadow-sm hover:opacity-90 active:scale-95"
+              style={{ background: "#6D28D9" }}
+            >
+              Full Analytics <ArrowUpRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+        </div>
+
+        {/* Gate Velocity & Rush Hour Curve */}
+        <div className="mb-5 bg-neutral-50/70 rounded-2xl p-4.5 border border-neutral-100/90">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs font-bold text-neutral-800 flex items-center gap-1.5">
+                <TrendingUp className="w-3.5 h-3.5 text-brand" />
+                Gate Arrival Velocity &amp; Rush Timeline
+              </span>
+              {peakVelocity > 0 && (
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-brand-50 text-brand border border-brand-100">
+                  Peak Rush: {peakVelocity} scans/hr ({peakTimeLabel})
+                </span>
+              )}
+            </div>
+            <span className="text-xs font-semibold tabular-nums text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md">
+              {checkedIn} verified {checkedIn === 1 ? "arrival" : "arrivals"}
+            </span>
+          </div>
+
+          {checkedIn === 0 ? (
+            <div className="text-center py-8 text-xs text-neutral-400">
+              No attendees scanned at the entrance yet. As volunteers scan passes with the QR scanner, hourly rush-hour bars will rise here in real time.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <div className="h-36 w-full flex items-end gap-1.5 sm:gap-2 pt-5 pb-1">
+                {hourlyBars.map((bucket, idx) => {
+                  const heightPct = Math.max(8, Math.round((bucket.count / maxBarScans) * 100));
+                  const isHovered = hoveredBarIndex === idx;
+                  const isPeak = bucket.count > 0 && bucket.count === peakVelocity;
+                  return (
+                    <div
+                      key={bucket.label}
+                      className="relative flex-1 flex flex-col items-center h-full justify-end group cursor-pointer"
+                      onMouseEnter={() => setHoveredBarIndex(idx)}
+                      onMouseLeave={() => setHoveredBarIndex(null)}
+                    >
+                      {isHovered && (
+                        <div className="absolute -top-11 z-20 bg-neutral-900 text-white text-[11px] font-bold rounded-xl px-2.5 py-1 shadow-xl whitespace-nowrap pointer-events-none">
+                          {bucket.range}: {bucket.count} scans ({bucket.pct}%)
+                        </div>
+                      )}
+                      <div
+                        className={`w-full rounded-t-lg transition-all duration-300 ${
+                          isPeak
+                            ? "bg-gradient-to-t from-brand to-violet-500 shadow-sm"
+                            : bucket.count > 0
+                            ? "bg-violet-400 group-hover:bg-brand"
+                            : "bg-neutral-200/60"
+                        }`}
+                        style={{ height: `${heightPct}%` }}
+                      />
+                      <span className="text-[9px] font-semibold text-neutral-400 mt-1.5 truncate max-w-full group-hover:text-neutral-900 transition-colors">
+                        {bucket.label}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="flex items-center justify-between text-[11px] text-neutral-400 pt-2 border-t border-neutral-200/50">
+                <span>Peak entry window: <strong className="text-neutral-700 font-bold">{peakTimeLabel}</strong></span>
+                <span>Turnout efficiency: <strong className="text-emerald-700 font-bold">{turnoutRate}% arrived</strong></span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* 2-Column Analytics: Conversion Funnel & Pass Tiers */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Conversion Funnel */}
+          <div className="p-4.5 rounded-2xl bg-neutral-50/70 border border-neutral-100/90 flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-xs font-bold text-neutral-900">Attendance Conversion Funnel</p>
+                <span className="text-[10px] font-bold text-neutral-500 bg-neutral-200/60 px-2 py-0.5 rounded-md">
+                  {turnoutRate}% conversion
+                </span>
+              </div>
+              <p className="text-[11px] text-neutral-400 mb-3.5">
+                Drop-off rates from public application to physical gate entry
+              </p>
+
+              <div className="space-y-3">
+                {/* 1. Applications */}
+                <div>
+                  <div className="flex justify-between text-[11px] font-medium mb-1">
+                    <span className="text-neutral-600">1. Applications Received</span>
+                    <span className="font-bold tabular-nums text-neutral-900">{total} (100%)</span>
+                  </div>
+                  <div className="h-1.5 bg-neutral-200/70 rounded-full overflow-hidden">
+                    <div className="h-full bg-neutral-800 rounded-full w-full" />
+                  </div>
+                </div>
+
+                {/* 2. Approved */}
+                <div>
+                  <div className="flex justify-between text-[11px] font-medium mb-1">
+                    <span className="text-neutral-600">2. Approved Registrations</span>
+                    <span className="font-bold tabular-nums text-neutral-900">{approved} ({acceptanceRate}%)</span>
+                  </div>
+                  <div className="h-1.5 bg-neutral-200/70 rounded-full overflow-hidden">
+                    <div className="h-full bg-brand rounded-full transition-all" style={{ width: `${Math.min(100, acceptanceRate)}%` }} />
+                  </div>
+                </div>
+
+                {/* 3. Passes Delivered */}
+                <div>
+                  <div className="flex justify-between text-[11px] font-medium mb-1">
+                    <span className="text-neutral-600">3. Passes Delivered</span>
+                    <span className="font-bold tabular-nums text-neutral-900">{passesGenerated} ({passDeliveryRate}%)</span>
+                  </div>
+                  <div className="h-1.5 bg-neutral-200/70 rounded-full overflow-hidden">
+                    <div className="h-full bg-blue-500 rounded-full transition-all" style={{ width: `${Math.min(100, passDeliveryRate)}%` }} />
+                  </div>
+                </div>
+
+                {/* 4. Arrived */}
+                <div>
+                  <div className="flex justify-between text-[11px] font-semibold mb-1">
+                    <span className="text-neutral-800">4. Verified at Gate</span>
+                    <span className="font-bold tabular-nums text-emerald-600">{checkedIn} ({turnoutRate}%)</span>
+                  </div>
+                  <div className="h-1.5 bg-neutral-200/70 rounded-full overflow-hidden">
+                    <div className="h-full bg-emerald-500 rounded-full transition-all" style={{ width: `${Math.min(100, turnoutRate)}%` }} />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4 pt-3 border-t border-neutral-200/60 flex items-center justify-between text-[11px] text-neutral-400">
+              <span>No-show drop off: <strong className="text-neutral-700 font-bold">{noShowRate}%</strong></span>
+              <span>Pending arrival: <strong className="text-neutral-700 font-bold">{Math.max(0, approved - checkedIn)}</strong></span>
+            </div>
+          </div>
+
+          {/* Pass Tier / Category Breakdown */}
+          <div className="p-4.5 rounded-2xl bg-neutral-50/70 border border-neutral-100/90 flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-xs font-bold text-neutral-900">Attendance by Pass Category</p>
+                <span className="text-[10px] font-bold text-brand bg-brand-50 px-2 py-0.5 rounded-md">
+                  {Object.keys(passTypeStats).length} {Object.keys(passTypeStats).length === 1 ? "Tier" : "Tiers"}
+                </span>
+              </div>
+              <p className="text-[11px] text-neutral-400 mb-3.5">
+                Check-in distribution and turnout percentage per ticket type
+              </p>
+
+              {Object.keys(passTypeStats).length === 0 ? (
+                <div className="text-center py-6 text-[11px] text-neutral-400">
+                  No attendees registered yet.
+                </div>
+              ) : (
+                <div className="space-y-2.5">
+                  {Object.entries(passTypeStats).map(([type, stats]) => {
+                    const pct = stats.total > 0 ? Math.round((stats.checkedIn / stats.total) * 100) : 0;
+                    const label = PASS_STATUS_CONFIG[type as PassStatus]?.label || type.charAt(0).toUpperCase() + type.slice(1);
+                    return (
+                      <div key={type} className="bg-white rounded-xl p-2.5 border border-neutral-200/60 shadow-2xs">
+                        <div className="flex items-center justify-between text-[11px] mb-1.5">
+                          <span className="font-bold text-neutral-800 capitalize">{label}</span>
+                          <span className="font-bold tabular-nums text-brand">
+                            {stats.checkedIn} / {stats.total} ({pct}%)
+                          </span>
+                        </div>
+                        <div className="h-1.5 bg-neutral-100 rounded-full overflow-hidden">
+                          <div className="h-full bg-brand rounded-full transition-all duration-500" style={{ width: `${pct}%` }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            <div className="mt-4 pt-3 border-t border-neutral-200/60 flex items-center justify-between text-[11px] text-neutral-400">
+              <span>QR Scans: <strong className="text-emerald-700 font-bold">{methodStats.qr}</strong></span>
+              <span>Manual Approvals: <strong className="text-neutral-700 font-bold">{methodStats.manual}</strong></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* ── Ticket types ──────────────────────────────────────── */}
       <div className="bg-white rounded-2xl shadow-sm p-5 mb-3">
         <div className="flex items-center justify-between mb-1 gap-4">
@@ -344,6 +767,14 @@ export default function EventOverview({ event, initialAttendees = [] }: Props) {
 
       {/* ── Attendee Engagement & Communications ─────────────────── */}
       <EventCommunicationsCard
+        eventId={event.id}
+        eventName={event.name}
+        applySlug={event.apply_slug}
+        approvedCount={approved}
+      />
+
+      {/* ── Event Attendee Feedback & Post-Event Reviews ───────── */}
+      <EventAttendeeFeedbackCard
         eventId={event.id}
         eventName={event.name}
         applySlug={event.apply_slug}

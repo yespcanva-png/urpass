@@ -18,11 +18,13 @@ import {
   Zap,
   ChevronRight,
   Building2,
+  BarChart3,
 } from "lucide-react";
 
 const mainNav = [
   { label: "Dashboard", href: "/dashboard",        icon: LayoutDashboard, exact: true },
   { label: "Events",    href: "/dashboard/events", icon: Calendar,        exact: false },
+  { label: "Analytics", href: "/dashboard/analytics", icon: BarChart3,    exact: false },
   { label: "Scanner",   href: "/scan",              icon: ScanLine,        exact: false },
 ];
 

@@ -751,7 +751,7 @@ export async function sendPostEventThankYouEmail({
   eventName: string;
   eventId: string;
 }) {
-  const feedbackUrl = `${APP_URL}/feedback?event=${eventId}`;
+  const feedbackUrl = `${APP_URL}/feedback/${eventId}`;
 
   await sendEmail({
     from: FROM,

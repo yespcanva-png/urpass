@@ -43,6 +43,11 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   if (isProtected && !user) {
+    const feedbackMatch = pathname.match(/^\/event\/([^/]+)\/feedback$/);
+    if (feedbackMatch) {
+      url.pathname = `/feedback/${feedbackMatch[1]}`;
+      return NextResponse.redirect(url);
+    }
     url.pathname = "/login";
     return NextResponse.redirect(url);
   }

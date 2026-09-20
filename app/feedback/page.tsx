@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
   Loader2,
@@ -79,7 +80,17 @@ function StarRating({
   );
 }
 
-export default function FeedbackPage() {
+function FeedbackPageContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const eventParam = searchParams.get("event");
+
+  useEffect(() => {
+    if (eventParam) {
+      router.replace(`/feedback/${eventParam}`);
+    }
+  }, [eventParam, router]);
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [category, setCategory] = useState("compliment");
@@ -300,5 +311,19 @@ export default function FeedbackPage() {
         </form>
       </div>
     </div>
+  );
+}
+
+export default function FeedbackPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-neutral-50 flex items-center justify-center p-6">
+          <Loader2 className="w-6 h-6 animate-spin text-purple-600" />
+        </div>
+      }
+    >
+      <FeedbackPageContent />
+    </Suspense>
   );
 }
