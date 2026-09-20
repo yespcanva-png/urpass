@@ -924,8 +924,8 @@ export async function sendInvoiceEmail({
       <tr>
         <td style="border-top:1px solid #f3f4f6;padding:16px 32px;background:#fafafa;text-align:center;">
           <p style="margin:0;font-size:11px;color:#9ca3af;">
-            URPASS Technologies Private Limited &middot; GSTIN: 33AABCU9603R1ZM<br/>
-            IIT Madras Research Park, Taramani, Chennai, TN 600113 &middot; <a href="${APP_URL}" style="color:#6D28D9;text-decoration:none;">urpass.space</a>
+            Yesp Corporation &middot; GSTIN: 33OPDPS9865F1Z3<br/>
+            Tamil Nadu, India &middot; <a href="${APP_URL}" style="color:#6D28D9;text-decoration:none;">urpass.space</a>
           </p>
         </td>
       </tr>

@@ -63,12 +63,64 @@ export interface InvoiceRecord {
 }
 
 const SELLER = {
-  name: "YESP Corporation",
+  name: "Yesp Corporation",
   gstin: "33OPDPS9865F1Z3",
-  address: "YESP Corporation, Tamil Nadu, India",
+  address: "Tamil Nadu, India",
+  website: "urpass.space",
+  email: "support@urpass.space",
   placeOfSupply: "Tamil Nadu (33)",
   stateCode: "33",
 };
+
+export function numToWords(n: number): string {
+  const units = [
+    "", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten",
+    "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"
+  ];
+  const tens = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
+
+  function convertChunk(num: number): string {
+    let str = "";
+    if (num >= 100) {
+      str += units[Math.floor(num / 100)] + " Hundred ";
+      num %= 100;
+    }
+    if (num >= 20) {
+      str += tens[Math.floor(num / 10)] + (num % 10 ? " " + units[num % 10] : "");
+    } else if (num > 0) {
+      str += units[num];
+    }
+    return str.trim();
+  }
+
+  const rupees = Math.floor(n);
+  const paise = Math.round((n - rupees) * 100);
+
+  let result = "";
+  if (rupees === 0) {
+    result = "Zero Rupees";
+  } else {
+    const crore = Math.floor(rupees / 10000000);
+    const lakh = Math.floor((rupees % 10000000) / 100000);
+    const thousand = Math.floor((rupees % 100000) / 1000);
+    const hundred = rupees % 1000;
+
+    const parts: string[] = [];
+    if (crore) parts.push(convertChunk(crore) + " Crore");
+    if (lakh) parts.push(convertChunk(lakh) + " Lakh");
+    if (thousand) parts.push(convertChunk(thousand) + " Thousand");
+    if (hundred) parts.push(convertChunk(hundred));
+
+    result = "Rupees " + parts.join(" ");
+  }
+
+  if (paise > 0) {
+    result += " and " + convertChunk(paise) + " Paise Only";
+  } else {
+    result += " Only";
+  }
+  return result;
+}
 
 export async function createInvoiceForPayment(
   params: InvoiceCreationParams
@@ -176,280 +228,319 @@ export async function generateInvoicePdf(invoice: InvoiceRecord): Promise<Uint8A
   const fontRegular = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-  const primary = rgb(0.43, 0.16, 0.85); // #6D28D9
+  // Palette: MNC fintech / SaaS aesthetic
+  const primary = rgb(0.43, 0.16, 0.85); // #6D28D9 Urpass purple accent
   const primaryLight = rgb(0.96, 0.95, 1.0); // #F5F3FF
-  const dark = rgb(0.06, 0.09, 0.16); // #0F172A
-  const darkGray = rgb(0.20, 0.25, 0.30);
-  const muted = rgb(0.40, 0.45, 0.52); // #64748B
-  const cardBg = rgb(0.98, 0.98, 0.99); // #F8FAFC
-  const borderCol = rgb(0.89, 0.91, 0.94); // #E2E8F0
-  const emeraldBg = rgb(0.92, 0.99, 0.96); // #ECFDF5
-  const emeraldText = rgb(0.02, 0.47, 0.34); // #047857
-  const rzpBlue = rgb(0.01, 0.41, 0.73); // Razorpay brand blue
+  const primaryBorder = rgb(0.87, 0.84, 0.98); // #DDD6FE
+  const dark = rgb(0.06, 0.09, 0.16); // #0F172A Dark navy/charcoal
+  const charcoal = rgb(0.20, 0.25, 0.33); // #334155
+  const muted = rgb(0.39, 0.45, 0.55); // #64748B
+  const faint = rgb(0.58, 0.64, 0.72); // #94A3B8
+  const lineCol = rgb(0.89, 0.91, 0.94); // #E2E8F0
+  const bgLight = rgb(0.97, 0.98, 0.99); // #F8FAFC
+  const greenBg = rgb(0.92, 0.99, 0.96); // #ECFDF5
+  const greenBorder = rgb(0.65, 0.95, 0.82); // #A7F3D0
+  const greenText = rgb(0.02, 0.47, 0.34); // #047857
 
-  // 1. Top accent bar
-  page.drawRectangle({
-    x: 0,
-    y: height - 5,
-    width,
-    height: 5,
+  // Subtle watermark in background (3-5% opacity)
+  page.drawText("URPASS", {
+    x: width / 2 - 130,
+    y: height / 2 - 40,
+    size: 72,
+    font: fontBold,
+    color: rgb(0.97, 0.97, 0.99),
+  });
+
+  // ---------------- HEADER ----------------
+  const startY = height - 48;
+
+  // Top-left: URPASS logo + A product by Yesp Corporation + tagline
+  page.drawText("URPASS", {
+    x: 44,
+    y: startY,
+    size: 22,
+    font: fontBold,
     color: primary,
   });
 
-  // 2. Brand Block (YESP Corporation + URPASS)
-  page.drawText("YESP CORPORATION", {
-    x: 40,
-    y: height - 38,
-    size: 18,
+  page.drawText("A product by Yesp Corporation", {
+    x: 44,
+    y: startY - 15,
+    size: 8.5,
     font: fontBold,
     color: dark,
   });
 
-  page.drawText("URPASS  •  EVENT TICKETING & PASS PLATFORM", {
-    x: 40,
-    y: height - 51,
-    size: 7.5,
-    font: fontBold,
-    color: primary,
-  });
-
-  page.drawText("urpass.space  •  yespstudio.com  •  GSTIN: 33OPDPS9865F1Z3", {
-    x: 40,
-    y: height - 63,
+  page.drawText("Event registration made simple.", {
+    x: 44,
+    y: startY - 27,
     size: 8,
     font: fontRegular,
     color: muted,
   });
 
-  // Top Right: TAX INVOICE + PAID Pill
-  const isSample = invoice.invoice_number.includes("SMPL") || Boolean(invoice.payment_id?.includes("sample"));
-  page.drawText(isSample ? "SAMPLE INVOICE" : "TAX INVOICE", {
-    x: width - 170,
-    y: height - 38,
-    size: 17,
+  // Top-right: TAX INVOICE + PAID status badge
+  page.drawText("TAX INVOICE", {
+    x: width - 180,
+    y: startY,
+    size: 18,
     font: fontBold,
     color: dark,
   });
 
+  // Elegant green PAID badge
   page.drawRectangle({
-    x: width - 170,
-    y: height - 65,
-    width: 130,
-    height: 19,
-    color: emeraldBg,
-    borderColor: rgb(0.65, 0.95, 0.82),
+    x: width - 85,
+    y: startY - 1,
+    width: 41,
+    height: 16,
+    color: greenBg,
+    borderColor: greenBorder,
     borderWidth: 1,
   });
-
-  page.drawText("PAID • RAZORPAY VERIFIED", {
-    x: width - 162,
-    y: height - 59,
+  page.drawText("PAID", {
+    x: width - 77,
+    y: startY + 3,
     size: 7.5,
     font: fontBold,
-    color: emeraldText,
+    color: greenText,
   });
 
-  // Divider
+  // Invoice metadata list (top right)
+  const metaLabelsX = width - 200;
+  const metaValuesX = width - 110;
+  let metaY = startY - 18;
+
+  const drawMetaRow = (label: string, val: string) => {
+    page.drawText(label, { x: metaLabelsX, y: metaY, size: 8, font: fontRegular, color: muted });
+    page.drawText(val, { x: metaValuesX, y: metaY, size: 8, font: fontBold, color: dark });
+    metaY -= 12;
+  };
+
+  drawMetaRow("Invoice No:", invoice.invoice_number || "URP/26-27/0001");
+  drawMetaRow("Issue Date:", invoice.invoice_date || "20 Sep 2026");
+  drawMetaRow("Due Date:", invoice.invoice_date || "20 Sep 2026");
+  drawMetaRow(
+    "Billing Period:",
+    invoice.billing_period_start && invoice.billing_period_end
+      ? `${invoice.billing_period_start} - ${invoice.billing_period_end}`
+      : "20 Sep 2026 - 19 Oct 2026"
+  );
+
+  // Subtle divider
   page.drawLine({
-    start: { x: 40, y: height - 76 },
-    end: { x: width - 40, y: height - 76 },
-    color: borderCol,
+    start: { x: 44, y: startY - 72 },
+    end: { x: width - 44, y: startY - 72 },
+    color: lineCol,
     thickness: 1,
   });
 
-  // 3. Invoice Metadata Strip (Razorpay Style)
-  const metaY = height - 128;
+  // ---------------- SELLER & CUSTOMER SECTION ----------------
+  const entityY = startY - 95;
+
+  // FROM (SELLER)
+  page.drawText("FROM (SELLER)", { x: 44, y: entityY, size: 7.5, font: fontBold, color: muted });
+  page.drawText(invoice.seller_name || "Yesp Corporation", { x: 44, y: entityY - 14, size: 11, font: fontBold, color: dark });
+  page.drawText(`GSTIN: ${invoice.seller_gstin || "33OPDPS9865F1Z3"}`, { x: 44, y: entityY - 27, size: 8.5, font: fontBold, color: charcoal });
+  page.drawText("Tamil Nadu, India", { x: 44, y: entityY - 39, size: 8.5, font: fontRegular, color: muted });
+  page.drawText("Website: urpass.space", { x: 44, y: entityY - 51, size: 8.5, font: fontRegular, color: muted });
+  page.drawText("Email: support@urpass.space", { x: 44, y: entityY - 63, size: 8.5, font: fontRegular, color: primary });
+
+  // BILL TO (CUSTOMER)
+  const custX = 310;
+  page.drawText("BILL TO (CUSTOMER)", { x: custX, y: entityY, size: 7.5, font: fontBold, color: muted });
+  page.drawText(invoice.customer_name || "ABC Events Pvt Ltd", { x: custX, y: entityY - 14, size: 11, font: fontBold, color: dark });
+  page.drawText(invoice.customer_address || "Customer Billing Address", { x: custX, y: entityY - 27, size: 8.5, font: fontRegular, color: muted });
+  page.drawText(`GSTIN: ${invoice.customer_gstin || "29ABCDE1234F1Z5"}`, { x: custX, y: entityY - 39, size: 8.5, font: fontBold, color: charcoal });
+  page.drawText(`State: ${invoice.place_of_supply || "Karnataka (29)"}`, { x: custX, y: entityY - 51, size: 8.5, font: fontRegular, color: muted });
+  page.drawText(`Email: ${invoice.customer_email || "billing@abcevents.com"}`, { x: custX, y: entityY - 63, size: 8.5, font: fontRegular, color: primary });
+
+  // ---------------- ITEM TABLE ----------------
+  const tableY = entityY - 95;
+
+  // Header background strip
   page.drawRectangle({
-    x: 40,
-    y: metaY,
-    width: width - 80,
-    height: 42,
-    color: cardBg,
-    borderColor: borderCol,
-    borderWidth: 1,
-  });
-
-  const colW = (width - 80) / 4;
-  const drawMetaCol = (idx: number, label: string, val: string, isPurple = false) => {
-    const cx = 52 + idx * colW;
-    page.drawText(label, { x: cx, y: metaY + 26, size: 7, font: fontBold, color: muted });
-    page.drawText(val.slice(0, 22), { x: cx, y: metaY + 12, size: 8.5, font: fontBold, color: isPurple ? primary : dark });
-  };
-
-  drawMetaCol(0, "INVOICE NUMBER", invoice.invoice_number);
-  drawMetaCol(1, "INVOICE DATE", invoice.invoice_date);
-  drawMetaCol(2, "PAYMENT METHOD", "Razorpay Secure", true);
-  drawMetaCol(3, "PAYMENT ID", invoice.payment_id || "N/A");
-
-  // 4. Seller & Buyer Cards (Canva 2-Column Grid)
-  const cardsY = metaY - 100;
-  const cardWidth = (width - 92) / 2;
-
-  // Seller Card
-  page.drawRectangle({
-    x: 40,
-    y: cardsY,
-    width: cardWidth,
-    height: 90,
-    color: cardBg,
-    borderColor: borderCol,
-    borderWidth: 1,
-  });
-
-  page.drawText("ISSUED BY (SELLER)", { x: 52, y: cardsY + 74, size: 7.5, font: fontBold, color: primary });
-  page.drawText(invoice.seller_name || "YESP Corporation", { x: 52, y: cardsY + 59, size: 10.5, font: fontBold, color: dark });
-  page.drawText(`GSTIN: ${invoice.seller_gstin || "33OPDPS9865F1Z3"}`, { x: 52, y: cardsY + 45, size: 8.5, font: fontBold, color: darkGray });
-  page.drawText(`State: ${invoice.place_of_supply || "Tamil Nadu (33)"}`, { x: 52, y: cardsY + 32, size: 8, font: fontRegular, color: muted });
-  page.drawText("Email: srinithin@yespstudio.com", { x: 52, y: cardsY + 19, size: 8, font: fontRegular, color: muted });
-  page.drawText("Platform: URPASS (urpass.space)", { x: 52, y: cardsY + 7, size: 8, font: fontRegular, color: muted });
-
-  // Buyer Card
-  const buyerX = 40 + cardWidth + 12;
-  page.drawRectangle({
-    x: buyerX,
-    y: cardsY,
-    width: cardWidth,
-    height: 90,
-    color: cardBg,
-    borderColor: borderCol,
-    borderWidth: 1,
-  });
-
-  page.drawText("BILLED TO (BUYER)", { x: buyerX + 12, y: cardsY + 74, size: 7.5, font: fontBold, color: primary });
-  page.drawText((invoice.customer_name || "YESP Corporation").slice(0, 26), { x: buyerX + 12, y: cardsY + 59, size: 10.5, font: fontBold, color: dark });
-  page.drawText(`GSTIN: ${invoice.customer_gstin || "33OPDPS9865F1Z3"}`, { x: buyerX + 12, y: cardsY + 45, size: 8.5, font: fontBold, color: darkGray });
-  page.drawText(`Email: ${invoice.customer_email || "yespcorpindia@gmail.com"}`, { x: buyerX + 12, y: cardsY + 32, size: 8, font: fontRegular, color: muted });
-  page.drawText(`Place of Supply: ${invoice.place_of_supply || "Tamil Nadu (33)"}`, { x: buyerX + 12, y: cardsY + 19, size: 8, font: fontRegular, color: muted });
-  page.drawText(invoice.customer_address ? `Address: ${invoice.customer_address.slice(0, 32)}` : "Account: Corporate Verified Account", { x: buyerX + 12, y: cardsY + 7, size: 8, font: fontRegular, color: muted });
-
-  // 5. Line Items Table (Canva Modern Table)
-  const tableY = cardsY - 32;
-  page.drawRectangle({
-    x: 40,
+    x: 44,
     y: tableY,
-    width: width - 80,
-    height: 24,
-    color: rgb(0.94, 0.96, 0.98),
-    borderColor: borderCol,
+    width: width - 88,
+    height: 22,
+    color: bgLight,
+    borderColor: lineCol,
     borderWidth: 1,
   });
 
-  page.drawText("DESCRIPTION & SERVICE", { x: 52, y: tableY + 8, size: 7.5, font: fontBold, color: darkGray });
-  page.drawText("SAC CODE", { x: 250, y: tableY + 8, size: 7.5, font: fontBold, color: darkGray });
-  page.drawText("QTY", { x: 315, y: tableY + 8, size: 7.5, font: fontBold, color: darkGray });
-  page.drawText("TAXABLE", { x: 355, y: tableY + 8, size: 7.5, font: fontBold, color: darkGray });
-  page.drawText("GST (18%)", { x: 425, y: tableY + 8, size: 7.5, font: fontBold, color: darkGray });
-  page.drawText("TOTAL (INR)", { x: 490, y: tableY + 8, size: 7.5, font: fontBold, color: darkGray });
+  page.drawText("#", { x: 54, y: tableY + 7, size: 7.5, font: fontBold, color: charcoal });
+  page.drawText("DESCRIPTION", { x: 80, y: tableY + 7, size: 7.5, font: fontBold, color: charcoal });
+  page.drawText("SAC", { x: 285, y: tableY + 7, size: 7.5, font: fontBold, color: charcoal });
+  page.drawText("QTY", { x: 345, y: tableY + 7, size: 7.5, font: fontBold, color: charcoal });
+  page.drawText("RATE (INR)", { x: 405, y: tableY + 7, size: 7.5, font: fontBold, color: charcoal });
+  page.drawText("AMOUNT (INR)", { x: 480, y: tableY + 7, size: 7.5, font: fontBold, color: charcoal });
 
-  // Table row
-  const rowY = tableY - 35;
-  const itemTitle = invoice.description || (isSample ? "Sample Pass & Designer Pack" : "URPASS Pro Plan Subscription");
-  const itemSubtitle = isSample
-    ? "Demo Pass Template • QR Code • Custom Ticket Designer Preview"
-    : "Unlimited Events • Custom Pass Designer • White-label • Priority Support";
+  // Line item row
+  const rowY = tableY - 25;
+  const taxable = Number(invoice.taxable_amount || 1999).toFixed(2);
 
-  page.drawText(itemTitle.slice(0, 36), { x: 52, y: rowY + 12, size: 9, font: fontBold, color: dark });
-  page.drawText(itemSubtitle.slice(0, 52), { x: 52, y: rowY, size: 7.5, font: fontRegular, color: muted });
-  page.drawText("998313", { x: 250, y: rowY + 6, size: 8.5, font: fontRegular, color: darkGray });
-  page.drawText("1", { x: 320, y: rowY + 6, size: 8.5, font: fontRegular, color: darkGray });
-  page.drawText(`INR ${Number(invoice.taxable_amount).toFixed(2)}`, { x: 355, y: rowY + 6, size: 8.5, font: fontRegular, color: darkGray });
-  const totalGst = Number(invoice.cgst_amount) + Number(invoice.sgst_amount) + Number(invoice.igst_amount);
-  page.drawText(`INR ${totalGst.toFixed(2)}`, { x: 425, y: rowY + 6, size: 8.5, font: fontRegular, color: darkGray });
-  page.drawText(`INR ${Number(invoice.total_amount).toFixed(2)}`, { x: 490, y: rowY + 6, size: 8.5, font: fontBold, color: dark });
+  page.drawText("1", { x: 54, y: rowY, size: 8.5, font: fontRegular, color: dark });
+  page.drawText(invoice.description || "Urpass Pro Plan", { x: 80, y: rowY, size: 9.5, font: fontBold, color: dark });
+  page.drawText("Monthly Subscription", { x: 80, y: rowY - 11, size: 8, font: fontRegular, color: muted });
+  page.drawText("Billing Period: 20 Sep 2026 - 19 Oct 2026", { x: 80, y: rowY - 21, size: 7.5, font: fontRegular, color: faint });
+
+  page.drawText("998313", { x: 285, y: rowY, size: 8.5, font: fontRegular, color: charcoal });
+  page.drawText("1", { x: 348, y: rowY, size: 8.5, font: fontRegular, color: charcoal });
+  page.drawText(Number(taxable).toLocaleString("en-IN", { minimumFractionDigits: 2 }), { x: 405, y: rowY, size: 8.5, font: fontRegular, color: charcoal });
+  page.drawText(Number(taxable).toLocaleString("en-IN", { minimumFractionDigits: 2 }), { x: 485, y: rowY, size: 8.5, font: fontBold, color: dark });
 
   // Divider under row
   page.drawLine({
-    start: { x: 40, y: rowY - 10 },
-    end: { x: width - 40, y: rowY - 10 },
-    color: borderCol,
+    start: { x: 44, y: rowY - 32 },
+    end: { x: width - 44, y: rowY - 32 },
+    color: lineCol,
     thickness: 1,
   });
 
-  // 6. Split Bottom Section: Razorpay Authentication & Financial Breakdown
-  const bottomY = rowY - 135;
+  // ---------------- TOTAL & PAYMENT SECTION ----------------
+  const splitY = rowY - 52;
 
-  // Razorpay Card
-  page.drawRectangle({
-    x: 40,
-    y: bottomY,
-    width: cardWidth,
-    height: 115,
-    color: rgb(0.97, 0.98, 1.0),
-    borderColor: rgb(0.80, 0.88, 0.97),
-    borderWidth: 1,
-  });
+  // Left: PAYMENT DETAILS & Message card
+  page.drawText("PAYMENT DETAILS", { x: 44, y: splitY, size: 7.5, font: fontBold, color: muted });
 
-  page.drawText("RAZORPAY PAYMENT AUTHENTICATION", { x: 52, y: bottomY + 98, size: 7.5, font: fontBold, color: rzpBlue });
-  page.drawText("Payment Gateway: Razorpay Secure PG (India)", { x: 52, y: bottomY + 82, size: 8, font: fontRegular, color: darkGray });
-  page.drawText(`Transaction ID: ${(invoice.payment_id || "pay_rzp_real_yespcorp").slice(0, 24)}`, { x: 52, y: bottomY + 68, size: 8, font: fontBold, color: dark });
-  page.drawText("Payment Status: Captured & Settled (PAID)", { x: 52, y: bottomY + 54, size: 8, font: fontBold, color: emeraldText });
-  page.drawText("Method: Online / UPI / Corporate NetBanking", { x: 52, y: bottomY + 40, size: 8, font: fontRegular, color: muted });
-  page.drawText("Security: 256-bit TLS Encrypted • Razorpay Shield", { x: 52, y: bottomY + 26, size: 8, font: fontRegular, color: muted });
-  page.drawText("Verification: Authenticated Digital Tax Record", { x: 52, y: bottomY + 12, size: 7.5, font: fontBold, color: rzpBlue });
-
-  // Financial Totals
-  page.drawRectangle({
-    x: buyerX,
-    y: bottomY,
-    width: cardWidth,
-    height: 115,
-    color: cardBg,
-    borderColor: borderCol,
-    borderWidth: 1,
-  });
-
-  const drawSummaryLine = (label: string, val: string, yOff: number) => {
-    page.drawText(label, { x: buyerX + 14, y: bottomY + yOff, size: 8, font: fontRegular, color: muted });
-    page.drawText(val, { x: buyerX + cardWidth - 95, y: bottomY + yOff, size: 8.5, font: fontBold, color: dark });
+  let payY = splitY - 14;
+  const drawPayRow = (label: string, val: string, isGreen = false) => {
+    page.drawText(label, { x: 44, y: payY, size: 8, font: fontRegular, color: muted });
+    page.drawText(val, { x: 135, y: payY, size: 8, font: fontBold, color: isGreen ? greenText : dark });
+    payY -= 13;
   };
 
-  drawSummaryLine("Subtotal (Taxable):", `INR ${Number(invoice.subtotal).toFixed(2)}`, 96);
-  drawSummaryLine("CGST (9.0%):", `INR ${Number(invoice.cgst_amount).toFixed(2)}`, 80);
-  drawSummaryLine("SGST (9.0%):", `INR ${Number(invoice.sgst_amount).toFixed(2)}`, 64);
-  drawSummaryLine("Total GST (18.0%):", `INR ${totalGst.toFixed(2)}`, 48);
+  drawPayRow("Payment Status:", "PAID", true);
+  drawPayRow("Payment Method:", "UPI");
+  drawPayRow("Transaction ID:", invoice.payment_id || "pay_Qr7H9k3LmN2");
+  drawPayRow("Payment Date:", invoice.invoice_date || "20 Sep 2026");
 
-  // Total Paid Highlight Bar
+  // Premium message card
+  const msgY = payY - 24;
   page.drawRectangle({
-    x: buyerX + 8,
-    y: bottomY + 8,
-    width: cardWidth - 16,
-    height: 28,
-    color: primaryLight,
-    borderColor: rgb(0.80, 0.75, 0.95),
+    x: 44,
+    y: msgY,
+    width: 235,
+    height: 38,
+    color: bgLight,
+    borderColor: lineCol,
     borderWidth: 1,
   });
 
-  page.drawText("TOTAL PAID (INR):", { x: buyerX + 16, y: bottomY + 17, size: 9, font: fontBold, color: primary });
-  page.drawText(`INR ${Number(invoice.total_amount).toFixed(2)}`, { x: buyerX + cardWidth - 105, y: bottomY + 16, size: 11, font: fontBold, color: primary });
+  page.drawText("Thank you for choosing Urpass.", {
+    x: 54,
+    y: msgY + 23,
+    size: 8,
+    font: fontBold,
+    color: dark,
+  });
+  page.drawText("We're excited to be part of your event journey.", {
+    x: 54,
+    y: msgY + 11,
+    size: 7.5,
+    font: fontRegular,
+    color: muted,
+  });
 
-  // 7. Footer
+  // Right: TOTALS SECTION
+  const sumLabelX = 330;
+  const sumValX = 485;
+  let sumY = splitY;
+
+  const drawSummaryLine = (label: string, val: string) => {
+    page.drawText(label, { x: sumLabelX, y: sumY, size: 8.5, font: fontRegular, color: charcoal });
+    page.drawText(val, { x: sumValX, y: sumY, size: 8.5, font: fontBold, color: dark });
+    sumY -= 15;
+  };
+
+  const subtotalStr = `INR ${Number(invoice.subtotal || 1999).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`;
+  const cgstStr = `INR ${Number(invoice.cgst_amount || 179.91).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`;
+  const sgstStr = `INR ${Number(invoice.sgst_amount || 179.91).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`;
+
+  drawSummaryLine("Subtotal:", subtotalStr);
+  drawSummaryLine("CGST (9%):", cgstStr);
+  drawSummaryLine("SGST (9%):", sgstStr);
+
+  // Visually Prominent Final Total Box
+  const totalBoxY = sumY - 22;
+  page.drawRectangle({
+    x: sumLabelX - 10,
+    y: totalBoxY,
+    width: width - 44 - (sumLabelX - 10),
+    height: 32,
+    color: primaryLight,
+    borderColor: primaryBorder,
+    borderWidth: 1,
+  });
+
+  page.drawText("TOTAL (INR):", {
+    x: sumLabelX,
+    y: totalBoxY + 11,
+    size: 10,
+    font: fontBold,
+    color: primary,
+  });
+
+  const totalFormatted = `INR ${Number(invoice.total_amount || 2358.82).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`;
+  page.drawText(totalFormatted, {
+    x: sumValX - 18,
+    y: totalBoxY + 10,
+    size: 13,
+    font: fontBold,
+    color: primary,
+  });
+
+  // Amount in Words below total box
+  const wordsY = totalBoxY - 18;
+  page.drawText("Amount in Words:", {
+    x: sumLabelX - 10,
+    y: wordsY,
+    size: 7.5,
+    font: fontBold,
+    color: muted,
+  });
+
+  const wordsStr = numToWords(Number(invoice.total_amount || 2358.82));
+  page.drawText(wordsStr, {
+    x: sumLabelX - 10,
+    y: wordsY - 10,
+    size: 6.8,
+    font: fontRegular,
+    color: charcoal,
+  });
+
+  // ---------------- FOOTER ----------------
+  const footerDividerY = 70;
   page.drawLine({
-    start: { x: 40, y: 70 },
-    end: { x: width - 40, y: 70 },
-    color: borderCol,
+    start: { x: 44, y: footerDividerY },
+    end: { x: width - 44, y: footerDividerY },
+    color: lineCol,
     thickness: 1,
   });
 
-  page.drawText("This is a computer-generated tax invoice issued by YESP Corporation in compliance with GST Rules.", {
-    x: 40,
-    y: 54,
-    size: 7.5,
+  // Footer Row 1
+  page.drawText("URPASS", { x: 44, y: 53, size: 9, font: fontBold, color: dark });
+  page.drawText("A product by Yesp Corporation", { x: 44, y: 43, size: 7.5, font: fontRegular, color: muted });
+
+  page.drawText("Need help?", { x: width - 180, y: 53, size: 7.5, font: fontRegular, color: faint });
+  page.drawText("support@urpass.space  •  urpass.space", { x: width - 180, y: 43, size: 7.5, font: fontBold, color: primary });
+
+  // Bottom legal lines
+  page.drawText("Yesp Corporation | GSTIN: 33OPDPS9865F1Z3 | Tamil Nadu, India", {
+    x: 44,
+    y: 28,
+    size: 7,
     font: fontRegular,
-    color: muted,
+    color: faint,
   });
-  page.drawText("Payment processed securely via Razorpay. Support: srinithin@yespstudio.com • support@urpass.space", {
-    x: 40,
-    y: 42,
-    size: 7.5,
-    font: fontRegular,
-    color: muted,
-  });
-  page.drawText("URPASS © 2026 YESP Corporation. All rights reserved. • https://urpass.space", {
-    x: 40,
-    y: 30,
-    size: 7.5,
+
+  page.drawText("Urpass is a product of Yesp Corporation.", {
+    x: width - 190,
+    y: 28,
+    size: 7,
     font: fontBold,
-    color: primary,
+    color: muted,
   });
 
   return await pdfDoc.save();
