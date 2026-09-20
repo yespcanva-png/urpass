@@ -218,13 +218,8 @@ function InvoiceHistory({ invoices }: { invoices: Invoice[] }) {
     <section className="mb-8">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <div>
-          <div className="flex items-center gap-2">
-            <p className="text-[10px] font-bold tracking-widest uppercase text-neutral-400">Invoices</p>
-            <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
-              GSTIN: 33OPDPS9865F1Z3
-            </span>
-          </div>
-          <p className="text-xs text-neutral-500 mt-1">Official GST tax invoices issued by YESP Corporation &middot; Secured via Razorpay.</p>
+          <p className="text-[10px] font-bold tracking-widest uppercase text-neutral-400">Invoices</p>
+          <p className="text-xs text-neutral-500 mt-1">Official tax invoices &middot; Secured via Razorpay.</p>
         </div>
       </div>
 
