@@ -122,6 +122,10 @@ interface Invoice {
   payment_status: string;
   invoice_status: string;
   pdf_url: string | null;
+  seller_name?: string | null;
+  seller_gstin?: string | null;
+  customer_name?: string | null;
+  payment_id?: string | null;
 }
 
 function UsageTile({
@@ -212,14 +216,19 @@ function formatInvoiceStatus(status: string) {
 function InvoiceHistory({ invoices }: { invoices: Invoice[] }) {
   return (
     <section className="mb-8">
-      <div className="flex items-center justify-between gap-3 mb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <div>
-          <p className="text-[10px] font-bold tracking-widest uppercase text-neutral-400">Invoices</p>
-          <p className="text-xs text-neutral-500 mt-1">Tax invoice PDFs for your URPASS purchases.</p>
+          <div className="flex items-center gap-2">
+            <p className="text-[10px] font-bold tracking-widest uppercase text-neutral-400">Invoices</p>
+            <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
+              GSTIN: 33OPDPS9865F1Z3
+            </span>
+          </div>
+          <p className="text-xs text-neutral-500 mt-1">Official GST tax invoices issued by YESP Corporation &middot; Secured via Razorpay.</p>
         </div>
       </div>
 
-      <div className="bg-white border border-neutral-100 rounded-2xl overflow-hidden">
+      <div className="bg-white border border-neutral-100 rounded-2xl overflow-hidden shadow-xs">
         {invoices.length === 0 ? (
           <div className="p-6 flex items-start gap-3">
             <div className="w-10 h-10 rounded-xl bg-neutral-100 flex items-center justify-center shrink-0">
@@ -234,19 +243,28 @@ function InvoiceHistory({ invoices }: { invoices: Invoice[] }) {
           </div>
         ) : (
           <div className="divide-y divide-neutral-100">
-            <div className="hidden md:grid grid-cols-[1.4fr_1fr_1fr_0.8fr_1.3fr] gap-4 px-5 py-3 bg-neutral-50 text-[10px] font-bold uppercase tracking-widest text-neutral-400">
-              <span>Invoice</span>
+            <div className="hidden md:grid grid-cols-[1.5fr_1fr_1fr_0.9fr_1.3fr] gap-4 px-5 py-3 bg-neutral-50 text-[10px] font-bold uppercase tracking-widest text-neutral-400">
+              <span>Invoice & Entity</span>
               <span>Date</span>
               <span>Amount</span>
-              <span>Status</span>
+              <span>Payment & Gateway</span>
               <span className="text-right">Actions</span>
             </div>
-            {invoices.map((invoice) => (
-              <div key={invoice.id} className="grid grid-cols-1 md:grid-cols-[1.4fr_1fr_1fr_0.8fr_1.3fr] gap-3 md:gap-4 px-5 py-4 md:items-center">
+            {invoices.map((invoice) => {
+              const isRzp = invoice.payment_id?.includes("rzp") || invoice.payment_id?.startsWith("pay_");
+              return (
+                <div key={invoice.id} className="grid grid-cols-1 md:grid-cols-[1.5fr_1fr_1fr_0.9fr_1.3fr] gap-3 md:gap-4 px-5 py-4 md:items-center">
                   <div>
-                    <p className="text-sm font-bold text-neutral-900">{invoice.invoice_number}</p>
-                    <p className="md:hidden text-xs text-neutral-400 mt-0.5">
-                      {formatInvoiceDate(invoice.invoice_date)}
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-bold text-neutral-900">{invoice.invoice_number}</p>
+                      {isRzp && (
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">
+                          Razorpay
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-neutral-400 mt-0.5">
+                      {invoice.customer_name || invoice.seller_name || "YESP Corporation"} &middot; {formatInvoiceDate(invoice.invoice_date)}
                     </p>
                   </div>
                   <p className="hidden md:block text-sm text-neutral-600">
@@ -279,7 +297,8 @@ function InvoiceHistory({ invoices }: { invoices: Invoice[] }) {
                     </a>
                   </div>
                 </div>
-              ))}
+              );
+            })}
           </div>
         )}
       </div>
@@ -308,7 +327,7 @@ export default async function BillingPage() {
         .single(),
       supabase
         .from("invoices")
-        .select("id, invoice_number, invoice_date, total_amount, currency, payment_status, invoice_status, pdf_url")
+        .select("id, invoice_number, invoice_date, total_amount, currency, payment_status, invoice_status, pdf_url, seller_name, seller_gstin, customer_name, payment_id")
         .eq("user_id", user.id)
         .order("invoice_date", { ascending: false })
         .limit(12),

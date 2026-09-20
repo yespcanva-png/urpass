@@ -316,11 +316,11 @@ export async function generateInvoicePdf(invoice: InvoiceRecord): Promise<Uint8A
   });
 
   page.drawText("BILLED TO (BUYER)", { x: buyerX + 12, y: cardsY + 74, size: 7.5, font: fontBold, color: primary });
-  page.drawText((invoice.customer_name || "yesp corporation").slice(0, 26), { x: buyerX + 12, y: cardsY + 59, size: 10.5, font: fontBold, color: dark });
+  page.drawText((invoice.customer_name || "YESP Corporation").slice(0, 26), { x: buyerX + 12, y: cardsY + 59, size: 10.5, font: fontBold, color: dark });
   page.drawText(`GSTIN: ${invoice.customer_gstin || "33OPDPS9865F1Z3"}`, { x: buyerX + 12, y: cardsY + 45, size: 8.5, font: fontBold, color: darkGray });
   page.drawText(`Email: ${invoice.customer_email || "yespcorpindia@gmail.com"}`, { x: buyerX + 12, y: cardsY + 32, size: 8, font: fontRegular, color: muted });
   page.drawText(`Place of Supply: ${invoice.place_of_supply || "Tamil Nadu (33)"}`, { x: buyerX + 12, y: cardsY + 19, size: 8, font: fontRegular, color: muted });
-  page.drawText("Account: Corporate Verified Account", { x: buyerX + 12, y: cardsY + 7, size: 8, font: fontRegular, color: muted });
+  page.drawText(invoice.customer_address ? `Address: ${invoice.customer_address.slice(0, 32)}` : "Account: Corporate Verified Account", { x: buyerX + 12, y: cardsY + 7, size: 8, font: fontRegular, color: muted });
 
   // 5. Line Items Table (Canva Modern Table)
   const tableY = cardsY - 32;
