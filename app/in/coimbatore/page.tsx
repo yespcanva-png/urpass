@@ -5,11 +5,27 @@ import SEOPage from "@/components/landing/SEOPage";
 export const metadata: Metadata = {
   title: "Event Registration Software for Colleges & Events Coimbatore | URPASS",
   description: "URPASS event registration and QR check-in for Coimbatore colleges and events. Used by PSG, Amrita, KCT, SKCET, and more. Free to start.",
+  keywords: [
+    "event registration Coimbatore",
+    "QR check-in Coimbatore",
+    "PSG tech event registration",
+    "Amrita college events passes",
+    "KCT event passes",
+    "Coimbatore event ticketing software",
+  ],
   alternates: { canonical: "https://urpass.space/in/coimbatore" },
   openGraph: {
     title: "Event Registration Software Coimbatore | URPASS",
     description: "Digital event registration and QR check-in for Coimbatore college and corporate events.",
     url: "https://urpass.space/in/coimbatore",
+    locale: "en_IN",
+    type: "website",
+  },
+  other: {
+    "geo.region": "IN-TN",
+    "geo.placename": "Coimbatore, Tamil Nadu, India",
+    "geo.position": "11.0168;76.9558",
+    "ICBM": "11.0168, 76.9558",
   },
 };
 
@@ -19,6 +35,14 @@ export default function CoimbatorePage() {
       config={{
         badge: "URPASS · COIMBATORE",
         h1: "Event Registration & QR Check-In for Coimbatore",
+        canonicalUrl: "https://urpass.space/in/coimbatore",
+        geo: {
+          region: "IN-TN",
+          placename: "Coimbatore, Tamil Nadu, India",
+          position: "11.0168;76.9558",
+          latitude: 11.0168,
+          longitude: 76.9558,
+        },
         description: "Run college and corporate event registrations in Coimbatore with digital QR passes and phone-based check-in. Trusted by Coimbatore colleges and event teams.",
         ctaLabel: "Start your Coimbatore event",
         features: [

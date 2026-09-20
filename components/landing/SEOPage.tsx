@@ -2,6 +2,7 @@ import Link from "next/link";
 import Navbar from "@/components/landing/Navbar";
 import AnimateIn from "@/components/ui/AnimateIn";
 import FAQItemSection from "@/components/landing/FAQItemSection";
+import Footer from "@/components/landing/Footer";
 
 export interface SEOFeature {
   icon: React.ElementType;
@@ -12,6 +13,14 @@ export interface SEOFeature {
 export interface SEOFaq {
   q: string;
   a: string;
+}
+
+export interface SEOGeo {
+  region: string;
+  placename: string;
+  position: string;
+  latitude: number;
+  longitude: number;
 }
 
 export interface SEOPageConfig {
@@ -31,6 +40,8 @@ export interface SEOPageConfig {
   faqs: SEOFaq[];
   ctaTitle?: string;
   ctaDescription?: string;
+  geo?: SEOGeo;
+  canonicalUrl?: string;
 }
 
 const DEFAULT_STEPS = [
@@ -43,10 +54,82 @@ const DEFAULT_STEPS = [
 
 export default function SEOPage({ config }: { config: SEOPageConfig }) {
   const steps = config.steps ?? DEFAULT_STEPS;
+  const canonical = config.canonicalUrl || "https://urpass.space";
+
+  const faqSchema =
+    config.faqs && config.faqs.length > 0
+      ? {
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: config.faqs.map((f) => ({
+            "@type": "Question",
+            name: f.q,
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: f.a,
+            },
+          })),
+        }
+      : null;
+
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: "https://urpass.space",
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: config.h1,
+        item: canonical,
+      },
+    ],
+  };
+
+  const geoSchema = config.geo
+    ? {
+        "@context": "https://schema.org",
+        "@type": "Place",
+        name: config.geo.placename,
+        geo: {
+          "@type": "GeoCoordinates",
+          latitude: config.geo.latitude,
+          longitude: config.geo.longitude,
+        },
+        address: {
+          "@type": "PostalAddress",
+          addressLocality: config.geo.placename,
+          addressRegion: config.geo.region,
+          addressCountry: "IN",
+        },
+      }
+    : null;
 
   return (
-    <div className="min-h-screen bg-white text-neutral-900">
-      <Navbar />
+    <div className="min-h-screen bg-white text-neutral-900 flex flex-col justify-between">
+      {faqSchema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+        />
+      )}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
+      {geoSchema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(geoSchema) }}
+        />
+      )}
+      <div>
+        <Navbar />
 
       {/* Hero */}
       <section className="pt-32 pb-24 sm:pt-40 sm:pb-32 px-5 sm:px-8">
@@ -241,16 +324,8 @@ export default function SEOPage({ config }: { config: SEOPageConfig }) {
         </div>
       </section>
 
-      {/* Footer note */}
-      <div className="py-6 px-5 text-center bg-neutral-50 border-t border-neutral-100">
-        <div className="flex items-center justify-center gap-6 flex-wrap text-xs text-neutral-400">
-          <Link href="/" className="font-semibold text-neutral-900 text-sm">URPASS</Link>
-          <Link href="/pricing" className="hover:text-neutral-600 transition-colors">Pricing</Link>
-          <Link href="/contact" className="hover:text-neutral-600 transition-colors">Contact</Link>
-          <Link href="/terms" className="hover:text-neutral-600 transition-colors">Terms</Link>
-          <Link href="/signup" className="hover:text-neutral-600 transition-colors">Sign up free</Link>
-        </div>
       </div>
+      <Footer />
     </div>
   );
 }

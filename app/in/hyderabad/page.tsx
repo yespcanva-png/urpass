@@ -5,11 +5,27 @@ import SEOPage from "@/components/landing/SEOPage";
 export const metadata: Metadata = {
   title: "Event Registration & QR Check-In Software Hyderabad | URPASS",
   description: "URPASS event registration and QR check-in for Hyderabad. For tech events, HITEC City meetups, college events, and corporate conferences. Free to start.",
+  keywords: [
+    "event registration Hyderabad",
+    "QR check-in Hyderabad",
+    "HITEC city event ticketing",
+    "Gachibowli tech meetups pass",
+    "IIIT Hyderabad events check-in",
+    "Hyderabad college fests software",
+  ],
   alternates: { canonical: "https://urpass.space/in/hyderabad" },
   openGraph: {
     title: "Event Registration & QR Check-In Software Hyderabad | URPASS",
     description: "Hyderabad event registration and QR pass platform. Tech, colleges, and corporate events.",
     url: "https://urpass.space/in/hyderabad",
+    locale: "en_IN",
+    type: "website",
+  },
+  other: {
+    "geo.region": "IN-TG",
+    "geo.placename": "Hyderabad, Telangana, India",
+    "geo.position": "17.3850;78.4867",
+    "ICBM": "17.3850, 78.4867",
   },
 };
 
@@ -19,6 +35,14 @@ export default function HyderabadPage() {
       config={{
         badge: "URPASS · HYDERABAD",
         h1: "Event Registration & QR Check-In for Hyderabad",
+        canonicalUrl: "https://urpass.space/in/hyderabad",
+        geo: {
+          region: "IN-TG",
+          placename: "Hyderabad, Telangana, India",
+          position: "17.3850;78.4867",
+          latitude: 17.3850,
+          longitude: 78.4867,
+        },
         description: "Trusted by Hyderabad's tech community, colleges, and corporate event teams. Manage registrations, issue digital QR passes, and check in attendees with phone-based scanning.",
         ctaLabel: "Start your Hyderabad event",
         features: [

@@ -5,11 +5,28 @@ import SEOPage from "@/components/landing/SEOPage";
 export const metadata: Metadata = {
   title: "Event Registration & QR Check-In Software Bangalore | URPASS",
   description: "URPASS event registration and QR check-in platform for Bangalore. For tech meetups, startup events, corporate conferences, and college events. Free to start.",
+  keywords: [
+    "event registration Bangalore",
+    "QR check-in Bangalore",
+    "Bangalore tech events pass",
+    "startup event ticketing Bangalore",
+    "college event passes Bangalore",
+    "event management software Karnataka",
+    "Razorpay event ticketing Bangalore",
+  ],
   alternates: { canonical: "https://urpass.space/in/bangalore" },
   openGraph: {
     title: "Event Registration & QR Check-In Software Bangalore | URPASS",
     description: "Bangalore's event registration and QR pass platform. Built for tech events, startups, and colleges.",
     url: "https://urpass.space/in/bangalore",
+    locale: "en_IN",
+    type: "website",
+  },
+  other: {
+    "geo.region": "IN-KA",
+    "geo.placename": "Bengaluru, Karnataka, India",
+    "geo.position": "12.9716;77.5946",
+    "ICBM": "12.9716, 77.5946",
   },
 };
 
@@ -19,6 +36,14 @@ export default function BangalorePage() {
       config={{
         badge: "URPASS · BANGALORE",
         h1: "Event Registration & QR Check-In for Bangalore Events",
+        canonicalUrl: "https://urpass.space/in/bangalore",
+        geo: {
+          region: "IN-KA",
+          placename: "Bengaluru, Karnataka, India",
+          position: "12.9716;77.5946",
+          latitude: 12.9716,
+          longitude: 77.5946,
+        },
         description: "Trusted by Bangalore's tech community, startups, and college organisers. Digital QR passes, Razorpay payments, and real-time check-in for every type of Bangalore event.",
         ctaLabel: "Start your Bangalore event",
         features: [

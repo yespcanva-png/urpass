@@ -8,6 +8,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const core = [
     { url: BASE, priority: 1.0, changeFrequency: "weekly" as const },
     { url: `${BASE}/pricing`, priority: 0.9, changeFrequency: "monthly" as const },
+    { url: `${BASE}/sitelinks`, priority: 0.85, changeFrequency: "weekly" as const },
     { url: `${BASE}/contact`, priority: 0.6, changeFrequency: "yearly" as const },
     { url: `${BASE}/terms`, priority: 0.4, changeFrequency: "yearly" as const },
     { url: `${BASE}/docs`, priority: 0.5, changeFrequency: "monthly" as const },
@@ -15,6 +16,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
   ];
 
   const seoPages = [
+    "/custom-pass-design",
+    "/qr-code-scanner",
+    "/event-analytics",
     "/event-registration-software",
     "/qr-event-check-in",
     "/digital-event-pass",
@@ -57,6 +61,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/in/pune",
     "/in/mumbai",
     "/in/delhi",
+    "/in/kochi",
+    "/in/kolkata",
+    "/in/ahmedabad",
   ].map((path) => ({ url: `${BASE}${path}`, priority: 0.75, changeFrequency: "monthly" as const }));
 
   const guidePages = [

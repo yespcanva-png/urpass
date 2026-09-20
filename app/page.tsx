@@ -3,6 +3,7 @@ import Link from "next/link";
 import Navbar from "@/components/landing/Navbar";
 import FAQSection from "@/components/landing/FAQSection";
 import AnimateIn from "@/components/ui/AnimateIn";
+import Footer from "@/components/landing/Footer";
 
 export const metadata: Metadata = {
   title: "URPASS — Digital Event Passes & QR Check-in India",
@@ -467,41 +468,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── FOOTER ───────────────────────────────────────────────────────── */}
-      <footer className="bg-neutral-950 px-5 sm:px-8 py-14">
-        <div className="max-w-5xl mx-auto grid grid-cols-2 sm:grid-cols-4 gap-8 mb-12">
-          <div className="col-span-2 sm:col-span-1">
-            <p className="font-semibold text-white tracking-tight mb-2">URPASS</p>
-            <p className="text-xs text-white/30 leading-relaxed">Simple digital passes for events.</p>
-          </div>
-          <div>
-            <p className="text-xs font-semibold text-white/40 uppercase tracking-widest mb-3">Product</p>
-            <ul className="flex flex-col gap-2">
-              {[{ label: "How it works", href: "#how-it-works" }, { label: "Pricing", href: "/pricing" }].map((l) => (
-                <li key={l.label}><a href={l.href} className="text-xs text-white/40 hover:text-white/70 transition-colors">{l.label}</a></li>
-              ))}
-            </ul>
-          </div>
-          <div>
-            <p className="text-xs font-semibold text-white/40 uppercase tracking-widest mb-3">Company</p>
-            <ul className="flex flex-col gap-2">
-              <li><a href="/contact" className="text-xs text-white/40 hover:text-white/70 transition-colors">Contact</a></li>
-              <li><a href="/feedback" className="text-xs text-white/40 hover:text-white/70 transition-colors">Feedback</a></li>
-              <li><a href="/docs" className="text-xs text-white/40 hover:text-white/70 transition-colors">Docs</a></li>
-            </ul>
-          </div>
-          <div>
-            <p className="text-xs font-semibold text-white/40 uppercase tracking-widest mb-3">Legal</p>
-            <ul className="flex flex-col gap-2">
-              <li><a href="/terms" className="text-xs text-white/40 hover:text-white/70 transition-colors">Terms</a></li>
-              <li><a href="/contact" className="text-xs text-white/40 hover:text-white/70 transition-colors">Privacy</a></li>
-              <li><a href="/sitelinks" className="text-xs text-white/40 hover:text-white/70 transition-colors">Sitelinks</a></li>
-            </ul>
-          </div>
-        </div>
-        <div className="max-w-5xl mx-auto border-t border-white/5 pt-8">
-          <p className="text-xs text-white/20 text-center">© 2026 URPASS · urpass.space</p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

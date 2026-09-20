@@ -13,6 +13,7 @@ import {
   Clock,
 } from "lucide-react";
 import AnimateIn from "@/components/ui/AnimateIn";
+import { InstagramIcon, YoutubeIcon, SOCIAL_LINKS } from "@/components/landing/SocialIcons";
 
 const inputCls =
   "border border-neutral-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-neutral-900 transition-colors bg-white placeholder:text-neutral-300 w-full";
@@ -131,6 +132,50 @@ export default function ContactPage() {
                   <p className="text-sm font-semibold text-neutral-800 mb-0.5">Based in</p>
                   <p className="text-sm text-neutral-500">Tamil Nadu, India 🇮🇳</p>
                 </div>
+              </div>
+            </div>
+
+            {/* Social channels */}
+            <div className="bg-white border border-neutral-100 rounded-2xl p-6">
+              <p className="text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-3">
+                Official Channels
+              </p>
+              <div className="flex flex-col gap-2.5">
+                <a
+                  href={SOCIAL_LINKS.instagram}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between p-2.5 rounded-xl border border-neutral-100 hover:border-pink-200 hover:bg-pink-50/50 transition-all group"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-pink-50 flex items-center justify-center text-pink-600 group-hover:scale-105 transition-transform">
+                      <InstagramIcon className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-neutral-800">Instagram</p>
+                      <p className="text-[11px] text-neutral-400">@urpass.space</p>
+                    </div>
+                  </div>
+                  <span className="text-xs text-neutral-400 group-hover:text-pink-600 transition-colors">→</span>
+                </a>
+
+                <a
+                  href={SOCIAL_LINKS.youtube}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between p-2.5 rounded-xl border border-neutral-100 hover:border-red-200 hover:bg-red-50/50 transition-all group"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center text-red-600 group-hover:scale-105 transition-transform">
+                      <YoutubeIcon className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-neutral-800">YouTube</p>
+                      <p className="text-[11px] text-neutral-400">@URPASS Official</p>
+                    </div>
+                  </div>
+                  <span className="text-xs text-neutral-400 group-hover:text-red-600 transition-colors">→</span>
+                </a>
               </div>
             </div>
 

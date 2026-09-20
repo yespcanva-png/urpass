@@ -5,11 +5,28 @@ import SEOPage from "@/components/landing/SEOPage";
 export const metadata: Metadata = {
   title: "Event Registration & QR Check-In Software Mumbai | URPASS",
   description: "URPASS event registration and QR check-in for Mumbai. For corporate events, tech meetups, college events, and community gatherings across Mumbai, Navi Mumbai, and Thane.",
+  keywords: [
+    "event registration Mumbai",
+    "QR check-in Mumbai",
+    "BKC corporate event ticketing",
+    "Powai startup meetups pass",
+    "IIT Bombay event passes",
+    "Mumbai college fests registration",
+    "event management software Maharashtra",
+  ],
   alternates: { canonical: "https://urpass.space/in/mumbai" },
   openGraph: {
     title: "Event Registration & QR Check-In Software Mumbai | URPASS",
     description: "Mumbai event registration and QR pass platform for corporate, tech, and college events.",
     url: "https://urpass.space/in/mumbai",
+    locale: "en_IN",
+    type: "website",
+  },
+  other: {
+    "geo.region": "IN-MH",
+    "geo.placename": "Mumbai, Maharashtra, India",
+    "geo.position": "19.0760;72.8777",
+    "ICBM": "19.0760, 72.8777",
   },
 };
 
@@ -19,6 +36,14 @@ export default function MumbaiPage() {
       config={{
         badge: "URPASS · MUMBAI",
         h1: "Event Registration & QR Check-In for Mumbai Events",
+        canonicalUrl: "https://urpass.space/in/mumbai",
+        geo: {
+          region: "IN-MH",
+          placename: "Mumbai, Maharashtra, India",
+          position: "19.0760;72.8777",
+          latitude: 19.0760,
+          longitude: 72.8777,
+        },
         description: "Trusted by Mumbai's corporate event teams, startup community, and college organisers. Online registration, digital QR passes, and fast check-in for any Mumbai event.",
         ctaLabel: "Start your Mumbai event",
         features: [

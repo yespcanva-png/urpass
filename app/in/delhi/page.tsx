@@ -5,11 +5,28 @@ import SEOPage from "@/components/landing/SEOPage";
 export const metadata: Metadata = {
   title: "Event Registration & QR Check-In Software Delhi | URPASS",
   description: "URPASS event registration and QR check-in for Delhi NCR. For corporate events, tech meetups, college events, and conferences across Delhi, Noida, and Gurugram. Free to start.",
+  keywords: [
+    "event registration Delhi",
+    "QR check-in Delhi NCR",
+    "Noida event passes",
+    "Gurugram corporate event registration",
+    "Delhi University event passes",
+    "IIT Delhi events check-in",
+    "event ticketing software Delhi",
+  ],
   alternates: { canonical: "https://urpass.space/in/delhi" },
   openGraph: {
     title: "Event Registration & QR Check-In Software Delhi | URPASS",
     description: "Delhi NCR event registration and QR pass platform for colleges, corporates, and tech events.",
     url: "https://urpass.space/in/delhi",
+    locale: "en_IN",
+    type: "website",
+  },
+  other: {
+    "geo.region": "IN-DL",
+    "geo.placename": "New Delhi, Delhi NCR, India",
+    "geo.position": "28.6139;77.2090",
+    "ICBM": "28.6139, 77.2090",
   },
 };
 
@@ -19,6 +36,14 @@ export default function DelhiPage() {
       config={{
         badge: "URPASS · DELHI NCR",
         h1: "Event Registration & QR Check-In for Delhi Events",
+        canonicalUrl: "https://urpass.space/in/delhi",
+        geo: {
+          region: "IN-DL",
+          placename: "New Delhi, Delhi NCR, India",
+          position: "28.6139;77.2090",
+          latitude: 28.6139,
+          longitude: 77.2090,
+        },
         description: "Used by Delhi NCR's corporate event teams, college organisers, and startup community. Online registration, digital QR passes, and check-in for any Delhi event.",
         ctaLabel: "Start your Delhi event",
         features: [

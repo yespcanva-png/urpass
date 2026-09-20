@@ -5,11 +5,28 @@ import SEOPage from "@/components/landing/SEOPage";
 export const metadata: Metadata = {
   title: "Event Registration & QR Check-In Software Chennai | URPASS",
   description: "URPASS event registration and QR check-in platform for Chennai. Trusted by colleges, tech companies, and event organisers across Chennai and Tamil Nadu. Free to start.",
+  keywords: [
+    "event registration Chennai",
+    "QR check-in Chennai",
+    "college fest passes Chennai",
+    "IIT Madras events registration",
+    "Anna University event passes",
+    "event management software Tamil Nadu",
+    "Razorpay event ticketing Chennai",
+  ],
   alternates: { canonical: "https://urpass.space/in/chennai" },
   openGraph: {
     title: "Event Registration & QR Check-In Software Chennai | URPASS",
     description: "Chennai's event registration and QR pass platform for colleges, corporates, and communities.",
     url: "https://urpass.space/in/chennai",
+    locale: "en_IN",
+    type: "website",
+  },
+  other: {
+    "geo.region": "IN-TN",
+    "geo.placename": "Chennai, Tamil Nadu, India",
+    "geo.position": "13.0827;80.2707",
+    "ICBM": "13.0827, 80.2707",
   },
 };
 
@@ -19,6 +36,14 @@ export default function ChennaiPage() {
       config={{
         badge: "URPASS · CHENNAI",
         h1: "Event Registration & QR Check-In for Chennai Events",
+        canonicalUrl: "https://urpass.space/in/chennai",
+        geo: {
+          region: "IN-TN",
+          placename: "Chennai, Tamil Nadu, India",
+          position: "13.0827;80.2707",
+          latitude: 13.0827,
+          longitude: 80.2707,
+        },
         description: "Trusted by college organisers, tech event teams, and corporate event managers across Chennai and Tamil Nadu. Digital QR passes, Razorpay payments, and real-time check-in.",
         ctaLabel: "Start your Chennai event",
         features: [

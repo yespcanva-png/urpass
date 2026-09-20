@@ -5,11 +5,27 @@ import SEOPage from "@/components/landing/SEOPage";
 export const metadata: Metadata = {
   title: "Event Registration & QR Check-In Software Pune | URPASS",
   description: "URPASS event registration and QR check-in for Pune. For tech events, college workshops, startup meetups, and corporate events in Pune and Pimpri-Chinchwad. Free to start.",
+  keywords: [
+    "event registration Pune",
+    "QR check-in Pune",
+    "COEP college event passes",
+    "Hinjawadi tech meetups registration",
+    "Symbiosis event ticketing",
+    "Pune startup event software",
+  ],
   alternates: { canonical: "https://urpass.space/in/pune" },
   openGraph: {
     title: "Event Registration & QR Check-In Software Pune | URPASS",
     description: "Pune event registration and QR pass platform for tech events, colleges, and corporates.",
     url: "https://urpass.space/in/pune",
+    locale: "en_IN",
+    type: "website",
+  },
+  other: {
+    "geo.region": "IN-MH",
+    "geo.placename": "Pune, Maharashtra, India",
+    "geo.position": "18.5204;73.8567",
+    "ICBM": "18.5204, 73.8567",
   },
 };
 
@@ -19,6 +35,14 @@ export default function PunePage() {
       config={{
         badge: "URPASS · PUNE",
         h1: "Event Registration & QR Check-In for Pune Events",
+        canonicalUrl: "https://urpass.space/in/pune",
+        geo: {
+          region: "IN-MH",
+          placename: "Pune, Maharashtra, India",
+          position: "18.5204;73.8567",
+          latitude: 18.5204,
+          longitude: 73.8567,
+        },
         description: "Used by Pune's colleges, tech community, and corporate event teams. Online registration, digital QR passes, and phone-based check-in for any Pune event.",
         ctaLabel: "Start your Pune event",
         features: [

@@ -45,6 +45,14 @@ export const metadata: Metadata = {
       "Create digital event passes, manage attendees, and scan QR codes at entry — all in one platform.",
     url: BASE_URL,
     locale: "en_IN",
+    images: [
+      {
+        url: `${BASE_URL}/og-image.png`,
+        width: 1200,
+        height: 630,
+        alt: "URPASS — Digital Event Passes & Lightning QR Check-In",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
@@ -53,6 +61,7 @@ export const metadata: Metadata = {
     title: "URPASS — Digital Event Passes & QR Check-in",
     description:
       "Create digital event passes, manage attendees, and scan QR codes at entry — all in one platform.",
+    images: [`${BASE_URL}/og-image.png`],
   },
   icons: {
     icon: [
@@ -76,7 +85,10 @@ const organizationSchema = {
   name: "URPASS",
   url: BASE_URL,
   logo: `${BASE_URL}/icon.png`,
-  sameAs: [],
+  sameAs: [
+    "https://www.instagram.com/urpass.space?stkn=MW8yaWpmODU2OWxuYg%3D%3D&utm_source=yespstudio.com",
+    "https://www.youtube.com/channel/UCzUliQs5vwGlLAM7X6aB9zg/",
+  ],
   contactPoint: {
     "@type": "ContactPoint",
     contactType: "customer support",

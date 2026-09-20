@@ -5,11 +5,28 @@ import SEOPage from "@/components/landing/SEOPage";
 export const metadata: Metadata = {
   title: "Event Registration & QR Check-In Software India | URPASS",
   description: "URPASS is an event registration, ticketing, and QR check-in platform built for India. Trusted by colleges, startups, and event organisers across Chennai, Bangalore, Mumbai, and beyond.",
+  keywords: [
+    "event registration software India",
+    "QR event check-in India",
+    "event ticketing platform India",
+    "Razorpay event ticketing",
+    "college event passes India",
+    "digital ticket generator India",
+    "event attendance tracking India",
+  ],
   alternates: { canonical: "https://urpass.space/in" },
   openGraph: {
     title: "Event Registration & QR Check-In Software India | URPASS",
     description: "India's event registration and QR check-in platform. Built for Indian events. Free to start.",
     url: "https://urpass.space/in",
+    locale: "en_IN",
+    type: "website",
+  },
+  other: {
+    "geo.region": "IN",
+    "geo.placename": "India",
+    "geo.position": "20.5937;78.9629",
+    "ICBM": "20.5937, 78.9629",
   },
 };
 
@@ -19,6 +36,14 @@ export default function IndiaPage() {
       config={{
         badge: "URPASS INDIA",
         h1: "Event Registration & QR Check-In Platform for India",
+        canonicalUrl: "https://urpass.space/in",
+        geo: {
+          region: "IN",
+          placename: "India",
+          position: "20.5937;78.9629",
+          latitude: 20.5937,
+          longitude: 78.9629,
+        },
         description: "URPASS is built for Indian event organisers. Handle event registrations, issue digital QR passes, accept Razorpay payments, and check in attendees — in INR, for India.",
         ctaLabel: "Start free in India",
         features: [
