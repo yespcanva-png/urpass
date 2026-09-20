@@ -63,6 +63,11 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/design-your-ticket" className="text-xs text-neutral-400 hover:text-white transition-colors">
+                  Design Your Ticket
+                </Link>
+              </li>
+              <li>
                 <Link href="/custom-pass-design" className="text-xs text-neutral-400 hover:text-white transition-colors">
                   Custom Pass Design
                 </Link>

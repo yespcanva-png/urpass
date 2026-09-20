@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
   const resend = new Resend(apiKey);
   const { error } = await resend.emails.send({
     from: "URPASS Feedback <noreply@urpass.space>",
-    to: ["srinithinoffl@gmail.com"],
+    to: ["srinithin@yespstudio.com"],
     ...(replyToHeader ? { replyTo: replyToHeader } : {}),
     subject: `[Feedback] ${categoryLabel} — ${ratingLabel}`,
     html: `

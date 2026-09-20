@@ -155,7 +155,7 @@ export default function NotificationBell() {
         type="button"
         onClick={handleToggle}
         aria-label="Notifications"
-        className="relative w-9 h-9 rounded-xl flex items-center justify-center text-neutral-400 hover:text-white hover:bg-white/10 transition-colors focus:outline-none"
+        className="relative w-9 h-9 rounded-xl flex items-center justify-center text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:text-white dark:hover:bg-white/10 transition-colors focus:outline-none"
       >
         <Bell className="w-4 h-4" />
         {unreadCount > 0 && (
@@ -167,7 +167,7 @@ export default function NotificationBell() {
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 sm:w-96 rounded-2xl bg-neutral-900 border border-neutral-800 text-white shadow-2xl z-50 overflow-hidden animate-in fade-in-0 zoom-in-95 duration-150">
+        <div className="absolute right-0 mt-2 w-80 sm:w-96 rounded-2xl bg-neutral-900 border border-neutral-800 text-white shadow-2xl z-[9999] overflow-hidden animate-in fade-in-0 zoom-in-95 duration-150">
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-800 bg-neutral-900/90 backdrop-blur-sm">
             <div className="flex items-center gap-2">

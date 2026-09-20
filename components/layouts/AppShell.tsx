@@ -41,7 +41,7 @@ export default function AppShell({ fullName, email, planSlug, orgs, activeOrgSlu
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden" style={{ background: "#f5f4fa" }}>
 
         {/* ── Mobile top bar ─────────────────────────────────────────── */}
-        <header className="lg:hidden shrink-0" style={{ background: "linear-gradient(180deg, #14111f 0%, #100e1a 100%)" }}>
+        <header className="lg:hidden shrink-0 sticky top-0 z-50 shadow-sm" style={{ background: "linear-gradient(180deg, #14111f 0%, #100e1a 100%)" }}>
           <div
             className="flex items-center justify-between px-4 h-14"
             style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
@@ -93,7 +93,7 @@ export default function AppShell({ fullName, email, planSlug, orgs, activeOrgSlu
         </header>
 
         {/* ── Desktop top bar ─────────────────────────────────────────── */}
-        <header className="hidden lg:flex items-center justify-between px-6 h-14 shrink-0 bg-white/80 backdrop-blur-sm border-b border-neutral-200/80">
+        <header className="hidden lg:flex items-center justify-between px-6 h-14 shrink-0 sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-neutral-200/80 shadow-xs">
           <div className="flex items-center gap-2 text-xs font-semibold text-neutral-500">
             <span className="w-2 h-2 rounded-full bg-emerald-500" />
             <span>URPASS Workspace</span>

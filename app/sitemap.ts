@@ -16,6 +16,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   ];
 
   const seoPages = [
+    "/design-your-ticket",
     "/custom-pass-design",
     "/qr-code-scanner",
     "/event-analytics",

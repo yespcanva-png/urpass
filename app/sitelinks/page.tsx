@@ -43,6 +43,7 @@ const sections: {
   {
     title: "Core Features",
     links: [
+      { label: "Design Your Ticket", href: "/design-your-ticket", badge: "Featured" },
       { label: "Custom Pass Designer", href: "/custom-pass-design", badge: "New" },
       { label: "Mobile QR Code Scanner", href: "/qr-code-scanner", badge: "Fast" },
       { label: "Real-Time Event Analytics", href: "/event-analytics", badge: "Live" },

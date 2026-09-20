@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
   const resend = new Resend(apiKey);
   const { error } = await resend.emails.send({
     from: "URPASS Contact <noreply@urpass.space>",
-    to: ["srinithinoffl@gmail.com"],
+    to: ["srinithin@yespstudio.com"],
     replyTo: email,
     subject: `Contact form: ${name}`,
     html: `
