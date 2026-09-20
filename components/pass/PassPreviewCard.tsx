@@ -42,12 +42,12 @@ export default function PassPreviewCard({
   shortCode = "8F42-99B1",
   showBranding = true,
 }: PassPreviewCardProps) {
-  const fontCls = getFontFamilyCls(design.fontFamily);
+  const fontCls = getFontFamilyCls(design.fontFamily || "sans");
   const patternStyle = getPatternStyle(
-    design.pattern,
+    design.pattern || "radial",
     design.primaryColor,
-    design.secondaryColor,
-    design.headerStyle
+    design.secondaryColor || darkenHex(design.primaryColor, 35),
+    design.headerStyle || "gradient"
   );
 
   const badgeText = design.badgeLabel || "EVENT PASS";

@@ -2,11 +2,11 @@ import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getUserPlan } from "@/lib/plan";
-import PassDesigner from "@/components/pass/PassDesigner";
+import TicketDesigner from "@/components/pass/TicketDesigner";
 
 export const metadata: Metadata = {
-  title: "Custom Pass Design",
-  description: "Customize the ticket pass design, colors, and layout for this event.",
+  title: "Design your ticket",
+  description: "Create the pass your attendees will receive. Keep it simple and on brand.",
   robots: { index: false, follow: false },
 };
 
@@ -49,7 +49,7 @@ export default async function EventPassDesignPage({
     if (!orgMember) notFound();
   }
 
-  // Fetch organizer profile pass design & branding defaults
+  // Fetch organizer profile defaults if any
   const { data: profile } = await supabase
     .from("profiles")
     .select("org_name, org_logo_url, brand_color, custom_pass_design")
@@ -57,41 +57,22 @@ export default async function EventPassDesignPage({
     .single();
 
   const formattedDate = new Date(event.event_date).toLocaleDateString("en-IN", {
-    weekday: "long",
     day: "numeric",
-    month: "long",
+    month: "short",
     year: "numeric",
-  });
+  }).toUpperCase();
 
   const isPro = plan.canUse("custom_pass_design");
 
   return (
-    <div className="py-6 flex flex-col gap-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-neutral-100 pb-4">
-        <div>
-          <p className="text-xs font-semibold tracking-widest uppercase text-brand mb-0.5">
-            Ticket Experience
-          </p>
-          <h1 className="text-xl font-bold text-neutral-900">Custom Pass Design</h1>
-          <p className="text-xs text-neutral-500 mt-0.5">
-            Design how entry passes look for attendees of{" "}
-            <span className="font-semibold text-neutral-800">{event.name}</span>.
-          </p>
-        </div>
-      </div>
-
-      <PassDesigner
-        initialDesign={event.custom_pass_design}
-        orgDefaultDesign={profile?.custom_pass_design}
-        orgName={profile?.org_name ?? "URPASS"}
-        orgLogoUrl={profile?.org_logo_url ?? ""}
-        isPro={isPro}
-        mode="event"
-        eventId={event.id}
-        eventName={event.name}
-        eventDate={`${formattedDate} · ${event.start_time ?? ""}`}
-        venue={event.venue ?? "Venue TBD"}
-      />
-    </div>
+    <TicketDesigner
+      initialConfig={event.custom_pass_design || profile?.custom_pass_design}
+      isPro={isPro}
+      eventId={event.id}
+      eventName={event.name}
+      eventDate={`${formattedDate} | ${event.start_time || "10:00 AM"}`}
+      venue={event.venue || "Venue TBD"}
+      backHref={`/event/${event.id}`}
+    />
   );
 }

@@ -1,37 +1,166 @@
+export type TicketTemplate = "minimal" | "modern" | "dark";
+
+export interface TicketDesignConfig {
+  template: TicketTemplate;
+  primaryColor: string;
+  logoUrl?: string | null;
+  backgroundImageUrl?: string | null;
+  showAttendeeName: boolean;
+  showTicketType: boolean;
+  showVenue: boolean;
+  showTicketId: boolean;
+  updatedAt?: string;
+  isPublished?: boolean;
+}
+
+export const DEFAULT_TICKET_DESIGN: TicketDesignConfig = {
+  template: "modern",
+  primaryColor: "#635BFF",
+  logoUrl: null,
+  backgroundImageUrl: null,
+  showAttendeeName: true,
+  showTicketType: true,
+  showVenue: true,
+  showTicketId: true,
+  isPublished: true,
+};
+
+const HEX_REGEX = /^#[0-9a-fA-F]{6}$/;
+
+/**
+ * Validates and sanitizes a ticket design configuration object.
+ */
+export function sanitizeTicketDesign(input: unknown): TicketDesignConfig {
+  if (!input || typeof input !== "object") {
+    return { ...DEFAULT_TICKET_DESIGN };
+  }
+
+  const raw = input as Record<string, unknown>;
+
+  const template: TicketTemplate = ["minimal", "modern", "dark"].includes(String(raw.template))
+    ? (raw.template as TicketTemplate)
+    : raw.theme === "minimal"
+    ? "minimal"
+    : raw.theme === "cyber"
+    ? "dark"
+    : DEFAULT_TICKET_DESIGN.template;
+
+  const primaryColor =
+    typeof raw.primaryColor === "string" && HEX_REGEX.test(raw.primaryColor)
+      ? raw.primaryColor
+      : typeof raw.brand_color === "string" && HEX_REGEX.test(raw.brand_color)
+      ? raw.brand_color
+      : DEFAULT_TICKET_DESIGN.primaryColor;
+
+  const logoUrl =
+    typeof raw.logoUrl === "string" && (raw.logoUrl.startsWith("https://") || raw.logoUrl.startsWith("data:image/"))
+      ? raw.logoUrl.trim()
+      : typeof raw.org_logo_url === "string" && raw.org_logo_url.startsWith("https://")
+      ? raw.org_logo_url.trim()
+      : null;
+
+  const backgroundImageUrl =
+    typeof raw.backgroundImageUrl === "string" &&
+    (raw.backgroundImageUrl.startsWith("https://") || raw.backgroundImageUrl.startsWith("data:image/"))
+      ? raw.backgroundImageUrl.trim()
+      : typeof raw.bannerUrl === "string" && raw.bannerUrl.startsWith("https://")
+      ? raw.bannerUrl.trim()
+      : null;
+
+  const showAttendeeName =
+    typeof raw.showAttendeeName === "boolean" ? raw.showAttendeeName : true;
+
+  const showTicketType =
+    typeof raw.showTicketType === "boolean" ? raw.showTicketType : true;
+
+  const showVenue =
+    typeof raw.showVenue === "boolean" ? raw.showVenue : true;
+
+  const showTicketId =
+    typeof raw.showTicketId === "boolean" ? raw.showTicketId : true;
+
+  const isPublished =
+    typeof raw.isPublished === "boolean" ? raw.isPublished : true;
+
+  return {
+    template,
+    primaryColor,
+    logoUrl,
+    backgroundImageUrl,
+    showAttendeeName,
+    showTicketType,
+    showVenue,
+    showTicketId,
+    isPublished,
+    updatedAt: typeof raw.updatedAt === "string" ? raw.updatedAt : undefined,
+  };
+}
+
+/**
+ * Resolves the active ticket design with fallback:
+ * 1. Event-specific ticket design (if set)
+ * 2. Profile default ticket design (if set)
+ * 3. Fallback brandColor or defaults
+ */
+export function resolveTicketDesign(
+  eventDesign?: unknown,
+  profileDesign?: unknown,
+  fallbackBrandColor?: string | null
+): TicketDesignConfig {
+  if (eventDesign && typeof eventDesign === "object" && Object.keys(eventDesign).length > 0) {
+    return sanitizeTicketDesign(eventDesign);
+  }
+
+  if (profileDesign && typeof profileDesign === "object" && Object.keys(profileDesign).length > 0) {
+    return sanitizeTicketDesign(profileDesign);
+  }
+
+  if (fallbackBrandColor && HEX_REGEX.test(fallbackBrandColor)) {
+    return {
+      ...DEFAULT_TICKET_DESIGN,
+      primaryColor: fallbackBrandColor,
+    };
+  }
+
+  return { ...DEFAULT_TICKET_DESIGN };
+}
+
+/**
+ * Helper to compute a darker shade of any hex color safely.
+ */
+export function darkenHex(hex: string, amount = 40): string {
+  const clean = hex.replace("#", "");
+  if (clean.length !== 6) return hex;
+  const r = Math.max(0, parseInt(clean.slice(0, 2), 16) - amount);
+  const g = Math.max(0, parseInt(clean.slice(2, 4), 16) - amount);
+  const b = Math.max(0, parseInt(clean.slice(4, 6), 16) - amount);
+  return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
+}
+
+// Backward compatibility aliases
 export type PassThemePreset = "classic" | "modern" | "minimal" | "badge" | "cyber";
-
 export type BackgroundPattern = "mesh" | "dots" | "radial" | "stripes" | "clean";
-
 export type FontFamily = "sans" | "mono" | "serif";
-
 export type HeaderStyle = "gradient" | "solid" | "glass";
 
-export interface CustomPassDesign {
-  theme: PassThemePreset;
-  primaryColor: string;
-  secondaryColor: string;
-  pattern: BackgroundPattern;
-  fontFamily: FontFamily;
-  headerStyle: HeaderStyle;
+export interface CustomPassDesign extends TicketDesignConfig {
+  theme?: PassThemePreset;
+  secondaryColor?: string;
+  pattern?: BackgroundPattern;
+  fontFamily?: FontFamily;
+  headerStyle?: HeaderStyle;
   badgeLabel?: string;
   footerNote?: string;
   bannerUrl?: string;
-  accentGlow: boolean;
-  showQrBorder: boolean;
-}
-
-export interface PassDesignPreset {
-  id: string;
-  name: string;
-  description: string;
-  badge: string;
-  design: CustomPassDesign;
+  accentGlow?: boolean;
+  showQrBorder?: boolean;
 }
 
 export const DEFAULT_PASS_DESIGN: CustomPassDesign = {
-  theme: "classic",
+  ...DEFAULT_TICKET_DESIGN,
   primaryColor: "#6D28D9",
   secondaryColor: "#4C1D95",
+  theme: "classic",
   pattern: "radial",
   fontFamily: "sans",
   headerStyle: "gradient",
@@ -42,166 +171,54 @@ export const DEFAULT_PASS_DESIGN: CustomPassDesign = {
   showQrBorder: true,
 };
 
-export const PASS_DESIGN_PRESETS: PassDesignPreset[] = [
+export const PASS_DESIGN_PRESETS: {
+  id: string;
+  name: string;
+  description: string;
+  badge: string;
+  design: CustomPassDesign;
+}[] = [
   {
-    id: "classic_violet",
-    name: "Classic Violet",
-    description: "Iconic URPASS deep violet with gentle radial spotlight and ticket tear cutouts.",
-    badge: "Popular",
-    design: {
-      theme: "classic",
-      primaryColor: "#6D28D9",
-      secondaryColor: "#4C1D95",
-      pattern: "radial",
-      fontFamily: "sans",
-      headerStyle: "gradient",
-      badgeLabel: "EVENT PASS",
-      footerNote: "Show this digital pass at the entrance counter for quick check-in.",
-      bannerUrl: "",
-      accentGlow: true,
-      showQrBorder: true,
-    },
-  },
-  {
-    id: "modern_glass",
-    name: "Glassmorphic Aura",
-    description: "Ultra-modern translucent frosted glass aesthetic with multi-point mesh gradient.",
-    badge: "Pro",
-    design: {
-      theme: "modern",
-      primaryColor: "#0284C7",
-      secondaryColor: "#0F172A",
-      pattern: "mesh",
-      fontFamily: "sans",
-      headerStyle: "glass",
-      badgeLabel: "DIGITAL PASS",
-      footerNote: "Verified digital credential • Valid for entry on registered date.",
-      bannerUrl: "",
-      accentGlow: true,
-      showQrBorder: true,
-    },
-  },
-  {
-    id: "cyber_neon",
-    name: "Cyberpunk Matrix",
-    description: "High-tech dark aesthetics, monospace font, cyan neon glow and dot-matrix geometry.",
-    badge: "Tech",
-    design: {
-      theme: "cyber",
-      primaryColor: "#06B6D4",
-      secondaryColor: "#111827",
-      pattern: "dots",
-      fontFamily: "mono",
-      headerStyle: "gradient",
-      badgeLabel: "ALL-ACCESS PASS",
-      footerNote: "CRYPTOGRAPHIC ACCESS TOKEN • SCAN AT TERMINAL GATE",
-      bannerUrl: "",
-      accentGlow: true,
-      showQrBorder: true,
-    },
-  },
-  {
-    id: "emerald_vip",
-    name: "Emerald Executive",
-    description: "Prestigious deep emerald green and rich jade badge layout for conferences & summits.",
-    badge: "VIP",
-    design: {
-      theme: "badge",
-      primaryColor: "#059669",
-      secondaryColor: "#064E3B",
-      pattern: "radial",
-      fontFamily: "sans",
-      headerStyle: "gradient",
-      badgeLabel: "VIP DELEGATE",
-      footerNote: "VIP Lounge Access & Priority Check-in included.",
-      bannerUrl: "",
-      accentGlow: true,
-      showQrBorder: true,
-    },
-  },
-  {
-    id: "sunset_modern",
-    name: "Sunset Ember",
-    description: "Vibrant coral to deep crimson warm gradient with modern rounded styling.",
-    badge: "Festival",
-    design: {
-      theme: "modern",
-      primaryColor: "#EA580C",
-      secondaryColor: "#991B1B",
-      pattern: "mesh",
-      fontFamily: "sans",
-      headerStyle: "gradient",
-      badgeLabel: "FESTIVAL TICKET",
-      footerNote: "Wristband pickup available at Main Registration.",
-      bannerUrl: "",
-      accentGlow: true,
-      showQrBorder: true,
-    },
-  },
-  {
-    id: "monochrome_luxe",
-    name: "Noir Minimal",
-    description: "Clean Swiss typographic luxury, editorial serif font, and crisp monochrome contrast.",
+    id: "minimal",
+    name: "Minimal",
+    description: "Crisp white background with high typographic contrast and subtle border accents.",
     badge: "Minimal",
     design: {
+      ...DEFAULT_PASS_DESIGN,
+      template: "minimal",
       theme: "minimal",
       primaryColor: "#18181B",
       secondaryColor: "#27272A",
-      pattern: "clean",
-      fontFamily: "serif",
-      headerStyle: "solid",
-      badgeLabel: "EXCLUSIVE ENTRY",
-      footerNote: "Strictly non-transferable. Identification required upon entry.",
-      bannerUrl: "",
-      accentGlow: false,
-      showQrBorder: false,
     },
   },
   {
-    id: "royal_sapphire",
-    name: "Royal Sapphire",
-    description: "Deep corporate blue with diagonal technical stripes and conference badge hierarchy.",
-    badge: "Corporate",
+    id: "modern",
+    name: "Modern",
+    description: "Sleek contemporary layout with brand accent ribbon, prominent QR and clean badge.",
+    badge: "Popular",
     design: {
-      theme: "badge",
-      primaryColor: "#2563EB",
-      secondaryColor: "#1E3A8A",
-      pattern: "stripes",
-      fontFamily: "sans",
-      headerStyle: "gradient",
-      badgeLabel: "OFFICIAL BADGE",
-      footerNote: "Wear digital or printed badge visibly during conference sessions.",
-      bannerUrl: "",
-      accentGlow: true,
-      showQrBorder: true,
-    },
-  },
-  {
-    id: "rose_gold",
-    name: "Rose & Velvet",
-    description: "Sophisticated magenta-rose gradient ideal for galas, arts, and creative gatherings.",
-    badge: "Creative",
-    design: {
+      ...DEFAULT_PASS_DESIGN,
+      template: "modern",
       theme: "modern",
-      primaryColor: "#DB2777",
-      secondaryColor: "#4C0519",
-      pattern: "mesh",
-      fontFamily: "sans",
-      headerStyle: "gradient",
-      badgeLabel: "INVITATION PASS",
-      footerNote: "Welcome to the showcase! Scan at reception for admission.",
-      bannerUrl: "",
-      accentGlow: true,
-      showQrBorder: true,
+      primaryColor: "#635BFF",
+      secondaryColor: "#4F46E5",
+    },
+  },
+  {
+    id: "dark",
+    name: "Dark",
+    description: "Sophisticated deep dark aesthetic with high contrast white text and vibrant accents.",
+    badge: "VIP",
+    design: {
+      ...DEFAULT_PASS_DESIGN,
+      template: "dark",
+      theme: "cyber",
+      primaryColor: "#818CF8",
+      secondaryColor: "#1E1E2D",
     },
   },
 ];
 
-const HEX_REGEX = /^#[0-9a-fA-F]{6}$/;
-
-/**
- * Validates and sanitizes a custom pass design object.
- */
 export function sanitizePassDesign(input: unknown): CustomPassDesign {
   if (!input || typeof input !== "object") {
     return { ...DEFAULT_PASS_DESIGN };
@@ -213,21 +230,21 @@ export function sanitizePassDesign(input: unknown): CustomPassDesign {
     String(raw.theme)
   )
     ? (raw.theme as PassThemePreset)
-    : DEFAULT_PASS_DESIGN.theme;
+    : DEFAULT_PASS_DESIGN.theme || "classic";
 
   const pattern: BackgroundPattern = ["mesh", "dots", "radial", "stripes", "clean"].includes(
     String(raw.pattern)
   )
     ? (raw.pattern as BackgroundPattern)
-    : DEFAULT_PASS_DESIGN.pattern;
+    : DEFAULT_PASS_DESIGN.pattern || "radial";
 
   const fontFamily: FontFamily = ["sans", "mono", "serif"].includes(String(raw.fontFamily))
     ? (raw.fontFamily as FontFamily)
-    : DEFAULT_PASS_DESIGN.fontFamily;
+    : DEFAULT_PASS_DESIGN.fontFamily || "sans";
 
   const headerStyle: HeaderStyle = ["gradient", "solid", "glass"].includes(String(raw.headerStyle))
     ? (raw.headerStyle as HeaderStyle)
-    : DEFAULT_PASS_DESIGN.headerStyle;
+    : DEFAULT_PASS_DESIGN.headerStyle || "gradient";
 
   const primaryColor =
     typeof raw.primaryColor === "string" && HEX_REGEX.test(raw.primaryColor)
@@ -259,7 +276,11 @@ export function sanitizePassDesign(input: unknown): CustomPassDesign {
   const accentGlow = typeof raw.accentGlow === "boolean" ? raw.accentGlow : true;
   const showQrBorder = typeof raw.showQrBorder === "boolean" ? raw.showQrBorder : true;
 
+  const baseTicket = sanitizeTicketDesign(input);
+
   return {
+    ...DEFAULT_PASS_DESIGN,
+    ...baseTicket,
     theme,
     primaryColor,
     secondaryColor,
@@ -274,12 +295,6 @@ export function sanitizePassDesign(input: unknown): CustomPassDesign {
   };
 }
 
-/**
- * Resolves the active pass design with hierarchy:
- * 1. Event-specific custom pass design (if set)
- * 2. Profile default custom pass design (if set)
- * 3. Fallback to profile brandColor or default
- */
 export function resolvePassDesign(
   eventDesign?: unknown,
   profileDesign?: unknown,
@@ -304,21 +319,6 @@ export function resolvePassDesign(
   return { ...DEFAULT_PASS_DESIGN };
 }
 
-/**
- * Helper to compute a darker shade of any hex color safely.
- */
-export function darkenHex(hex: string, amount = 40): string {
-  const clean = hex.replace("#", "");
-  if (clean.length !== 6) return hex;
-  const r = Math.max(0, parseInt(clean.slice(0, 2), 16) - amount);
-  const g = Math.max(0, parseInt(clean.slice(2, 4), 16) - amount);
-  const b = Math.max(0, parseInt(clean.slice(4, 6), 16) - amount);
-  return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
-}
-
-/**
- * Returns background style and texture css for a given pass design.
- */
 export function getPatternStyle(
   pattern: BackgroundPattern,
   primaryColor: string,
@@ -330,38 +330,36 @@ export function getPatternStyle(
       ? primaryColor
       : `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)`;
 
+  // Always use separate backgroundColor and backgroundImage to prevent React style conflicts
   switch (pattern) {
     case "mesh":
       return {
-        background: baseBg,
+        backgroundColor: primaryColor,
         backgroundImage: `radial-gradient(at 10% 20%, rgba(255,255,255,0.25) 0px, transparent 50%), radial-gradient(at 90% 80%, rgba(0,0,0,0.3) 0px, transparent 50%), linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)`,
       };
     case "dots":
       return {
-        background: baseBg,
+        backgroundColor: primaryColor,
         backgroundImage: `radial-gradient(rgba(255, 255, 255, 0.22) 1.5px, transparent 1.5px), linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)`,
         backgroundSize: "16px 16px, 100% 100%",
       };
     case "stripes":
       return {
-        background: baseBg,
+        backgroundColor: primaryColor,
         backgroundImage: `repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.07) 0px, rgba(255, 255, 255, 0.07) 2px, transparent 2px, transparent 10px), linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)`,
       };
     case "radial":
       return {
-        background: baseBg,
+        backgroundColor: primaryColor,
         backgroundImage: `radial-gradient(circle at 85% 30%, rgba(255, 255, 255, 0.28) 0%, transparent 60%), linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)`,
       };
     case "clean":
     default:
-      return { background: baseBg };
+      return { backgroundColor: primaryColor, backgroundImage: baseBg };
   }
 }
 
-/**
- * Font family CSS utility
- */
-export function getFontFamilyCls(fontFamily: FontFamily): string {
+export function getFontFamilyCls(fontFamily?: FontFamily): string {
   switch (fontFamily) {
     case "mono":
       return "font-mono";

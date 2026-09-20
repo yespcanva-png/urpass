@@ -22,18 +22,16 @@ describe("Custom Pass Design - lib/pass-design", () => {
   });
 
   it("contains curated designer presets with unique IDs and designs", () => {
-    expect(PASS_DESIGN_PRESETS.length).toBeGreaterThanOrEqual(6);
+    expect(PASS_DESIGN_PRESETS.length).toBeGreaterThanOrEqual(3);
     const ids = PASS_DESIGN_PRESETS.map((p) => p.id);
     const uniqueIds = new Set(ids);
     expect(uniqueIds.size).toBe(ids.length);
 
-    // Verify presence of core themes
-    const themes = PASS_DESIGN_PRESETS.map((p) => p.design.theme);
-    expect(themes).toContain("classic");
-    expect(themes).toContain("modern");
-    expect(themes).toContain("cyber");
-    expect(themes).toContain("badge");
-    expect(themes).toContain("minimal");
+    // Verify presence of core templates
+    const templates = PASS_DESIGN_PRESETS.map((p) => p.design.template);
+    expect(templates).toContain("minimal");
+    expect(templates).toContain("modern");
+    expect(templates).toContain("dark");
   });
 
   describe("sanitizePassDesign", () => {
@@ -181,7 +179,7 @@ describe("Custom Pass Design - lib/pass-design", () => {
       expect(radialStyle.backgroundImage).toContain("radial-gradient(circle at 85% 30%");
 
       const cleanStyle = getPatternStyle("clean", "#18181B", "#27272A", "solid");
-      expect(cleanStyle.background).toBe("#18181B");
+      expect(cleanStyle.backgroundColor).toBe("#18181B");
     });
   });
 
