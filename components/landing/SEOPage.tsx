@@ -52,6 +52,20 @@ const DEFAULT_STEPS = [
   { n: "05", title: "Track",   desc: "Monitor check-ins and attendance in real time on your dashboard." },
 ];
 
+const INDIAN_HUBS = [
+  { name: "Bengaluru", state: "Karnataka", href: "/in/bangalore", tag: "Tech & Startups" },
+  { name: "Chennai", state: "Tamil Nadu", href: "/in/chennai", tag: "Colleges & Fests" },
+  { name: "Mumbai", state: "Maharashtra", href: "/in/mumbai", tag: "Summits & Business" },
+  { name: "Hyderabad", state: "Telangana", href: "/in/hyderabad", tag: "IT & Hackathons" },
+  { name: "Delhi NCR", state: "National Capital", href: "/in/delhi", tag: "Conferences & Meets" },
+  { name: "Pune", state: "Maharashtra", href: "/in/pune", tag: "Student & Tech Fests" },
+  { name: "Coimbatore", state: "Tamil Nadu", href: "/in/coimbatore", tag: "Engineering & Workshops" },
+  { name: "Kochi", state: "Kerala", href: "/in/kochi", tag: "Startups & Creator Events" },
+  { name: "Kolkata", state: "West Bengal", href: "/in/kolkata", tag: "Cultural & Tech Fests" },
+  { name: "Ahmedabad", state: "Gujarat", href: "/in/ahmedabad", tag: "Business & Innovation" },
+  { name: "All India", state: "National Hub", href: "/in", tag: "INR Pricing & Razorpay" },
+];
+
 export default function SEOPage({ config }: { config: SEOPageConfig }) {
   const steps = config.steps ?? DEFAULT_STEPS;
   const canonical = config.canonicalUrl || "https://urpass.space";
@@ -72,29 +86,78 @@ export default function SEOPage({ config }: { config: SEOPageConfig }) {
         }
       : null;
 
+  const isCityPage = canonical.includes("/in/") && canonical !== "https://urpass.space/in";
+  const isGuidePage = canonical.includes("/guides/");
+  const isComparePage = canonical.includes("/compare/");
+
+  const breadcrumbItems = [
+    {
+      "@type": "ListItem",
+      position: 1,
+      name: "Home",
+      item: "https://urpass.space",
+    },
+  ];
+
+  if (isCityPage) {
+    breadcrumbItems.push({
+      "@type": "ListItem",
+      position: 2,
+      name: "Events in India",
+      item: "https://urpass.space/in",
+    });
+    breadcrumbItems.push({
+      "@type": "ListItem",
+      position: 3,
+      name: config.geo?.placename || config.h1,
+      item: canonical,
+    });
+  } else if (isGuidePage) {
+    breadcrumbItems.push({
+      "@type": "ListItem",
+      position: 2,
+      name: "Guides",
+      item: "https://urpass.space/guides/what-is-qr-event-check-in",
+    });
+    breadcrumbItems.push({
+      "@type": "ListItem",
+      position: 3,
+      name: config.h1,
+      item: canonical,
+    });
+  } else if (isComparePage) {
+    breadcrumbItems.push({
+      "@type": "ListItem",
+      position: 2,
+      name: "Alternatives & Comparisons",
+      item: "https://urpass.space/compare/eventbrite-alternative",
+    });
+    breadcrumbItems.push({
+      "@type": "ListItem",
+      position: 3,
+      name: config.h1,
+      item: canonical,
+    });
+  } else {
+    breadcrumbItems.push({
+      "@type": "ListItem",
+      position: 2,
+      name: config.h1,
+      item: canonical,
+    });
+  }
+
   const breadcrumbSchema = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
-    itemListElement: [
-      {
-        "@type": "ListItem",
-        position: 1,
-        name: "Home",
-        item: "https://urpass.space",
-      },
-      {
-        "@type": "ListItem",
-        position: 2,
-        name: config.h1,
-        item: canonical,
-      },
-    ],
+    itemListElement: breadcrumbItems,
   };
 
   const geoSchema = config.geo
     ? {
         "@context": "https://schema.org",
         "@type": "Place",
+        "@id": `${canonical}#place`,
         name: config.geo.placename,
         geo: {
           "@type": "GeoCoordinates",
@@ -106,6 +169,37 @@ export default function SEOPage({ config }: { config: SEOPageConfig }) {
           addressLocality: config.geo.placename,
           addressRegion: config.geo.region,
           addressCountry: "IN",
+        },
+      }
+    : null;
+
+  const serviceSchema = config.geo
+    ? {
+        "@context": "https://schema.org",
+        "@type": "Service",
+        name: config.h1,
+        serviceType: "Event Registration, Ticketing & QR Check-In Platform",
+        description: config.description,
+        provider: {
+          "@type": "Organization",
+          name: "URPASS",
+          url: "https://urpass.space",
+        },
+        areaServed: {
+          "@type": "AdministrativeArea",
+          name: config.geo.placename,
+          containedInPlace: {
+            "@type": "Country",
+            name: "India",
+          },
+        },
+        serviceOutput: "Digital QR Event Pass & Real-time Attendance Analytics",
+        offers: {
+          "@type": "AggregateOffer",
+          priceCurrency: "INR",
+          lowPrice: "0",
+          highPrice: "799",
+          offerCount: "3",
         },
       }
     : null;
@@ -126,6 +220,12 @@ export default function SEOPage({ config }: { config: SEOPageConfig }) {
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(geoSchema) }}
+        />
+      )}
+      {serviceSchema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceSchema) }}
         />
       )}
       <div>
@@ -292,8 +392,48 @@ export default function SEOPage({ config }: { config: SEOPageConfig }) {
         </section>
       )}
 
-      {/* FAQs */}
-      <FAQItemSection faqs={config.faqs} />
+      {/* Indian Hubs Directory (for Geo & Local SEO Authority) */}
+      {(config.geo || canonical.includes("/in")) && (
+        <section className="py-16 px-5 sm:px-8 bg-neutral-50/80 border-t border-neutral-100">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center max-w-xl mx-auto mb-8">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-brand">Regional Event Ecosystems</span>
+              <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-neutral-900 mt-1">
+                Event Registration &amp; QR Check-In across India
+              </h2>
+              <p className="text-xs text-neutral-500 mt-1">
+                Local INR pricing, Razorpay payment gateway integration, and rapid 0.2s entry check-in tailored for Indian hubs.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2.5">
+              {INDIAN_HUBS.map((hub) => {
+                const isActive = canonical.endsWith(hub.href);
+                return (
+                  <Link
+                    key={hub.href}
+                    href={hub.href}
+                    className={`p-3 rounded-2xl border text-left transition-all ${
+                      isActive
+                        ? "bg-white border-brand shadow-xs ring-1 ring-brand/30"
+                        : "bg-white border-neutral-200/80 hover:border-neutral-400 hover:shadow-xs"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-1 mb-1">
+                      <span className="text-xs font-bold text-neutral-900">{hub.name}</span>
+                      {isActive && <span className="w-1.5 h-1.5 rounded-full bg-brand" />}
+                    </div>
+                    <span className="text-[10px] text-neutral-500 block">{hub.state}</span>
+                    <span className="text-[9px] font-semibold text-brand/80 mt-1 block truncate">
+                      {hub.tag}
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Final CTA */}
       <section className="py-24 px-5 sm:px-8 bg-neutral-900">

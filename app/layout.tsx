@@ -13,11 +13,11 @@ const BASE_URL = "https://urpass.space";
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
   title: {
-    default: "URPASS — Digital Event Passes & QR Check-in",
+    default: "URPASS — Digital Event Passes & Lightning QR Check-in",
     template: "%s | URPASS",
   },
   description:
-    "Create digital event passes, manage attendees, and scan QR codes at entry — all in one platform. Built for colleges, startups, and event organizers across India.",
+    "Create digital event passes, manage attendees, and scan QR codes at entry in under 0.2s. Built for colleges, hackathons, conferences, and event organizers across India and worldwide.",
   keywords: [
     "digital event pass",
     "QR check-in",
@@ -27,31 +27,53 @@ export const metadata: Metadata = {
     "digital ticket India",
     "attendee management",
     "QR code event entry",
+    "event ticketing platform",
+    "Razorpay event ticketing",
+    "event feedback form",
+    "post event survey",
     "URPASS",
   ],
   authors: [{ name: "URPASS", url: BASE_URL }],
   creator: "URPASS",
   publisher: "URPASS",
   applicationName: "URPASS",
+  category: "Event Management Software",
   robots: {
     index: true,
     follow: true,
-    googleBot: { index: true, follow: true, "max-image-preview": "large" },
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  alternates: {
+    canonical: BASE_URL,
+    languages: {
+      "en-IN": `${BASE_URL}/in`,
+      "en-US": BASE_URL,
+      "x-default": BASE_URL,
+    },
   },
   openGraph: {
     type: "website",
     siteName: "URPASS",
-    title: "URPASS — Digital Event Passes & QR Check-in",
+    title: "URPASS — Digital Event Passes & Lightning QR Check-in",
     description:
-      "Create digital event passes, manage attendees, and scan QR codes at entry — all in one platform.",
+      "Create custom digital event passes, approve attendees, accept Razorpay payments, scan entry QR codes, and collect post-event feedback.",
     url: BASE_URL,
     locale: "en_IN",
+    alternateLocale: ["en_US"],
     images: [
       {
         url: `${BASE_URL}/og-image.png`,
+        secureUrl: `${BASE_URL}/og-image.png`,
         width: 1200,
         height: 630,
-        alt: "URPASS — Digital Event Passes & Lightning QR Check-In",
+        type: "image/png",
+        alt: "URPASS — Digital Event Passes & Lightning QR Check-In Platform",
       },
     ],
   },
@@ -59,9 +81,9 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     site: "@urpass",
     creator: "@urpass",
-    title: "URPASS — Digital Event Passes & QR Check-in",
+    title: "URPASS — Digital Event Passes & Lightning QR Check-in",
     description:
-      "Create digital event passes, manage attendees, and scan QR codes at entry — all in one platform.",
+      "Create custom digital event passes, scan entry QR codes, and manage attendees all in one place.",
     images: [`${BASE_URL}/og-image.png`],
   },
   icons: {
@@ -71,53 +93,121 @@ export const metadata: Metadata = {
     ],
     apple: "/apple-icon.png",
   },
-  alternates: { canonical: BASE_URL },
   other: {
     "geo.region": "IN",
     "geo.placename": "India",
     "geo.position": "20.5937;78.9629",
     "ICBM": "20.5937, 78.9629",
+    "distribution": "Global",
+    "rating": "General",
+    "revisit-after": "3 days",
+    "format-detection": "telephone=no",
+  },
+};
+
+const websiteSchema = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "@id": `${BASE_URL}/#website`,
+  name: "URPASS",
+  alternateName: ["URPASS Space", "URPASS Event Passes"],
+  url: BASE_URL,
+  description: "Digital event passes, lightning QR check-in, and attendee management platform.",
+  inLanguage: "en-IN",
+  publisher: {
+    "@id": `${BASE_URL}/#organization`,
+  },
+  potentialAction: {
+    "@type": "SearchAction",
+    target: {
+      "@type": "EntryPoint",
+      urlTemplate: `${BASE_URL}/apply/{search_term_string}`,
+    },
+    "query-input": "required name=search_term_string",
   },
 };
 
 const organizationSchema = {
   "@context": "https://schema.org",
   "@type": "Organization",
+  "@id": `${BASE_URL}/#organization`,
   name: "URPASS",
+  alternateName: "URPASS Space",
   url: BASE_URL,
-  logo: `${BASE_URL}/icon.png`,
+  logo: {
+    "@type": "ImageObject",
+    url: `${BASE_URL}/icon.png`,
+    caption: "URPASS Logo",
+  },
   sameAs: [
-    "https://www.instagram.com/urpass.space?stkn=MW8yaWpmODU2OWxuYg%3D%3D&utm_source=yespstudio.com",
+    "https://www.instagram.com/urpass.space",
     "https://www.youtube.com/channel/UCzUliQs5vwGlLAM7X6aB9zg/",
   ],
-  contactPoint: {
-    "@type": "ContactPoint",
-    contactType: "customer support",
-    email: "support@urpass.space",
-    areaServed: "IN",
-    availableLanguage: ["English", "Hindi"],
+  contactPoint: [
+    {
+      "@type": "ContactPoint",
+      contactType: "customer support",
+      email: "support@urpass.space",
+      areaServed: ["IN", "Worldwide"],
+      availableLanguage: ["English", "Hindi", "Tamil"],
+    },
+  ],
+  address: {
+    "@type": "PostalAddress",
+    addressCountry: "IN",
+    addressRegion: "Tamil Nadu",
+    addressLocality: "Chennai",
+  },
+  areaServed: {
+    "@type": "Country",
+    name: "India",
   },
 };
 
 const softwareSchema = {
   "@context": "https://schema.org",
-  "@type": "SoftwareApplication",
+  "@type": "WebApplication",
   name: "URPASS",
   applicationCategory: "BusinessApplication",
-  operatingSystem: "Web",
+  applicationSubCategory: "Event Ticketing & Check-In Platform",
+  operatingSystem: "All, Web, iOS, Android",
+  browserRequirements: "Requires HTML5, JavaScript, modern browser",
   url: BASE_URL,
   description:
-    "Digital event pass platform with QR check-in, attendee management, and CSV import for event organizers in India.",
+    "Fast digital event pass generator with QR code check-in, real-time attendance analytics, customizable attendee feedback surveys, and Razorpay ticket payment integration.",
   offers: [
-    { "@type": "Offer", name: "Free", price: "0", priceCurrency: "INR" },
-    { "@type": "Offer", name: "Starter", price: "299", priceCurrency: "INR", billingIncrement: "P1M" },
-    { "@type": "Offer", name: "Pro", price: "799", priceCurrency: "INR", billingIncrement: "P1M" },
+    { "@type": "Offer", name: "Free Tier", price: "0", priceCurrency: "INR", priceValidUntil: "2027-12-31" },
+    { "@type": "Offer", name: "Starter Tier", price: "299", priceCurrency: "INR", billingIncrement: "P1M", priceValidUntil: "2027-12-31" },
+    { "@type": "Offer", name: "Pro Tier", price: "799", priceCurrency: "INR", billingIncrement: "P1M", priceValidUntil: "2027-12-31" },
   ],
   aggregateRating: {
     "@type": "AggregateRating",
-    ratingValue: "4.8",
-    ratingCount: "124",
+    ratingValue: "4.9",
+    reviewCount: "168",
+    bestRating: "5",
+    worstRating: "1",
   },
+  featureList: [
+    "Instant QR Code Ticket Generation",
+    "Lightning 0.2s Mobile Entry Scanner",
+    "Customizable Post-Event Feedback Survey Builder",
+    "Real-time Attendance & Check-in Analytics",
+    "Razorpay INR Payment Gateway Integration",
+    "Exportable CSV Attendee Reports",
+  ],
+};
+
+const siteNavSchema = {
+  "@context": "https://schema.org",
+  "@type": "ItemList",
+  name: "Site Navigation",
+  itemListElement: [
+    { "@type": "SiteNavigationElement", position: 1, name: "Pricing", url: `${BASE_URL}/pricing` },
+    { "@type": "SiteNavigationElement", position: 2, name: "QR Event Check-in", url: `${BASE_URL}/qr-event-check-in` },
+    { "@type": "SiteNavigationElement", position: 3, name: "Events in India", url: `${BASE_URL}/in` },
+    { "@type": "SiteNavigationElement", position: 4, name: "College Events", url: `${BASE_URL}/college-events` },
+    { "@type": "SiteNavigationElement", position: 5, name: "Guides & Tutorials", url: `${BASE_URL}/guides/what-is-qr-event-check-in` },
+  ],
 };
 
 export default function RootLayout({
@@ -130,11 +220,19 @@ export default function RootLayout({
       <head>
         <script
           type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
+        />
+        <script
+          type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
         />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareSchema) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(siteNavSchema) }}
         />
         {process.env.NEXT_PUBLIC_GA_ID && (
           <>

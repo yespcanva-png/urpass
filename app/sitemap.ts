@@ -1,18 +1,19 @@
 import type { MetadataRoute } from "next";
+import { createClient } from "@/lib/supabase/server";
 
 const BASE = "https://urpass.space";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date().toISOString();
 
   const core = [
-    { url: BASE, priority: 1.0, changeFrequency: "weekly" as const },
-    { url: `${BASE}/pricing`, priority: 0.9, changeFrequency: "monthly" as const },
+    { url: BASE, priority: 1.0, changeFrequency: "daily" as const },
+    { url: `${BASE}/pricing`, priority: 0.9, changeFrequency: "weekly" as const },
     { url: `${BASE}/sitelinks`, priority: 0.85, changeFrequency: "weekly" as const },
-    { url: `${BASE}/contact`, priority: 0.6, changeFrequency: "yearly" as const },
-    { url: `${BASE}/terms`, priority: 0.4, changeFrequency: "yearly" as const },
-    { url: `${BASE}/docs`, priority: 0.5, changeFrequency: "monthly" as const },
-    { url: `${BASE}/feedback`, priority: 0.4, changeFrequency: "yearly" as const },
+    { url: `${BASE}/contact`, priority: 0.6, changeFrequency: "monthly" as const },
+    { url: `${BASE}/terms`, priority: 0.4, changeFrequency: "monthly" as const },
+    { url: `${BASE}/docs`, priority: 0.6, changeFrequency: "weekly" as const },
+    { url: `${BASE}/feedback`, priority: 0.5, changeFrequency: "monthly" as const },
   ];
 
   const seoPages = [
@@ -38,7 +39,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/qr-event-tickets",
     "/event-ticket-booking-system",
     "/free-event-ticketing",
-  ].map((path) => ({ url: `${BASE}${path}`, priority: 0.85, changeFrequency: "monthly" as const }));
+  ].map((path) => ({ url: `${BASE}${path}`, priority: 0.85, changeFrequency: "weekly" as const }));
 
   const useCasePages = [
     "/college-events",
@@ -51,7 +52,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/tech-events",
     "/community-events",
     "/campus-events",
-  ].map((path) => ({ url: `${BASE}${path}`, priority: 0.8, changeFrequency: "monthly" as const }));
+  ].map((path) => ({ url: `${BASE}${path}`, priority: 0.8, changeFrequency: "weekly" as const }));
 
   const locationPages = [
     "/in",
@@ -65,7 +66,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/in/kochi",
     "/in/kolkata",
     "/in/ahmedabad",
-  ].map((path) => ({ url: `${BASE}${path}`, priority: 0.75, changeFrequency: "monthly" as const }));
+  ].map((path) => ({ url: `${BASE}${path}`, priority: 0.85, changeFrequency: "weekly" as const }));
 
   const guidePages = [
     "/guides/what-is-qr-event-check-in",
@@ -73,14 +74,45 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/guides/prevent-duplicate-event-entry",
     "/guides/college-event-registration-system",
     "/guides/event-check-in-without-app",
-  ].map((path) => ({ url: `${BASE}${path}`, priority: 0.7, changeFrequency: "monthly" as const }));
+  ].map((path) => ({ url: `${BASE}${path}`, priority: 0.75, changeFrequency: "monthly" as const }));
 
   const comparePages = [
     "/compare/eventbrite-alternative",
     "/compare/zoho-backstage-alternative",
-  ].map((path) => ({ url: `${BASE}${path}`, priority: 0.7, changeFrequency: "monthly" as const }));
+  ].map((path) => ({ url: `${BASE}${path}`, priority: 0.75, changeFrequency: "monthly" as const }));
 
-  return [
+  // Query live events dynamically so public event registration pages get indexed
+  let eventEntries: MetadataRoute.Sitemap = [];
+  try {
+    const supabase = await createClient();
+    const { data: events } = await supabase
+      .from("events")
+      .select("id, apply_slug, updated_at")
+      .eq("status", "active")
+      .order("updated_at", { ascending: false })
+      .limit(100);
+
+    if (events && events.length > 0) {
+      eventEntries = events.flatMap((e) => [
+        {
+          url: `${BASE}/apply/${e.apply_slug || e.id}`,
+          priority: 0.8,
+          changeFrequency: "daily" as const,
+          lastModified: e.updated_at || now,
+        },
+        {
+          url: `${BASE}/feedback/${e.apply_slug || e.id}`,
+          priority: 0.6,
+          changeFrequency: "weekly" as const,
+          lastModified: e.updated_at || now,
+        },
+      ]);
+    }
+  } catch {
+    // Silently fall back if Supabase is unavailable at build-time
+  }
+
+  const staticEntries = [
     ...core,
     ...seoPages,
     ...useCasePages,
@@ -88,4 +120,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...guidePages,
     ...comparePages,
   ].map((item) => ({ ...item, lastModified: now }));
+
+  return [...staticEntries, ...eventEntries];
 }

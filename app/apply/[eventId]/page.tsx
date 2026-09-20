@@ -18,7 +18,7 @@ export async function generateMetadata({
   const supabase = await createClient();
   const query = supabase
     .from("events")
-    .select("name, venue, event_date")
+    .select("id, name, venue, event_date, start_time, description, apply_slug, status")
     .eq("status", "active");
 
   const { data: event } = await (isUuid
@@ -26,14 +26,47 @@ export async function generateMetadata({
     : query.eq("apply_slug", idOrSlug)
   ).maybeSingle();
 
-  if (!event) return { title: "Apply for Event" };
-  const date = new Date(event.event_date).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
+  if (!event) return { title: "Register for Event — URPASS" };
+  const date = new Date(event.event_date).toLocaleDateString("en-IN", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+  const canonicalUrl = `https://urpass.space/apply/${event.apply_slug || event.id}`;
+  const desc = event.description
+    ? `${event.description.slice(0, 150)}... Register now for ${event.name} at ${event.venue} on ${date}.`
+    : `Register for ${event.name} at ${event.venue} on ${date}. Get your digital QR event pass instantly on approval.`;
+
   return {
-    title: `Apply — ${event.name}`,
-    description: `Register for ${event.name} at ${event.venue} on ${date}. Get your digital pass instantly on approval.`,
+    title: `Register for ${event.name} — Passes & Entry`,
+    description: desc,
+    alternates: { canonical: canonicalUrl },
     openGraph: {
-      title: `Apply for ${event.name}`,
-      description: `Register for ${event.name} at ${event.venue} on ${date}.`,
+      type: "website",
+      title: `${event.name} — Registration & Entry Pass`,
+      description: desc,
+      url: canonicalUrl,
+      siteName: "URPASS",
+      locale: "en_IN",
+      images: [
+        {
+          url: "https://urpass.space/og-image.png",
+          width: 1200,
+          height: 630,
+          alt: `${event.name} on URPASS`,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${event.name} — Register Now`,
+      description: desc,
+      images: ["https://urpass.space/og-image.png"],
+    },
+    other: {
+      "geo.placename": event.venue || "India",
+      "geo.region": "IN",
     },
   };
 }
@@ -60,6 +93,7 @@ interface EventInfo {
   is_paid_event: boolean;
   ticket_price: number;
   event_type: string;
+  apply_slug?: string | null;
 }
 
 interface Branding {
@@ -90,7 +124,7 @@ export default async function ApplyPage({
 
   const query = supabase
     .from("events")
-    .select("id, name, description, event_date, start_time, venue, auto_approve, is_paid_event, ticket_price, organizer_id, organization_id, event_type")
+    .select("id, name, description, event_date, start_time, venue, auto_approve, is_paid_event, ticket_price, organizer_id, organization_id, event_type, apply_slug")
     .eq("status", "active")
     .eq("application_enabled", true);
 
@@ -256,8 +290,54 @@ export default async function ApplyPage({
     }
   }
 
+  const eventSchema = {
+    "@context": "https://schema.org",
+    "@type": "Event",
+    name: event.name,
+    description: event.description || `Register for ${event.name} at ${event.venue}.`,
+    startDate: event.event_date + (event.start_time ? `T${event.start_time}:00+05:30` : "T09:00:00+05:30"),
+    eventStatus: "https://schema.org/EventScheduled",
+    eventAttendanceMode: isOnline
+      ? "https://schema.org/OnlineEventAttendanceMode"
+      : isHybrid
+      ? "https://schema.org/MixedEventAttendanceMode"
+      : "https://schema.org/OfflineEventAttendanceMode",
+    location: isOnline
+      ? {
+          "@type": "VirtualLocation",
+          url: `https://urpass.space/apply/${event.apply_slug || event.id}`,
+        }
+      : {
+          "@type": "Place",
+          name: event.venue,
+          address: {
+            "@type": "PostalAddress",
+            addressLocality: event.venue,
+            addressCountry: "IN",
+          },
+        },
+    organizer: {
+      "@type": "Organization",
+      name: branding.orgName || "URPASS Organizer",
+      url: "https://urpass.space",
+    },
+    offers: {
+      "@type": "AggregateOffer",
+      priceCurrency: "INR",
+      lowPrice: Math.min(...(ticketTypes.length ? ticketTypes.map((t) => t.price) : [event.ticket_price || 0])),
+      highPrice: Math.max(...(ticketTypes.length ? ticketTypes.map((t) => t.price) : [event.ticket_price || 0])),
+      offerCount: ticketTypes.length || 1,
+      availability: "https://schema.org/InStock",
+      url: `https://urpass.space/apply/${event.apply_slug || event.id}`,
+    },
+  };
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(eventSchema) }}
+      />
       {staffScanLink && (
         <div className="fixed top-0 inset-x-0 z-50 flex flex-col"
           style={{ background: "linear-gradient(135deg, #6D28D9 0%, #4c1d95 100%)" }}>

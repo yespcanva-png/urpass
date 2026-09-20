@@ -22,9 +22,40 @@ export async function generateMetadata({
     };
   }
 
+  const title = `${form.title || "Share Feedback"} — ${event.name}`;
+  const description = `Take 60 seconds to share your thoughts and rate your experience at ${event.name}. Your feedback shapes future editions.`;
+  const canonicalUrl = `https://urpass.space/feedback/${event.apply_slug || event.id}`;
+
   return {
-    title: `${form.title || "Feedback"} — ${event.name}`,
-    description: `Share your experience and thoughts about ${event.name}. Powered by URPASS.`,
+    title,
+    description,
+    alternates: { canonical: canonicalUrl },
+    openGraph: {
+      type: "website",
+      title,
+      description,
+      url: canonicalUrl,
+      siteName: "URPASS",
+      locale: "en_IN",
+      images: [
+        {
+          url: event.logo_url || "https://urpass.space/og-image.png",
+          width: 1200,
+          height: 630,
+          alt: `${event.name} Feedback Survey`,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [event.logo_url || "https://urpass.space/og-image.png"],
+    },
+    other: {
+      "geo.placename": event.venue || "India",
+      "geo.region": "IN",
+    },
   };
 }
 
