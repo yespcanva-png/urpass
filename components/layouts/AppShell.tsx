@@ -1,7 +1,5 @@
 import Sidebar from "@/components/dashboard/Sidebar";
 import MobileNav from "@/components/dashboard/MobileNav";
-import { Ticket, Zap } from "lucide-react";
-import Link from "next/link";
 import NotificationBell from "@/components/notifications/NotificationBell";
 
 export interface OrgContext {
@@ -20,107 +18,16 @@ interface Props {
   children: React.ReactNode;
 }
 
-const PLAN_BADGE: Record<string, { label: string; cls: string }> = {
-  starter:    { label: "Starter",    cls: "text-violet-300 border-violet-500/30 bg-violet-500/15" },
-  pro:        { label: "Pro",        cls: "text-amber-300  border-amber-500/30  bg-amber-500/15"  },
-  enterprise: { label: "Ent",        cls: "text-slate-300  border-slate-500/30  bg-slate-500/15"  },
-};
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export default function AppShell({ fullName, email, planSlug, orgs, activeOrgSlug, children }: Props) {
-  const initials = fullName
-    .split(" ").slice(0, 2).map((w) => w[0] ?? "").join("").toUpperCase() || "U";
-
-  const badge = planSlug ? PLAN_BADGE[planSlug] : null;
-  const isPaid = planSlug && planSlug !== "free";
-
+export default function AppShell({ fullName, email, planSlug, children }: Props) {
   return (
     <div className="flex h-screen overflow-hidden" style={{ background: "#0e0c16" }}>
       <Sidebar fullName={fullName} email={email} planSlug={planSlug} />
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden" style={{ background: "#f5f4fa" }}>
-
-        {/* ── Mobile top bar ─────────────────────────────────────────── */}
-        <header className="lg:hidden shrink-0 sticky top-0 z-50 shadow-sm" style={{ background: "linear-gradient(180deg, #14111f 0%, #100e1a 100%)" }}>
-          <div
-            className="flex items-center justify-between px-4 h-14"
-            style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
-          >
-            {/* Wordmark + plan badge */}
-            <Link href="/dashboard" className="flex items-center gap-2.5">
-              <div
-                className="w-8 h-8 rounded-[10px] flex items-center justify-center shadow-lg"
-                style={{ background: "linear-gradient(145deg, #7c3aed, #4c1d95)" }}
-              >
-                <Ticket className="w-4 h-4 text-white" />
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-[13px] font-black tracking-[0.15em] uppercase text-white leading-none">
-                  URPASS
-                </span>
-                {badge && (
-                  <span className={`text-[9px] font-bold tracking-widest uppercase px-1.5 py-0.5 rounded-full border ${badge.cls}`}>
-                    {badge.label}
-                  </span>
-                )}
-              </div>
-            </Link>
-
-            {/* Right: Notification Bell + Upgrade pill or avatar */}
-            <div className="flex items-center gap-2">
-              <NotificationBell />
-              {!isPaid ? (
-                <Link
-                  href="/billing"
-                  className="flex items-center gap-1.5 text-white text-[11px] font-bold px-3.5 py-2 rounded-xl transition-opacity hover:opacity-90 active:opacity-75"
-                  style={{ background: "linear-gradient(135deg, #6D28D9, #4c1d95)" }}
-                >
-                  <Zap className="w-3.5 h-3.5 text-yellow-300" />
-                  Upgrade
-                </Link>
-              ) : (
-                <Link
-                  href="/dashboard/settings"
-                  className="w-9 h-9 rounded-full flex items-center justify-center text-[12px] font-bold text-white ring-2 ring-white/10 transition-opacity hover:opacity-80 active:opacity-60"
-                  style={{ background: "linear-gradient(145deg, #7c3aed, #4c1d95)" }}
-                  title={email}
-                >
-                  {initials}
-                </Link>
-              )}
-            </div>
-          </div>
-        </header>
-
-        {/* ── Desktop top bar ─────────────────────────────────────────── */}
-        <header className="hidden lg:flex items-center justify-between px-6 h-14 shrink-0 sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-neutral-200/80 shadow-xs">
-          <div className="flex items-center gap-2 text-xs font-semibold text-neutral-500">
-            <span className="w-2 h-2 rounded-full bg-emerald-500" />
-            <span>URPASS Workspace</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <NotificationBell />
-            {!isPaid ? (
-              <Link
-                href="/billing"
-                className="flex items-center gap-1.5 text-white text-[11px] font-bold px-3.5 py-1.5 rounded-xl transition-opacity hover:opacity-90 active:opacity-75 shadow-sm"
-                style={{ background: "linear-gradient(135deg, #6D28D9, #4c1d95)" }}
-              >
-                <Zap className="w-3.5 h-3.5 text-yellow-300" />
-                Upgrade
-              </Link>
-            ) : (
-              <Link
-                href="/dashboard/settings"
-                className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white shadow-sm transition-opacity hover:opacity-85"
-                style={{ background: "linear-gradient(145deg, #7c3aed, #4c1d95)" }}
-                title={email}
-              >
-                {initials}
-              </Link>
-            )}
-          </div>
-        </header>
+        {/* ── Notification Icon on top (no navbar) ─────────────────────────── */}
+        <div className="flex justify-end items-center px-4 lg:px-8 pt-3 pb-0 shrink-0 z-40">
+          <NotificationBell />
+        </div>
 
         {/* ── Scrollable content ──────────────────────────────────────── */}
         <main className="flex-1 overflow-y-auto pb-[88px] lg:pb-0">
