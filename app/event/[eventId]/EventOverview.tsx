@@ -11,9 +11,12 @@ import {
   XCircle,
   Wifi,
   ScanLine,
+  Ticket,
+  Plus,
 } from "lucide-react";
 import CopyLinkButton from "@/components/event/CopyLinkButton";
 import { createClient } from "@/lib/supabase/client";
+import EventCommunicationsCard from "@/components/event/EventCommunicationsCard";
 
 type PassStatus = "not_generated" | "generated" | "checked_in";
 type AppStatus = "pending" | "approved" | "rejected";
@@ -82,6 +85,7 @@ function avatarColor(name: string) {
 export default function EventOverview({ event, initialAttendees = [] }: Props) {
   const [attendees, setAttendees] = useState<Attendee[]>(initialAttendees);
   const [live, setLive] = useState(false);
+  const [ticketTypes, setTicketTypes] = useState<{id: string; name: string; price: number; status: string}[]>([]);
 
   useEffect(() => {
     const supabase = createClient();
@@ -91,6 +95,12 @@ export default function EventOverview({ event, initialAttendees = [] }: Props) {
       .eq("event_id", event.id)
       .order("created_at", { ascending: false })
       .then(({ data }) => { if (data) setAttendees(data); });
+    supabase
+      .from("ticket_types")
+      .select("id, name, price, status")
+      .eq("event_id", event.id)
+      .order("position", { ascending: true })
+      .then(({ data }) => { if (data) setTicketTypes(data); });
   }, [event.id]);
 
   useEffect(() => {
@@ -247,6 +257,51 @@ export default function EventOverview({ event, initialAttendees = [] }: Props) {
         </div>
       </div>
 
+      {/* ── Ticket types ──────────────────────────────────────── */}
+      <div className="bg-white rounded-2xl shadow-sm p-5 mb-3">
+        <div className="flex items-center justify-between mb-1 gap-4">
+          <div className="flex items-center gap-2">
+            <Ticket className="w-4 h-4 text-brand shrink-0" />
+            <p className="text-sm font-semibold text-neutral-900">Ticket types</p>
+          </div>
+          <Link
+            href={`/event/${event.id}/tickets`}
+            className="text-xs font-semibold text-brand hover:underline underline-offset-2 shrink-0"
+          >
+            Manage →
+          </Link>
+        </div>
+        {ticketTypes.length === 0 ? (
+          <div className="flex items-center justify-between mt-3 bg-neutral-50 rounded-xl px-4 py-3 border border-neutral-100">
+            <p className="text-xs text-neutral-500">No ticket types yet — create types for tiered registration (VIP, General, etc.)</p>
+            <Link
+              href={`/event/${event.id}/tickets/new`}
+              className="ml-4 flex items-center gap-1 text-xs font-bold text-brand shrink-0 hover:opacity-80"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Add type
+            </Link>
+          </div>
+        ) : (
+          <div className="flex flex-wrap gap-2 mt-3">
+            {ticketTypes.map((tt) => (
+              <span
+                key={tt.id}
+                className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border ${
+                  tt.status === "on_sale" ? "bg-green-50 text-green-700 border-green-100" :
+                  tt.status === "closed"  ? "bg-red-50 text-red-600 border-red-100" :
+                  "bg-neutral-100 text-neutral-500 border-neutral-200"
+                }`}
+              >
+                {tt.name}
+                <span className="opacity-60">·</span>
+                {tt.price === 0 ? "Free" : `₹${(tt.price / 100).toLocaleString("en-IN")}`}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* ── Capacity ────────────────────────────────────────────── */}
       <div className="bg-white rounded-2xl shadow-sm p-5 mb-5">
         <div className="flex items-center justify-between mb-3 gap-4">
@@ -286,6 +341,14 @@ export default function EventOverview({ event, initialAttendees = [] }: Props) {
           )}
         </div>
       </div>
+
+      {/* ── Attendee Engagement & Communications ─────────────────── */}
+      <EventCommunicationsCard
+        eventId={event.id}
+        eventName={event.name}
+        applySlug={event.apply_slug}
+        approvedCount={approved}
+      />
 
       {/* ── Recent attendees ────────────────────────────────────── */}
       <div className="bg-white rounded-2xl shadow-sm overflow-hidden">

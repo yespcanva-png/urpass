@@ -11,11 +11,23 @@ vi.mock("@/lib/supabase/server", () => ({
 
 function makeVerifySupabase({
   user = { id: "user-1" },
-  event = { id: "evt-1", name: "Test Event" } as Record<string, unknown> | null,
+  event: rawEvent,
   pass = null as null | Record<string, unknown>,
   attendee = null as null | Record<string, unknown>,
   insertError = null as null | Record<string, unknown>,
+}: {
+  user?: { id: string };
+  event?: Record<string, unknown> | null;
+  pass?: Record<string, unknown> | null;
+  attendee?: Record<string, unknown> | null;
+  insertError?: Record<string, unknown> | null;
 } = {}) {
+  const event =
+    rawEvent === undefined
+      ? { id: "evt-1", name: "Test Event", organizer_id: user.id }
+      : rawEvent === null
+        ? null
+        : { organizer_id: user.id, ...rawEvent };
   // auth.getUser is separate from single() — only these three DB calls use single():
   //   [0] event ownership check
   //   [1] pass lookup
@@ -32,6 +44,7 @@ function makeVerifySupabase({
     from: vi.fn().mockReturnThis(),
     select: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
+    in: vi.fn().mockReturnThis(),
     update: vi.fn().mockReturnThis(),
     insert: vi.fn().mockResolvedValue({ error: insertError }),
     single: vi.fn().mockImplementation(async () => singles[idx++] ?? { data: null, error: null }),
@@ -58,6 +71,24 @@ describe("POST /api/verify", () => {
     expect(res.status).toBe(401);
   });
 
+  it("returns 403 when user is neither the organizer nor authorized org staff", async () => {
+    const { createClient } = await import("@/lib/supabase/server");
+    const supabase = makeVerifySupabase({
+      user: { id: "stranger-user" },
+      event: { id: "evt-1", name: "Test", organizer_id: "different-organizer" },
+    });
+    vi.mocked(createClient).mockResolvedValue(supabase as never);
+
+    const { POST } = await import("@/app/api/verify/route");
+    const req = new NextRequest("http://localhost/api/verify", {
+      method: "POST",
+      body: JSON.stringify({ passToken: "tok-1", eventId: "evt-1" }),
+      headers: { "Content-Type": "application/json" },
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(403);
+  });
+
   it("returns 400 when body is missing passToken", async () => {
     const { createClient } = await import("@/lib/supabase/server");
     vi.mocked(createClient).mockResolvedValue({
@@ -77,7 +108,7 @@ describe("POST /api/verify", () => {
   it("returns 404 when pass token does not exist for event", async () => {
     const { createClient } = await import("@/lib/supabase/server");
     const supabase = makeVerifySupabase({
-      event: { id: "evt-1", name: "Test" },
+      event: { id: "evt-1", name: "Test", organizer_id: "user-1" },
       pass: null,
     });
     vi.mocked(createClient).mockResolvedValue(supabase as never);
@@ -155,6 +186,29 @@ describe("POST /api/verify", () => {
     expect(res.status).toBe(200);
     expect(body.success).toBe(true);
     expect(body.attendee.name).toBe("Alice");
+  });
+
+  it("normalizes pass URL from email QR code to raw token", async () => {
+    const { createClient } = await import("@/lib/supabase/server");
+    const supabase = makeVerifySupabase({
+      event: { id: "evt-1", name: "Test" },
+      pass: { id: "p1", pass_token: "clean-token-123", pass_type: "participant", status: "generated", attendee_id: "att-1", event_id: "evt-1" },
+      attendee: { id: "att-1", name: "Alice", email: "alice@test.com", pass_type: "participant", application_status: "approved" },
+      insertError: null,
+    });
+    supabase.update = vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) });
+    vi.mocked(createClient).mockResolvedValue(supabase as never);
+
+    const { POST } = await import("@/app/api/verify/route");
+    const req = new NextRequest("http://localhost/api/verify", {
+      method: "POST",
+      body: JSON.stringify({ passToken: "https://urpass.space/pass/clean-token-123", eventId: "evt-1" }),
+      headers: { "Content-Type": "application/json" },
+    });
+    const res = await POST(req);
+    const body = await res.json();
+    expect(res.status).toBe(200);
+    expect(body.success).toBe(true);
   });
 });
 

@@ -14,7 +14,7 @@ export default async function JoinPage({ params, searchParams }: Props) {
   const { token } = await searchParams;
 
   if (!token) {
-    return <ErrorCard message="Invalid invite link — no token found." orgSlug={orgSlug} />;
+    return <ErrorCard message="Invalid invite link — no token found." />;
   }
 
   const supabase = await createClient();
@@ -30,13 +30,13 @@ export default async function JoinPage({ params, searchParams }: Props) {
     if (result.error === "not_authenticated") {
       redirect(`/login?next=/org/${orgSlug}/join?token=${token}`);
     }
-    return <ErrorCard message={result.error} orgSlug={orgSlug} />;
+    return <ErrorCard message={result.error} />;
   }
 
   redirect(`/org/${result.orgSlug}`);
 }
 
-function ErrorCard({ message, orgSlug }: { message: string; orgSlug: string }) {
+function ErrorCard({ message }: { message: string }) {
   return (
     <div className="min-h-screen bg-neutral-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-xl p-8 max-w-sm w-full text-center">

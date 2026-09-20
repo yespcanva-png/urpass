@@ -11,6 +11,7 @@ describe("eventSchema", () => {
     start_time: "09:00",
     end_time: "18:00",
     venue: "IIT Madras",
+    event_type: "physical" as const,
     attendee_limit: 200,
     status: "draft" as const,
     application_enabled: true,

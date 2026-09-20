@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { CalendarDays, Ticket, ScanLine } from "lucide-react";
+import { createClient as createAdminClient } from "@supabase/supabase-js";
+import { CalendarDays, Ticket, ScanLine, Wifi, LayoutGrid } from "lucide-react";
 import ApplyForm from "./ApplyForm";
+import { getSupabaseUrl } from "@/lib/supabase/config";
 
 export const dynamic = "force-dynamic";
 
@@ -11,14 +13,18 @@ export async function generateMetadata({
 }: {
   params: Promise<{ eventId: string }>;
 }): Promise<Metadata> {
-  const { eventId } = await params;
+  const { eventId: idOrSlug } = await params;
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idOrSlug);
   const supabase = await createClient();
-  const { data: event } = await supabase
+  const query = supabase
     .from("events")
     .select("name, venue, event_date")
-    .eq("id", eventId)
-    .eq("status", "active")
-    .single();
+    .eq("status", "active");
+
+  const { data: event } = await (isUuid
+    ? query.eq("id", idOrSlug)
+    : query.eq("apply_slug", idOrSlug)
+  ).maybeSingle();
 
   if (!event) return { title: "Apply for Event" };
   const date = new Date(event.event_date).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
@@ -32,6 +38,17 @@ export async function generateMetadata({
   };
 }
 
+export interface ApplyTicketType {
+  id: string;
+  name: string;
+  description: string | null;
+  category: string;
+  price: number;
+  capacity: number | null;
+  max_per_person: number;
+  remaining: number | null;
+}
+
 interface EventInfo {
   id: string;
   name: string;
@@ -42,6 +59,7 @@ interface EventInfo {
   auto_approve: boolean;
   is_paid_event: boolean;
   ticket_price: number;
+  event_type: string;
 }
 
 interface Branding {
@@ -53,21 +71,33 @@ interface Branding {
 
 const gradientBg = "radial-gradient(ellipse 100% 50% at 50% -10%, #ede9fe 0%, #f5f3ff 40%, #ffffff 70%)";
 
+function adminClient() {
+  return createAdminClient(
+    getSupabaseUrl(),
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  );
+}
+
 export default async function ApplyPage({
   params,
 }: {
   params: Promise<{ eventId: string }>;
 }) {
-  const { eventId: slug } = await params;
+  const { eventId: idOrSlug } = await params;
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idOrSlug);
   const supabase = await createClient();
 
-  const { data: event } = await supabase
+  const query = supabase
     .from("events")
-    .select("id, name, description, event_date, start_time, venue, auto_approve, is_paid_event, ticket_price, organizer_id, organization_id")
-    .eq("apply_slug", slug)
+    .select("id, name, description, event_date, start_time, venue, auto_approve, is_paid_event, ticket_price, organizer_id, organization_id, event_type")
     .eq("status", "active")
-    .eq("application_enabled", true)
-    .single();
+    .eq("application_enabled", true);
+
+  const { data: event } = await (isUuid
+    ? query.eq("id", idOrSlug)
+    : query.eq("apply_slug", idOrSlug)
+  ).maybeSingle();
 
   if (!event) {
     return (
@@ -95,25 +125,28 @@ export default async function ApplyPage({
     );
   }
 
-  // Fetch organizer branding
-  const { data: sub } = await supabase
-    .from("subscriptions")
-    .select("plan:plans(slug)")
-    .eq("user_id", event.organizer_id)
-    .eq("status", "active")
-    .single();
+  // Fetch organizer branding — must use admin client because subscriptions and profiles
+  // have owner-only RLS policies; anonymous visitors cannot read another user's rows.
+  const adminForBranding = adminClient();
+  const [{ data: sub }, { data: orgProfileRaw }] = await Promise.all([
+    adminForBranding
+      .from("subscriptions")
+      .select("plan:plans(slug)")
+      .eq("user_id", event.organizer_id)
+      .eq("status", "active")
+      .single(),
+    adminForBranding
+      .from("profiles")
+      .select("org_name, brand_color, org_logo_url, hide_urpass_branding")
+      .eq("user_id", event.organizer_id)
+      .single(),
+  ]);
 
   const planSlug = (sub?.plan as unknown as { slug: string } | null)?.slug ?? "free";
-  const isPro = planSlug === "pro";
+  console.log("[apply] organizer_id:", event.organizer_id, "planSlug:", planSlug);
+  const isPro = ["pro", "business", "campus", "enterprise"].includes(planSlug);
   const canRemoveBranding = planSlug !== "free";
-
-  const { data: orgProfile } = canRemoveBranding
-    ? await supabase
-        .from("profiles")
-        .select("org_name, brand_color, org_logo_url, hide_urpass_branding")
-        .eq("user_id", event.organizer_id)
-        .single()
-    : { data: null };
+  const orgProfile = canRemoveBranding ? orgProfileRaw : null;
 
   const branding: Branding = {
     showUrpassBranding: !(canRemoveBranding && orgProfile?.hide_urpass_branding),
@@ -143,25 +176,150 @@ export default async function ApplyPage({
     }
   }
 
+  const isOnline = event.event_type === "online";
+  const isHybrid = event.event_type === "hybrid";
+  const admin = adminClient();
+
+  // Use admin client to fetch all non-closed ticket types regardless of status.
+  // This is a server component so the service role key is never exposed.
+  const { data: ticketTypeRows, error: ticketErr } = await admin
+    .from("ticket_types")
+    .select("id, name, description, category, price, capacity, max_per_person, sales_start, sales_end, position, status")
+    .eq("event_id", event.id)
+    .neq("status", "closed")
+    .order("position", { ascending: true });
+  console.log("[apply] event.id:", event.id, "ticketTypeRows:", ticketTypeRows?.length ?? 0, "err:", ticketErr?.message);
+
+  const ticketTypeIds = (ticketTypeRows ?? []).map((ticketType) => ticketType.id);
+  const { data: ticketTypeAttendees } = ticketTypeIds.length
+    ? await admin
+        .from("attendees")
+        .select("ticket_type_id")
+        .eq("event_id", event.id)
+        .neq("application_status", "rejected")
+        .in("ticket_type_id", ticketTypeIds)
+    : { data: [] };
+
+  const reservedByTicketType = new Map<string, number>();
+  for (const attendee of ticketTypeAttendees ?? []) {
+    if (!attendee.ticket_type_id) continue;
+    reservedByTicketType.set(
+      attendee.ticket_type_id,
+      (reservedByTicketType.get(attendee.ticket_type_id) ?? 0) + 1
+    );
+  }
+
+  const nowTimestamp = new Date().getTime();
+  const ticketTypes: ApplyTicketType[] = (ticketTypeRows ?? [])
+    .filter((ticketType) => {
+      const startsAt = ticketType.sales_start ? new Date(ticketType.sales_start).getTime() : null;
+      const endsAt = ticketType.sales_end ? new Date(ticketType.sales_end).getTime() : null;
+      return (startsAt == null || startsAt <= nowTimestamp) && (endsAt == null || endsAt >= nowTimestamp);
+    })
+    .map((ticketType) => {
+      const reserved = reservedByTicketType.get(ticketType.id) ?? 0;
+      return {
+        id: ticketType.id,
+        name: ticketType.name,
+        description: ticketType.description,
+        category: ticketType.category,
+        price: ticketType.price,
+        capacity: ticketType.capacity,
+        max_per_person: ticketType.max_per_person,
+        remaining: ticketType.capacity == null ? null : Math.max(0, ticketType.capacity - reserved),
+      };
+    });
+
+  // Check payment gateway only when the event has any paid flow
+  const hasPaidTicketTypes = ticketTypes.some((t) => t.price > 0);
+  const isPaidFlow = event.is_paid_event || hasPaidTicketTypes;
+  let hasPaymentGateway = !isPaidFlow; // free events don't need a gateway
+  if (isPaidFlow) {
+    if (event.organization_id) {
+      const { data: orgPs } = await admin
+        .from("org_payment_settings")
+        .select("razorpay_key_id")
+        .eq("organization_id", event.organization_id)
+        .maybeSingle();
+      if (orgPs?.razorpay_key_id) {
+        hasPaymentGateway = true;
+      }
+    }
+
+    if (!hasPaymentGateway) {
+      const { data: ps } = await admin
+        .from("payment_settings")
+        .select("razorpay_key_id")
+        .eq("user_id", event.organizer_id)
+        .maybeSingle();
+      hasPaymentGateway = !!(ps?.razorpay_key_id);
+    }
+  }
+
   return (
     <>
       {staffScanLink && (
-        <div className="fixed top-0 inset-x-0 z-50 flex items-center justify-between gap-3 px-4 py-2.5 text-white text-sm font-semibold"
+        <div className="fixed top-0 inset-x-0 z-50 flex flex-col"
           style={{ background: "linear-gradient(135deg, #6D28D9 0%, #4c1d95 100%)" }}>
-          <div className="flex items-center gap-2">
-            <ScanLine className="w-4 h-4 text-white/70" />
-            <span>Staff view</span>
+          <div className="flex items-center justify-between gap-3 px-4 py-2.5 text-white text-sm font-semibold">
+            <div className="flex items-center gap-2">
+              <ScanLine className="w-4 h-4 text-white/70" />
+              <span>Staff view</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Link
+                href={`/event/${event.id}/tickets`}
+                className="flex items-center gap-1.5 bg-white/15 hover:bg-white/25 transition-colors px-3 py-1.5 rounded-lg text-xs font-bold"
+              >
+                Tickets
+              </Link>
+              <Link
+                href={staffScanLink}
+                className="flex items-center gap-1.5 bg-white/15 hover:bg-white/25 transition-colors px-3 py-1.5 rounded-lg text-xs font-bold"
+              >
+                <ScanLine className="w-3.5 h-3.5" />
+                Scanner
+              </Link>
+            </div>
           </div>
-          <Link
-            href={staffScanLink}
-            className="flex items-center gap-1.5 bg-white/15 hover:bg-white/25 transition-colors px-3 py-1.5 rounded-lg text-xs font-bold"
-          >
-            <ScanLine className="w-3.5 h-3.5" />
-            Open scanner
-          </Link>
+          {ticketTypes.length === 0 && (
+            <div className="flex items-center justify-between gap-3 px-4 py-2 bg-amber-500/30 border-t border-white/10 text-xs">
+              <span className="text-white/90">No ticket types — visitors cannot select one</span>
+              <Link
+                href={`/event/${event.id}/tickets/new`}
+                className="bg-white/20 hover:bg-white/30 transition-colors px-2.5 py-1 rounded-md font-bold text-white shrink-0"
+              >
+                Add ticket →
+              </Link>
+            </div>
+          )}
         </div>
       )}
-      <ApplyForm event={event as EventInfo} branding={branding} staffScanLink={staffScanLink} />
+      {isOnline && (
+        <div className="fixed top-0 inset-x-0 z-40 flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-50 border-b border-blue-100"
+          style={{ top: staffScanLink ? 44 : 0 }}>
+          <Wifi className="w-4 h-4 text-blue-600 shrink-0" />
+          <p className="text-sm text-blue-700 font-medium">
+            Online Event — you&apos;ll receive joining instructions on your pass after approval.
+          </p>
+        </div>
+      )}
+      {isHybrid && (
+        <div className="fixed top-0 inset-x-0 z-40 flex items-center justify-center gap-2 px-4 py-2.5 bg-violet-50 border-b border-violet-100"
+          style={{ top: staffScanLink ? 44 : 0 }}>
+          <LayoutGrid className="w-4 h-4 text-violet-600 shrink-0" />
+          <p className="text-sm text-violet-700 font-medium">
+            Hybrid Event — attend in-person or join online.
+          </p>
+        </div>
+      )}
+      <ApplyForm
+        event={event as EventInfo}
+        branding={branding}
+        staffScanLink={staffScanLink}
+        ticketTypes={ticketTypes}
+        hasPaymentGateway={hasPaymentGateway}
+      />
     </>
   );
 }

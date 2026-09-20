@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { getSupabaseConfig } from "@/lib/supabase/config";
 
 const PROTECTED = ["/dashboard", "/event", "/create-event", "/scan", "/billing", "/org"];
 const AUTH_PAGES = ["/login", "/signup"];
@@ -16,13 +17,7 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.next({ request });
   }
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  // If Supabase is not configured yet, let requests pass through
-  if (!supabaseUrl || supabaseUrl === "your_supabase_project_url" || !supabaseKey) {
-    return NextResponse.next({ request });
-  }
+  const { url: supabaseUrl, anonKey: supabaseKey } = getSupabaseConfig();
 
   let supabaseResponse = NextResponse.next({ request });
 

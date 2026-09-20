@@ -16,12 +16,23 @@ export default async function AttendeesPage({ params }: Props) {
 
   const { data: event } = await supabase
     .from("events")
-    .select("id, name, attendee_limit, application_enabled, apply_slug")
+    .select("id, name, attendee_limit, application_enabled, apply_slug, organizer_id, organization_id")
     .eq("id", eventId)
-    .eq("organizer_id", user.id)
-    .single();
+    .maybeSingle();
 
   if (!event) redirect("/dashboard");
+  if (event.organizer_id !== user.id) {
+    if (!event.organization_id) redirect("/dashboard");
+    const { data: member } = await supabase
+      .from("organization_members")
+      .select("role")
+      .eq("organization_id", event.organization_id)
+      .eq("user_id", user.id)
+      .eq("status", "active")
+      .in("role", ["owner", "admin", "event_manager", "checkin_staff"])
+      .maybeSingle();
+    if (!member) redirect("/dashboard");
+  }
 
   const [{ data: attendees }, { data: passes }, plan] = await Promise.all([
     supabase
@@ -45,6 +56,7 @@ export default async function AttendeesPage({ params }: Props) {
       <AttendeeTable
         attendees={attendees ?? []}
         eventId={eventId}
+        eventName={event.name}
         attendeeLimit={event.attendee_limit}
         applySlug={event.apply_slug}
         applicationEnabled={event.application_enabled}

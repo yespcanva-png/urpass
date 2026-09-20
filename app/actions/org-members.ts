@@ -1,6 +1,8 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createAdminClient } from "@supabase/supabase-js";
+import { getSupabaseUrl } from "@/lib/supabase/config";
 import { inviteMemberSchema } from "@/lib/validations/organization";
 import { sendOrgInviteEmail } from "@/lib/email";
 import { revalidatePath } from "next/cache";
@@ -10,6 +12,13 @@ import type { OrgRole } from "@/types";
 type ActionResult = { error: string } | undefined;
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://urpass.space";
+
+function adminClient() {
+  return createAdminClient(
+    getSupabaseUrl(),
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 function generateToken(): string {
   const array = new Uint8Array(32);
@@ -50,7 +59,6 @@ export async function inviteMember(
   }
 
   const token = generateToken();
-  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
   // Check if the invited email belongs to an existing user
   const { data: profile } = await supabase
@@ -97,11 +105,12 @@ export async function acceptInvite(token: string): Promise<{ orgSlug: string } |
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "not_authenticated" };
 
-  const { data: member } = await supabase
+  const admin = adminClient();
+  const { data: member } = await admin
     .from("organization_members")
     .select("id, organization_id, status, organization:organizations(slug)")
     .eq("invite_token", token)
-    .single();
+    .maybeSingle();
 
   if (!member) return { error: "Invalid or expired invite link." };
   if (member.status === "active") {
@@ -109,7 +118,7 @@ export async function acceptInvite(token: string): Promise<{ orgSlug: string } |
     return { orgSlug: org.slug };
   }
 
-  const { error } = await supabase
+  const { error } = await admin
     .from("organization_members")
     .update({
       user_id: user.id,

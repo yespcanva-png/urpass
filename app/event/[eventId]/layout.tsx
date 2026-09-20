@@ -61,25 +61,52 @@ export default async function EventLayout({
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const [{ data: event }, { data: profile }, plan] = await Promise.all([
+  const [{ data: event }, { data: profile }, plan, { data: memberships }] = await Promise.all([
     supabase
       .from("events")
-      .select("id, name, status, event_date, start_time, end_time, venue")
+      .select("id, name, status, event_date, start_time, end_time, venue, organizer_id, organization_id")
       .eq("id", eventId)
-      .eq("organizer_id", user.id)
-      .single(),
+      .maybeSingle(),
     supabase
       .from("profiles")
       .select("full_name, email")
       .eq("user_id", user.id)
       .single(),
     getUserPlan(supabase, user.id),
+    supabase
+      .from("organization_members")
+      .select("role, organization_id, organization:organizations(slug, name, brand_color)")
+      .eq("user_id", user.id)
+      .eq("status", "active"),
   ]);
 
   if (!event) notFound();
+  if (event.organizer_id !== user.id) {
+    const isMember = Boolean(
+      event.organization_id &&
+      memberships?.some((m) => m.organization_id === event.organization_id)
+    );
+    if (!isMember) notFound();
+  }
 
   const fullName = profile?.full_name ?? user.email?.split("@")[0] ?? "Organizer";
   const email    = profile?.email ?? user.email ?? "";
+
+  // Supabase returns related records as objects (not arrays) for single FK joins
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const orgs = ((memberships ?? []) as any[])
+    .filter((m) => m.organization != null)
+    .map((m) => {
+      const org = Array.isArray(m.organization) ? m.organization[0] : m.organization;
+      if (!org) return null;
+      return {
+        slug: org.slug as string,
+        name: org.name as string,
+        brand_color: org.brand_color as string,
+        role: m.role as string,
+      };
+    })
+    .filter(Boolean) as { slug: string; name: string; brand_color: string; role: string }[];
 
   const statusKey = (event.status as Status) in STATUS_CONFIG ? (event.status as Status) : "draft";
   const statusCfg = STATUS_CONFIG[statusKey];
@@ -92,7 +119,7 @@ export default async function EventLayout({
   });
 
   return (
-    <AppShell fullName={fullName} email={email} planSlug={plan.slug}>
+    <AppShell fullName={fullName} email={email} planSlug={plan.slug} orgs={orgs}>
 
       {/* ── Page header ───────────────────────────────────────── */}
       <div className="bg-white border-b border-neutral-100">

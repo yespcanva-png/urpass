@@ -20,7 +20,7 @@ export async function GET(
     .single();
 
   if (!pass) {
-    return NextResponse.redirect(`${APP_URL}/login`, { status: 302 });
+    return NextResponse.json({ error: "Pass not found" }, { status: 404 });
   }
 
   // Apple Wallet .pkpass requires Apple Developer certificates

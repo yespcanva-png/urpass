@@ -207,3 +207,35 @@ describe("cancelSubscription", () => {
     expect(result).toBeUndefined();
   });
 });
+
+describe("createDefaultTicketType", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("stores ticket price in paise (multiplied by 100) for paid events", async () => {
+    let insertedData: Record<string, unknown> | null = null;
+    const supabase = makeSupabase();
+    supabase.single.mockImplementation(async () => {
+      return {
+        data: {
+          organizer_id: "user-123",
+          organization_id: null,
+          attendee_limit: 100,
+          is_paid_event: true,
+          ticket_price: 500, // ₹500
+        },
+        error: null,
+      };
+    });
+    supabase.insert = vi.fn().mockImplementation((data) => {
+      insertedData = data;
+      return Promise.resolve({ error: null });
+    });
+    mockedCreateClient.mockResolvedValue(supabase as never);
+
+    const { createDefaultTicketType } = await import("@/app/actions/ticket-types");
+    await createDefaultTicketType("evt-123");
+
+    expect(insertedData).not.toBeNull();
+    expect((insertedData as { price: number } | null)?.price).toBe(50000); // 500 * 100 = 50000 paise
+  });
+});

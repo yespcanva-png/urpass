@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
+
+const emptySubscribe = () => () => {};
 import {
   Plus,
   Calendar,
@@ -15,7 +17,10 @@ import {
   TrendingUp,
   Users,
   Clock,
+  Building2,
+  AlertCircle,
 } from "lucide-react";
+import { getUserOrganizations } from "@/app/actions/organizations";
 import { createClient } from "@/lib/supabase/client";
 
 interface EventRow {
@@ -24,6 +29,13 @@ interface EventRow {
   venue: string;
   event_date: string;
   status: string;
+}
+
+interface OrgRow {
+  slug: string;
+  name: string;
+  brand_color: string;
+  role: string;
 }
 
 const STATUS_CONFIG: Record<string, { label: string; cls: string; dot: string }> = {
@@ -89,45 +101,65 @@ function EventSkeleton() {
 
 export default function DashboardContent() {
   const [firstName, setFirstName] = useState("");
+  const dateLabel = useSyncExternalStore(emptySubscribe, formatDate, () => "Today");
+  const greeting = useSyncExternalStore(emptySubscribe, getGreeting, () => "Welcome");
   const [planSlug, setPlanSlug] = useState("free");
   const [stats, setStats] = useState({ total: 0, active: 0, passes: 0, checkedIn: 0 });
   const [events, setEvents] = useState<EventRow[]>([]);
+  const [orgs, setOrgs] = useState<OrgRow[]>([]);
+  const [loadError, setLoadError] = useState("");
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
+
     async function load() {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          setLoaded(true);
+          return;
+        }
 
-      const [{ data: profile }, { data: eventRows }, { data: sub }] = await Promise.all([
-        supabase.from("profiles").select("full_name").eq("user_id", user.id).single(),
-        supabase.from("events").select("id, name, venue, event_date, status")
-          .eq("organizer_id", user.id).order("created_at", { ascending: false }),
-        supabase.from("subscriptions").select("plan:plans(slug)").eq("user_id", user.id).eq("status", "active").single(),
-      ]);
+        const [{ data: profile }, { data: eventRows }, { data: sub }, memberships] = await Promise.all([
+          supabase.from("profiles").select("full_name").eq("user_id", user.id).single(),
+          supabase.from("events").select("id, name, venue, event_date, status")
+            .eq("organizer_id", user.id).order("created_at", { ascending: false }),
+          supabase.from("subscriptions").select("plan:plans(slug)").eq("user_id", user.id).eq("status", "active").single(),
+          getUserOrganizations(),
+        ]);
 
-      const allIds = eventRows?.map((e) => e.id) ?? [];
-      const [{ count: totalPasses }, { count: totalCheckedIn }] = await Promise.all([
-        allIds.length
-          ? supabase.from("passes").select("*", { count: "exact", head: true }).in("event_id", allIds)
-          : Promise.resolve({ count: 0 }),
-        allIds.length
-          ? supabase.from("check_ins").select("*", { count: "exact", head: true }).in("event_id", allIds)
-          : Promise.resolve({ count: 0 }),
-      ]);
+        const allIds = eventRows?.map((e) => e.id) ?? [];
+        const [{ count: totalPasses }, { count: totalCheckedIn }] = await Promise.all([
+          allIds.length
+            ? supabase.from("passes").select("*", { count: "exact", head: true }).in("event_id", allIds)
+            : Promise.resolve({ count: 0 }),
+          allIds.length
+            ? supabase.from("check_ins").select("*", { count: "exact", head: true }).in("event_id", allIds)
+            : Promise.resolve({ count: 0 }),
+        ]);
 
-      const slug = (sub?.plan as unknown as { slug: string } | null)?.slug ?? "free";
-      setFirstName(profile?.full_name?.split(" ")[0] ?? "there");
-      setPlanSlug(slug);
-      setStats({
-        total: allIds.length,
-        active: eventRows?.filter((e) => e.status === "active").length ?? 0,
-        passes: totalPasses ?? 0,
-        checkedIn: totalCheckedIn ?? 0,
-      });
-      setEvents((eventRows ?? []).slice(0, 6));
-      setLoaded(true);
+        const slug = (sub?.plan as unknown as { slug: string } | null)?.slug ?? "free";
+        setFirstName(profile?.full_name?.split(" ")[0] ?? "there");
+        setPlanSlug(slug);
+        setStats({
+          total: allIds.length,
+          active: eventRows?.filter((e) => e.status === "active").length ?? 0,
+          passes: totalPasses ?? 0,
+          checkedIn: totalCheckedIn ?? 0,
+        });
+        setEvents((eventRows ?? []).slice(0, 6));
+        setOrgs(
+          (memberships ?? []).map((m) => {
+            return { slug: m.org.slug, name: m.org.name, brand_color: m.org.brand_color, role: m.role };
+          })
+        );
+        setLoaded(true);
+      } catch (error) {
+        console.error("Failed to load dashboard", error);
+        setLoadError("We couldn't load your dashboard data. Refresh the page or sign in again.");
+        setLoaded(true);
+      }
     }
     load();
   }, []);
@@ -152,10 +184,10 @@ export default function DashboardContent() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-xs font-semibold tracking-widest uppercase text-neutral-400 mb-1">
-            {formatDate()}
+            {dateLabel}
           </p>
           <h1 className="text-2xl font-bold tracking-tight text-neutral-900">
-            {getGreeting()}{firstName ? `, ${firstName}` : ""} 👋
+            {greeting}{firstName ? `, ${firstName}` : ""} 👋
           </h1>
           <p className="text-sm text-neutral-400 mt-1">
             Here&apos;s what&apos;s happening across your events
@@ -171,6 +203,13 @@ export default function DashboardContent() {
           New event
         </Link>
       </div>
+
+      {loadError && (
+        <div className="flex items-start gap-3 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+          <p>{loadError}</p>
+        </div>
+      )}
 
       {/* ── Stats grid ───────────────────────────────────────────── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -203,13 +242,74 @@ export default function DashboardContent() {
         </div>
       </div>
 
+      {/* ── Organizations ────────────────────────────────────────── */}
+      {loaded && orgs.length > 0 && (
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-[10px] font-bold tracking-widest uppercase text-neutral-400">Organizations</p>
+            <Link href="/dashboard/organizations" className="flex items-center gap-1 text-xs text-neutral-400 hover:text-brand transition-colors font-medium">
+              View all <ChevronRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {orgs.slice(0, 4).map((org) => (
+              <Link
+                key={org.slug}
+                href={`/org/${org.slug}`}
+                className="flex items-center gap-3 bg-white rounded-2xl px-4 py-3.5 shadow-sm hover:shadow-md transition-all group"
+              >
+                <div
+                  className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-base shrink-0"
+                  style={{ background: org.brand_color }}
+                >
+                  {org.name.charAt(0).toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-neutral-900 truncate group-hover:text-brand transition-colors">{org.name}</p>
+                  <p className="text-xs text-neutral-400 capitalize">{org.role}</p>
+                </div>
+                <ChevronRight className="w-4 h-4 text-neutral-200 group-hover:text-brand transition-colors shrink-0" />
+              </Link>
+            ))}
+            {planSlug !== "free" && (
+              <Link
+                href="/dashboard/organizations/new"
+                className="flex items-center gap-3 bg-white rounded-2xl px-4 py-3.5 shadow-sm hover:shadow-md transition-all border-2 border-dashed border-neutral-200 hover:border-brand/30 group"
+              >
+                <div className="w-10 h-10 rounded-xl border-2 border-dashed border-neutral-200 group-hover:border-brand/30 flex items-center justify-center shrink-0 group-hover:bg-brand-50 transition-all">
+                  <Plus className="w-4 h-4 text-neutral-300 group-hover:text-brand transition-colors" />
+                </div>
+                <p className="text-sm font-medium text-neutral-400 group-hover:text-brand transition-colors">New organization</p>
+              </Link>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Starter+ but no orgs yet — suggest creating one */}
+      {loaded && orgs.length === 0 && planSlug !== "free" && (
+        <Link
+          href="/dashboard/organizations/new"
+          className="flex items-center gap-4 bg-white rounded-2xl px-5 py-4 shadow-sm hover:shadow-md transition-all group border-2 border-dashed border-neutral-200 hover:border-brand/30"
+        >
+          <div className="w-10 h-10 bg-brand-50 border border-brand-100 rounded-xl flex items-center justify-center shrink-0 group-hover:bg-brand group-hover:border-brand transition-all">
+            <Building2 className="w-4 h-4 text-brand group-hover:text-white transition-colors" />
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-neutral-900">Create your organization</p>
+            <p className="text-xs text-neutral-400 mt-0.5">Invite your team and manage events together</p>
+          </div>
+          <ChevronRight className="w-4 h-4 text-neutral-300 group-hover:text-brand transition-colors shrink-0" />
+        </Link>
+      )}
+
       {/* ── Upgrade prompt (free plan only) ──────────────────────── */}
       {loaded && planSlug === "free" && (
         <div
           className="relative overflow-hidden rounded-2xl px-6 py-5 flex items-center justify-between gap-4"
           style={{ background: "linear-gradient(135deg, #6D28D9 0%, #4c1d95 100%)" }}
         >
-          <div className="absolute right-0 top-0 w-48 h-48 opacity-10"
+          <div className="absolute right-0 top-0 w-48 h-48 opacity-10 pointer-events-none"
             style={{ backgroundImage: "radial-gradient(circle, #fff 0%, transparent 70%)", transform: "translate(20%, -30%)" }} />
           <div className="relative">
             <div className="flex items-center gap-2 mb-1">

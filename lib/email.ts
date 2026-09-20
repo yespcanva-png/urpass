@@ -17,6 +17,24 @@ const FROM    = isDev
   ? "URPASS <delivered@resend.dev>"
   : "URPASS <noreply@urpass.space>";
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://urpass.space";
+const OWNER_EMAIL = "srinithin@yespstudio.com";
+
+function escapeHtml(value: unknown) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function formatInrFromPaise(amountPaise?: number | null) {
+  if (amountPaise == null || Number.isNaN(amountPaise)) return "Not available";
+  return `₹${(amountPaise / 100).toLocaleString("en-IN", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+}
 
 async function sendEmail(payload: Parameters<Resend["emails"]["send"]>[0]) {
   const resend = getResend();
@@ -33,6 +51,230 @@ async function sendEmail(payload: Parameters<Resend["emails"]["send"]>[0]) {
     console.error("[email] Resend error:", error);
     throw error;
   }
+}
+
+async function sendOwnerNotification({
+  subject,
+  title,
+  rows,
+}: {
+  subject: string;
+  title: string;
+  rows: Array<[string, unknown]>;
+}) {
+  const safeTitle = escapeHtml(title);
+  await sendEmail({
+    from: FROM,
+    to: OWNER_EMAIL,
+    subject,
+    html: `
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /></head>
+<body style="margin:0;padding:0;background:#f6f4ff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f6f4ff;padding:32px 16px;">
+  <tr><td align="center">
+    <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border:1px solid #ede9fe;border-radius:18px;overflow:hidden;">
+      <tr><td style="background:#6D28D9;padding:22px 26px;">
+        <p style="margin:0 0 4px;font-size:10px;font-weight:800;letter-spacing:3px;color:rgba(255,255,255,0.62);text-transform:uppercase;">URPASS Admin</p>
+        <h1 style="margin:0;font-size:20px;line-height:1.35;color:#ffffff;">${safeTitle}</h1>
+      </td></tr>
+      <tr><td style="padding:24px 26px;">
+        <table width="100%" cellpadding="0" cellspacing="0">
+          ${rows.map(([label, value]) => `
+            <tr>
+              <td style="padding:9px 0;border-bottom:1px solid #f3f4f6;width:38%;font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;">${escapeHtml(label)}</td>
+              <td style="padding:9px 0;border-bottom:1px solid #f3f4f6;font-size:14px;color:#111827;">${escapeHtml(value || "Not provided")}</td>
+            </tr>
+          `).join("")}
+        </table>
+      </td></tr>
+    </table>
+  </td></tr>
+</table>
+</body>
+</html>`.trim(),
+  });
+}
+
+export async function notifyOwnerNewUser({
+  name,
+  email,
+  provider,
+  userId,
+}: {
+  name?: string | null;
+  email?: string | null;
+  provider: "email" | "google";
+  userId?: string | null;
+}) {
+  await sendOwnerNotification({
+    subject: `New URPASS signup: ${email ?? "unknown email"}`,
+    title: "New user signup",
+    rows: [
+      ["Name", name],
+      ["Email", email],
+      ["Signup method", provider],
+      ["User ID", userId],
+      ["Time", new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })],
+    ],
+  });
+}
+
+export async function sendUserWelcomeEmail({
+  to,
+  name,
+}: {
+  to: string;
+  name?: string | null;
+}) {
+  await sendEmail({
+    from: FROM,
+    to,
+    subject: "Welcome to URPASS",
+    html: `
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /></head>
+<body style="margin:0;padding:0;background:#f0effe;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f0effe;padding:40px 16px;">
+  <tr><td align="center">
+    <table width="100%" cellpadding="0" cellspacing="0" style="max-width:460px;background:#ffffff;border-radius:24px;overflow:hidden;box-shadow:0 8px 40px rgba(109,40,217,0.12);">
+      <tr><td style="background:linear-gradient(135deg,#6D28D9 0%,#4c1d95 100%);padding:30px 32px;">
+        <p style="margin:0 0 4px;font-size:10px;font-weight:700;letter-spacing:3px;color:rgba(255,255,255,0.55);text-transform:uppercase;">Welcome</p>
+        <p style="margin:0;font-size:22px;font-weight:800;color:#ffffff;">You&apos;re in. Let&apos;s build your first event.</p>
+      </td></tr>
+      <tr><td style="padding:28px 32px;">
+        <p style="margin:0 0 18px;font-size:14px;color:#374151;line-height:1.6;">
+          Hi <strong>${escapeHtml(name || "there")}</strong>, welcome to URPASS. Your account is ready.
+        </p>
+        <a href="${APP_URL}/dashboard" style="display:block;background:#6D28D9;color:#ffffff;text-align:center;padding:15px 24px;border-radius:12px;font-size:14px;font-weight:700;text-decoration:none;">Open Dashboard &rarr;</a>
+      </td></tr>
+    </table>
+  </td></tr>
+</table>
+</body>
+</html>`.trim(),
+  });
+}
+
+export async function notifyOwnerPaymentAttempt({
+  kind,
+  buyerName,
+  buyerEmail,
+  itemName,
+  amountPaise,
+  orderId,
+}: {
+  kind: "subscription" | "event_pass" | "ticket";
+  buyerName?: string | null;
+  buyerEmail?: string | null;
+  itemName: string;
+  amountPaise?: number | null;
+  orderId?: string | null;
+}) {
+  await sendOwnerNotification({
+    subject: `URPASS payment attempt: ${itemName}`,
+    title: "Payment attempt started",
+    rows: [
+      ["Type", kind],
+      ["Item", itemName],
+      ["Amount", formatInrFromPaise(amountPaise)],
+      ["Buyer name", buyerName],
+      ["Buyer email", buyerEmail],
+      ["Razorpay order", orderId],
+      ["Time", new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })],
+    ],
+  });
+}
+
+export async function notifyOwnerPaymentSuccess({
+  kind,
+  buyerName,
+  buyerEmail,
+  itemName,
+  amountPaise,
+  paymentId,
+  orderId,
+}: {
+  kind: "subscription" | "event_pass" | "ticket";
+  buyerName?: string | null;
+  buyerEmail?: string | null;
+  itemName: string;
+  amountPaise?: number | null;
+  paymentId?: string | null;
+  orderId?: string | null;
+}) {
+  await sendOwnerNotification({
+    subject: `URPASS payment captured: ${itemName}`,
+    title: "Payment successful",
+    rows: [
+      ["Type", kind],
+      ["Item", itemName],
+      ["Amount", formatInrFromPaise(amountPaise)],
+      ["Buyer name", buyerName],
+      ["Buyer email", buyerEmail],
+      ["Razorpay payment", paymentId],
+      ["Razorpay order", orderId],
+      ["Time", new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })],
+    ],
+  });
+}
+
+export async function sendUserPaymentSuccessEmail({
+  to,
+  name,
+  itemName,
+  amountPaise,
+  kind,
+}: {
+  to: string;
+  name?: string | null;
+  itemName: string;
+  amountPaise?: number | null;
+  kind: "subscription" | "event_pass" | "ticket";
+}) {
+  const heading = kind === "subscription"
+    ? "Congratulations, your subscription is active"
+    : kind === "event_pass"
+      ? "Congratulations, your event pass is ready"
+      : "Payment confirmed";
+
+  await sendEmail({
+    from: FROM,
+    to,
+    subject: `${heading} — URPASS`,
+    html: `
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /></head>
+<body style="margin:0;padding:0;background:#f0effe;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f0effe;padding:40px 16px;">
+  <tr><td align="center">
+    <table width="100%" cellpadding="0" cellspacing="0" style="max-width:460px;background:#ffffff;border-radius:24px;overflow:hidden;box-shadow:0 8px 40px rgba(109,40,217,0.12);">
+      <tr><td style="background:linear-gradient(135deg,#16a34a 0%,#15803d 100%);padding:30px 32px;">
+        <p style="margin:0 0 4px;font-size:10px;font-weight:700;letter-spacing:3px;color:rgba(255,255,255,0.58);text-transform:uppercase;">Payment Confirmed</p>
+        <p style="margin:0;font-size:22px;font-weight:800;color:#ffffff;">${escapeHtml(heading)}</p>
+      </td></tr>
+      <tr><td style="padding:28px 32px;">
+        <p style="margin:0 0 18px;font-size:14px;color:#374151;line-height:1.6;">
+          Hi <strong>${escapeHtml(name || "there")}</strong>, thanks for your purchase. Your URPASS payment has been confirmed.
+        </p>
+        <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0fdf4;border-radius:14px;border:1px solid #bbf7d0;margin-bottom:20px;">
+          <tr><td style="padding:18px 22px;">
+            <p style="margin:0 0 4px;font-size:10px;font-weight:700;letter-spacing:2px;color:#6b7280;text-transform:uppercase;">Purchase</p>
+            <p style="margin:0 0 4px;font-size:15px;font-weight:800;color:#111827;">${escapeHtml(itemName)}</p>
+            <p style="margin:0;font-size:13px;color:#15803d;font-weight:700;">${escapeHtml(formatInrFromPaise(amountPaise))}</p>
+          </td></tr>
+        </table>
+        <a href="${APP_URL}/dashboard" style="display:block;background:#6D28D9;color:#ffffff;text-align:center;padding:15px 24px;border-radius:12px;font-size:14px;font-weight:700;text-decoration:none;">Open URPASS &rarr;</a>
+      </td></tr>
+    </table>
+  </td></tr>
+</table>
+</body>
+</html>`.trim(),
+  });
 }
 
 const PASS_TYPE_LABEL: Record<string, string> = {
@@ -403,3 +645,156 @@ export async function sendApprovalEmail({
 </html>`.trim(),
   });
 }
+
+export async function sendEventReminderEmail({
+  to,
+  attendeeName,
+  eventName,
+  eventDate,
+  startTime,
+  venue,
+  passToken,
+  isOnline,
+}: {
+  to: string;
+  attendeeName: string;
+  eventName: string;
+  eventDate: string;
+  startTime?: string | null;
+  venue: string;
+  passToken: string;
+  isOnline?: boolean;
+}) {
+  const formattedDate = new Date(eventDate).toLocaleDateString("en-IN", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
+  const passUrl = `${APP_URL}/pass/${passToken}`;
+  const qrSrc = qrUrl(passUrl, 180);
+  const timeStr = startTime ? ` at ${startTime}` : "";
+
+  await sendEmail({
+    from: FROM,
+    to,
+    subject: `Reminder: ${eventName} is coming up soon!`,
+    html: `
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /></head>
+<body style="margin:0;padding:0;background:#f0effe;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f0effe;padding:40px 16px;">
+  <tr><td align="center">
+    <p style="margin:0 0 20px;font-size:11px;font-weight:700;letter-spacing:4px;color:#9333ea;text-transform:uppercase;">URPASS</p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="max-width:460px;background:#ffffff;border-radius:24px;overflow:hidden;box-shadow:0 8px 40px rgba(109,40,217,0.12);">
+      <tr>
+        <td style="background:linear-gradient(135deg,#6D28D9 0%,#4c1d95 100%);padding:30px 32px;">
+          <p style="margin:0 0 4px;font-size:10px;font-weight:700;letter-spacing:3px;color:rgba(255,255,255,0.55);text-transform:uppercase;">Event Reminder</p>
+          <p style="margin:0;font-size:22px;font-weight:800;color:#ffffff;">See you soon at ${escapeHtml(eventName)}</p>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:28px 32px;">
+          <p style="margin:0 0 18px;font-size:14px;color:#374151;line-height:1.6;">
+            Hi <strong>${escapeHtml(attendeeName)}</strong>, just a quick reminder that <strong>${escapeHtml(eventName)}</strong> is taking place on <strong>${formattedDate}${timeStr}</strong>.
+          </p>
+
+          <table width="100%" cellpadding="0" cellspacing="0" style="background:#faf5ff;border-radius:14px;border:1px solid #ede9fe;margin-bottom:20px;">
+            <tr>
+              <td style="padding:18px 22px;">
+                <p style="margin:0 0 4px;font-size:10px;font-weight:700;letter-spacing:2px;color:#9ca3af;text-transform:uppercase;">When &amp; Where</p>
+                <p style="margin:0 0 4px;font-size:15px;font-weight:800;color:#111827;">${formattedDate}${timeStr}</p>
+                <p style="margin:0;font-size:13px;color:#6b7280;">&#128205; ${escapeHtml(venue)}</p>
+              </td>
+            </tr>
+          </table>
+
+          <div style="text-align:center;margin:24px 0 20px;">
+            <p style="margin:0 0 10px;font-size:12px;font-weight:600;color:#6b7280;">Your Entry Pass</p>
+            <table cellpadding="0" cellspacing="0" style="margin:0 auto;border:1px solid #e5e7eb;border-radius:14px;overflow:hidden;">
+              <tr>
+                <td style="padding:12px;background:#ffffff;">
+                  <img src="${qrSrc}" width="160" height="160" alt="Entry QR Code" style="display:block;" />
+                </td>
+              </tr>
+            </table>
+          </div>
+
+          <a href="${passUrl}" style="display:block;background:#6D28D9;color:#ffffff;text-align:center;padding:15px 24px;border-radius:12px;font-size:14px;font-weight:700;text-decoration:none;">
+            ${isOnline ? "Access Live Pass & Meeting →" : "Open Digital Pass →"}
+          </a>
+        </td>
+      </tr>
+      <tr>
+        <td style="border-top:1px solid #f3f4f6;padding:16px 32px;background:#fafafa;border-radius:0 0 24px 24px;text-align:center;">
+          <p style="margin:0;font-size:11px;color:#d1d5db;">Powered by URPASS &middot; <a href="${APP_URL}" style="color:#a78bfa;text-decoration:none;">urpass.space</a></p>
+        </td>
+      </tr>
+    </table>
+  </td></tr>
+</table>
+</body>
+</html>`.trim(),
+  });
+}
+
+export async function sendPostEventThankYouEmail({
+  to,
+  attendeeName,
+  eventName,
+  eventId,
+}: {
+  to: string;
+  attendeeName: string;
+  eventName: string;
+  eventId: string;
+}) {
+  const feedbackUrl = `${APP_URL}/feedback?event=${eventId}`;
+
+  await sendEmail({
+    from: FROM,
+    to,
+    subject: `Thank you for attending ${eventName}!`,
+    html: `
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /></head>
+<body style="margin:0;padding:0;background:#f0effe;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f0effe;padding:40px 16px;">
+  <tr><td align="center">
+    <p style="margin:0 0 20px;font-size:11px;font-weight:700;letter-spacing:4px;color:#9333ea;text-transform:uppercase;">URPASS</p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="max-width:460px;background:#ffffff;border-radius:24px;overflow:hidden;box-shadow:0 8px 40px rgba(109,40,217,0.12);">
+      <tr>
+        <td style="background:linear-gradient(135deg,#6D28D9 0%,#4c1d95 100%);padding:30px 32px;">
+          <p style="margin:0 0 4px;font-size:10px;font-weight:700;letter-spacing:3px;color:rgba(255,255,255,0.55);text-transform:uppercase;">Thank You</p>
+          <p style="margin:0;font-size:22px;font-weight:800;color:#ffffff;">Thank you for attending!</p>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:28px 32px;">
+          <p style="margin:0 0 16px;font-size:14px;color:#374151;line-height:1.6;">
+            Hi <strong>${escapeHtml(attendeeName)}</strong>, thank you for being a part of <strong>${escapeHtml(eventName)}</strong>.
+          </p>
+          <p style="margin:0 0 22px;font-size:14px;color:#4b5563;line-height:1.6;">
+            We hope you had an inspiring experience! How was your time at the event? We&apos;d love to hear your feedback and suggestions.
+          </p>
+          <a href="${feedbackUrl}" style="display:block;background:#6D28D9;color:#ffffff;text-align:center;padding:15px 24px;border-radius:12px;font-size:14px;font-weight:700;text-decoration:none;">
+            Share Event Feedback &rarr;
+          </a>
+        </td>
+      </tr>
+      <tr>
+        <td style="border-top:1px solid #f3f4f6;padding:16px 32px;background:#fafafa;border-radius:0 0 24px 24px;text-align:center;">
+          <p style="margin:0;font-size:11px;color:#d1d5db;">Powered by URPASS &middot; <a href="${APP_URL}" style="color:#a78bfa;text-decoration:none;">urpass.space</a></p>
+        </td>
+      </tr>
+    </table>
+  </td></tr>
+</table>
+</body>
+</html>`.trim(),
+  });
+}
+

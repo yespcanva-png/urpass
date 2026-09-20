@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { sendWebhooks } from "@/lib/webhooks";
+import { recordApiUsage } from "@/lib/api-usage";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +16,7 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json().catch(() => null);
-  const { passToken, eventId } = body ?? {};
+  const { passToken, eventId, gateId, checkInMethod } = body ?? {};
 
   if (!passToken || !eventId) {
     return NextResponse.json({ error: "Missing passToken or eventId" }, { status: 400 });
@@ -49,16 +51,52 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Event not found or unauthorized" }, { status: 403 });
   }
 
+  // If the scanned payload is a full URL (e.g. from email QR code https://urpass.space/pass/<token>),
+  // extract just the raw pass_token.
+  const cleanPassToken = typeof passToken === "string"
+    ? passToken.trim().replace(/^https?:\/\/[^\/]+\/pass\//, "")
+    : passToken;
+
   // Fetch pass by token, scoped to this event
   const { data: pass } = await supabase
     .from("passes")
-    .select("id, pass_token, pass_type, status, attendee_id, event_id")
-    .eq("pass_token", passToken)
+    .select("id, pass_token, pass_type, status, attendee_id, event_id, ticket_type_id")
+    .eq("pass_token", cleanPassToken)
     .eq("event_id", eventId)
     .single();
 
   if (!pass) {
     return NextResponse.json({ error: "Invalid pass — not found for this event" }, { status: 404 });
+  }
+
+  // If a gate is selected, enforce zone access control if gate has an assigned zone
+  if (gateId) {
+    const { data: gate } = await supabase
+      .from("scanner_gates")
+      .select("id, name, zone_id")
+      .eq("id", gateId)
+      .eq("event_id", eventId)
+      .maybeSingle();
+
+    if (gate?.zone_id && pass.ticket_type_id) {
+      const { data: zoneAccess } = await supabase
+        .from("ticket_zone_access")
+        .select("id")
+        .eq("ticket_type_id", pass.ticket_type_id)
+        .eq("zone_id", gate.zone_id)
+        .maybeSingle();
+
+      if (!zoneAccess) {
+        return NextResponse.json(
+          {
+            error: "This pass is not authorized for this gate / zone.",
+            accessDenied: true,
+            passType: pass.pass_type,
+          },
+          { status: 403 }
+        );
+      }
+    }
   }
 
   if (pass.status === "checked_in") {
@@ -96,6 +134,8 @@ export async function POST(req: NextRequest) {
     event_id: eventId,
     attendee_id: pass.attendee_id,
     checked_in_by: user.id,
+    gate_id: gateId || null,
+    check_in_method: checkInMethod || "qr",
   });
 
   if (ciError) {
@@ -121,6 +161,18 @@ export async function POST(req: NextRequest) {
     .from("attendees")
     .update({ pass_status: "checked_in" })
     .eq("id", pass.attendee_id);
+
+  // Fire webhook — non-blocking
+  sendWebhooks(event.organizer_id, "checkin.completed", {
+    attendee_id: pass.attendee_id,
+    event_id: eventId,
+    name: attendee.name,
+    email: attendee.email,
+    pass_type: attendee.pass_type,
+    checked_in_at: new Date().toISOString(),
+  }).catch(() => {});
+
+  void recordApiUsage(event.organizer_id, "check_ins");
 
   return NextResponse.json({
     success: true,

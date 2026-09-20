@@ -25,31 +25,34 @@ function randomBetween(a: number, b: number) {
   return a + Math.random() * (b - a);
 }
 
-export default function ProCelebration() {
+function generateParticles(): Particle[] {
+  return Array.from({ length: 28 }, (_, i) => {
+    const angle = (i / 28) * 360 + randomBetween(-8, 8);
+    const rad = (angle * Math.PI) / 180;
+    const distance = randomBetween(120, 280);
+    return {
+      id: i,
+      tx: `${Math.cos(rad) * distance}px`,
+      ty: `${Math.sin(rad) * distance}px`,
+      size: randomBetween(5, 12),
+      color: COLORS[i % COLORS.length],
+      duration: randomBetween(700, 1300),
+      delay: randomBetween(0, 180),
+      top: "50%",
+      left: "50%",
+    };
+  });
+}
+
+export default function UpgradeCelebration() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const isUpgraded = searchParams.get("upgraded") === "true";
+  const planName = searchParams.get("plan") ?? "Pro";
   const [exiting, setExiting] = useState(false);
   const [dismissed, setDismissed] = useState(false);
 
-  const [particles] = useState<Particle[]>(() =>
-    Array.from({ length: 28 }, (_, i) => {
-      const angle = (i / 28) * 360 + randomBetween(-8, 8);
-      const rad = (angle * Math.PI) / 180;
-      const distance = randomBetween(120, 280);
-      return {
-        id: i,
-        tx: `${Math.cos(rad) * distance}px`,
-        ty: `${Math.sin(rad) * distance}px`,
-        size: randomBetween(5, 12),
-        color: COLORS[i % COLORS.length],
-        duration: randomBetween(700, 1300),
-        delay: randomBetween(0, 180),
-        top: "50%",
-        left: "50%",
-      };
-    })
-  );
+  const [particles] = useState<Particle[]>(generateParticles);
 
   useEffect(() => {
     if (!isUpgraded || dismissed) return;
@@ -77,44 +80,35 @@ export default function ProCelebration() {
         transition: "background 0.5s ease, backdrop-filter 0.5s ease",
       }}
     >
-      {/* Expanding rings */}
       {[0, 150, 300].map((delay) => (
         <div
           key={delay}
           className="absolute rounded-full border"
           style={{
-            width: 80,
-            height: 80,
-            top: "50%",
-            left: "50%",
+            width: 80, height: 80,
+            top: "50%", left: "50%",
             borderColor: "rgba(245, 158, 11, 0.6)",
             animation: `ring-expand 1.2s cubic-bezier(0.2, 0, 0.8, 1) ${delay}ms both`,
           }}
         />
       ))}
 
-      {/* Particles */}
       {particles.map((p) => (
         <div
           key={p.id}
           className="absolute rounded-full pointer-events-none"
           style={{
-            width: p.size,
-            height: p.size,
-            top: p.top,
-            left: p.left,
-            marginTop: -p.size / 2,
-            marginLeft: -p.size / 2,
+            width: p.size, height: p.size,
+            top: p.top, left: p.left,
+            marginTop: -p.size / 2, marginLeft: -p.size / 2,
             background: p.color,
             boxShadow: `0 0 ${p.size * 2}px ${p.color}80`,
-            "--tx": p.tx,
-            "--ty": p.ty,
+            "--tx": p.tx, "--ty": p.ty,
             animation: `particle-fly ${p.duration}ms cubic-bezier(0.2, 0, 0.6, 1) ${p.delay}ms both`,
           } as React.CSSProperties}
         />
       ))}
 
-      {/* Main card */}
       <div
         className="relative flex flex-col items-center gap-6 px-10 py-10 rounded-3xl mx-4 max-w-sm w-full"
         style={{
@@ -126,16 +120,11 @@ export default function ProCelebration() {
             : "pro-card-in 0.65s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both",
         }}
       >
-        {/* Glow overlay inside card */}
         <div
           className="absolute inset-0 rounded-3xl pointer-events-none opacity-20"
-          style={{
-            backgroundImage:
-              "radial-gradient(ellipse 70% 50% at 50% 0%, #F59E0B, transparent)",
-          }}
+          style={{ backgroundImage: "radial-gradient(ellipse 70% 50% at 50% 0%, #F59E0B, transparent)" }}
         />
 
-        {/* Crown icon */}
         <div
           className="relative w-20 h-20 rounded-2xl flex items-center justify-center"
           style={{
@@ -146,50 +135,28 @@ export default function ProCelebration() {
           <Crown className="w-10 h-10 text-white" />
         </div>
 
-        {/* Text */}
         <div className="relative text-center flex flex-col items-center gap-2">
-          <p
-            className="text-[10px] font-bold tracking-widest uppercase"
-            style={{ color: "#F59E0B" }}
-          >
+          <p className="text-[10px] font-bold tracking-widest uppercase" style={{ color: "#F59E0B" }}>
             Plan upgraded
           </p>
           <div className="flex items-center gap-2.5">
-            <Star
-              className="w-4 h-4 shrink-0"
-              style={{
-                color: "#F59E0B",
-                animation: "star-spin 2s linear infinite",
-              }}
-            />
-            <span className="text-2xl font-black tracking-tight text-white">
-              PRO UNLOCKED
+            <Star className="w-4 h-4 shrink-0" style={{ color: "#F59E0B", animation: "star-spin 2s linear infinite" }} />
+            <span className="text-2xl font-black tracking-tight text-white uppercase">
+              {planName} unlocked
             </span>
-            <Star
-              className="w-4 h-4 shrink-0"
-              style={{
-                color: "#F59E0B",
-                animation: "star-spin 2s linear infinite 1s",
-              }}
-            />
+            <Star className="w-4 h-4 shrink-0" style={{ color: "#F59E0B", animation: "star-spin 2s linear infinite 1s" }} />
           </div>
           <p className="text-xs text-white/40 leading-relaxed mt-1">
-            Unlimited events · 2 000 attendees · Custom branding · Data export
+            Welcome to {planName}. Your new limits are active.
           </p>
         </div>
 
-        {/* Gold PRO badge */}
         <div
           className="relative flex items-center gap-2 px-5 py-2 rounded-full border"
-          style={{
-            background: "linear-gradient(135deg, #FEF3C7, #FDE68A)",
-            borderColor: "#F59E0B40",
-          }}
+          style={{ background: "linear-gradient(135deg, #FEF3C7, #FDE68A)", borderColor: "#F59E0B40" }}
         >
           <Crown className="w-3.5 h-3.5 text-amber-700" />
-          <span className="text-xs font-black tracking-widest uppercase text-amber-700">
-            PRO
-          </span>
+          <span className="text-xs font-black tracking-widest uppercase text-amber-700">{planName}</span>
         </div>
       </div>
     </div>

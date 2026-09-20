@@ -3,9 +3,10 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, AlertTriangle, Settings2 } from "lucide-react";
+import { Loader2, AlertTriangle, Settings2, CreditCard } from "lucide-react";
 import { orgSchema, type OrgInput } from "@/lib/validations/organization";
 import { updateOrganization, deleteOrganization } from "@/app/actions/organizations";
+import OrgRazorpayCard from "@/components/org/OrgRazorpayCard";
 import type { Organization, OrgRole } from "@/types";
 
 const inputCls =
@@ -24,13 +25,25 @@ function Field({ label, error, children, hint }: {
   );
 }
 
+function SectionHeader({ icon: Icon, title }: { icon: React.ComponentType<{ className?: string }>; title: string }) {
+  return (
+    <div className="flex items-center gap-3 pb-4 border-b border-neutral-100">
+      <div className="w-8 h-8 rounded-xl bg-brand-50 border border-brand-100 flex items-center justify-center">
+        <Icon className="w-4 h-4 text-brand" />
+      </div>
+      <p className="text-sm font-bold text-neutral-900">{title}</p>
+    </div>
+  );
+}
+
 interface Props {
   org: Organization;
   orgSlug: string;
   userRole: OrgRole;
+  existingPaymentKeyId: string | null;
 }
 
-export default function OrgSettingsClient({ org, orgSlug, userRole }: Props) {
+export default function OrgSettingsClient({ org, orgSlug, userRole, existingPaymentKeyId }: Props) {
   const [serverError, setServerError] = useState("");
   const [saved, setSaved] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState("");
@@ -67,26 +80,22 @@ export default function OrgSettingsClient({ org, orgSlug, userRole }: Props) {
       return;
     }
     setDeleting(true);
-    const result = await deleteOrganization(org.id, orgSlug);
+    const result = await deleteOrganization(org.id);
     if (result?.error) { setDeleteError(result.error); setDeleting(false); }
   }
 
   return (
     <div className="space-y-6">
-      {/* General settings */}
+
+      {/* ── General settings ──────────────────────────────── */}
       <form onSubmit={handleSubmit(onSubmit)} className="bg-white rounded-2xl shadow-sm p-6 space-y-5">
-        <div className="flex items-center gap-3 pb-4 border-b border-neutral-100">
-          <div className="w-8 h-8 rounded-xl bg-brand-50 border border-brand-100 flex items-center justify-center">
-            <Settings2 className="w-4 h-4 text-brand" />
-          </div>
-          <p className="text-sm font-bold text-neutral-900">General</p>
-        </div>
+        <SectionHeader icon={Settings2} title="General" />
 
         <Field label="Organization name *" error={errors.name?.message}>
           <input {...register("name")} className={inputCls} />
         </Field>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Field label="Website" error={errors.website?.message}>
             <input {...register("website")} placeholder="https://example.com" className={inputCls} />
           </Field>
@@ -99,9 +108,10 @@ export default function OrgSettingsClient({ org, orgSlug, userRole }: Props) {
           <input {...register("contact_phone")} className={inputCls} />
         </Field>
 
-        <Field label="Brand color" hint="Accent color used across the organization">
+        <Field label="Brand color" hint="Accent color used across org events and passes">
           <div className="flex items-center gap-3">
-            <input {...register("brand_color")} type="color" className="w-10 h-10 rounded-lg border border-neutral-200 cursor-pointer p-0.5" />
+            <input {...register("brand_color")} type="color"
+              className="w-10 h-10 rounded-lg border border-neutral-200 cursor-pointer p-0.5" />
             <input {...register("brand_color")} placeholder="#6D28D9" className={inputCls} />
           </div>
         </Field>
@@ -120,7 +130,17 @@ export default function OrgSettingsClient({ org, orgSlug, userRole }: Props) {
         </button>
       </form>
 
-      {/* Danger zone — owner only */}
+      {/* ── Payment integration ───────────────────────────── */}
+      <div className="bg-white rounded-2xl shadow-sm p-6 space-y-4">
+        <SectionHeader icon={CreditCard} title="Payment integration" />
+        <p className="text-xs text-neutral-500 leading-relaxed">
+          Connect Razorpay to accept payments for all events in this organization.
+          Revenue goes directly to your account — UrPass never holds your money.
+        </p>
+        <OrgRazorpayCard orgId={org.id} orgSlug={orgSlug} existingKeyId={existingPaymentKeyId} />
+      </div>
+
+      {/* ── Danger zone — owner only ──────────────────────── */}
       {userRole === "owner" && (
         <div className="bg-white rounded-2xl shadow-sm p-6 space-y-4 border border-red-100">
           <div className="flex items-center gap-3 pb-4 border-b border-red-100">

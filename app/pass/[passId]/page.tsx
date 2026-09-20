@@ -1,12 +1,23 @@
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { notFound } from "next/navigation";
-import { CalendarDays, MapPin, CheckCircle, Ticket } from "lucide-react";
+import { CalendarDays, MapPin, CheckCircle, Ticket, Wifi, ExternalLink } from "lucide-react";
 import PassQR from "@/components/pass/PassQR";
 import { getUserPlan } from "@/lib/plan";
 import DownloadPassButton from "@/components/pass/DownloadPassButton";
 import AutoDownload from "@/components/pass/AutoDownload";
+import WhatsAppShareButton from "@/components/pass/WhatsAppShareButton";
 import { Suspense } from "react";
+import { getSupabaseUrl } from "@/lib/supabase/config";
+
+function adminClient() {
+  return createAdminClient(
+    getSupabaseUrl(),
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  );
+}
 
 function darkenHex(hex: string, amount = 40): string {
   const clean = hex.replace("#", "");
@@ -56,15 +67,22 @@ const passTypeCls: Record<string, string> = {
   organizer: "bg-emerald-400/10 text-emerald-200 border-emerald-300/25",
 };
 
+const PLATFORM_LABEL: Record<string, string> = {
+  zoom: "Zoom Meeting",
+  google_meet: "Google Meet",
+  teams: "Microsoft Teams",
+  custom: "Online Meeting",
+};
+
 export default async function PassPage({
   params,
 }: {
   params: Promise<{ passId: string }>;
 }) {
   const { passId: passToken } = await params;
-  const supabase = await createClient();
+  const admin = adminClient();
 
-  const { data: pass } = await supabase
+  const { data: pass } = await admin
     .from("passes")
     .select("pass_token, pass_type, status, attendee_id, event_id")
     .eq("pass_token", passToken)
@@ -73,32 +91,24 @@ export default async function PassPage({
   if (!pass) notFound();
 
   const [{ data: attendee }, { data: event }] = await Promise.all([
-    supabase
+    admin
       .from("attendees")
-      .select("name, email")
+      .select("name, email, phone, application_status")
       .eq("id", pass.attendee_id)
       .single(),
-    supabase
+    admin
       .from("events")
-      .select("name, event_date, start_time, end_time, venue")
+      .select("name, event_date, start_time, end_time, venue, event_type, meeting_url, meeting_platform, organizer_id")
       .eq("id", pass.event_id)
       .single(),
   ]);
 
   if (!attendee || !event) notFound();
-
-  // Fetch organizer plan + branding
-  const { data: eventOrg } = await supabase
-    .from("events")
-    .select("organizer_id")
-    .eq("id", pass.event_id)
-    .single();
-
-  const organizerId = eventOrg?.organizer_id ?? null;
+  const organizerId = event.organizer_id as string | null ?? null;
   const [plan, { data: orgProfile }] = await Promise.all([
-    organizerId ? getUserPlan(supabase, organizerId) : Promise.resolve(null),
+    organizerId ? getUserPlan(admin, organizerId) : Promise.resolve(null),
     organizerId
-      ? supabase
+      ? admin
           .from("profiles")
           .select("org_name, brand_color, org_logo_url, hide_urpass_branding")
           .eq("user_id", organizerId)
@@ -114,6 +124,10 @@ export default async function PassPage({
   const orgLogoUrl = (isPro && orgProfile?.org_logo_url) ? orgProfile.org_logo_url : null;
 
   const isCheckedIn = pass.status === "checked_in";
+  const isOnline = event.event_type === "online";
+  const isHybrid = event.event_type === "hybrid";
+  const hasJoinLink = (isOnline || isHybrid) && !!event.meeting_url && attendee.application_status === "approved";
+
   const formattedDate = new Date(event.event_date).toLocaleDateString("en-IN", {
     weekday: "long",
     day: "numeric",
@@ -128,6 +142,20 @@ export default async function PassPage({
       ?.join("-") ?? pass.pass_token.slice(0, 8);
 
   const typeCls = passTypeCls[pass.pass_type] ?? passTypeCls.participant;
+
+  const platformLabel = event.meeting_platform
+    ? PLATFORM_LABEL[event.meeting_platform] ?? "Online Meeting"
+    : "Online Meeting";
+
+  // Determine status strip text based on event type
+  function getStatusText() {
+    if (isCheckedIn) return null; // handled separately
+    if (isOnline) return "Approved · Use Join button below";
+    if (isHybrid) return "Valid · QR for entry or join online";
+    return "Valid · Show at entrance";
+  }
+
+  const statusText = getStatusText();
 
   return (
     <div
@@ -195,10 +223,19 @@ export default async function PassPage({
                   {formattedDate} &middot; {event.start_time}–{event.end_time}
                 </span>
               </div>
-              <div className="flex items-center gap-2 text-xs text-purple-200">
-                <MapPin className="w-3.5 h-3.5 shrink-0" />
-                <span>{event.venue}</span>
-              </div>
+              {/* Show venue only if not purely online */}
+              {!isOnline && event.venue && (
+                <div className="flex items-center gap-2 text-xs text-purple-200">
+                  <MapPin className="w-3.5 h-3.5 shrink-0" />
+                  <span>{event.venue}</span>
+                </div>
+              )}
+              {isOnline && (
+                <div className="flex items-center gap-2 text-xs text-purple-200">
+                  <Wifi className="w-3.5 h-3.5 shrink-0" />
+                  <span>{platformLabel}</span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -220,14 +257,28 @@ export default async function PassPage({
               <p className="text-xs text-neutral-400 mt-0.5">{attendee.email}</p>
             </div>
 
-            {/* QR code */}
-            <PassQR value={pass.pass_token} size={164} />
+            {/* QR section — for physical and hybrid events */}
+            {!isOnline && (
+              <>
+                <PassQR value={pass.pass_token} size={164} />
+                <p className="text-[10px] text-neutral-300 font-mono tracking-widest">
+                  {shortCode.toUpperCase()}
+                </p>
+              </>
+            )}
 
-            <p className="text-[10px] text-neutral-300 font-mono tracking-widest">
-              {shortCode.toUpperCase()}
-            </p>
+            {/* Online-only icon area — replaces QR */}
+            {isOnline && (
+              <div className="w-full flex flex-col items-center gap-3 py-4">
+                <div className="w-16 h-16 rounded-2xl bg-brand-50 border border-brand-100 flex items-center justify-center">
+                  <Wifi className="w-8 h-8 text-brand" />
+                </div>
+                <p className="text-sm font-semibold text-neutral-900">Online Event</p>
+                <p className="text-xs text-neutral-400">{platformLabel}</p>
+              </div>
+            )}
 
-            {/* Status */}
+            {/* Status strip */}
             {isCheckedIn ? (
               <div className="w-full flex items-center gap-2 bg-green-50 border border-green-100 rounded-xl px-3 py-2.5 justify-center">
                 <CheckCircle className="w-4 h-4 text-green-600 shrink-0" />
@@ -237,7 +288,7 @@ export default async function PassPage({
               <div className="w-full flex items-center gap-2 bg-brand-50 border border-brand-100 rounded-xl px-3 py-2.5 justify-center">
                 <span className="w-2 h-2 rounded-full bg-brand animate-pulse shrink-0" />
                 <span className="text-xs font-semibold text-brand">
-                  Valid &middot; Show at entrance
+                  {statusText}
                 </span>
               </div>
             )}
@@ -249,7 +300,29 @@ export default async function PassPage({
         <p className="text-xs text-neutral-300 mt-12 pass-in-2">Powered by URPASS</p>
       )}
 
-      <div className="mt-6 pass-in-3">
+      {/* Join Event button — for online and hybrid events */}
+      {hasJoinLink && (
+        <a
+          href={`/api/join/${pass.pass_token}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-center gap-2 w-full max-w-sm py-4 rounded-2xl text-base font-bold text-white hover:opacity-90 transition-opacity mt-6"
+          style={{ background: "linear-gradient(135deg, #6D28D9 0%, #4c1d95 100%)" }}
+        >
+          <ExternalLink className="w-5 h-5" />
+          Join Event
+        </a>
+      )}
+
+      <div className="mt-6 flex flex-col items-center gap-3 w-full max-w-sm pass-in-3">
+        <WhatsAppShareButton
+          eventName={event.name}
+          eventDate={formattedDate}
+          venue={event.venue ?? "Online"}
+          passToken={pass.pass_token}
+          attendeeName={attendee.name}
+          phone={attendee.phone}
+        />
         <DownloadPassButton
           passToken={pass.pass_token}
           fileName={`${event.name.replace(/\s+/g, "-").toLowerCase()}-pass.png`}

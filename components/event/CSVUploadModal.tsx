@@ -18,9 +18,13 @@ type ParsedRow   = AttendeeInput & { _valid: boolean; _error?: string };
 type ImportResult = { added: number; skipped: number; error?: string };
 
 function parseCSV(text: string): ParsedRow[] {
-  const lines = text.trim().split(/\r?\n/);
+  const cleanText = text.replace(/^\uFEFF/, "").trim();
+  const lines = cleanText.split(/\r?\n/);
   if (lines.length < 2) return [];
-  const headers = lines[0].split(",").map((h) => h.trim().toLowerCase().replace(/['"]/g, ""));
+  const headers = lines[0]
+    .replace(/^\uFEFF/, "")
+    .split(",")
+    .map((h) => h.trim().toLowerCase().replace(/['"]/g, ""));
   return lines.slice(1).map((line) => {
     const cols: string[] = [];
     let inQuote = false, cur = "";

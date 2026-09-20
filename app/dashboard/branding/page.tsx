@@ -83,7 +83,7 @@ export default async function BrandingPage() {
             org_logo_url: profile?.org_logo_url ?? "",
             hide_urpass_branding: profile?.hide_urpass_branding ?? false,
           }}
-          isPro={plan.slug === "pro"}
+          isPro={plan.canUse("custom_pass_design")}
           canHideBranding={plan.canRemoveBranding}
         />
       </div>

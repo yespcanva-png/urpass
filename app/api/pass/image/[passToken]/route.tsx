@@ -1,6 +1,7 @@
 import { ImageResponse } from "next/og";
 import { createClient } from "@supabase/supabase-js";
 import QRCode from "qrcode";
+import { getSupabaseUrl } from "@/lib/supabase/config";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -27,7 +28,7 @@ export async function GET(
 
   // Service-role client bypasses RLS (server only, key never sent to client)
   const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    getSupabaseUrl(),
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 
@@ -74,7 +75,7 @@ export async function GET(
 
     const planSlug = (sub?.plan as unknown as { slug: string } | null)?.slug ?? "free";
     showBranding = planSlug === "free";
-    const isPro = planSlug === "pro";
+    const isPro = ["pro", "business", "campus", "enterprise"].includes(planSlug);
     if (orgProfile?.brand_color && isPro) brandColor = orgProfile.brand_color;
     if (orgProfile?.org_name && isPro) orgName = orgProfile.org_name;
   }

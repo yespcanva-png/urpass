@@ -6,7 +6,13 @@ export const eventSchema = z.object({
   event_date: z.string().min(1, "Event date is required"),
   start_time: z.string().min(1, "Start time is required"),
   end_time: z.string().min(1, "End time is required"),
-  venue: z.string().min(2, "Venue must be at least 2 characters"),
+  venue: z.string().max(500),
+  event_type: z.enum(["physical", "online", "hybrid"]),
+  meeting_url: z.string().url("Enter a valid URL").optional().nullable(),
+  meeting_platform: z
+    .enum(["zoom", "google_meet", "teams", "custom"])
+    .optional()
+    .nullable(),
   attendee_limit: z
     .number({ invalid_type_error: "Must be a number" })
     .int()

@@ -8,6 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Loader2, Mail, Lock, User, Ticket, AlertCircle, CheckCircle, ArrowLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { sendSignupNotifications } from "@/app/actions/notifications";
 
 const schema = z.object({
   full_name: z.string().min(2, "Name must be at least 2 characters"),
@@ -46,7 +47,7 @@ export default function SignupPage() {
   async function onSubmit(data: FormData) {
     setServerError("");
     const supabase = createClient();
-    const { error } = await supabase.auth.signUp({
+    const { data: signUpData, error } = await supabase.auth.signUp({
       email: data.email,
       password: data.password,
       options: { data: { full_name: data.full_name } },
@@ -55,12 +56,20 @@ export default function SignupPage() {
       setServerError(error.message);
       return;
     }
+    sendSignupNotifications({
+      name: data.full_name,
+      email: data.email,
+      provider: "email",
+      userId: signUpData.user?.id,
+    }).catch((err: unknown) => console.error("[email]", err));
     setSuccess(true);
-    setTimeout(() => router.push("/dashboard"), 1500);
+    setTimeout(() => router.push("/onboarding"), 1500);
   }
 
   function handleGoogleSignup() {
     setGoogleLoading(true);
+    // OAuth flow requires browser navigation to server API endpoint
+    // eslint-disable-next-line @next/next/no-location-assign-relative-destination
     window.location.href = "/api/auth/google/redirect";
   }
 

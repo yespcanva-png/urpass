@@ -11,6 +11,7 @@ import AddAttendeeModal from "./AddAttendeeModal";
 import CSVUploadModal from "./CSVUploadModal";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import WhatsAppShareButton from "@/components/pass/WhatsAppShareButton";
 
 type Status    = "pending" | "approved" | "rejected";
 type FilterTab = "all" | Status;
@@ -29,6 +30,7 @@ interface Attendee {
 interface Props {
   attendees: Attendee[];
   eventId: string;
+  eventName?: string;
   attendeeLimit: number;
   applySlug?: string | null;
   applicationEnabled?: boolean;
@@ -86,6 +88,7 @@ function Btn({ onClick, pending, variant, children }: {
 export default function AttendeeTable({
   attendees: initial,
   eventId,
+  eventName,
   attendeeLimit,
   applySlug,
   applicationEnabled,
@@ -429,20 +432,31 @@ export default function AttendeeTable({
                                   </Btn>
                                 )}
                                 {passTokens[a.id] && (
-                                  <button title="Download pass as PNG"
-                                    onClick={async () => {
-                                      const token = passTokens[a.id];
-                                      const res = await fetch(`/api/pass/image/${token}`);
-                                      if (!res.ok) return;
-                                      const blob = await res.blob();
-                                      const url  = URL.createObjectURL(blob);
-                                      const dl   = document.createElement("a");
-                                      dl.href = url; dl.download = `pass-${a.name.replace(/\s+/g, "-").toLowerCase()}.png`; dl.click();
-                                      URL.revokeObjectURL(url);
-                                    }}
-                                    className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-xl border border-neutral-200 text-neutral-500 hover:bg-neutral-50 hover:text-neutral-900 transition-all">
-                                    <Download className="w-3 h-3" />
-                                  </button>
+                                  <>
+                                    <WhatsAppShareButton
+                                      eventName={eventName || "Event"}
+                                      eventDate="the upcoming event"
+                                      venue="the venue"
+                                      passToken={passTokens[a.id]}
+                                      attendeeName={a.name}
+                                      phone={a.phone}
+                                      variant="icon"
+                                    />
+                                    <button title="Download pass as PNG"
+                                      onClick={async () => {
+                                        const token = passTokens[a.id];
+                                        const res = await fetch(`/api/pass/image/${token}`);
+                                        if (!res.ok) return;
+                                        const blob = await res.blob();
+                                        const url  = URL.createObjectURL(blob);
+                                        const dl   = document.createElement("a");
+                                        dl.href = url; dl.download = `pass-${a.name.replace(/\s+/g, "-").toLowerCase()}.png`; dl.click();
+                                        URL.revokeObjectURL(url);
+                                      }}
+                                      className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-xl border border-neutral-200 text-neutral-500 hover:bg-neutral-50 hover:text-neutral-900 transition-all">
+                                      <Download className="w-3 h-3" />
+                                    </button>
+                                  </>
                                 )}
                                 <Btn onClick={() => handleReject(a.id, a.application_status)} pending={false} variant="danger">
                                   Revoke

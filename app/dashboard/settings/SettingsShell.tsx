@@ -4,27 +4,44 @@ import { useState } from "react";
 import {
   User, ShieldCheck, CreditCard, Puzzle, AlertTriangle,
   Check, Sparkles, Zap, Crown, Building2, ArrowUpRight,
-  ChevronRight, Mail, KeyRound, LogOut,
+  ChevronRight, Mail, KeyRound, LogOut, Code2,
 } from "lucide-react";
 import Link from "next/link";
 import ProfileForm from "./ProfileForm";
 import PasswordResetButton from "./PasswordResetButton";
 import SignOutButton from "./SignOutButton";
 import RazorpayCard from "./RazorpayCard";
-import type { PlanLimits } from "@/lib/plan";
+import DeveloperDashboard, { type ApiKeyRow } from "@/app/dashboard/developer/DeveloperDashboard";
+import type { ApiUsage } from "@/app/actions/api-usage";
+import type { WebhookEndpoint, WebhookDelivery } from "@/app/actions/webhooks";
 
-type Section = "profile" | "security" | "billing" | "integrations" | "danger";
+type Section = "profile" | "security" | "billing" | "integrations" | "developer" | "danger";
+
+export interface SettingsPlan {
+  slug: string;
+  maxEvents: number;
+  unlimited: boolean;
+  registrationsPerMonth: number;
+  canUseDeveloperTools: boolean;
+  canUsePayments: boolean;
+}
 
 interface Props {
   fullName: string;
   email: string;
   initials: string;
-  plan: PlanLimits;
+  plan: SettingsPlan;
   currentPlan: { name: string; price_monthly: number; slug: string } | null;
   renewalDate: string | null;
   cancelAtPeriodEnd: boolean;
   activeEventCount: number;
+  billingCycle: "monthly" | "annual";
+  registrationsUsed: number;
   existingPaymentKeyId: string | null;
+  apiUsage: ApiUsage;
+  apiKeys: ApiKeyRow[];
+  webhookEndpoints: WebhookEndpoint[];
+  recentDeliveries: WebhookDelivery[];
 }
 
 const NAV: { id: Section; label: string; icon: React.ComponentType<{ className?: string }>; danger?: boolean }[] = [
@@ -32,26 +49,31 @@ const NAV: { id: Section; label: string; icon: React.ComponentType<{ className?:
   { id: "security",     label: "Security",       icon: ShieldCheck },
   { id: "billing",      label: "Plan & Billing", icon: CreditCard },
   { id: "integrations", label: "Integrations",   icon: Puzzle },
+  { id: "developer",    label: "Developer",      icon: Code2 },
   { id: "danger",       label: "Danger zone",    icon: AlertTriangle, danger: true },
 ];
 
 const PLAN_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
-  free: Sparkles, starter: Zap, pro: Crown, enterprise: Building2,
+  free: Sparkles, starter: Zap, pro: Crown, business: Building2, campus: Building2, enterprise: Building2,
 };
 const PLAN_GRADIENT: Record<string, string> = {
   free:       "linear-gradient(135deg, #1c1c28 0%, #13111c 100%)",
   starter:    "linear-gradient(135deg, #1e1030 0%, #13111c 100%)",
   pro:        "linear-gradient(135deg, #2a1a00 0%, #13111c 100%)",
+  business:   "linear-gradient(135deg, #082f49 0%, #13111c 100%)",
+  campus:     "linear-gradient(135deg, #064e3b 0%, #13111c 100%)",
   enterprise: "linear-gradient(135deg, #0c1624 0%, #13111c 100%)",
 };
 const PLAN_ACCENT: Record<string, string> = {
-  free: "#a78bfa", starter: "#a78bfa", pro: "#fbbf24", enterprise: "#94a3b8",
+  free: "#a78bfa", starter: "#a78bfa", pro: "#fbbf24", business: "#38bdf8", campus: "#34d399", enterprise: "#94a3b8",
 };
 const PLAN_FEATURES: Record<string, string[]> = {
-  free:       ["1 active event", "50 attendees/event", "Digital passes", "QR check-in"],
-  starter:    ["5 active events", "500 attendees/event", "CSV upload", "Remove branding", "Paid events"],
-  pro:        ["Unlimited events", "2,000 attendees/event", "Data export", "API access", "Paid events"],
-  enterprise: ["Everything in Pro", "Dedicated support", "Custom SLAs", "Volume discounts"],
+  free:       ["2 events/month", "100 registrations/month", "Digital passes", "QR check-in"],
+  starter:    ["10 events/month", "500 registrations/month", "CSV upload", "Standard analytics"],
+  pro:        ["Unlimited events", "2,500 registrations/month", "API access", "Webhooks"],
+  business:   ["Unlimited events", "10,000 registrations/month", "Advanced teams", "API & webhooks"],
+  campus:     ["Unlimited events", "Unlimited registrations", "Campus teams", "API & webhooks"],
+  enterprise: ["Everything in Business", "Dedicated support", "Custom SLAs", "Volume discounts"],
 };
 
 /* ── Shared section label ──────────────────────────────────────────────── */
@@ -64,21 +86,38 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 }
 
 /* ── Plan card (shared between mobile and desktop) ─────────────────────── */
-function PlanCard({ plan, currentPlan, renewalDate, cancelAtPeriodEnd, activeEventCount }: {
-  plan: PlanLimits;
+function PlanCard({
+  plan,
+  currentPlan,
+  renewalDate,
+  cancelAtPeriodEnd,
+  activeEventCount,
+  billingCycle,
+  registrationsUsed,
+}: {
+  plan: SettingsPlan;
   currentPlan: Props["currentPlan"];
   renewalDate: string | null;
   cancelAtPeriodEnd: boolean;
   activeEventCount: number;
+  billingCycle: Props["billingCycle"];
+  registrationsUsed: number;
 }) {
   const PlanIcon     = PLAN_ICONS[plan.slug] ?? Sparkles;
   const planGradient = PLAN_GRADIENT[plan.slug] ?? PLAN_GRADIENT.free;
   const planAccent   = PLAN_ACCENT[plan.slug] ?? PLAN_ACCENT.free;
   const planFeatures = PLAN_FEATURES[plan.slug] ?? PLAN_FEATURES.free;
+  const displayPrice = currentPlan
+    ? billingCycle === "annual" ? currentPlan.price_monthly * 10 : currentPlan.price_monthly
+    : 0;
   const eventUsagePct = plan.unlimited
     ? 18
     : Math.min(100, (activeEventCount / plan.maxEvents) * 100);
-  const attendeeDisplay = plan.unlimited ? "Unlimited" : plan.maxAttendees.toLocaleString();
+  const registrationLimit = plan.registrationsPerMonth;
+  const registrationsUnlimited = registrationLimit >= 999_999;
+  const registrationUsagePct = registrationsUnlimited
+    ? 18
+    : Math.min(100, (registrationsUsed / registrationLimit) * 100);
 
   return (
     <div className="space-y-3">
@@ -103,12 +142,12 @@ function PlanCard({ plan, currentPlan, renewalDate, cancelAtPeriodEnd, activeEve
           </div>
           <div className="text-right">
             <p className="text-2xl font-bold text-white">
-              {currentPlan
-                ? currentPlan.price_monthly === 0 ? "₹0" : `₹${(currentPlan.price_monthly / 100).toFixed(0)}`
-                : "₹0"}
+              {displayPrice === 0 ? "₹0" : `₹${(displayPrice / 100).toFixed(0)}`}
             </p>
             <p className="text-[10px] text-white/30">
-              {currentPlan && currentPlan.price_monthly > 0 ? "/month" : "forever"}
+              {currentPlan && currentPlan.price_monthly > 0
+                ? billingCycle === "annual" ? "/year" : "/month"
+                : "forever"}
             </p>
           </div>
         </div>
@@ -125,9 +164,16 @@ function PlanCard({ plan, currentPlan, renewalDate, cancelAtPeriodEnd, activeEve
             </div>
           </div>
           <div className="rounded-xl px-3 py-3" style={{ background: "rgba(255,255,255,0.06)" }}>
-            <p className="text-[10px] text-white/35 mb-1">Attendees/event</p>
-            <p className="text-sm font-bold text-white">{attendeeDisplay}</p>
-            <p className="text-[10px] text-white/25 mt-2.5">max capacity</p>
+            <p className="text-[10px] text-white/35 mb-1">Registrations</p>
+            <p className="text-sm font-bold text-white">
+              {registrationsUsed.toLocaleString()}
+              <span className="text-white/35 font-normal">
+                {" "}/ {registrationsUnlimited ? "∞" : registrationLimit.toLocaleString()}
+              </span>
+            </p>
+            <div className="h-1 bg-white/10 rounded-full overflow-hidden mt-2.5">
+              <div className="h-full rounded-full transition-all" style={{ width: `${registrationUsagePct}%`, background: planAccent }} />
+            </div>
           </div>
         </div>
 
@@ -153,7 +199,7 @@ function PlanCard({ plan, currentPlan, renewalDate, cancelAtPeriodEnd, activeEve
         </ul>
       </div>
 
-      {plan.slug !== "pro" && plan.slug !== "enterprise" ? (
+      {plan.slug === "free" || plan.slug === "starter" ? (
         <Link
           href="/billing"
           className="flex items-center justify-center gap-2 w-full py-3.5 rounded-2xl text-sm font-bold text-white hover:opacity-90 transition-opacity"
@@ -174,11 +220,35 @@ function PlanCard({ plan, currentPlan, renewalDate, cancelAtPeriodEnd, activeEve
   );
 }
 
+function DeveloperLocked() {
+  return (
+    <div className="bg-white rounded-2xl shadow-sm p-6 max-w-xl">
+      <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center mb-4">
+        <Code2 className="w-5 h-5 text-amber-500" />
+      </div>
+      <h2 className="text-lg font-bold tracking-tight text-neutral-900">Developer tools are available on Pro and above</h2>
+      <p className="text-sm text-neutral-400 mt-1 mb-5">
+        Upgrade to generate API keys, configure webhooks, and access API logs.
+      </p>
+      <Link
+        href="/billing"
+        className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white hover:opacity-90 transition-opacity"
+        style={{ background: "#6D28D9" }}
+      >
+        Upgrade to Pro <ArrowUpRight className="w-4 h-4" />
+      </Link>
+    </div>
+  );
+}
+
 export default function SettingsShell({
   fullName, email, initials, plan, currentPlan,
-  renewalDate, cancelAtPeriodEnd, activeEventCount, existingPaymentKeyId,
+  renewalDate, cancelAtPeriodEnd, activeEventCount, billingCycle, registrationsUsed, existingPaymentKeyId,
+  apiUsage, apiKeys, webhookEndpoints, recentDeliveries,
 }: Props) {
   const [section, setSection] = useState<Section>("profile");
+  const canUseDeveloperTools = plan.canUseDeveloperTools;
+  const canUsePayments = plan.canUsePayments;
 
   /* ── Desktop section content ──────────────────────────────────────────── */
   function renderDesktopContent() {
@@ -225,6 +295,7 @@ export default function SettingsShell({
             <PlanCard
               plan={plan} currentPlan={currentPlan} renewalDate={renewalDate}
               cancelAtPeriodEnd={cancelAtPeriodEnd} activeEventCount={activeEventCount}
+              billingCycle={billingCycle} registrationsUsed={registrationsUsed}
             />
           </div>
         );
@@ -237,8 +308,20 @@ export default function SettingsShell({
               <p className="text-sm text-neutral-400 mt-0.5">Connect payment gateways and third-party tools.</p>
             </div>
             <p className="text-[10px] font-bold tracking-widest uppercase text-neutral-400 mb-3">Payment gateways</p>
-            <RazorpayCard canUsePayments={plan.slug !== "free"} existingKeyId={existingPaymentKeyId} />
+            <RazorpayCard canUsePayments={canUsePayments} existingKeyId={existingPaymentKeyId} />
           </div>
+        );
+
+      case "developer":
+        return canUseDeveloperTools ? (
+          <DeveloperDashboard
+            apiUsage={apiUsage}
+            apiKeys={apiKeys}
+            webhookEndpoints={webhookEndpoints}
+            recentDeliveries={recentDeliveries}
+          />
+        ) : (
+          <DeveloperLocked />
         );
 
       case "danger":
@@ -318,11 +401,25 @@ export default function SettingsShell({
         <PlanCard
           plan={plan} currentPlan={currentPlan} renewalDate={renewalDate}
           cancelAtPeriodEnd={cancelAtPeriodEnd} activeEventCount={activeEventCount}
+          billingCycle={billingCycle} registrationsUsed={registrationsUsed}
         />
 
         {/* ── Integrations ────────────────────────────────── */}
         <SectionLabel>Integrations</SectionLabel>
-        <RazorpayCard canUsePayments={plan.slug !== "free"} existingKeyId={existingPaymentKeyId} />
+        <RazorpayCard canUsePayments={canUsePayments} existingKeyId={existingPaymentKeyId} />
+
+        {/* ── Developer ───────────────────────────────────── */}
+        <SectionLabel>Developer</SectionLabel>
+        {canUseDeveloperTools ? (
+          <DeveloperDashboard
+            apiUsage={apiUsage}
+            apiKeys={apiKeys}
+            webhookEndpoints={webhookEndpoints}
+            recentDeliveries={recentDeliveries}
+          />
+        ) : (
+          <DeveloperLocked />
+        )}
 
         {/* ── Account actions ─────────────────────────────── */}
         <SectionLabel>Account</SectionLabel>
@@ -375,7 +472,7 @@ export default function SettingsShell({
 
           <div className="mb-1">
             <p className="text-[10px] font-bold tracking-widest uppercase text-neutral-400 px-3 mb-1 mt-3">Workspace</p>
-            {(["billing", "integrations"] as Section[]).map((id) => {
+            {(["billing", "integrations", "developer"] as Section[]).map((id) => {
               const item = NAV.find((n) => n.id === id)!;
               const active = section === id;
               return (

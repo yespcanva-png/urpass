@@ -68,6 +68,21 @@ html { scroll-behavior: smooth; }
   100% { top: 10%; }
 }
 
+@keyframes scanBeam {
+  0%, 100% { top: 13%; }
+  50%       { top: 87%; }
+}
+
+@keyframes bracketPulse {
+  0%, 100% { opacity: 0.5; }
+  50%       { opacity: 1; }
+}
+
+@keyframes viewfinderRing {
+  0%, 100% { opacity: 0.3; }
+  50%       { opacity: 0.7; }
+}
+
 /* ── Apply page entrance ───────────────────────────────────────────────── */
 .apply-in-1 { animation: heroFadeUp 0.6s cubic-bezier(0.16,1,0.3,1) 0.05s both; }
 .apply-in-2 { animation: heroFadeUp 0.6s cubic-bezier(0.16,1,0.3,1) 0.18s both; }

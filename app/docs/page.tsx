@@ -19,26 +19,37 @@ import {
   Code2,
   Webhook,
   Lock,
+  Building2,
+  Video,
+  Key,
+  Layers,
+  Sliders,
+  Check,
+  X,
+  ExternalLink,
 } from "lucide-react";
+import { CodeBlock } from "@/components/docs/CodeBlock";
 
 export const metadata: Metadata = {
-  title: "Documentation — Complete Guide to URPASS",
+  title: "Documentation — Complete Developer & Organizer Guide to URPASS",
   description:
-    "Complete URPASS documentation. Learn how to create events, manage attendees, issue digital passes, and scan QR codes at check-in. Guides for Free, Starter, and Pro plans.",
+    "Complete documentation for URPASS. Learn how to create events, issue tiered passes, configure multi-gate check-ins, integrate the REST API, and verify webhooks.",
   keywords: [
     "URPASS documentation",
-    "event pass guide",
+    "event pass API",
     "QR check-in tutorial",
-    "digital pass how to",
+    "digital pass API",
+    "webhooks documentation",
     "event management guide India",
+    "multi gate check-in",
+    "event ticketing API",
     "URPASS how to use",
-    "event pass generator tutorial",
   ],
   alternates: { canonical: "https://urpass.space/docs" },
   openGraph: {
-    title: "URPASS Documentation — Complete Event Pass Guide",
+    title: "URPASS Documentation — Developer & Organizer Guide",
     description:
-      "Learn how to create digital event passes, manage attendees, and run QR check-in with URPASS. Full documentation and tutorials.",
+      "Full guide to creating digital passes, managing attendees, running multi-gate QR check-in, and integrating with the URPASS REST API and Webhooks.",
     url: "https://urpass.space/docs",
     type: "article",
   },
@@ -46,7 +57,7 @@ export const metadata: Metadata = {
     "geo.region": "IN",
     "geo.placename": "India",
     "geo.position": "20.5937;78.9629",
-    "ICBM": "20.5937, 78.9629",
+    ICBM: "20.5937, 78.9629",
   },
 };
 
@@ -68,63 +79,55 @@ const faqSchema = {
       name: "What is URPASS?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "URPASS is a digital event pass platform that lets organizers create QR-code passes, manage attendees, and scan entries at the door — all from a web dashboard.",
+        text: "URPASS is a modern digital event pass, ticketing, and verification platform designed for organizers, colleges, tech conferences, and enterprise teams.",
       },
     },
     {
       "@type": "Question",
-      name: "Is URPASS free to use?",
+      name: "Do attendees need to download an app to access their pass or check in?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Yes. The Free plan lets you run 1 active event with up to 50 attendees, digital passes, and QR check-in at no cost. Paid plans start at ₹1/month.",
+        text: "No app is required. Attendees receive a responsive web pass that opens on any device, with optional Apple Wallet (.pkpass) export. Organizers and staff can scan QR passes using any phone browser at urpass.space/scan.",
       },
     },
     {
       "@type": "Question",
-      name: "How do attendees get their passes?",
+      name: "Does URPASS support virtual and hybrid events?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Attendees receive a unique QR code pass by email immediately after being approved. They can also access their pass via a direct link anytime.",
+        text: "Yes. URPASS natively supports in-person, online, and hybrid formats. For online and hybrid events, approved attendees can access verified direct-join redirects (/api/join/[passToken]) to Zoom, Google Meet, Microsoft Teams, or custom links.",
       },
     },
     {
       "@type": "Question",
-      name: "Can I upload attendees in bulk?",
+      name: "How does multi-gate check-in and zone access control work?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Yes. Starter and Pro plan users can upload a CSV file with columns: name, email, phone, pass_type to bulk-import attendees in seconds.",
+        text: "Organizers can define multiple scanner gates (e.g., Gate A, VIP Entrance, Backstage) and zones. Passes can be restricted so that specific ticket tiers are only admitted at authorized gates.",
       },
     },
     {
       "@type": "Question",
-      name: "How does QR check-in work?",
+      name: "Are ticket prices stored in rupees or paise in the API?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Open the URPASS scanner on any phone browser, select your event, and scan attendee QR codes. The system verifies the pass in real time and prevents duplicate entries.",
+        text: "In accordance with standard Indian payment gateways like Razorpay, all financial amounts in the database and API are denominated in paise (1 INR = 100 paise). For instance, ₹499 is represented as 49900.",
       },
     },
     {
       "@type": "Question",
-      name: "Can I remove the URPASS branding from passes?",
+      name: "How do outbound webhooks work?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Yes. Starter and Pro plan subscribers can remove the URPASS watermark from all attendee passes.",
+        text: "Organizers on Pro and Business plans can register HTTPS endpoints in Dashboard → Developer → Webhooks. UrPass signs each webhook using HMAC-SHA256 with your endpoint secret and sends the signature in the X-UrPass-Signature header.",
       },
     },
     {
       "@type": "Question",
-      name: "How do I export attendee data?",
+      name: "What team roles are supported in Organizations?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Pro plan users can export all attendee data as a CSV file from the Attendees tab of any event. The export includes name, email, pass type, application status, and check-in status.",
-      },
-    },
-    {
-      "@type": "Question",
-      name: "Is URPASS available in India?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "Yes. URPASS is built for Indian event organizers. Payments are processed in Indian Rupees (₹) via Razorpay, and all plans include 18% GST.",
+        text: "URPASS provides role-based access control with 5 distinct roles: Owner, Admin, Event Manager, Check-in Staff, and Viewer.",
       },
     },
   ],
@@ -133,9 +136,9 @@ const faqSchema = {
 const docSchema = {
   "@context": "https://schema.org",
   "@type": "TechArticle",
-  headline: "URPASS Complete Documentation",
+  headline: "URPASS Complete Documentation — Developer & Organizer Guide",
   description:
-    "Full guide to creating digital event passes, managing attendees, and running QR check-in with URPASS.",
+    "Full reference for creating digital event passes, managing attendees, running multi-gate QR check-in, and integrating the URPASS REST API and Webhooks.",
   author: { "@type": "Organization", name: "URPASS", url: "https://urpass.space" },
   publisher: { "@type": "Organization", name: "URPASS", url: "https://urpass.space" },
   inLanguage: "en-IN",
@@ -144,18 +147,16 @@ const docSchema = {
 
 const SECTIONS = [
   { id: "getting-started", label: "Getting started" },
-  { id: "events", label: "Events" },
-  { id: "attendees", label: "Attendees" },
-  { id: "passes", label: "Passes & check-in" },
+  { id: "events", label: "Events & formats" },
+  { id: "attendees", label: "Attendees & import" },
+  { id: "tickets-passes", label: "Tickets & passes" },
+  { id: "gates-checkin", label: "Gates & check-in" },
+  { id: "organizations", label: "Organizations & roles" },
+  { id: "api", label: "REST API reference" },
+  { id: "webhooks", label: "Webhooks integration" },
   { id: "plans", label: "Plans & billing" },
-  { id: "api", label: "API reference" },
-  { id: "webhooks", label: "Webhooks" },
   { id: "faq", label: "FAQ" },
 ];
-
-function SectionAnchor({ id }: { id: string }) {
-  return <span id={id} className="-mt-24 pt-24 block" aria-hidden />;
-}
 
 function Step({ n, title, children }: { n: number; title: string; children: React.ReactNode }) {
   return (
@@ -174,7 +175,12 @@ function Step({ n, title, children }: { n: number; title: string; children: Reac
   );
 }
 
-function FeatureRow({ icon: Icon, title, description, badge }: {
+function FeatureRow({
+  icon: Icon,
+  title,
+  description,
+  badge,
+}: {
   icon: React.ComponentType<{ className?: string }>;
   title: string;
   description: string;
@@ -216,30 +222,42 @@ export default function DocsPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(docSchema) }}
       />
 
-      <div className="min-h-screen bg-neutral-50">
+      <div className="min-h-screen bg-neutral-50 text-neutral-900 selection:bg-brand-100 selection:text-brand-900">
         {/* Top nav */}
-        <header className="sticky top-0 z-30 bg-white border-b border-neutral-100">
+        <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-neutral-200/80">
           <div className="max-w-6xl mx-auto px-5 h-14 flex items-center justify-between">
             <Link href="/" className="flex items-center gap-2">
               <div
-                className="w-7 h-7 rounded-lg flex items-center justify-center"
+                className="w-7 h-7 rounded-lg flex items-center justify-center shadow-sm"
                 style={{ background: "linear-gradient(135deg, #6D28D9, #4c1d95)" }}
               >
                 <Ticket className="w-3.5 h-3.5 text-white" />
               </div>
               <span className="text-sm font-bold tracking-widest uppercase text-neutral-900">URPASS</span>
-              <span className="text-xs text-neutral-300 font-normal ml-1 hidden sm:inline">/ Docs</span>
+              <span className="text-xs text-neutral-400 font-normal ml-1 hidden sm:inline">
+                / Documentation
+              </span>
             </Link>
-            <div className="flex items-center gap-3">
-              <Link href="/pricing" className="text-xs text-neutral-500 hover:text-neutral-900 transition-colors">
+            <div className="flex items-center gap-4">
+              <Link
+                href="/dashboard/developer"
+                className="text-xs font-medium text-neutral-600 hover:text-neutral-900 transition-colors hidden sm:flex items-center gap-1.5"
+              >
+                <Key className="w-3.5 h-3.5 text-neutral-400" />
+                API Keys
+              </Link>
+              <Link
+                href="/pricing"
+                className="text-xs font-medium text-neutral-600 hover:text-neutral-900 transition-colors"
+              >
                 Pricing
               </Link>
               <Link
                 href="/signup"
-                className="text-xs font-semibold text-white px-3 py-1.5 rounded-lg hover:opacity-90 transition-opacity"
+                className="text-xs font-semibold text-white px-3 py-1.5 rounded-lg hover:opacity-90 transition-opacity shadow-sm"
                 style={{ background: "#6D28D9" }}
               >
-                Get started
+                Dashboard
               </Link>
             </div>
           </div>
@@ -247,312 +265,1044 @@ export default function DocsPage() {
 
         <div className="max-w-6xl mx-auto px-5 py-10 flex gap-10">
           {/* Sidebar TOC */}
-          <aside className="hidden lg:block w-52 shrink-0">
-            <div className="sticky top-24">
-              <p className="text-[10px] font-bold tracking-widest uppercase text-neutral-400 mb-3">
-                On this page
+          <aside className="hidden lg:block w-56 shrink-0">
+            <div className="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto pr-2 pb-6 scrollbar-thin">
+              <p className="text-[10px] font-bold tracking-widest uppercase text-neutral-400 mb-3 px-3">
+                Documentation
               </p>
-              <nav className="flex flex-col gap-0.5">
+              <nav className="flex flex-col gap-1">
                 {SECTIONS.map((s) => (
                   <a
                     key={s.id}
                     href={`#${s.id}`}
-                    className="flex items-center gap-2 text-sm text-neutral-500 hover:text-brand transition-colors px-3 py-1.5 rounded-lg hover:bg-brand-50"
+                    className="flex items-center gap-2 text-xs font-medium text-neutral-600 hover:text-brand transition-colors px-3 py-1.5 rounded-lg hover:bg-brand-50/70"
                   >
-                    <ChevronRight className="w-3 h-3 shrink-0" />
+                    <ChevronRight className="w-3 h-3 shrink-0 text-neutral-300 group-hover:text-brand" />
                     {s.label}
                   </a>
                 ))}
               </nav>
-              <div className="mt-8 pt-6 border-t border-neutral-100">
-                <p className="text-[10px] font-bold tracking-widest uppercase text-neutral-400 mb-3">
-                  Quick links
+
+              <div className="mt-8 pt-6 border-t border-neutral-200">
+                <p className="text-[10px] font-bold tracking-widest uppercase text-neutral-400 mb-3 px-3">
+                  Developer Resources
                 </p>
-                <div className="flex flex-col gap-1">
-                  <Link href="/signup" className="text-xs text-brand hover:underline">Create free account</Link>
-                  <Link href="/pricing" className="text-xs text-brand hover:underline">View pricing</Link>
-                  <a href="mailto:support@urpass.space" className="text-xs text-brand hover:underline">Contact support</a>
+                <div className="flex flex-col gap-1.5 px-3">
+                  <Link
+                    href="/dashboard/developer"
+                    className="text-xs text-neutral-600 hover:text-brand flex items-center justify-between"
+                  >
+                    API Keys
+                    <ExternalLink className="w-3 h-3 opacity-60" />
+                  </Link>
+                  <Link
+                    href="/scan"
+                    className="text-xs text-neutral-600 hover:text-brand flex items-center justify-between"
+                  >
+                    Web QR Scanner
+                    <ExternalLink className="w-3 h-3 opacity-60" />
+                  </Link>
+                  <Link
+                    href="/pricing"
+                    className="text-xs text-neutral-600 hover:text-brand flex items-center justify-between"
+                  >
+                    Plan Limits
+                    <ExternalLink className="w-3 h-3 opacity-60" />
+                  </Link>
+                  <a
+                    href="mailto:support@urpass.space"
+                    className="text-xs text-neutral-600 hover:text-brand flex items-center justify-between"
+                  >
+                    Support
+                    <ExternalLink className="w-3 h-3 opacity-60" />
+                  </a>
                 </div>
               </div>
             </div>
           </aside>
 
           {/* Main content */}
-          <article className="flex-1 min-w-0">
+          <article className="flex-1 min-w-0 max-w-3xl">
             {/* Hero */}
-            <div className="mb-10">
-              <div className="flex items-center gap-2 text-xs text-neutral-400 mb-4">
-                <Globe className="w-3.5 h-3.5" />
-                <span>Available in India · ₹ pricing · Razorpay payments</span>
+            <div className="mb-12">
+              <div className="flex items-center gap-2 text-xs text-neutral-500 mb-4 bg-white border border-neutral-200/80 rounded-full px-3 py-1 w-fit shadow-2xs">
+                <Globe className="w-3.5 h-3.5 text-brand" />
+                <span>Production platform · Indian Rupee (₹) · REST API v1 · Outbound Webhooks</span>
               </div>
-              <h1 className="text-3xl font-bold tracking-tight text-neutral-900 mb-3">
+              <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-neutral-900 mb-4">
                 URPASS Documentation
               </h1>
-              <p className="text-base text-neutral-500 leading-relaxed max-w-2xl">
-                Everything you need to create digital event passes, manage attendees, and run
-                QR-code check-in at your events — all from a web browser, no app required.
+              <p className="text-base text-neutral-600 leading-relaxed">
+                Everything you need to create events, issue tiered digital passes, run high-speed multi-gate
+                QR check-ins, and integrate with the URPASS developer platform.
               </p>
-              <div className="flex flex-wrap gap-3 mt-5">
+              <div className="flex flex-wrap gap-3 mt-6">
                 <Link
                   href="/signup"
-                  className="inline-flex items-center gap-2 text-sm font-semibold text-white px-4 py-2.5 rounded-xl hover:opacity-90 transition-opacity"
+                  className="inline-flex items-center gap-2 text-sm font-semibold text-white px-4 py-2.5 rounded-xl hover:opacity-95 transition-opacity shadow-sm"
                   style={{ background: "#6D28D9" }}
                 >
-                  Start for free
+                  Create free account
                   <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
-                <Link
-                  href="/pricing"
-                  className="inline-flex items-center gap-2 text-sm font-medium text-neutral-700 px-4 py-2.5 rounded-xl border border-neutral-200 hover:bg-neutral-50 transition-colors"
+                <a
+                  href="#api"
+                  className="inline-flex items-center gap-2 text-sm font-medium text-neutral-700 px-4 py-2.5 rounded-xl border border-neutral-200 bg-white hover:bg-neutral-50 transition-colors shadow-2xs"
                 >
-                  See pricing
-                </Link>
+                  <Code2 className="w-4 h-4 text-brand" />
+                  Explore REST API
+                </a>
               </div>
             </div>
 
-            {/* ── Getting Started ────────────────────────────────── */}
-            <SectionAnchor id="getting-started" />
-            <section className="mb-12">
+            {/* ── Section 1: Getting Started ───────────────────────── */}
+            <section id="getting-started" className="mb-14 scroll-mt-20">
               <div className="flex items-center gap-2.5 mb-6">
                 <div className="w-8 h-8 rounded-xl bg-brand-50 border border-brand-100 flex items-center justify-center shrink-0">
                   <BookOpen className="w-4 h-4 text-brand" />
                 </div>
-                <h2 className="text-xl font-bold text-neutral-900">Getting started</h2>
+                <div>
+                  <h2 className="text-xl font-bold text-neutral-900">Getting started</h2>
+                  <p className="text-xs text-neutral-500">Platform overview and end-to-end event workflow</p>
+                </div>
               </div>
 
-              <div className="bg-white border border-neutral-100 rounded-2xl p-6 mb-6">
-                <h3 className="text-sm font-semibold text-neutral-800 mb-1">What is URPASS?</h3>
-                <p className="text-sm text-neutral-500 leading-relaxed">
-                  URPASS is a digital event pass platform for Indian event organizers — colleges,
-                  startups, conferences, and community events. You create an event, add attendees
-                  (manually or via CSV), generate QR-code passes, and scan them at the entrance.
-                  No app, no hardware — just a phone browser.
+              <div className="bg-white border border-neutral-200 rounded-2xl p-6 mb-6 shadow-2xs">
+                <h3 className="text-sm font-semibold text-neutral-900 mb-2">What is URPASS?</h3>
+                <p className="text-sm text-neutral-600 leading-relaxed">
+                  URPASS is a modern digital pass and check-in platform engineered for conferences,
+                  college festivals, exhibitions, corporate summits, and community events. It eliminates
+                  cumbersome physical badges, costly dedicated scanner hardware, and proprietary mobile app
+                  downloads. Both organizers and attendees interact through responsive, secure web links.
                 </p>
               </div>
 
-              <div className="bg-white border border-neutral-100 rounded-2xl p-6">
-                <h3 className="text-sm font-semibold text-neutral-800 mb-6">Quick start guide</h3>
+              <div className="bg-white border border-neutral-200 rounded-2xl p-6 shadow-2xs">
+                <h3 className="text-sm font-semibold text-neutral-900 mb-6">5-Step Quickstart</h3>
                 <div className="flex flex-col gap-0">
-                  <Step n={1} title="Create your account">
-                    Go to <Link href="/signup" className="text-brand underline">urpass.space/signup</Link> and
-                    sign up with your email. No credit card required for the Free plan.
+                  <Step n={1} title="Create an Organizer Account">
+                    Register at <Link href="/signup" className="text-brand font-medium hover:underline">urpass.space/signup</Link>.
+                    Free plans include active event hosting and attendee pass generation with zero setup fees.
                   </Step>
-                  <Step n={2} title="Create your first event">
-                    Click <strong>New event</strong> from your dashboard. Fill in the event name,
-                    date, venue, and attendee limit. You can set the event to <em>Draft</em> first
-                    or publish it immediately as <em>Active</em>.
+                  <Step n={2} title="Configure Your Event">
+                    Click <strong>New Event</strong>. Choose your event format (In-person, Online, or Hybrid),
+                    set dates, capacity, registration options, and optional ticketing tiers.
                   </Step>
-                  <Step n={3} title="Add attendees">
-                    Go to the <strong>Attendees</strong> tab of your event. Add attendees one by
-                    one or — on Starter/Pro — upload a CSV file. Approve each attendee to
-                    generate their digital pass.
+                  <Step n={3} title="Collect Registrations or Import Attendees">
+                    Share your public application link (<code className="text-xs bg-neutral-100 px-1 py-0.5 rounded font-mono">/apply/your-event</code>)
+                    with custom form fields, or bulk-import existing guest lists via CSV.
                   </Step>
-                  <Step n={4} title="Generate digital passes">
-                    Once an attendee is approved, click <strong>Generate pass</strong>. They
-                    receive a unique QR code pass by email. You can also share the pass link
-                    directly.
+                  <Step n={4} title="Issue Digital Passes">
+                    Approved attendees instantly receive an email containing their digital pass link and QR code,
+                    with direct Apple Wallet (<code className="text-xs bg-neutral-100 px-1 py-0.5 rounded font-mono">.pkpass</code>)
+                    export.
                   </Step>
-                  <Step n={5} title="Scan at the entrance">
-                    Open <Link href="/scan" className="text-brand underline">urpass.space/scan</Link> on
-                    any phone. Select your event, point the camera at an attendee&apos;s QR code,
-                    and the system instantly marks them as checked in.
+                  <Step n={5} title="Run Check-In at the Entrance">
+                    Open <Link href="/scan" className="text-brand font-medium hover:underline">urpass.space/scan</Link> on
+                    any smartphone camera. The system verifies passes with sub-second latency, enforces gate-zone
+                    permissions, and rejects duplicate entries.
                   </Step>
                 </div>
               </div>
             </section>
 
-            {/* ── Events ──────────────────────────────────────────── */}
-            <SectionAnchor id="events" />
-            <section className="mb-12">
+            {/* ── Section 2: Events & Formats ──────────────────────── */}
+            <section id="events" className="mb-14 scroll-mt-20">
               <div className="flex items-center gap-2.5 mb-6">
                 <div className="w-8 h-8 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center shrink-0">
                   <Zap className="w-4 h-4 text-blue-600" />
                 </div>
-                <h2 className="text-xl font-bold text-neutral-900">Events</h2>
+                <div>
+                  <h2 className="text-xl font-bold text-neutral-900">Events &amp; formats</h2>
+                  <p className="text-xs text-neutral-500">In-person, virtual meetings, hybrid setups, and lifecycles</p>
+                </div>
               </div>
 
-              <div className="bg-white border border-neutral-100 rounded-2xl overflow-hidden mb-4">
+              {/* Event formats */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                <div className="bg-white border border-neutral-200 rounded-2xl p-5 shadow-2xs">
+                  <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center mb-3">
+                    <QrCode className="w-4 h-4" />
+                  </div>
+                  <h4 className="text-sm font-semibold text-neutral-900 mb-1">In-Person</h4>
+                  <p className="text-xs text-neutral-500 leading-relaxed">
+                    Physical venue with entrance scanning, multi-gate check-in, and zone-based badge validation.
+                  </p>
+                </div>
+                <div className="bg-white border border-neutral-200 rounded-2xl p-5 shadow-2xs">
+                  <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center mb-3">
+                    <Video className="w-4 h-4" />
+                  </div>
+                  <h4 className="text-sm font-semibold text-neutral-900 mb-1">Online (Virtual)</h4>
+                  <p className="text-xs text-neutral-500 leading-relaxed">
+                    Connect Zoom, Google Meet, Microsoft Teams, or custom links. Approved attendees join with a secure one-click pass link.
+                  </p>
+                </div>
+                <div className="bg-white border border-neutral-200 rounded-2xl p-5 shadow-2xs">
+                  <div className="w-7 h-7 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center mb-3">
+                    <Layers className="w-4 h-4" />
+                  </div>
+                  <h4 className="text-sm font-semibold text-neutral-900 mb-1">Hybrid</h4>
+                  <p className="text-xs text-neutral-500 leading-relaxed">
+                    Simultaneous physical venue access for local attendees and automated meeting room redirects for remote participants.
+                  </p>
+                </div>
+              </div>
+
+              {/* Event Lifecycles */}
+              <div className="bg-white border border-neutral-200 rounded-2xl overflow-hidden mb-6 shadow-2xs">
                 <div className="px-6 py-4 border-b border-neutral-100">
-                  <h3 className="text-sm font-semibold text-neutral-800">Creating an event</h3>
+                  <h3 className="text-sm font-semibold text-neutral-900">Event status lifecycles</h3>
+                </div>
+                <div className="divide-y divide-neutral-100 px-6">
+                  {[
+                    ["Draft", "bg-neutral-100 text-neutral-600 border-neutral-200", "Event configuration is private. The public registration page is hidden and closed."],
+                    ["Active", "bg-emerald-50 text-emerald-700 border-emerald-200", "Registration form is live. Attendees can register, purchase tickets, and passes are active."],
+                    ["Completed", "bg-blue-50 text-blue-700 border-blue-200", "The event has concluded. Registration is locked, while analytics and export archives remain accessible."],
+                    ["Cancelled", "bg-rose-50 text-rose-700 border-rose-200", "The event was called off. Passes are voided and scanning endpoints will reject entries."],
+                  ].map(([status, badgeClass, desc]) => (
+                    <div key={status} className="flex items-start gap-3 py-3.5">
+                      <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full shrink-0 border ${badgeClass}`}>
+                        {status}
+                      </span>
+                      <p className="text-sm text-neutral-600">{desc}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Custom Form Fields */}
+              <div className="bg-white border border-neutral-200 rounded-2xl p-6 shadow-2xs">
+                <div className="flex items-center gap-2 mb-3">
+                  <Sliders className="w-4 h-4 text-brand" />
+                  <h3 className="text-sm font-semibold text-neutral-900">Custom registration form fields</h3>
+                </div>
+                <p className="text-sm text-neutral-600 leading-relaxed mb-4">
+                  Every event can define custom registration fields to collect extra participant information
+                  (e.g., College Name, T-shirt size, Dietary preferences, GitHub profile, Roll number).
+                  Supported field types include <strong>text</strong>, <strong>number</strong>, <strong>dropdown select</strong>,
+                  and <strong>checkbox</strong>.
+                </p>
+                <div className="bg-neutral-50 border border-neutral-200 rounded-xl p-3.5 text-xs text-neutral-600">
+                  <strong className="text-neutral-900">Plan Quotas:</strong> Free plans support up to 3 custom fields, Starter supports 10,
+                  and Pro / Business plans allow unlimited custom registration fields.
+                </div>
+              </div>
+            </section>
+
+            {/* ── Section 3: Attendees ─────────────────────────────── */}
+            <section id="attendees" className="mb-14 scroll-mt-20">
+              <div className="flex items-center gap-2.5 mb-6">
+                <div className="w-8 h-8 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center shrink-0">
+                  <Users className="w-4 h-4 text-emerald-600" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-neutral-900">Attendees &amp; import</h2>
+                  <p className="text-xs text-neutral-500">Attendee lifecycle, approval pipelines, and bulk CSV operations</p>
+                </div>
+              </div>
+
+              <div className="bg-white border border-neutral-200 rounded-2xl px-6 py-2 mb-6 shadow-2xs">
+                <FeatureRow
+                  icon={Users}
+                  title="Manual Attendee Addition"
+                  description="Add individual VIPs, speakers, or staff members directly from the event dashboard with instantaneous pass generation."
+                />
+                <FeatureRow
+                  icon={Upload}
+                  title="CSV Bulk Import"
+                  description="Upload a CSV with name, email, phone, and pass_type to import hundreds of attendees in seconds. Duplicate emails are automatically de-duplicated."
+                  badge="Starter+"
+                />
+                <FeatureRow
+                  icon={Download}
+                  title="CSV Data Export"
+                  description="Export full attendee records with registration status, pass token, ticket tier, check-in timestamp, and custom form responses."
+                  badge="Starter+"
+                />
+                <FeatureRow
+                  icon={CheckCircle}
+                  title="Approval Workflow & Auto-Approve"
+                  description="Toggle auto-approve to immediately issue passes upon registration, or retain manual approval mode to review applications before passes are distributed."
+                />
+              </div>
+
+              <div className="bg-neutral-900 text-white rounded-2xl p-5 shadow-sm">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-xs font-bold tracking-wider uppercase text-neutral-400">
+                    Standard CSV Import Format
+                  </p>
+                  <span className="text-[11px] font-mono text-neutral-400">attendees.csv</span>
+                </div>
+                <div className="bg-neutral-950 rounded-xl p-3 font-mono text-xs text-emerald-400 overflow-x-auto border border-neutral-800">
+                  name,email,phone,pass_type<br />
+                  Aarav Patel,aarav@example.com,+919876543210,participant<br />
+                  Meera Nair,meera@example.com,+919876543211,vip<br />
+                  Vikram Singh,vikram@example.com,+919876543212,speaker
+                </div>
+                <p className="text-xs text-neutral-400 mt-3">
+                  Accepted pass types: <code className="text-neutral-200 font-mono">participant</code>,{" "}
+                  <code className="text-neutral-200 font-mono">vip</code>,{" "}
+                  <code className="text-neutral-200 font-mono">speaker</code>, and{" "}
+                  <code className="text-neutral-200 font-mono">organizer</code>.
+                </p>
+              </div>
+            </section>
+
+            {/* ── Section 4: Tickets & Passes ───────────────────────── */}
+            <section id="tickets-passes" className="mb-14 scroll-mt-20">
+              <div className="flex items-center gap-2.5 mb-6">
+                <div className="w-8 h-8 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center shrink-0">
+                  <QrCode className="w-4 h-4 text-brand" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-neutral-900">Tickets &amp; passes</h2>
+                  <p className="text-xs text-neutral-500">Tiered ticketing, dynamic QR tokens, Apple Wallet, and online redirects</p>
+                </div>
+              </div>
+
+              {/* Multi-tier Ticketing */}
+              <div className="bg-white border border-neutral-200 rounded-2xl p-6 mb-6 shadow-2xs">
+                <h3 className="text-sm font-semibold text-neutral-900 mb-2">Multi-tier ticketing</h3>
+                <p className="text-sm text-neutral-600 leading-relaxed mb-4">
+                  Events can offer multiple ticket tiers (e.g. Early Bird, General Admission, VIP Pass, Student Pass).
+                  Each tier configures its own pricing, quota limit, sale window, and assigned zone access.
+                </p>
+                <div className="bg-amber-50/80 border border-amber-200/80 rounded-xl p-3.5 text-xs text-amber-900">
+                  <strong className="text-amber-950">Currency &amp; Paise Denomination:</strong> In the URPASS database and API,
+                  all monetary values are stored in <strong>paise</strong> (1 INR = 100 paise).
+                  For example, a ticket priced at ₹499 is represented in API responses and orders as <code className="bg-amber-100/80 px-1 py-0.5 rounded font-mono font-semibold">49900</code>.
+                </div>
+              </div>
+
+              {/* Pass Anatomy */}
+              <div className="bg-white border border-neutral-200 rounded-2xl p-6 mb-6 shadow-2xs">
+                <h3 className="text-sm font-semibold text-neutral-900 mb-4">Pass features</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {[
+                    ["Dynamic QR Code", "Secure, tamper-evident pass token rendered on high-contrast retina canvas."],
+                    ["Apple Wallet (.pkpass)", "Attendees on iOS can tap 'Add to Apple Wallet' for quick access from the lock screen."],
+                    ["Live Check-in Status", "Pass display updates live from 'Approved' to 'Checked In' with entry timestamp."],
+                    ["Color-Coded Badges", "Distinct visual colors for Participant (Purple), VIP (Gold), Speaker (Blue), and Organizer (Green)."],
+                    ["White-Label / Custom Branding", "Pro and Business tiers remove 'Powered by URPASS' watermarks for a pure brand experience."],
+                    ["Virtual Join Link", "For online events, an integrated verified join button safely redirects to Zoom/Meet."],
+                  ].map(([title, desc]) => (
+                    <div key={title} className="p-3.5 rounded-xl bg-neutral-50 border border-neutral-200/70">
+                      <p className="text-xs font-semibold text-neutral-900 mb-1">{title}</p>
+                      <p className="text-xs text-neutral-500 leading-relaxed">{desc}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Online Join Endpoint */}
+              <div className="bg-white border border-neutral-200 rounded-2xl overflow-hidden shadow-2xs">
+                <div className="px-6 py-4 border-b border-neutral-100 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Video className="w-4 h-4 text-blue-600" />
+                    <h3 className="text-sm font-semibold text-neutral-900">Online event verified join redirect</h3>
+                  </div>
+                  <span className="text-[11px] font-mono text-neutral-400">GET /api/join/[passToken]</span>
                 </div>
                 <div className="px-6 py-5">
-                  <p className="text-sm text-neutral-500 mb-4">
-                    From your dashboard, click <strong>New event</strong>. Fill in the required
-                    fields:
+                  <p className="text-sm text-neutral-600 leading-relaxed mb-4">
+                    Instead of sharing open Zoom/Meet links on social media (which leads to uninvited attendees),
+                    URPASS provides a verified redirect endpoint. When an approved attendee opens the link:
                   </p>
-                  <ul className="flex flex-col gap-2 text-sm text-neutral-500">
-                    {[
-                      ["Event name", "The display name shown on passes and the application form."],
-                      ["Venue", "Physical location of your event."],
-                      ["Date & time", "Start and end times for the event."],
-                      ["Attendee limit", "Maximum number of approved attendees. Capped by your plan."],
-                      ["Public application form", "Toggle on to generate a public URL where anyone can apply."],
-                      ["Auto-approve", "Instantly approve and issue passes on submission (skips manual review)."],
-                    ].map(([field, desc]) => (
-                      <li key={field} className="flex gap-2">
-                        <CheckCircle className="w-4 h-4 text-green-500 shrink-0 mt-0.5" />
-                        <span><strong className="text-neutral-800">{field}</strong> — {desc}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  <ol className="flex flex-col gap-2 text-xs text-neutral-600 mb-4">
+                    <li className="flex items-start gap-2">
+                      <span className="font-semibold text-neutral-900">1.</span>
+                      <span>The server validates the <code className="bg-neutral-100 px-1 py-0.5 rounded font-mono">passToken</code> and verifies that the attendee&apos;s application status is <code className="text-emerald-700 font-mono">approved</code>.</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="font-semibold text-neutral-900">2.</span>
+                      <span>The server inspects the event&apos;s configured meeting platform (Zoom, Google Meet, Teams, or Custom).</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="font-semibold text-neutral-900">3.</span>
+                      <span>If verified, the browser is issued a 307 temporary redirect to the live meeting session.</span>
+                    </li>
+                  </ol>
+                  <CodeBlock
+                    title="Verified Join URL Pattern"
+                    singleLanguage="http"
+                    singleCode={`https://urpass.space/api/join/urp_pass_a8f9b2c3d4e5...`}
+                  />
+                </div>
+              </div>
+            </section>
+
+            {/* ── Section 5: Gates & Check-in ───────────────────────── */}
+            <section id="gates-checkin" className="mb-14 scroll-mt-20">
+              <div className="flex items-center gap-2.5 mb-6">
+                <div className="w-8 h-8 rounded-xl bg-violet-50 border border-violet-100 flex items-center justify-center shrink-0">
+                  <Shield className="w-4 h-4 text-violet-600" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-neutral-900">Gates &amp; check-in</h2>
+                  <p className="text-xs text-neutral-500">Multi-gate routing, zone access control, and duplicate prevention</p>
                 </div>
               </div>
 
-              <div className="bg-white border border-neutral-100 rounded-2xl overflow-hidden">
-                <div className="px-6 py-4 border-b border-neutral-100">
-                  <h3 className="text-sm font-semibold text-neutral-800">Event statuses</h3>
+              {/* Web Scanner */}
+              <div className="bg-white border border-neutral-200 rounded-2xl p-6 mb-6 shadow-2xs">
+                <h3 className="text-sm font-semibold text-neutral-900 mb-3">High-speed web scanner</h3>
+                <p className="text-sm text-neutral-600 leading-relaxed mb-4">
+                  Check-in staff can navigate to <Link href="/scan" className="text-brand font-medium hover:underline">urpass.space/scan</Link> on
+                  any smartphone. No native app installation or permissions other than camera access are needed.
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                  <div className="p-3 bg-neutral-50 rounded-xl border border-neutral-100">
+                    <p className="font-semibold text-neutral-900 mb-1">Zero Hardware</p>
+                    <p className="text-neutral-500">Works directly in Safari, Chrome, and Firefox.</p>
+                  </div>
+                  <div className="p-3 bg-neutral-50 rounded-xl border border-neutral-100">
+                    <p className="font-semibold text-neutral-900 mb-1">Concurrency Safe</p>
+                    <p className="text-neutral-500">Database constraints reject duplicate concurrent scans.</p>
+                  </div>
+                  <div className="p-3 bg-neutral-50 rounded-xl border border-neutral-100">
+                    <p className="font-semibold text-neutral-900 mb-1">Sub-second Latency</p>
+                    <p className="text-neutral-500">Fast edge verification with immediate visual feedback.</p>
+                  </div>
                 </div>
-                <div className="divide-y divide-neutral-50 px-6">
+              </div>
+
+              {/* Multi-Gate & Zone Access Control */}
+              <div className="bg-white border border-neutral-200 rounded-2xl p-6 mb-6 shadow-2xs">
+                <div className="flex items-center gap-2 mb-2">
+                  <Layers className="w-4 h-4 text-brand" />
+                  <h3 className="text-sm font-semibold text-neutral-900">Multi-gate &amp; zone access control</h3>
+                </div>
+                <p className="text-sm text-neutral-600 leading-relaxed mb-4">
+                  For large venues, organizers can define custom gates (e.g., &ldquo;North Gate&rdquo;, &ldquo;Main Arena Entrance&rdquo;, &ldquo;VIP Lounge&rdquo;)
+                  and link them to specific access zones.
+                </p>
+                <div className="bg-neutral-50 border border-neutral-200 rounded-xl p-4 text-xs leading-relaxed space-y-2">
+                  <p className="text-neutral-800 font-semibold">How Zone Validation Works:</p>
+                  <p className="text-neutral-600">
+                    When a gate is assigned a zone, the check-in engine queries <code className="bg-white px-1 py-0.5 rounded border border-neutral-200 font-mono">ticket_zone_access</code>.
+                    If the attendee&apos;s ticket tier does not possess access permissions for that zone, entry is immediately denied
+                    with a clear warning: <span className="text-rose-600 font-medium">&ldquo;This pass is not authorized for this gate / zone.&rdquo;</span>
+                  </p>
+                </div>
+              </div>
+
+              {/* Verification API */}
+              <div className="bg-white border border-neutral-200 rounded-2xl overflow-hidden shadow-2xs">
+                <div className="px-6 py-4 border-b border-neutral-100">
+                  <h3 className="text-sm font-semibold text-neutral-900">Check-in verification endpoint</h3>
+                </div>
+                <div className="px-6 py-5">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-xs font-bold text-violet-700 bg-violet-50 border border-violet-200 px-2 py-0.5 rounded font-mono">
+                      POST
+                    </span>
+                    <code className="text-sm font-mono text-neutral-800">/api/verify</code>
+                  </div>
+                  <p className="text-xs text-neutral-600 mb-4">
+                    Scanners and custom gate hardware submit scanned tokens to this endpoint. The endpoint accepts both the raw token string
+                    or a full pass URL (e.g. <code className="font-mono">https://urpass.space/pass/urp_pass_...</code>).
+                  </p>
+
+                  <CodeBlock
+                    tabs={[
+                      {
+                        label: "cURL",
+                        language: "bash",
+                        code: `curl -X POST https://urpass.space/api/verify \\
+  -H "Content-Type: application/json" \\
+  -H "Cookie: sb-access-token=..." \\
+  -d '{
+    "passToken": "urp_pass_9c4e82b71f...",
+    "eventId": "3c84be2e-4b2a-4819-a9a3-5c5f49e19d77",
+    "gateId": "7d91e602-0e83-4a11-b0ec-1c8821901a12",
+    "checkInMethod": "qr"
+  }'`,
+                      },
+                      {
+                        label: "TypeScript",
+                        language: "typescript",
+                        code: `const response = await fetch("https://urpass.space/api/verify", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    passToken: "urp_pass_9c4e82b71f...",
+    eventId: "3c84be2e-4b2a-4819-a9a3-5c5f49e19d77",
+    gateId: "7d91e602-0e83-4a11-b0ec-1c8821901a12",
+    checkInMethod: "qr" // "qr" | "manual" | "nfc"
+  }),
+});
+
+const result = await response.json();
+if (result.success) {
+  console.log("Checked in:", result.attendee.name);
+} else if (result.alreadyCheckedIn) {
+  console.warn("Already checked in:", result.attendee.name);
+} else if (result.accessDenied) {
+  console.error("Access denied for zone:", result.error);
+}`,
+                      },
+                    ]}
+                  />
+
+                  <div className="mt-4">
+                    <p className="text-xs font-semibold text-neutral-700 mb-2">Success Response (200 OK)</p>
+                    <CodeBlock
+                      singleLanguage="json"
+                      singleCode={`{
+  "success": true,
+  "attendee": {
+    "name": "Kavitha Sundaram",
+    "email": "kavitha@example.com",
+    "pass_type": "vip"
+  },
+  "passType": "vip"
+}`}
+                    />
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* ── Section 6: Organizations & Roles ─────────────────── */}
+            <section id="organizations" className="mb-14 scroll-mt-20">
+              <div className="flex items-center gap-2.5 mb-6">
+                <div className="w-8 h-8 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center shrink-0">
+                  <Building2 className="w-4 h-4 text-amber-600" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-neutral-900">Organizations &amp; roles</h2>
+                  <p className="text-xs text-neutral-500">Multi-tenant teams and granular role-based permissions</p>
+                </div>
+              </div>
+
+              <div className="bg-white border border-neutral-200 rounded-2xl p-6 mb-6 shadow-2xs">
+                <p className="text-sm text-neutral-600 leading-relaxed mb-4">
+                  Organizations allow companies, student societies, and event agencies to collaborate seamlessly.
+                  Invite colleagues via email, manage memberships, and assign role-based permissions tailored to each staff member&apos;s duties.
+                </p>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs text-left">
+                    <thead className="border-b border-neutral-200 text-neutral-500 uppercase tracking-wider font-semibold">
+                      <tr>
+                        <th className="py-2.5 px-3">Role</th>
+                        <th className="py-2.5 px-3">Manage Org &amp; Billing</th>
+                        <th className="py-2.5 px-3">Create / Edit Events</th>
+                        <th className="py-2.5 px-3">Approve Attendees</th>
+                        <th className="py-2.5 px-3">Scan Passes at Gates</th>
+                        <th className="py-2.5 px-3">View Analytics</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-neutral-100 text-neutral-700">
+                      <tr>
+                        <td className="py-2.5 px-3 font-semibold text-neutral-900">Owner</td>
+                        <td className="py-2.5 px-3"><Check className="w-4 h-4 text-emerald-600" /></td>
+                        <td className="py-2.5 px-3"><Check className="w-4 h-4 text-emerald-600" /></td>
+                        <td className="py-2.5 px-3"><Check className="w-4 h-4 text-emerald-600" /></td>
+                        <td className="py-2.5 px-3"><Check className="w-4 h-4 text-emerald-600" /></td>
+                        <td className="py-2.5 px-3"><Check className="w-4 h-4 text-emerald-600" /></td>
+                      </tr>
+                      <tr>
+                        <td className="py-2.5 px-3 font-semibold text-neutral-900">Admin</td>
+                        <td className="py-2.5 px-3"><X className="w-4 h-4 text-neutral-300" /></td>
+                        <td className="py-2.5 px-3"><Check className="w-4 h-4 text-emerald-600" /></td>
+                        <td className="py-2.5 px-3"><Check className="w-4 h-4 text-emerald-600" /></td>
+                        <td className="py-2.5 px-3"><Check className="w-4 h-4 text-emerald-600" /></td>
+                        <td className="py-2.5 px-3"><Check className="w-4 h-4 text-emerald-600" /></td>
+                      </tr>
+                      <tr>
+                        <td className="py-2.5 px-3 font-semibold text-neutral-900">Event Manager</td>
+                        <td className="py-2.5 px-3"><X className="w-4 h-4 text-neutral-300" /></td>
+                        <td className="py-2.5 px-3"><Check className="w-4 h-4 text-emerald-600" /></td>
+                        <td className="py-2.5 px-3"><Check className="w-4 h-4 text-emerald-600" /></td>
+                        <td className="py-2.5 px-3"><Check className="w-4 h-4 text-emerald-600" /></td>
+                        <td className="py-2.5 px-3"><Check className="w-4 h-4 text-emerald-600" /></td>
+                      </tr>
+                      <tr>
+                        <td className="py-2.5 px-3 font-semibold text-neutral-900">Check-in Staff</td>
+                        <td className="py-2.5 px-3"><X className="w-4 h-4 text-neutral-300" /></td>
+                        <td className="py-2.5 px-3"><X className="w-4 h-4 text-neutral-300" /></td>
+                        <td className="py-2.5 px-3"><X className="w-4 h-4 text-neutral-300" /></td>
+                        <td className="py-2.5 px-3"><Check className="w-4 h-4 text-emerald-600" /></td>
+                        <td className="py-2.5 px-3"><X className="w-4 h-4 text-neutral-300" /></td>
+                      </tr>
+                      <tr>
+                        <td className="py-2.5 px-3 font-semibold text-neutral-900">Viewer</td>
+                        <td className="py-2.5 px-3"><X className="w-4 h-4 text-neutral-300" /></td>
+                        <td className="py-2.5 px-3"><X className="w-4 h-4 text-neutral-300" /></td>
+                        <td className="py-2.5 px-3"><X className="w-4 h-4 text-neutral-300" /></td>
+                        <td className="py-2.5 px-3"><X className="w-4 h-4 text-neutral-300" /></td>
+                        <td className="py-2.5 px-3"><Check className="w-4 h-4 text-emerald-600" /></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </section>
+
+            {/* ── Section 7: REST API ──────────────────────────────── */}
+            <section id="api" className="mb-14 scroll-mt-20">
+              <div className="flex items-center gap-2.5 mb-6">
+                <div className="w-8 h-8 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center shrink-0">
+                  <Code2 className="w-4 h-4 text-indigo-600" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-xl font-bold text-neutral-900">REST API reference</h2>
+                    <span className="text-[10px] font-bold tracking-widest uppercase px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                      Pro &amp; Business
+                    </span>
+                  </div>
+                  <p className="text-xs text-neutral-500">Programmatic access for events, attendees, and custom check-in gates</p>
+                </div>
+              </div>
+
+              {/* Base URL */}
+              <div className="bg-white border border-neutral-200 rounded-2xl p-6 mb-6 shadow-2xs">
+                <p className="text-sm text-neutral-600 leading-relaxed mb-4">
+                  The URPASS REST API follows standard REST principles. All responses return JSON payloads with
+                  consistent top-level <code className="bg-neutral-100 px-1 py-0.5 rounded font-mono">data</code> and{" "}
+                  <code className="bg-neutral-100 px-1 py-0.5 rounded font-mono">meta</code> pagination envelopes.
+                </p>
+                <div className="flex items-center gap-3 bg-neutral-900 text-white rounded-xl px-4 py-3 font-mono text-xs">
+                  <span className="text-neutral-400 font-semibold">BASE URL</span>
+                  <span className="text-emerald-400">https://urpass.space/api/v1</span>
+                </div>
+              </div>
+
+              {/* Authentication */}
+              <div className="bg-white border border-neutral-200 rounded-2xl overflow-hidden mb-6 shadow-2xs">
+                <div className="flex items-center gap-2 px-6 py-4 border-b border-neutral-100">
+                  <Lock className="w-4 h-4 text-neutral-500" />
+                  <h3 className="text-sm font-semibold text-neutral-900">API key authentication</h3>
+                </div>
+                <div className="px-6 py-5">
+                  <p className="text-sm text-neutral-600 mb-4">
+                    Authenticate all API requests by supplying your API key in the{" "}
+                    <code className="bg-neutral-100 px-1.5 py-0.5 rounded text-xs font-mono text-neutral-800">Authorization</code> header
+                    as a Bearer token. Generate keys from{" "}
+                    <Link href="/dashboard/developer" className="text-brand font-medium hover:underline">
+                      Dashboard → Developer → API Keys
+                    </Link>.
+                  </p>
+                  <div className="space-y-2 text-xs text-neutral-600 mb-4">
+                    <p>
+                      • Production keys start with prefix: <code className="bg-neutral-100 px-1.5 py-0.5 rounded font-mono text-neutral-800">urp_live_</code>
+                    </p>
+                    <p>
+                      • Sandbox test keys start with prefix: <code className="bg-neutral-100 px-1.5 py-0.5 rounded font-mono text-neutral-800">urp_test_</code>
+                    </p>
+                  </div>
+                  <CodeBlock
+                    tabs={[
+                      {
+                        label: "cURL",
+                        language: "bash",
+                        code: `curl -X GET https://urpass.space/api/v1/events \\
+  -H "Authorization: Bearer urp_live_9a7b5c3d2e1f40..."`,
+                      },
+                      {
+                        label: "JavaScript / Node",
+                        language: "javascript",
+                        code: `const response = await fetch("https://urpass.space/api/v1/events", {
+  headers: {
+    "Authorization": "Bearer urp_live_9a7b5c3d2e1f40..."
+  }
+});
+const { data, meta } = await response.json();`,
+                      },
+                      {
+                        label: "Python",
+                        language: "python",
+                        code: `import requests
+
+headers = {
+    "Authorization": "Bearer urp_live_9a7b5c3d2e1f40..."
+}
+response = requests.get("https://urpass.space/api/v1/events", headers=headers)
+events = response.json().get("data", [])`,
+                      },
+                    ]}
+                  />
+                </div>
+              </div>
+
+              {/* Endpoint 1: GET /events */}
+              <div className="bg-white border border-neutral-200 rounded-2xl overflow-hidden mb-6 shadow-2xs">
+                <div className="px-6 py-4 border-b border-neutral-100 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded font-mono">
+                      GET
+                    </span>
+                    <code className="text-sm font-mono font-semibold text-neutral-900">/events</code>
+                  </div>
+                  <span className="text-xs text-neutral-500">List events</span>
+                </div>
+                <div className="px-6 py-5">
+                  <p className="text-sm text-neutral-600 mb-4">
+                    Returns a paginated list of events owned by the authenticated organizer.
+                  </p>
+
+                  <p className="text-xs font-semibold text-neutral-700 mb-2">Query Parameters</p>
+                  <div className="space-y-1.5 mb-4 text-xs">
+                    <div className="grid grid-cols-[100px_80px_1fr] gap-2 p-2 rounded-lg bg-neutral-50 font-mono">
+                      <span className="text-brand font-semibold">status</span>
+                      <span className="text-neutral-400">string</span>
+                      <span className="font-sans text-neutral-600">Filter by status: <code>draft</code>, <code>active</code>, <code>completed</code>, <code>cancelled</code></span>
+                    </div>
+                    <div className="grid grid-cols-[100px_80px_1fr] gap-2 p-2 rounded-lg bg-neutral-50 font-mono">
+                      <span className="text-brand font-semibold">limit</span>
+                      <span className="text-neutral-400">number</span>
+                      <span className="font-sans text-neutral-600">Max records to return (default 50, maximum 100)</span>
+                    </div>
+                    <div className="grid grid-cols-[100px_80px_1fr] gap-2 p-2 rounded-lg bg-neutral-50 font-mono">
+                      <span className="text-brand font-semibold">offset</span>
+                      <span className="text-neutral-400">number</span>
+                      <span className="font-sans text-neutral-600">Pagination offset index (default 0)</span>
+                    </div>
+                  </div>
+
+                  <p className="text-xs font-semibold text-neutral-700 mb-2">Example Response</p>
+                  <CodeBlock
+                    singleLanguage="json"
+                    singleCode={`{
+  "data": [
+    {
+      "id": "e4210d65-3d84-4828-b997-c25f48719230",
+      "name": "DevCon India 2026",
+      "description": "Annual national developer conference",
+      "event_date": "2026-11-20",
+      "start_time": "09:30:00",
+      "end_time": "18:00:00",
+      "venue": "Bengaluru International Exhibition Centre",
+      "status": "active",
+      "is_paid_event": true,
+      "ticket_price": 79900,
+      "attendee_limit": 1000,
+      "application_enabled": true,
+      "apply_slug": "devcon-india-2026",
+      "created_at": "2026-09-01T10:15:30.000Z"
+    }
+  ],
+  "meta": {
+    "total": 1,
+    "limit": 50,
+    "offset": 0
+  }
+}`}
+                  />
+                </div>
+              </div>
+
+              {/* Endpoint 2: GET /events/:id */}
+              <div className="bg-white border border-neutral-200 rounded-2xl overflow-hidden mb-6 shadow-2xs">
+                <div className="px-6 py-4 border-b border-neutral-100 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded font-mono">
+                      GET
+                    </span>
+                    <code className="text-sm font-mono font-semibold text-neutral-900">/events/:eventId</code>
+                  </div>
+                  <span className="text-xs text-neutral-500">Get event details</span>
+                </div>
+                <div className="px-6 py-5">
+                  <p className="text-sm text-neutral-600 mb-4">
+                    Retrieve complete metadata for an individual event by its UUID identifier.
+                  </p>
+                  <CodeBlock
+                    tabs={[
+                      {
+                        label: "cURL",
+                        language: "bash",
+                        code: `curl -X GET https://urpass.space/api/v1/events/e4210d65-3d84-4828-b997-c25f48719230 \\
+  -H "Authorization: Bearer urp_live_..."`,
+                      },
+                    ]}
+                  />
+                </div>
+              </div>
+
+              {/* Endpoint 3: GET /events/:id/attendees */}
+              <div className="bg-white border border-neutral-200 rounded-2xl overflow-hidden mb-6 shadow-2xs">
+                <div className="px-6 py-4 border-b border-neutral-100 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded font-mono">
+                      GET
+                    </span>
+                    <code className="text-sm font-mono font-semibold text-neutral-900">/events/:eventId/attendees</code>
+                  </div>
+                  <span className="text-xs text-neutral-500">List attendees</span>
+                </div>
+                <div className="px-6 py-5">
+                  <p className="text-sm text-neutral-600 mb-4">
+                    Retrieve all registered attendees for the specified event, with optional status filtering.
+                  </p>
+
+                  <p className="text-xs font-semibold text-neutral-700 mb-2">Query Parameters</p>
+                  <div className="space-y-1.5 mb-4 text-xs">
+                    <div className="grid grid-cols-[140px_80px_1fr] gap-2 p-2 rounded-lg bg-neutral-50 font-mono">
+                      <span className="text-brand font-semibold">application_status</span>
+                      <span className="text-neutral-400">string</span>
+                      <span className="font-sans text-neutral-600"><code>pending</code>, <code>approved</code>, <code>rejected</code></span>
+                    </div>
+                    <div className="grid grid-cols-[140px_80px_1fr] gap-2 p-2 rounded-lg bg-neutral-50 font-mono">
+                      <span className="text-brand font-semibold">pass_status</span>
+                      <span className="text-neutral-400">string</span>
+                      <span className="font-sans text-neutral-600"><code>not_generated</code>, <code>generated</code>, <code>checked_in</code></span>
+                    </div>
+                    <div className="grid grid-cols-[140px_80px_1fr] gap-2 p-2 rounded-lg bg-neutral-50 font-mono">
+                      <span className="text-brand font-semibold">limit</span>
+                      <span className="text-neutral-400">number</span>
+                      <span className="font-sans text-neutral-600">Max records to return (default 100, maximum 500)</span>
+                    </div>
+                  </div>
+
+                  <p className="text-xs font-semibold text-neutral-700 mb-2">Example Response</p>
+                  <CodeBlock
+                    singleLanguage="json"
+                    singleCode={`{
+  "data": [
+    {
+      "id": "7bf31890-1c5e-49b2-9d33-149b1049c402",
+      "name": "Ananya Roy",
+      "email": "ananya@example.com",
+      "phone": "+919123456780",
+      "pass_type": "vip",
+      "application_status": "approved",
+      "pass_status": "checked_in",
+      "created_at": "2026-09-12T11:42:00.000Z"
+    }
+  ],
+  "meta": {
+    "total": 340,
+    "limit": 100,
+    "offset": 0
+  }
+}`}
+                  />
+                </div>
+              </div>
+
+              {/* Error Codes */}
+              <div className="bg-white border border-neutral-200 rounded-2xl overflow-hidden shadow-2xs">
+                <div className="px-6 py-4 border-b border-neutral-100">
+                  <h3 className="text-sm font-semibold text-neutral-900">Standard HTTP error codes</h3>
+                </div>
+                <div className="divide-y divide-neutral-100">
                   {[
-                    ["Draft", "Event is private. Application form is disabled."],
-                    ["Active", "Event is live. Application form accepts registrations."],
-                    ["Completed", "Event has ended. No new applications accepted."],
-                    ["Cancelled", "Event is cancelled. Application form closed."],
-                  ].map(([status, desc]) => (
-                    <div key={status} className="flex items-start gap-3 py-3.5">
-                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 mt-0.5 ${
-                        status === "Active" ? "bg-green-50 text-green-700 border border-green-100" :
-                        status === "Draft" ? "bg-neutral-100 text-neutral-500 border border-neutral-200" :
-                        status === "Completed" ? "bg-blue-50 text-blue-600 border border-blue-100" :
-                        "bg-red-50 text-red-600 border border-red-100"
-                      }`}>{status}</span>
-                      <p className="text-sm text-neutral-500">{desc}</p>
+                    ["400", "Bad Request", "Missing or invalid payload parameters or malformed UUID."],
+                    ["401", "Unauthorized", "Missing, invalid, or expired Bearer API token."],
+                    ["403", "Forbidden", "API key revoked, or subscription tier does not include developer access."],
+                    ["404", "Not Found", "The requested event or attendee record does not exist or is not owned by your account."],
+                    ["422", "Unprocessable Entity", "Attendee is not in 'approved' status for pass operations."],
+                    ["429", "Too Many Requests", "Rate limit exceeded (standard limit is 120 req/minute). Back off and retry."],
+                    ["500", "Internal Server Error", "Unexpected server error. Check URPASS status or reach out to support."],
+                  ].map(([code, title, desc]) => (
+                    <div key={code} className="flex items-start gap-4 px-6 py-3.5 text-xs">
+                      <code className="font-mono font-bold text-rose-600 shrink-0 w-10">{code}</code>
+                      <span className="font-semibold text-neutral-800 w-36 shrink-0">{title}</span>
+                      <span className="text-neutral-500">{desc}</span>
                     </div>
                   ))}
                 </div>
               </div>
             </section>
 
-            {/* ── Attendees ───────────────────────────────────────── */}
-            <SectionAnchor id="attendees" />
-            <section className="mb-12">
+            {/* ── Section 8: Webhooks ──────────────────────────────── */}
+            <section id="webhooks" className="mb-14 scroll-mt-20">
               <div className="flex items-center gap-2.5 mb-6">
-                <div className="w-8 h-8 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center shrink-0">
-                  <Users className="w-4 h-4 text-emerald-600" />
+                <div className="w-8 h-8 rounded-xl bg-violet-50 border border-violet-100 flex items-center justify-center shrink-0">
+                  <Webhook className="w-4 h-4 text-violet-600" />
                 </div>
-                <h2 className="text-xl font-bold text-neutral-900">Attendees</h2>
-              </div>
-
-              <div className="bg-white border border-neutral-100 rounded-2xl px-6 py-2 mb-4">
-                <FeatureRow
-                  icon={Users}
-                  title="Add attendees manually"
-                  description="Go to the Attendees tab → click Add attendee. Enter name, email, phone (optional), and pass type. The attendee is immediately approved and their pass can be generated."
-                />
-                <FeatureRow
-                  icon={Upload}
-                  title="CSV bulk import"
-                  description='Upload a CSV file with headers: name, email, phone, pass_type. Valid pass types are: participant, vip, speaker, organizer. Duplicate emails are automatically skipped.'
-                  badge="Starter+"
-                />
-                <FeatureRow
-                  icon={Download}
-                  title="Export attendee data"
-                  description="Download all attendee records as a CSV file including name, email, pass type, application status, check-in status, and registration date."
-                  badge="Pro"
-                />
-                <FeatureRow
-                  icon={CheckCircle}
-                  title="Approve & reject applications"
-                  description="When an attendee applies via the public form, they appear as Pending. Approve to issue a pass, or reject to decline. Revoked approvals invalidate the pass."
-                />
-              </div>
-
-              <div className="bg-amber-50 border border-amber-100 rounded-2xl px-5 py-4 text-sm text-amber-800">
-                <strong>CSV format:</strong> The first row must be a header row.
-                Columns (in any order): <code className="bg-amber-100 px-1 rounded font-mono text-xs">name</code>,{" "}
-                <code className="bg-amber-100 px-1 rounded font-mono text-xs">email</code>,{" "}
-                <code className="bg-amber-100 px-1 rounded font-mono text-xs">phone</code>,{" "}
-                <code className="bg-amber-100 px-1 rounded font-mono text-xs">pass_type</code>.
-                Rows with missing name or invalid email are skipped.
-              </div>
-            </section>
-
-            {/* ── Passes & Check-in ───────────────────────────────── */}
-            <SectionAnchor id="passes" />
-            <section className="mb-12">
-              <div className="flex items-center gap-2.5 mb-6">
-                <div className="w-8 h-8 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center shrink-0">
-                  <QrCode className="w-4 h-4 text-brand" />
-                </div>
-                <h2 className="text-xl font-bold text-neutral-900">Passes &amp; check-in</h2>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                {[
-                  {
-                    title: "participant",
-                    desc: "Standard attendee pass. Default for most registrations.",
-                    color: "bg-purple-500/10 text-purple-700",
-                  },
-                  {
-                    title: "vip",
-                    desc: "VIP access. Displayed with a gold badge on the pass.",
-                    color: "bg-amber-400/10 text-amber-700",
-                  },
-                  {
-                    title: "speaker",
-                    desc: "Speaker or presenter pass with blue badge.",
-                    color: "bg-blue-400/10 text-blue-700",
-                  },
-                  {
-                    title: "organizer",
-                    desc: "Organizer access. Green badge, full permissions.",
-                    color: "bg-emerald-400/10 text-emerald-700",
-                  },
-                ].map((p) => (
-                  <div key={p.title} className="bg-white border border-neutral-100 rounded-2xl p-4">
-                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full capitalize ${p.color} mb-2 inline-block`}>
-                      {p.title}
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-xl font-bold text-neutral-900">Webhooks integration</h2>
+                    <span className="text-[10px] font-bold tracking-widest uppercase px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                      Pro &amp; Business
                     </span>
-                    <p className="text-sm text-neutral-500">{p.desc}</p>
                   </div>
-                ))}
+                  <p className="text-xs text-neutral-500">Real-time outbound event notifications delivered to your servers</p>
+                </div>
               </div>
 
-              <div className="bg-white border border-neutral-100 rounded-2xl p-6 mb-4">
-                <h3 className="text-sm font-semibold text-neutral-800 mb-4">How QR check-in works</h3>
-                <ol className="flex flex-col gap-3 text-sm text-neutral-500">
+              {/* Webhooks Overview */}
+              <div className="bg-white border border-neutral-200 rounded-2xl p-6 mb-6 shadow-2xs">
+                <p className="text-sm text-neutral-600 leading-relaxed mb-4">
+                  URPASS outbound webhooks notify your server in real time when attendees register, complete payments,
+                  or scan their passes at venue gates. Configure webhook endpoints from{" "}
+                  <Link href="/dashboard/developer" className="text-brand font-medium hover:underline">
+                    Dashboard → Developer → Webhooks
+                  </Link>.
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                  <div className="p-3 bg-neutral-50 rounded-xl border border-neutral-100">
+                    <p className="font-semibold text-neutral-900 mb-1">HTTPS Required</p>
+                    <p className="text-neutral-500">Webhook endpoints must be served over valid TLS/HTTPS.</p>
+                  </div>
+                  <div className="p-3 bg-neutral-50 rounded-xl border border-neutral-100">
+                    <p className="font-semibold text-neutral-900 mb-1">Delivery Logs &amp; Retries</p>
+                    <p className="text-neutral-500">Review request headers, response status, and delivery history in your dashboard.</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Supported Webhook Events */}
+              <div className="bg-white border border-neutral-200 rounded-2xl overflow-hidden mb-6 shadow-2xs">
+                <div className="px-6 py-4 border-b border-neutral-100">
+                  <h3 className="text-sm font-semibold text-neutral-900">Supported event triggers</h3>
+                </div>
+                <div className="divide-y divide-neutral-100">
                   {[
-                    "Open urpass.space/scan on any smartphone — no app install needed.",
-                    "Select the event you want to scan for.",
-                    "Allow camera access when prompted.",
-                    "Point the camera at an attendee's QR code.",
-                    "The system verifies the pass in under 1 second and marks the attendee as checked in.",
-                    "Duplicate scans are rejected with a clear 'Already checked in' message.",
-                  ].map((step, i) => (
-                    <li key={i} className="flex gap-3">
-                      <span
-                        className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0 mt-0.5"
-                        style={{ background: "#6D28D9" }}
-                      >
-                        {i + 1}
-                      </span>
-                      {step}
-                    </li>
+                    ["registration.created", "Fired when a new attendee submits a registration form or buys a ticket."],
+                    ["checkin.completed", "Fired when an attendee pass is scanned and successfully verified at any entrance gate."],
+                    ["payment.success", "Fired when ticket checkout or attendee order payment is verified via Razorpay."],
+                    ["pass.issued", "Fired when a digital pass QR token is generated and prepared for the attendee."],
+                    ["registration.approved", "Fired when an organizer approves an attendee application."],
+                    ["registration.rejected", "Fired when an organizer rejects or revokes an attendee application."],
+                  ].map(([event, desc]) => (
+                    <div key={event} className="flex items-start gap-3 px-6 py-3.5 text-xs">
+                      <code className="font-mono font-semibold text-brand bg-brand-50 px-2 py-0.5 rounded border border-brand-100 shrink-0">
+                        {event}
+                      </code>
+                      <span className="text-neutral-600">{desc}</span>
+                    </div>
                   ))}
-                </ol>
+                </div>
               </div>
 
-              <div className="bg-neutral-900 rounded-2xl p-5 text-white">
-                <p className="text-xs font-bold tracking-widest uppercase text-white/40 mb-2">
-                  Branding on passes
-                </p>
-                <p className="text-sm text-white/70 leading-relaxed">
-                  Free plan passes show the URPASS wordmark and &ldquo;Powered by URPASS&rdquo; footer.
-                  Starter and Pro plan passes show only your event name and attendee details — no URPASS branding.
-                </p>
+              {/* Signature Verification */}
+              <div className="bg-white border border-neutral-200 rounded-2xl overflow-hidden mb-6 shadow-2xs">
+                <div className="px-6 py-4 border-b border-neutral-100">
+                  <h3 className="text-sm font-semibold text-neutral-900">HMAC-SHA256 signature verification</h3>
+                </div>
+                <div className="px-6 py-5">
+                  <p className="text-sm text-neutral-600 leading-relaxed mb-4">
+                    Every webhook request sent from URPASS includes an <code className="bg-neutral-100 px-1 py-0.5 rounded font-mono text-xs">X-UrPass-Signature</code> header
+                    in the format <code className="bg-neutral-100 px-1 py-0.5 rounded font-mono text-xs">sha256=&lt;hash&gt;</code> and an{" "}
+                    <code className="bg-neutral-100 px-1 py-0.5 rounded font-mono text-xs">X-UrPass-Event</code> header.
+                    Compute the HMAC-SHA256 hash of the raw request payload using your webhook endpoint secret and compare it using a constant-time check.
+                  </p>
+
+                  <CodeBlock
+                    tabs={[
+                      {
+                        label: "Node.js / Next.js",
+                        language: "typescript",
+                        code: `import crypto from "crypto";
+
+export async function POST(req: Request) {
+  const signature = req.headers.get("x-urpass-signature");
+  const eventType = req.headers.get("x-urpass-event");
+  const rawBody = await req.text();
+
+  const secret = process.env.URPASS_WEBHOOK_SECRET!;
+  const expectedSig = \`sha256=\${crypto
+    .createHmac("sha256", secret)
+    .update(rawBody)
+    .digest("hex")}\`;
+
+  const isValid =
+    signature &&
+    signature.length === expectedSig.length &&
+    crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSig));
+
+  if (!isValid) {
+    return new Response("Invalid signature", { status: 401 });
+  }
+
+  const payload = JSON.parse(rawBody);
+  console.log(\`Received event \${eventType}:\`, payload.data);
+
+  return new Response("OK", { status: 200 });
+}`,
+                      },
+                      {
+                        label: "Python (FastAPI)",
+                        language: "python",
+                        code: `import hmac
+import hashlib
+import os
+from fastapi import FastAPI, Request, HTTPException
+
+app = FastAPI()
+SECRET = os.getenv("URPASS_WEBHOOK_SECRET", "").encode()
+
+@app.post("/webhook/urpass")
+async def handle_urpass_webhook(request: Request):
+    sig_header = request.headers.get("x-urpass-signature", "")
+    body_bytes = await request.body()
+
+    expected = "sha256=" + hmac.new(SECRET, body_bytes, hashlib.sha256).hexdigest()
+
+    if not hmac.compare_digest(sig_header, expected):
+        raise HTTPException(status_code=401, detail="Invalid signature")
+
+    payload = await request.json()
+    print("Event received:", payload.get("event_type"))
+    return {"status": "ok"}`,
+                      },
+                    ]}
+                  />
+                </div>
+              </div>
+
+              {/* Sample Webhook Payloads */}
+              <div className="bg-white border border-neutral-200 rounded-2xl overflow-hidden shadow-2xs">
+                <div className="px-6 py-4 border-b border-neutral-100">
+                  <h3 className="text-sm font-semibold text-neutral-900">Example webhook payloads</h3>
+                </div>
+                <div className="px-6 py-5">
+                  <p className="text-xs font-semibold text-neutral-700 mb-2">
+                    Check-in Completed (<code className="font-mono text-brand">checkin.completed</code>)
+                  </p>
+                  <CodeBlock
+                    singleLanguage="json"
+                    singleCode={`{
+  "event_type": "checkin.completed",
+  "timestamp": "2026-09-20T11:45:00.000Z",
+  "data": {
+    "attendee_id": "7bf31890-1c5e-49b2-9d33-149b1049c402",
+    "event_id": "e4210d65-3d84-4828-b997-c25f48719230",
+    "name": "Ananya Roy",
+    "email": "ananya@example.com",
+    "pass_type": "vip",
+    "checked_in_at": "2026-09-20T11:45:00.000Z"
+  }
+}`}
+                  />
+
+                  <p className="text-xs font-semibold text-neutral-700 mt-5 mb-2">
+                    Payment Success (<code className="font-mono text-brand">payment.success</code>)
+                  </p>
+                  <CodeBlock
+                    singleLanguage="json"
+                    singleCode={`{
+  "event_type": "payment.success",
+  "timestamp": "2026-09-20T10:30:12.000Z",
+  "data": {
+    "order_id": "order_NXv0b8A1C9dE3f",
+    "event_id": "e4210d65-3d84-4828-b997-c25f48719230",
+    "amount": 79900,
+    "currency": "INR",
+    "buyer_name": "Devansh Gupta",
+    "buyer_email": "devansh@example.com"
+  }
+}`}
+                  />
+                </div>
               </div>
             </section>
 
-            {/* ── Plans ───────────────────────────────────────────── */}
-            <SectionAnchor id="plans" />
-            <section className="mb-12">
+            {/* ── Section 9: Plans & Billing ───────────────────────── */}
+            <section id="plans" className="mb-14 scroll-mt-20">
               <div className="flex items-center gap-2.5 mb-6">
                 <div className="w-8 h-8 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center shrink-0">
                   <CreditCard className="w-4 h-4 text-blue-600" />
                 </div>
-                <h2 className="text-xl font-bold text-neutral-900">Plans &amp; billing</h2>
+                <div>
+                  <h2 className="text-xl font-bold text-neutral-900">Plans &amp; billing</h2>
+                  <p className="text-xs text-neutral-500">Transparent Indian Rupee pricing, quota limits, and tax invoices</p>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -562,507 +1312,195 @@ export default function DocsPage() {
                     price: "₹0",
                     period: "forever",
                     features: [
-                      "1 active event",
-                      "50 attendees/event",
-                      "Digital passes",
-                      "QR check-in",
-                      "Basic dashboard",
+                      "2 events / month",
+                      "100 registrations / month",
+                      "1 organizer seat",
+                      "3 custom form fields",
+                      "Responsive digital passes",
+                      "Mobile web scanner",
                       "URPASS branding",
                     ],
                     highlight: false,
+                    cta: "Start free",
+                    href: "/signup",
                   },
                   {
                     name: "Starter",
-                    price: "₹299",
-                    period: "/month (+18% GST)",
+                    price: "₹499",
+                    period: "/month",
                     features: [
-                      "5 active events",
-                      "500 attendees/event",
-                      "CSV bulk import",
-                      "QR check-in",
-                      "Remove branding",
+                      "10 events / month",
+                      "500 registrations / month",
+                      "2 organizer seats",
+                      "10 custom form fields",
+                      "CSV bulk import & export",
+                      "Standard analytics",
+                      "Paid ticket support",
                     ],
-                    highlight: true,
+                    highlight: false,
+                    cta: "Choose Starter",
+                    href: "/signup",
                   },
                   {
                     name: "Pro",
-                    price: "₹799",
-                    period: "/month (+18% GST)",
+                    price: "₹999",
+                    period: "/month",
                     features: [
                       "Unlimited events",
-                      "2 000 attendees/event",
-                      "CSV bulk import",
-                      "Custom branding",
-                      "Export attendee data",
+                      "2,500 registrations / month",
+                      "5 organizer seats",
+                      "Unlimited custom fields",
+                      "Remove URPASS branding",
+                      "Full REST API access",
+                      "Outbound Webhooks",
+                      "Priority email support",
                     ],
-                    highlight: false,
+                    highlight: true,
+                    cta: "Choose Pro",
+                    href: "/signup",
                   },
-                ].map((plan) => (
+                ].map((p) => (
                   <div
-                    key={plan.name}
-                    className={`rounded-2xl p-5 flex flex-col gap-4 ${
-                      plan.highlight
-                        ? "bg-neutral-900 text-white"
-                        : "bg-white border border-neutral-100"
+                    key={p.name}
+                    className={`rounded-2xl p-5 flex flex-col justify-between ${
+                      p.highlight
+                        ? "bg-neutral-900 text-white shadow-md ring-2 ring-brand-500/20"
+                        : "bg-white border border-neutral-200 shadow-2xs"
                     }`}
                   >
                     <div>
-                      <p className={`text-[10px] font-bold tracking-widest uppercase mb-1 ${plan.highlight ? "text-white/40" : "text-neutral-400"}`}>
-                        {plan.name}
-                      </p>
-                      <div className="flex items-baseline gap-1">
-                        <span className={`text-2xl font-bold ${plan.highlight ? "text-white" : "text-neutral-900"}`}>
-                          {plan.price}
+                      <div className="flex items-center justify-between mb-1">
+                        <p className={`text-[10px] font-bold tracking-widest uppercase ${p.highlight ? "text-brand-300" : "text-neutral-400"}`}>
+                          {p.name}
+                        </p>
+                        {p.highlight && (
+                          <span className="text-[10px] bg-brand font-bold text-white px-2 py-0.5 rounded-full">
+                            Popular
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-baseline gap-1 mb-4">
+                        <span className={`text-2xl font-bold ${p.highlight ? "text-white" : "text-neutral-900"}`}>
+                          {p.price}
                         </span>
-                        <span className={`text-xs ${plan.highlight ? "text-white/40" : "text-neutral-400"}`}>
-                          {plan.period}
+                        <span className={`text-xs ${p.highlight ? "text-neutral-400" : "text-neutral-500"}`}>
+                          {p.period}
                         </span>
                       </div>
+                      <ul className="flex flex-col gap-2 mb-6">
+                        {p.features.map((f) => (
+                          <li key={f} className="flex items-center gap-2 text-xs">
+                            <CheckCircle className={`w-3.5 h-3.5 shrink-0 ${p.highlight ? "text-brand-400" : "text-brand"}`} />
+                            <span className={p.highlight ? "text-neutral-300" : "text-neutral-600"}>{f}</span>
+                          </li>
+                        ))}
+                      </ul>
                     </div>
-                    <ul className="flex flex-col gap-2">
-                      {plan.features.map((f) => (
-                        <li key={f} className="flex items-center gap-2 text-xs">
-                          <CheckCircle className={`w-3.5 h-3.5 shrink-0 ${plan.highlight ? "text-white/60" : "text-brand"}`} />
-                          <span className={plan.highlight ? "text-white/70" : "text-neutral-600"}>{f}</span>
-                        </li>
-                      ))}
-                    </ul>
                     <Link
-                      href={plan.highlight ? "/billing" : "/signup"}
+                      href={p.href}
                       className={`text-center text-xs font-semibold py-2.5 rounded-xl transition-all ${
-                        plan.highlight
+                        p.highlight
                           ? "bg-white text-neutral-900 hover:bg-neutral-100"
                           : "border border-neutral-200 text-neutral-700 hover:bg-neutral-50"
                       }`}
                     >
-                      {plan.price === "₹0" ? "Get started free" : `Choose ${plan.name}`}
+                      {p.cta}
                     </Link>
                   </div>
                 ))}
               </div>
 
-              <div className="bg-white border border-neutral-100 rounded-2xl p-5 text-sm text-neutral-500">
+              {/* Invoicing notes */}
+              <div className="bg-white border border-neutral-200 rounded-2xl p-5 text-sm text-neutral-600 shadow-2xs">
                 <div className="flex items-center gap-2 mb-2">
                   <Shield className="w-4 h-4 text-brand shrink-0" />
-                  <p className="font-medium text-neutral-800">Billing notes</p>
+                  <p className="font-semibold text-neutral-900">Billing &amp; Tax Compliance</p>
                 </div>
-                <ul className="flex flex-col gap-1.5 ml-6">
-                  <li>Payments are processed in Indian Rupees (₹) via Razorpay.</li>
-                  <li>All prices are inclusive of 18% GST.</li>
-                  <li>Subscriptions renew monthly. Cancel anytime from your billing page.</li>
-                  <li>On cancellation, access continues until the end of the billing period.</li>
+                <ul className="flex flex-col gap-1.5 ml-6 text-xs text-neutral-500">
+                  <li>• Secure payments processed via Razorpay supporting UPI, Cards, NetBanking, and Corporate Cards.</li>
+                  <li>• Subscription invoices include 18% GST with your organization&apos;s GSTIN and state tax breakdown.</li>
+                  <li>• Download PDF tax invoices anytime from <strong>Dashboard → Billing → Invoices</strong>.</li>
+                  <li>• Upgrades, downgrades, and cancellations are managed directly from the billing portal.</li>
                 </ul>
               </div>
             </section>
 
-            {/* ── API Reference ───────────────────────────────────── */}
-            <SectionAnchor id="api" />
-            <section className="mb-12">
-              <div className="flex items-center gap-2.5 mb-6">
-                <div className="w-8 h-8 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center shrink-0">
-                  <Code2 className="w-4 h-4 text-indigo-600" />
-                </div>
-                <h2 className="text-xl font-bold text-neutral-900">API reference</h2>
-                <span className="text-[10px] font-bold tracking-widest uppercase px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
-                  Pro
-                </span>
-              </div>
-
-              {/* Overview */}
-              <div className="bg-white border border-neutral-100 rounded-2xl p-6 mb-4">
-                <p className="text-sm text-neutral-500 leading-relaxed mb-4">
-                  The URPASS REST API lets you read your events and attendees from any external
-                  application. API access is available exclusively on the{" "}
-                  <strong className="text-neutral-800">Pro plan</strong>. Generate keys from{" "}
-                  <strong className="text-neutral-800">Dashboard → API Keys</strong>.
-                </p>
-                <div className="flex items-center gap-3 bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-3">
-                  <p className="text-xs font-semibold text-neutral-500 shrink-0">Base URL</p>
-                  <code className="text-xs font-mono text-neutral-800 flex-1">
-                    https://urpass.space/api/v1
-                  </code>
-                </div>
-              </div>
-
-              {/* Auth */}
-              <div className="bg-white border border-neutral-100 rounded-2xl overflow-hidden mb-4">
-                <div className="flex items-center gap-2 px-6 py-4 border-b border-neutral-100">
-                  <Lock className="w-4 h-4 text-neutral-400" />
-                  <h3 className="text-sm font-semibold text-neutral-800">Authentication</h3>
-                </div>
-                <div className="px-6 py-5">
-                  <p className="text-sm text-neutral-500 mb-4">
-                    Pass your API key in the <code className="bg-neutral-100 px-1.5 py-0.5 rounded text-xs font-mono text-neutral-700">Authorization</code> header
-                    as a Bearer token on every request. Keys start with{" "}
-                    <code className="bg-neutral-100 px-1.5 py-0.5 rounded text-xs font-mono text-neutral-700">urp_live_</code>.
-                  </p>
-                  <div className="bg-neutral-950 rounded-xl p-4 font-mono text-xs text-green-400 overflow-x-auto">
-                    <span className="text-neutral-500">curl </span>
-                    <span className="text-blue-400">https://urpass.space/api/v1/events </span>
-                    <span className="text-neutral-500">\{"\n"}  </span>
-                    <span className="text-yellow-400">-H </span>
-                    <span className="text-green-400">&quot;Authorization: Bearer urp_live_...&quot;</span>
-                  </div>
-                  <div className="mt-4 flex items-start gap-2 text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-xl px-4 py-3">
-                    <Shield className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-                    Never expose API keys in client-side code or public repositories.
-                  </div>
-                </div>
-              </div>
-
-              {/* Endpoints */}
-              <div className="bg-white border border-neutral-100 rounded-2xl overflow-hidden mb-4">
-                <div className="px-6 py-4 border-b border-neutral-100">
-                  <h3 className="text-sm font-semibold text-neutral-800">Endpoints</h3>
-                </div>
-
-                {/* GET /events */}
-                <div className="px-6 py-5 border-b border-neutral-50">
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="text-xs font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded font-mono">GET</span>
-                    <code className="text-sm font-mono text-neutral-800">/events</code>
-                  </div>
-                  <p className="text-sm text-neutral-500 mb-3">List all events you own.</p>
-                  <p className="text-xs font-semibold text-neutral-600 mb-2">Query parameters</p>
-                  <div className="flex flex-col gap-1.5 mb-4">
-                    {[
-                      ["status", "string", "Filter by status: draft · active · completed · cancelled"],
-                      ["limit", "number", "Max results per page (default 50, max 100)"],
-                      ["offset", "number", "Pagination offset (default 0)"],
-                    ].map(([param, type, desc]) => (
-                      <div key={param as string} className="grid grid-cols-[120px_60px_1fr] gap-2 text-xs">
-                        <code className="font-mono text-brand">{param}</code>
-                        <span className="text-neutral-400 italic">{type}</span>
-                        <span className="text-neutral-500">{desc}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="bg-neutral-950 rounded-xl p-4 font-mono text-xs overflow-x-auto">
-                    <pre className="text-neutral-300 whitespace-pre">{`{
-  "data": [
-    {
-      "id": "uuid",
-      "name": "AI Workshop 2026",
-      "event_date": "2026-09-15",
-      "venue": "SRM Institute, Chennai",
-      "status": "active",
-      "is_paid_event": false,
-      "ticket_price": 0,
-      "attendee_limit": 200
-    }
-  ],
-  "meta": { "total": 4, "limit": 50, "offset": 0 }
-}`}</pre>
-                  </div>
-                </div>
-
-                {/* GET /events/:id */}
-                <div className="px-6 py-5 border-b border-neutral-50">
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="text-xs font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded font-mono">GET</span>
-                    <code className="text-sm font-mono text-neutral-800">/events/:id</code>
-                  </div>
-                  <p className="text-sm text-neutral-500">Retrieve a single event by its UUID.</p>
-                </div>
-
-                {/* GET /events/:id/attendees */}
-                <div className="px-6 py-5">
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="text-xs font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded font-mono">GET</span>
-                    <code className="text-sm font-mono text-neutral-800">/events/:id/attendees</code>
-                  </div>
-                  <p className="text-sm text-neutral-500 mb-3">List attendees for an event.</p>
-                  <p className="text-xs font-semibold text-neutral-600 mb-2">Query parameters</p>
-                  <div className="flex flex-col gap-1.5 mb-4">
-                    {[
-                      ["application_status", "string", "pending · approved · rejected"],
-                      ["pass_status", "string", "not_generated · generated · checked_in"],
-                      ["limit", "number", "Max results (default 100, max 500)"],
-                      ["offset", "number", "Pagination offset"],
-                    ].map(([param, type, desc]) => (
-                      <div key={param as string} className="grid grid-cols-[140px_60px_1fr] gap-2 text-xs">
-                        <code className="font-mono text-brand">{param}</code>
-                        <span className="text-neutral-400 italic">{type}</span>
-                        <span className="text-neutral-500">{desc}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="bg-neutral-950 rounded-xl p-4 font-mono text-xs overflow-x-auto">
-                    <pre className="text-neutral-300 whitespace-pre">{`{
-  "data": [
-    {
-      "id": "uuid",
-      "name": "Arun Kumar",
-      "email": "arun@example.com",
-      "pass_type": "participant",
-      "application_status": "approved",
-      "pass_status": "checked_in"
-    }
-  ],
-  "meta": { "total": 87, "limit": 100, "offset": 0 }
-}`}</pre>
-                  </div>
-                </div>
-              </div>
-
-              {/* Error codes */}
-              <div className="bg-white border border-neutral-100 rounded-2xl overflow-hidden">
-                <div className="px-6 py-4 border-b border-neutral-100">
-                  <h3 className="text-sm font-semibold text-neutral-800">Error responses</h3>
-                </div>
-                <div className="divide-y divide-neutral-50">
-                  {[
-                    ["401", "Unauthorized", "Missing or invalid API key"],
-                    ["403", "Forbidden", "Key is revoked or plan downgraded from Pro"],
-                    ["404", "Not Found", "Resource does not exist or belongs to another user"],
-                    ["429", "Too Many Requests", "Rate limit exceeded — back off and retry"],
-                    ["500", "Server Error", "Internal error — contact support if persistent"],
-                  ].map(([code, name, desc]) => (
-                    <div key={code as string} className="flex items-start gap-4 px-6 py-3.5">
-                      <code className={`text-xs font-mono font-bold shrink-0 mt-0.5 ${
-                        code === "401" || code === "403" ? "text-red-600" :
-                        code === "404" ? "text-amber-600" :
-                        code === "429" ? "text-orange-600" : "text-neutral-500"
-                      }`}>{code}</code>
-                      <p className="text-xs font-semibold text-neutral-700 w-32 shrink-0 mt-0.5">{name}</p>
-                      <p className="text-xs text-neutral-500">{desc}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </section>
-
-            {/* ── Webhooks ─────────────────────────────────────────── */}
-            <SectionAnchor id="webhooks" />
-            <section className="mb-12">
-              <div className="flex items-center gap-2.5 mb-6">
-                <div className="w-8 h-8 rounded-xl bg-violet-50 border border-violet-100 flex items-center justify-center shrink-0">
-                  <Webhook className="w-4 h-4 text-violet-600" />
-                </div>
-                <h2 className="text-xl font-bold text-neutral-900">Webhooks</h2>
-              </div>
-
-              <div className="bg-white border border-neutral-100 rounded-2xl p-6 mb-4">
-                <p className="text-sm text-neutral-500 leading-relaxed">
-                  URPASS sends webhook events to your server when important actions occur — such as
-                  a subscription payment or a paid event ticket purchase. Configure your webhook
-                  endpoint in the{" "}
-                  <strong className="text-neutral-800">Razorpay Dashboard → Webhooks</strong> and
-                  point it to:
-                </p>
-                <div className="mt-4 flex items-center gap-3 bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-3">
-                  <code className="text-xs font-mono text-neutral-800 flex-1 break-all">
-                    https://urpass.space/api/webhook/razorpay
-                  </code>
-                </div>
-              </div>
-
-              {/* Signature verification */}
-              <div className="bg-white border border-neutral-100 rounded-2xl overflow-hidden mb-4">
-                <div className="flex items-center gap-2 px-6 py-4 border-b border-neutral-100">
-                  <Shield className="w-4 h-4 text-neutral-400" />
-                  <h3 className="text-sm font-semibold text-neutral-800">Signature verification</h3>
-                </div>
-                <div className="px-6 py-5">
-                  <p className="text-sm text-neutral-500 mb-4">
-                    Every webhook request includes an{" "}
-                    <code className="bg-neutral-100 px-1.5 py-0.5 rounded text-xs font-mono">x-razorpay-signature</code>{" "}
-                    header. URPASS verifies this using HMAC-SHA256 with your{" "}
-                    <code className="bg-neutral-100 px-1.5 py-0.5 rounded text-xs font-mono">RAZORPAY_WEBHOOK_SECRET</code>.
-                    Requests with an invalid signature are rejected with <code className="bg-neutral-100 px-1.5 py-0.5 rounded text-xs font-mono">400</code>.
-                  </p>
-                  <div className="bg-neutral-950 rounded-xl p-4 font-mono text-xs overflow-x-auto">
-                    <pre className="text-neutral-300 whitespace-pre">{`import crypto from "crypto";
-
-const expected = crypto
-  .createHmac("sha256", process.env.RAZORPAY_WEBHOOK_SECRET)
-  .update(rawBody)
-  .digest("hex");
-
-const valid = crypto.timingSafeEqual(
-  Buffer.from(expected, "hex"),
-  Buffer.from(signature, "hex")
-);`}</pre>
-                  </div>
-                </div>
-              </div>
-
-              {/* Event types */}
-              <div className="bg-white border border-neutral-100 rounded-2xl overflow-hidden mb-4">
-                <div className="px-6 py-4 border-b border-neutral-100">
-                  <h3 className="text-sm font-semibold text-neutral-800">Event types</h3>
-                </div>
-
-                {/* payment.captured — subscription */}
-                <div className="px-6 py-5 border-b border-neutral-50">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-mono font-semibold text-neutral-900">payment.captured</span>
-                    <span className="text-[10px] bg-blue-50 text-blue-700 border border-blue-100 px-1.5 py-0.5 rounded-full font-semibold">Subscription</span>
-                  </div>
-                  <p className="text-sm text-neutral-500 mb-4">
-                    Fired when a user successfully pays for a Starter or Pro subscription.
-                    URPASS activates the subscription automatically.
-                  </p>
-                  <div className="bg-neutral-950 rounded-xl p-4 font-mono text-xs overflow-x-auto">
-                    <pre className="text-neutral-300 whitespace-pre">{`{
-  "event": "payment.captured",
-  "payload": {
-    "payment": {
-      "entity": {
-        "id": "pay_XXXXXXXX",
-        "amount": 35282,
-        "currency": "INR",
-        "notes": {
-          "user_id": "uuid",
-          "plan_id": "uuid",
-          "plan_slug": "pro"
-        }
-      }
-    }
-  }
-}`}</pre>
-                  </div>
-                </div>
-
-                {/* payment.captured — ticket */}
-                <div className="px-6 py-5">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-mono font-semibold text-neutral-900">payment.captured</span>
-                    <span className="text-[10px] bg-amber-50 text-amber-700 border border-amber-100 px-1.5 py-0.5 rounded-full font-semibold">Ticket</span>
-                  </div>
-                  <p className="text-sm text-neutral-500 mb-4">
-                    Fired when an attendee pays for a ticket on a paid event.
-                    URPASS marks the <code className="bg-neutral-100 px-1.5 py-0.5 rounded font-mono text-xs">ticket_orders</code> record
-                    as <code className="bg-neutral-100 px-1.5 py-0.5 rounded font-mono text-xs">paid</code> and the attendee application is recorded.
-                  </p>
-                  <div className="bg-neutral-950 rounded-xl p-4 font-mono text-xs overflow-x-auto">
-                    <pre className="text-neutral-300 whitespace-pre">{`{
-  "event": "payment.captured",
-  "payload": {
-    "payment": {
-      "entity": {
-        "id": "pay_XXXXXXXX",
-        "order_id": "order_XXXXXXXX",
-        "amount": 49900,
-        "currency": "INR",
-        "notes": {
-          "type": "ticket",
-          "event_id": "uuid",
-          "buyer_name": "Arun Kumar",
-          "buyer_email": "arun@example.com"
-        }
-      }
-    }
-  }
-}`}</pre>
-                  </div>
-                </div>
-              </div>
-
-              {/* Setup steps */}
-              <div className="bg-white border border-neutral-100 rounded-2xl p-6">
-                <h3 className="text-sm font-semibold text-neutral-800 mb-5">Setup checklist</h3>
-                <div className="flex flex-col gap-0">
-                  {[
-                    ["Add the URPASS webhook URL in Razorpay Dashboard → Webhooks", "https://urpass.space/api/webhook/razorpay"],
-                    ["Select the event type: payment.captured", null],
-                    ["Copy the Webhook Secret from Razorpay and add it to your Railway/Vercel environment as RAZORPAY_WEBHOOK_SECRET", null],
-                    ["Test with a real payment — the Razorpay dashboard shows delivery status and lets you retry", null],
-                  ].map(([step, code], i) => (
-                    <div key={i} className="flex gap-4 pb-5 border-b border-neutral-100 last:border-0 last:pb-0 mb-5 last:mb-0">
-                      <div
-                        className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0 mt-0.5"
-                        style={{ background: "#6D28D9" }}
-                      >
-                        {i + 1}
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm text-neutral-600">{step as string}</p>
-                        {code && (
-                          <code className="mt-1.5 block text-xs font-mono text-brand bg-brand-50 border border-brand-100 px-3 py-1.5 rounded-lg">
-                            {code as string}
-                          </code>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </section>
-
-            {/* ── FAQ ─────────────────────────────────────────────── */}
-            <SectionAnchor id="faq" />
-            <section className="mb-12">
+            {/* ── Section 10: FAQ ─────────────────────────────────── */}
+            <section id="faq" className="mb-14 scroll-mt-20">
               <div className="flex items-center gap-2.5 mb-6">
                 <div className="w-8 h-8 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center shrink-0">
                   <HelpCircle className="w-4 h-4 text-amber-600" />
                 </div>
-                <h2 className="text-xl font-bold text-neutral-900">Frequently asked questions</h2>
+                <div>
+                  <h2 className="text-xl font-bold text-neutral-900">Frequently asked questions</h2>
+                  <p className="text-xs text-neutral-500">Common questions from organizers, developers, and college teams</p>
+                </div>
               </div>
 
               <div className="flex flex-col gap-3">
                 {[
                   {
-                    q: "Do attendees need to install an app?",
-                    a: "No. Attendees receive a link to their digital pass. The pass opens in any browser on any device — no app download needed.",
+                    q: "Do attendees need to install an app to present their QR pass?",
+                    a: "No. The attendee pass is rendered as a lightweight, responsive web pass accessible on any smartphone browser. On iOS devices, attendees can also add the pass directly to Apple Wallet.",
                   },
                   {
-                    q: "Can I use URPASS for offline events?",
-                    a: "Yes. The scanner works on any smartphone with a camera and a mobile data connection. Passes are verified in real time, so an internet connection is required at the venue.",
+                    q: "Can multiple check-in staff scan at different gates simultaneously?",
+                    a: "Yes. Multiple staff members can scan at the same time using their own mobile phones. All check-in attempts are validated atomically against the central database to guarantee zero duplicate admissions.",
                   },
                   {
-                    q: "What happens if I exceed my attendee limit?",
-                    a: "When an event reaches its attendee limit, new approvals are blocked automatically. You'll see a warning on the dashboard. Upgrade your plan or increase the event's attendee limit in Settings.",
+                    q: "How are ticket prices handled in the API and payment checkout?",
+                    a: "All ticket prices and order amounts in URPASS are denominated in paise (1 INR = 100 paise), matching standard Indian payment systems. For example, a ₹499 ticket is passed as 49900 in the API.",
                   },
                   {
-                    q: "Can multiple people scan at the same entrance?",
-                    a: "Yes. Open urpass.space/scan on multiple phones simultaneously. Each scan is validated server-side, so duplicates are rejected regardless of which device first scanned the QR.",
+                    q: "What happens if a scanned attendee tries to enter a restricted zone or wrong gate?",
+                    a: "If the gate is configured with an assigned zone and the attendee's ticket tier does not have zone access privileges in ticket_zone_access, the scanner immediately displays an 'Access Denied' alert.",
                   },
                   {
-                    q: "Can I send passes to attendees by email?",
-                    a: "Yes. When you generate a pass or approve an auto-approve application, the attendee automatically receives an email with their pass link.",
+                    q: "How do virtual / online event passes work?",
+                    a: "When you configure an event as 'Online' or 'Hybrid' with a meeting link (Zoom, Google Meet, Teams, or Custom), the attendee's digital pass includes a verified join button that resolves via /api/join/[passToken]. Only approved attendees can access the redirect.",
                   },
                   {
-                    q: "What is the public application form?",
-                    a: "When you enable the 'Public application form' toggle on an event, URPASS generates a unique URL (e.g. urpass.space/apply/your-slug). Share this link and anyone can register. Applications appear as Pending until you approve them (or use auto-approve).",
+                    q: "Can I remove the URPASS watermark and branding from passes?",
+                    a: "Yes. Pro and Business tier plans provide white-label passes with all URPASS branding and footers removed.",
                   },
                   {
-                    q: "Is my data stored securely?",
-                    a: "Yes. URPASS is built on Supabase (PostgreSQL) with row-level security. Attendee data is only accessible by the event organizer. Payments are processed by Razorpay — we never store card details.",
+                    q: "How secure is attendee data?",
+                    a: "URPASS is built on Supabase PostgreSQL with rigorous Row-Level Security (RLS) policies. Attendee records and event data can only be accessed by authenticated organizers and team members with appropriate role permissions.",
                   },
                 ].map(({ q, a }) => (
-                  <div key={q} className="bg-white border border-neutral-100 rounded-2xl p-5">
-                    <p className="text-sm font-semibold text-neutral-900 mb-2">{q}</p>
-                    <p className="text-sm text-neutral-500 leading-relaxed">{a}</p>
+                  <div key={q} className="bg-white border border-neutral-200 rounded-2xl p-5 shadow-2xs">
+                    <p className="text-sm font-semibold text-neutral-900 mb-1.5">{q}</p>
+                    <p className="text-xs text-neutral-500 leading-relaxed">{a}</p>
                   </div>
                 ))}
               </div>
             </section>
 
             {/* Support CTA */}
-            <div className="bg-neutral-900 rounded-2xl p-7 text-center">
+            <div className="bg-neutral-900 rounded-2xl p-8 text-center text-white shadow-md">
               <div
-                className="w-10 h-10 rounded-xl mx-auto mb-4 flex items-center justify-center"
+                className="w-10 h-10 rounded-xl mx-auto mb-4 flex items-center justify-center shadow-sm"
                 style={{ background: "linear-gradient(135deg, #6D28D9, #4c1d95)" }}
               >
                 <Star className="w-5 h-5 text-white" />
               </div>
-              <h3 className="text-lg font-bold text-white mb-2">Still have questions?</h3>
-              <p className="text-sm text-white/50 mb-5">
-                Our support team is available via email — usually within 24 hours.
+              <h3 className="text-lg font-bold text-white mb-2">Need dedicated technical help?</h3>
+              <p className="text-xs text-neutral-400 max-w-md mx-auto mb-6 leading-relaxed">
+                Whether you are integrating our REST API, writing custom scanner hardware integrations, or organizing
+                a 5,000+ attendee campus festival, our team is ready to assist.
               </p>
               <div className="flex flex-wrap gap-3 justify-center">
                 <a
                   href="mailto:support@urpass.space"
-                  className="inline-flex items-center gap-2 text-sm font-semibold text-white px-5 py-2.5 rounded-xl border border-white/20 hover:bg-white/10 transition-colors"
+                  className="inline-flex items-center gap-2 text-xs font-semibold text-white px-4 py-2.5 rounded-xl border border-neutral-700 hover:bg-neutral-800 transition-colors"
                 >
                   support@urpass.space
                 </a>
                 <Link
                   href="/signup"
-                  className="inline-flex items-center gap-2 text-sm font-semibold text-neutral-900 bg-white px-5 py-2.5 rounded-xl hover:bg-neutral-50 transition-colors"
+                  className="inline-flex items-center gap-2 text-xs font-semibold text-neutral-900 bg-white px-4 py-2.5 rounded-xl hover:bg-neutral-100 transition-colors"
                 >
-                  Start for free
+                  Start building for free
                   <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
               </div>

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Html5Qrcode, Html5QrcodeSupportedFormats } from "html5-qrcode";
-import { ScanLine, Camera, CameraOff } from "lucide-react";
+import { Camera, CameraOff } from "lucide-react";
 
 interface Props {
   onScan: (token: string) => void;
@@ -84,8 +84,14 @@ export default function QRScanner({ onScan, active }: Props) {
 
   return (
     <div className="flex flex-col items-center gap-4 w-full">
-      {/* Viewfinder — fills parent width, square ratio */}
-      <div className="relative w-full rounded-3xl overflow-hidden bg-neutral-900" style={{ aspectRatio: "1" }}>
+      {/* Viewfinder */}
+      <div
+        className="relative w-full rounded-3xl overflow-hidden bg-neutral-900"
+        style={{
+          aspectRatio: "1",
+          boxShadow: started ? "0 0 0 1px rgba(109,40,217,0.2), 0 0 40px rgba(109,40,217,0.08)" : undefined,
+        }}
+      >
         <div id={SCANNER_ID} className="w-full h-full" />
 
         {/* Starting placeholder */}
@@ -108,24 +114,64 @@ export default function QRScanner({ onScan, active }: Props) {
           </div>
         )}
 
-        {/* Corner bracket overlay */}
+        {/* Scanner overlay — only when started */}
         {started && (
           <>
-            <span className="absolute top-5 left-5 w-8 h-8 border-t-2 border-l-2 border-white/50 rounded-tl-xl pointer-events-none" />
-            <span className="absolute top-5 right-5 w-8 h-8 border-t-2 border-r-2 border-white/50 rounded-tr-xl pointer-events-none" />
-            <span className="absolute bottom-5 left-5 w-8 h-8 border-b-2 border-l-2 border-white/50 rounded-bl-xl pointer-events-none" />
-            <span className="absolute bottom-5 right-5 w-8 h-8 border-b-2 border-r-2 border-white/50 rounded-br-xl pointer-events-none" />
-            {/* Scan line */}
-            <span className="absolute top-1/2 -translate-y-1/2 left-8 right-8 h-0.5 bg-gradient-to-r from-transparent via-brand to-transparent opacity-70 pointer-events-none animate-[scanLine_2s_linear_infinite]" />
+            {/* Vignette — dims edges to focus on center */}
+            <div
+              className="absolute inset-0 pointer-events-none"
+              style={{
+                background: "radial-gradient(ellipse 72% 72% at 50% 50%, transparent 48%, rgba(0,0,0,0.5) 100%)",
+              }}
+            />
+
+            {/* Corner brackets — brand colored with pulse */}
+            <span
+              className="absolute top-5 left-5 w-10 h-10 rounded-tl-xl pointer-events-none animate-[bracketPulse_2.4s_ease-in-out_infinite]"
+              style={{ borderTop: "3px solid #7C3AED", borderLeft: "3px solid #7C3AED", filter: "drop-shadow(0 0 5px #6D28D9)" }}
+            />
+            <span
+              className="absolute top-5 right-5 w-10 h-10 rounded-tr-xl pointer-events-none animate-[bracketPulse_2.4s_ease-in-out_infinite]"
+              style={{ borderTop: "3px solid #7C3AED", borderRight: "3px solid #7C3AED", filter: "drop-shadow(0 0 5px #6D28D9)", animationDelay: "0.3s" }}
+            />
+            <span
+              className="absolute bottom-5 left-5 w-10 h-10 rounded-bl-xl pointer-events-none animate-[bracketPulse_2.4s_ease-in-out_infinite]"
+              style={{ borderBottom: "3px solid #7C3AED", borderLeft: "3px solid #7C3AED", filter: "drop-shadow(0 0 5px #6D28D9)", animationDelay: "0.6s" }}
+            />
+            <span
+              className="absolute bottom-5 right-5 w-10 h-10 rounded-br-xl pointer-events-none animate-[bracketPulse_2.4s_ease-in-out_infinite]"
+              style={{ borderBottom: "3px solid #7C3AED", borderRight: "3px solid #7C3AED", filter: "drop-shadow(0 0 5px #6D28D9)", animationDelay: "0.9s" }}
+            />
+
+            {/* Scan beam — diffuse glow layer */}
+            <span
+              className="absolute left-6 right-6 pointer-events-none animate-[scanBeam_2.4s_ease-in-out_infinite]"
+              style={{
+                height: "24px",
+                transform: "translateY(-50%)",
+                background: "linear-gradient(to bottom, transparent, rgba(109,40,217,0.18) 50%, transparent)",
+                borderRadius: "99px",
+              }}
+            />
+            {/* Scan beam — bright core line */}
+            <span
+              className="absolute left-10 right-10 pointer-events-none animate-[scanBeam_2.4s_ease-in-out_infinite]"
+              style={{
+                height: "2px",
+                transform: "translateY(-50%)",
+                background: "linear-gradient(to right, transparent, #8B5CF6 20%, #6D28D9 50%, #8B5CF6 80%, transparent)",
+                boxShadow: "0 0 6px 2px rgba(109,40,217,0.7), 0 0 14px 4px rgba(109,40,217,0.3)",
+              }}
+            />
           </>
         )}
       </div>
 
-      {/* Status line */}
+      {/* Status indicator */}
       {started && (
         <div className="flex items-center gap-2">
-          <ScanLine className="w-3.5 h-3.5 text-white/30" />
-          <p className="text-xs text-white/30">Aim the QR code at the frame</p>
+          <span className="w-1.5 h-1.5 rounded-full bg-brand animate-pulse shrink-0" />
+          <p className="text-xs text-white/30">Hold the QR code steady in the frame</p>
         </div>
       )}
     </div>

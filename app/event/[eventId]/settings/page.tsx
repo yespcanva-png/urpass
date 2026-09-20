@@ -2,15 +2,17 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Loader2, Trash2, AlertTriangle, IndianRupee,
   FileText, CalendarDays, Users, CreditCard,
-  Radio, CheckCircle2, AlertCircle,
+  Radio, CheckCircle2, AlertCircle, Wifi, Link2, Ticket,
 } from "lucide-react";
 import { eventSchema, type EventInput } from "@/lib/validations/event";
 import { updateEvent, updateEventStatus, deleteEvent } from "@/app/actions/events";
+import { setTicketTypeStatus, createDefaultTicketType } from "@/app/actions/ticket-types";
 import { createClient } from "@/lib/supabase/client";
 
 const inputCls =
@@ -127,12 +129,26 @@ const STATUS_CONFIG = {
   cancelled: { label: "Cancelled", dot: "bg-red-400",     bg: "bg-red-50",      text: "text-red-700",      border: "border-red-200" },
 } as const;
 
+const EVENT_TYPE_OPTIONS = [
+  { value: "physical" as const, label: "Physical" },
+  { value: "online" as const, label: "Online" },
+  { value: "hybrid" as const, label: "Hybrid" },
+];
+
+const PLATFORM_OPTIONS = [
+  { value: "zoom" as const, label: "Zoom" },
+  { value: "google_meet" as const, label: "Google Meet" },
+  { value: "teams" as const, label: "Teams" },
+  { value: "custom" as const, label: "Custom" },
+];
+
 type EventRow = {
   id: string; name: string; description: string | null;
   event_date: string; start_time: string; end_time: string;
   venue: string; attendee_limit: number; status: string;
   application_enabled: boolean; auto_approve: boolean;
   is_paid_event: boolean; ticket_price: number;
+  event_type: string; meeting_url: string | null; meeting_platform: string | null;
 };
 
 export default function EventSettingsPage() {
@@ -148,6 +164,8 @@ export default function EventSettingsPage() {
   const [deleteConfirm, setDeleteConfirm]       = useState(false);
   const [deleteLoading, setDeleteLoading]       = useState(false);
   const [hasPaymentGateway, setHasPaymentGateway] = useState<boolean | null>(null);
+  const [ticketTypes, setTicketTypes]           = useState<{id: string; name: string; price: number; status: string}[]>([]);
+  const [creatingDefault, setCreatingDefault]   = useState(false);
 
   const {
     register,
@@ -156,18 +174,19 @@ export default function EventSettingsPage() {
     setValue,
     reset,
     formState: { errors, isSubmitting, isDirty },
-  } = useForm<EventInput>({ resolver: zodResolver(eventSchema) });
+  } = useForm<EventInput, unknown, EventInput>({ resolver: zodResolver(eventSchema) as never });
 
   const applicationEnabled = watch("application_enabled");
   const autoApprove        = watch("auto_approve");
   const isPaidEvent        = watch("is_paid_event");
+  const eventType          = watch("event_type");
 
   useEffect(() => {
     async function load() {
       const supabase = createClient();
       const [{ data }, { data: { user } }] = await Promise.all([
         supabase.from("events")
-          .select("id,name,description,event_date,start_time,end_time,venue,attendee_limit,status,application_enabled,auto_approve,is_paid_event,ticket_price")
+          .select("id,name,description,event_date,start_time,end_time,venue,attendee_limit,status,application_enabled,auto_approve,is_paid_event,ticket_price,event_type,meeting_url,meeting_platform")
           .eq("id", eventId).single(),
         supabase.auth.getUser(),
       ]);
@@ -176,10 +195,13 @@ export default function EventSettingsPage() {
         reset({
           name: data.name, description: data.description ?? "",
           event_date: data.event_date, start_time: data.start_time, end_time: data.end_time,
-          venue: data.venue, attendee_limit: data.attendee_limit,
+          venue: data.venue ?? "", attendee_limit: data.attendee_limit,
           status: data.status as "draft" | "active",
           application_enabled: data.application_enabled, auto_approve: data.auto_approve,
           is_paid_event: data.is_paid_event, ticket_price: data.ticket_price,
+          event_type: (data.event_type as "physical" | "online" | "hybrid") ?? "physical",
+          meeting_url: data.meeting_url ?? null,
+          meeting_platform: (data.meeting_platform as "zoom" | "google_meet" | "teams" | "custom" | null) ?? null,
         });
       }
       if (user) {
@@ -187,6 +209,12 @@ export default function EventSettingsPage() {
           .select("razorpay_key_id").eq("user_id", user.id).single();
         setHasPaymentGateway(!!(ps?.razorpay_key_id));
       }
+      const { data: ttRows } = await supabase
+        .from("ticket_types")
+        .select("id, name, price, status")
+        .eq("event_id", eventId)
+        .order("position", { ascending: true });
+      setTicketTypes(ttRows ?? []);
       setLoading(false);
     }
     load();
@@ -196,7 +224,11 @@ export default function EventSettingsPage() {
     setSaveError(""); setSaveSuccess(false);
     const result = await updateEvent(eventId, data);
     if (result?.error) { setSaveError(result.error); }
-    else { setSaveSuccess(true); setTimeout(() => setSaveSuccess(false), 3000); }
+    else {
+      reset(data);
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+    }
   }
 
   async function handleStatusChange(newStatus: "draft" | "active" | "completed" | "cancelled") {
@@ -208,6 +240,19 @@ export default function EventSettingsPage() {
       setEvent((e) => (e ? { ...e, status: newStatus } : e));
     }
     setStatusLoading(false);
+  }
+
+  async function handleTicketTypeToggle(ticketTypeId: string, currentStatus: string) {
+    const newStatus = currentStatus === "on_sale" ? "draft" : "on_sale";
+    setTicketTypes((prev) =>
+      prev.map((t) => (t.id === ticketTypeId ? { ...t, status: newStatus } : t))
+    );
+    const result = await setTicketTypeStatus(ticketTypeId, newStatus as "on_sale" | "draft");
+    if (result?.error) {
+      setTicketTypes((prev) =>
+        prev.map((t) => (t.id === ticketTypeId ? { ...t, status: currentStatus } : t))
+      );
+    }
   }
 
   async function handleDelete() {
@@ -232,6 +277,7 @@ export default function EventSettingsPage() {
   }
 
   const statusCfg = STATUS_CONFIG[event.status as keyof typeof STATUS_CONFIG] ?? STATUS_CONFIG.draft;
+  const showMeetingDetails = eventType === "online" || eventType === "hybrid";
 
   return (
     <div className="max-w-2xl mx-auto px-4 lg:px-0 py-6 pb-28">
@@ -239,16 +285,71 @@ export default function EventSettingsPage() {
 
         {/* ── Event details ── */}
         <SectionCard icon={FileText} title="Event details" subtitle="Basic information about your event">
+          <Field label="Event type" error={errors.event_type?.message}>
+            <div className="flex gap-2">
+              {EVENT_TYPE_OPTIONS.map(({ value, label }) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setValue("event_type", value, { shouldDirty: true })}
+                  className={`flex-1 py-2 rounded-lg border text-xs font-semibold transition-all ${
+                    eventType === value
+                      ? "border-brand bg-brand-50 text-brand"
+                      : "border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </Field>
           <Field label="Event name" error={errors.name?.message}>
             <input type="text" className={inputCls} placeholder="My Awesome Event" {...register("name")} />
           </Field>
           <Field label="Description" error={errors.description?.message}>
             <textarea rows={3} className={`${inputCls} resize-none`} placeholder="What's this event about?" {...register("description")} />
           </Field>
-          <Field label="Venue" error={errors.venue?.message}>
-            <input type="text" className={inputCls} placeholder="Venue name or address" {...register("venue")} />
-          </Field>
+          {eventType !== "online" && (
+            <Field label="Venue" error={errors.venue?.message}>
+              <input type="text" className={inputCls} placeholder="Venue name or address" {...register("venue")} />
+            </Field>
+          )}
         </SectionCard>
+
+        {/* ── Meeting details (online / hybrid) ── */}
+        {showMeetingDetails && (
+          <SectionCard icon={Wifi} title="Meeting details" subtitle="Online meeting link and platform">
+            <Field label="Meeting platform" error={errors.meeting_platform?.message}>
+              <div className="flex gap-2 flex-wrap">
+                {PLATFORM_OPTIONS.map(({ value, label }) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setValue("meeting_platform", value, { shouldDirty: true })}
+                    className={`px-3 py-2 rounded-lg border text-xs font-semibold transition-all ${
+                      watch("meeting_platform") === value
+                        ? "border-brand bg-brand-50 text-brand"
+                        : "border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </Field>
+            <Field label="Meeting URL" error={errors.meeting_url?.message} hint="Attendees will be redirected here when they click 'Join Event' on their pass.">
+              <div className="relative">
+                <Link2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 pointer-events-none" />
+                <input
+                  type="url"
+                  placeholder="https://zoom.us/j/123456789"
+                  className={`${inputCls} pl-9`}
+                  {...register("meeting_url")}
+                />
+              </div>
+            </Field>
+          </SectionCard>
+        )}
 
         {/* ── Date & time ── */}
         <SectionCard icon={CalendarDays} title="Date & time">
@@ -288,39 +389,147 @@ export default function EventSettingsPage() {
           )}
         </SectionCard>
 
-        {/* ── Ticket payment ── */}
-        <SectionCard icon={CreditCard} title="Ticket payment" subtitle="Charge attendees via Razorpay">
-          {isPaidEvent && hasPaymentGateway === false && (
-            <div className="flex items-start gap-3 bg-amber-50 border border-amber-100 rounded-xl px-4 py-3">
-              <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
-              <div>
-                <p className="text-xs font-semibold text-amber-800">Payment gateway not connected</p>
-                <p className="text-xs text-amber-700 mt-0.5">
-                  Attendees can&apos;t pay until you connect Razorpay.{" "}
-                  <a href="/dashboard/settings" className="font-bold underline">Connect now →</a>
+        {/* ── Ticket payment / types ── */}
+        {ticketTypes.length > 0 ? (
+          <div className="bg-white rounded-2xl border border-neutral-100 overflow-hidden"
+            style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
+            <div className="flex items-center gap-3 px-6 py-4 border-b border-neutral-50">
+              <div className="w-8 h-8 rounded-lg bg-violet-50 flex items-center justify-center shrink-0">
+                <Ticket className="w-4 h-4 text-violet-600" />
+              </div>
+              <div className="flex-1">
+                <h2 className="text-sm font-semibold text-neutral-900 leading-none">Ticket types</h2>
+                <p className="text-xs text-neutral-400 mt-0.5">
+                  {ticketTypes.length} type{ticketTypes.length !== 1 ? "s" : ""} configured — pricing managed per type
                 </p>
               </div>
+              <Link
+                href={`/event/${eventId}/tickets`}
+                className="text-xs font-semibold text-brand hover:underline underline-offset-2 shrink-0"
+              >
+                Manage →
+              </Link>
             </div>
-          )}
-          <ToggleRow
-            label="Paid event"
-            description="Require attendees to pay before registering"
-            checked={!!isPaidEvent}
-            onChange={() => setValue("is_paid_event", !isPaidEvent, { shouldDirty: true })}
-          />
-          {isPaidEvent && (
-            <Field label="Ticket price (₹)" error={errors.ticket_price?.message} hint="Amount in rupees">
-              <div className="relative">
-                <IndianRupee className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 pointer-events-none" />
-                <input
-                  type="number" min={1} max={100000}
-                  className={`${inputCls} pl-9`}
-                  {...register("ticket_price", { valueAsNumber: true })}
-                />
+            <div className="px-6 py-4 flex flex-col gap-0">
+              {ticketTypes.map((tt, idx) => (
+                <div
+                  key={tt.id}
+                  className={`flex items-center justify-between gap-4 py-3.5 ${
+                    idx < ticketTypes.length - 1 ? "border-b border-neutral-50" : ""
+                  }`}
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-neutral-800 truncate">{tt.name}</p>
+                    <p className="text-xs text-neutral-400 mt-0.5">
+                      {tt.price === 0 ? "Free" : `₹${(tt.price / 100).toLocaleString("en-IN")}`}
+                      {tt.status === "closed" && (
+                        <span className="ml-1.5 text-red-500">· Closed</span>
+                      )}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2.5 shrink-0">
+                    <span className={`text-[11px] font-semibold ${
+                      tt.status === "on_sale" ? "text-green-600" : "text-neutral-400"
+                    }`}>
+                      {tt.status === "on_sale" ? "On" : "Off"}
+                    </span>
+                    <Toggle
+                      checked={tt.status === "on_sale"}
+                      onChange={() => handleTicketTypeToggle(tt.id, tt.status)}
+                      disabled={tt.status === "closed"}
+                    />
+                  </div>
+                </div>
+              ))}
+              {hasPaymentGateway === false && ticketTypes.some((t) => t.price > 0) && (
+                <div className="flex items-start gap-3 bg-amber-50 border border-amber-100 rounded-xl px-4 py-3 mt-3">
+                  <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-xs font-semibold text-amber-800">Payment gateway not connected</p>
+                    <p className="text-xs text-amber-700 mt-0.5">
+                      Attendees can&apos;t pay until you connect Razorpay.{" "}
+                      <a href="/dashboard/settings" className="font-bold underline">Connect now →</a>
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+          <SectionCard icon={CreditCard} title="Ticket payment" subtitle="Charge attendees via Razorpay">
+            {isPaidEvent && hasPaymentGateway === false && (
+              <div className="flex items-start gap-3 bg-amber-50 border border-amber-100 rounded-xl px-4 py-3">
+                <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-xs font-semibold text-amber-800">Payment gateway not connected</p>
+                  <p className="text-xs text-amber-700 mt-0.5">
+                    Attendees can&apos;t pay until you connect Razorpay.{" "}
+                    <a href="/dashboard/settings" className="font-bold underline">Connect now →</a>
+                  </p>
+                </div>
               </div>
-            </Field>
-          )}
-        </SectionCard>
+            )}
+            <ToggleRow
+              label="Paid event"
+              description="Require attendees to pay before registering"
+              checked={!!isPaidEvent}
+              onChange={() => setValue("is_paid_event", !isPaidEvent, { shouldDirty: true })}
+            />
+            {isPaidEvent && (
+              <Field label="Ticket price (₹)" error={errors.ticket_price?.message} hint="Amount in rupees">
+                <div className="relative">
+                  <IndianRupee className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 pointer-events-none" />
+                  <input
+                    type="number" min={1} max={100000}
+                    className={`${inputCls} pl-9`}
+                    {...register("ticket_price", { valueAsNumber: true })}
+                  />
+                </div>
+              </Field>
+            )}
+            {/* No ticket types yet — offer to create the default one */}
+            <div className="flex items-center justify-between bg-amber-50 border border-amber-100 rounded-xl px-4 py-3">
+              <div className="min-w-0 mr-3">
+                <p className="text-xs font-semibold text-amber-800">No ticket types configured</p>
+                <p className="text-xs text-amber-700 mt-0.5">Ticket selector won&apos;t appear on the apply page until you add one.</p>
+              </div>
+              <button
+                type="button"
+                disabled={creatingDefault}
+                onClick={async () => {
+                  setCreatingDefault(true);
+                  const res = await createDefaultTicketType(eventId);
+                  if (!res?.error) {
+                    const supabase = createClient();
+                    const { data: ttRows } = await supabase
+                      .from("ticket_types")
+                      .select("id, name, price, status")
+                      .eq("event_id", eventId)
+                      .order("position", { ascending: true });
+                    setTicketTypes(ttRows ?? []);
+                  }
+                  setCreatingDefault(false);
+                }}
+                className="shrink-0 flex items-center gap-1.5 text-xs font-semibold text-white bg-amber-500 hover:bg-amber-600 transition-colors px-3 py-1.5 rounded-lg disabled:opacity-50"
+              >
+                {creatingDefault && <Loader2 className="w-3 h-3 animate-spin" />}
+                Add default
+              </button>
+            </div>
+            <div className="flex items-center justify-between bg-neutral-50 border border-neutral-100 rounded-xl px-4 py-3">
+              <div>
+                <p className="text-xs font-semibold text-neutral-700">Need multiple ticket tiers?</p>
+                <p className="text-xs text-neutral-400 mt-0.5">VIP, Early Bird, Student, and more</p>
+              </div>
+              <Link
+                href={`/event/${eventId}/tickets`}
+                className="text-xs font-semibold text-brand hover:underline underline-offset-2 shrink-0"
+              >
+                Set up ticket types →
+              </Link>
+            </div>
+          </SectionCard>
+        )}
 
         {/* Alerts */}
         {saveError && (

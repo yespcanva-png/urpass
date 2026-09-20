@@ -34,7 +34,7 @@ export default async function ApiKeysPage() {
 
   const plan = await getUserPlan(supabase, user.id);
 
-  if (plan.slug !== "pro") {
+  if (!plan.canUse("api_access")) {
     return (
       <div className="min-h-screen bg-neutral-50 flex flex-col items-center justify-center p-6">
         <div className="max-w-sm w-full text-center">

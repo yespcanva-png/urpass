@@ -58,6 +58,8 @@ export default function LoginPage() {
 
   function handleGoogleLogin() {
     setGoogleLoading(true);
+    // OAuth flow requires browser navigation to server API endpoint
+    // eslint-disable-next-line @next/next/no-location-assign-relative-destination
     window.location.href = "/api/auth/google/redirect";
   }
 

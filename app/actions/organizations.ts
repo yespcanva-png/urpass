@@ -6,10 +6,11 @@ import { orgSchema, type OrgInput } from "@/lib/validations/organization";
 import { getUserPlan } from "@/lib/plan";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { getSupabaseUrl } from "@/lib/supabase/config";
 
 function adminClient() {
   return createAdminClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    getSupabaseUrl(),
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
     { auth: { autoRefreshToken: false, persistSession: false } }
   );
@@ -102,7 +103,7 @@ export async function updateOrganization(orgId: string, data: OrgInput): Promise
   revalidatePath(`/org`);
 }
 
-export async function deleteOrganization(orgId: string, orgSlug: string): Promise<ActionResult> {
+export async function deleteOrganization(orgId: string): Promise<ActionResult> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");

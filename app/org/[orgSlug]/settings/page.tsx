@@ -1,6 +1,7 @@
 import { redirect, notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getOrganization } from "@/app/actions/organizations";
+import { getOrgPaymentSettings } from "@/app/actions/org-payment-settings";
 import OrgSettingsClient from "./OrgSettingsClient";
 
 export default async function OrgSettingsPage({ params }: { params: Promise<{ orgSlug: string }> }) {
@@ -17,5 +18,14 @@ export default async function OrgSettingsPage({ params }: { params: Promise<{ or
     redirect(`/org/${orgSlug}`);
   }
 
-  return <OrgSettingsClient org={org} orgSlug={orgSlug} userRole={userRole as import("@/types").OrgRole} />;
+  const paymentSettings = await getOrgPaymentSettings(org.id);
+
+  return (
+    <OrgSettingsClient
+      org={org}
+      orgSlug={orgSlug}
+      userRole={userRole as import("@/types").OrgRole}
+      existingPaymentKeyId={paymentSettings?.razorpay_key_id ?? null}
+    />
+  );
 }

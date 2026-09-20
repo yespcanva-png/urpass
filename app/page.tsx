@@ -158,10 +158,10 @@ function ScanResult() {
 
 // ─── Plans ────────────────────────────────────────────────────────────────────
 const plans = [
-  { name: "Free",       price: "₹0",       period: "forever",            recommended: false, cta: "Start free",    features: ["1 active event", "50 attendees", "Digital passes", "QR check-in", "Basic dashboard"] },
-  { name: "Starter",    price: "₹299",     period: "/month (+18% GST)",  recommended: true,  cta: "Start Starter", features: ["5 active events", "500 attendees/event", "CSV upload", "QR check-in", "Remove branding"] },
-  { name: "Pro",        price: "₹799",     period: "/month (+18% GST)",  recommended: false, cta: "Go Pro",        features: ["Unlimited events", "2,000 attendees/event", "Custom branding", "Data export", "Advanced check-in"] },
-  { name: "Enterprise", price: "Custom",   period: "pricing",            recommended: false, cta: "Contact sales", features: ["Everything in Pro", "Dedicated support", "Custom SLAs", "Volume discounts", "Onboarding help", "Invoice billing"] },
+  { name: "Free",     price: "₹0",      period: "forever",           recommended: false, cta: "Start free",       href: "/signup",  features: ["2 events/month", "100 registrations/month", "QR passes & check-in", "Attendee approval", "Basic analytics"] },
+  { name: "Starter",  price: "₹499",    period: "/month +GST",       recommended: false, cta: "Choose Starter",   href: "/signup",  features: ["10 events/month", "500 registrations/month", "2 organizers", "CSV import & export", "Standard analytics"] },
+  { name: "Pro",      price: "₹999",    period: "/month +GST",       recommended: true,  cta: "Choose Pro",       href: "/signup",  features: ["Unlimited events", "2,500 registrations/month", "5 organizers", "Custom pass design", "Advanced analytics", "Priority support"] },
+  { name: "Business", price: "₹2,499",  period: "/month +GST",       recommended: false, cta: "Choose Business",  href: "/signup",  features: ["Unlimited events", "10,000 registrations/month", "15 organizers", "Custom domain", "API & webhooks"] },
 ];
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
@@ -408,15 +408,10 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-stretch">
             {plans.map((plan, i) => (
               <AnimateIn key={plan.name} delay={i * 90} from="up">
-                <div className={`relative rounded-2xl flex flex-col p-7 h-full ${plan.recommended ? "bg-neutral-900 text-white shadow-xl" : plan.name === "Enterprise" ? "bg-white border-2 border-neutral-900" : "bg-white border border-neutral-100"}`}>
+                <div className={`relative rounded-2xl flex flex-col p-7 h-full ${plan.recommended ? "bg-neutral-900 text-white shadow-xl" : "bg-white border border-neutral-100"}`}>
                   {plan.recommended && (
                     <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] font-bold tracking-widest bg-brand text-white px-3 py-1 rounded-full">
                       RECOMMENDED
-                    </span>
-                  )}
-                  {plan.name === "Enterprise" && (
-                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] font-bold tracking-widest bg-neutral-900 text-white px-3 py-1 rounded-full whitespace-nowrap">
-                      FOR LARGE TEAMS
                     </span>
                   )}
                   <p className={`text-xs font-semibold tracking-widest mb-4 ${plan.recommended ? "text-white/50" : "text-neutral-400"}`}>
@@ -436,15 +431,9 @@ export default function LandingPage() {
                       </li>
                     ))}
                   </ul>
-                  {plan.name === "Enterprise" ? (
-                    <Link href="/contact" className="w-full text-center py-3 rounded-xl text-sm font-semibold transition-colors bg-neutral-900 text-white hover:bg-neutral-700">
-                      {plan.cta}
-                    </Link>
-                  ) : (
-                    <Link href="/signup" className={`w-full text-center py-3 rounded-xl text-sm font-semibold transition-colors ${plan.recommended ? "bg-white text-neutral-900 hover:bg-neutral-100" : "bg-neutral-900 text-white hover:bg-neutral-700"}`}>
-                      {plan.cta}
-                    </Link>
-                  )}
+                  <Link href={plan.href} className={`w-full text-center py-3 rounded-xl text-sm font-semibold transition-colors ${plan.recommended ? "bg-white text-neutral-900 hover:bg-neutral-100" : "bg-neutral-900 text-white hover:bg-neutral-700"}`}>
+                    {plan.cta}
+                  </Link>
                 </div>
               </AnimateIn>
             ))}
@@ -505,6 +494,7 @@ export default function LandingPage() {
             <ul className="flex flex-col gap-2">
               <li><a href="/terms" className="text-xs text-white/40 hover:text-white/70 transition-colors">Terms</a></li>
               <li><a href="/contact" className="text-xs text-white/40 hover:text-white/70 transition-colors">Privacy</a></li>
+              <li><a href="/sitelinks" className="text-xs text-white/40 hover:text-white/70 transition-colors">Sitelinks</a></li>
             </ul>
           </div>
         </div>

@@ -4,9 +4,11 @@ import { useState } from "react";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, Loader2, Lock, IndianRupee, Building2 } from "lucide-react";
+import { ArrowLeft, Loader2, Lock, IndianRupee, Building2, MapPin, Wifi, LayoutGrid, Link2 } from "lucide-react";
 import { eventSchema, type EventInput } from "@/lib/validations/event";
 import { createEvent } from "@/app/actions/events";
+
+type OrgOption = { id: string; slug: string; name: string; brand_color: string; role: string };
 
 interface Props {
   maxAttendees: number;
@@ -16,6 +18,7 @@ interface Props {
   canCreatePaidEvents: boolean;
   organizationId?: string;
   organizationName?: string;
+  orgs?: OrgOption[];
 }
 
 function Field({
@@ -42,8 +45,45 @@ function Field({
 const inputCls =
   "border border-neutral-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-neutral-900 transition-colors bg-white placeholder:text-neutral-300";
 
-export default function CreateEventForm({ maxAttendees, activeEventCount, maxEvents, unlimited, canCreatePaidEvents, organizationId, organizationName }: Props) {
+const EVENT_TYPES = [
+  {
+    value: "physical" as const,
+    label: "Physical",
+    description: "In-person venue, QR check-in",
+    Icon: MapPin,
+  },
+  {
+    value: "online" as const,
+    label: "Online",
+    description: "Webinar, livestream, virtual event",
+    Icon: Wifi,
+  },
+  {
+    value: "hybrid" as const,
+    label: "Hybrid",
+    description: "Both in-person and online",
+    Icon: LayoutGrid,
+  },
+] as const;
+
+const PLATFORMS = [
+  { value: "zoom" as const, label: "Zoom", short: "Z" },
+  { value: "google_meet" as const, label: "Google Meet", short: "G" },
+  { value: "teams" as const, label: "Teams", short: "T" },
+  { value: "custom" as const, label: "Custom", short: "⚙" },
+] as const;
+
+export default function CreateEventForm({
+  maxAttendees,
+  activeEventCount,
+  maxEvents,
+  unlimited,
+  canCreatePaidEvents,
+  organizationId,
+  organizationName,
+}: Props) {
   const [serverError, setServerError] = useState("");
+  const [selectedPlatform, setSelectedPlatform] = useState<"zoom" | "google_meet" | "teams" | "custom" | null>(null);
 
   const atLimit = !unlimited && activeEventCount >= maxEvents;
 
@@ -53,8 +93,8 @@ export default function CreateEventForm({ maxAttendees, activeEventCount, maxEve
     watch,
     setValue,
     formState: { errors, isSubmitting },
-  } = useForm<EventInput>({
-    resolver: zodResolver(eventSchema),
+  } = useForm<EventInput, unknown, EventInput>({
+    resolver: zodResolver(eventSchema) as never,
     defaultValues: {
       status: "draft",
       application_enabled: true,
@@ -62,12 +102,32 @@ export default function CreateEventForm({ maxAttendees, activeEventCount, maxEve
       attendee_limit: Math.min(100, maxAttendees),
       is_paid_event: false,
       ticket_price: 0,
+      event_type: "physical",
+      meeting_url: null,
+      meeting_platform: null,
+      venue: "",
     },
   });
 
   const applicationEnabled = watch("application_enabled");
   const autoApprove = watch("auto_approve");
   const isPaidEvent = watch("is_paid_event");
+  const eventType = watch("event_type");
+
+  function handleEventTypeChange(type: "physical" | "online" | "hybrid") {
+    setValue("event_type", type);
+    if (type === "online") {
+      setValue("venue", "Online");
+    } else if (type === "physical" || type === "hybrid") {
+      // Reset venue for re-entry unless hybrid keeping their value
+      if (eventType === "online") setValue("venue", "");
+    }
+  }
+
+  function handlePlatformSelect(platform: "zoom" | "google_meet" | "teams" | "custom") {
+    setSelectedPlatform(platform);
+    setValue("meeting_platform", platform);
+  }
 
   async function onSubmit(data: EventInput) {
     setServerError("");
@@ -127,8 +187,37 @@ export default function CreateEventForm({ maxAttendees, activeEventCount, maxEve
         )}
 
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
-          {/* Event details */}
+          {/* Event type selector — first */}
           <fieldset disabled={atLimit} className="contents">
+            <div className="bg-white border border-neutral-100 rounded-2xl p-6 flex flex-col gap-4">
+              <h2 className="text-sm font-semibold text-neutral-800">Event type</h2>
+              <div className="grid grid-cols-3 gap-3">
+                {EVENT_TYPES.map(({ value, label, description, Icon }) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => handleEventTypeChange(value)}
+                    className={`flex flex-col items-center gap-2 px-3 py-4 rounded-xl border text-center transition-all ${
+                      eventType === value
+                        ? "border-brand bg-brand-50"
+                        : "border-neutral-200 hover:border-neutral-300 bg-white"
+                    }`}
+                  >
+                    <Icon
+                      className={`w-5 h-5 ${eventType === value ? "text-brand" : "text-neutral-400"}`}
+                    />
+                    <div>
+                      <p className={`text-xs font-semibold ${eventType === value ? "text-brand" : "text-neutral-700"}`}>
+                        {label}
+                      </p>
+                      <p className="text-[10px] text-neutral-400 mt-0.5 leading-tight">{description}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Event details */}
             <div className="bg-white border border-neutral-100 rounded-2xl p-6 flex flex-col gap-5">
               <h2 className="text-sm font-semibold text-neutral-800">Event details</h2>
 
@@ -150,14 +239,58 @@ export default function CreateEventForm({ maxAttendees, activeEventCount, maxEve
                 />
               </Field>
 
-              <Field label="Venue" error={errors.venue?.message}>
-                <input
-                  type="text"
-                  placeholder="SRM Institute, Chennai"
-                  className={inputCls}
-                  {...register("venue")}
-                />
-              </Field>
+              {/* Venue — hidden for pure online events */}
+              {eventType !== "online" && (
+                <Field label="Venue" error={errors.venue?.message}>
+                  <input
+                    type="text"
+                    placeholder="SRM Institute, Chennai"
+                    className={inputCls}
+                    {...register("venue")}
+                  />
+                </Field>
+              )}
+
+              {/* Meeting details for online / hybrid */}
+              {(eventType === "online" || eventType === "hybrid") && (
+                <>
+                  <Field label="Meeting platform" error={errors.meeting_platform?.message}>
+                    <div className="flex gap-2 flex-wrap">
+                      {PLATFORMS.map(({ value, label, short }) => (
+                        <button
+                          key={value}
+                          type="button"
+                          onClick={() => handlePlatformSelect(value)}
+                          className={`flex items-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-semibold transition-all ${
+                            selectedPlatform === value
+                              ? "border-brand bg-brand-50 text-brand"
+                              : "border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300"
+                          }`}
+                        >
+                          <span className="text-sm">{short}</span>
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  </Field>
+
+                  <Field
+                    label="Meeting URL"
+                    error={errors.meeting_url?.message}
+                    hint="The link attendees will use to join. Shown on their pass after approval."
+                  >
+                    <div className="relative">
+                      <Link2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 pointer-events-none" />
+                      <input
+                        type="url"
+                        placeholder="https://zoom.us/j/123456789"
+                        className={`${inputCls} pl-9`}
+                        {...register("meeting_url")}
+                      />
+                    </div>
+                  </Field>
+                </>
+              )}
             </div>
 
             {/* Date & time */}

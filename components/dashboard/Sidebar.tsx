@@ -150,7 +150,7 @@ export default function Sidebar({ email, fullName, planSlug }: Props) {
           <nav className="flex flex-col gap-0.5">
             <SectionLabel>Tools</SectionLabel>
             <NavLink href="/dashboard/branding" icon={Palette} label="Branding" active={isActive("/dashboard/branding")} />
-            {(planSlug === "pro" || planSlug === "enterprise") && (
+            {planSlug === "pro" && (
               <NavLink href="/dashboard/api-keys" icon={Key} label="API Keys" active={isActive("/dashboard/api-keys")} />
             )}
           </nav>

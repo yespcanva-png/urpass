@@ -1,11 +1,21 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { eventSchema, type EventInput } from "@/lib/validations/event";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { generateApplySlug } from "@/lib/utils";
 import { getUserPlan } from "@/lib/plan";
+import { recordApiUsage } from "@/lib/api-usage";
+import { getSupabaseUrl } from "@/lib/supabase/config";
+
+function adminClient() {
+  return createAdminClient(
+    getSupabaseUrl(),
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 type ActionResult = { error: string } | undefined;
 
@@ -21,25 +31,20 @@ export async function createEvent(data: EventInput, organizationId?: string): Pr
     return { error: parsed.error.issues[0].message };
   }
 
-  // Check plan limits
-  const plan = await getUserPlan(supabase, user.id);
+  // If creating under an organization, ensure user is owner or admin of that organization
+  if (organizationId) {
+    const { data: member } = await supabase
+      .from("organization_members")
+      .select("role")
+      .eq("organization_id", organizationId)
+      .eq("user_id", user.id)
+      .eq("status", "active")
+      .in("role", ["owner", "admin"])
+      .maybeSingle();
 
-  const { count: activeCount } = await supabase
-    .from("events")
-    .select("*", { count: "exact", head: true })
-    .eq("organizer_id", user.id)
-    .in("status", ["draft", "active"]);
-
-  if (!plan.unlimited && (activeCount ?? 0) >= plan.maxEvents) {
-    return {
-      error: `You've reached your event limit (${plan.maxEvents} on ${plan.slug}). Upgrade your plan to create more events.`,
-    };
-  }
-
-  if (parsed.data.attendee_limit > plan.maxAttendees) {
-    return {
-      error: `Your ${plan.slug} plan supports up to ${plan.maxAttendees} attendees per event. Upgrade to increase this limit.`,
-    };
+    if (!member) {
+      return { error: "You are not authorized to create events for this organization." };
+    }
   }
 
   // Generate a unique slug — retry once on collision (vanishingly rare)
@@ -62,11 +67,24 @@ export async function createEvent(data: EventInput, organizationId?: string): Pr
   const { data: event, error } = await supabase
     .from("events")
     .insert(eventData)
-    .select("id")
+    .select("id, attendee_limit")
     .single();
 
   if (error) return { error: error.message };
 
+  await supabase.from("ticket_types").insert({
+    event_id: event.id,
+    name: "General Admission",
+    description: parsed.data.is_paid_event ? "Standard event ticket" : "Standard registration",
+    category: "general",
+    price: parsed.data.is_paid_event ? Math.round(parsed.data.ticket_price * 100) : 0,
+    capacity: event.attendee_limit,
+    max_per_person: 1,
+    status: "on_sale",
+    position: 0,
+  });
+
+  void recordApiUsage(user.id, "events", 1);
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/events");
   redirect(`/event/${event.id}`);
@@ -85,13 +103,6 @@ export async function updateEvent(
   const parsed = eventSchema.safeParse(data);
   if (!parsed.success) {
     return { error: parsed.error.issues[0].message };
-  }
-
-  const plan = await getUserPlan(supabase, user.id);
-  if (parsed.data.attendee_limit > plan.maxAttendees) {
-    return {
-      error: `Your ${plan.slug} plan supports up to ${plan.maxAttendees} attendees per event. Upgrade to increase this limit.`,
-    };
   }
 
   const { error } = await supabase
@@ -116,6 +127,66 @@ export async function updateEventStatus(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
+
+  // Enforce events-per-month limit at publish time, not at draft creation.
+  if (status === "active") {
+    const [plan, { data: sub }] = await Promise.all([
+      getUserPlan(supabase, user.id),
+      supabase
+        .from("subscriptions")
+        .select("current_period_start")
+        .eq("user_id", user.id)
+        .single(),
+    ]);
+
+    const eventsLimit = plan.getLimit("events_per_month");
+
+    if (eventsLimit < 999_999) {
+      const periodStart = sub?.current_period_start
+        ? new Date(sub.current_period_start)
+        : new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+
+      const { count: publishedThisPeriod } = await supabase
+        .from("events")
+        .select("*", { count: "exact", head: true })
+        .eq("organizer_id", user.id)
+        .eq("status", "active")
+        .neq("id", eventId)
+        .gte("created_at", periodStart.toISOString());
+
+      if ((publishedThisPeriod ?? 0) >= eventsLimit) {
+        // Check if the user has an available one-event pass to use instead
+        const { data: availablePass } = await supabase
+          .from("event_passes")
+          .select("id, pass_type, registration_limit")
+          .eq("user_id", user.id)
+          .eq("status", "available")
+          .order("purchased_at", { ascending: true })
+          .limit(1)
+          .maybeSingle();
+
+        if (availablePass) {
+          // Auto-attach the oldest available pass to this event
+          const admin = adminClient();
+          await Promise.all([
+            admin
+              .from("event_passes")
+              .update({ status: "attached", event_id: eventId, attached_at: new Date().toISOString() })
+              .eq("id", availablePass.id),
+            admin
+              .from("events")
+              .update({ event_pass_id: availablePass.id })
+              .eq("id", eventId),
+          ]);
+          // Fall through — allow the event to be published using the pass
+        } else {
+          return {
+            error: `You've published ${eventsLimit} event${eventsLimit === 1 ? "" : "s"} this month — the limit on your ${plan.slug} plan. Upgrade your plan or buy a one-event pass to continue.`,
+          };
+        }
+      }
+    }
+  }
 
   const { error } = await supabase
     .from("events")

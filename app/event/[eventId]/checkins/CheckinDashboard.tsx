@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
 import {
   CheckCircle2,
   Clock,
@@ -10,9 +10,15 @@ import {
   XCircle,
   TrendingUp,
   Search,
+  Plus,
+  Copy,
+  Trash2,
+  Loader2,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
+import { createGate, deleteGate } from "@/app/actions/scanner-gates";
+import { manualCheckIn } from "@/app/actions/manual-checkin";
 
 type PassType = "participant" | "vip" | "speaker" | "organizer";
 
@@ -29,6 +35,19 @@ interface Checkin {
   id: string;
   attendee_id: string;
   checked_in_at: string;
+  gate?: { name: string } | null;
+}
+
+interface ScannerGate {
+  id: string;
+  name: string;
+  zone_id: string | null;
+  zone: { name: string } | null;
+}
+
+interface Zone {
+  id: string;
+  name: string;
 }
 
 interface Event {
@@ -65,15 +84,32 @@ export default function CheckinDashboard({
   event,
   initialAttendees,
   initialCheckins,
+  initialGates,
+  zones,
 }: {
   event: Event;
   initialAttendees: Attendee[];
   initialCheckins: Checkin[];
+  initialGates: ScannerGate[];
+  zones: Zone[];
 }) {
   const [attendees, setAttendees] = useState<Attendee[]>(initialAttendees);
   const [checkins, setCheckins] = useState<Checkin[]>(initialCheckins);
+  const [gates, setGates] = useState<ScannerGate[]>(initialGates);
   const [live, setLive] = useState(false);
   const [search, setSearch] = useState("");
+
+  // Gate management form state
+  const [newGateName, setNewGateName] = useState("");
+  const [newGateZoneId, setNewGateZoneId] = useState("");
+  const [gateFormOpen, setGateFormOpen] = useState(false);
+  const [gateFormPending, startGateTransition] = useTransition();
+  const [gateError, setGateError] = useState("");
+  const [deletingGateId, setDeletingGateId] = useState<string | null>(null);
+  const [copiedGateId, setCopiedGateId] = useState<string | null>(null);
+
+  // Manual check-in state per attendee
+  const [checkingInId, setCheckingInId] = useState<string | null>(null);
 
   const checkinSet = new Set(checkins.map((c) => c.attendee_id));
   const checkedInCount = checkins.length;
@@ -119,6 +155,68 @@ export default function CheckinDashboard({
     const q = search.toLowerCase();
     return a.name.toLowerCase().includes(q) || a.email.toLowerCase().includes(q);
   });
+
+  async function handleCreateGate() {
+    if (!newGateName.trim()) return;
+    setGateError("");
+    startGateTransition(async () => {
+      const result = await createGate(event.id, newGateName.trim(), newGateZoneId || undefined);
+      if (result.error) {
+        setGateError(result.error);
+        return;
+      }
+      // Optimistically add the new gate to local state
+      if (result.id) {
+        const zone = zones.find((z) => z.id === newGateZoneId);
+        setGates((prev) => [
+          ...prev,
+          {
+            id: result.id!,
+            name: newGateName.trim(),
+            zone_id: newGateZoneId || null,
+            zone: zone ? { name: zone.name } : null,
+          },
+        ]);
+      }
+      setNewGateName("");
+      setNewGateZoneId("");
+      setGateFormOpen(false);
+    });
+  }
+
+  async function handleDeleteGate(gateId: string) {
+    if (!window.confirm("Delete this gate? The scanner link will stop working.")) return;
+    setDeletingGateId(gateId);
+    const result = await deleteGate(gateId);
+    setDeletingGateId(null);
+    if (!result.error) {
+      setGates((prev) => prev.filter((g) => g.id !== gateId));
+    }
+  }
+
+  function handleCopyGateLink(gateId: string) {
+    const url = `${window.location.origin}/scan/${event.id}?gate=${gateId}`;
+    navigator.clipboard.writeText(url).then(() => {
+      setCopiedGateId(gateId);
+      setTimeout(() => setCopiedGateId(null), 2000);
+    });
+  }
+
+  async function handleManualCheckIn(attendee: Attendee) {
+    if (checkingInId) return;
+    setCheckingInId(attendee.id);
+    const result = await manualCheckIn(attendee.id, event.id);
+    setCheckingInId(null);
+
+    if (result.success || result.alreadyCheckedIn) {
+      // Update local state optimistically
+      setAttendees((prev) =>
+        prev.map((a) =>
+          a.id === attendee.id ? { ...a, pass_status: "checked_in" } : a
+        )
+      );
+    }
+  }
 
   return (
     <div className="max-w-5xl mx-auto page-in">
@@ -215,6 +313,119 @@ export default function CheckinDashboard({
         </div>
       </div>
 
+      {/* Scanner Gates */}
+      <div className="bg-white rounded-2xl shadow-sm p-5 mb-5">
+        <div className="flex items-center justify-between mb-4">
+          <p className="text-sm font-semibold text-neutral-900">Scanner Gates</p>
+          <button
+            onClick={() => { setGateFormOpen((o) => !o); setGateError(""); }}
+            className="flex items-center gap-1.5 text-xs font-semibold text-brand hover:text-brand/80 transition-colors"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            Add gate
+          </button>
+        </div>
+
+        {/* Add gate form */}
+        {gateFormOpen && (
+          <div className="mb-4 p-3 bg-neutral-50 border border-neutral-100 rounded-xl flex flex-col gap-2.5">
+            <input
+              type="text"
+              value={newGateName}
+              onChange={(e) => setNewGateName(e.target.value)}
+              placeholder="Gate name (e.g. Gate 1, VIP Entrance)"
+              className="w-full text-xs bg-white border border-neutral-200 rounded-lg px-3 py-2 outline-none focus:border-brand transition-colors"
+            />
+            {zones.length > 0 && (
+              <select
+                value={newGateZoneId}
+                onChange={(e) => setNewGateZoneId(e.target.value)}
+                className="w-full text-xs bg-white border border-neutral-200 rounded-lg px-3 py-2 outline-none focus:border-brand transition-colors text-neutral-600"
+              >
+                <option value="">No zone restriction</option>
+                {zones.map((z) => (
+                  <option key={z.id} value={z.id}>{z.name}</option>
+                ))}
+              </select>
+            )}
+            {gateError && (
+              <p className="text-xs text-red-500">{gateError}</p>
+            )}
+            <div className="flex gap-2">
+              <button
+                onClick={handleCreateGate}
+                disabled={gateFormPending || !newGateName.trim()}
+                className="flex items-center gap-1.5 text-xs font-semibold text-white px-3 py-1.5 rounded-lg transition-opacity hover:opacity-90 disabled:opacity-50"
+                style={{ background: "#6D28D9" }}
+              >
+                {gateFormPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
+                Create
+              </button>
+              <button
+                onClick={() => { setGateFormOpen(false); setNewGateName(""); setNewGateZoneId(""); setGateError(""); }}
+                className="text-xs text-neutral-400 hover:text-neutral-600 transition-colors px-2"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Gate list */}
+        {gates.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-8 text-center">
+            <div className="w-10 h-10 rounded-2xl bg-neutral-50 flex items-center justify-center mb-2">
+              <ScanLine className="w-5 h-5 text-neutral-200" />
+            </div>
+            <p className="text-sm text-neutral-400">No gates yet</p>
+            <p className="text-xs text-neutral-300 mt-1">Add gates to assign scanners to specific entry points</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {gates.map((gate) => {
+              const scannerUrl = `/scan/${event.id}?gate=${gate.id}`;
+              const isCopied = copiedGateId === gate.id;
+              const isDeleting = deletingGateId === gate.id;
+              return (
+                <div key={gate.id} className="bg-white rounded-2xl shadow-sm border border-neutral-100 p-4 flex flex-col gap-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-neutral-900 truncate">{gate.name}</p>
+                      {gate.zone && (
+                        <p className="text-xs text-neutral-400 mt-0.5">Zone: {gate.zone.name}</p>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => handleDeleteGate(gate.id)}
+                      disabled={isDeleting}
+                      className="shrink-0 p-1.5 text-neutral-300 hover:text-red-400 transition-colors disabled:opacity-50"
+                      title="Delete gate"
+                    >
+                      {isDeleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Link
+                      href={scannerUrl}
+                      className="flex-1 text-center text-[11px] font-semibold px-2.5 py-1.5 rounded-lg text-brand border border-brand/20 bg-brand/5 hover:bg-brand/10 transition-colors truncate"
+                    >
+                      Open Scanner
+                    </Link>
+                    <button
+                      onClick={() => handleCopyGateLink(gate.id)}
+                      className="flex items-center gap-1 text-[11px] font-medium px-2.5 py-1.5 rounded-lg border border-neutral-200 text-neutral-500 hover:text-neutral-700 hover:border-neutral-300 transition-colors shrink-0"
+                    >
+                      <Copy className="w-3 h-3" />
+                      {isCopied ? "Copied!" : "Copy link"}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
       {/* Pass type breakdown */}
       {Object.keys(byType).length > 0 && (
         <div className="bg-white rounded-2xl shadow-sm p-5 mb-5">
@@ -287,6 +498,9 @@ export default function CheckinDashboard({
                       {PASS_TYPE_LABEL[entry.attendee?.pass_type ?? ""] ?? "—"}
                     </span>
                     <span className="text-[10px] text-neutral-300">{formatTime(entry.checked_in_at)}</span>
+                    {entry.gate?.name && (
+                      <span className="text-[10px] text-neutral-300">{entry.gate.name}</span>
+                    )}
                   </div>
                 </div>
               ))
@@ -318,7 +532,8 @@ export default function CheckinDashboard({
               </div>
             ) : (
               filtered.map((a) => {
-                const isIn = checkinSet.has(a.id);
+                const isIn = checkinSet.has(a.id) || a.pass_status === "checked_in";
+                const isChecking = checkingInId === a.id;
                 return (
                   <div
                     key={a.id}
@@ -335,13 +550,29 @@ export default function CheckinDashboard({
                         <p className="text-xs text-neutral-400 truncate">{a.email}</p>
                       </div>
                     </div>
-                    <div className="flex flex-col items-end shrink-0 ml-2 gap-0.5">
-                      <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full border ${PASS_TYPE_COLOR[a.pass_type] ?? "bg-neutral-50 text-neutral-500 border-neutral-200"}`}>
-                        {PASS_TYPE_LABEL[a.pass_type] ?? a.pass_type}
-                      </span>
-                      <span className={`text-[10px] font-semibold ${isIn ? "text-emerald-500" : "text-neutral-300"}`}>
-                        {isIn ? "Checked in" : "Not arrived"}
-                      </span>
+                    <div className="flex items-center gap-2 shrink-0 ml-2">
+                      <div className="flex flex-col items-end gap-0.5">
+                        <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full border ${PASS_TYPE_COLOR[a.pass_type] ?? "bg-neutral-50 text-neutral-500 border-neutral-200"}`}>
+                          {PASS_TYPE_LABEL[a.pass_type] ?? a.pass_type}
+                        </span>
+                        <span className={`text-[10px] font-semibold ${isIn ? "text-emerald-500" : "text-neutral-300"}`}>
+                          {isIn ? "Checked in" : "Not arrived"}
+                        </span>
+                      </div>
+                      {!isIn && (
+                        <button
+                          onClick={() => handleManualCheckIn(a)}
+                          disabled={isChecking}
+                          className="flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-lg bg-brand/5 text-brand border border-brand/20 hover:bg-brand/10 transition-colors disabled:opacity-50 shrink-0"
+                        >
+                          {isChecking ? (
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                          ) : (
+                            <CheckCircle2 className="w-3 h-3" />
+                          )}
+                          <span className="hidden sm:inline">Check in</span>
+                        </button>
+                      )}
                     </div>
                   </div>
                 );
