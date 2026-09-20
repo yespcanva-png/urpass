@@ -277,7 +277,13 @@ export async function generateInvoicePdf(invoice: InvoiceRecord): Promise<Uint8A
 
   // Table Row
   y -= 25;
-  const itemDesc = invoice.description || "UrPass Subscription Service";
+  const itemDesc =
+    invoice.description ||
+    (invoice.payment_id?.includes("sample")
+      ? "Sample Pass & Designer Pack"
+      : invoice.subscription_id
+      ? "URPASS Pro Plan Subscription"
+      : "URPASS Subscription Service");
   page.drawText(itemDesc.slice(0, 32), { x: 50, y, size: 9, font: fontRegular, color: black });
   page.drawText("998313", { x: 250, y, size: 9, font: fontRegular, color: darkGray });
   page.drawText(`INR ${invoice.taxable_amount.toFixed(2)}`, { x: 340, y, size: 9, font: fontRegular, color: black });

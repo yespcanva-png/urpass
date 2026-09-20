@@ -798,3 +798,143 @@ export async function sendPostEventThankYouEmail({
   });
 }
 
+export async function sendInvoiceEmail({
+  to,
+  name,
+  invoiceNumber,
+  invoiceDate,
+  itemName,
+  subtotal,
+  taxAmount,
+  totalAmount,
+  currency = "INR",
+  isSample = false,
+  pdfBytes,
+}: {
+  to: string;
+  name?: string | null;
+  invoiceNumber: string;
+  invoiceDate: string;
+  itemName: string;
+  subtotal: number;
+  taxAmount: number;
+  totalAmount: number;
+  currency?: string;
+  isSample?: boolean;
+  pdfBytes?: Uint8Array;
+}) {
+  const safeName = escapeHtml(name || "there");
+  const safeNumber = escapeHtml(invoiceNumber);
+  const safeItem = escapeHtml(itemName);
+  const formattedTotal = `${currency} ${totalAmount.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const formattedSubtotal = `${currency} ${subtotal.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const formattedTax = `${currency} ${taxAmount.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+  const badgeText = isSample ? "SAMPLE TAX INVOICE" : "OFFICIAL TAX INVOICE";
+  const subject = `${isSample ? "[Sample] " : ""}Tax Invoice ${invoiceNumber} — URPASS`;
+
+  const attachments = pdfBytes
+    ? [
+        {
+          filename: `Invoice-${invoiceNumber}.pdf`,
+          content: Buffer.from(pdfBytes),
+        },
+      ]
+    : undefined;
+
+  await sendEmail({
+    from: FROM,
+    to,
+    subject,
+    attachments,
+    html: `
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /></head>
+<body style="margin:0;padding:0;background:#f6f4ff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f6f4ff;padding:40px 16px;">
+  <tr><td align="center">
+    <table width="100%" cellpadding="0" cellspacing="0" style="max-width:540px;background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 8px 32px rgba(109,40,217,0.08);border:1px solid #ede9fe;">
+      <tr>
+        <td style="background:linear-gradient(135deg,#6D28D9 0%,#4c1d95 100%);padding:28px 32px;">
+          <table width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+              <td>
+                <span style="display:inline-block;padding:4px 10px;border-radius:999px;font-size:10px;font-weight:800;letter-spacing:1.5px;background:rgba(255,255,255,0.18);color:#ffffff;text-transform:uppercase;">${badgeText}</span>
+                <h1 style="margin:8px 0 0;font-size:22px;font-weight:800;color:#ffffff;line-height:1.2;">Invoice ${safeNumber}</h1>
+              </td>
+              <td align="right" valign="top">
+                <span style="font-size:18px;font-weight:900;letter-spacing:2px;color:#ffffff;">URPASS</span>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:28px 32px;">
+          <p style="margin:0 0 16px;font-size:14px;color:#374151;line-height:1.6;">
+            Hi <strong>${safeName}</strong>,
+          </p>
+          <p style="margin:0 0 20px;font-size:14px;color:#4b5563;line-height:1.6;">
+            ${isSample ? "Here is your sample invoice demonstration generated from URPASS." : "Thank you for your business! Your payment has been confirmed and your tax invoice is ready."}
+          </p>
+
+          <table width="100%" cellpadding="0" cellspacing="0" style="background:#fcfaff;border-radius:14px;border:1px solid #ede9fe;margin-bottom:24px;overflow:hidden;">
+            <tr style="border-bottom:1px solid #ede9fe;">
+              <td style="padding:14px 18px;font-size:12px;color:#6b7280;">Invoice Number:</td>
+              <td style="padding:14px 18px;font-size:13px;font-weight:700;color:#111827;text-align:right;">${safeNumber}</td>
+            </tr>
+            <tr style="border-bottom:1px solid #ede9fe;">
+              <td style="padding:14px 18px;font-size:12px;color:#6b7280;">Invoice Date:</td>
+              <td style="padding:14px 18px;font-size:13px;font-weight:600;color:#111827;text-align:right;">${escapeHtml(invoiceDate)}</td>
+            </tr>
+            <tr style="border-bottom:1px solid #ede9fe;">
+              <td style="padding:14px 18px;font-size:12px;color:#6b7280;">Description:</td>
+              <td style="padding:14px 18px;font-size:13px;font-weight:600;color:#111827;text-align:right;">${safeItem}</td>
+            </tr>
+            <tr style="border-bottom:1px solid #ede9fe;">
+              <td style="padding:14px 18px;font-size:12px;color:#6b7280;">Taxable Amount:</td>
+              <td style="padding:14px 18px;font-size:13px;color:#4b5563;text-align:right;">${formattedSubtotal}</td>
+            </tr>
+            <tr style="border-bottom:1px solid #ede9fe;">
+              <td style="padding:14px 18px;font-size:12px;color:#6b7280;">GST (18%):</td>
+              <td style="padding:14px 18px;font-size:13px;color:#4b5563;text-align:right;">${formattedTax}</td>
+            </tr>
+            <tr style="background:#f5f3ff;">
+              <td style="padding:16px 18px;font-size:13px;font-weight:700;color:#6D28D9;">Total Amount (Paid):</td>
+              <td style="padding:16px 18px;font-size:16px;font-weight:800;color:#6D28D9;text-align:right;">${formattedTotal}</td>
+            </tr>
+          </table>
+
+          <p style="margin:0 0 20px;font-size:12px;color:#6b7280;line-height:1.5;">
+            The full official PDF tax invoice is attached to this email. You can also view and download all your past invoices at any time in your URPASS dashboard.
+          </p>
+
+          <table width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+              <td>
+                <a href="${APP_URL}/billing" style="display:block;background:#6D28D9;color:#ffffff;text-align:center;padding:14px 24px;border-radius:12px;font-size:14px;font-weight:700;text-decoration:none;">
+                  View Invoices in Dashboard &rarr;
+                </a>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+      <tr>
+        <td style="border-top:1px solid #f3f4f6;padding:16px 32px;background:#fafafa;text-align:center;">
+          <p style="margin:0;font-size:11px;color:#9ca3af;">
+            URPASS Technologies Private Limited &middot; GSTIN: 33AABCU9603R1ZM<br/>
+            IIT Madras Research Park, Taramani, Chennai, TN 600113 &middot; <a href="${APP_URL}" style="color:#6D28D9;text-decoration:none;">urpass.space</a>
+          </p>
+        </td>
+      </tr>
+    </table>
+  </td></tr>
+</table>
+</body>
+</html>`.trim(),
+  });
+}
+
+
