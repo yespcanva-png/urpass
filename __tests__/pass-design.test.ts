@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect } from "vitest";
 import {
   DEFAULT_PASS_DESIGN,
   PASS_DESIGN_PRESETS,
@@ -97,7 +97,7 @@ describe("Custom Pass Design - lib/pass-design", () => {
       };
 
       const sanitized = sanitizePassDesign(input);
-      expect(sanitized.badgeLabel.length).toBeLessThanOrEqual(32);
+      expect(sanitized.badgeLabel?.length).toBeLessThanOrEqual(32);
       expect(sanitized.footerNote?.length).toBeLessThanOrEqual(160);
     });
   });

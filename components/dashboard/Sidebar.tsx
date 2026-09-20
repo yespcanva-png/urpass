@@ -146,15 +146,19 @@ export default function Sidebar({ email, fullName, planSlug }: Props) {
         )}
 
         {/* ── Tools nav ─────────────────────────────────────────── */}
-        {planSlug && planSlug !== "free" && (
-          <nav className="flex flex-col gap-0.5">
-            <SectionLabel>Tools</SectionLabel>
-            <NavLink href="/dashboard/branding" icon={Palette} label="Branding" active={isActive("/dashboard/branding")} />
-            {planSlug === "pro" && (
-              <NavLink href="/dashboard/api-keys" icon={Key} label="API Keys" active={isActive("/dashboard/api-keys")} />
-            )}
-          </nav>
-        )}
+        <nav className="flex flex-col gap-0.5">
+          <SectionLabel>Tools</SectionLabel>
+          <NavLink href="/dashboard/branding" icon={Palette} label="Branding" active={isActive("/dashboard/branding")} />
+          <NavLink
+            href="/dashboard/ticket-design"
+            icon={Ticket}
+            label="Ticket Design"
+            active={isActive("/dashboard/ticket-design") || isActive("/dashboard/pass-design")}
+          />
+          {planSlug && ["pro", "business", "campus", "enterprise"].includes(planSlug) && (
+            <NavLink href="/dashboard/api-keys" icon={Key} label="API Keys" active={isActive("/dashboard/api-keys")} />
+          )}
+        </nav>
 
         {/* ── Spacer ────────────────────────────────────────────── */}
         <div className="flex-1" />

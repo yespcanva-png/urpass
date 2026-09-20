@@ -3,13 +3,12 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getUserPlan } from "@/lib/plan";
 import BrandingForm from "./BrandingForm";
-import PassDesigner from "@/components/pass/PassDesigner";
 import Link from "next/link";
-import { ArrowLeft, Lock, Sparkles, Shield, Palette } from "lucide-react";
+import { ArrowLeft, Lock, Ticket, ArrowRight, Sparkles } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Branding & Custom Pass Design",
-  description: "Customize your ticket passes, brand identity, and theme layouts.",
+  title: "Branding",
+  description: "Customise how your brand appears on event passes and attendee pages.",
   robots: { index: false, follow: false },
 };
 
@@ -33,7 +32,7 @@ export default async function BrandingPage() {
           </div>
           <h1 className="text-xl font-bold text-neutral-900 mb-2">Starter+ feature</h1>
           <p className="text-sm text-neutral-500 mb-6">
-            Remove URPASS branding on Starter. Design custom tickets, themes, and brand colors on Pro.
+            Remove URPASS branding on Starter. Add your own logo and brand colour on Pro.
           </p>
           <Link
             href="/billing"
@@ -54,7 +53,7 @@ export default async function BrandingPage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("org_name, brand_color, org_logo_url, hide_urpass_branding, custom_pass_design")
+    .select("org_name, brand_color, org_logo_url, hide_urpass_branding")
     .eq("user_id", user.id)
     .single();
 
@@ -62,7 +61,7 @@ export default async function BrandingPage() {
 
   return (
     <div className="min-h-screen bg-neutral-50 pb-16">
-      <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className="max-w-2xl mx-auto px-4 py-8">
         <Link
           href="/dashboard"
           className="inline-flex items-center gap-1.5 text-sm text-neutral-500 hover:text-neutral-900 transition-colors mb-8"
@@ -72,76 +71,62 @@ export default async function BrandingPage() {
         </Link>
 
         {/* Page Header */}
-        <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-xs font-semibold tracking-widest uppercase text-brand">
-                Brand & Design Studio
-              </span>
-              {isPro && (
-                <span className="text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 border border-purple-200 flex items-center gap-1">
-                  <Sparkles className="w-3 h-3" />
-                  Pro Unlocked
-                </span>
-              )}
-            </div>
-            <h1 className="text-2xl font-bold tracking-tight text-neutral-900">
-              Pass Designer & Identity
-            </h1>
-            <p className="text-sm text-neutral-500 mt-1 max-w-2xl">
-              Design how your digital tickets look for attendees across your events, and configure your organization identity.
-            </p>
-          </div>
+        <div className="mb-8">
+          <p className="text-xs font-semibold tracking-widest uppercase text-brand mb-1">Branding</p>
+          <h1 className="text-2xl font-semibold tracking-tight text-neutral-900 mb-1">
+            Organization Branding
+          </h1>
+          <p className="text-sm text-neutral-500">
+            Control whether URPASS branding appears on passes and attendee pages, and set your organisation identity.
+          </p>
         </div>
 
-        <div className="flex flex-col gap-10">
-          {/* Section 1: Custom Pass Designer */}
-          <div>
-            <div className="mb-4">
-              <h2 className="text-base font-bold text-neutral-900 flex items-center gap-2">
-                <Palette className="w-4 h-4 text-brand" />
-                Digital Pass Designer
-              </h2>
-              <p className="text-xs text-neutral-500">
-                Choose themes (Classic Cutout, Modern Glass, Minimal Monochrome, Conference Badge, Cyberpunk), gradients, patterns, and typography.
+        {/* Dedicated Connection Card to Ticket Design Studio */}
+        <div className="mb-6 bg-gradient-to-br from-violet-900 via-purple-900 to-neutral-900 text-white rounded-2xl p-5 shadow-sm border border-purple-500/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-start gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-white/15 border border-white/20 flex items-center justify-center shrink-0">
+              <Ticket className="w-5 h-5 text-purple-200" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-bold text-white">Custom Ticket Pass Design</h3>
+                {isPro ? (
+                  <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-purple-500/30 text-purple-200 border border-purple-400/30 flex items-center gap-1">
+                    <Sparkles className="w-2.5 h-2.5" />
+                    Pro Unlocked
+                  </span>
+                ) : (
+                  <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-200 border border-amber-300/30">
+                    Pro Feature
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-purple-200/80 mt-1 max-w-md leading-relaxed">
+                Customize themes (Classic, Glassmorphism, Conference Badge, Cyberpunk), backgrounds, textures, and typography.
               </p>
             </div>
-
-            <PassDesigner
-              initialDesign={profile?.custom_pass_design}
-              orgName={profile?.org_name ?? "Your Organisation"}
-              orgLogoUrl={profile?.org_logo_url ?? ""}
-              isPro={isPro}
-              mode="profile"
-            />
           </div>
 
-          {/* Section 2: Organization Identity & Visibility */}
-          <div className="pt-6 border-t border-neutral-200/80">
-            <div className="mb-4">
-              <h2 className="text-base font-bold text-neutral-900 flex items-center gap-2">
-                <Shield className="w-4 h-4 text-neutral-600" />
-                Organization Identity & Visibility
-              </h2>
-              <p className="text-xs text-neutral-500">
-                Control logo display, organization naming, and whether the URPASS badge is visible.
-              </p>
-            </div>
-
-            <div className="max-w-2xl">
-              <BrandingForm
-                initial={{
-                  org_name: profile?.org_name ?? "",
-                  brand_color: profile?.brand_color ?? "#6D28D9",
-                  org_logo_url: profile?.org_logo_url ?? "",
-                  hide_urpass_branding: profile?.hide_urpass_branding ?? false,
-                }}
-                isPro={isPro}
-                canHideBranding={plan.canRemoveBranding}
-              />
-            </div>
-          </div>
+          <Link
+            href="/dashboard/ticket-design"
+            className="shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white text-neutral-900 hover:bg-neutral-100 text-xs font-bold transition-all shadow-sm"
+          >
+            <span>Open Ticket Studio</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
         </div>
+
+        {/* Branding Form */}
+        <BrandingForm
+          initial={{
+            org_name: profile?.org_name ?? "",
+            brand_color: profile?.brand_color ?? "#6D28D9",
+            org_logo_url: profile?.org_logo_url ?? "",
+            hide_urpass_branding: profile?.hide_urpass_branding ?? false,
+          }}
+          isPro={isPro}
+          canHideBranding={plan.canRemoveBranding}
+        />
       </div>
     </div>
   );

@@ -36,6 +36,21 @@ export async function updateBranding(data: BrandingInput): Promise<ActionResult>
     return { error: "Logo URL must start with https://" };
   }
 
+  // Sync custom_pass_design primaryColor if pass design exists on profile
+  const { data: existingProfile } = await supabase
+    .from("profiles")
+    .select("custom_pass_design")
+    .eq("user_id", user.id)
+    .single();
+
+  let updatedPassDesign = existingProfile?.custom_pass_design;
+  if (updatedPassDesign && typeof updatedPassDesign === "object") {
+    updatedPassDesign = {
+      ...updatedPassDesign,
+      primaryColor: brandColor,
+    };
+  }
+
   const { error } = await supabase
     .from("profiles")
     .update({
@@ -43,11 +58,15 @@ export async function updateBranding(data: BrandingInput): Promise<ActionResult>
       brand_color: brandColor,
       org_logo_url: orgLogoUrl || null,
       hide_urpass_branding: data.hide_urpass_branding,
+      ...(updatedPassDesign ? { custom_pass_design: updatedPassDesign } : {}),
     })
     .eq("user_id", user.id);
 
   if (error) return { error: error.message };
 
   revalidatePath("/dashboard/branding");
+  revalidatePath("/dashboard/ticket-design");
+  revalidatePath("/dashboard/pass-design");
   revalidatePath("/dashboard/settings");
+  revalidatePath("/pass/[passId]", "page");
 }

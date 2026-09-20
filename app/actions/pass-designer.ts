@@ -46,6 +46,8 @@ export async function updateProfilePassDesign(
   }
 
   revalidatePath("/dashboard/branding");
+  revalidatePath("/dashboard/ticket-design");
+  revalidatePath("/dashboard/pass-design");
   revalidatePath("/dashboard/settings");
   revalidatePath("/event/[eventId]/pass-design", "page");
 
