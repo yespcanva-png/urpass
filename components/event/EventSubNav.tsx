@@ -9,11 +9,12 @@ export default function EventSubNav({ eventId }: { eventId: string }) {
   const base = `/event/${eventId}`;
 
   const tabs = [
-    { label: "Overview",  href: base,                exact: true  },
-    { label: "Tickets",   href: `${base}/tickets`,   exact: false },
-    { label: "Attendees", href: `${base}/attendees`, exact: false },
-    { label: "Check-ins", href: `${base}/checkins`,  exact: false },
-    { label: "Settings",  href: `${base}/settings`,  exact: false },
+    { label: "Overview",    href: base,                  exact: true  },
+    { label: "Tickets",     href: `${base}/tickets`,     exact: false },
+    { label: "Pass Design", href: `${base}/pass-design`, exact: false },
+    { label: "Attendees",   href: `${base}/attendees`,   exact: false },
+    { label: "Check-ins",   href: `${base}/checkins`,    exact: false },
+    { label: "Settings",    href: `${base}/settings`,    exact: false },
   ];
 
   return (

@@ -10,6 +10,11 @@ import AutoDownload from "@/components/pass/AutoDownload";
 import WhatsAppShareButton from "@/components/pass/WhatsAppShareButton";
 import { Suspense } from "react";
 import { getSupabaseUrl } from "@/lib/supabase/config";
+import {
+  resolvePassDesign,
+  getPatternStyle,
+  getFontFamilyCls,
+} from "@/lib/pass-design";
 
 function adminClient() {
   return createAdminClient(
@@ -17,15 +22,6 @@ function adminClient() {
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
     { auth: { autoRefreshToken: false, persistSession: false } }
   );
-}
-
-function darkenHex(hex: string, amount = 40): string {
-  const clean = hex.replace("#", "");
-  if (clean.length !== 6) return hex;
-  const r = Math.max(0, parseInt(clean.slice(0, 2), 16) - amount);
-  const g = Math.max(0, parseInt(clean.slice(2, 4), 16) - amount);
-  const b = Math.max(0, parseInt(clean.slice(4, 6), 16) - amount);
-  return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
 }
 
 export async function generateMetadata({
@@ -98,7 +94,7 @@ export default async function PassPage({
       .single(),
     admin
       .from("events")
-      .select("name, event_date, start_time, end_time, venue, event_type, meeting_url, meeting_platform, organizer_id")
+      .select("name, event_date, start_time, end_time, venue, event_type, meeting_url, meeting_platform, organizer_id, custom_pass_design")
       .eq("id", pass.event_id)
       .single(),
   ]);
@@ -110,18 +106,25 @@ export default async function PassPage({
     organizerId
       ? admin
           .from("profiles")
-          .select("org_name, brand_color, org_logo_url, hide_urpass_branding")
+          .select("org_name, brand_color, org_logo_url, hide_urpass_branding, custom_pass_design")
           .eq("user_id", organizerId)
           .single()
       : Promise.resolve({ data: null }),
   ]);
 
   const showBranding = !(plan?.canRemoveBranding && orgProfile?.hide_urpass_branding);
-  const isPro = plan?.slug === "pro";
-  const brandColor = (isPro && orgProfile?.brand_color) ? orgProfile.brand_color : "#6D28D9";
-  const brandColorDark = darkenHex(brandColor);
+  const isPro = plan ? plan.canUse("custom_pass_design") : false;
+
+  const design = isPro
+    ? resolvePassDesign(event.custom_pass_design, orgProfile?.custom_pass_design, orgProfile?.brand_color)
+    : resolvePassDesign(null, null, null);
+
+  const brandColor = design.primaryColor;
+  const brandColorDark = design.secondaryColor;
   const orgName = (isPro && orgProfile?.org_name) ? orgProfile.org_name : null;
   const orgLogoUrl = (isPro && orgProfile?.org_logo_url) ? orgProfile.org_logo_url : null;
+  const patternStyle = getPatternStyle(design.pattern, design.primaryColor, design.secondaryColor, design.headerStyle);
+  const fontCls = getFontFamilyCls(design.fontFamily);
 
   const isCheckedIn = pass.status === "checked_in";
   const isOnline = event.event_type === "online";
@@ -175,25 +178,57 @@ export default async function PassPage({
         </div>
       )}
 
-      {/* Three-layer card */}
-      <div className="relative w-full max-w-sm pass-scale-in select-none">
-        <div className="absolute inset-0 translate-x-5 translate-y-5 bg-brand-100 rounded-3xl" />
-        <div className="absolute inset-0 translate-x-2.5 translate-y-2.5 bg-brand-200 rounded-3xl" />
+      {/* Three-layer card with dynamic theme & typography */}
+      <div
+        className={`relative w-full max-w-sm pass-scale-in select-none ${fontCls}`}
+        style={
+          design.accentGlow
+            ? { filter: `drop-shadow(0 20px 30px ${brandColor}35)` }
+            : undefined
+        }
+      >
+        <div
+          className="absolute inset-0 translate-x-5 translate-y-5 rounded-3xl opacity-30"
+          style={{ backgroundColor: `${brandColor}25` }}
+        />
+        <div
+          className="absolute inset-0 translate-x-2.5 translate-y-2.5 rounded-3xl opacity-40"
+          style={{ backgroundColor: `${brandColor}40` }}
+        />
 
-        <div className="relative bg-white rounded-3xl shadow-2xl border border-neutral-100 overflow-hidden animate-float">
+        <div
+          className={`relative rounded-3xl shadow-2xl border overflow-hidden animate-float ${
+            design.theme === "cyber"
+              ? "bg-neutral-950 border-neutral-800 text-neutral-100"
+              : design.theme === "minimal"
+              ? "bg-white border-neutral-900 text-neutral-900"
+              : "bg-white border-neutral-100 text-neutral-900"
+          }`}
+        >
+          {/* Lanyard cutout for Conference Badge theme */}
+          {design.theme === "badge" && (
+            <div className="w-full bg-neutral-100 py-2.5 flex items-center justify-center border-b border-neutral-200">
+              <div className="w-10 h-3 rounded-full bg-neutral-300 border border-neutral-400/50 shadow-inner" />
+            </div>
+          )}
+
+          {/* Banner cover if provided */}
+          {design.bannerUrl && (
+            <div className="w-full h-28 overflow-hidden border-b border-white/15 bg-neutral-900">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={design.bannerUrl}
+                alt="Event Banner"
+                className="w-full h-full object-cover"
+              />
+            </div>
+          )}
+
           {/* Brand header */}
           <div
             className="px-6 pt-6 pb-8 relative overflow-hidden"
-            style={{ background: `linear-gradient(135deg, ${brandColor} 0%, ${brandColorDark} 100%)` }}
+            style={patternStyle}
           >
-            <div
-              className="absolute inset-0 opacity-20"
-              style={{
-                backgroundImage:
-                  "radial-gradient(circle at 85% 40%, #fff 0%, transparent 55%)",
-              }}
-            />
-
             <div className="relative flex items-start justify-between mb-5">
               <div className="min-w-0 pr-3">
                 <div className="flex items-center gap-1.5 mb-1.5">
@@ -201,8 +236,8 @@ export default async function PassPage({
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={orgLogoUrl} alt="logo" className="w-4 h-4 rounded object-cover" />
                   )}
-                  <p className="text-[10px] font-bold tracking-widest uppercase text-white/60">
-                    {orgName ? `${orgName} · Event Pass` : "Event Pass"}
+                  <p className="text-[10px] font-bold tracking-widest uppercase text-white/70">
+                    {orgName ? `${orgName} · ${design.badgeLabel || "Event Pass"}` : design.badgeLabel || "Event Pass"}
                   </p>
                 </div>
                 <h1 className="text-xl font-bold text-white leading-snug">
@@ -217,7 +252,7 @@ export default async function PassPage({
             </div>
 
             <div className="relative flex flex-col gap-2">
-              <div className="flex items-center gap-2 text-xs text-purple-200">
+              <div className="flex items-center gap-2 text-xs text-white/80">
                 <CalendarDays className="w-3.5 h-3.5 shrink-0" />
                 <span>
                   {formattedDate} &middot; {event.start_time}–{event.end_time}
@@ -225,13 +260,13 @@ export default async function PassPage({
               </div>
               {/* Show venue only if not purely online */}
               {!isOnline && event.venue && (
-                <div className="flex items-center gap-2 text-xs text-purple-200">
+                <div className="flex items-center gap-2 text-xs text-white/80">
                   <MapPin className="w-3.5 h-3.5 shrink-0" />
                   <span>{event.venue}</span>
                 </div>
               )}
               {isOnline && (
-                <div className="flex items-center gap-2 text-xs text-purple-200">
+                <div className="flex items-center gap-2 text-xs text-white/80">
                   <Wifi className="w-3.5 h-3.5 shrink-0" />
                   <span>{platformLabel}</span>
                 </div>
@@ -239,12 +274,14 @@ export default async function PassPage({
             </div>
           </div>
 
-          {/* Tear line */}
-          <div className="relative h-0">
-            <div className="absolute -left-3 -top-3 w-6 h-6 rounded-full bg-[#f5f3ff]" />
-            <div className="absolute -right-3 -top-3 w-6 h-6 rounded-full bg-[#f5f3ff]" />
-            <div className="absolute left-3 right-3 border-t border-dashed border-neutral-200" />
-          </div>
+          {/* Tear line for Classic theme */}
+          {design.theme === "classic" && (
+            <div className="relative h-0">
+              <div className="absolute -left-3 -top-3 w-6 h-6 rounded-full bg-[#f5f3ff]" />
+              <div className="absolute -right-3 -top-3 w-6 h-6 rounded-full bg-[#f5f3ff]" />
+              <div className="absolute left-3 right-3 border-t border-dashed border-neutral-200" />
+            </div>
+          )}
 
           {/* Body */}
           <div className="px-6 pt-8 pb-6 flex flex-col items-center gap-4">
@@ -253,27 +290,44 @@ export default async function PassPage({
               <p className="text-[10px] font-bold tracking-widest uppercase text-neutral-400 mb-1">
                 Attendee
               </p>
-              <p className="text-lg font-bold text-neutral-900">{attendee.name}</p>
+              <p className={`text-lg font-bold ${design.theme === "cyber" ? "text-white" : "text-neutral-900"}`}>
+                {attendee.name}
+              </p>
               <p className="text-xs text-neutral-400 mt-0.5">{attendee.email}</p>
             </div>
 
             {/* QR section — for physical and hybrid events */}
             {!isOnline && (
-              <>
+              <div
+                className={`p-2 rounded-2xl flex flex-col items-center gap-2 ${
+                  design.showQrBorder ? "border-2" : ""
+                } ${design.theme === "cyber" ? "bg-neutral-900" : "bg-neutral-50/80"}`}
+                style={{
+                  borderColor: design.showQrBorder ? brandColor : undefined,
+                }}
+              >
                 <PassQR value={pass.pass_token} size={164} />
-                <p className="text-[10px] text-neutral-300 font-mono tracking-widest">
+                <p className="text-[10px] text-neutral-400 font-mono tracking-widest">
                   {shortCode.toUpperCase()}
                 </p>
-              </>
+              </div>
             )}
 
             {/* Online-only icon area — replaces QR */}
             {isOnline && (
               <div className="w-full flex flex-col items-center gap-3 py-4">
-                <div className="w-16 h-16 rounded-2xl bg-brand-50 border border-brand-100 flex items-center justify-center">
-                  <Wifi className="w-8 h-8 text-brand" />
+                <div
+                  className="w-16 h-16 rounded-2xl flex items-center justify-center border"
+                  style={{
+                    backgroundColor: `${brandColor}15`,
+                    borderColor: `${brandColor}30`,
+                  }}
+                >
+                  <Wifi className="w-8 h-8" style={{ color: brandColor }} />
                 </div>
-                <p className="text-sm font-semibold text-neutral-900">Online Event</p>
+                <p className={`text-sm font-semibold ${design.theme === "cyber" ? "text-white" : "text-neutral-900"}`}>
+                  Online Event
+                </p>
                 <p className="text-xs text-neutral-400">{platformLabel}</p>
               </div>
             )}
@@ -285,12 +339,24 @@ export default async function PassPage({
                 <span className="text-xs font-semibold text-green-700">Checked in</span>
               </div>
             ) : (
-              <div className="w-full flex items-center gap-2 bg-brand-50 border border-brand-100 rounded-xl px-3 py-2.5 justify-center">
-                <span className="w-2 h-2 rounded-full bg-brand animate-pulse shrink-0" />
-                <span className="text-xs font-semibold text-brand">
+              <div
+                className="w-full flex items-center gap-2 rounded-xl px-3 py-2.5 justify-center text-white"
+                style={{
+                  background: `linear-gradient(135deg, ${brandColor} 0%, ${brandColorDark} 100%)`,
+                }}
+              >
+                <span className="w-2 h-2 rounded-full bg-white animate-pulse shrink-0" />
+                <span className="text-xs font-semibold text-white">
                   {statusText}
                 </span>
               </div>
+            )}
+
+            {/* Custom footer disclaimer or sponsor note */}
+            {design.footerNote && (
+              <p className="text-[10px] text-neutral-400 text-center mt-1 leading-normal px-2">
+                {design.footerNote}
+              </p>
             )}
           </div>
         </div>

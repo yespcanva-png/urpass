@@ -2,6 +2,7 @@ import { ImageResponse } from "next/og";
 import { createClient } from "@supabase/supabase-js";
 import QRCode from "qrcode";
 import { getSupabaseUrl } from "@/lib/supabase/config";
+import { resolvePassDesign } from "@/lib/pass-design";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -42,7 +43,7 @@ export async function GET(
 
   const [{ data: attendee }, { data: event }] = await Promise.all([
     supabase.from("attendees").select("name, email").eq("id", pass.attendee_id).single(),
-    supabase.from("events").select("name, event_date, start_time, venue").eq("id", pass.event_id).single(),
+    supabase.from("events").select("name, event_date, start_time, venue, custom_pass_design").eq("id", pass.event_id).single(),
   ]);
 
   if (!attendee || !event) return new Response("Not found", { status: 404 });
@@ -56,8 +57,9 @@ export async function GET(
 
   const organizerId = eventOrg?.organizer_id ?? null;
   let showBranding = true;
-  let brandColor = "#6D28D9";
-  let orgName: string | null = null;
+  let orgProfileData: { org_name: string | null; brand_color: string | null; custom_pass_design: unknown } | null = null;
+  let isPro = false;
+
   if (organizerId) {
     const [{ data: sub }, { data: orgProfile }] = await Promise.all([
       supabase
@@ -68,28 +70,26 @@ export async function GET(
         .single(),
       supabase
         .from("profiles")
-        .select("org_name, brand_color")
+        .select("org_name, brand_color, custom_pass_design")
         .eq("user_id", organizerId)
         .single(),
     ]);
 
     const planSlug = (sub?.plan as unknown as { slug: string } | null)?.slug ?? "free";
     showBranding = planSlug === "free";
-    const isPro = ["pro", "business", "campus", "enterprise"].includes(planSlug);
-    if (orgProfile?.brand_color && isPro) brandColor = orgProfile.brand_color;
-    if (orgProfile?.org_name && isPro) orgName = orgProfile.org_name;
+    isPro = ["pro", "business", "campus", "enterprise"].includes(planSlug);
+    orgProfileData = orgProfile;
   }
 
-  function darkenHex(hex: string, amount = 40): string {
-    const clean = hex.replace("#", "");
-    if (clean.length !== 6) return hex;
-    const r = Math.max(0, parseInt(clean.slice(0, 2), 16) - amount);
-    const g = Math.max(0, parseInt(clean.slice(2, 4), 16) - amount);
-    const b = Math.max(0, parseInt(clean.slice(4, 6), 16) - amount);
-    return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
-  }
-  const brandColorDark = darkenHex(brandColor);
-  const headerLabel = orgName ? `${orgName} · EVENT PASS` : showBranding ? "URPASS · EVENT PASS" : "EVENT PASS";
+  const design = isPro
+    ? resolvePassDesign(event.custom_pass_design, orgProfileData?.custom_pass_design, orgProfileData?.brand_color)
+    : resolvePassDesign(null, null, null);
+
+  const brandColor = design.primaryColor;
+  const brandColorDark = design.secondaryColor;
+  const orgName = (isPro && orgProfileData?.org_name) ? orgProfileData.org_name : null;
+  const badgeLabel = design.badgeLabel || "EVENT PASS";
+  const headerLabel = orgName ? `${orgName} · ${badgeLabel}` : showBranding ? `URPASS · ${badgeLabel}` : badgeLabel;
 
   // QR code as base64 PNG — works in ImageResponse <img src>
   const qrDataUrl = await QRCode.toDataURL(passToken, {
@@ -304,12 +304,34 @@ export async function GET(
               style={{
                 fontSize: 12,
                 fontWeight: 600,
-                color: isCheckedIn ? "#15803d" : "#6D28D9",
+                color: isCheckedIn ? "#15803d" : brandColor,
               }}
             >
               {isCheckedIn ? "Checked in" : "Valid · Show at entrance"}
             </span>
           </div>
+
+          {design.footerNote ? (
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                marginTop: 8,
+                padding: "0 12px",
+              }}
+            >
+              <span
+                style={{
+                  fontSize: 9,
+                  color: "#9ca3af",
+                  textAlign: "center",
+                  lineHeight: 1.3,
+                }}
+              >
+                {design.footerNote}
+              </span>
+            </div>
+          ) : null}
         </div>
 
         {/* ── Footer ────────────────────────────────────────────── */}
