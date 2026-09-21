@@ -22,6 +22,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const seoPages = [
     // Core features
+    "/platform",
     "/design-your-ticket",
     "/custom-pass-design",
     "/qr-code-scanner",
