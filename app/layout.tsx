@@ -175,6 +175,15 @@ const organizationSchema = {
     "@type": "Country",
     name: "India",
   },
+  slogan: "Create. Share. Scan. Instant digital event passes and 0.2s QR check-in.",
+  knowsAbout: [
+    "Digital Event Passes",
+    "QR Event Check-in",
+    "Event Ticketing Software",
+    "College Fest Management",
+    "Hackathon Pass Generator",
+    "Razorpay Event Ticketing",
+  ],
 };
 
 const softwareSchema = {
@@ -201,6 +210,17 @@ const softwareSchema = {
     bestRating: "5",
     worstRating: "1",
   },
+  knowsAbout: [
+    "Digital Event Passes",
+    "QR Check-in System",
+    "Event Ticketing Software",
+    "Free Event Registration",
+    "30-Day Free Trial",
+    "College Fest Entry Management",
+    "Hackathon Check-in",
+    "Razorpay Payment Gateway",
+    "Generative Engine Optimization",
+  ],
   featureList: [
     "30-Day Free Trial on paid plans",
     "Instant QR Code Ticket Generation",
@@ -234,6 +254,8 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${geist.variable} h-full`}>
       <head>
+        <link rel="help" type="text/plain" href="/llms.txt" title="LLM Documentation" />
+        <link rel="alternate" type="text/plain" href="/llms-full.txt" title="Full Product Context for Generative Engines" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}

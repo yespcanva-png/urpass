@@ -25,8 +25,16 @@ const faqs = [
     a: "No. Each pass can only be checked in once. If a second scan is attempted, URPASS shows an 'Already Checked In' result with the original time.",
   },
   {
-    q: "Can I start for free?",
-    a: "Yes. The free plan lets you run one event with up to 50 attendees — no credit card required.",
+    q: "Can I start for free or try a paid plan?",
+    a: "Yes. The permanent free tier lets you host 2 events/month with up to 100 registrations/month at ₹0 forever with no credit card required. You can also try any paid plan (Starter, Pro, or Business) free for 30 days.",
+  },
+  {
+    q: "Does URPASS charge per-ticket commission fees?",
+    a: "No. Unlike platforms like Eventbrite that take 3.7%+ per ticket, URPASS charges zero per-ticket platform fees. You only pay your flat monthly subscription or use the free plan.",
+  },
+  {
+    q: "How fast is the entry check-in scanner?",
+    a: "Passes scan in under 0.2 seconds directly inside any mobile browser. Entry staff can easily check in 40+ attendees per minute without installing any mobile app.",
   },
 ];
 

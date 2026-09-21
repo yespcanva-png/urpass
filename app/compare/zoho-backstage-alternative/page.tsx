@@ -46,7 +46,7 @@ export default function ZohoBackstageAlternativePage() {
         ],
         faqs: [
           { q: "When should I use URPASS instead of Zoho Backstage?", a: "Use URPASS if you need simple event registration, digital QR passes, and check-in scanning — without the complexity of managing speakers, sessions, agendas, and exhibitors. URPASS is faster to set up and free to start." },
-          { q: "Is URPASS free to use?", a: "Yes. URPASS has a permanent free plan for 1 event with up to 50 attendees. No credit card required." },
+          { q: "Is URPASS free to use?", a: "Yes. URPASS has a permanent free plan for 2 events/month with up to 100 registrations/month with no credit card required. You can also try any paid plan free for 30 days." },
           { q: "Can URPASS handle paid events with Razorpay?", a: "Yes. Starter and Pro plans support paid ticketing with Razorpay integration for UPI, cards, and net banking." },
           { q: "Does URPASS have QR check-in?", a: "Yes. All URPASS plans include QR-based check-in scanning. No additional module or cost." },
           { q: "Is URPASS suitable for corporate events?", a: "Yes. The Pro plan includes custom branding (company name, logo, colour on passes) and team management with role-based access." },

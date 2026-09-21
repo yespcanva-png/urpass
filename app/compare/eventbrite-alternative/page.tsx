@@ -47,7 +47,7 @@ export default function EventbriteAlternativePage() {
         faqs: [
           { q: "Why would I use URPASS instead of Eventbrite?", a: "If you're running events in India, URPASS is built for you — INR pricing, Razorpay for UPI/cards, college and community event support, and a free plan that requires no credit card. Eventbrite is globally focused and primarily uses USD and Stripe." },
           { q: "Does URPASS charge per-ticket fees?", a: "No. URPASS charges a monthly subscription. Razorpay charges their standard payment processing fee. There are no per-ticket platform fees from URPASS." },
-          { q: "Can I use URPASS for free?", a: "Yes. URPASS has a permanent free plan for 1 event with up to 50 attendees — no credit card required." },
+          { q: "Can I use URPASS for free?", a: "Yes. URPASS has a permanent free tier for 2 events/month with up to 100 registrations/month — no credit card required. You can also try any paid plan free for 30 days." },
           { q: "Does URPASS have QR check-in like Eventbrite?", a: "Yes. Every URPASS plan includes QR-based check-in scanning. Attendees get digital QR passes and staff scans them at the entrance using any phone browser." },
           { q: "Can I accept UPI payments on URPASS?", a: "Yes. URPASS uses Razorpay which supports UPI, Google Pay, PhonePe, credit/debit cards, and net banking." },
           { q: "Is URPASS suitable for small events?", a: "Yes. URPASS is specifically designed for small to medium events — workshops, college fests, hackathons, and community meetups — not just large-scale ticketing." },
