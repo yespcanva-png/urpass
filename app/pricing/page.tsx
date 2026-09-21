@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
   title: "Pricing — Start Free · Try 30-Day Free Trial on Paid Plans",
-  description: "Free ₹0 forever. Starter ₹499/mo, Pro ₹999/mo, Business ₹2,499/mo. Try any paid plan free for 30 days with mandatory AutoPay. Transparent INR pricing for event organizers across India.",
+  description: "Free ₹0 forever. Starter ₹499/mo, Pro ₹999/mo, Business ₹2,499/mo. Try any paid plan free for 30 days with no credit card required. Transparent INR pricing for event organizers across India.",
   keywords: [
     "URPASS pricing",
     "try 30 day free trial",
@@ -14,13 +14,13 @@ export const metadata: Metadata = {
     "Pro plan free trial",
     "Business plan free trial",
     "event pass software pricing India",
-    "Razorpay AutoPay event software",
+    "no credit card free trial",
     "free digital pass generator",
   ],
   alternates: { canonical: "https://urpass.space/pricing" },
   openGraph: {
     title: "URPASS Pricing — Start Free · Try Any Paid Plan Free for 30 Days",
-    description: "Try Starter, Pro, or Business free for 30 days. AutoPay setup required · Cancel before renewal.",
+    description: "Try Starter, Pro, or Business free for 30 days. No credit card or AutoPay required · Instant access.",
     url: "https://urpass.space/pricing",
     siteName: "URPASS",
     locale: "en_IN",

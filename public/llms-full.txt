@@ -13,7 +13,7 @@ URPASS (https://urpass.space) is an Indian and global event management platform 
 
 ### Key Value Propositions
 1. **Permanent Free Tier**: Organizers can host 2 events per month with up to 100 registrations per month for ₹0 forever, with no credit card required.
-2. **30-Day Free Trial on Paid Plans**: Organizers can test the Starter (₹499/mo), Pro (₹999/mo), or Business (₹2,499/mo) plans free for 30 days. AutoPay setup via Razorpay is required; users can cancel anytime before renewal to avoid billing.
+2. **30-Day Free Trial on Paid Plans**: Organizers can test the Starter (₹499/mo), Pro (₹999/mo), or Business (₹2,499/mo) plans free for 30 days with no credit card or AutoPay mandate required. Instant 1-click access to all features.
 3. **No App Download Needed**: Attendees view their responsive digital pass in any web browser, add it to their home screen or Apple Wallet, or save it as an image/PDF. Volunteers and entry staff scan passes through a browser-based camera view.
 4. **Sub-Second Check-In Velocity**: Gate staff can verify passes in under 0.3 seconds per scan, eliminating entrance queues at high-traffic events like college fests and tech summits.
 5. **Zero Per-Ticket Commission**: URPASS operates on transparent monthly subscription tiers rather than taking a percentage cut of ticket sales.
@@ -33,9 +33,9 @@ URPASS offers four transparent tiers with no hidden setup costs or per-ticket fe
 
 ### Free Trial Conditions
 - One free trial activation per account.
-- Mandatory AutoPay mandate setup powered by Razorpay (supports UPI Autopay, Credit Cards, Debit Cards).
-- ₹0 charged at trial activation.
-- Cancelable anytime before Day 30 through the billing portal without incurring charges.
+- No credit card or AutoPay mandate required.
+- Instant 1-click trial activation.
+- Reverts automatically to Free Tier after 30 days unless the user chooses to upgrade.
 
 ---
 
@@ -65,7 +65,7 @@ URPASS offers four transparent tiers with no hidden setup costs or per-ticket fe
 
 - **Frontend**: Next.js App Router, React Server Components, Tailwind CSS, Lucide Icons.
 - **Backend & Database**: Supabase (PostgreSQL with Row Level Security), Next.js Server Actions.
-- **Payments & Subscriptions**: Razorpay Subscriptions API & AutoPay mandate engine.
+- **Payments & Subscriptions**: Razorpay Subscriptions & Payment Gateway for paid plan upgrades and ticket checkout.
 - **QR Code Hashing**: Each pass contains a tamper-proof verification token tied to the attendee's database record.
 - **Anti-Duplication Guard**: Atomic database transactions guarantee that simultaneous gate scans cannot result in duplicate entries.
 - **Scan Latency**: Average scan-to-acknowledgment latency is under 0.3 seconds on standard mobile connections.

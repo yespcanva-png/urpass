@@ -116,6 +116,7 @@ export default function DashboardContent() {
     scheduledAmountRupees: number;
     renewalDate: string;
     autopayCancelled: boolean;
+    hasAutopay: boolean;
   } | null>(null);
   const [stats, setStats] = useState({ total: 0, active: 0, passes: 0, checkedIn: 0 });
   const [events, setEvents] = useState<EventRow[]>([]);
@@ -174,6 +175,7 @@ export default function DashboardContent() {
             scheduledAmountRupees: 0,
             renewalDate: "",
             autopayCancelled: false,
+            hasAutopay: false,
           };
         } else if (isTrial && sub?.trial_ends_at) {
           const endsAt = new Date(sub.trial_ends_at);
@@ -187,6 +189,7 @@ export default function DashboardContent() {
             year: "numeric",
           });
           const autopayCancelled = Boolean(sub?.cancel_at_period_end || sub?.autopay_status === "cancelled");
+          const hasAutopay = sub?.autopay_status === "active";
 
           trialState = {
             isEligible: false,
@@ -197,6 +200,7 @@ export default function DashboardContent() {
             scheduledAmountRupees,
             renewalDate,
             autopayCancelled,
+            hasAutopay,
           };
         }
         setTrialInfo(trialState);
@@ -294,7 +298,7 @@ export default function DashboardContent() {
                 Your account is eligible for one free 30-day plan
               </h2>
               <p className="text-xs text-white/70 mt-0.5">
-                Choose Starter, Pro or Business when you&apos;re ready. Full feature access with mandatory AutoPay setup.
+                Choose Starter, Pro or Business when you&apos;re ready. Full feature access with no credit card or AutoPay required.
               </p>
             </div>
           </div>
@@ -327,7 +331,9 @@ export default function DashboardContent() {
               <p className="text-xs sm:text-sm text-white/90 font-medium">
                 {trialInfo.autopayCancelled
                   ? `AutoPay cancelled &middot; Free trial access active until ${trialInfo.renewalDate}`
-                  : `Your first payment of ₹${trialInfo.scheduledAmountRupees.toLocaleString("en-IN")} + taxes is scheduled for ${trialInfo.renewalDate}.`}
+                  : trialInfo.hasAutopay
+                  ? `Your first payment of ₹${trialInfo.scheduledAmountRupees.toLocaleString("en-IN")} + taxes is scheduled for ${trialInfo.renewalDate}.`
+                  : `Free trial active until ${trialInfo.renewalDate} &middot; No card on file (reverts to Free plan)`}
               </p>
             </div>
           </div>

@@ -160,9 +160,9 @@ function ScanResult() {
 // ─── Plans ────────────────────────────────────────────────────────────────────
 const plans = [
   { name: "Free",     price: "₹0",      period: "forever",           recommended: false, cta: "Start free",        href: "/signup",                         subtext: "Free forever",                  features: ["2 events/month", "100 registrations/month", "QR passes & check-in", "Attendee approval", "Basic analytics"] },
-  { name: "Starter",  price: "₹499",    period: "/month +GST",       recommended: false, cta: "Try Starter Free",  href: "/signup?plan=starter&trial=true", subtext: "30 days ₹0 · AutoPay required", features: ["10 events/month", "500 registrations/month", "2 organizers", "CSV import & export", "Standard analytics"] },
-  { name: "Pro",      price: "₹999",    period: "/month +GST",       recommended: true,  cta: "Try Pro Free",      href: "/signup?plan=pro&trial=true",     subtext: "30 days ₹0 · AutoPay required", features: ["Unlimited events", "2,500 registrations/month", "5 organizers", "Custom pass design", "Advanced analytics", "Priority support"] },
-  { name: "Business", price: "₹2,499",  period: "/month +GST",       recommended: false, cta: "Try Business Free", href: "/signup?plan=business&trial=true",subtext: "30 days ₹0 · AutoPay required", features: ["Unlimited events", "10,000 registrations/month", "15 organizers", "Custom domain", "API & webhooks"] },
+  { name: "Starter",  price: "₹499",    period: "/month +GST",       recommended: false, cta: "Try Starter Free",  href: "/signup?plan=starter&trial=true", subtext: "30 days ₹0 · No credit card required", features: ["10 events/month", "500 registrations/month", "2 organizers", "CSV import & export", "Standard analytics"] },
+  { name: "Pro",      price: "₹999",    period: "/month +GST",       recommended: true,  cta: "Try Pro Free",      href: "/signup?plan=pro&trial=true",     subtext: "30 days ₹0 · No credit card required", features: ["Unlimited events", "2,500 registrations/month", "5 organizers", "Custom pass design", "Advanced analytics", "Priority support"] },
+  { name: "Business", price: "₹2,499",  period: "/month +GST",       recommended: false, cta: "Try Business Free", href: "/signup?plan=business&trial=true",subtext: "30 days ₹0 · No credit card required", features: ["Unlimited events", "10,000 registrations/month", "15 organizers", "Custom domain", "API & webhooks"] },
 ];
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
@@ -407,7 +407,7 @@ export default function LandingPage() {
                 YOUR FIRST 30 DAYS ARE FREE
               </div>
               <h2 className="text-2xl sm:text-4xl font-semibold tracking-tight">Choose any plan. Get your first 30 days free.</h2>
-              <p className="mt-2 sm:mt-3 text-neutral-500 text-xs sm:text-sm">AutoPay setup required · Cancel before renewal · One free trial per account</p>
+              <p className="mt-2 sm:mt-3 text-neutral-500 text-xs sm:text-sm">No credit card or AutoPay required · Instant access · One free trial per account</p>
             </div>
           </AnimateIn>
 

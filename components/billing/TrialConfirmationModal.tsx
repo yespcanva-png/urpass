@@ -10,10 +10,11 @@ import {
   AlertCircle,
   Sparkles,
   Calendar,
-  Lock,
+  CheckCircle2,
   ArrowRight,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { activateFreeTrial } from "@/app/actions/billing";
 
 interface Props {
   isOpen: boolean;
@@ -22,24 +23,6 @@ interface Props {
   planName: string;
   userEmail: string;
   userName: string;
-}
-
-declare global {
-  interface Window {
-    Razorpay: new (options: Record<string, unknown>) => { open: () => void };
-  }
-}
-
-function loadRazorpay(): Promise<boolean> {
-  return new Promise((resolve) => {
-    if (typeof window === "undefined") return resolve(false);
-    if (window.Razorpay) return resolve(true);
-    const script = document.createElement("script");
-    script.src = "https://checkout.razorpay.com/v1/checkout.js";
-    script.onload = () => resolve(true);
-    script.onerror = () => resolve(false);
-    document.body.appendChild(script);
-  });
 }
 
 const PLAN_INFO: Record<
@@ -89,8 +72,6 @@ export default function TrialConfirmationModal({
   onClose,
   planSlug,
   planName,
-  userEmail,
-  userName,
 }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -113,8 +94,6 @@ export default function TrialConfirmationModal({
   if (!isOpen) return null;
 
   const info = PLAN_INFO[planSlug] ?? PLAN_INFO.pro;
-  const gstAmount = Math.round(info.monthly * 18) / 100;
-  const totalMonthlyWithGst = Math.round((info.monthly + gstAmount) * 100) / 100;
 
   const trialEndDate = new Date();
   trialEndDate.setDate(trialEndDate.getDate() + 30);
@@ -129,114 +108,29 @@ export default function TrialConfirmationModal({
     setError("");
 
     try {
-      const sdkReady = await loadRazorpay();
-      if (!sdkReady) {
-        setError("Could not load payment gateway SDK. Please check your connection.");
+      const res = await activateFreeTrial(planSlug);
+      if (res?.error) {
+        setError(res.error);
         setLoading(false);
         return;
       }
 
-      // Step 1: Create trial subscription / mandate
-      const res = await fetch("/api/razorpay/trial-subscription", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ planSlug }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error || "Could not set up trial subscription.");
-        setLoading(false);
-        return;
-      }
-
-      // Step 2: Open Razorpay checkout with subscription_id or order_id
-      const options: Record<string, unknown> = {
-        key: data.keyId,
-        name: "URPASS",
-        description: `30-Day Free Trial — ${planName} Plan`,
-        prefill: {
-          name: userName,
-          email: userEmail,
-        },
-        theme: { color: "#6D28D9" },
-        modal: {
-          ondismiss: () => {
-            setLoading(false);
-          },
-        },
-        handler: async (response: {
-          razorpay_payment_id?: string;
-          razorpay_subscription_id?: string;
-          razorpay_order_id?: string;
-          razorpay_signature?: string;
-        }) => {
-          if (!response?.razorpay_payment_id || !response?.razorpay_signature) {
-            setError("AutoPay verification details were incomplete.");
-            setLoading(false);
-            return;
-          }
-
-          // Step 3: Verify AutoPay setup & start 30-day trial clock
-          try {
-            const verifyRes = await fetch("/api/razorpay/verify-trial", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                planSlug,
-                subscriptionId: response.razorpay_subscription_id || data.subscriptionId,
-                orderId: response.razorpay_order_id || data.orderId,
-                paymentId: response.razorpay_payment_id,
-                signature: response.razorpay_signature,
-              }),
-            });
-
-            const verifyData = await verifyRes.json();
-            if (!verifyRes.ok) {
-              setError(verifyData.error || "Failed to activate trial.");
-              setLoading(false);
-              return;
-            }
-
-            // Redirect to billing with celebration parameter
-            onClose();
-            router.push(`/billing?trial_activated=true&plan=${encodeURIComponent(planName)}`);
-            router.refresh();
-          } catch (err) {
-            console.error("[trial-activation-error]", err);
-            setError("Verification network error. Please refresh and check your billing page.");
-            setLoading(false);
-          }
-        },
-      };
-
-      if (data.subscriptionId) {
-        options.subscription_id = data.subscriptionId;
-      } else if (data.orderId) {
-        options.order_id = data.orderId;
-        options.amount = data.amount;
-        options.currency = data.currency;
-      }
-
-      const rzp = new window.Razorpay(options);
-      rzp.open();
+      onClose();
+      router.push(`/billing?trial_activated=true&plan=${encodeURIComponent(planName)}`);
+      router.refresh();
     } catch (err) {
-      console.error("[trial-modal-error]", err);
-      setError("An unexpected error occurred. Please try again.");
+      console.error("[trial-activation-error]", err);
+      setError("Failed to start trial. Please check your connection and try again.");
       setLoading(false);
     }
   }
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop */}
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
-        onClick={() => !loading && onClose()}
-      />
-
-      {/* Dialog */}
-      <div className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl flex flex-col max-h-[90vh] overflow-y-auto border border-neutral-100">
+        className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-neutral-100 overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="p-6 sm:p-7 flex flex-col gap-5">
           {/* Header */}
           <div className="flex items-start justify-between gap-3">
@@ -249,7 +143,7 @@ export default function TrialConfirmationModal({
                 Try {planName} free for 30 days
               </h2>
               <p className="text-xs sm:text-sm text-neutral-500 mt-1">
-                Full access to all {planName} features. AutoPay setup required.
+                Full access to all {planName} features. No credit card or AutoPay required.
               </p>
             </div>
             <button
@@ -276,26 +170,34 @@ export default function TrialConfirmationModal({
               <span className="font-semibold text-neutral-900">30 days</span>
             </div>
 
+            <div className="flex items-center justify-between text-xs sm:text-sm text-neutral-600">
+              <span className="flex items-center gap-1.5">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+                Credit Card / Payment
+              </span>
+              <span className="font-semibold text-emerald-600">None required (₹0)</span>
+            </div>
+
             <div className="h-px bg-neutral-200" />
 
             <div className="flex items-center justify-between text-xs sm:text-sm">
-              <span className="text-neutral-500">First payment after trial</span>
+              <span className="text-neutral-500">After 30 days</span>
               <div className="text-right">
-                <p className="font-bold text-neutral-900">₹{totalMonthlyWithGst.toLocaleString("en-IN")}/mo</p>
-                <p className="text-[11px] text-neutral-400">₹{info.monthly.toLocaleString("en-IN")} + 18% GST on {formattedRenewalDate}</p>
+                <p className="font-semibold text-neutral-900">Optional subscription</p>
+                <p className="text-[11px] text-neutral-400">Upgrade anytime or revert to Free</p>
               </div>
             </div>
           </div>
 
-          {/* AutoPay Mandatory Notice */}
-          <div className="bg-violet-50/70 border border-violet-200/80 rounded-2xl p-4 flex items-start gap-3">
-            <Lock className="w-4 h-4 text-brand shrink-0 mt-0.5" />
+          {/* Zero commitment Notice */}
+          <div className="bg-emerald-50/70 border border-emerald-200/80 rounded-2xl p-4 flex items-start gap-3">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
             <div className="text-xs leading-relaxed text-neutral-700">
               <p className="font-semibold text-neutral-900 mb-1">
-                AutoPay setup required &middot; Cancel anytime before renewal
+                Zero commitment &middot; No automatic charges
               </p>
               <p className="text-neutral-600">
-                You will authorize an AutoPay mandate with Razorpay. <strong>You will not be billed today.</strong> You can cancel anytime before {formattedRenewalDate} under Billing Settings and you will not be charged. One free activation per account.
+                You will immediately unlock 30 days of full {planName} access. No payment information is collected. When your trial ends on {formattedRenewalDate}, your account simply reverts to the Free tier unless you choose to subscribe.
               </p>
             </div>
           </div>
@@ -335,11 +237,11 @@ export default function TrialConfirmationModal({
               {loading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Setting up AutoPay...
+                  Activating Free Trial...
                 </>
               ) : (
                 <>
-                  Set Up AutoPay &amp; Start Free Trial
+                  Start 30-Day Free Trial
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}
@@ -347,7 +249,7 @@ export default function TrialConfirmationModal({
 
             <div className="flex items-center justify-center gap-2 text-[11px] text-neutral-400">
               <ShieldCheck className="w-3.5 h-3.5 text-neutral-400" />
-              <span>Secured by Razorpay &middot; Cancel before {formattedRenewalDate} with zero charge</span>
+              <span>Instant activation &middot; No credit card or AutoPay required</span>
             </div>
           </div>
         </div>

@@ -124,7 +124,7 @@ const FAQ_DATA: FAQItem[] = [
   {
     category: "Payments & Pricing",
     q: "How does the 30-day free trial on paid plans work?",
-    a: "You can test Starter (₹499/mo), Pro (₹999/mo), or Business (₹2,499/mo) completely free for 30 days. AutoPay setup via Razorpay is required; you can cancel anytime before day 30 at ₹0 charge.",
+    a: "You can test Starter (₹499/mo), Pro (₹999/mo), or Business (₹2,499/mo) completely free for 30 days with no credit card or AutoPay mandate required. You get instant access to all features, and your account simply reverts to the Free plan after 30 days unless you choose to upgrade.",
   },
   {
     category: "Payments & Pricing",

@@ -439,7 +439,9 @@ export default async function BillingPage() {
                 <p className="text-xs text-white/40 mt-1">
                   {sub?.cancel_at_period_end || sub?.autopay_status === "cancelled"
                     ? `AutoPay cancelled · Free trial ends ${renewalDate} (reverts to Free)`
-                    : `First payment of ₹${Math.round(currentPlan.priceMonthly * 1.18).toLocaleString("en-IN")} scheduled for ${renewalDate}`}
+                    : sub?.autopay_status === "active"
+                    ? `First payment of ₹${Math.round(currentPlan.priceMonthly * 1.18).toLocaleString("en-IN")} scheduled for ${renewalDate}`
+                    : `Free trial ends ${renewalDate} · No card on file (reverts to Free)`}
                 </p>
               ) : currentPlanSlug !== "free" && renewalDate ? (
                 <p className="text-xs text-white/30 mt-0.5">

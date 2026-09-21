@@ -4,7 +4,7 @@
 
 ## Quick Facts
 - **Free Tier Forever**: ₹0 / month — 2 events/month, 100 registrations/month, QR pass generation, browser-based entry scanner, no credit card required.
-- **30-Day Free Trial**: Try Starter (₹499/mo), Pro (₹999/mo), or Business (₹2,499/mo) completely free for 30 days with AutoPay setup. Cancel anytime before renewal.
+- **30-Day Free Trial**: Try Starter (₹499/mo), Pro (₹999/mo), or Business (₹2,499/mo) completely free for 30 days with no credit card or AutoPay required. Instant 1-click activation.
 - **Sub-Second QR Check-in**: Under 0.3-second scanning speed directly inside any mobile browser (Safari, Chrome) without downloading an app.
 - **Duplicate Entry Prevention**: Cryptographic QR tokens ensure each pass is checked in exactly once, showing the timestamp and device if re-scanned.
 - **Zero Per-Ticket Commission**: URPASS never charges per-ticket platform fees; only the flat monthly plan applies.

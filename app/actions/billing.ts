@@ -62,17 +62,120 @@ export async function cancelSubscription(): Promise<ActionResult> {
   revalidateBillingPaths();
 }
 
+export async function activateFreeTrial(planSlug: string): Promise<ActionResult> {
+  if (!planSlug || !["starter", "pro", "business"].includes(planSlug)) {
+    return { error: "Free trial is only available on Starter, Pro, or Business plans." };
+  }
+
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const admin = adminClient();
+
+  // Check if trial has already been used
+  const { data: existingSub } = await admin
+    .from("subscriptions")
+    .select("id, trial_used")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (existingSub?.trial_used) {
+    return { error: "Your account has already used its one free 30-day trial." };
+  }
+
+  const { data: targetPlan } = await admin
+    .from("plans")
+    .select("id, name, slug")
+    .eq("slug", planSlug)
+    .eq("is_active", true)
+    .single();
+
+  if (!targetPlan) return { error: "Plan not found." };
+
+  const now = new Date();
+  const trialEndsAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+
+  const { error: updateError } = await admin.from("subscriptions").upsert(
+    {
+      user_id: user.id,
+      plan_id: targetPlan.id,
+      status: "trialing",
+      provider: "none",
+      billing_cycle: "monthly",
+      current_period_start: now.toISOString(),
+      current_period_end: trialEndsAt.toISOString(),
+      cancel_at_period_end: false,
+      registrations_used: 0,
+      trial_used: true,
+      is_trial: true,
+      trial_plan: planSlug,
+      trial_starts_at: now.toISOString(),
+      trial_ends_at: trialEndsAt.toISOString(),
+      autopay_mandate_id: null,
+      autopay_status: "none",
+      reminded_7_days: false,
+      reminded_3_days: false,
+      reminded_1_day: false,
+      updated_at: now.toISOString(),
+    },
+    { onConflict: "user_id" }
+  );
+
+  if (updateError) {
+    return { error: updateError.message };
+  }
+
+  const pricePaiseMap: Record<string, number> = {
+    starter: 49900,
+    pro: 99900,
+    business: 249900,
+  };
+
+  const formattedEndDate = trialEndsAt.toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
+  if (user.email) {
+    void sendTrialStartedEmail({
+      to: user.email,
+      userName: user.user_metadata?.full_name,
+      planName: targetPlan.name,
+      monthlyPricePaise: pricePaiseMap[planSlug] ?? 49900,
+      trialEndsAt: formattedEndDate,
+    }).catch((err) => console.error("[email] Trial started email error:", err));
+  }
+
+  void notifyOwnerPaymentSuccess({
+    kind: "subscription",
+    buyerName: user.user_metadata?.full_name,
+    buyerEmail: user.email,
+    itemName: `30-Day Free Trial: ${targetPlan.name} (No AutoPay)`,
+    amountPaise: 0,
+  }).catch((err) => console.error("[email] Trial started owner notification error:", err));
+
+  revalidateBillingPaths();
+  return undefined;
+}
+
 export async function activateTrialSubscription(
   planSlug: string,
-  verification: {
+  verification?: {
     subscriptionId?: string;
     orderId?: string;
-    paymentId: string;
-    signature: string;
+    paymentId?: string;
+    signature?: string;
   }
 ): Promise<ActionResult> {
   if (!planSlug || !["starter", "pro", "business"].includes(planSlug)) {
     return { error: "Free trial is only available on Starter, Pro, or Business plans." };
+  }
+
+  // If no verification is provided, activate free trial directly without AutoPay
+  if (!verification || !verification.paymentId || !verification.signature) {
+    return activateFreeTrial(planSlug);
   }
 
   const supabase = await createClient();

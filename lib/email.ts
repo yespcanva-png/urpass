@@ -995,14 +995,14 @@ export async function sendTrialStartedEmail({
               <td style="padding:14px 18px;font-size:13px;font-weight:600;color:#111827;text-align:right;">30 Days (until ${safeDate})</td>
             </tr>
             <tr style="background:#f5f3ff;">
-              <td style="padding:16px 18px;font-size:13px;font-weight:700;color:#6D28D9;">First Renewal Charge:</td>
-              <td style="padding:16px 18px;font-size:14px;font-weight:800;color:#6D28D9;text-align:right;">${formattedMonthly} on ${safeDate}</td>
+              <td style="padding:16px 18px;font-size:13px;font-weight:700;color:#6D28D9;">Regular Plan Price:</td>
+              <td style="padding:16px 18px;font-size:14px;font-weight:800;color:#6D28D9;text-align:right;">${formattedMonthly} after trial</td>
             </tr>
           </table>
 
           <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:14px 16px;margin-bottom:24px;">
             <p style="margin:0;font-size:13px;color:#166534;line-height:1.5;">
-              <strong>AutoPay Confirmed:</strong> Your mandate is active. You will not be charged anything during your 30-day free trial. If you wish to cancel before the first payment, you can cancel anytime with one click in your billing settings.
+              <strong>No Credit Card Required:</strong> There are no automatic charges. When your 30-day free trial ends, your account will simply revert to the Free plan unless you choose to upgrade.
             </p>
           </div>
 
@@ -1090,13 +1090,13 @@ export async function sendTrialReminderEmail({
               <td style="padding:14px 18px;font-size:13px;font-weight:600;color:#111827;text-align:right;">${safeDate}</td>
             </tr>
             <tr style="background:#f5f3ff;">
-              <td style="padding:16px 18px;font-size:13px;font-weight:700;color:#6D28D9;">Scheduled Renewal:</td>
+              <td style="padding:16px 18px;font-size:13px;font-weight:700;color:#6D28D9;">Regular Plan Price:</td>
               <td style="padding:16px 18px;font-size:14px;font-weight:800;color:#6D28D9;text-align:right;">${formattedMonthly}</td>
             </tr>
           </table>
 
           <p style="margin:0 0 24px;font-size:13px;color:#6b7280;line-height:1.6;">
-            If you love using URPASS, you don&apos;t need to do anything &mdash; your subscription will continue seamlessly via AutoPay. If you don&apos;t wish to renew, you can cancel anytime before ${safeDate} in your billing settings and you will not be charged.
+            If you love using URPASS, you can upgrade anytime in your billing settings to keep your ${safePlan} features. If you take no action, your account will simply revert to our Free plan on ${safeDate} with zero charges.
           </p>
 
           <table width="100%" cellpadding="0" cellspacing="0">
