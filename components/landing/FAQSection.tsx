@@ -42,10 +42,10 @@ export default function FAQSection() {
   const [open, setOpen] = useState<number | null>(null);
 
   return (
-    <section className="py-28 px-5 sm:px-8 bg-white">
+    <section className="py-16 sm:py-24 px-4 sm:px-8 bg-white">
       <div className="max-w-2xl mx-auto">
-        <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight text-center mb-14">
-          Questions
+        <h2 className="text-2xl sm:text-4xl font-semibold tracking-tight text-center mb-8 sm:mb-14">
+          Frequently Asked Questions
         </h2>
 
         <div className="flex flex-col divide-y divide-neutral-100">

@@ -41,27 +41,29 @@ export default function Navbar() {
     <header className="fixed top-0 inset-x-0 z-50 transition-all duration-300">
       {/* ── Top Notification / Announcement Bar ── */}
       {bannerVisible && (
-        <div className="bg-gradient-to-r from-neutral-950 via-purple-950 to-neutral-950 text-white border-b border-purple-900/30 text-xs py-2 px-4 relative z-50 shadow-xs">
-          <div className="max-w-6xl mx-auto flex items-center justify-between gap-3">
-            <div className="flex-1 flex items-center justify-center gap-2 text-center flex-wrap">
-              <span className="inline-flex items-center gap-1 text-purple-300 shrink-0">
-                <Sparkles className="w-3.5 h-3.5" />
+        <div className="bg-gradient-to-r from-neutral-950 via-purple-950 to-neutral-950 text-white border-b border-purple-900/30 text-[11px] sm:text-xs py-1 sm:py-1.5 px-2.5 sm:px-4 relative z-50 shadow-xs">
+          <div className="max-w-6xl mx-auto flex items-center justify-between gap-1.5 sm:gap-2">
+            <div className="flex-1 flex items-center justify-center gap-1 sm:gap-1.5 text-center leading-tight truncate">
+              <span className="inline-flex items-center text-purple-300 shrink-0">
+                <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
               </span>
               <span className="text-neutral-200 font-normal">
-                Start free or try any paid plan with our 30-day free trial. ₹0 today.
+                <span className="sm:hidden">30-day free trial · ₹0 today.</span>
+                <span className="hidden sm:inline">Start free or try any paid plan with our 30-day free trial. ₹0 today.</span>
               </span>
               <Link
                 href="/pricing"
-                className="inline-flex items-center gap-1 font-semibold text-purple-300 hover:text-white transition-colors underline-offset-4 hover:underline shrink-0 ml-1"
+                className="inline-flex items-center gap-0.5 font-semibold text-purple-300 hover:text-white transition-colors shrink-0 ml-1 underline-offset-2 hover:underline"
               >
-                <span>Try 30 days free</span>
-                <ArrowRight className="w-3 h-3" />
+                <span className="sm:hidden">Try free</span>
+                <span className="hidden sm:inline">Try 30 days free</span>
+                <ArrowRight className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
               </Link>
             </div>
             <button
               type="button"
               onClick={handleDismiss}
-              className="text-neutral-400 hover:text-white p-1 rounded-md transition-colors shrink-0 -mr-1"
+              className="text-neutral-400 hover:text-white p-0.5 rounded transition-colors shrink-0"
               aria-label="Dismiss notification"
             >
               <X className="w-3.5 h-3.5" />
