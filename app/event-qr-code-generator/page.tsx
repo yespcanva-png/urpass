@@ -3,7 +3,7 @@ import { QrCode, Zap, Ticket, Smartphone, ShieldCheck, RefreshCw } from "lucide-
 import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
-  title: "Event QR Code Generator for Attendees | URPASS",
+  title: "Event QR Code Generator for Attendees",
   description: "Generate unique QR codes for every event attendee automatically. Each QR is linked to the attendee's registration, single-use, and scannable at entry. No printing needed.",
   alternates: { canonical: "https://urpass.space/event-qr-code-generator" },
   openGraph: {

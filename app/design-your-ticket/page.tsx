@@ -3,7 +3,7 @@ import { Palette, Sparkles, Smartphone, Image, Sliders, Printer } from "lucide-r
 import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
-  title: "Design Your Ticket Online — Custom Event Pass & Ticket Maker | URPASS",
+  title: "Design Your Ticket Online — Custom Event Pass & Ticket Maker",
   description: "Design your ticket online in minutes with URPASS. Minimalist, modern, and dark templates, custom hex colors, logo uploads, and instant mobile passes or printable PDFs. Free to start.",
   keywords: [
     "design your ticket",

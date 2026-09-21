@@ -3,7 +3,7 @@ import { Zap, QrCode, CreditCard, Users, BarChart3, Gift } from "lucide-react";
 import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
-  title: "Zoho Backstage Alternative for Simple Events | URPASS",
+  title: "Zoho Backstage Alternative for Simple Events",
   description: "Looking for a simpler Zoho Backstage alternative? URPASS is lightweight event registration with digital QR passes, Razorpay, and a free plan. No complex configuration.",
   alternates: { canonical: "https://urpass.space/compare/zoho-backstage-alternative" },
   openGraph: {

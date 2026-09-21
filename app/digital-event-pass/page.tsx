@@ -3,7 +3,7 @@ import { Ticket, QrCode, Zap, Smartphone, Palette, Mail } from "lucide-react";
 import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
-  title: "Digital Event Pass & QR Pass Generator | URPASS",
+  title: "Digital Event Pass & QR Pass Generator",
   description: "Create digital QR passes for event attendees instantly. Attendees receive a mobile-ready digital pass with event details, QR code, and attendee name. No printing needed.",
   alternates: { canonical: "https://urpass.space/digital-event-pass" },
   openGraph: {

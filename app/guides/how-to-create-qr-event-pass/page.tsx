@@ -3,7 +3,7 @@ import { PlusCircle, Share2, CheckSquare, QrCode, ScanLine, BarChart3 } from "lu
 import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
-  title: "How to Create QR Passes for an Event | URPASS",
+  title: "How to Create QR Passes for an Event",
   description: "Step-by-step guide to creating digital QR passes for your event attendees. Create an event, collect registrations, approve attendees, and issue QR passes in minutes.",
   alternates: { canonical: "https://urpass.space/guides/how-to-create-qr-event-pass" },
   openGraph: {

@@ -3,7 +3,7 @@ import { School, QrCode, ClipboardList, ScanLine, Users, BarChart3 } from "lucid
 import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
-  title: "Campus Event Registration & Attendance System | URPASS",
+  title: "Campus Event Registration & Attendance System",
   description: "Manage campus event registrations, digital QR passes, and attendance tracking. Replace manual sign-in sheets with QR-based campus attendance. Free to start.",
   alternates: { canonical: "https://urpass.space/campus-events" },
   openGraph: {

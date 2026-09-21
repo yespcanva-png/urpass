@@ -3,7 +3,7 @@ import { Monitor, ClipboardList, Ticket, QrCode, ScanLine, Users } from "lucide-
 import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
-  title: "Workshop Registration Software with QR Check-In | URPASS",
+  title: "Workshop Registration Software with QR Check-In",
   description: "Collect workshop registrations, issue digital QR passes, and check in participants with QR scanning. Supports free and paid workshops. Quick setup.",
   alternates: { canonical: "https://urpass.space/workshops" },
   openGraph: {

@@ -3,7 +3,7 @@ import { ScanLine, ShieldCheck, Zap, Smartphone, BarChart3, WifiOff } from "luci
 import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
-  title: "QR Code Event Check-In Software | URPASS",
+  title: "QR Code Event Check-In Software",
   description: "Fast QR code check-in for events. Scan attendee digital passes at the entrance using any phone or tablet. No app required. Duplicate entry prevention. Real-time dashboard.",
   alternates: { canonical: "https://urpass.space/qr-event-check-in" },
   openGraph: {

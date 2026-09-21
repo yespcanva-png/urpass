@@ -3,7 +3,7 @@ import { Users2, QrCode, Zap, ScanLine, ClipboardList, Gift } from "lucide-react
 import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
-  title: "Community Event Registration Software | URPASS",
+  title: "Community Event Registration Software",
   description: "Manage community event registrations with digital QR passes and simple check-in. Free plan for small communities. Scale as you grow.",
   alternates: { canonical: "https://urpass.space/community-events" },
   openGraph: {

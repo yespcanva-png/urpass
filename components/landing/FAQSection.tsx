@@ -34,7 +34,7 @@ const faqs = [
   },
   {
     q: "How fast is the entry check-in scanner?",
-    a: "Passes scan in under 0.2 seconds directly inside any mobile browser. Entry staff can easily check in 40+ attendees per minute without installing any mobile app.",
+    a: "Passes scan in under 0.3 seconds directly inside any mobile browser. Entry staff can check in attendees quickly and continuously without installing any mobile app.",
   },
 ];
 

@@ -3,7 +3,7 @@ import { MapPin, Cpu, QrCode, ScanLine, Ticket, Users } from "lucide-react";
 import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
-  title: "Event Registration & QR Check-In Software Bangalore | URPASS",
+  title: "Event Registration & QR Check-In Software Bangalore",
   description: "URPASS event registration and QR check-in platform for Bangalore. For tech meetups, startup events, corporate conferences, and college events. Free to start.",
   keywords: [
     "event registration Bangalore",

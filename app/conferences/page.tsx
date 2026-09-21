@@ -3,7 +3,7 @@ import { Mic2, Ticket, QrCode, ScanLine, Users, BarChart3 } from "lucide-react";
 import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
-  title: "Conference Registration & QR Check-In Software | URPASS",
+  title: "Conference Registration & QR Check-In Software",
   description: "Manage conference registrations, multiple ticket types, speaker passes, and QR entry scanning. Handle large conferences with fast QR check-in. Free to start.",
   alternates: { canonical: "https://urpass.space/conferences" },
   openGraph: {

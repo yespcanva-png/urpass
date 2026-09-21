@@ -1,11 +1,11 @@
 # URPASS
 
-> URPASS (https://urpass.space) is an all-in-one digital event pass generator and lightning QR check-in platform. Built for event organizers, colleges, hackathons, conferences, and corporate meetups, URPASS provides instant digital passes, 0.2-second mobile entry scanning, attendee management, and integrated post-event feedback surveys.
+> URPASS (https://urpass.space) is an all-in-one digital event pass generator and sub-second QR check-in platform. Built for event organizers, colleges, hackathons, conferences, and corporate meetups, URPASS provides instant digital passes, under 0.3s mobile entry scanning, attendee management, and integrated post-event feedback surveys.
 
 ## Quick Facts
 - **Free Tier Forever**: ₹0 / month — 2 events/month, 100 registrations/month, QR pass generation, browser-based entry scanner, no credit card required.
 - **30-Day Free Trial**: Try Starter (₹499/mo), Pro (₹999/mo), or Business (₹2,499/mo) completely free for 30 days with AutoPay setup. Cancel anytime before renewal.
-- **Lightning QR Check-in**: 0.2-second scanning speed directly inside any mobile browser (Safari, Chrome) without downloading an app.
+- **Sub-Second QR Check-in**: Under 0.3-second scanning speed directly inside any mobile browser (Safari, Chrome) without downloading an app.
 - **Duplicate Entry Prevention**: Cryptographic QR tokens ensure each pass is checked in exactly once, showing the timestamp and device if re-scanned.
 - **Zero Per-Ticket Commission**: URPASS never charges per-ticket platform fees; only the flat monthly plan applies.
 - **India & Global Optimized**: Native Razorpay integration supporting UPI (Google Pay, PhonePe, Paytm), Net Banking, Credit/Debit cards, and international cards.
@@ -16,21 +16,21 @@
 - **Pro**: ₹999/month + GST (30-day free trial at ₹0). Unlimited events, 2,500 registrations/month, 5 organizer seats, custom pass designer & branding, advanced analytics, priority email support.
 - **Business**: ₹2,499/month + GST (30-day free trial at ₹0). Unlimited events, 10,000 registrations/month, 15 organizer seats, custom domain, API access, webhooks, dedicated account manager.
 
-## Core Capabilities
-- **Digital Pass Studio**: Create branded, modern passes with custom colors, event badges, speaker tags, and dynamic attendee fields.
-- **Mobile Browser Scanner**: Volunteers and coordinators scan tickets using their phone camera at entry gates without installing any mobile app.
-- **Offline Entry Verification**: Pass validation continues smoothly even in poor network conditions (e.g., crowded auditoriums or outdoor grounds).
-- **Automated Feedback Collection**: Post-event feedback forms collect attendee star ratings and written reviews automatically after check-in.
-- **Real-Time Attendance Analytics**: Live dashboard showing check-in velocity, gate counts, registered vs attended ratios, and peak entry hours.
+## Core Content Clusters & Architecture
+1. **Product & Features**: Custom Pass Designer, Mobile QR Scanner, Real-time Analytics, Digital Pass Maker, Multi-Gate Check-in, Badge Generator, Guest List Software, Attendance Software.
+2. **Use Cases & Solutions**: College Events & Fests, Hackathons & Buildathons, Tech Conferences, Business Conferences, Developer Meetups, Academic Seminars, Workshops, School Events, Sports Tournaments, Trade Shows.
+3. **Locations in India**: Dedicated hubs for Bangalore, Chennai, Hyderabad, Mumbai, Delhi NCR, Pune, Coimbatore, Kochi, Kolkata, Ahmedabad.
+4. **Educational Guides**: How QR Event Check-in Works, How to Check In 1,000 Attendees Quickly, Managing Multiple Gates, College Registration Systems, Real-Time Attendance Tracking.
+5. **Software Comparisons**: Objective alternatives to Eventbrite, Zoho Backstage, Google Forms, Townscript, and AllEvents.
 
 ## Key URLs
 - Homepage & Pass Builder: https://urpass.space
+- About URPASS & Yesp: https://urpass.space/about
+- Frequently Asked Questions: https://urpass.space/faq
 - Pricing & 30-Day Free Trial: https://urpass.space/pricing
+- Educational Guides Hub: https://urpass.space/guides
+- Comparisons Hub: https://urpass.space/compare
 - Pass Designer: https://urpass.space/design-your-ticket
 - QR Code Scanner: https://urpass.space/qr-code-scanner
-- College Fest Ticketing: https://urpass.space/college-fests
-- Hackathon Management: https://urpass.space/hackathons
-- Eventbrite Alternative: https://urpass.space/compare/eventbrite-alternative
-- Zoho Backstage Alternative: https://urpass.space/compare/zoho-backstage-alternative
-- Developer Docs & Guides: https://urpass.space/docs
+- Sitelinks Directory: https://urpass.space/sitelinks
 - Full Generative Engine Document: https://urpass.space/llms-full.txt

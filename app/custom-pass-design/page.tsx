@@ -3,7 +3,7 @@ import { Palette, Sparkles, Smartphone, Image, Shield, QrCode } from "lucide-rea
 import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
-  title: "Custom Event Pass Designer & Branded Ticket Maker | URPASS",
+  title: "Custom Event Pass Designer & Branded Ticket Maker",
   description: "Design premium, minimalist digital event passes and printable PDF tickets. Curated templates, brand colors, custom logos, and secure QR codes. Keep it simple and on-brand.",
   keywords: [
     "custom event pass designer",

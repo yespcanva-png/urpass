@@ -3,7 +3,7 @@ import { Smartphone, Zap, ShieldCheck, Wifi, Users, Clock } from "lucide-react";
 import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
-  title: "Mobile QR Code Scanner for Event Entry & Gate Check-In | URPASS",
+  title: "Mobile QR Code Scanner for Event Entry & Gate Check-In",
   description: "Fast, hardware-free QR code scanner for event check-in. Turn any iPhone or Android camera into a high-speed event entry scanner. Prevent duplicate entries with instant gate sync.",
   keywords: [
     "event QR code scanner",
@@ -51,13 +51,13 @@ export default function QrCodeScannerPage() {
         steps: [
           { n: "01", title: "Open Scanner URL", desc: "Navigate to your event check-in URL or share a PIN-protected link with entrance volunteers." },
           { n: "02", title: "Allow Camera", desc: "Grant one-time browser camera access on any iOS or Android smartphone or tablet." },
-          { n: "03", title: "Scan QR Pass", desc: "Aim camera at attendee phone or printed badge. The pass is verified in under 300 milliseconds." },
+          { n: "03", title: "Scan QR Pass", desc: "Aim camera at attendee phone or printed badge. The pass is verified in under 0.3 seconds." },
           { n: "04", title: "Instant Validation", desc: "Screen flashes green with attendee name, ticket tier, and check-in timestamp." },
           { n: "05", title: "Track Attendance", desc: "Watch total gate counts, check-in velocity, and remaining capacity live on your organizer dashboard." },
         ],
         callout: {
           badge: "EVENT ENTRY SPEED",
-          title: "Check in 60+ attendees per minute per gate.",
+          title: "Continuous high-throughput gate check-in.",
           description: "Long registration lines kill event momentum. URPASS mobile scanner eliminates paper lists, manual lookups, and slow hardware barcodes.",
           bullets: [
             "Works on any modern smartphone browser (Chrome, Safari, Firefox)",
@@ -78,7 +78,7 @@ export default function QrCodeScannerPage() {
           { q: "Can I manually check in an attendee if their phone battery died?", a: "Yes. Organizers can search attendees by name, email, or ticket ID on the dashboard and mark them checked in manually." },
         ],
         ctaTitle: "Streamline your event check-in today",
-        ctaDescription: "Free plan available · Zero hardware setup · Scans in 0.3 seconds",
+        ctaDescription: "Free plan available · Zero hardware setup · Scans in under 0.3 seconds",
       }}
     />
   );

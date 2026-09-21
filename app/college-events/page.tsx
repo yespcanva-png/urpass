@@ -3,7 +3,7 @@ import { GraduationCap, QrCode, Users, ScanLine, ClipboardList, Zap } from "luci
 import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
-  title: "College Event Registration & QR Check-In | URPASS",
+  title: "College Event Registration & QR Check-In",
   description: "Run college events with online registration, digital QR passes, and fast attendee check-in. Trusted by college organisers across India. Free plan available.",
   alternates: { canonical: "https://urpass.space/college-events" },
   openGraph: {

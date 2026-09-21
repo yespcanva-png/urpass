@@ -3,7 +3,7 @@ import { Gift, Ticket, QrCode, ScanLine, Zap, BarChart3 } from "lucide-react";
 import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
-  title: "Free Event Ticketing & QR Check-In Platform | URPASS",
+  title: "Free Event Ticketing & QR Check-In Platform",
   description: "Free event ticketing platform with QR check-in. Issue digital QR tickets for free events. No credit card required. Upgrade to paid ticketing when you're ready.",
   alternates: { canonical: "https://urpass.space/free-event-ticketing" },
   openGraph: {

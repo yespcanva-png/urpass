@@ -3,7 +3,7 @@ import { Building2, GraduationCap, MapPin, QrCode, ScanLine, Ticket } from "luci
 import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
-  title: "Event Registration & QR Check-In Software Ahmedabad | URPASS",
+  title: "Event Registration & QR Check-In Software Ahmedabad",
   description: "URPASS event registration, ticketing, and QR check-in platform for Ahmedabad and Gujarat. Built for business summits, trade expos, college fests, and startup events.",
   keywords: [
     "event registration Ahmedabad",

@@ -3,7 +3,7 @@ import { Ticket, QrCode, ScanLine, CreditCard, BarChart3, Zap } from "lucide-rea
 import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
-  title: "Event Ticketing Software with QR Check-In | URPASS",
+  title: "Event Ticketing Software with QR Check-In",
   description: "Event ticketing software that generates digital QR tickets and checks in attendees at the door. No printing. No spreadsheets. Just create, sell, scan.",
   alternates: { canonical: "https://urpass.space/event-ticketing-software" },
   openGraph: {

@@ -3,7 +3,7 @@ import { Zap, MapPin, QrCode, CreditCard, Users, BarChart3 } from "lucide-react"
 import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
-  title: "Eventbrite Alternative for QR Event Check-In | URPASS",
+  title: "Eventbrite Alternative for QR Event Check-In",
   description: "Looking for an Eventbrite alternative? URPASS offers event registration, digital QR passes, and check-in scanning with INR pricing and Razorpay. Free plan available.",
   alternates: { canonical: "https://urpass.space/compare/eventbrite-alternative" },
   openGraph: {

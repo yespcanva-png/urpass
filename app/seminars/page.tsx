@@ -3,7 +3,7 @@ import { Megaphone, ClipboardList, QrCode, ScanLine, Zap, Users } from "lucide-r
 import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
-  title: "Seminar Registration & Attendance Software | URPASS",
+  title: "Seminar Registration & Attendance Software",
   description: "Manage seminar registrations, attendance tracking, and QR check-in. Issue digital passes, scan attendees at entry, and track seminar attendance in real time.",
   alternates: { canonical: "https://urpass.space/seminars" },
   openGraph: {

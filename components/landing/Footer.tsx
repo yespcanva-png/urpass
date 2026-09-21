@@ -49,7 +49,7 @@ export default function Footer() {
 
             <div className="mt-8 pt-6 border-t border-neutral-900 flex items-center gap-2 text-[11px] text-neutral-500">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>All Systems Operational &middot; 99.9% Check-in Uptime</span>
+              <span>All Systems Operational &middot; Cloud Infrastructure &amp; Real-Time Sync</span>
             </div>
           </div>
 
@@ -178,7 +178,19 @@ export default function Footer() {
             <span className="hidden sm:inline">Made in India</span>
           </div>
 
-          <div className="flex items-center gap-5 text-xs text-neutral-500">
+          <div className="flex flex-wrap items-center gap-5 text-xs text-neutral-500">
+            <Link href="/about" className="hover:text-neutral-300 transition-colors">
+              About
+            </Link>
+            <Link href="/faq" className="hover:text-neutral-300 transition-colors">
+              FAQ
+            </Link>
+            <Link href="/guides" className="hover:text-neutral-300 transition-colors">
+              Guides
+            </Link>
+            <Link href="/compare" className="hover:text-neutral-300 transition-colors">
+              Compare
+            </Link>
             <Link href="/contact" className="hover:text-neutral-300 transition-colors">
               Contact
             </Link>

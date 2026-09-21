@@ -5,12 +5,12 @@ import Footer from "@/components/landing/Footer";
 import { InstagramIcon, YoutubeIcon, SOCIAL_LINKS } from "@/components/landing/SocialIcons";
 
 export const metadata: Metadata = {
-  title: "Sitelinks & Directory — URPASS",
-  description: "Complete directory of all pages on URPASS — custom pass designer, QR check-in, real-time analytics, college fests, city hubs, and official channels.",
+  title: "Sitelinks & Directory",
+  description: "Complete directory of all pages on URPASS — custom pass designer, QR check-in, real-time analytics, college fests, city hubs, comparisons, and official channels.",
   alternates: { canonical: "https://urpass.space/sitelinks" },
   openGraph: {
     title: "Sitelinks & Directory — URPASS",
-    description: "Explore all pages on URPASS by category — features, solutions, cities, and guides.",
+    description: "Explore all pages on URPASS by category — product features, use case solutions, city hubs, educational guides, and comparisons.",
     url: "https://urpass.space/sitelinks",
     locale: "en_IN",
     type: "website",
@@ -25,13 +25,19 @@ export const metadata: Metadata = {
 
 const sections: {
   title: string;
+  badge?: string;
   links: { label: string; href: string; isExternal?: boolean; badge?: string }[];
 }[] = [
   {
-    title: "Main Platform",
+    title: "Platform & Company",
+    badge: "Core",
     links: [
       { label: "Home", href: "/" },
+      { label: "About URPASS & Yesp", href: "/about", badge: "New" },
+      { label: "Platform FAQ & Answers", href: "/faq", badge: "35+ FAQs" },
       { label: "Pricing & Plans", href: "/pricing" },
+      { label: "Guides & Tutorials Hub", href: "/guides" },
+      { label: "Software Comparisons Hub", href: "/compare" },
       { label: "Documentation & API", href: "/docs" },
       { label: "Contact Support", href: "/contact" },
       { label: "Feedback & Requests", href: "/feedback" },
@@ -41,72 +47,129 @@ const sections: {
     ],
   },
   {
-    title: "Core Features",
+    title: "1. Product & Feature Cluster",
+    badge: "Product",
     links: [
-      { label: "Design Your Ticket", href: "/design-your-ticket", badge: "Featured" },
-      { label: "Custom Pass Designer", href: "/custom-pass-design", badge: "New" },
+      { label: "Custom Pass Designer", href: "/custom-pass-design", badge: "Popular" },
       { label: "Mobile QR Code Scanner", href: "/qr-code-scanner", badge: "Fast" },
       { label: "Real-Time Event Analytics", href: "/event-analytics", badge: "Live" },
       { label: "Event Registration Software", href: "/event-registration-software" },
       { label: "QR Event Check-In", href: "/qr-event-check-in" },
       { label: "Digital Event Pass Maker", href: "/digital-event-pass" },
+      { label: "Event Management Software", href: "/event-management-software" },
+      { label: "Event Check-In Software", href: "/event-check-in-software" },
+      { label: "Event Registration Platform", href: "/event-registration-platform" },
+      { label: "Online Registration System", href: "/online-event-registration-system" },
+      { label: "Multi-Gate Event Check-In", href: "/multi-gate-event-check-in", badge: "New" },
+      { label: "Event Pass Management", href: "/event-pass-management-system" },
+      { label: "Event Badge Generator", href: "/event-badge-generator" },
+      { label: "Event Ticket Generator", href: "/event-ticket-generator" },
+      { label: "Event Registration Form", href: "/event-registration-form" },
+      { label: "Event RSVP Software", href: "/event-rsvp-software" },
+      { label: "Event Guest List Software", href: "/event-guest-list-software" },
+      { label: "Event Entry System", href: "/event-entry-system" },
+      { label: "Event Check-In App (Browser)", href: "/event-check-in-app" },
+      { label: "QR Code Attendance System", href: "/qr-code-attendance-system" },
       { label: "Event Attendance Tracking", href: "/event-attendance-tracking" },
       { label: "Attendee Management", href: "/attendee-management" },
-      { label: "Event QR Code Generator", href: "/event-qr-code-generator" },
-      { label: "QR Ticketing System", href: "/qr-ticketing-system" },
-      { label: "Event Access Control", href: "/event-access-control" },
-      { label: "Free Event Registration", href: "/free-event-registration" },
-      { label: "Event Ticketing Platform", href: "/event-ticketing-platform" },
-      { label: "Event Ticketing Software", href: "/event-ticketing-software" },
-      { label: "Online Event Ticketing", href: "/online-event-ticketing" },
       { label: "QR Event Tickets", href: "/qr-event-tickets" },
+      { label: "Free Event Registration", href: "/free-event-registration" },
+      { label: "Design Your Ticket", href: "/design-your-ticket" },
     ],
   },
   {
-    title: "Event Solutions",
+    title: "2. Use Cases & Solutions",
+    badge: "Use Case",
     links: [
       { label: "College Events", href: "/college-events" },
-      { label: "College Fests & Culturals", href: "/college-fests" },
-      { label: "Hackathons & Buildathons", href: "/hackathons" },
+      { label: "College Fests & Culturals", href: "/college-fests", badge: "Top" },
+      { label: "Hackathons & Buildathons", href: "/hackathons", badge: "Top" },
+      { label: "Technical Symposium", href: "/technical-symposium", badge: "New" },
+      { label: "Cultural Fest Management", href: "/cultural-fest", badge: "New" },
+      { label: "Campus & Orientation Events", href: "/campus-events" },
+      { label: "University Events", href: "/university-events", badge: "New" },
+      { label: "School Events & Annual Days", href: "/school-events", badge: "New" },
+      { label: "Tech Conferences & Summits", href: "/conferences" },
+      { label: "Business Conferences", href: "/business-conferences", badge: "New" },
+      { label: "Developer Meetups", href: "/developer-meetups", badge: "New" },
       { label: "Workshops & Masterclasses", href: "/workshops" },
-      { label: "Tech Conferences", href: "/conferences" },
       { label: "Academic Seminars", href: "/seminars" },
-      { label: "Corporate Summits", href: "/corporate-events" },
-      { label: "Tech Community Events", href: "/tech-events" },
+      { label: "Corporate Events & Townhalls", href: "/corporate-events" },
+      { label: "Startup Pitches & Demo Days", href: "/startup-events", badge: "New" },
+      { label: "Networking Mixers", href: "/networking-events", badge: "New" },
+      { label: "Trade Shows & Expos", href: "/trade-shows", badge: "New" },
+      { label: "Exhibitions & Galleries", href: "/exhibitions", badge: "New" },
+      { label: "Sports Events & Tournaments", href: "/sports-events", badge: "New" },
+      { label: "Award Ceremonies & Galas", href: "/award-ceremonies", badge: "New" },
+      { label: "Alumni Meets & Reunions", href: "/alumni-events", badge: "New" },
+      { label: "Training & Certification", href: "/training-events", badge: "New" },
       { label: "Community Meetups", href: "/community-events" },
-      { label: "Campus Events", href: "/campus-events" },
     ],
   },
   {
-    title: "Locations in India",
+    title: "3. Locations in India",
+    badge: "Location",
     links: [
-      { label: "Events in India (Hub)", href: "/in" },
-      { label: "Bangalore (Tech & Startups)", href: "/in/bangalore" },
-      { label: "Chennai (Colleges & Tech)", href: "/in/chennai" },
-      { label: "Coimbatore (Academic Hub)", href: "/in/coimbatore" },
-      { label: "Hyderabad (HITEC City)", href: "/in/hyderabad" },
-      { label: "Mumbai (Corporate & Expos)", href: "/in/mumbai" },
-      { label: "Delhi NCR (Summits & Meets)", href: "/in/delhi" },
-      { label: "Pune (IT & Universities)", href: "/in/pune" },
-      { label: "Kochi & Kerala (Startups & Fests)", href: "/in/kochi", badge: "New" },
-      { label: "Kolkata (Culture & Tech)", href: "/in/kolkata", badge: "New" },
-      { label: "Ahmedabad (Business & Summits)", href: "/in/ahmedabad", badge: "New" },
+      { label: "Events Software India (Hub)", href: "/in", badge: "Hub" },
+      { label: "Bangalore Event Software", href: "/event-registration-software-bangalore", badge: "Tech" },
+      { label: "Bangalore City Guide", href: "/in/bangalore" },
+      { label: "Chennai Event Software", href: "/event-registration-software-chennai", badge: "Colleges" },
+      { label: "Chennai City Guide", href: "/in/chennai" },
+      { label: "Hyderabad Event Software", href: "/event-registration-software-hyderabad", badge: "HITEC" },
+      { label: "Hyderabad City Guide", href: "/in/hyderabad" },
+      { label: "Mumbai Event Software", href: "/event-registration-software-mumbai", badge: "Expos" },
+      { label: "Mumbai City Guide", href: "/in/mumbai" },
+      { label: "Delhi NCR Event Software", href: "/event-registration-software-delhi", badge: "Summits" },
+      { label: "Delhi NCR City Guide", href: "/in/delhi" },
+      { label: "Pune Event Software", href: "/event-registration-software-pune", badge: "IT" },
+      { label: "Pune City Guide", href: "/in/pune" },
+      { label: "Coimbatore Event Software", href: "/event-registration-software-coimbatore", badge: "Institutions" },
+      { label: "Coimbatore City Guide", href: "/in/coimbatore" },
+      { label: "Kochi Event Software", href: "/event-registration-software-kochi", badge: "Startups" },
+      { label: "Kochi City Guide", href: "/in/kochi" },
+      { label: "Kolkata City Guide", href: "/in/kolkata" },
+      { label: "Ahmedabad City Guide", href: "/in/ahmedabad" },
     ],
   },
   {
-    title: "Knowledge & Guides",
+    title: "4. Educational Guides & Knowledge",
+    badge: "Guides & GEO",
     links: [
-      { label: "What is QR Event Check-In?", href: "/guides/what-is-qr-event-check-in" },
-      { label: "How to Create a QR Event Pass", href: "/guides/how-to-create-qr-event-pass" },
-      { label: "Prevent Duplicate Event Entry", href: "/guides/prevent-duplicate-event-entry" },
-      { label: "College Event Registration System", href: "/guides/college-event-registration-system" },
+      { label: "All Guides & Knowledge Hub", href: "/guides", badge: "Hub" },
+      { label: "How QR Check-In Works", href: "/guides/how-does-qr-event-check-in-work" },
+      { label: "How to Check In 1,000+ Attendees Fast", href: "/guides/how-to-check-in-1000-attendees-quickly", badge: "Speed" },
+      { label: "Manage Multiple Event Entrances", href: "/guides/how-to-manage-multiple-event-entrances" },
+      { label: "Generate QR Codes for Attendees", href: "/guides/how-to-create-qr-codes-for-event-attendees" },
+      { label: "Create Digital Event Passes", href: "/guides/how-to-create-digital-event-passes" },
+      { label: "Track Attendance in Real Time", href: "/guides/how-to-track-event-attendance-in-real-time" },
+      { label: "College Event Registration Guide", href: "/guides/how-to-manage-college-event-registrations" },
+      { label: "College Fest Form Best Practices", href: "/guides/how-to-create-college-fest-registration-form" },
+      { label: "How to Send QR Tickets via Email", href: "/guides/how-to-send-qr-tickets-to-attendees" },
+      { label: "What Fields to Collect in Forms", href: "/guides/what-information-should-event-registration-form-collect" },
+      { label: "QR Tickets vs Paper Tickets", href: "/guides/qr-ticket-vs-paper-ticket" },
+      { label: "Event Registration vs Google Forms", href: "/guides/event-registration-software-vs-google-forms" },
+      { label: "Can Google Forms Generate QR Passes?", href: "/guides/can-google-forms-generate-event-qr-passes" },
+      { label: "Run Registration Without Eventbrite", href: "/guides/how-to-run-event-registration-without-eventbrite" },
+      { label: "Create Free Event Tickets Online", href: "/guides/how-to-create-free-event-tickets-online" },
+      { label: "Organize Registration for Hackathons", href: "/guides/how-to-organize-registration-for-a-hackathon" },
+      { label: "Manage Conference Attendees", href: "/guides/how-to-manage-conference-attendees" },
+      { label: "Best Way to Check Attendees In", href: "/guides/best-way-to-check-attendees-into-an-event" },
+      { label: "Prevent Duplicate Entry Guide", href: "/guides/prevent-duplicate-event-entry" },
       { label: "Event Check-In Without an App", href: "/guides/event-check-in-without-app" },
     ],
   },
   {
-    title: "Comparisons",
+    title: "5. Comparisons & Alternatives",
+    badge: "Comparisons",
     links: [
-      { label: "Eventbrite Alternative", href: "/compare/eventbrite-alternative" },
+      { label: "Compare All Platforms", href: "/compare", badge: "Overview" },
+      { label: "Eventbrite Alternative India", href: "/compare/eventbrite-alternative-india", badge: "Zero Fee" },
+      { label: "Zoho Backstage Alternative India", href: "/compare/zoho-backstage-alternative-india" },
+      { label: "Google Forms vs URPASS", href: "/compare/google-forms-vs-urpass", badge: "QR Entry" },
+      { label: "Google Forms Registration Alternative", href: "/compare/google-forms-event-registration-alternative" },
+      { label: "Townscript Alternative", href: "/compare/townscript-alternative" },
+      { label: "AllEvents Alternative", href: "/compare/allevents-alternative" },
+      { label: "Eventbrite Alternative (Global)", href: "/compare/eventbrite-alternative" },
       { label: "Zoho Backstage Alternative", href: "/compare/zoho-backstage-alternative" },
     ],
   },
@@ -155,23 +218,23 @@ export default function SitelinksPage() {
           Directory &amp; Sitelinks
         </p>
         <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-neutral-900 mb-2">
-          URPASS Sitelinks
+          URPASS Architecture &amp; Directory
         </h1>
-        <p className="text-sm text-neutral-500 mb-10 max-w-xl">
-          Complete index of all public landing pages, features, city hubs, and guides on URPASS.
+        <p className="text-sm text-neutral-500 mb-10 max-w-2xl leading-relaxed">
+          Explore URPASS across our five foundational clusters: core platform features, specialized event use cases, Indian tech hubs, in-depth educational guides, and objective software comparisons.
         </p>
 
         {/* Official Channels Banner Card */}
         <div className="mb-10 bg-white border border-neutral-200/90 rounded-2xl p-6 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <span className="font-semibold text-neutral-900 text-base">Official Social Channels</span>
+              <span className="font-semibold text-neutral-900 text-base">Official Channels &amp; Community</span>
               <span className="text-[10px] uppercase font-bold tracking-wider bg-brand-50 text-brand px-2 py-0.5 rounded-full">
                 Community
               </span>
             </div>
             <p className="text-xs text-neutral-500">
-              Follow our latest product updates, video walk-throughs, feature releases, and event tips.
+              Follow our latest product updates, video walk-throughs, feature releases, and event management tips.
             </p>
           </div>
 
@@ -198,38 +261,45 @@ export default function SitelinksPage() {
         </div>
 
         {/* Categories Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {sections.map((section) => (
             <div
               key={section.title}
-              className="bg-white border border-neutral-100 rounded-2xl p-6 shadow-xs hover:border-neutral-200 transition-all flex flex-col justify-between"
+              className="bg-white border border-neutral-200/90 rounded-2xl p-6 shadow-xs hover:border-neutral-300 transition-all flex flex-col justify-between"
             >
               <div>
-                <p className="text-xs font-bold tracking-widest uppercase text-neutral-400 mb-4 pb-2 border-b border-neutral-100">
-                  {section.title}
-                </p>
-                <ul className="flex flex-col gap-2.5">
+                <div className="flex items-center justify-between mb-4 pb-2 border-b border-neutral-100">
+                  <p className="text-xs font-bold tracking-widest uppercase text-neutral-900">
+                    {section.title}
+                  </p>
+                  {section.badge && (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-brand-50 text-brand">
+                      {section.badge}
+                    </span>
+                  )}
+                </div>
+                <ul className="flex flex-col gap-2">
                   {section.links.map((link) => (
-                    <li key={link.href} className="flex items-center justify-between group">
+                    <li key={link.href} className="flex items-center justify-between group py-0.5">
                       {link.isExternal ? (
                         <a
                           href={link.href}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-xs text-neutral-700 hover:text-brand transition-colors font-medium"
+                          className="text-xs text-neutral-600 hover:text-brand transition-colors font-medium"
                         >
                           {link.label}
                         </a>
                       ) : (
                         <Link
                           href={link.href}
-                          className="text-xs text-neutral-700 hover:text-brand transition-colors font-medium"
+                          className="text-xs text-neutral-600 hover:text-brand transition-colors font-medium"
                         >
                           {link.label}
                         </Link>
                       )}
                       {link.badge && (
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-brand-50 text-brand group-hover:bg-brand group-hover:text-white transition-colors">
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-neutral-100 text-neutral-600 group-hover:bg-brand-50 group-hover:text-brand transition-colors ml-2 shrink-0">
                           {link.badge}
                         </span>
                       )}
@@ -245,7 +315,7 @@ export default function SitelinksPage() {
         <div className="mt-14 mb-6 text-center">
           <Link
             href="/create-event"
-            className="inline-flex items-center gap-2 bg-neutral-900 text-white px-7 py-3.5 rounded-xl text-sm font-semibold hover:bg-neutral-700 transition-colors"
+            className="inline-flex items-center gap-2 bg-neutral-900 text-white px-7 py-3.5 rounded-xl text-sm font-semibold hover:bg-neutral-700 transition-colors shadow-sm"
           >
             Create your first event free →
           </Link>

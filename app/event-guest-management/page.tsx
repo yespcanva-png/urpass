@@ -3,7 +3,7 @@ import { Users, UserCheck, ClipboardList, Mail, ScanLine, BarChart3 } from "luci
 import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
-  title: "Event Guest Management Software | URPASS",
+  title: "Event Guest Management Software",
   description: "Manage guests from registration to entry. Collect RSVPs, review guest lists, issue digital passes, and check in guests with QR scanning. Simple guest management for any event.",
   alternates: { canonical: "https://urpass.space/event-guest-management" },
   openGraph: {

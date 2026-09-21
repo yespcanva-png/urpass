@@ -3,7 +3,7 @@ import { Cpu, QrCode, Users, ClipboardList, ScanLine, BarChart3 } from "lucide-r
 import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
-  title: "Tech Event Registration & QR Check-In | URPASS",
+  title: "Tech Event Registration & QR Check-In",
   description: "Run tech event registrations with digital QR passes and fast check-in. Ideal for developer meetups, hackathons, AI events, and tech conferences. Free to start.",
   alternates: { canonical: "https://urpass.space/tech-events" },
   openGraph: {

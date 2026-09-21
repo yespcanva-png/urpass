@@ -3,7 +3,7 @@ import { BarChart3, Activity, Users, Clock, Download, ShieldCheck } from "lucide
 import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
-  title: "Event Attendance Tracking Software | URPASS",
+  title: "Event Attendance Tracking Software",
   description: "Track event attendance in real time with QR check-in scanning. See who has arrived, check-in rates, and live attendance stats from your dashboard. Export attendance data.",
   alternates: { canonical: "https://urpass.space/event-attendance-tracking" },
   openGraph: {

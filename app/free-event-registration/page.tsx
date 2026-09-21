@@ -3,7 +3,7 @@ import { Gift, ClipboardList, QrCode, ScanLine, BarChart3, Zap } from "lucide-re
 import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
-  title: "Free Event Registration & QR Check-In Software | URPASS",
+  title: "Free Event Registration & QR Check-In Software",
   description: "Start event registration for free. Create an event, collect registrations, issue digital QR passes, and check in attendees at zero cost. No credit card required.",
   alternates: { canonical: "https://urpass.space/free-event-registration" },
   openGraph: {

@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     template: "%s | URPASS",
   },
   description:
-    "Create digital event passes in minutes, manage attendees, and scan QR codes at entry in under 0.2s. Start free forever or try any paid plan with a 30-day free trial. Built for colleges, hackathons, conferences, and event organizers across India and worldwide.",
+    "Create digital event passes in minutes, manage attendees, and scan QR codes at entry in under 0.3s. Start free forever or try any paid plan with a 30-day free trial. Built for colleges, hackathons, conferences, and event organizers across India and worldwide.",
   keywords: [
     "digital event pass",
     "QR check-in",
@@ -175,7 +175,7 @@ const organizationSchema = {
     "@type": "Country",
     name: "India",
   },
-  slogan: "Create. Share. Scan. Instant digital event passes and 0.2s QR check-in.",
+  slogan: "Create. Share. Scan. Instant digital event passes and sub-second QR check-in.",
   knowsAbout: [
     "Digital Event Passes",
     "QR Event Check-in",
@@ -224,7 +224,7 @@ const softwareSchema = {
   featureList: [
     "30-Day Free Trial on paid plans",
     "Instant QR Code Ticket Generation",
-    "Lightning 0.2s Mobile Entry Scanner",
+    "Sub-second Mobile QR Entry Scanner",
     "Customizable Post-Event Feedback Survey Builder",
     "Real-time Attendance & Check-in Analytics",
     "Custom Pass Designer with Live Preview",

@@ -3,7 +3,7 @@ import { QrCode, Ticket, ShieldCheck, Smartphone, Zap, CreditCard } from "lucide
 import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
-  title: "QR Code Event Tickets & Digital Passes | URPASS",
+  title: "QR Code Event Tickets & Digital Passes",
   description: "Create QR code event tickets for your attendees. Each ticket is a unique digital QR pass — scannable at entry, fraud-proof, and delivered instantly on registration.",
   alternates: { canonical: "https://urpass.space/qr-event-tickets" },
   openGraph: {

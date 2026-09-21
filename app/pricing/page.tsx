@@ -3,7 +3,7 @@ import PricingContent from "./PricingContent";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
-  title: "Pricing — Start Free · Try 30-Day Free Trial on Paid Plans | URPASS",
+  title: "Pricing — Start Free · Try 30-Day Free Trial on Paid Plans",
   description: "Free ₹0 forever. Starter ₹499/mo, Pro ₹999/mo, Business ₹2,499/mo. Try any paid plan free for 30 days with mandatory AutoPay. Transparent INR pricing for event organizers across India.",
   keywords: [
     "URPASS pricing",

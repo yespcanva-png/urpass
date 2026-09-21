@@ -3,7 +3,7 @@ import { BookOpen, CreditCard, QrCode, ScanLine, Users, BarChart3 } from "lucide
 import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
-  title: "Event Ticket Booking & QR Entry System | URPASS",
+  title: "Event Ticket Booking & QR Entry System",
   description: "A complete event ticket booking system with QR entry. Attendees book tickets online, receive a QR pass, and scan at the entrance. From booking to entry in one system.",
   alternates: { canonical: "https://urpass.space/event-ticket-booking-system" },
   openGraph: {

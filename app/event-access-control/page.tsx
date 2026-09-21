@@ -3,7 +3,7 @@ import { Lock, ShieldCheck, ScanLine, AlertCircle, Users, Zap } from "lucide-rea
 import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
-  title: "Event Access Control & QR Check-In Software | URPASS",
+  title: "Event Access Control & QR Check-In Software",
   description: "Control event access with digital QR passes and scanning. Block unauthorised entry, prevent duplicates, and track every entry in real time. Works on any phone.",
   alternates: { canonical: "https://urpass.space/event-access-control" },
   openGraph: {

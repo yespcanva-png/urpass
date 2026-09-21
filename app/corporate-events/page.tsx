@@ -3,7 +3,7 @@ import { Building2, Ticket, QrCode, ScanLine, BarChart3, Users } from "lucide-re
 import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
-  title: "Corporate Event Registration & Check-In | URPASS",
+  title: "Corporate Event Registration & Check-In",
   description: "Manage corporate event registrations, employee passes, and QR entry scanning. Branded passes on Pro plan. Real-time check-in dashboard. Secure attendee management.",
   alternates: { canonical: "https://urpass.space/corporate-events" },
   openGraph: {

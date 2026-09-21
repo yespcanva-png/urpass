@@ -3,7 +3,7 @@ import { DoorOpen, ShieldCheck, ScanLine, Users, Zap, AlertCircle } from "lucide
 import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
-  title: "Event Entry Management & QR Access System | URPASS",
+  title: "Event Entry Management & QR Access System",
   description: "Manage event entry with QR code scanning. Control who enters, block duplicates, flag invalid passes, and track every entry in real time. Works on any phone.",
   alternates: { canonical: "https://urpass.space/event-entry-management" },
   openGraph: {

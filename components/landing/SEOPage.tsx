@@ -117,7 +117,7 @@ export default function SEOPage({ config }: { config: SEOPageConfig }) {
       "@type": "ListItem",
       position: 2,
       name: "Guides",
-      item: "https://urpass.space/guides/what-is-qr-event-check-in",
+      item: "https://urpass.space/guides",
     });
     breadcrumbItems.push({
       "@type": "ListItem",
@@ -130,7 +130,7 @@ export default function SEOPage({ config }: { config: SEOPageConfig }) {
       "@type": "ListItem",
       position: 2,
       name: "Alternatives & Comparisons",
-      item: "https://urpass.space/compare/eventbrite-alternative",
+      item: "https://urpass.space/compare",
     });
     breadcrumbItems.push({
       "@type": "ListItem",
@@ -402,7 +402,7 @@ export default function SEOPage({ config }: { config: SEOPageConfig }) {
                 Event Registration &amp; QR Check-In across India
               </h2>
               <p className="text-xs text-neutral-500 mt-1">
-                Local INR pricing, Razorpay payment gateway integration, and rapid 0.2s entry check-in tailored for Indian hubs.
+                Local INR pricing, Razorpay payment gateway integration, and fast, sub-second QR check-in tailored for Indian hubs.
               </p>
             </div>
 

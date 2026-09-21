@@ -86,18 +86,30 @@ export default function Navbar() {
           </Link>
 
           {/* Desktop nav */}
-          <nav className="hidden md:flex items-center gap-8">
-            <a
-              href="#how-it-works"
+          <nav className="hidden md:flex items-center gap-7">
+            <Link
+              href="/#how-it-works"
               className="text-sm text-neutral-500 hover:text-neutral-900 transition-colors"
             >
               How it works
-            </a>
+            </Link>
             <Link
               href="/pricing"
               className="text-sm text-neutral-500 hover:text-neutral-900 transition-colors"
             >
               Pricing
+            </Link>
+            <Link
+              href="/guides"
+              className="text-sm text-neutral-500 hover:text-neutral-900 transition-colors"
+            >
+              Guides
+            </Link>
+            <Link
+              href="/faq"
+              className="text-sm text-neutral-500 hover:text-neutral-900 transition-colors"
+            >
+              FAQ
             </Link>
             <Link
               href="/contact"
@@ -136,19 +148,33 @@ export default function Navbar() {
         {/* Mobile drawer */}
         {open && (
           <div className="md:hidden bg-white border-b border-neutral-100 px-5 py-5 flex flex-col gap-4">
-            <a
-              href="#how-it-works"
+            <Link
+              href="/#how-it-works"
               onClick={() => setOpen(false)}
               className="text-sm text-neutral-600 py-1"
             >
               How it works
-            </a>
+            </Link>
             <Link
               href="/pricing"
               onClick={() => setOpen(false)}
               className="text-sm text-neutral-600 py-1"
             >
               Pricing
+            </Link>
+            <Link
+              href="/guides"
+              onClick={() => setOpen(false)}
+              className="text-sm text-neutral-600 py-1"
+            >
+              Guides
+            </Link>
+            <Link
+              href="/faq"
+              onClick={() => setOpen(false)}
+              className="text-sm text-neutral-600 py-1"
+            >
+              FAQ
             </Link>
             <Link
               href="/contact"

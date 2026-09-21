@@ -3,7 +3,7 @@ import { HelpCircle, ScanLine, QrCode, ShieldCheck, Smartphone, Zap } from "luci
 import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
-  title: "What Is QR Event Check-In? Complete Guide | URPASS",
+  title: "What Is QR Event Check-In? Complete Guide",
   description: "Learn how QR event check-in works. Understand digital QR passes, scanning at entry, duplicate prevention, and real-time attendance tracking. Then try it with URPASS.",
   alternates: { canonical: "https://urpass.space/guides/what-is-qr-event-check-in" },
   openGraph: {

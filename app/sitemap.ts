@@ -8,7 +8,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const core = [
     { url: BASE, priority: 1.0, changeFrequency: "daily" as const },
+    { url: `${BASE}/about`, priority: 0.9, changeFrequency: "monthly" as const },
+    { url: `${BASE}/faq`, priority: 0.85, changeFrequency: "weekly" as const },
     { url: `${BASE}/pricing`, priority: 0.9, changeFrequency: "weekly" as const },
+    { url: `${BASE}/guides`, priority: 0.85, changeFrequency: "weekly" as const },
+    { url: `${BASE}/compare`, priority: 0.85, changeFrequency: "weekly" as const },
     { url: `${BASE}/sitelinks`, priority: 0.85, changeFrequency: "weekly" as const },
     { url: `${BASE}/contact`, priority: 0.6, changeFrequency: "monthly" as const },
     { url: `${BASE}/terms`, priority: 0.4, changeFrequency: "monthly" as const },
@@ -17,6 +21,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   const seoPages = [
+    // Core features
     "/design-your-ticket",
     "/custom-pass-design",
     "/qr-code-scanner",
@@ -39,6 +44,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/qr-event-tickets",
     "/event-ticket-booking-system",
     "/free-event-ticketing",
+    // Expanded feature cluster
+    "/event-management-software",
+    "/event-check-in-software",
+    "/event-registration-platform",
+    "/online-event-registration-system",
+    "/event-attendance-software",
+    "/event-pass-management-system",
+    "/event-badge-generator",
+    "/event-ticket-generator",
+    "/event-registration-form",
+    "/event-rsvp-software",
+    "/event-guest-list-software",
+    "/event-entry-system",
+    "/multi-gate-event-check-in",
+    "/event-check-in-app",
+    "/qr-code-attendance-system",
   ].map((path) => ({ url: `${BASE}${path}`, priority: 0.85, changeFrequency: "weekly" as const }));
 
   const useCasePages = [
@@ -52,6 +73,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/tech-events",
     "/community-events",
     "/campus-events",
+    // Expanded use-cases
+    "/school-events",
+    "/university-events",
+    "/sports-events",
+    "/exhibitions",
+    "/trade-shows",
+    "/startup-events",
+    "/networking-events",
+    "/award-ceremonies",
+    "/alumni-events",
+    "/orientation-events",
+    "/technical-symposium",
+    "/cultural-fest",
+    "/business-conferences",
+    "/developer-meetups",
+    "/training-events",
   ].map((path) => ({ url: `${BASE}${path}`, priority: 0.8, changeFrequency: "weekly" as const }));
 
   const locationPages = [
@@ -66,6 +103,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/in/kochi",
     "/in/kolkata",
     "/in/ahmedabad",
+    // High-intent root city pages
+    "/event-registration-software-bangalore",
+    "/event-registration-software-chennai",
+    "/event-registration-software-coimbatore",
+    "/event-registration-software-hyderabad",
+    "/event-registration-software-mumbai",
+    "/event-registration-software-pune",
+    "/event-registration-software-delhi",
+    "/event-registration-software-kochi",
   ].map((path) => ({ url: `${BASE}${path}`, priority: 0.85, changeFrequency: "weekly" as const }));
 
   const guidePages = [
@@ -74,12 +120,37 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/guides/prevent-duplicate-event-entry",
     "/guides/college-event-registration-system",
     "/guides/event-check-in-without-app",
+    // Expanded educational guides
+    "/guides/how-does-qr-event-check-in-work",
+    "/guides/how-to-create-qr-codes-for-event-attendees",
+    "/guides/how-to-create-digital-event-passes",
+    "/guides/how-to-manage-college-event-registrations",
+    "/guides/how-to-check-in-1000-attendees-quickly",
+    "/guides/how-to-manage-multiple-event-entrances",
+    "/guides/how-to-create-college-fest-registration-form",
+    "/guides/how-to-send-qr-tickets-to-attendees",
+    "/guides/how-to-track-event-attendance-in-real-time",
+    "/guides/what-information-should-event-registration-form-collect",
+    "/guides/qr-ticket-vs-paper-ticket",
+    "/guides/event-registration-software-vs-google-forms",
+    "/guides/can-google-forms-generate-event-qr-passes",
+    "/guides/how-to-run-event-registration-without-eventbrite",
+    "/guides/how-to-create-free-event-tickets-online",
+    "/guides/how-to-organize-registration-for-a-hackathon",
+    "/guides/how-to-manage-conference-attendees",
+    "/guides/best-way-to-check-attendees-into-an-event",
   ].map((path) => ({ url: `${BASE}${path}`, priority: 0.75, changeFrequency: "monthly" as const }));
 
   const comparePages = [
     "/compare/eventbrite-alternative",
     "/compare/zoho-backstage-alternative",
-  ].map((path) => ({ url: `${BASE}${path}`, priority: 0.75, changeFrequency: "monthly" as const }));
+    "/compare/google-forms-vs-urpass",
+    "/compare/eventbrite-alternative-india",
+    "/compare/zoho-backstage-alternative-india",
+    "/compare/allevents-alternative",
+    "/compare/townscript-alternative",
+    "/compare/google-forms-event-registration-alternative",
+  ].map((path) => ({ url: `${BASE}${path}`, priority: 0.8, changeFrequency: "weekly" as const }));
 
   // Query live events dynamically so public event registration pages get indexed
   let eventEntries: MetadataRoute.Sitemap = [];

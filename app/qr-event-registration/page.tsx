@@ -3,7 +3,7 @@ import { QrCode, Link2, ClipboardList, Ticket, ScanLine, BarChart3 } from "lucid
 import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
-  title: "QR Code Event Registration System | URPASS",
+  title: "QR Code Event Registration System",
   description: "Connect event registration directly to QR code entry. Attendees register online, receive a unique QR pass, and scan in at the entrance. No manual steps.",
   alternates: { canonical: "https://urpass.space/qr-event-registration" },
   openGraph: {

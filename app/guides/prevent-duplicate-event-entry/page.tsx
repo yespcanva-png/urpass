@@ -3,7 +3,7 @@ import { ShieldCheck, AlertCircle, Lock, QrCode, ScanLine, Clock } from "lucide-
 import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
-  title: "How to Prevent Duplicate Event Check-Ins | URPASS",
+  title: "How to Prevent Duplicate Event Check-Ins",
   description: "Learn how to prevent duplicate entry at your event using QR code check-in. Single-use QR passes block re-entry, photo copies, and shared passes automatically.",
   alternates: { canonical: "https://urpass.space/guides/prevent-duplicate-event-entry" },
   openGraph: {

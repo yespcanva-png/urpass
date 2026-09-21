@@ -3,7 +3,7 @@ import { Users, CheckSquare, X, Search, Download, ClipboardList } from "lucide-r
 import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
-  title: "Event Attendee Management Software | URPASS",
+  title: "Event Attendee Management Software",
   description: "Manage your event attendees from registration to check-in. Review applications, approve or reject attendees, issue passes, and track entry — all from one dashboard.",
   alternates: { canonical: "https://urpass.space/attendee-management" },
   openGraph: {

@@ -3,7 +3,7 @@ import { TrendingUp, Users, Download, Activity, PieChart, ShieldCheck } from "lu
 import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
-  title: "Real-Time Event Attendance & Check-In Analytics Dashboard | URPASS",
+  title: "Real-Time Event Attendance & Check-In Analytics Dashboard",
   description: "Live event analytics dashboard for modern organizers. Track check-in velocity, attendance rates, ticket tier breakdown, and export timestamped CSV reports in one click.",
   keywords: [
     "event analytics dashboard",

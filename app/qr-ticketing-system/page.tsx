@@ -3,7 +3,7 @@ import { Ticket, CreditCard, QrCode, ScanLine, ShieldCheck, BarChart3 } from "lu
 import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
-  title: "QR Ticketing System for Events | URPASS",
+  title: "QR Ticketing System for Events",
   description: "Issue digital QR tickets for your events. Collect payments, generate QR tickets, and scan at entry — all from one system. Free for non-paid events.",
   alternates: { canonical: "https://urpass.space/qr-ticketing-system" },
   openGraph: {

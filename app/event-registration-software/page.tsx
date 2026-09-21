@@ -3,7 +3,7 @@ import { ClipboardList, QrCode, Users, CheckSquare, BarChart3, Zap } from "lucid
 import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
-  title: "Event Registration Software for Modern Events | URPASS",
+  title: "Event Registration Software for Modern Events",
   description: "Simple online event registration software with instant digital passes and QR check-in. Create your event, collect registrations, and manage attendees from one dashboard. Free to start.",
   alternates: { canonical: "https://urpass.space/event-registration-software" },
   openGraph: {

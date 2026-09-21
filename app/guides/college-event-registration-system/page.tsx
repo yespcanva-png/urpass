@@ -3,7 +3,7 @@ import { GraduationCap, Link2, ClipboardList, CheckSquare, QrCode, ScanLine } fr
 import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
-  title: "How to Set Up a College Event Registration System | URPASS",
+  title: "How to Set Up a College Event Registration System",
   description: "Step-by-step guide to setting up a digital college event registration system with QR passes and check-in. Replace Google Forms and manual lists in minutes.",
   alternates: { canonical: "https://urpass.space/guides/college-event-registration-system" },
   openGraph: {

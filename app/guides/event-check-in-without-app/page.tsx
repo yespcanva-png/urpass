@@ -3,7 +3,7 @@ import { Smartphone, ScanLine, QrCode, ShieldCheck, Zap, WifiOff } from "lucide-
 import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
-  title: "How to Run QR Event Check-In Without an App | URPASS",
+  title: "How to Run QR Event Check-In Without an App",
   description: "Run fast QR event check-in without any app download — for staff or attendees. URPASS scanner works in any mobile browser. Attendee passes work on any phone browser.",
   alternates: { canonical: "https://urpass.space/guides/event-check-in-without-app" },
   openGraph: {
