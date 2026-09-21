@@ -62,6 +62,10 @@ export type Event = {
   is_paid_event: boolean;
   ticket_price: number;
   organization_id: string | null;
+  workspace_id?: string | null;
+  location_id?: string | null;
+  workspace?: Workspace;
+  location?: Location;
   created_at: string;
   updated_at: string;
 };
@@ -137,7 +141,8 @@ export type CheckIn = {
   created_at: string;
 };
 
-export type OrgRole = "owner" | "admin" | "event_manager" | "checkin_staff" | "viewer";
+export type OrgTier = "free" | "starter" | "pro" | "enterprise";
+export type OrgRole = "owner" | "admin" | "event_manager" | "checkin_staff" | "viewer" | "member";
 export type MemberStatus = "active" | "pending";
 
 export type Organization = {
@@ -149,9 +154,94 @@ export type Organization = {
   contact_email: string | null;
   contact_phone: string | null;
   brand_color: string;
+  tier?: OrgTier;
+  max_workspaces?: number;
+  max_locations?: number;
+  max_members?: number;
   created_by: string;
   created_at: string;
   updated_at: string;
+};
+
+export type OrganizationSettings = {
+  id: string;
+  organization_id: string;
+  timezone: string;
+  currency: string;
+  date_format: string;
+  time_format: "12h" | "24h";
+  allowed_domains: string[];
+  enforce_2fa: boolean;
+  require_approval_for_passes: boolean;
+  email_sender_name: string | null;
+  support_email: string | null;
+  custom_domain: string | null;
+  brand_logo_url: string | null;
+  brand_primary_color: string;
+  brand_secondary_color: string;
+  default_pass_template: string;
+  features: {
+    workspaces?: boolean;
+    locations?: boolean;
+    multiGate?: boolean;
+    advancedAnalytics?: boolean;
+    customPasses?: boolean;
+  };
+  created_at: string;
+  updated_at: string;
+};
+
+export type Workspace = {
+  id: string;
+  organization_id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  color: string;
+  is_default: boolean;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+  memberCount?: number;
+  eventCount?: number;
+};
+
+export type WorkspaceRole = "lead" | "member" | "viewer";
+
+export type WorkspaceMember = {
+  id: string;
+  workspace_id: string;
+  member_id: string;
+  role: WorkspaceRole;
+  created_at: string;
+  member?: OrganizationMember;
+};
+
+export type VenueType = "physical" | "virtual" | "hybrid";
+
+export type Location = {
+  id: string;
+  organization_id: string;
+  workspace_id: string | null;
+  name: string;
+  venue_type: VenueType;
+  address: string | null;
+  city: string | null;
+  state: string | null;
+  country: string;
+  postal_code: string | null;
+  capacity: number | null;
+  timezone: string;
+  virtual_url: string | null;
+  contact_name: string | null;
+  contact_phone: string | null;
+  contact_email: string | null;
+  metadata: Record<string, unknown>;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  workspace?: Workspace;
+  eventCount?: number;
 };
 
 export type OrganizationMember = {

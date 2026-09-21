@@ -155,8 +155,86 @@ export async function getUserOrganizations() {
     .eq("status", "active")
     .order("created_at", { ascending: false });
 
+  if (!data || data.length === 0) {
+    // Auto-provision if user has no org yet
+    await ensureUserOrganization(user.id);
+    const { data: refreshed } = await supabase
+      .from("organization_members")
+      .select("role, organization:organizations(*)")
+      .eq("user_id", user.id)
+      .eq("status", "active")
+      .order("created_at", { ascending: false });
+
+    return (refreshed ?? []).map((m) => ({
+      org: m.organization as unknown as import("@/types").Organization,
+      role: m.role as import("@/types").OrgRole,
+    }));
+  }
+
   return (data ?? []).map((m) => ({
     org: m.organization as unknown as import("@/types").Organization,
     role: m.role as import("@/types").OrgRole,
   }));
 }
+
+export async function ensureUserOrganization(userId: string): Promise<string | null> {
+  const admin = adminClient();
+  try {
+    const { data: member } = await admin
+      .from("organization_members")
+      .select("organization_id, organization:organizations(slug)")
+      .eq("user_id", userId)
+      .eq("status", "active")
+      .limit(1)
+      .maybeSingle();
+
+    if (member?.organization_id) {
+      return (member.organization as unknown as { slug: string })?.slug ?? null;
+    }
+
+    const { data: profile } = await admin
+      .from("profiles")
+      .select("full_name, email")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    const name = profile?.full_name?.trim() || "My";
+    const orgName = `${name}'s Organization`;
+    const baseSlug = toSlug(name) || "org";
+    let slug = baseSlug;
+    let attempt = 1;
+    while (true) {
+      const { data: existing } = await admin.from("organizations").select("id").eq("slug", slug).maybeSingle();
+      if (!existing) break;
+      slug = `${baseSlug}-${attempt++}`;
+    }
+
+    const { data: newOrg, error: orgErr } = await admin
+      .from("organizations")
+      .insert({
+        name: orgName,
+        slug,
+        contact_email: profile?.email || null,
+        created_by: userId,
+        brand_color: "#6D28D9",
+      })
+      .select()
+      .single();
+
+    if (orgErr || !newOrg) return null;
+
+    await admin.from("organization_members").insert({
+      organization_id: newOrg.id,
+      user_id: userId,
+      invited_email: profile?.email || "",
+      role: "owner",
+      status: "active",
+      joined_at: new Date().toISOString(),
+    });
+
+    return newOrg.slug;
+  } catch {
+    return null;
+  }
+}
+

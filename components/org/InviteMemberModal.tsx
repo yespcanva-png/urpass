@@ -9,6 +9,7 @@ const ROLES = [
   { value: "event_manager", label: "Event Manager",  desc: "Manage assigned events" },
   { value: "checkin_staff", label: "Check-in Staff", desc: "Scan QR codes only" },
   { value: "viewer",        label: "Viewer",         desc: "View dashboard" },
+  { value: "member",        label: "Member",         desc: "General member access" },
 ] as const;
 
 const inputCls =

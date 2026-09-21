@@ -8,6 +8,7 @@ const ROLE_BADGE: Record<OrgRole, { label: string; cls: string }> = {
   event_manager: { label: "Event Manager", cls: "bg-amber-50 text-amber-700 border-amber-100" },
   checkin_staff: { label: "Check-in Staff", cls: "bg-green-50 text-green-700 border-green-100" },
   viewer:        { label: "Viewer",        cls: "bg-neutral-100 text-neutral-500 border-neutral-200" },
+  member:        { label: "Member",        cls: "bg-neutral-100 text-neutral-600 border-neutral-200" },
 };
 
 export default function OrgCard({

@@ -19,6 +19,8 @@ interface Props {
   organizationId?: string;
   organizationName?: string;
   orgs?: OrgOption[];
+  workspaces?: import("@/types").Workspace[];
+  locations?: import("@/types").Location[];
 }
 
 function Field({
@@ -81,6 +83,8 @@ export default function CreateEventForm({
   canCreatePaidEvents,
   organizationId,
   organizationName,
+  workspaces = [],
+  locations = [],
 }: Props) {
   const [serverError, setServerError] = useState("");
   const [selectedPlatform, setSelectedPlatform] = useState<"zoom" | "google_meet" | "teams" | "custom" | null>(null);
@@ -221,6 +225,22 @@ export default function CreateEventForm({
             <div className="bg-white border border-neutral-100 rounded-2xl p-6 flex flex-col gap-5">
               <h2 className="text-sm font-semibold text-neutral-800">Event details</h2>
 
+              {workspaces.length > 0 && (
+                <Field label="Department / Workspace" hint="Assign to a specific division or committee">
+                  <select
+                    className={inputCls}
+                    {...register("workspace_id")}
+                  >
+                    <option value="">General (Default Organization Workspace)</option>
+                    {workspaces.map((ws) => (
+                      <option key={ws.id} value={ws.id}>
+                        {ws.name} {ws.is_default ? "· (Default)" : ""}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+              )}
+
               <Field label="Event name" error={errors.name?.message}>
                 <input
                   type="text"
@@ -241,14 +261,39 @@ export default function CreateEventForm({
 
               {/* Venue — hidden for pure online events */}
               {eventType !== "online" && (
-                <Field label="Venue" error={errors.venue?.message}>
-                  <input
-                    type="text"
-                    placeholder="SRM Institute, Chennai"
-                    className={inputCls}
-                    {...register("venue")}
-                  />
-                </Field>
+                <div className="flex flex-col gap-3">
+                  {locations.length > 0 && (
+                    <Field label="Select Pre-Configured Location" hint="Choose a saved campus auditorium or venue">
+                      <select
+                        className={inputCls}
+                        onChange={(e) => {
+                          const locId = e.target.value;
+                          setValue("location_id", locId || null);
+                          const chosen = locations.find((l) => l.id === locId);
+                          if (chosen) {
+                            setValue("venue", chosen.name + (chosen.city ? `, ${chosen.city}` : ""));
+                          }
+                        }}
+                      >
+                        <option value="">Custom Venue (Enter below)...</option>
+                        {locations.map((loc) => (
+                          <option key={loc.id} value={loc.id}>
+                            {loc.name} {loc.city ? `(${loc.city})` : ""} {loc.capacity ? `· ${loc.capacity} cap` : ""}
+                          </option>
+                        ))}
+                      </select>
+                    </Field>
+                  )}
+
+                  <Field label="Venue address / name" error={errors.venue?.message}>
+                    <input
+                      type="text"
+                      placeholder="SRM Institute, Chennai"
+                      className={inputCls}
+                      {...register("venue")}
+                    />
+                  </Field>
+                </div>
               )}
 
               {/* Meeting details for online / hybrid */}

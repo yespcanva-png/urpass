@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getUserPlan } from "@/lib/plan";
+import { getWorkspaces } from "@/app/actions/workspaces";
+import { getLocations } from "@/app/actions/locations";
 import CreateEventForm from "./CreateEventForm";
 
 export default async function CreateEventPage({
@@ -26,13 +28,18 @@ export default async function CreateEventPage({
       .select("role, organization:organizations(id, slug, name, brand_color)")
       .eq("user_id", user.id)
       .eq("status", "active")
-      .in("role", ["owner", "admin"]),
+      .in("role", ["owner", "admin", "event_manager"]),
   ]);
 
   const orgs = (memberships ?? []).map((m) => {
     const o = m.organization as unknown as { id: string; slug: string; name: string; brand_color: string };
     return { id: o.id, slug: o.slug, name: o.name, brand_color: o.brand_color, role: m.role };
   });
+
+  const activeOrgId = orgId || orgs[0]?.id;
+  const [workspaces, locations] = activeOrgId
+    ? await Promise.all([getWorkspaces(activeOrgId), getLocations(activeOrgId)])
+    : [[], []];
 
   return (
     <CreateEventForm
@@ -41,8 +48,10 @@ export default async function CreateEventPage({
       maxEvents={plan.maxEvents}
       unlimited={plan.unlimited}
       canCreatePaidEvents={plan.canCreatePaidEvents}
-      organizationId={orgId}
+      organizationId={activeOrgId}
       orgs={orgs}
+      workspaces={workspaces}
+      locations={locations}
     />
   );
 }

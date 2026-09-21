@@ -13,7 +13,7 @@ export type OrgInput = z.infer<typeof orgSchema>;
 
 export const inviteMemberSchema = z.object({
   email: z.string().email("Enter a valid email"),
-  role: z.enum(["admin", "event_manager", "checkin_staff", "viewer"]),
+  role: z.enum(["admin", "event_manager", "checkin_staff", "viewer", "member"]),
 });
 
 export type InviteMemberInput = z.infer<typeof inviteMemberSchema>;

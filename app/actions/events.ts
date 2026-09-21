@@ -32,19 +32,32 @@ export async function createEvent(data: EventInput, organizationId?: string): Pr
   }
 
   // If creating under an organization, ensure user is owner or admin of that organization
-  if (organizationId) {
+  let targetOrgId = organizationId;
+  if (targetOrgId) {
     const { data: member } = await supabase
       .from("organization_members")
       .select("role")
-      .eq("organization_id", organizationId)
+      .eq("organization_id", targetOrgId)
       .eq("user_id", user.id)
       .eq("status", "active")
-      .in("role", ["owner", "admin"])
+      .in("role", ["owner", "admin", "event_manager"])
       .maybeSingle();
 
     if (!member) {
       return { error: "You are not authorized to create events for this organization." };
     }
+  } else {
+    // Auto-resolve user's default organization
+    const { data: member } = await supabase
+      .from("organization_members")
+      .select("organization_id")
+      .eq("user_id", user.id)
+      .eq("status", "active")
+      .order("role", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+
+    targetOrgId = member?.organization_id;
   }
 
   // Generate a unique slug — retry once on collision (vanishingly rare)
@@ -56,12 +69,14 @@ export async function createEvent(data: EventInput, organizationId?: string): Pr
   if ((slugExists ?? 0) > 0) apply_slug = generateApplySlug();
 
   // If not a paid event, ensure ticket_price is 0
-  const eventData = {
+  const eventData: Record<string, unknown> = {
     ...parsed.data,
     ticket_price: parsed.data.is_paid_event ? parsed.data.ticket_price : 0,
     organizer_id: user.id,
     apply_slug,
-    ...(organizationId ? { organization_id: organizationId } : {}),
+    ...(targetOrgId ? { organization_id: targetOrgId } : {}),
+    ...(parsed.data.workspace_id ? { workspace_id: parsed.data.workspace_id } : {}),
+    ...(parsed.data.location_id ? { location_id: parsed.data.location_id } : {}),
   };
 
   const { data: event, error } = await supabase

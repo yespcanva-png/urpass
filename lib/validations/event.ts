@@ -27,6 +27,8 @@ export const eventSchema = z.object({
     .int()
     .min(0, "Price cannot be negative")
     .max(100_000_00, "Maximum ticket price is ₹1,00,000"),
+  workspace_id: z.string().uuid().optional().nullable(),
+  location_id: z.string().uuid().optional().nullable(),
 });
 
 export type EventInput = z.infer<typeof eventSchema>;
