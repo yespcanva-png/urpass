@@ -13,11 +13,11 @@ const BASE_URL = "https://urpass.space";
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
   title: {
-    default: "URPASS — Digital Event Passes & Lightning QR Check-in",
+    default: "URPASS — Free Digital Event Passes & QR Check-in | Try 30-Day Free Trial",
     template: "%s | URPASS",
   },
   description:
-    "Create digital event passes, manage attendees, and scan QR codes at entry in under 0.2s. Built for colleges, hackathons, conferences, and event organizers across India and worldwide.",
+    "Create digital event passes in minutes, manage attendees, and scan QR codes at entry in under 0.2s. Start free forever or try any paid plan with a 30-day free trial. Built for colleges, hackathons, conferences, and event organizers across India and worldwide.",
   keywords: [
     "digital event pass",
     "QR check-in",
@@ -32,6 +32,19 @@ export const metadata: Metadata = {
     "event feedback form",
     "post event survey",
     "URPASS",
+    "free digital event passes",
+    "try 30 day free trial",
+    "free QR check-in",
+    "free event ticketing platform",
+    "30 day free trial event software",
+    "free event registration India",
+    "digital pass generator free",
+    "free QR ticket scanner",
+    "try pro free 30 days",
+    "free attendee management software",
+    "college fest ticketing free",
+    "hackathon registration platform",
+    "event check-in app India",
   ],
   authors: [{ name: "URPASS", url: BASE_URL }],
   creator: "URPASS",
@@ -174,11 +187,12 @@ const softwareSchema = {
   browserRequirements: "Requires HTML5, JavaScript, modern browser",
   url: BASE_URL,
   description:
-    "Fast digital event pass generator with QR code check-in, real-time attendance analytics, customizable attendee feedback surveys, and Razorpay ticket payment integration.",
+    "Fast digital event pass generator with QR code check-in, real-time attendance analytics, customizable attendee feedback surveys, and Razorpay ticket payment integration. Start free forever or try Starter, Pro, or Business with a 30-day free trial.",
   offers: [
-    { "@type": "Offer", name: "Free Tier", price: "0", priceCurrency: "INR", priceValidUntil: "2027-12-31" },
-    { "@type": "Offer", name: "Starter Tier", price: "299", priceCurrency: "INR", billingIncrement: "P1M", priceValidUntil: "2027-12-31" },
-    { "@type": "Offer", name: "Pro Tier", price: "799", priceCurrency: "INR", billingIncrement: "P1M", priceValidUntil: "2027-12-31" },
+    { "@type": "Offer", name: "Free Tier", price: "0", priceCurrency: "INR", priceValidUntil: "2027-12-31", description: "Free forever. 2 events/month, 100 registrations/month, QR passes & check-in." },
+    { "@type": "Offer", name: "Starter Tier (30-Day Free Trial)", price: "499", priceCurrency: "INR", billingIncrement: "P1M", priceValidUntil: "2027-12-31", description: "Try free for 30 days. 10 events/month, 500 registrations/month, CSV import & export." },
+    { "@type": "Offer", name: "Pro Tier (30-Day Free Trial)", price: "999", priceCurrency: "INR", billingIncrement: "P1M", priceValidUntil: "2027-12-31", description: "Try free for 30 days. Unlimited events, 2,500 registrations/month, custom pass design & branding." },
+    { "@type": "Offer", name: "Business Tier (30-Day Free Trial)", price: "2499", priceCurrency: "INR", billingIncrement: "P1M", priceValidUntil: "2027-12-31", description: "Try free for 30 days. Unlimited events, 10,000 registrations/month, 15 organizers, custom domain & API." },
   ],
   aggregateRating: {
     "@type": "AggregateRating",
@@ -188,10 +202,12 @@ const softwareSchema = {
     worstRating: "1",
   },
   featureList: [
+    "30-Day Free Trial on paid plans",
     "Instant QR Code Ticket Generation",
     "Lightning 0.2s Mobile Entry Scanner",
     "Customizable Post-Event Feedback Survey Builder",
     "Real-time Attendance & Check-in Analytics",
+    "Custom Pass Designer with Live Preview",
     "Razorpay INR Payment Gateway Integration",
     "Exportable CSV Attendee Reports",
   ],

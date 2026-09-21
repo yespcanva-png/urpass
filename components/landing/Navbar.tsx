@@ -44,18 +44,17 @@ export default function Navbar() {
         <div className="bg-gradient-to-r from-neutral-950 via-purple-950 to-neutral-950 text-white border-b border-purple-900/30 text-xs py-2 px-4 relative z-50 shadow-xs">
           <div className="max-w-6xl mx-auto flex items-center justify-between gap-3">
             <div className="flex-1 flex items-center justify-center gap-2 text-center flex-wrap">
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-purple-500/20 text-purple-300 border border-purple-500/30 shrink-0">
-                <Sparkles className="w-2.5 h-2.5 text-purple-300" />
-                Special Offer
+              <span className="inline-flex items-center gap-1 text-purple-300 shrink-0">
+                <Sparkles className="w-3.5 h-3.5" />
               </span>
               <span className="text-neutral-200 font-normal">
-                Try Starter, Pro, or Business free for 30 days. No charge today.
+                Start free or try any paid plan with our 30-day free trial. ₹0 today.
               </span>
               <Link
                 href="/pricing"
-                className="inline-flex items-center gap-1 font-semibold text-purple-300 hover:text-white transition-colors underline-offset-4 hover:underline shrink-0"
+                className="inline-flex items-center gap-1 font-semibold text-purple-300 hover:text-white transition-colors underline-offset-4 hover:underline shrink-0 ml-1"
               >
-                <span>Claim 30 days free</span>
+                <span>Try 30 days free</span>
                 <ArrowRight className="w-3 h-3" />
               </Link>
             </div>

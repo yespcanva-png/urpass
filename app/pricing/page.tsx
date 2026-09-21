@@ -3,13 +3,41 @@ import PricingContent from "./PricingContent";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
-  title: "Pricing — URPASS",
-  description: "Free, Starter ₹499/mo, Pro ₹999/mo, Business ₹2,499/mo. Try any paid plan free for 30 days. Simple pricing based on monthly registrations.",
+  title: "Pricing — Start Free · Try 30-Day Free Trial on Paid Plans | URPASS",
+  description: "Free ₹0 forever. Starter ₹499/mo, Pro ₹999/mo, Business ₹2,499/mo. Try any paid plan free for 30 days with mandatory AutoPay. Transparent INR pricing for event organizers across India.",
+  keywords: [
+    "URPASS pricing",
+    "try 30 day free trial",
+    "event management free trial",
+    "free event ticketing platform",
+    "Starter plan free trial",
+    "Pro plan free trial",
+    "Business plan free trial",
+    "event pass software pricing India",
+    "Razorpay AutoPay event software",
+    "free digital pass generator",
+  ],
   alternates: { canonical: "https://urpass.space/pricing" },
   openGraph: {
-    title: "URPASS Pricing — Try Any Plan Free for 30 Days",
+    title: "URPASS Pricing — Start Free · Try Any Paid Plan Free for 30 Days",
     description: "Try Starter, Pro, or Business free for 30 days. AutoPay setup required · Cancel before renewal.",
     url: "https://urpass.space/pricing",
+    siteName: "URPASS",
+    locale: "en_IN",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    site: "@urpass",
+    creator: "@urpass",
+    title: "URPASS Pricing — Start Free · Try Any Paid Plan Free for 30 Days",
+    description: "Try Starter, Pro, or Business free for 30 days. Transparent INR pricing for organizers.",
+  },
+  other: {
+    "geo.region": "IN",
+    "geo.placename": "India",
+    "geo.position": "20.5937;78.9629",
+    "ICBM": "20.5937, 78.9629",
   },
 };
 

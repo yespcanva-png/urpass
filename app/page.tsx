@@ -6,13 +6,45 @@ import AnimateIn from "@/components/ui/AnimateIn";
 import Footer from "@/components/landing/Footer";
 
 export const metadata: Metadata = {
-  title: "URPASS — Digital Event Passes & QR Check-in India",
-  description: "Create digital event passes in minutes. Manage attendees, scan QR codes at entry, and issue branded passes — free to start. Trusted by colleges and event organizers across India.",
+  title: "URPASS — Free Digital Event Passes & QR Check-in | Try 30-Day Free Trial",
+  description: "Create digital event passes in minutes. Manage attendees, scan QR codes at entry in 0.2s, and issue branded tickets. Start free forever or try any paid plan with our 30-day free trial across India.",
+  keywords: [
+    "free digital event passes",
+    "try 30 day free trial",
+    "free QR check-in",
+    "free event ticketing platform",
+    "30 day free trial event software",
+    "free event registration India",
+    "digital pass generator free",
+    "free QR ticket scanner",
+    "try pro free 30 days",
+    "free attendee management software",
+    "college fest ticketing free",
+    "hackathon registration platform",
+    "event check-in app India",
+    "URPASS free trial",
+  ],
   alternates: { canonical: "https://urpass.space" },
   openGraph: {
-    title: "URPASS — Digital Event Passes & QR Check-in",
-    description: "Create digital passes, manage attendees, and scan QR codes at the door. Free plan available.",
+    title: "URPASS — Free Digital Event Passes & QR Check-in | Try 30-Day Free Trial",
+    description: "Create digital passes in minutes, manage attendees, and scan QR codes in 0.2s. Start free forever or try any paid plan with a 30-day free trial. Trusted across India.",
     url: "https://urpass.space",
+    siteName: "URPASS",
+    locale: "en_IN",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    site: "@urpass",
+    creator: "@urpass",
+    title: "URPASS — Free Digital Event Passes & QR Check-in | Try 30-Day Free Trial",
+    description: "Start free forever or try any paid plan with a 30-day free trial. Digital event passes & lightning QR check-in.",
+  },
+  other: {
+    "geo.region": "IN",
+    "geo.placename": "India",
+    "geo.position": "20.5937;78.9629",
+    "ICBM": "20.5937, 78.9629",
   },
 };
 import {
@@ -475,6 +507,107 @@ export default function LandingPage() {
           <p className="mt-5 text-xs text-white/30">Start free · No credit card required</p>
         </AnimateIn>
       </section>
+
+      {/* ── JSON-LD Structured Data for SEO ── */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "SoftwareApplication",
+            name: "URPASS",
+            operatingSystem: "All, Web, iOS, Android",
+            applicationCategory: "BusinessApplication",
+            url: "https://urpass.space",
+            offers: [
+              {
+                "@type": "Offer",
+                name: "Free Tier",
+                price: "0",
+                priceCurrency: "INR",
+                description: "2 events/month, 100 registrations/month, QR passes & check-in.",
+              },
+              {
+                "@type": "Offer",
+                name: "Starter 30-Day Free Trial",
+                price: "0",
+                priceCurrency: "INR",
+                description: "Try Starter plan free for 30 days (₹499/mo after). AutoPay setup required.",
+              },
+              {
+                "@type": "Offer",
+                name: "Pro 30-Day Free Trial",
+                price: "0",
+                priceCurrency: "INR",
+                description: "Try Pro plan free for 30 days (₹999/mo after). AutoPay setup required.",
+              },
+              {
+                "@type": "Offer",
+                name: "Business 30-Day Free Trial",
+                price: "0",
+                priceCurrency: "INR",
+                description: "Try Business plan free for 30 days (₹2,499/mo after). AutoPay setup required.",
+              },
+            ],
+            aggregateRating: {
+              "@type": "AggregateRating",
+              ratingValue: "4.9",
+              reviewCount: "168",
+            },
+          }),
+        }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            mainEntity: [
+              {
+                "@type": "Question",
+                name: "Do attendees need an account?",
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: "No. Attendees apply through a public link and receive their pass without creating an account.",
+                },
+              },
+              {
+                "@type": "Question",
+                name: "Do attendees need an app?",
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: "No. Their digital pass works directly in any mobile browser. No app download required.",
+                },
+              },
+              {
+                "@type": "Question",
+                name: "Can I use URPASS for college events?",
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: "Yes — it's designed exactly for this. Workshops, hackathons, seminars, fests, community meetups.",
+                },
+              },
+              {
+                "@type": "Question",
+                name: "How does check-in work?",
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: "Each approved attendee gets a unique QR pass. Staff opens the scanner on any device, scans the QR, and URPASS instantly validates and records the check-in in 0.2s.",
+                },
+              },
+              {
+                "@type": "Question",
+                name: "Can I start for free or try a paid plan?",
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: "Yes. Start free with 100 registrations/month at ₹0 forever, or activate a 30-day free trial on Starter, Pro, or Business with mandatory AutoPay.",
+                },
+              },
+            ],
+          }),
+        }}
+      />
 
       {/* ── FOOTER ───────────────────────────────────────────────────────── */}
       <Footer />
