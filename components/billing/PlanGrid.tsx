@@ -8,6 +8,7 @@ import {
 import CheckoutButton from "./CheckoutButton";
 import SwitchPlanButton from "./SwitchPlanButton";
 import EventPassCheckoutModal from "./EventPassCheckoutModal";
+import TrialConfirmationModal from "./TrialConfirmationModal";
 
 // ── Subscription plans ────────────────────────────────────────
 const PLANS = [
@@ -93,11 +94,13 @@ interface Props {
   currentPlanIndex: number;
   userEmail: string;
   userName: string;
+  trialUsed?: boolean;
 }
 
-export default function PlanGrid({ currentPlanSlug, currentPlanIndex, userEmail, userName }: Props) {
+export default function PlanGrid({ currentPlanSlug, currentPlanIndex, userEmail, userName, trialUsed = false }: Props) {
   const [tab, setTab]     = useState<"subscription" | "one-event">("subscription");
   const [cycle, setCycle] = useState<"monthly" | "annual">("monthly");
+  const [trialModal, setTrialModal] = useState<{ planSlug: string; planName: string } | null>(null);
   const [passModal, setPassModal] = useState<{
     passType: string; passName: string; priceRupees: number; registrationLimit: number;
   } | null>(null);
@@ -137,6 +140,34 @@ export default function PlanGrid({ currentPlanSlug, currentPlanIndex, userEmail,
       {/* ── Subscription tab ─────────────────────────────────── */}
       {tab === "subscription" && (
         <>
+          {/* Free trial banner if user has not used trial yet */}
+          {!trialUsed && (
+            <div
+              className="mb-6 rounded-2xl p-5 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg border border-purple-500/30"
+              style={{ background: "linear-gradient(135deg, #1e093d 0%, #4c1d95 60%, #6D28D9 100%)" }}
+            >
+              <div className="flex items-start sm:items-center gap-3.5">
+                <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center shrink-0">
+                  <Sparkles className="w-5 h-5 text-purple-200" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                    <span className="text-[10px] font-extrabold tracking-widest uppercase px-2 py-0.5 rounded-full bg-white/20 text-white border border-white/30">
+                      YOUR FIRST 30 DAYS ARE FREE
+                    </span>
+                    <span className="text-xs font-semibold text-purple-200">AutoPay Required</span>
+                  </div>
+                  <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
+                    TRY ANY URPASS PLAN FREE FOR 30 DAYS
+                  </h3>
+                  <p className="text-xs text-white/70 mt-0.5">
+                    Choose Starter, Pro, or Business &middot; AutoPay setup required &middot; Cancel before renewal &middot; One free activation per account
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Billing cycle toggle */}
           <div className="flex justify-end mb-4">
             <div className="flex items-center gap-1 bg-neutral-100 rounded-xl p-1">
@@ -252,6 +283,19 @@ export default function PlanGrid({ currentPlanSlug, currentPlanIndex, userEmail,
                       <div className="w-full text-center text-xs font-semibold py-2.5 rounded-xl border border-white/10 text-white/30">
                         Active plan
                       </div>
+                    ) : !trialUsed && p.priceMonthly > 0 ? (
+                      <div className="flex flex-col gap-1.5">
+                        <button
+                          onClick={() => setTrialModal({ planSlug: p.slug, planName: p.name })}
+                          className="w-full py-2.5 text-sm font-bold rounded-xl text-white hover:opacity-95 shadow-md active:scale-[0.99] transition-all"
+                          style={{ background: "linear-gradient(135deg, #1e1035 0%, #6D28D9 100%)" }}
+                        >
+                          Try {p.name} Free
+                        </button>
+                        <p className="text-[10px] text-center text-neutral-400">
+                          30 days ₹0 &middot; AutoPay required
+                        </p>
+                      </div>
                     ) : p.priceMonthly > 0 ? (
                       <CheckoutButton
                         planSlug={p.slug}
@@ -361,6 +405,18 @@ export default function PlanGrid({ currentPlanSlug, currentPlanIndex, userEmail,
           passName={passModal.passName}
           priceRupees={passModal.priceRupees}
           registrationLimit={passModal.registrationLimit}
+          userEmail={userEmail}
+          userName={userName}
+        />
+      )}
+
+      {/* 30-Day Free Trial Modal */}
+      {trialModal && (
+        <TrialConfirmationModal
+          isOpen={Boolean(trialModal)}
+          onClose={() => setTrialModal(null)}
+          planSlug={trialModal.planSlug}
+          planName={trialModal.planName}
           userEmail={userEmail}
           userName={userName}
         />

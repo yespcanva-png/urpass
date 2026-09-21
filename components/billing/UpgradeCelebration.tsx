@@ -48,6 +48,8 @@ export default function UpgradeCelebration() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const isUpgraded = searchParams.get("upgraded") === "true";
+  const isTrialActivated = searchParams.get("trial_activated") === "true";
+  const showCelebration = isUpgraded || isTrialActivated;
   const planName = searchParams.get("plan") ?? "Pro";
   const [exiting, setExiting] = useState(false);
   const [dismissed, setDismissed] = useState(false);
@@ -55,7 +57,7 @@ export default function UpgradeCelebration() {
   const [particles] = useState<Particle[]>(generateParticles);
 
   useEffect(() => {
-    if (!isUpgraded || dismissed) return;
+    if (!showCelebration || dismissed) return;
 
     const exitT = setTimeout(() => setExiting(true), 2800);
     const hideT = setTimeout(() => {
@@ -67,9 +69,9 @@ export default function UpgradeCelebration() {
       clearTimeout(exitT);
       clearTimeout(hideT);
     };
-  }, [isUpgraded, dismissed, router]);
+  }, [showCelebration, dismissed, router]);
 
-  if (!isUpgraded || dismissed) return null;
+  if (!showCelebration || dismissed) return null;
 
   return (
     <div
@@ -137,7 +139,7 @@ export default function UpgradeCelebration() {
 
         <div className="relative text-center flex flex-col items-center gap-2">
           <p className="text-[10px] font-bold tracking-widest uppercase" style={{ color: "#F59E0B" }}>
-            Plan upgraded
+            {isTrialActivated ? "30-Day Free Trial Active" : "Plan upgraded"}
           </p>
           <div className="flex items-center gap-2.5">
             <Star className="w-4 h-4 shrink-0" style={{ color: "#F59E0B", animation: "star-spin 2s linear infinite" }} />
@@ -147,7 +149,9 @@ export default function UpgradeCelebration() {
             <Star className="w-4 h-4 shrink-0" style={{ color: "#F59E0B", animation: "star-spin 2s linear infinite 1s" }} />
           </div>
           <p className="text-xs text-white/40 leading-relaxed mt-1">
-            Welcome to {planName}. Your new limits are active.
+            {isTrialActivated
+              ? `Welcome to ${planName}! Enjoy 30 days of full access.`
+              : `Welcome to ${planName}. Your new limits are active.`}
           </p>
         </div>
 

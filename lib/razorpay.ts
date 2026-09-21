@@ -46,3 +46,32 @@ export function verifyRazorpaySignature(
     return false;
   }
 }
+
+export function verifyRazorpaySubscriptionSignature(
+  subscriptionId: string,
+  paymentId: string,
+  signature: string,
+  secret = process.env.RAZORPAY_KEY_SECRET
+): boolean {
+  if (!subscriptionId || !paymentId || !signature || !secret) {
+    return false;
+  }
+
+  try {
+    const expected = crypto
+      .createHmac("sha256", secret)
+      .update(`${paymentId}|${subscriptionId}`)
+      .digest("hex");
+
+    const expectedBuf = Buffer.from(expected, "hex");
+    const sigBuf = Buffer.from(signature, "hex");
+
+    return (
+      expectedBuf.length === sigBuf.length &&
+      crypto.timingSafeEqual(expectedBuf, sigBuf)
+    );
+  } catch {
+    return false;
+  }
+}
+

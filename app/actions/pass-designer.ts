@@ -69,12 +69,8 @@ export async function updateEventPassDesign(
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const plan = await getUserPlan(supabase, user.id);
-  if (!plan.canUse("custom_pass_design")) {
-    return {
-      error: "Custom Pass Design is an exclusive Pro feature. Please upgrade to unlock.",
-    };
-  }
+  const userPlan = await getUserPlan(supabase, user.id);
+  const userCanDesign = userPlan.canUse("custom_pass_design");
 
   // Ensure user owns or organizes this event
   const { data: event, error: eventErr } = await supabase
@@ -85,6 +81,19 @@ export async function updateEventPassDesign(
 
   if (eventErr || !event) {
     return { error: "Event not found or access denied." };
+  }
+
+  if (!userCanDesign && event.organizer_id) {
+    const orgPlan = await getUserPlan(supabase, event.organizer_id);
+    if (!orgPlan.canUse("custom_pass_design")) {
+      return {
+        error: "Custom Pass Design is an exclusive Pro feature. Please upgrade to unlock.",
+      };
+    }
+  } else if (!userCanDesign) {
+    return {
+      error: "Custom Pass Design is an exclusive Pro feature. Please upgrade to unlock.",
+    };
   }
 
   if (event.organizer_id !== user.id) {

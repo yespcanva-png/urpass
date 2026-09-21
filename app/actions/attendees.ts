@@ -148,23 +148,25 @@ export async function rejectAttendee(
         .eq("status", "attached")
     );
 
-    if (!attachedPass) {
-      const subscription = await optionalSingle<{ registrations_used: number | null }>(
-        supabase
-          .from("subscriptions")
-          .select("registrations_used")
-          .eq("user_id", event.organizer_id)
-          .eq("status", "active")
-      );
+      let subQuery = supabase
+        .from("subscriptions")
+        .select("registrations_used")
+        .eq("user_id", event.organizer_id);
+      if (typeof subQuery.in === "function") {
+        subQuery = subQuery.in("status", ["active", "trialing"]);
+      }
+      const subscription = await optionalSingle<{ registrations_used: number | null }>(subQuery);
 
       if (subscription && (subscription.registrations_used ?? 0) > 0) {
-        await supabase
+        let updateQuery = supabase
           .from("subscriptions")
           .update({ registrations_used: (subscription.registrations_used ?? 0) - 1 })
-          .eq("user_id", event.organizer_id)
-          .eq("status", "active");
+          .eq("user_id", event.organizer_id);
+        if (typeof updateQuery.in === "function") {
+          updateQuery = updateQuery.in("status", ["active", "trialing"]);
+        }
+        await updateQuery;
       }
-    }
   }
 
   revalidateEvent(eventId);
@@ -313,13 +315,14 @@ export async function submitApplication(
     }
   } else {
     // Subscription-based limit
-    const orgSub = await optionalSingle<{ registrations_used: number | null }>(
-      admin
-        .from("subscriptions")
-        .select("registrations_used, current_period_start, plan:plans(slug)")
-        .eq("user_id", event.organizer_id)
-        .eq("status", "active")
-    );
+    let orgSubQuery = admin
+      .from("subscriptions")
+      .select("registrations_used, current_period_start, plan:plans(slug)")
+      .eq("user_id", event.organizer_id);
+    if (typeof orgSubQuery.in === "function") {
+      orgSubQuery = orgSubQuery.in("status", ["active", "trialing"]);
+    }
+    const orgSub = await optionalSingle<{ registrations_used: number | null }>(orgSubQuery);
 
     const orgPlan = await getUserPlan(admin as unknown as SupabaseClient, event.organizer_id);
     const regLimit = orgPlan.getLimit("registrations_per_month");
@@ -461,21 +464,25 @@ export async function submitApplication(
     void recordApiUsage(organizerId, "registrations", 1);
     if (attachedPass) return;
     void (async () => {
-      const s = await optionalSingle<{ registrations_used: number | null }>(
-        admin
-          .from("subscriptions")
-          .select("registrations_used")
-          .eq("user_id", organizerId)
-          .eq("status", "active")
-      );
+      let sQuery = admin
+        .from("subscriptions")
+        .select("registrations_used")
+        .eq("user_id", organizerId);
+      if (typeof sQuery.in === "function") {
+        sQuery = sQuery.in("status", ["active", "trialing"]);
+      }
+      const s = await optionalSingle<{ registrations_used: number | null }>(sQuery);
 
       if (!s) return;
 
-      await admin
+      let upQuery = admin
         .from("subscriptions")
         .update({ registrations_used: (s.registrations_used ?? 0) + 1 })
-        .eq("user_id", organizerId)
-        .eq("status", "active");
+        .eq("user_id", organizerId);
+      if (typeof upQuery.in === "function") {
+        upQuery = upQuery.in("status", ["active", "trialing"]);
+      }
+      await upQuery;
     })().catch(() => {});
   }
 

@@ -20,6 +20,8 @@ import {
   Building2,
   AlertCircle,
   BarChart3,
+  Sparkles,
+  ArrowRight,
 } from "lucide-react";
 import { getUserOrganizations } from "@/app/actions/organizations";
 import { createClient } from "@/lib/supabase/client";
@@ -105,6 +107,16 @@ export default function DashboardContent() {
   const dateLabel = useSyncExternalStore(emptySubscribe, formatDate, () => "Today");
   const greeting = useSyncExternalStore(emptySubscribe, getGreeting, () => "Welcome");
   const [planSlug, setPlanSlug] = useState("free");
+  const [trialInfo, setTrialInfo] = useState<{
+    isEligible: boolean;
+    isActiveTrial: boolean;
+    planName: string;
+    planSlug: string;
+    daysRemaining: number;
+    scheduledAmountRupees: number;
+    renewalDate: string;
+    autopayCancelled: boolean;
+  } | null>(null);
   const [stats, setStats] = useState({ total: 0, active: 0, passes: 0, checkedIn: 0 });
   const [events, setEvents] = useState<EventRow[]>([]);
   const [orgs, setOrgs] = useState<OrgRow[]>([]);
@@ -126,7 +138,12 @@ export default function DashboardContent() {
           supabase.from("profiles").select("full_name").eq("user_id", user.id).single(),
           supabase.from("events").select("id, name, venue, event_date, status")
             .eq("organizer_id", user.id).order("created_at", { ascending: false }),
-          supabase.from("subscriptions").select("plan:plans(slug)").eq("user_id", user.id).eq("status", "active").single(),
+          supabase
+            .from("subscriptions")
+            .select("status, is_trial, trial_used, trial_plan, trial_starts_at, trial_ends_at, current_period_end, autopay_status, cancel_at_period_end, plan:plans(name, slug)")
+            .eq("user_id", user.id)
+            .in("status", ["active", "trialing"])
+            .maybeSingle(),
           getUserOrganizations(),
         ]);
 
@@ -140,7 +157,50 @@ export default function DashboardContent() {
             : Promise.resolve({ count: 0 }),
         ]);
 
-        const slug = (sub?.plan as unknown as { slug: string } | null)?.slug ?? "free";
+        const isTrial = Boolean(sub?.is_trial && sub?.trial_ends_at && new Date(sub.trial_ends_at) >= new Date());
+        const isTrialExpired = Boolean(sub?.is_trial && sub?.trial_ends_at && new Date(sub.trial_ends_at) < new Date());
+        const slug = isTrialExpired ? "free" : ((sub?.plan as unknown as { slug: string } | null)?.slug ?? "free");
+        const planName = (sub?.plan as unknown as { name: string } | null)?.name ?? (slug ? slug.toUpperCase() : "Pro");
+        const trialUsed = sub?.trial_used ?? false;
+
+        let trialState = null;
+        if (!trialUsed && slug === "free") {
+          trialState = {
+            isEligible: true,
+            isActiveTrial: false,
+            planName: "",
+            planSlug: "",
+            daysRemaining: 0,
+            scheduledAmountRupees: 0,
+            renewalDate: "",
+            autopayCancelled: false,
+          };
+        } else if (isTrial && sub?.trial_ends_at) {
+          const endsAt = new Date(sub.trial_ends_at);
+          const msRemaining = endsAt.getTime() - Date.now();
+          const daysRemaining = Math.max(1, Math.ceil(msRemaining / (1000 * 60 * 60 * 24)));
+          const monthlyPrice = slug === "starter" ? 499 : slug === "business" ? 2499 : 999;
+          const scheduledAmountRupees = Math.round(monthlyPrice * 1.18);
+          const renewalDate = endsAt.toLocaleDateString("en-IN", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+          });
+          const autopayCancelled = Boolean(sub?.cancel_at_period_end || sub?.autopay_status === "cancelled");
+
+          trialState = {
+            isEligible: false,
+            isActiveTrial: true,
+            planName,
+            planSlug: slug,
+            daysRemaining,
+            scheduledAmountRupees,
+            renewalDate,
+            autopayCancelled,
+          };
+        }
+        setTrialInfo(trialState);
+
         setFirstName(profile?.full_name?.split(" ")[0] ?? "there");
         setPlanSlug(slug);
         setStats({
@@ -210,6 +270,74 @@ export default function DashboardContent() {
         <div className="flex items-start gap-3 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
           <p>{loadError}</p>
+        </div>
+      )}
+
+      {/* ── 30-Day Free Trial Eligibility Banner ─────────────────── */}
+      {loaded && trialInfo?.isEligible && (
+        <div
+          className="rounded-2xl p-5 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-md border border-purple-400/30 transition-all"
+          style={{ background: "linear-gradient(135deg, #1e093d 0%, #4c1d95 60%, #6D28D9 100%)" }}
+        >
+          <div className="flex items-start sm:items-center gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center shrink-0">
+              <Sparkles className="w-5 h-5 text-purple-200" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-[10px] font-extrabold tracking-widest uppercase px-2 py-0.5 rounded-full bg-white/20 text-white border border-white/30">
+                  EXCLUSIVE OFFER
+                </span>
+                <span className="text-xs font-semibold text-purple-200">30 DAYS. ANY PLAN. ₹0.</span>
+              </div>
+              <h2 className="text-base sm:text-lg font-bold text-white tracking-tight">
+                Your account is eligible for one free 30-day plan
+              </h2>
+              <p className="text-xs text-white/70 mt-0.5">
+                Choose Starter, Pro or Business when you&apos;re ready. Full feature access with mandatory AutoPay setup.
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/billing"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-white text-neutral-900 hover:bg-purple-50 shadow-sm shrink-0 transition-all hover:scale-105 active:scale-95 whitespace-nowrap"
+          >
+            Choose My Free Plan
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+      )}
+
+      {/* ── Active Free Trial Status Card ────────────────────────── */}
+      {loaded && trialInfo?.isActiveTrial && (
+        <div className="rounded-2xl p-4 sm:p-5 bg-gradient-to-r from-violet-900 via-purple-900 to-indigo-950 text-white shadow-md border border-purple-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-start sm:items-center gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center shrink-0">
+              <Clock className="w-5 h-5 text-purple-300" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 mb-1 flex-wrap">
+                <span className="text-[10px] font-extrabold tracking-widest uppercase px-2 py-0.5 rounded-full bg-purple-500/30 text-purple-200 border border-purple-400/40">
+                  {trialInfo.planName.toUpperCase()} &middot; FREE TRIAL
+                </span>
+                <span className="text-xs font-bold text-emerald-300">
+                  {trialInfo.daysRemaining} {trialInfo.daysRemaining === 1 ? "day" : "days"} remaining
+                </span>
+              </div>
+              <p className="text-xs sm:text-sm text-white/90 font-medium">
+                {trialInfo.autopayCancelled
+                  ? `AutoPay cancelled &middot; Free trial access active until ${trialInfo.renewalDate}`
+                  : `Your first payment of ₹${trialInfo.scheduledAmountRupees.toLocaleString("en-IN")} + taxes is scheduled for ${trialInfo.renewalDate}.`}
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/billing"
+            className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-white/10 text-white hover:bg-white/20 border border-white/20 shrink-0 transition-colors whitespace-nowrap"
+          >
+            Manage Subscription
+            <ChevronRight className="w-3.5 h-3.5" />
+          </Link>
         </div>
       )}
 

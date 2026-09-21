@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getSupabaseUrl } from "@/lib/supabase/config";
-import { sendEventReminderEmail } from "@/lib/email";
+import { sendEventReminderEmail, sendTrialReminderEmail } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +12,12 @@ function adminClient() {
     { auth: { autoRefreshToken: false, persistSession: false } }
   );
 }
+
+const TRIAL_PLAN_PRICES_PAISE: Record<string, number> = {
+  starter: 49900,
+  pro: 99900,
+  business: 249900,
+};
 
 export async function GET(req: NextRequest) {
   // Check authorization via secret
@@ -99,10 +105,103 @@ export async function GET(req: NextRequest) {
     }
   }
 
+  // ── Process 30-Day Free Trial Reminders (7, 3, 1 day) ───────────
+  let trialRemindersSent = 0;
+  const { data: trialSubs } = await supabase
+    .from("subscriptions")
+    .select("id, user_id, trial_plan, trial_ends_at, is_trial, status, reminded_7_days, reminded_3_days, reminded_1_day, autopay_status, cancel_at_period_end, plan:plans(name, slug)")
+    .eq("is_trial", true)
+    .in("status", ["trialing", "active"])
+    .not("trial_ends_at", "is", null);
+
+  for (const sub of trialSubs ?? []) {
+    if (!sub.trial_ends_at) continue;
+    const endsAt = new Date(sub.trial_ends_at);
+    const msRemaining = endsAt.getTime() - now.getTime();
+    const daysRemaining = Math.ceil(msRemaining / (1000 * 60 * 60 * 24));
+
+    // If trial has expired and user cancelled AutoPay, mark expired
+    if (msRemaining <= 0) {
+      if (sub.cancel_at_period_end || sub.autopay_status === "cancelled") {
+        await supabase
+          .from("subscriptions")
+          .update({ status: "expired", is_trial: false })
+          .eq("id", sub.id);
+      }
+      continue;
+    }
+
+    // Determine if reminder is needed
+    let reminderDaysToSend: number | null = null;
+    let fieldToUpdate: "reminded_7_days" | "reminded_3_days" | "reminded_1_day" | null = null;
+
+    if (daysRemaining <= 1 && !sub.reminded_1_day) {
+      reminderDaysToSend = 1;
+      fieldToUpdate = "reminded_1_day";
+    } else if (daysRemaining <= 3 && !sub.reminded_3_days) {
+      reminderDaysToSend = 3;
+      fieldToUpdate = "reminded_3_days";
+    } else if (daysRemaining <= 7 && !sub.reminded_7_days) {
+      reminderDaysToSend = 7;
+      fieldToUpdate = "reminded_7_days";
+    }
+
+    if (reminderDaysToSend !== null && fieldToUpdate !== null) {
+      // Get user email
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("email, full_name")
+        .eq("user_id", sub.user_id)
+        .maybeSingle();
+
+      let targetEmail = profile?.email;
+      let userName = profile?.full_name;
+
+      if (!targetEmail) {
+        const { data: authUser } = await supabase.auth.admin.getUserById(sub.user_id);
+        targetEmail = authUser?.user?.email;
+        userName = authUser?.user?.user_metadata?.full_name;
+      }
+
+      if (targetEmail) {
+        const planSlug = sub.trial_plan || (sub.plan as unknown as { slug: string } | null)?.slug || "pro";
+        const planName = (sub.plan as unknown as { name: string } | null)?.name || planSlug.toUpperCase();
+        const pricePaise = TRIAL_PLAN_PRICES_PAISE[planSlug] ?? 99900;
+        const formattedEndDate = endsAt.toLocaleDateString("en-IN", {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        });
+
+        try {
+          await sendTrialReminderEmail({
+            to: targetEmail,
+            userName,
+            planName,
+            daysRemaining: reminderDaysToSend,
+            trialEndsAt: formattedEndDate,
+            monthlyPricePaise: pricePaise,
+          });
+
+          await supabase
+            .from("subscriptions")
+            .update({ [fieldToUpdate]: true })
+            .eq("id", sub.id);
+
+          trialRemindersSent++;
+        } catch (err) {
+          console.error(`[cron/trial-reminders] Error sending reminder to ${targetEmail}:`, err);
+        }
+      }
+    }
+  }
+
   return NextResponse.json({
     success: true,
     processedEvents: totalEventsProcessed,
     totalSent: totalEmailsSent,
+    trialRemindersSent,
     timestamp: new Date().toISOString(),
   });
 }
+

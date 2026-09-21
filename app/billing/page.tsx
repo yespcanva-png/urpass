@@ -110,6 +110,13 @@ interface Subscription {
   current_period_end: string;
   cancel_at_period_end: boolean;
   registrations_used: number | null;
+  trial_used?: boolean;
+  trial_plan?: string | null;
+  trial_starts_at?: string | null;
+  trial_ends_at?: string | null;
+  is_trial?: boolean;
+  autopay_mandate_id?: string | null;
+  autopay_status?: string | null;
   plan: SubPlan;
 }
 
@@ -312,9 +319,9 @@ export default async function BillingPage() {
     await Promise.all([
       supabase
         .from("subscriptions")
-        .select("status, provider, billing_cycle, current_period_start, current_period_end, cancel_at_period_end, registrations_used, plan:plans(slug)")
+        .select("status, provider, billing_cycle, current_period_start, current_period_end, cancel_at_period_end, registrations_used, trial_used, trial_plan, trial_starts_at, trial_ends_at, is_trial, autopay_mandate_id, autopay_status, plan:plans(slug)")
         .eq("user_id", user.id)
-        .single(),
+        .maybeSingle(),
       supabase
         .from("profiles")
         .select("full_name, email")
@@ -330,8 +337,11 @@ export default async function BillingPage() {
     ]);
 
   const sub = subData as Subscription | null;
-  const currentPlanSlug = (sub?.plan as SubPlan | null)?.slug ?? "free";
+  const isTrial = Boolean(sub?.is_trial && sub?.trial_ends_at && new Date(sub.trial_ends_at) >= new Date());
+  const isTrialExpired = Boolean(sub?.is_trial && sub?.trial_ends_at && new Date(sub.trial_ends_at) < new Date());
+  const currentPlanSlug = isTrialExpired ? "free" : ((sub?.plan as SubPlan | null)?.slug ?? "free");
   const currentPlanIndex = PLAN_ORDER[currentPlanSlug] ?? 0;
+  const trialUsed = sub?.trial_used ?? false;
 
   const renewalDate = sub?.current_period_end
     ? new Date(sub.current_period_end).toLocaleDateString("en-IN", {
@@ -405,26 +415,40 @@ export default async function BillingPage() {
               <div className="flex items-center gap-2.5 flex-wrap">
                 <p className="text-xl font-bold text-white">{currentPlan.name}</p>
                 <p className="text-sm text-white/40">
-                  {currentPlan.priceMonthly === 0
-                    ? "Free forever"
-                    : billingCycle === "annual"
-                    ? `₹${currentPlan.annualTotal.toLocaleString("en-IN")}/year`
-                    : `₹${currentPlan.priceMonthly}/mo`}
+                  {isTrial ? (
+                    "30-Day Free Trial (₹0 today)"
+                  ) : currentPlan.priceMonthly === 0 ? (
+                    "Free forever"
+                  ) : billingCycle === "annual" ? (
+                    `₹${currentPlan.annualTotal.toLocaleString("en-IN")}/year`
+                  ) : (
+                    `₹${currentPlan.priceMonthly}/mo`
+                  )}
                 </p>
-                {billingCycle === "annual" && currentPlanSlug !== "free" && (
+                {isTrial ? (
+                  <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-brand/30 text-brand-200 border border-brand/50 tracking-wider">
+                    FREE TRIAL
+                  </span>
+                ) : billingCycle === "annual" && currentPlanSlug !== "free" ? (
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-brand/20 text-brand-200 border border-brand/30 tracking-wide">
                     ANNUAL
                   </span>
-                )}
+                ) : null}
               </div>
-              {currentPlanSlug !== "free" && renewalDate && (
+              {isTrial ? (
+                <p className="text-xs text-white/40 mt-1">
+                  {sub?.cancel_at_period_end || sub?.autopay_status === "cancelled"
+                    ? `AutoPay cancelled · Free trial ends ${renewalDate} (reverts to Free)`
+                    : `First payment of ₹${Math.round(currentPlan.priceMonthly * 1.18).toLocaleString("en-IN")} scheduled for ${renewalDate}`}
+                </p>
+              ) : currentPlanSlug !== "free" && renewalDate ? (
                 <p className="text-xs text-white/30 mt-0.5">
                   {sub?.cancel_at_period_end ? `Cancels ${renewalDate}` : `Renews ${renewalDate}`}
                 </p>
-              )}
+              ) : null}
             </div>
             <div className="flex items-center gap-3 shrink-0">
-              {sub && (
+              {sub && !isTrial && (
                 <span className={`text-[10px] font-bold px-3 py-1.5 rounded-full border tracking-wide uppercase ${
                   sub.status === "active"
                     ? "bg-green-400/10 text-green-300 border-green-400/20"
@@ -433,7 +457,9 @@ export default async function BillingPage() {
                   {sub.status}
                 </span>
               )}
-              {currentPlanSlug !== "free" && sub && !sub.cancel_at_period_end && <CancelButton />}
+              {currentPlanSlug !== "free" && sub && !sub.cancel_at_period_end && sub.autopay_status !== "cancelled" && (
+                <CancelButton />
+              )}
             </div>
           </div>
         </div>
@@ -483,6 +509,7 @@ export default async function BillingPage() {
             currentPlanIndex={currentPlanIndex}
             userEmail={userEmail}
             userName={userName}
+            trialUsed={trialUsed}
           />
 
           {/* Campus / scale CTA */}

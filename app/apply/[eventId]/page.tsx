@@ -165,10 +165,10 @@ export default async function ApplyPage({
   const [{ data: sub }, { data: orgProfileRaw }] = await Promise.all([
     adminForBranding
       .from("subscriptions")
-      .select("plan:plans(slug)")
+      .select("plan:plans(slug), is_trial, trial_ends_at")
       .eq("user_id", event.organizer_id)
-      .eq("status", "active")
-      .single(),
+      .in("status", ["active", "trialing"])
+      .maybeSingle(),
     adminForBranding
       .from("profiles")
       .select("org_name, brand_color, org_logo_url, hide_urpass_branding")
@@ -176,7 +176,8 @@ export default async function ApplyPage({
       .single(),
   ]);
 
-  const planSlug = (sub?.plan as unknown as { slug: string } | null)?.slug ?? "free";
+  const isTrialExpired = sub?.is_trial && sub?.trial_ends_at && new Date(sub.trial_ends_at) < new Date();
+  const planSlug = isTrialExpired ? "free" : ((sub?.plan as unknown as { slug: string } | null)?.slug ?? "free");
   console.log("[apply] organizer_id:", event.organizer_id, "planSlug:", planSlug);
   const isPro = ["pro", "business", "campus", "enterprise"].includes(planSlug);
   const canRemoveBranding = planSlug !== "free";

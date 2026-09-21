@@ -64,10 +64,10 @@ export async function GET(
     const [{ data: sub }, { data: orgProfile }] = await Promise.all([
       supabase
         .from("subscriptions")
-        .select("plan:plans(slug)")
+        .select("plan:plans(slug), is_trial, trial_ends_at")
         .eq("user_id", organizerId)
-        .eq("status", "active")
-        .single(),
+        .in("status", ["active", "trialing"])
+        .maybeSingle(),
       supabase
         .from("profiles")
         .select("org_name, brand_color, custom_pass_design")
@@ -75,7 +75,8 @@ export async function GET(
         .single(),
     ]);
 
-    const planSlug = (sub?.plan as unknown as { slug: string } | null)?.slug ?? "free";
+    const isTrialExpired = sub?.is_trial && sub?.trial_ends_at && new Date(sub.trial_ends_at) < new Date();
+    const planSlug = isTrialExpired ? "free" : ((sub?.plan as unknown as { slug: string } | null)?.slug ?? "free");
     showBranding = planSlug === "free";
     isPro = ["pro", "business", "campus", "enterprise"].includes(planSlug);
     orgProfileData = orgProfile;

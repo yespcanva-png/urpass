@@ -24,8 +24,9 @@ export async function saveTicketDesign(
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const plan = await getUserPlan(supabase, user.id);
-  if (!plan.canUse("custom_pass_design")) {
+  const userPlan = await getUserPlan(supabase, user.id);
+  const userCanDesign = userPlan.canUse("custom_pass_design");
+  if (!userCanDesign && !eventId) {
     return {
       error: "Custom Ticket Design is exclusive to Pro and higher tier plans.",
     };
@@ -47,6 +48,15 @@ export async function saveTicketDesign(
 
     if (eventErr || !event) {
       return { error: "Event not found or access denied." };
+    }
+
+    if (!userCanDesign && event.organizer_id) {
+      const orgPlan = await getUserPlan(supabase, event.organizer_id);
+      if (!orgPlan.canUse("custom_pass_design")) {
+        return {
+          error: "Custom Ticket Design is exclusive to Pro and higher tier plans.",
+        };
+      }
     }
 
     if (event.organizer_id !== user.id) {

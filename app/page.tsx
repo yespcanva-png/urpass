@@ -159,10 +159,10 @@ function ScanResult() {
 
 // ─── Plans ────────────────────────────────────────────────────────────────────
 const plans = [
-  { name: "Free",     price: "₹0",      period: "forever",           recommended: false, cta: "Start free",       href: "/signup",  features: ["2 events/month", "100 registrations/month", "QR passes & check-in", "Attendee approval", "Basic analytics"] },
-  { name: "Starter",  price: "₹499",    period: "/month +GST",       recommended: false, cta: "Choose Starter",   href: "/signup",  features: ["10 events/month", "500 registrations/month", "2 organizers", "CSV import & export", "Standard analytics"] },
-  { name: "Pro",      price: "₹999",    period: "/month +GST",       recommended: true,  cta: "Choose Pro",       href: "/signup",  features: ["Unlimited events", "2,500 registrations/month", "5 organizers", "Custom pass design", "Advanced analytics", "Priority support"] },
-  { name: "Business", price: "₹2,499",  period: "/month +GST",       recommended: false, cta: "Choose Business",  href: "/signup",  features: ["Unlimited events", "10,000 registrations/month", "15 organizers", "Custom domain", "API & webhooks"] },
+  { name: "Free",     price: "₹0",      period: "forever",           recommended: false, cta: "Start free",        href: "/signup",                         subtext: "Free forever",                  features: ["2 events/month", "100 registrations/month", "QR passes & check-in", "Attendee approval", "Basic analytics"] },
+  { name: "Starter",  price: "₹499",    period: "/month +GST",       recommended: false, cta: "Try Starter Free",  href: "/signup?plan=starter&trial=true", subtext: "30 days ₹0 · AutoPay required", features: ["10 events/month", "500 registrations/month", "2 organizers", "CSV import & export", "Standard analytics"] },
+  { name: "Pro",      price: "₹999",    period: "/month +GST",       recommended: true,  cta: "Try Pro Free",      href: "/signup?plan=pro&trial=true",     subtext: "30 days ₹0 · AutoPay required", features: ["Unlimited events", "2,500 registrations/month", "5 organizers", "Custom pass design", "Advanced analytics", "Priority support"] },
+  { name: "Business", price: "₹2,499",  period: "/month +GST",       recommended: false, cta: "Try Business Free", href: "/signup?plan=business&trial=true",subtext: "30 days ₹0 · AutoPay required", features: ["Unlimited events", "10,000 registrations/month", "15 organizers", "Custom domain", "API & webhooks"] },
 ];
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
@@ -203,7 +203,7 @@ export default function LandingPage() {
             </div>
 
             <p className="hero-meta mt-8 text-xs text-neutral-400">
-              Free to start · No credit card required
+              Free to start · Try any paid plan free for 30 days
             </p>
           </div>
 
@@ -400,9 +400,11 @@ export default function LandingPage() {
         <div className="max-w-5xl mx-auto">
           <AnimateIn>
             <div className="text-center mb-14">
-              <p className="text-xs font-semibold tracking-widest text-brand mb-3">PRICING</p>
-              <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight">Simple pricing.</h2>
-              <p className="mt-3 text-neutral-500 text-sm">Start free. Upgrade as you grow.</p>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-50 border border-brand-100 text-brand text-xs font-bold tracking-wider uppercase mb-3">
+                YOUR FIRST 30 DAYS ARE FREE
+              </div>
+              <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight">Choose any plan. Get your first 30 days free.</h2>
+              <p className="mt-3 text-neutral-500 text-sm">AutoPay setup required · Cancel before renewal · One free trial per account</p>
             </div>
           </AnimateIn>
 
@@ -432,9 +434,16 @@ export default function LandingPage() {
                       </li>
                     ))}
                   </ul>
-                  <Link href={plan.href} className={`w-full text-center py-3 rounded-xl text-sm font-semibold transition-colors ${plan.recommended ? "bg-white text-neutral-900 hover:bg-neutral-100" : "bg-neutral-900 text-white hover:bg-neutral-700"}`}>
-                    {plan.cta}
-                  </Link>
+                  <div className="flex flex-col gap-1.5">
+                    <Link href={plan.href} className={`w-full text-center py-3 rounded-xl text-sm font-semibold transition-colors ${plan.recommended ? "bg-white text-neutral-900 hover:bg-neutral-100" : "bg-neutral-900 text-white hover:bg-neutral-700"}`}>
+                      {plan.cta}
+                    </Link>
+                    {plan.subtext && (
+                      <p className={`text-[10px] text-center ${plan.recommended ? "text-white/40" : "text-neutral-400"}`}>
+                        {plan.subtext}
+                      </p>
+                    )}
+                  </div>
                 </div>
               </AnimateIn>
             ))}

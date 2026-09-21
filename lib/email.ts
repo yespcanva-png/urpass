@@ -937,4 +937,192 @@ export async function sendInvoiceEmail({
   });
 }
 
+export async function sendTrialStartedEmail({
+  to,
+  userName,
+  planName,
+  monthlyPricePaise,
+  trialEndsAt,
+}: {
+  to: string;
+  userName?: string | null;
+  planName: string;
+  monthlyPricePaise: number;
+  trialEndsAt: string;
+}) {
+  const safeName = escapeHtml(userName || "there");
+  const safePlan = escapeHtml(planName);
+  const safeDate = escapeHtml(trialEndsAt);
+  const monthlyTotalPaise = Math.round(monthlyPricePaise * 1.18);
+  const formattedMonthly = formatInrFromPaise(monthlyTotalPaise);
+
+  await sendEmail({
+    from: FROM,
+    to,
+    subject: `Your 30-Day Free Trial of URPASS ${safePlan} is Active!`,
+    html: `
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"/></head>
+<body style="margin:0;padding:0;background:#f9fafb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f9fafb;padding:36px 16px;">
+  <tr><td align="center">
+    <table width="100%" cellpadding="0" cellspacing="0" style="max-width:540px;background:#ffffff;border-radius:20px;border:1px solid #e5e7eb;overflow:hidden;">
+      <tr>
+        <td style="background:linear-gradient(135deg, #1e1035, #6D28D9);padding:32px 32px 28px;">
+          <p style="margin:0 0 6px;font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#c4b5fd;">30-DAY FREE TRIAL ACTIVATED</p>
+          <h1 style="margin:0;color:#ffffff;font-size:24px;font-weight:800;letter-spacing:-0.02em;">Welcome to URPASS ${safePlan}!</h1>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:28px 32px;">
+          <p style="margin:0 0 16px;font-size:15px;color:#111827;font-weight:600;">Hi ${safeName},</p>
+          <p style="margin:0 0 20px;font-size:14px;color:#4b5563;line-height:1.6;">
+            Your 30-day free trial of <strong>URPASS ${safePlan}</strong> has started! You now have full access to all ${safePlan} features for the next 30 days.
+          </p>
+
+          <table width="100%" cellpadding="0" cellspacing="0" style="background:#fcfaff;border-radius:14px;border:1px solid #ede9fe;margin-bottom:24px;overflow:hidden;">
+            <tr style="border-bottom:1px solid #ede9fe;">
+              <td style="padding:14px 18px;font-size:12px;color:#6b7280;">Plan:</td>
+              <td style="padding:14px 18px;font-size:13px;font-weight:700;color:#111827;text-align:right;">${safePlan}</td>
+            </tr>
+            <tr style="border-bottom:1px solid #ede9fe;">
+              <td style="padding:14px 18px;font-size:12px;color:#6b7280;">Charged Today:</td>
+              <td style="padding:14px 18px;font-size:13px;font-weight:700;color:#16a34a;text-align:right;">₹0.00 (Free Trial)</td>
+            </tr>
+            <tr style="border-bottom:1px solid #ede9fe;">
+              <td style="padding:14px 18px;font-size:12px;color:#6b7280;">Free Trial Duration:</td>
+              <td style="padding:14px 18px;font-size:13px;font-weight:600;color:#111827;text-align:right;">30 Days (until ${safeDate})</td>
+            </tr>
+            <tr style="background:#f5f3ff;">
+              <td style="padding:16px 18px;font-size:13px;font-weight:700;color:#6D28D9;">First Renewal Charge:</td>
+              <td style="padding:16px 18px;font-size:14px;font-weight:800;color:#6D28D9;text-align:right;">${formattedMonthly} on ${safeDate}</td>
+            </tr>
+          </table>
+
+          <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:14px 16px;margin-bottom:24px;">
+            <p style="margin:0;font-size:13px;color:#166534;line-height:1.5;">
+              <strong>AutoPay Confirmed:</strong> Your mandate is active. You will not be charged anything during your 30-day free trial. If you wish to cancel before the first payment, you can cancel anytime with one click in your billing settings.
+            </p>
+          </div>
+
+          <table width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+              <td>
+                <a href="${APP_URL}/dashboard" style="display:block;background:#6D28D9;color:#ffffff;text-align:center;padding:14px 24px;border-radius:12px;font-size:14px;font-weight:700;text-decoration:none;">
+                  Go to Your Dashboard &rarr;
+                </a>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+      <tr>
+        <td style="border-top:1px solid #f3f4f6;padding:16px 32px;background:#fafafa;text-align:center;">
+          <p style="margin:0;font-size:11px;color:#9ca3af;">
+            Tamil Nadu, India &middot; <a href="${APP_URL}" style="color:#6D28D9;text-decoration:none;">urpass.space</a>
+          </p>
+        </td>
+      </tr>
+    </table>
+  </td></tr>
+</table>
+</body>
+</html>`.trim(),
+  });
+}
+
+export async function sendTrialReminderEmail({
+  to,
+  userName,
+  planName,
+  daysRemaining,
+  trialEndsAt,
+  monthlyPricePaise,
+}: {
+  to: string;
+  userName?: string | null;
+  planName: string;
+  daysRemaining: number;
+  trialEndsAt: string;
+  monthlyPricePaise: number;
+}) {
+  const safeName = escapeHtml(userName || "there");
+  const safePlan = escapeHtml(planName);
+  const safeDate = escapeHtml(trialEndsAt);
+  const monthlyTotalPaise = Math.round(monthlyPricePaise * 1.18);
+  const formattedMonthly = formatInrFromPaise(monthlyTotalPaise);
+
+  await sendEmail({
+    from: FROM,
+    to,
+    subject: `Reminder: Your URPASS ${safePlan} trial ends in ${daysRemaining} day${daysRemaining === 1 ? "" : "s"}`,
+    html: `
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"/></head>
+<body style="margin:0;padding:0;background:#f9fafb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f9fafb;padding:36px 16px;">
+  <tr><td align="center">
+    <table width="100%" cellpadding="0" cellspacing="0" style="max-width:540px;background:#ffffff;border-radius:20px;border:1px solid #e5e7eb;overflow:hidden;">
+      <tr>
+        <td style="background:linear-gradient(135deg, #2d124d, #7c3aed);padding:32px 32px 28px;">
+          <p style="margin:0 0 6px;font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#ddd6fe;">TRIAL RENEWAL REMINDER</p>
+          <h1 style="margin:0;color:#ffffff;font-size:24px;font-weight:800;letter-spacing:-0.02em;">
+            ${daysRemaining} day${daysRemaining === 1 ? "" : "s"} left on your free trial
+          </h1>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:28px 32px;">
+          <p style="margin:0 0 16px;font-size:15px;color:#111827;font-weight:600;">Hi ${safeName},</p>
+          <p style="margin:0 0 20px;font-size:14px;color:#4b5563;line-height:1.6;">
+            This is a friendly reminder that your 30-day free trial of <strong>URPASS ${safePlan}</strong> will end on <strong>${safeDate}</strong> (${daysRemaining} day${daysRemaining === 1 ? "" : "s"} from now).
+          </p>
+
+          <table width="100%" cellpadding="0" cellspacing="0" style="background:#fcfaff;border-radius:14px;border:1px solid #ede9fe;margin-bottom:24px;overflow:hidden;">
+            <tr style="border-bottom:1px solid #ede9fe;">
+              <td style="padding:14px 18px;font-size:12px;color:#6b7280;">Plan:</td>
+              <td style="padding:14px 18px;font-size:13px;font-weight:700;color:#111827;text-align:right;">${safePlan}</td>
+            </tr>
+            <tr style="border-bottom:1px solid #ede9fe;">
+              <td style="padding:14px 18px;font-size:12px;color:#6b7280;">Trial Expiration:</td>
+              <td style="padding:14px 18px;font-size:13px;font-weight:600;color:#111827;text-align:right;">${safeDate}</td>
+            </tr>
+            <tr style="background:#f5f3ff;">
+              <td style="padding:16px 18px;font-size:13px;font-weight:700;color:#6D28D9;">Scheduled Renewal:</td>
+              <td style="padding:16px 18px;font-size:14px;font-weight:800;color:#6D28D9;text-align:right;">${formattedMonthly}</td>
+            </tr>
+          </table>
+
+          <p style="margin:0 0 24px;font-size:13px;color:#6b7280;line-height:1.6;">
+            If you love using URPASS, you don&apos;t need to do anything &mdash; your subscription will continue seamlessly via AutoPay. If you don&apos;t wish to renew, you can cancel anytime before ${safeDate} in your billing settings and you will not be charged.
+          </p>
+
+          <table width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+              <td>
+                <a href="${APP_URL}/billing" style="display:block;background:#6D28D9;color:#ffffff;text-align:center;padding:14px 24px;border-radius:12px;font-size:14px;font-weight:700;text-decoration:none;">
+                  Manage Subscription in Billing Settings &rarr;
+                </a>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+      <tr>
+        <td style="border-top:1px solid #f3f4f6;padding:16px 32px;background:#fafafa;text-align:center;">
+          <p style="margin:0;font-size:11px;color:#9ca3af;">
+            Tamil Nadu, India &middot; <a href="${APP_URL}" style="color:#6D28D9;text-decoration:none;">urpass.space</a>
+          </p>
+        </td>
+      </tr>
+    </table>
+  </td></tr>
+</table>
+</body>
+</html>`.trim(),
+  });
+}
+
 

@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Check, Minus, ChevronDown } from "lucide-react";
+import { Check, Minus, ChevronDown, Sparkles } from "lucide-react";
+import TrialConfirmationModal from "@/components/billing/TrialConfirmationModal";
 
 type Cycle = "monthly" | "annual";
 
@@ -212,10 +213,21 @@ function FaqItem({ q, a }: { q: string; a: string }) {
   );
 }
 
-// ─── Page ──────────────────────────────────────────────────────────────────────
+interface Props {
+  isAuthenticated?: boolean;
+  trialUsed?: boolean;
+  userEmail?: string;
+  userName?: string;
+}
 
-export default function PricingContent() {
+export default function PricingContent({
+  isAuthenticated = false,
+  trialUsed = false,
+  userEmail = "",
+  userName = "",
+}: Props = {}) {
   const [cycle, setCycle] = useState<Cycle>("monthly");
+  const [trialModal, setTrialModal] = useState<{ planSlug: string; planName: string } | null>(null);
 
   function displayPrice(plan: typeof PLANS[0]) {
     if (plan.monthly === 0) return { price: "₹0", sub: "forever" };
@@ -234,8 +246,16 @@ export default function PricingContent() {
       <header className="border-b border-neutral-100 px-6 py-4 flex items-center justify-between">
         <Link href="/" className="font-semibold tracking-tight text-base text-neutral-900">URPASS</Link>
         <div className="flex items-center gap-4">
-          <Link href="/login" className="text-sm text-neutral-500 hover:text-neutral-900 transition-colors">Log in</Link>
-          <Link href="/signup" className="text-sm bg-neutral-900 text-white px-4 py-2 rounded-lg hover:bg-neutral-700 transition-colors">Get started</Link>
+          {isAuthenticated ? (
+            <Link href="/dashboard" className="text-sm bg-neutral-900 text-white px-4 py-2 rounded-lg hover:bg-neutral-700 transition-colors">
+              Dashboard
+            </Link>
+          ) : (
+            <>
+              <Link href="/login" className="text-sm text-neutral-500 hover:text-neutral-900 transition-colors">Log in</Link>
+              <Link href="/signup" className="text-sm bg-neutral-900 text-white px-4 py-2 rounded-lg hover:bg-neutral-700 transition-colors">Get started</Link>
+            </>
+          )}
         </div>
       </header>
 
@@ -243,13 +263,37 @@ export default function PricingContent() {
 
         {/* ── 01 Hero + Toggle ── */}
         <section className="max-w-5xl mx-auto text-center pt-20 pb-14">
-          <p className="text-xs font-semibold tracking-widest text-brand mb-4">PRICING</p>
-          <h1 className="text-4xl sm:text-5xl font-semibold tracking-tight mb-4">
-            Simple pricing for every event.
-          </h1>
-          <p className="text-neutral-500 mb-10 text-base">
-            Start free. Upgrade when your events grow. No complicated setup.
-          </p>
+          {!trialUsed ? (
+            <>
+              <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-brand-50 border border-brand-100 text-brand text-xs font-bold tracking-wider uppercase mb-4">
+                <Sparkles className="w-3.5 h-3.5" />
+                YOUR FIRST 30 DAYS ARE FREE
+              </div>
+              <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-neutral-900 mb-4">
+                TRY ANY URPASS PLAN FREE FOR 30 DAYS
+              </h1>
+              <p className="text-neutral-600 max-w-2xl mx-auto mb-3 text-base sm:text-lg">
+                Choose Starter, Pro, or Business and unlock all features of that plan for 30 days.
+              </p>
+              <div className="inline-flex items-center gap-2 text-xs font-medium text-neutral-500 mb-8 bg-neutral-100 px-3.5 py-1.5 rounded-full flex-wrap justify-center">
+                <span>AutoPay setup required</span>
+                <span>&middot;</span>
+                <span>Cancel before renewal</span>
+                <span>&middot;</span>
+                <span>One free activation per account</span>
+              </div>
+            </>
+          ) : (
+            <>
+              <p className="text-xs font-semibold tracking-widest text-brand mb-4">PRICING</p>
+              <h1 className="text-4xl sm:text-5xl font-semibold tracking-tight mb-4">
+                Simple pricing for every event.
+              </h1>
+              <p className="text-neutral-500 mb-10 text-base">
+                Start free. Upgrade when your events grow. No complicated setup.
+              </p>
+            </>
+          )}
 
           {/* Monthly / Annual toggle */}
           <div className="inline-flex items-center bg-neutral-100 rounded-xl p-1 gap-1">
@@ -309,12 +353,48 @@ export default function PricingContent() {
                       </li>
                     ))}
                   </ul>
-                  <Link
-                    href={plan.href}
-                    className={`w-full text-center py-3 rounded-xl text-sm font-semibold transition-colors ${plan.highlight ? "bg-white text-neutral-900 hover:bg-neutral-100" : "bg-neutral-900 text-white hover:bg-neutral-700"}`}
-                  >
-                    {plan.cta}
-                  </Link>
+
+                  {!trialUsed && plan.monthly > 0 ? (
+                    <div className="flex flex-col gap-1.5">
+                      {isAuthenticated ? (
+                        <button
+                          onClick={() => setTrialModal({ planSlug: plan.slug, planName: plan.name })}
+                          className={`w-full text-center py-3 rounded-xl text-sm font-bold transition-all shadow-sm ${
+                            plan.highlight
+                              ? "bg-white text-neutral-900 hover:bg-neutral-100"
+                              : "bg-neutral-900 text-white hover:bg-neutral-800"
+                          }`}
+                        >
+                          Try {plan.name} Free
+                        </button>
+                      ) : (
+                        <Link
+                          href={`/signup?plan=${plan.slug}&trial=true`}
+                          className={`w-full text-center py-3 rounded-xl text-sm font-bold transition-all shadow-sm ${
+                            plan.highlight
+                              ? "bg-white text-neutral-900 hover:bg-neutral-100"
+                              : "bg-neutral-900 text-white hover:bg-neutral-800"
+                          }`}
+                        >
+                          Try {plan.name} Free
+                        </Link>
+                      )}
+                      <p className={`text-[10px] text-center ${plan.highlight ? "text-white/40" : "text-neutral-400"}`}>
+                        30 days ₹0 &middot; AutoPay required
+                      </p>
+                    </div>
+                  ) : (
+                    <Link
+                      href={plan.monthly === 0 ? (isAuthenticated ? "/dashboard" : "/signup") : (isAuthenticated ? "/billing" : "/signup")}
+                      className={`w-full text-center py-3 rounded-xl text-sm font-semibold transition-colors ${
+                        plan.highlight
+                          ? "bg-white text-neutral-900 hover:bg-neutral-100"
+                          : "bg-neutral-900 text-white hover:bg-neutral-700"
+                      }`}
+                    >
+                      {plan.monthly === 0 ? "Start Free" : `Choose ${plan.name}`}
+                    </Link>
+                  )}
                 </div>
               );
             })}
@@ -487,6 +567,18 @@ export default function PricingContent() {
           </div>
         </div>
       </footer>
+
+      {/* ── 30-Day Free Trial Modal ── */}
+      {trialModal && (
+        <TrialConfirmationModal
+          isOpen={Boolean(trialModal)}
+          onClose={() => setTrialModal(null)}
+          planSlug={trialModal.planSlug}
+          planName={trialModal.planName}
+          userEmail={userEmail}
+          userName={userName}
+        />
+      )}
 
     </div>
   );

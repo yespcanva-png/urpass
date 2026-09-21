@@ -25,7 +25,7 @@ export default async function EventPassDesignPage({
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const [{ data: event }, plan] = await Promise.all([
+  const [{ data: event }, userPlan] = await Promise.all([
     supabase
       .from("events")
       .select("id, name, event_date, start_time, end_time, venue, organizer_id, custom_pass_design")
@@ -36,7 +36,7 @@ export default async function EventPassDesignPage({
 
   if (!event) notFound();
 
-  // Verify ownership or org admin role
+  // Verify ownership or org role
   if (event.organizer_id !== user.id) {
     const { data: orgMember } = await supabase
       .from("organization_members")
@@ -47,6 +47,12 @@ export default async function EventPassDesignPage({
       .maybeSingle();
 
     if (!orgMember) notFound();
+  }
+
+  // If event organizer differs from current user, check organizer's plan too
+  let organizerPlan = null;
+  if (event.organizer_id && event.organizer_id !== user.id) {
+    organizerPlan = await getUserPlan(supabase, event.organizer_id);
   }
 
   // Fetch organizer profile defaults if any
@@ -62,7 +68,9 @@ export default async function EventPassDesignPage({
     year: "numeric",
   }).toUpperCase();
 
-  const isPro = plan.canUse("custom_pass_design");
+  const isPro =
+    userPlan.canUse("custom_pass_design") ||
+    (organizerPlan?.canUse("custom_pass_design") ?? false);
 
   return (
     <TicketDesigner
