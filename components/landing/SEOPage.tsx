@@ -23,6 +23,20 @@ export interface SEOGeo {
   longitude: number;
 }
 
+export interface SEODeepDiveSection {
+  badge?: string;
+  title: string;
+  paragraphs: string[];
+  bullets?: string[];
+  takeaway?: string;
+}
+
+export interface SEORelatedLink {
+  title: string;
+  href: string;
+  category: "Product" | "Use Case" | "Guide" | "Comparison" | "Location";
+}
+
 export interface SEOPageConfig {
   badge: string;
   h1: string;
@@ -36,7 +50,9 @@ export interface SEOPageConfig {
     description: string;
     bullets: string[];
   };
+  deepDiveSections?: SEODeepDiveSection[];
   useCases?: string[];
+  relatedLinks?: SEORelatedLink[];
   faqs: SEOFaq[];
   ctaTitle?: string;
   ctaDescription?: string;
@@ -228,6 +244,27 @@ export default function SEOPage({ config }: { config: SEOPageConfig }) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceSchema) }}
         />
       )}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "SoftwareApplication",
+            name: "URPASS",
+            applicationCategory: "BusinessApplication",
+            operatingSystem: "Web, iOS, Android",
+            url: canonical,
+            description: config.description,
+            offers: {
+              "@type": "AggregateOffer",
+              priceCurrency: "INR",
+              lowPrice: "0",
+              highPrice: "2499",
+              offerCount: "4",
+            },
+          }),
+        }}
+      />
       <div>
         <Navbar />
 
@@ -370,9 +407,52 @@ export default function SEOPage({ config }: { config: SEOPageConfig }) {
         </section>
       )}
 
+      {/* Editorial Deep Dive / In-Depth Content */}
+      {config.deepDiveSections && config.deepDiveSections.length > 0 && (
+        <section className="py-20 px-5 sm:px-8 bg-white border-t border-neutral-100">
+          <div className="max-w-4xl mx-auto space-y-16">
+            {config.deepDiveSections.map((section, idx) => (
+              <AnimateIn key={section.title} delay={idx * 60} from="up">
+                <div className="space-y-5">
+                  {section.badge && (
+                    <span className="text-[11px] font-bold uppercase tracking-widest text-brand bg-brand-50 border border-brand-100 px-3 py-1 rounded-full inline-block">
+                      {section.badge}
+                    </span>
+                  )}
+                  <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-neutral-900">
+                    {section.title}
+                  </h2>
+                  <div className="space-y-4 text-base text-neutral-600 leading-relaxed">
+                    {section.paragraphs.map((p, pIdx) => (
+                      <p key={pIdx}>{p}</p>
+                    ))}
+                  </div>
+                  {section.bullets && section.bullets.length > 0 && (
+                    <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                      {section.bullets.map((b, bIdx) => (
+                        <li key={bIdx} className="flex items-start gap-2.5 text-sm text-neutral-700 bg-neutral-50 border border-neutral-100 rounded-xl p-3.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-brand mt-1.5 shrink-0" />
+                          <span>{b}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {section.takeaway && (
+                    <div className="bg-brand-50/60 border-l-4 border-brand p-4 rounded-r-xl text-sm text-neutral-800 font-medium">
+                      <strong className="text-brand font-bold block mb-1">Key Takeaway:</strong>
+                      {section.takeaway}
+                    </div>
+                  )}
+                </div>
+              </AnimateIn>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* Use cases */}
       {config.useCases && config.useCases.length > 0 && (
-        <section className="py-20 px-5 sm:px-8 bg-white">
+        <section className="py-20 px-5 sm:px-8 bg-neutral-50/60 border-t border-neutral-100">
           <div className="max-w-4xl mx-auto text-center">
             <AnimateIn>
               <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight mb-8">
@@ -382,7 +462,7 @@ export default function SEOPage({ config }: { config: SEOPageConfig }) {
             <div className="flex flex-wrap gap-3 justify-center">
               {config.useCases.map((uc, i) => (
                 <AnimateIn key={uc} delay={i * 40} from="scale">
-                  <div className="border border-neutral-100 rounded-2xl px-5 py-3 text-sm font-medium text-neutral-700 hover:border-brand-200 hover:bg-brand-50 transition-all">
+                  <div className="border border-neutral-200/80 bg-white rounded-2xl px-5 py-3 text-sm font-medium text-neutral-700 hover:border-brand-200 hover:bg-brand-50 transition-all">
                     {uc}
                   </div>
                 </AnimateIn>
@@ -390,6 +470,49 @@ export default function SEOPage({ config }: { config: SEOPageConfig }) {
             </div>
           </div>
         </section>
+      )}
+
+      {/* Content Ecosystem / Related Cluster Links */}
+      {config.relatedLinks && config.relatedLinks.length > 0 && (
+        <section className="py-16 px-5 sm:px-8 bg-white border-t border-neutral-100">
+          <div className="max-w-5xl mx-auto">
+            <div className="text-center max-w-xl mx-auto mb-10">
+              <span className="text-[11px] font-bold uppercase tracking-widest text-brand">Content Ecosystem</span>
+              <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-neutral-900 mt-1">
+                Explore Related Guides &amp; Solutions
+              </h2>
+              <p className="text-xs sm:text-sm text-neutral-500 mt-1.5">
+                Discover how URPASS powers ticketing, digital credentials, and entrance management across different scenarios.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+              {config.relatedLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="p-4 rounded-2xl bg-neutral-50/80 border border-neutral-200/70 hover:border-brand-300 hover:bg-white hover:shadow-xs transition-all group flex flex-col justify-between"
+                >
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-brand bg-brand-50 px-2 py-0.5 rounded-md border border-brand-100">
+                      {link.category}
+                    </span>
+                    <span className="text-neutral-400 group-hover:text-brand transition-colors text-xs font-semibold">
+                      &rarr;
+                    </span>
+                  </div>
+                  <span className="text-sm font-semibold text-neutral-900 group-hover:text-brand transition-colors">
+                    {link.title}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* FAQ Accordion Section */}
+      {config.faqs && config.faqs.length > 0 && (
+        <FAQItemSection faqs={config.faqs} />
       )}
 
       {/* Indian Hubs Directory (for Geo & Local SEO Authority) */}
