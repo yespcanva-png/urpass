@@ -199,7 +199,17 @@ export default function ApplyForm({
       modal: {
         ondismiss: () => {
           setPaymentPending(false);
-          setServerError("Payment was cancelled. Please try again.");
+          setServerError("Payment was cancelled. Your reserved slot has been released.");
+          if (order.reservationId || order.orderId) {
+            fetch("/api/razorpay/ticket-order", {
+              method: "DELETE",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                reservationId: order.reservationId,
+                orderId: order.orderId,
+              }),
+            }).catch(() => {});
+          }
         },
       },
     });

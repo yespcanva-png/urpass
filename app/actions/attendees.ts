@@ -17,6 +17,10 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { sendWebhooks } from "@/lib/webhooks";
 import { recordApiUsage } from "@/lib/api-usage";
 import { getSupabaseUrl } from "@/lib/supabase/config";
+import {
+  markReservationPaid,
+  markReservationApproved,
+} from "@/lib/capacity-reservation";
 import crypto from "crypto";
 
 function adminClient() {
@@ -90,6 +94,18 @@ export async function approveAttendee(
     .eq("event_id", eventId);
 
   if (error) return { error: error.message };
+
+  // Update associated reservation if this was a paid registration
+  const { data: order } = await supabase
+    .from("ticket_orders")
+    .select("razorpay_order_id")
+    .eq("attendee_id", attendeeId)
+    .eq("status", "paid")
+    .maybeSingle();
+
+  if (order?.razorpay_order_id) {
+    await markReservationApproved(adminClient(), order.razorpay_order_id);
+  }
 
   // Notify the attendee they've been approved
   const [{ data: att }, { data: evt }] = await Promise.all([
@@ -451,6 +467,10 @@ export async function submitApplication(
       .from("ticket_orders")
       .update({ status: "paid", razorpay_payment_id: payment.paymentId, updated_at: new Date().toISOString() })
       .eq("razorpay_order_id", payment.orderId);
+
+    // Transition reservation state: RESERVED -> PAID
+    // This guarantees manual-approval events consume capacity immediately upon payment.
+    await markReservationPaid(admin, payment.orderId);
   }
 
   const parsed = attendeeSchema.safeParse(data);
@@ -516,6 +536,8 @@ export async function submitApplication(
         .from("ticket_orders")
         .update({ attendee_id: attendee.id })
         .eq("razorpay_order_id", payment.orderId);
+      // Transition reservation: PAID -> APPROVED
+      await markReservationApproved(admin, payment.orderId);
     }
 
     // Generate pass immediately

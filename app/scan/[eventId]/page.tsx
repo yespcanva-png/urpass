@@ -14,9 +14,12 @@ import {
   Search,
   ChevronDown,
   ShieldX,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { createClient } from "@/lib/supabase/client";
+import { playScannerFeedback } from "@/lib/scanner-feedback";
 
 const QRScanner = dynamic(() => import("@/components/scan/QRScanner"), { ssr: false });
 
@@ -74,6 +77,7 @@ export default function ScanEventPage() {
   const [scanCount, setScanCount] = useState(0);
   const [resetProgress, setResetProgress] = useState(0);
   const [feed, setFeed] = useState<FeedEntry[]>([]);
+  const [soundEnabled, setSoundEnabled] = useState(true);
 
   // Gate state
   const [gates, setGates] = useState<Gate[]>([]);
@@ -199,40 +203,54 @@ export default function ScanEventPage() {
 
       setScanState("verifying");
 
+      const scanOperationId = typeof crypto !== "undefined" && crypto.randomUUID
+        ? crypto.randomUUID()
+        : `scan_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+
       try {
         const res = await fetch("/api/verify", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ passToken: rawToken, eventId, gateId: selectedGateId }),
+          body: JSON.stringify({
+            passToken: rawToken,
+            eventId,
+            gateId: selectedGateId,
+            scanOperationId,
+          }),
         });
         const data = await res.json();
 
-        if (res.status === 403 && data.accessDenied) {
+        if (res.status === 403 && (data.accessDenied || data.status === "ACCESS_DENIED")) {
+          playScannerFeedback("access_denied", { sound: soundEnabled });
           setAccessDeniedMsg(data.error ?? "Access denied");
           setScanState("access_denied");
           return;
         }
 
         if (!res.ok) {
+          playScannerFeedback("error", { sound: soundEnabled });
           setErrorMsg(data.error ?? "Verification failed");
           setScanState("error");
           return;
         }
 
-        if (data.alreadyCheckedIn) {
+        if (data.status === "ALREADY_CHECKED_IN" || data.alreadyCheckedIn) {
+          playScannerFeedback("duplicate", { sound: soundEnabled });
           setResult(data);
           setScanState("duplicate");
           return;
         }
 
+        playScannerFeedback("success", { sound: soundEnabled });
         setResult(data);
         setScanState("success");
       } catch {
+        playScannerFeedback("error", { sound: soundEnabled });
         setErrorMsg("Network error. Check your connection.");
         setScanState("error");
       }
     },
-    [eventId, selectedGateId]
+    [eventId, selectedGateId, soundEnabled]
   );
 
   // Manual check-in for a specific attendee
@@ -256,6 +274,10 @@ export default function ScanEventPage() {
           return;
         }
 
+        const scanOperationId = typeof crypto !== "undefined" && crypto.randomUUID
+          ? crypto.randomUUID()
+          : `scan_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+
         const res = await fetch("/api/verify", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -263,6 +285,7 @@ export default function ScanEventPage() {
             passToken: passData.pass_token,
             eventId,
             gateId: selectedGateId,
+            scanOperationId,
           }),
         });
         const data = await res.json();
@@ -274,23 +297,24 @@ export default function ScanEventPage() {
           )
         );
 
-        if (res.status === 403 && data.accessDenied) {
+        if (res.status === 403 && (data.accessDenied || data.status === "ACCESS_DENIED")) {
+          playScannerFeedback("access_denied", { sound: soundEnabled });
           setAccessDeniedMsg(data.error ?? "Access denied");
           setScanState("access_denied");
           setManualMode(false);
           lastTokenRef.current = passData.pass_token;
         } else if (!res.ok) {
-          // Show brief error inline — don't navigate away
-        } else if (data.alreadyCheckedIn) {
-          // Already checked in — already reflected in pass_status
-        } else if (data.success) {
-          // Success — feed will update via Realtime
+          playScannerFeedback("error", { sound: soundEnabled });
+        } else if (data.status === "ALREADY_CHECKED_IN" || data.alreadyCheckedIn) {
+          playScannerFeedback("duplicate", { sound: soundEnabled });
+        } else if (data.status === "CHECKED_IN" || data.success) {
+          playScannerFeedback("success", { sound: soundEnabled });
         }
       } finally {
         setCheckingInId(null);
       }
     },
-    [eventId, selectedGateId, checkingInId]
+    [eventId, selectedGateId, checkingInId, soundEnabled]
   );
 
   const reset = useCallback(() => {
@@ -391,6 +415,20 @@ export default function ScanEventPage() {
               )}
             </div>
           )}
+
+          {/* Audio Chime / Haptic toggle */}
+          <button
+            onClick={() => setSoundEnabled((s) => !s)}
+            className="flex items-center gap-1.5 bg-white/[0.06] border border-white/[0.08] rounded-full px-2.5 py-1.5 text-[11px] font-medium text-white/60 hover:text-white/80 transition-colors"
+            title={soundEnabled ? "Mute scan feedback sound" : "Unmute scan feedback sound"}
+            aria-label={soundEnabled ? "Mute audio" : "Unmute audio"}
+          >
+            {soundEnabled ? (
+              <Volume2 className="w-3.5 h-3.5 text-emerald-400" />
+            ) : (
+              <VolumeX className="w-3.5 h-3.5 text-white/30" />
+            )}
+          </button>
 
           {/* Mode toggle: QR vs Search */}
           <button

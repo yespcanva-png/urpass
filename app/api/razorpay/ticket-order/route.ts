@@ -3,6 +3,11 @@ import Razorpay from "razorpay";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { getSupabaseUrl } from "@/lib/supabase/config";
 import { notifyOwnerPaymentAttempt } from "@/lib/email";
+import {
+  reserveEventCapacity,
+  linkOrderToReservation,
+  releaseReservation,
+} from "@/lib/capacity-reservation";
 
 export const dynamic = "force-dynamic";
 
@@ -59,25 +64,29 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Selected ticket is not on sale right now." }, { status: 400 });
     }
 
-    if (ticketType.capacity != null) {
-      const { count } = await admin
-        .from("attendees")
-        .select("*", { count: "exact", head: true })
-        .eq("event_id", eventId)
-        .eq("ticket_type_id", ticketTypeId)
-        .neq("application_status", "rejected");
-
-      if ((count ?? 0) >= ticketType.capacity) {
-        return NextResponse.json({ error: "Selected ticket is sold out." }, { status: 400 });
-      }
-    }
-
     amountPaise = ticketType.price;
     ticketName = `${event.name} — ${ticketType.name}`;
   }
 
   if (amountPaise <= 0) {
     return NextResponse.json({ error: "Selected ticket does not require payment" }, { status: 400 });
+  }
+
+  // ── P0: Atomic Capacity Reservation (10-minute window) ───────────
+  // Locks database rows to guarantee no two concurrent buyers claim the last seat.
+  const reservation = await reserveEventCapacity({
+    adminClient: admin,
+    eventId,
+    ticketTypeId: ticketTypeId ?? null,
+    buyerEmail,
+    buyerName,
+  });
+
+  if (!reservation.success) {
+    return NextResponse.json(
+      { error: reservation.message || "Selected ticket is sold out. Capacity reached." },
+      { status: 409 }
+    );
   }
 
   // Fetch Razorpay credentials (check organization settings first, then user settings)
@@ -111,56 +120,90 @@ export async function POST(req: NextRequest) {
   }
 
   if (!keyId || !keySecret) {
+    // Release the capacity reservation before failing
+    if (reservation.reservationId) {
+      await releaseReservation(admin, { reservationId: reservation.reservationId });
+    }
     return NextResponse.json(
       { error: "The event organizer has not connected a payment gateway yet." },
       { status: 400 }
     );
   }
 
-  const razorpay = new Razorpay({
-    key_id: keyId,
-    key_secret: keySecret,
-  });
+  try {
+    const razorpay = new Razorpay({
+      key_id: keyId,
+      key_secret: keySecret,
+    });
 
-  const order = await razorpay.orders.create({
-    amount: amountPaise,
-    currency: "INR",
-    receipt: `ticket_${eventId.slice(0, 8)}_${Date.now()}`,
-    notes: {
-      event_id: eventId,
-      ticket_type_id: ticketTypeId ?? "",
-      buyer_name: buyerName,
-      buyer_email: buyerEmail,
-      ticket_name: ticketName,
-      type: "ticket",
-    },
-  });
+    const order = await razorpay.orders.create({
+      amount: amountPaise,
+      currency: "INR",
+      receipt: `ticket_${eventId.slice(0, 8)}_${Date.now()}`,
+      notes: {
+        event_id: eventId,
+        ticket_type_id: ticketTypeId ?? "",
+        buyer_name: buyerName,
+        buyer_email: buyerEmail,
+        ticket_name: ticketName,
+        type: "ticket",
+        reservation_id: reservation.reservationId ?? "",
+      },
+    });
 
-  await admin.from("ticket_orders").insert({
-    event_id: eventId,
-    ticket_type_id: ticketTypeId ?? null,
-    razorpay_order_id: order.id,
-    amount: amountPaise,
-    currency: "INR",
-    buyer_name: buyerName,
-    buyer_email: buyerEmail,
-    status: "created",
-  });
+    await Promise.all([
+      admin.from("ticket_orders").insert({
+        event_id: eventId,
+        ticket_type_id: ticketTypeId ?? null,
+        razorpay_order_id: order.id,
+        amount: amountPaise,
+        currency: "INR",
+        buyer_name: buyerName,
+        buyer_email: buyerEmail,
+        status: "created",
+      }),
+      reservation.reservationId
+        ? linkOrderToReservation(admin, reservation.reservationId, order.id)
+        : Promise.resolve(),
+    ]);
 
-  notifyOwnerPaymentAttempt({
-    kind: "ticket",
-    buyerName,
-    buyerEmail,
-    itemName: ticketName,
-    amountPaise,
-    orderId: order.id,
-  }).catch((err: unknown) => console.error("[email]", err));
+    notifyOwnerPaymentAttempt({
+      kind: "ticket",
+      buyerName,
+      buyerEmail,
+      itemName: ticketName,
+      amountPaise,
+      orderId: order.id,
+    }).catch((err: unknown) => console.error("[email]", err));
 
-  return NextResponse.json({
-    orderId: order.id,
-    amount: order.amount,
-    currency: order.currency,
-    keyId,
-    eventName: ticketName,
-  });
+    return NextResponse.json({
+      orderId: order.id,
+      amount: order.amount,
+      currency: order.currency,
+      keyId,
+      eventName: ticketName,
+      reservationId: reservation.reservationId,
+      expiresAt: reservation.expiresAt,
+    });
+  } catch (err: unknown) {
+    // Release reservation if Razorpay order creation fails
+    if (reservation.reservationId) {
+      await releaseReservation(admin, { reservationId: reservation.reservationId });
+    }
+    const message = err instanceof Error ? err.message : "Failed to create payment order";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }
+
+export async function DELETE(req: NextRequest) {
+  const body = await req.json().catch(() => null);
+  const { reservationId, orderId } = body ?? {};
+  if (!reservationId && !orderId) {
+    return NextResponse.json({ error: "Missing reservationId or orderId" }, { status: 400 });
+  }
+
+  const admin = adminClient();
+  await releaseReservation(admin, { reservationId, orderId });
+  return NextResponse.json({ success: true });
+}
+
