@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { createClient } from "@/lib/supabase/client";
-import { playScannerFeedback } from "@/lib/scanner-feedback";
+import { playScannerFeedback, unlockAudioContext } from "@/lib/scanner-feedback";
 
 const QRScanner = dynamic(() => import("@/components/scan/QRScanner"), { ssr: false });
 
@@ -62,6 +62,8 @@ const PASS_TYPE_LABEL: Record<string, string> = {
 };
 
 const AUTO_RESET_MS = 5000;
+const SCAN_LOCK_MS = 1200; // 1.2s debounce to prevent repeated sounds for same QR
+const SOUND_STORAGE_KEY = "urpass_scanner_sound_enabled";
 
 export default function ScanEventPage() {
   const params = useParams();
@@ -97,6 +99,37 @@ export default function ScanEventPage() {
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isScannerActive = !manualMode && (scanState === "idle" || scanState === "scanning");
+
+  // Load sound preference from localStorage and unlock audio on initial gesture
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(SOUND_STORAGE_KEY);
+      if (saved !== null) {
+        setSoundEnabled(saved === "true");
+      }
+    } catch {}
+
+    const unlock = () => {
+      unlockAudioContext();
+    };
+    window.addEventListener("pointerdown", unlock, { once: true });
+    window.addEventListener("touchstart", unlock, { once: true });
+    return () => {
+      window.removeEventListener("pointerdown", unlock);
+      window.removeEventListener("touchstart", unlock);
+    };
+  }, []);
+
+  const toggleSound = useCallback(() => {
+    setSoundEnabled((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(SOUND_STORAGE_KEY, String(next));
+      } catch {}
+      if (next) unlockAudioContext();
+      return next;
+    });
+  }, []);
 
   // Fetch event name + gates on mount
   useEffect(() => {
@@ -199,7 +232,7 @@ export default function ScanEventPage() {
       if (cooldownRef.current || rawToken === lastTokenRef.current) return;
       cooldownRef.current = true;
       lastTokenRef.current = rawToken;
-      setTimeout(() => { cooldownRef.current = false; }, 3000);
+      setTimeout(() => { cooldownRef.current = false; }, SCAN_LOCK_MS);
 
       setScanState("verifying");
 
@@ -220,33 +253,64 @@ export default function ScanEventPage() {
         });
         const data = await res.json();
 
-        if (res.status === 403 && (data.accessDenied || data.status === "ACCESS_DENIED")) {
-          playScannerFeedback("access_denied", { sound: soundEnabled });
-          setAccessDeniedMsg(data.error ?? "Access denied");
-          setScanState("access_denied");
+        // 1. Success check-in (Green ✓, short high chime, 80ms)
+        if (data.status === "CHECKED_IN" || data.success) {
+          playScannerFeedback("CHECKED_IN", { sound: soundEnabled });
+          setResult(data);
+          setScanState("success");
           return;
         }
 
-        if (!res.ok) {
-          playScannerFeedback("error", { sound: soundEnabled });
-          setErrorMsg(data.error ?? "Verification failed");
-          setScanState("error");
-          return;
-        }
-
+        // 2. Duplicate check-in (Amber ⚠, double low tone, [150, 80, 150])
         if (data.status === "ALREADY_CHECKED_IN" || data.alreadyCheckedIn) {
-          playScannerFeedback("duplicate", { sound: soundEnabled });
+          playScannerFeedback("ALREADY_CHECKED_IN", { sound: soundEnabled });
           setResult(data);
           setScanState("duplicate");
           return;
         }
 
-        playScannerFeedback("success", { sound: soundEnabled });
-        setResult(data);
-        setScanState("success");
+        // 3. Wrong event (Red ✕, low buzz, 250ms)
+        if (data.status === "WRONG_EVENT") {
+          playScannerFeedback("WRONG_EVENT", { sound: soundEnabled });
+          setErrorMsg(data.error || "Pass is registered for a different event");
+          setScanState("error");
+          return;
+        }
+
+        // 4. Not approved (Red ✕, low buzz, 250ms)
+        if (data.status === "NOT_APPROVED") {
+          playScannerFeedback("NOT_APPROVED", { sound: soundEnabled });
+          setErrorMsg(data.error || "Attendee is not approved for this event");
+          setScanState("error");
+          return;
+        }
+
+        // 5. Invalid pass (Red ✕, low buzz, 250ms)
+        if (data.status === "INVALID_PASS" || res.status === 404) {
+          playScannerFeedback("INVALID_PASS", { sound: soundEnabled });
+          setErrorMsg(data.error || "Invalid pass — pass not found");
+          setScanState("error");
+          return;
+        }
+
+        // 6. Access denied / Zone restricted
+        if (res.status === 403 && (data.accessDenied || data.status === "ACCESS_DENIED")) {
+          playScannerFeedback("NOT_APPROVED", { sound: soundEnabled });
+          setAccessDeniedMsg(data.error || "This pass is not authorized for this gate / zone");
+          setScanState("access_denied");
+          return;
+        }
+
+        // 7. General server error
+        if (!res.ok) {
+          playScannerFeedback("NETWORK_ERROR", { sound: soundEnabled });
+          setErrorMsg(data.error || "Verification failed");
+          setScanState("error");
+          return;
+        }
       } catch {
-        playScannerFeedback("error", { sound: soundEnabled });
-        setErrorMsg("Network error. Check your connection.");
+        playScannerFeedback("NETWORK_ERROR", { sound: soundEnabled });
+        setErrorMsg("Network error. Check connection.");
         setScanState("error");
       }
     },
@@ -297,18 +361,24 @@ export default function ScanEventPage() {
           )
         );
 
-        if (res.status === 403 && (data.accessDenied || data.status === "ACCESS_DENIED")) {
-          playScannerFeedback("access_denied", { sound: soundEnabled });
-          setAccessDeniedMsg(data.error ?? "Access denied");
+        if (data.status === "CHECKED_IN" || data.success) {
+          playScannerFeedback("CHECKED_IN", { sound: soundEnabled });
+        } else if (data.status === "ALREADY_CHECKED_IN" || data.alreadyCheckedIn) {
+          playScannerFeedback("ALREADY_CHECKED_IN", { sound: soundEnabled });
+        } else if (data.status === "WRONG_EVENT") {
+          playScannerFeedback("WRONG_EVENT", { sound: soundEnabled });
+        } else if (data.status === "NOT_APPROVED") {
+          playScannerFeedback("NOT_APPROVED", { sound: soundEnabled });
+        } else if (data.status === "INVALID_PASS" || res.status === 404) {
+          playScannerFeedback("INVALID_PASS", { sound: soundEnabled });
+        } else if (res.status === 403 && (data.accessDenied || data.status === "ACCESS_DENIED")) {
+          playScannerFeedback("NOT_APPROVED", { sound: soundEnabled });
+          setAccessDeniedMsg(data.error || "Access denied for this gate");
           setScanState("access_denied");
           setManualMode(false);
           lastTokenRef.current = passData.pass_token;
-        } else if (!res.ok) {
-          playScannerFeedback("error", { sound: soundEnabled });
-        } else if (data.status === "ALREADY_CHECKED_IN" || data.alreadyCheckedIn) {
-          playScannerFeedback("duplicate", { sound: soundEnabled });
-        } else if (data.status === "CHECKED_IN" || data.success) {
-          playScannerFeedback("success", { sound: soundEnabled });
+        } else {
+          playScannerFeedback("NETWORK_ERROR", { sound: soundEnabled });
         }
       } finally {
         setCheckingInId(null);
@@ -418,7 +488,7 @@ export default function ScanEventPage() {
 
           {/* Audio Chime / Haptic toggle */}
           <button
-            onClick={() => setSoundEnabled((s) => !s)}
+            onClick={toggleSound}
             className="flex items-center gap-1.5 bg-white/[0.06] border border-white/[0.08] rounded-full px-2.5 py-1.5 text-[11px] font-medium text-white/60 hover:text-white/80 transition-colors"
             title={soundEnabled ? "Mute scan feedback sound" : "Unmute scan feedback sound"}
             aria-label={soundEnabled ? "Mute audio" : "Unmute audio"}
@@ -622,9 +692,9 @@ export default function ScanEventPage() {
             {/* Bottom hint */}
             {isScannerActive && (
               <div className="shrink-0 flex items-center justify-center gap-2 px-5 pt-2">
-                <ScanLine className="w-3.5 h-3.5 text-white/15" />
-                <p className="text-xs text-white/20">
-                  Scanning · Approved passes only · Duplicate check-ins blocked
+                <ScanLine className="w-3.5 h-3.5 text-white/20" />
+                <p className="text-xs text-white/30">
+                  Ready to scan · Approved passes only · Duplicate check-ins blocked
                 </p>
               </div>
             )}

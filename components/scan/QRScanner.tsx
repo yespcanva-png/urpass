@@ -170,8 +170,8 @@ export default function QRScanner({ onScan, active }: Props) {
       {/* Status indicator */}
       {started && (
         <div className="flex items-center gap-2">
-          <span className="w-1.5 h-1.5 rounded-full bg-brand animate-pulse shrink-0" />
-          <p className="text-xs text-white/30">Hold the QR code steady in the frame</p>
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+          <p className="text-xs text-white/60 font-medium">Ready to scan</p>
         </div>
       )}
     </div>

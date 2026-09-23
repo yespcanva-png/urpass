@@ -153,8 +153,20 @@ export async function POST(req: NextRequest) {
     .single();
 
   if (!pass) {
+    // Check if pass belongs to a different event
+    const { data: otherEventPass } = await safeMaybeSingle(
+      supabase.from("passes").select("id, event_id").eq("pass_token", cleanPassToken)
+    );
+
+    if (otherEventPass) {
+      return NextResponse.json(
+        { error: "This pass is registered for a different event.", status: "WRONG_EVENT", scanOperationId },
+        { status: 404 }
+      );
+    }
+
     return NextResponse.json(
-      { error: "Invalid pass — not found for this event", status: "INVALID", scanOperationId },
+      { error: "Invalid pass — not found.", status: "INVALID_PASS", scanOperationId },
       { status: 404 }
     );
   }

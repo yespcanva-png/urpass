@@ -269,6 +269,9 @@ export default function SupportWidget() {
             sm:left-auto sm:right-6 sm:bottom-24 sm:w-[400px] sm:max-h-[min(680px,calc(100vh-120px))] sm:rounded-2xl sm:border sm:border-neutral-200 sm:shadow-2xl sm:shadow-neutral-900/15
             animate-in fade-in slide-in-from-bottom-4 sm:slide-in-from-bottom-2 duration-200
           `}
+          style={{
+            paddingBottom: "max(16px, env(safe-area-inset-bottom))",
+          }}
         >
           {/* Mobile Drag Handle */}
           <div className="sm:hidden pt-2.5 pb-1 flex justify-center">
@@ -561,7 +564,7 @@ export default function SupportWidget() {
                       </>
                     ) : (
                       <>
-                        <span>Send to Support</span>
+                        <span>Send message</span>
                         <ArrowRight className="w-3.5 h-3.5" />
                       </>
                     )}
@@ -583,6 +586,8 @@ export default function SupportWidget() {
           ───────────────────────────────────────────────────────────── */}
       <div
         className={`fixed z-50 transition-all duration-200 ${
+          isOpen ? "max-sm:hidden" : ""
+        } ${
           isDashboardRoute
             ? "right-5 bottom-20 lg:bottom-6 lg:right-6"
             : "right-5 bottom-5 sm:right-6 sm:bottom-6"

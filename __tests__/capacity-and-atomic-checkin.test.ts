@@ -423,20 +423,20 @@ describe("P0: Scanner Sound & Haptics", () => {
       writable: true,
     });
 
-    // Test success feedback
-    playScannerFeedback("success", { sound: false, haptics: true });
-    expect(vibrateMock).toHaveBeenCalledWith([70]);
+    // Test success / CHECKED_IN feedback (80ms)
+    playScannerFeedback("CHECKED_IN", { sound: false, haptics: true });
+    expect(vibrateMock).toHaveBeenCalledWith(80);
 
-    // Test duplicate feedback
-    playScannerFeedback("duplicate", { sound: false, haptics: true });
-    expect(vibrateMock).toHaveBeenCalledWith([120, 80, 120]);
+    // Test duplicate / ALREADY_CHECKED_IN feedback ([150, 80, 150])
+    playScannerFeedback("ALREADY_CHECKED_IN", { sound: false, haptics: true });
+    expect(vibrateMock).toHaveBeenCalledWith([150, 80, 150]);
 
-    // Test access denied feedback
-    playScannerFeedback("access_denied", { sound: false, haptics: true });
-    expect(vibrateMock).toHaveBeenCalledWith([250]);
+    // Test invalid / not approved / wrong event feedback (250ms)
+    playScannerFeedback("INVALID_PASS", { sound: false, haptics: true });
+    expect(vibrateMock).toHaveBeenCalledWith(250);
 
-    // Test error feedback
-    playScannerFeedback("error", { sound: false, haptics: true });
-    expect(vibrateMock).toHaveBeenCalledWith([250]);
+    // Test network error feedback ([100, 50, 100])
+    playScannerFeedback("NETWORK_ERROR", { sound: false, haptics: true });
+    expect(vibrateMock).toHaveBeenCalledWith([100, 50, 100]);
   });
 });
