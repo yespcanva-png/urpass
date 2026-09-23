@@ -16,10 +16,23 @@ import {
   ShieldX,
   Volume2,
   VolumeX,
+  Wifi,
+  WifiOff,
+  CloudUpload,
+  RefreshCw,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { createClient } from "@/lib/supabase/client";
 import { playScannerFeedback, unlockAudioContext } from "@/lib/scanner-feedback";
+import {
+  saveEventManifest,
+  getManifestMeta,
+  searchOfflineAttendees,
+  verifyPassOffline,
+  getQueueStats,
+  syncOfflineQueue,
+  type OfflineVerificationResult,
+} from "@/lib/offline-scanner";
 
 const QRScanner = dynamic(() => import("@/components/scan/QRScanner"), { ssr: false });
 
@@ -30,6 +43,7 @@ interface ScanResult {
   passType: string;
   checkedInAt?: string | null;
   gateName?: string | null;
+  offline?: boolean;
 }
 
 interface FeedEntry {
@@ -92,6 +106,18 @@ export default function ScanEventPage() {
   const [searchResults, setSearchResults] = useState<SearchAttendee[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [checkingInId, setCheckingInId] = useState<string | null>(null);
+
+  // Offline state & synchronization
+  const [isOnline, setIsOnline] = useState<boolean>(
+    typeof navigator !== "undefined" ? navigator.onLine : true
+  );
+  const [cachedPassCount, setCachedPassCount] = useState<number>(0);
+  const [queuePending, setQueuePending] = useState<number>(0);
+  const [isSyncing, setIsSyncing] = useState<boolean>(false);
+  const [isRefreshingCache, setIsRefreshingCache] = useState<boolean>(false);
+  const [syncBanner, setSyncBanner] = useState<{ message: string; type: "success" | "warning" } | null>(null);
+
+  const selectedGate = gates.find((g) => g.id === selectedGateId) ?? null;
 
   const lastTokenRef = useRef<string | null>(null);
   const cooldownRef = useRef(false);
@@ -200,7 +226,140 @@ export default function ScanEventPage() {
     return () => { supabase.removeChannel(channel); };
   }, [eventId]);
 
-  // Debounced attendee search
+  // Refresh local offline manifest cache from server
+  const refreshManifest = useCallback(async () => {
+    setIsRefreshingCache(true);
+    try {
+      const res = await fetch(`/api/scan/manifest?eventId=${eventId}`);
+      if (res.ok) {
+        const data = await res.json();
+        await saveEventManifest(eventId, data.eventName, data.passes, data.gates);
+        setCachedPassCount(data.totalPasses || 0);
+      }
+    } catch {
+      const meta = await getManifestMeta(eventId);
+      if (meta) setCachedPassCount(meta.totalPasses);
+    } finally {
+      setIsRefreshingCache(false);
+    }
+  }, [eventId]);
+
+  // Synchronize offline queued scans to the server
+  const syncPendingScans = useCallback(async () => {
+    if (isSyncing) return;
+    setIsSyncing(true);
+    try {
+      const report = await syncOfflineQueue(eventId);
+      const stats = await getQueueStats(eventId);
+      setQueuePending(stats.pending);
+
+      if (report.synced > 0 && report.conflicts === 0) {
+        setSyncBanner({
+          message: `Synchronized ${report.synced} offline check-in${report.synced > 1 ? "s" : ""} to the server.`,
+          type: "success",
+        });
+        setTimeout(() => setSyncBanner(null), 6000);
+      } else if (report.conflicts > 0) {
+        setSyncBanner({
+          message: `Synced ${report.synced} scan(s), but detected ${report.conflicts} offline duplicate conflict across gates!`,
+          type: "warning",
+        });
+        setTimeout(() => setSyncBanner(null), 9000);
+      }
+    } catch {
+      // Ignore network sync errors
+    } finally {
+      setIsSyncing(false);
+    }
+  }, [eventId, isSyncing]);
+
+  // Listen for online/offline events & initialize cache/queue counters
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    getManifestMeta(eventId).then((meta) => {
+      if (meta) setCachedPassCount(meta.totalPasses);
+    });
+    getQueueStats(eventId).then((stats) => {
+      setQueuePending(stats.pending);
+    });
+
+    if (navigator.onLine) {
+      refreshManifest();
+    }
+
+    const handleOnline = () => {
+      setIsOnline(true);
+      refreshManifest();
+      syncPendingScans();
+    };
+    const handleOffline = () => {
+      setIsOnline(false);
+    };
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, [eventId, refreshManifest, syncPendingScans]);
+
+  const handleOfflineResult = useCallback(
+    (offRes: OfflineVerificationResult) => {
+      if (offRes.status === "CHECKED_IN") {
+        playScannerFeedback("CHECKED_IN", { sound: soundEnabled });
+        setResult({
+          attendee: offRes.attendee!,
+          passType: offRes.passType || "participant",
+          checkedInAt: offRes.checkedInAt,
+          gateName: selectedGate?.name,
+          offline: true,
+        });
+        setScanState("success");
+        setScanCount((c) => c + 1);
+        setFeed((prev) => [
+          {
+            id: offRes.scanOperationId,
+            name: `${offRes.attendee!.name} (offline)`,
+            pass_type: offRes.passType || "participant",
+            ts: offRes.checkedInAt || new Date().toISOString(),
+          },
+          ...prev,
+        ].slice(0, 20));
+        getQueueStats(eventId).then((s) => setQueuePending(s.pending));
+        return;
+      }
+
+      if (offRes.status === "ALREADY_CHECKED_IN") {
+        playScannerFeedback("ALREADY_CHECKED_IN", { sound: soundEnabled });
+        setResult({
+          attendee: offRes.attendee!,
+          passType: offRes.passType || "participant",
+          checkedInAt: offRes.checkedInAt,
+          gateName: selectedGate?.name,
+          offline: true,
+        });
+        setScanState("duplicate");
+        return;
+      }
+
+      if (offRes.status === "ACCESS_DENIED") {
+        playScannerFeedback("NOT_APPROVED", { sound: soundEnabled });
+        setAccessDeniedMsg(offRes.error || "Pass is not authorized for this gate / zone");
+        setScanState("access_denied");
+        return;
+      }
+
+      playScannerFeedback("INVALID_PASS", { sound: soundEnabled });
+      setErrorMsg(offRes.error || "Pass not found in offline database");
+      setScanState("error");
+    },
+    [eventId, selectedGate?.name, soundEnabled]
+  );
+
+  // Debounced attendee search (online + offline fallback)
   useEffect(() => {
     if (!manualMode) return;
     if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
@@ -214,18 +373,47 @@ export default function ScanEventPage() {
 
     searchTimerRef.current = setTimeout(async () => {
       setSearchLoading(true);
-      const supabase = createClient();
-      const { data } = await supabase
-        .from("attendees")
-        .select("id, name, email, pass_type, pass_status")
-        .eq("event_id", eventId)
-        .eq("application_status", "approved")
-        .ilike("name", `%${searchQuery}%`)
-        .limit(10);
-      setSearchResults((data as SearchAttendee[]) ?? []);
-      setSearchLoading(false);
+      if (!isOnline) {
+        const matches = await searchOfflineAttendees(eventId, searchQuery);
+        setSearchResults(
+          matches.map((m) => ({
+            id: m.attendeeId,
+            name: m.name,
+            email: m.email,
+            pass_type: m.passType,
+            pass_status: m.checkedIn ? "checked_in" : "approved",
+          }))
+        );
+        setSearchLoading(false);
+        return;
+      }
+
+      try {
+        const supabase = createClient();
+        const { data } = await supabase
+          .from("attendees")
+          .select("id, name, email, pass_type, pass_status")
+          .eq("event_id", eventId)
+          .eq("application_status", "approved")
+          .ilike("name", `%${searchQuery}%`)
+          .limit(10);
+        setSearchResults((data as SearchAttendee[]) ?? []);
+      } catch {
+        const matches = await searchOfflineAttendees(eventId, searchQuery);
+        setSearchResults(
+          matches.map((m) => ({
+            id: m.attendeeId,
+            name: m.name,
+            email: m.email,
+            pass_type: m.passType,
+            pass_status: m.checkedIn ? "checked_in" : "approved",
+          }))
+        );
+      } finally {
+        setSearchLoading(false);
+      }
     }, 300);
-  }, [searchQuery, manualMode, eventId]);
+  }, [searchQuery, manualMode, eventId, isOnline]);
 
   const verify = useCallback(
     async (rawToken: string) => {
@@ -235,6 +423,19 @@ export default function ScanEventPage() {
       setTimeout(() => { cooldownRef.current = false; }, SCAN_LOCK_MS);
 
       setScanState("verifying");
+
+      // ── Offline Verification Flow ──
+      if (!isOnline) {
+        const offRes = await verifyPassOffline({
+          eventId,
+          passToken: rawToken,
+          gateId: selectedGateId,
+          gateName: selectedGate?.name,
+          checkInMethod: "qr",
+        });
+        handleOfflineResult(offRes);
+        return;
+      }
 
       const scanOperationId = typeof crypto !== "undefined" && crypto.randomUUID
         ? crypto.randomUUID()
@@ -309,12 +510,19 @@ export default function ScanEventPage() {
           return;
         }
       } catch {
-        playScannerFeedback("NETWORK_ERROR", { sound: soundEnabled });
-        setErrorMsg("Network error. Check connection.");
-        setScanState("error");
+        // Network dropped during scan — fallback to offline verification
+        setIsOnline(false);
+        const offRes = await verifyPassOffline({
+          eventId,
+          passToken: rawToken,
+          gateId: selectedGateId,
+          gateName: selectedGate?.name,
+          checkInMethod: "qr",
+        });
+        handleOfflineResult(offRes);
       }
     },
-    [eventId, selectedGateId, soundEnabled]
+    [eventId, isOnline, selectedGateId, selectedGate?.name, soundEnabled, handleOfflineResult]
   );
 
   // Manual check-in for a specific attendee
@@ -324,6 +532,22 @@ export default function ScanEventPage() {
       setCheckingInId(attendee.id);
 
       try {
+        if (!isOnline) {
+          const offRes = await verifyPassOffline({
+            eventId,
+            passToken: attendee.name,
+            gateId: selectedGateId,
+            gateName: selectedGate?.name,
+            checkInMethod: "manual",
+          });
+          setSearchResults((prev) =>
+            prev.map((a) => (a.id === attendee.id ? { ...a, pass_status: "checked_in" } : a))
+          );
+          handleOfflineResult(offRes);
+          setManualMode(false);
+          return;
+        }
+
         // Fetch the pass token for this attendee
         const supabase = createClient();
         const { data: passData } = await supabase
@@ -380,11 +604,25 @@ export default function ScanEventPage() {
         } else {
           playScannerFeedback("NETWORK_ERROR", { sound: soundEnabled });
         }
+      } catch {
+        setIsOnline(false);
+        const offRes = await verifyPassOffline({
+          eventId,
+          passToken: attendee.name,
+          gateId: selectedGateId,
+          gateName: selectedGate?.name,
+          checkInMethod: "manual",
+        });
+        setSearchResults((prev) =>
+          prev.map((a) => (a.id === attendee.id ? { ...a, pass_status: "checked_in" } : a))
+        );
+        handleOfflineResult(offRes);
+        setManualMode(false);
       } finally {
         setCheckingInId(null);
       }
     },
-    [eventId, selectedGateId, checkingInId, soundEnabled]
+    [eventId, isOnline, selectedGateId, selectedGate?.name, checkingInId, soundEnabled, handleOfflineResult]
   );
 
   const reset = useCallback(() => {
@@ -422,28 +660,79 @@ export default function ScanEventPage() {
     }
   }, [scanState, reset]);
 
-  const selectedGate = gates.find((g) => g.id === selectedGateId) ?? null;
-
   return (
     <div className="min-h-screen bg-neutral-950 text-white flex flex-col page-in">
 
       {/* ── Top bar ────────────────────────────────────────────────── */}
-      <div className="shrink-0 flex items-center justify-between px-5 h-14 border-b border-white/[0.06]">
-        <button
-          onClick={() => router.push("/scan")}
-          className="flex items-center gap-1.5 text-sm text-white/40 hover:text-white/80 transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span className="hidden sm:inline">Events</span>
-        </button>
+      <div className="shrink-0 flex items-center justify-between px-4 sm:px-5 h-14 border-b border-white/[0.06] gap-2">
+        <div className="flex items-center gap-2.5 shrink-0">
+          <button
+            onClick={() => router.push("/scan")}
+            className="flex items-center gap-1.5 text-sm text-white/40 hover:text-white/80 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span className="hidden sm:inline">Events</span>
+          </button>
+
+          {/* Online / Offline status badge */}
+          <div
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors ${
+              isOnline
+                ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
+                : "bg-amber-500/15 border-amber-500/30 text-amber-300"
+            }`}
+            title={
+              isOnline
+                ? `Online · ${cachedPassCount} passes cached locally`
+                : `Offline · Scanning from local cache of ${cachedPassCount} passes`
+            }
+          >
+            {isOnline ? (
+              <Wifi className="w-3 h-3 text-emerald-400" />
+            ) : (
+              <WifiOff className="w-3 h-3 text-amber-400 animate-pulse" />
+            )}
+            <span className="hidden sm:inline">{isOnline ? "Online" : "Offline"}</span>
+            {cachedPassCount > 0 && (
+              <span className="opacity-50 text-[10px] hidden md:inline">
+                ({cachedPassCount})
+              </span>
+            )}
+          </div>
+
+          {/* Sync Queue button if pending items exist */}
+          {queuePending > 0 && (
+            <button
+              onClick={syncPendingScans}
+              disabled={isSyncing || !isOnline}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-brand/20 text-brand-200 border border-brand/30 hover:bg-brand/30 transition-all disabled:opacity-50 animate-pulse"
+              title={isOnline ? "Click to sync offline check-ins" : "Will auto-sync when network returns"}
+            >
+              <CloudUpload className={`w-3 h-3 ${isSyncing ? "animate-spin" : ""}`} />
+              <span>{queuePending} queued</span>
+            </button>
+          )}
+
+          {/* Refresh cache icon */}
+          {isOnline && (
+            <button
+              onClick={refreshManifest}
+              disabled={isRefreshingCache}
+              className="p-1.5 rounded-full text-white/30 hover:text-white/70 hover:bg-white/[0.06] transition-colors"
+              title="Refresh local offline pass cache"
+            >
+              <RefreshCw className={`w-3 h-3 ${isRefreshingCache ? "animate-spin" : ""}`} />
+            </button>
+          )}
+        </div>
 
         {/* Event name / wordmark */}
-        <div className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center">
-          <span className="text-xs font-semibold text-white/70 max-w-[180px] truncate text-center">
+        <div className="flex flex-col items-center min-w-0">
+          <span className="text-xs font-semibold text-white/70 max-w-[140px] sm:max-w-[200px] truncate text-center">
             {eventName || "URPASS Scanner"}
           </span>
           {eventName && (
-            <span className="text-[10px] text-white/25 mt-0.5 tracking-wide">QR Check-in</span>
+            <span className="text-[10px] text-white/25 mt-0.5 tracking-wide hidden sm:block">QR Check-in</span>
           )}
         </div>
 
@@ -527,6 +816,28 @@ export default function ScanEventPage() {
           </div>
         </div>
       </div>
+
+      {/* ── Offline Reconnection / Sync Result Banner ────────────────── */}
+      {syncBanner && (
+        <div
+          className={`shrink-0 px-5 py-2.5 text-xs flex items-center justify-between border-b transition-all ${
+            syncBanner.type === "success"
+              ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-300"
+              : "bg-amber-500/10 border-amber-500/20 text-amber-300"
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+            <span>{syncBanner.message}</span>
+          </div>
+          <button
+            onClick={() => setSyncBanner(null)}
+            className="text-white/40 hover:text-white text-xs ml-3"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       {/* ── Dropdown backdrop ───────────────────────────────────────── */}
       {gateDropdownOpen && (
@@ -660,6 +971,7 @@ export default function ScanEventPage() {
                   passType={result.passType}
                   checkedInAt={result.checkedInAt}
                   gateName={result.gateName}
+                  offline={result.offline}
                   onReset={reset}
                   progress={resetProgress}
                 />
@@ -673,6 +985,7 @@ export default function ScanEventPage() {
                   passType={result.passType}
                   checkedInAt={result.checkedInAt}
                   gateName={result.gateName}
+                  offline={result.offline}
                   onReset={reset}
                   progress={resetProgress}
                 />
@@ -743,6 +1056,7 @@ function ResultCard({
   passType,
   checkedInAt,
   gateName,
+  offline,
   onReset,
   progress,
 }: {
@@ -751,6 +1065,7 @@ function ResultCard({
   passType: string;
   checkedInAt?: string | null;
   gateName?: string | null;
+  offline?: boolean;
   onReset: () => void;
   progress: number;
 }) {
@@ -797,6 +1112,12 @@ function ResultCard({
             <p className="text-xs" style={{ color: `${color}99` }}>
               {ok ? "Attendee verified and admitted" : "This pass was already scanned"}
             </p>
+            {offline && (
+              <span className="inline-flex items-center gap-1 mt-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                <WifiOff className="w-2.5 h-2.5" />
+                Validated offline · Queued to sync
+              </span>
+            )}
             {checkedInAt && (
               <p className="text-xs mt-1" style={{ color: `${color}80` }}>
                 at {new Date(checkedInAt).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true })}
