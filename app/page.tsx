@@ -14,6 +14,13 @@ import {
   Megaphone,
   Users2,
   Mic,
+  Bot,
+  Terminal,
+  Cpu,
+  Sparkles,
+  ArrowRight,
+  ShieldCheck,
+  CheckCircle2,
 } from "lucide-react";
 
 export const metadata: Metadata = {
@@ -152,6 +159,95 @@ function ScanResult() {
       <div className="mt-4 pt-4 border-t border-white/10">
         <p className="text-xs text-white/50">Checked in</p>
         <p className="text-sm font-semibold text-white mt-0.5">9:42 AM</p>
+      </div>
+    </div>
+  );
+}
+
+// ─── MCP Agent Mockup ────────────────────────────────────────────────────────
+function McpMockup() {
+  return (
+    <div className="bg-neutral-900 rounded-3xl border border-neutral-800 shadow-2xl overflow-hidden w-full max-w-lg text-left font-sans">
+      {/* Window Title Bar */}
+      <div className="px-4 sm:px-5 py-3.5 bg-neutral-950/90 border-b border-neutral-800 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-2.5 h-2.5 rounded-full bg-neutral-700" />
+          <div className="w-2.5 h-2.5 rounded-full bg-neutral-700" />
+          <div className="w-2.5 h-2.5 rounded-full bg-neutral-700" />
+          <span className="ml-2 text-xs font-mono text-neutral-400">Claude Desktop · URPASS MCP</span>
+        </div>
+        <div className="flex items-center gap-1.5 bg-emerald-500/10 text-emerald-400 px-2.5 py-1 rounded-full text-[10px] font-mono border border-emerald-500/20">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          10 tools active
+        </div>
+      </div>
+
+      {/* Conversation Thread */}
+      <div className="p-4 sm:p-6 flex flex-col gap-3.5 text-xs">
+        {/* User Prompt 1 */}
+        <div className="flex items-start gap-2.5 justify-end">
+          <div className="bg-brand text-white px-4 py-2.5 rounded-2xl rounded-tr-sm max-w-[85%] leading-relaxed shadow-sm">
+            How is gate throughput looking for today&apos;s AI Summit?
+          </div>
+        </div>
+
+        {/* Tool Invocation 1 */}
+        <div className="flex items-center gap-2 px-3 py-1.5 bg-neutral-800/80 border border-neutral-700/60 rounded-xl text-[11px] text-neutral-300 font-mono self-start">
+          <Cpu className="w-3.5 h-3.5 text-brand-200 shrink-0" />
+          <span>Called <strong className="text-white">get_event_stats</strong>(event_id: &quot;ai-summit-2026&quot;)</span>
+        </div>
+
+        {/* Assistant Response 1 */}
+        <div className="bg-neutral-800/50 border border-neutral-700/50 rounded-2xl p-4 text-neutral-300 space-y-3">
+          <p className="leading-relaxed">
+            Attendance velocity is at its morning peak. Here is the live telemetry:
+          </p>
+          <div className="grid grid-cols-3 gap-2 py-0.5">
+            <div className="bg-neutral-900/90 p-2.5 rounded-xl border border-neutral-800 text-center">
+              <p className="text-base sm:text-lg font-bold text-white">742</p>
+              <p className="text-[10px] text-neutral-400 mt-0.5">Checked In</p>
+            </div>
+            <div className="bg-neutral-900/90 p-2.5 rounded-xl border border-neutral-800 text-center">
+              <p className="text-base sm:text-lg font-bold text-emerald-400">84.3%</p>
+              <p className="text-[10px] text-neutral-400 mt-0.5">Turnout</p>
+            </div>
+            <div className="bg-neutral-900/90 p-2.5 rounded-xl border border-neutral-800 text-center">
+              <p className="text-base sm:text-lg font-bold text-brand-300">42/min</p>
+              <p className="text-[10px] text-neutral-400 mt-0.5">Velocity</p>
+            </div>
+          </div>
+          <p className="text-[11px] text-neutral-400 leading-normal">
+            North Gate is handling 65% of arrivals. You have 12 pending VIP speaker applications waiting for approval.
+          </p>
+        </div>
+
+        {/* User Prompt 2 */}
+        <div className="flex items-start gap-2.5 justify-end">
+          <div className="bg-brand text-white px-4 py-2.5 rounded-2xl rounded-tr-sm max-w-[85%] leading-relaxed shadow-sm">
+            Approve all 12 speakers and issue their digital passes.
+          </div>
+        </div>
+
+        {/* Tool Invocation 2 */}
+        <div className="flex items-center gap-2 px-3 py-1.5 bg-neutral-800/80 border border-neutral-700/60 rounded-xl text-[11px] text-neutral-300 font-mono self-start">
+          <Sparkles className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+          <span>Called <strong className="text-white">approve_attendee</strong> (12 attendees)</span>
+        </div>
+
+        {/* Assistant Response 2 */}
+        <div className="bg-neutral-800/50 border border-neutral-700/50 rounded-2xl p-3.5 text-neutral-300 text-xs flex items-center gap-2.5">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span>12 speaker passes generated and emailed with Apple Wallet links.</span>
+        </div>
+      </div>
+
+      {/* Terminal Footer */}
+      <div className="px-4 sm:px-5 py-3 bg-neutral-950/90 border-t border-neutral-800 flex items-center justify-between text-xs font-mono text-neutral-500">
+        <span className="flex items-center gap-2 text-neutral-400">
+          <Terminal className="w-3.5 h-3.5 text-brand-300" />
+          npx urpass-mcp
+        </span>
+        <span className="text-neutral-500">stdio transport</span>
       </div>
     </div>
   );
@@ -363,7 +459,104 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── 06 EVENT TYPES ───────────────────────────────────────────────── */}
+      {/* ── 06 MODEL CONTEXT PROTOCOL (MCP) ─────────────────────────────── */}
+      <section id="mcp" className="py-16 sm:py-28 px-4 sm:px-8 bg-neutral-950 text-white border-t border-neutral-800/80 relative overflow-hidden">
+        {/* Ambient Glows */}
+        <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-96 h-96 bg-brand-600/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-10 right-1/4 w-80 h-80 bg-purple-600/10 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center relative z-10">
+          {/* Left Column: Copy & Value Props */}
+          <AnimateIn from="left">
+            <div>
+              <div className="inline-flex items-center gap-2 bg-purple-500/10 border border-purple-500/20 text-purple-300 text-[11px] sm:text-xs font-semibold tracking-wider px-3.5 py-1.5 rounded-full mb-6">
+                <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse" />
+                MODEL CONTEXT PROTOCOL (MCP)
+              </div>
+
+              <h2 className="text-3xl sm:text-5xl font-semibold tracking-tight leading-[1.1] mb-5 sm:mb-6">
+                Manage your events with AI. <br className="hidden sm:inline" />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-brand-300 to-indigo-300">
+                  Inside Claude &amp; Cursor.
+                </span>
+              </h2>
+
+              <p className="text-white/60 text-sm sm:text-base leading-relaxed mb-8 max-w-lg">
+                URPASS is the first event ticketing platform with native Model Context Protocol support.
+                Connect Claude Desktop, Cursor, or autonomous agents to query attendance, approve registrations, issue passes, and manage gate check-ins conversationally.
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4 mb-8">
+                <div className="p-4 bg-white/5 border border-white/10 rounded-2xl">
+                  <div className="w-8 h-8 rounded-xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-purple-300 mb-2.5">
+                    <Bot className="w-4 h-4" />
+                  </div>
+                  <h3 className="font-semibold text-sm text-white mb-1">Conversational Ops</h3>
+                  <p className="text-xs text-white/50 leading-relaxed">
+                    Ask: &quot;How many checked in at North Gate?&quot; or &quot;Approve all speaker passes.&quot;
+                  </p>
+                </div>
+
+                <div className="p-4 bg-white/5 border border-white/10 rounded-2xl">
+                  <div className="w-8 h-8 rounded-xl bg-brand-500/20 border border-brand-500/30 flex items-center justify-center text-brand-300 mb-2.5">
+                    <Terminal className="w-4 h-4" />
+                  </div>
+                  <h3 className="font-semibold text-sm text-white mb-1">1-Minute Setup</h3>
+                  <p className="text-xs text-white/50 leading-relaxed">
+                    Add <code className="text-purple-300 font-mono text-[11px]">npx urpass-mcp</code> to your Claude Desktop or Cursor config.
+                  </p>
+                </div>
+
+                <div className="p-4 bg-white/5 border border-white/10 rounded-2xl">
+                  <div className="w-8 h-8 rounded-xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-300 mb-2.5">
+                    <Cpu className="w-4 h-4" />
+                  </div>
+                  <h3 className="font-semibold text-sm text-white mb-1">10 Production Tools</h3>
+                  <p className="text-xs text-white/50 leading-relaxed">
+                    Typed schemas for events, attendee rosters, stats, pass tokens, and check-in.
+                  </p>
+                </div>
+
+                <div className="p-4 bg-white/5 border border-white/10 rounded-2xl">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-300 mb-2.5">
+                    <ShieldCheck className="w-4 h-4" />
+                  </div>
+                  <h3 className="font-semibold text-sm text-white mb-1">Scoped Security</h3>
+                  <p className="text-xs text-white/50 leading-relaxed">
+                    Strict Bearer token auth sandboxed to your organizer account and database RLS.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3">
+                <Link
+                  href="/mcp-event-management"
+                  className="inline-flex items-center gap-2 bg-brand text-white px-5 py-3 rounded-xl text-xs sm:text-sm font-semibold hover:bg-brand-600 transition-colors shadow-lg shadow-brand-500/20"
+                >
+                  Explore MCP Platform
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+                <Link
+                  href="/docs#mcp"
+                  className="inline-flex items-center gap-2 border border-white/20 bg-white/5 px-5 py-3 rounded-xl text-xs sm:text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white transition-colors"
+                >
+                  <Terminal className="w-3.5 h-3.5 text-neutral-400" />
+                  View Setup Docs
+                </Link>
+              </div>
+            </div>
+          </AnimateIn>
+
+          {/* Right Column: Interactive Claude Desktop MCP Mockup */}
+          <AnimateIn from="right" delay={100}>
+            <div className="flex justify-center lg:justify-end">
+              <McpMockup />
+            </div>
+          </AnimateIn>
+        </div>
+      </section>
+
+      {/* ── 07 EVENT TYPES ───────────────────────────────────────────────── */}
       <section className="py-14 sm:py-24 px-4 sm:px-8 bg-white">
         <div className="max-w-5xl mx-auto text-center">
           <AnimateIn>
@@ -398,7 +591,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── 07 PRICING ───────────────────────────────────────────────────── */}
+      {/* ── 08 PRICING ───────────────────────────────────────────────────── */}
       <section id="pricing" className="py-14 sm:py-28 px-4 sm:px-8 bg-neutral-50">
         <div className="max-w-5xl mx-auto">
           <AnimateIn>
@@ -454,10 +647,10 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── 08 FAQ ───────────────────────────────────────────────────────── */}
+      {/* ── 09 FAQ ───────────────────────────────────────────────────────── */}
       <FAQSection />
 
-      {/* ── 09 FINAL CTA ─────────────────────────────────────────────────── */}
+      {/* ── 10 FINAL CTA ─────────────────────────────────────────────────── */}
       <section className="py-16 sm:py-28 px-4 sm:px-8 bg-neutral-900 text-center">
         <AnimateIn>
           <div className="max-w-2xl mx-auto">

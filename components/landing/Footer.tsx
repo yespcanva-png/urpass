@@ -92,6 +92,12 @@ export default function Footer() {
                   Free Event Software
                 </Link>
               </li>
+              <li>
+                <Link href="/mcp-event-management" className="text-xs text-purple-300 hover:text-white transition-colors flex items-center gap-1.5 font-medium">
+                  <span className="w-1.5 h-1.5 rounded-full bg-purple-400"></span>
+                  Model Context Protocol (MCP)
+                </Link>
+              </li>
             </ul>
           </div>
 
