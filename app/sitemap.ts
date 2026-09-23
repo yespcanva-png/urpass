@@ -64,6 +64,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/multi-gate-event-check-in",
     "/event-check-in-app",
     "/qr-code-attendance-system",
+    // Enterprise & Multi-Location cluster
+    "/enterprise-event-management",
+    "/enterprise-event-registration",
+    "/corporate-event-management",
+    "/multi-location-event-management",
+    "/white-label-event-platform",
+    "/event-data-migration",
   ].map((path) => ({ url: `${BASE}${path}`, priority: 0.85, changeFrequency: "weekly" as const }));
 
   const useCasePages = [
