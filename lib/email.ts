@@ -11,11 +11,8 @@ function getResend() {
   return new Resend(RESEND_API_KEY);
 }
 
-// Resend requires a verified domain in production.
-// In dev you can use delivered@resend.dev to bypass domain verification.
-const FROM    = isDev
-  ? "URPASS <delivered@resend.dev>"
-  : "URPASS <noreply@urpass.space>";
+// Verified sending domain in Resend
+const FROM = process.env.EMAIL_FROM || "URPASS <noreply@urpass.space>";
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://urpass.space";
 const OWNER_EMAIL = "srinithin@yespstudio.com";
 
@@ -1167,11 +1164,15 @@ export async function sendSupportTicketNotificationToTeam({
       ]
     : undefined;
 
+  const teamEmails = Array.from(
+    new Set([SUPPORT_EMAIL, "srinithin@yespstudio.com"].filter(Boolean))
+  );
+
   await sendEmail({
     from: FROM,
-    to: SUPPORT_EMAIL,
+    to: teamEmails.length === 1 ? teamEmails[0] : teamEmails,
     replyTo: customerEmail,
-    subject: `[${ticketId}] ${topic} — ${customerEmail}`,
+    subject: `[Ticket #${ticketId}] ${topic} — ${customerEmail}`,
     attachments,
     html: `
 <!DOCTYPE html>

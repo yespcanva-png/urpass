@@ -132,8 +132,7 @@ export async function sendTestTicketEmail(
     }
 
     const resend = new Resend(apiKey);
-    const isDev = process.env.NODE_ENV === "development";
-    const from = isDev ? "URPASS <delivered@resend.dev>" : "URPASS <noreply@urpass.space>";
+    const from = process.env.EMAIL_FROM || "URPASS <noreply@urpass.space>";
 
     await resend.emails.send({
       from,
