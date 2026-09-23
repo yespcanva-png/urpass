@@ -194,7 +194,7 @@ export default function TrialConfirmationModal({
             <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
             <div className="text-xs leading-relaxed text-neutral-700">
               <p className="font-semibold text-neutral-900 mb-1">
-                Zero commitment &middot; No automatic charges
+                Zero commitment · No automatic charges
               </p>
               <p className="text-neutral-600">
                 You will immediately unlock 30 days of full {planName} access. No payment information is collected. When your trial ends on {formattedRenewalDate}, your account simply reverts to the Free tier unless you choose to subscribe.
@@ -249,7 +249,7 @@ export default function TrialConfirmationModal({
 
             <div className="flex items-center justify-center gap-2 text-[11px] text-neutral-400">
               <ShieldCheck className="w-3.5 h-3.5 text-neutral-400" />
-              <span>Instant activation &middot; No credit card or AutoPay required</span>
+              <span>Instant activation · No credit card or AutoPay required</span>
             </div>
           </div>
         </div>

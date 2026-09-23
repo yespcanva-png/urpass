@@ -322,7 +322,7 @@ export default function DashboardContent() {
             <div>
               <div className="flex items-center gap-2 mb-1 flex-wrap">
                 <span className="text-[10px] font-extrabold tracking-widest uppercase px-2 py-0.5 rounded-full bg-purple-500/30 text-purple-200 border border-purple-400/40">
-                  {trialInfo.planName.toUpperCase()} &middot; FREE TRIAL
+                  {trialInfo.planName.toUpperCase()} · FREE TRIAL
                 </span>
                 <span className="text-xs font-bold text-emerald-300">
                   {trialInfo.daysRemaining} {trialInfo.daysRemaining === 1 ? "day" : "days"} remaining
@@ -330,10 +330,10 @@ export default function DashboardContent() {
               </div>
               <p className="text-xs sm:text-sm text-white/90 font-medium">
                 {trialInfo.autopayCancelled
-                  ? `AutoPay cancelled &middot; Free trial access active until ${trialInfo.renewalDate}`
+                  ? `AutoPay cancelled · Free trial access active until ${trialInfo.renewalDate}`
                   : trialInfo.hasAutopay
                   ? `Your first payment of ₹${trialInfo.scheduledAmountRupees.toLocaleString("en-IN")} + taxes is scheduled for ${trialInfo.renewalDate}.`
-                  : `Free trial active until ${trialInfo.renewalDate} &middot; No card on file (reverts to Free plan)`}
+                  : `Free trial active until ${trialInfo.renewalDate} · No card on file (reverts to Free plan)`}
               </p>
             </div>
           </div>

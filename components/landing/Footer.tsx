@@ -49,7 +49,7 @@ export default function Footer() {
 
             <div className="mt-8 pt-6 border-t border-neutral-900 flex items-center gap-2 text-[11px] text-neutral-500">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>All Systems Operational &middot; Cloud Infrastructure &amp; Real-Time Sync</span>
+              <span>All Systems Operational · Cloud Infrastructure &amp; Real-Time Sync</span>
             </div>
           </div>
 
@@ -174,7 +174,7 @@ export default function Footer() {
         <div className="pt-8 border-t border-neutral-900 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-4 text-xs text-neutral-500">
             <span>&copy; 2026 URPASS. Built with precision for organizers.</span>
-            <span>&middot;</span>
+            <span>·</span>
             <span className="hidden sm:inline">Made in India</span>
           </div>
 

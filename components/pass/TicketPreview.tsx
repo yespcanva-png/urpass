@@ -220,7 +220,7 @@ export default function TicketPreview({
       <div className="border-b border-neutral-200 pb-3 mb-5 flex items-center justify-between text-xs text-neutral-500">
         <div className="flex items-center gap-2">
           <span className="font-bold text-neutral-900 tracking-wider">URPASS</span>
-          <span>&middot;</span>
+          <span>·</span>
           <span>Official Event Ticket</span>
         </div>
         <span className="font-mono text-[10px] text-neutral-400">A4 / Letter Format</span>

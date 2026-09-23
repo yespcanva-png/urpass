@@ -208,7 +208,7 @@ export default function PassDesigner({
             <div>
               <div className="flex items-center gap-2">
                 <h4 className="text-sm font-bold text-neutral-900">
-                  Custom Pass Design &middot; Pro Feature
+                  Custom Pass Design · Pro Feature
                 </h4>
                 <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
                   Pro Only

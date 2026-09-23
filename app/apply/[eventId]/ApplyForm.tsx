@@ -266,7 +266,7 @@ export default function ApplyForm({
               <div className="flex items-center gap-2 text-xs text-neutral-500 mb-2">
                 <CalendarDays className="w-3.5 h-3.5 shrink-0 text-brand" />
                 <span>
-                  {formattedDate} &middot; {event.start_time}
+                  {formattedDate} · {event.start_time}
                 </span>
               </div>
               <div className="flex items-center gap-2 text-xs text-neutral-500">
@@ -307,7 +307,7 @@ export default function ApplyForm({
             <div className="flex items-center gap-1.5 text-xs text-neutral-500">
               <CalendarDays className="w-3.5 h-3.5 text-brand shrink-0" />
               <span>
-                {formattedDate} &middot; {event.start_time}
+                {formattedDate} · {event.start_time}
               </span>
             </div>
             <div className="flex items-center gap-1.5 text-xs text-neutral-500">

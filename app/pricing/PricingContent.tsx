@@ -277,9 +277,9 @@ export default function PricingContent({
               </p>
               <div className="inline-flex items-center gap-2 text-xs font-medium text-neutral-500 mb-8 bg-neutral-100 px-3.5 py-1.5 rounded-full flex-wrap justify-center">
                 <span>No credit card or AutoPay required</span>
-                <span>&middot;</span>
+                <span>·</span>
                 <span>Instant full access</span>
-                <span>&middot;</span>
+                <span>·</span>
                 <span>One free activation per account</span>
               </div>
             </>
@@ -380,7 +380,7 @@ export default function PricingContent({
                         </Link>
                       )}
                       <p className={`text-[10px] text-center ${plan.highlight ? "text-white/40" : "text-neutral-400"}`}>
-                        30 days ₹0 &middot; No credit card required
+                        30 days ₹0 · No credit card required
                       </p>
                     </div>
                   ) : (

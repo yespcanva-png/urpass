@@ -184,7 +184,7 @@ export default function PassPreviewCard({
             }}
           >
             <CheckCircle className="w-3.5 h-3.5" />
-            <span>Valid Entry &middot; Show at entrance</span>
+            <span>Valid Entry · Show at entrance</span>
           </div>
 
           {/* Custom Footer Note */}

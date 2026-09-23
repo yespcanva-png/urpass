@@ -226,7 +226,7 @@ function InvoiceHistory({ invoices }: { invoices: Invoice[] }) {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <div>
           <p className="text-[10px] font-bold tracking-widest uppercase text-neutral-400">Invoices</p>
-          <p className="text-xs text-neutral-500 mt-1">Official tax invoices &middot; Secured via Razorpay.</p>
+          <p className="text-xs text-neutral-500 mt-1">Official tax invoices · Secured via Razorpay.</p>
         </div>
       </div>
 
@@ -266,7 +266,7 @@ function InvoiceHistory({ invoices }: { invoices: Invoice[] }) {
                       )}
                     </div>
                     <p className="text-xs text-neutral-400 mt-0.5">
-                      {invoice.customer_name || invoice.seller_name || "YESP Corporation"} &middot; {formatInvoiceDate(invoice.invoice_date)}
+                      {invoice.customer_name || invoice.seller_name || "YESP Corporation"} · {formatInvoiceDate(invoice.invoice_date)}
                     </p>
                   </div>
                   <p className="hidden md:block text-sm text-neutral-600">

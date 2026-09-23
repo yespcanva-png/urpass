@@ -161,7 +161,7 @@ export default function PlanGrid({ currentPlanSlug, currentPlanIndex, userEmail,
                     TRY ANY URPASS PLAN FREE FOR 30 DAYS
                   </h3>
                   <p className="text-xs text-white/70 mt-0.5">
-                    Choose Starter, Pro, or Business &middot; No credit card or AutoPay required &middot; Instant full access &middot; One free trial per account
+                    Choose Starter, Pro, or Business · No credit card or AutoPay required · Instant full access · One free trial per account
                   </p>
                 </div>
               </div>
@@ -293,7 +293,7 @@ export default function PlanGrid({ currentPlanSlug, currentPlanIndex, userEmail,
                           Try {p.name} Free
                         </button>
                         <p className="text-[10px] text-center text-neutral-400">
-                          30 days ₹0 &middot; No credit card required
+                          30 days ₹0 · No credit card required
                         </p>
                       </div>
                     ) : p.priceMonthly > 0 ? (

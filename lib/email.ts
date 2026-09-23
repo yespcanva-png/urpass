@@ -1125,4 +1125,199 @@ export async function sendTrialReminderEmail({
   });
 }
 
+export const SUPPORT_EMAIL = "urpass.space@yespstudio.com";
+
+export interface SupportAttachmentPayload {
+  filename: string;
+  content: string; // base64 string
+  contentType?: string;
+}
+
+export async function sendSupportTicketNotificationToTeam({
+  ticketId,
+  customerEmail,
+  topic,
+  message,
+  pageUrl,
+  userId,
+  attachment,
+}: {
+  ticketId: string;
+  customerEmail: string;
+  topic: string;
+  message: string;
+  pageUrl?: string;
+  userId?: string | null;
+  attachment?: SupportAttachmentPayload | null;
+}) {
+  const safeTicket = escapeHtml(ticketId);
+  const safeEmail = escapeHtml(customerEmail);
+  const safeTopic = escapeHtml(topic);
+  const safeMessage = escapeHtml(message);
+  const safePageUrl = pageUrl ? escapeHtml(pageUrl) : "";
+  const safeUserId = userId ? escapeHtml(userId) : "Anonymous / Guest";
+
+  const attachments = attachment && attachment.content
+    ? [
+        {
+          filename: attachment.filename,
+          content: attachment.content,
+          contentType: attachment.contentType,
+        },
+      ]
+    : undefined;
+
+  await sendEmail({
+    from: FROM,
+    to: SUPPORT_EMAIL,
+    replyTo: customerEmail,
+    subject: `[${ticketId}] ${topic} — ${customerEmail}`,
+    attachments,
+    html: `
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /></head>
+<body style="margin:0;padding:0;background:#f8fafc;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;padding:32px 16px;">
+  <tr><td align="center">
+    <table width="100%" cellpadding="0" cellspacing="0" style="max-width:580px;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e2e8f0;box-shadow:0 4px 12px rgba(0,0,0,0.04);">
+      <tr>
+        <td style="background:#0f172a;padding:24px 28px;">
+          <div style="display:inline-block;background:#334155;color:#f8fafc;font-size:11px;font-weight:700;padding:3px 10px;border-radius:6px;letter-spacing:0.5px;margin-bottom:8px;">
+            URPASS SUPPORT TICKET
+          </div>
+          <h1 style="margin:0;color:#ffffff;font-size:20px;font-weight:700;letter-spacing:-0.4px;">
+            Ticket #${safeTicket}
+          </h1>
+          <p style="margin:6px 0 0;color:#94a3b8;font-size:13px;">
+            New incoming message from ${safeEmail}
+          </p>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:28px;">
+          <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;background:#f8fafc;border-radius:10px;padding:16px;border:1px solid #f1f5f9;">
+            <tr>
+              <td style="padding:4px 0;font-size:12px;color:#64748b;font-weight:600;width:120px;">Topic:</td>
+              <td style="padding:4px 0;font-size:13px;font-weight:700;color:#0f172a;">${safeTopic}</td>
+            </tr>
+            <tr>
+              <td style="padding:4px 0;font-size:12px;color:#64748b;font-weight:600;">Customer:</td>
+              <td style="padding:4px 0;font-size:13px;font-weight:600;"><a href="mailto:${safeEmail}" style="color:#6D28D9;text-decoration:none;">${safeEmail}</a></td>
+            </tr>
+            <tr>
+              <td style="padding:4px 0;font-size:12px;color:#64748b;font-weight:600;">User ID:</td>
+              <td style="padding:4px 0;font-size:12px;font-family:monospace;color:#475569;">${safeUserId}</td>
+            </tr>
+            ${safePageUrl ? `
+            <tr>
+              <td style="padding:4px 0;font-size:12px;color:#64748b;font-weight:600;">Submitted from:</td>
+              <td style="padding:4px 0;font-size:12px;color:#475569;word-break:break-all;">${safePageUrl}</td>
+            </tr>` : ""}
+            ${attachment ? `
+            <tr>
+              <td style="padding:4px 0;font-size:12px;color:#64748b;font-weight:600;">Attachment:</td>
+              <td style="padding:4px 0;font-size:12px;color:#0f172a;font-weight:600;">📎 ${escapeHtml(attachment.filename)} (attached)</td>
+            </tr>` : ""}
+          </table>
+
+          <div style="margin-top:20px;">
+            <div style="font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">
+              Customer Message
+            </div>
+            <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;padding:16px;font-size:14px;color:#1e293b;line-height:1.6;white-space:pre-wrap;">${safeMessage}</div>
+          </div>
+
+          <div style="margin-top:24px;padding-top:20px;border-top:1px solid #f1f5f9;">
+            <p style="margin:0;font-size:12px;color:#64748b;">
+              Reply directly to this email to respond to <strong>${safeEmail}</strong>.
+            </p>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <td style="border-top:1px solid #f1f5f9;padding:16px 28px;background:#fafafa;text-align:center;">
+          <p style="margin:0;font-size:11px;color:#94a3b8;">
+            URPASS Support Desk &middot; <a href="https://urpass.space" style="color:#6D28D9;text-decoration:none;">urpass.space</a>
+          </p>
+        </td>
+      </tr>
+    </table>
+  </td></tr>
+</table>
+</body>
+</html>`.trim(),
+  });
+}
+
+export async function sendSupportTicketAcknowledgement({
+  ticketId,
+  customerEmail,
+  topic,
+  message,
+}: {
+  ticketId: string;
+  customerEmail: string;
+  topic: string;
+  message: string;
+}) {
+  const safeTicket = escapeHtml(ticketId);
+  const safeTopic = escapeHtml(topic);
+  const safeMessage = escapeHtml(message);
+
+  await sendEmail({
+    from: FROM,
+    to: customerEmail,
+    subject: `[${ticketId}] Support request received: ${topic}`,
+    html: `
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /></head>
+<body style="margin:0;padding:0;background:#f8fafc;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;padding:32px 16px;">
+  <tr><td align="center">
+    <table width="100%" cellpadding="0" cellspacing="0" style="max-width:540px;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e2e8f0;box-shadow:0 4px 12px rgba(0,0,0,0.04);">
+      <tr>
+        <td style="padding:32px 32px 24px;">
+          <div style="display:inline-flex;align-items:center;background:#f3f4f6;color:#111827;font-size:11px;font-weight:700;padding:4px 12px;border-radius:999px;margin-bottom:16px;">
+            Ticket #${safeTicket}
+          </div>
+          <h1 style="margin:0 0 10px;font-size:20px;font-weight:800;color:#0f172a;letter-spacing:-0.4px;">
+            We received your request
+          </h1>
+          <p style="margin:0 0 20px;font-size:14px;color:#475569;line-height:1.6;">
+            Thanks for reaching out! Our team has received your inquiry regarding <strong>${safeTopic}</strong> and will get back to you by email.
+          </p>
+
+          <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;border-radius:12px;padding:16px;border:1px solid #e2e8f0;margin-bottom:20px;">
+            <tr>
+              <td style="padding-bottom:8px;font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">
+                Summary of your message:
+              </td>
+            </tr>
+            <tr>
+              <td style="font-size:13px;color:#334155;line-height:1.6;white-space:pre-wrap;">${safeMessage}</td>
+            </tr>
+          </table>
+
+          <div style="background:#f1f5f9;border-radius:10px;padding:12px 16px;font-size:12px;color:#475569;display:flex;align-items:center;">
+            <span>⏱️ <strong>Response time:</strong> Usually within 1 business day.</span>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <td style="border-top:1px solid #f1f5f9;padding:18px 32px;background:#fafafa;text-align:center;">
+          <p style="margin:0;font-size:11px;color:#94a3b8;">
+            URPASS Support &middot; <a href="https://urpass.space" style="color:#6D28D9;text-decoration:none;">urpass.space</a>
+          </p>
+        </td>
+      </tr>
+    </table>
+  </td></tr>
+</table>
+</body>
+</html>`.trim(),
+  });
+}
+
 
