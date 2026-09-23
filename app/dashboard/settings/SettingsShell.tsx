@@ -337,8 +337,8 @@ export default function SettingsShell({
                 <p className="text-xs font-semibold text-neutral-700 mb-1">Delete account</p>
                 <p className="text-xs text-neutral-400 leading-relaxed">
                   Permanently removes your account and all data. Email{" "}
-                  <a href="mailto:support@urpass.space" className="font-semibold text-neutral-600 hover:text-brand transition-colors">
-                    support@urpass.space
+                  <a href="mailto:urpass.space@yespstudio.com" className="font-semibold text-neutral-600 hover:text-brand transition-colors">
+                    urpass.space@yespstudio.com
                   </a>{" "}
                   to request deletion.
                 </p>
@@ -431,8 +431,8 @@ export default function SettingsShell({
           <p className="text-xs font-semibold text-neutral-700 mb-1">Delete account</p>
           <p className="text-xs text-neutral-400 leading-relaxed">
             Permanently removes your account and all data. Email{" "}
-            <a href="mailto:support@urpass.space" className="font-semibold text-neutral-600 hover:text-brand transition-colors">
-              support@urpass.space
+            <a href="mailto:urpass.space@yespstudio.com" className="font-semibold text-neutral-600 hover:text-brand transition-colors">
+              urpass.space@yespstudio.com
             </a>{" "}
             to request deletion.
           </p>

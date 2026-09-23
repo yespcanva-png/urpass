@@ -160,7 +160,7 @@ const organizationSchema = {
     {
       "@type": "ContactPoint",
       contactType: "customer support",
-      email: "support@urpass.space",
+      email: "urpass.space@yespstudio.com",
       areaServed: ["IN", "Worldwide"],
       availableLanguage: ["English", "Hindi", "Tamil"],
     },

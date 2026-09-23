@@ -67,7 +67,7 @@ const SELLER = {
   gstin: "33OPDPS9865F1Z3",
   address: "Tamil Nadu, India",
   website: "urpass.space",
-  email: "support@urpass.space",
+  email: "urpass.space@yespstudio.com",
   placeOfSupply: "Tamil Nadu (33)",
   stateCode: "33",
 };
@@ -397,7 +397,7 @@ export async function generateInvoicePdf(invoice: InvoiceRecord): Promise<Uint8A
   page.drawText(`GSTIN: ${invoice.seller_gstin || "33OPDPS9865F1Z3"}`, { x: margin, y: partiesY - 34, size: 9, font: fontBold, color: bodyText });
   page.drawText(invoice.seller_address || "Tamil Nadu, India", { x: margin, y: partiesY - 49, size: 9, font: fontRegular, color: muted });
   page.drawText("Website: urpass.space", { x: margin, y: partiesY - 64, size: 9, font: fontRegular, color: muted });
-  page.drawText("Email: support@urpass.space", { x: margin, y: partiesY - 79, size: 9, font: fontRegular, color: primary });
+  page.drawText("Email: urpass.space@yespstudio.com", { x: margin, y: partiesY - 79, size: 9, font: fontRegular, color: primary });
 
   // BILL TO (CUSTOMER)
   const custX = margin + colHalf;
@@ -623,7 +623,7 @@ export async function generateInvoicePdf(invoice: InvoiceRecord): Promise<Uint8A
   page.drawText("URPASS", { x: margin, y: 48, size: 9, font: fontBold, color: dark });
   page.drawText("A product by Yesp Corporation", { x: margin, y: 36, size: 8, font: fontRegular, color: muted });
 
-  drawTextRight("Need help? support@urpass.space • urpass.space", 48, 8, fontBold, primary);
+  drawTextRight("Need help? urpass.space@yespstudio.com • urpass.space", 48, 8, fontBold, primary);
   drawTextRight("Urpass is a product of Yesp Corporation.", 36, 7.5, fontRegular, muted);
 
   // Row 2 (Legal)

@@ -106,10 +106,10 @@ export default function ContactPage() {
                 <div>
                   <p className="text-sm font-semibold text-neutral-800 mb-0.5">Email</p>
                   <a
-                    href="mailto:support@urpass.space"
+                    href="mailto:urpass.space@yespstudio.com"
                     className="text-sm text-brand hover:underline underline-offset-2"
                   >
-                    support@urpass.space
+                    urpass.space@yespstudio.com
                   </a>
                 </div>
               </div>

@@ -310,7 +310,7 @@ export default function DocsPage() {
                     <ExternalLink className="w-3 h-3 opacity-60" />
                   </Link>
                   <a
-                    href="mailto:support@urpass.space"
+                    href="mailto:urpass.space@yespstudio.com"
                     className="text-xs text-neutral-600 hover:text-brand flex items-center justify-between"
                   >
                     Support
@@ -1491,10 +1491,10 @@ async def handle_urpass_webhook(request: Request):
               </p>
               <div className="flex flex-wrap gap-3 justify-center">
                 <a
-                  href="mailto:support@urpass.space"
+                  href="mailto:urpass.space@yespstudio.com"
                   className="inline-flex items-center gap-2 text-xs font-semibold text-white px-4 py-2.5 rounded-xl border border-neutral-700 hover:bg-neutral-800 transition-colors"
                 >
-                  support@urpass.space
+                  urpass.space@yespstudio.com
                 </a>
                 <Link
                   href="/signup"

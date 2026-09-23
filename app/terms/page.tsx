@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 };
 
 const EFFECTIVE_DATE = "1 August 2025";
-const CONTACT_EMAIL = "support@urpass.space";
+const CONTACT_EMAIL = "urpass.space@yespstudio.com";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
