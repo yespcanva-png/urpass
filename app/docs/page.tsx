@@ -27,6 +27,9 @@ import {
   Check,
   X,
   ExternalLink,
+  Bot,
+  Terminal,
+  Cpu,
 } from "lucide-react";
 import { CodeBlock } from "@/components/docs/CodeBlock";
 
@@ -154,6 +157,7 @@ const SECTIONS = [
   { id: "organizations", label: "Organizations & roles" },
   { id: "api", label: "REST API reference" },
   { id: "webhooks", label: "Webhooks integration" },
+  { id: "mcp", label: "Model Context Protocol (MCP)" },
   { id: "plans", label: "Plans & billing" },
   { id: "faq", label: "FAQ" },
 ];
@@ -1293,7 +1297,167 @@ async def handle_urpass_webhook(request: Request):
               </div>
             </section>
 
-            {/* ── Section 9: Plans & Billing ───────────────────────── */}
+            {/* ── Section 9: Model Context Protocol (MCP) ───────────── */}
+            <section id="mcp" className="mb-14 scroll-mt-20">
+              <div className="flex items-center gap-2.5 mb-6">
+                <div className="w-8 h-8 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center shrink-0">
+                  <Bot className="w-4 h-4 text-purple-600" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-xl font-bold text-neutral-900">Model Context Protocol (MCP)</h2>
+                    <span className="text-[10px] font-bold tracking-widest uppercase px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
+                      AI Agents &amp; Tools
+                    </span>
+                  </div>
+                  <p className="text-xs text-neutral-500">Operate events, issue passes, and manage check-ins via Claude Desktop, Cursor, and autonomous agents</p>
+                </div>
+              </div>
+
+              {/* MCP Overview */}
+              <div className="bg-white border border-neutral-200 rounded-2xl p-6 mb-6 shadow-2xs">
+                <p className="text-sm text-neutral-600 leading-relaxed mb-4">
+                  The <a href="https://modelcontextprotocol.io" target="_blank" rel="noopener noreferrer" className="text-brand font-medium hover:underline">Model Context Protocol (MCP)</a> is
+                  an open standard that enables Large Language Models (Claude, Cursor, Antigravity) to safely interact with external systems.
+                  URPASS provides an official MCP server exposing 10 production tools for querying events, issuing cryptographic passes,
+                  screening applicants, and executing gate check-ins.
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                  <div className="p-3 bg-neutral-50 rounded-xl border border-neutral-100">
+                    <p className="font-semibold text-neutral-900 mb-1">Local Stdio Runner</p>
+                    <p className="text-neutral-500 font-mono text-[11px]">npx urpass-mcp</p>
+                  </div>
+                  <div className="p-3 bg-neutral-50 rounded-xl border border-neutral-100">
+                    <p className="font-semibold text-neutral-900 mb-1">Remote JSON-RPC 2.0</p>
+                    <p className="text-neutral-500 font-mono text-[11px]">POST /api/mcp</p>
+                  </div>
+                  <div className="p-3 bg-neutral-50 rounded-xl border border-neutral-100">
+                    <p className="font-semibold text-neutral-900 mb-1">Auth Requirement</p>
+                    <p className="text-neutral-500">Active Bearer API Key from Developer Settings</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Client Setup Guides */}
+              <div className="bg-white border border-neutral-200 rounded-2xl overflow-hidden mb-6 shadow-2xs">
+                <div className="px-6 py-4 border-b border-neutral-100">
+                  <h3 className="text-sm font-semibold text-neutral-900">Client configuration guide</h3>
+                </div>
+                <div className="px-6 py-5">
+                  <CodeBlock
+                    tabs={[
+                      {
+                        label: "Claude Desktop",
+                        language: "json",
+                        code: `// ~/Library/Application Support/Claude/claude_desktop_config.json (macOS)
+// %APPDATA%\\Claude\\claude_desktop_config.json (Windows)
+{
+  "mcpServers": {
+    "urpass": {
+      "command": "npx",
+      "args": ["-y", "urpass-mcp"],
+      "env": {
+        "URPASS_API_KEY": "urpass_live_your_api_key_here"
+      }
+    }
+  }
+}`,
+                      },
+                      {
+                        label: "Cursor IDE",
+                        language: "json",
+                        code: `// .cursor/mcp.json (in your project root)
+{
+  "mcpServers": {
+    "urpass": {
+      "command": "npx",
+      "args": ["-y", "urpass-mcp"],
+      "env": {
+        "URPASS_API_KEY": "urpass_live_your_api_key_here"
+      }
+    }
+  }
+}`,
+                      },
+                      {
+                        label: "Remote JSON-RPC (cURL)",
+                        language: "bash",
+                        code: `# Direct HTTPS JSON-RPC 2.0 endpoint for cloud agents
+curl -X POST https://urpass.space/api/mcp \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer YOUR_URPASS_API_KEY" \\
+  -d '{
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "tools/call",
+    "params": {
+      "name": "list_events",
+      "arguments": { "status": "active" }
+    }
+  }'`,
+                      },
+                    ]}
+                  />
+                </div>
+              </div>
+
+              {/* Complete Tool Reference */}
+              <div className="bg-white border border-neutral-200 rounded-2xl overflow-hidden mb-6 shadow-2xs">
+                <div className="px-6 py-4 border-b border-neutral-100 flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-neutral-900">Supported MCP Tools (10 Production Endpoints)</h3>
+                  <span className="text-xs text-neutral-400 font-mono">v1.0.0</span>
+                </div>
+                <div className="divide-y divide-neutral-100 text-xs">
+                  {[
+                    ["list_events", "{ status?: string }", "List all organizer events with registration counts, date, and venue details."],
+                    ["get_event", "{ event_id: string }", "Retrieve full event record, ticket tier configuration, and capacity parameters."],
+                    ["get_event_stats", "{ event_id: string }", "Compute live check-in percentage, total checked-in, pending count, and velocity."],
+                    ["list_attendees", "{ event_id: string, status?: string, query?: string }", "Search and paginate event attendees by name, email, or registration status."],
+                    ["get_attendee", "{ attendee_id: string }", "Fetch full attendee profile, custom form answers, tier, and pass redemption status."],
+                    ["approve_attendee", "{ attendee_id: string, notes?: string }", "Approve a pending registration and automatically issue dynamic QR ticket."],
+                    ["reject_attendee", "{ attendee_id: string, reason?: string }", "Reject or revoke an attendee registration application with audit logging."],
+                    ["verify_pass", "{ pass_token: string, gate_name?: string }", "Non-destructive pass validation: inspects validity, tier, and name without redeeming."],
+                    ["check_in_attendee", "{ pass_token: string, gate_name?: string }", "Atomic gate redemption: verifies token, marks checked-in, and guards against duplicate scans."],
+                    ["issue_pass", "{ event_id: string, name: string, email: string, tier_id?: string }", "Directly create an approved attendee and issue a cryptographically signed pass."],
+                  ].map(([tool, args, desc]) => (
+                    <div key={tool} className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-4 px-6 py-3.5">
+                      <code className="font-mono font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded border border-purple-200 w-44 shrink-0">
+                        {tool}
+                      </code>
+                      <code className="font-mono text-neutral-500 text-[11px] w-52 shrink-0">
+                        {args}
+                      </code>
+                      <span className="text-neutral-600 flex-1">{desc}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Conversational Prompt Examples */}
+              <div className="bg-white border border-neutral-200 rounded-2xl p-6 shadow-2xs">
+                <h3 className="text-sm font-semibold text-neutral-900 mb-3">Example prompts you can ask Claude Desktop or Cursor</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                  <div className="p-3.5 bg-neutral-50 rounded-xl border border-neutral-200/80">
+                    <p className="font-semibold text-neutral-900 mb-1">“Summarize check-in progress”</p>
+                    <p className="text-neutral-500">“Show me how many attendees checked in for today's tech summit and give me the breakdown across VIP vs General tiers.”</p>
+                  </div>
+                  <div className="p-3.5 bg-neutral-50 rounded-xl border border-neutral-200/80">
+                    <p className="font-semibold text-neutral-900 mb-1">“Approve pending hackathon teams”</p>
+                    <p className="text-neutral-500">“Fetch pending applicants for HackNight 2026 and approve all candidates who provided a valid GitHub URL.”</p>
+                  </div>
+                  <div className="p-3.5 bg-neutral-50 rounded-xl border border-neutral-200/80">
+                    <p className="font-semibold text-neutral-900 mb-1">“Search and check in VIP guest”</p>
+                    <p className="text-neutral-500">“Find attendee Priya Patel and mark her pass checked in at VIP Entrance Lounge.”</p>
+                  </div>
+                  <div className="p-3.5 bg-neutral-50 rounded-xl border border-neutral-200/80">
+                    <p className="font-semibold text-neutral-900 mb-1">“Issue emergency speaker pass”</p>
+                    <p className="text-neutral-500">“Issue a VIP Speaker pass to aris@example.com for the AI Conference and send me the pass link.”</p>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* ── Section 10: Plans & Billing ───────────────────────── */}
             <section id="plans" className="mb-14 scroll-mt-20">
               <div className="flex items-center gap-2.5 mb-6">
                 <div className="w-8 h-8 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center shrink-0">

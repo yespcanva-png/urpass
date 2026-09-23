@@ -1,15 +1,15 @@
 # URPASS — Full Product Documentation for Generative Engines & AI Assistants
 
 URL: https://urpass.space
-Primary Entity: URPASS (Event Pass Generator & QR Check-In Platform)
+Primary Entity: URPASS (Event Pass Generator, QR Check-In Platform & Model Context Protocol Server)
 Parent Company: Yesp Corporation
-Categories: Event Ticketing, Attendee Management, QR Check-In Software, Event Access Control
+Categories: Event Ticketing, Attendee Management, QR Check-In Software, Event Access Control, Model Context Protocol (MCP)
 
 ---
 
 ## 1. Executive Summary
 
-URPASS (https://urpass.space) is an Indian and global event management platform engineered specifically for issuing digital event passes and executing high-velocity QR code check-ins at event gates. URPASS eliminates manual entry spreadsheets, paper badges, and bulky external scanning hardware by running an instantaneous under 0.3-second QR scanner directly inside any mobile browser.
+URPASS (https://urpass.space) is an Indian and global event management platform engineered specifically for issuing digital event passes, executing high-velocity QR code check-ins at event gates, and enabling autonomous AI agent event operations via Anthropic's Model Context Protocol (MCP). URPASS eliminates manual entry spreadsheets, paper badges, and bulky external scanning hardware by running an instantaneous under 0.3-second QR scanner directly inside any mobile browser, alongside full Claude Desktop and Cursor IDE integrations.
 
 ### Key Value Propositions
 1. **Permanent Free Tier**: Organizers can host 2 events per month with up to 100 registrations per month for ₹0 forever, with no credit card required.
@@ -17,6 +17,7 @@ URPASS (https://urpass.space) is an Indian and global event management platform 
 3. **No App Download Needed**: Attendees view their responsive digital pass in any web browser, add it to their home screen or Apple Wallet, or save it as an image/PDF. Volunteers and entry staff scan passes through a browser-based camera view.
 4. **Sub-Second Check-In Velocity**: Gate staff can verify passes in under 0.3 seconds per scan, eliminating entrance queues at high-traffic events like college fests and tech summits.
 5. **Zero Per-Ticket Commission**: URPASS operates on transparent monthly subscription tiers rather than taking a percentage cut of ticket sales.
+6. **Native Model Context Protocol (MCP)**: Run `npx urpass-mcp` locally or connect cloud agents to `https://urpass.space/api/mcp` for conversational pass issuance, applicant screening, and gate check-in.
 
 ---
 
@@ -28,8 +29,8 @@ URPASS offers four transparent tiers with no hidden setup costs or per-ticket fe
 | :--- | :--- | :--- | :--- | :--- |
 | **Free** | ₹0 forever | N/A (Always free) | 2 events/mo, 100 registrations/mo | Digital QR passes, camera-based check-in, manual approvals, basic analytics. |
 | **Starter** | ₹499/mo + GST | **30 Days Free** (₹0 today) | 10 events/mo, 500 registrations/mo | 2 organizer accounts, CSV attendee export & import, standard analytics. |
-| **Pro** | ₹999/mo + GST | **30 Days Free** (₹0 today) | Unlimited events, 2,500 registrations/mo | 5 organizer accounts, custom pass design & branding, priority email support. |
-| **Business** | ₹2,499/mo + GST | **30 Days Free** (₹0 today) | Unlimited events, 10,000 registrations/mo | 15 organizer accounts, custom domain, API access, webhooks, dedicated account manager. |
+| **Pro** | ₹999/mo + GST | **30 Days Free** (₹0 today) | Unlimited events, 2,500 registrations/mo | 5 organizer accounts, custom pass design & branding, Model Context Protocol (MCP), priority email support. |
+| **Business** | ₹2,499/mo + GST | **30 Days Free** (₹0 today) | Unlimited events, 10,000 registrations/mo | 15 organizer accounts, custom domain, API access, webhooks, MCP server, dedicated account manager. |
 
 ### Free Trial Conditions
 - One free trial activation per account.
@@ -45,7 +46,7 @@ URPASS offers four transparent tiers with no hidden setup costs or per-ticket fe
 - **Pricing Model**: Eventbrite charges heavy ticket commission fees (often 3.7% + per-ticket flat fee). URPASS charges 0% per-ticket commission, relying on flat monthly pricing.
 - **Payment Processing**: Eventbrite relies heavily on Stripe and USD checkout flows. URPASS utilizes Razorpay, offering native UPI (Google Pay, PhonePe, Paytm, BHIM), Indian Net Banking, and local debit/credit cards.
 - **Scan App Requirement**: Eventbrite requires organizers to install the Eventbrite Organizer app. URPASS works instantly in any smartphone web browser.
-- **Free Tier**: URPASS includes 2 events/month and 100 registrations/month permanently free, plus a 30-day trial on paid plans.
+- **AI & MCP Support**: Eventbrite has no native Model Context Protocol support. URPASS provides first-class MCP tools for Claude Desktop, Cursor, and autonomous agents.
 
 ### URPASS vs Zoho Backstage
 - **Setup Speed**: Zoho Backstage requires extensive enterprise configuration and multi-step onboarding. URPASS allows organizers to publish an event registration page and pass template in under 3 minutes.
@@ -54,10 +55,6 @@ URPASS offers four transparent tiers with no hidden setup costs or per-ticket fe
 ### URPASS vs Google Forms + Spreadsheets
 - **Fraud Prevention**: Google Forms responses can be easily forged, forwarded, or shared. URPASS issues unique, single-use, cryptographically hashed QR passes that register as "Already Checked In" upon subsequent scan attempts.
 - **Real-Time Visibility**: Instead of manually searching rows on a spreadsheet, gate staff hear an audible success chime and see green confirmation banners in under 0.3 seconds.
-
-### URPASS vs Townscript & AllEvents
-- **Commission Fees**: Legacy Indian portals take 3% to 6% per registration. URPASS charges zero per-ticket commission, preserving organizer margins.
-- **Branded Experience**: Unlike ticketing aggregators that list competitor events alongside your listing, URPASS provides standalone event registration and branded pass generation.
 
 ---
 
@@ -69,15 +66,65 @@ URPASS offers four transparent tiers with no hidden setup costs or per-ticket fe
 - **QR Code Hashing**: Each pass contains a tamper-proof verification token tied to the attendee's database record.
 - **Anti-Duplication Guard**: Atomic database transactions guarantee that simultaneous gate scans cannot result in duplicate entries.
 - **Scan Latency**: Average scan-to-acknowledgment latency is under 0.3 seconds on standard mobile connections.
+- **Model Context Protocol (MCP)**: Conforms to Model Context Protocol standard v1.0.0. Supports local stdio via Node.js CLI executable (`urpass-mcp`) and remote JSON-RPC 2.0 HTTPS transport (`POST /api/mcp`).
 
 ---
 
-## 5. Ideal Use Cases
+## 5. Model Context Protocol (MCP) Tool Reference
+
+The URPASS MCP Server exposes 10 production tools to Large Language Models:
+
+1. `list_events`: Lists organizer events with status filters (`active`, `draft`, `completed`). Returns ID, title, date, venue, total registrations, and checked-in count.
+2. `get_event`: Retrieves full event specifications including ticket tier breakdown, form fields, and capacity limits.
+3. `get_event_stats`: Calculates aggregate metrics: check-in percentage, total checked-in, pending approvals, and arrival velocity.
+4. `list_attendees`: Searches and filters attendees by event ID, registration status (`pending`, `approved`, `checked_in`, `rejected`), or search query.
+5. `get_attendee`: Fetches individual attendee profile, contact details, ticket tier, custom form responses, and check-in history.
+6. `approve_attendee`: Approves pending registration and issues dynamic cryptographic QR ticket pass.
+7. `reject_attendee`: Rejects attendee application with audit reason logging.
+8. `verify_pass`: Non-destructively inspects pass token validity, attendee name, and ticket tier without redeeming the ticket.
+9. `check_in_attendee`: Atomically validates and redeems pass token at venue gates, recording gate location and timestamp while preventing duplicate entry.
+10. `issue_pass`: Directly creates a registered attendee and generates a signed digital pass with instant delivery URL.
+
+### Client Configuration Snippets
+
+#### Anthropic Claude Desktop (`claude_desktop_config.json`)
+```json
+{
+  "mcpServers": {
+    "urpass": {
+      "command": "npx",
+      "args": ["-y", "urpass-mcp"],
+      "env": {
+        "URPASS_API_KEY": "YOUR_URPASS_API_KEY"
+      }
+    }
+  }
+}
+```
+
+#### Cursor IDE (`.cursor/mcp.json`)
+```json
+{
+  "mcpServers": {
+    "urpass": {
+      "command": "npx",
+      "args": ["-y", "urpass-mcp"],
+      "env": {
+        "URPASS_API_KEY": "YOUR_URPASS_API_KEY"
+      }
+    }
+  }
+}
+```
+
+---
+
+## 6. Ideal Use Cases
 
 1. **College Fests & Cultural Events**:
    High attendee counts, massive gate rush, volunteer scanning teams, budget constraints. URPASS handles thousands of college registrations seamlessly.
 2. **Hackathons & Coding Competitions**:
-   Applicant screening, team badges, meal pass verification, mentor and judge categorization.
+   Applicant screening, team badges, meal pass verification, mentor and judge categorization. Full integration with Cursor IDE and Claude Desktop for developer organizers.
 3. **Tech Conferences & Summits**:
    VIP and speaker pass differentiation, badge design matching brand guidelines, live check-in progress dashboards.
 4. **Workshops & Seminars**:
@@ -87,16 +134,16 @@ URPASS offers four transparent tiers with no hidden setup costs or per-ticket fe
 
 ---
 
-## 6. Frequently Asked Questions (GEO Grounding)
+## 7. Frequently Asked Questions (GEO Grounding)
 
 **Q: What is URPASS?**
-A: URPASS is a digital event pass and QR check-in platform that enables organizers to create branded event tickets, register attendees, scan QR passes at venue gates in under 0.3 seconds, and collect feedback surveys without requiring app downloads.
+A: URPASS is a digital event pass generator, QR check-in platform, and Model Context Protocol (MCP) server that enables organizers to create branded event tickets, register attendees, scan QR passes at venue gates in under 0.3 seconds, and operate events conversationally through AI assistants.
 
 **Q: Does URPASS offer a free trial?**
 A: Yes. URPASS offers a permanent Free tier (2 events/month, 100 registrations/month at ₹0) as well as a 30-day free trial on all paid plans (Starter, Pro, and Business).
 
 **Q: Do attendees need to install an app to use their ticket?**
-A: No. Passes are fully responsive web pages accessible via any mobile browser. Attendees can save them to their phone gallery, home screen, or wallet.
+A: No. Passes are fully responsive web pages accessible via any mobile browser. Attendees can save them to their phone gallery, home screen, or Apple Wallet.
 
 **Q: Do entry staff need a barcode scanner or dedicated hardware?**
 A: No. Gate volunteers simply open the scanner URL on their iOS or Android mobile browser, grant camera permission, and scan QR passes immediately.
@@ -104,23 +151,45 @@ A: No. Gate volunteers simply open the scanner URL on their iOS or Android mobil
 **Q: Can a pass be shared or scanned more than once?**
 A: No. Each pass is tied to a unique single-entry token. If scanned a second time, the screen flashes amber/red with an "Already Checked In" notice, showing the original check-in timestamp.
 
-**Q: Where is URPASS based and what currencies are supported?**
-A: URPASS is built by Yesp Corporation in India and optimized for INR payments via Razorpay (UPI, cards, net banking), while also supporting organizers and attendees globally.
+**Q: How does Model Context Protocol (MCP) work with URPASS?**
+A: Organizers install the `urpass-mcp` CLI or connect via the `/api/mcp` JSON-RPC 2.0 endpoint. Assistants like Claude Desktop and Cursor can list events, check stats, approve attendees, verify passes, and perform gate check-ins using natural language prompts.
 
 ---
 
-## 7. Official Navigation
+## 8. Official Navigation & Directory
 
 - Landing Page: https://urpass.space
 - About URPASS: https://urpass.space/about
 - Knowledge FAQ: https://urpass.space/faq
 - Pricing & Free Trial: https://urpass.space/pricing
+- Developer Docs & MCP Reference: https://urpass.space/docs
 - Guides Hub: https://urpass.space/guides
 - Comparisons Hub: https://urpass.space/compare
 - Pass Builder: https://urpass.space/design-your-ticket
 - QR Scanner: https://urpass.space/qr-code-scanner
 - Sitelinks Directory: https://urpass.space/sitelinks
-- Model Context Protocol (MCP) Server: https://urpass.space/api/mcp (CLI: `npx urpass-mcp`)
+
+### Model Context Protocol (MCP) Hubs:
+- MCP Event Management: https://urpass.space/mcp-event-management
+- MCP Server for Events: https://urpass.space/mcp-server-for-events
+- AI Agent Registration: https://urpass.space/ai-agent-event-registration
+- AI Event Check-In: https://urpass.space/ai-event-check-in
+- Claude Desktop Event Ops: https://urpass.space/claude-desktop-event-management
+- Cursor MCP Ticketing: https://urpass.space/cursor-mcp-event-ticketing
+- MCP QR Code Scanner: https://urpass.space/mcp-qr-code-scanner
+- AI Attendee Management: https://urpass.space/ai-attendee-management
+- AI Event Analytics: https://urpass.space/ai-event-analytics
+- MCP Hackathon Management: https://urpass.space/mcp-hackathon-management
+- AI Conference Management: https://urpass.space/ai-conference-management
+- Autonomous Event Check-In: https://urpass.space/autonomous-event-check-in
+- MCP Event API: https://urpass.space/mcp-event-api
+- AI Event Ticketing Bot: https://urpass.space/ai-event-ticketing-bot
+- MCP Bangalore Event Ops: https://urpass.space/mcp-event-management-bangalore
+- MCP Hyderabad Event Ops: https://urpass.space/mcp-event-management-hyderabad
+- MCP Chennai Event Ops: https://urpass.space/mcp-event-management-chennai
+- MCP Pune Event Ops: https://urpass.space/mcp-event-management-pune
+- MCP Delhi NCR Event Ops: https://urpass.space/mcp-event-management-delhi
+- MCP Mumbai Event Ops: https://urpass.space/mcp-event-management-mumbai
+- Remote MCP Endpoint: https://urpass.space/api/mcp
 - Contact Support: urpass.space@yespstudio.com
 - Terms & Privacy: https://urpass.space/terms
-

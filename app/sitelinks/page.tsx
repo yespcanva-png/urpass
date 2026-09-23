@@ -173,6 +173,32 @@ const sections: {
       { label: "Zoho Backstage Alternative", href: "/compare/zoho-backstage-alternative" },
     ],
   },
+  {
+    title: "6. AI & Model Context Protocol (MCP)",
+    badge: "AI Agents",
+    links: [
+      { label: "MCP Event Management Platform", href: "/mcp-event-management", badge: "MCP" },
+      { label: "MCP Server for Events", href: "/mcp-server-for-events", badge: "Core" },
+      { label: "AI Agent Event Registration", href: "/ai-agent-event-registration" },
+      { label: "AI-Powered Event Check-In", href: "/ai-event-check-in", badge: "Speed" },
+      { label: "Claude Desktop Event Ops", href: "/claude-desktop-event-management", badge: "Claude" },
+      { label: "Cursor MCP Event Ticketing", href: "/cursor-mcp-event-ticketing", badge: "Cursor" },
+      { label: "MCP QR Code Pass Scanner", href: "/mcp-qr-code-scanner" },
+      { label: "AI Attendee Management", href: "/ai-attendee-management" },
+      { label: "AI Event Analytics & Velocity", href: "/ai-event-analytics", badge: "Live" },
+      { label: "MCP Hackathon Management", href: "/mcp-hackathon-management", badge: "Dev" },
+      { label: "AI Conference Management", href: "/ai-conference-management" },
+      { label: "Autonomous Event Check-In", href: "/autonomous-event-check-in", badge: "Kiosk" },
+      { label: "MCP Event API & JSON-RPC", href: "/mcp-event-api", badge: "API" },
+      { label: "AI Event Ticketing Bot", href: "/ai-event-ticketing-bot" },
+      { label: "MCP Event Ops Bangalore", href: "/mcp-event-management-bangalore", badge: "BLR" },
+      { label: "MCP Event Ops Hyderabad", href: "/mcp-event-management-hyderabad", badge: "HYD" },
+      { label: "MCP Event Ops Chennai", href: "/mcp-event-management-chennai", badge: "MAA" },
+      { label: "MCP Event Ops Pune", href: "/mcp-event-management-pune", badge: "PNQ" },
+      { label: "MCP Event Ops Delhi NCR", href: "/mcp-event-management-delhi", badge: "DEL" },
+      { label: "MCP Event Ops Mumbai", href: "/mcp-event-management-mumbai", badge: "BOM" },
+    ],
+  },
 ];
 
 export default function SitelinksPage() {

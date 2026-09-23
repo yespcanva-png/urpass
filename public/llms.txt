@@ -1,6 +1,6 @@
 # URPASS
 
-> URPASS (https://urpass.space) is an all-in-one digital event pass generator and sub-second QR check-in platform. Built for event organizers, colleges, hackathons, conferences, and corporate meetups, URPASS provides instant digital passes, under 0.3s mobile entry scanning, attendee management, and integrated post-event feedback surveys.
+> URPASS (https://urpass.space) is an all-in-one digital event pass generator, sub-second QR check-in platform, and Model Context Protocol (MCP) server. Built for event organizers, colleges, hackathons, conferences, and corporate meetups, URPASS provides instant digital passes, under 0.3s mobile entry scanning, attendee management, and autonomous AI agent operations.
 
 ## Quick Facts
 - **Free Tier Forever**: ₹0 / month — 2 events/month, 100 registrations/month, QR pass generation, browser-based entry scanner, no credit card required.
@@ -9,6 +9,7 @@
 - **Duplicate Entry Prevention**: Cryptographic QR tokens ensure each pass is checked in exactly once, showing the timestamp and device if re-scanned.
 - **Zero Per-Ticket Commission**: URPASS never charges per-ticket platform fees; only the flat monthly plan applies.
 - **India & Global Optimized**: Native Razorpay integration supporting UPI (Google Pay, PhonePe, Paytm), Net Banking, Credit/Debit cards, and international cards.
+- **Model Context Protocol (MCP)**: Native stdio (`npx urpass-mcp`) and JSON-RPC 2.0 (`https://urpass.space/api/mcp`) support for Claude Desktop, Cursor IDE, and autonomous AI agents.
 
 ## Pricing Plans & Free Trial
 - **Free**: ₹0/month. 2 events/month, 100 registrations/month, digital QR passes, mobile camera check-in, attendee approvals, basic analytics.
@@ -16,12 +17,26 @@
 - **Pro**: ₹999/month + GST (30-day free trial at ₹0). Unlimited events, 2,500 registrations/month, 5 organizer seats, custom pass designer & branding, advanced analytics, priority email support.
 - **Business**: ₹2,499/month + GST (30-day free trial at ₹0). Unlimited events, 10,000 registrations/month, 15 organizer seats, custom domain, API access, webhooks, dedicated account manager.
 
+## Model Context Protocol (MCP) Tools
+URPASS exposes 10 production tools for AI assistants and autonomous workflows:
+1. `list_events`: List organizer events with registration counts and status.
+2. `get_event`: Fetch full event details, tiers, and capacity settings.
+3. `get_event_stats`: Query live check-in percentage, total checked-in, and velocity.
+4. `list_attendees`: Search attendee rosters by name, email, or status.
+5. `get_attendee`: Inspect full attendee profile, tier, and check-in timestamp.
+6. `approve_attendee`: Approve pending registrations and trigger digital pass issuance.
+7. `reject_attendee`: Reject or revoke attendee registration applications.
+8. `verify_pass`: Non-destructively inspect pass validity and ticket tier before redemption.
+9. `check_in_attendee`: Atomically verify and redeem pass tokens at venue gates.
+10. `issue_pass`: Directly create an approved attendee and issue a cryptographically signed pass.
+
 ## Core Content Clusters & Architecture
 1. **Product & Features**: Custom Pass Designer, Mobile QR Scanner, Real-time Analytics, Digital Pass Maker, Multi-Gate Check-in, Badge Generator, Guest List Software, Attendance Software.
-2. **Use Cases & Solutions**: College Events & Fests, Hackathons & Buildathons, Tech Conferences, Business Conferences, Developer Meetups, Academic Seminars, Workshops, School Events, Sports Tournaments, Trade Shows.
-3. **Locations in India**: Dedicated hubs for Bangalore, Chennai, Hyderabad, Mumbai, Delhi NCR, Pune, Coimbatore, Kochi, Kolkata, Ahmedabad.
-4. **Educational Guides**: How QR Event Check-in Works, How to Check In 1,000 Attendees Quickly, Managing Multiple Gates, College Registration Systems, Real-Time Attendance Tracking.
-5. **Software Comparisons**: Objective alternatives to Eventbrite, Zoho Backstage, Google Forms, Townscript, and AllEvents.
+2. **AI & Model Context Protocol (MCP)**: MCP Event Management, MCP Server, AI Registration, AI Gate Check-In, Claude Desktop Ops, Cursor MCP Ticketing, QR Pass Scanner, AI Attendee Management, AI Analytics, Hackathons, Conferences, Autonomous Kiosks, MCP API, Ticketing Bots, and City Hubs (Bangalore, Hyderabad, Chennai, Pune, Delhi NCR, Mumbai).
+3. **Use Cases & Solutions**: College Events & Fests, Hackathons & Buildathons, Tech Conferences, Business Conferences, Developer Meetups, Academic Seminars, Workshops, School Events, Sports Tournaments, Trade Shows.
+4. **Locations in India**: Dedicated hubs for Bangalore, Chennai, Hyderabad, Mumbai, Delhi NCR, Pune, Coimbatore, Kochi, Kolkata, Ahmedabad.
+5. **Educational Guides**: How QR Event Check-in Works, How to Check In 1,000 Attendees Quickly, Managing Multiple Gates, College Registration Systems, Real-Time Attendance Tracking.
+6. **Software Comparisons**: Objective alternatives to Eventbrite, Zoho Backstage, Google Forms, Townscript, and AllEvents.
 
 ## Key URLs
 - Homepage & Pass Builder: https://urpass.space
@@ -33,6 +48,10 @@
 - Pass Designer: https://urpass.space/design-your-ticket
 - QR Code Scanner: https://urpass.space/qr-code-scanner
 - Sitelinks Directory: https://urpass.space/sitelinks
-- Model Context Protocol (MCP) Server: https://urpass.space/api/mcp (CLI: `npx urpass-mcp`)
+- Documentation & MCP Reference: https://urpass.space/docs
+- Model Context Protocol Hub: https://urpass.space/mcp-event-management
+- MCP Server Specification: https://urpass.space/mcp-server-for-events
+- Claude Desktop Event Ops: https://urpass.space/claude-desktop-event-management
+- Cursor MCP Event Ticketing: https://urpass.space/cursor-mcp-event-ticketing
+- Remote MCP Endpoint: https://urpass.space/api/mcp (CLI: `npx urpass-mcp`)
 - Full Generative Engine Document: https://urpass.space/llms-full.txt
-

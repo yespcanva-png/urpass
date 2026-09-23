@@ -187,6 +187,29 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/compare/google-forms-event-registration-alternative",
   ].map((path) => ({ url: `${BASE}${path}`, priority: 0.8, changeFrequency: "weekly" as const }));
 
+  const mcpPages = [
+    "/mcp-event-management",
+    "/mcp-server-for-events",
+    "/ai-agent-event-registration",
+    "/ai-event-check-in",
+    "/claude-desktop-event-management",
+    "/cursor-mcp-event-ticketing",
+    "/mcp-qr-code-scanner",
+    "/ai-attendee-management",
+    "/ai-event-analytics",
+    "/mcp-hackathon-management",
+    "/ai-conference-management",
+    "/autonomous-event-check-in",
+    "/mcp-event-api",
+    "/ai-event-ticketing-bot",
+    "/mcp-event-management-bangalore",
+    "/mcp-event-management-hyderabad",
+    "/mcp-event-management-chennai",
+    "/mcp-event-management-pune",
+    "/mcp-event-management-delhi",
+    "/mcp-event-management-mumbai",
+  ].map((path) => ({ url: `${BASE}${path}`, priority: 0.85, changeFrequency: "weekly" as const }));
+
   // Query live events dynamically so public event registration pages get indexed
   let eventEntries: MetadataRoute.Sitemap = [];
   try {
@@ -225,6 +248,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...locationPages,
     ...guidePages,
     ...comparePages,
+    ...mcpPages,
   ].map((item) => ({ ...item, lastModified: now }));
 
   return [...staticEntries, ...eventEntries];
