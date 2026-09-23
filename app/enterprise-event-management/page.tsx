@@ -1,23 +1,23 @@
 import type { Metadata } from "next";
-import { Building2, Users2, ShieldAlert, BarChart3, Lock, Globe2, CheckCircle2, Layers, KeyRound } from "lucide-react";
+import { Building2, Users2, ShieldAlert, BarChart3, Lock, Globe2, CheckCircle2, Layers, KeyRound, ArrowRight } from "lucide-react";
 import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
   title: "Enterprise Event Management Platform | URPASS",
-  description: "Manage enterprise events with registration, attendee management, QR check-in, access control and centralized reporting.",
+  description: "Enterprise event management software with SSO, custom domains, multi-department workspaces, sub-second QR check-in, audit logs, and dedicated SLA support.",
   keywords: [
     "enterprise event management",
     "enterprise event software",
-    "enterprise events",
-    "organization event management",
-    "multi-department event software",
-    "corporate event platform",
+    "enterprise event platform",
+    "corporate event management platform",
+    "multi department event software",
+    "enterprise ticketing software",
     "URPASS"
   ],
   alternates: { canonical: "https://urpass.space/enterprise-event-management" },
   openGraph: {
     title: "Enterprise Event Management Platform | URPASS",
-    description: "Manage enterprise events with registration, attendee management, QR check-in, access control and centralized reporting.",
+    description: "Enterprise event management software with SSO, custom domains, multi-department workspaces, and sub-second QR check-in.",
     url: "https://urpass.space/enterprise-event-management",
     locale: "en_IN",
     type: "website",
@@ -28,98 +28,78 @@ export default function Page() {
   return (
     <SEOPage
       config={{
-        badge: "ENTERPRISE EVENT PLATFORM",
-        h1: "Event Management Built for Enterprise Teams",
+        badge: "ENTERPRISE GRADE",
+        h1: "Event Management Software for Enterprise Teams",
         canonicalUrl: "https://urpass.space/enterprise-event-management",
-        description: "Run events across departments, teams and locations while managing attendees and event operations from one platform.",
-        ctaLabel: "Explore Enterprise",
+        description:
+          "Enterprise event management software delivers high-capacity attendee registration, multi-department workspaces, role-based access control, cryptographic QR check-in, and centralized financial auditing. URPASS scales effortlessly to thousands of concurrent attendees across multi-city summits, user conferences, and internal corporate roadshows.",
+        ctaLabel: "Contact Enterprise Sales",
         features: [
-          { icon: Building2, title: "Multi-Department Workspaces", desc: "Create dedicated workspaces for Marketing, HR, Engineering, and Regional Offices with centralized billing and oversight." },
-          { icon: Users2, title: "Role-Based Access Control", desc: "Assign fine-grained permissions — Organization Owner, Workspace Admin, Event Manager, Gate Scanner — to protect sensitive business data." },
-          { icon: ShieldAlert, title: "Tenant Isolation & Security", desc: "Row-level database security guarantees that department attendee databases and confidential rosters remain strictly segregated." },
-          { icon: KeyRound, title: "Single Sign-On & Centralized Auth", desc: "Streamline employee access with Google Workspace and enterprise identity providers while keeping accounts secure." },
-          { icon: Lock, title: "Cryptographic Gate Access", desc: "Prevent badge sharing and unapproved admissions across high-security executive briefings, AGMs, and confidential product reveals." },
-          { icon: BarChart3, title: "Cross-Event Governance Analytics", desc: "Track aggregate attendance, regional event ROI, gate velocities, and feedback trends across your entire organization." },
+          { icon: Building2, title: "Multi-Department Workspaces", desc: "Isolate regional chapters, subsidiaries, and marketing divisions into separate secure workspaces under one corporate umbrella." },
+          { icon: Lock, title: "Enterprise Security & Compliance", desc: "Bank-grade encryption, SOC-2 compliant database architecture, role-based permissions, and complete audit logging." },
+          { icon: Globe2, title: "Custom Branded Domains", desc: "Host attendee registration forms and digital pass portals on your company's official domain (e.g. events.company.com)." },
+          { icon: KeyRound, title: "SSO & SAML Authentication", desc: "Integrate with Okta, Azure AD, Google Workspace, and enterprise identity providers for streamlined employee logins." },
+          { icon: BarChart3, title: "Consolidated Financial Telemetry", desc: "Centralize ticket revenue, automated GST invoices, corporate billing, and custom payment gateway integrations." },
+          { icon: ShieldAlert, title: "Dedicated SLA & Support", desc: "24/7 priority emergency support, dedicated account managers, and custom on-site check-in logistics assistance." },
         ],
         steps: [
-          { n: "01", title: "Create Organization", desc: "Establish your enterprise umbrella account and configure organization-wide settings." },
-          { n: "02", title: "Provision Workspaces", desc: "Set up departmental workspaces for regional teams, divisions, and subsidiaries." },
-          { n: "03", title: "Assign Team Roles", desc: "Invite organizers, event coordinators, and door security with tailored access controls." },
-          { n: "04", title: "Standardize Registration", desc: "Deploy branded event registration templates, custom approval rules, and ticket tiers." },
-          { n: "05", title: "Coordinate Check-In", desc: "Deploy browser-based mobile scanners across gates with real-time cloud sync." },
+          { n: "01", title: "Provision Enterprise Org", desc: "Set up corporate workspaces with custom subdomains, legal entities, and SSO integrations." },
+          { n: "02", title: "Delegate Regional Teams", desc: "Assign department coordinators and event managers with granular role-based permissions." },
+          { n: "03", title: "Deploy Branded Registrations", desc: "Launch high-converting registration forms white-labeled with your corporate identity." },
+          { n: "04", title: "Sub-0.3s Gate Operations", desc: "Check in thousands of delegates across dozens of entrances simultaneously with zero line delays." },
+          { n: "05", title: "Enterprise Analytics Rollup", desc: "Review cross-event attendance trends, revenue settlements, and compliance reports centrally." },
         ],
         callout: {
-          badge: "ENTERPRISE GOVERNANCE",
-          title: "Enterprise control without bureaucratic operational complexity.",
-          description: "Large enterprises suffer from tool fragmentation: marketing uses one ticketing site, HR collects training signups on spreadsheets, and regional teams rent external barcode guns. URPASS consolidates your entire company's event infrastructure into a secure, unified cloud platform.",
+          badge: "SCALE WITHOUT LIMITS",
+          title: "Engineered for 50,000+ attendee summits and global roadshows.",
+          description: "Legacy enterprise event software is notoriously slow, bloated, and expensive, charging massive per-ticket commissions and taking months to deploy. URPASS delivers modern cloud performance, sub-second scanning speed, and transparent SaaS pricing without hidden fees.",
           bullets: [
-            "Complete tenant isolation with organization-level audit trails",
-            "Zero per-ticket platform fees — predictable flat enterprise billing",
-            "Instant browser-based mobile scanning with no hardware rentals",
-            "Comprehensive CSV and API export pipelines for corporate CRM integration",
+            "Sub-300ms QR code scanning speed prevents morning foyer bottlenecks",
+            "Zero per-ticket commission fees — keep 100% of your conference ticket revenue",
+            "Custom contracts, enterprise security reviews, and dedicated invoicing available",
+            "Direct REST API and webhooks connect to Salesforce, HubSpot, and internal ERPs",
           ],
         },
         deepDiveSections: [
           {
-            badge: "ORGANIZATIONAL ARCHITECTURE",
-            title: "Managing Multi-Department Events at Enterprise Scale",
+            badge: "INFRASTRUCTURE",
+            title: "How does URPASS maintain high availability during enterprise ticket drops?",
             paragraphs: [
-              "As enterprises grow, event operations naturally decentralize. Internal communications hosts quarterly all-hands; developer relations organizes hackathons and tech symposiums; human resources coordinates employee onboarding and leadership retreats; and commercial teams manage partner summits.",
-              "Without centralized software, this leads to 'rogue event IT' — unvetted software subscriptions, conflicting attendee lists, leaked customer emails, and inconsistent branding. IT and compliance departments lose visibility into who enters corporate venues and how employee data is handled.",
-              "URPASS provides a structured multi-tenant model. An enterprise establishes a top-level Organization with global governance, then delegates Workspaces to specific departments or regional offices. Each workspace operates independently, yet leadership maintains holistic reporting, security compliance, and unified billing."
+              "When an enterprise summit announces registrations, traffic surges can overwhelm traditional web servers. URPASS is architected on distributed edge compute, Next.js, and high-concurrency database clusters.",
+              "Database transactions utilize optimistic concurrency controls, ensuring that thousands of simultaneous ticket purchases are validated and processed without database deadlocks or overselling venue capacities.",
             ],
-            bullets: [
-              "Departmental isolation prevents unauthorized data leakage between teams",
-              "Standardized brand templates maintain corporate identity across all events",
-              "Consolidated invoicing reduces enterprise administrative overhead",
-              "Global attendee deduplication across concurrent corporate programs"
-            ],
-            takeaway: "Empower departmental teams to launch events quickly while maintaining strict corporate governance, data privacy, and security controls."
+            takeaway: "Distributed edge infrastructure guarantees zero downtime during high-visibility corporate launches.",
           },
           {
-            badge: "SECURITY & COMPLIANCE",
-            title: "Tenant Isolation, Role Permissions, and Audit-Ready Gates",
+            badge: "DATA PRIVACY",
+            title: "How does enterprise role-based access protect sensitive attendee data?",
             paragraphs: [
-              "Enterprise events frequently involve confidential business discussions, VIP clients, and high-security campuses. Standard public ticketing tools treat every event as an open marketplace, exposing attendee directories to unauthenticated third parties.",
-              "URPASS is architected with enterprise security fundamentals. Role-based access control ensures volunteers assigned to door scanning only see the check-in camera and immediate guest name — financial summaries, corporate email rosters, and administrative settings are completely hidden.",
-              "Every gate scan, registration approval, and attendee status change is timestamped and recorded in immutable logs, providing complete traceability for security and compliance audits."
+              "Large corporations must adhere to strict data privacy standards (such as GDPR and local privacy mandates). URPASS ensures that volunteer gate staff only see attendee name and ticket tier on scanner displays, with email addresses, phone numbers, and payment details hidden from view.",
+              "Administrative actions (such as exports and role changes) are recorded in tamper-proof audit trails for internal compliance reviews.",
             ],
-            bullets: [
-              "Granular permissions prevent staff from viewing unauthorized attendee data",
-              "Restricted scanner links ensure gate staff only access door verification",
-              "Single-use cryptographic QR passes prevent credential forwarding",
-              "Exportable audit logs providing precise arrival timestamps for compliance"
-            ],
-            takeaway: "Maintain military-grade access control and compliance at every corporate entrance without slowing down executive and guest arrival."
-          }
-        ],
-        useCases: [
-          "Annual General Meetings (AGMs)",
-          "Global Townhalls & All-Hands",
-          "Customer User Conferences",
-          "Executive Leadership Retreats",
-          "Multi-City Product Roadshows",
-          "Internal Technical Hackathons",
-          "Partner Summits & Dealer Meets",
-        ],
-        relatedLinks: [
-          { title: "Enterprise Event Registration", href: "/enterprise-event-registration", category: "Product" },
-          { title: "Corporate Event Management", href: "/corporate-event-management", category: "Product" },
-          { title: "Multi-Location Event Management", href: "/multi-location-event-management", category: "Product" },
-          { title: "White Label Event Platform", href: "/white-label-event-platform", category: "Product" },
-          { title: "Zoho Backstage Alternative", href: "/compare/zoho-backstage-alternative", category: "Comparison" },
-          { title: "Corporate Events Hub", href: "/corporate-events", category: "Use Case" },
+            takeaway: "Granular access controls guarantee enterprise data governance and privacy compliance.",
+          },
         ],
         faqs: [
-          { q: "What is enterprise event management software?", a: "Enterprise event management software is a centralized platform designed for corporations and large organizations to coordinate events across multiple departments, locations, and teams with role-based permissions, tenant isolation, and centralized reporting." },
-          { q: "How does URPASS handle multi-department event operations?", a: "URPASS provides an Organization hierarchy where you can create isolated Workspaces for different business units (e.g. HR, Engineering, Sales, Marketing). Each workspace manages its own events while administrators maintain organization-wide governance and billing." },
-          { q: "Can we restrict what gate staff and volunteers can see?", a: "Yes. URPASS uses role-based access control (RBAC). Gate staff receive restricted mobile scanner links that only display pass verification screens, keeping attendee personal details, financial reports, and administrative controls completely secure." },
-          { q: "Does URPASS require renting specialized barcode scanners for large summits?", a: "No. URPASS runs directly inside standard mobile web browsers (Safari, Chrome). Gate staff can verify up to 30 attendees per minute per device using standard smartphones with sub-0.3s camera recognition." },
-          { q: "Is attendee data isolated between different workspaces?", a: "Yes. Using PostgreSQL Row Level Security (RLS), attendee records and registration data are strictly isolated between organizations and workspaces, ensuring zero cross-department data leakage." },
-          { q: "Can we migrate existing attendee lists from spreadsheets or legacy platforms?", a: "Yes. URPASS includes a structured bulk import engine allowing you to import thousands of attendee records from CSV or Excel files with automated field mapping and instant QR pass generation." },
+          {
+            q: "Can enterprise clients pay via invoice and bank transfer rather than credit card?",
+            a: "Yes. Enterprise plans support annual invoicing, purchase orders (PO), and direct NEFT/RTGS bank wire transfers with GST compliance.",
+          },
+          {
+            q: "Does URPASS provide custom service level agreements (SLAs)?",
+            a: "Yes. Enterprise contracts include 99.9% uptime SLAs and guaranteed response times from our technical operations team.",
+          },
+          {
+            q: "Can we use our own custom payment gateway merchant account?",
+            a: "Yes. Enterprise accounts can connect their direct corporate Razorpay, Stripe, or bank merchant accounts for immediate funds settlement.",
+          },
         ],
-        ctaTitle: "Scale your enterprise events with URPASS",
-        ctaDescription: "Centralized governance · Role-based permissions · Sub-second gate check-in",
+        relatedLinks: [
+          { title: "Multi-Event Management", href: "/multi-event-management", category: "Product" },
+          { title: "Event Team Management", href: "/event-team-management", category: "Product" },
+          { title: "White Label Event Platform", href: "/white-label-event-platform", category: "Product" },
+          { title: "Event Registration API", href: "/event-registration-api", category: "Product" },
+        ],
       }}
     />
   );
