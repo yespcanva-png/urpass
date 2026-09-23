@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { Plus, Trash2, Copy, Check, Eye, EyeOff, AlertCircle, Key } from "lucide-react";
 import { createApiKey, revokeApiKey, deleteApiKey } from "@/app/actions/api-keys";
+import McpIntegrationCard from "./McpIntegrationCard";
 
 interface ApiKeyRow {
   id: string;
@@ -273,6 +274,8 @@ export default function ApiKeyManager({ keys: initialKeys }: { keys: ApiKeyRow[]
   -H "Authorization: Bearer urp_live_..."`}
         </pre>
       </div>
+
+      <McpIntegrationCard />
     </div>
   );
 }

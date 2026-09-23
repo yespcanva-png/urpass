@@ -120,5 +120,7 @@ A: URPASS is built by Yesp Corporation in India and optimized for INR payments v
 - Pass Builder: https://urpass.space/design-your-ticket
 - QR Scanner: https://urpass.space/qr-code-scanner
 - Sitelinks Directory: https://urpass.space/sitelinks
+- Model Context Protocol (MCP) Server: https://urpass.space/api/mcp (CLI: `npx urpass-mcp`)
 - Contact Support: urpass.space@yespstudio.com
 - Terms & Privacy: https://urpass.space/terms
+

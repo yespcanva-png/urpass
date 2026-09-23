@@ -33,4 +33,6 @@
 - Pass Designer: https://urpass.space/design-your-ticket
 - QR Code Scanner: https://urpass.space/qr-code-scanner
 - Sitelinks Directory: https://urpass.space/sitelinks
+- Model Context Protocol (MCP) Server: https://urpass.space/api/mcp (CLI: `npx urpass-mcp`)
 - Full Generative Engine Document: https://urpass.space/llms-full.txt
+

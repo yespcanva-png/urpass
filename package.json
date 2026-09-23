@@ -5,6 +5,9 @@
   "engines": {
     "node": "22.x"
   },
+  "bin": {
+    "urpass-mcp": "./bin/urpass-mcp.mjs"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -16,6 +19,7 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",
+    "@modelcontextprotocol/sdk": "^1.30.1",
     "@supabase/ssr": "^0.12.5",
     "@supabase/supabase-js": "^2.112.4",
     "@types/qrcode": "^1.5.6",
