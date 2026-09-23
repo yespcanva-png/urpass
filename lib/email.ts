@@ -1125,7 +1125,7 @@ export async function sendTrialReminderEmail({
   });
 }
 
-export const SUPPORT_EMAIL = "urpass.space@yespstudio.com";
+export const SUPPORT_EMAIL = process.env.SUPPORT_EMAIL || "srinithin@yespstudio.com";
 
 export interface SupportAttachmentPayload {
   filename: string;
