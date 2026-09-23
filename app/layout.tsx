@@ -247,6 +247,8 @@ const siteNavSchema = {
   ],
 };
 
+const GA_ID = process.env.NEXT_PUBLIC_GA_ID || "G-E5RNX1BZ0Z";
+
 export default function RootLayout({
   children,
 }: {
@@ -273,11 +275,11 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(siteNavSchema) }}
         />
-        {process.env.NEXT_PUBLIC_GA_ID && (
+        {GA_ID && (
           <>
             <Script
               strategy="afterInteractive"
-              src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID}`}
+              src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
             />
             <Script
               id="google-analytics"
@@ -287,7 +289,7 @@ export default function RootLayout({
                   window.dataLayer = window.dataLayer || [];
                   function gtag(){dataLayer.push(arguments);}
                   gtag('js', new Date());
-                  gtag('config', '${process.env.NEXT_PUBLIC_GA_ID}', {
+                  gtag('config', '${GA_ID}', {
                     page_path: window.location.pathname,
                   });
                 `,
