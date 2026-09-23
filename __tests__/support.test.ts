@@ -81,7 +81,7 @@ describe("POST /api/support", () => {
     expect(body.error).toContain("at least 5 characters");
   });
 
-  it("creates a ticket successfully with unique SUP-XXXX id and notifies team & user", async () => {
+  it("creates a ticket successfully with unique random number id and notifies team & user", async () => {
     const req = new NextRequest("http://localhost/api/support", {
       method: "POST",
       body: JSON.stringify({
@@ -96,7 +96,7 @@ describe("POST /api/support", () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.ok).toBe(true);
-    expect(body.ticketId).toMatch(/^SUP-\d{4}$/);
+    expect(body.ticketId).toMatch(/^\d{6}$/);
 
     expect(mockSendSupportTeam).toHaveBeenCalledWith(
       expect.objectContaining({

@@ -21,8 +21,8 @@ const VALID_TOPICS = [
 ];
 
 function generateTicketId(): string {
-  const num = Math.floor(1000 + Math.random() * 9000);
-  return `SUP-${num}`;
+  const num = Math.floor(100000 + Math.random() * 900000);
+  return String(num);
 }
 
 export async function POST(req: NextRequest) {

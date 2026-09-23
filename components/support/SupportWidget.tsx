@@ -198,7 +198,7 @@ export default function SupportWidget() {
         throw new Error(data.error || "Failed to submit request.");
       }
 
-      setTicketId(data.ticketId || "SUP-1042");
+      setTicketId(data.ticketId || String(Math.floor(100000 + Math.random() * 900000)));
       setIsSuccess(true);
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : "Something went wrong. Please try again.";
