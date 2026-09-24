@@ -124,27 +124,27 @@ export default function TicketPreview({
           {eventName}
         </h2>
 
-        {/* Event Date & Time */}
-        <p className={`text-xs font-semibold tracking-wide ${subtextCls} mb-1 flex items-center gap-1.5`}>
-          <Calendar className="w-3.5 h-3.5 opacity-70 shrink-0" />
-          <span>{eventDate}</span>
-        </p>
-
-        {/* Venue (Toggled) */}
-        {config.showVenue && venue && (
-          <p className={`text-xs ${subtextCls} flex items-center gap-1.5 mb-5`}>
-            <MapPin className="w-3.5 h-3.5 opacity-70 shrink-0" />
-            <span className="truncate max-w-[240px]">{venue}</span>
-          </p>
+        {/* Ticket Type Pill (Toggled) */}
+        {config.showTicketType && (
+          <div className="mb-3">
+            <span
+              className="inline-flex items-center gap-1 text-[11px] font-bold tracking-wider uppercase px-3 py-1 rounded-full border"
+              style={{
+                borderColor: `${config.primaryColor}30`,
+                color: config.primaryColor,
+                backgroundColor: `${config.primaryColor}12`,
+              }}
+            >
+              <TicketIcon className="w-3 h-3" />
+              {ticketType}
+            </span>
+          </div>
         )}
 
-        {/* Divider */}
-        <div className={`w-full border-t ${dividerCls} my-2`} />
-
-        {/* Large Centered QR Code with plenty of clean white space */}
-        <div className="my-4 flex flex-col items-center">
+        {/* Large Centered QR Code Card with clean contrast */}
+        <div className="my-2 flex flex-col items-center">
           <div
-            className="p-4 bg-white rounded-xl shadow-xs border border-neutral-100 flex items-center justify-center"
+            className="p-4 bg-white rounded-2xl shadow-xs border border-neutral-100 flex flex-col items-center justify-center"
             title={`QR Value: ${qrValue}`}
             data-qr-value={qrValue}
           >
@@ -160,44 +160,48 @@ export default function TicketPreview({
                 </div>
               ))}
             </div>
+            <span className="text-[9px] font-black tracking-widest text-neutral-400 uppercase mt-2">
+              SCAN FOR ENTRY
+            </span>
           </div>
         </div>
 
         {/* Attendee Name (Toggled) */}
         {config.showAttendeeName && (
-          <div className="mt-1 mb-2">
+          <div className="mt-2 mb-1">
             <p className="text-base font-bold tracking-tight">
               {attendeeName}
             </p>
           </div>
         )}
 
-        {/* Ticket Type Pill (Toggled) */}
-        {config.showTicketType && (
-          <div className="mb-4">
-            <span
-              className="inline-flex items-center gap-1 text-[11px] font-bold tracking-wider uppercase px-3 py-1 rounded-full border"
-              style={{
-                borderColor: `${config.primaryColor}30`,
-                color: config.primaryColor,
-                backgroundColor: `${config.primaryColor}12`,
-              }}
-            >
-              <TicketIcon className="w-3 h-3" />
-              {ticketType}
-            </span>
-          </div>
-        )}
-
-        {/* Divider */}
+        {/* Ticket ID (Toggled) */}
         {config.showTicketId && (
-          <div className={`w-full border-t ${dividerCls} pt-3 mt-1 flex flex-col items-center gap-0.5`}>
+          <div className="mb-2 flex items-center justify-center gap-1.5">
             <span className="text-[9px] font-bold tracking-widest uppercase text-neutral-400">
               TICKET ID
             </span>
             <span className="text-xs font-mono font-semibold tracking-wider">
               {ticketId}
             </span>
+          </div>
+        )}
+
+        {/* Date & Venue (Toggled) */}
+        {(config.showEventDate !== false || (config.showVenue && venue)) && (
+          <div className={`w-full border-t ${dividerCls} pt-3 mt-2 flex flex-col items-center gap-1`}>
+            {config.showEventDate !== false && eventDate && (
+              <p className={`text-xs font-semibold tracking-wide ${subtextCls} flex items-center gap-1.5`}>
+                <Calendar className="w-3.5 h-3.5 opacity-70 shrink-0" />
+                <span>{eventDate}</span>
+              </p>
+            )}
+            {config.showVenue && venue && (
+              <p className={`text-xs ${subtextCls} flex items-center gap-1.5`}>
+                <MapPin className="w-3.5 h-3.5 opacity-70 shrink-0" />
+                <span className="truncate max-w-[240px]">{venue}</span>
+              </p>
+            )}
           </div>
         )}
       </div>

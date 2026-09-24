@@ -1,4 +1,4 @@
-export type TicketTemplate = "minimal" | "modern" | "dark";
+export type TicketTemplate = "minimal" | "event" | "dark" | "modern";
 
 export interface TicketDesignConfig {
   template: TicketTemplate;
@@ -7,6 +7,7 @@ export interface TicketDesignConfig {
   backgroundImageUrl?: string | null;
   showAttendeeName: boolean;
   showTicketType: boolean;
+  showEventDate?: boolean;
   showVenue: boolean;
   showTicketId: boolean;
   updatedAt?: string;
@@ -14,12 +15,13 @@ export interface TicketDesignConfig {
 }
 
 export const DEFAULT_TICKET_DESIGN: TicketDesignConfig = {
-  template: "modern",
+  template: "event",
   primaryColor: "#635BFF",
   logoUrl: null,
   backgroundImageUrl: null,
   showAttendeeName: true,
   showTicketType: true,
+  showEventDate: true,
   showVenue: true,
   showTicketId: true,
   isPublished: true,
@@ -37,7 +39,7 @@ export function sanitizeTicketDesign(input: unknown): TicketDesignConfig {
 
   const raw = input as Record<string, unknown>;
 
-  const template: TicketTemplate = ["minimal", "modern", "dark"].includes(String(raw.template))
+  const template: TicketTemplate = ["minimal", "event", "dark", "modern"].includes(String(raw.template))
     ? (raw.template as TicketTemplate)
     : raw.theme === "minimal"
     ? "minimal"
@@ -73,6 +75,9 @@ export function sanitizeTicketDesign(input: unknown): TicketDesignConfig {
   const showTicketType =
     typeof raw.showTicketType === "boolean" ? raw.showTicketType : true;
 
+  const showEventDate =
+    typeof raw.showEventDate === "boolean" ? raw.showEventDate : true;
+
   const showVenue =
     typeof raw.showVenue === "boolean" ? raw.showVenue : true;
 
@@ -89,6 +94,7 @@ export function sanitizeTicketDesign(input: unknown): TicketDesignConfig {
     backgroundImageUrl,
     showAttendeeName,
     showTicketType,
+    showEventDate,
     showVenue,
     showTicketId,
     isPublished,

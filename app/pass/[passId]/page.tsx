@@ -213,24 +213,24 @@ export default async function PassPage({
           </div>
         )}
 
-        {/* Top Accent Strip (Modern template only) */}
-        {design.template === "modern" && (
+        {/* Top Accent Strip (Event / Modern template) */}
+        {(design.template === "event" || design.template === "modern") && (
           <div
-            className="h-1.5 w-full relative z-10"
+            className="h-2 w-full relative z-10"
             style={{ backgroundColor: brandColor }}
           />
         )}
 
         {/* Ticket Body */}
         <div className="relative z-10 p-6 flex flex-col items-center text-center">
-          {/* Logo / Brand Header */}
-          <div className="mb-4 flex items-center justify-center">
+          {/* 1. Event Logo / Brand Header */}
+          <div className="mb-3.5 flex items-center justify-center">
             {logoToDisplay ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={logoToDisplay}
                 alt="Logo"
-                className="h-7 max-w-[120px] object-contain"
+                className="h-8 max-w-[130px] object-contain"
               />
             ) : (
               <span
@@ -242,47 +242,36 @@ export default async function PassPage({
             )}
           </div>
 
-          {/* Large Event Name */}
+          {/* 2. Event Name */}
           <h1 className="text-xl font-bold tracking-tight mb-2 uppercase leading-snug max-w-xs">
             {event.name}
           </h1>
 
-          {/* Event Date & Time */}
-          <p
-            className={`text-xs font-semibold tracking-wide mb-1 flex items-center gap-1.5 ${
-              isDark ? "text-neutral-400" : "text-neutral-500"
-            }`}
-          >
-            <CalendarDays className="w-3.5 h-3.5 opacity-70 shrink-0" />
-            <span>
-              {formattedDate} | {event.start_time}–{event.end_time}
-            </span>
-          </p>
-
-          {/* Venue (if toggled) */}
-          {design.showVenue && event.venue && (
-            <p
-              className={`text-xs flex items-center gap-1.5 mb-4 ${
-                isDark ? "text-neutral-400" : "text-neutral-500"
-              }`}
-            >
-              <MapPin className="w-3.5 h-3.5 opacity-70 shrink-0" />
-              <span className="truncate max-w-[240px]">{event.venue}</span>
-            </p>
+          {/* 3. Ticket Type Pill (if toggled) */}
+          {design.showTicketType && (
+            <div className="mb-3">
+              <span
+                className="inline-flex items-center gap-1 text-[11px] font-bold tracking-wider uppercase px-3 py-1 rounded-full border"
+                style={{
+                  borderColor: `${brandColor}35`,
+                  color: brandColor,
+                  backgroundColor: `${brandColor}12`,
+                }}
+              >
+                <Ticket className="w-3 h-3" />
+                {PASS_TYPE_LABEL[pass.pass_type] ?? pass.pass_type}
+              </span>
+            </div>
           )}
 
-          {/* Divider */}
-          <div
-            className={`w-full border-t my-2 ${
-              isDark ? "border-neutral-800" : "border-neutral-100"
-            }`}
-          />
-
-          {/* Large Centered QR Code with clean white space */}
+          {/* 4. Large Centered QR Code with clean high-contrast white card */}
           {!isOnline && (
-            <div className="my-4 flex flex-col items-center">
-              <div className="p-4 bg-white rounded-xl shadow-xs border border-neutral-100 flex items-center justify-center">
+            <div className="my-2 flex flex-col items-center">
+              <div className="p-4 bg-white rounded-2xl shadow-xs border border-neutral-100 flex flex-col items-center justify-center">
                 <PassQR value={pass.pass_token} size={160} />
+                <span className="text-[9px] font-black tracking-widest text-neutral-400 uppercase mt-2">
+                  SCAN FOR ENTRY
+                </span>
               </div>
             </div>
           )}
@@ -306,45 +295,57 @@ export default async function PassPage({
             </div>
           )}
 
-          {/* Attendee Name (if toggled) */}
+          {/* 5. Attendee Name (if toggled) */}
           {design.showAttendeeName && (
-            <div className="mt-1 mb-2">
+            <div className="mt-3 mb-1">
               <p className="text-base font-bold tracking-tight">
                 {attendee.name}
               </p>
             </div>
           )}
 
-          {/* Ticket Type Pill (if toggled) */}
-          {design.showTicketType && (
-            <div className="mb-4">
-              <span
-                className="inline-flex items-center gap-1 text-[11px] font-bold tracking-wider uppercase px-3 py-1 rounded-full border"
-                style={{
-                  borderColor: `${brandColor}30`,
-                  color: brandColor,
-                  backgroundColor: `${brandColor}12`,
-                }}
-              >
-                <Ticket className="w-3 h-3" />
-                {PASS_TYPE_LABEL[pass.pass_type] ?? pass.pass_type}
-              </span>
-            </div>
-          )}
-
-          {/* Ticket ID (if toggled) */}
+          {/* 6. Ticket ID (if toggled) */}
           {design.showTicketId && (
-            <div
-              className={`w-full border-t pt-3 mt-1 flex flex-col items-center gap-0.5 ${
-                isDark ? "border-neutral-800" : "border-neutral-100"
-              }`}
-            >
-              <span className="text-[9px] font-bold tracking-widest uppercase text-neutral-400">
+            <div className="mb-3 flex items-center justify-center gap-1.5">
+              <span className="text-[10px] font-bold tracking-wider uppercase text-neutral-400">
                 TICKET ID
               </span>
               <span className="text-xs font-mono font-semibold tracking-wider">
                 #{shortCode.toUpperCase()}
               </span>
+            </div>
+          )}
+
+          {/* 7. Date & Venue (if toggled) */}
+          {(design.showEventDate !== false || (design.showVenue && event.venue)) && (
+            <div
+              className={`w-full border-t pt-3 mt-1 flex flex-col items-center gap-1 ${
+                isDark ? "border-neutral-800" : "border-neutral-100"
+              }`}
+            >
+              {design.showEventDate !== false && (
+                <p
+                  className={`text-xs font-semibold tracking-wide flex items-center gap-1.5 ${
+                    isDark ? "text-neutral-400" : "text-neutral-500"
+                  }`}
+                >
+                  <CalendarDays className="w-3.5 h-3.5 opacity-70 shrink-0" />
+                  <span>
+                    {formattedDate} | {event.start_time}–{event.end_time}
+                  </span>
+                </p>
+              )}
+
+              {design.showVenue && event.venue && (
+                <p
+                  className={`text-xs flex items-center gap-1.5 ${
+                    isDark ? "text-neutral-400" : "text-neutral-500"
+                  }`}
+                >
+                  <MapPin className="w-3.5 h-3.5 opacity-70 shrink-0" />
+                  <span className="truncate max-w-[240px]">{event.venue}</span>
+                </p>
+              )}
             </div>
           )}
 
