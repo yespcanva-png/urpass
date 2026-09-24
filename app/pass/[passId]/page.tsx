@@ -114,7 +114,14 @@ export default async function PassPage({
     ? resolveTicketDesign(event.custom_pass_design, orgProfile?.custom_pass_design, orgProfile?.brand_color)
     : resolveTicketDesign(null, null, null);
 
-  const brandColor = design.primaryColor;
+  const categoryColor = pass.pass_type ? design.categoryColors?.[pass.pass_type] : null;
+  const brandColor = categoryColor || design.primaryColor;
+  const shapeRadius =
+    design.shape === "rounded"
+      ? "rounded-[28px]"
+      : design.shape === "compact"
+      ? "rounded-xl"
+      : "rounded-2xl";
   const isDark = design.template === "dark";
   const isMinimal = design.template === "minimal";
   const orgName = (isPro && orgProfile?.org_name) ? orgProfile.org_name : null;
@@ -181,7 +188,7 @@ export default async function PassPage({
         </div>
       ) : (
         <div
-          className={`relative w-full max-w-sm rounded-2xl border shadow-sm select-none overflow-hidden transition-all ${
+          className={`relative w-full max-w-sm ${shapeRadius} border shadow-sm select-none overflow-hidden transition-all ${
             isDark
               ? "bg-[#121216] border-neutral-800 text-white"
               : isMinimal
@@ -223,8 +230,8 @@ export default async function PassPage({
 
         {/* Ticket Body */}
         <div className="relative z-10 p-6 flex flex-col items-center text-center">
-          {/* 1. Event Logo / Brand Header */}
-          <div className="mb-3.5 flex items-center justify-center">
+          {/* 1. Event Logo & Sponsor Header */}
+          <div className="mb-3.5 flex items-center justify-center gap-3">
             {logoToDisplay ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -239,6 +246,18 @@ export default async function PassPage({
               >
                 {orgName || "URPASS"}
               </span>
+            )}
+
+            {design.sponsorLogoUrl && (
+              <>
+                <span className="text-neutral-300 text-xs">×</span>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={design.sponsorLogoUrl}
+                  alt="Sponsor Logo"
+                  className="h-6 max-w-[100px] object-contain opacity-80"
+                />
+              </>
             )}
           </div>
 
@@ -346,6 +365,32 @@ export default async function PassPage({
                   <span className="truncate max-w-[240px]">{event.venue}</span>
                 </p>
               )}
+            </div>
+          )}
+
+          {/* Custom Message */}
+          {design.customMessage && (
+            <div className="mt-2.5 pt-2 border-t border-dashed border-neutral-200/80 w-full">
+              <p className="text-xs italic opacity-85 max-w-xs mx-auto">
+                &ldquo;{design.customMessage}&rdquo;
+              </p>
+            </div>
+          )}
+
+          {/* Ticket Rules */}
+          {(design.showSingleEntryRule || design.showGateNotice || design.customInstruction) && (
+            <div
+              className={`mt-2.5 pt-2 border-t w-full text-[10px] leading-relaxed ${
+                isDark ? "border-neutral-800 text-neutral-400" : "border-neutral-100 text-neutral-500"
+              }`}
+            >
+              {[
+                design.showSingleEntryRule ? "Valid for one entry" : null,
+                design.showGateNotice ? "Keep this QR ready at the gate" : null,
+                design.customInstruction || null,
+              ]
+                .filter(Boolean)
+                .join(" • ")}
             </div>
           )}
 

@@ -14,6 +14,9 @@ interface TicketPreviewProps {
   ticketType?: string;
   ticketId?: string;
   qrValue?: string;
+  attendeeOrganization?: string;
+  attendeePhone?: string;
+  attendeeRegNumber?: string;
 }
 
 export default function TicketPreview({
@@ -26,10 +29,27 @@ export default function TicketPreview({
   ticketType = "VIP PASS",
   ticketId = "#URP-10284",
   qrValue = "URP_x8K2pQ91Lm",
+  attendeeOrganization = "TechCorp Labs",
+  attendeePhone = "+91 98765 43210",
+  attendeeRegNumber = "REG-2026-089",
 }: TicketPreviewProps) {
   const isDark = config.template === "dark";
   const isMinimal = config.template === "minimal";
   const isPdf = viewMode === "pdf";
+
+  // Category-specific color override or fallback to primaryColor
+  const activeColor =
+    (ticketType && config.categoryColors?.[ticketType]) || config.primaryColor;
+
+  // Shape class
+  const shapeRadius =
+    config.shape === "rounded"
+      ? "rounded-[28px]"
+      : config.shape === "compact"
+      ? "rounded-xl"
+      : "rounded-2xl";
+
+  const paddingCls = config.shape === "compact" ? "p-4 sm:p-5" : "p-6";
 
   // Card theme classes
   const cardBg = isDark ? "bg-[#121216] text-white" : "bg-white text-neutral-900";
@@ -62,9 +82,15 @@ export default function TicketPreview({
     [1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 1],
   ];
 
+  // Rules text builder
+  const rulesList: string[] = [];
+  if (config.showSingleEntryRule) rulesList.push("Valid for one entry");
+  if (config.showGateNotice) rulesList.push("Keep this QR ready at the gate");
+  if (config.customInstruction) rulesList.push(config.customInstruction);
+
   const ticketContent = (
     <div
-      className={`relative w-full rounded-2xl border ${cardBorder} ${cardBg} overflow-hidden shadow-sm transition-all duration-200 select-none`}
+      className={`relative w-full ${shapeRadius} border ${cardBorder} ${cardBg} overflow-hidden shadow-sm transition-all duration-200 select-none`}
       style={{
         boxShadow: isDark
           ? "0 4px 24px -2px rgba(0, 0, 0, 0.5)"
@@ -90,18 +116,18 @@ export default function TicketPreview({
         </div>
       )}
 
-      {/* Top Accent Strip (Modern template only) */}
-      {config.template === "modern" && (
+      {/* Top Accent Strip (Event or Modern template) */}
+      {(config.template === "event" || config.template === "modern") && (
         <div
-          className="h-1.5 w-full relative z-10"
-          style={{ backgroundColor: config.primaryColor }}
+          className="h-2 w-full relative z-10"
+          style={{ backgroundColor: activeColor }}
         />
       )}
 
       {/* Ticket Body */}
-      <div className="relative z-10 p-6 flex flex-col items-center text-center">
-        {/* Logo / Brand Header */}
-        <div className="mb-4 flex items-center justify-center">
+      <div className={`relative z-10 ${paddingCls} flex flex-col items-center text-center`}>
+        {/* Logo & Sponsor Header */}
+        <div className="mb-3.5 flex items-center justify-center gap-3">
           {config.logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -117,6 +143,18 @@ export default function TicketPreview({
               URPASS
             </span>
           )}
+
+          {config.sponsorLogoUrl && (
+            <>
+              <span className="text-neutral-300 text-xs">×</span>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={config.sponsorLogoUrl}
+                alt="Sponsor Logo"
+                className="h-6 max-w-[100px] object-contain opacity-80"
+              />
+            </>
+          )}
         </div>
 
         {/* Event Name */}
@@ -130,9 +168,9 @@ export default function TicketPreview({
             <span
               className="inline-flex items-center gap-1 text-[11px] font-bold tracking-wider uppercase px-3 py-1 rounded-full border"
               style={{
-                borderColor: `${config.primaryColor}30`,
-                color: config.primaryColor,
-                backgroundColor: `${config.primaryColor}12`,
+                borderColor: `${activeColor}35`,
+                color: activeColor,
+                backgroundColor: `${activeColor}12`,
               }}
             >
               <TicketIcon className="w-3 h-3" />
@@ -168,16 +206,37 @@ export default function TicketPreview({
 
         {/* Attendee Name (Toggled) */}
         {config.showAttendeeName && (
-          <div className="mt-2 mb-1">
+          <div className="mt-2 mb-0.5">
             <p className="text-base font-bold tracking-tight">
               {attendeeName}
             </p>
           </div>
         )}
 
+        {/* Dynamic Fields: Company / College, Phone, Registration Number */}
+        {config.showOrganization && attendeeOrganization && (
+          <p className={`text-xs font-medium ${subtextCls} mb-0.5`}>
+            {attendeeOrganization}
+          </p>
+        )}
+
+        {config.showPhone && attendeePhone && (
+          <p className={`text-[11px] font-mono ${subtextCls} mb-0.5`}>
+            {attendeePhone}
+          </p>
+        )}
+
+        {config.showRegistrationNumber && attendeeRegNumber && (
+          <div className="my-1">
+            <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300">
+              {attendeeRegNumber}
+            </span>
+          </div>
+        )}
+
         {/* Ticket ID (Toggled) */}
         {config.showTicketId && (
-          <div className="mb-2 flex items-center justify-center gap-1.5">
+          <div className="my-1.5 flex items-center justify-center gap-1.5">
             <span className="text-[9px] font-bold tracking-widest uppercase text-neutral-400">
               TICKET ID
             </span>
@@ -189,7 +248,7 @@ export default function TicketPreview({
 
         {/* Date & Venue (Toggled) */}
         {(config.showEventDate !== false || (config.showVenue && venue)) && (
-          <div className={`w-full border-t ${dividerCls} pt-3 mt-2 flex flex-col items-center gap-1`}>
+          <div className={`w-full border-t ${dividerCls} pt-2.5 mt-2 flex flex-col items-center gap-1`}>
             {config.showEventDate !== false && eventDate && (
               <p className={`text-xs font-semibold tracking-wide ${subtextCls} flex items-center gap-1.5`}>
                 <Calendar className="w-3.5 h-3.5 opacity-70 shrink-0" />
@@ -200,6 +259,32 @@ export default function TicketPreview({
               <p className={`text-xs ${subtextCls} flex items-center gap-1.5`}>
                 <MapPin className="w-3.5 h-3.5 opacity-70 shrink-0" />
                 <span className="truncate max-w-[240px]">{venue}</span>
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Custom Message */}
+        {config.customMessage && (
+          <div className="mt-2.5 pt-2 border-t border-dashed border-neutral-200/80 w-full">
+            <p className="text-xs italic opacity-85 max-w-xs mx-auto">
+              &ldquo;{config.customMessage}&rdquo;
+            </p>
+          </div>
+        )}
+
+        {/* Ticket Rules Strip */}
+        {rulesList.length > 0 && (
+          <div className={`mt-3 pt-2.5 border-t ${dividerCls} w-full text-[10px] ${subtextCls} leading-relaxed`}>
+            <p className="font-medium">{rulesList.join(" • ")}</p>
+            {config.showTermsLink && (
+              <p className="mt-0.5 underline opacity-70 cursor-pointer">
+                Event Terms & Conditions apply
+              </p>
+            )}
+            {config.showOrganizerContact && (
+              <p className="mt-0.5 opacity-70">
+                Need help? Contact the event organizer
               </p>
             )}
           </div>

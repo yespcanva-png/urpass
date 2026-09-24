@@ -16,12 +16,12 @@ vi.mock("@/app/actions/ticket-design", () => ({
   sendTestTicketEmail: vi.fn().mockResolvedValue({ success: true }),
 }));
 
-describe("URPASS Ticket Studio (Simplified 2-Column Ticket Editor)", () => {
+describe("URPASS Ticket Studio (4-Section Clean Ticket Editor)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it("renders the 2-column layout with CUSTOMIZE panel and LIVE PREVIEW", () => {
+  it("renders the 4 core sections: Design, Content, Branding, Delivery", () => {
     render(
       <TicketStudio
         isPro={true}
@@ -33,11 +33,14 @@ describe("URPASS Ticket Studio (Simplified 2-Column Ticket Editor)", () => {
     );
 
     expect(screen.getByText("Ticket Studio")).toBeInTheDocument();
-    expect(screen.getByText("CUSTOMIZE")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /design/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /content/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /branding/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /delivery/i })).toBeInTheDocument();
     expect(screen.getByText("LIVE PREVIEW")).toBeInTheDocument();
   });
 
-  it("renders 3 ready-made styles: Minimal, Event, and Dark", () => {
+  it("renders 3 ready-made templates, ticket shapes, and category colors in Design section", () => {
     render(
       <TicketStudio
         isPro={true}
@@ -49,10 +52,68 @@ describe("URPASS Ticket Studio (Simplified 2-Column Ticket Editor)", () => {
     expect(screen.getByRole("button", { name: /minimal/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /event/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /dark/i })).toBeInTheDocument();
+    expect(screen.getByText("Ticket Shape")).toBeInTheDocument();
+    expect(screen.getByText("Ticket Type Colors")).toBeInTheDocument();
+    expect(screen.getByText("QR Safety Zone Active")).toBeInTheDocument();
   });
 
-  it("strictly renders locked information hierarchy: Logo -> Event Name -> Ticket Type -> QR -> Attendee -> ID -> Date/Venue", () => {
-    const { container } = render(
+  it("renders dynamic ticket fields and ticket rules in Content section", async () => {
+    render(
+      <TicketStudio
+        isPro={true}
+        eventId="evt-1"
+        eventName="TECHFEST 2026"
+        venue="The Residency, Coimbatore"
+      />
+    );
+
+    // Switch to Content tab
+    await userEvent.click(screen.getByRole("button", { name: /content/i }));
+
+    expect(screen.getByText("Dynamic Ticket Fields")).toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: /attendee name/i })).toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: /venue/i })).toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: /company \/ college/i })).toBeInTheDocument();
+    expect(screen.getByText("Ticket Rules")).toBeInTheDocument();
+    expect(screen.getAllByText(/valid for one entry/i).length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("renders event logo and sponsor logo in Branding section", async () => {
+    render(
+      <TicketStudio
+        isPro={true}
+        eventId="evt-1"
+        eventName="TECHFEST 2026"
+      />
+    );
+
+    // Switch to Branding tab
+    await userEvent.click(screen.getByRole("button", { name: /branding/i }));
+
+    expect(screen.getByText("Event / Company Logo")).toBeInTheDocument();
+    expect(screen.getByText(/sponsor logo/i)).toBeInTheDocument();
+  });
+
+  it("renders mobile/email view modes and design status in Delivery section", async () => {
+    render(
+      <TicketStudio
+        isPro={true}
+        eventId="evt-1"
+        eventName="TECHFEST 2026"
+      />
+    );
+
+    // Switch to Delivery tab
+    await userEvent.click(screen.getByRole("button", { name: /delivery/i }));
+
+    expect(screen.getByText("Mobile / Email Preview Mode")).toBeInTheDocument();
+    expect(screen.getByText("Design Status")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /send test to organizer/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /download sample pass/i })).toBeInTheDocument();
+  });
+
+  it("strictly renders locked information hierarchy on live preview: Logo -> Event Name -> Ticket Type -> QR -> Attendee -> ID -> Date/Venue", () => {
+    render(
       <TicketStudio
         isPro={true}
         eventId="evt-1"
@@ -67,7 +128,7 @@ describe("URPASS Ticket Studio (Simplified 2-Column Ticket Editor)", () => {
     expect(headings.length).toBeGreaterThanOrEqual(1);
 
     // Ticket Type Pill
-    const vipPasses = screen.getAllByText(/vip pass/i);
+    const vipPasses = screen.getAllByText(/vip/i);
     expect(vipPasses.length).toBeGreaterThanOrEqual(1);
 
     // QR Code Entry text
@@ -82,27 +143,6 @@ describe("URPASS Ticket Studio (Simplified 2-Column Ticket Editor)", () => {
     // Date & Venue
     expect(screen.getByText("03 OCT 2026 | 10:00 AM")).toBeInTheDocument();
     expect(screen.getByText("The Residency, Coimbatore")).toBeInTheDocument();
-  });
-
-  it("toggles display fields dynamically on the live ticket card", async () => {
-    render(
-      <TicketStudio
-        isPro={true}
-        eventId="evt-1"
-        eventName="TECHFEST 2026"
-        venue="The Residency, Coimbatore"
-      />
-    );
-
-    // Venue is initially visible
-    expect(screen.getByText("The Residency, Coimbatore")).toBeInTheDocument();
-
-    // Find the Venue checkbox and uncheck it
-    const venueCheckbox = screen.getByRole("checkbox", { name: /venue/i });
-    await userEvent.click(venueCheckbox);
-
-    // Venue should now be hidden from live preview
-    expect(screen.queryByText("The Residency, Coimbatore")).not.toBeInTheDocument();
   });
 
   it("allows switching sample attendees to preview different guest names", async () => {

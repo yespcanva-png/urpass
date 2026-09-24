@@ -1,15 +1,35 @@
 export type TicketTemplate = "minimal" | "event" | "dark" | "modern";
+export type TicketShape = "standard" | "rounded" | "compact";
 
 export interface TicketDesignConfig {
   template: TicketTemplate;
   primaryColor: string;
+  shape?: TicketShape;
   logoUrl?: string | null;
+  sponsorLogoUrl?: string | null;
   backgroundImageUrl?: string | null;
+
+  // Dynamic ticket fields
   showAttendeeName: boolean;
   showTicketType: boolean;
   showEventDate?: boolean;
   showVenue: boolean;
   showTicketId: boolean;
+  showOrganization?: boolean;
+  showPhone?: boolean;
+  showRegistrationNumber?: boolean;
+
+  // Custom message & Ticket rules
+  customMessage?: string;
+  showSingleEntryRule?: boolean;
+  showGateNotice?: boolean;
+  showTermsLink?: boolean;
+  showOrganizerContact?: boolean;
+  customInstruction?: string;
+
+  // Ticket type / category accent colors (e.g. { "VIP": "#18181B", "General": "#4F46E5" })
+  categoryColors?: Record<string, string>;
+
   updatedAt?: string;
   isPublished?: boolean;
 }
@@ -17,13 +37,25 @@ export interface TicketDesignConfig {
 export const DEFAULT_TICKET_DESIGN: TicketDesignConfig = {
   template: "event",
   primaryColor: "#635BFF",
+  shape: "standard",
   logoUrl: null,
+  sponsorLogoUrl: null,
   backgroundImageUrl: null,
   showAttendeeName: true,
   showTicketType: true,
   showEventDate: true,
   showVenue: true,
   showTicketId: true,
+  showOrganization: false,
+  showPhone: false,
+  showRegistrationNumber: false,
+  customMessage: "",
+  showSingleEntryRule: true,
+  showGateNotice: true,
+  showTermsLink: false,
+  showOrganizerContact: false,
+  customInstruction: "",
+  categoryColors: {},
   isPublished: true,
 };
 
@@ -47,6 +79,10 @@ export function sanitizeTicketDesign(input: unknown): TicketDesignConfig {
     ? "dark"
     : DEFAULT_TICKET_DESIGN.template;
 
+  const shape: TicketShape = ["standard", "rounded", "compact"].includes(String(raw.shape))
+    ? (raw.shape as TicketShape)
+    : DEFAULT_TICKET_DESIGN.shape || "standard";
+
   const primaryColor =
     typeof raw.primaryColor === "string" && HEX_REGEX.test(raw.primaryColor)
       ? raw.primaryColor
@@ -59,6 +95,12 @@ export function sanitizeTicketDesign(input: unknown): TicketDesignConfig {
       ? raw.logoUrl.trim()
       : typeof raw.org_logo_url === "string" && raw.org_logo_url.startsWith("https://")
       ? raw.org_logo_url.trim()
+      : null;
+
+  const sponsorLogoUrl =
+    typeof raw.sponsorLogoUrl === "string" &&
+    (raw.sponsorLogoUrl.startsWith("https://") || raw.sponsorLogoUrl.startsWith("data:image/"))
+      ? raw.sponsorLogoUrl.trim()
       : null;
 
   const backgroundImageUrl =
@@ -84,19 +126,68 @@ export function sanitizeTicketDesign(input: unknown): TicketDesignConfig {
   const showTicketId =
     typeof raw.showTicketId === "boolean" ? raw.showTicketId : true;
 
+  const showOrganization =
+    typeof raw.showOrganization === "boolean" ? raw.showOrganization : false;
+
+  const showPhone =
+    typeof raw.showPhone === "boolean" ? raw.showPhone : false;
+
+  const showRegistrationNumber =
+    typeof raw.showRegistrationNumber === "boolean" ? raw.showRegistrationNumber : false;
+
+  const customMessage =
+    typeof raw.customMessage === "string" ? raw.customMessage.trim().slice(0, 160) : "";
+
+  const showSingleEntryRule =
+    typeof raw.showSingleEntryRule === "boolean" ? raw.showSingleEntryRule : true;
+
+  const showGateNotice =
+    typeof raw.showGateNotice === "boolean" ? raw.showGateNotice : true;
+
+  const showTermsLink =
+    typeof raw.showTermsLink === "boolean" ? raw.showTermsLink : false;
+
+  const showOrganizerContact =
+    typeof raw.showOrganizerContact === "boolean" ? raw.showOrganizerContact : false;
+
+  const customInstruction =
+    typeof raw.customInstruction === "string" ? raw.customInstruction.trim().slice(0, 160) : "";
+
+  // Category accent colors mapping
+  const categoryColors: Record<string, string> = {};
+  if (raw.categoryColors && typeof raw.categoryColors === "object") {
+    for (const [k, v] of Object.entries(raw.categoryColors as Record<string, unknown>)) {
+      if (typeof v === "string" && HEX_REGEX.test(v)) {
+        categoryColors[k] = v;
+      }
+    }
+  }
+
   const isPublished =
     typeof raw.isPublished === "boolean" ? raw.isPublished : true;
 
   return {
     template,
     primaryColor,
+    shape,
     logoUrl,
+    sponsorLogoUrl,
     backgroundImageUrl,
     showAttendeeName,
     showTicketType,
     showEventDate,
     showVenue,
     showTicketId,
+    showOrganization,
+    showPhone,
+    showRegistrationNumber,
+    customMessage,
+    showSingleEntryRule,
+    showGateNotice,
+    showTermsLink,
+    showOrganizerContact,
+    customInstruction,
+    categoryColors,
     isPublished,
     updatedAt: typeof raw.updatedAt === "string" ? raw.updatedAt : undefined,
   };
