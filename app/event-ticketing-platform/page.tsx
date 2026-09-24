@@ -5,11 +5,13 @@ import SEOPage from "@/components/landing/SEOPage";
 export const metadata: Metadata = {
   title: "Event Ticketing Platform with QR Check-In",
   description: "An event ticketing platform that connects ticket sales to QR check-in. Create ticket types, collect payments, issue digital QR tickets, and scan attendees at entry.",
-  alternates: { canonical: "https://urpass.space/event-ticketing-platform" },
+  alternates: { canonical: "https://urpass.space/event-ticketing-software" },
   openGraph: {
     title: "Event Ticketing Platform with QR Check-In | URPASS",
     description: "Sell tickets, generate QR passes, and check in attendees — all from one platform.",
-    url: "https://urpass.space/event-ticketing-platform",
+    url: "https://urpass.space/event-ticketing-software",
+    locale: "en_IN",
+    type: "website",
   },
 };
 
@@ -17,7 +19,7 @@ export default function EventTicketingPlatformPage() {
   return (
     <SEOPage
       config={{
-        canonicalUrl: "https://urpass.space/event-ticketing-platform",
+        canonicalUrl: "https://urpass.space/event-ticketing-software",
         badge: "EVENT TICKETING PLATFORM",
         h1: "Event Ticketing Made Simple",
         description: "Create ticket types, collect payments, issue digital QR tickets, and scan attendees at the door — all from one connected platform. No juggling multiple tools.",

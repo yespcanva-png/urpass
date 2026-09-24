@@ -14,11 +14,11 @@ export const metadata: Metadata = {
     "QR event registration",
     "URPASS"
   ],
-  alternates: { canonical: "https://urpass.space/event-registration-platform" },
+  alternates: { canonical: "https://urpass.space/event-registration-software" },
   openGraph: {
     title: "Event Registration Platform for Easy Sign-Ups | URPASS",
     description: "Create registration pages, collect attendee information, manage approvals and issue digital passes with URPASS.",
-    url: "https://urpass.space/event-registration-platform",
+    url: "https://urpass.space/event-registration-software",
     locale: "en_IN",
     type: "website",
   },
@@ -30,7 +30,7 @@ export default function Page() {
       config={{
         badge: "REGISTRATION PLATFORM",
         h1: "One Platform for Event Registration",
-        canonicalUrl: "https://urpass.space/event-registration-platform",
+        canonicalUrl: "https://urpass.space/event-registration-software",
         description: "Build a smoother journey from attendee registration to event-day entry with a registration platform designed for modern events.",
         ctaLabel: "Start Accepting Registrations",
         features: [

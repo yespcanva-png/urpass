@@ -37,10 +37,62 @@ export interface SEORelatedLink {
   category: "Product" | "Use Case" | "Guide" | "Comparison" | "Location";
 }
 
+export interface SEODirectAnswer {
+  title?: string;
+  summary: string;
+  keyPoints?: string[];
+}
+
+export interface SEOKeyFactsTable {
+  title?: string;
+  subtitle?: string;
+  headers: [string, string, string?];
+  rows: Array<{
+    col1: string;
+    col2: string;
+    col3?: string;
+  }>;
+}
+
+export interface SEOProductProof {
+  badge?: string;
+  title: string;
+  description: string;
+  type: "ticket-studio" | "scanner" | "analytics" | "passes";
+}
+
+export interface SEOIndiaHighlights {
+  title?: string;
+  subtitle?: string;
+  items: Array<{
+    title: string;
+    description: string;
+    badge?: string;
+  }>;
+}
+
+export interface SEOCompetitorComparison {
+  title?: string;
+  subtitle?: string;
+  competitorName: string;
+  sourceCitations?: string[];
+  rows: Array<{
+    criteria: string;
+    urpass: string;
+    competitor: string;
+    urpassAdvantage?: boolean;
+  }>;
+}
+
 export interface SEOPageConfig {
   badge: string;
   h1: string;
   description: string;
+  directAnswer?: SEODirectAnswer;
+  keyFactsTable?: SEOKeyFactsTable;
+  productProof?: SEOProductProof;
+  indiaHighlights?: SEOIndiaHighlights;
+  competitorComparison?: SEOCompetitorComparison;
   ctaLabel?: string;
   features: SEOFeature[];
   steps?: { n: string; title: string; desc: string }[];
@@ -317,6 +369,31 @@ export default function SEOPage({ config }: { config: SEOPageConfig }) {
             </Link>
           </div>
           <p className="mt-6 text-xs text-neutral-400">Free plan available · No credit card required</p>
+
+          {/* Direct Answer at the top: 40-80 words engineered for Featured Snippets & AI Search */}
+          {config.directAnswer && (
+            <div className="mt-12 text-left bg-gradient-to-br from-brand-50/40 via-white to-neutral-50/80 border border-brand-200/70 rounded-2xl p-6 sm:p-7 shadow-xs">
+              <div className="flex items-center gap-2 mb-2.5">
+                <span className="w-2 h-2 rounded-full bg-brand" />
+                <h2 className="text-xs font-bold uppercase tracking-wider text-brand">
+                  {config.directAnswer.title || "Direct Answer & Overview"}
+                </h2>
+              </div>
+              <p className="text-sm sm:text-base text-neutral-800 leading-relaxed font-medium">
+                {config.directAnswer.summary}
+              </p>
+              {config.directAnswer.keyPoints && config.directAnswer.keyPoints.length > 0 && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mt-4 pt-4 border-t border-brand-100">
+                  {config.directAnswer.keyPoints.map((point, idx) => (
+                    <div key={idx} className="flex items-start gap-2 text-xs text-neutral-700">
+                      <span className="text-brand font-bold">✓</span>
+                      <span>{point}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </section>
 
@@ -346,6 +423,209 @@ export default function SEOPage({ config }: { config: SEOPageConfig }) {
           </div>
         </div>
       </section>
+
+      {/* Key Facts / Specifications Table */}
+      {config.keyFactsTable && (
+        <section className="py-20 px-5 sm:px-8 bg-white border-t border-neutral-100">
+          <div className="max-w-5xl mx-auto">
+            <div className="text-center max-w-2xl mx-auto mb-10">
+              <p className="text-xs font-semibold tracking-widest text-brand mb-2">QUICK COMPARISON &amp; KEY FACTS</p>
+              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-neutral-900">
+                {config.keyFactsTable.title || "Key Specifications & Capabilities"}
+              </h2>
+              {config.keyFactsTable.subtitle && (
+                <p className="text-sm text-neutral-500 mt-2">{config.keyFactsTable.subtitle}</p>
+              )}
+            </div>
+            <div className="overflow-x-auto rounded-2xl border border-neutral-200 shadow-2xs">
+              <table className="w-full text-left border-collapse text-xs sm:text-sm">
+                <thead>
+                  <tr className="bg-neutral-50 border-b border-neutral-200">
+                    <th className="p-3.5 sm:p-4 font-bold text-neutral-900">{config.keyFactsTable.headers[0]}</th>
+                    <th className="p-3.5 sm:p-4 font-bold text-brand">{config.keyFactsTable.headers[1]}</th>
+                    {config.keyFactsTable.headers[2] && (
+                      <th className="p-3.5 sm:p-4 font-bold text-neutral-600">{config.keyFactsTable.headers[2]}</th>
+                    )}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-neutral-100 bg-white">
+                  {config.keyFactsTable.rows.map((r, i) => (
+                    <tr key={i} className="hover:bg-neutral-50/50 transition-colors">
+                      <td className="p-3.5 sm:p-4 font-semibold text-neutral-800">{r.col1}</td>
+                      <td className="p-3.5 sm:p-4 font-medium text-neutral-900">{r.col2}</td>
+                      {r.col3 && <td className="p-3.5 sm:p-4 text-neutral-500">{r.col3}</td>}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Real Product Proof */}
+      {config.productProof && (
+        <section className="py-20 px-5 sm:px-8 bg-neutral-900 text-white border-t border-neutral-800">
+          <div className="max-w-5xl mx-auto">
+            <div className="text-center max-w-2xl mx-auto mb-12">
+              {config.productProof.badge && (
+                <span className="text-xs font-semibold tracking-widest text-brand-200 uppercase bg-brand/10 border border-brand/20 px-3.5 py-1 rounded-full inline-block mb-3">
+                  {config.productProof.badge}
+                </span>
+              )}
+              <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight text-white mb-3">
+                {config.productProof.title}
+              </h2>
+              <p className="text-sm sm:text-base text-neutral-400 leading-relaxed">
+                {config.productProof.description}
+              </p>
+            </div>
+
+            <div className="bg-neutral-950 border border-neutral-800 rounded-3xl p-6 sm:p-10 shadow-2xl">
+              {config.productProof.type === "ticket-studio" ? (
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between border-b border-neutral-800 pb-4 text-xs">
+                    <span className="font-mono text-brand">URPASS TICKET STUDIO // WYSIWYG CANVAS</span>
+                    <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 font-bold">12 Built-In Templates</span>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="bg-neutral-900 border border-neutral-800 p-4 rounded-2xl flex flex-col justify-between">
+                      <span className="text-[10px] uppercase font-bold text-neutral-500">FORMAT 01</span>
+                      <h4 className="text-sm font-bold text-white my-2">Digital Mobile Pass</h4>
+                      <p className="text-xs text-neutral-400">Vertical 380x680px layout with scannable QR and Apple Wallet delivery.</p>
+                    </div>
+                    <div className="bg-neutral-900 border border-neutral-800 p-4 rounded-2xl flex flex-col justify-between">
+                      <span className="text-[10px] uppercase font-bold text-neutral-500">FORMAT 02</span>
+                      <h4 className="text-sm font-bold text-white my-2">Printable Ticket</h4>
+                      <p className="text-xs text-neutral-400">Landscape 780x340px ticket with perforated tear-off stub for physical check-in.</p>
+                    </div>
+                    <div className="bg-neutral-900 border border-neutral-800 p-4 rounded-2xl flex flex-col justify-between">
+                      <span className="text-[10px] uppercase font-bold text-neutral-500">FORMAT 03</span>
+                      <h4 className="text-sm font-bold text-white my-2">Conference Badge</h4>
+                      <p className="text-xs text-neutral-400">Lanyard badge 440x640px with student/speaker credentials and gate tier.</p>
+                    </div>
+                  </div>
+                </div>
+              ) : config.productProof.type === "scanner" ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                  <div className="space-y-4">
+                    <span className="text-[11px] font-mono text-emerald-400 uppercase tracking-widest">SUB-SECOND CHECK-IN SPEED</span>
+                    <h3 className="text-2xl font-bold text-white">Any Smartphone as Gate Scanner</h3>
+                    <p className="text-sm text-neutral-400 leading-relaxed">
+                      Volunteers open a simple URL in Safari or Chrome. No app download or account creation required. Sub-second QR verification with audio chime and haptic buzz.
+                    </p>
+                    <div className="flex items-center gap-4 text-xs font-semibold text-neutral-300">
+                      <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-400" /> &lt;0.3s Scan Time</span>
+                      <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-brand" /> Offline Sync Support</span>
+                    </div>
+                  </div>
+                  <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-5 space-y-3">
+                    <div className="flex items-center justify-between text-xs text-neutral-400 border-b border-neutral-800 pb-2">
+                      <span>Gate 1 · Main Entrance</span>
+                      <span className="text-emerald-400 font-bold">LIVE ONLINE</span>
+                    </div>
+                    <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4 text-center">
+                      <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider block">CHECKED IN</span>
+                      <p className="text-base font-bold text-white mt-1">Arjun Kumar · VIP Pass</p>
+                      <span className="text-[11px] font-mono text-neutral-400">#URP-10284 · 10:14:02 AM</span>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
+                  <div className="bg-neutral-900 border border-neutral-800 p-5 rounded-2xl">
+                    <span className="text-3xl font-extrabold text-white">99.8%</span>
+                    <p className="text-xs text-neutral-400 mt-1">Check-in Accuracy</p>
+                  </div>
+                  <div className="bg-neutral-900 border border-neutral-800 p-5 rounded-2xl">
+                    <span className="text-3xl font-extrabold text-brand">0.3s</span>
+                    <p className="text-xs text-neutral-400 mt-1">Gate Validation Speed</p>
+                  </div>
+                  <div className="bg-neutral-900 border border-neutral-800 p-5 rounded-2xl">
+                    <span className="text-3xl font-extrabold text-emerald-400">0%</span>
+                    <p className="text-xs text-neutral-400 mt-1">Ticketing Commission</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* India-Specific Features */}
+      {config.indiaHighlights && (
+        <section className="py-20 px-5 sm:px-8 bg-neutral-50/70 border-t border-neutral-100">
+          <div className="max-w-5xl mx-auto">
+            <div className="text-center max-w-2xl mx-auto mb-12">
+              <p className="text-xs font-semibold tracking-widest text-brand mb-2">BUILT FOR INDIA</p>
+              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-neutral-900">
+                {config.indiaHighlights.title || "Engineered for Indian Events & UPI Payments"}
+              </h2>
+              {config.indiaHighlights.subtitle && (
+                <p className="text-sm text-neutral-500 mt-2">{config.indiaHighlights.subtitle}</p>
+              )}
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {config.indiaHighlights.items.map((item, idx) => (
+                <div key={idx} className="bg-white rounded-2xl border border-neutral-200/80 p-5 shadow-2xs hover:border-brand-200 transition-all">
+                  {item.badge && (
+                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-brand-50 text-brand inline-block mb-3">
+                      {item.badge}
+                    </span>
+                  )}
+                  <h3 className="text-sm font-bold text-neutral-900 mb-1.5">{item.title}</h3>
+                  <p className="text-xs text-neutral-500 leading-relaxed">{item.description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Competitor Comparison Section */}
+      {config.competitorComparison && (
+        <section className="py-20 px-5 sm:px-8 bg-white border-t border-neutral-100">
+          <div className="max-w-5xl mx-auto">
+            <div className="text-center max-w-2xl mx-auto mb-10">
+              <p className="text-xs font-semibold tracking-widest text-brand mb-2">COMPETITIVE COMPARISON</p>
+              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-neutral-900">
+                {config.competitorComparison.title || `URPASS vs ${config.competitorComparison.competitorName}`}
+              </h2>
+              {config.competitorComparison.subtitle && (
+                <p className="text-sm text-neutral-500 mt-2">{config.competitorComparison.subtitle}</p>
+              )}
+            </div>
+            <div className="overflow-x-auto rounded-2xl border border-neutral-200 shadow-2xs">
+              <table className="w-full text-left border-collapse text-xs sm:text-sm">
+                <thead>
+                  <tr className="bg-neutral-50 border-b border-neutral-200">
+                    <th className="p-3.5 sm:p-4 font-bold text-neutral-900">Evaluation Criteria</th>
+                    <th className="p-3.5 sm:p-4 font-bold text-brand">URPASS</th>
+                    <th className="p-3.5 sm:p-4 font-bold text-neutral-600">{config.competitorComparison.competitorName}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-neutral-100 bg-white">
+                  {config.competitorComparison.rows.map((row, i) => (
+                    <tr key={i} className="hover:bg-neutral-50/50 transition-colors">
+                      <td className="p-3.5 sm:p-4 font-semibold text-neutral-800">{row.criteria}</td>
+                      <td className="p-3.5 sm:p-4 font-medium text-neutral-900">
+                        <span className="text-brand font-bold mr-1.5">{row.urpassAdvantage !== false ? "✓" : "●"}</span>
+                        {row.urpass}
+                      </td>
+                      <td className="p-3.5 sm:p-4 text-neutral-600">{row.competitor}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {config.competitorComparison.sourceCitations && config.competitorComparison.sourceCitations.length > 0 && (
+              <p className="text-[11px] text-neutral-400 mt-3 text-center">
+                Sources: {config.competitorComparison.sourceCitations.join(" · ")}
+              </p>
+            )}
+          </div>
+        </section>
+      )}
 
       {/* How it works */}
       <section className="py-28 px-5 sm:px-8 bg-white">
