@@ -17,6 +17,7 @@ export default function CampusEventsPage() {
   return (
     <SEOPage
       config={{
+        canonicalUrl: "https://urpass.space/campus-events",
         badge: "CAMPUS EVENTS",
         h1: "Registration & Attendance for Campus Events",
         description: "Replace manual sign-in sheets with digital registration and QR check-in for all campus events — from department seminars to annual cultural fests.",
@@ -48,7 +49,7 @@ export default function CampusEventsPage() {
           { q: "Can I use URPASS across multiple departments in the same college?", a: "Yes. Multiple organisers can have separate accounts for their department events, or a single account can manage events for the whole campus." },
           { q: "Can I collect student ID or roll number at registration?", a: "Yes. Add a custom field for student ID, roll number, department, or year in your registration form." },
           { q: "Does URPASS help with maintaining official attendance records?", a: "Yes. Every check-in is timestamped and stored. You can export the full attendance log to CSV for official records." },
-          { q: "Is URPASS free for campus events?", a: "The free plan supports one event with 50 attendees. For larger campus events, paid plans start at ₹299/month." },
+          { q: "Is URPASS free for campus events?", a: "The free plan supports 2 events/month with up to 100 registrations/month at ₹0 forever. For larger campus events and fests, paid plans start at ₹499/month (Starter: 500 registrations) and ₹999/month (Pro: 2,500 registrations) with a 30-day free trial." },
           { q: "Can multiple clubs or committees use URPASS?", a: "Yes. Each club or committee can create their own URPASS account, or multiple team members can share one account on the Pro plan." },
           { q: "Can I run campus events for both students and external guests?", a: "Yes. The registration form is public. You can differentiate internal students from external guests using custom form fields." },
         ],

@@ -17,6 +17,7 @@ export default function FreeEventTicketingPage() {
   return (
     <SEOPage
       config={{
+        canonicalUrl: "https://urpass.space/free-event-ticketing",
         badge: "FREE EVENT TICKETING",
         h1: "Start Event Ticketing for Free",
         description: "URPASS lets you ticket your events at zero cost — for free events. Issue digital QR tickets to attendees, scan them at the door, and track everything. Upgrade for paid ticketing.",
@@ -32,10 +33,10 @@ export default function FreeEventTicketingPage() {
         callout: {
           badge: "FREE PLAN",
           title: "Ticket your free event at zero cost.",
-          description: "The URPASS free plan is built for free events. Issue digital QR tickets to your first 50 attendees, scan them at the door, and manage the full event lifecycle — at no charge.",
+          description: "The URPASS free plan is built for free events. Issue digital QR tickets for up to 100 attendees per month across 2 events, scan them at the door, and manage the full event lifecycle — at no charge.",
           bullets: [
-            "1 active event",
-            "Up to 50 attendees",
+            "2 events per month",
+            "Up to 100 registrations per month",
             "Full QR ticketing included",
             "No credit card required",
           ],
@@ -45,10 +46,10 @@ export default function FreeEventTicketingPage() {
           "Local hackathons", "Trial events", "Seminars", "Campus events",
         ],
         faqs: [
-          { q: "Is URPASS completely free for free events?", a: "Yes. For events where tickets are free (₹0), the URPASS free plan covers the full flow: registration, QR tickets, and check-in — at zero cost with up to 50 attendees." },
+          { q: "Is URPASS completely free for free events?", a: "Yes. For events where tickets are free (₹0), the URPASS free plan covers the full flow: registration, QR tickets, and check-in — at zero cost with up to 100 registrations per month across 2 events." },
           { q: "Can I use the free plan for paid events too?", a: "No. Collecting payments requires a Starter or Pro subscription. The free plan is for free (₹0) events only." },
           { q: "What is the difference between a free ticket and a paid ticket in URPASS?", a: "A free ticket is a ₹0 registration where the attendee applies and gets a QR pass on approval. A paid ticket requires attendees to pay via Razorpay before receiving their QR pass." },
-          { q: "How do I upgrade to paid ticketing?", a: "Sign up and start with the free plan. When you're ready to collect payments, upgrade to the Starter or Pro plan from your billing page." },
+          { q: "How do I upgrade to paid ticketing?", a: "Sign up and start with the free plan. When you're ready to collect payments, upgrade to Starter (₹499/mo) or Pro (₹999/mo) with a 30-day free trial." },
           { q: "Are there any hidden fees on the free plan?", a: "No. The free plan is genuinely free — no trial period, no credit card required, no hidden charges." },
           { q: "Can I switch from free to paid events on the same account?", a: "Yes. Once you upgrade to a paid plan, you can create paid ticketing events alongside free events on the same account." },
         ],

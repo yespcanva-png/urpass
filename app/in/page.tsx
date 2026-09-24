@@ -71,15 +71,15 @@ export default function IndiaPage() {
           "Community events — Pune", "Campus events — India",
         ],
         faqs: [
-          { q: "Is URPASS an Indian event management platform?", a: "Yes. URPASS is built for India — INR pricing, Razorpay payment integration, and designed for the Indian event ecosystem including colleges, startups, and corporations." },
-          { q: "What payment methods does URPASS support in India?", a: "URPASS uses Razorpay for payments, which supports UPI, credit/debit cards, net banking, and popular Indian wallets." },
-          { q: "Is URPASS free for Indian users?", a: "Yes. The free plan is available to all Indian users — 1 event, 50 attendees, full QR check-in, no credit card required." },
-          { q: "Which Indian cities use URPASS?", a: "URPASS is used by event organisers in Chennai, Bangalore, Coimbatore, Hyderabad, Pune, Mumbai, Delhi, and growing. The platform works for any event anywhere in India." },
-          { q: "Does URPASS support college events in India?", a: "Yes. URPASS is widely used for Indian college events — workshops, seminars, symposiums, hackathons, cultural fests, and more." },
-          { q: "What is the pricing for Indian users?", a: "Free plan: ₹0. Starter: ₹299/month. Pro: ₹799/month. All prices include GST at 18%." },
+          { q: "Is URPASS an Indian event management platform?", a: "Yes. URPASS is an India-focused digital event registration, QR pass and check-in platform for colleges, conferences, hackathons, workshops and corporate events across India with native INR pricing and Razorpay UPI payments." },
+          { q: "What payment methods does URPASS support in India?", a: "URPASS uses Razorpay for ticketing payments, supporting instant UPI (Google Pay, PhonePe, Paytm), credit/debit cards, net banking, and wallets with zero per-ticket commission fees." },
+          { q: "Is URPASS free for Indian users?", a: "Yes. The free plan is permanently available to all Indian organizers — 2 events/month, 100 registrations/month, full QR check-in, no credit card required." },
+          { q: "Which Indian cities use URPASS?", a: "URPASS is used by event organisers in Chennai, Bangalore, Coimbatore, Hyderabad, Pune, Mumbai, Delhi NCR, Kochi, Kolkata, Ahmedabad and across India." },
+          { q: "Does URPASS support college events in India?", a: "Yes. URPASS is widely used for Indian college events — workshops, seminars, symposiums, hackathons, cultural fests, and campus department events." },
+          { q: "What is the pricing for Indian users?", a: "Free plan: ₹0 forever (2 events/mo, 100 registrations/mo). Starter: ₹499/month (+18% GST). Pro: ₹999/month (+18% GST). Business: ₹2,499/month (+18% GST). All paid plans include a 30-day free trial." },
         ],
         ctaTitle: "Start your event in India today",
-        ctaDescription: "₹0 to start · Razorpay payments · Built for India",
+        ctaDescription: "₹0 to start · Razorpay UPI payments · Built for India",
       }}
     />
   );

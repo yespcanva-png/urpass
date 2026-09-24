@@ -17,6 +17,7 @@ export default function DigitalEventPassPage() {
   return (
     <SEOPage
       config={{
+        canonicalUrl: "https://urpass.space/digital-event-pass",
         badge: "DIGITAL EVENT PASS",
         h1: "Create Digital QR Passes for Events",
         description: "Issue each attendee a unique digital QR pass the moment you approve their application. They open it in any browser — no app download, no printing.",

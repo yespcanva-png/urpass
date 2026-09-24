@@ -17,6 +17,7 @@ export default function CollegeEventsPage() {
   return (
     <SEOPage
       config={{
+        canonicalUrl: "https://urpass.space/college-events",
         badge: "COLLEGE EVENTS",
         h1: "Event Registration & QR Check-In for Colleges",
         description: "Replace Google Forms and manual entry lists with a proper college event system. Share a registration link, issue digital passes, and scan QR codes at the door.",
@@ -45,7 +46,7 @@ export default function CollegeEventsPage() {
           "Guest lectures", "Seminars", "Inter-college events", "Department events",
         ],
         faqs: [
-          { q: "Is URPASS free for college events?", a: "Yes. The free plan supports one event with up to 50 attendees. For larger college events, paid plans start at ₹299/month." },
+          { q: "Is URPASS free for college events?", a: "Yes. The free plan supports 2 events per month with up to 100 registrations per month at ₹0 forever. For larger college events and fests, paid plans start at ₹499/month (Starter: 10 events, 500 registrations) and ₹999/month (Pro: unlimited events, 2,500 registrations) with a 30-day free trial." },
           { q: "Can I collect department or year from students?", a: "Yes. You can add custom registration fields for any information you need — department, year, roll number, or college name." },
           { q: "How do students receive their pass?", a: "After registration is approved, students get a link to their digital QR pass. They show it on their phone at the event entrance." },
           { q: "Can one coordinator manage the full event?", a: "Yes. One person can set up the event, manage registrations, and run QR check-in from the same account." },

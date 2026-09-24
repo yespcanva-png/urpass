@@ -17,6 +17,7 @@ export default function EventEntryManagementPage() {
   return (
     <SEOPage
       config={{
+        canonicalUrl: "https://urpass.space/event-entry-management",
         badge: "EVENT ENTRY MANAGEMENT",
         h1: "Make Event Entry Faster and Simpler",
         description: "Replace slow manual check-in queues with instant QR scanning. Staff uses any phone to validate passes at the door — no hardware, no printed lists, no confusion.",

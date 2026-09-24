@@ -17,6 +17,7 @@ export default function EventCheckInWithoutAppPage() {
   return (
     <SEOPage
       config={{
+        canonicalUrl: "https://urpass.space/guides/event-check-in-without-app",
         badge: "HOW-TO GUIDE",
         h1: "How to Run QR Event Check-In Without an App",
         description: "QR event check-in in URPASS requires zero app downloads — for both your check-in staff and your attendees. Everything works in a standard mobile browser.",

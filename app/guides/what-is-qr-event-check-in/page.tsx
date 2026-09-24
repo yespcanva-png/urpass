@@ -17,6 +17,7 @@ export default function WhatIsQrEventCheckInPage() {
   return (
     <SEOPage
       config={{
+        canonicalUrl: "https://urpass.space/guides/what-is-qr-event-check-in",
         badge: "GUIDE",
         h1: "What Is QR Event Check-In?",
         description: "QR event check-in replaces manual name lists and paper tickets with a digital QR code on each attendee's phone. Staff scans the code at the entrance for instant, fraud-proof verification.",

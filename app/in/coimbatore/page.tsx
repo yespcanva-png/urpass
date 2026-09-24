@@ -70,8 +70,8 @@ export default function CoimbatorePage() {
         ],
         faqs: [
           { q: "Is URPASS used by Coimbatore colleges?", a: "Yes. URPASS is used by college event organisers at PSG, Amrita, KCT, SKCET, and other colleges across Coimbatore." },
-          { q: "Is URPASS free for Coimbatore college events?", a: "Yes. The free plan supports one event with 50 attendees — perfect for department workshops and small college events." },
-          { q: "Can I manage a Coimbatore college fest with URPASS?", a: "Yes. The Pro plan supports up to 2,000 attendees per event — suitable for large Coimbatore college fests." },
+          { q: "Is URPASS free for Coimbatore college events?", a: "Yes. The free plan supports 2 events/month with up to 100 registrations/month at ₹0 forever — perfect for department workshops, symposiums, and student clubs." },
+          { q: "Can I manage a Coimbatore college fest with URPASS?", a: "Yes. Pro and Business plans support 2,500 to 10,000 registrations/month — ideal for large Coimbatore engineering college fests and symposiums." },
           { q: "How do Coimbatore attendees pay for events?", a: "Razorpay supports UPI, cards, and net banking — the payment methods commonly used in Coimbatore." },
           { q: "Can I run events for multiple departments in the same college?", a: "Yes. Each department or club can create their own events from one URPASS account." },
           { q: "Do I need internet at the venue to do QR check-in?", a: "URPASS handles low-connectivity scenarios well. Scans work in poor internet conditions and sync when connectivity is restored." },

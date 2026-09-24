@@ -17,6 +17,7 @@ export default function WorkshopsPage() {
   return (
     <SEOPage
       config={{
+        canonicalUrl: "https://urpass.space/workshops",
         badge: "WORKSHOPS",
         h1: "Workshop Registration & QR Check-In",
         description: "Share a registration link, collect participant sign-ups, issue digital QR passes, and scan attendees at your workshop door. Supports both free and paid workshops.",

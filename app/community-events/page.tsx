@@ -17,6 +17,7 @@ export default function CommunityEventsPage() {
   return (
     <SEOPage
       config={{
+        canonicalUrl: "https://urpass.space/community-events",
         badge: "COMMUNITY EVENTS",
         h1: "Simple Registration for Community Events",
         description: "Run community events with a clean registration page, digital QR passes, and phone-based check-in. Free for small communities. No complicated setup.",
@@ -45,11 +46,11 @@ export default function CommunityEventsPage() {
           "Religious events", "Charity events", "Support groups", "Sports events",
         ],
         faqs: [
-          { q: "Is URPASS suitable for small community events?", a: "Absolutely. The free plan is designed for exactly this — one event with up to 50 attendees at zero cost." },
+          { q: "Is URPASS suitable for small community events?", a: "Absolutely. The free plan is designed for exactly this — 2 events per month with up to 100 registrations per month at ₹0 forever." },
           { q: "Do I need technical skills to use URPASS?", a: "No. URPASS is designed to be used by anyone. Creating an event and sharing the registration link takes about 5 minutes." },
           { q: "Can community members register without creating an account?", a: "Yes. Attendees register through the public link — no account, no login, no app required on their end." },
           { q: "Can I use URPASS for recurring community meetups?", a: "You can create a new event for each meetup. On paid plans, you can run multiple events simultaneously." },
-          { q: "What if my community grows and I need more than 50 attendees?", a: "You can upgrade to a paid plan — Starter at ₹299/month supports 500 attendees per event." },
+          { q: "What if my community grows and I need more than 100 registrations?", a: "You can upgrade to a paid plan — Starter at ₹499/month supports 10 events and 500 registrations/month. Pro at ₹999/month supports unlimited events and 2,500 registrations/month." },
           { q: "Is there a mobile app for community event organisers?", a: "URPASS works entirely in a mobile browser — no app download needed for organisers or attendees." },
         ],
         ctaTitle: "Bring your community together with URPASS",

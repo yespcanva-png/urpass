@@ -17,6 +17,7 @@ export default function PreventDuplicateEventEntryPage() {
   return (
     <SEOPage
       config={{
+        canonicalUrl: "https://urpass.space/guides/prevent-duplicate-event-entry",
         badge: "HOW-TO GUIDE",
         h1: "How to Prevent Duplicate Event Check-Ins",
         description: "Duplicate entry at events — whether from sharing passes, photocopying tickets, or re-entering without permission — is blocked automatically with single-use QR passes in URPASS.",

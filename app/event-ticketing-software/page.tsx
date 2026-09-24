@@ -17,6 +17,7 @@ export default function EventTicketingSoftwarePage() {
   return (
     <SEOPage
       config={{
+        canonicalUrl: "https://urpass.space/event-ticketing-software",
         badge: "EVENT TICKETING SOFTWARE",
         h1: "Simple Event Ticketing Software",
         description: "Create your event, set up ticket types, collect payments, issue digital QR tickets, and check in attendees with a phone scanner. All in one place.",

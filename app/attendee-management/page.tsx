@@ -17,6 +17,7 @@ export default function AttendeeManagementPage() {
   return (
     <SEOPage
       config={{
+        canonicalUrl: "https://urpass.space/attendee-management",
         badge: "ATTENDEE MANAGEMENT",
         h1: "Manage Your Event Attendees in One Place",
         description: "From the first application to the final check-in, URPASS gives you full control over every attendee. Review applications, issue passes, and track entry from one clean dashboard.",
@@ -47,9 +48,9 @@ export default function AttendeeManagementPage() {
         faqs: [
           { q: "What does attendee management mean in URPASS?", a: "Attendee management in URPASS covers the full lifecycle: collecting applications, reviewing and approving them, issuing digital passes, and tracking check-ins. All from one dashboard." },
           { q: "Can I manually add attendees without a registration form?", a: "Yes. You can manually add attendees directly from the attendee management page, bypassing the public registration form." },
-          { q: "How many attendees can I manage?", a: "The free plan supports up to 50 attendees per event. Starter supports 500/event and Pro supports 2,000/event." },
-          { q: "Can I export my attendee list?", a: "Yes. Starter and Pro plans allow CSV export of your full attendee list with all details and statuses." },
-          { q: "Can multiple organisers manage the same event?", a: "Yes. Pro plan supports organisations with multiple team members who can all manage attendees and check-ins for shared events." },
+          { q: "How many attendees can I manage?", a: "The free plan supports up to 100 registrations per month across 2 events. Starter supports 500 registrations/month, Pro supports 2,500 registrations/month, and Business supports 10,000 registrations/month with a 30-day free trial." },
+          { q: "Can I export my attendee list?", a: "Yes. Starter, Pro, and Business plans allow CSV export of your full attendee list with all details and statuses." },
+          { q: "Can multiple organisers manage the same event?", a: "Yes. Pro plan supports up to 5 organizer seats and Business supports up to 15 seats with role-based access." },
           { q: "What happens to my attendee data after the event?", a: "Your attendee data is stored securely and accessible from your dashboard. You can export it at any time." },
         ],
         ctaTitle: "Put your attendee list under control",

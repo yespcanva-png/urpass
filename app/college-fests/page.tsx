@@ -17,6 +17,7 @@ export default function CollegeFestsPage() {
   return (
     <SEOPage
       config={{
+        canonicalUrl: "https://urpass.space/college-fests",
         badge: "COLLEGE FESTS",
         h1: "College Fest Registration & QR Check-In",
         description: "Run your college fest with online registration, multiple ticket types, digital QR passes, and fast entry scanning. Handle thousands of attendees without chaos.",

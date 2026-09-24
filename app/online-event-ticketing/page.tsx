@@ -17,6 +17,7 @@ export default function OnlineEventTicketingPage() {
   return (
     <SEOPage
       config={{
+        canonicalUrl: "https://urpass.space/online-event-ticketing",
         badge: "ONLINE EVENT TICKETING",
         h1: "Sell & Manage Event Tickets Online",
         description: "Create an online ticket page, collect payments, send digital QR tickets, and check in attendees at the event. Everything managed from your browser.",

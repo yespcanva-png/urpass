@@ -17,13 +17,14 @@ export default function ZohoBackstageAlternativePage() {
   return (
     <SEOPage
       config={{
+        canonicalUrl: "https://urpass.space/compare/zoho-backstage-alternative",
         badge: "ZOHO BACKSTAGE ALTERNATIVE",
         h1: "A Simpler Alternative to Zoho Backstage",
         description: "URPASS is purpose-built for fast, simple event registration with QR check-in. If your event doesn't need a full conference management suite, URPASS gets you running in minutes.",
         ctaLabel: "Try URPASS free",
         features: [
           { icon: Zap, title: "5-minute setup", desc: "Create an event and start collecting registrations in 5 minutes. No training, no onboarding, no sales call." },
-          { icon: Gift, title: "Free plan", desc: "Permanent free plan for 1 event and 50 attendees. No credit card, no trial expiry." },
+          { icon: Gift, title: "Free plan", desc: "Permanent free plan for 2 events/month and 100 registrations/month. No credit card, no trial expiry." },
           { icon: QrCode, title: "QR check-in included", desc: "Every plan includes digital QR passes and phone-based check-in scanning. No add-on required." },
           { icon: CreditCard, title: "Razorpay payments", desc: "Accept INR payments via UPI, cards, and net banking with Razorpay — no complex payment setup." },
           { icon: Users, title: "Simple attendee management", desc: "Registration, approval, pass issuance, and check-in tracking from one clean dashboard." },

@@ -17,6 +17,7 @@ export default function ConferencesPage() {
   return (
     <SEOPage
       config={{
+        canonicalUrl: "https://urpass.space/conferences",
         badge: "CONFERENCES",
         h1: "Conference Registration & QR Check-In",
         description: "Run conference registrations with multiple ticket types, speaker passes, and fast QR entry scanning. Manage hundreds of delegates from a single dashboard.",

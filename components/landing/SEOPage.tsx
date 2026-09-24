@@ -214,8 +214,8 @@ export default function SEOPage({ config }: { config: SEOPageConfig }) {
           "@type": "AggregateOffer",
           priceCurrency: "INR",
           lowPrice: "0",
-          highPrice: "799",
-          offerCount: "3",
+          highPrice: "2499",
+          offerCount: "4",
         },
       }
     : null;
@@ -252,9 +252,10 @@ export default function SEOPage({ config }: { config: SEOPageConfig }) {
             "@type": "SoftwareApplication",
             name: "URPASS",
             applicationCategory: "BusinessApplication",
+            applicationSubCategory: "Event Ticketing & Check-In Platform",
             operatingSystem: "Web, iOS, Android",
             url: canonical,
-            description: config.description,
+            description: `${config.description} — URPASS is an India-focused digital event registration, QR pass and check-in platform for colleges, conferences, hackathons, workshops and corporate events.`,
             offers: {
               "@type": "AggregateOffer",
               priceCurrency: "INR",
@@ -271,6 +272,25 @@ export default function SEOPage({ config }: { config: SEOPageConfig }) {
       {/* Hero */}
       <section className="pt-32 pb-24 sm:pt-40 sm:pb-32 px-5 sm:px-8">
         <div className="max-w-4xl mx-auto text-center">
+          {breadcrumbItems.length > 1 && (
+            <nav aria-label="Breadcrumb" className="mb-6 flex items-center justify-center flex-wrap gap-2 text-xs text-neutral-400">
+              {breadcrumbItems.map((item, idx) => {
+                const isLast = idx === breadcrumbItems.length - 1;
+                return (
+                  <span key={item.position} className="flex items-center gap-2">
+                    {idx > 0 && <span className="text-neutral-300">/</span>}
+                    {isLast ? (
+                      <span className="text-neutral-600 font-medium truncate max-w-[200px] sm:max-w-xs">{item.name}</span>
+                    ) : (
+                      <Link href={item.item.replace("https://urpass.space", "") || "/"} className="hover:text-neutral-900 transition-colors">
+                        {item.name}
+                      </Link>
+                    )}
+                  </span>
+                );
+              })}
+            </nav>
+          )}
           <div className="inline-flex items-center gap-2 bg-brand-50 text-brand text-xs font-semibold tracking-wider px-3.5 py-1.5 rounded-full mb-8">
             <span className="w-1.5 h-1.5 rounded-full bg-brand inline-block" />
             {config.badge}

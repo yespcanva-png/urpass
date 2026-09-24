@@ -17,6 +17,7 @@ export default function EventGuestManagementPage() {
   return (
     <SEOPage
       config={{
+        canonicalUrl: "https://urpass.space/event-guest-management",
         badge: "EVENT GUEST MANAGEMENT",
         h1: "Manage Guests from Registration to Entry",
         description: "Collect guest registrations, manage your approved guest list, issue digital QR passes, and scan guests at the entrance. All from one clean platform.",
@@ -50,7 +51,7 @@ export default function EventGuestManagementPage() {
           { q: "How does a guest get their entry pass?", a: "Once you approve their registration, the guest receives a digital QR pass via a link. They show it on their phone at the entrance." },
           { q: "Can I add VIP guests separately?", a: "Yes. When approving guests, you can assign pass types such as VIP, Speaker, or Organizer in addition to the standard Participant type." },
           { q: "Can I manage a walk-in guest list?", a: "Yes. You can manually add attendees directly from the attendee management dashboard for walk-in guests." },
-          { q: "How many guests can I manage for free?", a: "The free plan supports up to 50 guests per event. Paid plans support 500 or 2,000 guests per event." },
+          { q: "How many guests can I manage for free?", a: "The free plan supports up to 100 registrations per month across 2 events. Paid plans support 500 (Starter), 2,500 (Pro), or 10,000 (Business) registrations per month with a 30-day free trial." },
         ],
         ctaTitle: "Simplify your guest management",
         ctaDescription: "Registration to entry · Digital QR passes · Free to start",

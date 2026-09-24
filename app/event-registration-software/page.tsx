@@ -17,6 +17,7 @@ export default function EventRegistrationSoftwarePage() {
   return (
     <SEOPage
       config={{
+        canonicalUrl: "https://urpass.space/event-registration-software",
         badge: "EVENT REGISTRATION SOFTWARE",
         h1: "Simple Online Event Registration Software",
         description: "Create an event, share a registration link, collect applications, and issue digital QR passes — all from one simple platform. No spreadsheets. No confusion.",
@@ -46,7 +47,7 @@ export default function EventRegistrationSoftwarePage() {
         ],
         faqs: [
           { q: "What is event registration software?", a: "Event registration software lets organizers create an event, collect attendee applications or sign-ups, manage approvals, and issue passes or tickets. URPASS handles all of this plus QR check-in from a single dashboard." },
-          { q: "Is URPASS free to use?", a: "Yes. The free plan supports 1 active event with up to 50 attendees. No credit card required. Paid plans start at ₹299/month." },
+          { q: "Is URPASS free to use?", a: "Yes. The free plan supports 2 events/month with up to 100 registrations/month at ₹0 forever. No credit card required. Paid plans start at ₹499/month with a 30-day free trial." },
           { q: "Do attendees need to download an app?", a: "No. Attendees register through a public link and receive a digital pass that opens in any mobile browser. No app installation required." },
           { q: "Can I use this for paid events?", a: "Yes. Starter and Pro plans support paid event ticketing with Razorpay payment integration." },
           { q: "How long does it take to set up?", a: "You can create an event and publish a registration link in under 5 minutes." },

@@ -17,6 +17,7 @@ export default function HackathonsPage() {
   return (
     <SEOPage
       config={{
+        canonicalUrl: "https://urpass.space/hackathons",
         badge: "HACKATHONS",
         h1: "Hackathon Registration & QR Check-In",
         description: "Run your hackathon registration from a public link. Collect participant details, issue unique QR passes, and check in your teams at the venue with phone-based scanning.",
@@ -47,7 +48,7 @@ export default function HackathonsPage() {
         faqs: [
           { q: "Can I register teams for a hackathon in URPASS?", a: "URPASS handles individual registrations. For team events, you can add a 'Team Name' custom field and approve each team member individually." },
           { q: "Can I limit registrations to a specific college?", a: "Not automatically, but you can collect college name in the form and manually review/approve only the participants who meet your criteria." },
-          { q: "Is URPASS free for hackathons?", a: "Yes. The free plan supports one event with up to 50 participants. For larger hackathons, paid plans start at ₹299/month." },
+          { q: "Is URPASS free for hackathons?", a: "Yes. The free plan supports 2 events/month with up to 100 participants/month at ₹0 forever. For larger hackathons, paid plans start at ₹499/month (Starter: 500 hackers) and ₹999/month (Pro: 2,500 hackers) with a 30-day free trial." },
           { q: "How do participants show their pass at the venue?", a: "Approved participants receive a link to their digital QR pass. They show the QR code on their phone at the hackathon venue entrance." },
           { q: "Can I use URPASS for a 24-hour hackathon with multiple entry/exit points?", a: "Yes. The scanner supports multiple simultaneous devices, so you can run check-in at multiple doors." },
           { q: "Can I collect GitHub links or project submissions in the form?", a: "Yes. URPASS supports custom fields, so you can ask for GitHub usernames, project ideas, or any other details in the registration form." },

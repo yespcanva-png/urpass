@@ -17,6 +17,7 @@ export default function EventbriteAlternativePage() {
   return (
     <SEOPage
       config={{
+        canonicalUrl: "https://urpass.space/compare/eventbrite-alternative",
         badge: "EVENTBRITE ALTERNATIVE",
         h1: "Looking for an Eventbrite Alternative?",
         description: "URPASS is a simpler, India-built event registration platform with digital QR passes, Razorpay payment integration, and a permanent free plan. No per-ticket fees from URPASS.",

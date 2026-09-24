@@ -17,6 +17,7 @@ export default function EventQrCodeGeneratorPage() {
   return (
     <SEOPage
       config={{
+        canonicalUrl: "https://urpass.space/event-qr-code-generator",
         badge: "EVENT QR CODE GENERATOR",
         h1: "Generate QR Codes for Event Attendees",
         description: "URPASS automatically generates a unique QR code for every approved attendee. No manual work. Each QR is embedded in a digital pass and scannable at your event entrance.",

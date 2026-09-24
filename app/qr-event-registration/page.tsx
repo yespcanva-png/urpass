@@ -17,6 +17,7 @@ export default function QrEventRegistrationPage() {
   return (
     <SEOPage
       config={{
+        canonicalUrl: "https://urpass.space/qr-event-registration",
         badge: "QR CODE EVENT REGISTRATION",
         h1: "Registration to QR Check-In in One Platform",
         description: "Attendees register through your public link. They get a QR pass on approval. You scan it at the door. The entire flow — registration, pass, entry — in one place.",
@@ -50,7 +51,7 @@ export default function QrEventRegistrationPage() {
           { q: "How does the QR pass work for attendees?", a: "Attendees receive a link to their digital pass. They open it on their phone and show the QR code at the entrance. No app needed." },
           { q: "Can I share the registration link on social media?", a: "Yes. The registration link is a public URL you can share anywhere — WhatsApp, Instagram, email, LinkedIn, or your college notice board." },
           { q: "How quickly do attendees get their QR pass?", a: "With manual approval, passes are issued as soon as you approve the application. With auto-approval, passes are issued within seconds of registration." },
-          { q: "Is there a limit on registrations?", a: "Free plan supports up to 50 attendees. Starter supports 500/event. Pro supports 2,000/event." },
+          { q: "Is there a limit on registrations?", a: "Free plan supports up to 100 registrations per month across 2 events. Starter supports 500 registrations/month, Pro supports 2,500 registrations/month, and Business supports 10,000 registrations/month with a 30-day free trial." },
         ],
         ctaTitle: "Set up QR registration for your next event",
         ctaDescription: "Public registration link · Instant QR passes · Live check-in",

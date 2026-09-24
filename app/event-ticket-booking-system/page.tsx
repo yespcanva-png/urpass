@@ -17,6 +17,7 @@ export default function EventTicketBookingSystemPage() {
   return (
     <SEOPage
       config={{
+        canonicalUrl: "https://urpass.space/event-ticket-booking-system",
         badge: "EVENT TICKET BOOKING SYSTEM",
         h1: "Event Booking to Entry in One System",
         description: "Let attendees book tickets online, collect payment, generate QR passes, and scan them in at the entrance. One connected system — no disconnected tools.",

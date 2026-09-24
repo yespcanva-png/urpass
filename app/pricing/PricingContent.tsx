@@ -179,7 +179,7 @@ const FAQS = [
   },
   {
     q: "Can I sell paid tickets?",
-    a: "Paid ticketing is coming soon. You can contact us to join the early-access list.",
+    a: "Yes. Connect Razorpay to sell paid tickets with direct payouts to your Indian bank account via UPI, cards, and net banking — with zero per-ticket platform commissions from URPASS.",
   },
   {
     q: "What happens to my data if I cancel?",

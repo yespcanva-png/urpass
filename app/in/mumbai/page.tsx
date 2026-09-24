@@ -71,8 +71,8 @@ export default function MumbaiPage() {
         ],
         faqs: [
           { q: "Is URPASS used in Mumbai?", a: "Yes. URPASS is used by Mumbai event organisers across corporate events, college fests, and community gatherings." },
-          { q: "Can I use URPASS for a large Mumbai conference?", a: "Yes. Pro plan supports up to 2,000 attendees per event — suitable for large Mumbai conferences." },
-          { q: "Is there a free plan for Mumbai events?", a: "Yes. Free plan with 1 event and 50 attendees — no credit card required." },
+          { q: "Can I use URPASS for a large Mumbai conference?", a: "Yes. Pro and Business plans support 2,500 to 10,000 registrations/month — suitable for large Mumbai conferences and corporate summits." },
+          { q: "Is there a free plan for Mumbai events?", a: "Yes. Free plan with 2 events/month and 100 registrations/month — no credit card required. Paid plans start at ₹499/month with a 30-day free trial." },
           { q: "Can I brand passes for my Mumbai company's events?", a: "Yes. Pro plan includes custom branding — company name, logo, and brand colour on every pass." },
           { q: "What payment methods are available for Mumbai events?", a: "Razorpay supports UPI, HDFC/Axis/ICICI cards, Paytm, PhonePe, and net banking — popular in Mumbai." },
           { q: "Can I use URPASS for an event in Navi Mumbai or Thane?", a: "Yes. URPASS works anywhere — the registration link is shared online and scanning works at any venue." },

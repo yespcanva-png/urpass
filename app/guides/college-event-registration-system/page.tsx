@@ -17,6 +17,7 @@ export default function CollegeEventRegistrationSystemPage() {
   return (
     <SEOPage
       config={{
+        canonicalUrl: "https://urpass.space/guides/college-event-registration-system",
         badge: "HOW-TO GUIDE",
         h1: "How to Set Up a College Event Registration System",
         description: "Most college events still use Google Forms, Excel sheets, and manual check-in. Here is how to set up a proper digital registration system with QR passes — in under 10 minutes.",
@@ -44,7 +45,7 @@ export default function CollegeEventRegistrationSystemPage() {
             "Google Forms = data collection only",
             "URPASS = registration + QR pass + check-in",
             "Live attendance dashboard included",
-            "Free for events up to 50 students",
+            "Free for up to 100 students per month",
           ],
         },
         useCases: [
@@ -53,11 +54,11 @@ export default function CollegeEventRegistrationSystemPage() {
         ],
         faqs: [
           { q: "Why should I replace Google Forms for college event registration?", a: "Google Forms collects data but doesn't generate passes, prevent duplicate entries, or provide real-time check-in tracking. URPASS does all of this automatically once a student registers." },
-          { q: "How many students can register for free?", a: "Up to 50 students per event on the free plan. For larger college events, paid plans start at ₹299/month with 500 students per event." },
+          { q: "How many students can register for free?", a: "Up to 100 students per month across 2 events on the free plan. For larger college events and symposiums, paid plans start at ₹499/month (Starter: 500 students) and ₹999/month (Pro: 2,500 students) with a 30-day free trial." },
           { q: "Can volunteers use URPASS to check students in?", a: "Yes. Volunteers open the URPASS scanner in any phone browser and start scanning immediately. No training or account required for scanning." },
           { q: "Can I collect department and year from students?", a: "Yes. Add custom fields for department, year, roll number, college name, or any other student detail." },
           { q: "What if students don't have internet access at the venue?", a: "Students can screenshot their QR pass before coming. The QR works from a screenshot." },
-          { q: "Can I use the same URPASS account for multiple college events?", a: "Yes. The Starter plan supports 5 active events, and the Pro plan supports unlimited events." },
+          { q: "Can I use the same URPASS account for multiple college events?", a: "Yes. The Starter plan supports 10 events per month, and the Pro plan supports unlimited events." },
         ],
         ctaTitle: "Replace Google Forms with a real registration system",
         ctaDescription: "QR passes · Live check-in · Free for small events · 10-minute setup",

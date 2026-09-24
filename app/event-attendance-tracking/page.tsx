@@ -17,6 +17,7 @@ export default function EventAttendanceTrackingPage() {
   return (
     <SEOPage
       config={{
+        canonicalUrl: "https://urpass.space/event-attendance-tracking",
         badge: "EVENT ATTENDANCE TRACKING",
         h1: "Track Event Attendance in Real Time",
         description: "Know exactly who has arrived at your event and when. URPASS updates your check-in dashboard live as attendees scan in — no manual counting, no spreadsheets.",

@@ -17,6 +17,7 @@ export default function HowToCreateQrEventPassPage() {
   return (
     <SEOPage
       config={{
+        canonicalUrl: "https://urpass.space/guides/how-to-create-qr-event-pass",
         badge: "HOW-TO GUIDE",
         h1: "How to Create QR Passes for an Event",
         description: "Creating QR passes for your event takes 5 minutes with URPASS. Here's the complete step-by-step process — from event creation to QR scanning at the entrance.",
@@ -57,7 +58,7 @@ export default function HowToCreateQrEventPassPage() {
           { q: "Can I create QR passes without technical skills?", a: "Yes. URPASS is designed for anyone to use. No coding or technical knowledge is required." },
           { q: "What does a QR event pass look like?", a: "It's a mobile-friendly web page showing the event name, date, venue, attendee name, pass type, and a scannable QR code. Attendees open it on their phone." },
           { q: "Can I add my organisation's branding to the QR passes?", a: "Yes. Pro plan users can add their organisation name, logo, and brand colour to every QR pass." },
-          { q: "Is creating QR passes for events free?", a: "Yes. The free plan lets you create QR passes for one event with up to 50 attendees at no cost." },
+          { q: "Is creating QR passes for events free?", a: "Yes. The free plan lets you create QR passes for 2 events/month with up to 100 registrations/month at no cost." },
         ],
         ctaTitle: "Create your first QR event passes",
         ctaDescription: "5-minute setup · Automatic QR generation · Free plan available",

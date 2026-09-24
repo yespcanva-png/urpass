@@ -17,12 +17,14 @@ import {
 } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "URPASS — Digital Event Passes & QR Check-in India",
-  description: "Create digital event passes in minutes. Manage attendees, scan QR codes at entry, and issue branded passes — free to start. Trusted by colleges and event organizers across India.",
+  title: "URPASS — India-Focused Digital Event Registration, QR Pass & Check-In Platform",
+  description:
+    "An India-focused digital event registration, QR pass and check-in platform for colleges, conferences, hackathons, workshops and corporate events. Start free forever or try 30 days free.",
   alternates: { canonical: "https://urpass.space" },
   openGraph: {
-    title: "URPASS — Digital Event Passes & QR Check-in",
-    description: "Create digital passes, manage attendees, and scan QR codes at the door. Free plan available.",
+    title: "URPASS — India-Focused Digital Event Registration, QR Pass & Check-In Platform",
+    description:
+      "An India-focused digital event registration, QR pass and check-in platform for colleges, conferences, hackathons, workshops and corporate events.",
     url: "https://urpass.space",
   },
 };
@@ -169,6 +171,85 @@ const plans = [
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-white text-neutral-900">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@graph": [
+              {
+                "@type": "WebApplication",
+                name: "URPASS",
+                applicationCategory: "BusinessApplication",
+                applicationSubCategory: "Event Ticketing & Check-In Platform",
+                operatingSystem: "Web, iOS, Android",
+                url: "https://urpass.space",
+                description:
+                  "An India-focused digital event registration, QR pass and check-in platform for colleges, conferences, hackathons, workshops and corporate events.",
+                offers: [
+                  { "@type": "Offer", name: "Free Tier", price: "0", priceCurrency: "INR", description: "2 events/month, 100 registrations/month" },
+                  { "@type": "Offer", name: "Starter Tier", price: "499", priceCurrency: "INR", description: "10 events/month, 500 registrations/month" },
+                  { "@type": "Offer", name: "Pro Tier", price: "999", priceCurrency: "INR", description: "Unlimited events, 2,500 registrations/month" },
+                  { "@type": "Offer", name: "Business Tier", price: "2499", priceCurrency: "INR", description: "Unlimited events, 10,000 registrations/month" },
+                ],
+              },
+              {
+                "@type": "FAQPage",
+                mainEntity: [
+                  {
+                    "@type": "Question",
+                    name: "Do attendees need an account?",
+                    acceptedAnswer: {
+                      "@type": "Answer",
+                      text: "No. Attendees apply through a public link and receive their pass without creating an account.",
+                    },
+                  },
+                  {
+                    "@type": "Question",
+                    name: "Do attendees need an app?",
+                    acceptedAnswer: {
+                      "@type": "Answer",
+                      text: "No. Their digital pass works directly in any mobile browser. No app download required.",
+                    },
+                  },
+                  {
+                    "@type": "Question",
+                    name: "Can I use URPASS for college events?",
+                    acceptedAnswer: {
+                      "@type": "Answer",
+                      text: "Yes — it's designed exactly for this. Workshops, hackathons, seminars, fests, community meetups.",
+                    },
+                  },
+                  {
+                    "@type": "Question",
+                    name: "How does check-in work?",
+                    acceptedAnswer: {
+                      "@type": "Answer",
+                      text: "Each approved attendee gets a unique QR pass. Staff opens the scanner on any device, scans the QR, and URPASS instantly validates and records the check-in in under 0.3s.",
+                    },
+                  },
+                  {
+                    "@type": "Question",
+                    name: "Can one pass be scanned twice?",
+                    acceptedAnswer: {
+                      "@type": "Answer",
+                      text: "No. Each pass can only be checked in once. If a second scan is attempted, URPASS shows an 'Already Checked In' result with the original timestamp.",
+                    },
+                  },
+                  {
+                    "@type": "Question",
+                    name: "Can I start for free or try a paid plan?",
+                    acceptedAnswer: {
+                      "@type": "Answer",
+                      text: "Yes. The permanent free tier lets you host 2 events/month with up to 100 registrations/month at ₹0 forever with no credit card required. You can also try any paid plan (Starter, Pro, or Business) free for 30 days.",
+                    },
+                  },
+                ],
+              },
+            ],
+          }),
+        }}
+      />
       <Navbar />
 
       {/* ── 01 HERO ─────────────────────────────────────────────────────── */}

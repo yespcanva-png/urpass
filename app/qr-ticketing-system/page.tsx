@@ -17,6 +17,7 @@ export default function QrTicketingSystemPage() {
   return (
     <SEOPage
       config={{
+        canonicalUrl: "https://urpass.space/qr-ticketing-system",
         badge: "QR TICKETING SYSTEM",
         h1: "Digital QR Ticketing Made Simple",
         description: "Create ticket types, collect payments, generate unique QR tickets, and scan attendees at the entrance. The full ticketing cycle — one platform.",

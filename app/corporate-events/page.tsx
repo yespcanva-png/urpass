@@ -17,6 +17,7 @@ export default function CorporateEventsPage() {
   return (
     <SEOPage
       config={{
+        canonicalUrl: "https://urpass.space/corporate-events",
         badge: "CORPORATE EVENTS",
         h1: "Corporate Event Registration & Check-In",
         description: "Handle corporate event registrations, team passes, and QR entry management professionally. Custom branding on Pro plan. Secure, reliable, and simple.",

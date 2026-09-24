@@ -17,6 +17,7 @@ export default function SeminarsPage() {
   return (
     <SEOPage
       config={{
+        canonicalUrl: "https://urpass.space/seminars",
         badge: "SEMINARS",
         h1: "Seminar Registration & Attendance Tracking",
         description: "Create a seminar registration page, collect attendee sign-ups, issue digital QR passes, and track who attended. All from one simple platform.",
@@ -50,7 +51,7 @@ export default function SeminarsPage() {
           { q: "Can I get an attendance report after the seminar?", a: "Yes. You can view the full check-in list in your dashboard and export it to CSV on paid plans." },
           { q: "What if some attendees walk in without registering?", a: "You can manually add walk-in attendees directly from the attendee management dashboard and check them in manually." },
           { q: "How do I share the seminar registration link?", a: "Once your event is published, you get a unique URL you can share via WhatsApp, email, Instagram, or your institution's notice board." },
-          { q: "Can I use URPASS for free?", a: "Yes. The free plan supports one seminar with up to 50 attendees — perfect for smaller sessions." },
+          { q: "Can I use URPASS for free?", a: "Yes. The free plan supports 2 seminars per month with up to 100 registrations per month at ₹0 forever — perfect for academic sessions and departmental guest lectures." },
         ],
         ctaTitle: "Track seminar attendance precisely",
         ctaDescription: "Registration · QR passes · Attendance records · Free to start",

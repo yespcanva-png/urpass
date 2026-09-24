@@ -71,10 +71,10 @@ export default function HyderabadPage() {
         faqs: [
           { q: "Is URPASS used in Hyderabad?", a: "Yes. URPASS is used by event organisers in Hyderabad for tech meetups, college events, and corporate conferences." },
           { q: "Can I use URPASS for a HITEC City tech event?", a: "Yes. URPASS is ideal for Hyderabad's tech event ecosystem in HITEC City, Gachibowli, and Madhapur." },
-          { q: "Is there a free plan for Hyderabad events?", a: "Yes. Free plan with 1 event, 50 attendees, full QR check-in. No credit card." },
+          { q: "Is there a free plan for Hyderabad events?", a: "Yes. Free plan with 2 events/month, 100 registrations/month, full QR check-in. No credit card required. Paid plans start at ₹499/month with a 30-day free trial." },
           { q: "Does URPASS support Telangana college events?", a: "Yes. URPASS is used by colleges across Telangana and Andhra Pradesh." },
           { q: "What payment methods work for Hyderabad events?", a: "Razorpay supports UPI, PhonePe, Google Pay, cards, and net banking — all popular in Hyderabad." },
-          { q: "Can I run a large Hyderabad conference on URPASS?", a: "Yes. Pro plan supports up to 2,000 attendees per event." },
+          { q: "Can I run a large Hyderabad conference on URPASS?", a: "Yes. Pro and Business plans support 2,500 to 10,000 registrations/month with multi-gate check-in scanning." },
         ],
         ctaTitle: "Start your Hyderabad event on URPASS",
         ctaDescription: "HITEC City to campus · Free to start · QR check-in",

@@ -17,6 +17,7 @@ export default function TechEventsPage() {
   return (
     <SEOPage
       config={{
+        canonicalUrl: "https://urpass.space/tech-events",
         badge: "TECH EVENTS",
         h1: "Tech Event Registration & QR Check-In",
         description: "Share a registration link, collect developer details, issue digital QR passes, and check in attendees at your tech event. Built with the same simplicity that engineers expect.",
@@ -48,7 +49,7 @@ export default function TechEventsPage() {
           { q: "Is there an API for integrating URPASS with my event website?", a: "Yes. The Pro plan includes API access so you can programmatically create events, manage attendees, and access check-in data." },
           { q: "Can I collect GitHub or LinkedIn from developers at registration?", a: "Yes. Custom registration fields let you ask for any information — GitHub username, LinkedIn, tech stack, or years of experience." },
           { q: "Does URPASS have webhooks?", a: "Yes. The Pro plan supports webhooks so you can trigger automations when a new attendee registers, is approved, or checks in." },
-          { q: "Can I use URPASS for a free tech meetup?", a: "Yes. The free plan covers one event with up to 50 attendees — perfect for smaller developer meetups." },
+          { q: "Can I use URPASS for a free tech meetup?", a: "Yes. The free plan covers 2 events/month with up to 100 registrations/month at ₹0 forever — perfect for developer meetups and tech talks." },
           { q: "How do I share the registration link for my tech event?", a: "Your event gets a unique URL. Share it on Discord, Slack, Twitter/X, LinkedIn, Luma, or your community newsletter." },
           { q: "What happens when my meetup fills up?", a: "Registrations close automatically when you reach your capacity limit. You can also manage a waitlist manually." },
         ],

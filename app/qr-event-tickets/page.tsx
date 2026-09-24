@@ -17,6 +17,7 @@ export default function QrEventTicketsPage() {
   return (
     <SEOPage
       config={{
+        canonicalUrl: "https://urpass.space/qr-event-tickets",
         badge: "QR CODE EVENT TICKETS",
         h1: "Create QR Tickets for Your Event",
         description: "Issue every attendee a unique QR code ticket. They show it on their phone. You scan it at the door. No printing, no spreadsheets, no confusion.",

@@ -41,6 +41,100 @@ export const metadata: Metadata = {
   },
 };
 
+const pricingJsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        {
+          "@type": "ListItem",
+          position: 1,
+          name: "Home",
+          item: "https://urpass.space",
+        },
+        {
+          "@type": "ListItem",
+          position: 2,
+          name: "Pricing & Plans",
+          item: "https://urpass.space/pricing",
+        },
+      ],
+    },
+    {
+      "@type": "SoftwareApplication",
+      name: "URPASS",
+      applicationCategory: "BusinessApplication",
+      operatingSystem: "Web, iOS, Android",
+      url: "https://urpass.space/pricing",
+      description:
+        "India-focused digital event registration, QR pass and check-in platform for colleges, conferences, hackathons, workshops and corporate events.",
+      offers: [
+        {
+          "@type": "Offer",
+          name: "Free Tier",
+          price: "0",
+          priceCurrency: "INR",
+          description: "Free forever. 2 events/month, 100 registrations/month, QR passes & sub-second check-in.",
+        },
+        {
+          "@type": "Offer",
+          name: "Starter Tier",
+          price: "499",
+          priceCurrency: "INR",
+          billingIncrement: "P1M",
+          description: "Try free for 30 days. 10 events/month, 500 registrations/month, 2 organizers, CSV import & export.",
+        },
+        {
+          "@type": "Offer",
+          name: "Pro Tier",
+          price: "999",
+          priceCurrency: "INR",
+          billingIncrement: "P1M",
+          description: "Try free for 30 days. Unlimited events, 2,500 registrations/month, 5 organizers, custom pass design, advanced analytics.",
+        },
+        {
+          "@type": "Offer",
+          name: "Business Tier",
+          price: "2499",
+          priceCurrency: "INR",
+          billingIncrement: "P1M",
+          description: "Try free for 30 days. Unlimited events, 10,000 registrations/month, 15 organizers, custom domain, API & webhooks.",
+        },
+      ],
+    },
+    {
+      "@type": "FAQPage",
+      mainEntity: [
+        {
+          "@type": "Question",
+          name: "Can I cancel anytime?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "Yes. Cancel from your billing settings at any time with no lock-in. You keep access until the end of your current billing period.",
+          },
+        },
+        {
+          "@type": "Question",
+          name: "Can I start for free or try a paid plan?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "Yes. The Free plan is permanently available at ₹0 forever with 2 events/month and 100 registrations/month. All paid plans include a 30-day free trial with no credit card required.",
+          },
+        },
+        {
+          "@type": "Question",
+          name: "Can I sell paid tickets?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "Yes. URPASS supports paid ticket sales with direct Razorpay integration, accepting UPI, debit/credit cards, and net banking with zero per-ticket commission fees.",
+          },
+        },
+      ],
+    },
+  ],
+};
+
 export default async function PricingPage() {
   const supabase = await createClient();
   const {
@@ -63,11 +157,17 @@ export default async function PricingPage() {
   }
 
   return (
-    <PricingContent
-      isAuthenticated={Boolean(user)}
-      trialUsed={trialUsed}
-      userEmail={userEmail}
-      userName={userName}
-    />
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(pricingJsonLd) }}
+      />
+      <PricingContent
+        isAuthenticated={Boolean(user)}
+        trialUsed={trialUsed}
+        userEmail={userEmail}
+        userName={userName}
+      />
+    </>
   );
 }

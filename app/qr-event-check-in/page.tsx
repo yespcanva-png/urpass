@@ -17,6 +17,7 @@ export default function QrEventCheckInPage() {
   return (
     <SEOPage
       config={{
+        canonicalUrl: "https://urpass.space/qr-event-check-in",
         badge: "QR CODE EVENT CHECK-IN",
         h1: "Fast QR Check-In for Every Event",
         description: "Open the URPASS scanner on any phone or tablet, point it at a QR pass, and entry is validated in under a second. No app install. No manual lists.",
