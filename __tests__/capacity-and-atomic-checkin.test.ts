@@ -24,11 +24,14 @@ vi.mock("@supabase/supabase-js", () => ({
           }),
         }),
       }),
-      select: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue({ data: null, error: null }),
-        }),
+      select: vi.fn().mockImplementation(() => {
+        const query: Record<string, unknown> = {};
+        query.eq = vi.fn().mockReturnValue(query);
+        query.single = vi.fn().mockResolvedValue({ data: null, error: null });
+        query.maybeSingle = vi.fn().mockResolvedValue({ data: null, error: null });
+        return query;
       }),
+      insert: vi.fn().mockResolvedValue({ error: null }),
     }),
   })),
 }));
