@@ -519,6 +519,7 @@ export default function TicketStudio({
           onSelectElement={setSelectedElementId}
           onUpdateElement={handleUpdateElement}
           onDeleteElement={handleDeleteElement}
+          onDuplicateElement={handleDuplicateElement}
           onUndo={handleUndo}
           onRedo={handleRedo}
           activeAttendee={activeAttendee}

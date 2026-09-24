@@ -122,6 +122,15 @@ export default function StudioToolbar({
             <span>Ticket Studio</span>
           </div>
 
+          {eventName && (
+            <div className="hidden sm:flex items-center gap-1.5 text-xs text-neutral-400">
+              <span className="text-neutral-300">/</span>
+              <span className="font-semibold text-neutral-700 truncate max-w-[160px] md:max-w-[220px]">
+                {eventName}
+              </span>
+            </div>
+          )}
+
           {getFormatBadge(design.format)}
 
           {design.isPublished ? (

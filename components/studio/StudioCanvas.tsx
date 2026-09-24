@@ -27,6 +27,7 @@ interface Props {
   onSelectElement: (id: string | null) => void;
   onUpdateElement: (updated: Partial<StudioElement>) => void;
   onDeleteElement: (id: string) => void;
+  onDuplicateElement?: (id: string) => void;
   onUndo?: () => void;
   onRedo?: () => void;
   activeAttendee?: DummyAttendee;
@@ -41,6 +42,7 @@ export default function StudioCanvas({
   onSelectElement,
   onUpdateElement,
   onDeleteElement,
+  onDuplicateElement,
   onUndo,
   onRedo,
   activeAttendee = DUMMY_ATTENDEES[0],
@@ -49,6 +51,7 @@ export default function StudioCanvas({
   const [zoom, setZoom] = useState<number>(0.85);
   const [isSnapActive, setIsSnapActive] = useState(snapToGrid);
 
+  const viewportRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState<{ mouseX: number; mouseY: number; elX: number; elY: number } | null>(null);
@@ -65,16 +68,28 @@ export default function StudioCanvas({
 
   const selectedElement = design.elements.find((el) => el.id === selectedElementId) || null;
 
+  // Fit to screen calculation
+  const handleFitToScreen = useCallback(() => {
+    if (!viewportRef.current) return;
+    const paddingX = 96;
+    const paddingY = 96;
+    const availableWidth = viewportRef.current.clientWidth - paddingX;
+    const availableHeight = viewportRef.current.clientHeight - paddingY;
+    if (availableWidth > 0 && availableHeight > 0) {
+      const scaleX = availableWidth / design.width;
+      const scaleY = availableHeight / design.height;
+      const bestFit = Math.min(scaleX, scaleY, 1.25);
+      setZoom(Number(Math.max(0.35, Math.min(1.5, bestFit)).toFixed(2)));
+    }
+  }, [design.width, design.height]);
+
   // Auto-fit zoom on mount or when format changes
   useEffect(() => {
-    if (design.format === "printable") {
-      setZoom(0.75);
-    } else if (design.format === "badge") {
-      setZoom(0.85);
-    } else {
-      setZoom(0.9);
-    }
-  }, [design.format]);
+    const timer = setTimeout(() => {
+      handleFitToScreen();
+    }, 60);
+    return () => clearTimeout(timer);
+  }, [design.format, handleFitToScreen]);
 
   // Snap coordinate helper
   const snapVal = useCallback(
@@ -85,7 +100,7 @@ export default function StudioCanvas({
     [isSnapActive]
   );
 
-  // Global Keyboard shortcuts (Delete, Arrow Nudge, Undo/Redo)
+  // Global Keyboard shortcuts (Delete, Arrow Nudge, Undo/Redo, Duplicate, Deselect)
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       // Ignore if user is typing in an input or textarea
@@ -99,6 +114,18 @@ export default function StudioCanvas({
           e.preventDefault();
           onDeleteElement(selectedElementId);
         }
+      }
+
+      // Duplicate element shortcut: Cmd+D / Ctrl+D
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "d" && selectedElementId) {
+        e.preventDefault();
+        onDuplicateElement?.(selectedElementId);
+      }
+
+      // Deselect shortcut: Escape
+      if (e.key === "Escape") {
+        e.preventDefault();
+        onSelectElement(null);
       }
 
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") {
@@ -136,7 +163,7 @@ export default function StudioCanvas({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [selectedElement, selectedElementId, onDeleteElement, onUndo, onRedo, onUpdateElement]);
+  }, [selectedElement, selectedElementId, onDeleteElement, onDuplicateElement, onSelectElement, onUndo, onRedo, onUpdateElement]);
 
   // Start element dragging
   function handleElementMouseDown(e: React.MouseEvent, element: StudioElement) {
@@ -182,8 +209,11 @@ export default function StudioCanvas({
         const rawX = dragStart.elX + deltaX;
         const rawY = dragStart.elY + deltaY;
 
-        const newX = snapVal(Math.max(0, Math.min(design.width - selectedElement.width, rawX)));
-        const newY = snapVal(Math.max(0, Math.min(design.height - selectedElement.height, rawY)));
+        const maxX = Math.max(0, design.width - selectedElement.width);
+        const maxY = Math.max(0, design.height - selectedElement.height);
+
+        const newX = snapVal(Math.max(0, Math.min(maxX, rawX)));
+        const newY = snapVal(Math.max(0, Math.min(maxY, rawY)));
 
         onUpdateElement({ x: newX, y: newY });
       } else if (resizingHandle && resizeStart && selectedElement) {
@@ -313,7 +343,7 @@ export default function StudioCanvas({
           </span>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           {/* Snap-to-Grid Toggle */}
           <button
             type="button"
@@ -330,31 +360,40 @@ export default function StudioCanvas({
           </button>
 
           {/* Zoom Controls */}
-          <div className="flex items-center gap-1 bg-neutral-100 p-0.5 rounded-lg">
+          <div className="flex items-center gap-1 bg-neutral-100 p-0.5 rounded-lg border border-neutral-200/60">
             <button
               type="button"
               onClick={() => setZoom((z) => Math.max(0.4, Number((z - 0.1).toFixed(2))))}
               title="Zoom Out"
-              className="p-1 rounded text-neutral-600 hover:text-neutral-900 hover:bg-white"
+              className="p-1 rounded text-neutral-600 hover:text-neutral-900 hover:bg-white transition-colors"
             >
               <ZoomOut className="w-3.5 h-3.5" />
             </button>
-            <span className="text-[11px] font-mono font-bold w-12 text-center text-neutral-700">
+            <span className="text-[11px] font-mono font-bold w-11 text-center text-neutral-700">
               {Math.round(zoom * 100)}%
             </span>
             <button
               type="button"
               onClick={() => setZoom((z) => Math.min(1.5, Number((z + 0.1).toFixed(2))))}
               title="Zoom In"
-              className="p-1 rounded text-neutral-600 hover:text-neutral-900 hover:bg-white"
+              className="p-1 rounded text-neutral-600 hover:text-neutral-900 hover:bg-white transition-colors"
             >
               <ZoomIn className="w-3.5 h-3.5" />
             </button>
             <button
               type="button"
+              onClick={handleFitToScreen}
+              title="Fit to Screen"
+              className="px-1.5 py-0.5 rounded text-neutral-600 hover:text-neutral-900 hover:bg-white text-[10px] font-bold flex items-center gap-0.5 transition-colors"
+            >
+              <Maximize2 className="w-2.5 h-2.5" />
+              <span>Fit</span>
+            </button>
+            <button
+              type="button"
               onClick={() => setZoom(1.0)}
               title="Actual Size 100%"
-              className="p-1 rounded text-neutral-600 hover:text-neutral-900 hover:bg-white text-[10px] font-bold"
+              className="px-1.5 py-0.5 rounded text-neutral-600 hover:text-neutral-900 hover:bg-white text-[10px] font-bold transition-colors"
             >
               1:1
             </button>
@@ -364,35 +403,66 @@ export default function StudioCanvas({
 
       {/* Live WYSIWYG Center Canvas Viewport */}
       <div
-        className="flex-1 overflow-auto flex items-center justify-center p-8 bg-[#F3F4F6]"
+        ref={viewportRef}
+        className="flex-1 overflow-auto p-6 md:p-10 bg-[#F8F9FA] bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:20px_20px]"
         onClick={() => onSelectElement(null)}
       >
         <div
-          ref={canvasRef}
-          className="relative shadow-2xl transition-all duration-75 select-none origin-center"
+          className="m-auto flex items-center justify-center p-6"
           style={{
-            width: `${design.width}px`,
-            height: `${design.height}px`,
-            backgroundColor: design.background.color || "#FFFFFF",
-            transform: `scale(${zoom})`,
-            borderRadius: design.format === "digital" ? "24px" : "12px",
-            overflow: "hidden",
-            boxShadow:
-              "0 20px 50px -10px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05)",
+            minWidth: `${Math.ceil(design.width * zoom) + 48}px`,
+            minHeight: "100%",
           }}
         >
-          {/* Optional Background Image */}
-          {design.background.imageUrl && (
-            <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={design.background.imageUrl}
-                alt="Canvas Background"
-                className="w-full h-full object-cover"
-                style={{ opacity: design.background.overlayOpacity || 0.15 }}
-              />
-            </div>
-          )}
+          <div
+            ref={canvasRef}
+            className="relative shadow-2xl transition-transform duration-75 select-none shrink-0"
+            style={{
+              width: `${design.width}px`,
+              height: `${design.height}px`,
+              backgroundColor: design.background.color || "#FFFFFF",
+              transform: `scale(${zoom})`,
+              transformOrigin: "center center",
+              borderRadius: design.format === "digital" ? "24px" : "12px",
+              overflow: "hidden",
+              boxShadow:
+                "0 25px 60px -15px rgba(0, 0, 0, 0.22), 0 0 0 1px rgba(0, 0, 0, 0.08)",
+            }}
+          >
+            {/* Format Realism Decoration: Lanyard hole slot for Event Badge */}
+            {design.format === "badge" && (
+              <div className="absolute top-2.5 left-1/2 -translate-x-1/2 w-14 h-2.5 rounded-full bg-neutral-200/90 border border-neutral-300 shadow-inner z-20 pointer-events-none" />
+            )}
+
+            {/* Format Realism Decoration: Tear-off stub perforation line for Printable Ticket */}
+            {design.format === "printable" && (
+              <div
+                className="absolute top-0 bottom-0 pointer-events-none z-10 flex flex-col justify-between"
+                style={{ left: `${Math.round(design.width * 0.72)}px` }}
+              >
+                <div className="w-5 h-5 rounded-full bg-[#F8F9FA] -translate-x-1/2 -translate-y-1/2 border border-neutral-300/80 shadow-xs" />
+                <div className="flex-1 w-px border-r-2 border-dashed border-neutral-300/80 mx-auto" />
+                <div className="w-5 h-5 rounded-full bg-[#F8F9FA] -translate-x-1/2 translate-y-1/2 border border-neutral-300/80 shadow-xs" />
+              </div>
+            )}
+
+            {/* Format Realism Decoration: Mobile speaker notch for Digital Pass */}
+            {design.format === "digital" && (
+              <div className="absolute top-2.5 left-1/2 -translate-x-1/2 w-16 h-1 rounded-full bg-neutral-300/70 z-20 pointer-events-none" />
+            )}
+
+            {/* Optional Background Image */}
+            {design.background.imageUrl && (
+              <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={design.background.imageUrl}
+                  alt="Canvas Background"
+                  className="w-full h-full object-cover"
+                  style={{ opacity: design.background.overlayOpacity || 0.15 }}
+                />
+              </div>
+            )}
 
           {/* Elements Stack */}
           {design.elements.map((el) => {
@@ -453,6 +523,7 @@ export default function StudioCanvas({
               </div>
             );
           })}
+        </div>
         </div>
       </div>
     </div>

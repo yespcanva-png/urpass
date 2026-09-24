@@ -10,6 +10,7 @@ import {
   QrCode,
   Palette,
   Layers,
+  ChevronLeft,
   Plus,
 } from "lucide-react";
 import type {
@@ -77,6 +78,7 @@ export default function StudioSidebar({
   onDeleteElement,
 }: Props) {
   const [activeTab, setActiveTab] = useState<TabType>("templates");
+  const [isDrawerOpen, setIsDrawerOpen] = useState(true);
   const [templateSubTab, setTemplateSubTab] = useState<"templates" | "blank">("templates");
 
   const tabs: Array<{ id: TabType; label: string; icon: React.ElementType }> = [
@@ -96,12 +98,20 @@ export default function StudioSidebar({
       <div className="w-18 border-r border-neutral-200 flex flex-col items-center py-3 gap-1 shrink-0 bg-neutral-50/50">
         {tabs.map((tab) => {
           const Icon = tab.icon;
-          const isActive = activeTab === tab.id;
+          const isActive = isDrawerOpen && activeTab === tab.id;
           return (
             <button
               key={tab.id}
               type="button"
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => {
+                if (activeTab === tab.id && isDrawerOpen) {
+                  setIsDrawerOpen(false);
+                } else {
+                  setActiveTab(tab.id);
+                  setIsDrawerOpen(true);
+                }
+              }}
+              title={tab.label}
               className={`w-14 py-2.5 rounded-xl flex flex-col items-center justify-center gap-1 transition-all ${
                 isActive
                   ? "bg-brand text-white shadow-xs font-semibold"
@@ -116,11 +126,23 @@ export default function StudioSidebar({
       </div>
 
       {/* 2. Expandable Panel Content */}
-      <div className="w-80 sm:w-96 flex flex-col h-full bg-white overflow-hidden">
-        <div className="p-4 border-b border-neutral-100 flex items-center justify-between">
+      <div
+        className={`flex flex-col h-full bg-white overflow-hidden transition-all duration-200 ${
+          isDrawerOpen ? "w-80 sm:w-96 border-r border-neutral-100" : "w-0 border-r-0"
+        }`}
+      >
+        <div className="p-3.5 border-b border-neutral-100 flex items-center justify-between shrink-0">
           <h2 className="text-sm font-bold text-neutral-900 capitalize">
             {activeTab}
           </h2>
+          <button
+            type="button"
+            onClick={() => setIsDrawerOpen(false)}
+            title="Collapse panel"
+            className="p-1 rounded-lg text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 transition-colors"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
         </div>
 
         <div className="flex-1 overflow-y-auto p-4">

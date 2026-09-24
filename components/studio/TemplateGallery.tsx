@@ -128,7 +128,7 @@ export default function TemplateGallery({
       </div>
 
       {/* Templates Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 max-h-[620px] overflow-y-auto pr-1">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
         {filteredTemplates.map((template) => {
           const isSelected = activeTemplateId === template.id;
 

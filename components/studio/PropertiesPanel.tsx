@@ -17,6 +17,12 @@ import {
   AlignLeft,
   AlignCenter,
   AlignRight,
+  AlignCenterHorizontal,
+  AlignCenterVertical,
+  AlignStartHorizontal,
+  AlignEndHorizontal,
+  AlignStartVertical,
+  AlignEndVertical,
   ShieldCheck,
   AlertTriangle,
   Lock,
@@ -63,7 +69,7 @@ export default function PropertiesPanel({
   // If no element is selected, show Canvas & Background Properties
   if (!selectedElement) {
     return (
-      <div className="p-4 space-y-6">
+      <div className="flex-1 overflow-y-auto p-4 space-y-6">
         <div>
           <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-400 mb-1">
             Canvas Settings
@@ -162,7 +168,7 @@ export default function PropertiesPanel({
   );
 
   return (
-    <div className="p-4 space-y-5 max-h-[calc(100vh-140px)] overflow-y-auto">
+    <div className="flex-1 overflow-y-auto p-4 space-y-5">
       {/* Element Header */}
       <div className="flex items-center justify-between pb-3 border-b border-neutral-100">
         <div>
@@ -207,6 +213,80 @@ export default function PropertiesPanel({
               <Trash2 className="w-3.5 h-3.5" />
             </button>
           )}
+        </div>
+      </div>
+
+      {/* Quick Alignment Tools */}
+      <div className="bg-neutral-50 border border-neutral-200/80 p-1.5 rounded-xl">
+        <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block px-1 mb-1">
+          Quick Align
+        </span>
+        <div className="flex items-center justify-between gap-1">
+          <button
+            type="button"
+            onClick={() => onUpdateElement({ x: 0 })}
+            title="Align Left"
+            className="p-1.5 rounded-lg text-neutral-600 hover:text-neutral-900 hover:bg-white transition-colors"
+          >
+            <AlignStartHorizontal className="w-3.5 h-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              onUpdateElement({
+                x: Math.max(0, Math.round((design.width - selectedElement.width) / 2)),
+              })
+            }
+            title="Align Center Horizontal"
+            className="p-1.5 rounded-lg text-neutral-600 hover:text-neutral-900 hover:bg-white transition-colors"
+          >
+            <AlignCenterHorizontal className="w-3.5 h-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              onUpdateElement({
+                x: Math.max(0, design.width - selectedElement.width),
+              })
+            }
+            title="Align Right"
+            className="p-1.5 rounded-lg text-neutral-600 hover:text-neutral-900 hover:bg-white transition-colors"
+          >
+            <AlignEndHorizontal className="w-3.5 h-3.5" />
+          </button>
+          <div className="w-px h-4 bg-neutral-300 mx-0.5" />
+          <button
+            type="button"
+            onClick={() => onUpdateElement({ y: 0 })}
+            title="Align Top"
+            className="p-1.5 rounded-lg text-neutral-600 hover:text-neutral-900 hover:bg-white transition-colors"
+          >
+            <AlignStartVertical className="w-3.5 h-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              onUpdateElement({
+                y: Math.max(0, Math.round((design.height - selectedElement.height) / 2)),
+              })
+            }
+            title="Align Center Vertical"
+            className="p-1.5 rounded-lg text-neutral-600 hover:text-neutral-900 hover:bg-white transition-colors"
+          >
+            <AlignCenterVertical className="w-3.5 h-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              onUpdateElement({
+                y: Math.max(0, design.height - selectedElement.height),
+              })
+            }
+            title="Align Bottom"
+            className="p-1.5 rounded-lg text-neutral-600 hover:text-neutral-900 hover:bg-white transition-colors"
+          >
+            <AlignEndVertical className="w-3.5 h-3.5" />
+          </button>
         </div>
       </div>
 
@@ -305,21 +385,74 @@ export default function PropertiesPanel({
             </div>
           </div>
 
-          {/* Text Color */}
-          <div>
-            <label className="text-[11px] font-bold text-neutral-600 block mb-1">Text Color</label>
-            <div className="flex items-center gap-2">
+          {/* Letter Spacing & Text Transform */}
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="text-[11px] font-bold text-neutral-600 block mb-1">Letter Spacing</label>
               <input
-                type="color"
-                value={(selectedElement as StudioTextElement).color || "#000000"}
-                onChange={(e) => onUpdateElement({ color: e.target.value })}
-                className="w-8 h-8 rounded-lg border border-neutral-200 cursor-pointer p-0.5"
+                type="number"
+                min={-2}
+                max={20}
+                step={0.5}
+                value={(selectedElement as StudioTextElement).letterSpacing || 0}
+                onChange={(e) => onUpdateElement({ letterSpacing: Number(e.target.value) })}
+                className="w-full px-2 py-1.5 border border-neutral-200 rounded-lg text-xs"
               />
+            </div>
+            <div>
+              <label className="text-[11px] font-bold text-neutral-600 block mb-1">Text Case</label>
+              <select
+                value={(selectedElement as StudioTextElement).textTransform || "none"}
+                onChange={(e) =>
+                  onUpdateElement({
+                    textTransform: e.target.value as "uppercase" | "lowercase" | "capitalize" | "none",
+                  })
+                }
+                className="w-full px-2 py-1.5 border border-neutral-200 rounded-lg text-xs"
+              >
+                <option value="none">Normal</option>
+                <option value="uppercase">UPPERCASE</option>
+                <option value="capitalize">Capitalize</option>
+                <option value="lowercase">lowercase</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Text Color & Opacity */}
+          <div className="space-y-3">
+            <div>
+              <label className="text-[11px] font-bold text-neutral-600 block mb-1">Text Color</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="color"
+                  value={(selectedElement as StudioTextElement).color || "#000000"}
+                  onChange={(e) => onUpdateElement({ color: e.target.value })}
+                  className="w-8 h-8 rounded-lg border border-neutral-200 cursor-pointer p-0.5"
+                />
+                <input
+                  type="text"
+                  value={(selectedElement as StudioTextElement).color || "#000000"}
+                  onChange={(e) => onUpdateElement({ color: e.target.value })}
+                  className="flex-1 px-2.5 py-1.5 text-xs font-mono border border-neutral-200 rounded-lg uppercase"
+                />
+              </div>
+            </div>
+
+            <div>
+              <div className="flex justify-between items-center mb-1">
+                <label className="font-bold text-neutral-700">Opacity</label>
+                <span className="font-mono text-neutral-500">
+                  {Math.round(((selectedElement as StudioTextElement).opacity ?? 1) * 100)}%
+                </span>
+              </div>
               <input
-                type="text"
-                value={(selectedElement as StudioTextElement).color || "#000000"}
-                onChange={(e) => onUpdateElement({ color: e.target.value })}
-                className="flex-1 px-2.5 py-1.5 text-xs font-mono border border-neutral-200 rounded-lg uppercase"
+                type="range"
+                min={0.05}
+                max={1}
+                step={0.05}
+                value={(selectedElement as StudioTextElement).opacity ?? 1}
+                onChange={(e) => onUpdateElement({ opacity: Number(e.target.value) })}
+                className="w-full accent-brand cursor-pointer"
               />
             </div>
           </div>
@@ -498,6 +631,49 @@ export default function PropertiesPanel({
               className="w-full px-2 py-1.5 border border-neutral-200 rounded-lg text-xs"
             />
           </div>
+
+          {/* Border Stroke */}
+          <div className="grid grid-cols-2 gap-2 pt-2 border-t border-neutral-100">
+            <div>
+              <label className="text-[11px] font-bold text-neutral-600 block mb-1">Border Width</label>
+              <input
+                type="number"
+                min={0}
+                max={20}
+                value={(selectedElement as StudioShapeElement).borderWidth || 0}
+                onChange={(e) => onUpdateElement({ borderWidth: Math.max(0, Number(e.target.value)) })}
+                className="w-full px-2 py-1.5 border border-neutral-200 rounded-lg text-xs"
+              />
+            </div>
+            <div>
+              <label className="text-[11px] font-bold text-neutral-600 block mb-1">Border Color</label>
+              <input
+                type="color"
+                value={(selectedElement as StudioShapeElement).borderColor || "#000000"}
+                onChange={(e) => onUpdateElement({ borderColor: e.target.value })}
+                className="w-full h-8 rounded-lg border border-neutral-200 cursor-pointer p-0.5"
+              />
+            </div>
+          </div>
+
+          {/* Opacity */}
+          <div>
+            <div className="flex justify-between items-center mb-1">
+              <label className="font-bold text-neutral-700">Opacity</label>
+              <span className="font-mono text-neutral-500">
+                {Math.round(((selectedElement as StudioShapeElement).opacity ?? 1) * 100)}%
+              </span>
+            </div>
+            <input
+              type="range"
+              min={0.05}
+              max={1}
+              step={0.05}
+              value={(selectedElement as StudioShapeElement).opacity ?? 1}
+              onChange={(e) => onUpdateElement({ opacity: Number(e.target.value) })}
+              className="w-full accent-brand cursor-pointer"
+            />
+          </div>
         </div>
       )}
 
@@ -521,7 +697,7 @@ export default function PropertiesPanel({
           </div>
 
           <div>
-            <label className="font-bold text-neutral-700 block mb-1">Corner Radius</label>
+            <label className="font-bold text-neutral-700 block mb-1">Corner Radius (px)</label>
             <input
               type="number"
               min={0}
@@ -531,8 +707,97 @@ export default function PropertiesPanel({
               className="w-full px-2 py-1.5 border border-neutral-200 rounded-lg text-xs"
             />
           </div>
+
+          {/* Opacity */}
+          <div>
+            <div className="flex justify-between items-center mb-1">
+              <label className="font-bold text-neutral-700">Opacity</label>
+              <span className="font-mono text-neutral-500">
+                {Math.round(((selectedElement as StudioImageElement).opacity ?? 1) * 100)}%
+              </span>
+            </div>
+            <input
+              type="range"
+              min={0.05}
+              max={1}
+              step={0.05}
+              value={(selectedElement as StudioImageElement).opacity ?? 1}
+              onChange={(e) => onUpdateElement({ opacity: Number(e.target.value) })}
+              className="w-full accent-brand cursor-pointer"
+            />
+          </div>
         </div>
       )}
+
+      {/* 5. Divider Line Inspector */}
+      {selectedElement.type === "divider" && (() => {
+        const divEl = selectedElement as StudioDividerElement;
+        return (
+          <div className="space-y-4 text-xs">
+            <div>
+              <label className="font-bold text-neutral-700 block mb-1">Line Color</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="color"
+                  value={divEl.color || "#E5E7EB"}
+                  onChange={(e) => onUpdateElement({ color: e.target.value })}
+                  className="w-8 h-8 rounded-lg border border-neutral-200 cursor-pointer p-0.5"
+                />
+                <input
+                  type="text"
+                  value={divEl.color || "#E5E7EB"}
+                  onChange={(e) => onUpdateElement({ color: e.target.value })}
+                  className="flex-1 px-2.5 py-1.5 text-xs font-mono border border-neutral-200 rounded-lg uppercase"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="font-bold text-neutral-700 block mb-1">Thickness (px)</label>
+                <input
+                  type="number"
+                  min={1}
+                  max={12}
+                  value={divEl.thickness || 1}
+                  onChange={(e) => onUpdateElement({ thickness: Math.max(1, Number(e.target.value)) })}
+                  className="w-full px-2 py-1.5 border border-neutral-200 rounded-lg text-xs"
+                />
+              </div>
+              <div>
+                <label className="font-bold text-neutral-700 block mb-1">Line Style</label>
+                <select
+                  value={divEl.style || "solid"}
+                  onChange={(e) => onUpdateElement({ style: e.target.value as "solid" | "dashed" | "dotted" })}
+                  className="w-full px-2 py-1.5 border border-neutral-200 rounded-lg text-xs"
+                >
+                  <option value="solid">Solid</option>
+                  <option value="dashed">Dashed</option>
+                  <option value="dotted">Dotted</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <div className="flex justify-between items-center mb-1">
+                <label className="font-bold text-neutral-700">Opacity</label>
+                <span className="font-mono text-neutral-500">
+                  {Math.round((divEl.opacity ?? 1) * 100)}%
+                </span>
+              </div>
+              <input
+                type="range"
+                min={0.1}
+                max={1}
+                step={0.05}
+                value={divEl.opacity ?? 1}
+                onChange={(e) => onUpdateElement({ opacity: Number(e.target.value) })}
+                className="w-full accent-brand cursor-pointer"
+              />
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Common Geometry Inspector */}
       {renderGeometry()}
