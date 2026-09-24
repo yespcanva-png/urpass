@@ -41,14 +41,18 @@ export default function AddAttendeeModal({ eventId, onClose, onSuccess }: Props)
 
   async function onSubmit(data: AttendeeInput) {
     setServerError("");
-    const result = await addAttendee(eventId, data);
-    if (result?.error) {
-      setServerError(result.error);
-      return;
+    try {
+      const result = await addAttendee(eventId, data);
+      if (result?.error) {
+        setServerError(result.error);
+        return;
+      }
+      reset();
+      onSuccess();
+      onClose();
+    } catch (err) {
+      setServerError(err instanceof Error ? err.message : "Failed to add attendee");
     }
-    reset();
-    onSuccess();
-    onClose();
   }
 
   return (

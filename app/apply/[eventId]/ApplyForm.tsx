@@ -175,25 +175,30 @@ export default function ApplyForm({
       prefill: { name: data.name, email: data.email, contact: data.phone ?? "" },
       theme: { color: "#6D28D9" },
       handler: async (response: RazorpayResponse) => {
-        const result = await submitApplication(
-          event.id,
-          data,
-          {
-            orderId: response.razorpay_order_id,
-            paymentId: response.razorpay_payment_id,
-            signature: response.razorpay_signature,
-          },
-          selectedTicketTypeId
-        );
-        setPaymentPending(false);
-        if (result?.error) {
-          setServerError(result.error);
-          return;
-        }
-        if (result?.passToken) {
-          router.push(`/pass/${result.passToken}`);
-        } else {
-          setSuccess({ type: "pending", attendeeName: data.name });
+        try {
+          const result = await submitApplication(
+            event.id,
+            data,
+            {
+              orderId: response.razorpay_order_id,
+              paymentId: response.razorpay_payment_id,
+              signature: response.razorpay_signature,
+            },
+            selectedTicketTypeId
+          );
+          setPaymentPending(false);
+          if (result?.error) {
+            setServerError(result.error);
+            return;
+          }
+          if (result?.passToken) {
+            router.push(`/pass/${result.passToken}`);
+          } else {
+            setSuccess({ type: "pending", attendeeName: data.name });
+          }
+        } catch (err) {
+          setPaymentPending(false);
+          setServerError(err instanceof Error ? err.message : "Failed to confirm registration.");
         }
       },
       modal: {
@@ -230,15 +235,19 @@ export default function ApplyForm({
       return handlePaidSubmit(data);
     }
     setServerError("");
-    const result = await submitApplication(event.id, data, undefined, selectedTicketTypeId);
-    if (result?.error) {
-      setServerError(result.error);
-      return;
-    }
-    if (result?.passToken) {
-      router.push(`/pass/${result.passToken}`);
-    } else {
-      setSuccess({ type: "pending", attendeeName: data.name });
+    try {
+      const result = await submitApplication(event.id, data, undefined, selectedTicketTypeId);
+      if (result?.error) {
+        setServerError(result.error);
+        return;
+      }
+      if (result?.passToken) {
+        router.push(`/pass/${result.passToken}`);
+      } else {
+        setSuccess({ type: "pending", attendeeName: data.name });
+      }
+    } catch (err) {
+      setServerError(err instanceof Error ? err.message : "Failed to submit registration.");
     }
   }
 

@@ -110,16 +110,21 @@ export default function BrandingForm({ initial, isPro, canHideBranding }: Props)
     setSaving(true);
     setError("");
     setSaved(false);
-    const result = await updateBranding({
-      org_name: orgName,
-      brand_color: brandColor,
-      org_logo_url: logoUrl,
-      hide_urpass_branding: hideBranding,
-    });
-    setSaving(false);
-    if (result?.error) { setError(result.error); return; }
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+    try {
+      const result = await updateBranding({
+        org_name: orgName,
+        brand_color: brandColor,
+        org_logo_url: logoUrl,
+        hide_urpass_branding: hideBranding,
+      });
+      setSaving(false);
+      if (result?.error) { setError(result.error); return; }
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (err) {
+      setSaving(false);
+      setError(err instanceof Error ? err.message : "Failed to update branding settings");
+    }
   }
 
   return (

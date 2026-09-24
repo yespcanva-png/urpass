@@ -124,15 +124,24 @@ export default function CSVUploadModal({ eventId, onClose, onSuccess }: Props) {
     const valid = rows.filter((r) => r._valid);
     if (valid.length === 0) return;
     setLoading(true);
-    const res = await bulkAddAttendees(
-      eventId,
-      valid.map(({ name, email, pass_type, phone }) => ({
-        name, email, pass_type, ...(phone ? { phone } : {}),
-      }))
-    );
-    setResult(res);
-    setLoading(false);
-    if (!res.error && res.added > 0) onSuccess();
+    try {
+      const res = await bulkAddAttendees(
+        eventId,
+        valid.map(({ name, email, pass_type, phone }) => ({
+          name, email, pass_type, ...(phone ? { phone } : {}),
+        }))
+      );
+      setResult(res);
+      setLoading(false);
+      if (!res.error && res.added > 0) onSuccess();
+    } catch (err) {
+      setLoading(false);
+      setResult({
+        added: 0,
+        skipped: 0,
+        error: err instanceof Error ? err.message : "Failed to import attendees",
+      });
+    }
   }
 
   const validCount   = rows.filter((r) => r._valid).length;

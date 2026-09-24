@@ -3,6 +3,7 @@ import Script from "next/script";
 import { Geist } from "next/font/google";
 import "./globals.css";
 import SupportWidget from "@/components/support/SupportWidget";
+import VersionSkewHandler from "@/components/common/VersionSkewHandler";
 
 const geist = Geist({
   subsets: ["latin"],
@@ -305,6 +306,7 @@ export default function RootLayout({
         )}
       </head>
       <body className="h-full font-[family-name:var(--font-geist)] antialiased bg-white text-neutral-900">
+        <VersionSkewHandler />
         {children}
         <SupportWidget />
       </body>

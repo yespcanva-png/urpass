@@ -201,101 +201,128 @@ export default function DeveloperDashboard({
     if (!newKeyName.trim()) return;
     setCreatingKey(true);
     setKeyError("");
-    const result = await createApiKey(newKeyName.trim(), newKeyEnv);
-    setCreatingKey(false);
-    if ("error" in result) {
-      setKeyError(result.error);
-      return;
-    }
-    setNewRawKey(result.key);
-    setKeys((prev) => [
-      {
-        id: result.id,
-        name: newKeyName.trim(),
-        key_prefix: result.key.slice(0, newKeyEnv === "sandbox" ? 17 : 16),
-        permissions: ["events:read", "attendees:read"],
-        is_active: true,
-        last_used_at: null,
-        expires_at: null,
-        created_at: new Date().toISOString(),
-        environment: newKeyEnv,
-      },
-      ...prev,
-    ]);
-    setNewKeyName("");
-    setShowCreateKey(false);
-  }
-
-  function handleRevokeKey(id: string) {
-    startTransition(async () => {
-      await revokeApiKey(id);
-      setKeys((prev) => prev.map((k) => (k.id === id ? { ...k, is_active: false } : k)));
-    });
-  }
-
-  function handleDeleteKey(id: string) {
-    startTransition(async () => {
-      await deleteApiKey(id);
-      setKeys((prev) => prev.filter((k) => k.id !== id));
-    });
-  }
-
-  async function handleRotateKey(id: string) {
-    setRotatingId(id);
-    const result = await rotateApiKey(id);
-    setRotatingId(null);
-    if ("error" in result) {
-      alert(result.error);
-      return;
-    }
-    setNewRawKey(result.key);
-    setKeys((prev) =>
-      prev.map((k) =>
-        k.id === id
-          ? { ...k, is_active: false }
-          : k
-      ).concat([
+    try {
+      const result = await createApiKey(newKeyName.trim(), newKeyEnv);
+      setCreatingKey(false);
+      if ("error" in result) {
+        setKeyError(result.error);
+        return;
+      }
+      setNewRawKey(result.key);
+      setKeys((prev) => [
         {
           id: result.id,
-          name: prev.find((k) => k.id === id)?.name ?? "Rotated key",
-          key_prefix: result.key.slice(0, result.key.startsWith("urp_test_") ? 17 : 16),
+          name: newKeyName.trim(),
+          key_prefix: result.key.slice(0, newKeyEnv === "sandbox" ? 17 : 16),
           permissions: ["events:read", "attendees:read"],
           is_active: true,
           last_used_at: null,
           expires_at: null,
           created_at: new Date().toISOString(),
-          environment: prev.find((k) => k.id === id)?.environment ?? "production",
+          environment: newKeyEnv,
         },
-      ])
-    );
+        ...prev,
+      ]);
+      setNewKeyName("");
+      setShowCreateKey(false);
+    } catch (err) {
+      setCreatingKey(false);
+      setKeyError(err instanceof Error ? err.message : "Failed to create API key");
+    }
+  }
+
+  function handleRevokeKey(id: string) {
+    startTransition(async () => {
+      try {
+        await revokeApiKey(id);
+        setKeys((prev) => prev.map((k) => (k.id === id ? { ...k, is_active: false } : k)));
+      } catch {
+        // Handled
+      }
+    });
+  }
+
+  function handleDeleteKey(id: string) {
+    startTransition(async () => {
+      try {
+        await deleteApiKey(id);
+        setKeys((prev) => prev.filter((k) => k.id !== id));
+      } catch {
+        // Handled
+      }
+    });
+  }
+
+  async function handleRotateKey(id: string) {
+    setRotatingId(id);
+    try {
+      const result = await rotateApiKey(id);
+      setRotatingId(null);
+      if ("error" in result) {
+        alert(result.error);
+        return;
+      }
+      setNewRawKey(result.key);
+      setKeys((prev) =>
+        prev.map((k) =>
+          k.id === id
+            ? { ...k, is_active: false }
+            : k
+        ).concat([
+          {
+            id: result.id,
+            name: prev.find((k) => k.id === id)?.name ?? "Rotated key",
+            key_prefix: result.key.slice(0, result.key.startsWith("urp_test_") ? 17 : 16),
+            permissions: ["events:read", "attendees:read"],
+            is_active: true,
+            last_used_at: null,
+            expires_at: null,
+            created_at: new Date().toISOString(),
+            environment: prev.find((k) => k.id === id)?.environment ?? "production",
+          },
+        ])
+      );
+    } catch (err) {
+      setRotatingId(null);
+      alert(err instanceof Error ? err.message : "Failed to rotate API key");
+    }
   }
 
   async function handleAddEndpoint(e: React.FormEvent) {
     e.preventDefault();
     setCreatingWebhook(true);
     setWebhookError("");
-    const result = await createWebhookEndpoint(webhookUrl, webhookDesc, selectedEvents);
-    setCreatingWebhook(false);
-    if (result.error) {
-      setWebhookError(result.error);
-      return;
+    try {
+      const result = await createWebhookEndpoint(webhookUrl, webhookDesc, selectedEvents);
+      setCreatingWebhook(false);
+      if (result.error) {
+        setWebhookError(result.error);
+        return;
+      }
+      if (result.endpoint) {
+        setNewWebhookSecret(result.endpoint.secret);
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { secret, ...epWithoutSecret } = result.endpoint;
+        setEndpoints((prev) => [{ ...epWithoutSecret, delivery_total: 0, delivery_success: 0 }, ...prev]);
+      }
+      setWebhookUrl("");
+      setWebhookDesc("");
+      setSelectedEvents([]);
+      setShowAddEndpoint(false);
+    } catch (err) {
+      setCreatingWebhook(false);
+      setWebhookError(err instanceof Error ? err.message : "Failed to create webhook endpoint");
     }
-    if (result.endpoint) {
-      setNewWebhookSecret(result.endpoint.secret);
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { secret, ...epWithoutSecret } = result.endpoint;
-      setEndpoints((prev) => [{ ...epWithoutSecret, delivery_total: 0, delivery_success: 0 }, ...prev]);
-    }
-    setWebhookUrl("");
-    setWebhookDesc("");
-    setSelectedEvents([]);
-    setShowAddEndpoint(false);
   }
 
   function handleDeleteEndpoint(id: string) {
     startTransition(async () => {
-      await deleteWebhookEndpoint(id);
-      setEndpoints((prev) => prev.filter((e) => e.id !== id));
+      try {
+        await deleteWebhookEndpoint(id);
+        setEndpoints((prev) => prev.filter((e) => e.id !== id));
+      } catch {
+        // Handled
+      }
     });
   }
 

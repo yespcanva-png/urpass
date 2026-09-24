@@ -160,37 +160,45 @@ export default function CheckinDashboard({
     if (!newGateName.trim()) return;
     setGateError("");
     startGateTransition(async () => {
-      const result = await createGate(event.id, newGateName.trim(), newGateZoneId || undefined);
-      if (result.error) {
-        setGateError(result.error);
-        return;
+      try {
+        const result = await createGate(event.id, newGateName.trim(), newGateZoneId || undefined);
+        if (result.error) {
+          setGateError(result.error);
+          return;
+        }
+        // Optimistically add the new gate to local state
+        if (result.id) {
+          const zone = zones.find((z) => z.id === newGateZoneId);
+          setGates((prev) => [
+            ...prev,
+            {
+              id: result.id!,
+              name: newGateName.trim(),
+              zone_id: newGateZoneId || null,
+              zone: zone ? { name: zone.name } : null,
+            },
+          ]);
+        }
+        setNewGateName("");
+        setNewGateZoneId("");
+        setGateFormOpen(false);
+      } catch (err) {
+        setGateError(err instanceof Error ? err.message : "Failed to create gate");
       }
-      // Optimistically add the new gate to local state
-      if (result.id) {
-        const zone = zones.find((z) => z.id === newGateZoneId);
-        setGates((prev) => [
-          ...prev,
-          {
-            id: result.id!,
-            name: newGateName.trim(),
-            zone_id: newGateZoneId || null,
-            zone: zone ? { name: zone.name } : null,
-          },
-        ]);
-      }
-      setNewGateName("");
-      setNewGateZoneId("");
-      setGateFormOpen(false);
     });
   }
 
   async function handleDeleteGate(gateId: string) {
     if (!window.confirm("Delete this gate? The scanner link will stop working.")) return;
     setDeletingGateId(gateId);
-    const result = await deleteGate(gateId);
-    setDeletingGateId(null);
-    if (!result.error) {
-      setGates((prev) => prev.filter((g) => g.id !== gateId));
+    try {
+      const result = await deleteGate(gateId);
+      setDeletingGateId(null);
+      if (!result.error) {
+        setGates((prev) => prev.filter((g) => g.id !== gateId));
+      }
+    } catch {
+      setDeletingGateId(null);
     }
   }
 
@@ -205,16 +213,20 @@ export default function CheckinDashboard({
   async function handleManualCheckIn(attendee: Attendee) {
     if (checkingInId) return;
     setCheckingInId(attendee.id);
-    const result = await manualCheckIn(attendee.id, event.id);
-    setCheckingInId(null);
+    try {
+      const result = await manualCheckIn(attendee.id, event.id);
+      setCheckingInId(null);
 
-    if (result.success || result.alreadyCheckedIn) {
-      // Update local state optimistically
-      setAttendees((prev) =>
-        prev.map((a) =>
-          a.id === attendee.id ? { ...a, pass_status: "checked_in" } : a
-        )
-      );
+      if (result.success || result.alreadyCheckedIn) {
+        // Update local state optimistically
+        setAttendees((prev) =>
+          prev.map((a) =>
+            a.id === attendee.id ? { ...a, pass_status: "checked_in" } : a
+          )
+        );
+      }
+    } catch {
+      setCheckingInId(null);
     }
   }
 

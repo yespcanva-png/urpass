@@ -135,8 +135,12 @@ export default function CreateEventForm({
 
   async function onSubmit(data: EventInput) {
     setServerError("");
-    const result = await createEvent(data, organizationId);
-    if (result?.error) setServerError(result.error);
+    try {
+      const result = await createEvent(data, organizationId);
+      if (result?.error) setServerError(result.error);
+    } catch (err) {
+      setServerError(err instanceof Error ? err.message : "Failed to create event");
+    }
   }
 
   return (

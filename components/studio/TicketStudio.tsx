@@ -38,7 +38,6 @@ import {
   DEFAULT_TICKET_DESIGN,
   sanitizeTicketDesign,
 } from "@/lib/pass-design";
-import { saveTicketDesign, sendTestTicketEmail } from "@/app/actions/ticket-design";
 
 interface TicketStudioProps {
   initialConfig?: unknown;
@@ -193,16 +192,27 @@ export default function TicketStudio({
   const isInitialMount = useRef(true);
   const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
-  // Execute Save Action
+  // Execute Save Action via deterministic REST endpoint (immune to server action build-hash rotation)
   const performSave = useCallback(
     async (designToSave: TicketDesignConfig) => {
       setSaveStatus("saving");
       setSaveErrorMessage(null);
       try {
-        const res = await saveTicketDesign(eventId || null, designToSave);
-        if (res.error) {
+        const response = await fetch("/api/studio/save", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            eventId: eventId || null,
+            design: designToSave,
+          }),
+        });
+
+        const data = await response.json().catch(() => null);
+        if (!response.ok || !data?.success) {
           setSaveStatus("error");
-          setSaveErrorMessage(res.error);
+          setSaveErrorMessage(data?.error || `Failed to save design (${response.status})`);
         } else {
           setSaveStatus("saved");
         }
@@ -345,9 +355,19 @@ export default function TicketStudio({
     setTestSuccess(false);
 
     try {
-      const res = await sendTestTicketEmail(testEmail, eventName, config);
-      if (res.error) {
-        setTestError(res.error);
+      const res = await fetch("/api/studio/test-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          toEmail: testEmail,
+          eventName,
+          config,
+        }),
+      });
+
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.success) {
+        setTestError(data?.error || `Failed to dispatch test pass (${res.status})`);
       } else {
         setTestSuccess(true);
         setTimeout(() => {

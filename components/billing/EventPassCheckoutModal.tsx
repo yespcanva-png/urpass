@@ -116,17 +116,22 @@ export default function EventPassCheckoutModal({
             return;
           }
 
-          const result = await activateEventPass(passType, {
-            orderId: response.razorpay_order_id,
-            paymentId: response.razorpay_payment_id,
-            signature: response.razorpay_signature,
-          });
-          setLoading(false);
-          if (result?.error) {
-            setError(result.error);
-            return;
+          try {
+            const result = await activateEventPass(passType, {
+              orderId: response.razorpay_order_id,
+              paymentId: response.razorpay_payment_id,
+              signature: response.razorpay_signature,
+            });
+            setLoading(false);
+            if (result?.error) {
+              setError(result.error);
+              return;
+            }
+            router.push("/billing?pass=purchased");
+          } catch (err) {
+            setLoading(false);
+            setError(err instanceof Error ? err.message : "Failed to activate event pass.");
           }
-          router.push("/billing?pass=purchased");
         },
       });
 

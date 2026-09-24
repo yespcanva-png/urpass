@@ -10,7 +10,7 @@ vi.mock("next/navigation", () => ({
   useParams: () => ({ eventId: "evt-1" }),
 }));
 
-// ── Mock server actions ───────────────────────────────────────────────────────
+// ── Mock server actions & API routes ──────────────────────────────────────────
 vi.mock("@/app/actions/ticket-design", () => ({
   saveTicketDesign: vi.fn().mockResolvedValue({ success: true }),
   sendTestTicketEmail: vi.fn().mockResolvedValue({ success: true }),
@@ -19,6 +19,27 @@ vi.mock("@/app/actions/ticket-design", () => ({
 describe("URPASS Ticket Studio (4-Section Clean Ticket Editor)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    global.fetch = vi.fn().mockImplementation((url: string) => {
+      if (url === "/api/studio/save") {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () => Promise.resolve({ success: true }),
+        });
+      }
+      if (url === "/api/studio/test-email") {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () => Promise.resolve({ success: true }),
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({}),
+      });
+    });
   });
 
   it("renders the 4 core sections: Design, Content, Branding, Delivery", () => {
@@ -186,17 +207,17 @@ describe("URPASS Ticket Studio (4-Section Clean Ticket Editor)", () => {
     await userEvent.click(screen.getByRole("button", { name: /send pass/i }));
 
     await waitFor(() => {
-      expect(sendTestTicketEmail).toHaveBeenCalledWith(
-        "organizer@test.com",
-        "TECHFEST 2026",
-        expect.any(Object)
+      expect(global.fetch).toHaveBeenCalledWith(
+        "/api/studio/test-email",
+        expect.objectContaining({
+          method: "POST",
+          body: expect.stringContaining("organizer@test.com"),
+        })
       );
     });
   });
 
   it("calls manual save when Save button is clicked", async () => {
-    const { saveTicketDesign } = await import("@/app/actions/ticket-design");
-
     render(
       <TicketStudio
         isPro={true}
@@ -209,7 +230,13 @@ describe("URPASS Ticket Studio (4-Section Clean Ticket Editor)", () => {
     await userEvent.click(saveBtn);
 
     await waitFor(() => {
-      expect(saveTicketDesign).toHaveBeenCalledWith("evt-1", expect.any(Object));
+      expect(global.fetch).toHaveBeenCalledWith(
+        "/api/studio/save",
+        expect.objectContaining({
+          method: "POST",
+          body: expect.stringContaining('"eventId":"evt-1"'),
+        })
+      );
     });
   });
 

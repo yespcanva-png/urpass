@@ -163,30 +163,35 @@ export default function CheckoutModal({
             return;
           }
 
-          const result = await activatePaidSubscription(
-            planSlug,
-            {
-              orderId: response.razorpay_order_id,
-              paymentId: response.razorpay_payment_id,
-              signature: response.razorpay_signature,
-            },
-            billingCycle,
-            coupon
-              ? {
-                  couponCode: coupon.code,
-                  originalAmountRupees: coupon.baseAmountRupees,
-                  discountAmountRupees: coupon.discountAmountRupees,
-                  finalAmountRupees: coupon.discountedAmountRupees,
-                  billingCyclesRemaining: coupon.durationMonths,
-                }
-              : undefined
-          );
-          setPayLoading(false);
-          if (result?.error) {
-            setPayError(result.error);
-            return;
+          try {
+            const result = await activatePaidSubscription(
+              planSlug,
+              {
+                orderId: response.razorpay_order_id,
+                paymentId: response.razorpay_payment_id,
+                signature: response.razorpay_signature,
+              },
+              billingCycle,
+              coupon
+                ? {
+                    couponCode: coupon.code,
+                    originalAmountRupees: coupon.baseAmountRupees,
+                    discountAmountRupees: coupon.discountAmountRupees,
+                    finalAmountRupees: coupon.discountedAmountRupees,
+                    billingCyclesRemaining: coupon.durationMonths,
+                  }
+                : undefined
+            );
+            setPayLoading(false);
+            if (result?.error) {
+              setPayError(result.error);
+              return;
+            }
+            router.push(`/billing?upgraded=true&plan=${encodeURIComponent(planName)}`);
+          } catch (err) {
+            setPayLoading(false);
+            setPayError(err instanceof Error ? err.message : "Failed to activate subscription.");
           }
-          router.push(`/billing?upgraded=true&plan=${encodeURIComponent(planName)}`);
         },
       });
 

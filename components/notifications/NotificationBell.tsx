@@ -15,7 +15,6 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import {
-  getOrganizerNotifications,
   markAllNotificationsAsRead,
   markNotificationAsRead,
   type InAppNotification,
@@ -83,9 +82,12 @@ export default function NotificationBell() {
 
   async function fetchNotifications() {
     try {
-      const res = await getOrganizerNotifications(15);
-      setNotifications(res.notifications);
-      setUnreadCount(res.unreadCount);
+      const res = await fetch("/api/notifications/organizer?limit=15");
+      if (res.ok) {
+        const data = await res.json();
+        setNotifications(data.notifications || []);
+        setUnreadCount(data.unreadCount || 0);
+      }
     } catch {
       // ignore
     }
@@ -129,7 +131,11 @@ export default function NotificationBell() {
 
   const handleMarkAllRead = () => {
     startTransition(async () => {
-      await markAllNotificationsAsRead();
+      try {
+        await markAllNotificationsAsRead();
+      } catch {
+        // Continue with local update
+      }
       setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
       setUnreadCount(0);
     });
@@ -138,7 +144,11 @@ export default function NotificationBell() {
   const handleItemClick = (n: InAppNotification) => {
     if (!n.is_read) {
       startTransition(async () => {
-        await markNotificationAsRead(n.id);
+        try {
+          await markNotificationAsRead(n.id);
+        } catch {
+          // Continue with local update
+        }
         setNotifications((prev) =>
           prev.map((item) => (item.id === n.id ? { ...item, is_read: true } : item))
         );

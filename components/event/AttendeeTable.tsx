@@ -172,62 +172,86 @@ export default function AttendeeTable({
     // Instant optimistic flip — no await, no spinner
     setAttendees((prev) => prev.map((a) => a.id === id ? { ...a, application_status: "approved" } : a));
     setErr(id, "");
-    approveAttendee(id, eventId).then((result) => {
-      if (result?.error) {
+    approveAttendee(id, eventId)
+      .then((result) => {
+        if (result?.error) {
+          setAttendees((prev) => prev.map((a) => a.id === id ? { ...a, application_status: prev_status } : a));
+          setErr(id, result.error);
+        }
+      })
+      .catch((err) => {
         setAttendees((prev) => prev.map((a) => a.id === id ? { ...a, application_status: prev_status } : a));
-        setErr(id, result.error);
-      }
-    });
+        setErr(id, err instanceof Error ? err.message : "Failed to approve attendee");
+      });
   }
 
   function handleReject(id: string, prev_status: Status) {
     setAttendees((prev) => prev.map((a) => a.id === id ? { ...a, application_status: "rejected" } : a));
     setErr(id, "");
-    rejectAttendee(id, eventId).then((result) => {
-      if (result?.error) {
+    rejectAttendee(id, eventId)
+      .then((result) => {
+        if (result?.error) {
+          setAttendees((prev) => prev.map((a) => a.id === id ? { ...a, application_status: prev_status } : a));
+          setErr(id, result.error);
+        }
+      })
+      .catch((err) => {
         setAttendees((prev) => prev.map((a) => a.id === id ? { ...a, application_status: prev_status } : a));
-        setErr(id, result.error);
-      }
-    });
+        setErr(id, err instanceof Error ? err.message : "Failed to reject attendee");
+      });
   }
 
   async function handleGeneratePass(id: string) {
     setLoadingId(id); setErr(id, "");
-    const result = await generatePass(id, eventId);
-    setLoadingId(null);
-    if (result?.error) {
-      setErr(id, result.error ?? "");
-    } else if (result?.passToken) {
-      const token = result.passToken as string;
-      setPassTokens((prev) => ({ ...prev, [id]: token }));
-      setAttendees((prev) => prev.map((a) => a.id === id ? { ...a, pass_status: "generated" } : a));
+    try {
+      const result = await generatePass(id, eventId);
+      setLoadingId(null);
+      if (result?.error) {
+        setErr(id, result.error ?? "");
+      } else if (result?.passToken) {
+        const token = result.passToken as string;
+        setPassTokens((prev) => ({ ...prev, [id]: token }));
+        setAttendees((prev) => prev.map((a) => a.id === id ? { ...a, pass_status: "generated" } : a));
+      }
+    } catch (err) {
+      setLoadingId(null);
+      setErr(id, err instanceof Error ? err.message : "Failed to generate pass");
     }
   }
 
   async function handleViewPass(id: string) {
     if (passTokens[id]) { window.open(`/pass/${passTokens[id]}`, "_blank"); return; }
     setLoadingId(id); setErr(id, "");
-    const result = await generatePass(id, eventId);
-    setLoadingId(null);
-    if (result?.error) {
-      setErr(id, result.error ?? "");
-    } else if (result?.passToken) {
-      const token = result.passToken as string;
-      setPassTokens((prev) => ({ ...prev, [id]: token }));
-      window.open(`/pass/${token}`, "_blank");
+    try {
+      const result = await generatePass(id, eventId);
+      setLoadingId(null);
+      if (result?.error) {
+        setErr(id, result.error ?? "");
+      } else if (result?.passToken) {
+        const token = result.passToken as string;
+        setPassTokens((prev) => ({ ...prev, [id]: token }));
+        window.open(`/pass/${token}`, "_blank");
+      }
+    } catch (err) {
+      setLoadingId(null);
+      setErr(id, err instanceof Error ? err.message : "Failed to load pass");
     }
   }
 
   async function handleExport() {
     setExporting(true);
-    const result = await exportAttendeesCSV(eventId);
-    setExporting(false);
-    if (result.error || !result.csv) return;
-    const blob = new Blob([result.csv], { type: "text/csv;charset=utf-8;" });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement("a");
-    a.href = url; a.download = `attendees-${eventId.slice(0, 8)}.csv`; a.click();
-    URL.revokeObjectURL(url);
+    try {
+      const result = await exportAttendeesCSV(eventId);
+      setExporting(false);
+      if (result.error || !result.csv) return;
+      const blob = new Blob([result.csv], { type: "text/csv;charset=utf-8;" });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement("a");
+      a.href = url; a.download = `attendees-${eventId.slice(0, 8)}.csv`; a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      setExporting(false);
+    }
   }
 
   const tabs: FilterTab[] = ["all", "pending", "approved", "rejected"];

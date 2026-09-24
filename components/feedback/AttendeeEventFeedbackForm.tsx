@@ -135,19 +135,23 @@ export default function AttendeeEventFeedbackForm({
     }
 
     startTransition(async () => {
-      const res = await submitAttendeeFeedback(event.id, {
-        attendee_name: name.trim() || undefined,
-        attendee_email: email.trim() || undefined,
-        rating: derivedRating,
-        nps_score: derivedNps,
-        answers,
-      });
+      try {
+        const res = await submitAttendeeFeedback(event.id, {
+          attendee_name: name.trim() || undefined,
+          attendee_email: email.trim() || undefined,
+          rating: derivedRating,
+          nps_score: derivedNps,
+          answers,
+        });
 
-      if (!res.success) {
-        setErrorMessage(res.error || "Failed to submit feedback. Please try again.");
-      } else {
-        setIsSubmitted(true);
-        window.scrollTo({ top: 0, behavior: "smooth" });
+        if (!res.success) {
+          setErrorMessage(res.error || "Failed to submit feedback. Please try again.");
+        } else {
+          setIsSubmitted(true);
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+      } catch (err) {
+        setErrorMessage(err instanceof Error ? err.message : "Failed to submit feedback. Please try again.");
       }
     });
   };

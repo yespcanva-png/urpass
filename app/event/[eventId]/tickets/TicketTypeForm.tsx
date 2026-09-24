@@ -111,18 +111,22 @@ export default function TicketTypeForm({ eventId, initialData, ticketTypeId }: P
     const payload = { ...data, price: isFree ? 0 : data.price };
 
     startTransition(async () => {
-      let result: { error?: string; id?: string } | { error?: string };
-      if (ticketTypeId) {
-        result = await updateTicketType(ticketTypeId, payload);
-      } else {
-        result = await createTicketType(eventId, payload);
-      }
+      try {
+        let result: { error?: string; id?: string } | { error?: string };
+        if (ticketTypeId) {
+          result = await updateTicketType(ticketTypeId, payload);
+        } else {
+          result = await createTicketType(eventId, payload);
+        }
 
-      if (result?.error) {
-        setServerError(result.error);
-        return;
+        if (result?.error) {
+          setServerError(result.error);
+          return;
+        }
+        router.push(`/event/${eventId}/tickets`);
+      } catch (err) {
+        setServerError(err instanceof Error ? err.message : "Failed to save ticket tier");
       }
-      router.push(`/event/${eventId}/tickets`);
     });
   }
 
@@ -130,13 +134,18 @@ export default function TicketTypeForm({ eventId, initialData, ticketTypeId }: P
     if (!ticketTypeId) return;
     setIsDeleting(true);
     startTransition(async () => {
-      const result = await deleteTicketType(ticketTypeId);
-      if (result?.error) {
-        setServerError(result.error);
+      try {
+        const result = await deleteTicketType(ticketTypeId);
+        if (result?.error) {
+          setServerError(result.error);
+          setIsDeleting(false);
+          return;
+        }
+        router.push(`/event/${eventId}/tickets`);
+      } catch (err) {
+        setServerError(err instanceof Error ? err.message : "Failed to delete ticket tier");
         setIsDeleting(false);
-        return;
       }
-      router.push(`/event/${eventId}/tickets`);
     });
   }
 

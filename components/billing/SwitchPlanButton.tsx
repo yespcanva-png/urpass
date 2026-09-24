@@ -25,11 +25,15 @@ export default function SwitchPlanButton({
   async function handleSwitch() {
     setError("");
     startTransition(async () => {
-      const result = await switchPlan(planSlug);
-      if (result?.error) {
-        setError(result.error);
-      } else {
-        router.refresh();
+      try {
+        const result = await switchPlan(planSlug);
+        if (result?.error) {
+          setError(result.error);
+        } else {
+          router.refresh();
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to switch plan");
       }
     });
   }
