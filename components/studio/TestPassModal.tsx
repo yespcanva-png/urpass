@@ -87,7 +87,7 @@ export default function TestPassModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 select-none">
+    <div className="fixed inset-0 z-[110] bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 select-none">
       <div className="bg-white rounded-3xl w-full max-w-3xl max-h-[92vh] flex flex-col overflow-hidden shadow-2xl">
         {/* Modal Header */}
         <div className="p-4 border-b border-neutral-100 flex items-center justify-between">

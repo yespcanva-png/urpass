@@ -9,20 +9,22 @@ export default function EventSubNav({ eventId }: { eventId: string }) {
   const base = `/event/${eventId}`;
 
   const tabs = [
-    { label: "Overview",    href: base,                  exact: true  },
-    { label: "Tickets",     href: `${base}/tickets`,     exact: false },
-    { label: "Pass Design", href: `${base}/pass-design`, exact: false },
-    { label: "Attendees",   href: `${base}/attendees`,   exact: false },
-    { label: "Check-ins",   href: `${base}/checkins`,    exact: false },
-    { label: "Analytics",   href: `${base}/analytics`,   exact: false },
-    { label: "Feedback",    href: `${base}/feedback`,    exact: false },
-    { label: "Settings",    href: `${base}/settings`,    exact: false },
+    { label: "Overview",      href: base,                  exact: true  },
+    { label: "Tickets",       href: `${base}/tickets`,     exact: false },
+    { label: "Ticket Studio", href: `/studio/${eventId}`,  exact: false },
+    { label: "Attendees",     href: `${base}/attendees`,   exact: false },
+    { label: "Check-ins",     href: `${base}/checkins`,    exact: false },
+    { label: "Analytics",     href: `${base}/analytics`,   exact: false },
+    { label: "Feedback",      href: `${base}/feedback`,    exact: false },
+    { label: "Settings",      href: `${base}/settings`,    exact: false },
   ];
 
   return (
     <nav className="flex gap-1 -mb-px">
       {tabs.map(({ label, href, exact }) => {
-        const active = exact ? pathname === href : pathname.startsWith(href);
+        const active = exact
+          ? pathname === href
+          : pathname.startsWith(href) || (href.includes("/studio/") && pathname.includes("/pass-design"));
         return (
           <Link
             key={href}

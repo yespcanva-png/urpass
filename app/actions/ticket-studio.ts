@@ -97,6 +97,7 @@ export async function saveStudioDesign(
 
     if (updateErr) return { error: updateErr.message };
 
+    revalidatePath(`/studio/${eventId}`);
     revalidatePath(`/event/${eventId}/pass-design`);
     revalidatePath(`/event/${eventId}`);
     revalidatePath("/pass/[passId]", "page");
@@ -111,6 +112,7 @@ export async function saveStudioDesign(
 
     if (profileErr) return { error: profileErr.message };
 
+    revalidatePath("/studio");
     revalidatePath("/dashboard/ticket-design");
     revalidatePath("/dashboard/branding");
     revalidatePath("/pass/[passId]", "page");

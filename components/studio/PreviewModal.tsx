@@ -67,7 +67,7 @@ export default function PreviewModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 select-none">
+    <div className="fixed inset-0 z-[110] bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 select-none">
       <div className="bg-neutral-900 border border-neutral-800 rounded-3xl w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden shadow-2xl text-white">
         {/* Header Controls */}
         <div className="p-4 border-b border-neutral-800 flex items-center justify-between gap-4">

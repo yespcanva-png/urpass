@@ -152,10 +152,10 @@ export default function Sidebar({ email, fullName, planSlug }: Props) {
           <SectionLabel>Tools</SectionLabel>
           <NavLink href="/dashboard/branding" icon={Palette} label="Branding" active={isActive("/dashboard/branding")} />
           <NavLink
-            href="/dashboard/ticket-design"
+            href="/studio"
             icon={Ticket}
-            label="Ticket Design"
-            active={isActive("/dashboard/ticket-design") || isActive("/dashboard/pass-design")}
+            label="Ticket Studio"
+            active={isActive("/studio") || isActive("/dashboard/ticket-design") || isActive("/dashboard/pass-design")}
           />
           {planSlug && ["pro", "business", "campus", "enterprise"].includes(planSlug) && (
             <NavLink href="/dashboard/api-keys" icon={Key} label="API Keys" active={isActive("/dashboard/api-keys")} />

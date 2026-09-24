@@ -453,7 +453,7 @@ export default function TicketStudio({
     design.elements.find((el) => el.id === selectedElementId) || null;
 
   return (
-    <div className="flex flex-col h-screen w-screen overflow-hidden bg-neutral-100 font-sans">
+    <div className="fixed inset-0 z-[100] flex flex-col w-screen h-screen overflow-hidden bg-neutral-100 font-sans">
       {/* 1. Top Studio Toolbar */}
       <StudioToolbar
         design={design}
@@ -475,14 +475,14 @@ export default function TicketStudio({
 
       {/* Save Notification Toasts */}
       {saveStatus && (
-        <div className="absolute top-16 right-4 z-50 flex items-center gap-2 p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold rounded-2xl shadow-lg animate-in fade-in slide-in-from-top-2">
+        <div className="absolute top-16 right-4 z-[120] flex items-center gap-2 p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold rounded-2xl shadow-lg animate-in fade-in slide-in-from-top-2">
           <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
           <span>{saveStatus}</span>
         </div>
       )}
 
       {saveError && (
-        <div className="absolute top-16 right-4 z-50 flex items-center gap-2 p-3 bg-red-50 border border-red-200 text-red-800 text-xs font-bold rounded-2xl shadow-lg animate-in fade-in slide-in-from-top-2">
+        <div className="absolute top-16 right-4 z-[120] flex items-center gap-2 p-3 bg-red-50 border border-red-200 text-red-800 text-xs font-bold rounded-2xl shadow-lg animate-in fade-in slide-in-from-top-2">
           <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
           <span>{saveError}</span>
         </div>
@@ -557,7 +557,7 @@ export default function TicketStudio({
 
       {/* 5. Publish Validation Alert Modal */}
       {publishAlert && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[110] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
             <div className="flex items-center gap-3 text-red-600">
               <div className="w-10 h-10 rounded-2xl bg-red-50 flex items-center justify-center">

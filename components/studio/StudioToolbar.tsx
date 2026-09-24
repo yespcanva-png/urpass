@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -15,6 +15,8 @@ import {
   Ticket,
   CreditCard,
   Loader2,
+  Maximize2,
+  Minimize2,
 } from "lucide-react";
 import type { StudioDesign, TicketFormat } from "@/lib/studio/types";
 
@@ -53,6 +55,24 @@ export default function StudioToolbar({
   selectedCategory,
   onSelectCategory,
 }: Props) {
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    function onFullscreenChange() {
+      setIsFullscreen(Boolean(document.fullscreenElement));
+    }
+    document.addEventListener("fullscreenchange", onFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", onFullscreenChange);
+  }, []);
+
+  function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    } else {
+      document.exitFullscreen().catch(() => {});
+    }
+  }
+
   function getFormatBadge(format: TicketFormat) {
     switch (format) {
       case "printable":
@@ -86,10 +106,13 @@ export default function StudioToolbar({
       <div className="flex items-center gap-3">
         <Link
           href={backHref}
-          className="inline-flex items-center gap-1.5 text-xs font-bold text-neutral-600 hover:text-neutral-900 transition-colors p-1.5 rounded-lg hover:bg-neutral-100"
+          className="inline-flex items-center gap-1.5 text-xs font-bold text-neutral-700 hover:text-neutral-900 transition-colors px-2.5 py-1.5 rounded-xl hover:bg-neutral-100 border border-neutral-200/80 bg-neutral-50 shadow-2xs"
+          title={`Back to ${backHref.includes("/event/") ? "Event" : "Dashboard"}`}
         >
-          <ArrowLeft className="w-4 h-4" />
-          <span className="hidden sm:inline">Back</span>
+          <ArrowLeft className="w-3.5 h-3.5" />
+          <span className="hidden sm:inline">
+            {backHref.includes("/event/") ? "Back to Event" : "Back to Dashboard"}
+          </span>
         </Link>
 
         <div className="h-4 w-px bg-neutral-200 hidden sm:block" />
@@ -155,8 +178,18 @@ export default function StudioToolbar({
         </div>
       </div>
 
-      {/* Right: Preview, Test Pass, Save & Publish */}
+      {/* Right: Fullscreen, Preview, Test Pass, Save & Publish */}
       <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={toggleFullscreen}
+          title={isFullscreen ? "Exit Fullscreen (Esc)" : "Enter Fullscreen Mode"}
+          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-neutral-200 bg-white text-xs font-bold text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900 transition-colors shadow-2xs"
+        >
+          {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5 text-neutral-500" />}
+          <span className="hidden md:inline">{isFullscreen ? "Exit Fullscreen" : "Full Screen"}</span>
+        </button>
+
         <button
           type="button"
           onClick={onOpenPreview}
