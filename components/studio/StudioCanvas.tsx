@@ -53,6 +53,7 @@ export default function StudioCanvas({
 
   const viewportRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
+  const hasDraggedRef = useRef(false);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState<{ mouseX: number; mouseY: number; elX: number; elY: number } | null>(null);
 
@@ -168,12 +169,12 @@ export default function StudioCanvas({
   // Start element dragging
   function handleElementMouseDown(e: React.MouseEvent, element: StudioElement) {
     e.stopPropagation();
+    hasDraggedRef.current = false;
+    onSelectElement(element.id);
     if (element.locked) {
-      onSelectElement(element.id);
       return;
     }
 
-    onSelectElement(element.id);
     setIsDragging(true);
     setDragStart({
       mouseX: e.clientX,
@@ -186,6 +187,7 @@ export default function StudioCanvas({
   // Start resizing
   function handleResizeMouseDown(e: React.MouseEvent, handle: ResizeHandle) {
     e.stopPropagation();
+    hasDraggedRef.current = false;
     if (!selectedElement || selectedElement.locked) return;
 
     setResizingHandle(handle);
@@ -206,6 +208,10 @@ export default function StudioCanvas({
         const deltaX = (e.clientX - dragStart.mouseX) / zoom;
         const deltaY = (e.clientY - dragStart.mouseY) / zoom;
 
+        if (Math.abs(deltaX) > 2 || Math.abs(deltaY) > 2) {
+          hasDraggedRef.current = true;
+        }
+
         const rawX = dragStart.elX + deltaX;
         const rawY = dragStart.elY + deltaY;
 
@@ -219,6 +225,10 @@ export default function StudioCanvas({
       } else if (resizingHandle && resizeStart && selectedElement) {
         const deltaX = (e.clientX - resizeStart.mouseX) / zoom;
         const deltaY = (e.clientY - resizeStart.mouseY) / zoom;
+
+        if (Math.abs(deltaX) > 2 || Math.abs(deltaY) > 2) {
+          hasDraggedRef.current = true;
+        }
 
         const minW = selectedElement.type === "qr" ? MIN_QR_SIZE : 15;
         const minH = selectedElement.type === "qr" ? MIN_QR_SIZE : 10;
@@ -270,6 +280,9 @@ export default function StudioCanvas({
       setDragStart(null);
       setResizingHandle(null);
       setResizeStart(null);
+      setTimeout(() => {
+        hasDraggedRef.current = false;
+      }, 120);
     }
 
     if (isDragging || resizingHandle) {
@@ -405,7 +418,10 @@ export default function StudioCanvas({
       <div
         ref={viewportRef}
         className="flex-1 overflow-auto p-6 md:p-10 bg-[#F8F9FA] bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:20px_20px]"
-        onClick={() => onSelectElement(null)}
+        onClick={() => {
+          if (hasDraggedRef.current) return;
+          onSelectElement(null);
+        }}
       >
         <div
           className="m-auto flex items-center justify-center p-6"
@@ -413,10 +429,21 @@ export default function StudioCanvas({
             minWidth: `${Math.ceil(design.width * zoom) + 48}px`,
             minHeight: "100%",
           }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              if (hasDraggedRef.current) return;
+              onSelectElement(null);
+            }
+          }}
         >
           <div
             ref={canvasRef}
             className="relative shadow-2xl transition-transform duration-75 select-none shrink-0"
+            onClick={(e) => {
+              if (hasDraggedRef.current) return;
+              e.stopPropagation();
+              onSelectElement(null);
+            }}
             style={{
               width: `${design.width}px`,
               height: `${design.height}px`,
@@ -472,6 +499,10 @@ export default function StudioCanvas({
               <div
                 key={el.id}
                 onMouseDown={(e) => handleElementMouseDown(e, el)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSelectElement(el.id);
+                }}
                 style={{
                   position: "absolute",
                   left: `${el.x}px`,
@@ -505,6 +536,9 @@ export default function StudioCanvas({
                         <div
                           key={handle}
                           onMouseDown={(e) => handleResizeMouseDown(e, handle)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                          }}
                           style={{
                             position: "absolute",
                             width: "8px",
