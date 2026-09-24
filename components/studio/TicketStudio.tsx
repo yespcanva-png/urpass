@@ -142,8 +142,17 @@ export default function TicketStudio({
     sanitizeTicketDesign(initialConfig || {})
   );
 
-  // 2. Active Sections
+  // 2. Active Sections & Selected Element
   const [activeSection, setActiveSection] = useState<StudioSection>("design");
+  const [selectedElement, setSelectedElement] = useState<string | null>(null);
+
+  function handleSelectElement(elementKey: string, targetSection: StudioSection) {
+    setSelectedElement(elementKey);
+    setActiveSection(targetSection);
+    if (mobileTab === "preview") {
+      setMobileTab("customize");
+    }
+  }
 
   // 3. UI View Mode: Mobile Pass vs Email Delivery Preview
   const [previewMode, setPreviewMode] = useState<"mobile" | "email">("mobile");
@@ -392,6 +401,47 @@ export default function TicketStudio({
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col w-screen h-screen overflow-hidden bg-neutral-100 font-sans select-none">
+      {/* Print Styles for Clean Sample Pass Download */}
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+            @media print {
+              @page {
+                margin: 10mm;
+                size: auto;
+              }
+              body {
+                background: #ffffff !important;
+                color: #000000 !important;
+              }
+              header, aside, .no-print, button {
+                display: none !important;
+              }
+              main {
+                background: transparent !important;
+                padding: 0 !important;
+                display: flex !important;
+                justify-content: center !important;
+                align-items: center !important;
+                width: 100% !important;
+                height: auto !important;
+                overflow: visible !important;
+              }
+              #printable-ticket-card {
+                box-shadow: none !important;
+                border: 1px solid #d4d4d8 !important;
+                max-width: 380px !important;
+                width: 380px !important;
+                margin: 20px auto !important;
+                page-break-inside: avoid !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+              }
+            }
+          `,
+        }}
+      />
+
       {/* ─────────────────────────────────────────────────────────────
           1. TOP APP BAR
       ───────────────────────────────────────────────────────────── */}
@@ -1650,6 +1700,7 @@ export default function TicketStudio({
                   Event logo → Event name → Ticket type → QR → Attendee name → Ticket ID → Date/venue
               ───────────────────────────────────────────────────────── */
               <div
+                id="printable-ticket-card"
                 className={`relative w-full ${shapeRadius} border ${cardBorder} ${cardBg} overflow-hidden shadow-lg select-none transition-all duration-200`}
                 style={{
                   boxShadow: isDark
@@ -1679,15 +1730,25 @@ export default function TicketStudio({
                 {/* Event Template Top Accent Strip */}
                 {(isEvent || config.template === "modern") && (
                   <div
-                    className="h-2 w-full relative z-10"
+                    onClick={() => handleSelectElement("accent", "design")}
+                    className="h-2 w-full relative z-10 cursor-pointer hover:opacity-80 transition-opacity"
                     style={{ backgroundColor: activeColor }}
+                    title="Click to customize Template Accent"
                   />
                 )}
 
                 {/* Ticket Content Container */}
                 <div className={`relative z-10 ${paddingCls} flex flex-col items-center text-center`}>
                   {/* 1. EVENT LOGO & SPONSOR LOGO */}
-                  <div className="mb-3.5 flex items-center justify-center gap-3">
+                  <div
+                    onClick={() => handleSelectElement("logo", "branding")}
+                    className={`mb-3.5 flex items-center justify-center gap-3 cursor-pointer p-1.5 transition-all ${
+                      selectedElement === "logo"
+                        ? "ring-2 ring-brand ring-offset-2 rounded-xl"
+                        : "hover:ring-1 hover:ring-brand/40 rounded-xl"
+                    }`}
+                    title="Click to customize Logo & Branding"
+                  >
                     {config.logoUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
@@ -1718,13 +1779,29 @@ export default function TicketStudio({
                   </div>
 
                   {/* 2. EVENT NAME */}
-                  <h2 className="text-xl font-bold tracking-tight mb-2 uppercase leading-snug max-w-xs">
+                  <h2
+                    onClick={() => handleSelectElement("eventName", "content")}
+                    className={`text-xl font-bold tracking-tight mb-2 uppercase leading-snug max-w-xs cursor-pointer px-2 py-0.5 transition-all ${
+                      selectedElement === "eventName"
+                        ? "ring-2 ring-brand ring-offset-2 rounded-lg"
+                        : "hover:ring-1 hover:ring-brand/40 rounded-lg"
+                    }`}
+                    title="Click to view Content settings"
+                  >
                     {eventName}
                   </h2>
 
                   {/* 3. TICKET TYPE PILL (if toggled) */}
                   {config.showTicketType && (
-                    <div className="mb-3">
+                    <div
+                      onClick={() => handleSelectElement("ticketType", "design")}
+                      className={`mb-3 cursor-pointer p-0.5 transition-all ${
+                        selectedElement === "ticketType"
+                          ? "ring-2 ring-brand ring-offset-2 rounded-full"
+                          : "hover:ring-1 hover:ring-brand/40 rounded-full"
+                      }`}
+                      title="Click to customize Ticket Type Colors & Templates"
+                    >
                       <span
                         className="inline-flex items-center gap-1 text-[11px] font-bold tracking-wider uppercase px-3 py-1 rounded-full border shadow-2xs"
                         style={{
@@ -1740,7 +1817,15 @@ export default function TicketStudio({
                   )}
 
                   {/* 4. LARGE CENTERED QR CODE CARD (Clean Contrast Shield) */}
-                  <div className="my-2 flex flex-col items-center">
+                  <div
+                    onClick={() => handleSelectElement("qr", "design")}
+                    className={`my-2 flex flex-col items-center cursor-pointer transition-all ${
+                      selectedElement === "qr"
+                        ? "ring-2 ring-brand ring-offset-2 rounded-2xl"
+                        : "hover:ring-1 hover:ring-brand/40 rounded-2xl"
+                    }`}
+                    title="QR Safety Zone - Click to customize Design & Template"
+                  >
                     <div
                       className="p-4 bg-white rounded-2xl shadow-xs border border-neutral-100 flex flex-col items-center justify-center"
                       title={`QR Token: ${sampleAttendee.qrValue}`}
@@ -1765,7 +1850,15 @@ export default function TicketStudio({
 
                   {/* 5. ATTENDEE NAME (if toggled) */}
                   {config.showAttendeeName && (
-                    <div className="mt-2 mb-0.5">
+                    <div
+                      onClick={() => handleSelectElement("attendeeName", "content")}
+                      className={`mt-2 mb-0.5 cursor-pointer px-2 py-0.5 transition-all ${
+                        selectedElement === "attendeeName"
+                          ? "ring-2 ring-brand ring-offset-2 rounded-lg"
+                          : "hover:ring-1 hover:ring-brand/40 rounded-lg"
+                      }`}
+                      title="Click to customize Attendee Name & Fields"
+                    >
                       <p className="text-base font-bold tracking-tight">
                         {sampleAttendee.name}
                       </p>
@@ -1774,20 +1867,32 @@ export default function TicketStudio({
 
                   {/* DYNAMIC FIELDS: Organization / College, Phone, Registration Number */}
                   {config.showOrganization && sampleAttendee.organization && (
-                    <p className={`text-xs font-medium ${subtextCls} mb-0.5`}>
+                    <p
+                      onClick={() => handleSelectElement("organization", "content")}
+                      className={`text-xs font-medium ${subtextCls} mb-0.5 cursor-pointer hover:underline`}
+                      title="Click to customize Dynamic Fields"
+                    >
                       {sampleAttendee.organization}
                     </p>
                   )}
 
                   {config.showPhone && sampleAttendee.phone && (
-                    <p className={`text-[11px] font-mono ${subtextCls} mb-0.5`}>
+                    <p
+                      onClick={() => handleSelectElement("phone", "content")}
+                      className={`text-[11px] font-mono ${subtextCls} mb-0.5 cursor-pointer hover:underline`}
+                      title="Click to customize Dynamic Fields"
+                    >
                       {sampleAttendee.phone}
                     </p>
                   )}
 
                   {config.showRegistrationNumber && sampleAttendee.regNumber && (
-                    <div className="my-1">
-                      <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300">
+                    <div
+                      onClick={() => handleSelectElement("regNumber", "content")}
+                      className="my-1 cursor-pointer"
+                      title="Click to customize Dynamic Fields"
+                    >
+                      <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 hover:ring-1 hover:ring-brand/40">
                         {sampleAttendee.regNumber}
                       </span>
                     </div>
@@ -1795,7 +1900,15 @@ export default function TicketStudio({
 
                   {/* 6. TICKET ID (if toggled) */}
                   {config.showTicketId && (
-                    <div className="my-1.5 flex items-center justify-center gap-1.5">
+                    <div
+                      onClick={() => handleSelectElement("ticketId", "content")}
+                      className={`my-1.5 flex items-center justify-center gap-1.5 cursor-pointer px-2 py-0.5 transition-all ${
+                        selectedElement === "ticketId"
+                          ? "ring-2 ring-brand ring-offset-2 rounded-lg"
+                          : "hover:ring-1 hover:ring-brand/40 rounded-lg"
+                      }`}
+                      title="Click to customize Ticket ID"
+                    >
                       <span className="text-[9px] font-bold tracking-widest uppercase text-neutral-400">
                         TICKET ID
                       </span>
@@ -1807,7 +1920,15 @@ export default function TicketStudio({
 
                   {/* 7. DATE & VENUE (if toggled) */}
                   {(config.showEventDate !== false || (config.showVenue && venue)) && (
-                    <div className={`w-full border-t ${dividerCls} pt-2.5 mt-2 flex flex-col items-center gap-1`}>
+                    <div
+                      onClick={() => handleSelectElement("dateVenue", "content")}
+                      className={`w-full border-t ${dividerCls} pt-2.5 mt-2 flex flex-col items-center gap-1 cursor-pointer p-1 transition-all ${
+                        selectedElement === "dateVenue"
+                          ? "ring-2 ring-brand ring-offset-2 rounded-lg"
+                          : "hover:ring-1 hover:ring-brand/40 rounded-lg"
+                      }`}
+                      title="Click to customize Date & Venue display"
+                    >
                       {config.showEventDate !== false && eventDate && (
                         <p className={`text-xs font-semibold tracking-wide ${subtextCls} flex items-center gap-1.5`}>
                           <Calendar className="w-3.5 h-3.5 opacity-70 shrink-0" />
@@ -1825,7 +1946,15 @@ export default function TicketStudio({
 
                   {/* 8. CUSTOM MESSAGE */}
                   {config.customMessage && (
-                    <div className="mt-2.5 pt-2 border-t border-dashed border-neutral-200/80 w-full">
+                    <div
+                      onClick={() => handleSelectElement("customMessage", "content")}
+                      className={`mt-2.5 pt-2 border-t border-dashed border-neutral-200/80 w-full cursor-pointer p-1 transition-all ${
+                        selectedElement === "customMessage"
+                          ? "ring-2 ring-brand ring-offset-2 rounded-lg"
+                          : "hover:ring-1 hover:ring-brand/40 rounded-lg"
+                      }`}
+                      title="Click to edit Custom Message"
+                    >
                       <p className="text-xs italic opacity-85 max-w-xs mx-auto">
                         &ldquo;{config.customMessage}&rdquo;
                       </p>
@@ -1834,7 +1963,15 @@ export default function TicketStudio({
 
                   {/* 9. TICKET RULES STRIP */}
                   {rulesList.length > 0 && (
-                    <div className={`mt-3 pt-2.5 border-t ${dividerCls} w-full text-[10px] ${subtextCls} leading-relaxed`}>
+                    <div
+                      onClick={() => handleSelectElement("rules", "content")}
+                      className={`mt-3 pt-2.5 border-t ${dividerCls} w-full text-[10px] ${subtextCls} leading-relaxed cursor-pointer p-1 transition-all ${
+                        selectedElement === "rules"
+                          ? "ring-2 ring-brand ring-offset-2 rounded-lg"
+                          : "hover:ring-1 hover:ring-brand/40 rounded-lg"
+                      }`}
+                      title="Click to customize Ticket Rules"
+                    >
                       <p className="font-medium">{rulesList.join(" • ")}</p>
                       {config.showTermsLink && (
                         <p className="mt-0.5 underline opacity-70">

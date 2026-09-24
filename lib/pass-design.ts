@@ -71,6 +71,22 @@ export function sanitizeTicketDesign(input: unknown): TicketDesignConfig {
 
   const raw = input as Record<string, unknown>;
 
+  let legacyLogo: string | null = null;
+  let legacyColor: string | null = null;
+  if (raw.version === 2 && Array.isArray(raw.elements)) {
+    for (const el of raw.elements) {
+      if (el && typeof el === "object") {
+        const item = el as Record<string, unknown>;
+        if (!legacyLogo && item.type === "image" && typeof item.src === "string") {
+          legacyLogo = item.src;
+        }
+        if (!legacyColor && item.type === "shape" && typeof item.fillColor === "string" && HEX_REGEX.test(item.fillColor)) {
+          legacyColor = item.fillColor;
+        }
+      }
+    }
+  }
+
   const template: TicketTemplate = ["minimal", "event", "dark", "modern"].includes(String(raw.template))
     ? (raw.template as TicketTemplate)
     : raw.theme === "minimal"
@@ -88,14 +104,14 @@ export function sanitizeTicketDesign(input: unknown): TicketDesignConfig {
       ? raw.primaryColor
       : typeof raw.brand_color === "string" && HEX_REGEX.test(raw.brand_color)
       ? raw.brand_color
-      : DEFAULT_TICKET_DESIGN.primaryColor;
+      : legacyColor || DEFAULT_TICKET_DESIGN.primaryColor;
 
   const logoUrl =
     typeof raw.logoUrl === "string" && (raw.logoUrl.startsWith("https://") || raw.logoUrl.startsWith("data:image/"))
       ? raw.logoUrl.trim()
       : typeof raw.org_logo_url === "string" && raw.org_logo_url.startsWith("https://")
       ? raw.org_logo_url.trim()
-      : null;
+      : legacyLogo || null;
 
   const sponsorLogoUrl =
     typeof raw.sponsorLogoUrl === "string" &&

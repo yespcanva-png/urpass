@@ -212,4 +212,34 @@ describe("URPASS Ticket Studio (4-Section Clean Ticket Editor)", () => {
       expect(saveTicketDesign).toHaveBeenCalledWith("evt-1", expect.any(Object));
     });
   });
+
+  it("switches section and maintains persistent selection when clicking elements on live preview", async () => {
+    render(
+      <TicketStudio
+        isPro={true}
+        eventId="evt-1"
+        eventName="TECHFEST 2026"
+      />
+    );
+
+    // Initial section is Design
+    expect(screen.getByText("3 Design Templates")).toBeInTheDocument();
+
+    // Click on Logo element on preview
+    const logoEl = screen.getByTitle(/click to customize logo & branding/i);
+    await userEvent.click(logoEl);
+
+    // Should switch to Branding section and keep logo selected
+    expect(screen.getByText("Event / Company Logo")).toBeInTheDocument();
+
+    // Click on Attendee name on preview
+    const attendeeEl = screen.getByTitle(/click to customize attendee name & fields/i);
+    await userEvent.click(attendeeEl);
+
+    // Should switch to Content section
+    expect(screen.getByText("Dynamic Ticket Fields")).toBeInTheDocument();
+
+    // Verify printable-ticket-card exists for clean printing
+    expect(document.getElementById("printable-ticket-card")).toBeInTheDocument();
+  });
 });

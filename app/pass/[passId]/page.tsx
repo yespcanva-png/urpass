@@ -316,10 +316,26 @@ export default async function PassPage({
 
           {/* 5. Attendee Name (if toggled) */}
           {design.showAttendeeName && (
-            <div className="mt-3 mb-1">
+            <div className="mt-3 mb-0.5">
               <p className="text-base font-bold tracking-tight">
                 {attendee.name}
               </p>
+            </div>
+          )}
+
+          {/* Dynamic phone number */}
+          {design.showPhone && attendee.phone && (
+            <p className={`text-[11px] font-mono ${isDark ? "text-neutral-400" : "text-neutral-500"} mb-1`}>
+              {attendee.phone}
+            </p>
+          )}
+
+          {/* Dynamic registration number */}
+          {design.showRegistrationNumber && (
+            <div className="my-1">
+              <span className={`text-[10px] font-mono font-semibold px-2 py-0.5 rounded ${isDark ? "bg-neutral-800 text-neutral-300" : "bg-neutral-100 text-neutral-600"}`}>
+                REG-{shortCode.toUpperCase()}
+              </span>
             </div>
           )}
 
@@ -378,7 +394,7 @@ export default async function PassPage({
           )}
 
           {/* Ticket Rules */}
-          {(design.showSingleEntryRule || design.showGateNotice || design.customInstruction) && (
+          {(design.showSingleEntryRule || design.showGateNotice || design.customInstruction || design.showTermsLink || design.showOrganizerContact) && (
             <div
               className={`mt-2.5 pt-2 border-t w-full text-[10px] leading-relaxed ${
                 isDark ? "border-neutral-800 text-neutral-400" : "border-neutral-100 text-neutral-500"
@@ -391,6 +407,16 @@ export default async function PassPage({
               ]
                 .filter(Boolean)
                 .join(" • ")}
+              {design.showTermsLink && (
+                <p className="mt-0.5 underline opacity-70">
+                  Event Terms & Conditions apply
+                </p>
+              )}
+              {design.showOrganizerContact && (
+                <p className="mt-0.5 opacity-70">
+                  Need help? Contact organizer
+                </p>
+              )}
             </div>
           )}
 

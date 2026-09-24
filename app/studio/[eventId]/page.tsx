@@ -28,7 +28,7 @@ export default async function StudioEventPage({
   const [{ data: event }, userPlan] = await Promise.all([
     supabase
       .from("events")
-      .select("id, name, event_date, start_time, end_time, venue, organizer_id, custom_pass_design")
+      .select("id, name, event_date, start_time, end_time, venue, organizer_id, organization_id, custom_pass_design")
       .eq("id", eventId)
       .single(),
     getUserPlan(supabase, user.id),
@@ -38,15 +38,20 @@ export default async function StudioEventPage({
 
   // Verify ownership or org role
   if (event.organizer_id !== user.id) {
-    const { data: orgMember } = await supabase
-      .from("organization_members")
-      .select("role")
-      .eq("user_id", user.id)
-      .eq("status", "active")
-      .in("role", ["owner", "admin"])
-      .maybeSingle();
+    let hasAccess = false;
+    if (event.organization_id) {
+      const { data: orgMember } = await supabase
+        .from("organization_members")
+        .select("role")
+        .eq("organization_id", event.organization_id)
+        .eq("user_id", user.id)
+        .eq("status", "active")
+        .in("role", ["owner", "admin", "event_manager"])
+        .maybeSingle();
+      hasAccess = !!orgMember;
+    }
 
-    if (!orgMember) notFound();
+    if (!hasAccess) notFound();
   }
 
   // If event organizer differs from current user, check organizer's plan too
