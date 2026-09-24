@@ -14,6 +14,25 @@ vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn(),
 }));
 
+vi.mock("@supabase/supabase-js", () => ({
+  createClient: vi.fn(() => ({
+    from: vi.fn().mockReturnValue({
+      update: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            in: vi.fn().mockResolvedValue({ error: null }),
+          }),
+        }),
+      }),
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({ data: null, error: null }),
+        }),
+      }),
+    }),
+  })),
+}));
+
 // ── Mock Supabase for capacity tests ──────────────────────────────────────────
 
 function createMockSupabaseForCapacity({

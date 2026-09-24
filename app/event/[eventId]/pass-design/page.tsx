@@ -2,11 +2,11 @@ import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getUserPlan } from "@/lib/plan";
-import TicketDesigner from "@/components/pass/TicketDesigner";
+import TicketStudio from "@/components/studio/TicketStudio";
 
 export const metadata: Metadata = {
-  title: "Design your ticket",
-  description: "Create the pass your attendees will receive. Keep it simple and on brand.",
+  title: "Ticket Studio — Urpass",
+  description: "Visual drag-and-drop ticket and pass builder for your event.",
   robots: { index: false, follow: false },
 };
 
@@ -55,12 +55,19 @@ export default async function EventPassDesignPage({
     organizerPlan = await getUserPlan(supabase, event.organizer_id);
   }
 
-  // Fetch organizer profile defaults if any
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("org_name, org_logo_url, brand_color, custom_pass_design")
-    .eq("user_id", event.organizer_id)
-    .single();
+  // Fetch organizer profile defaults and event ticket types
+  const [{ data: profile }, { data: ticketTypes }] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("org_name, org_logo_url, brand_color, custom_pass_design")
+      .eq("user_id", event.organizer_id)
+      .single(),
+    supabase
+      .from("ticket_types")
+      .select("id, name")
+      .eq("event_id", event.id)
+      .order("created_at", { ascending: true }),
+  ]);
 
   const formattedDate = new Date(event.event_date).toLocaleDateString("en-IN", {
     day: "numeric",
@@ -73,7 +80,7 @@ export default async function EventPassDesignPage({
     (organizerPlan?.canUse("custom_pass_design") ?? false);
 
   return (
-    <TicketDesigner
+    <TicketStudio
       initialConfig={event.custom_pass_design || profile?.custom_pass_design}
       isPro={isPro}
       eventId={event.id}
@@ -81,6 +88,7 @@ export default async function EventPassDesignPage({
       eventDate={`${formattedDate} | ${event.start_time || "10:00 AM"}`}
       venue={event.venue || "Venue TBD"}
       backHref={`/event/${event.id}`}
+      ticketCategories={ticketTypes || []}
     />
   );
 }

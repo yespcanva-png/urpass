@@ -2,11 +2,11 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getUserPlan } from "@/lib/plan";
-import TicketDesigner from "@/components/pass/TicketDesigner";
+import TicketStudio from "@/components/studio/TicketStudio";
 
 export const metadata: Metadata = {
-  title: "Design your ticket",
-  description: "Create the pass your attendees will receive. Keep it simple and on brand.",
+  title: "Ticket Studio — Urpass",
+  description: "Visual drag-and-drop ticket and pass builder for your default brand passes.",
   robots: { index: false, follow: false },
 };
 
@@ -30,7 +30,7 @@ export default async function TicketDesignPage() {
   const isPro = plan.canUse("custom_pass_design");
 
   return (
-    <TicketDesigner
+    <TicketStudio
       initialConfig={profile?.custom_pass_design}
       isPro={isPro}
       eventName={profile?.org_name ? `${profile.org_name} SUMMIT` : "URPASS SUMMIT"}

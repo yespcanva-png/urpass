@@ -13,6 +13,8 @@ import { getSupabaseUrl } from "@/lib/supabase/config";
 import {
   resolveTicketDesign,
 } from "@/lib/pass-design";
+import StudioPassRenderer from "@/components/studio/StudioPassRenderer";
+import { isStudioDesign } from "@/lib/studio/resolver";
 
 function adminClient() {
   return createAdminClient(
@@ -105,6 +107,8 @@ export default async function PassPage({
 
   const showBranding = !(plan?.canRemoveBranding && orgProfile?.hide_urpass_branding);
   const isPro = plan ? plan.canUse("custom_pass_design") : false;
+  const rawCustomDesign = event.custom_pass_design || orgProfile?.custom_pass_design;
+  const isStudio = isPro && isStudioDesign(rawCustomDesign) && rawCustomDesign.isPublished !== false;
 
   const design = isPro
     ? resolveTicketDesign(event.custom_pass_design, orgProfile?.custom_pass_design, orgProfile?.brand_color)
@@ -164,13 +168,24 @@ export default async function PassPage({
         </div>
       )}
 
-      {/* Clean Premium Ticket Pass Card */}
-      <div
-        className={`relative w-full max-w-sm rounded-2xl border shadow-sm select-none overflow-hidden transition-all ${
-          isDark
-            ? "bg-[#121216] border-neutral-800 text-white"
-            : isMinimal
-            ? "bg-white border-neutral-200 text-neutral-900"
+      {/* Visual Ticket Pass Card: Studio Design or Standard Template */}
+      {isStudio ? (
+        <div className="w-full max-w-sm flex justify-center mb-6">
+          <StudioPassRenderer
+            design={rawCustomDesign}
+            attendee={attendee}
+            event={event}
+            passToken={pass.pass_token}
+            ticketId={`#${shortCode.toUpperCase()}`}
+          />
+        </div>
+      ) : (
+        <div
+          className={`relative w-full max-w-sm rounded-2xl border shadow-sm select-none overflow-hidden transition-all ${
+            isDark
+              ? "bg-[#121216] border-neutral-800 text-white"
+              : isMinimal
+              ? "bg-white border-neutral-200 text-neutral-900"
             : "bg-white border-neutral-200/90 text-neutral-900"
         }`}
         style={{
@@ -359,6 +374,7 @@ export default async function PassPage({
           </div>
         </div>
       </div>
+      )}
 
       {showBranding && (
         <p className="text-xs text-neutral-300 mt-12 pass-in-2">Powered by URPASS</p>
