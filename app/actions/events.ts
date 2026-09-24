@@ -120,11 +120,36 @@ export async function updateEvent(
     return { error: parsed.error.issues[0].message };
   }
 
+  // Verify access: user is creator or an owner/admin/event_manager in the org
+  const { data: event } = await supabase
+    .from("events")
+    .select("id, organizer_id, organization_id")
+    .eq("id", eventId)
+    .single();
+
+  if (!event) return { error: "Event not found." };
+
+  let isAuthorized = event.organizer_id === user.id;
+  if (!isAuthorized && event.organization_id) {
+    const { data: member } = await supabase
+      .from("organization_members")
+      .select("role")
+      .eq("organization_id", event.organization_id)
+      .eq("user_id", user.id)
+      .eq("status", "active")
+      .in("role", ["owner", "admin", "event_manager"])
+      .single();
+    isAuthorized = !!member;
+  }
+
+  if (!isAuthorized) {
+    return { error: "You are not authorized to update this event." };
+  }
+
   const { error } = await supabase
     .from("events")
     .update(parsed.data)
-    .eq("id", eventId)
-    .eq("organizer_id", user.id);
+    .eq("id", eventId);
 
   if (error) return { error: error.message };
 
@@ -143,14 +168,40 @@ export async function updateEventStatus(
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
+  const { data: event } = await supabase
+    .from("events")
+    .select("id, organizer_id, organization_id")
+    .eq("id", eventId)
+    .single();
+
+  if (!event) return { error: "Event not found." };
+
+  let isAuthorized = event.organizer_id === user.id;
+  if (!isAuthorized && event.organization_id) {
+    const { data: member } = await supabase
+      .from("organization_members")
+      .select("role")
+      .eq("organization_id", event.organization_id)
+      .eq("user_id", user.id)
+      .eq("status", "active")
+      .in("role", ["owner", "admin", "event_manager"])
+      .single();
+    isAuthorized = !!member;
+  }
+
+  if (!isAuthorized) {
+    return { error: "You are not authorized to update this event." };
+  }
+
   // Enforce events-per-month limit at publish time, not at draft creation.
   if (status === "active") {
+    const ownerId = event.organizer_id || user.id;
     const [plan, { data: sub }] = await Promise.all([
-      getUserPlan(supabase, user.id),
+      getUserPlan(supabase, ownerId),
       supabase
         .from("subscriptions")
         .select("current_period_start")
-        .eq("user_id", user.id)
+        .eq("user_id", ownerId)
         .single(),
     ]);
 
@@ -164,7 +215,7 @@ export async function updateEventStatus(
       const { count: publishedThisPeriod } = await supabase
         .from("events")
         .select("*", { count: "exact", head: true })
-        .eq("organizer_id", user.id)
+        .eq("organizer_id", ownerId)
         .eq("status", "active")
         .neq("id", eventId)
         .gte("created_at", periodStart.toISOString());
@@ -174,7 +225,7 @@ export async function updateEventStatus(
         const { data: availablePass } = await supabase
           .from("event_passes")
           .select("id, pass_type, registration_limit")
-          .eq("user_id", user.id)
+          .eq("user_id", ownerId)
           .eq("status", "available")
           .order("purchased_at", { ascending: true })
           .limit(1)
@@ -206,8 +257,7 @@ export async function updateEventStatus(
   const { error } = await supabase
     .from("events")
     .update({ status })
-    .eq("id", eventId)
-    .eq("organizer_id", user.id);
+    .eq("id", eventId);
 
   if (error) return { error: error.message };
 
@@ -224,11 +274,35 @@ export async function deleteEvent(eventId: string): Promise<ActionResult> {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
+  const { data: event } = await supabase
+    .from("events")
+    .select("id, organizer_id, organization_id")
+    .eq("id", eventId)
+    .single();
+
+  if (!event) return { error: "Event not found." };
+
+  let isAuthorized = event.organizer_id === user.id;
+  if (!isAuthorized && event.organization_id) {
+    const { data: member } = await supabase
+      .from("organization_members")
+      .select("role")
+      .eq("organization_id", event.organization_id)
+      .eq("user_id", user.id)
+      .eq("status", "active")
+      .in("role", ["owner", "admin"])
+      .single();
+    isAuthorized = !!member;
+  }
+
+  if (!isAuthorized) {
+    return { error: "You are not authorized to delete this event." };
+  }
+
   const { error } = await supabase
     .from("events")
     .delete()
-    .eq("id", eventId)
-    .eq("organizer_id", user.id);
+    .eq("id", eventId);
 
   if (error) return { error: error.message };
 
