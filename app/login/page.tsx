@@ -185,7 +185,7 @@ function LoginContent() {
         className="w-full max-w-md bg-white rounded-3xl border border-neutral-100 p-8 apply-in-2"
         style={{ boxShadow: "0 4px 32px 0 rgba(109,40,217,0.08)" }}
       >
-        <div className="mb-6">
+        <div className="mb-7">
           <h1 className="text-2xl font-semibold tracking-tight">
             {authMode === "sso" ? "Enterprise SSO" : "Welcome back"}
           </h1>
@@ -196,39 +196,6 @@ function LoginContent() {
           </p>
         </div>
 
-        {/* Segmented Auth Mode Switcher */}
-        <div className="flex bg-neutral-100 p-1 rounded-2xl mb-6">
-          <button
-            type="button"
-            onClick={() => {
-              setServerError("");
-              setAuthMode("standard");
-            }}
-            className={`flex-1 py-2 text-xs font-semibold rounded-xl transition-all ${
-              authMode === "standard"
-                ? "bg-white text-neutral-900 shadow-sm"
-                : "text-neutral-500 hover:text-neutral-900"
-            }`}
-          >
-            Standard Login
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setServerError("");
-              setAuthMode("sso");
-            }}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-semibold rounded-xl transition-all ${
-              authMode === "sso"
-                ? "bg-white text-brand shadow-sm"
-                : "text-neutral-500 hover:text-neutral-900"
-            }`}
-          >
-            <Building2 className="w-3.5 h-3.5" />
-            Enterprise SSO
-          </button>
-        </div>
-
         {authMode === "standard" ? (
           <>
             {/* Google OAuth */}
@@ -236,7 +203,7 @@ function LoginContent() {
               type="button"
               onClick={handleGoogleLogin}
               disabled={googleLoading || isPasswordSubmitting}
-              className="flex items-center justify-center gap-2.5 w-full py-3 rounded-xl text-sm font-medium text-neutral-700 border border-neutral-200 bg-white hover:bg-neutral-50 transition-colors disabled:opacity-60 mb-3"
+              className="flex items-center justify-center gap-2.5 w-full py-3 rounded-xl text-sm font-medium text-neutral-700 border border-neutral-200 bg-white hover:bg-neutral-50 transition-colors disabled:opacity-60 mb-2.5"
             >
               {googleLoading ? (
                 <Loader2 className="w-4 h-4 animate-spin text-neutral-400" />
@@ -246,16 +213,16 @@ function LoginContent() {
               {googleLoading ? "Signing in…" : "Continue with Google"}
             </button>
 
-            {/* Enterprise SSO Switch Button */}
+            {/* Enterprise SSO Switch Button (Compact) */}
             <button
               type="button"
               onClick={() => {
                 setServerError("");
                 setAuthMode("sso");
               }}
-              className="flex items-center justify-center gap-2.5 w-full py-3 rounded-xl text-sm font-semibold text-brand border border-brand/20 bg-brand-50/50 hover:bg-brand-50 transition-colors mb-5"
+              className="flex items-center justify-center gap-2 w-full py-2 px-3 rounded-xl text-xs font-medium text-brand border border-brand/20 bg-brand-50/40 hover:bg-brand-50 transition-colors mb-4"
             >
-              <Building2 className="w-4 h-4 text-brand" />
+              <Building2 className="w-3.5 h-3.5 text-brand" />
               Continue with Enterprise SSO
             </button>
 

@@ -42,19 +42,18 @@ describe("Auth Pages Enterprise SSO Integration", () => {
   });
 
   describe("LoginPage", () => {
-    it("renders both Standard Login and Enterprise SSO tabs", () => {
+    it("renders compact Continue with Enterprise SSO button and no top tab switcher", () => {
       render(<LoginPage />);
 
-      expect(screen.getByRole("button", { name: /^Standard Login$/i })).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: /^Enterprise SSO$/i })).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /^Standard Login$/i })).not.toBeInTheDocument();
       expect(screen.getByRole("button", { name: /Continue with Enterprise SSO/i })).toBeInTheDocument();
     });
 
-    it("switches to Enterprise SSO mode when tab is clicked", async () => {
+    it("switches to Enterprise SSO mode when Continue with Enterprise SSO is clicked", () => {
       render(<LoginPage />);
 
-      const ssoTab = screen.getByRole("button", { name: /^Enterprise SSO$/i });
-      fireEvent.click(ssoTab);
+      const ssoBtn = screen.getByRole("button", { name: /Continue with Enterprise SSO/i });
+      fireEvent.click(ssoBtn);
 
       expect(screen.getByPlaceholderText("name@company.com")).toBeInTheDocument();
       expect(screen.getByRole("button", { name: /Continue with SSO/i })).toBeInTheDocument();
@@ -72,19 +71,18 @@ describe("Auth Pages Enterprise SSO Integration", () => {
   });
 
   describe("SignupPage", () => {
-    it("renders both Standard Signup and Enterprise SSO tabs", () => {
+    it("renders compact Continue with Enterprise SSO button and no top tab switcher", () => {
       render(<SignupPage />);
 
-      expect(screen.getByRole("button", { name: /^Standard Signup$/i })).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: /^Enterprise SSO$/i })).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: /Sign in with Enterprise SSO/i })).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /^Standard Signup$/i })).not.toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /Continue with Enterprise SSO/i })).toBeInTheDocument();
     });
 
-    it("switches to Enterprise SSO mode on signup page", () => {
+    it("switches to Enterprise SSO mode on signup page when Continue with Enterprise SSO is clicked", () => {
       render(<SignupPage />);
 
-      const ssoTab = screen.getByRole("button", { name: /^Enterprise SSO$/i });
-      fireEvent.click(ssoTab);
+      const ssoBtn = screen.getByRole("button", { name: /Continue with Enterprise SSO/i });
+      fireEvent.click(ssoBtn);
 
       expect(screen.getByPlaceholderText("name@company.com")).toBeInTheDocument();
       expect(screen.getByText(/Organizations with Enterprise SSO automatically provision accounts/i)).toBeInTheDocument();
