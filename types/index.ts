@@ -375,5 +375,24 @@ export interface SecurityPolicies {
   session_idle_timeout_minutes: number;
   enforce_2fa: boolean;
   allowed_domains: string[];
+  allowed_cidrs: string[];
+  enforce_ip_allowlist: boolean;
+  anonymize_pii_days?: number | null;
+}
+
+export type CustomDomainStatus = "pending" | "active" | "failed";
+export type SslStatus = "pending" | "issued" | "failed";
+
+export interface CustomDomain {
+  id: string;
+  organization_id: string;
+  domain: string;
+  cname_target: string;
+  status: CustomDomainStatus;
+  ssl_status: SslStatus;
+  verification_token: string;
+  verified_at: string | null;
+  created_at: string;
+  updated_at: string;
 }
 

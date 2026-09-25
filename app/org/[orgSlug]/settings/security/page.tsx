@@ -5,6 +5,8 @@ import { getSSOConnection } from "@/app/actions/sso";
 import { getVerifiedDomains } from "@/app/actions/domains";
 import { getSecurityPolicies, getEnterpriseSessions } from "@/app/actions/security";
 import { getEnterpriseAuditLogs } from "@/app/actions/audit-logs";
+import { getScimTokenInfo } from "@/app/actions/scim";
+import { getCustomDomains } from "@/app/actions/custom-domains";
 import EnterpriseSecurityClient from "./EnterpriseSecurityClient";
 
 export default async function OrgSecurityPage({
@@ -25,13 +27,16 @@ export default async function OrgSecurityPage({
     redirect(`/org/${orgSlug}`);
   }
 
-  const [ssoConnection, domains, policies, sessions, auditLogs] = await Promise.all([
-    getSSOConnection(org.id),
-    getVerifiedDomains(org.id),
-    getSecurityPolicies(org.id),
-    getEnterpriseSessions(org.id),
-    getEnterpriseAuditLogs(org.id, 50),
-  ]);
+  const [ssoConnection, domains, policies, sessions, auditLogs, scimTokenInfo, customDomains] =
+    await Promise.all([
+      getSSOConnection(org.id),
+      getVerifiedDomains(org.id),
+      getSecurityPolicies(org.id),
+      getEnterpriseSessions(org.id),
+      getEnterpriseAuditLogs(org.id, 50),
+      getScimTokenInfo(org.id),
+      getCustomDomains(org.id),
+    ]);
 
   return (
     <EnterpriseSecurityClient
@@ -43,6 +48,8 @@ export default async function OrgSecurityPage({
       initialPolicies={policies}
       initialSessions={sessions}
       initialAuditLogs={auditLogs}
+      initialScimToken={scimTokenInfo}
+      initialCustomDomains={customDomains}
     />
   );
 }

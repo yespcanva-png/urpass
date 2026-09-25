@@ -131,6 +131,9 @@ export async function getSecurityPolicies(orgId: string): Promise<SecurityPolici
     session_idle_timeout_minutes: settings?.session_idle_timeout_minutes ?? 1440,
     enforce_2fa: settings?.enforce_2fa ?? false,
     allowed_domains: settings?.allowed_domains ?? [],
+    allowed_cidrs: settings?.allowed_cidrs ?? [],
+    enforce_ip_allowlist: settings?.enforce_ip_allowlist ?? false,
+    anonymize_pii_days: settings?.anonymize_pii_days ?? null,
   };
 }
 
@@ -187,6 +190,9 @@ export async function updateSecurityPolicies(
         session_idle_timeout_minutes: parsed.data.session_idle_timeout_minutes,
         enforce_2fa: parsed.data.enforce_2fa,
         allowed_domains: parsed.data.allowed_domains,
+        allowed_cidrs: parsed.data.allowed_cidrs,
+        enforce_ip_allowlist: parsed.data.enforce_ip_allowlist,
+        anonymize_pii_days: parsed.data.anonymize_pii_days,
       })
       .eq("organization_id", orgId),
     admin
@@ -208,4 +214,73 @@ export async function updateSecurityPolicies(
 
   revalidatePath("/org/[orgSlug]/settings/security", "page");
   return { success: true };
+}
+
+export async function exportAuditLogs(
+  orgId: string,
+  format: "csv" | "json" = "json"
+): Promise<{ success: boolean; data?: string; filename?: string; error?: string }> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: "Authentication required." };
+
+  const { data: member } = await supabase
+    .from("organization_members")
+    .select("role")
+    .eq("organization_id", orgId)
+    .eq("user_id", user.id)
+    .eq("status", "active")
+    .single();
+
+  if (!member || (member.role !== "owner" && member.role !== "admin")) {
+    return { success: false, error: "Only owners and admins can export audit logs." };
+  }
+
+  const admin = adminClient();
+  const { data: logs, error } = await admin
+    .from("enterprise_audit_logs")
+    .select("*")
+    .eq("organization_id", orgId)
+    .order("created_at", { ascending: false })
+    .limit(5000);
+
+  if (error || !logs) {
+    return { success: false, error: "Failed to query audit logs." };
+  }
+
+  const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+
+  if (format === "json") {
+    // Standard SIEM JSON export (Splunk CIM / Datadog schema compatible)
+    const exportData = JSON.stringify(logs, null, 2);
+    return {
+      success: true,
+      data: exportData,
+      filename: `urpass-audit-logs-${timestamp}.json`,
+    };
+  }
+
+  // CSV export
+  const headers = ["ID", "Timestamp (UTC)", "Actor Email", "Action", "Resource Type", "Resource ID", "IP Address", "Details"];
+  const rows = logs.map((log) => [
+    log.id,
+    log.created_at,
+    log.actor_email || "system",
+    log.action,
+    log.resource_type,
+    log.resource_id || "",
+    log.ip_address || "",
+    JSON.stringify(log.details || {}).replace(/"/g, '""'),
+  ]);
+
+  const csvContent = [
+    headers.join(","),
+    ...rows.map((row) => row.map((val) => `"${val}"`).join(",")),
+  ].join("\n");
+
+  return {
+    success: true,
+    data: csvContent,
+    filename: `urpass-audit-logs-${timestamp}.csv`,
+  };
 }

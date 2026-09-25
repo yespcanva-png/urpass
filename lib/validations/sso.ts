@@ -44,6 +44,9 @@ export const securityPoliciesSchema = z.object({
   session_idle_timeout_minutes: z.number().int().min(15).max(10080).default(1440),
   enforce_2fa: z.boolean().default(false),
   allowed_domains: z.array(z.string().trim().toLowerCase()).default([]),
+  allowed_cidrs: z.array(z.string().trim()).default([]),
+  enforce_ip_allowlist: z.boolean().default(false),
+  anonymize_pii_days: z.number().int().min(7).max(730).nullable().optional(),
 });
 
 export type SecurityPoliciesInput = z.infer<typeof securityPoliciesSchema>;
