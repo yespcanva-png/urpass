@@ -102,6 +102,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/event-registration-software-for-agencies",
     "/event-registration-software-for-universities",
     "/event-registration-software-for-corporates",
+    // Enterprise Security, SSO, SCIM & Branded Portals
+    "/enterprise-sso-event-ticketing",
+    "/scim-event-user-provisioning",
+    "/custom-domain-event-ticketing",
+    "/event-security-compliance",
   ].map((path) => ({ url: `${BASE}${path}`, priority: 0.85, changeFrequency: "weekly" as const }));
 
   const useCasePages = [
@@ -142,6 +147,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/in/pune",
     "/in/mumbai",
     "/in/delhi",
+    "/in/gurgaon",
+    "/in/noida",
+    "/in/chandigarh",
+    "/in/jaipur",
+    "/in/goa",
     "/in/kochi",
     "/in/kolkata",
     "/in/ahmedabad",
@@ -153,6 +163,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/event-registration-software-mumbai",
     "/event-registration-software-pune",
     "/event-registration-software-delhi",
+    "/event-registration-software-gurgaon",
+    "/event-registration-software-noida",
     "/event-registration-software-kochi",
   ].map((path) => ({ url: `${BASE}${path}`, priority: 0.85, changeFrequency: "weekly" as const }));
 

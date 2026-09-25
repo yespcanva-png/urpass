@@ -30,6 +30,11 @@ import {
   Bot,
   Terminal,
   Cpu,
+  ShieldCheck,
+  Network,
+  Globe2,
+  HardDriveDownload,
+  RefreshCw,
 } from "lucide-react";
 import { CodeBlock } from "@/components/docs/CodeBlock";
 
@@ -155,6 +160,7 @@ const SECTIONS = [
   { id: "tickets-passes", label: "Tickets & passes" },
   { id: "gates-checkin", label: "Gates & check-in" },
   { id: "organizations", label: "Organizations & roles" },
+  { id: "enterprise-identity", label: "Enterprise SSO & SCIM" },
   { id: "api", label: "REST API reference" },
   { id: "webhooks", label: "Webhooks integration" },
   { id: "mcp", label: "Model Context Protocol (MCP)" },
@@ -840,6 +846,210 @@ if (result.success) {
                       </tr>
                     </tbody>
                   </table>
+                </div>
+              </div>
+            </section>
+
+            {/* ── Section: Enterprise Identity & Security ─────────── */}
+            <section id="enterprise-identity" className="mb-14 scroll-mt-20">
+              <div className="flex items-center gap-2.5 mb-6">
+                <div className="w-8 h-8 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center shrink-0">
+                  <ShieldCheck className="w-4 h-4 text-purple-600" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-xl font-bold text-neutral-900">Enterprise SSO, SCIM 2.0 &amp; Security Compliance</h2>
+                    <span className="text-[10px] font-bold tracking-widest uppercase px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
+                      Enterprise Tier
+                    </span>
+                  </div>
+                  <p className="text-xs text-neutral-500">Identity Provider federation, automated directory provisioning, IP allowlisting, custom domains, and SIEM auditing</p>
+                </div>
+              </div>
+
+              {/* Sub-section 1: SAML & OIDC SSO */}
+              <div className="mb-8">
+                <h3 className="text-sm font-bold text-neutral-900 mb-2 flex items-center gap-2">
+                  <Lock className="w-4 h-4 text-brand" />
+                  1. SAML 2.0 &amp; OpenID Connect (OIDC) Single Sign-On
+                </h3>
+                <p className="text-xs text-neutral-600 leading-relaxed mb-4">
+                  URPASS supports federated identity with all major enterprise Identity Providers (IdPs) including <strong>Okta, Microsoft Entra ID (Azure AD), Google Workspace, OneLogin, and JumpCloud</strong>.
+                  Both SP-Initiated and IdP-Initiated SSO are supported with X.509 certificate validation and SHA-256 signatures.
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                  <div className="p-3.5 rounded-xl bg-white border border-neutral-200/80">
+                    <span className="text-[10px] uppercase font-bold text-neutral-400 block mb-1">Service Provider Entity ID</span>
+                    <code className="text-xs font-mono text-neutral-800 break-all select-all">https://urpass.space/api/auth/sso/saml/metadata/&#123;orgId&#125;</code>
+                  </div>
+                  <div className="p-3.5 rounded-xl bg-white border border-neutral-200/80">
+                    <span className="text-[10px] uppercase font-bold text-neutral-400 block mb-1">Assertion Consumer Service (ACS) URL</span>
+                    <code className="text-xs font-mono text-neutral-800 break-all select-all">https://urpass.space/api/auth/sso/saml/acs/&#123;orgId&#125;</code>
+                  </div>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-purple-50/50 border border-purple-100 text-xs text-purple-900 leading-relaxed space-y-1">
+                  <p className="font-semibold">Security Provisions:</p>
+                  <ul className="list-disc list-inside space-y-0.5 text-purple-800">
+                    <li><strong>Just-In-Time (JIT) Provisioning</strong>: New employees or students are automatically provisioned with configurable default roles upon first successful login.</li>
+                    <li><strong>Emergency Owner Bypass</strong>: Prevents accidental enterprise lockout if IdP X.509 certificates expire or external identity servers suffer downtime.</li>
+                    <li><strong>Domain Ownership Verification</strong>: DNS TXT record validation ensures only verified corporate domains can be routed to your SSO connection.</li>
+                  </ul>
+                </div>
+              </div>
+
+              {/* Sub-section 2: SCIM 2.0 */}
+              <div className="mb-8">
+                <h3 className="text-sm font-bold text-neutral-900 mb-2 flex items-center gap-2">
+                  <Users className="w-4 h-4 text-brand" />
+                  2. Automated Directory Sync &amp; Deprovisioning (SCIM 2.0)
+                </h3>
+                <p className="text-xs text-neutral-600 leading-relaxed mb-3">
+                  URPASS implements an RFC 7643 and RFC 7644 compliant SCIM 2.0 server. Whenever an employee is onboarded or departs your company, Okta or Entra ID automatically updates URPASS in real time.
+                  Deactivated users immediately have all active browser and scanner check-in sessions revoked.
+                </p>
+
+                <div className="p-4 rounded-xl bg-white border border-neutral-200/80 mb-3 space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-semibold text-neutral-700">SCIM 2.0 Connector Base URL</span>
+                    <span className="text-[10px] font-mono text-neutral-400">Bearer Token Auth</span>
+                  </div>
+                  <code className="block p-2.5 bg-neutral-50 rounded-lg text-xs font-mono text-neutral-800 break-all select-all">
+                    https://urpass.space/api/scim/v2/&#123;orgId&#125;
+                  </code>
+                </div>
+
+                <div className="overflow-x-auto rounded-xl border border-neutral-200 bg-white mb-4">
+                  <table className="w-full text-xs text-left">
+                    <thead className="bg-neutral-50 border-b border-neutral-200 text-neutral-500 font-semibold uppercase text-[10px]">
+                      <tr>
+                        <th className="py-2.5 px-3">Method</th>
+                        <th className="py-2.5 px-3">Endpoint</th>
+                        <th className="py-2.5 px-3">Purpose</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-neutral-100 font-mono text-[11px]">
+                      <tr>
+                        <td className="py-2 px-3 font-bold text-blue-600">GET</td>
+                        <td className="py-2 px-3">/ServiceProviderConfig</td>
+                        <td className="py-2 px-3 font-sans text-neutral-600">SCIM 2.0 capability discovery</td>
+                      </tr>
+                      <tr>
+                        <td className="py-2 px-3 font-bold text-blue-600">GET</td>
+                        <td className="py-2 px-3">/Schemas</td>
+                        <td className="py-2 px-3 font-sans text-neutral-600">Core User resource schema</td>
+                      </tr>
+                      <tr>
+                        <td className="py-2 px-3 font-bold text-blue-600">GET</td>
+                        <td className="py-2 px-3">/Users?filter=userName eq &quot;...&quot;</td>
+                        <td className="py-2 px-3 font-sans text-neutral-600">Search directory members by email</td>
+                      </tr>
+                      <tr>
+                        <td className="py-2 px-3 font-bold text-emerald-600">POST</td>
+                        <td className="py-2 px-3">/Users</td>
+                        <td className="py-2 px-3 font-sans text-neutral-600">Provision new organization member</td>
+                      </tr>
+                      <tr>
+                        <td className="py-2 px-3 font-bold text-amber-600">PATCH</td>
+                        <td className="py-2 px-3">/Users/&#123;userId&#125;</td>
+                        <td className="py-2 px-3 font-sans text-neutral-600">Instant deactivation (active: false) &amp; session purge</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="mb-4">
+                  <p className="text-xs font-semibold text-neutral-700 mb-1.5">Example: Okta Deprovisioning Request (RFC 7644)</p>
+                  <CodeBlock
+                    title="Okta Deprovisioning Request (RFC 7644)"
+                    singleLanguage="http"
+                    singleCode={`PATCH /api/scim/v2/org-12345/Users/mem-98765 HTTP/1.1\nHost: urpass.space\nAuthorization: Bearer scim_live_8f3a9e1b2c4d...\nContent-Type: application/scim+json\n\n{\n  "schemas": ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],\n  "Operations": [\n    {\n      "op": "replace",\n      "path": "active",\n      "value": false\n    }\n  ]\n}`}
+                  />
+                </div>
+              </div>
+
+              {/* Sub-section 3: IP Allowlisting */}
+              <div className="mb-8">
+                <h3 className="text-sm font-bold text-neutral-900 mb-2 flex items-center gap-2">
+                  <Network className="w-4 h-4 text-brand" />
+                  3. IP / CIDR Network Allowlisting
+                </h3>
+                <p className="text-xs text-neutral-600 leading-relaxed mb-3">
+                  Lock down admin panels, event configuration, attendee lists, and check-in scanner gateways strictly to authorized corporate VPN networks or campus subnets.
+                  Supports both IPv4 and IPv6 notation with custom subnet masks.
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+                  <div className="p-3 rounded-xl bg-white border border-neutral-200">
+                    <p className="text-[10px] font-bold text-neutral-400 uppercase">Single Dedicated IP</p>
+                    <code className="text-xs font-mono text-neutral-900 mt-1 block">203.0.113.50/32</code>
+                  </div>
+                  <div className="p-3 rounded-xl bg-white border border-neutral-200">
+                    <p className="text-[10px] font-bold text-neutral-400 uppercase">Corporate Subnet</p>
+                    <code className="text-xs font-mono text-neutral-900 mt-1 block">198.51.100.0/24</code>
+                  </div>
+                  <div className="p-3 rounded-xl bg-white border border-neutral-200">
+                    <p className="text-[10px] font-bold text-neutral-400 uppercase">IPv6 Network Range</p>
+                    <code className="text-xs font-mono text-neutral-900 mt-1 block">2001:db8::/32</code>
+                  </div>
+                </div>
+                <p className="text-xs text-neutral-500">
+                  When IP allowlisting is enforced, non-whitelisted requests receive an immediate HTTP 403 Forbidden with security audit logging.
+                </p>
+              </div>
+
+              {/* Sub-section 4: Custom Domains */}
+              <div className="mb-8">
+                <h3 className="text-sm font-bold text-neutral-900 mb-2 flex items-center gap-2">
+                  <Globe2 className="w-4 h-4 text-brand" />
+                  4. Branded Custom CNAME Domains
+                </h3>
+                <p className="text-xs text-neutral-600 leading-relaxed mb-3">
+                  Deliver a fully white-labeled ticketing and check-in experience under your corporate or university subdomain (e.g., <code className="font-mono text-neutral-800">events.acmecorp.com</code> or <code className="font-mono text-neutral-800">fest.university.edu</code>).
+                </p>
+
+                <div className="p-4 rounded-xl bg-white border border-neutral-200/80 space-y-2 mb-3">
+                  <span className="text-xs font-semibold text-neutral-800">DNS Configuration Setup:</span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 text-xs">
+                    <div>
+                      <span className="text-[10px] font-bold uppercase text-neutral-400 block mb-0.5">DNS Record Type / Host</span>
+                      <code className="p-2 bg-neutral-50 rounded-lg border border-neutral-200 block font-mono text-neutral-800">CNAME / events</code>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold uppercase text-neutral-400 block mb-0.5">Target Value</span>
+                      <code className="p-2 bg-neutral-50 rounded-lg border border-neutral-200 block font-mono text-neutral-800 font-semibold">cname.urpass.in</code>
+                    </div>
+                  </div>
+                </div>
+                <p className="text-xs text-neutral-500">
+                  Edge routing automatically provisions and renews TLS/SSL certificates with zero downtime.
+                </p>
+              </div>
+
+              {/* Sub-section 5: SIEM Audit Logs */}
+              <div>
+                <h3 className="text-sm font-bold text-neutral-900 mb-2 flex items-center gap-2">
+                  <HardDriveDownload className="w-4 h-4 text-brand" />
+                  5. SIEM Audit Streaming &amp; GDPR Retention Schedules
+                </h3>
+                <p className="text-xs text-neutral-600 leading-relaxed mb-3">
+                  All administrative actions, authentication attempts, door scan results, and configuration changes are recorded in an immutable, tamper-evident audit log.
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+                  <div className="p-3.5 rounded-xl bg-white border border-neutral-200/80 space-y-1">
+                    <p className="text-xs font-bold text-neutral-900">Splunk CIM &amp; Datadog JSON</p>
+                    <p className="text-xs text-neutral-500 leading-relaxed">
+                      Exports audit events aligned with the Common Information Model (CIM) with ISO 8601 timestamps, actor metadata, and IP provenance.
+                    </p>
+                  </div>
+                  <div className="p-3.5 rounded-xl bg-white border border-neutral-200/80 space-y-1">
+                    <p className="text-xs font-bold text-neutral-900">GDPR Article 17 Data Retention</p>
+                    <p className="text-xs text-neutral-500 leading-relaxed">
+                      Automate attendee PII anonymization after 30, 90, 180, or 365 days post-event to maintain strict compliance with data minimization mandates.
+                    </p>
+                  </div>
                 </div>
               </div>
             </section>

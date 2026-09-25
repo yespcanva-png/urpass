@@ -295,31 +295,76 @@ export default function IndiaPage() {
 
         // Event-Specific Use Cases
         useCases: [
-          "College Fests & Culturals — Chennai & Coimbatore",
-          "Tech Conferences & Summits — Bengaluru & Hyderabad",
-          "Inter-College Hackathons — Pune & Delhi NCR",
-          "Hands-On Masterclasses & Bootcamps — Mumbai",
-          "Startup Meetups & Demo Days — Kochi & Ahmedabad",
-          "Music Concerts & Cultural Fests — Kolkata",
-          "Corporate Townhalls & Product Summits — Pan-India",
-          "Exhibitions & Industry Trade Expos — All India",
+          "College Fests & Culturals — Chennai, Coimbatore & Chandigarh",
+          "Tech Conferences & Summits — Bengaluru, Hyderabad & Gurgaon",
+          "Inter-College Hackathons — Pune, Delhi NCR & Noida",
+          "Hands-On Masterclasses & Bootcamps — Mumbai & Jaipur",
+          "Startup Meetups & Demo Days — Kochi, Ahmedabad & Goa",
+          "Music Concerts & Cultural Fests — Kolkata & Panaji",
+          "Corporate Townhalls & Product Summits — Cyber City Gurugram",
+          "Exhibitions & Industry Trade Expos — India Expo Centre Noida & JECC Jaipur",
         ],
 
         // Topic Cluster Internal Links
         relatedLinks: [
           {
-            title: "Event Ticketing Software",
-            href: "/event-ticketing-software",
+            title: "Event Registration Bengaluru",
+            href: "/in/bangalore",
+            category: "Location",
+          },
+          {
+            title: "Event Registration Gurugram (Gurgaon)",
+            href: "/in/gurgaon",
+            category: "Location",
+          },
+          {
+            title: "Event Registration Noida & Greater Noida",
+            href: "/in/noida",
+            category: "Location",
+          },
+          {
+            title: "Event Registration Delhi NCR",
+            href: "/in/delhi",
+            category: "Location",
+          },
+          {
+            title: "Event Registration Chandigarh & Mohali",
+            href: "/in/chandigarh",
+            category: "Location",
+          },
+          {
+            title: "Event Registration Jaipur",
+            href: "/in/jaipur",
+            category: "Location",
+          },
+          {
+            title: "Event Registration Goa",
+            href: "/in/goa",
+            category: "Location",
+          },
+          {
+            title: "Event Registration Mumbai",
+            href: "/in/mumbai",
+            category: "Location",
+          },
+          {
+            title: "Enterprise SSO Event Ticketing",
+            href: "/enterprise-sso-event-ticketing",
             category: "Product",
           },
           {
-            title: "QR Ticketing System & Check-In",
-            href: "/qr-ticketing-system",
+            title: "SCIM 2.0 Directory Sync",
+            href: "/scim-event-user-provisioning",
             category: "Product",
           },
           {
-            title: "Event Registration Software",
-            href: "/event-registration-software",
+            title: "Custom CNAME Domains",
+            href: "/custom-domain-event-ticketing",
+            category: "Product",
+          },
+          {
+            title: "Event Security & Compliance",
+            href: "/event-security-compliance",
             category: "Product",
           },
           {
@@ -328,29 +373,9 @@ export default function IndiaPage() {
             category: "Product",
           },
           {
-            title: "Event Ticket Payment Gateway (Razorpay)",
-            href: "/event-ticket-payment-gateway",
-            category: "Guide",
-          },
-          {
             title: "Compare: Eventbrite Alternative India",
             href: "/compare/eventbrite-alternative-india",
             category: "Comparison",
-          },
-          {
-            title: "Compare: Zoho Backstage Alternative India",
-            href: "/compare/zoho-backstage-alternative-india",
-            category: "Comparison",
-          },
-          {
-            title: "Event Registration Bengaluru",
-            href: "/in/bangalore",
-            category: "Location",
-          },
-          {
-            title: "Event Registration Chennai",
-            href: "/in/chennai",
-            category: "Location",
           },
         ],
 
