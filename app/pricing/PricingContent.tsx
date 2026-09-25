@@ -125,6 +125,7 @@ const TABLE: TableRow[] = [
 
   { type: "category", label: "Scale" },
   { type: "row", feature: "Team permissions",            free: false, starter: false, pro: "Basic",  business: "Advanced" },
+  { type: "row", feature: "Enterprise SSO (SAML 2.0 & OIDC)", free: false, starter: false, pro: false, business: true },
   { type: "row", feature: "Custom domain",               free: false, starter: false, pro: false,    business: true },
   { type: "row", feature: "API access",                  free: false, starter: false, pro: false,    business: true },
   { type: "row", feature: "Webhooks",                    free: false, starter: false, pro: false,    business: true },

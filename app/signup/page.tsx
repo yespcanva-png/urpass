@@ -1,14 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Loader2, Mail, Lock, User, Ticket, AlertCircle, CheckCircle, ArrowLeft } from "lucide-react";
+import {
+  Loader2,
+  Mail,
+  Lock,
+  User,
+  Ticket,
+  AlertCircle,
+  CheckCircle,
+  ArrowLeft,
+  Building2,
+  ShieldCheck,
+  CheckCircle2,
+} from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { sendSignupNotifications } from "@/app/actions/notifications";
+import { lookupSSOByEmail } from "@/app/actions/sso";
 
 const schema = z.object({
   full_name: z.string().min(2, "Name must be at least 2 characters"),
@@ -16,7 +29,12 @@ const schema = z.object({
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
+const ssoSchema = z.object({
+  email: z.string().email("Enter your corporate or school email"),
+});
+
 type FormData = z.infer<typeof schema>;
+type SsoFormData = z.infer<typeof ssoSchema>;
 
 const inputCls =
   "bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-brand focus:bg-white transition-all w-full placeholder:text-neutral-400 pl-10";
@@ -32,11 +50,18 @@ function GoogleIcon() {
   );
 }
 
-export default function SignupPage() {
+function SignupContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const [authMode, setAuthMode] = useState<"standard" | "sso">(
+    searchParams.get("mode") === "sso" ? "sso" : "standard"
+  );
   const [serverError, setServerError] = useState("");
+  const [enforcedSSORedirect, setEnforcedSSORedirect] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [ssoLoading, setSsoLoading] = useState(false);
+  const [ssoSuccessMsg, setSsoSuccessMsg] = useState("");
 
   const {
     register,
@@ -44,8 +69,30 @@ export default function SignupPage() {
     formState: { errors, isSubmitting },
   } = useForm<FormData>({ resolver: zodResolver(schema) });
 
+  const {
+    register: registerSso,
+    handleSubmit: handleSsoSubmit,
+    formState: { errors: ssoErrors },
+  } = useForm<SsoFormData>({ resolver: zodResolver(ssoSchema) });
+
   async function onSubmit(data: FormData) {
     setServerError("");
+    setEnforcedSSORedirect(null);
+
+    // Check if domain enforces Enterprise SSO
+    try {
+      const lookup = await lookupSSOByEmail(data.email);
+      if (lookup.ssoAvailable && lookup.enforced && lookup.loginUrl) {
+        setEnforcedSSORedirect(lookup.loginUrl);
+        setServerError(
+          `Your organization (${lookup.orgName || "domain"}) enforces Enterprise SSO. Please sign in via your identity provider.`
+        );
+        return;
+      }
+    } catch {
+      // Continue if lookup fails non-critically
+    }
+
     const supabase = createClient();
     const { data: signUpData, error } = await supabase.auth.signUp({
       email: data.email,
@@ -64,6 +111,33 @@ export default function SignupPage() {
     }).catch((err: unknown) => console.error("[email]", err));
     setSuccess(true);
     setTimeout(() => router.push("/onboarding"), 1500);
+  }
+
+  async function onSsoSubmit(data: SsoFormData) {
+    setServerError("");
+    setSsoSuccessMsg("");
+    setSsoLoading(true);
+
+    try {
+      const lookup = await lookupSSOByEmail(data.email);
+
+      if (!lookup.ssoAvailable || !lookup.loginUrl) {
+        setServerError(
+          `No active Enterprise SSO connection found for "${data.email.split("@")[1]}". Please contact your organization administrator or use standard signup.`
+        );
+        setSsoLoading(false);
+        return;
+      }
+
+      setSsoSuccessMsg(`Found ${lookup.orgName || "Organization"} SSO (${lookup.protocol}). Redirecting to identity provider…`);
+      setTimeout(() => {
+        window.location.href = lookup.loginUrl!;
+      }, 700);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to verify SSO domain";
+      setServerError(msg);
+      setSsoLoading(false);
+    }
   }
 
   function handleGoogleSignup() {
@@ -118,110 +192,268 @@ export default function SignupPage() {
         className="w-full max-w-md bg-white rounded-3xl border border-neutral-100 p-8 apply-in-2"
         style={{ boxShadow: "0 4px 32px 0 rgba(109,40,217,0.08)" }}
       >
-        <div className="mb-7">
-          <h1 className="text-2xl font-semibold tracking-tight">Create your account</h1>
+        <div className="mb-6">
+          <h1 className="text-2xl font-semibold tracking-tight">
+            {authMode === "sso" ? "Enterprise SSO" : "Create your account"}
+          </h1>
           <p className="mt-1 text-sm text-neutral-500">
-            Start on the free plan — no credit card required
+            {authMode === "sso"
+              ? "Join your organization via SAML 2.0 or OIDC Single Sign-On"
+              : "Start on the free plan — no credit card required"}
           </p>
         </div>
 
-        {/* Google OAuth */}
-        <button
-          type="button"
-          onClick={handleGoogleSignup}
-          disabled={googleLoading || isSubmitting}
-          className="flex items-center justify-center gap-2.5 w-full py-3 rounded-xl text-sm font-medium text-neutral-700 border border-neutral-200 bg-white hover:bg-neutral-50 transition-colors disabled:opacity-60 mb-5"
-        >
-          {googleLoading ? (
-            <Loader2 className="w-4 h-4 animate-spin text-neutral-400" />
-          ) : (
-            <GoogleIcon />
-          )}
-          {googleLoading ? "Signing in…" : "Continue with Google"}
-        </button>
-
-        {/* Divider */}
-        <div className="flex items-center gap-3 mb-5">
-          <div className="flex-1 h-px bg-neutral-100" />
-          <span className="text-xs text-neutral-300 font-medium">or</span>
-          <div className="flex-1 h-px bg-neutral-100" />
+        {/* Segmented Auth Mode Switcher */}
+        <div className="flex bg-neutral-100 p-1 rounded-2xl mb-6">
+          <button
+            type="button"
+            onClick={() => {
+              setServerError("");
+              setEnforcedSSORedirect(null);
+              setAuthMode("standard");
+            }}
+            className={`flex-1 py-2 text-xs font-semibold rounded-xl transition-all ${
+              authMode === "standard"
+                ? "bg-white text-neutral-900 shadow-sm"
+                : "text-neutral-500 hover:text-neutral-900"
+            }`}
+          >
+            Standard Signup
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setServerError("");
+              setEnforcedSSORedirect(null);
+              setAuthMode("sso");
+            }}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-semibold rounded-xl transition-all ${
+              authMode === "sso"
+                ? "bg-white text-brand shadow-sm"
+                : "text-neutral-500 hover:text-neutral-900"
+            }`}
+          >
+            <Building2 className="w-3.5 h-3.5" />
+            Enterprise SSO
+          </button>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold text-neutral-500 uppercase tracking-wide">
-              Full name
-            </label>
-            <div className="relative">
-              <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-300 pointer-events-none" />
-              <input
-                type="text"
-                autoComplete="name"
-                placeholder="Srinithin S"
-                className={inputCls}
-                {...register("full_name")}
-              />
+        {authMode === "standard" ? (
+          <>
+            {/* Google OAuth */}
+            <button
+              type="button"
+              onClick={handleGoogleSignup}
+              disabled={googleLoading || isSubmitting}
+              className="flex items-center justify-center gap-2.5 w-full py-3 rounded-xl text-sm font-medium text-neutral-700 border border-neutral-200 bg-white hover:bg-neutral-50 transition-colors disabled:opacity-60 mb-3"
+            >
+              {googleLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin text-neutral-400" />
+              ) : (
+                <GoogleIcon />
+              )}
+              {googleLoading ? "Signing in…" : "Continue with Google"}
+            </button>
+
+            {/* Enterprise SSO Switch Button */}
+            <button
+              type="button"
+              onClick={() => {
+                setServerError("");
+                setEnforcedSSORedirect(null);
+                setAuthMode("sso");
+              }}
+              className="flex items-center justify-center gap-2.5 w-full py-3 rounded-xl text-sm font-semibold text-brand border border-brand/20 bg-brand-50/50 hover:bg-brand-50 transition-colors mb-5"
+            >
+              <Building2 className="w-4 h-4 text-brand" />
+              Sign in with Enterprise SSO
+            </button>
+
+            {/* Divider */}
+            <div className="flex items-center gap-3 mb-5">
+              <div className="flex-1 h-px bg-neutral-100" />
+              <span className="text-xs text-neutral-300 font-medium">or create with email</span>
+              <div className="flex-1 h-px bg-neutral-100" />
             </div>
-            {errors.full_name && (
-              <p className="text-xs text-red-500">{errors.full_name.message}</p>
-            )}
+
+            <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-neutral-500 uppercase tracking-wide">
+                  Full name
+                </label>
+                <div className="relative">
+                  <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-300 pointer-events-none" />
+                  <input
+                    type="text"
+                    autoComplete="name"
+                    placeholder="Srinithin S"
+                    className={inputCls}
+                    {...register("full_name")}
+                  />
+                </div>
+                {errors.full_name && (
+                  <p className="text-xs text-red-500">{errors.full_name.message}</p>
+                )}
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-neutral-500 uppercase tracking-wide">
+                  Email
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-300 pointer-events-none" />
+                  <input
+                    type="email"
+                    autoComplete="email"
+                    placeholder="you@example.com"
+                    className={inputCls}
+                    {...register("email")}
+                  />
+                </div>
+                {errors.email && (
+                  <p className="text-xs text-red-500">{errors.email.message}</p>
+                )}
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-neutral-500 uppercase tracking-wide">
+                  Password
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-300 pointer-events-none" />
+                  <input
+                    type="password"
+                    autoComplete="new-password"
+                    placeholder="••••••••"
+                    className={inputCls}
+                    {...register("password")}
+                  />
+                </div>
+                {errors.password && (
+                  <p className="text-xs text-red-500">{errors.password.message}</p>
+                )}
+              </div>
+
+              {serverError && (
+                <div className="flex items-start gap-2 text-xs text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-3">
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5 text-red-400" />
+                  <div>
+                    {serverError}
+                    {enforcedSSORedirect && (
+                      <a
+                        href={enforcedSSORedirect}
+                        className="block mt-1 font-semibold text-brand underline"
+                      >
+                        Continue to Enterprise SSO →
+                      </a>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={isSubmitting || googleLoading}
+                className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60 mt-1"
+                style={{ background: "#6D28D9" }}
+              >
+                {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                {isSubmitting ? "Creating account…" : "Create account"}
+              </button>
+            </form>
+          </>
+        ) : (
+          /* Enterprise SSO Mode */
+          <div className="space-y-5">
+            <div className="p-3 bg-neutral-50 border border-neutral-200/80 rounded-2xl flex items-center gap-3">
+              <div className="w-8 h-8 rounded-xl bg-brand-50 border border-brand-100 flex items-center justify-center shrink-0">
+                <ShieldCheck className="w-4 h-4 text-brand" />
+              </div>
+              <p className="text-xs text-neutral-600 leading-snug">
+                Organizations with Enterprise SSO automatically provision accounts (JIT). No password required.
+              </p>
+            </div>
+
+            <form onSubmit={handleSsoSubmit(onSsoSubmit)} className="space-y-4">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-neutral-500 uppercase tracking-wide">
+                  Corporate / Student Email
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-300 pointer-events-none" />
+                  <input
+                    type="email"
+                    autoComplete="email"
+                    placeholder="name@company.com"
+                    className={inputCls}
+                    {...registerSso("email")}
+                  />
+                </div>
+                {ssoErrors.email && (
+                  <p className="text-xs text-red-500">{ssoErrors.email.message}</p>
+                )}
+              </div>
+
+              {ssoSuccessMsg && (
+                <div className="flex items-center gap-2 text-xs text-green-700 bg-green-50 border border-green-200 rounded-xl px-4 py-3">
+                  <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
+                  {ssoSuccessMsg}
+                </div>
+              )}
+
+              {serverError && (
+                <div className="flex items-start gap-2 text-xs text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-3">
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5 text-red-400" />
+                  <div>
+                    {serverError}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setServerError("");
+                        setAuthMode("standard");
+                      }}
+                      className="block mt-1 font-semibold text-brand underline text-left"
+                    >
+                      Switch to standard account creation
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={ssoLoading}
+                className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60 shadow-sm"
+                style={{ background: "#6D28D9" }}
+              >
+                {ssoLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+                {ssoLoading ? "Connecting to Identity Provider…" : "Continue with Enterprise SSO"}
+              </button>
+            </form>
+
+            <div className="pt-1 flex items-center justify-center gap-1.5 flex-wrap text-[11px] text-neutral-400">
+              <span>Supports:</span>
+              <span className="px-2 py-0.5 rounded-md bg-neutral-100 font-medium text-neutral-600">Okta</span>
+              <span className="px-2 py-0.5 rounded-md bg-neutral-100 font-medium text-neutral-600">Entra ID</span>
+              <span className="px-2 py-0.5 rounded-md bg-neutral-100 font-medium text-neutral-600">Google Workspace</span>
+              <span className="px-2 py-0.5 rounded-md bg-neutral-100 font-medium text-neutral-600">SAML 2.0</span>
+              <span className="px-2 py-0.5 rounded-md bg-neutral-100 font-medium text-neutral-600">OIDC</span>
+            </div>
+
+            <div className="pt-2 text-center">
+              <button
+                type="button"
+                onClick={() => {
+                  setServerError("");
+                  setAuthMode("standard");
+                }}
+                className="text-xs text-neutral-500 hover:text-neutral-800 transition-colors font-medium"
+              >
+                ← Back to standard signup
+              </button>
+            </div>
           </div>
-
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold text-neutral-500 uppercase tracking-wide">
-              Email
-            </label>
-            <div className="relative">
-              <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-300 pointer-events-none" />
-              <input
-                type="email"
-                autoComplete="email"
-                placeholder="you@example.com"
-                className={inputCls}
-                {...register("email")}
-              />
-            </div>
-            {errors.email && (
-              <p className="text-xs text-red-500">{errors.email.message}</p>
-            )}
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold text-neutral-500 uppercase tracking-wide">
-              Password
-            </label>
-            <div className="relative">
-              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-300 pointer-events-none" />
-              <input
-                type="password"
-                autoComplete="new-password"
-                placeholder="••••••••"
-                className={inputCls}
-                {...register("password")}
-              />
-            </div>
-            {errors.password && (
-              <p className="text-xs text-red-500">{errors.password.message}</p>
-            )}
-          </div>
-
-          {serverError && (
-            <div className="flex items-start gap-2 text-xs text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-3">
-              <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5 text-red-400" />
-              {serverError}
-            </div>
-          )}
-
-          <button
-            type="submit"
-            disabled={isSubmitting || googleLoading}
-            className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60 mt-1"
-            style={{ background: "#6D28D9" }}
-          >
-            {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
-            {isSubmitting ? "Creating account…" : "Create account"}
-          </button>
-        </form>
+        )}
 
         <p className="mt-6 text-sm text-neutral-500 text-center">
           Already have an account?{" "}
@@ -231,9 +463,23 @@ export default function SignupPage() {
         </p>
       </div>
 
-      <p className="text-xs text-neutral-300 mt-6 apply-in-3">
-        Free to start · No credit card required
+      <p className="text-xs text-neutral-400 mt-6 apply-in-3">
+        Enterprise SSO · SAML 2.0 &amp; OpenID Connect compliant
       </p>
     </div>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-neutral-50">
+          <Loader2 className="w-8 h-8 animate-spin text-brand" />
+        </div>
+      }
+    >
+      <SignupContent />
+    </Suspense>
   );
 }

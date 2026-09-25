@@ -123,6 +123,18 @@ export default function ForgotPasswordPage() {
               {loading ? "Sending…" : "Send reset link"}
             </button>
           </form>
+
+          <div className="mt-6 pt-5 border-t border-neutral-100 text-center">
+            <p className="text-xs text-neutral-500">
+              Does your organization use <strong>Enterprise SSO</strong>?
+            </p>
+            <Link
+              href="/login?mode=sso"
+              className="inline-flex items-center gap-1.5 mt-1.5 text-xs font-semibold text-brand hover:underline"
+            >
+              Sign in with Enterprise SSO →
+            </Link>
+          </div>
         </div>
       )}
     </div>

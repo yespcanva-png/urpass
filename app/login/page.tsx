@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -47,20 +47,29 @@ function GoogleIcon() {
   );
 }
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [authMode, setAuthMode] = useState<"standard" | "sso">("standard");
+  const [authMode, setAuthMode] = useState<"standard" | "sso">(
+    searchParams.get("mode") === "sso" ? "sso" : "standard"
+  );
   const [serverError, setServerError] = useState("");
   const [googleLoading, setGoogleLoading] = useState(false);
   const [ssoLoading, setSsoLoading] = useState(false);
-  const [isEmergencyOwnerLogin, setIsEmergencyOwnerLogin] = useState(false);
+  const [isEmergencyOwnerLogin, setIsEmergencyOwnerLogin] = useState(
+    searchParams.get("emergency") === "1"
+  );
   const [ssoSuccessMsg, setSsoSuccessMsg] = useState("");
 
-  // Handle URL errors (e.g. from SSO callback redirects)
   useEffect(() => {
     const errorParam = searchParams.get("error");
     const msgParam = searchParams.get("msg");
+    const modeParam = searchParams.get("mode");
+
+    if (modeParam === "sso") {
+      setAuthMode("sso");
+    }
+
     if (errorParam) {
       if (errorParam === "sso_not_active") {
         setServerError("Enterprise SSO is not yet active for this organization.");
@@ -74,14 +83,12 @@ export default function LoginPage() {
     }
   }, [searchParams]);
 
-  // Form for password login
   const {
     register: registerPassword,
     handleSubmit: handlePasswordSubmit,
     formState: { errors: passwordErrors, isSubmitting: isPasswordSubmitting },
   } = useForm<PasswordFormData>({ resolver: zodResolver(passwordSchema) });
 
-  // Form for Enterprise SSO
   const {
     register: registerSso,
     handleSubmit: handleSsoSubmit,
@@ -91,7 +98,6 @@ export default function LoginPage() {
   async function onPasswordSubmit(data: PasswordFormData) {
     setServerError("");
 
-    // If not in emergency owner bypass mode, check if domain has enforced SSO
     if (!isEmergencyOwnerLogin) {
       try {
         const lookup = await lookupSSOByEmail(data.email);
@@ -179,7 +185,7 @@ export default function LoginPage() {
         className="w-full max-w-md bg-white rounded-3xl border border-neutral-100 p-8 apply-in-2"
         style={{ boxShadow: "0 4px 32px 0 rgba(109,40,217,0.08)" }}
       >
-        <div className="mb-7">
+        <div className="mb-6">
           <h1 className="text-2xl font-semibold tracking-tight">
             {authMode === "sso" ? "Enterprise SSO" : "Welcome back"}
           </h1>
@@ -188,6 +194,39 @@ export default function LoginPage() {
               ? "Sign in using your organization's SAML 2.0 or OIDC Identity Provider"
               : "Sign in to your organizer account"}
           </p>
+        </div>
+
+        {/* Segmented Auth Mode Switcher */}
+        <div className="flex bg-neutral-100 p-1 rounded-2xl mb-6">
+          <button
+            type="button"
+            onClick={() => {
+              setServerError("");
+              setAuthMode("standard");
+            }}
+            className={`flex-1 py-2 text-xs font-semibold rounded-xl transition-all ${
+              authMode === "standard"
+                ? "bg-white text-neutral-900 shadow-sm"
+                : "text-neutral-500 hover:text-neutral-900"
+            }`}
+          >
+            Standard Login
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setServerError("");
+              setAuthMode("sso");
+            }}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-semibold rounded-xl transition-all ${
+              authMode === "sso"
+                ? "bg-white text-brand shadow-sm"
+                : "text-neutral-500 hover:text-neutral-900"
+            }`}
+          >
+            <Building2 className="w-3.5 h-3.5" />
+            Enterprise SSO
+          </button>
         </div>
 
         {authMode === "standard" ? (
@@ -371,6 +410,15 @@ export default function LoginPage() {
               </button>
             </form>
 
+            <div className="pt-1 flex items-center justify-center gap-1.5 flex-wrap text-[11px] text-neutral-400">
+              <span>Supports:</span>
+              <span className="px-2 py-0.5 rounded-md bg-neutral-100 font-medium text-neutral-600">Okta</span>
+              <span className="px-2 py-0.5 rounded-md bg-neutral-100 font-medium text-neutral-600">Entra ID</span>
+              <span className="px-2 py-0.5 rounded-md bg-neutral-100 font-medium text-neutral-600">Google Workspace</span>
+              <span className="px-2 py-0.5 rounded-md bg-neutral-100 font-medium text-neutral-600">SAML 2.0</span>
+              <span className="px-2 py-0.5 rounded-md bg-neutral-100 font-medium text-neutral-600">OIDC</span>
+            </div>
+
             <div className="pt-2 text-center">
               <button
                 type="button"
@@ -398,5 +446,19 @@ export default function LoginPage() {
         Enterprise SSO · SAML 2.0 &amp; OpenID Connect compliant
       </p>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-neutral-50">
+          <Loader2 className="w-8 h-8 animate-spin text-brand" />
+        </div>
+      }
+    >
+      <LoginContent />
+    </Suspense>
   );
 }
