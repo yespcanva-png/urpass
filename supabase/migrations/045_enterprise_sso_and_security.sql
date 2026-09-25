@@ -13,6 +13,54 @@
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- ============================================================
+-- 0. Enterprise Helper Functions (Idempotent)
+-- ============================================================
+
+CREATE OR REPLACE FUNCTION public.handle_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION public.get_user_org_role(p_org_id UUID)
+RETURNS TEXT LANGUAGE sql SECURITY DEFINER STABLE
+SET search_path = public
+AS $$
+  SELECT role FROM public.organization_members
+  WHERE organization_id = p_org_id
+    AND user_id = auth.uid()
+    AND status = 'active'
+  LIMIT 1;
+$$;
+
+CREATE OR REPLACE FUNCTION public.is_org_member(p_org_id UUID)
+RETURNS BOOLEAN LANGUAGE sql SECURITY DEFINER STABLE
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.organization_members
+    WHERE organization_id = p_org_id
+      AND user_id = auth.uid()
+      AND status = 'active'
+  );
+$$;
+
+CREATE OR REPLACE FUNCTION public.is_org_admin(p_org_id UUID)
+RETURNS BOOLEAN LANGUAGE sql SECURITY DEFINER STABLE
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.organization_members
+    WHERE organization_id = p_org_id
+      AND user_id = auth.uid()
+      AND status = 'active'
+      AND role IN ('owner', 'admin')
+  );
+$$;
+
+-- ============================================================
 -- 1. Enterprise SSO Connections
 -- ============================================================
 
@@ -132,6 +180,23 @@ CREATE INDEX IF NOT EXISTS idx_enterprise_sessions_status ON public.enterprise_s
 -- ============================================================
 -- 5. Extend Organization Settings for SSO & Emergency Login
 -- ============================================================
+
+CREATE TABLE IF NOT EXISTS public.organization_settings (
+  id                          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id             UUID NOT NULL UNIQUE REFERENCES public.organizations(id) ON DELETE CASCADE,
+  timezone                    TEXT NOT NULL DEFAULT 'Asia/Kolkata',
+  currency                    TEXT NOT NULL DEFAULT 'INR',
+  date_format                 TEXT NOT NULL DEFAULT 'DD/MM/YYYY',
+  time_format                 TEXT NOT NULL DEFAULT '12h',
+  allowed_domains             TEXT[] NOT NULL DEFAULT '{}',
+  enforce_2fa                 BOOLEAN NOT NULL DEFAULT false,
+  require_approval_for_passes BOOLEAN NOT NULL DEFAULT false,
+  enforce_sso                 BOOLEAN NOT NULL DEFAULT false,
+  allow_emergency_owner_login BOOLEAN NOT NULL DEFAULT true,
+  session_idle_timeout_minutes INTEGER NOT NULL DEFAULT 1440,
+  created_at                  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at                  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 
 ALTER TABLE IF EXISTS public.organization_settings
   ADD COLUMN IF NOT EXISTS enforce_sso BOOLEAN NOT NULL DEFAULT false,
