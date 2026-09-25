@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -12,6 +13,7 @@ import {
   ShieldCheck,
   Building2,
   Check,
+  ArrowRight,
 } from "lucide-react";
 import { orgSchema, type OrgInput } from "@/lib/validations/organization";
 import { updateOrganization, deleteOrganization } from "@/app/actions/organizations";
@@ -235,6 +237,32 @@ export default function OrgSettingsClient({
           Save Profile
         </button>
       </form>
+
+      {/* ── Enterprise Security Center Spotlight ─────────────────────────── */}
+      <div className="bg-gradient-to-br from-brand-900 via-brand-800 to-purple-950 text-white rounded-2xl p-6 sm:p-7 shadow-sm border border-brand-700/50 relative overflow-hidden">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5 relative z-10">
+          <div className="space-y-1.5 max-w-xl">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase bg-white/10 text-brand-100 border border-white/20">
+              <ShieldCheck className="w-3 h-3 text-brand-200" />
+              Enterprise-Grade Access Control
+            </div>
+            <h3 className="text-lg font-bold tracking-tight text-white">
+              Single Sign-On (SAML 2.0 &amp; OIDC) &amp; Security Center
+            </h3>
+            <p className="text-xs text-brand-100/80 leading-relaxed">
+              Connect your organization&apos;s identity provider (Okta, Entra ID, Google Workspace, OneLogin). Automatically provision team members, enforce SSO, verify corporate domains, and monitor security audit logs.
+            </p>
+          </div>
+
+          <Link
+            href={`/org/${orgSlug}/settings/security`}
+            className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-xs sm:text-sm font-bold bg-white text-brand hover:bg-brand-50 transition-colors shadow-sm shrink-0 whitespace-nowrap"
+          >
+            Manage Security &amp; SSO
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+      </div>
 
       {/* ── 2. Enterprise Organization-Level Settings ──────────────────── */}
       <form

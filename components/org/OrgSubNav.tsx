@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Calendar, Users, Settings, Briefcase, MapPin } from "lucide-react";
+import { Calendar, Users, Settings, Briefcase, MapPin, ShieldCheck } from "lucide-react";
 import type { OrgRole } from "@/types";
 
 const TABS = [
@@ -10,6 +10,7 @@ const TABS = [
   { label: "Workspaces", href: "/workspaces", icon: Briefcase, minRole: "viewer" as OrgRole },
   { label: "Locations", href: "/locations", icon: MapPin, minRole: "viewer" as OrgRole },
   { label: "Members", href: "/members", icon: Users, minRole: "viewer" as OrgRole },
+  { label: "Security", href: "/settings/security", icon: ShieldCheck, minRole: "admin" as OrgRole },
   { label: "Settings", href: "/settings", icon: Settings, minRole: "admin" as OrgRole },
 ];
 

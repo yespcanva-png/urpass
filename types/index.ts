@@ -281,3 +281,99 @@ export type EventStats = {
   pending: number;
   rejected: number;
 };
+
+// ── Enterprise SSO & Access Control Types ───────────────────────────────────────
+
+export type SSOProtocol = "SAML" | "OIDC";
+export type SSOConnectionStatus = "draft" | "active" | "inactive" | "testing";
+export type DomainVerificationMethod = "dns_txt" | "meta_tag";
+export type DomainVerificationStatus = "pending" | "verified" | "failed";
+export type EnterpriseSessionStatus = "active" | "revoked" | "expired";
+
+export interface EnterpriseSSOConnection {
+  id: string;
+  organization_id: string;
+  protocol: SSOProtocol;
+  name: string;
+  status: SSOConnectionStatus;
+  domains: string[];
+  enforce_sso: boolean;
+  jit_provisioning: boolean;
+  default_role: OrgRole;
+
+  // SAML Configuration
+  sp_entity_id: string;
+  acs_url: string;
+  idp_entity_id: string | null;
+  idp_sso_url: string | null;
+  idp_certificate: string | null;
+
+  // OIDC Configuration
+  oidc_issuer: string | null;
+  oidc_client_id: string | null;
+  oidc_client_secret: string | null;
+  oidc_authorization_endpoint: string | null;
+  oidc_token_endpoint: string | null;
+  oidc_userinfo_endpoint: string | null;
+
+  // Testing & Metadata
+  last_tested_at: string | null;
+  last_tested_status: "success" | "failure" | null;
+  last_tested_error: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface VerifiedDomain {
+  id: string;
+  organization_id: string;
+  domain: string;
+  verification_method: DomainVerificationMethod;
+  verification_token: string;
+  status: DomainVerificationStatus;
+  verified_at: string | null;
+  last_checked_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EnterpriseAuditLog {
+  id: string;
+  organization_id: string;
+  user_id: string | null;
+  actor_email: string | null;
+  action: string;
+  resource_type: string;
+  resource_id: string | null;
+  details: Record<string, unknown>;
+  ip_address: string | null;
+  user_agent: string | null;
+  created_at: string;
+}
+
+export interface EnterpriseSession {
+  id: string;
+  organization_id: string;
+  user_id: string;
+  sso_connection_id: string | null;
+  session_token_hash: string | null;
+  idp_session_index: string | null;
+  ip_address: string | null;
+  user_agent: string | null;
+  device: string | null;
+  status: EnterpriseSessionStatus;
+  last_active_at: string;
+  expires_at: string | null;
+  created_at: string;
+  user_email?: string;
+  user_name?: string;
+}
+
+export interface SecurityPolicies {
+  enforce_sso: boolean;
+  allow_emergency_owner_login: boolean;
+  session_idle_timeout_minutes: number;
+  enforce_2fa: boolean;
+  allowed_domains: string[];
+}
+
