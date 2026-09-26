@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
     // 1. Trial abuse protection check: one trial per account/workspace permanently
     const { data: existingSub } = await admin
       .from("subscriptions")
-      .select("id, trial_used, status, is_trial")
+      .select("id, trial_used, status, is_trial, provider")
       .eq("user_id", user.id)
       .maybeSingle();
 
@@ -64,9 +64,24 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (existingSub && (existingSub.status === "active" || existingSub.status === "trialing")) {
+    if (existingSub && existingSub.status === "trialing") {
       return NextResponse.json(
-        { error: "You already have an active subscription or trial." },
+        { error: "You already have an active 30-day free trial in progress." },
+        { status: 400 }
+      );
+    }
+
+    if (
+      existingSub &&
+      existingSub.status === "active" &&
+      existingSub.provider === "razorpay" &&
+      !existingSub.is_trial
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "You already have an active paid subscription. Please manage your plan from the billing dashboard.",
+        },
         { status: 400 }
       );
     }
