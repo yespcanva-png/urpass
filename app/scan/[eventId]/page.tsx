@@ -26,6 +26,7 @@ import dynamic from "next/dynamic";
 import { createClient } from "@/lib/supabase/client";
 import { playScannerFeedback, unlockAudioContext } from "@/lib/scanner-feedback";
 import { createWakeLockController, type WakeLockController } from "@/lib/wake-lock";
+import { attachHardwareScannerListener } from "@/lib/hardware-scanner";
 import {
   saveEventManifest,
   getManifestMeta,
@@ -577,6 +578,18 @@ export default function ScanEventPage() {
     },
     [eventId, isOnline, selectedGateId, selectedGate?.name, soundEnabled, handleOfflineResult]
   );
+
+  // Listen for hardware barcode scanners (Zebra, Honeywell, USB/Bluetooth guns)
+  useEffect(() => {
+    const detach = attachHardwareScannerListener({
+      onScan: (token) => {
+        verify(token);
+      },
+    });
+    return () => {
+      detach();
+    };
+  }, [verify]);
 
   // Manual check-in for a specific attendee
   const manualCheckIn = useCallback(
