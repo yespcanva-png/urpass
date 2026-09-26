@@ -20,10 +20,12 @@ import {
   WifiOff,
   CloudUpload,
   RefreshCw,
+  Sun,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { createClient } from "@/lib/supabase/client";
 import { playScannerFeedback, unlockAudioContext } from "@/lib/scanner-feedback";
+import { createWakeLockController, type WakeLockController } from "@/lib/wake-lock";
 import {
   saveEventManifest,
   getManifestMeta,
@@ -126,6 +128,8 @@ export default function ScanEventPage() {
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [isRefreshingCache, setIsRefreshingCache] = useState<boolean>(false);
   const [syncBanner, setSyncBanner] = useState<{ message: string; type: "success" | "warning" } | null>(null);
+  const [wakeLockActive, setWakeLockActive] = useState<boolean>(false);
+  const wakeLockRef = useRef<WakeLockController | null>(null);
 
   const selectedGate = gates.find((g) => g.id === selectedGateId) ?? null;
 
@@ -136,6 +140,30 @@ export default function ScanEventPage() {
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isScannerActive = !manualMode && (scanState === "idle" || scanState === "scanning" || scanState === "success");
+
+  // Keep screen awake during scanning
+  useEffect(() => {
+    const controller = createWakeLockController((active) => {
+      setWakeLockActive(active);
+    });
+    wakeLockRef.current = controller;
+    void controller.request();
+
+    return () => {
+      void controller.release();
+      wakeLockRef.current = null;
+    };
+  }, []);
+
+  const toggleWakeLock = useCallback(() => {
+    const controller = wakeLockRef.current;
+    if (!controller) return;
+    if (controller.isActive()) {
+      void controller.release();
+    } else {
+      void controller.request();
+    }
+  }, []);
 
   // Unlock audio on initial gesture
   useEffect(() => {
@@ -800,6 +828,20 @@ export default function ScanEventPage() {
               )}
             </div>
           )}
+
+          {/* Screen Wake Lock toggle */}
+          <button
+            onClick={toggleWakeLock}
+            className={`flex items-center gap-1.5 border rounded-full px-2.5 py-1.5 text-[11px] font-medium transition-colors ${
+              wakeLockActive
+                ? "bg-amber-500/10 border-amber-500/30 text-amber-300"
+                : "bg-white/[0.06] border-white/[0.08] text-white/30 hover:text-white/60"
+            }`}
+            title={wakeLockActive ? "Screen wake lock active (screen will not sleep)" : "Enable screen stay-awake"}
+            aria-label={wakeLockActive ? "Screen wake lock active" : "Screen wake lock inactive"}
+          >
+            <Sun className={`w-3.5 h-3.5 ${wakeLockActive ? "text-amber-400 animate-pulse" : "text-white/30"}`} />
+          </button>
 
           {/* Audio Chime / Haptic toggle */}
           <button
