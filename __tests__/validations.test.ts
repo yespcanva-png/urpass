@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { eventSchema } from "@/lib/validations/event";
 import { attendeeSchema, PASS_TYPES } from "@/lib/validations/attendee";
+import { ticketTypeSchema } from "@/lib/validations/ticket-type";
 
 // ── eventSchema ──────────────────────────────────────────────────────────────
 
@@ -111,3 +112,51 @@ describe("attendeeSchema", () => {
     expect(attendeeSchema.safeParse({ ...valid, pass_type: pt }).success).toBe(true);
   });
 });
+
+// ── ticketTypeSchema ─────────────────────────────────────────────────────────
+
+describe("ticketTypeSchema", () => {
+  const valid = {
+    name: "Early Bird",
+    category: "early_bird" as const,
+    price: 499,
+    max_per_person: 2,
+    status: "on_sale" as const,
+  };
+
+  it("accepts valid ticket type", () => {
+    const res = ticketTypeSchema.safeParse(valid);
+    expect(res.success).toBe(true);
+    if (res.success) {
+      expect(res.data.sales_start).toBeNull();
+      expect(res.data.sales_end).toBeNull();
+    }
+  });
+
+  it("transforms empty string sales_start and sales_end to null", () => {
+    const res = ticketTypeSchema.safeParse({
+      ...valid,
+      sales_start: "",
+      sales_end: "   ",
+    });
+    expect(res.success).toBe(true);
+    if (res.success) {
+      expect(res.data.sales_start).toBeNull();
+      expect(res.data.sales_end).toBeNull();
+    }
+  });
+
+  it("preserves valid ISO datetime strings", () => {
+    const res = ticketTypeSchema.safeParse({
+      ...valid,
+      sales_start: "2026-10-01T09:00:00.000Z",
+      sales_end: "2026-10-10T23:59:59.000Z",
+    });
+    expect(res.success).toBe(true);
+    if (res.success) {
+      expect(res.data.sales_start).toBe("2026-10-01T09:00:00.000Z");
+      expect(res.data.sales_end).toBe("2026-10-10T23:59:59.000Z");
+    }
+  });
+});
+

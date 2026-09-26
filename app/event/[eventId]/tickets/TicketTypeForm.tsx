@@ -108,7 +108,18 @@ export default function TicketTypeForm({ eventId, initialData, ticketTypeId }: P
 
   async function onSubmit(data: TicketTypeInput) {
     setServerError("");
-    const payload = { ...data, price: isFree ? 0 : data.price };
+    const payload: TicketTypeInput = {
+      ...data,
+      price: isFree ? 0 : data.price,
+      sales_start:
+        data.sales_start && typeof data.sales_start === "string" && data.sales_start.trim() !== ""
+          ? data.sales_start.trim()
+          : null,
+      sales_end:
+        data.sales_end && typeof data.sales_end === "string" && data.sales_end.trim() !== ""
+          ? data.sales_end.trim()
+          : null,
+    };
 
     startTransition(async () => {
       try {

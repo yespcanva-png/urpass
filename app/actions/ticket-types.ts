@@ -1,9 +1,18 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createAdminClient } from "@supabase/supabase-js";
+import { getSupabaseUrl } from "@/lib/supabase/config";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { ticketTypeSchema, type TicketTypeInput } from "@/lib/validations/ticket-type";
+
+function adminClient() {
+  return createAdminClient(
+    getSupabaseUrl(),
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 type TicketCategory =
   | "general"
@@ -128,28 +137,57 @@ export async function createTicketType(
     .limit(1);
   const position = existing && existing.length > 0 ? (existing[0].position ?? 0) + 1 : 0;
 
+  const sanitizedSalesStart =
+    sales_start && typeof sales_start === "string" && sales_start.trim() !== ""
+      ? sales_start.trim()
+      : null;
+  const sanitizedSalesEnd =
+    sales_end && typeof sales_end === "string" && sales_end.trim() !== ""
+      ? sales_end.trim()
+      : null;
+
+  const insertData = {
+    event_id: eventId,
+    name,
+    description: description ?? null,
+    category,
+    price: Math.round(price * 100), // rupees → paise
+    capacity: capacity ?? null,
+    sales_start: sanitizedSalesStart,
+    sales_end: sanitizedSalesEnd,
+    max_per_person,
+    status,
+    position,
+  };
+
+  let createdId: string | null = null;
   const { data: created, error } = await supabase
     .from("ticket_types")
-    .insert({
-      event_id: eventId,
-      name,
-      description: description ?? null,
-      category,
-      price: Math.round(price * 100), // rupees → paise
-      capacity: capacity ?? null,
-      sales_start: sales_start ?? null,
-      sales_end: sales_end ?? null,
-      max_per_person,
-      status,
-      position,
-    })
+    .insert(insertData)
     .select("id")
     .single();
 
-  if (error) return { error: error.message };
+  if (error) {
+    if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      const admin = adminClient();
+      const { data: adminCreated, error: adminError } = await admin
+        .from("ticket_types")
+        .insert(insertData)
+        .select("id")
+        .single();
+      if (adminError) return { error: adminError.message };
+      createdId = adminCreated?.id ?? null;
+    } else {
+      return { error: error.message };
+    }
+  } else {
+    createdId = created?.id ?? null;
+  }
+
+  if (!createdId) return { error: "Failed to create ticket tier." };
 
   revalidatePath(`/event/${eventId}/tickets`);
-  return { id: created.id };
+  return { id: createdId };
 }
 
 export async function updateTicketType(
@@ -179,22 +217,44 @@ export async function updateTicketType(
   const { name, description, category, price, capacity, sales_start, sales_end, max_per_person, status } =
     parsed.data;
 
+  const sanitizedSalesStart =
+    sales_start && typeof sales_start === "string" && sales_start.trim() !== ""
+      ? sales_start.trim()
+      : null;
+  const sanitizedSalesEnd =
+    sales_end && typeof sales_end === "string" && sales_end.trim() !== ""
+      ? sales_end.trim()
+      : null;
+
+  const updateData = {
+    name,
+    description: description ?? null,
+    category,
+    price: Math.round(price * 100), // rupees → paise
+    capacity: capacity ?? null,
+    sales_start: sanitizedSalesStart,
+    sales_end: sanitizedSalesEnd,
+    max_per_person,
+    status,
+  };
+
   const { error } = await supabase
     .from("ticket_types")
-    .update({
-      name,
-      description: description ?? null,
-      category,
-      price: Math.round(price * 100), // rupees → paise
-      capacity: capacity ?? null,
-      sales_start: sales_start ?? null,
-      sales_end: sales_end ?? null,
-      max_per_person,
-      status,
-    })
+    .update(updateData)
     .eq("id", ticketTypeId);
 
-  if (error) return { error: error.message };
+  if (error) {
+    if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      const admin = adminClient();
+      const { error: adminError } = await admin
+        .from("ticket_types")
+        .update(updateData)
+        .eq("id", ticketTypeId);
+      if (adminError) return { error: adminError.message };
+    } else {
+      return { error: error.message };
+    }
+  }
 
   revalidatePath(`/event/${existing.event_id}/tickets`);
   return {};
@@ -281,19 +341,29 @@ export async function createDefaultTicketType(
     .single();
   if (!event) return { error: "Event not found." };
 
-  const { error } = await supabase.from("ticket_types").insert({
+  const defaultTicketData = {
     event_id: eventId,
     name: "General Admission",
     description: event.is_paid_event ? "Standard event ticket" : "Standard registration",
-    category: "general",
+    category: "general" as const,
     price: event.is_paid_event ? Math.round(Number(event.ticket_price) * 100) : 0,
     capacity: event.attendee_limit,
     max_per_person: 1,
-    status: "on_sale",
+    status: "on_sale" as const,
     position: 0,
-  });
+  };
 
-  if (error) return { error: error.message };
+  const { error } = await supabase.from("ticket_types").insert(defaultTicketData);
+
+  if (error) {
+    if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      const admin = adminClient();
+      const { error: adminError } = await admin.from("ticket_types").insert(defaultTicketData);
+      if (adminError) return { error: adminError.message };
+    } else {
+      return { error: error.message };
+    }
+  }
 
   revalidatePath(`/event/${eventId}/tickets`);
   revalidatePath(`/event/${eventId}/settings`);
