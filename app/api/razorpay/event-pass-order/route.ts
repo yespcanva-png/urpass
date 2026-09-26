@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import Razorpay from "razorpay";
+import {
+  getRazorpayClient,
+  getRazorpayCredentials,
+  formatRazorpayErrorMessage,
+} from "@/lib/razorpay";
 import { createClient } from "@/lib/supabase/server";
 import { notifyOwnerPaymentAttempt } from "@/lib/email";
 
@@ -24,13 +28,6 @@ const PASS_REG_LIMITS: Record<string, number> = {
   event_pro:   2500,
 };
 
-function getRazorpay() {
-  return new Razorpay({
-    key_id:    process.env.RAZORPAY_KEY_ID    || "dummy_key_id",
-    key_secret: process.env.RAZORPAY_KEY_SECRET || "dummy_key_secret",
-  });
-}
-
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -47,30 +44,41 @@ export async function POST(req: NextRequest) {
   const gstPaise   = Math.round(basePaise * 0.18);
   const totalPaise = basePaise + gstPaise;
 
-  const keyId = process.env.RAZORPAY_KEY_ID;
-  if (!keyId || keyId === "dummy_key_id") {
-    return NextResponse.json({ error: "Payment gateway is not configured." }, { status: 503 });
+  let keyId: string;
+  try {
+    const creds = getRazorpayCredentials();
+    keyId = creds.keyId;
+  } catch {
+    return NextResponse.json(
+      {
+        error:
+          "Payment gateway credentials are not configured on the server. Please ensure RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET are set in your environment variables (e.g. Vercel Project Settings).",
+      },
+      { status: 503 }
+    );
   }
 
   let order;
   try {
-    const razorpay = getRazorpay();
+    const razorpay = getRazorpayClient();
+    const receipt = `ev_${user.id.slice(0, 8)}_${Date.now()}`.slice(0, 40);
     order = await razorpay.orders.create({
       amount:   totalPaise,
       currency: "INR",
-      receipt:  `evpass_${user.id.slice(0, 8)}_${Date.now()}`,
+      receipt,
       notes: {
-        user_id:            user.id,
-        pass_type:          passType,
-        registration_limit: PASS_REG_LIMITS[passType],
-        base_paise:         basePaise,
-        gst_paise:          gstPaise,
-        customer_name:      user.user_metadata?.full_name ?? "",
-        customer_email:     user.email ?? "",
+        user_id:            String(user.id),
+        pass_type:          String(passType),
+        registration_limit: String(PASS_REG_LIMITS[passType] ?? ""),
+        base_paise:         String(basePaise),
+        gst_paise:          String(gstPaise),
+        customer_name:      String(user.user_metadata?.full_name ?? ""),
+        customer_email:     String(user.email ?? ""),
       },
     });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : "Failed to create order";
+    console.error("[api/razorpay/event-pass-order] Razorpay order error:", err);
+    const msg = formatRazorpayErrorMessage(err, "Failed to create order");
     return NextResponse.json({ error: msg }, { status: 502 });
   }
 

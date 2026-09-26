@@ -1,15 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import Razorpay from "razorpay";
+import {
+  getRazorpayClient,
+  getRazorpayCredentials,
+  formatRazorpayErrorMessage,
+} from "@/lib/razorpay";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
-
-function getRazorpay() {
-  return new Razorpay({
-    key_id: process.env.RAZORPAY_KEY_ID || "dummy_key_id",
-    key_secret: process.env.RAZORPAY_KEY_SECRET || "dummy_key_secret",
-  });
-}
 
 const TRIAL_PLAN_PRICES_PAISE: Record<string, number> = {
   starter: 49900,
@@ -64,16 +61,22 @@ export async function POST(req: NextRequest) {
   }
 
   const pricePaise = TRIAL_PLAN_PRICES_PAISE[planSlug];
-  const keyId = process.env.RAZORPAY_KEY_ID;
 
-  if (!keyId || keyId === "dummy_key_id") {
+  let keyId: string;
+  try {
+    const creds = getRazorpayCredentials();
+    keyId = creds.keyId;
+  } catch {
     return NextResponse.json(
-      { error: "Payment gateway is not configured." },
+      {
+        error:
+          "Payment gateway credentials are not configured on the server. Please ensure RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET are set in your environment variables (e.g. Vercel Project Settings).",
+      },
       { status: 503 }
     );
   }
 
-  const razorpay = getRazorpay();
+  const razorpay = getRazorpayClient();
   const nowSec = Math.floor(Date.now() / 1000);
   const startAtSec = nowSec + 30 * 24 * 60 * 60; // Starts in exactly 30 days
 

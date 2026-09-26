@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
-import { getRazorpayClient } from "@/lib/razorpay";
+import {
+  getRazorpayClient,
+  getRazorpayCredentials,
+  formatRazorpayErrorMessage,
+} from "@/lib/razorpay";
 import { getBillingPlan, resolveBillingPlanKey } from "@/lib/billing-plans";
 import { getSupabaseUrl } from "@/lib/supabase/config";
 
@@ -76,11 +80,17 @@ export async function POST(req: NextRequest) {
       .maybeSingle();
 
     const planId = planRow?.id || null;
-    const keyId = process.env.RAZORPAY_KEY_ID;
 
-    if (!keyId || keyId === "dummy_key_id") {
+    let keyId: string;
+    try {
+      const creds = getRazorpayCredentials();
+      keyId = creds.keyId;
+    } catch {
       return NextResponse.json(
-        { error: "Payment gateway is not configured." },
+        {
+          error:
+            "Payment gateway credentials are not configured on the server. Please ensure RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET are set in your environment variables (e.g. Vercel Project Settings).",
+        },
         { status: 503 }
       );
     }
@@ -110,7 +120,7 @@ export async function POST(req: NextRequest) {
         },
       });
     } catch (rzpErr: unknown) {
-      const msg = rzpErr instanceof Error ? rzpErr.message : "Failed to create Razorpay subscription";
+      const msg = formatRazorpayErrorMessage(rzpErr, "Failed to create Razorpay subscription");
       console.error("[billing-subscriptions] Razorpay subscription create error:", rzpErr);
       return NextResponse.json({ error: msg }, { status: 502 });
     }

@@ -1,18 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import Razorpay from "razorpay";
+import {
+  getRazorpayClient,
+  getRazorpayCredentials,
+  formatRazorpayErrorMessage,
+} from "@/lib/razorpay";
 import { createClient } from "@/lib/supabase/server";
 import { notifyOwnerPaymentAttempt } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
-
-function getRazorpay() {
-  const key_id = (process.env.RAZORPAY_KEY_ID || "").trim();
-  const key_secret = (process.env.RAZORPAY_KEY_SECRET || "").trim();
-  return new Razorpay({
-    key_id: key_id || "dummy_key_id",
-    key_secret: key_secret || "dummy_key_secret",
-  });
-}
 
 // V1 plan prices in paise — source of truth for what Razorpay charges.
 // Must stay in sync with PLANS in app/billing/page.tsx and PLAN_PRICES in CheckoutButton.tsx.
@@ -115,14 +110,23 @@ export async function POST(req: NextRequest) {
   const gstAmount = Math.round(discountedBase * 0.18);
   const totalAmount = Math.round(discountedBase + gstAmount);
 
-  const keyId = (process.env.RAZORPAY_KEY_ID || "").trim();
-  if (!keyId || keyId === "dummy_key_id") {
-    return NextResponse.json({ error: "Payment gateway is not configured." }, { status: 503 });
+  let keyId: string;
+  try {
+    const creds = getRazorpayCredentials();
+    keyId = creds.keyId;
+  } catch {
+    return NextResponse.json(
+      {
+        error:
+          "Payment gateway credentials are not configured on the server. Please ensure RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET are set in your environment variables (e.g. Vercel Project Settings).",
+      },
+      { status: 503 }
+    );
   }
 
   let order;
   try {
-    const razorpay = getRazorpay();
+    const razorpay = getRazorpayClient();
     const receipt = `ur_${user.id.slice(0, 8)}_${Date.now()}`.slice(0, 40);
     order = await razorpay.orders.create({
       amount: totalAmount,
@@ -144,14 +148,7 @@ export async function POST(req: NextRequest) {
     });
   } catch (err: unknown) {
     console.error("[api/razorpay/order] Razorpay error creating order:", err);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const rzpErr = err as any;
-    const msg =
-      rzpErr?.error?.description ||
-      rzpErr?.message ||
-      (typeof err === "string" ? err : null) ||
-      (rzpErr?.error ? JSON.stringify(rzpErr.error) : null) ||
-      "Failed to create payment order";
+    const msg = formatRazorpayErrorMessage(err, "Failed to create payment order");
     return NextResponse.json({ error: msg }, { status: 502 });
   }
 
