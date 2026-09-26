@@ -46,4 +46,9 @@ next-env.d.ts
 # supabase temp
 supabase/.temp/
 
+# test reports & benchmarks
+*-results.json
+stress-test-results.json
+
+
 

@@ -32,6 +32,8 @@ function addBillingPeriod(start: Date, cycle: BillingCycle) {
   return end;
 }
 
+const processedWebhookEvents = new Set<string>();
+
 export async function POST(req: NextRequest) {
   const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
   if (!webhookSecret) {
@@ -61,6 +63,184 @@ export async function POST(req: NextRequest) {
 
   const event = JSON.parse(rawBody);
 
+  // Webhook event deduplication / idempotency
+  const eventId = event.event_id || req.headers.get("x-razorpay-event-id") || "";
+  if (eventId) {
+    if (processedWebhookEvents.has(eventId)) {
+      return NextResponse.json({ received: true, duplicate: true });
+    }
+    processedWebhookEvents.add(eventId);
+    if (processedWebhookEvents.size > 5000) {
+      const first = processedWebhookEvents.values().next().value;
+      if (first) processedWebhookEvents.delete(first);
+    }
+  }
+
+  const eventType = event.event;
+  const supabase = adminClient();
+
+  // 1. Subscription Mandate & Lifecycle Events
+  if (typeof eventType === "string" && eventType.startsWith("subscription.")) {
+    const subscription = event.payload?.subscription?.entity;
+    if (!subscription) return NextResponse.json({ received: true });
+
+    const notes = subscription.notes ?? {};
+    const userId = notes.user_id;
+    const planSlug = (notes.tier || notes.plan_slug || notes.plan_key || "pro").toString().toLowerCase();
+
+    // Look up plan
+    let planId = null;
+    const { data: planRow } = await supabase
+      .from("plans")
+      .select("id")
+      .eq("slug", planSlug)
+      .maybeSingle();
+    if (planRow?.id) planId = planRow.id;
+
+    if (eventType === "subscription.authenticated") {
+      // AutoPay authorization confirmed
+      const now = new Date();
+      const trialEndsAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+
+      if (userId) {
+        await supabase.from("subscriptions").upsert(
+          {
+            user_id: userId,
+            plan_id: planId,
+            status: "trialing",
+            provider: "razorpay",
+            billing_cycle: subscription.period || "monthly",
+            provider_subscription_id: subscription.id,
+            current_period_start: now.toISOString(),
+            current_period_end: trialEndsAt.toISOString(),
+            cancel_at_period_end: false,
+            trial_used: true,
+            trial_used_at: now.toISOString(),
+            is_trial: true,
+            trial_plan: planSlug,
+            trial_starts_at: now.toISOString(),
+            trial_ends_at: trialEndsAt.toISOString(),
+            autopay_mandate_id: subscription.id,
+            autopay_status: "active",
+            updated_at: now.toISOString(),
+          },
+          { onConflict: "user_id" }
+        );
+      }
+      return NextResponse.json({ received: true, event: eventType });
+    }
+
+    if (eventType === "subscription.activated") {
+      if (userId) {
+        await supabase
+          .from("subscriptions")
+          .update({
+            autopay_status: "active",
+            provider_subscription_id: subscription.id,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("user_id", userId);
+      }
+      return NextResponse.json({ received: true, event: eventType });
+    }
+
+    if (eventType === "subscription.charged") {
+      // First charge after trial or renewal charge
+      const payment = event.payload?.payment?.entity;
+      const currentStart = subscription.current_start
+        ? new Date(subscription.current_start * 1000).toISOString()
+        : new Date().toISOString();
+      const currentEnd = subscription.current_end
+        ? new Date(subscription.current_end * 1000).toISOString()
+        : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+
+      if (userId) {
+        await supabase
+          .from("subscriptions")
+          .update({
+            status: "active",
+            is_trial: false,
+            autopay_status: "active",
+            current_period_start: currentStart,
+            current_period_end: currentEnd,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("user_id", userId);
+
+        if (payment) {
+          void notifyOwnerPaymentSuccess({
+            kind: "subscription",
+            buyerName: notes.customer_name || payment.email,
+            buyerEmail: notes.customer_email || payment.email,
+            itemName: `${planSlug.toUpperCase()} Plan Renewal`,
+            amountPaise: payment.amount,
+            paymentId: payment.id,
+          }).catch(() => {});
+        }
+      }
+      return NextResponse.json({ received: true, event: eventType });
+    }
+
+    if (eventType === "subscription.pending") {
+      // Payment failed — enter grace period without deleting customer data
+      if (userId) {
+        await supabase
+          .from("subscriptions")
+          .update({
+            status: "payment_pending",
+            autopay_status: "pending",
+            updated_at: new Date().toISOString(),
+          })
+          .eq("user_id", userId);
+      }
+      return NextResponse.json({ received: true, event: eventType });
+    }
+
+    if (eventType === "subscription.halted") {
+      if (userId) {
+        await supabase
+          .from("subscriptions")
+          .update({
+            status: "halted",
+            autopay_status: "halted",
+            updated_at: new Date().toISOString(),
+          })
+          .eq("user_id", userId);
+      }
+      return NextResponse.json({ received: true, event: eventType });
+    }
+
+    if (eventType === "subscription.cancelled") {
+      if (userId) {
+        const { data: currentSub } = await supabase
+          .from("subscriptions")
+          .select("is_trial, trial_ends_at")
+          .eq("user_id", userId)
+          .maybeSingle();
+
+        const inTrial = Boolean(
+          currentSub?.is_trial &&
+            currentSub.trial_ends_at &&
+            new Date(currentSub.trial_ends_at) > new Date()
+        );
+
+        await supabase
+          .from("subscriptions")
+          .update({
+            cancel_at_period_end: true,
+            status: inTrial ? "trialing" : "cancelled",
+            autopay_status: "cancelled",
+            updated_at: new Date().toISOString(),
+          })
+          .eq("user_id", userId);
+      }
+      return NextResponse.json({ received: true, event: eventType });
+    }
+
+    return NextResponse.json({ received: true, event: eventType });
+  }
+
+  // 2. Existing Payment.captured handling
   if (event.event !== "payment.captured") {
     return NextResponse.json({ received: true });
   }
@@ -69,7 +249,6 @@ export async function POST(req: NextRequest) {
   if (!payment) return NextResponse.json({ received: true });
 
   const notes = payment.notes ?? {};
-  const supabase = adminClient();
 
   // Ticket payment
   if (notes.type === "ticket") {

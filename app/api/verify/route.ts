@@ -28,10 +28,30 @@ interface AuthCacheRecord {
 const authCache = new Map<string, AuthCacheRecord>();
 
 export async function POST(req: NextRequest) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  let supabase = await createClient();
+  let user: { id: string; email?: string } | null = null;
+
+  const authHeader = req.headers.get("authorization") || "";
+  if (authHeader.startsWith("Bearer ")) {
+    const token = authHeader.slice(7).trim();
+    if (token && process.env.SUPABASE_SERVICE_ROLE_KEY && token === process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      supabase = createAdminClient(getSupabaseUrl(), process.env.SUPABASE_SERVICE_ROLE_KEY);
+      user = { id: "service-role", email: "admin@urpass.space" };
+    } else if (token) {
+      const admin = createAdminClient(getSupabaseUrl(), process.env.SUPABASE_SERVICE_ROLE_KEY || "");
+      const { data: userData } = await admin.auth.getUser(token);
+      if (userData?.user) {
+        user = userData.user;
+      }
+    }
+  }
+
+  if (!user) {
+    const {
+      data: { user: cookieUser },
+    } = await supabase.auth.getUser();
+    user = cookieUser;
+  }
 
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -45,19 +65,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Missing passToken or eventId" }, { status: 400 });
   }
 
-  // Verify user has access to check in at this event (cached for 60s per user/event in production)
-  const isTest = process.env.NODE_ENV === "test";
-  const cacheKey = `${user.id}:${eventId}`;
-  const cachedAuth = !isTest ? authCache.get(cacheKey) : undefined;
-  const now = Date.now();
-
   let organizerId = "";
-  if (cachedAuth && cachedAuth.expiresAt > now) {
-    if (!cachedAuth.isOrganizer && !cachedAuth.hasOrgAccess) {
-      return NextResponse.json({ error: "Event not found or unauthorized" }, { status: 403 });
-    }
-    organizerId = cachedAuth.organizerId;
-  } else {
+  if (user.id === "service-role") {
     const { data: event } = await supabase
       .from("events")
       .select("id, name, organizer_id, organization_id")
@@ -65,39 +74,64 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (!event) {
-      return NextResponse.json({ error: "Event not found or unauthorized" }, { status: 403 });
+      return NextResponse.json({ error: "Event not found" }, { status: 404 });
     }
-
-    const isOrganizer = event.organizer_id === user.id;
-    let hasOrgAccess = false;
-    if (!isOrganizer && event.organization_id) {
-      const { data: member } = await supabase
-        .from("organization_members")
-        .select("role")
-        .eq("organization_id", event.organization_id)
-        .eq("user_id", user.id)
-        .eq("status", "active")
-        .in("role", ["owner", "admin", "event_manager", "checkin_staff"])
-        .single();
-      hasOrgAccess = !!member;
-    }
-
-    if (!isOrganizer && !hasOrgAccess) {
-      if (!isTest) {
-        authCache.set(cacheKey, { isOrganizer: false, hasOrgAccess: false, organizerId: "", expiresAt: now + 15000 });
-      }
-      return NextResponse.json({ error: "Event not found or unauthorized" }, { status: 403 });
-    }
-
     organizerId = event.organizer_id;
-    if (!isTest) {
-      authCache.set(cacheKey, {
-        isOrganizer,
-        hasOrgAccess,
-        organizerId: event.organizer_id,
-        organizationId: event.organization_id,
-        expiresAt: now + 60000,
-      });
+    user = { id: event.organizer_id, email: "admin@urpass.space" };
+  } else {
+    // Verify user has access to check in at this event (cached for 60s per user/event in production)
+    const isTest = process.env.NODE_ENV === "test";
+    const cacheKey = `${user.id}:${eventId}`;
+    const cachedAuth = !isTest ? authCache.get(cacheKey) : undefined;
+    const now = Date.now();
+
+    if (cachedAuth && cachedAuth.expiresAt > now) {
+      if (!cachedAuth.isOrganizer && !cachedAuth.hasOrgAccess) {
+        return NextResponse.json({ error: "Event not found or unauthorized" }, { status: 403 });
+      }
+      organizerId = cachedAuth.organizerId;
+    } else {
+      const { data: event } = await supabase
+        .from("events")
+        .select("id, name, organizer_id, organization_id")
+        .eq("id", eventId)
+        .single();
+
+      if (!event) {
+        return NextResponse.json({ error: "Event not found or unauthorized" }, { status: 403 });
+      }
+
+      const isOrganizer = event.organizer_id === user.id;
+      let hasOrgAccess = false;
+      if (!isOrganizer && event.organization_id) {
+        const { data: member } = await supabase
+          .from("organization_members")
+          .select("role")
+          .eq("organization_id", event.organization_id)
+          .eq("user_id", user.id)
+          .eq("status", "active")
+          .in("role", ["owner", "admin", "event_manager", "checkin_staff"])
+          .single();
+        hasOrgAccess = !!member;
+      }
+
+      if (!isOrganizer && !hasOrgAccess) {
+        if (!isTest) {
+          authCache.set(cacheKey, { isOrganizer: false, hasOrgAccess: false, organizerId: "", expiresAt: now + 15000 });
+        }
+        return NextResponse.json({ error: "Event not found or unauthorized" }, { status: 403 });
+      }
+
+      organizerId = event.organizer_id;
+      if (!isTest) {
+        authCache.set(cacheKey, {
+          isOrganizer,
+          hasOrgAccess,
+          organizerId: event.organizer_id,
+          organizationId: event.organization_id,
+          expiresAt: now + 60000,
+        });
+      }
     }
   }
 

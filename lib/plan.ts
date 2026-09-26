@@ -21,6 +21,81 @@ export type EntitlementKey =
   | "cross_event_analytics"
   | "paid_events";
 
+export const ENTITLEMENTS = {
+  FREE: {
+    eventsPerMonth: 2,
+    registrationsPerMonth: 100,
+    organizerSeats: 1,
+    customFields: 3,
+  },
+  STARTER: {
+    eventsPerMonth: 10,
+    registrationsPerMonth: 500,
+    organizerSeats: 2,
+    customFields: 10,
+    csvImport: true,
+    csvExport: true,
+  },
+  PRO: {
+    eventsPerMonth: Infinity,
+    registrationsPerMonth: 2500,
+    organizerSeats: 5,
+    customFields: Infinity,
+    customPassDesign: true,
+    removeBranding: true,
+    advancedAnalytics: true,
+    prioritySupport: true,
+  },
+  BUSINESS: {
+    eventsPerMonth: Infinity,
+    registrationsPerMonth: 10000,
+    organizerSeats: 15,
+    customFields: Infinity,
+    customPassDesign: true,
+    removeBranding: true,
+    advancedAnalytics: true,
+    customDomain: true,
+    apiAccess: true,
+    webhooks: true,
+    advancedPermissions: true,
+    crossEventAnalytics: true,
+  },
+} as const;
+
+export type EntitlementFeature =
+  | "csvImport"
+  | "csvExport"
+  | "customPassDesign"
+  | "removeBranding"
+  | "advancedAnalytics"
+  | "prioritySupport"
+  | "customDomain"
+  | "apiAccess"
+  | "webhooks"
+  | "advancedPermissions"
+  | "crossEventAnalytics";
+
+export function canUseFeature(
+  tierOrPlan: string | PlanLimits | { slug?: string; tier?: string } | null | undefined,
+  feature: EntitlementFeature
+): boolean {
+  if (!tierOrPlan) return false;
+  let tierKey = "FREE";
+
+  if (typeof tierOrPlan === "string") {
+    tierKey = tierOrPlan.toUpperCase();
+  } else if ("slug" in tierOrPlan && tierOrPlan.slug) {
+    tierKey = tierOrPlan.slug.toUpperCase();
+  } else if ("tier" in tierOrPlan && tierOrPlan.tier) {
+    tierKey = String(tierOrPlan.tier).toUpperCase();
+  }
+
+  const tierEntitlements = (ENTITLEMENTS as Record<string, Record<string, unknown>>)[tierKey];
+  if (!tierEntitlements) return false;
+
+  return Boolean(tierEntitlements[feature]);
+}
+
 export type LimitKey =
   | "events_per_month"
   | "registrations_per_month"

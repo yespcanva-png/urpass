@@ -34,6 +34,14 @@ function formatInrFromPaise(amountPaise?: number | null) {
 }
 
 async function sendEmail(payload: Parameters<Resend["emails"]["send"]>[0]) {
+  if (
+    process.env.STRESS_TEST === "true" ||
+    (typeof payload.to === "string" && payload.to.includes("@test.urpass.space")) ||
+    (Array.isArray(payload.to) &&
+      payload.to.some((t) => typeof t === "string" && t.includes("@test.urpass.space")))
+  ) {
+    return;
+  }
   const resend = getResend();
   if (!resend) {
     console.warn(
