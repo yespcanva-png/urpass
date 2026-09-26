@@ -384,7 +384,7 @@ export async function submitApplication(
   let selectedTicketType: SelectedTicketType = null;
   let paymentAmountPaise = event.is_paid_event ? Math.round(event.ticket_price * 100) : 0;
 
-  if (ticketTypeId) {
+  if (ticketTypeId && ticketTypeId !== "default") {
     const { data: ticketType } = await admin
       .from("ticket_types")
       .select("id, name, price, capacity, status, sales_start, sales_end")
@@ -419,14 +419,25 @@ export async function submitApplication(
     selectedTicketType = ticketType;
     paymentAmountPaise = ticketType.price;
   } else {
-    const { count: availableTicketTypes } = await admin
+    // If ticketTypeId is "default" or omitted, try to resolve to the event's default on-sale ticket type
+    const query = admin
       .from("ticket_types")
-      .select("*", { count: "exact", head: true })
+      .select("id, name, price, capacity, status, sales_start, sales_end")
       .eq("event_id", eventId)
       .eq("status", "on_sale");
 
-    if ((availableTicketTypes ?? 0) > 0) {
-      return { error: "Select a ticket type to continue." };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const qAny = query as any;
+    const { data: defaultTT } = typeof qAny.order === "function"
+      ? await qAny.order("position", { ascending: true }).limit(1).maybeSingle()
+      : await query;
+
+    if (defaultTT) {
+      const tt = Array.isArray(defaultTT) ? defaultTT[0] : defaultTT;
+      if (tt && tt.id) {
+        selectedTicketType = tt;
+        paymentAmountPaise = tt.price;
+      }
     }
   }
 

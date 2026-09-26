@@ -20,7 +20,7 @@ function adminClient() {
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
-  const { eventId, ticketTypeId, buyerName, buyerEmail } = body ?? {};
+  let { eventId, ticketTypeId, buyerName, buyerEmail } = body ?? {};
 
   if (!eventId || !buyerName || !buyerEmail) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
   let amountPaise = event.is_paid_event ? Math.round(event.ticket_price * 100) : 0;
   let ticketName = event.name;
 
-  if (ticketTypeId) {
+  if (ticketTypeId && ticketTypeId !== "default") {
     const { data: ticketType } = await admin
       .from("ticket_types")
       .select("id, event_id, name, price, capacity, status, sales_start, sales_end")
@@ -66,6 +66,21 @@ export async function POST(req: NextRequest) {
 
     amountPaise = ticketType.price;
     ticketName = `${event.name} — ${ticketType.name}`;
+  } else if (ticketTypeId === "default") {
+    const { data: defaultTT } = await admin
+      .from("ticket_types")
+      .select("id, event_id, name, price, capacity, status, sales_start, sales_end")
+      .eq("event_id", eventId)
+      .eq("status", "on_sale")
+      .order("position", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+
+    if (defaultTT) {
+      amountPaise = defaultTT.price;
+      ticketName = `${event.name} — ${defaultTT.name}`;
+      ticketTypeId = defaultTT.id;
+    }
   }
 
   if (amountPaise <= 0) {

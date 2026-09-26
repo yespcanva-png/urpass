@@ -104,7 +104,9 @@ export default function ApplyForm({
   const [serverError, setServerError] = useState("");
   const [paymentPending, setPaymentPending] = useState(false);
   // Pre-select: prefer first available free ticket when no payment gateway, otherwise first available
-  const available = ticketTypes.filter((t) => t.remaining == null || t.remaining > 0);
+  const available = ticketTypes.filter(
+    (t) => !t.isUpcoming && !t.isEnded && (t.remaining == null || t.remaining > 0)
+  );
   const defaultTicketTypeId =
     (!hasPaymentGateway && available.some((t) => t.price === 0)
       ? available.find((t) => t.price === 0)
@@ -224,6 +226,14 @@ export default function ApplyForm({
   async function onSubmit(data: AttendeeInput) {
     if (ticketTypes.length > 0 && !selectedTicketTypeId) {
       setServerError("Select a ticket type to continue.");
+      return;
+    }
+    if (selectedTicket?.isUpcoming) {
+      setServerError("Sales for this ticket tier have not started yet.");
+      return;
+    }
+    if (selectedTicket?.isEnded) {
+      setServerError("Sales for this ticket tier have ended.");
       return;
     }
     if (selectedTicket?.remaining !== null && selectedTicket?.remaining !== undefined && selectedTicket.remaining <= 0) {
@@ -365,17 +375,21 @@ export default function ApplyForm({
             <div className="flex flex-col gap-2">
               {ticketTypes.map((tt) => {
                 const isSoldOut = tt.remaining !== null && tt.remaining <= 0;
+                const isUpcoming = !!tt.isUpcoming;
+                const isEnded = !!tt.isEnded;
+                const isAvailable = !isUpcoming && !isEnded && !isSoldOut;
                 const isPaymentUnavailable = tt.price > 0 && !hasPaymentGateway;
                 const isSelected = selectedTicketTypeId === tt.id;
+                const isDisabled = !isAvailable || (isPaymentUnavailable && tt.price > 0);
                 return (
                   <label
                     key={tt.id}
-                    className={`flex items-start gap-3 rounded-2xl border p-4 cursor-pointer transition-all ${
+                    className={`flex items-start gap-3 rounded-2xl border p-4 transition-all ${
                       isSelected
-                        ? "border-brand bg-brand-50"
-                        : isSoldOut
-                        ? "border-neutral-100 bg-neutral-50 opacity-60 cursor-not-allowed"
-                        : "border-neutral-200 hover:border-brand/40 hover:bg-neutral-50"
+                        ? "border-brand bg-brand-50 cursor-pointer"
+                        : isDisabled
+                        ? "border-neutral-100 bg-neutral-50/80 opacity-60 cursor-not-allowed"
+                        : "border-neutral-200 hover:border-brand/40 hover:bg-neutral-50 cursor-pointer"
                     }`}
                   >
                     {/* Native radio — hidden but drives selection */}
@@ -383,7 +397,7 @@ export default function ApplyForm({
                       type="radio"
                       name="ticket_type"
                       value={tt.id}
-                      disabled={isSoldOut}
+                      disabled={isDisabled}
                       checked={isSelected}
                       onChange={() => setSelectedTicketTypeId(tt.id)}
                       className="sr-only"
@@ -394,8 +408,8 @@ export default function ApplyForm({
                       className={`mt-0.5 w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
                         isSelected
                           ? "border-brand bg-brand"
-                          : isSoldOut
-                          ? "border-neutral-200"
+                          : isDisabled
+                          ? "border-neutral-200 bg-neutral-100"
                           : "border-neutral-300"
                       }`}
                     >
@@ -403,16 +417,33 @@ export default function ApplyForm({
                     </span>
 
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-sm font-semibold text-neutral-900 truncate">
                           {tt.name}
                         </span>
-                        {isSoldOut && (
+                        {isUpcoming && (
+                          <span className="text-[11px] font-semibold text-blue-700 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-full shrink-0">
+                            {tt.sales_start
+                              ? `Sales start ${new Date(tt.sales_start).toLocaleDateString("en-IN", {
+                                  month: "short",
+                                  day: "numeric",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}`
+                              : "Coming soon"}
+                          </span>
+                        )}
+                        {isEnded && !isUpcoming && (
+                          <span className="text-[11px] font-semibold text-neutral-600 bg-neutral-100 border border-neutral-200 px-2 py-0.5 rounded-full shrink-0">
+                            Sales ended
+                          </span>
+                        )}
+                        {isSoldOut && !isUpcoming && !isEnded && (
                           <span className="text-[11px] font-semibold text-red-600 bg-red-50 border border-red-100 px-2 py-0.5 rounded-full shrink-0">
                             Sold out
                           </span>
                         )}
-                        {isPaymentUnavailable && !isSoldOut && (
+                        {isPaymentUnavailable && !isSoldOut && !isUpcoming && !isEnded && (
                           <span className="text-[11px] font-semibold text-amber-700 bg-amber-50 border border-amber-100 px-2 py-0.5 rounded-full shrink-0">
                             Payment unavailable
                           </span>
@@ -423,7 +454,7 @@ export default function ApplyForm({
                           {tt.description}
                         </p>
                       )}
-                      {tt.remaining !== null && !isSoldOut && (
+                      {tt.remaining !== null && isAvailable && (
                         <p className="text-[11px] text-neutral-400 mt-1">
                           {tt.remaining} spot{tt.remaining !== 1 ? "s" : ""} left
                         </p>

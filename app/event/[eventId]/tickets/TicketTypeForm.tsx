@@ -58,6 +58,25 @@ const STATUSES: { value: TicketStatus; label: string; desc: string; cls: string 
   { value: "closed",  label: "Closed",  desc: "No longer accepting",       cls: "border-red-200 text-red-600" },
 ];
 
+function toLocalInputString(isoString?: string | null): string {
+  if (!isoString) return "";
+  const d = new Date(isoString);
+  if (isNaN(d.getTime())) return "";
+  const pad = (n: number) => n.toString().padStart(2, "0");
+  const year = d.getFullYear();
+  const month = pad(d.getMonth() + 1);
+  const day = pad(d.getDate());
+  const hours = pad(d.getHours());
+  const minutes = pad(d.getMinutes());
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
+function toISOStringOrNull(val?: string | null): string | null {
+  if (!val || typeof val !== "string" || !val.trim()) return null;
+  const d = new Date(val);
+  return isNaN(d.getTime()) ? null : d.toISOString();
+}
+
 export default function TicketTypeForm({ eventId, initialData, ticketTypeId }: Props) {
   const router = useRouter();
   const [serverError, setServerError] = useState("");
@@ -85,10 +104,10 @@ export default function TicketTypeForm({ eventId, initialData, ticketTypeId }: P
           price: initialData.price / 100, // paise → rupees for display
           capacity: initialData.capacity ?? undefined,
           sales_start: initialData.sales_start
-            ? initialData.sales_start.slice(0, 16)
+            ? toLocalInputString(initialData.sales_start)
             : undefined,
           sales_end: initialData.sales_end
-            ? initialData.sales_end.slice(0, 16)
+            ? toLocalInputString(initialData.sales_end)
             : undefined,
           max_per_person: initialData.max_per_person,
           status: initialData.status as TicketStatus,
@@ -108,17 +127,21 @@ export default function TicketTypeForm({ eventId, initialData, ticketTypeId }: P
 
   async function onSubmit(data: TicketTypeInput) {
     setServerError("");
+    const sanitizedSalesStart = toISOStringOrNull(data.sales_start);
+    const sanitizedSalesEnd = toISOStringOrNull(data.sales_end);
+
+    if (sanitizedSalesStart && sanitizedSalesEnd) {
+      if (new Date(sanitizedSalesEnd).getTime() <= new Date(sanitizedSalesStart).getTime()) {
+        setServerError("Sales end date must be after sales start date.");
+        return;
+      }
+    }
+
     const payload: TicketTypeInput = {
       ...data,
       price: isFree ? 0 : data.price,
-      sales_start:
-        data.sales_start && typeof data.sales_start === "string" && data.sales_start.trim() !== ""
-          ? data.sales_start.trim()
-          : null,
-      sales_end:
-        data.sales_end && typeof data.sales_end === "string" && data.sales_end.trim() !== ""
-          ? data.sales_end.trim()
-          : null,
+      sales_start: sanitizedSalesStart,
+      sales_end: sanitizedSalesEnd,
     };
 
     startTransition(async () => {

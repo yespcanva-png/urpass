@@ -80,6 +80,10 @@ export interface ApplyTicketType {
   capacity: number | null;
   max_per_person: number;
   remaining: number | null;
+  sales_start?: string | null;
+  sales_end?: string | null;
+  isUpcoming?: boolean;
+  isEnded?: boolean;
 }
 
 interface EventInfo {
@@ -92,6 +96,7 @@ interface EventInfo {
   auto_approve: boolean;
   is_paid_event: boolean;
   ticket_price: number;
+  attendee_limit: number;
   event_type: string;
   apply_slug?: string | null;
 }
@@ -124,7 +129,7 @@ export default async function ApplyPage({
 
   const query = supabase
     .from("events")
-    .select("id, name, description, event_date, start_time, venue, auto_approve, is_paid_event, ticket_price, organizer_id, organization_id, event_type, apply_slug")
+    .select("id, name, description, event_date, start_time, venue, auto_approve, is_paid_event, ticket_price, attendee_limit, organizer_id, organization_id, event_type, apply_slug")
     .eq("status", "active")
     .eq("application_enabled", true);
 
@@ -215,17 +220,53 @@ export default async function ApplyPage({
   const isHybrid = event.event_type === "hybrid";
   const admin = adminClient();
 
-  // Use admin client to fetch all non-closed ticket types regardless of status.
-  // This is a server component so the service role key is never exposed.
-  const { data: ticketTypeRows, error: ticketErr } = await admin
+  // Use admin client to fetch all non-closed ticket types.
+  let { data: ticketTypeRows, error: ticketErr } = await admin
     .from("ticket_types")
     .select("id, name, description, category, price, capacity, max_per_person, sales_start, sales_end, position, status")
     .eq("event_id", event.id)
     .neq("status", "closed")
     .order("position", { ascending: true });
-  console.log("[apply] event.id:", event.id, "ticketTypeRows:", ticketTypeRows?.length ?? 0, "err:", ticketErr?.message);
 
-  const ticketTypeIds = (ticketTypeRows ?? []).map((ticketType) => ticketType.id);
+  // If this event has no ticket types in the database, auto-create a default General Admission
+  // tier so visitors can always select a pass.
+  if (!ticketTypeRows || ticketTypeRows.length === 0) {
+    const defaultData = {
+      event_id: event.id,
+      name: "General Admission",
+      description: event.is_paid_event ? "Standard event ticket" : "Standard registration",
+      category: "general",
+      price: event.is_paid_event ? Math.round(Number(event.ticket_price) * 100) : 0,
+      capacity: event.attendee_limit,
+      max_per_person: 1,
+      status: "on_sale",
+      position: 0,
+    };
+
+    const { data: defaultTT } = await admin
+      .from("ticket_types")
+      .insert(defaultData)
+      .select("id, name, description, category, price, capacity, max_per_person, sales_start, sales_end, position, status")
+      .single();
+
+    if (defaultTT) {
+      ticketTypeRows = [defaultTT];
+    } else {
+      ticketTypeRows = [
+        {
+          id: "default",
+          ...defaultData,
+          sales_start: null,
+          sales_end: null,
+        },
+      ];
+    }
+  }
+
+  const ticketTypeIds = (ticketTypeRows ?? [])
+    .map((ticketType) => ticketType.id)
+    .filter((id) => id !== "default");
+
   const { data: ticketTypeAttendees } = ticketTypeIds.length
     ? await admin
         .from("attendees")
@@ -244,26 +285,28 @@ export default async function ApplyPage({
     );
   }
 
-  const nowTimestamp = new Date().getTime();
-  const ticketTypes: ApplyTicketType[] = (ticketTypeRows ?? [])
-    .filter((ticketType) => {
-      const startsAt = ticketType.sales_start ? new Date(ticketType.sales_start).getTime() : null;
-      const endsAt = ticketType.sales_end ? new Date(ticketType.sales_end).getTime() : null;
-      return (startsAt == null || startsAt <= nowTimestamp) && (endsAt == null || endsAt >= nowTimestamp);
-    })
-    .map((ticketType) => {
-      const reserved = reservedByTicketType.get(ticketType.id) ?? 0;
-      return {
-        id: ticketType.id,
-        name: ticketType.name,
-        description: ticketType.description,
-        category: ticketType.category,
-        price: ticketType.price,
-        capacity: ticketType.capacity,
-        max_per_person: ticketType.max_per_person,
-        remaining: ticketType.capacity == null ? null : Math.max(0, ticketType.capacity - reserved),
-      };
-    });
+  const nowTimestamp = Date.now();
+  const ticketTypes: ApplyTicketType[] = (ticketTypeRows ?? []).map((ticketType) => {
+    const startsAt = ticketType.sales_start ? new Date(ticketType.sales_start).getTime() : null;
+    const endsAt = ticketType.sales_end ? new Date(ticketType.sales_end).getTime() : null;
+    const isUpcoming = startsAt != null && startsAt > nowTimestamp;
+    const isEnded = endsAt != null && endsAt < nowTimestamp;
+    const reserved = reservedByTicketType.get(ticketType.id) ?? 0;
+    return {
+      id: ticketType.id,
+      name: ticketType.name,
+      description: ticketType.description,
+      category: ticketType.category,
+      price: ticketType.price,
+      capacity: ticketType.capacity,
+      max_per_person: ticketType.max_per_person,
+      sales_start: ticketType.sales_start,
+      sales_end: ticketType.sales_end,
+      isUpcoming,
+      isEnded,
+      remaining: ticketType.capacity == null ? null : Math.max(0, ticketType.capacity - reserved),
+    };
+  });
 
   // Check payment gateway only when the event has any paid flow
   const hasPaidTicketTypes = ticketTypes.some((t) => t.price > 0);
