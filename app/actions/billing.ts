@@ -14,6 +14,9 @@ import { createInvoiceForPayment } from "@/lib/invoices";
 import { getSupabaseUrl } from "@/lib/supabase/config";
 import {
   notifyOwnerPaymentSuccess,
+  notifyOwnerTrialActivated,
+  notifyOwnerPaidSubscription,
+  notifyOwnerOneTimePayment,
   sendUserPaymentSuccessEmail,
   sendTrialStartedEmail,
 } from "@/lib/email";
@@ -148,12 +151,13 @@ export async function activateFreeTrial(planSlug: string): Promise<ActionResult>
     }).catch((err) => console.error("[email] Trial started email error:", err));
   }
 
-  void notifyOwnerPaymentSuccess({
-    kind: "subscription",
+  void notifyOwnerTrialActivated({
     buyerName: user.user_metadata?.full_name,
     buyerEmail: user.email,
-    itemName: `30-Day Free Trial: ${targetPlan.name} (No AutoPay)`,
-    amountPaise: 0,
+    planName: targetPlan.name,
+    billingInterval: "monthly",
+    futurePricePaise: pricePaiseMap[planSlug] ?? 49900,
+    trialEndsAt: formattedEndDate,
   }).catch((err) => console.error("[email] Trial started owner notification error:", err));
 
   revalidateBillingPaths();
@@ -281,14 +285,15 @@ export async function activateTrialSubscription(
     }).catch((err) => console.error("[email] Trial started email error:", err));
   }
 
-  void notifyOwnerPaymentSuccess({
-    kind: "subscription",
+  void notifyOwnerTrialActivated({
     buyerName: user.user_metadata?.full_name,
     buyerEmail: user.email,
-    itemName: `30-Day Free Trial: ${targetPlan.name}`,
-    amountPaise: 0,
+    planName: targetPlan.name,
+    billingInterval: "monthly",
+    futurePricePaise: pricePaiseMap[planSlug] ?? 49900,
+    subscriptionId: verification.subscriptionId,
     paymentId: verification.paymentId,
-    orderId: verification.orderId,
+    trialEndsAt: formattedEndDate,
   }).catch((err) => console.error("[email] Trial notify error:", err));
 
   revalidateBillingPaths();
@@ -475,14 +480,15 @@ export async function activatePaidSubscription(
 
     const itemName = `${planSlug.toUpperCase()} Plan (${cycle})`;
     void Promise.allSettled([
-      notifyOwnerPaymentSuccess({
-        kind: "subscription",
+      notifyOwnerPaidSubscription({
         buyerName: user.user_metadata?.full_name,
         buyerEmail: user.email,
-        itemName,
+        planName: `${planSlug.toUpperCase()} Plan`,
+        billingCycle: cycle,
         amountPaise: orderAmountPaise,
         paymentId: verifiedPaymentId,
         orderId: typeof payment === "object" ? payment.orderId : undefined,
+        subscriptionId: verifiedPaymentId,
       }),
       user.email
         ? sendUserPaymentSuccessEmail({

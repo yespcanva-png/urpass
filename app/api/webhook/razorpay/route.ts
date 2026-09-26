@@ -3,7 +3,13 @@ import crypto from "crypto";
 import { createClient } from "@supabase/supabase-js";
 import { createInvoiceForPayment } from "@/lib/invoices";
 import { getSupabaseUrl } from "@/lib/supabase/config";
-import { notifyOwnerPaymentSuccess, sendUserPaymentSuccessEmail } from "@/lib/email";
+import {
+  notifyOwnerPaymentSuccess,
+  notifyOwnerTrialActivated,
+  notifyOwnerPaidSubscription,
+  notifyOwnerOneTimePayment,
+  sendUserPaymentSuccessEmail,
+} from "@/lib/email";
 import { communicationService, formatTicketId, buildTicketUrl } from "@/lib/communications";
 
 export const dynamic = "force-dynamic";
@@ -125,6 +131,20 @@ export async function POST(req: NextRequest) {
           },
           { onConflict: "user_id" }
         );
+
+        void notifyOwnerTrialActivated({
+          buyerName: notes.customer_name || null,
+          buyerEmail: notes.customer_email || null,
+          planName: planSlug.toUpperCase(),
+          billingInterval: subscription.period || "monthly",
+          subscriptionId: subscription.id,
+          paymentId: event.payload?.payment?.entity?.id || null,
+          trialEndsAt: trialEndsAt.toLocaleDateString("en-IN", {
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+          }),
+        }).catch((err) => console.error("[email] Error notifying owner of trial activation:", err));
       }
       return NextResponse.json({ received: true, event: eventType });
     }
@@ -167,14 +187,16 @@ export async function POST(req: NextRequest) {
           .eq("user_id", userId);
 
         if (payment) {
-          void notifyOwnerPaymentSuccess({
-            kind: "subscription",
+          void notifyOwnerPaidSubscription({
             buyerName: notes.customer_name || payment.email,
             buyerEmail: notes.customer_email || payment.email,
-            itemName: `${planSlug.toUpperCase()} Plan Renewal`,
+            planName: `${planSlug.toUpperCase()} Plan (Renewal/Charge)`,
+            billingCycle: subscription.period || "monthly",
             amountPaise: payment.amount,
             paymentId: payment.id,
-          }).catch(() => {});
+            orderId: payment.order_id,
+            subscriptionId: subscription.id,
+          }).catch((err) => console.error("[email] Error notifying owner of subscription charge:", err));
         }
       }
       return NextResponse.json({ received: true, event: eventType });
@@ -277,8 +299,7 @@ export async function POST(req: NextRequest) {
 
     const paidOrder = paidOrders?.[0] ?? existingOrder;
     if (paidOrder) {
-      void notifyOwnerPaymentSuccess({
-        kind: "ticket",
+      void notifyOwnerOneTimePayment({
         buyerName: paidOrder.buyer_name,
         buyerEmail: paidOrder.buyer_email,
         itemName: notes.ticket_name || "Paid event ticket",
@@ -417,14 +438,15 @@ export async function POST(req: NextRequest) {
 
       const itemName = `Event Pass (${passType.replace("_", " ").toUpperCase()})`;
       void Promise.allSettled([
-        notifyOwnerPaymentSuccess({
-          kind: "event_pass",
+        notifyOwnerOneTimePayment({
           buyerName: notes.customer_name,
           buyerEmail: notes.customer_email || payment.email,
           itemName,
           amountPaise: payment.amount,
           paymentId: payment.id,
           orderId: payment.order_id,
+          passType,
+          registrationLimit: regLimit,
         }),
         (notes.customer_email || payment.email)
           ? sendUserPaymentSuccessEmail({
@@ -532,14 +554,15 @@ export async function POST(req: NextRequest) {
   if (!isDuplicatePayment) {
     const itemName = `${(notes.plan_slug || "Subscription").toString().toUpperCase()} Plan (${billingCycle})`;
     void Promise.allSettled([
-      notifyOwnerPaymentSuccess({
-        kind: "subscription",
+      notifyOwnerPaidSubscription({
         buyerName: notes.customer_name,
         buyerEmail: notes.customer_email || payment.email,
-        itemName,
+        planName: `${(notes.plan_slug || "Subscription").toString().toUpperCase()} Plan`,
+        billingCycle,
         amountPaise: payment.amount,
         paymentId: payment.id,
         orderId: payment.order_id,
+        subscriptionId: payment.subscription_id,
       }),
       (notes.customer_email || payment.email)
         ? sendUserPaymentSuccessEmail({

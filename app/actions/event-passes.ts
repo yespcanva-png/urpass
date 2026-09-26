@@ -8,7 +8,11 @@ import {
   type PaymentVerificationInput,
 } from "@/lib/razorpay";
 import { createInvoiceForPayment } from "@/lib/invoices";
-import { notifyOwnerPaymentSuccess, sendUserPaymentSuccessEmail } from "@/lib/email";
+import {
+  notifyOwnerPaymentSuccess,
+  notifyOwnerOneTimePayment,
+  sendUserPaymentSuccessEmail,
+} from "@/lib/email";
 
 type ActionResult = { error: string } | undefined;
 
@@ -112,14 +116,15 @@ export async function activateEventPass(
 
   const itemName = `Event Pass (${passType.replace("_", " ").toUpperCase()})`;
   void Promise.allSettled([
-    notifyOwnerPaymentSuccess({
-      kind: "event_pass",
+    notifyOwnerOneTimePayment({
       buyerName: user.user_metadata?.full_name,
       buyerEmail: user.email,
       itemName,
       amountPaise: orderAmountPaise,
       paymentId: payment.paymentId,
       orderId: payment.orderId,
+      passType,
+      registrationLimit,
     }),
     user.email
       ? sendUserPaymentSuccessEmail({

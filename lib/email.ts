@@ -226,6 +226,118 @@ export async function notifyOwnerPaymentSuccess({
   });
 }
 
+export async function notifyOwnerTrialActivated({
+  buyerName,
+  buyerEmail,
+  planName,
+  billingInterval,
+  futurePricePaise,
+  subscriptionId,
+  paymentId,
+  trialEndsAt,
+}: {
+  buyerName?: string | null;
+  buyerEmail?: string | null;
+  planName: string;
+  billingInterval?: string | null;
+  futurePricePaise?: number | null;
+  subscriptionId?: string | null;
+  paymentId?: string | null;
+  trialEndsAt?: string | null;
+}) {
+  await sendOwnerNotification({
+    subject: `🚀 URPASS 30-Day Free Trial Activated: ${planName} (${buyerEmail ?? "unknown email"})`,
+    title: "30-Day Free Trial Activated & AutoPay Authorized",
+    rows: [
+      ["Event", "30-Day Free Trial Started"],
+      ["Plan Selected", planName],
+      ["Billing Interval", (billingInterval || "monthly").toUpperCase()],
+      ["Charged Today", "₹0.00 (30-Day Free Trial)"],
+      ["Renewal After Trial", formatInrFromPaise(futurePricePaise)],
+      ["Trial Ends At", trialEndsAt || "30 days from now"],
+      ["Customer Name", buyerName],
+      ["Customer Email", buyerEmail],
+      ["Razorpay Subscription ID", subscriptionId],
+      ["Razorpay Mandate Payment ID", paymentId],
+      ["Time", new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })],
+    ],
+  });
+}
+
+export async function notifyOwnerPaidSubscription({
+  buyerName,
+  buyerEmail,
+  planName,
+  billingCycle,
+  amountPaise,
+  paymentId,
+  orderId,
+  subscriptionId,
+}: {
+  buyerName?: string | null;
+  buyerEmail?: string | null;
+  planName: string;
+  billingCycle?: string | null;
+  amountPaise?: number | null;
+  paymentId?: string | null;
+  orderId?: string | null;
+  subscriptionId?: string | null;
+}) {
+  await sendOwnerNotification({
+    subject: `💰 URPASS Paid Subscription: ${planName} — ${formatInrFromPaise(amountPaise)} (${buyerEmail ?? "unknown email"})`,
+    title: "Paid Subscription Confirmed",
+    rows: [
+      ["Event", "Paid Subscription Confirmed"],
+      ["Plan", planName],
+      ["Billing Cycle", (billingCycle || "monthly").toUpperCase()],
+      ["Amount Paid", formatInrFromPaise(amountPaise)],
+      ["Customer Name", buyerName],
+      ["Customer Email", buyerEmail],
+      ["Razorpay Payment ID", paymentId],
+      ["Razorpay Order ID", orderId],
+      ["Razorpay Subscription ID", subscriptionId],
+      ["Time", new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })],
+    ],
+  });
+}
+
+export async function notifyOwnerOneTimePayment({
+  buyerName,
+  buyerEmail,
+  itemName,
+  amountPaise,
+  paymentId,
+  orderId,
+  passType,
+  registrationLimit,
+}: {
+  buyerName?: string | null;
+  buyerEmail?: string | null;
+  itemName: string;
+  amountPaise?: number | null;
+  paymentId?: string | null;
+  orderId?: string | null;
+  passType?: string | null;
+  registrationLimit?: number | null;
+}) {
+  await sendOwnerNotification({
+    subject: `🎉 URPASS One-Time Payment: ${itemName} — ${formatInrFromPaise(amountPaise)} (${buyerEmail ?? "unknown email"})`,
+    title: "One-Time Payment Received",
+    rows: [
+      ["Event", "One-Time Payment Confirmed"],
+      ["Item Purchased", itemName],
+      ["Pass Type", passType || "One-Event Pass"],
+      ["Registration Limit", registrationLimit ? `${registrationLimit.toLocaleString()} attendees` : "N/A"],
+      ["Amount Paid", formatInrFromPaise(amountPaise)],
+      ["Customer Name", buyerName],
+      ["Customer Email", buyerEmail],
+      ["Razorpay Payment ID", paymentId],
+      ["Razorpay Order ID", orderId],
+      ["Time", new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })],
+    ],
+  });
+}
+
 export async function sendUserPaymentSuccessEmail({
   to,
   name,

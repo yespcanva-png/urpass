@@ -6,7 +6,7 @@ import {
   verifyRazorpaySubscriptionSignature,
 } from "@/lib/razorpay";
 import { getSupabaseUrl } from "@/lib/supabase/config";
-import { sendTrialStartedEmail, notifyOwnerPaymentSuccess } from "@/lib/email";
+import { sendTrialStartedEmail, notifyOwnerTrialActivated } from "@/lib/email";
 import { revalidatePath } from "next/cache";
 
 export const dynamic = "force-dynamic";
@@ -156,14 +156,15 @@ export async function POST(req: NextRequest) {
   }
 
   // Notify owner
-  void notifyOwnerPaymentSuccess({
-    kind: "subscription",
+  void notifyOwnerTrialActivated({
     buyerName: user.user_metadata?.full_name,
     buyerEmail: user.email,
-    itemName: `30-Day Free Trial: ${targetPlan.name}`,
-    amountPaise: 0,
-    paymentId,
-    orderId: orderId ?? undefined,
+    planName: targetPlan.name,
+    billingInterval: "monthly",
+    futurePricePaise: pricePaise,
+    subscriptionId: subscriptionId ?? undefined,
+    paymentId: paymentId ?? undefined,
+    trialEndsAt: formattedEndDate,
   }).catch((err) => console.error("[email] Error notifying owner of trial:", err));
 
   revalidatePath("/billing");

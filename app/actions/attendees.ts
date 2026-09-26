@@ -7,6 +7,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
   notifyOwnerPaymentSuccess,
+  notifyOwnerOneTimePayment,
   sendApplicationConfirmationEmail,
   sendApprovalEmail,
   sendPassEmail,
@@ -632,14 +633,14 @@ export async function submitApplication(
         }).catch(() => {});
         const itemName = selectedTicketType ? `${event.name} — ${selectedTicketType.name}` : event.name;
         Promise.allSettled([
-          notifyOwnerPaymentSuccess({
-            kind: "ticket",
+          notifyOwnerOneTimePayment({
             buyerName: parsed.data.name,
             buyerEmail: parsed.data.email,
             itemName,
             amountPaise: paymentAmountPaise,
             paymentId: payment.paymentId,
             orderId: payment.orderId,
+            passType: "Paid Event Ticket",
           }),
           sendUserPaymentSuccessEmail({
             to: parsed.data.email,
@@ -694,14 +695,14 @@ export async function submitApplication(
 
     const itemName = selectedTicketType ? `${event.name} — ${selectedTicketType.name}` : event.name;
     Promise.allSettled([
-      notifyOwnerPaymentSuccess({
-        kind: "ticket",
+      notifyOwnerOneTimePayment({
         buyerName: parsed.data.name,
         buyerEmail: parsed.data.email,
         itemName,
         amountPaise: paymentAmountPaise,
         paymentId: payment.paymentId,
         orderId: payment.orderId,
+        passType: "Paid Event Ticket",
       }),
       sendUserPaymentSuccessEmail({
         to: parsed.data.email,
