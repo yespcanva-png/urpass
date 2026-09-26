@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, Loader2, Lock, IndianRupee, Building2, MapPin, Wifi, LayoutGrid, Link2 } from "lucide-react";
+import { ArrowLeft, Loader2, Lock, IndianRupee, Building2, MapPin, Wifi, LayoutGrid, Link2, AlertCircle, CheckCircle2 } from "lucide-react";
 import { eventSchema, type EventInput } from "@/lib/validations/event";
 import { createEvent } from "@/app/actions/events";
 
@@ -88,9 +88,14 @@ export default function CreateEventForm({
   locations = [],
 }: Props) {
   const [serverError, setServerError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  const [isNavigating, setIsNavigating] = useState(false);
   const [selectedPlatform, setSelectedPlatform] = useState<"zoom" | "google_meet" | "teams" | "custom" | null>(null);
 
   const atLimit = !unlimited && activeEventCount >= maxEvents;
+
+  // Tomorrow as default date in YYYY-MM-DD format
+  const tomorrow = new Date(Date.now() + 86400000).toISOString().split("T")[0];
 
   const {
     register,
@@ -111,6 +116,9 @@ export default function CreateEventForm({
       meeting_url: null,
       meeting_platform: null,
       venue: "",
+      event_date: tomorrow,
+      start_time: "10:00",
+      end_time: "12:00",
     },
   });
 
@@ -136,23 +144,46 @@ export default function CreateEventForm({
 
   const router = useRouter();
 
+  const onInvalid = (formErrors: typeof errors) => {
+    const errorList = Object.entries(formErrors)
+      .map(([field, err]) => `${field.replace(/_/g, " ")}: ${err?.message}`)
+      .filter(Boolean);
+    const message =
+      errorList.length > 0
+        ? `Please fix the following: ${errorList.join(" • ")}`
+        : "Please complete all required fields.";
+    setServerError(message);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   async function onSubmit(data: EventInput) {
     setServerError("");
+    setSuccessMessage("");
+    setIsNavigating(false);
     try {
       const result = await createEvent(data, organizationId);
       if (result?.error) {
-        setServerError(result.error);
+        setServerError(`Could not create event: ${result.error}`);
+        window.scrollTo({ top: 0, behavior: "smooth" });
         return;
       }
       if (result?.eventId) {
+        setSuccessMessage("Event created successfully! Opening your event dashboard...");
+        setIsNavigating(true);
         router.push(`/event/${result.eventId}`);
+      } else {
+        setServerError("Could not create event: Server did not return an event ID.");
+        window.scrollTo({ top: 0, behavior: "smooth" });
       }
     } catch (err: unknown) {
       const digest = (err as { digest?: string })?.digest;
       if (typeof digest === "string" && digest.startsWith("NEXT_REDIRECT")) {
-        throw err;
+        setSuccessMessage("Event created! Opening event dashboard...");
+        setIsNavigating(true);
+        return;
       }
-      setServerError(err instanceof Error ? err.message : "Failed to create event");
+      setServerError(`Error creating event: ${err instanceof Error ? err.message : String(err)}`);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   }
 
@@ -207,7 +238,28 @@ export default function CreateEventForm({
           </div>
         )}
 
-        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
+        {/* Top error / success banner */}
+        {serverError && (
+          <div className="flex items-start gap-3 bg-red-50 border-2 border-red-300 rounded-2xl p-4 text-red-900 shadow-sm mb-4 animate-shake">
+            <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <h3 className="text-sm font-bold text-red-900">Event could not be created</h3>
+              <p className="text-xs text-red-800 mt-1 font-medium">{serverError}</p>
+            </div>
+          </div>
+        )}
+
+        {successMessage && (
+          <div className="flex items-start gap-3 bg-emerald-50 border-2 border-emerald-300 rounded-2xl p-4 text-emerald-900 shadow-sm mb-4">
+            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <h3 className="text-sm font-bold text-emerald-900">Success!</h3>
+              <p className="text-xs text-emerald-800 mt-1 font-medium">{successMessage}</p>
+            </div>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="flex flex-col gap-6">
           {/* Event type selector — first */}
           <fieldset disabled={atLimit} className="contents">
             <div className="bg-white border border-neutral-100 rounded-2xl p-6 flex flex-col gap-4">
@@ -523,8 +575,22 @@ export default function CreateEventForm({
           </fieldset>
 
           {serverError && (
-            <div className="bg-red-50 border border-red-100 rounded-xl px-4 py-3">
-              <p className="text-sm text-red-600">{serverError}</p>
+            <div className="flex items-start gap-3 bg-red-50 border-2 border-red-300 rounded-xl p-4 text-red-900 shadow-sm animate-shake">
+              <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <h3 className="text-sm font-bold text-red-900">Event could not be created</h3>
+                <p className="text-xs text-red-800 mt-1 font-medium">{serverError}</p>
+              </div>
+            </div>
+          )}
+
+          {successMessage && (
+            <div className="flex items-start gap-3 bg-emerald-50 border-2 border-emerald-300 rounded-xl p-4 text-emerald-900 shadow-sm">
+              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <h3 className="text-sm font-bold text-emerald-900">Success!</h3>
+                <p className="text-xs text-emerald-800 mt-1 font-medium">{successMessage}</p>
+              </div>
             </div>
           )}
 
@@ -537,12 +603,12 @@ export default function CreateEventForm({
             </Link>
             <button
               type="submit"
-              disabled={isSubmitting || atLimit}
-              className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold text-white hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={isSubmitting || isNavigating || atLimit}
+              className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold text-white hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
               style={{ background: "#6D28D9" }}
             >
-              {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
-              {isSubmitting ? "Creating…" : "Create event"}
+              {(isSubmitting || isNavigating) && <Loader2 className="w-4 h-4 animate-spin" />}
+              {isNavigating ? "Opening event…" : isSubmitting ? "Creating…" : "Create event"}
             </button>
           </div>
         </form>

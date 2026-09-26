@@ -36,7 +36,10 @@ export default async function CreateEventPage({
     return { id: o.id, slug: o.slug, name: o.name, brand_color: o.brand_color, role: m.role };
   });
 
-  const activeOrgId = orgId || orgs[0]?.id;
+  const matchedOrg = orgId ? orgs.find((o) => o.id === orgId || o.slug === orgId) : undefined;
+  const activeOrgId = matchedOrg?.id;
+  const activeOrgName = matchedOrg?.name;
+
   const [workspaces, locations] = activeOrgId
     ? await Promise.all([getWorkspaces(activeOrgId), getLocations(activeOrgId)])
     : [[], []];
@@ -49,6 +52,7 @@ export default async function CreateEventPage({
       unlimited={plan.unlimited}
       canCreatePaidEvents={plan.canCreatePaidEvents}
       organizationId={activeOrgId}
+      organizationName={activeOrgName}
       orgs={orgs}
       workspaces={workspaces}
       locations={locations}

@@ -44,7 +44,23 @@ export async function createEvent(data: EventInput, organizationId?: string): Pr
       .maybeSingle();
 
     if (!member) {
-      return { error: "You are not authorized to create events for this organization." };
+      // Check via admin client to avoid client RLS false-positives
+      let isAuthorized = false;
+      if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
+        const admin = adminClient();
+        const { data: adminMember } = await admin
+          .from("organization_members")
+          .select("role")
+          .eq("organization_id", targetOrgId)
+          .eq("user_id", user.id)
+          .eq("status", "active")
+          .in("role", ["owner", "admin", "event_manager"])
+          .maybeSingle();
+        isAuthorized = !!adminMember;
+      }
+      if (!isAuthorized) {
+        return { error: "You are not authorized to create events for this organization." };
+      }
     }
   }
 
