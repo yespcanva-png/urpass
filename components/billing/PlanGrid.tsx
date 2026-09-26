@@ -155,13 +155,13 @@ export default function PlanGrid({ currentPlanSlug, currentPlanIndex, userEmail,
                     <span className="text-[10px] font-extrabold tracking-widest uppercase px-2 py-0.5 rounded-full bg-white/20 text-white border border-white/30">
                       YOUR FIRST 30 DAYS ARE FREE
                     </span>
-                    <span className="text-xs font-semibold text-emerald-300">No Card Required</span>
+                    <span className="text-xs font-semibold text-emerald-300">AutoPay Required · Cancel Anytime</span>
                   </div>
                   <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
                     TRY ANY URPASS PLAN FREE FOR 30 DAYS
                   </h3>
                   <p className="text-xs text-white/70 mt-0.5">
-                    Choose Starter, Pro, or Business · No credit card or AutoPay required · Instant full access · One free trial per account
+                    Choose Starter, Pro, or Business · AutoPay required · Cancel anytime before first payment · One free trial per account
                   </p>
                 </div>
               </div>
@@ -293,7 +293,7 @@ export default function PlanGrid({ currentPlanSlug, currentPlanIndex, userEmail,
                           Try {p.name} Free
                         </button>
                         <p className="text-[10px] text-center text-neutral-400">
-                          30 days ₹0 · No credit card required
+                          ₹0 for 30 days · Cancel before your first payment
                         </p>
                       </div>
                     ) : p.priceMonthly > 0 ? (
@@ -417,6 +417,7 @@ export default function PlanGrid({ currentPlanSlug, currentPlanIndex, userEmail,
           onClose={() => setTrialModal(null)}
           planSlug={trialModal.planSlug}
           planName={trialModal.planName}
+          cycle={cycle}
           userEmail={userEmail}
           userName={userName}
         />

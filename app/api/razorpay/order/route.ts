@@ -6,9 +6,11 @@ import { notifyOwnerPaymentAttempt } from "@/lib/email";
 export const dynamic = "force-dynamic";
 
 function getRazorpay() {
+  const key_id = (process.env.RAZORPAY_KEY_ID || "").trim();
+  const key_secret = (process.env.RAZORPAY_KEY_SECRET || "").trim();
   return new Razorpay({
-    key_id: process.env.RAZORPAY_KEY_ID || "dummy_key_id",
-    key_secret: process.env.RAZORPAY_KEY_SECRET || "dummy_key_secret",
+    key_id: key_id || "dummy_key_id",
+    key_secret: key_secret || "dummy_key_secret",
   });
 }
 
@@ -29,21 +31,37 @@ export async function POST(req: NextRequest) {
   const { planSlug, billingCycle = "monthly", couponCode } = body ?? {};
   if (!planSlug) return NextResponse.json({ error: "Missing planSlug" }, { status: 400 });
 
-  const priceMonthlyPaise = V1_PRICES_PAISE[planSlug];
+  const rawSlug = String(planSlug).toLowerCase().trim();
+  const normalizedSlug = rawSlug.replace("_monthly", "").replace("_yearly", "").replace("_annual", "");
+
+  const priceMonthlyPaise = V1_PRICES_PAISE[normalizedSlug];
   if (!priceMonthlyPaise) {
-    return NextResponse.json({ error: "Plan not found or is free" }, { status: 400 });
+    return NextResponse.json({ error: `Plan '${planSlug}' not found or is free` }, { status: 400 });
   }
 
-  // Fetch plan from DB only to get the plan ID (for order notes / subscription activation)
-  const { data: plan } = await supabase
+  // Fetch plan from DB with fallback to admin client
+  let { data: plan } = await supabase
     .from("plans")
     .select("id, name, slug")
-    .eq("slug", planSlug)
+    .eq("slug", normalizedSlug)
     .eq("is_active", true)
-    .single();
+    .maybeSingle();
+
+  if (!plan && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    const { createClient: createAdminClient } = await import("@supabase/supabase-js");
+    const { getSupabaseUrl } = await import("@/lib/supabase/config");
+    const admin = createAdminClient(getSupabaseUrl(), process.env.SUPABASE_SERVICE_ROLE_KEY);
+    const { data: adminPlan } = await admin
+      .from("plans")
+      .select("id, name, slug")
+      .eq("slug", normalizedSlug)
+      .eq("is_active", true)
+      .maybeSingle();
+    plan = adminPlan;
+  }
 
   if (!plan) {
-    return NextResponse.json({ error: "Plan not found" }, { status: 400 });
+    return NextResponse.json({ error: `Plan '${normalizedSlug}' not found in database` }, { status: 400 });
   }
 
   // Annual = 10 months (2 months free). Prices in paise.
@@ -65,7 +83,7 @@ export async function POST(req: NextRequest) {
 
     if (coupon) {
       const notExpired = !coupon.expiry_date || new Date(coupon.expiry_date) >= new Date();
-      const planApplies = !coupon.applicable_plans || coupon.applicable_plans.includes(planSlug);
+      const planApplies = !coupon.applicable_plans || coupon.applicable_plans.includes(normalizedSlug);
       const cycleApplies = !coupon.billing_cycle || coupon.billing_cycle === billingCycle;
 
       const { count: userCount } = await supabase
@@ -95,9 +113,9 @@ export async function POST(req: NextRequest) {
 
   const discountedBase = Math.max(0, baseAmount - discountPaise);
   const gstAmount = Math.round(discountedBase * 0.18);
-  const totalAmount = discountedBase + gstAmount;
+  const totalAmount = Math.round(discountedBase + gstAmount);
 
-  const keyId = process.env.RAZORPAY_KEY_ID;
+  const keyId = (process.env.RAZORPAY_KEY_ID || "").trim();
   if (!keyId || keyId === "dummy_key_id") {
     return NextResponse.json({ error: "Payment gateway is not configured." }, { status: 503 });
   }
@@ -105,26 +123,35 @@ export async function POST(req: NextRequest) {
   let order;
   try {
     const razorpay = getRazorpay();
+    const receipt = `ur_${user.id.slice(0, 8)}_${Date.now()}`.slice(0, 40);
     order = await razorpay.orders.create({
       amount: totalAmount,
       currency: "INR",
-      receipt: `urpass_${user.id.slice(0, 8)}_${Date.now()}`,
+      receipt,
       notes: {
-        user_id: user.id,
-        plan_id: plan.id,
-        plan_slug: planSlug,
-        billing_cycle: billingCycle,
-        base_amount: baseAmount,
-        discount_paise: discountPaise,
-        gst_amount: gstAmount,
-        coupon_id: appliedCouponId ?? "",
-        coupon_code: couponCode ?? "",
-        customer_name: user.user_metadata?.full_name ?? "",
-        customer_email: user.email ?? "",
+        user_id: String(user.id),
+        plan_id: String(plan.id),
+        plan_slug: String(normalizedSlug),
+        billing_cycle: String(billingCycle),
+        base_amount: String(baseAmount),
+        discount_paise: String(discountPaise),
+        gst_amount: String(gstAmount),
+        coupon_id: String(appliedCouponId ?? ""),
+        coupon_code: String(couponCode ?? ""),
+        customer_name: String(user.user_metadata?.full_name ?? ""),
+        customer_email: String(user.email ?? ""),
       },
     });
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : "Failed to create payment order";
+  } catch (err: unknown) {
+    console.error("[api/razorpay/order] Razorpay error creating order:", err);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const rzpErr = err as any;
+    const msg =
+      rzpErr?.error?.description ||
+      rzpErr?.message ||
+      (typeof err === "string" ? err : null) ||
+      (rzpErr?.error ? JSON.stringify(rzpErr.error) : null) ||
+      "Failed to create payment order";
     return NextResponse.json({ error: msg }, { status: 502 });
   }
 
