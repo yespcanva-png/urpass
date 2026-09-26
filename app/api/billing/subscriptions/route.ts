@@ -50,11 +50,11 @@ export async function POST(req: NextRequest) {
     // 1. Trial abuse protection check: one trial per account/workspace permanently
     const { data: existingSub } = await admin
       .from("subscriptions")
-      .select("id, trial_used, trial_used_at, status, is_trial")
+      .select("id, trial_used, status, is_trial")
       .eq("user_id", user.id)
       .maybeSingle();
 
-    if (existingSub?.trial_used || existingSub?.trial_used_at) {
+    if (existingSub?.trial_used) {
       return NextResponse.json(
         {
           error:

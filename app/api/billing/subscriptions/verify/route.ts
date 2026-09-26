@@ -63,11 +63,11 @@ export async function POST(req: NextRequest) {
     // Check trial abuse
     const { data: existingSub } = await admin
       .from("subscriptions")
-      .select("id, trial_used, trial_used_at")
+      .select("id, trial_used")
       .eq("user_id", user.id)
       .maybeSingle();
 
-    if (existingSub?.trial_used || existingSub?.trial_used_at) {
+    if (existingSub?.trial_used) {
       return NextResponse.json(
         { error: "Your account has already redeemed its one free 30-day trial." },
         { status: 400 }
@@ -100,7 +100,6 @@ export async function POST(req: NextRequest) {
         cancel_at_period_end: false,
         registrations_used: 0,
         trial_used: true,
-        trial_used_at: now.toISOString(),
         is_trial: true,
         trial_plan: plan.planSlug,
         trial_starts_at: now.toISOString(),

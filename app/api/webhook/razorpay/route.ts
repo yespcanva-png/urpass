@@ -115,7 +115,6 @@ export async function POST(req: NextRequest) {
             current_period_end: trialEndsAt.toISOString(),
             cancel_at_period_end: false,
             trial_used: true,
-            trial_used_at: now.toISOString(),
             is_trial: true,
             trial_plan: planSlug,
             trial_starts_at: now.toISOString(),
