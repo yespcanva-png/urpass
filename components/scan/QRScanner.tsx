@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Html5Qrcode, Html5QrcodeSupportedFormats } from "html5-qrcode";
-import { Camera, CameraOff } from "lucide-react";
+import { Camera, CameraOff, Flashlight, FlashlightOff } from "lucide-react";
 
 interface Props {
   onScan: (token: string) => void;
@@ -16,6 +16,8 @@ export default function QRScanner({ onScan, active, statusVariant = "idle" }: Pr
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const [cameraError, setCameraError] = useState("");
   const [started, setStarted] = useState(false);
+  const [torchSupported, setTorchSupported] = useState(false);
+  const [torchOn, setTorchOn] = useState(false);
   const mountedRef = useRef(true);
   const activeRef = useRef(active);
 
@@ -73,13 +75,16 @@ export default function QRScanner({ onScan, active, statusVariant = "idle" }: Pr
         () => {}
       );
 
-      // Attempt to apply continuous auto-focus if supported by the active camera track
+      // Attempt to apply continuous auto-focus and detect torch capability
       try {
         const videoEl = document.getElementById(SCANNER_ID)?.querySelector("video") as HTMLVideoElement | null;
         const stream = videoEl?.srcObject as MediaStream | null;
         const videoTrack = stream?.getVideoTracks?.()[0];
         if (videoTrack && typeof videoTrack.getCapabilities === "function") {
-          const capabilities = videoTrack.getCapabilities() as { focusMode?: string[] };
+          const capabilities = videoTrack.getCapabilities() as any;
+          if (capabilities && "torch" in capabilities) {
+            setTorchSupported(Boolean(capabilities.torch));
+          }
           if (capabilities?.focusMode?.includes("continuous")) {
             await videoTrack.applyConstraints({
               advanced: [{ focusMode: "continuous" } as MediaTrackConstraintSet],
@@ -105,6 +110,24 @@ export default function QRScanner({ onScan, active, statusVariant = "idle" }: Pr
     }
   }
 
+  async function toggleTorch() {
+    try {
+      const videoEl = document.getElementById(SCANNER_ID)?.querySelector("video") as HTMLVideoElement | null;
+      const stream = videoEl?.srcObject as MediaStream | null;
+      const videoTrack = stream?.getVideoTracks?.()[0];
+      if (!videoTrack) return;
+
+      const nextTorch = !torchOn;
+      // @ts-ignore
+      await videoTrack.applyConstraints({
+        advanced: [{ torch: nextTorch } as any],
+      });
+      setTorchOn(nextTorch);
+    } catch (err) {
+      console.warn("Failed to toggle torch:", err);
+    }
+  }
+
   async function stopScanner() {
     if (!scannerRef.current) return;
     try {
@@ -114,7 +137,11 @@ export default function QRScanner({ onScan, active, statusVariant = "idle" }: Pr
       scannerRef.current.clear();
     } catch {}
     scannerRef.current = null;
-    if (mountedRef.current) setStarted(false);
+    if (mountedRef.current) {
+      setStarted(false);
+      setTorchOn(false);
+      setTorchSupported(false);
+    }
   }
 
   // Mount once and keep stream alive until full unmount
@@ -242,6 +269,27 @@ export default function QRScanner({ onScan, active, statusVariant = "idle" }: Pr
                   }}
                 />
               </>
+            )}
+
+            {/* Torch toggle button (when supported by device camera) */}
+            {torchSupported && (
+              <button
+                type="button"
+                onClick={toggleTorch}
+                className={`absolute bottom-4 right-4 z-20 flex items-center justify-center w-10 h-10 rounded-2xl backdrop-blur-md transition-all duration-200 active:scale-95 ${
+                  torchOn
+                    ? "bg-amber-400 text-neutral-950 shadow-[0_0_20px_rgba(251,191,36,0.6)]"
+                    : "bg-black/50 text-white/80 hover:text-white border border-white/20"
+                }`}
+                title={torchOn ? "Turn flashlight off" : "Turn flashlight on for low-light scanning"}
+                aria-label={torchOn ? "Flashlight on" : "Flashlight off"}
+              >
+                {torchOn ? (
+                  <Flashlight className="w-5 h-5 fill-current" />
+                ) : (
+                  <FlashlightOff className="w-5 h-5 text-white/70" />
+                )}
+              </button>
             )}
           </>
         )}
