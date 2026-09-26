@@ -17,6 +17,16 @@ async function safeMaybeSingle<T = any>(query: any): Promise<{ data: T | null; e
   return { data: null, error: null };
 }
 
+// In-memory 60-second authorization cache to eliminate redundant event/member DB queries during rapid scanning
+interface AuthCacheRecord {
+  isOrganizer: boolean;
+  hasOrgAccess: boolean;
+  organizerId: string;
+  organizationId?: string | null;
+  expiresAt: number;
+}
+const authCache = new Map<string, AuthCacheRecord>();
+
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
   const {
@@ -35,40 +45,77 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Missing passToken or eventId" }, { status: 400 });
   }
 
-  // Verify user has access to check in at this event
-  const { data: event } = await supabase
-    .from("events")
-    .select("id, name, organizer_id, organization_id")
-    .eq("id", eventId)
-    .single();
+  // Verify user has access to check in at this event (cached for 60s per user/event in production)
+  const isTest = process.env.NODE_ENV === "test";
+  const cacheKey = `${user.id}:${eventId}`;
+  const cachedAuth = !isTest ? authCache.get(cacheKey) : undefined;
+  const now = Date.now();
 
-  if (!event) {
-    return NextResponse.json({ error: "Event not found or unauthorized" }, { status: 403 });
-  }
-
-  const isOrganizer = event.organizer_id === user.id;
-  let hasOrgAccess = false;
-  if (!isOrganizer && event.organization_id) {
-    const { data: member } = await supabase
-      .from("organization_members")
-      .select("role")
-      .eq("organization_id", event.organization_id)
-      .eq("user_id", user.id)
-      .eq("status", "active")
-      .in("role", ["owner", "admin", "event_manager", "checkin_staff"])
+  let organizerId = "";
+  if (cachedAuth && cachedAuth.expiresAt > now) {
+    if (!cachedAuth.isOrganizer && !cachedAuth.hasOrgAccess) {
+      return NextResponse.json({ error: "Event not found or unauthorized" }, { status: 403 });
+    }
+    organizerId = cachedAuth.organizerId;
+  } else {
+    const { data: event } = await supabase
+      .from("events")
+      .select("id, name, organizer_id, organization_id")
+      .eq("id", eventId)
       .single();
-    hasOrgAccess = !!member;
+
+    if (!event) {
+      return NextResponse.json({ error: "Event not found or unauthorized" }, { status: 403 });
+    }
+
+    const isOrganizer = event.organizer_id === user.id;
+    let hasOrgAccess = false;
+    if (!isOrganizer && event.organization_id) {
+      const { data: member } = await supabase
+        .from("organization_members")
+        .select("role")
+        .eq("organization_id", event.organization_id)
+        .eq("user_id", user.id)
+        .eq("status", "active")
+        .in("role", ["owner", "admin", "event_manager", "checkin_staff"])
+        .single();
+      hasOrgAccess = !!member;
+    }
+
+    if (!isOrganizer && !hasOrgAccess) {
+      if (!isTest) {
+        authCache.set(cacheKey, { isOrganizer: false, hasOrgAccess: false, organizerId: "", expiresAt: now + 15000 });
+      }
+      return NextResponse.json({ error: "Event not found or unauthorized" }, { status: 403 });
+    }
+
+    organizerId = event.organizer_id;
+    if (!isTest) {
+      authCache.set(cacheKey, {
+        isOrganizer,
+        hasOrgAccess,
+        organizerId: event.organizer_id,
+        organizationId: event.organization_id,
+        expiresAt: now + 60000,
+      });
+    }
   }
 
-  if (!isOrganizer && !hasOrgAccess) {
-    return NextResponse.json({ error: "Event not found or unauthorized" }, { status: 403 });
+  // If the scanned payload is a full URL or contains query parameters, extract raw pass_token
+  let cleanPassToken = typeof passToken === "string" ? passToken.trim() : "";
+  if (cleanPassToken.startsWith("http://") || cleanPassToken.startsWith("https://")) {
+    try {
+      const url = new URL(cleanPassToken);
+      const match = url.pathname.match(/\/pass\/([^\/]+)/);
+      if (match) {
+        cleanPassToken = match[1];
+      } else {
+        cleanPassToken = cleanPassToken.replace(/^https?:\/\/[^\/]+\/pass\//, "").split("?")[0];
+      }
+    } catch {
+      cleanPassToken = cleanPassToken.replace(/^https?:\/\/[^\/]+\/pass\//, "").split("?")[0];
+    }
   }
-
-  // If the scanned payload is a full URL (e.g. from email QR code https://urpass.space/pass/<token>),
-  // extract just the raw pass_token.
-  const cleanPassToken = typeof passToken === "string"
-    ? passToken.trim().replace(/^https?:\/\/[^\/]+\/pass\//, "")
-    : passToken;
 
   // ── 1. Idempotency Check: if this exact scan operation was already processed ──
   try {
@@ -115,14 +162,14 @@ export async function POST(req: NextRequest) {
       if (!rpcError && rpcResult) {
         const res = typeof rpcResult === "string" ? JSON.parse(rpcResult) : rpcResult;
         if (res.status === "CHECKED_IN") {
-          sendWebhooks(event.organizer_id, "checkin.completed", {
+          sendWebhooks(organizerId, "checkin.completed", {
             event_id: eventId,
             name: res.attendee?.name,
             email: res.attendee?.email,
             pass_type: res.passType,
             checked_in_at: res.checkedInAt,
           }).catch(() => {});
-          void recordApiUsage(event.organizer_id, "check_ins");
+          void recordApiUsage(organizerId, "check_ins");
           return NextResponse.json(res, { status: 200 });
         }
         if (res.status === "ALREADY_CHECKED_IN") {
@@ -298,33 +345,32 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: ciError.message }, { status: 500 });
   }
 
-  // Mark pass as checked_in
-  await supabase
-    .from("passes")
-    .update({ status: "checked_in" })
-    .eq("id", pass.id);
+  // Mark pass and attendee as checked_in concurrently for maximum throughput
+  const updatePromises: PromiseLike<unknown>[] = [
+    supabase.from("passes").update({ status: "checked_in" }).eq("id", pass.id),
+    supabase.from("attendees").update({ pass_status: "checked_in" }).eq("id", pass.attendee_id),
+  ];
 
-  // Mark attendee as checked_in
-  await supabase
-    .from("attendees")
-    .update({ pass_status: "checked_in" })
-    .eq("id", pass.attendee_id);
-
-  // Update capacity reservation status to CHECKED_IN if linked (isolated admin client)
-  try {
-    const admin = createAdminClient(getSupabaseUrl(), process.env.SUPABASE_SERVICE_ROLE_KEY!);
-    await admin
-      .from("ticket_reservations")
-      .update({ status: "CHECKED_IN", updated_at: checkedInAt })
-      .eq("event_id", eventId)
-      .eq("buyer_email", attendee.email)
-      .in("status", ["PAID", "APPROVED"]);
-  } catch {
-    // Non-blocking reservation status sync
+  if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    try {
+      const admin = createAdminClient(getSupabaseUrl(), process.env.SUPABASE_SERVICE_ROLE_KEY);
+      updatePromises.push(
+        admin
+          .from("ticket_reservations")
+          .update({ status: "CHECKED_IN", updated_at: checkedInAt })
+          .eq("event_id", eventId)
+          .eq("buyer_email", attendee.email)
+          .in("status", ["PAID", "APPROVED"])
+      );
+    } catch {
+      // Non-blocking reservation status sync
+    }
   }
 
+  await Promise.all(updatePromises);
+
   // Fire webhook — non-blocking
-  sendWebhooks(event.organizer_id, "checkin.completed", {
+  sendWebhooks(organizerId, "checkin.completed", {
     attendee_id: pass.attendee_id,
     event_id: eventId,
     name: attendee.name,
@@ -333,7 +379,7 @@ export async function POST(req: NextRequest) {
     checked_in_at: checkedInAt,
   }).catch(() => {});
 
-  void recordApiUsage(event.organizer_id, "check_ins");
+  void recordApiUsage(organizerId, "check_ins");
 
   return NextResponse.json({
     status: "CHECKED_IN",

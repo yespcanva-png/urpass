@@ -192,7 +192,7 @@ function getAdminClientSafe() {
 export async function getUserPlan(supabase: any, userId: string): Promise<PlanLimits> {
   if (!userId) return FREE_PLAN;
 
-  let sub: any = null;
+  let sub: Record<string, unknown> | null = null;
 
   // 1. Try querying with the provided supabase client
   if (supabase && typeof supabase.from === "function") {
@@ -210,17 +210,19 @@ export async function getUserPlan(supabase: any, userId: string): Promise<PlanLi
         ? await filteredQuery.maybeSingle()
         : await filteredQuery.single();
 
-      sub = res?.data;
+      sub = (res?.data as Record<string, unknown>) ?? null;
     } catch {
       sub = null;
     }
   }
 
-  function extractSlug(s: any): PlanSlug | undefined {
+  function extractSlug(s: Record<string, unknown> | null | undefined): PlanSlug | undefined {
     if (!s) return undefined;
-    const p = Array.isArray(s.plan) ? s.plan[0] : s.plan;
+    const planVal = s.plan as { slug?: string } | Array<{ slug?: string }> | undefined;
+    const p = Array.isArray(planVal) ? planVal[0] : planVal;
     if (p?.slug && (p.slug in PLAN_CONFIGS)) return p.slug as PlanSlug;
-    if (s.trial_plan && (s.trial_plan in PLAN_CONFIGS)) return s.trial_plan as PlanSlug;
+    const trialPlan = s.trial_plan as string | undefined;
+    if (trialPlan && (trialPlan in PLAN_CONFIGS)) return trialPlan as PlanSlug;
     return undefined;
   }
 
@@ -278,7 +280,8 @@ export async function getUserPlan(supabase: any, userId: string): Promise<PlanLi
 
       if (memberships && memberships.length > 0) {
         for (const m of memberships) {
-          const orgOwnerId = (m.organization as any)?.created_by;
+          const org = m.organization as { created_by?: string } | Array<{ created_by?: string }> | null | undefined;
+          const orgOwnerId = Array.isArray(org) ? org[0]?.created_by : org?.created_by;
           if (orgOwnerId && orgOwnerId !== userId) {
             const { data: ownerSub } = await admin
               .from("subscriptions")
@@ -305,7 +308,8 @@ export async function getUserPlan(supabase: any, userId: string): Promise<PlanLi
 
   // If on trial, verify that trial has not expired
   if (sub.is_trial || sub.status === "trialing") {
-    if (sub.trial_ends_at && new Date(sub.trial_ends_at) < new Date()) {
+    const trialEnds = (sub as { trial_ends_at?: string | number | Date | null }).trial_ends_at;
+    if (trialEnds && new Date(trialEnds) < new Date()) {
       return FREE_PLAN;
     }
   }

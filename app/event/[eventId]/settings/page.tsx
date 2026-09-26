@@ -149,6 +149,10 @@ type EventRow = {
   application_enabled: boolean; auto_approve: boolean;
   is_paid_event: boolean; ticket_price: number;
   event_type: string; meeting_url: string | null; meeting_platform: string | null;
+  sms_enabled?: boolean; whatsapp_enabled?: boolean; email_enabled?: boolean;
+  sms_fallback_enabled?: boolean; sms_sender_id?: string | null;
+  sms_dlt_entity_id?: string | null; sms_dlt_template_id?: string | null;
+  sms_provider?: string | null;
 };
 
 export default function EventSettingsPage() {
@@ -186,12 +190,12 @@ export default function EventSettingsPage() {
       const supabase = createClient();
       const [{ data }, { data: { user } }] = await Promise.all([
         supabase.from("events")
-          .select("id,name,description,event_date,start_time,end_time,venue,attendee_limit,status,application_enabled,auto_approve,is_paid_event,ticket_price,event_type,meeting_url,meeting_platform")
+          .select("id,name,description,event_date,start_time,end_time,venue,attendee_limit,status,application_enabled,auto_approve,is_paid_event,ticket_price,event_type,meeting_url,meeting_platform,sms_enabled,whatsapp_enabled,email_enabled,sms_fallback_enabled,sms_sender_id,sms_dlt_entity_id,sms_dlt_template_id,sms_provider")
           .eq("id", eventId).single(),
         supabase.auth.getUser(),
       ]);
       if (data) {
-        setEvent(data as EventRow);
+        setEvent(data as unknown as EventRow);
         reset({
           name: data.name, description: data.description ?? "",
           event_date: data.event_date, start_time: data.start_time, end_time: data.end_time,
@@ -604,6 +608,8 @@ export default function EventSettingsPage() {
           )}
         </div>
       </div>
+
+
 
       {/* ── Danger zone ── */}
       <div className="mt-5 rounded-2xl border border-red-100 overflow-hidden">

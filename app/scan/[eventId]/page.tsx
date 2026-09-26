@@ -75,8 +75,10 @@ const PASS_TYPE_LABEL: Record<string, string> = {
   organizer: "Organizer",
 };
 
-const AUTO_RESET_MS = 5000;
-const SCAN_LOCK_MS = 1200; // 1.2s debounce to prevent repeated sounds for same QR
+const AUTO_RESET_SUCCESS_MS = 600;
+const AUTO_RESET_ALERT_MS = 1800;
+const SAME_TOKEN_DEBOUNCE_MS = 2000; // Debounce same QR code to prevent duplicate triggers
+const RAPID_SCAN_COOLDOWN_MS = 150; // Minimal 150ms cooldown between different tickets
 const SOUND_STORAGE_KEY = "urpass_scanner_sound_enabled";
 
 export default function ScanEventPage() {
@@ -93,7 +95,15 @@ export default function ScanEventPage() {
   const [scanCount, setScanCount] = useState(0);
   const [resetProgress, setResetProgress] = useState(0);
   const [feed, setFeed] = useState<FeedEntry[]>([]);
-  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [soundEnabled, setSoundEnabled] = useState<boolean>(() => {
+    if (typeof window === "undefined") return true;
+    try {
+      const saved = localStorage.getItem(SOUND_STORAGE_KEY);
+      return saved !== null ? saved === "true" : true;
+    } catch {
+      return true;
+    }
+  });
 
   // Gate state
   const [gates, setGates] = useState<Gate[]>([]);
@@ -120,21 +130,15 @@ export default function ScanEventPage() {
   const selectedGate = gates.find((g) => g.id === selectedGateId) ?? null;
 
   const lastTokenRef = useRef<string | null>(null);
+  const lastTokenTimeRef = useRef<number>(0);
   const cooldownRef = useRef(false);
   const progressRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const isScannerActive = !manualMode && (scanState === "idle" || scanState === "scanning");
+  const isScannerActive = !manualMode && (scanState === "idle" || scanState === "scanning" || scanState === "success");
 
-  // Load sound preference from localStorage and unlock audio on initial gesture
+  // Unlock audio on initial gesture
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(SOUND_STORAGE_KEY);
-      if (saved !== null) {
-        setSoundEnabled(saved === "true");
-      }
-    } catch {}
-
     const unlock = () => {
       unlockAudioContext();
     };
@@ -284,8 +288,11 @@ export default function ScanEventPage() {
       setQueuePending(stats.pending);
     });
 
+    let manifestTimer: ReturnType<typeof setTimeout> | null = null;
     if (navigator.onLine) {
-      refreshManifest();
+      manifestTimer = setTimeout(() => {
+        refreshManifest();
+      }, 0);
     }
 
     const handleOnline = () => {
@@ -301,6 +308,7 @@ export default function ScanEventPage() {
     window.addEventListener("offline", handleOffline);
 
     return () => {
+      if (manifestTimer) clearTimeout(manifestTimer);
       window.removeEventListener("online", handleOnline);
       window.removeEventListener("offline", handleOffline);
     };
@@ -417,10 +425,22 @@ export default function ScanEventPage() {
 
   const verify = useCallback(
     async (rawToken: string) => {
-      if (cooldownRef.current || rawToken === lastTokenRef.current) return;
+      if (cooldownRef.current) return;
+      const now = Date.now();
+      if (rawToken === lastTokenRef.current && (now - lastTokenTimeRef.current < SAME_TOKEN_DEBOUNCE_MS)) {
+        return;
+      }
+
+      // Interrupt existing reset countdown if a new ticket is scanned immediately
+      if (progressRef.current) {
+        clearInterval(progressRef.current);
+        progressRef.current = null;
+      }
+
       cooldownRef.current = true;
       lastTokenRef.current = rawToken;
-      setTimeout(() => { cooldownRef.current = false; }, SCAN_LOCK_MS);
+      lastTokenTimeRef.current = now;
+      setTimeout(() => { cooldownRef.current = false; }, RAPID_SCAN_COOLDOWN_MS);
 
       setScanState("verifying");
 
@@ -442,9 +462,13 @@ export default function ScanEventPage() {
         : `scan_${Date.now()}_${Math.random().toString(36).slice(2)}`;
 
       try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 2500); // 2.5s deadline to avoid hanging in poor connectivity
+
         const res = await fetch("/api/verify", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          signal: controller.signal,
           body: JSON.stringify({
             passToken: rawToken,
             eventId,
@@ -452,6 +476,7 @@ export default function ScanEventPage() {
             scanOperationId,
           }),
         });
+        clearTimeout(timeoutId);
         const data = await res.json();
 
         // 1. Success check-in (Green ✓, short high chime, 80ms)
@@ -622,7 +647,7 @@ export default function ScanEventPage() {
         setCheckingInId(null);
       }
     },
-    [eventId, isOnline, selectedGateId, selectedGate?.name, checkingInId, soundEnabled, handleOfflineResult]
+    [eventId, isOnline, selectedGateId, selectedGate, checkingInId, soundEnabled, handleOfflineResult]
   );
 
   const reset = useCallback(() => {
@@ -643,15 +668,16 @@ export default function ScanEventPage() {
       scanState === "error" ||
       scanState === "access_denied"
     ) {
+      const durationMs = scanState === "success" ? AUTO_RESET_SUCCESS_MS : AUTO_RESET_ALERT_MS;
       const initTimer = setTimeout(() => setResetProgress(0), 0);
-      const step = 100 / (AUTO_RESET_MS / 50);
+      const step = 100 / (durationMs / 50);
       progressRef.current = setInterval(() => {
         setResetProgress((p) => {
           if (p >= 100) { clearInterval(progressRef.current!); return 100; }
           return p + step;
         });
       }, 50);
-      const t = setTimeout(reset, AUTO_RESET_MS);
+      const t = setTimeout(reset, durationMs);
       return () => {
         clearTimeout(initTimer);
         clearTimeout(t);
@@ -940,12 +966,10 @@ export default function ScanEventPage() {
             {/* Center zone */}
             <div className="flex-1 flex flex-col items-center justify-center px-5 py-8">
 
-              {/* Scanner */}
-              {isScannerActive && (
-                <div className="w-full max-w-xs sm:max-w-sm">
-                  <QRScanner onScan={verify} active={isScannerActive} />
-                </div>
-              )}
+              {/* Scanner — kept mounted in DOM to prevent hardware teardown and re-initialization */}
+              <div className={`w-full max-w-xs sm:max-w-sm ${scanState === "idle" || scanState === "scanning" ? "block" : "hidden"}`}>
+                <QRScanner onScan={verify} active={isScannerActive} statusVariant={scanState} />
+              </div>
 
               {/* Verifying */}
               {scanState === "verifying" && (
@@ -965,40 +989,52 @@ export default function ScanEventPage() {
 
               {/* Success */}
               {scanState === "success" && result && (
-                <ResultCard
-                  variant="success"
-                  attendee={result.attendee}
-                  passType={result.passType}
-                  checkedInAt={result.checkedInAt}
-                  gateName={result.gateName}
-                  offline={result.offline}
-                  onReset={reset}
-                  progress={resetProgress}
-                />
+                <div className="w-full max-w-xs sm:max-w-sm cursor-pointer select-none" onClick={reset} title="Tap anywhere to scan next">
+                  <ResultCard
+                    variant="success"
+                    attendee={result.attendee}
+                    passType={result.passType}
+                    checkedInAt={result.checkedInAt}
+                    gateName={result.gateName}
+                    offline={result.offline}
+                    onReset={reset}
+                    progress={resetProgress}
+                  />
+                  <p className="text-center text-[11px] text-white/40 mt-2 font-medium">Tap anywhere to scan next</p>
+                </div>
               )}
 
               {/* Duplicate */}
               {scanState === "duplicate" && result && (
-                <ResultCard
-                  variant="duplicate"
-                  attendee={result.attendee}
-                  passType={result.passType}
-                  checkedInAt={result.checkedInAt}
-                  gateName={result.gateName}
-                  offline={result.offline}
-                  onReset={reset}
-                  progress={resetProgress}
-                />
+                <div className="w-full max-w-xs sm:max-w-sm cursor-pointer select-none" onClick={reset} title="Tap anywhere to scan next">
+                  <ResultCard
+                    variant="duplicate"
+                    attendee={result.attendee}
+                    passType={result.passType}
+                    checkedInAt={result.checkedInAt}
+                    gateName={result.gateName}
+                    offline={result.offline}
+                    onReset={reset}
+                    progress={resetProgress}
+                  />
+                  <p className="text-center text-[11px] text-white/40 mt-2 font-medium">Tap anywhere to scan next</p>
+                </div>
               )}
 
               {/* Access denied */}
               {scanState === "access_denied" && (
-                <AccessDeniedCard message={accessDeniedMsg} onReset={reset} progress={resetProgress} />
+                <div className="w-full max-w-xs sm:max-w-sm cursor-pointer select-none" onClick={reset}>
+                  <AccessDeniedCard message={accessDeniedMsg} onReset={reset} progress={resetProgress} />
+                  <p className="text-center text-[11px] text-white/40 mt-2 font-medium">Tap anywhere to scan next</p>
+                </div>
               )}
 
               {/* Error */}
               {scanState === "error" && (
-                <ErrorCard message={errorMsg} onReset={reset} progress={resetProgress} />
+                <div className="w-full max-w-xs sm:max-w-sm cursor-pointer select-none" onClick={reset}>
+                  <ErrorCard message={errorMsg} onReset={reset} progress={resetProgress} />
+                  <p className="text-center text-[11px] text-white/40 mt-2 font-medium">Tap anywhere to scan next</p>
+                </div>
               )}
             </div>
 

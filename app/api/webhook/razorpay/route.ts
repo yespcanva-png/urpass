@@ -3,7 +3,8 @@ import crypto from "crypto";
 import { createClient } from "@supabase/supabase-js";
 import { createInvoiceForPayment } from "@/lib/invoices";
 import { getSupabaseUrl } from "@/lib/supabase/config";
-import { notifyOwnerPaymentSuccess, sendUserPaymentSuccessEmail, sendPassEmail } from "@/lib/email";
+import { notifyOwnerPaymentSuccess, sendUserPaymentSuccessEmail } from "@/lib/email";
+import { communicationService, formatTicketId, buildTicketUrl } from "@/lib/communications";
 
 export const dynamic = "force-dynamic";
 
@@ -184,15 +185,22 @@ export async function POST(req: NextRequest) {
               }
 
               if (passToken) {
-                void sendPassEmail({
-                  to: paidOrder.buyer_email,
-                  attendeeName: paidOrder.buyer_name,
+                const phone = notes.phone || notes.buyer_phone || payment.contact || null;
+                void communicationService.sendTicketCommunications({
+                  eventId: paidOrder.event_id,
                   eventName: eventData.name,
                   eventDate: eventData.event_date,
                   venue: eventData.venue,
+                  ticketId: formatTicketId(passToken),
                   passToken,
+                  attendeeId,
+                  attendeeName: paidOrder.buyer_name,
+                  email: paidOrder.buyer_email,
+                  phone,
                   passType,
-                }).catch((err: unknown) => console.error("[email]", err));
+                  ticketUrl: buildTicketUrl(passToken),
+                  version: `order_${paidOrder.id}`,
+                }).catch((err: unknown) => console.error("[communications]", err));
               }
             }
           }

@@ -48,6 +48,12 @@ const QUESTION_TYPE_BUTTONS: {
   { type: "yes_no", label: "Yes / No", icon: ToggleLeft },
 ];
 
+let questionCounter = 0;
+function generateQuestionId() {
+  questionCounter += 1;
+  return `q_${Date.now()}_${questionCounter}`;
+}
+
 export default function EventFeedbackFormBuilder({ config, onChange }: Props) {
   const [showSettings, setShowSettings] = useState(false);
   const questions = config.questions || [];
@@ -57,7 +63,7 @@ export default function EventFeedbackFormBuilder({ config, onChange }: Props) {
   };
 
   const handleAddQuestion = (type: QuestionType) => {
-    const newId = `q_${Date.now()}`;
+    const newId = generateQuestionId();
     let newQ: FormQuestion;
 
     switch (type) {

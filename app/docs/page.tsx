@@ -1649,7 +1649,7 @@ curl -X POST https://urpass.space/api/mcp \\
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
                   <div className="p-3.5 bg-neutral-50 rounded-xl border border-neutral-200/80">
                     <p className="font-semibold text-neutral-900 mb-1">“Summarize check-in progress”</p>
-                    <p className="text-neutral-500">“Show me how many attendees checked in for today's tech summit and give me the breakdown across VIP vs General tiers.”</p>
+                    <p className="text-neutral-500">“Show me how many attendees checked in for today&apos;s tech summit and give me the breakdown across VIP vs General tiers.”</p>
                   </div>
                   <div className="p-3.5 bg-neutral-50 rounded-xl border border-neutral-200/80">
                     <p className="font-semibold text-neutral-900 mb-1">“Approve pending hackathon teams”</p>

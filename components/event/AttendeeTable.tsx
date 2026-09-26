@@ -12,6 +12,7 @@ import CSVUploadModal from "./CSVUploadModal";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import WhatsAppShareButton from "@/components/pass/WhatsAppShareButton";
+import AttendeeDeliveryActions from "./AttendeeDeliveryActions";
 
 type Status    = "pending" | "approved" | "rejected";
 type FilterTab = "all" | Status;
@@ -465,6 +466,12 @@ export default function AttendeeTable({
                                       attendeeName={a.name}
                                       phone={a.phone}
                                       variant="icon"
+                                    />
+                                    <AttendeeDeliveryActions
+                                      eventId={eventId}
+                                      passToken={passTokens[a.id]}
+                                      email={a.email}
+                                      phone={a.phone}
                                     />
                                     <button title="Download pass as PNG"
                                       onClick={async () => {

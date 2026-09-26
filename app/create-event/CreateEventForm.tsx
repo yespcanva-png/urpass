@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, Loader2, Lock, IndianRupee, Building2, MapPin, Wifi, LayoutGrid, Link2 } from "lucide-react";
@@ -133,12 +134,24 @@ export default function CreateEventForm({
     setValue("meeting_platform", platform);
   }
 
+  const router = useRouter();
+
   async function onSubmit(data: EventInput) {
     setServerError("");
     try {
       const result = await createEvent(data, organizationId);
-      if (result?.error) setServerError(result.error);
-    } catch (err) {
+      if (result?.error) {
+        setServerError(result.error);
+        return;
+      }
+      if (result?.eventId) {
+        router.push(`/event/${result.eventId}`);
+      }
+    } catch (err: unknown) {
+      const digest = (err as { digest?: string })?.digest;
+      if (typeof digest === "string" && digest.startsWith("NEXT_REDIRECT")) {
+        throw err;
+      }
       setServerError(err instanceof Error ? err.message : "Failed to create event");
     }
   }
@@ -492,7 +505,6 @@ export default function CreateEventForm({
                           className={`${inputCls} pl-9`}
                           {...register("ticket_price", {
                             valueAsNumber: true,
-                            setValueAs: (v) => Math.round(Number(v) * 100),
                           })}
                         />
                       </div>

@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, useEffect, useTransition, useMemo } from "react";
+import { useState, useEffect, useTransition, useMemo, useSyncExternalStore } from "react";
 import Link from "next/link";
+
+const emptySubscribe = () => () => {};
 import {
   Star,
   Copy,
@@ -74,10 +76,7 @@ export default function EventFeedbackManager({
   const [showQrModal, setShowQrModal] = useState(false);
 
   // Hydration safety: ensure server and initial client render match deterministically
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
 
   const defaultAppUrl = process.env.NEXT_PUBLIC_APP_URL || "https://urpass.space";
   const appUrl = mounted && typeof window !== "undefined" ? window.location.origin : defaultAppUrl;

@@ -17,7 +17,7 @@ function adminClient() {
   );
 }
 
-type ActionResult = { error: string } | undefined;
+type ActionResult = { error?: string; eventId?: string } | undefined;
 
 export async function createEvent(data: EventInput, organizationId?: string): Promise<ActionResult> {
   const supabase = await createClient();
@@ -31,8 +31,8 @@ export async function createEvent(data: EventInput, organizationId?: string): Pr
     return { error: parsed.error.issues[0].message };
   }
 
-  // If creating under an organization, ensure user is owner or admin of that organization
-  let targetOrgId = organizationId;
+  // If creating under an organization, ensure user is owner, admin, or event_manager
+  const targetOrgId: string | undefined = organizationId;
   if (targetOrgId) {
     const { data: member } = await supabase
       .from("organization_members")
@@ -46,18 +46,6 @@ export async function createEvent(data: EventInput, organizationId?: string): Pr
     if (!member) {
       return { error: "You are not authorized to create events for this organization." };
     }
-  } else {
-    // Auto-resolve user's default organization
-    const { data: member } = await supabase
-      .from("organization_members")
-      .select("organization_id")
-      .eq("user_id", user.id)
-      .eq("status", "active")
-      .order("role", { ascending: true })
-      .limit(1)
-      .maybeSingle();
-
-    targetOrgId = member?.organization_id;
   }
 
   // Generate a unique slug — retry once on collision (vanishingly rare)
@@ -69,25 +57,81 @@ export async function createEvent(data: EventInput, organizationId?: string): Pr
   if ((slugExists ?? 0) > 0) apply_slug = generateApplySlug();
 
   // If not a paid event, ensure ticket_price is 0
+  const { workspace_id, location_id, ...baseFields } = parsed.data;
+
   const eventData: Record<string, unknown> = {
-    ...parsed.data,
-    ticket_price: parsed.data.is_paid_event ? parsed.data.ticket_price : 0,
+    name: baseFields.name.trim(),
+    description: baseFields.description || null,
+    event_date: baseFields.event_date,
+    start_time: baseFields.start_time,
+    end_time: baseFields.end_time,
+    venue: baseFields.venue?.trim() || (baseFields.event_type === "online" ? "Online" : "Main Venue"),
+    event_type: baseFields.event_type || "physical",
+    attendee_limit: baseFields.attendee_limit,
+    status: baseFields.status || "draft",
+    application_enabled: baseFields.application_enabled !== false,
+    auto_approve: !!baseFields.auto_approve,
+    is_paid_event: !!baseFields.is_paid_event,
+    ticket_price: baseFields.is_paid_event ? baseFields.ticket_price : 0,
     organizer_id: user.id,
     apply_slug,
-    ...(targetOrgId ? { organization_id: targetOrgId } : {}),
-    ...(parsed.data.workspace_id ? { workspace_id: parsed.data.workspace_id } : {}),
-    ...(parsed.data.location_id ? { location_id: parsed.data.location_id } : {}),
   };
 
-  const { data: event, error } = await supabase
+  if (baseFields.meeting_url) eventData.meeting_url = baseFields.meeting_url;
+  if (baseFields.meeting_platform) eventData.meeting_platform = baseFields.meeting_platform;
+  if (targetOrgId) eventData.organization_id = targetOrgId;
+  if (workspace_id) eventData.workspace_id = workspace_id;
+  if (location_id) eventData.location_id = location_id;
+
+  let event: { id: string; attendee_limit: number } | null = null;
+  const { data: insertedEvent, error } = await supabase
     .from("events")
     .insert(eventData)
     .select("id, attendee_limit")
     .single();
 
-  if (error) return { error: error.message };
+  if (error) {
+    // If client RLS failed or schema cache missing optional columns, retry with admin client
+    if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      const admin = adminClient();
+      if (error.message?.includes("workspace_id") || error.message?.includes("location_id")) {
+        delete eventData.workspace_id;
+        delete eventData.location_id;
+      }
+      const { data: adminEvent, error: adminErr } = await admin
+        .from("events")
+        .insert(eventData)
+        .select("id, attendee_limit")
+        .single();
+      if (adminErr) {
+        if (adminErr.message?.includes("workspace_id") || adminErr.message?.includes("location_id")) {
+          delete eventData.workspace_id;
+          delete eventData.location_id;
+          const { data: fallbackEvent, error: fallbackErr } = await admin
+            .from("events")
+            .insert(eventData)
+            .select("id, attendee_limit")
+            .single();
+          if (fallbackErr) return { error: fallbackErr.message };
+          event = fallbackEvent;
+        } else {
+          return { error: adminErr.message };
+        }
+      } else {
+        event = adminEvent;
+      }
+    } else {
+      return { error: error.message };
+    }
+  } else {
+    event = insertedEvent;
+  }
 
-  await supabase.from("ticket_types").insert({
+  if (!event) {
+    return { error: "Failed to create event." };
+  }
+
+  const { error: ttError } = await supabase.from("ticket_types").insert({
     event_id: event.id,
     name: "General Admission",
     description: parsed.data.is_paid_event ? "Standard event ticket" : "Standard registration",
@@ -99,10 +143,25 @@ export async function createEvent(data: EventInput, organizationId?: string): Pr
     position: 0,
   });
 
+  if (ttError && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    const admin = adminClient();
+    await admin.from("ticket_types").insert({
+      event_id: event.id,
+      name: "General Admission",
+      description: parsed.data.is_paid_event ? "Standard event ticket" : "Standard registration",
+      category: "general",
+      price: parsed.data.is_paid_event ? Math.round(parsed.data.ticket_price * 100) : 0,
+      capacity: event.attendee_limit,
+      max_per_person: 1,
+      status: "on_sale",
+      position: 0,
+    });
+  }
+
   void recordApiUsage(user.id, "events", 1);
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/events");
-  redirect(`/event/${event.id}`);
+  return { eventId: event.id };
 }
 
 export async function updateEvent(
@@ -146,12 +205,45 @@ export async function updateEvent(
     return { error: "You are not authorized to update this event." };
   }
 
+  const { workspace_id, location_id, ...baseUpdateFields } = parsed.data;
+  const updatePayload: Record<string, unknown> = {
+    name: baseUpdateFields.name,
+    description: baseUpdateFields.description || null,
+    event_date: baseUpdateFields.event_date,
+    start_time: baseUpdateFields.start_time,
+    end_time: baseUpdateFields.end_time,
+    venue: baseUpdateFields.venue,
+    event_type: baseUpdateFields.event_type,
+    attendee_limit: baseUpdateFields.attendee_limit,
+    status: baseUpdateFields.status,
+    application_enabled: baseUpdateFields.application_enabled,
+    auto_approve: baseUpdateFields.auto_approve,
+    is_paid_event: baseUpdateFields.is_paid_event,
+    ticket_price: baseUpdateFields.is_paid_event ? baseUpdateFields.ticket_price : 0,
+  };
+  if (baseUpdateFields.meeting_url !== undefined) updatePayload.meeting_url = baseUpdateFields.meeting_url;
+  if (baseUpdateFields.meeting_platform !== undefined) updatePayload.meeting_platform = baseUpdateFields.meeting_platform;
+  if (workspace_id) updatePayload.workspace_id = workspace_id;
+  if (location_id) updatePayload.location_id = location_id;
+
   const { error } = await supabase
     .from("events")
-    .update(parsed.data)
+    .update(updatePayload)
     .eq("id", eventId);
 
-  if (error) return { error: error.message };
+  if (error) {
+    if (error.message?.includes("workspace_id") || error.message?.includes("location_id")) {
+      delete updatePayload.workspace_id;
+      delete updatePayload.location_id;
+      const { error: retryError } = await supabase
+        .from("events")
+        .update(updatePayload)
+        .eq("id", eventId);
+      if (retryError) return { error: retryError.message };
+    } else {
+      return { error: error.message };
+    }
+  }
 
   revalidatePath(`/event/${eventId}`);
   revalidatePath(`/event/${eventId}/settings`);

@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, useEffect, useTransition } from "react";
+import { useState, useEffect, useTransition, useSyncExternalStore } from "react";
 import Link from "next/link";
+
+const emptySubscribe = () => () => {};
 import {
   MessageSquare,
   Star,
@@ -40,11 +42,7 @@ export default function EventAttendeeFeedbackCard({
   const [copied, setCopied] = useState(false);
   const [broadcastStatus, setBroadcastStatus] = useState<string | null>(null);
   const [isBroadcasting, startBroadcast] = useTransition();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
 
   const defaultAppUrl = process.env.NEXT_PUBLIC_APP_URL || "https://urpass.space";
   const appUrl = mounted && typeof window !== "undefined" ? window.location.origin : defaultAppUrl;

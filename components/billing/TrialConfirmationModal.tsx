@@ -77,11 +77,18 @@ export default function TrialConfirmationModal({
   const [error, setError] = useState("");
   const router = useRouter();
 
-  // Reset error when opened
-  useEffect(() => {
+  // Reset error and loading when opened
+  const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+  if (isOpen !== prevIsOpen) {
+    setPrevIsOpen(isOpen);
     if (isOpen) {
       setError("");
       setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    if (isOpen) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "";

@@ -21,6 +21,7 @@ import {
   markReservationPaid,
   markReservationApproved,
 } from "@/lib/capacity-reservation";
+import { communicationService, formatTicketId, buildTicketUrl } from "@/lib/communications";
 import crypto from "crypto";
 
 function adminClient() {
@@ -583,15 +584,23 @@ export async function submitApplication(
       await admin.from("attendees").update({ pass_status: "generated" }).eq("id", attendee.id);
       incrementRegistrationsUsed();
 
-      sendPassEmail({
-        to: parsed.data.email,
-        attendeeName: parsed.data.name,
-        eventName: event.name,
-        eventDate: event.event_date,
-        venue: event.venue,
-        passToken: pass.pass_token,
-        passType: attendee.pass_type,
-      }).catch((err: unknown) => console.error("[email]", err));
+      communicationService
+        .sendTicketCommunications({
+          eventId,
+          eventName: event.name,
+          eventDate: event.event_date,
+          venue: event.venue,
+          ticketId: formatTicketId(pass.pass_token),
+          passToken: pass.pass_token,
+          attendeeId: attendee.id,
+          attendeeName: parsed.data.name,
+          email: parsed.data.email,
+          phone: parsed.data.phone || null,
+          passType: attendee.pass_type,
+          ticketUrl: buildTicketUrl(pass.pass_token),
+          version: `attendee_${attendee.id}`,
+        })
+        .catch((err: unknown) => console.error("[communications]", err));
 
       sendWebhooks(event.organizer_id, "registration.created", {
         attendee_id: attendee.id,

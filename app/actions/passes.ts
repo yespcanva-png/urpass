@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { sendPassEmail } from "@/lib/email";
+import { communicationService, formatTicketId, buildTicketUrl } from "@/lib/communications";
 
 type GenerateResult = { passToken?: string; error?: string };
 
@@ -108,22 +109,30 @@ export async function generatePass(
 
   // Attendees page is realtime-driven — no revalidation needed
 
-  // Send pass email — fire-and-forget
+  // Send pass communications (Email, WhatsApp, SMS with DLT and fallback) — fire-and-forget
   const [{ data: attendeeInfo }, { data: eventInfo }] = await Promise.all([
-    supabase.from("attendees").select("name, email, pass_type").eq("id", attendeeId).single(),
+    supabase.from("attendees").select("name, email, phone, pass_type").eq("id", attendeeId).single(),
     supabase.from("events").select("name, event_date, venue").eq("id", eventId).single(),
   ]);
 
   if (attendeeInfo && eventInfo) {
-    sendPassEmail({
-      to: attendeeInfo.email,
-      attendeeName: attendeeInfo.name,
-      eventName: eventInfo.name,
-      eventDate: eventInfo.event_date,
-      venue: eventInfo.venue,
-      passToken: pass.pass_token,
-      passType: attendeeInfo.pass_type,
-    }).catch((err: unknown) => console.error("[email]", err));
+    communicationService
+      .sendTicketCommunications({
+        eventId,
+        eventName: eventInfo.name,
+        eventDate: eventInfo.event_date,
+        venue: eventInfo.venue,
+        ticketId: formatTicketId(pass.pass_token),
+        passToken: pass.pass_token,
+        attendeeId,
+        attendeeName: attendeeInfo.name,
+        email: attendeeInfo.email,
+        phone: attendeeInfo.phone,
+        passType: attendeeInfo.pass_type,
+        ticketUrl: buildTicketUrl(pass.pass_token),
+        version: `pass_${pass.pass_token}`,
+      })
+      .catch((err: unknown) => console.error("[communications]", err));
   }
 
   return { passToken: pass.pass_token };

@@ -47,9 +47,11 @@ export default function AnalyticsDashboard({ initialData, isScopedToEvent = fals
   const [filterRange, setFilterRange] = useState<"all" | "today" | "7d" | "30d">("all");
 
   // Keep data in sync if initialData changes from server
-  useEffect(() => {
+  const [prevInitialData, setPrevInitialData] = useState(initialData);
+  if (initialData !== prevInitialData) {
+    setPrevInitialData(initialData);
     setData(initialData);
-  }, [initialData]);
+  }
 
   // Realtime check-in updates
   useEffect(() => {

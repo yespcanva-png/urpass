@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -53,35 +53,26 @@ function LoginContent() {
   const [authMode, setAuthMode] = useState<"standard" | "sso">(
     searchParams.get("mode") === "sso" ? "sso" : "standard"
   );
-  const [serverError, setServerError] = useState("");
+  const [serverError, setServerError] = useState<string>(() => {
+    const errorParam = searchParams.get("error");
+    const msgParam = searchParams.get("msg");
+    if (!errorParam) return "";
+    if (errorParam === "sso_not_active") {
+      return "Enterprise SSO is not yet active for this organization.";
+    } else if (errorParam === "sso_jit_disabled") {
+      return "Auto-provisioning is disabled for this organization. Contact your IT administrator for an invite.";
+    } else if (msgParam) {
+      return decodeURIComponent(msgParam);
+    } else {
+      return `Authentication failed (${errorParam}). Please try again.`;
+    }
+  });
   const [googleLoading, setGoogleLoading] = useState(false);
   const [ssoLoading, setSsoLoading] = useState(false);
   const [isEmergencyOwnerLogin, setIsEmergencyOwnerLogin] = useState(
     searchParams.get("emergency") === "1"
   );
   const [ssoSuccessMsg, setSsoSuccessMsg] = useState("");
-
-  useEffect(() => {
-    const errorParam = searchParams.get("error");
-    const msgParam = searchParams.get("msg");
-    const modeParam = searchParams.get("mode");
-
-    if (modeParam === "sso") {
-      setAuthMode("sso");
-    }
-
-    if (errorParam) {
-      if (errorParam === "sso_not_active") {
-        setServerError("Enterprise SSO is not yet active for this organization.");
-      } else if (errorParam === "sso_jit_disabled") {
-        setServerError("Auto-provisioning is disabled for this organization. Contact your IT administrator for an invite.");
-      } else if (msgParam) {
-        setServerError(decodeURIComponent(msgParam));
-      } else {
-        setServerError(`Authentication failed (${errorParam}). Please try again.`);
-      }
-    }
-  }, [searchParams]);
 
   const {
     register: registerPassword,
@@ -142,8 +133,7 @@ function LoginContent() {
       }
 
       setSsoSuccessMsg(`Redirecting to ${lookup.orgName || "Enterprise"} Identity Provider (${lookup.protocol || "SAML"})...`);
-      // eslint-disable-next-line @next/next/no-location-assign-relative-destination
-      window.location.href = lookup.loginUrl;
+      window.location.assign(lookup.loginUrl);
     } catch (err: unknown) {
       setServerError(err instanceof Error ? err.message : "Failed to initiate Enterprise SSO.");
       setSsoLoading(false);
@@ -152,8 +142,7 @@ function LoginContent() {
 
   function handleGoogleLogin() {
     setGoogleLoading(true);
-    // eslint-disable-next-line @next/next/no-location-assign-relative-destination
-    window.location.href = "/api/auth/google/redirect";
+    window.location.assign("/api/auth/google/redirect");
   }
 
   return (

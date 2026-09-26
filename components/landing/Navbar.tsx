@@ -8,17 +8,14 @@ import { cn } from "@/lib/utils";
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [bannerVisible, setBannerVisible] = useState(true);
-
-  useEffect(() => {
+  const [bannerVisible, setBannerVisible] = useState(() => {
+    if (typeof window === "undefined") return true;
     try {
-      if (sessionStorage.getItem("urpass_banner_dismissed") === "true") {
-        setBannerVisible(false);
-      }
+      return sessionStorage.getItem("urpass_banner_dismissed") !== "true";
     } catch {
-      // sessionStorage unavailable
+      return true;
     }
-  }, []);
+  });
 
   useEffect(() => {
     function onScroll() {
