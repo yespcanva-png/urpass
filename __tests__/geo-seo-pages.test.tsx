@@ -171,5 +171,33 @@ describe("GEO SEO Pages - Bhubaneswar", () => {
   });
 });
 
+describe("GEO SEO Pages - Patna", () => {
+  it("has correct SEO metadata for Patna", async () => {
+    const { metadata } = await import("@/app/in/patna/page");
+    expect(metadata.title).toContain("Patna");
+    expect(metadata.alternates?.canonical).toBe("https://urpass.space/in/patna");
+    expect(metadata.other?.["geo.region"]).toBe("IN-BR");
+    expect(metadata.other?.["geo.placename"]).toContain("Patna");
+  });
+
+  it("renders Patna GEO page content and local venues", async () => {
+    const { default: PatnaPage } = await import("@/app/in/patna/page");
+    render(<PatnaPage />);
+
+    expect(screen.getByRole("heading", { level: 1, name: /Event Registration & QR Check-In for Patna Events/i })).toBeInTheDocument();
+    expect(screen.getByText(/URPASS · PATNA & BIHAR/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Gyan Bhawan/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/IIT Patna/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/Bapu Sabhagar/i)[0]).toBeInTheDocument();
+  });
+
+  it("India Hub links to Patna GEO page", () => {
+    render(<IndiaPage />);
+    const patnaLink = document.querySelector('a[href="/in/patna"]');
+    expect(patnaLink).not.toBeNull();
+  });
+});
+
+
 
 

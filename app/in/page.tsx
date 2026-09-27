@@ -378,6 +378,11 @@ export default function IndiaPage() {
             category: "Location",
           },
           {
+            title: "Event Registration Patna",
+            href: "/in/patna",
+            category: "Location",
+          },
+          {
             title: "Enterprise SSO Event Ticketing",
             href: "/enterprise-sso-event-ticketing",
             category: "Product",
