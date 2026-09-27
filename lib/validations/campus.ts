@@ -31,7 +31,7 @@ export const institutionSchema = z.object({
   logo_url: z.string().trim().url().optional().or(z.literal("")),
 });
 
-export type InstitutionInput = z.infer<typeof institutionSchema>;
+export type InstitutionInput = z.input<typeof institutionSchema>;
 
 export const departmentSchema = z.object({
   name: z
@@ -59,7 +59,7 @@ export const departmentSchema = z.object({
   head_of_department_id: z.string().uuid("Invalid user ID").optional().or(z.literal("")),
 });
 
-export type DepartmentInput = z.infer<typeof departmentSchema>;
+export type DepartmentInput = z.input<typeof departmentSchema>;
 
 export const clubSchema = z.object({
   name: z
@@ -83,7 +83,7 @@ export const clubSchema = z.object({
   lead_student_id: z.string().uuid("Invalid lead student user ID").optional().or(z.literal("")),
 });
 
-export type ClubInput = z.infer<typeof clubSchema>;
+export type ClubInput = z.input<typeof clubSchema>;
 
 export const campusMemberSchema = z.object({
   invited_email: z.string().trim().email("Must be a valid email address"),
@@ -92,7 +92,7 @@ export const campusMemberSchema = z.object({
   club_id: z.string().uuid("Invalid club ID").nullable().optional(),
 });
 
-export type CampusMemberInput = z.infer<typeof campusMemberSchema>;
+export type CampusMemberInput = z.input<typeof campusMemberSchema>;
 
 export const campusStudentSchema = z.object({
   student_id: z.string().trim().max(50).optional().or(z.literal("")),
@@ -105,11 +105,11 @@ export const campusStudentSchema = z.object({
   section: z.string().trim().max(10).optional().or(z.literal("")),
 });
 
-export type CampusStudentInput = z.infer<typeof campusStudentSchema>;
+export type CampusStudentInput = z.input<typeof campusStudentSchema>;
 
 export const eventApprovalSchema = z.object({
   action: z.enum(["approve", "reject", "request_changes"]),
   reason: z.string().trim().max(500, "Reason must be under 500 characters").optional(),
 });
 
-export type EventApprovalInput = z.infer<typeof eventApprovalSchema>;
+export type EventApprovalInput = z.input<typeof eventApprovalSchema>;
