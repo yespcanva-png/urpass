@@ -103,12 +103,13 @@ export default function Page() {
           "Hackathon Late-Night Access Checkpoints",
         ],
         relatedLinks: [
-          { title: "Event Management Software", href: "/event-management-software", category: "Product" },
-          { title: "Event Registration Platform", href: "/event-registration-platform", category: "Product" },
+          { title: "Event Ticket Scanner Software", href: "/event-ticket-scanner", category: "Product" },
+          { title: "Multi-Gate Event Check-In", href: "/multi-gate-event-check-in", category: "Product" },
+          { title: "QR Event Check-In App", href: "/qr-event-check-in", category: "Product" },
           { title: "Event Access Control", href: "/event-access-control", category: "Product" },
+          { title: "Prevent Duplicate Event Entry Guide", href: "/guides/prevent-duplicate-event-entry", category: "Guide" },
           { title: "How to Check In 1,000 Attendees Quickly", href: "/guides/how-to-check-in-1000-attendees-quickly", category: "Guide" },
           { title: "How Does QR Event Check-In Work?", href: "/guides/how-does-qr-event-check-in-work", category: "Guide" },
-          { title: "Event Check-In Software Mumbai", href: "/in/mumbai", category: "Location" },
         ],
         faqs: [
           { q: "What is event check-in software?", a: "Event check-in software is a digital platform used by event staff to verify tickets, check in attendees at venue doors, prevent duplicate admissions, and record real-time attendance figures." },

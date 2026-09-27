@@ -53,6 +53,7 @@ const sections: {
     links: [
       { label: "Custom Pass Designer", href: "/custom-pass-design", badge: "Popular" },
       { label: "Mobile QR Code Scanner", href: "/qr-code-scanner", badge: "Fast" },
+      { label: "Event Ticket Scanner", href: "/event-ticket-scanner", badge: "Laser+Phone" },
       { label: "Real-Time Event Analytics", href: "/event-analytics", badge: "Live" },
       { label: "Event Registration Software", href: "/event-registration-software" },
       { label: "QR Event Check-In", href: "/qr-event-check-in" },
