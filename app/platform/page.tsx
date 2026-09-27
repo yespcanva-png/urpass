@@ -28,6 +28,7 @@ import {
   School,
   Presentation,
   Sparkles,
+  Flame,
 } from "lucide-react";
 
 export const metadata: Metadata = {
@@ -615,6 +616,36 @@ export default function PlatformPage() {
               </div>
               <h2 className="text-2xl sm:text-4xl font-semibold tracking-tight">Choose any plan. Get your first 30 days free.</h2>
               <p className="mt-2 sm:mt-3 text-neutral-500 text-xs sm:text-sm">No credit card or AutoPay required · Instant access · One free trial per account</p>
+            </div>
+          </AnimateIn>
+
+          {/* ── Founder Lifetime Plan Callout Banner ── */}
+          <AnimateIn delay={60} from="up">
+            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-neutral-950 via-purple-950 to-neutral-950 p-6 sm:p-8 border border-purple-500/30 text-white shadow-xl mb-8 sm:mb-10">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+                <div className="space-y-2">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-amber-400/10 border border-amber-400/30 text-amber-300">
+                    <Flame className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
+                    <span>FOUNDER DEAL · LIMITED TO 20 ACCOUNTS ONLY</span>
+                  </div>
+                  <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
+                    URPASS Founder Lifetime Access — ₹19,999 One-Time
+                  </h3>
+                  <p className="text-xs sm:text-sm text-neutral-300 max-w-2xl leading-relaxed">
+                    Permanent access to all currently available URPASS features for a one-time payment. Zero renewal fees forever. Valid for the lifetime of URPASS platform.
+                  </p>
+                </div>
+
+                <div className="shrink-0 flex flex-col sm:flex-row gap-3">
+                  <Link
+                    href="/founder-lifetime-deal"
+                    className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-brand to-purple-600 hover:from-brand-light hover:to-purple-500 text-white font-semibold text-xs sm:text-sm transition-all shadow-lg active:scale-95 text-center whitespace-nowrap"
+                  >
+                    <span>View Lifetime Deal</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                </div>
+              </div>
             </div>
           </AnimateIn>
 

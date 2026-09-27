@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import {
   Check, Sparkles, Zap, Crown, TrendingUp,
-  CalendarCheck, Zap as ZapIcon, Star,
+  CalendarCheck, Zap as ZapIcon, Star, Flame,
 } from "lucide-react";
 import CheckoutButton from "./CheckoutButton";
 import SwitchPlanButton from "./SwitchPlanButton";
@@ -134,6 +135,16 @@ export default function PlanGrid({ currentPlanSlug, currentPlanIndex, userEmail,
           >
             One-Event
           </button>
+          <Link
+            href="/founder-lifetime-deal"
+            className="px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-all text-amber-700 hover:text-amber-900 hover:bg-amber-100/60 flex items-center gap-1.5"
+          >
+            <Flame className="w-3 h-3 text-amber-500 animate-pulse" />
+            <span>Lifetime</span>
+            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-200/80 text-amber-900">
+              ₹19,999
+            </span>
+          </Link>
         </div>
       </div>
 

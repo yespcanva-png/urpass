@@ -36,6 +36,7 @@ const sections: {
       { label: "About URPASS & Yesp", href: "/about", badge: "New" },
       { label: "Platform FAQ & Answers", href: "/faq", badge: "35+ FAQs" },
       { label: "Pricing & Plans", href: "/pricing" },
+      { label: "Founder Lifetime Deal (₹19,999)", href: "/founder-lifetime-deal", badge: "Limited 20" },
       { label: "Guides & Tutorials Hub", href: "/guides" },
       { label: "Software Comparisons Hub", href: "/compare" },
       { label: "Documentation & API", href: "/docs" },

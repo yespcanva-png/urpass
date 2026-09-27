@@ -63,6 +63,12 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/founder-lifetime-deal" className="text-xs text-amber-400 hover:text-amber-300 font-medium transition-colors flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+                  Founder Lifetime Deal (₹19,999)
+                </Link>
+              </li>
+              <li>
                 <Link href="/design-your-ticket" className="text-xs text-neutral-400 hover:text-white transition-colors">
                   Design Your Ticket
                 </Link>

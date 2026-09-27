@@ -16,6 +16,8 @@ import {
   Download,
   Eye,
   FileText,
+  Flame,
+  ArrowRight,
 } from "lucide-react";
 import CancelButton from "@/components/billing/CancelButton";
 import PlanGrid from "@/components/billing/PlanGrid";
@@ -505,6 +507,34 @@ export default async function BillingPage() {
           </div>
 
           <InvoiceHistory invoices={invoices} />
+
+          {/* ── Founder Lifetime Plan Callout Banner ── */}
+          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-neutral-950 via-purple-950 to-neutral-950 p-6 sm:p-8 border border-purple-500/30 text-white shadow-xl">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+              <div className="space-y-2">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-amber-400/10 border border-amber-400/30 text-amber-300">
+                  <Flame className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
+                  <span>FOUNDER DEAL · LIMITED TO 20 ACCOUNTS ONLY</span>
+                </div>
+                <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
+                  URPASS Founder Lifetime Access — ₹19,999 One-Time
+                </h3>
+                <p className="text-xs sm:text-sm text-neutral-300 max-w-2xl leading-relaxed">
+                  Permanent access to all currently available URPASS features for a one-time payment. Zero renewal fees forever. Valid for the lifetime of URPASS platform.
+                </p>
+              </div>
+
+              <div className="shrink-0 flex items-center">
+                <Link
+                  href="/founder-lifetime-deal"
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-brand to-purple-600 hover:from-brand-light hover:to-purple-500 text-white font-semibold text-xs sm:text-sm transition-all shadow-lg active:scale-95 text-center whitespace-nowrap"
+                >
+                  <span>Claim Lifetime Deal</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
+            </div>
+          </div>
 
           <PlanGrid
             currentPlanSlug={currentPlanSlug}
