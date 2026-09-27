@@ -4,9 +4,11 @@ import { createClient } from "@/lib/supabase/server";
 
 // Plan prices in rupees — must stay in sync with billing/page.tsx PLANS constant
 const PLAN_PRICES: Record<string, { monthly: number; annual: number }> = {
-  starter:  { monthly: 499,  annual: 4990 },
-  pro:      { monthly: 999,  annual: 9990 },
-  business: { monthly: 2499, annual: 24990 },
+  starter:  { monthly: 499,   annual: 4990 },
+  pro:      { monthly: 999,   annual: 9990 },
+  business: { monthly: 2499,  annual: 24990 },
+  founder:  { monthly: 19999, annual: 19999 },
+  lifetime: { monthly: 19999, annual: 19999 },
 };
 
 export interface ValidatedCoupon {
@@ -33,7 +35,7 @@ export type CouponResult =
 export async function validateCoupon(
   code: string,
   planSlug: string,
-  billingCycle: "monthly" | "annual"
+  billingCycle: "monthly" | "annual" | "lifetime" = "monthly"
 ): Promise<CouponResult> {
   const trimmedCode = code.trim().toUpperCase();
   if (!trimmedCode) return { error: "Enter a coupon code." };

@@ -12,9 +12,12 @@ export const dynamic = "force-dynamic";
 // V1 plan prices in paise — source of truth for what Razorpay charges.
 // Must stay in sync with PLANS in app/billing/page.tsx and PLAN_PRICES in CheckoutButton.tsx.
 const V1_PRICES_PAISE: Record<string, number> = {
-  starter:  49900,
-  pro:      99900,
-  business: 249900,
+  starter:          49900,
+  pro:              99900,
+  business:        249900,
+  founder:        1999900,
+  lifetime:       1999900,
+  founder_lifetime: 1999900,
 };
 
 export async function POST(req: NextRequest) {
@@ -27,7 +30,18 @@ export async function POST(req: NextRequest) {
   if (!planSlug) return NextResponse.json({ error: "Missing planSlug" }, { status: 400 });
 
   const rawSlug = String(planSlug).toLowerCase().trim();
-  const normalizedSlug = rawSlug.replace("_monthly", "").replace("_yearly", "").replace("_annual", "");
+  let normalizedSlug = rawSlug
+    .replace("_monthly", "")
+    .replace("_yearly", "")
+    .replace("_annual", "")
+    .replace("_lifetime", "");
+
+  if (normalizedSlug === "founder_lifetime" || normalizedSlug === "lifetime") {
+    normalizedSlug = "founder";
+  }
+
+  const isFounder = normalizedSlug === "founder";
+  const effectiveBillingCycle = isFounder ? "lifetime" : billingCycle;
 
   const priceMonthlyPaise = V1_PRICES_PAISE[normalizedSlug];
   if (!priceMonthlyPaise) {
@@ -53,15 +67,39 @@ export async function POST(req: NextRequest) {
       .eq("is_active", true)
       .maybeSingle();
     plan = adminPlan;
+
+    if (!plan && isFounder) {
+      const { data: seededFounder } = await admin
+        .from("plans")
+        .upsert(
+          {
+            name: "Founder Lifetime",
+            slug: "founder",
+            price_monthly: 1999900,
+            price_yearly: 1999900,
+            max_events: 999999,
+            max_attendees: 999999,
+            features: ["all_access", "lifetime"],
+            is_active: true,
+          },
+          { onConflict: "slug" }
+        )
+        .select("id, name, slug")
+        .single();
+      plan = seededFounder;
+    }
   }
 
   if (!plan) {
     return NextResponse.json({ error: `Plan '${normalizedSlug}' not found in database` }, { status: 400 });
   }
 
-  // Annual = 10 months (2 months free). Prices in paise.
-  const baseAmount: number =
-    billingCycle === "annual" ? priceMonthlyPaise * 10 : priceMonthlyPaise;
+  // Founder = 19,999 INR one-time. Annual = 10 months (2 months free). Prices in paise.
+  const baseAmount: number = isFounder
+    ? 1999900
+    : effectiveBillingCycle === "annual"
+    ? priceMonthlyPaise * 10
+    : priceMonthlyPaise;
 
   // Re-validate coupon server-side to compute the trusted charged amount
   let discountPaise = 0;
@@ -136,7 +174,7 @@ export async function POST(req: NextRequest) {
         user_id: String(user.id),
         plan_id: String(plan.id),
         plan_slug: String(normalizedSlug),
-        billing_cycle: String(billingCycle),
+        billing_cycle: String(effectiveBillingCycle),
         base_amount: String(baseAmount),
         discount_paise: String(discountPaise),
         gst_amount: String(gstAmount),
@@ -156,7 +194,7 @@ export async function POST(req: NextRequest) {
     kind: "subscription",
     buyerName: user.user_metadata?.full_name,
     buyerEmail: user.email,
-    itemName: `${plan.name} Plan (${billingCycle})`,
+    itemName: isFounder ? "URPASS Founder Lifetime Access" : `${plan.name} Plan (${effectiveBillingCycle})`,
     amountPaise: totalAmount,
     orderId: order.id,
   }).catch((err: unknown) => console.error("[email]", err));
@@ -167,6 +205,6 @@ export async function POST(req: NextRequest) {
     currency: order.currency,
     keyId,
     planName: plan.name,
-    billingCycle,
+    billingCycle: effectiveBillingCycle,
   });
 }

@@ -374,8 +374,10 @@ export async function generateInvoicePdf(invoice: InvoiceRecord): Promise<Uint8A
     3,
     "Billing Period",
     invoice.billing_period_start && invoice.billing_period_end
-      ? `${invoice.billing_period_start} – ${invoice.billing_period_end}`
-      : "20 Sep 2026 – 19 Oct 2026"
+      ? (invoice.billing_period_end.startsWith("212") || invoice.description?.includes("Founder") || invoice.description?.includes("Lifetime")
+        ? `Lifetime (from ${invoice.billing_period_start})`
+        : `${invoice.billing_period_start} – ${invoice.billing_period_end}`)
+      : (invoice.invoice_date || "One-Time")
   );
 
   // Meta hairline divider
@@ -454,15 +456,27 @@ export async function generateInvoicePdf(invoice: InvoiceRecord): Promise<Uint8A
   const formattedAmount = taxableVal.toLocaleString("en-IN", { minimumFractionDigits: 2 });
 
   page.drawText("1", { x: colNumX, y: rowY, size: 9, font: fontRegular, color: dark });
-  page.drawText(invoice.description || "Urpass Pro Plan", { x: colDescX, y: rowY, size: 10.5, font: fontBold, color: dark });
-  page.drawText("Monthly Subscription", {
+  page.drawText(invoice.description || "URPASS Software License", { x: colDescX, y: rowY, size: 10.5, font: fontBold, color: dark });
+  const subHeading = invoice.description?.includes("Founder") || invoice.description?.includes("Lifetime")
+    ? "Lifetime Operational Access · Single Payment"
+    : invoice.description?.includes("Event Pass")
+    ? "Single Event Registration License"
+    : invoice.description?.includes("annual") || invoice.description?.includes("Annual")
+    ? "Annual Software Subscription"
+    : "Monthly Software Subscription";
+  page.drawText(subHeading, {
     x: colDescX,
     y: rowY - 14,
     size: 8.5,
     font: fontRegular,
     color: muted,
   });
-  page.drawText("Billing Period: 20 Sep 2026 – 19 Oct 2026", {
+  const periodText = invoice.billing_period_start && invoice.billing_period_end
+    ? (invoice.billing_period_end.startsWith("212") || invoice.description?.includes("Founder") || invoice.description?.includes("Lifetime")
+      ? `Validity: Lifetime Access (Activated: ${invoice.billing_period_start})`
+      : `Billing Period: ${invoice.billing_period_start} – ${invoice.billing_period_end}`)
+    : `Invoice Date: ${invoice.invoice_date || new Date().toISOString().slice(0, 10)}`;
+  page.drawText(periodText, {
     x: colDescX,
     y: rowY - 26,
     size: 8,

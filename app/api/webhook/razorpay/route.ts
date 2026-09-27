@@ -22,13 +22,17 @@ function adminClient() {
   );
 }
 
-type BillingCycle = "monthly" | "annual";
+type BillingCycle = "monthly" | "annual" | "lifetime";
 
 function getBillingCycle(value: unknown): BillingCycle {
+  if (value === "lifetime") return "lifetime";
   return value === "annual" ? "annual" : "monthly";
 }
 
 function addBillingPeriod(start: Date, cycle: BillingCycle) {
+  if (cycle === "lifetime") {
+    return new Date("2125-01-01T00:00:00.000Z");
+  }
   const end = new Date(start);
   if (cycle === "annual") {
     end.setFullYear(end.getFullYear() + 1);
@@ -538,11 +542,17 @@ export async function POST(req: NextRequest) {
       : 0;
   const discountPaise = notes.discount_paise ? Number(notes.discount_paise) : 0;
 
+  const rawSlug = (notes.plan_slug || "Subscription").toString().toLowerCase();
+  const isFounder = rawSlug === "founder" || rawSlug === "lifetime" || billingCycle === "lifetime";
+  const invoiceDesc = isFounder
+    ? "URPASS Founder Lifetime Access (One-Time)"
+    : `${rawSlug.toUpperCase()} Plan (${billingCycle})`;
+
   void createInvoiceForPayment({
     userId,
     subscriptionId: updatedSub?.id ?? existingSubscription?.id ?? null,
     paymentId: payment.id,
-    description: `${(notes.plan_slug || "Subscription").toString().toUpperCase()} Plan (${billingCycle})`,
+    description: invoiceDesc,
     baseAmountRupees: basePaise / 100,
     discountRupees: discountPaise / 100,
     customerEmail: payment.email,
@@ -552,12 +562,18 @@ export async function POST(req: NextRequest) {
   });
 
   if (!isDuplicatePayment) {
-    const itemName = `${(notes.plan_slug || "Subscription").toString().toUpperCase()} Plan (${billingCycle})`;
+    const itemName = isFounder
+      ? "URPASS Founder Lifetime Access (One-Time)"
+      : `${rawSlug.toUpperCase()} Plan (${billingCycle})`;
+    const planDisplayName = isFounder
+      ? "Founder Lifetime Plan"
+      : `${rawSlug.toUpperCase()} Plan`;
+
     void Promise.allSettled([
       notifyOwnerPaidSubscription({
         buyerName: notes.customer_name,
         buyerEmail: notes.customer_email || payment.email,
-        planName: `${(notes.plan_slug || "Subscription").toString().toUpperCase()} Plan`,
+        planName: planDisplayName,
         billingCycle,
         amountPaise: payment.amount,
         paymentId: payment.id,

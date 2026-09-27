@@ -5,15 +5,17 @@ import CheckoutModal from "./CheckoutModal";
 
 // Must match PLANS in app/billing/page.tsx
 const PLAN_PRICES: Record<string, { priceMonthly: number; annualTotal: number }> = {
-  starter:  { priceMonthly: 499,  annualTotal: 4990 },
-  pro:      { priceMonthly: 999,  annualTotal: 9990 },
-  business: { priceMonthly: 2499, annualTotal: 24990 },
+  starter:  { priceMonthly: 499,   annualTotal: 4990 },
+  pro:      { priceMonthly: 999,   annualTotal: 9990 },
+  business: { priceMonthly: 2499,  annualTotal: 24990 },
+  founder:  { priceMonthly: 19999, annualTotal: 19999 },
+  lifetime: { priceMonthly: 19999, annualTotal: 19999 },
 };
 
 interface Props {
   planSlug: string;
   planName: string;
-  billingCycle?: "monthly" | "annual";
+  billingCycle?: "monthly" | "annual" | "lifetime";
   userEmail: string;
   userName: string;
   children: React.ReactNode;

@@ -22,7 +22,7 @@ import {
 } from "@/lib/email";
 
 type ActionResult = { error: string } | undefined;
-type BillingCycle = "monthly" | "annual";
+type BillingCycle = "monthly" | "annual" | "lifetime";
 
 function adminClient() {
   return createAdminClient(
@@ -39,7 +39,9 @@ function revalidateBillingPaths() {
 
 function periodEnd(cycle: BillingCycle): Date {
   const d = new Date();
-  if (cycle === "annual") {
+  if (cycle === "lifetime") {
+    return new Date("2125-01-01T00:00:00.000Z");
+  } else if (cycle === "annual") {
     d.setFullYear(d.getFullYear() + 1);
   } else {
     d.setMonth(d.getMonth() + 1);
@@ -363,13 +365,53 @@ export async function activatePaidSubscription(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
+  const rawSlug = String(planSlug).toLowerCase().trim();
+  let normalizedSlug = rawSlug
+    .replace("_monthly", "")
+    .replace("_yearly", "")
+    .replace("_annual", "")
+    .replace("_lifetime", "");
+
+  if (normalizedSlug === "founder_lifetime" || normalizedSlug === "lifetime") {
+    normalizedSlug = "founder";
+  }
+
+  const isFounder = normalizedSlug === "founder";
+  const effectiveCycle: BillingCycle = isFounder ? "lifetime" : cycle;
+
   const admin = adminClient();
-  const { data: targetPlan } = await admin
+  const planQuery = admin
     .from("plans")
-    .select("id, slug")
-    .eq("slug", planSlug)
-    .eq("is_active", true)
-    .single();
+    .select("id, slug, name")
+    .eq("slug", normalizedSlug)
+    .eq("is_active", true);
+
+  const planRes = typeof planQuery.maybeSingle === "function"
+    ? await planQuery.maybeSingle()
+    : await planQuery.single();
+
+  let targetPlan = planRes?.data;
+
+  if (!targetPlan && isFounder) {
+    const { data: seededFounder } = await admin
+      .from("plans")
+      .upsert(
+        {
+          name: "Founder Lifetime",
+          slug: "founder",
+          price_monthly: 1999900,
+          price_yearly: 1999900,
+          max_events: 999999,
+          max_attendees: 999999,
+          features: ["all_access", "lifetime"],
+          is_active: true,
+        },
+        { onConflict: "slug" }
+      )
+      .select("id, slug, name")
+      .single();
+    targetPlan = seededFounder;
+  }
 
   if (!targetPlan) return { error: "Plan not found." };
 
@@ -378,7 +420,7 @@ export async function activatePaidSubscription(
   let orderDiscountPaise = 0;
   let orderAmountPaise = 0;
 
-  if (planSlug !== "free") {
+  if (normalizedSlug !== "free") {
     if (!payment || typeof payment === "string" || !payment.orderId || !payment.paymentId || !payment.signature) {
       return {
         error: "Payment verification failed: Razorpay order ID, payment ID, and signature are required.",
@@ -408,7 +450,7 @@ export async function activatePaidSubscription(
       if (notes.user_id && notes.user_id !== user.id) {
         return { error: "Order does not belong to the authenticated user." };
       }
-      if (notes.plan_slug && notes.plan_slug !== planSlug) {
+      if (notes.plan_slug && notes.plan_slug !== normalizedSlug && notes.plan_slug !== planSlug) {
         return { error: "Order plan does not match target subscription plan." };
       }
 
@@ -440,6 +482,7 @@ export async function activatePaidSubscription(
   }
 
   const periodStart = new Date();
+  const periodEndTime = periodEnd(effectiveCycle);
   const { data: updatedSub, error } = await admin
     .from("subscriptions")
     .upsert(
@@ -448,10 +491,10 @@ export async function activatePaidSubscription(
         plan_id: targetPlan.id,
         status: "active",
         provider: "razorpay",
-        billing_cycle: cycle,
+        billing_cycle: effectiveCycle,
         provider_subscription_id: verifiedPaymentId,
         current_period_start: periodStart.toISOString(),
-        current_period_end: periodEnd(cycle).toISOString(),
+        current_period_end: periodEndTime.toISOString(),
         cancel_at_period_end: false,
         registrations_used: 0,
         updated_at: new Date().toISOString(),
@@ -464,27 +507,35 @@ export async function activatePaidSubscription(
   if (error) return { error: error.message };
 
   // Issue invoice for paid activation
-  if (verifiedPaymentId && planSlug !== "free") {
+  if (verifiedPaymentId && normalizedSlug !== "free") {
+    const invoiceDescription = isFounder
+      ? "URPASS Founder Lifetime Access (One-Time)"
+      : `${normalizedSlug.toUpperCase()} Plan (${effectiveCycle})`;
+
     void createInvoiceForPayment({
       userId: user.id,
       subscriptionId: updatedSub?.id ?? null,
       paymentId: verifiedPaymentId,
-      description: `${planSlug.toUpperCase()} Plan (${cycle})`,
+      description: invoiceDescription,
       baseAmountRupees: orderBasePaise / 100,
       discountRupees: orderDiscountPaise / 100,
       customerEmail: user.email,
       customerName: user.user_metadata?.full_name,
       billingPeriodStart: periodStart,
-      billingPeriodEnd: periodEnd(cycle),
+      billingPeriodEnd: periodEndTime,
     });
 
-    const itemName = `${planSlug.toUpperCase()} Plan (${cycle})`;
+    const planDisplayName = isFounder ? "Founder Lifetime Plan" : `${normalizedSlug.toUpperCase()} Plan`;
+    const itemName = isFounder
+      ? "URPASS Founder Lifetime Access (One-Time)"
+      : `${normalizedSlug.toUpperCase()} Plan (${effectiveCycle})`;
+
     void Promise.allSettled([
       notifyOwnerPaidSubscription({
         buyerName: user.user_metadata?.full_name,
         buyerEmail: user.email,
-        planName: `${planSlug.toUpperCase()} Plan`,
-        billingCycle: cycle,
+        planName: planDisplayName,
+        billingCycle: effectiveCycle,
         amountPaise: orderAmountPaise,
         paymentId: verifiedPaymentId,
         orderId: typeof payment === "object" ? payment.orderId : undefined,

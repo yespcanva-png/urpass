@@ -14,7 +14,7 @@ interface Props {
   onClose: () => void;
   planSlug: string;
   planName: string;
-  billingCycle: "monthly" | "annual";
+  billingCycle: "monthly" | "annual" | "lifetime";
   userEmail: string;
   userName: string;
   priceMonthly: number;
@@ -78,7 +78,8 @@ export default function CheckoutModal({
 
   if (!isOpen) return null;
 
-  const baseAmount = billingCycle === "annual" ? annualTotal : priceMonthly;
+  const isLifetime = billingCycle === "lifetime" || planSlug === "founder" || planSlug === "lifetime";
+  const baseAmount = isLifetime ? (annualTotal || priceMonthly || 19999) : billingCycle === "annual" ? annualTotal : priceMonthly;
   const baseGst    = Math.round(baseAmount * 18) / 100;
   const baseTotal  = Math.round((baseAmount + baseGst) * 100) / 100;
 
@@ -143,7 +144,7 @@ export default function CheckoutModal({
         amount: data.amount,
         currency: data.currency,
         name: "URPASS",
-        description: `${planName} — ${billingCycle}`,
+        description: isLifetime ? `${planName} — Lifetime Access` : `${planName} — ${billingCycle}`,
         order_id: data.orderId,
         prefill: { name: userName, email: userEmail },
         theme: { color: "#0a0a0a" },
@@ -187,7 +188,7 @@ export default function CheckoutModal({
               setPayError(result.error);
               return;
             }
-            router.push(`/billing?upgraded=true&plan=${encodeURIComponent(planName)}`);
+            router.push(isLifetime ? "/billing?upgraded=true&plan=Founder%20Lifetime" : `/billing?upgraded=true&plan=${encodeURIComponent(planName)}`);
           } catch (err) {
             setPayLoading(false);
             setPayError(err instanceof Error ? err.message : "Failed to activate subscription.");
@@ -222,7 +223,7 @@ export default function CheckoutModal({
               <h2 className="text-lg font-bold tracking-tight text-neutral-900">
                 {planName}
                 <span className="text-neutral-400 font-normal">
-                  {" "}— {billingCycle === "annual" ? "Annual" : "Monthly"}
+                  {" "}— {isLifetime ? "Lifetime Access" : billingCycle === "annual" ? "Annual" : "Monthly"}
                 </span>
               </h2>
             </div>
@@ -292,7 +293,7 @@ export default function CheckoutModal({
           <div className="bg-neutral-50 rounded-2xl p-4 flex flex-col gap-2.5 text-sm">
             <div className="flex items-center justify-between">
               <span className="text-neutral-600">
-                {planName} ({billingCycle === "annual" ? "12 months" : "1 month"})
+                {planName} ({isLifetime ? "Lifetime License · One-Time" : billingCycle === "annual" ? "12 months" : "1 month"})
               </span>
               <span className="font-medium text-neutral-900">₹{fmt(baseAmount)}</span>
             </div>
@@ -327,7 +328,11 @@ export default function CheckoutModal({
           </div>
 
           {/* Renewal disclosure */}
-          {coupon?.durationMonths ? (
+          {isLifetime ? (
+            <p className="text-[11px] text-emerald-600 font-medium text-center -mt-2">
+              One-time payment · Zero renewal fees · Valid for the lifetime of URPASS
+            </p>
+          ) : coupon?.durationMonths ? (
             <p className="text-[11px] text-neutral-400 text-center -mt-2">
               Renews at ₹{fmt(coupon.renewalTotalRupees)}/{billingCycle === "annual" ? "yr" : "mo"} after{" "}
               {coupon.durationMonths} month{coupon.durationMonths === 1 ? "" : "s"}.

@@ -23,6 +23,7 @@ import CancelButton from "@/components/billing/CancelButton";
 import PlanGrid from "@/components/billing/PlanGrid";
 import { getUserPlan } from "@/lib/plan";
 import UpgradeCelebration from "@/components/billing/UpgradeCelebration";
+import FounderCheckoutCta from "@/components/billing/FounderCheckoutCta";
 
 export const metadata: Metadata = {
   title: "Billing",
@@ -94,10 +95,27 @@ const PLANS = [
       "Cross-event analytics",
     ],
   },
+  {
+    slug: "founder",
+    name: "Founder Lifetime",
+    desc: "Permanent operational access.",
+    priceMonthly: 19999,
+    annualTotal: 19999,
+    features: [
+      "Unlimited events forever",
+      "Unlimited registrations forever",
+      "50 organizer seats",
+      "Custom pass design & branding",
+      "Advanced & cross-event analytics",
+      "Custom domain, API & webhooks",
+      "Priority founder support",
+      "Zero renewal fees forever",
+    ],
+  },
 ] as const;
 
 const PLAN_ORDER: Record<string, number> = {
-  free: 0, starter: 1, pro: 2, business: 3,
+  free: 0, starter: 1, pro: 2, business: 3, founder: 4, lifetime: 4,
 };
 
 interface SubPlan {
@@ -419,6 +437,8 @@ export default async function BillingPage() {
                 <p className="text-sm text-white/40">
                   {isTrial ? (
                     "30-Day Free Trial (₹0 today)"
+                  ) : currentPlanSlug === "founder" || currentPlanSlug === "lifetime" ? (
+                    "₹19,999 One-Time (Lifetime License)"
                   ) : currentPlan.priceMonthly === 0 ? (
                     "Free forever"
                   ) : billingCycle === "annual" ? (
@@ -430,6 +450,10 @@ export default async function BillingPage() {
                 {isTrial ? (
                   <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-brand/30 text-brand-200 border border-brand/50 tracking-wider">
                     FREE TRIAL
+                  </span>
+                ) : currentPlanSlug === "founder" || currentPlanSlug === "lifetime" ? (
+                  <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/30 tracking-wider">
+                    LIFETIME ACCESS
                   </span>
                 ) : billingCycle === "annual" && currentPlanSlug !== "free" ? (
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-brand/20 text-brand-200 border border-brand/30 tracking-wide">
@@ -444,6 +468,10 @@ export default async function BillingPage() {
                     : sub?.autopay_status === "active"
                     ? `First payment of ₹${Math.round(currentPlan.priceMonthly * 1.18).toLocaleString("en-IN")} scheduled for ${renewalDate}`
                     : `Free trial ends ${renewalDate} · No card on file (reverts to Free)`}
+                </p>
+              ) : currentPlanSlug === "founder" || currentPlanSlug === "lifetime" ? (
+                <p className="text-xs text-emerald-400/80 mt-0.5">
+                  Permanent operational license · No renewal payments required
                 </p>
               ) : currentPlanSlug !== "free" && renewalDate ? (
                 <p className="text-xs text-white/30 mt-0.5">
@@ -514,24 +542,47 @@ export default async function BillingPage() {
               <div className="space-y-2">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-amber-400/10 border border-amber-400/30 text-amber-300">
                   <Flame className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
-                  <span>FOUNDER DEAL · LIMITED TO 20 ACCOUNTS ONLY</span>
+                  <span>
+                    {currentPlanSlug === "founder" || currentPlanSlug === "lifetime"
+                      ? "FOUNDER STATUS ACTIVE"
+                      : "FOUNDER DEAL · LIMITED TO 20 ACCOUNTS ONLY"}
+                  </span>
                 </div>
                 <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
-                  URPASS Founder Lifetime Access — ₹19,999 One-Time
+                  {currentPlanSlug === "founder" || currentPlanSlug === "lifetime"
+                    ? "You are a URPASS Founding Organizer"
+                    : "URPASS Founder Lifetime Access — ₹19,999 One-Time"}
                 </h3>
                 <p className="text-xs sm:text-sm text-neutral-300 max-w-2xl leading-relaxed">
-                  Permanent access to all currently available URPASS features for a one-time payment. Zero renewal fees forever. Valid for the lifetime of URPASS platform.
+                  {currentPlanSlug === "founder" || currentPlanSlug === "lifetime"
+                    ? "Your account has permanent operational access to all core URPASS event creation, check-in, Ticket Studio, and scanner capabilities with zero recurring renewal fees."
+                    : "Permanent access to all currently available URPASS features for a one-time payment. Zero renewal fees forever. Valid for the lifetime of URPASS platform."}
                 </p>
               </div>
 
-              <div className="shrink-0 flex items-center">
-                <Link
-                  href="/founder-lifetime-deal"
-                  className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-brand to-purple-600 hover:from-brand-light hover:to-purple-500 text-white font-semibold text-xs sm:text-sm transition-all shadow-lg active:scale-95 text-center whitespace-nowrap"
-                >
-                  <span>Claim Lifetime Deal</span>
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
+              <div className="shrink-0 flex items-center gap-3">
+                {currentPlanSlug === "founder" || currentPlanSlug === "lifetime" ? (
+                  <span className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-semibold text-xs">
+                    <Check className="w-4 h-4 text-emerald-400" />
+                    Lifetime Active
+                  </span>
+                ) : (
+                  <>
+                    <FounderCheckoutCta
+                      isLoggedIn={true}
+                      userEmail={userEmail}
+                      userName={userName}
+                      variant="billing"
+                    />
+                    <Link
+                      href="/founder-lifetime-deal"
+                      className="inline-flex items-center justify-center gap-1.5 px-4 py-3 rounded-xl bg-white/10 hover:bg-white/15 text-white font-semibold text-xs transition-all border border-white/10"
+                    >
+                      <span>Details</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </Link>
+                  </>
+                )}
               </div>
             </div>
           </div>

@@ -120,4 +120,54 @@ describe("getUserPlan", () => {
     expect(plan.slug).toBe("free");
     expect(plan.canUse("custom_pass_design")).toBe(false);
   });
+
+  it("returns founder plan with unlimited events, registrations, and all top-tier features", async () => {
+    const mockSupabase = {
+      from: vi.fn().mockReturnThis(),
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      in: vi.fn().mockReturnThis(),
+      maybeSingle: vi.fn().mockResolvedValue({
+        data: {
+          status: "active",
+          is_trial: false,
+          trial_ends_at: null,
+          plan: { slug: "founder" },
+        },
+      }),
+    };
+
+    const plan = await getUserPlan(mockSupabase, "user-founder");
+    expect(plan.slug).toBe("founder");
+    expect(plan.canUse("custom_pass_design")).toBe(true);
+    expect(plan.canUse("remove_branding")).toBe(true);
+    expect(plan.canUse("api_access")).toBe(true);
+    expect(plan.canUse("webhooks")).toBe(true);
+    expect(plan.canUse("advanced_analytics")).toBe(true);
+    expect(plan.canUse("custom_domain")).toBe(true);
+    expect(plan.getLimit("events_per_month")).toBeGreaterThanOrEqual(999999);
+    expect(plan.getLimit("registrations_per_month")).toBeGreaterThanOrEqual(999999);
+    expect(plan.getLimit("organizer_seats")).toBe(50);
+  });
+
+  it("normalizes founder_lifetime slug to founder plan", async () => {
+    const mockSupabase = {
+      from: vi.fn().mockReturnThis(),
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      in: vi.fn().mockReturnThis(),
+      maybeSingle: vi.fn().mockResolvedValue({
+        data: {
+          status: "active",
+          is_trial: false,
+          trial_ends_at: null,
+          plan: { slug: "founder_lifetime" },
+        },
+      }),
+    };
+
+    const plan = await getUserPlan(mockSupabase, "user-lifetime");
+    expect(plan.slug).toBe("founder");
+    expect(plan.canUse("custom_pass_design")).toBe(true);
+  });
 });

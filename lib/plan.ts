@@ -1,7 +1,7 @@
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { getSupabaseUrl } from "@/lib/supabase/config";
 
-export type PlanSlug = "free" | "starter" | "pro" | "business" | "campus" | "enterprise";
+export type PlanSlug = "free" | "starter" | "pro" | "business" | "campus" | "enterprise" | "founder" | "lifetime";
 
 export type EntitlementKey =
   | "csv_import"
@@ -59,6 +59,40 @@ export const ENTITLEMENTS = {
     webhooks: true,
     advancedPermissions: true,
     crossEventAnalytics: true,
+  },
+  FOUNDER: {
+    eventsPerMonth: Infinity,
+    registrationsPerMonth: Infinity,
+    organizerSeats: 50,
+    customFields: Infinity,
+    customPassDesign: true,
+    removeBranding: true,
+    advancedAnalytics: true,
+    customDomain: true,
+    apiAccess: true,
+    webhooks: true,
+    advancedPermissions: true,
+    crossEventAnalytics: true,
+    prioritySupport: true,
+    csvImport: true,
+    csvExport: true,
+  },
+  LIFETIME: {
+    eventsPerMonth: Infinity,
+    registrationsPerMonth: Infinity,
+    organizerSeats: 50,
+    customFields: Infinity,
+    customPassDesign: true,
+    removeBranding: true,
+    advancedAnalytics: true,
+    customDomain: true,
+    apiAccess: true,
+    webhooks: true,
+    advancedPermissions: true,
+    crossEventAnalytics: true,
+    prioritySupport: true,
+    csvImport: true,
+    csvExport: true,
   },
 } as const;
 
@@ -200,6 +234,38 @@ const PLAN_CONFIGS: Record<PlanSlug, PlanConfig> = {
       "priority_support", "paid_events",
     ),
   },
+  founder: {
+    eventsPerMonth: UNLIMITED,
+    registrationsPerMonth: UNLIMITED,
+    organizerSeats: 50,
+    customFields: UNLIMITED,
+    entitlements: ent(
+      "csv_import", "csv_export",
+      "email_notifications_full",
+      "custom_fields_unlimited",
+      "custom_pass_design", "remove_branding",
+      "team_permissions_basic", "team_permissions_advanced",
+      "advanced_analytics", "cross_event_analytics",
+      "custom_domain", "api_access", "webhooks",
+      "priority_support", "paid_events",
+    ),
+  },
+  lifetime: {
+    eventsPerMonth: UNLIMITED,
+    registrationsPerMonth: UNLIMITED,
+    organizerSeats: 50,
+    customFields: UNLIMITED,
+    entitlements: ent(
+      "csv_import", "csv_export",
+      "email_notifications_full",
+      "custom_fields_unlimited",
+      "custom_pass_design", "remove_branding",
+      "team_permissions_basic", "team_permissions_advanced",
+      "advanced_analytics", "cross_event_analytics",
+      "custom_domain", "api_access", "webhooks",
+      "priority_support", "paid_events",
+    ),
+  },
 };
 
 export interface PlanLimits {
@@ -295,9 +361,16 @@ export async function getUserPlan(supabase: any, userId: string): Promise<PlanLi
     if (!s) return undefined;
     const planVal = s.plan as { slug?: string } | Array<{ slug?: string }> | undefined;
     const p = Array.isArray(planVal) ? planVal[0] : planVal;
-    if (p?.slug && (p.slug in PLAN_CONFIGS)) return p.slug as PlanSlug;
-    const trialPlan = s.trial_plan as string | undefined;
-    if (trialPlan && (trialPlan in PLAN_CONFIGS)) return trialPlan as PlanSlug;
+    const rawSlug = p?.slug?.toLowerCase();
+    if (rawSlug) {
+      if (rawSlug === "founder_lifetime") return "founder";
+      if (rawSlug in PLAN_CONFIGS) return rawSlug as PlanSlug;
+    }
+    const trialPlan = (s.trial_plan as string | undefined)?.toLowerCase();
+    if (trialPlan) {
+      if (trialPlan === "founder_lifetime") return "founder";
+      if (trialPlan in PLAN_CONFIGS) return trialPlan as PlanSlug;
+    }
     return undefined;
   }
 

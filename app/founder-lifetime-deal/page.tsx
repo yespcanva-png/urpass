@@ -3,6 +3,8 @@ import Link from "next/link";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 import AnimateIn from "@/components/ui/AnimateIn";
+import { createClient } from "@/lib/supabase/server";
+import FounderCheckoutCta from "@/components/billing/FounderCheckoutCta";
 import {
   Sparkles,
   CheckCircle2,
@@ -121,7 +123,13 @@ const faqs = [
   },
 ];
 
-export default function FounderLifetimeDealPage() {
+export default async function FounderLifetimeDealPage() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const isLoggedIn = Boolean(user);
+  const userEmail = user?.email ?? null;
+  const userName = user?.user_metadata?.full_name ?? user?.email?.split("@")[0] ?? null;
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@graph": [
@@ -224,13 +232,12 @@ export default function FounderLifetimeDealPage() {
                 </div>
 
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                  <Link
-                    href="/signup?plan=lifetime"
-                    className="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-2xl font-bold text-sm bg-gradient-to-r from-brand to-purple-600 hover:from-brand-light hover:to-purple-500 text-white shadow-[0_0_30px_rgba(124,58,237,0.4)] transition-all transform active:scale-95 text-center"
-                  >
-                    <span>Claim Founder Account</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </Link>
+                  <FounderCheckoutCta
+                    isLoggedIn={isLoggedIn}
+                    userEmail={userEmail}
+                    userName={userName}
+                    variant="gradient"
+                  />
 
                   <a
                     href="https://wa.me/919944621539?text=Hi%20Srinithin%2C%20I%20am%20interested%20in%20claiming%20one%20of%20the%2020%20URPASS%20Founder%20Lifetime%20Accounts%20(₹19%2C999)."
@@ -375,12 +382,12 @@ export default function FounderLifetimeDealPage() {
               </p>
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-                <Link
-                  href="/signup?plan=lifetime"
-                  className="w-full sm:w-auto px-8 py-3.5 rounded-2xl font-bold text-sm bg-white text-neutral-950 hover:bg-neutral-100 shadow-xl transition-all"
-                >
-                  Claim Lifetime Access — ₹19,999
-                </Link>
+                <FounderCheckoutCta
+                  isLoggedIn={isLoggedIn}
+                  userEmail={userEmail}
+                  userName={userName}
+                  variant="white"
+                />
                 <a
                   href="mailto:srinithin@yespstudio.com?subject=URPASS%20Founder%20Lifetime%20Plan%20Inquiry"
                   className="w-full sm:w-auto px-6 py-3.5 rounded-2xl font-semibold text-sm bg-white/10 hover:bg-white/15 text-white transition-all border border-white/15"
