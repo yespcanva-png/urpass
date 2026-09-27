@@ -52,6 +52,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/qr-event-tickets",
     "/event-ticket-booking-system",
     "/free-event-ticketing",
+    "/founder-lifetime-deal",
     // Expanded feature cluster
     "/event-management-software",
     "/event-check-in-software",
