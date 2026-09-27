@@ -64,11 +64,22 @@ export type Event = {
   organization_id: string | null;
   workspace_id?: string | null;
   location_id?: string | null;
+  institution_id?: string | null;
+  department_id?: string | null;
+  club_id?: string | null;
+  academic_year?: string | null;
+  approval_status?: import("./campus").CampusApprovalStatus;
+  rejection_reason?: string | null;
+  submitted_for_approval_at?: string | null;
+  reviewed_by?: string | null;
+  reviewed_at?: string | null;
   workspace?: Workspace;
   location?: Location;
   created_at: string;
   updated_at: string;
 };
+
+export * from "./campus";
 
 export type TicketOrderStatus = "created" | "paid" | "failed";
 
