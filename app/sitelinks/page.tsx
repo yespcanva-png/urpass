@@ -64,6 +64,7 @@ const sections: {
       { label: "Event Check-In Software", href: "/event-check-in-software" },
       { label: "Event Registration Platform", href: "/event-registration-platform" },
       { label: "Online Registration System", href: "/online-event-registration-system" },
+      { label: "Event Registration with UPI", href: "/event-registration-with-upi", badge: "0% Fee" },
       { label: "Multi-Gate Event Check-In", href: "/multi-gate-event-check-in", badge: "New" },
       { label: "Event Pass Management", href: "/event-pass-management-system" },
       { label: "Event Badge Generator", href: "/event-badge-generator" },

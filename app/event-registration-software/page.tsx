@@ -326,6 +326,11 @@ export default function EventRegistrationSoftwarePage() {
             category: "Product",
           },
           {
+            title: "Event Registration with UPI",
+            href: "/event-registration-with-upi",
+            category: "Product",
+          },
+          {
             title: "Event Registration in India (UPI & INR)",
             href: "/in",
             category: "Location",

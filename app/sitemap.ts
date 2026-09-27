@@ -49,6 +49,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/offline-qr-event-check-in",
     "/how-qr-ticket-validation-works",
     "/event-ticketing-with-upi",
+    "/event-registration-with-upi",
     "/event-ticket-payment-gateway",
     "/online-event-ticketing",
     "/qr-event-tickets",
