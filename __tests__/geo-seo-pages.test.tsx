@@ -62,3 +62,30 @@ describe("GEO SEO Pages - Indore", () => {
     expect(indoreLink).not.toBeNull();
   });
 });
+
+describe("GEO SEO Pages - Bhopal", () => {
+  it("has correct SEO metadata for Bhopal", async () => {
+    const { metadata } = await import("@/app/in/bhopal/page");
+    expect(metadata.title).toContain("Bhopal");
+    expect(metadata.alternates?.canonical).toBe("https://urpass.space/in/bhopal");
+    expect(metadata.other?.["geo.region"]).toBe("IN-MP");
+    expect(metadata.other?.["geo.placename"]).toContain("Bhopal");
+  });
+
+  it("renders Bhopal GEO page content and local venues", async () => {
+    const { default: BhopalPage } = await import("@/app/in/bhopal/page");
+    render(<BhopalPage />);
+
+    expect(screen.getByRole("heading", { level: 1, name: /Event Registration & QR Check-In for Bhopal Events/i })).toBeInTheDocument();
+    expect(screen.getByText(/URPASS · BHOPAL & MP/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Kushabhau Thakre/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/MANIT/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/AIIMS Bhopal/i)[0]).toBeInTheDocument();
+  });
+
+  it("India Hub links to Bhopal GEO page", () => {
+    render(<IndiaPage />);
+    const bhopalLink = document.querySelector('a[href="/in/bhopal"]');
+    expect(bhopalLink).not.toBeNull();
+  });
+});
