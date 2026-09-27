@@ -5,6 +5,8 @@ import Footer from "@/components/landing/Footer";
 import AnimateIn from "@/components/ui/AnimateIn";
 import { createClient } from "@/lib/supabase/server";
 import FounderCheckoutCta from "@/components/billing/FounderCheckoutCta";
+import FounderSpotCounter from "@/components/billing/FounderSpotCounter";
+import QuickConsultationWidget from "@/components/consultation/QuickConsultationWidget";
 import {
   Sparkles,
   CheckCircle2,
@@ -109,8 +111,8 @@ const includedFeatures = [
   },
   {
     icon: Globe,
-    title: "Custom Domain & REST API Access",
-    desc: "Brand passes under your custom subdomain, generate passes via REST APIs, and receive real-time check-in webhooks.",
+    title: "Branded Event Landing Pages on urpass.space",
+    desc: "Host dedicated event registration landing pages at urpass.space/apply/[your-event] or your custom domain, with Ticket Studio, zero commissions, and lifetime feature lock.",
   },
 ];
 
@@ -228,6 +230,18 @@ export default async function FounderLifetimeDealPage() {
                 Get full access to all <strong className="text-white">currently available URPASS features</strong> for a single one-time payment of{" "}
                 <span className="text-amber-300 font-bold">₹19,999</span>. Never pay a monthly or annual subscription fee again.
               </p>
+            </div>
+          </AnimateIn>
+
+          {/* Live Founder Spot Allocation Counter */}
+          <AnimateIn delay={75}>
+            <div className="max-w-2xl mx-auto mb-10">
+              <FounderSpotCounter
+                claimedCount={14}
+                totalCount={20}
+                variant="gradient"
+                showFeaturesLock={true}
+              />
             </div>
           </AnimateIn>
 
@@ -403,6 +417,15 @@ export default async function FounderLifetimeDealPage() {
                 Join our exclusive founding organizer cohort. Claim your spot before the 20-account allocation is exhausted.
               </p>
 
+              <div className="max-w-md mx-auto mb-6">
+                <FounderSpotCounter
+                  claimedCount={14}
+                  totalCount={20}
+                  variant="dark"
+                  showFeaturesLock={false}
+                />
+              </div>
+
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                 <FounderCheckoutCta
                   isLoggedIn={isLoggedIn}
@@ -429,6 +452,8 @@ export default async function FounderLifetimeDealPage() {
             </div>
           </AnimateIn>
         </div>
+
+        <QuickConsultationWidget claimedCount={14} totalCount={20} />
       </main>
 
       <Footer />

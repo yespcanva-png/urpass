@@ -24,6 +24,8 @@ import PlanGrid from "@/components/billing/PlanGrid";
 import { getUserPlan } from "@/lib/plan";
 import UpgradeCelebration from "@/components/billing/UpgradeCelebration";
 import FounderCheckoutCta from "@/components/billing/FounderCheckoutCta";
+import FounderSpotCounter from "@/components/billing/FounderSpotCounter";
+import QuickConsultationWidget from "@/components/consultation/QuickConsultationWidget";
 
 export const metadata: Metadata = {
   title: "Billing",
@@ -564,8 +566,19 @@ export default async function BillingPage() {
                 <p className="text-xs sm:text-sm text-neutral-300 max-w-2xl leading-relaxed">
                   {currentPlanSlug === "founder" || currentPlanSlug === "lifetime"
                     ? "Your account has permanent operational access to all core URPASS event creation, check-in, Ticket Studio, and scanner capabilities with zero recurring renewal fees."
-                    : "Permanent access to all currently available URPASS features for a one-time payment. Zero renewal fees forever. Valid for the lifetime of URPASS platform."}
+                    : "Permanent access to all currently available URPASS features for a one-time payment. Create your own event landing page on urpass.space and lock in all features for lifetime (Term 2125)."}
                 </p>
+
+                {!(currentPlanSlug === "founder" || currentPlanSlug === "lifetime") && (
+                  <div className="pt-2 max-w-lg">
+                    <FounderSpotCounter
+                      claimedCount={14}
+                      totalCount={20}
+                      variant="compact"
+                      showFeaturesLock={true}
+                    />
+                  </div>
+                )}
               </div>
 
               <div className="shrink-0 flex items-center gap-3">
@@ -657,6 +670,8 @@ export default async function BillingPage() {
           )}
         </div>
       </div>
+
+      <QuickConsultationWidget claimedCount={14} totalCount={20} />
     </div>
   );
 }

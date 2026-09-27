@@ -4,6 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { Check, Minus, ChevronDown, Sparkles, Flame, ArrowRight } from "lucide-react";
 import TrialConfirmationModal from "@/components/billing/TrialConfirmationModal";
+import FounderSpotCounter from "@/components/billing/FounderSpotCounter";
+import QuickConsultationWidget from "@/components/consultation/QuickConsultationWidget";
 
 type Cycle = "monthly" | "annual";
 
@@ -332,8 +334,17 @@ export default function PricingContent({
                   URPASS Founder Lifetime Access — ₹19,999 One-Time
                 </h3>
                 <p className="text-xs sm:text-sm text-neutral-300 max-w-2xl leading-relaxed">
-                  Get permanent access to all currently available URPASS features for a one-time payment. Zero renewal fees forever. Valid for the lifetime of URPASS platform.
+                  Get permanent access to all currently available URPASS features for a one-time payment. Create event landing pages on urpass.space and lock in all features for lifetime (Term 2125).
                 </p>
+
+                <div className="pt-2 max-w-lg">
+                  <FounderSpotCounter
+                    claimedCount={14}
+                    totalCount={20}
+                    variant="compact"
+                    showFeaturesLock={true}
+                  />
+                </div>
               </div>
 
               <div className="shrink-0 flex flex-col sm:flex-row gap-3">
@@ -620,6 +631,8 @@ export default function PricingContent({
         />
       )}
 
+      {/* ── Quick Consultation Floating Widget ── */}
+      <QuickConsultationWidget claimedCount={14} totalCount={20} />
     </div>
   );
 }
