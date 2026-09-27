@@ -104,6 +104,7 @@ export default function Page() {
         ],
         relatedLinks: [
           { title: "Event Ticket Scanner Software", href: "/event-ticket-scanner", category: "Product" },
+          { title: "Offline QR Event Check-In", href: "/offline-qr-event-check-in", category: "Product" },
           { title: "Multi-Gate Event Check-In", href: "/multi-gate-event-check-in", category: "Product" },
           { title: "QR Event Check-In App", href: "/qr-event-check-in", category: "Product" },
           { title: "Event Access Control", href: "/event-access-control", category: "Product" },
