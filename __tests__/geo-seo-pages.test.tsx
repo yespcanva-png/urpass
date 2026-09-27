@@ -117,3 +117,31 @@ describe("GEO SEO Pages - Visakhapatnam", () => {
   });
 });
 
+describe("GEO SEO Pages - Nagpur", () => {
+  it("has correct SEO metadata for Nagpur", async () => {
+    const { metadata } = await import("@/app/in/nagpur/page");
+    expect(metadata.title).toContain("Nagpur");
+    expect(metadata.alternates?.canonical).toBe("https://urpass.space/in/nagpur");
+    expect(metadata.other?.["geo.region"]).toBe("IN-MH");
+    expect(metadata.other?.["geo.placename"]).toContain("Nagpur");
+  });
+
+  it("renders Nagpur GEO page content and local venues", async () => {
+    const { default: NagpurPage } = await import("@/app/in/nagpur/page");
+    render(<NagpurPage />);
+
+    expect(screen.getByRole("heading", { level: 1, name: /Event Registration & QR Check-In for Nagpur Events/i })).toBeInTheDocument();
+    expect(screen.getByText(/URPASS · NAGPUR & VIDARBHA/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/VNIT Nagpur/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/IIM Nagpur/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/Suresh Bhat Natyagruha/i)[0]).toBeInTheDocument();
+  });
+
+  it("India Hub links to Nagpur GEO page", () => {
+    render(<IndiaPage />);
+    const nagpurLink = document.querySelector('a[href="/in/nagpur"]');
+    expect(nagpurLink).not.toBeNull();
+  });
+});
+
+

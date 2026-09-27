@@ -368,6 +368,11 @@ export default function IndiaPage() {
             category: "Location",
           },
           {
+            title: "Event Registration Nagpur",
+            href: "/in/nagpur",
+            category: "Location",
+          },
+          {
             title: "Enterprise SSO Event Ticketing",
             href: "/enterprise-sso-event-ticketing",
             category: "Product",
