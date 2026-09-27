@@ -1,6 +1,7 @@
 import Sidebar from "@/components/dashboard/Sidebar";
 import MobileNav from "@/components/dashboard/MobileNav";
 import NotificationBell from "@/components/notifications/NotificationBell";
+import type { CampusContext } from "@/types";
 
 export interface OrgContext {
   slug: string;
@@ -15,13 +16,14 @@ interface Props {
   planSlug?: string;
   orgs?: OrgContext[];
   activeOrgSlug?: string;
+  campusContext?: CampusContext | null;
   children: React.ReactNode;
 }
 
-export default function AppShell({ fullName, email, planSlug, children }: Props) {
+export default function AppShell({ fullName, email, planSlug, campusContext, children }: Props) {
   return (
     <div className="flex h-screen overflow-hidden" style={{ background: "#0e0c16" }}>
-      <Sidebar fullName={fullName} email={email} planSlug={planSlug} />
+      <Sidebar fullName={fullName} email={email} planSlug={planSlug} campusContext={campusContext} />
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden" style={{ background: "#f5f4fa" }}>
         {/* ── Notification Icon on top (no navbar) ─────────────────────────── */}

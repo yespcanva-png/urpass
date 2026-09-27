@@ -168,3 +168,12 @@ export interface CampusAnalyticsFilter {
   startDate?: string;
   endDate?: string;
 }
+
+export interface CampusContext {
+  institutionId: string;
+  institutionName: string;
+  institutionCode: string;
+  role: CampusRole;
+  departmentId?: string | null;
+  clubId?: string | null;
+}

@@ -19,7 +19,15 @@ import {
   ChevronRight,
   Building2,
   BarChart3,
+  GraduationCap,
+  CalendarDays,
+  Building,
+  Users,
+  BookOpen,
+  ShieldCheck,
+  SlidersHorizontal,
 } from "lucide-react";
+import type { CampusContext, CampusRole } from "@/types";
 
 const mainNav = [
   { label: "Dashboard", href: "/dashboard",        icon: LayoutDashboard, exact: true },
@@ -28,12 +36,34 @@ const mainNav = [
   { label: "Scanner",   href: "/scan",              icon: ScanLine,        exact: false },
 ];
 
+const campusNav: {
+  label: string;
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+  exact?: boolean;
+  roles: CampusRole[];
+}[] = [
+  { label: "Overview", href: "/dashboard/campus", icon: GraduationCap, exact: true, roles: ["INSTITUTION_ADMIN", "DEPARTMENT_ADMIN", "CLUB_ADMIN", "ORGANIZER", "SCANNER"] },
+  { label: "Events", href: "/dashboard/campus/events", icon: CalendarDays, exact: false, roles: ["INSTITUTION_ADMIN", "DEPARTMENT_ADMIN", "CLUB_ADMIN", "ORGANIZER", "SCANNER"] },
+  { label: "Departments", href: "/dashboard/campus/departments", icon: Building, exact: false, roles: ["INSTITUTION_ADMIN", "DEPARTMENT_ADMIN"] },
+  { label: "Clubs", href: "/dashboard/campus/clubs", icon: Users, exact: false, roles: ["INSTITUTION_ADMIN", "DEPARTMENT_ADMIN", "CLUB_ADMIN"] },
+  { label: "Students", href: "/dashboard/campus/students", icon: BookOpen, exact: false, roles: ["INSTITUTION_ADMIN", "DEPARTMENT_ADMIN", "CLUB_ADMIN"] },
+  { label: "Analytics", href: "/dashboard/campus/analytics", icon: BarChart3, exact: false, roles: ["INSTITUTION_ADMIN", "DEPARTMENT_ADMIN"] },
+  { label: "Team", href: "/dashboard/campus/team", icon: ShieldCheck, exact: false, roles: ["INSTITUTION_ADMIN", "DEPARTMENT_ADMIN", "CLUB_ADMIN"] },
+  { label: "Settings", href: "/dashboard/campus/settings", icon: SlidersHorizontal, exact: false, roles: ["INSTITUTION_ADMIN"] },
+];
+
 const bottomNav = [
   { label: "Billing",  href: "/billing",            icon: CreditCard },
   { label: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 
-type Props = { email: string; fullName: string; planSlug?: string };
+type Props = {
+  email: string;
+  fullName: string;
+  planSlug?: string;
+  campusContext?: CampusContext | null;
+};
 
 function NavLink({ href, icon: Icon, label, active }: {
   href: string; icon: React.ComponentType<{ className?: string }>;
@@ -64,7 +94,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
-export default function Sidebar({ email, fullName, planSlug }: Props) {
+export default function Sidebar({ email, fullName, planSlug, campusContext }: Props) {
   const pathname = usePathname();
   const router = useRouter();
 
@@ -99,10 +129,10 @@ export default function Sidebar({ email, fullName, planSlug }: Props) {
         style={{ background: "radial-gradient(ellipse 80% 60% at 50% 0%, rgba(109,40,217,0.18) 0%, transparent 100%)" }}
       />
 
-      <div className="relative flex flex-col h-full px-3 py-5 gap-5">
+      <div className="relative flex flex-col h-full px-3 py-5 gap-5 overflow-hidden">
 
         {/* ── Logo ──────────────────────────────────────────────── */}
-        <Link href="/dashboard" className="flex items-center gap-2.5 px-2 py-1 mb-1">
+        <Link href="/dashboard" className="flex items-center gap-2.5 px-2 py-1 mb-1 shrink-0">
           <div className="relative shrink-0">
             <div
               className="w-8 h-8 rounded-xl flex items-center justify-center shadow-lg"
@@ -131,69 +161,98 @@ export default function Sidebar({ email, fullName, planSlug }: Props) {
           </div>
         </Link>
 
-        {/* ── Main nav ──────────────────────────────────────────── */}
-        <nav className="flex flex-col gap-0.5">
-          <SectionLabel>Main</SectionLabel>
-          {mainNav.map(({ label, href, icon, exact }) => (
-            <NavLink key={href} href={href} icon={icon} label={label} exact={exact} active={isActive(href, exact)} />
-          ))}
-        </nav>
-
-        {/* ── Organizations (Starter+) ──────────────────────────── */}
-        {planSlug && planSlug !== "free" && (
+        {/* ── Scrollable middle section ─────────────────────────── */}
+        <div className="flex-1 overflow-y-auto min-h-0 flex flex-col gap-5 pr-1 -mr-1">
+          {/* ── Main nav ──────────────────────────────────────────── */}
           <nav className="flex flex-col gap-0.5">
-            <SectionLabel>Teams</SectionLabel>
-            <NavLink href="/dashboard/organizations" icon={Building2} label="Organizations" active={isActive("/dashboard/organizations") || isActive("/org")} />
+            <SectionLabel>Main</SectionLabel>
+            {mainNav.map(({ label, href, icon, exact }) => (
+              <NavLink key={href} href={href} icon={icon} label={label} exact={exact} active={isActive(href, exact)} />
+            ))}
           </nav>
-        )}
 
-        {/* ── Tools nav ─────────────────────────────────────────── */}
-        <nav className="flex flex-col gap-0.5">
-          <SectionLabel>Tools</SectionLabel>
-          <NavLink href="/dashboard/branding" icon={Palette} label="Branding" active={isActive("/dashboard/branding")} />
-          <NavLink
-            href="/studio"
-            icon={Ticket}
-            label="Ticket Studio"
-            active={isActive("/studio") || isActive("/dashboard/ticket-design") || isActive("/dashboard/pass-design")}
-          />
-          {planSlug && ["pro", "business", "campus", "enterprise"].includes(planSlug) && (
-            <NavLink href="/dashboard/api-keys" icon={Key} label="API Keys" active={isActive("/dashboard/api-keys")} />
+          {/* ── Campus (Academic Multi-Tenant) ────────────────────── */}
+          {campusContext && (
+            <nav className="flex flex-col gap-0.5" aria-label="Campus navigation">
+              <div className="flex items-center justify-between px-3 mb-1">
+                <p className="text-[9px] font-bold tracking-widest uppercase text-white/25">
+                  Campus
+                </p>
+                <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-brand/20 text-brand-300 border border-brand/30">
+                  {campusContext.institutionCode}
+                </span>
+              </div>
+              {campusNav
+                .filter((item) => item.roles.includes(campusContext.role))
+                .map(({ label, href, icon, exact }) => (
+                  <NavLink
+                    key={href}
+                    href={href}
+                    icon={icon}
+                    label={label}
+                    exact={exact}
+                    active={isActive(href, exact)}
+                  />
+                ))}
+            </nav>
           )}
-        </nav>
 
-        {/* ── Spacer ────────────────────────────────────────────── */}
-        <div className="flex-1" />
+          {/* ── Organizations (Starter+) ──────────────────────────── */}
+          {planSlug && planSlug !== "free" && (
+            <nav className="flex flex-col gap-0.5">
+              <SectionLabel>Teams</SectionLabel>
+              <NavLink href="/dashboard/organizations" icon={Building2} label="Organizations" active={isActive("/dashboard/organizations") || isActive("/org")} />
+            </nav>
+          )}
 
-        {/* ── Upgrade CTA (free only) ───────────────────────────── */}
-        {(!planSlug || planSlug === "free") && (
-          <Link
-            href="/billing"
-            className="relative overflow-hidden flex items-center gap-3 px-4 py-3.5 rounded-2xl transition-opacity hover:opacity-90"
-            style={{ background: "linear-gradient(135deg, rgba(109,40,217,0.5), rgba(76,29,149,0.5))" }}
-          >
-            <div className="absolute inset-0 border border-white/10 rounded-2xl pointer-events-none" />
-            <div className="w-7 h-7 bg-white/15 rounded-lg flex items-center justify-center shrink-0">
-              <Zap className="w-3.5 h-3.5 text-yellow-300" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-bold text-white leading-none">Upgrade plan</p>
-              <p className="text-[10px] text-white/50 mt-0.5 leading-none">Unlock more features</p>
-            </div>
-            <ChevronRight className="w-3.5 h-3.5 text-white/30 shrink-0" />
-          </Link>
-        )}
+          {/* ── Tools nav ─────────────────────────────────────────── */}
+          <nav className="flex flex-col gap-0.5">
+            <SectionLabel>Tools</SectionLabel>
+            <NavLink href="/dashboard/branding" icon={Palette} label="Branding" active={isActive("/dashboard/branding")} />
+            <NavLink
+              href="/studio"
+              icon={Ticket}
+              label="Ticket Studio"
+              active={isActive("/studio") || isActive("/dashboard/ticket-design") || isActive("/dashboard/pass-design")}
+            />
+            {planSlug && ["pro", "business", "campus", "enterprise"].includes(planSlug) && (
+              <NavLink href="/dashboard/api-keys" icon={Key} label="API Keys" active={isActive("/dashboard/api-keys")} />
+            )}
+          </nav>
 
-        {/* ── Account nav ───────────────────────────────────────── */}
-        <nav className="flex flex-col gap-0.5">
-          <SectionLabel>Account</SectionLabel>
-          {bottomNav.map(({ label, href, icon }) => (
-            <NavLink key={href} href={href} icon={icon} label={label} active={isActive(href)} />
-          ))}
-        </nav>
+          {/* ── Spacer ────────────────────────────────────────────── */}
+          <div className="flex-1" />
+
+          {/* ── Upgrade CTA (free only) ───────────────────────────── */}
+          {(!planSlug || planSlug === "free") && (
+            <Link
+              href="/billing"
+              className="relative overflow-hidden flex items-center gap-3 px-4 py-3.5 rounded-2xl transition-opacity hover:opacity-90"
+              style={{ background: "linear-gradient(135deg, rgba(109,40,217,0.5), rgba(76,29,149,0.5))" }}
+            >
+              <div className="absolute inset-0 border border-white/10 rounded-2xl pointer-events-none" />
+              <div className="w-7 h-7 bg-white/15 rounded-lg flex items-center justify-center shrink-0">
+                <Zap className="w-3.5 h-3.5 text-yellow-300" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-bold text-white leading-none">Upgrade plan</p>
+                <p className="text-[10px] text-white/50 mt-0.5 leading-none">Unlock more features</p>
+              </div>
+              <ChevronRight className="w-3.5 h-3.5 text-white/30 shrink-0" />
+            </Link>
+          )}
+
+          {/* ── Account nav ───────────────────────────────────────── */}
+          <nav className="flex flex-col gap-0.5">
+            <SectionLabel>Account</SectionLabel>
+            {bottomNav.map(({ label, href, icon }) => (
+              <NavLink key={href} href={href} icon={icon} label={label} active={isActive(href)} />
+            ))}
+          </nav>
+        </div>
 
         {/* ── User row ──────────────────────────────────────────── */}
-        <div className="border-t border-white/8 pt-4">
+        <div className="border-t border-white/8 pt-4 shrink-0">
           <div className="flex items-center gap-2.5 px-2 py-2 rounded-xl hover:bg-white/6 transition-colors group cursor-default">
             <div
               className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-[11px] font-bold text-white ring-2 ring-white/10"
