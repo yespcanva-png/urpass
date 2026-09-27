@@ -393,6 +393,11 @@ export default function IndiaPage() {
             category: "Location",
           },
           {
+            title: "Event Registration Trivandrum",
+            href: "/in/trivandrum",
+            category: "Location",
+          },
+          {
             title: "Enterprise SSO Event Ticketing",
             href: "/enterprise-sso-event-ticketing",
             category: "Product",

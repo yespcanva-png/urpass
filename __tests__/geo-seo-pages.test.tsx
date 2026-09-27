@@ -252,6 +252,34 @@ describe("GEO SEO Pages - Vadodara", () => {
   });
 });
 
+describe("GEO SEO Pages - Trivandrum", () => {
+  it("has correct SEO metadata for Trivandrum", async () => {
+    const { metadata } = await import("@/app/in/trivandrum/page");
+    expect(metadata.title).toContain("Trivandrum");
+    expect(metadata.alternates?.canonical).toBe("https://urpass.space/in/trivandrum");
+    expect(metadata.other?.["geo.region"]).toBe("IN-KL");
+    expect(metadata.other?.["geo.placename"]).toContain("Thiruvananthapuram");
+  });
+
+  it("renders Trivandrum GEO page content and local venues", async () => {
+    const { default: TrivandrumPage } = await import("@/app/in/trivandrum/page");
+    render(<TrivandrumPage />);
+
+    expect(screen.getByRole("heading", { level: 1, name: /Event Registration & QR Check-In for Trivandrum Events/i })).toBeInTheDocument();
+    expect(screen.getByText(/URPASS · TRIVANDRUM & KERALA/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Technopark/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/CET Trivandrum/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/Tagore Theatre/i)[0]).toBeInTheDocument();
+  });
+
+  it("India Hub links to Trivandrum GEO page", () => {
+    render(<IndiaPage />);
+    const trivandrumLink = document.querySelector('a[href="/in/trivandrum"]');
+    expect(trivandrumLink).not.toBeNull();
+  });
+});
+
+
 
 
 
