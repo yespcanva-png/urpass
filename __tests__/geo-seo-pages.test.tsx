@@ -144,4 +144,32 @@ describe("GEO SEO Pages - Nagpur", () => {
   });
 });
 
+describe("GEO SEO Pages - Bhubaneswar", () => {
+  it("has correct SEO metadata for Bhubaneswar", async () => {
+    const { metadata } = await import("@/app/in/bhubaneswar/page");
+    expect(metadata.title).toContain("Bhubaneswar");
+    expect(metadata.alternates?.canonical).toBe("https://urpass.space/in/bhubaneswar");
+    expect(metadata.other?.["geo.region"]).toBe("IN-OR");
+    expect(metadata.other?.["geo.placename"]).toContain("Bhubaneswar");
+  });
+
+  it("renders Bhubaneswar GEO page content and local venues", async () => {
+    const { default: BhubaneswarPage } = await import("@/app/in/bhubaneswar/page");
+    render(<BhubaneswarPage />);
+
+    expect(screen.getByRole("heading", { level: 1, name: /Event Registration & QR Check-In for Bhubaneswar Events/i })).toBeInTheDocument();
+    expect(screen.getByText(/URPASS · BHUBANESWAR & ODISHA/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/KIIT Fest/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/IIT Bhubaneswar/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/Janata Maidan/i)[0]).toBeInTheDocument();
+  });
+
+  it("India Hub links to Bhubaneswar GEO page", () => {
+    render(<IndiaPage />);
+    const bhubaneswarLink = document.querySelector('a[href="/in/bhubaneswar"]');
+    expect(bhubaneswarLink).not.toBeNull();
+  });
+});
+
+
 

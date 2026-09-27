@@ -373,6 +373,11 @@ export default function IndiaPage() {
             category: "Location",
           },
           {
+            title: "Event Registration Bhubaneswar",
+            href: "/in/bhubaneswar",
+            category: "Location",
+          },
+          {
             title: "Enterprise SSO Event Ticketing",
             href: "/enterprise-sso-event-ticketing",
             category: "Product",
