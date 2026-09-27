@@ -170,4 +170,106 @@ describe("getUserPlan", () => {
     expect(plan.slug).toBe("founder");
     expect(plan.canUse("custom_pass_design")).toBe(true);
   });
+
+  describe("Lifetime Subscription Continuity & Fallback", () => {
+    it("returns upgraded plan when lifetime user has an active upgraded subscription", async () => {
+      const futureDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+      const mockSupabase = {
+        from: vi.fn().mockReturnThis(),
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        in: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({
+          data: {
+            status: "active",
+            is_trial: false,
+            current_period_end: futureDate,
+            has_lifetime_access: true,
+            lifetime_plan_slug: "founder",
+            plan: { slug: "business" },
+          },
+        }),
+      };
+
+      const plan = await getUserPlan(mockSupabase, "user-lifetime-upgraded");
+      expect(plan.slug).toBe("business");
+      expect(plan.canUse("custom_pass_design")).toBe(true);
+      expect(plan.canUse("api_access")).toBe(true);
+    });
+
+    it("reverts to founder lifetime plan when upgraded subscription expires (instead of free)", async () => {
+      const pastDate = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString();
+      const mockSupabase = {
+        from: vi.fn().mockReturnThis(),
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        in: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({
+          data: {
+            status: "active",
+            is_trial: false,
+            current_period_end: pastDate,
+            has_lifetime_access: true,
+            lifetime_plan_slug: "founder",
+            plan: { slug: "business" },
+          },
+        }),
+      };
+
+      const plan = await getUserPlan(mockSupabase, "user-lifetime-expired-upgrade");
+      expect(plan.slug).toBe("founder");
+      expect(plan.canUse("custom_pass_design")).toBe(true);
+      expect(plan.canUse("remove_branding")).toBe(true);
+      expect(plan.canUse("api_access")).toBe(true);
+      expect(plan.getLimit("organizer_seats")).toBe(50);
+    });
+
+    it("reverts to founder lifetime plan when upgraded subscription is cancelled", async () => {
+      const mockSupabase = {
+        from: vi.fn().mockReturnThis(),
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        in: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({
+          data: {
+            status: "cancelled",
+            is_trial: false,
+            has_lifetime_access: true,
+            lifetime_plan_slug: "founder",
+            plan: { slug: "business" },
+          },
+        }),
+      };
+
+      const plan = await getUserPlan(mockSupabase, "user-lifetime-cancelled-upgrade");
+      expect(plan.slug).toBe("founder");
+      expect(plan.canUse("custom_pass_design")).toBe(true);
+    });
+
+    it("reverts to founder lifetime plan when upgraded trial expires", async () => {
+      const pastDate = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString();
+      const mockSupabase = {
+        from: vi.fn().mockReturnThis(),
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        in: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({
+          data: {
+            status: "trialing",
+            is_trial: true,
+            trial_plan: "pro",
+            trial_ends_at: pastDate,
+            has_lifetime_access: true,
+            lifetime_plan_slug: "founder",
+            plan: null,
+          },
+        }),
+      };
+
+      const plan = await getUserPlan(mockSupabase, "user-lifetime-expired-trial");
+      expect(plan.slug).toBe("founder");
+      expect(plan.canUse("custom_pass_design")).toBe(true);
+      expect(plan.canUse("webhooks")).toBe(true);
+    });
+  });
 });

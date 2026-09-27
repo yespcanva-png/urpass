@@ -67,6 +67,55 @@ export async function cancelSubscription(): Promise<ActionResult> {
   revalidateBillingPaths();
 }
 
+export async function revertToLifetimePlan(): Promise<ActionResult> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const admin = adminClient();
+  const { data: existingSub } = await admin
+    .from("subscriptions")
+    .select("has_lifetime_access, lifetime_plan_slug")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (!existingSub?.has_lifetime_access) {
+    return { error: "No lifetime plan associated with this account." };
+  }
+
+  const lifetimeSlug = existingSub.lifetime_plan_slug || "founder";
+  const { data: founderPlan } = await admin
+    .from("plans")
+    .select("id, slug")
+    .eq("slug", lifetimeSlug)
+    .maybeSingle();
+
+  if (!founderPlan) {
+    return { error: "Lifetime plan definition not found." };
+  }
+
+  const { error } = await admin
+    .from("subscriptions")
+    .upsert(
+      {
+        user_id: user.id,
+        plan_id: founderPlan.id,
+        status: "active",
+        provider: "razorpay",
+        billing_cycle: "lifetime",
+        current_period_end: "2125-01-01T00:00:00.000Z",
+        cancel_at_period_end: false,
+        has_lifetime_access: true,
+        lifetime_plan_slug: lifetimeSlug,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "user_id" }
+    );
+
+  if (error) return { error: error.message };
+  revalidateBillingPaths();
+}
+
 export async function activateFreeTrial(planSlug: string): Promise<ActionResult> {
   if (!planSlug || !["starter", "pro", "business"].includes(planSlug)) {
     return { error: "Free trial is only available on Starter, Pro, or Business plans." };
@@ -78,10 +127,10 @@ export async function activateFreeTrial(planSlug: string): Promise<ActionResult>
 
   const admin = adminClient();
 
-  // Check if trial has already been used
+  // Check if trial has already been used and preserve lifetime status
   const { data: existingSub } = await admin
     .from("subscriptions")
-    .select("id, trial_used")
+    .select("id, trial_used, has_lifetime_access, lifetime_plan_slug")
     .eq("user_id", user.id)
     .maybeSingle();
 
@@ -119,6 +168,8 @@ export async function activateFreeTrial(planSlug: string): Promise<ActionResult>
       trial_ends_at: trialEndsAt.toISOString(),
       autopay_mandate_id: null,
       autopay_status: "none",
+      has_lifetime_access: existingSub?.has_lifetime_access ?? false,
+      lifetime_plan_slug: existingSub?.lifetime_plan_slug ?? null,
       reminded_7_days: false,
       reminded_3_days: false,
       reminded_1_day: false,
@@ -190,10 +241,10 @@ export async function activateTrialSubscription(
 
   const admin = adminClient();
 
-  // Check if trial has already been used
+  // Check if trial has already been used and preserve lifetime status
   const { data: existingSub } = await admin
     .from("subscriptions")
-    .select("id, trial_used")
+    .select("id, trial_used, has_lifetime_access, lifetime_plan_slug")
     .eq("user_id", user.id)
     .maybeSingle();
 
@@ -253,6 +304,8 @@ export async function activateTrialSubscription(
       trial_ends_at: trialEndsAt.toISOString(),
       autopay_mandate_id: mandateId,
       autopay_status: "active",
+      has_lifetime_access: existingSub?.has_lifetime_access ?? false,
+      lifetime_plan_slug: existingSub?.lifetime_plan_slug ?? null,
       reminded_7_days: false,
       reminded_3_days: false,
       reminded_1_day: false,
@@ -315,6 +368,17 @@ export async function switchPlan(
   if (!user) redirect("/login");
 
   const admin = adminClient();
+  const { data: existingSub } = await admin
+    .from("subscriptions")
+    .select("id, has_lifetime_access, lifetime_plan_slug")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  // If user has lifetime access, reverting from an upgraded plan restores Lifetime Founder Plan
+  if (existingSub?.has_lifetime_access) {
+    return revertToLifetimePlan();
+  }
+
   const { data: targetPlan } = await admin
     .from("plans")
     .select("id, slug")
@@ -338,6 +402,8 @@ export async function switchPlan(
         current_period_end: periodEnd("monthly").toISOString(),
         cancel_at_period_end: false,
         registrations_used: 0,
+        has_lifetime_access: false,
+        lifetime_plan_slug: null,
         updated_at: new Date().toISOString(),
       },
       { onConflict: "user_id" }
@@ -481,6 +547,18 @@ export async function activatePaidSubscription(
     }
   }
 
+  // Preserve lifetime access status if a lifetime user subscribes to an upgraded plan
+  const { data: currentSub } = await admin
+    .from("subscriptions")
+    .select("id, has_lifetime_access, lifetime_plan_slug")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  const hasLifetimeAccess = isFounder || Boolean(currentSub?.has_lifetime_access);
+  const lifetimePlanSlug = isFounder
+    ? "founder"
+    : (currentSub?.lifetime_plan_slug || (currentSub?.has_lifetime_access ? "founder" : null));
+
   const periodStart = new Date();
   const periodEndTime = periodEnd(effectiveCycle);
   const { data: updatedSub, error } = await admin
@@ -497,6 +575,8 @@ export async function activatePaidSubscription(
         current_period_end: periodEndTime.toISOString(),
         cancel_at_period_end: false,
         registrations_used: 0,
+        has_lifetime_access: hasLifetimeAccess,
+        lifetime_plan_slug: lifetimePlanSlug,
         updated_at: new Date().toISOString(),
       },
       { onConflict: "user_id" }

@@ -137,6 +137,8 @@ interface Subscription {
   is_trial?: boolean;
   autopay_mandate_id?: string | null;
   autopay_status?: string | null;
+  has_lifetime_access?: boolean;
+  lifetime_plan_slug?: string | null;
   plan: SubPlan;
 }
 
@@ -339,7 +341,7 @@ export default async function BillingPage() {
     await Promise.all([
       supabase
         .from("subscriptions")
-        .select("status, provider, billing_cycle, current_period_start, current_period_end, cancel_at_period_end, registrations_used, trial_used, trial_plan, trial_starts_at, trial_ends_at, is_trial, autopay_mandate_id, autopay_status, plan:plans(slug)")
+        .select("status, provider, billing_cycle, current_period_start, current_period_end, cancel_at_period_end, registrations_used, trial_used, trial_plan, trial_starts_at, trial_ends_at, is_trial, autopay_mandate_id, autopay_status, has_lifetime_access, lifetime_plan_slug, plan:plans(slug)")
         .eq("user_id", user.id)
         .maybeSingle(),
       supabase
@@ -359,7 +361,7 @@ export default async function BillingPage() {
   const sub = subData as Subscription | null;
   const isTrial = Boolean(sub?.is_trial && sub?.trial_ends_at && new Date(sub.trial_ends_at) >= new Date());
   const isTrialExpired = Boolean(sub?.is_trial && sub?.trial_ends_at && new Date(sub.trial_ends_at) < new Date());
-  const currentPlanSlug = isTrialExpired ? "free" : ((sub?.plan as SubPlan | null)?.slug ?? "free");
+  const currentPlanSlug = plan.slug;
   const currentPlanIndex = PLAN_ORDER[currentPlanSlug] ?? 0;
   const trialUsed = sub?.trial_used ?? false;
 
@@ -455,6 +457,10 @@ export default async function BillingPage() {
                   <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/30 tracking-wider">
                     LIFETIME ACCESS
                   </span>
+                ) : sub?.has_lifetime_access ? (
+                  <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/30 tracking-wider">
+                    LIFETIME PROTECTED
+                  </span>
                 ) : billingCycle === "annual" && currentPlanSlug !== "free" ? (
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-brand/20 text-brand-200 border border-brand/30 tracking-wide">
                     ANNUAL
@@ -464,10 +470,10 @@ export default async function BillingPage() {
               {isTrial ? (
                 <p className="text-xs text-white/40 mt-1">
                   {sub?.cancel_at_period_end || sub?.autopay_status === "cancelled"
-                    ? `AutoPay cancelled · Free trial ends ${renewalDate} (reverts to Free)`
+                    ? `AutoPay cancelled · Free trial ends ${renewalDate} (${sub?.has_lifetime_access ? "reverts to Founder Lifetime" : "reverts to Free"})`
                     : sub?.autopay_status === "active"
                     ? `First payment of ₹${Math.round(currentPlan.priceMonthly * 1.18).toLocaleString("en-IN")} scheduled for ${renewalDate}`
-                    : `Free trial ends ${renewalDate} · No card on file (reverts to Free)`}
+                    : `Free trial ends ${renewalDate} · No card on file (${sub?.has_lifetime_access ? "reverts to Founder Lifetime" : "reverts to Free"})`}
                 </p>
               ) : currentPlanSlug === "founder" || currentPlanSlug === "lifetime" ? (
                 <p className="text-xs text-emerald-400/80 mt-0.5">
@@ -475,7 +481,9 @@ export default async function BillingPage() {
                 </p>
               ) : currentPlanSlug !== "free" && renewalDate ? (
                 <p className="text-xs text-white/30 mt-0.5">
-                  {sub?.cancel_at_period_end ? `Cancels ${renewalDate}` : `Renews ${renewalDate}`}
+                  {sub?.cancel_at_period_end
+                    ? `Cancels ${renewalDate} (${sub?.has_lifetime_access ? "reverts to Founder Lifetime" : "reverts to Free"})`
+                    : `Renews ${renewalDate}${sub?.has_lifetime_access ? " · Founder Lifetime protected on cancel" : ""}`}
                 </p>
               ) : null}
             </div>

@@ -107,9 +107,32 @@ export default function ContactPage() {
                   <p className="text-sm font-semibold text-neutral-800 mb-0.5">Email</p>
                   <a
                     href="mailto:urpass.space@yespstudio.com"
-                    className="text-sm text-brand hover:underline underline-offset-2"
+                    className="text-sm text-brand hover:underline underline-offset-2 block"
                   >
                     urpass.space@yespstudio.com
+                  </a>
+                  <a
+                    href="mailto:srinithin@yespstudio.com"
+                    className="text-xs text-neutral-500 hover:text-brand underline-offset-2 block mt-0.5"
+                  >
+                    Founder: srinithin@yespstudio.com
+                  </a>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <div className="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center shrink-0">
+                  <MessageSquare className="w-4 h-4 text-emerald-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-neutral-800 mb-0.5">WhatsApp / Phone</p>
+                  <a
+                    href="https://wa.me/919001270298"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-emerald-600 hover:underline underline-offset-2 font-medium"
+                  >
+                    +91 90012 70298
                   </a>
                 </div>
               </div>

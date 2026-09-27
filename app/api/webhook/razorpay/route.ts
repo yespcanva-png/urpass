@@ -489,7 +489,7 @@ export async function POST(req: NextRequest) {
   const now = new Date();
   const { data: existingSubscription } = await supabase
     .from("subscriptions")
-    .select("id, provider_subscription_id, current_period_start, current_period_end, registrations_used")
+    .select("id, provider_subscription_id, current_period_start, current_period_end, registrations_used, has_lifetime_access, lifetime_plan_slug")
     .eq("user_id", userId)
     .maybeSingle();
 
@@ -505,6 +505,14 @@ export async function POST(req: NextRequest) {
   const periodEnd = isDuplicatePayment && existingPeriodEnd
     ? existingPeriodEnd
     : addBillingPeriod(periodStart, billingCycle);
+
+  const rawSlug = (notes.plan_slug || "Subscription").toString().toLowerCase();
+  const isFounder = rawSlug === "founder" || rawSlug === "lifetime" || billingCycle === "lifetime";
+
+  const hasLifetimeAccess = isFounder || Boolean(existingSubscription?.has_lifetime_access);
+  const lifetimePlanSlug = isFounder
+    ? "founder"
+    : (existingSubscription?.lifetime_plan_slug || (existingSubscription?.has_lifetime_access ? "founder" : null));
 
   const { data: updatedSub, error } = await supabase
     .from("subscriptions")
@@ -522,6 +530,8 @@ export async function POST(req: NextRequest) {
         registrations_used: isDuplicatePayment
           ? (existingSubscription?.registrations_used ?? 0)
           : 0,
+        has_lifetime_access: hasLifetimeAccess,
+        lifetime_plan_slug: lifetimePlanSlug,
         updated_at: new Date().toISOString(),
       },
       { onConflict: "user_id" }
@@ -542,8 +552,6 @@ export async function POST(req: NextRequest) {
       : 0;
   const discountPaise = notes.discount_paise ? Number(notes.discount_paise) : 0;
 
-  const rawSlug = (notes.plan_slug || "Subscription").toString().toLowerCase();
-  const isFounder = rawSlug === "founder" || rawSlug === "lifetime" || billingCycle === "lifetime";
   const invoiceDesc = isFounder
     ? "URPASS Founder Lifetime Access (One-Time)"
     : `${rawSlug.toUpperCase()} Plan (${billingCycle})`;

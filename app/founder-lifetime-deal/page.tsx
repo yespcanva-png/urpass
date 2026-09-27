@@ -23,6 +23,9 @@ import {
   Users,
   Smartphone,
   MessageCircle,
+  Globe,
+  Send,
+  IndianRupee,
 } from "lucide-react";
 
 export const metadata: Metadata = {
@@ -57,7 +60,7 @@ const includedFeatures = [
   {
     icon: Palette,
     title: "Full Ticket Studio Designer",
-    desc: "Complete visual drag-and-drop designer for branded digital passes, custom badges, sponsor banners, and custom shapes.",
+    desc: "Complete visual drag-and-drop designer for branded digital passes, custom badges, sponsor banners, custom fonts, and shapes.",
   },
   {
     icon: ScanLine,
@@ -85,21 +88,36 @@ const includedFeatures = [
     desc: "Custom attendee registration fields, auto-approval workflows, instant digital QR pass issuance, and direct WhatsApp sharing.",
   },
   {
+    icon: Send,
+    title: "WhatsApp Ticket Distribution",
+    desc: "One-click digital ticket dispatch straight to attendee WhatsApp with verified QR badges and instant Apple/Google Wallet links.",
+  },
+  {
+    icon: IndianRupee,
+    title: "Zero Commission & Direct UPI",
+    desc: "Connect your own Razorpay or UPI gateway. Collect 100% of your ticket revenue directly into your bank with 0% platform fee.",
+  },
+  {
     icon: BarChart3,
     title: "Realtime Analytics & CSV Exports",
     desc: "Live check-in velocity, gate breakdown charts, attendance percentages, and one-click full attendee CSV data exports.",
   },
   {
     icon: Users,
-    title: "Team & Check-In Staff Access",
-    desc: "Add multiple event organizers and gate check-in volunteers with restricted gate roles across your organization.",
+    title: "50 Organizer & Gate Volunteer Seats",
+    desc: "Add up to 50 co-organizers and gate check-in volunteers with fine-grained scanner and committee role permissions.",
+  },
+  {
+    icon: Globe,
+    title: "Custom Domain & REST API Access",
+    desc: "Brand passes under your custom subdomain, generate passes via REST APIs, and receive real-time check-in webhooks.",
   },
 ];
 
 const faqs = [
   {
     q: "What exactly is the URPASS Founder Lifetime Plan?",
-    a: "The Founder Lifetime Plan grants you permanent access to all currently available URPASS event management, ticketing, and scanning features for a single one-time payment of ₹19,999 (+GST). There are zero monthly or annual renewal fees.",
+    a: "The Founder Lifetime Plan grants you permanent access to all currently available URPASS event management, ticketing, and scanning features for a single one-time payment of ₹19,999 (+18% GST = ₹23,599). There are zero monthly or annual renewal fees.",
   },
   {
     q: "How many Lifetime Accounts are available?",
@@ -107,11 +125,15 @@ const faqs = [
   },
   {
     q: "How long is this lifetime license valid?",
-    a: "Your license is valid for the operational lifetime of the URPASS platform with no expiration date, no renewal invoices, and no recurring subscriptions.",
+    a: "Your license is valid for the operational lifetime of the URPASS platform with no expiration date, no renewal invoices, and no recurring subscriptions (provisioned through year 2125 in our database).",
   },
   {
     q: "What features are included in this plan?",
-    a: "The plan covers all features currently available on the URPASS platform at the time of purchase — including unlimited events, Ticket Studio pass design, sub-second scanning, multi-gate check-in, offline sync, custom forms, Razorpay payments integration, and realtime analytics.",
+    a: "The plan covers unlimited events, unlimited monthly registrations, full Ticket Studio visual pass designer, sub-second scanning, 50 team seats, multi-gate check-in, offline sync mode, custom forms, WhatsApp pass distribution, zero platform commission ticketing, and realtime analytics.",
+  },
+  {
+    q: "What happens if I subscribe to an upgraded tier or add-on later?",
+    a: "Your Founder Lifetime status is permanently protected and never lost. If you ever need to subscribe to an upgraded version (e.g. specialized campus network packs, custom enterprise SLA tiers, or temporary seasonal upgrades), you can subscribe and enjoy those upgraded benefits. Once that subscription ends, cancels, or expires, your account automatically continues with your Founder Lifetime Plan. You will never drop to the Free plan.",
   },
   {
     q: "What is not included in the lifetime plan?",
@@ -119,7 +141,7 @@ const faqs = [
   },
   {
     q: "How do I claim one of the 20 Founder accounts?",
-    a: "You can click 'Claim Founder Account' below to complete the one-time payment, or reach out directly to the founding team on WhatsApp or via email at srinithin@yespstudio.com for instant account provisioning and GST invoice generation.",
+    a: "You can click 'Claim Lifetime Access' below to complete the one-time payment with instant 18% GST tax invoice generation, or reach out directly to the founder on WhatsApp at +91 90012 70298 or via email at srinithin@yespstudio.com for instant account provisioning and GST invoice generation.",
   },
 ];
 
@@ -240,13 +262,13 @@ export default async function FounderLifetimeDealPage() {
                   />
 
                   <a
-                    href="https://wa.me/919944621539?text=Hi%20Srinithin%2C%20I%20am%20interested%20in%20claiming%20one%20of%20the%2020%20URPASS%20Founder%20Lifetime%20Accounts%20(₹19%2C999)."
+                    href="https://wa.me/919001270298?text=Hi%20Srinithin%2C%20I%20am%20interested%20in%20claiming%20one%20of%20the%2020%20URPASS%20Founder%20Lifetime%20Accounts%20(₹19%2C999)."
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl font-semibold text-sm bg-white/5 hover:bg-white/10 border border-white/10 text-white transition-all text-center"
                   >
                     <MessageCircle className="w-4 h-4 text-emerald-400" />
-                    <span>Talk on WhatsApp</span>
+                    <span>Talk on WhatsApp (+91 90012 70298)</span>
                   </a>
                 </div>
               </div>
@@ -390,9 +412,18 @@ export default async function FounderLifetimeDealPage() {
                 />
                 <a
                   href="mailto:srinithin@yespstudio.com?subject=URPASS%20Founder%20Lifetime%20Plan%20Inquiry"
-                  className="w-full sm:w-auto px-6 py-3.5 rounded-2xl font-semibold text-sm bg-white/10 hover:bg-white/15 text-white transition-all border border-white/15"
+                  className="w-full sm:w-auto px-6 py-3.5 rounded-2xl font-semibold text-sm bg-white/10 hover:bg-white/15 text-white transition-all border border-white/15 inline-flex items-center justify-center"
                 >
                   Email Founder Directly
+                </a>
+                <a
+                  href="https://wa.me/919001270298?text=Hi%20Srinithin%2C%20I%20have%20a%20question%20about%20the%20URPASS%20Founder%20Lifetime%20Deal."
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full sm:w-auto px-6 py-3.5 rounded-2xl font-semibold text-sm bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 transition-all border border-emerald-500/30 inline-flex items-center justify-center gap-2"
+                >
+                  <MessageCircle className="w-4 h-4 text-emerald-400" />
+                  <span>WhatsApp (+91 90012 70298)</span>
                 </a>
               </div>
             </div>

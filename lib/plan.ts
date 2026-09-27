@@ -335,28 +335,7 @@ export async function getUserPlan(supabase: any, userId: string): Promise<PlanLi
 
   let sub: Record<string, unknown> | null = null;
 
-  // 1. Try querying with the provided supabase client
-  if (supabase && typeof supabase.from === "function") {
-    try {
-      const query = supabase
-        .from("subscriptions")
-        .select("plan_id, plan:plans(slug), status, is_trial, trial_plan, trial_ends_at")
-        .eq("user_id", userId);
-
-      const filteredQuery = typeof query.in === "function"
-        ? query.in("status", ["active", "trialing"])
-        : query;
-
-      const res = typeof filteredQuery.maybeSingle === "function"
-        ? await filteredQuery.maybeSingle()
-        : await filteredQuery.single();
-
-      sub = (res?.data as Record<string, unknown>) ?? null;
-    } catch {
-      sub = null;
-    }
-  }
-
+  // Helper to extract plan slug
   function extractSlug(s: Record<string, unknown> | null | undefined): PlanSlug | undefined {
     if (!s) return undefined;
     const planVal = s.plan as { slug?: string } | Array<{ slug?: string }> | undefined;
@@ -374,25 +353,74 @@ export async function getUserPlan(supabase: any, userId: string): Promise<PlanLi
     return undefined;
   }
 
-  let slug = extractSlug(sub);
+  function isSubscriptionActive(s: Record<string, unknown> | null | undefined): boolean {
+    if (!s) return false;
+    const status = (s.status as string | undefined)?.toLowerCase();
+    if (status !== "active" && status !== "trialing") return false;
 
-  // 2. If sub not found or slug not resolved, fallback to admin client
+    // Check trial expiration
+    if (s.is_trial || status === "trialing") {
+      const trialEnds = (s as { trial_ends_at?: string | number | Date | null }).trial_ends_at;
+      if (trialEnds && new Date(trialEnds) < new Date()) {
+        return false;
+      }
+    }
+
+    // Check current_period_end for paid non-trial subscriptions
+    const periodEnds = (s as { current_period_end?: string | number | Date | null }).current_period_end;
+    if (periodEnds && new Date(periodEnds) < new Date()) {
+      return false;
+    }
+
+    return true;
+  }
+
+  // 1. Try querying with the provided supabase client
+  if (supabase && typeof supabase.from === "function") {
+    try {
+      const query = supabase
+        .from("subscriptions")
+        .select("plan_id, plan:plans(slug), status, is_trial, trial_plan, trial_ends_at, current_period_end, has_lifetime_access, lifetime_plan_slug")
+        .eq("user_id", userId);
+
+      // Support mock clients with or without .in()
+      const queryWithIn = typeof query.in === "function"
+        ? query.in("status", ["active", "trialing", "cancelled", "expired"])
+        : query;
+
+      const res = typeof queryWithIn.maybeSingle === "function"
+        ? await queryWithIn.maybeSingle()
+        : await queryWithIn.single();
+
+      sub = (res?.data as Record<string, unknown>) ?? null;
+    } catch {
+      sub = null;
+    }
+  }
+
+  let slug: PlanSlug | undefined = undefined;
+  if (sub && isSubscriptionActive(sub)) {
+    slug = extractSlug(sub);
+  }
+
+  // 2. If sub not found or slug not active, fallback to admin client
   // (Prevents silent RLS failures, token refresh sync delays, or cross-user lookup blocks)
   const admin = getAdminClientSafe();
   if ((!sub || !slug || slug === "free") && admin) {
     try {
       const { data: adminSub } = await admin
         .from("subscriptions")
-        .select("plan_id, plan:plans(slug), status, is_trial, trial_plan, trial_ends_at")
+        .select("plan_id, plan:plans(slug), status, is_trial, trial_plan, trial_ends_at, current_period_end, has_lifetime_access, lifetime_plan_slug")
         .eq("user_id", userId)
-        .in("status", ["active", "trialing"])
         .maybeSingle();
 
       if (adminSub) {
-        const adminSlug = extractSlug(adminSub);
-        if (adminSlug) {
-          sub = adminSub;
-          slug = adminSlug;
+        sub = adminSub;
+        if (isSubscriptionActive(adminSub)) {
+          const adminSlug = extractSlug(adminSub);
+          if (adminSlug) {
+            slug = adminSlug;
+          }
         }
       }
     } catch {
@@ -401,7 +429,7 @@ export async function getUserPlan(supabase: any, userId: string): Promise<PlanLi
   }
 
   // 3. If sub has plan_id but slug is still not resolved, query plans table directly
-  if (!slug && sub?.plan_id && admin) {
+  if (!slug && sub?.plan_id && isSubscriptionActive(sub) && admin) {
     try {
       const { data: planRow } = await admin
         .from("plans")
@@ -416,8 +444,23 @@ export async function getUserPlan(supabase: any, userId: string): Promise<PlanLi
     }
   }
 
-  // 4. Organization membership check: If the user is on free,
-  // check if they are an active member of an organization whose creator/owner has a paid plan (Pro/Business)
+  // 4. LIFETIME CONTINUITY FALLBACK:
+  // If user does not have an active upgraded subscription, BUT has lifetime access:
+  // Maintain founder lifetime plan entitlements instead of dropping to Free!
+  const hasLifetime = Boolean(
+    sub?.has_lifetime_access ||
+    sub?.lifetime_plan_slug === "founder" ||
+    extractSlug(sub) === "founder"
+  );
+
+  if ((!slug || slug === "free") && hasLifetime) {
+    const rawLifetime = (sub?.lifetime_plan_slug as string)?.toLowerCase();
+    const fallbackSlug: PlanSlug = rawLifetime === "founder" || rawLifetime === "lifetime" ? "founder" : "founder";
+    return fromSlug(fallbackSlug);
+  }
+
+  // 5. Organization membership check: If the user is on free,
+  // check if they are an active member of an organization whose creator/owner has a paid plan (Pro/Business/Founder)
   if ((!slug || slug === "free") && admin) {
     try {
       const { data: memberships } = await admin
@@ -433,16 +476,19 @@ export async function getUserPlan(supabase: any, userId: string): Promise<PlanLi
           if (orgOwnerId && orgOwnerId !== userId) {
             const { data: ownerSub } = await admin
               .from("subscriptions")
-              .select("plan_id, plan:plans(slug), status, is_trial, trial_plan, trial_ends_at")
+              .select("plan_id, plan:plans(slug), status, is_trial, trial_plan, trial_ends_at, current_period_end, has_lifetime_access, lifetime_plan_slug")
               .eq("user_id", orgOwnerId)
-              .in("status", ["active", "trialing"])
               .maybeSingle();
 
-            const ownerSlug = extractSlug(ownerSub);
-            if (ownerSlug && ownerSlug !== "free") {
-              sub = ownerSub;
-              slug = ownerSlug;
-              break;
+            if (ownerSub && isSubscriptionActive(ownerSub)) {
+              const ownerSlug = extractSlug(ownerSub);
+              if (ownerSlug && ownerSlug !== "free") {
+                sub = ownerSub;
+                slug = ownerSlug;
+                break;
+              }
+            } else if (ownerSub?.has_lifetime_access || ownerSub?.lifetime_plan_slug === "founder") {
+              return fromSlug("founder");
             }
           }
         }
@@ -458,7 +504,7 @@ export async function getUserPlan(supabase: any, userId: string): Promise<PlanLi
   if (sub.is_trial || sub.status === "trialing") {
     const trialEnds = (sub as { trial_ends_at?: string | number | Date | null }).trial_ends_at;
     if (trialEnds && new Date(trialEnds) < new Date()) {
-      return FREE_PLAN;
+      return hasLifetime ? fromSlug("founder") : FREE_PLAN;
     }
   }
 
