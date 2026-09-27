@@ -34,7 +34,9 @@ export default function FounderCheckoutCta({
   }, [isLoggedIn, searchParams]);
 
   if (!isLoggedIn) {
-    const signupHref = "/signup?next=" + encodeURIComponent("/founder-lifetime-deal?claim=true");
+    const signupHref =
+      "/signup?from=founder-lifetime-deal&next=" +
+      encodeURIComponent("/billing?claim=true");
     if (children) {
       return (
         <Link href={signupHref} className={className}>

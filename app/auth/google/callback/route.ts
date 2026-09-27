@@ -3,6 +3,7 @@ import { createClient as createSupabaseAdmin } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { getSupabaseUrl } from "@/lib/supabase/config";
 import { notifyOwnerNewUser, sendUserWelcomeEmail } from "@/lib/email";
+import { resolvePostAuthRedirect } from "@/lib/auth-redirect";
 
 export const dynamic = "force-dynamic";
 
@@ -29,6 +30,7 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const code = searchParams.get("code");
+    const state = searchParams.get("state");
     const error = searchParams.get("error");
 
     if (error || !code) {
@@ -139,7 +141,15 @@ export async function GET(req: NextRequest) {
       return NextResponse.redirect(`${appUrl}/login?error=google_auth_failed&step=otp`);
     }
 
-    return NextResponse.redirect(`${appUrl}${isNewUser ? "/onboarding" : "/dashboard"}`);
+    const target = resolvePostAuthRedirect(
+      { get: (k: string) => (k === "next" ? state : null) },
+      null
+    );
+    const destination = target !== "/dashboard"
+      ? target
+      : (isNewUser ? "/onboarding" : "/dashboard");
+
+    return NextResponse.redirect(`${appUrl}${destination}`);
   } catch (err) {
     console.error("[google-callback] unhandled error:", err);
     return NextResponse.redirect(`${appUrl}/login?error=google_auth_failed&step=crash`);

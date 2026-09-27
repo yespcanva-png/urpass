@@ -22,6 +22,7 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { sendSignupNotifications } from "@/app/actions/notifications";
 import { lookupSSOByEmail } from "@/app/actions/sso";
+import { resolvePostAuthRedirect } from "@/lib/auth-redirect";
 
 const schema = z.object({
   full_name: z.string().min(2, "Name must be at least 2 characters"),
@@ -109,8 +110,13 @@ function SignupContent() {
       provider: "email",
       userId: signUpData.user?.id,
     }).catch((err: unknown) => console.error("[email]", err));
+    const target = resolvePostAuthRedirect(
+      searchParams,
+      typeof document !== "undefined" ? document.referrer : null
+    );
+    const destination = target !== "/dashboard" ? target : "/onboarding";
     setSuccess(true);
-    setTimeout(() => router.push("/onboarding"), 1500);
+    setTimeout(() => router.push(destination), 1500);
   }
 
   async function onSsoSubmit(data: SsoFormData) {
@@ -142,9 +148,11 @@ function SignupContent() {
 
   function handleGoogleSignup() {
     setGoogleLoading(true);
-    // OAuth flow requires browser navigation to server API endpoint
-    // eslint-disable-next-line @next/next/no-location-assign-relative-destination
-    window.location.href = "/api/auth/google/redirect";
+    const target = resolvePostAuthRedirect(
+      searchParams,
+      typeof document !== "undefined" ? document.referrer : null
+    );
+    window.location.href = `/api/auth/google/redirect?next=${encodeURIComponent(target)}`;
   }
 
   const BG = {
@@ -422,7 +430,10 @@ function SignupContent() {
 
         <p className="mt-6 text-sm text-neutral-500 text-center">
           Already have an account?{" "}
-          <Link href="/login" className="text-neutral-900 font-semibold hover:underline">
+          <Link
+            href={`/login${searchParams.toString() ? `?${searchParams.toString()}` : ""}`}
+            className="text-neutral-900 font-semibold hover:underline"
+          >
             Sign in
           </Link>
         </p>

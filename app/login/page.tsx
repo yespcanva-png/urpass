@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { lookupSSOByEmail } from "@/app/actions/sso";
+import { resolvePostAuthRedirect } from "@/lib/auth-redirect";
 
 const passwordSchema = z.object({
   email: z.string().email("Enter a valid email"),
@@ -112,7 +113,11 @@ function LoginContent() {
       setServerError(error.message);
       return;
     }
-    router.push("/dashboard");
+    const target = resolvePostAuthRedirect(
+      searchParams,
+      typeof document !== "undefined" ? document.referrer : null
+    );
+    router.push(target);
     router.refresh();
   }
 
@@ -142,7 +147,11 @@ function LoginContent() {
 
   function handleGoogleLogin() {
     setGoogleLoading(true);
-    window.location.assign("/api/auth/google/redirect");
+    const target = resolvePostAuthRedirect(
+      searchParams,
+      typeof document !== "undefined" ? document.referrer : null
+    );
+    window.location.assign(`/api/auth/google/redirect?next=${encodeURIComponent(target)}`);
   }
 
   return (
@@ -392,7 +401,10 @@ function LoginContent() {
 
         <p className="mt-6 text-sm text-neutral-500 text-center">
           Don&apos;t have an account?{" "}
-          <Link href="/signup" className="text-neutral-900 font-semibold hover:underline">
+          <Link
+            href={`/signup${searchParams.toString() ? `?${searchParams.toString()}` : ""}`}
+            className="text-neutral-900 font-semibold hover:underline"
+          >
             Sign up
           </Link>
         </p>

@@ -253,8 +253,8 @@ export default function PricingContent({
             </Link>
           ) : (
             <>
-              <Link href="/login" className="text-sm text-neutral-500 hover:text-neutral-900 transition-colors">Log in</Link>
-              <Link href="/signup" className="text-sm bg-neutral-900 text-white px-4 py-2 rounded-lg hover:bg-neutral-700 transition-colors">Get started</Link>
+              <Link href="/login?from=pricing&next=/billing" className="text-sm text-neutral-500 hover:text-neutral-900 transition-colors">Log in</Link>
+              <Link href="/signup?from=pricing&next=/billing" className="text-sm bg-neutral-900 text-white px-4 py-2 rounded-lg hover:bg-neutral-700 transition-colors">Get started</Link>
             </>
           )}
         </div>
@@ -400,7 +400,7 @@ export default function PricingContent({
                         </button>
                       ) : (
                         <Link
-                          href={`/signup?plan=${plan.slug}&trial=true`}
+                          href={`/signup?from=pricing&plan=${plan.slug}&trial=true&next=${encodeURIComponent(`/billing?trial=${plan.slug}`)}`}
                           className={`w-full text-center py-3 rounded-xl text-sm font-bold transition-all shadow-sm ${
                             plan.highlight
                               ? "bg-white text-neutral-900 hover:bg-neutral-100"
@@ -416,7 +416,15 @@ export default function PricingContent({
                     </div>
                   ) : (
                     <Link
-                      href={plan.monthly === 0 ? (isAuthenticated ? "/dashboard" : "/signup") : (isAuthenticated ? "/billing" : "/signup")}
+                      href={
+                        plan.monthly === 0
+                          ? isAuthenticated
+                            ? "/dashboard"
+                            : "/signup?from=pricing&next=/billing"
+                          : isAuthenticated
+                          ? "/billing"
+                          : `/signup?from=pricing&plan=${plan.slug}&next=/billing`
+                      }
                       className={`w-full text-center py-3 rounded-xl text-sm font-semibold transition-colors ${
                         plan.highlight
                           ? "bg-white text-neutral-900 hover:bg-neutral-100"
@@ -500,7 +508,7 @@ export default function PricingContent({
                       </li>
                     ))}
                   </ul>
-                  <Link href="/signup" className="w-full text-center py-2.5 rounded-xl text-sm font-semibold bg-neutral-900 text-white hover:bg-neutral-700 transition-colors">
+                  <Link href={isAuthenticated ? "/billing" : "/signup?from=pricing&next=/billing"} className="w-full text-center py-2.5 rounded-xl text-sm font-semibold bg-neutral-900 text-white hover:bg-neutral-700 transition-colors">
                     Create One Event
                   </Link>
                 </div>

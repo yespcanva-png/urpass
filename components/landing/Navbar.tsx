@@ -2,10 +2,27 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Menu, X, ArrowRight, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function Navbar() {
+  const pathname = usePathname();
+  const isFromFounder = pathname === "/founder-lifetime-deal";
+  const isFromPricing = pathname === "/pricing";
+
+  const loginHref = isFromFounder
+    ? "/login?from=founder-lifetime-deal&next=/billing?claim=true"
+    : isFromPricing
+    ? "/login?from=pricing&next=/billing"
+    : "/login";
+
+  const signupHref = isFromFounder
+    ? "/signup?from=founder-lifetime-deal&next=/billing?claim=true"
+    : isFromPricing
+    ? "/signup?from=pricing&next=/billing"
+    : "/signup";
+
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [bannerVisible, setBannerVisible] = useState(() => {
@@ -121,13 +138,13 @@ export default function Navbar() {
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center gap-3">
             <Link
-              href="/login"
+              href={loginHref}
               className="text-sm text-neutral-500 hover:text-neutral-900 transition-colors"
             >
               Login
             </Link>
             <Link
-              href="/signup"
+              href={signupHref}
               className="text-sm bg-neutral-900 text-white px-4 py-2 rounded-xl font-medium hover:bg-neutral-700 transition-colors"
             >
               Create event
@@ -184,14 +201,14 @@ export default function Navbar() {
             </Link>
             <div className="pt-2 border-t border-neutral-100 flex flex-col gap-2">
               <Link
-                href="/login"
+                href={loginHref}
                 onClick={() => setOpen(false)}
                 className="text-sm text-center border border-neutral-200 rounded-xl py-2.5 font-medium hover:bg-neutral-50 transition-colors"
               >
                 Login
               </Link>
               <Link
-                href="/signup"
+                href={signupHref}
                 onClick={() => setOpen(false)}
                 className="text-sm text-center bg-neutral-900 text-white rounded-xl py-2.5 font-medium hover:bg-neutral-700 transition-colors"
               >

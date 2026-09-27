@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { resolvePostAuthRedirect } from "@/lib/auth-redirect";
 
 export const dynamic = "force-dynamic";
 
@@ -14,12 +15,18 @@ export async function GET(req: NextRequest) {
   const host = req.headers.get("x-forwarded-host") ?? req.headers.get("host") ?? "";
   const origin = process.env.NEXT_PUBLIC_APP_URL ?? `${proto}://${host}`;
 
+  const target = resolvePostAuthRedirect(
+    req.nextUrl.searchParams,
+    req.headers.get("referer")
+  );
+
   const params = new URLSearchParams({
     client_id: clientId,
     redirect_uri: `${origin}/auth/google/callback`,
     response_type: "code",
     scope: "openid email profile",
     prompt: "select_account",
+    state: target,
   });
 
   return NextResponse.redirect(
