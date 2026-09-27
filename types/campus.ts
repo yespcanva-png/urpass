@@ -223,3 +223,15 @@ export interface CampusDepartmentDetailData {
   clubs: CampusClub[];
   organizers: CampusMember[];
 }
+
+export interface CampusClubDetailData {
+  club: CampusClub;
+  stats: {
+    eventsCount: number;
+    totalRegistrations: number;
+    totalCheckIns: number;
+    averageAttendance: number;
+  };
+  events: CampusEventSummary[];
+  organizers: CampusMember[];
+}
