@@ -135,6 +135,12 @@ const sections: {
       { label: "Kochi City Guide", href: "/in/kochi" },
       { label: "Kolkata City Guide", href: "/in/kolkata" },
       { label: "Ahmedabad City Guide", href: "/in/ahmedabad" },
+      { label: "Vellore & VIT Guide", href: "/in/vellore", badge: "VIT" },
+      { label: "Madurai City Guide", href: "/in/madurai" },
+      { label: "Trichy & NIT Guide", href: "/in/trichy" },
+      { label: "Salem City Guide", href: "/in/salem" },
+      { label: "Erode City Guide", href: "/in/erode" },
+      { label: "Tiruppur City Guide", href: "/in/tiruppur" },
     ],
   },
   {
