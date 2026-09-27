@@ -353,6 +353,11 @@ export default function IndiaPage() {
             category: "Location",
           },
           {
+            title: "Event Registration Indore",
+            href: "/in/indore",
+            category: "Location",
+          },
+          {
             title: "Enterprise SSO Event Ticketing",
             href: "/enterprise-sso-event-ticketing",
             category: "Product",
