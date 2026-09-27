@@ -225,6 +225,34 @@ describe("GEO SEO Pages - Surat", () => {
   });
 });
 
+describe("GEO SEO Pages - Vadodara", () => {
+  it("has correct SEO metadata for Vadodara", async () => {
+    const { metadata } = await import("@/app/in/vadodara/page");
+    expect(metadata.title).toContain("Vadodara");
+    expect(metadata.alternates?.canonical).toBe("https://urpass.space/in/vadodara");
+    expect(metadata.other?.["geo.region"]).toBe("IN-GJ");
+    expect(metadata.other?.["geo.placename"]).toContain("Vadodara");
+  });
+
+  it("renders Vadodara GEO page content and local venues", async () => {
+    const { default: VadodaraPage } = await import("@/app/in/vadodara/page");
+    render(<VadodaraPage />);
+
+    expect(screen.getByRole("heading", { level: 1, name: /Event Registration & QR Check-In for Vadodara Events/i })).toBeInTheDocument();
+    expect(screen.getByText(/URPASS · VADODARA & CENTRAL GUJARAT/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/MS University/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/Parul University/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/Sir Sayajirao Nagargruh/i)[0]).toBeInTheDocument();
+  });
+
+  it("India Hub links to Vadodara GEO page", () => {
+    render(<IndiaPage />);
+    const vadodaraLink = document.querySelector('a[href="/in/vadodara"]');
+    expect(vadodaraLink).not.toBeNull();
+  });
+});
+
+
 
 
 

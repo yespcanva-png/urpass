@@ -388,6 +388,11 @@ export default function IndiaPage() {
             category: "Location",
           },
           {
+            title: "Event Registration Vadodara",
+            href: "/in/vadodara",
+            category: "Location",
+          },
+          {
             title: "Enterprise SSO Event Ticketing",
             href: "/enterprise-sso-event-ticketing",
             category: "Product",
