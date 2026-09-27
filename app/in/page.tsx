@@ -348,6 +348,11 @@ export default function IndiaPage() {
             category: "Location",
           },
           {
+            title: "Event Registration Lucknow",
+            href: "/in/lucknow",
+            category: "Location",
+          },
+          {
             title: "Enterprise SSO Event Ticketing",
             href: "/enterprise-sso-event-ticketing",
             category: "Product",

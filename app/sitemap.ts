@@ -167,6 +167,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/in/madurai",
     "/in/trichy",
     "/in/vellore",
+    "/in/lucknow",
     // High-intent root city pages
     "/event-registration-software-bangalore",
     "/event-registration-software-chennai",
