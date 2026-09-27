@@ -52,6 +52,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/event-ticket-payment-gateway",
     "/online-event-ticketing",
     "/qr-event-tickets",
+    "/whatsapp-event-tickets",
     "/event-ticket-booking-system",
     "/free-event-ticketing",
     "/founder-lifetime-deal",

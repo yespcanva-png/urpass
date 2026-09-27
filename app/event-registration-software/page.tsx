@@ -321,6 +321,11 @@ export default function EventRegistrationSoftwarePage() {
             category: "Product",
           },
           {
+            title: "WhatsApp Event Tickets & Delivery",
+            href: "/whatsapp-event-tickets",
+            category: "Product",
+          },
+          {
             title: "Event Registration in India (UPI & INR)",
             href: "/in",
             category: "Location",

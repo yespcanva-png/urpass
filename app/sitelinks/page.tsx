@@ -59,6 +59,7 @@ const sections: {
       { label: "Event Registration Software", href: "/event-registration-software" },
       { label: "QR Event Check-In", href: "/qr-event-check-in" },
       { label: "Digital Event Pass Maker", href: "/digital-event-pass" },
+      { label: "WhatsApp Event Tickets", href: "/whatsapp-event-tickets", badge: "98% Open" },
       { label: "Event Management Software", href: "/event-management-software" },
       { label: "Event Check-In Software", href: "/event-check-in-software" },
       { label: "Event Registration Platform", href: "/event-registration-platform" },
