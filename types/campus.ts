@@ -177,3 +177,36 @@ export interface CampusContext {
   departmentId?: string | null;
   clubId?: string | null;
 }
+
+export interface CampusEventSummary {
+  id: string;
+  name: string;
+  event_date: string;
+  venue: string;
+  status: string;
+  department_id?: string | null;
+  department_name?: string | null;
+  department_code?: string | null;
+  department_color?: string | null;
+  club_id?: string | null;
+  club_name?: string | null;
+  registrations_count: number;
+  attendees_count: number;
+  attendance_rate: number;
+  approval_status?: CampusApprovalStatus;
+}
+
+export interface CampusTrendPoint {
+  date: string;
+  registrations: number;
+  attendees: number;
+}
+
+export interface CampusDashboardData {
+  institution: Institution;
+  kpis: CampusOverviewKPIs;
+  topDepartments: CampusDepartmentStats[];
+  upcomingEvents: CampusEventSummary[];
+  recentEvents: CampusEventSummary[];
+  trends: CampusTrendPoint[];
+}
