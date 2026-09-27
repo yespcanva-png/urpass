@@ -210,3 +210,16 @@ export interface CampusDashboardData {
   recentEvents: CampusEventSummary[];
   trends: CampusTrendPoint[];
 }
+
+export interface CampusDepartmentDetailData {
+  department: CampusDepartment;
+  stats: {
+    eventsThisYear: number;
+    totalRegistrations: number;
+    totalCheckIns: number;
+    averageAttendance: number;
+  };
+  events: CampusEventSummary[];
+  clubs: CampusClub[];
+  organizers: CampusMember[];
+}

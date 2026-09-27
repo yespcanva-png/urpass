@@ -6,7 +6,14 @@ import { departmentSchema, type DepartmentInput } from "@/lib/validations/campus
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getSupabaseUrl } from "@/lib/supabase/config";
-import type { CampusDepartment } from "@/types/campus";
+import type {
+  CampusDepartment,
+  CampusDepartmentDetailData,
+  CampusEventSummary,
+  CampusClub,
+  CampusMember,
+  CampusApprovalStatus,
+} from "@/types/campus";
 
 function adminClient() {
   return createAdminClient(
@@ -202,5 +209,143 @@ export async function deleteCampusDepartment(departmentId: string): Promise<Acti
     return {};
   } catch (err: unknown) {
     return { error: err instanceof Error ? err.message : "Failed to delete department" };
+  }
+}
+
+export async function getCampusDepartmentDetails(
+  departmentId: string,
+  academicYear?: string
+): Promise<CampusDepartmentDetailData | null> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  try {
+    const dept = await getCampusDepartment(departmentId);
+    if (!dept) return null;
+
+    let eventsQuery = supabase
+      .from("events")
+      .select(`
+        id,
+        name,
+        event_date,
+        venue,
+        status,
+        approval_status,
+        department_id,
+        club_id,
+        academic_year,
+        club:campus_clubs(id, name)
+      `)
+      .eq("department_id", departmentId);
+
+    if (academicYear) {
+      eventsQuery = eventsQuery.eq("academic_year", academicYear);
+    }
+
+    const { data: rawEvents } = await eventsQuery.order("event_date", { ascending: false });
+    const events = rawEvents ?? [];
+    const eventIds = events.map((e) => e.id);
+
+    const [attendeeCounts, checkinCounts, clubsRes, membersRes] = await Promise.all([
+      eventIds.length > 0
+        ? supabase.from("attendees").select("event_id").in("event_id", eventIds)
+        : Promise.resolve({ data: [] }),
+      eventIds.length > 0
+        ? supabase.from("passes").select("event_id").in("event_id", eventIds).not("checked_in_at", "is", null)
+        : Promise.resolve({ data: [] }),
+      supabase
+        .from("campus_clubs")
+        .select("*")
+        .eq("department_id", departmentId)
+        .order("name", { ascending: true }),
+      supabase
+        .from("campus_members")
+        .select(`
+          id,
+          institution_id,
+          user_id,
+          department_id,
+          club_id,
+          role,
+          invited_email,
+          status,
+          created_at,
+          updated_at
+        `)
+        .eq("department_id", departmentId)
+        .order("created_at", { ascending: false }),
+    ]);
+
+    const regMap: Record<string, number> = {};
+    (attendeeCounts.data ?? []).forEach((row: { event_id: string }) => {
+      regMap[row.event_id] = (regMap[row.event_id] || 0) + 1;
+    });
+
+    const checkinMap: Record<string, number> = {};
+    (checkinCounts.data ?? []).forEach((row: { event_id: string }) => {
+      checkinMap[row.event_id] = (checkinMap[row.event_id] || 0) + 1;
+    });
+
+    let totalRegs = 0;
+    let totalCheckIns = 0;
+
+    const eventSummaries: CampusEventSummary[] = events.map((e: any) => {
+      const regs = regMap[e.id] || 0;
+      const atts = checkinMap[e.id] || 0;
+      totalRegs += regs;
+      totalCheckIns += atts;
+      const club = Array.isArray(e.club) ? e.club[0] : e.club;
+
+      return {
+        id: e.id,
+        name: e.name,
+        event_date: e.event_date,
+        venue: e.venue || "Department Venue",
+        status: e.status,
+        approval_status: (e.approval_status ?? "not_required") as CampusApprovalStatus,
+        department_id: e.department_id,
+        department_name: dept.name,
+        department_code: dept.code,
+        department_color: dept.color,
+        club_id: e.club_id,
+        club_name: club?.name ?? null,
+        registrations_count: regs,
+        attendees_count: atts,
+        attendance_rate: regs > 0 ? Math.round((atts / regs) * 100) : 0,
+      };
+    });
+
+    const avgAttendance = totalRegs > 0 ? Math.round((totalCheckIns / totalRegs) * 100) : 0;
+
+    const clubsWithCounts: CampusClub[] = await Promise.all(
+      (clubsRes.data ?? []).map(async (c) => {
+        const { count: clubEventsCount } = await supabase
+          .from("events")
+          .select("*", { count: "exact", head: true })
+          .eq("club_id", c.id);
+        return {
+          ...(c as CampusClub),
+          events_count: clubEventsCount ?? 0,
+        };
+      })
+    );
+
+    return {
+      department: dept,
+      stats: {
+        eventsThisYear: events.length,
+        totalRegistrations: totalRegs,
+        totalCheckIns: totalCheckIns,
+        averageAttendance: avgAttendance,
+      },
+      events: eventSummaries,
+      clubs: clubsWithCounts,
+      organizers: (membersRes.data ?? []) as CampusMember[],
+    };
+  } catch (err) {
+    console.error("Error fetching department details:", err);
+    return null;
   }
 }
