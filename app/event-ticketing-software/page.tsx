@@ -298,6 +298,11 @@ export default function EventTicketingSoftwarePage() {
         // Topic Cluster Internal Links
         relatedLinks: [
           {
+            title: "Zero Commission Event Ticketing",
+            href: "/zero-commission-event-ticketing",
+            category: "Product",
+          },
+          {
             title: "Event Ticketing Software in India",
             href: "/in",
             category: "Location",

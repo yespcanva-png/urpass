@@ -78,6 +78,7 @@ const sections: {
       { label: "Event Attendance Tracking", href: "/event-attendance-tracking" },
       { label: "Attendee Management", href: "/attendee-management" },
       { label: "QR Event Tickets", href: "/qr-event-tickets" },
+      { label: "Zero Commission Event Ticketing", href: "/zero-commission-event-ticketing", badge: "0% Commission" },
       { label: "Free Event Registration", href: "/free-event-registration" },
       { label: "Design Your Ticket", href: "/design-your-ticket" },
     ],

@@ -56,6 +56,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/whatsapp-event-tickets",
     "/event-ticket-booking-system",
     "/free-event-ticketing",
+    "/zero-commission-event-ticketing",
     "/founder-lifetime-deal",
     // Expanded feature cluster
     "/event-management-software",
