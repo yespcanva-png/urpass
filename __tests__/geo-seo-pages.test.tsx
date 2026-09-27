@@ -198,6 +198,34 @@ describe("GEO SEO Pages - Patna", () => {
   });
 });
 
+describe("GEO SEO Pages - Surat", () => {
+  it("has correct SEO metadata for Surat", async () => {
+    const { metadata } = await import("@/app/in/surat/page");
+    expect(metadata.title).toContain("Surat");
+    expect(metadata.alternates?.canonical).toBe("https://urpass.space/in/surat");
+    expect(metadata.other?.["geo.region"]).toBe("IN-GJ");
+    expect(metadata.other?.["geo.placename"]).toContain("Surat");
+  });
+
+  it("renders Surat GEO page content and local venues", async () => {
+    const { default: SuratPage } = await import("@/app/in/surat/page");
+    render(<SuratPage />);
+
+    expect(screen.getByRole("heading", { level: 1, name: /Event Registration & QR Check-In for Surat Events/i })).toBeInTheDocument();
+    expect(screen.getByText(/URPASS · SURAT & SOUTH GUJARAT/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/SIECC Sarsana/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/Surat Diamond Bourse/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/SVNIT/i)[0]).toBeInTheDocument();
+  });
+
+  it("India Hub links to Surat GEO page", () => {
+    render(<IndiaPage />);
+    const suratLink = document.querySelector('a[href="/in/surat"]');
+    expect(suratLink).not.toBeNull();
+  });
+});
+
+
 
 
 
