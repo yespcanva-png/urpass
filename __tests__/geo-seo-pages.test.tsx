@@ -89,3 +89,31 @@ describe("GEO SEO Pages - Bhopal", () => {
     expect(bhopalLink).not.toBeNull();
   });
 });
+
+describe("GEO SEO Pages - Visakhapatnam", () => {
+  it("has correct SEO metadata for Visakhapatnam", async () => {
+    const { metadata } = await import("@/app/in/visakhapatnam/page");
+    expect(metadata.title).toContain("Visakhapatnam");
+    expect(metadata.alternates?.canonical).toBe("https://urpass.space/in/visakhapatnam");
+    expect(metadata.other?.["geo.region"]).toBe("IN-AP");
+    expect(metadata.other?.["geo.placename"]).toContain("Visakhapatnam");
+  });
+
+  it("renders Visakhapatnam GEO page content and local venues", async () => {
+    const { default: VisakhapatnamPage } = await import("@/app/in/visakhapatnam/page");
+    render(<VisakhapatnamPage />);
+
+    expect(screen.getByRole("heading", { level: 1, name: /Event Registration & QR Check-In for Visakhapatnam Events/i })).toBeInTheDocument();
+    expect(screen.getByText(/URPASS · VISAKHAPATNAM & AP/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/GITAM University/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/Andhra University/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/Novotel Varun Beach/i)[0]).toBeInTheDocument();
+  });
+
+  it("India Hub links to Visakhapatnam GEO page", () => {
+    render(<IndiaPage />);
+    const vizagLink = document.querySelector('a[href="/in/visakhapatnam"]');
+    expect(vizagLink).not.toBeNull();
+  });
+});
+

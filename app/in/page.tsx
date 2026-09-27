@@ -363,6 +363,11 @@ export default function IndiaPage() {
             category: "Location",
           },
           {
+            title: "Event Registration Visakhapatnam",
+            href: "/in/visakhapatnam",
+            category: "Location",
+          },
+          {
             title: "Enterprise SSO Event Ticketing",
             href: "/enterprise-sso-event-ticketing",
             category: "Product",
