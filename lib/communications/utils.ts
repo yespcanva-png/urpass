@@ -1,65 +1,29 @@
 import { DeliveryChannel } from "./types";
+import {
+  normalizePhoneInternational,
+  isValidE164Phone,
+  maskPhoneInternational,
+} from "@/lib/country-config";
 
 /**
  * Normalizes phone numbers to standard E.164 format (+[country_code][number]).
- * Defaults to India (+91) for standard 10-digit mobile numbers.
+ * Supports UK (+44, 07...), India (+91), and international numbers.
  */
 export function normalizePhone(raw: string | null | undefined, defaultCountryCode = "91"): string | null {
-  if (!raw) return null;
-  const trimmed = raw.trim();
-  if (!trimmed) return null;
-
-  // Remove non-digit chars except leading plus
-  let cleaned = trimmed.replace(/[^\d+]/g, "");
-  if (!cleaned) return null;
-
-  if (cleaned.startsWith("+")) {
-    const digitsOnly = cleaned.slice(1).replace(/\D/g, "");
-    if (digitsOnly.length >= 8 && digitsOnly.length <= 15) {
-      return `+${digitsOnly}`;
-    }
-    return null;
-  }
-
-  // Remove leading 0 if present (e.g. 09876543210)
-  if (cleaned.startsWith("0")) {
-    cleaned = cleaned.slice(1);
-  }
-
-  // 10-digit mobile number -> default to +91
-  if (cleaned.length === 10) {
-    return `+${defaultCountryCode}${cleaned}`;
-  }
-
-  // 12-digit number starting with 91 -> prepend +
-  if (cleaned.length === 12 && cleaned.startsWith("91")) {
-    return `+${cleaned}`;
-  }
-
-  // Fallback for valid international numbers without plus
-  if (cleaned.length >= 10 && cleaned.length <= 15) {
-    return `+${cleaned}`;
-  }
-
-  return null;
+  return normalizePhoneInternational(raw, defaultCountryCode);
 }
 
 export function isValidE164(phone: string): boolean {
-  return /^\+[1-9]\d{9,14}$/.test(phone);
+  return isValidE164Phone(phone);
 }
 
 /**
  * Masks phone numbers for security in organizer dashboards.
- * E.g. +919876543210 -> +91 •••••••210
+ * E.g. +447123456789 -> +44 •••••••789
+ *      +919876543210 -> +91 •••••••210
  */
 export function maskPhone(phone: string | null | undefined): string {
-  if (!phone) return "—";
-  const normalized = normalizePhone(phone) || phone;
-  if (normalized.length < 7) return "••••••";
-
-  const prefix = normalized.slice(0, 3); // e.g. +91
-  const suffix = normalized.slice(-3); // e.g. 210
-  return `${prefix} •••••••${suffix}`;
+  return maskPhoneInternational(phone);
 }
 
 /**

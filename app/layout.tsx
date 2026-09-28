@@ -4,6 +4,7 @@ import { Geist } from "next/font/google";
 import "./globals.css";
 import SupportWidget from "@/components/support/SupportWidget";
 import VersionSkewHandler from "@/components/common/VersionSkewHandler";
+import { CookieConsentBanner } from "@/components/ui/CookieConsentBanner";
 
 const geist = Geist({
   subsets: ["latin"],
@@ -295,9 +296,20 @@ export default function RootLayout({
                 __html: `
                   window.dataLayer = window.dataLayer || [];
                   function gtag(){dataLayer.push(arguments);}
+                  gtag('consent', 'default', {
+                    'analytics_storage': 'denied',
+                    'ad_storage': 'denied'
+                  });
                   gtag('js', new Date());
                   gtag('config', '${GA_ID}', {
                     page_path: window.location.pathname,
+                  });
+                  window.addEventListener('urpass:cookie-consent', function(e) {
+                    if (e.detail && e.detail.analytics) {
+                      gtag('consent', 'update', {
+                        'analytics_storage': 'granted'
+                      });
+                    }
                   });
                 `,
               }}
@@ -309,6 +321,7 @@ export default function RootLayout({
         <VersionSkewHandler />
         {children}
         <SupportWidget />
+        <CookieConsentBanner />
       </body>
     </html>
   );

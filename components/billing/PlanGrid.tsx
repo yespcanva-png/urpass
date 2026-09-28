@@ -96,9 +96,10 @@ interface Props {
   userEmail: string;
   userName: string;
   trialUsed?: boolean;
+  country?: "IN" | "GB";
 }
 
-export default function PlanGrid({ currentPlanSlug, currentPlanIndex, userEmail, userName, trialUsed = false }: Props) {
+export default function PlanGrid({ currentPlanSlug, currentPlanIndex, userEmail, userName, trialUsed = false, country = "IN" }: Props) {
   const [tab, setTab]     = useState<"subscription" | "one-event">("subscription");
   const [cycle, setCycle] = useState<"monthly" | "annual">("monthly");
   const [trialModal, setTrialModal] = useState<{ planSlug: string; planName: string } | null>(null);
@@ -429,6 +430,7 @@ export default function PlanGrid({ currentPlanSlug, currentPlanIndex, userEmail,
           planSlug={trialModal.planSlug}
           planName={trialModal.planName}
           cycle={cycle}
+          country={country}
           userEmail={userEmail}
           userName={userName}
         />

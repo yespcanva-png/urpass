@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Check, Minus, ChevronDown, Sparkles, Flame, ArrowRight } from "lucide-react";
 import TrialConfirmationModal from "@/components/billing/TrialConfirmationModal";
@@ -18,6 +18,8 @@ const PLANS = [
     desc: "For trying URPASS and running small events.",
     monthly: 0,
     annual: 0,
+    ukMonthly: 0,
+    ukAnnual: 0,
     popular: false,
     highlight: false,
     cta: "Start Free",
@@ -38,6 +40,8 @@ const PLANS = [
     desc: "For individual organizers and small event teams.",
     monthly: 499,
     annual: 4990,
+    ukMonthly: 15,
+    ukAnnual: 120,
     popular: false,
     highlight: false,
     cta: "Choose Starter",
@@ -58,6 +62,8 @@ const PLANS = [
     desc: "For growing event teams, colleges and professional organizers.",
     monthly: 999,
     annual: 9990,
+    ukMonthly: 35,
+    ukAnnual: 300,
     popular: true,
     highlight: true,
     cta: "Choose Pro",
@@ -77,6 +83,8 @@ const PLANS = [
     desc: "For organizations managing events at scale.",
     monthly: 2499,
     annual: 24990,
+    ukMonthly: 79,
+    ukAnnual: 699,
     popular: false,
     highlight: false,
     cta: "Choose Business",
@@ -140,18 +148,21 @@ const EVENT_PASSES = [
   {
     name: "Event",
     price: 299,
+    ukPrice: 5,
     regs: "250 registrations",
     features: ["1 event", "QR passes & check-in", "Attendee approval", "CSV export", "Basic analytics"],
   },
   {
     name: "Event Plus",
     price: 599,
+    ukPrice: 10,
     regs: "1,000 registrations",
     features: ["1 event", "QR passes & check-in", "Attendee approval", "CSV export", "Analytics", "Custom pass design"],
   },
   {
     name: "Large Event",
     price: 999,
+    ukPrice: 19,
     regs: "2,500 registrations",
     features: ["1 event", "QR passes & check-in", "Attendee approval", "CSV export", "Analytics", "Custom pass design", "Remove branding"],
   },
@@ -230,9 +241,36 @@ export default function PricingContent({
   userName = "",
 }: Props = {}) {
   const [cycle, setCycle] = useState<Cycle>("monthly");
+  const [country, setCountry] = useState<"IN" | "GB">("IN");
   const [trialModal, setTrialModal] = useState<{ planSlug: string; planName: string } | null>(null);
 
+  useEffect(() => {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const cParam = urlParams.get("country")?.toUpperCase();
+      if (cParam === "GB" || cParam === "UK") {
+        setCountry("GB");
+        return;
+      }
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      if (tz === "Europe/London" || tz === "GMT" || tz === "Europe/Belfast") {
+        setCountry("GB");
+      }
+    } catch {
+      // fallback to IN
+    }
+  }, []);
+
   function displayPrice(plan: typeof PLANS[0]) {
+    if (country === "GB") {
+      if (plan.ukMonthly === 0) return { price: "£0", sub: "forever" };
+      if (cycle === "monthly") return { price: `£${plan.ukMonthly}`, sub: "/month +VAT" };
+      const perMonth = Math.round(plan.ukAnnual / 12);
+      return {
+        price: `£${perMonth}`,
+        sub: `/month · £${plan.ukAnnual}/year`,
+      };
+    }
     if (plan.monthly === 0) return { price: "₹0", sub: "forever" };
     if (cycle === "monthly") return { price: `₹${plan.monthly.toLocaleString("en-IN")}`, sub: "/month +GST" };
     const perMonth = Math.round(plan.annual / 12);
@@ -266,6 +304,34 @@ export default function PricingContent({
 
         {/* ── 01 Hero + Toggle ── */}
         <section className="max-w-5xl mx-auto text-center pt-20 pb-14">
+          {/* Country Selector */}
+          <div className="flex items-center justify-center gap-2 mb-6">
+            <div className="inline-flex items-center bg-neutral-100 p-1 rounded-xl gap-1 text-xs">
+              <button
+                type="button"
+                onClick={() => setCountry("IN")}
+                className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
+                  country === "IN"
+                    ? "bg-white text-neutral-900 shadow-sm font-semibold"
+                    : "text-neutral-500 hover:text-neutral-800"
+                }`}
+              >
+                🇮🇳 India (INR ₹)
+              </button>
+              <button
+                type="button"
+                onClick={() => setCountry("GB")}
+                className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
+                  country === "GB"
+                    ? "bg-white text-neutral-900 shadow-sm font-semibold"
+                    : "text-neutral-500 hover:text-neutral-800"
+                }`}
+              >
+                🇬🇧 United Kingdom (GBP £)
+              </button>
+            </div>
+          </div>
+
           {!trialUsed ? (
             <>
               <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-brand-50 border border-brand-100 text-brand text-xs font-bold tracking-wider uppercase mb-4">
@@ -279,7 +345,11 @@ export default function PricingContent({
                 Choose Starter, Pro, or Business and unlock all features of that plan for 30 days.
               </p>
               <div className="inline-flex items-center gap-2 text-xs font-medium text-neutral-500 mb-8 bg-neutral-100 px-3.5 py-1.5 rounded-full flex-wrap justify-center">
-                <span>30 days ₹0 · AutoPay required · Cancel anytime</span>
+                <span>
+                  {country === "GB"
+                    ? "30 days £0 · No credit card required · Instant full access"
+                    : "30 days ₹0 · AutoPay required · Cancel anytime"}
+                </span>
                 <span>·</span>
                 <span>Instant full access</span>
                 <span>·</span>
@@ -422,7 +492,9 @@ export default function PricingContent({
                         </Link>
                       )}
                       <p className={`text-[10px] text-center ${plan.highlight ? "text-white/40" : "text-neutral-400"}`}>
-                        ₹0 for 30 days · Cancel before your first payment
+                        {country === "GB"
+                          ? "£0 for 30 days · No card required · Instant access"
+                          : "₹0 for 30 days · Cancel before your first payment"}
                       </p>
                     </div>
                   ) : (
@@ -507,7 +579,9 @@ export default function PricingContent({
                 <div key={pass.name} className="bg-white border border-neutral-100 rounded-2xl p-6 flex flex-col">
                   <p className="text-xs font-semibold tracking-widest text-neutral-400 mb-1">{pass.name.toUpperCase()}</p>
                   <div className="flex items-baseline gap-1 mb-1">
-                    <span className="text-3xl font-semibold">₹{pass.price}</span>
+                    <span className="text-3xl font-semibold">
+                      {country === "GB" ? `£${pass.ukPrice}` : `₹${pass.price}`}
+                    </span>
                     <span className="text-xs text-neutral-400">one-time</span>
                   </div>
                   <p className="text-sm font-medium text-neutral-700 mb-5">{pass.regs}</p>
@@ -574,10 +648,16 @@ export default function PricingContent({
               <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
                 <p className="text-sm font-semibold text-white mb-1">Campus Starter</p>
                 <div className="flex items-baseline gap-1 mb-2">
-                  <span className="text-2xl font-semibold text-white">from ₹9,999</span>
+                  <span className="text-2xl font-semibold text-white">
+                    {country === "GB" ? "from £149" : "from ₹9,999"}
+                  </span>
                   <span className="text-xs text-white/40">/year</span>
                 </div>
-                <p className="text-xs text-white/40 leading-relaxed">For colleges with multiple departments and clubs running regular events.</p>
+                <p className="text-xs text-white/40 leading-relaxed">
+                  {country === "GB"
+                    ? "For universities, students' unions, and student societies running regular campus events."
+                    : "For colleges with multiple departments and clubs running regular events."}
+                </p>
               </div>
               <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
                 <p className="text-sm font-semibold text-white mb-1">University / Institution</p>
@@ -626,6 +706,7 @@ export default function PricingContent({
           planSlug={trialModal.planSlug}
           planName={trialModal.planName}
           cycle={cycle}
+          country={country}
           userEmail={userEmail}
           userName={userName}
         />

@@ -21,7 +21,7 @@ import {
   sendTrialStartedEmail,
 } from "@/lib/email";
 
-type ActionResult = { error: string } | undefined;
+type ActionResult = { error?: string; success?: boolean } | undefined;
 type BillingCycle = "monthly" | "annual" | "lifetime";
 
 function adminClient() {
@@ -362,6 +362,110 @@ export async function activateTrialSubscription(
   }
 
   revalidateBillingPaths();
+}
+
+export async function activateUkFreeTrial(planSlug: string): Promise<ActionResult> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const admin = adminClient();
+  const { data: existingSub } = await admin
+    .from("subscriptions")
+    .select("id, trial_used, has_lifetime_access, lifetime_plan_slug")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (existingSub?.trial_used) {
+    return { error: "Your account has already used its one free 30-day trial." };
+  }
+
+  const { data: targetPlan } = await admin
+    .from("plans")
+    .select("id, name, slug")
+    .eq("slug", planSlug)
+    .eq("is_active", true)
+    .single();
+
+  if (!targetPlan) return { error: "Plan not found." };
+
+  const now = new Date();
+  const trialEndsAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+  const ukReferenceId = `UK_TRIAL_${Date.now().toString(36).toUpperCase()}`;
+
+  const { error: updateError } = await admin.from("subscriptions").upsert(
+    {
+      user_id: user.id,
+      plan_id: targetPlan.id,
+      status: "trialing",
+      provider: "uk_direct",
+      billing_cycle: "monthly",
+      provider_subscription_id: ukReferenceId,
+      current_period_start: now.toISOString(),
+      current_period_end: trialEndsAt.toISOString(),
+      cancel_at_period_end: false,
+      registrations_used: 0,
+      trial_used: true,
+      is_trial: true,
+      trial_plan: planSlug,
+      trial_starts_at: now.toISOString(),
+      trial_ends_at: trialEndsAt.toISOString(),
+      autopay_mandate_id: ukReferenceId,
+      autopay_status: "active",
+      has_lifetime_access: existingSub?.has_lifetime_access ?? false,
+      lifetime_plan_slug: existingSub?.lifetime_plan_slug ?? null,
+      reminded_7_days: false,
+      reminded_3_days: false,
+      reminded_1_day: false,
+      updated_at: now.toISOString(),
+    },
+    { onConflict: "user_id" }
+  );
+
+  if (updateError) {
+    return { error: updateError.message };
+  }
+
+  const ukMonthlyPenceMap: Record<string, number> = {
+    starter: 1500, // £15
+    pro: 3500,     // £35
+    business: 7900,// £79
+  };
+
+  const formattedEndDate = trialEndsAt.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
+  try {
+    await Promise.allSettled([
+      user.email
+        ? sendTrialStartedEmail({
+            to: user.email,
+            userName: user.user_metadata?.full_name,
+            planName: `${targetPlan.name} (UK Trial)`,
+            monthlyPricePaise: ukMonthlyPenceMap[planSlug] ?? 3500,
+            trialEndsAt: formattedEndDate,
+          })
+        : Promise.resolve(),
+      notifyOwnerTrialActivated({
+        buyerName: user.user_metadata?.full_name,
+        buyerEmail: user.email,
+        planName: `${targetPlan.name} (UK Direct — £0 Trial)`,
+        billingInterval: "monthly",
+        futurePricePaise: ukMonthlyPenceMap[planSlug] ?? 3500,
+        subscriptionId: ukReferenceId,
+        paymentId: "UK_NO_GATEWAY_DIRECT",
+        trialEndsAt: formattedEndDate,
+      }),
+    ]);
+  } catch (err: unknown) {
+    console.error("[billing] UK trial activation notification error:", err);
+  }
+
+  revalidateBillingPaths();
+  return { success: true };
 }
 
 export async function switchPlan(

@@ -15,6 +15,7 @@ import {
   BILLING_PLANS,
   resolveBillingPlanKey,
 } from "@/lib/billing-plans";
+import { activateUkFreeTrial } from "@/app/actions/billing";
 
 declare global {
   interface Window {
@@ -42,6 +43,7 @@ interface Props {
   planSlug: string;
   planName: string;
   cycle?: "monthly" | "annual" | "yearly";
+  country?: "IN" | "GB";
   userEmail?: string;
   userName?: string;
 }
@@ -52,6 +54,7 @@ export default function TrialConfirmationModal({
   planSlug,
   planName,
   cycle = "monthly",
+  country = "IN",
   userEmail = "",
   userName = "",
 }: Props) {
@@ -86,31 +89,63 @@ export default function TrialConfirmationModal({
 
   if (!isOpen) return null;
 
+  // Country-aware calculations
+  const isUk = country === "GB";
+  const dateLocale = isUk ? "en-GB" : "en-IN";
+
   // Calculate dates
   const today = new Date();
   const trialEnd = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
   const firstPaymentDate = new Date(trialEnd.getTime() + 24 * 60 * 60 * 1000);
   const nextYearRenewal = new Date(firstPaymentDate.getTime() + 365 * 24 * 60 * 60 * 1000);
 
-  const startDayMonth = today.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
-  const endDayMonth = trialEnd.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
-  const firstPaymentFormatted = firstPaymentDate.toLocaleDateString("en-IN", {
+  const startDayMonth = today.toLocaleDateString(dateLocale, { day: "numeric", month: "short" });
+  const endDayMonth = trialEnd.toLocaleDateString(dateLocale, { day: "numeric", month: "short" });
+  const firstPaymentFormatted = firstPaymentDate.toLocaleDateString(dateLocale, {
     day: "numeric",
     month: "short",
     year: "numeric",
   });
-  const nextRenewalFormatted = nextYearRenewal.toLocaleDateString("en-IN", {
+  const nextRenewalFormatted = nextYearRenewal.toLocaleDateString(dateLocale, {
     day: "numeric",
     month: "short",
     year: "numeric",
   });
 
-  const priceFormatted = `₹${planDef.price.toLocaleString("en-IN")}`;
+  const ukPrices: Record<string, { monthly: number; annual: number }> = {
+    starter: { monthly: 15, annual: 120 },
+    pro: { monthly: 35, annual: 300 },
+    business: { monthly: 79, annual: 699 },
+  };
+
+  const ukPlanPrice = ukPrices[planSlug.toLowerCase()] ?? { monthly: 35, annual: 300 };
+  const priceFormatted = isUk
+    ? `£${isYearly ? ukPlanPrice.annual : ukPlanPrice.monthly}`
+    : `₹${planDef.price.toLocaleString("en-IN")}`;
 
   async function handleActivateAutoPay() {
     setLoading(true);
     setError("");
 
+    // For UK: Direct activation without any payment gateway or credit card
+    if (isUk) {
+      try {
+        const result = await activateUkFreeTrial(planSlug);
+        if (result && "error" in result && result.error) {
+          setError(result.error);
+          setLoading(false);
+          return;
+        }
+        router.push("/billing?activated=true");
+        router.refresh();
+      } catch (err: any) {
+        setError(err?.message || "Failed to activate 30-day free trial.");
+        setLoading(false);
+      }
+      return;
+    }
+
+    // For India: Native Razorpay AutoPay recurring mandate
     try {
       const sdkReady = await loadRazorpay();
       if (!sdkReady) {
