@@ -27,7 +27,6 @@ import { getUserPlan } from "@/lib/plan";
 import UpgradeCelebration from "@/components/billing/UpgradeCelebration";
 import FounderCheckoutCta from "@/components/billing/FounderCheckoutCta";
 import FounderSpotCounter from "@/components/billing/FounderSpotCounter";
-import QuickConsultationWidget from "@/components/consultation/QuickConsultationWidget";
 
 export const metadata: Metadata = {
   title: "Billing",
@@ -732,8 +731,6 @@ export default async function BillingPage(props: {
           )}
         </div>
       </div>
-
-      <QuickConsultationWidget claimedCount={14} totalCount={20} />
     </div>
   );
 }

@@ -5,7 +5,6 @@ import Link from "next/link";
 import { Check, Minus, ChevronDown, Sparkles, Flame, ArrowRight } from "lucide-react";
 import TrialConfirmationModal from "@/components/billing/TrialConfirmationModal";
 import FounderSpotCounter from "@/components/billing/FounderSpotCounter";
-import QuickConsultationWidget from "@/components/consultation/QuickConsultationWidget";
 import { detectCountryClient } from "@/lib/country-config";
 
 type Cycle = "monthly" | "annual";
@@ -672,9 +671,6 @@ export default function PricingContent({
           userName={userName}
         />
       )}
-
-      {/* ── Quick Consultation Floating Widget ── */}
-      <QuickConsultationWidget claimedCount={14} totalCount={20} />
     </div>
   );
 }

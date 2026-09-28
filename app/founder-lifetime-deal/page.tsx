@@ -6,7 +6,6 @@ import AnimateIn from "@/components/ui/AnimateIn";
 import { createClient } from "@/lib/supabase/server";
 import FounderCheckoutCta from "@/components/billing/FounderCheckoutCta";
 import FounderSpotCounter from "@/components/billing/FounderSpotCounter";
-import QuickConsultationWidget from "@/components/consultation/QuickConsultationWidget";
 import {
   Sparkles,
   CheckCircle2,
@@ -452,8 +451,6 @@ export default async function FounderLifetimeDealPage() {
             </div>
           </AnimateIn>
         </div>
-
-        <QuickConsultationWidget claimedCount={14} totalCount={20} />
       </main>
 
       <Footer />
