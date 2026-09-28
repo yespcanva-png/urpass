@@ -49,6 +49,17 @@ export type Subscription = {
 
 export type EventStatus = "draft" | "active" | "completed" | "cancelled";
 
+export type CustomFieldType = "text" | "number" | "select" | "checkbox";
+
+export interface CustomFieldDefinition {
+  id: string;
+  label: string;
+  type: CustomFieldType;
+  placeholder?: string;
+  required: boolean;
+  options?: string[];
+}
+
 export type Event = {
   id: string;
   organizer_id: string;
@@ -65,6 +76,7 @@ export type Event = {
   application_enabled: boolean;
   is_paid_event: boolean;
   ticket_price: number;
+  custom_fields?: CustomFieldDefinition[];
   organization_id: string | null;
   workspace_id?: string | null;
   location_id?: string | null;
@@ -127,6 +139,7 @@ export type Attendee = {
   pass_type: string;
   application_status: ApplicationStatus;
   pass_status: PassStatus;
+  custom_responses?: Record<string, any> | null;
   created_at: string;
   updated_at: string;
 };

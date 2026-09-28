@@ -14,6 +14,8 @@ import { eventSchema, type EventInput } from "@/lib/validations/event";
 import { updateEvent, updateEventStatus, deleteEvent } from "@/app/actions/events";
 import { setTicketTypeStatus, createDefaultTicketType } from "@/app/actions/ticket-types";
 import { createClient } from "@/lib/supabase/client";
+import CustomFieldsBuilder from "@/components/event/CustomFieldsBuilder";
+import type { CustomFieldDefinition } from "@/types";
 
 const inputCls =
   "border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/10 transition-all bg-white placeholder:text-neutral-300 w-full";
@@ -153,6 +155,7 @@ type EventRow = {
   sms_fallback_enabled?: boolean; sms_sender_id?: string | null;
   sms_dlt_entity_id?: string | null; sms_dlt_template_id?: string | null;
   sms_provider?: string | null;
+  custom_fields?: CustomFieldDefinition[];
 };
 
 export default function EventSettingsPage() {
@@ -170,6 +173,7 @@ export default function EventSettingsPage() {
   const [hasPaymentGateway, setHasPaymentGateway] = useState<boolean | null>(null);
   const [ticketTypes, setTicketTypes]           = useState<{id: string; name: string; price: number; status: string}[]>([]);
   const [creatingDefault, setCreatingDefault]   = useState(false);
+  const [customFieldsLimit, setCustomFieldsLimit] = useState<{ max: number; isUnlimited: boolean }>({ max: 3, isUnlimited: false });
 
   const {
     register,
@@ -190,7 +194,7 @@ export default function EventSettingsPage() {
       const supabase = createClient();
       const [{ data }, { data: { user } }] = await Promise.all([
         supabase.from("events")
-          .select("id,name,description,event_date,start_time,end_time,venue,attendee_limit,status,application_enabled,auto_approve,is_paid_event,ticket_price,event_type,meeting_url,meeting_platform,sms_enabled,whatsapp_enabled,email_enabled,sms_fallback_enabled,sms_sender_id,sms_dlt_entity_id,sms_dlt_template_id,sms_provider")
+          .select("id,name,description,event_date,start_time,end_time,venue,attendee_limit,status,application_enabled,auto_approve,is_paid_event,ticket_price,event_type,meeting_url,meeting_platform,sms_enabled,whatsapp_enabled,email_enabled,sms_fallback_enabled,sms_sender_id,sms_dlt_entity_id,sms_dlt_template_id,sms_provider,custom_fields")
           .eq("id", eventId).single(),
         supabase.auth.getUser(),
       ]);
@@ -209,9 +213,20 @@ export default function EventSettingsPage() {
         });
       }
       if (user) {
-        const { data: ps } = await supabase.from("payment_settings")
-          .select("razorpay_key_id").eq("user_id", user.id).single();
+        const [{ data: ps }, { data: sub }] = await Promise.all([
+          supabase.from("payment_settings").select("razorpay_key_id").eq("user_id", user.id).single(),
+          supabase.from("subscriptions").select("plan:plans(slug)").eq("user_id", user.id).eq("status", "active").maybeSingle(),
+        ]);
         setHasPaymentGateway(!!(ps?.razorpay_key_id));
+        const planRaw = sub?.plan as unknown as { slug?: string } | { slug?: string }[] | undefined;
+        const slug = Array.isArray(planRaw) ? planRaw[0]?.slug : planRaw?.slug;
+        if (slug === "starter") {
+          setCustomFieldsLimit({ max: 10, isUnlimited: false });
+        } else if (slug && slug !== "free") {
+          setCustomFieldsLimit({ max: 999999, isUnlimited: true });
+        } else {
+          setCustomFieldsLimit({ max: 3, isUnlimited: false });
+        }
       }
       const { data: ttRows } = await supabase
         .from("ticket_types")
@@ -392,6 +407,14 @@ export default function EventSettingsPage() {
             />
           )}
         </SectionCard>
+
+        {/* ── Custom registration questions ── */}
+        <CustomFieldsBuilder
+          eventId={eventId}
+          initialFields={event?.custom_fields ?? []}
+          maxFields={customFieldsLimit.max}
+          isUnlimited={customFieldsLimit.isUnlimited}
+        />
 
         {/* ── Ticket payment / types ── */}
         {ticketTypes.length > 0 ? (

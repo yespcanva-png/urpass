@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import {
   UserPlus, Upload, Check, X, Clock, Loader2, Users,
-  Search, Ticket, ExternalLink, Download, Lock, Wifi,
+  Search, Ticket, ExternalLink, Download, Lock, Wifi, ClipboardList,
 } from "lucide-react";
 import { approveAttendee, rejectAttendee, exportAttendeesCSV } from "@/app/actions/attendees";
 import { generatePass } from "@/app/actions/passes";
@@ -13,6 +13,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import WhatsAppShareButton from "@/components/pass/WhatsAppShareButton";
 import AttendeeDeliveryActions from "./AttendeeDeliveryActions";
+import type { CustomFieldDefinition } from "@/types";
 
 type Status    = "pending" | "approved" | "rejected";
 type FilterTab = "all" | Status;
@@ -25,6 +26,7 @@ interface Attendee {
   pass_type: string;
   application_status: Status;
   pass_status: "not_generated" | "generated" | "checked_in";
+  custom_responses?: Record<string, unknown> | null;
   created_at: string;
 }
 
@@ -38,6 +40,7 @@ interface Props {
   initialPassTokens?: Record<string, string>;
   canCSV?: boolean;
   canExport?: boolean;
+  customFields?: CustomFieldDefinition[];
 }
 
 const statusConfig: Record<Status, { label: string; cls: string; icon: React.ComponentType<{ className?: string }> }> = {
@@ -96,6 +99,7 @@ export default function AttendeeTable({
   initialPassTokens,
   canCSV = false,
   canExport = false,
+  customFields = [],
 }: Props) {
   const [attendees, setAttendees]   = useState<Attendee[]>(initial);
   const [passTokens, setPassTokens] = useState<Record<string, string>>(initialPassTokens ?? {});
@@ -107,6 +111,7 @@ export default function AttendeeTable({
   const [loadingId, setLoadingId]   = useState<string | null>(null);
   const [exporting, setExporting]   = useState(false);
   const [liveConnected, setLiveConnected] = useState(false);
+  const [selectedAnswersAttendee, setSelectedAnswersAttendee] = useState<Attendee | null>(null);
   const initialRef = useRef(initial);
 
   // Sync when server re-renders with fresh props
@@ -410,7 +415,20 @@ export default function AttendeeTable({
                     return (
                       <tr key={a.id} className="hover:bg-neutral-50/50 transition-colors">
                         <td className="px-4 py-3">
-                          <p className="font-medium text-sm">{a.name}</p>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="font-medium text-sm">{a.name}</p>
+                            {a.custom_responses && Object.keys(a.custom_responses).length > 0 && (
+                              <button
+                                type="button"
+                                onClick={() => setSelectedAnswersAttendee(a)}
+                                className="inline-flex items-center gap-1 text-[10px] font-semibold text-brand bg-brand-50 hover:bg-brand-100 px-1.5 py-0.5 rounded-md transition-colors"
+                                title="View registration questions answers"
+                              >
+                                <ClipboardList className="w-3 h-3" />
+                                Answers
+                              </button>
+                            )}
+                          </div>
                           <p className="text-xs text-neutral-400 sm:hidden">{a.email}</p>
                           {actionErrors[a.id] && (
                             <p className="text-xs text-red-500 mt-0.5">{actionErrors[a.id]}</p>
@@ -524,6 +542,65 @@ export default function AttendeeTable({
       {showCSVModal && (
         <CSVUploadModal eventId={eventId} onClose={() => setShowCSVModal(false)}
           onSuccess={() => setShowCSVModal(false)} />
+      )}
+
+      {selectedAnswersAttendee && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4">
+            <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
+              <div>
+                <h3 className="text-sm font-bold text-neutral-900">{selectedAnswersAttendee.name}</h3>
+                <p className="text-xs text-neutral-400">{selectedAnswersAttendee.email}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedAnswersAttendee(null)}
+                className="p-1.5 rounded-lg text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
+              {customFields && customFields.length > 0 ? (
+                customFields.map((field) => {
+                  const rawVal = selectedAnswersAttendee.custom_responses?.[field.id];
+                  const displayVal =
+                    rawVal === true ? "Yes" : rawVal === false ? "No" : rawVal ? String(rawVal) : "—";
+                  return (
+                    <div key={field.id} className="bg-neutral-50 rounded-xl p-3 border border-neutral-100">
+                      <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">
+                        {field.label}
+                      </p>
+                      <p className="text-sm font-medium text-neutral-900 mt-1">{displayVal}</p>
+                    </div>
+                  );
+                })
+              ) : (
+                Object.entries(selectedAnswersAttendee.custom_responses || {}).map(([key, val]) => (
+                  <div key={key} className="bg-neutral-50 rounded-xl p-3 border border-neutral-100">
+                    <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">
+                      {key}
+                    </p>
+                    <p className="text-sm font-medium text-neutral-900 mt-1">
+                      {val === true ? "Yes" : val === false ? "No" : String(val ?? "—")}
+                    </p>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div className="pt-2 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setSelectedAnswersAttendee(null)}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-neutral-700 bg-neutral-100 hover:bg-neutral-200 transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </>
   );

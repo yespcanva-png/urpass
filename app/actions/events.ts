@@ -9,6 +9,7 @@ import { generateApplySlug } from "@/lib/utils";
 import { getUserPlan } from "@/lib/plan";
 import { recordApiUsage } from "@/lib/api-usage";
 import { getSupabaseUrl } from "@/lib/supabase/config";
+import type { CustomFieldDefinition } from "@/types";
 
 function adminClient() {
   return createAdminClient(
@@ -272,6 +273,82 @@ export async function updateEvent(
   revalidatePath(`/event/${eventId}`);
   revalidatePath(`/event/${eventId}/settings`);
   revalidatePath("/dashboard/events");
+}
+
+export async function updateEventCustomFields(
+  eventId: string,
+  customFields: CustomFieldDefinition[]
+): Promise<ActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const { data: event } = await supabase
+    .from("events")
+    .select("id, organizer_id, organization_id")
+    .eq("id", eventId)
+    .single();
+
+  if (!event) return { error: "Event not found." };
+
+  let isAuthorized = event.organizer_id === user.id;
+  if (!isAuthorized && event.organization_id) {
+    const { data: member } = await supabase
+      .from("organization_members")
+      .select("role")
+      .eq("organization_id", event.organization_id)
+      .eq("user_id", user.id)
+      .eq("status", "active")
+      .in("role", ["owner", "admin", "event_manager"])
+      .maybeSingle();
+    isAuthorized = !!member;
+  }
+
+  if (!isAuthorized) {
+    return { error: "You are not authorized to update this event." };
+  }
+
+  // Check plan limits
+  const plan = await getUserPlan(supabase, user.id);
+  const maxCustomFields = plan.getLimit("custom_fields");
+  if (customFields.length > maxCustomFields) {
+    return {
+      error: `Your current plan allows up to ${maxCustomFields} custom field${maxCustomFields === 1 ? "" : "s"}. Upgrade to add more.`,
+    };
+  }
+
+  // Validate fields
+  for (const f of customFields) {
+    if (!f.label || f.label.trim().length === 0) {
+      return { error: "Field label cannot be empty." };
+    }
+    if (f.type === "select" && (!f.options || f.options.filter((o) => o.trim().length > 0).length === 0)) {
+      return { error: `Dropdown field "${f.label}" must have at least one option.` };
+    }
+  }
+
+  const sanitized = customFields.map((f, idx) => ({
+    id: f.id?.trim() || `field_${Date.now()}_${idx}`,
+    label: f.label.trim(),
+    type: f.type,
+    placeholder: f.placeholder?.trim() || undefined,
+    required: !!f.required,
+    options: f.type === "select" ? (f.options ?? []).map((o) => o.trim()).filter(Boolean) : undefined,
+  }));
+
+  const { error } = await supabase
+    .from("events")
+    .update({ custom_fields: sanitized })
+    .eq("id", eventId);
+
+  if (error) return { error: error.message };
+
+  revalidatePath(`/event/${eventId}`);
+  revalidatePath(`/event/${eventId}/settings`);
+  revalidatePath(`/apply/${eventId}`);
+  return { eventId };
 }
 
 export async function updateEventStatus(

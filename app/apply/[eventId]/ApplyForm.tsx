@@ -14,11 +14,13 @@ import {
   Phone,
   AlertCircle,
   IndianRupee,
+  ChevronDown,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { attendeeSchema, type AttendeeInput } from "@/lib/validations/attendee";
 import { submitApplication } from "@/app/actions/attendees";
 import type { ApplyTicketType } from "./page";
+import type { CustomFieldDefinition } from "@/types";
 
 interface EventInfo {
   id: string;
@@ -30,6 +32,7 @@ interface EventInfo {
   auto_approve: boolean;
   is_paid_event: boolean;
   ticket_price: number;
+  custom_fields?: CustomFieldDefinition[];
 }
 
 interface Branding {
@@ -113,6 +116,7 @@ export default function ApplyForm({
       : available[0]
     )?.id ?? null;
   const [selectedTicketTypeId, setSelectedTicketTypeId] = useState<string | null>(defaultTicketTypeId);
+  const [customResponses, setCustomResponses] = useState<Record<string, unknown>>({});
 
   const {
     register,
@@ -186,7 +190,8 @@ export default function ApplyForm({
               paymentId: response.razorpay_payment_id,
               signature: response.razorpay_signature,
             },
-            selectedTicketTypeId
+            selectedTicketTypeId,
+            customResponses
           );
           setPaymentPending(false);
           if (result?.error) {
@@ -241,12 +246,24 @@ export default function ApplyForm({
       return;
     }
 
+    if (event.custom_fields && event.custom_fields.length > 0) {
+      for (const field of event.custom_fields) {
+        if (field.required) {
+          const val = customResponses[field.id];
+          if (val === undefined || val === null || val === "" || (field.type === "checkbox" && !val)) {
+            setServerError(`Please answer the required question: "${field.label}".`);
+            return;
+          }
+        }
+      }
+    }
+
     if (effectivelyPaid) {
       return handlePaidSubmit(data);
     }
     setServerError("");
     try {
-      const result = await submitApplication(event.id, data, undefined, selectedTicketTypeId);
+      const result = await submitApplication(event.id, data, undefined, selectedTicketTypeId, customResponses);
       if (result?.error) {
         setServerError(result.error);
         return;
@@ -538,6 +555,69 @@ export default function ApplyForm({
                 />
               </div>
             </div>
+
+            {/* Custom registration fields */}
+            {event.custom_fields && event.custom_fields.length > 0 && (
+              <div className="pt-2 border-t border-neutral-100 flex flex-col gap-4">
+                <p className="text-xs font-bold uppercase tracking-wider text-neutral-400">
+                  Additional Details
+                </p>
+                {event.custom_fields.map((field) => (
+                  <div key={field.id} className="flex flex-col gap-1.5">
+                    <label className="text-xs font-semibold text-neutral-500 uppercase tracking-wide">
+                      {field.label}{" "}
+                      {field.required ? (
+                        <span className="text-red-500">*</span>
+                      ) : (
+                        <span className="normal-case font-normal text-neutral-400">(optional)</span>
+                      )}
+                    </label>
+
+                    {field.type === "select" ? (
+                      <div className="relative">
+                        <select
+                          value={(customResponses[field.id] as string) ?? ""}
+                          onChange={(e) =>
+                            setCustomResponses({ ...customResponses, [field.id]: e.target.value })
+                          }
+                          className={`${inputCls} appearance-none pr-9`}
+                        >
+                          <option value="">Select an option...</option>
+                          {field.options?.map((opt) => (
+                            <option key={opt} value={opt}>
+                              {opt}
+                            </option>
+                          ))}
+                        </select>
+                        <ChevronDown className="w-4 h-4 text-neutral-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                      </div>
+                    ) : field.type === "checkbox" ? (
+                      <label className="flex items-center gap-2.5 cursor-pointer py-1">
+                        <input
+                          type="checkbox"
+                          checked={!!customResponses[field.id]}
+                          onChange={(e) =>
+                            setCustomResponses({ ...customResponses, [field.id]: e.target.checked })
+                          }
+                          className="w-4 h-4 rounded text-brand border-neutral-300 focus:ring-brand"
+                        />
+                        <span className="text-sm text-neutral-700">Yes, confirm</span>
+                      </label>
+                    ) : (
+                      <input
+                        type={field.type === "number" ? "number" : "text"}
+                        value={(customResponses[field.id] as string | number) ?? ""}
+                        onChange={(e) =>
+                          setCustomResponses({ ...customResponses, [field.id]: e.target.value })
+                        }
+                        placeholder={field.placeholder || `Enter ${field.label.toLowerCase()}`}
+                        className={inputCls}
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
 
             <input type="hidden" value="participant" {...register("pass_type")} />
 

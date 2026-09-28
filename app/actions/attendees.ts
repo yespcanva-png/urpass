@@ -321,19 +321,31 @@ export async function submitApplication(
   eventId: string,
   data: AttendeeInput,
   payment?: PaymentVerification,
-  ticketTypeId?: string | null
+  ticketTypeId?: string | null,
+  customResponses?: Record<string, unknown>
 ): Promise<{ error?: string; passToken?: string } | undefined> {
   const admin = adminClient();
 
   const { data: event } = await admin
     .from("events")
-    .select("id, status, application_enabled, auto_approve, attendee_limit, name, event_date, venue, is_paid_event, ticket_price, organizer_id, organization_id")
+    .select("id, status, application_enabled, auto_approve, attendee_limit, name, event_date, venue, is_paid_event, ticket_price, organizer_id, organization_id, custom_fields")
     .eq("id", eventId)
     .eq("status", "active")
     .eq("application_enabled", true)
     .single();
 
   if (!event) return { error: "Applications are not open for this event." };
+
+  if (event.custom_fields && Array.isArray(event.custom_fields)) {
+    for (const f of event.custom_fields as { id: string; label: string; type: string; required?: boolean }[]) {
+      if (f.required) {
+        const val = customResponses?.[f.id];
+        if (val === undefined || val === null || val === "" || (f.type === "checkbox" && !val)) {
+          return { error: `Please answer the required question: "${f.label}".` };
+        }
+      }
+    }
+  }
 
   // ── Registration limit check ────────────────────────────────
   // If the event has an attached one-event pass, enforce the pass's limit.
@@ -561,7 +573,13 @@ export async function submitApplication(
     // Insert as approved immediately
     const { data: attendee, error: attendeeError } = await admin
       .from("attendees")
-      .insert({ event_id: eventId, ...parsed.data, application_status: "approved", ticket_type_id: selectedTicketType?.id ?? null })
+      .insert({
+        event_id: eventId,
+        ...parsed.data,
+        application_status: "approved",
+        ticket_type_id: selectedTicketType?.id ?? null,
+        custom_responses: customResponses ?? {},
+      })
       .select("id, pass_type")
       .single();
 
@@ -678,6 +696,7 @@ export async function submitApplication(
     ...parsed.data,
     application_status: "pending",
     ticket_type_id: selectedTicketType?.id ?? null,
+    custom_responses: customResponses ?? {},
   });
   const { data: newAttendee, error } = typeof attendeeInsert.select === "function"
     ? await attendeeInsert.select("id").single()
@@ -757,27 +776,48 @@ export async function exportAttendeesCSV(
   const event = await getEventForOrganizer(supabase, eventId, user.id);
   if (!event) return { error: "Event not found." };
 
+  const { data: eventDetails } = await supabase
+    .from("events")
+    .select("custom_fields")
+    .eq("id", eventId)
+    .single();
+
+  const customFields = (eventDetails?.custom_fields ?? []) as { id: string; label: string }[];
+
   const { data: attendees } = await supabase
     .from("attendees")
-    .select("name, email, phone, pass_type, application_status, pass_status, created_at")
+    .select("name, email, phone, pass_type, application_status, pass_status, custom_responses, created_at")
     .eq("event_id", eventId)
     .order("created_at", { ascending: false });
 
   if (!attendees || attendees.length === 0) return { csv: "" };
 
+  const customHeaders = customFields.map((f) => f.label);
   const headers = [
     "Name", "Email", "Phone", "Pass Type",
     "Application Status", "Pass Status", "Registered At",
+    ...customHeaders,
   ];
-  const rows = attendees.map((a) => [
-    a.name,
-    a.email,
-    a.phone ?? "",
-    a.pass_type,
-    a.application_status,
-    a.pass_status,
-    new Date(a.created_at).toLocaleDateString("en-IN"),
-  ]);
+
+  const rows = attendees.map((a) => {
+    const customVals = customFields.map((f) => {
+      const val = (a as unknown as { custom_responses?: Record<string, unknown> }).custom_responses?.[f.id];
+      if (val === true) return "Yes";
+      if (val === false) return "No";
+      return val ?? "";
+    });
+
+    return [
+      a.name,
+      a.email,
+      a.phone ?? "",
+      a.pass_type,
+      a.application_status,
+      a.pass_status,
+      new Date(a.created_at).toLocaleDateString("en-IN"),
+      ...customVals,
+    ];
+  });
 
   const csv = [
     headers.join(","),

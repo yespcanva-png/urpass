@@ -16,7 +16,7 @@ export default async function AttendeesPage({ params }: Props) {
 
   const { data: event } = await supabase
     .from("events")
-    .select("id, name, attendee_limit, application_enabled, apply_slug, organizer_id, organization_id")
+    .select("id, name, attendee_limit, application_enabled, apply_slug, organizer_id, organization_id, custom_fields")
     .eq("id", eventId)
     .maybeSingle();
 
@@ -37,7 +37,7 @@ export default async function AttendeesPage({ params }: Props) {
   const [{ data: attendees }, { data: passes }, plan] = await Promise.all([
     supabase
       .from("attendees")
-      .select("id, name, email, phone, pass_type, application_status, pass_status, created_at")
+      .select("id, name, email, phone, pass_type, application_status, pass_status, custom_responses, created_at")
       .eq("event_id", eventId)
       .order("created_at", { ascending: false }),
     supabase
@@ -63,6 +63,7 @@ export default async function AttendeesPage({ params }: Props) {
         initialPassTokens={initialPassTokens}
         canCSV={plan.canCSV}
         canExport={plan.canExport}
+        customFields={event.custom_fields ?? []}
       />
     </div>
   );

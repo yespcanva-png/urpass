@@ -99,6 +99,7 @@ interface EventInfo {
   attendee_limit: number;
   event_type: string;
   apply_slug?: string | null;
+  custom_fields?: import("@/types").CustomFieldDefinition[];
 }
 
 interface Branding {
@@ -129,7 +130,7 @@ export default async function ApplyPage({
 
   const query = supabase
     .from("events")
-    .select("id, name, description, event_date, start_time, venue, auto_approve, is_paid_event, ticket_price, attendee_limit, organizer_id, organization_id, event_type, apply_slug")
+    .select("id, name, description, event_date, start_time, venue, auto_approve, is_paid_event, ticket_price, attendee_limit, organizer_id, organization_id, event_type, apply_slug, custom_fields")
     .eq("status", "active")
     .eq("application_enabled", true);
 
