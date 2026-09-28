@@ -160,7 +160,7 @@ describe("AttendeeTable", () => {
     render(<AttendeeTable attendees={sampleAttendees} eventId="evt-1" attendeeLimit={100} />);
     // Switch to approved tab
     await userEvent.click(screen.getByRole("button", { name: /approved/i }));
-    expect(screen.getByRole("button", { name: /pass/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Generate pass" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /revoke/i })).toBeInTheDocument();
   });
 

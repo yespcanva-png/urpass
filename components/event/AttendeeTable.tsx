@@ -4,12 +4,14 @@ import { useState, useEffect, useRef } from "react";
 import {
   UserPlus, Upload, Check, X, Clock, Loader2, Users,
   Search, Ticket, ExternalLink, Download, Lock, Wifi, ClipboardList, RotateCcw,
+  Send,
 } from "lucide-react";
 import { approveAttendee, rejectAttendee, exportAttendeesCSV, promoteNextWaitlistAttendee } from "@/app/actions/attendees";
 import { undoCheckIn } from "@/app/actions/manual-checkin";
-import { generatePass } from "@/app/actions/passes";
+import { generatePass, bulkGeneratePasses } from "@/app/actions/passes";
 import AddAttendeeModal from "./AddAttendeeModal";
 import CSVUploadModal from "./CSVUploadModal";
+import BulkBroadcastModal from "./BulkBroadcastModal";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import WhatsAppShareButton from "@/components/pass/WhatsAppShareButton";
@@ -109,6 +111,9 @@ export default function AttendeeTable({
   const [search, setSearch]         = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
   const [showCSVModal, setShowCSVModal] = useState(false);
+  const [showBroadcastModal, setShowBroadcastModal] = useState(false);
+  const [bulkGenerating, setBulkGenerating] = useState(false);
+  const [bulkMsg, setBulkMsg] = useState<{ text: string; isError?: boolean } | null>(null);
   const [actionErrors, setActionErrors] = useState<Record<string, string>>({});
   const [loadingId, setLoadingId]   = useState<string | null>(null);
   const [undoingId, setUndoingId]   = useState<string | null>(null);
@@ -155,6 +160,7 @@ export default function AttendeeTable({
 
   // ── Derived stats (all from live attendees state) ───────────
   const approvedCount = attendees.filter((a) => a.application_status === "approved").length;
+  const unissuedCount = attendees.filter((a) => a.application_status === "approved" && a.pass_status === "not_generated").length;
   const capacityPct   = attendeeLimit > 0 ? Math.min(100, Math.round((approvedCount / attendeeLimit) * 100)) : 0;
   const atCapacity    = approvedCount >= attendeeLimit;
 
@@ -177,6 +183,39 @@ export default function AttendeeTable({
   // ── Actions — optimistic, no spinner for approve/reject ─────
   function setErr(id: string, msg: string) {
     setActionErrors((prev) => ({ ...prev, [id]: msg }));
+  }
+
+  async function handleBulkGenerate() {
+    setBulkGenerating(true);
+    setBulkMsg(null);
+    try {
+      const res = await bulkGeneratePasses(eventId);
+      if (res.error) {
+        setBulkMsg({ text: res.error, isError: true });
+      } else {
+        if (res.tokens) {
+          setPassTokens((prev) => ({ ...prev, ...res.tokens }));
+        }
+        setAttendees((prev) =>
+          prev.map((a) =>
+            a.application_status === "approved" && a.pass_status === "not_generated"
+              ? { ...a, pass_status: "generated" }
+              : a
+          )
+        );
+        setBulkMsg({
+          text: `Successfully generated ${res.generated} ${res.generated === 1 ? "pass" : "passes"}!`,
+        });
+        setTimeout(() => setBulkMsg(null), 4000);
+      }
+    } catch (err) {
+      setBulkMsg({
+        text: err instanceof Error ? err.message : "Failed to bulk generate passes",
+        isError: true,
+      });
+    } finally {
+      setBulkGenerating(false);
+    }
   }
 
   function handleApprove(id: string, prev_status: Status) {
@@ -415,6 +454,29 @@ export default function AttendeeTable({
               </button>
             )}
 
+            {unissuedCount > 0 && (
+              <button
+                onClick={handleBulkGenerate}
+                disabled={bulkGenerating}
+                className="flex items-center gap-1.5 bg-brand-50 text-brand border border-brand-200 rounded-xl px-3 py-2 text-xs font-semibold hover:bg-brand-100 transition-colors disabled:opacity-50"
+                title="Generate passes for all approved attendees without a ticket"
+              >
+                {bulkGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Ticket className="w-3.5 h-3.5" />}
+                Generate {unissuedCount} {unissuedCount === 1 ? "pass" : "passes"}
+              </button>
+            )}
+
+            {approvedCount > 0 && (
+              <button
+                onClick={() => setShowBroadcastModal(true)}
+                className="flex items-center gap-1.5 border border-neutral-200 rounded-xl px-3 py-2 text-xs font-medium hover:bg-neutral-50 transition-colors text-neutral-700"
+                title="Broadcast digital pass links to attendees"
+              >
+                <Send className="w-3.5 h-3.5 text-neutral-400" />
+                Broadcast passes
+              </button>
+            )}
+
             <button onClick={() => setShowAddModal(true)}
               className="flex items-center gap-1.5 text-white rounded-xl px-3 py-2 text-xs font-medium hover:opacity-90 transition-opacity"
               style={{ background: "#6D28D9" }}>
@@ -423,6 +485,24 @@ export default function AttendeeTable({
             </button>
           </div>
         </div>
+
+        {bulkMsg && (
+          <div
+            className={`p-3 rounded-xl mb-4 text-xs font-medium flex items-center justify-between ${
+              bulkMsg.isError
+                ? "bg-red-50 text-red-700 border border-red-200"
+                : "bg-emerald-50 text-emerald-800 border border-emerald-200"
+            }`}
+          >
+            <span>{bulkMsg.text}</span>
+            <button
+              onClick={() => setBulkMsg(null)}
+              className="text-neutral-400 hover:text-neutral-700 text-xs px-1.5"
+            >
+              ✕
+            </button>
+          </div>
+        )}
 
         {/* Tabs + Search */}
         <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
@@ -685,6 +765,15 @@ export default function AttendeeTable({
             </div>
           </div>
         </div>
+      )}
+
+      {showBroadcastModal && (
+        <BulkBroadcastModal
+          eventId={eventId}
+          approvedCount={approvedCount}
+          unissuedCount={unissuedCount}
+          onClose={() => setShowBroadcastModal(false)}
+        />
       )}
     </>
   );
