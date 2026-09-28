@@ -215,3 +215,93 @@ export async function undoCheckInByToken(
 
   return undoCheckIn(pass.attendee_id, eventId);
 }
+
+export async function exportCheckinsCSV(
+  eventId: string
+): Promise<{ csv?: string; error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated." };
+
+  const { data: event } = await supabase
+    .from("events")
+    .select("id, organizer_id, organization_id, name")
+    .eq("id", eventId)
+    .single();
+
+  if (!event) return { error: "Event not found." };
+
+  const isOrganizer = event.organizer_id === user.id;
+  let hasOrgAccess = false;
+  if (!isOrganizer && event.organization_id) {
+    const { data: member } = await supabase
+      .from("organization_members")
+      .select("role")
+      .eq("organization_id", event.organization_id)
+      .eq("user_id", user.id)
+      .eq("status", "active")
+      .in("role", ["owner", "admin", "event_manager", "checkin_staff"])
+      .single();
+    hasOrgAccess = !!member;
+  }
+
+  if (!isOrganizer && !hasOrgAccess) {
+    return { error: "Not authorized to export check-ins for this event." };
+  }
+
+  const { data: checkins } = await supabase
+    .from("check_ins")
+    .select(`
+      id,
+      checked_in_at,
+      check_in_method,
+      gate:scanner_gates(name),
+      attendee:attendees(name, email, phone, pass_type)
+    `)
+    .eq("event_id", eventId)
+    .order("checked_in_at", { ascending: false });
+
+  if (!checkins || checkins.length === 0) {
+    return { csv: "" };
+  }
+
+  const headers = [
+    "Attendee Name",
+    "Email",
+    "Phone",
+    "Pass Type",
+    "Checked In At",
+    "Gate",
+    "Method",
+  ];
+
+  const rows = checkins.map((c) => {
+    const att = (c as unknown as { attendee?: { name?: string; email?: string; phone?: string; pass_type?: string } | null }).attendee;
+    const gateObj = (c as unknown as { gate?: { name?: string } | null }).gate;
+
+    const checkedInAt = c.checked_in_at
+      ? new Date(c.checked_in_at).toLocaleString("en-IN")
+      : "";
+
+    return [
+      att?.name ?? "Unknown",
+      att?.email ?? "",
+      att?.phone ?? "",
+      att?.pass_type ?? "General",
+      checkedInAt,
+      gateObj?.name ?? "Main Entrance",
+      c.check_in_method ?? "qr",
+    ];
+  });
+
+  const csv = [
+    headers.join(","),
+    ...rows.map((r) =>
+      r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",")
+    ),
+  ].join("\n");
+
+  return { csv };
+}

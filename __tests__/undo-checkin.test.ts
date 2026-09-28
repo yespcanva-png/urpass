@@ -9,7 +9,7 @@ vi.mock("@/lib/supabase/server", () => ({
 }));
 
 import { createClient } from "@/lib/supabase/server";
-import { undoCheckIn, undoCheckInByToken } from "@/app/actions/manual-checkin";
+import { undoCheckIn, undoCheckInByToken, exportCheckinsCSV } from "@/app/actions/manual-checkin";
 
 const mockedCreateClient = vi.mocked(createClient);
 
@@ -285,5 +285,169 @@ describe("undoCheckIn & undoCheckInByToken", () => {
 
     const result = await undoCheckInByToken("UNKNOWN_TOKEN", "evt-1");
     expect(result).toEqual({ error: "Pass not found." });
+  });
+
+  describe("exportCheckinsCSV", () => {
+    it("returns error when not authenticated", async () => {
+      const supabase = {
+        auth: {
+          getUser: vi.fn().mockResolvedValue({ data: { user: null } }),
+        },
+      };
+      mockedCreateClient.mockResolvedValue(supabase as never);
+
+      const result = await exportCheckinsCSV("evt-1");
+      expect(result).toEqual({ error: "Not authenticated." });
+    });
+
+    it("returns error when event not found", async () => {
+      const supabase = {
+        auth: {
+          getUser: vi.fn().mockResolvedValue({ data: { user: { id: "user-1" } } }),
+        },
+        from: vi.fn().mockReturnValue({
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({ data: null, error: null }),
+            }),
+          }),
+        }),
+      };
+      mockedCreateClient.mockResolvedValue(supabase as never);
+
+      const result = await exportCheckinsCSV("evt-1");
+      expect(result).toEqual({ error: "Event not found." });
+    });
+
+    it("returns error when user is unauthorized", async () => {
+      const supabase = {
+        auth: {
+          getUser: vi.fn().mockResolvedValue({ data: { user: { id: "user-unauth" } } }),
+        },
+        from: vi.fn().mockImplementation((table: string) => {
+          if (table === "events") {
+            return {
+              select: vi.fn().mockReturnValue({
+                eq: vi.fn().mockReturnValue({
+                  single: vi.fn().mockResolvedValue({
+                    data: { id: "evt-1", organizer_id: "user-organizer", organization_id: null, name: "Event 1" },
+                    error: null,
+                  }),
+                }),
+              }),
+            };
+          }
+          return {};
+        }),
+      };
+      mockedCreateClient.mockResolvedValue(supabase as never);
+
+      const result = await exportCheckinsCSV("evt-1");
+      expect(result).toEqual({ error: "Not authorized to export check-ins for this event." });
+    });
+
+    it("returns empty csv string when no check-ins exist", async () => {
+      const supabase = {
+        auth: {
+          getUser: vi.fn().mockResolvedValue({ data: { user: { id: "user-organizer" } } }),
+        },
+        from: vi.fn().mockImplementation((table: string) => {
+          if (table === "events") {
+            return {
+              select: vi.fn().mockReturnValue({
+                eq: vi.fn().mockReturnValue({
+                  single: vi.fn().mockResolvedValue({
+                    data: { id: "evt-1", organizer_id: "user-organizer", organization_id: null, name: "Event 1" },
+                    error: null,
+                  }),
+                }),
+              }),
+            };
+          }
+          if (table === "check_ins") {
+            return {
+              select: vi.fn().mockReturnValue({
+                eq: vi.fn().mockReturnValue({
+                  order: vi.fn().mockResolvedValue({ data: [], error: null }),
+                }),
+              }),
+            };
+          }
+          return {};
+        }),
+      };
+      mockedCreateClient.mockResolvedValue(supabase as never);
+
+      const result = await exportCheckinsCSV("evt-1");
+      expect(result).toEqual({ csv: "" });
+    });
+
+    it("generates structured CSV with attendee, gate, and check-in method details", async () => {
+      const mockCheckins = [
+        {
+          id: "ci-1",
+          checked_in_at: "2026-09-29T10:30:00Z",
+          check_in_method: "qr",
+          gate: { name: "VIP Gate A" },
+          attendee: {
+            name: "John Doe",
+            email: "john@example.com",
+            phone: "+919876543210",
+            pass_type: "vip",
+          },
+        },
+        {
+          id: "ci-2",
+          checked_in_at: "2026-09-29T11:00:00Z",
+          check_in_method: "manual",
+          gate: null,
+          attendee: {
+            name: "Jane Smith",
+            email: "jane@example.com",
+            phone: null,
+            pass_type: "participant",
+          },
+        },
+      ];
+
+      const supabase = {
+        auth: {
+          getUser: vi.fn().mockResolvedValue({ data: { user: { id: "user-organizer" } } }),
+        },
+        from: vi.fn().mockImplementation((table: string) => {
+          if (table === "events") {
+            return {
+              select: vi.fn().mockReturnValue({
+                eq: vi.fn().mockReturnValue({
+                  single: vi.fn().mockResolvedValue({
+                    data: { id: "evt-1", organizer_id: "user-organizer", organization_id: null, name: "Event 1" },
+                    error: null,
+                  }),
+                }),
+              }),
+            };
+          }
+          if (table === "check_ins") {
+            return {
+              select: vi.fn().mockReturnValue({
+                eq: vi.fn().mockReturnValue({
+                  order: vi.fn().mockResolvedValue({ data: mockCheckins, error: null }),
+                }),
+              }),
+            };
+          }
+          return {};
+        }),
+      };
+      mockedCreateClient.mockResolvedValue(supabase as never);
+
+      const result = await exportCheckinsCSV("evt-1");
+      expect(result.csv).toBeDefined();
+      expect(result.csv).toContain("Attendee Name,Email,Phone,Pass Type,Checked In At,Gate,Method");
+      expect(result.csv).toContain('"John Doe","john@example.com","+919876543210","vip"');
+      expect(result.csv).toContain('"VIP Gate A","qr"');
+      expect(result.csv).toContain('"Jane Smith","jane@example.com","","participant"');
+      expect(result.csv).toContain('"Main Entrance","manual"');
+    });
   });
 });

@@ -15,11 +15,12 @@ import {
   Trash2,
   Loader2,
   RotateCcw,
+  Download,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import { createGate, deleteGate } from "@/app/actions/scanner-gates";
-import { manualCheckIn, undoCheckIn } from "@/app/actions/manual-checkin";
+import { manualCheckIn, undoCheckIn, exportCheckinsCSV } from "@/app/actions/manual-checkin";
 
 type PassType = "participant" | "vip" | "speaker" | "organizer";
 
@@ -266,6 +267,34 @@ export default function CheckinDashboard({
     }
   }
 
+  const [exporting, setExporting] = useState(false);
+
+  async function handleExportCheckins() {
+    setExporting(true);
+    try {
+      const res = await exportCheckinsCSV(event.id);
+      setExporting(false);
+      if (res?.error) {
+        alert(res.error);
+        return;
+      }
+      if (!res?.csv) {
+        alert("No check-ins recorded yet to export.");
+        return;
+      }
+      const blob = new Blob([res.csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `checkins-${event.name.replace(/\s+/g, "-").toLowerCase()}-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setExporting(false);
+      alert(err instanceof Error ? err.message : "Failed to export check-ins");
+    }
+  }
+
   return (
     <div className="max-w-5xl mx-auto page-in">
 
@@ -289,6 +318,19 @@ export default function CheckinDashboard({
               </>
             )}
           </div>
+          <button
+            type="button"
+            onClick={handleExportCheckins}
+            disabled={exporting}
+            className="flex items-center gap-1.5 text-xs font-semibold text-neutral-700 bg-white border border-neutral-200 px-3.5 py-2 rounded-xl transition-colors hover:bg-neutral-50 shadow-2xs disabled:opacity-50 cursor-pointer"
+          >
+            {exporting ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-brand" />
+            ) : (
+              <Download className="w-3.5 h-3.5 text-neutral-500" />
+            )}
+            Export CSV
+          </button>
           <Link
             href={`/scan/${event.id}`}
             className="flex items-center gap-1.5 text-xs font-semibold text-white px-3.5 py-2 rounded-xl transition-opacity hover:opacity-90"
