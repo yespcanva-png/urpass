@@ -89,6 +89,8 @@ export async function createEvent(data: EventInput, organizationId?: string): Pr
     auto_approve: !!baseFields.auto_approve,
     is_paid_event: !!baseFields.is_paid_event,
     ticket_price: baseFields.is_paid_event ? baseFields.ticket_price : 0,
+    currency: baseFields.currency || "INR",
+    timezone: baseFields.timezone || "Asia/Kolkata",
     organizer_id: user.id,
     apply_slug,
   };
@@ -114,15 +116,21 @@ export async function createEvent(data: EventInput, organizationId?: string): Pr
         delete eventData.workspace_id;
         delete eventData.location_id;
       }
+      if (error.message?.includes("currency") || error.message?.includes("timezone")) {
+        delete eventData.currency;
+        delete eventData.timezone;
+      }
       const { data: adminEvent, error: adminErr } = await admin
         .from("events")
         .insert(eventData)
         .select("id, attendee_limit")
         .single();
       if (adminErr) {
-        if (adminErr.message?.includes("workspace_id") || adminErr.message?.includes("location_id")) {
+        if (adminErr.message?.includes("workspace_id") || adminErr.message?.includes("location_id") || adminErr.message?.includes("currency") || adminErr.message?.includes("timezone")) {
           delete eventData.workspace_id;
           delete eventData.location_id;
+          delete eventData.currency;
+          delete eventData.timezone;
           const { data: fallbackEvent, error: fallbackErr } = await admin
             .from("events")
             .insert(eventData)

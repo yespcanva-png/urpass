@@ -42,6 +42,8 @@ export const eventSchema = z.object({
     .optional()
     .nullable()
     .transform((val) => (val ? val : null)),
+  currency: z.enum(["INR", "GBP", "USD"]).default("INR"),
+  timezone: z.string().default("Asia/Kolkata"),
 });
 
 export type EventInput = z.infer<typeof eventSchema>;

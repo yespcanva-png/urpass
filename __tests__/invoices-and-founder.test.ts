@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { numToWords } from "@/lib/invoices";
+import { numToWords, numToWordsGBP } from "@/lib/invoices";
 
 describe("Invoice 18% GST and Founder Lifetime Calculations", () => {
   it("converts numbers to Indian currency words accurately", () => {
@@ -7,6 +7,29 @@ describe("Invoice 18% GST and Founder Lifetime Calculations", () => {
     expect(numToWords(499)).toBe("Rupees Four Hundred Ninety Nine Only");
     expect(numToWords(0)).toBe("Zero Rupees Only");
     expect(numToWords(23598.82)).toBe("Rupees Twenty Three Thousand Five Hundred Ninety Eight and Eighty Two Paise Only");
+  });
+
+  it("converts numbers to UK GBP words accurately", () => {
+    expect(numToWordsGBP(249)).toBe("Pounds Two Hundred Forty Nine Only");
+    expect(numToWordsGBP(35)).toBe("Pounds Thirty Five Only");
+    expect(numToWordsGBP(0)).toBe("Zero Pounds Only");
+    expect(numToWordsGBP(42.50)).toBe("Pounds Forty Two and Fifty Pence Only");
+  });
+
+  it("calculates exactly 20% UK VAT for Starter (£15), Pro (£35), and Founder (£249)", () => {
+    const ukTiers = [
+      { base: 15, expectedVat: 3.00, expectedTotal: 18.00 },
+      { base: 35, expectedVat: 7.00, expectedTotal: 42.00 },
+      { base: 79, expectedVat: 15.80, expectedTotal: 94.80 },
+      { base: 249, expectedVat: 49.80, expectedTotal: 298.80 },
+    ];
+
+    for (const t of ukTiers) {
+      const vat = Math.round(t.base * 0.20 * 100) / 100;
+      const total = Math.round((t.base + vat) * 100) / 100;
+      expect(vat).toBe(t.expectedVat);
+      expect(total).toBe(t.expectedTotal);
+    }
   });
 
   it("calculates exactly 18% GST (9% CGST + 9% SGST) for Founder Lifetime Deal (₹19,999)", () => {

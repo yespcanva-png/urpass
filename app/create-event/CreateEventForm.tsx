@@ -1,13 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, Loader2, Lock, IndianRupee, Building2, MapPin, Wifi, LayoutGrid, Link2, AlertCircle, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Loader2, Lock, Building2, MapPin, Wifi, LayoutGrid, Link2, AlertCircle, CheckCircle2, Globe } from "lucide-react";
 import { eventSchema, type EventInput } from "@/lib/validations/event";
 import { createEvent } from "@/app/actions/events";
+import { detectCountryClient } from "@/lib/country-config";
 
 type OrgOption = { id: string; slug: string; name: string; brand_color: string; role: string };
 
@@ -91,6 +92,7 @@ export default function CreateEventForm({
   const [successMessage, setSuccessMessage] = useState("");
   const [isNavigating, setIsNavigating] = useState(false);
   const [selectedPlatform, setSelectedPlatform] = useState<"zoom" | "google_meet" | "teams" | "custom" | null>(null);
+  const [country, setCountry] = useState<"IN" | "GB">("IN");
 
   const atLimit = !unlimited && activeEventCount >= maxEvents;
 
@@ -112,6 +114,8 @@ export default function CreateEventForm({
       attendee_limit: Math.min(100, maxAttendees),
       is_paid_event: false,
       ticket_price: 0,
+      currency: "INR",
+      timezone: "Asia/Kolkata",
       event_type: "physical",
       meeting_url: null,
       meeting_platform: null,
@@ -122,10 +126,20 @@ export default function CreateEventForm({
     },
   });
 
+  useEffect(() => {
+    const detected = detectCountryClient();
+    setCountry(detected);
+    if (detected === "GB") {
+      setValue("currency", "GBP");
+      setValue("timezone", "Europe/London");
+    }
+  }, [setValue]);
+
   const applicationEnabled = watch("application_enabled");
   const autoApprove = watch("auto_approve");
   const isPaidEvent = watch("is_paid_event");
   const eventType = watch("event_type");
+  const currency = watch("currency");
 
   function handleEventTypeChange(type: "physical" | "online" | "hybrid") {
     setValue("event_type", type);
@@ -423,6 +437,22 @@ export default function CreateEventForm({
                   <input type="time" className={inputCls} {...register("end_time")} />
                 </Field>
               </div>
+
+              <Field
+                label="Event timezone"
+                error={errors.timezone?.message}
+                hint="Check-in schedules, ticket studio passes, and attendee notifications adhere to this timezone."
+              >
+                <div className="relative">
+                  <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 pointer-events-none" />
+                  <select className={`${inputCls} pl-9`} {...register("timezone")}>
+                    <option value="Europe/London">Europe/London (GMT/BST · United Kingdom)</option>
+                    <option value="Asia/Kolkata">Asia/Kolkata (IST +5:30 · India)</option>
+                    <option value="America/New_York">America/New_York (EST/EDT · US Eastern)</option>
+                    <option value="UTC">UTC (Coordinated Universal Time)</option>
+                  </select>
+                </div>
+              </Field>
             </div>
 
             {/* Capacity & settings */}
@@ -542,25 +572,45 @@ export default function CreateEventForm({
                   </div>
 
                   {isPaidEvent && (
-                    <Field
-                      label="Ticket price (₹)"
-                      error={errors.ticket_price?.message}
-                      hint="Amount in rupees. Attendees pay this before their application is submitted."
-                    >
-                      <div className="relative">
-                        <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 pointer-events-none" />
-                        <input
-                          type="number"
-                          min={1}
-                          max={100000}
-                          placeholder="499"
-                          className={`${inputCls} pl-9`}
-                          {...register("ticket_price", {
-                            valueAsNumber: true,
-                          })}
-                        />
+                    <>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <Field
+                          label={`Ticket price (${currency === "GBP" ? "£" : currency === "USD" ? "$" : "₹"})`}
+                          error={errors.ticket_price?.message}
+                          hint={
+                            currency === "GBP"
+                              ? "Amount in British Pounds (£). Attendees pay this before their application is submitted."
+                              : currency === "USD"
+                              ? "Amount in US Dollars ($). Attendees pay this before their application is submitted."
+                              : "Amount in Indian Rupees (₹). Attendees pay this before their application is submitted."
+                          }
+                        >
+                          <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-neutral-400 pointer-events-none">
+                              {currency === "GBP" ? "£" : currency === "USD" ? "$" : "₹"}
+                            </span>
+                            <input
+                              type="number"
+                              min={1}
+                              max={currency === "GBP" || currency === "USD" ? 5000 : 100000}
+                              placeholder={currency === "GBP" ? "15" : "499"}
+                              className={`${inputCls} pl-9`}
+                              {...register("ticket_price", {
+                                valueAsNumber: true,
+                              })}
+                            />
+                          </div>
+                        </Field>
+
+                        <Field label="Billing currency" error={errors.currency?.message}>
+                          <select className={inputCls} {...register("currency")}>
+                            <option value="GBP">GBP (£) — United Kingdom</option>
+                            <option value="INR">INR (₹) — India</option>
+                            <option value="USD">USD ($) — United States</option>
+                          </select>
+                        </Field>
                       </div>
-                    </Field>
+                    </>
                   )}
                 </>
               ) : (

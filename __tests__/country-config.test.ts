@@ -8,6 +8,9 @@ import {
   isValidE164Phone,
   maskPhoneInternational,
   detectCountryFromHeaders,
+  isValidUkPostcode,
+  formatUkPostcode,
+  getRegistrationFieldPresets,
   COUNTRIES,
 } from "@/lib/country-config";
 
@@ -164,6 +167,70 @@ describe("Country Configuration Layer (Enterprise i18n)", () => {
     it("falls back to IN when no recognizable headers are present", () => {
       const emptyHeaders = new Map<string, string>();
       expect(detectCountryFromHeaders(emptyHeaders)).toBe("IN");
+    });
+  });
+
+  describe("UK Postcode Validation & Formatting", () => {
+    it("validates standard UK postcodes with and without spaces", () => {
+      expect(isValidUkPostcode("SW1A 1AA")).toBe(true);
+      expect(isValidUkPostcode("sw1a 1aa")).toBe(true);
+      expect(isValidUkPostcode("EC1A 1BB")).toBe(true);
+      expect(isValidUkPostcode("W1A 0AX")).toBe(true);
+      expect(isValidUkPostcode("M1 1AE")).toBe(true);
+      expect(isValidUkPostcode("B1 1BB")).toBe(true);
+      expect(isValidUkPostcode("EH1 1YZ")).toBe(true);
+      expect(isValidUkPostcode("CR2 6XH")).toBe(true);
+      expect(isValidUkPostcode("DN55 1PT")).toBe(true);
+      expect(isValidUkPostcode("M11AE")).toBe(true);
+    });
+
+    it("rejects invalid postcodes", () => {
+      expect(isValidUkPostcode("")).toBe(false);
+      expect(isValidUkPostcode(null)).toBe(false);
+      expect(isValidUkPostcode("12345")).toBe(false);
+      expect(isValidUkPostcode("560001")).toBe(false); // Indian PIN
+      expect(isValidUkPostcode("ABCDEFG")).toBe(false);
+      expect(isValidUkPostcode("123 ABC")).toBe(false);
+    });
+
+    it("formats UK postcodes into Royal Mail canonical spacing", () => {
+      expect(formatUkPostcode("sw1a1aa")).toBe("SW1A 1AA");
+      expect(formatUkPostcode("m11ae")).toBe("M1 1AE");
+      expect(formatUkPostcode("b11bb")).toBe("B1 1BB");
+      expect(formatUkPostcode("eh11yz")).toBe("EH1 1YZ");
+      expect(formatUkPostcode("SW1A 1AA")).toBe("SW1A 1AA");
+    });
+  });
+
+  describe("Campus Registration Field Presets", () => {
+    it("returns UK campus presets with Student ID and University Email", () => {
+      const presets = getRegistrationFieldPresets("GB");
+      const ids = presets.map((p) => p.id);
+      expect(ids).toContain("student_id");
+      expect(ids).toContain("institution");
+      expect(ids).toContain("course_department");
+      expect(ids).toContain("dietary_requirements");
+
+      const studentIdField = presets.find((p) => p.id === "student_id");
+      expect(studentIdField?.label).toBe("Student ID Number");
+    });
+
+    it("returns India campus presets with WhatsApp Phone and Roll Number", () => {
+      const presets = getRegistrationFieldPresets("IN");
+      const ids = presets.map((p) => p.id);
+      expect(ids).toContain("phone");
+      expect(ids).toContain("roll_number");
+      expect(ids).toContain("college_name");
+
+      const phoneField = presets.find((p) => p.id === "phone");
+      expect(phoneField?.label).toContain("WhatsApp");
+    });
+
+    it("returns US campus presets", () => {
+      const presets = getRegistrationFieldPresets("US");
+      const ids = presets.map((p) => p.id);
+      expect(ids).toContain("major_department");
+      expect(ids).toContain("student_id");
     });
   });
 });

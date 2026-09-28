@@ -433,3 +433,180 @@ export function persistCountryPreference(country: "IN" | "GB"): void {
   }
 }
 
+/**
+ * Validates UK postcode format against Royal Mail standard rules.
+ * Accepts formats like: SW1A 1AA, EC1A 1BB, W1A 0AX, M1 1AE, B1 1BB, EH1 1YZ, etc.
+ * Handles with or without internal whitespace.
+ */
+export function isValidUkPostcode(postcode: string | null | undefined): boolean {
+  if (!postcode) return false;
+  const cleaned = postcode.trim().toUpperCase();
+  // Standard UK outward + inward postcode regex
+  // Outward: 1-2 letters + 1-2 digits or digit+letter (e.g. W1A, SW1A, M1, EC1A)
+  // Inward: 1 digit + 2 letters (e.g. 1AA, 0AX)
+  const ukPostcodeRegex = /^[A-Z]{1,2}[0-9][A-Z0-9]?\s?[0-9][A-Z]{2}$/i;
+  return ukPostcodeRegex.test(cleaned);
+}
+
+/**
+ * Standardizes a valid UK postcode with proper Royal Mail spacing (e.g., "sw1a1aa" -> "SW1A 1AA").
+ */
+export function formatUkPostcode(postcode: string): string {
+  const cleaned = postcode.trim().toUpperCase().replace(/\s+/g, "");
+  if (cleaned.length < 5 || cleaned.length > 7) return postcode.trim().toUpperCase();
+  // Inward code is always the last 3 characters (e.g., "1AA")
+  const outward = cleaned.slice(0, -3);
+  const inward = cleaned.slice(-3);
+  return `${outward} ${inward}`;
+}
+
+export interface RegistrationFieldPreset {
+  id: string;
+  label: string;
+  type: "text" | "number" | "select" | "email" | "tel";
+  required: boolean;
+  placeholder?: string;
+  options?: string[];
+  helpText?: string;
+}
+
+/**
+ * Returns country-tuned registration field presets for campus, conferences, and student events.
+ */
+export function getRegistrationFieldPresets(countryCode: SupportedCountryCode = "IN"): RegistrationFieldPreset[] {
+  if (countryCode === "GB") {
+    return [
+      {
+        id: "full_name",
+        label: "Full Name",
+        type: "text",
+        required: true,
+        placeholder: "e.g. Oliver Smith",
+      },
+      {
+        id: "email",
+        label: "University / Work Email",
+        type: "email",
+        required: true,
+        placeholder: "oliver.smith@ucl.ac.uk",
+      },
+      {
+        id: "student_id",
+        label: "Student ID Number",
+        type: "text",
+        required: false,
+        placeholder: "e.g. 21084920",
+        helpText: "Required for student union & society members",
+      },
+      {
+        id: "institution",
+        label: "University / Organisation",
+        type: "text",
+        required: true,
+        placeholder: "e.g. University of Manchester",
+      },
+      {
+        id: "course_department",
+        label: "Course / Department",
+        type: "text",
+        required: false,
+        placeholder: "e.g. BSc Computer Science, Year 2",
+      },
+      {
+        id: "dietary_requirements",
+        label: "Dietary Requirements",
+        type: "select",
+        required: false,
+        options: ["None", "Vegetarian", "Vegan", "Halal", "Kosher", "Gluten-Free", "Other"],
+      },
+    ];
+  }
+
+  if (countryCode === "US") {
+    return [
+      {
+        id: "full_name",
+        label: "Full Name",
+        type: "text",
+        required: true,
+        placeholder: "e.g. John Doe",
+      },
+      {
+        id: "email",
+        label: "College / Work Email",
+        type: "email",
+        required: true,
+        placeholder: "johndoe@nyu.edu",
+      },
+      {
+        id: "student_id",
+        label: "Student ID",
+        type: "text",
+        required: false,
+        placeholder: "e.g. N12345678",
+      },
+      {
+        id: "institution",
+        label: "College / University",
+        type: "text",
+        required: true,
+        placeholder: "e.g. NYU Stern",
+      },
+      {
+        id: "major_department",
+        label: "Major / Department",
+        type: "text",
+        required: false,
+        placeholder: "e.g. Computer Science",
+      },
+    ];
+  }
+
+  // Default: India (IN)
+  return [
+    {
+      id: "full_name",
+      label: "Full Name",
+      type: "text",
+      required: true,
+      placeholder: "e.g. Aarav Sharma",
+    },
+    {
+      id: "email",
+      label: "Email Address",
+      type: "email",
+      required: true,
+      placeholder: "aarav@gmail.com",
+    },
+    {
+      id: "phone",
+      label: "WhatsApp Phone Number",
+      type: "tel",
+      required: true,
+      placeholder: "9876543210",
+      helpText: "For instant QR ticket delivery via WhatsApp",
+    },
+    {
+      id: "roll_number",
+      label: "Roll Number / USN",
+      type: "text",
+      required: false,
+      placeholder: "e.g. 1RV21CS001",
+    },
+    {
+      id: "college_name",
+      label: "College / Institution Name",
+      type: "text",
+      required: true,
+      placeholder: "e.g. RV College of Engineering",
+    },
+    {
+      id: "department",
+      label: "Department & Year",
+      type: "text",
+      required: false,
+      placeholder: "e.g. CSE, 3rd Year",
+    },
+  ];
+}
+

@@ -18,6 +18,7 @@ export interface InvoiceCreationParams {
   description: string;
   baseAmountRupees: number;
   discountRupees?: number;
+  currency?: "INR" | "GBP" | "USD";
   customerName?: string;
   customerEmail?: string;
   customerAddress?: string | null;
@@ -122,6 +123,54 @@ export function numToWords(n: number): string {
   return result;
 }
 
+export function numToWordsGBP(n: number): string {
+  const units = [
+    "", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten",
+    "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"
+  ];
+  const tens = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
+
+  function convertChunk(num: number): string {
+    let str = "";
+    if (num >= 100) {
+      str += units[Math.floor(num / 100)] + " Hundred ";
+      num %= 100;
+    }
+    if (num >= 20) {
+      str += tens[Math.floor(num / 10)] + (num % 10 ? " " + units[num % 10] : "");
+    } else if (num > 0) {
+      str += units[num];
+    }
+    return str.trim();
+  }
+
+  const pounds = Math.floor(n);
+  const pence = Math.round((n - pounds) * 100);
+
+  let result = "";
+  if (pounds === 0) {
+    result = "Zero Pounds";
+  } else {
+    const million = Math.floor(pounds / 1000000);
+    const thousand = Math.floor((pounds % 1000000) / 1000);
+    const hundred = pounds % 1000;
+
+    const parts: string[] = [];
+    if (million) parts.push(convertChunk(million) + " Million");
+    if (thousand) parts.push(convertChunk(thousand) + " Thousand");
+    if (hundred) parts.push(convertChunk(hundred));
+
+    result = "Pounds " + parts.join(" ");
+  }
+
+  if (pence > 0) {
+    result += " and " + convertChunk(pence) + " Pence Only";
+  } else {
+    result += " Only";
+  }
+  return result;
+}
+
 export async function createInvoiceForPayment(
   params: InvoiceCreationParams
 ): Promise<InvoiceRecord | null> {
@@ -160,38 +209,65 @@ export async function createInvoiceForPayment(
   const subtotal = Math.max(0, Number(params.baseAmountRupees) || 0);
   const discount = Math.max(0, Number(params.discountRupees) || 0);
   const taxableAmount = Math.max(0, subtotal - discount);
-  const cgstAmount = Math.round(taxableAmount * 0.09 * 100) / 100;
-  const sgstAmount = Math.round(taxableAmount * 0.09 * 100) / 100;
-  const totalAmount = Math.round((taxableAmount + cgstAmount + sgstAmount) * 100) / 100;
+
+  const currency = (params.currency || "INR").toUpperCase();
+  const isUk = currency === "GBP";
+
+  let cgstRate = 9;
+  let cgstAmount = 0;
+  let sgstRate = 9;
+  let sgstAmount = 0;
+  let igstRate = 0;
+  let igstAmount = 0;
+  let totalAmount = taxableAmount;
+
+  if (isUk) {
+    // UK 20% Standard VAT
+    cgstRate = 0;
+    sgstRate = 0;
+    igstRate = 20;
+    igstAmount = Math.round(taxableAmount * 0.20 * 100) / 100;
+    totalAmount = Math.round((taxableAmount + igstAmount) * 100) / 100;
+  } else {
+    cgstAmount = Math.round(taxableAmount * 0.09 * 100) / 100;
+    sgstAmount = Math.round(taxableAmount * 0.09 * 100) / 100;
+    totalAmount = Math.round((taxableAmount + cgstAmount + sgstAmount) * 100) / 100;
+  }
 
   const toDateString = (d?: Date | string | null) =>
     d ? (d instanceof Date ? d.toISOString().slice(0, 10) : String(d).slice(0, 10)) : null;
+
+  const sellerName = isUk ? "Yesp Corporation UK" : SELLER.name;
+  const sellerGstin = isUk ? "GB 987 6543 21" : SELLER.gstin;
+  const sellerAddress = isUk ? "London, United Kingdom" : SELLER.address;
+  const placeOfSupply = isUk ? "United Kingdom" : SELLER.placeOfSupply;
+  const stateCode = isUk ? "GB" : SELLER.stateCode;
 
   const invoiceRow = {
     invoice_number: invoiceNumber,
     user_id: params.userId,
     subscription_id: params.subscriptionId ?? null,
     payment_id: params.paymentId,
-    seller_name: SELLER.name,
-    seller_gstin: SELLER.gstin,
-    seller_address: SELLER.address,
+    seller_name: sellerName,
+    seller_gstin: sellerGstin,
+    seller_address: sellerAddress,
     customer_name: custName,
     customer_email: custEmail,
-    customer_address: params.customerAddress ?? null,
+    customer_address: params.customerAddress ?? (isUk ? "United Kingdom" : null),
     customer_gstin: params.customerGstin ?? null,
-    place_of_supply: SELLER.placeOfSupply,
-    state_code: SELLER.stateCode,
+    place_of_supply: placeOfSupply,
+    state_code: stateCode,
     subtotal,
     discount,
     taxable_amount: taxableAmount,
-    cgst_rate: 9,
+    cgst_rate: cgstRate,
     cgst_amount: cgstAmount,
-    sgst_rate: 9,
+    sgst_rate: sgstRate,
     sgst_amount: sgstAmount,
-    igst_rate: 0,
-    igst_amount: 0,
+    igst_rate: igstRate,
+    igst_amount: igstAmount,
     total_amount: totalAmount,
-    currency: "INR",
+    currency: isUk ? "GBP" : "INR",
     invoice_date: dateStr,
     billing_period_start: toDateString(params.billingPeriodStart),
     billing_period_end: toDateString(params.billingPeriodEnd),
@@ -390,24 +466,37 @@ export async function generateInvoicePdf(invoice: InvoiceRecord): Promise<Uint8A
   });
 
   // ---------------- 3. SELLER & CUSTOMER SECTION ----------------
+  const isUkInvoice = (invoice.currency || "").toUpperCase() === "GBP";
+  const currencyCode = isUkInvoice ? "GBP" : "INR";
   const partiesY = metaDividerY - 32;
   const colHalf = contentWidth / 2;
 
   // FROM (SELLER)
   page.drawText("FROM (SELLER)", { x: margin, y: partiesY, size: 8, font: fontBold, color: muted });
-  page.drawText(invoice.seller_name || "Yesp Corporation", { x: margin, y: partiesY - 18, size: 12, font: fontBold, color: dark });
-  page.drawText(`GSTIN: ${invoice.seller_gstin || "33OPDPS9865F1Z3"}`, { x: margin, y: partiesY - 34, size: 9, font: fontBold, color: bodyText });
-  page.drawText(invoice.seller_address || "Tamil Nadu, India", { x: margin, y: partiesY - 49, size: 9, font: fontRegular, color: muted });
+  page.drawText(invoice.seller_name || (isUkInvoice ? "Yesp Corporation UK" : "Yesp Corporation"), { x: margin, y: partiesY - 18, size: 12, font: fontBold, color: dark });
+  page.drawText(
+    isUkInvoice
+      ? `VAT Reg: ${invoice.seller_gstin || "GB 987 6543 21"}`
+      : `GSTIN: ${invoice.seller_gstin || "33OPDPS9865F1Z3"}`,
+    { x: margin, y: partiesY - 34, size: 9, font: fontBold, color: bodyText }
+  );
+  page.drawText(invoice.seller_address || (isUkInvoice ? "London, United Kingdom" : "Tamil Nadu, India"), { x: margin, y: partiesY - 49, size: 9, font: fontRegular, color: muted });
   page.drawText("Website: urpass.space", { x: margin, y: partiesY - 64, size: 9, font: fontRegular, color: muted });
-  page.drawText("Email: urpass.space@yespstudio.com", { x: margin, y: partiesY - 79, size: 9, font: fontRegular, color: primary });
+  page.drawText(isUkInvoice ? "Email: billing@urpass.space" : "Email: urpass.space@yespstudio.com", { x: margin, y: partiesY - 79, size: 9, font: fontRegular, color: primary });
 
   // BILL TO (CUSTOMER)
   const custX = margin + colHalf;
   page.drawText("BILL TO (CUSTOMER)", { x: custX, y: partiesY, size: 8, font: fontBold, color: muted });
   page.drawText(invoice.customer_name || "ABC Events Pvt Ltd", { x: custX, y: partiesY - 18, size: 12, font: fontBold, color: dark });
-  page.drawText(invoice.customer_address || "Customer Billing Address", { x: custX, y: partiesY - 34, size: 9, font: fontRegular, color: muted });
-  page.drawText(`GSTIN: ${invoice.customer_gstin || "29ABCDE1234F1Z5"}`, { x: custX, y: partiesY - 49, size: 9, font: fontBold, color: bodyText });
-  page.drawText(`State: ${invoice.place_of_supply || "Karnataka (29)"}`, { x: custX, y: partiesY - 64, size: 9, font: fontRegular, color: muted });
+  page.drawText(invoice.customer_address || (isUkInvoice ? "United Kingdom" : "Customer Billing Address"), { x: custX, y: partiesY - 34, size: 9, font: fontRegular, color: muted });
+  if (isUkInvoice) {
+    if (invoice.customer_gstin) {
+      page.drawText(`VAT ID: ${invoice.customer_gstin}`, { x: custX, y: partiesY - 49, size: 9, font: fontBold, color: bodyText });
+    }
+  } else {
+    page.drawText(`GSTIN: ${invoice.customer_gstin || "29ABCDE1234F1Z5"}`, { x: custX, y: partiesY - 49, size: 9, font: fontBold, color: bodyText });
+  }
+  page.drawText(isUkInvoice ? "Country: United Kingdom" : `State: ${invoice.place_of_supply || "Karnataka (29)"}`, { x: custX, y: partiesY - 64, size: 9, font: fontRegular, color: muted });
   page.drawText(`Email: ${invoice.customer_email || "billing@abcevents.com"}`, { x: custX, y: partiesY - 79, size: 9, font: fontRegular, color: primary });
 
   // Divider above table
@@ -446,14 +535,18 @@ export async function generateInvoicePdf(invoice: InvoiceRecord): Promise<Uint8A
   page.drawText("DESCRIPTION", { x: colDescX, y: headerTextY, size: 8, font: fontBold, color: muted });
   page.drawText("SAC", { x: colSacX, y: headerTextY, size: 8, font: fontBold, color: muted });
   page.drawText("QTY", { x: colQtyX, y: headerTextY, size: 8, font: fontBold, color: muted });
-  drawTextRightAt("RATE (INR)", colRateX, headerTextY, 8, fontBold, muted);
-  drawTextRightAt("AMOUNT (INR)", colAmountX, headerTextY, 8, fontBold, muted);
+  drawTextRightAt(`RATE (${currencyCode})`, colRateX, headerTextY, 8, fontBold, muted);
+  drawTextRightAt(`AMOUNT (${currencyCode})`, colAmountX, headerTextY, 8, fontBold, muted);
 
   // Line item 1
   const rowY = tableY - 32;
   const taxableVal = Number(invoice.taxable_amount || 1999);
-  const formattedRate = taxableVal.toLocaleString("en-IN", { minimumFractionDigits: 2 });
-  const formattedAmount = taxableVal.toLocaleString("en-IN", { minimumFractionDigits: 2 });
+  const formattedRate = isUkInvoice
+    ? taxableVal.toFixed(2)
+    : taxableVal.toLocaleString("en-IN", { minimumFractionDigits: 2 });
+  const formattedAmount = isUkInvoice
+    ? taxableVal.toFixed(2)
+    : taxableVal.toLocaleString("en-IN", { minimumFractionDigits: 2 });
 
   page.drawText("1", { x: colNumX, y: rowY, size: 9, font: fontRegular, color: dark });
   page.drawText(invoice.description || "URPASS Software License", { x: colDescX, y: rowY, size: 10.5, font: fontBold, color: dark });
@@ -512,7 +605,7 @@ export async function generateInvoicePdf(invoice: InvoiceRecord): Promise<Uint8A
   };
 
   drawPaymentItem("Payment Status:", "PAID", true);
-  drawPaymentItem("Payment Method:", "UPI");
+  drawPaymentItem("Payment Method:", isUkInvoice ? "Direct UK / Card" : "UPI");
   drawPaymentItem("Transaction ID:", invoice.payment_id || "pay_Qr7H9k3LmN2");
   drawPaymentItem("Payment Date:", invoice.invoice_date || "20 Sep 2026");
 
@@ -564,9 +657,15 @@ export async function generateInvoicePdf(invoice: InvoiceRecord): Promise<Uint8A
   const sgstVal = Number(invoice.sgst_amount || 179.91);
   const totalVal = Number(invoice.total_amount || 2358.82);
 
-  drawTotalLine("Subtotal:", `INR ${subtotalVal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`);
-  drawTotalLine("CGST (9%):", `INR ${cgstVal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`);
-  drawTotalLine("SGST (9%):", `INR ${sgstVal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`);
+  if (isUkInvoice) {
+    const vatVal = Number(invoice.igst_amount || Math.round(subtotalVal * 0.20 * 100) / 100);
+    drawTotalLine("Subtotal:", `GBP ${subtotalVal.toFixed(2)}`);
+    drawTotalLine("VAT (20%):", `GBP ${vatVal.toFixed(2)}`);
+  } else {
+    drawTotalLine("Subtotal:", `INR ${subtotalVal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`);
+    drawTotalLine("CGST (9%):", `INR ${cgstVal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`);
+    drawTotalLine("SGST (9%):", `INR ${sgstVal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`);
+  }
 
   // Hairline before Total Box
   currentSumY += 2;
@@ -594,7 +693,7 @@ export async function generateInvoicePdf(invoice: InvoiceRecord): Promise<Uint8A
     borderWidth: 1,
   });
 
-  page.drawText("TOTAL (INR):", {
+  page.drawText(`TOTAL (${currencyCode}):`, {
     x: totalBoxX + 10,
     y: totalBoxY + 13,
     size: 10.5,
@@ -602,7 +701,9 @@ export async function generateInvoicePdf(invoice: InvoiceRecord): Promise<Uint8A
     color: primary,
   });
 
-  const totalText = `INR ${totalVal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`;
+  const totalText = isUkInvoice
+    ? `GBP ${totalVal.toFixed(2)}`
+    : `INR ${totalVal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`;
   drawTextRightAt(totalText, rightEdge - 10, totalBoxY + 12, 13.5, fontBold, primary);
 
   // Amount in Words below total
@@ -615,7 +716,7 @@ export async function generateInvoicePdf(invoice: InvoiceRecord): Promise<Uint8A
     color: muted,
   });
 
-  const wordsStr = numToWords(totalVal);
+  const wordsStr = isUkInvoice ? numToWordsGBP(totalVal) : numToWords(totalVal);
   page.drawText(wordsStr, {
     x: sumLabelX - 8,
     y: wordsY - 12,
@@ -635,21 +736,31 @@ export async function generateInvoicePdf(invoice: InvoiceRecord): Promise<Uint8A
 
   // Row 1
   page.drawText("URPASS", { x: margin, y: 48, size: 9, font: fontBold, color: dark });
-  page.drawText("A product by Yesp Corporation", { x: margin, y: 36, size: 8, font: fontRegular, color: muted });
+  page.drawText(isUkInvoice ? "Yesp Corporation UK Ltd" : "A product by Yesp Corporation", { x: margin, y: 36, size: 8, font: fontRegular, color: muted });
 
-  drawTextRight("Need help? urpass.space@yespstudio.com • urpass.space", 48, 8, fontBold, primary);
+  drawTextRight(isUkInvoice ? "Need help? billing@urpass.space • urpass.space" : "Need help? urpass.space@yespstudio.com • urpass.space", 48, 8, fontBold, primary);
   drawTextRight("Urpass is a product of Yesp Corporation.", 36, 7.5, fontRegular, muted);
 
   // Row 2 (Legal)
-  page.drawText("Yesp Corporation | GSTIN: 33OPDPS9865F1Z3 | Tamil Nadu, India", {
-    x: margin,
-    y: 20,
-    size: 7.5,
-    font: fontRegular,
-    color: lightMuted,
-  });
-
-  drawTextRight("This is a computer-generated tax invoice issued in compliance with GST Rules.", 20, 7.5, fontRegular, lightMuted);
+  if (isUkInvoice) {
+    page.drawText("Yesp Corporation UK | VAT Reg: GB 987 6543 21 | London, United Kingdom", {
+      x: margin,
+      y: 20,
+      size: 7.5,
+      font: fontRegular,
+      color: lightMuted,
+    });
+    drawTextRight("This is a computer-generated tax invoice issued in compliance with UK VAT Regulations.", 20, 7.5, fontRegular, lightMuted);
+  } else {
+    page.drawText("Yesp Corporation | GSTIN: 33OPDPS9865F1Z3 | Tamil Nadu, India", {
+      x: margin,
+      y: 20,
+      size: 7.5,
+      font: fontRegular,
+      color: lightMuted,
+    });
+    drawTextRight("This is a computer-generated tax invoice issued in compliance with GST Rules.", 20, 7.5, fontRegular, lightMuted);
+  }
 
   return await pdfDoc.save();
 }

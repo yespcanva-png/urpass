@@ -238,6 +238,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const ukPages = [
     "/uk",
     "/uk/london",
+    "/uk/manchester",
+    "/uk/birmingham",
+    "/uk/edinburgh",
+    "/uk/bristol",
+    "/zero-commission-event-ticketing-uk",
+    "/university-society-event-ticketing",
   ].map((path) => ({ url: `${BASE}${path}`, priority: 0.9, changeFrequency: "weekly" as const }));
 
   const mcpPages = [

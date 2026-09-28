@@ -232,28 +232,38 @@ export default function UkEventTicketingPage() {
             category: "Location",
           },
           {
+            title: "Manchester Event Registration & Check-In",
+            href: "/uk/manchester",
+            category: "Location",
+          },
+          {
+            title: "Birmingham Event Registration & Check-In",
+            href: "/uk/birmingham",
+            category: "Location",
+          },
+          {
+            title: "Edinburgh Event Registration & Check-In",
+            href: "/uk/edinburgh",
+            category: "Location",
+          },
+          {
+            title: "Bristol Event Registration & Check-In",
+            href: "/uk/bristol",
+            category: "Location",
+          },
+          {
+            title: "Zero Commission Event Ticketing UK",
+            href: "/zero-commission-event-ticketing-uk",
+            category: "Product",
+          },
+          {
+            title: "University Society Event Ticketing",
+            href: "/university-society-event-ticketing",
+            category: "Product",
+          },
+          {
             title: "Eventbrite Alternative UK Comparison",
             href: "/compare/eventbrite-alternative-uk",
-            category: "Comparison",
-          },
-          {
-            title: "Zero Commission Event Ticketing",
-            href: "/zero-commission-event-ticketing",
-            category: "Product",
-          },
-          {
-            title: "Multiple Gate Event Check-In",
-            href: "/multiple-gate-event-check-in",
-            category: "Product",
-          },
-          {
-            title: "Offline QR Event Check-In",
-            href: "/offline-qr-event-check-in",
-            category: "Product",
-          },
-          {
-            title: "Google Forms Alternative for Events",
-            href: "/google-forms-alternative-for-events",
             category: "Comparison",
           },
         ],
