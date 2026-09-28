@@ -115,7 +115,7 @@ interface Props {
 }
 
 export default function PlanGrid({ currentPlanSlug, currentPlanIndex, userEmail, userName, trialUsed = false, country = "IN" }: Props) {
-  const [tab, setTab]     = useState<"subscription" | "one-event">("subscription");
+  const [tab, setTab]     = useState<"all" | "subscription" | "one-event">("all");
   const [cycle, setCycle] = useState<"monthly" | "annual">("monthly");
   const [activatingSlug, setActivatingSlug] = useState<string | null>(null);
   const [trialModal, setTrialModal] = useState<{ planSlug: string; planName: string } | null>(null);
@@ -127,12 +127,31 @@ export default function PlanGrid({ currentPlanSlug, currentPlanIndex, userEmail,
   return (
     <div>
       {/* ── Top-level tab ────────────────────────────────────── */}
-      <div className="flex items-center justify-between gap-4 mb-5">
-        <p className="text-[10px] font-bold tracking-wider uppercase text-neutral-500">
-          {tab === "subscription" ? `Available plans · ${PLANS.length}` : "One-Event passes · 3"}
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div>
+          <p className="text-[10px] font-bold tracking-wider uppercase text-neutral-500">
+            {tab === "all"
+              ? `All Plans & Passes · ${PLANS.length} Subscriptions + 3 Event Passes`
+              : tab === "subscription"
+              ? `Subscription Plans · ${PLANS.length}`
+              : "Single Event Passes · 3"}
+          </p>
+          <h2 className="text-xl font-bold tracking-tight text-neutral-900 mt-0.5">
+            Select Your Plan or Pass
+          </h2>
+        </div>
 
-        <div className="flex items-center gap-1 bg-neutral-100 border border-neutral-200/60 rounded-lg p-1 shrink-0">
+        <div className="flex items-center gap-1 bg-neutral-100 border border-neutral-200/60 rounded-lg p-1 shrink-0 self-start sm:self-auto flex-wrap">
+          <button
+            onClick={() => setTab("all")}
+            className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
+              tab === "all"
+                ? "bg-white text-neutral-900 shadow-2xs"
+                : "text-neutral-500 hover:text-neutral-900"
+            }`}
+          >
+            All Plans &amp; Passes
+          </button>
           <button
             onClick={() => setTab("subscription")}
             className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
@@ -141,7 +160,7 @@ export default function PlanGrid({ currentPlanSlug, currentPlanIndex, userEmail,
                 : "text-neutral-500 hover:text-neutral-900"
             }`}
           >
-            Subscription
+            Subscriptions
           </button>
           <button
             onClick={() => setTab("one-event")}
@@ -151,7 +170,7 @@ export default function PlanGrid({ currentPlanSlug, currentPlanIndex, userEmail,
                 : "text-neutral-500 hover:text-neutral-900"
             }`}
           >
-            One-Event
+            Single Events
           </button>
           <Link
             href="/founder-lifetime-deal"
@@ -166,9 +185,9 @@ export default function PlanGrid({ currentPlanSlug, currentPlanIndex, userEmail,
         </div>
       </div>
 
-      {/* ── Subscription tab ─────────────────────────────────── */}
-      {tab === "subscription" && (
-        <>
+      {/* ── Subscription section ─────────────────────────────── */}
+      {(tab === "all" || tab === "subscription") && (
+        <section className={tab === "all" ? "mb-10" : ""}>
           {/* Free trial banner if user has not used trial yet */}
           {!trialUsed && (
             <div className="mb-6 rounded-2xl p-5 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-neutral-900 border border-neutral-800 shadow-sm">
@@ -198,9 +217,13 @@ export default function PlanGrid({ currentPlanSlug, currentPlanIndex, userEmail,
             </div>
           )}
 
-          {/* Billing cycle toggle */}
-          <div className="flex justify-end mb-4">
-            <div className="flex items-center gap-1 bg-neutral-100 border border-neutral-200/60 rounded-lg p-1">
+          {/* Billing cycle toggle & section title */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+            <div>
+              <p className="text-[10px] font-bold tracking-wider uppercase text-neutral-500">Recurring Membership</p>
+              <h3 className="text-lg font-bold tracking-tight text-neutral-900">Monthly / Annual Subscriptions</h3>
+            </div>
+            <div className="flex items-center gap-1 bg-neutral-100 border border-neutral-200/60 rounded-lg p-1 self-start sm:self-auto">
               <button
                 onClick={() => setCycle("monthly")}
                 className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
@@ -381,15 +404,26 @@ export default function PlanGrid({ currentPlanSlug, currentPlanIndex, userEmail,
               );
             })}
           </div>
-        </>
+        </section>
       )}
 
-      {/* ── One-Event tab ─────────────────────────────────────── */}
-      {tab === "one-event" && (
-        <>
-          <p className="text-xs text-neutral-500 mb-4">
-            Buy a pass for a single event — no subscription needed. The pass stays on your account until you attach it to an event.
-          </p>
+      {/* ── Single Event Passes section ────────────────────── */}
+      {(tab === "all" || tab === "one-event") && (
+        <section className={tab === "all" ? "mt-12 pt-10 border-t border-neutral-200/80" : ""}>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+            <div>
+              <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-neutral-100 border border-neutral-200/60 text-[10px] font-bold tracking-wider uppercase text-neutral-700 mb-1">
+                Pay As You Go
+              </div>
+              <h3 className="text-lg font-bold tracking-tight text-neutral-900">Single Event Passes</h3>
+              <p className="text-xs text-neutral-500 mt-0.5">
+                Don&apos;t run events every month? Pay only for your next event with zero recurring renewal fees. Passes remain attached to your account until used.
+              </p>
+            </div>
+            <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-neutral-100 text-neutral-700 border border-neutral-200/60 self-start sm:self-auto shrink-0">
+              3 Single-Event Tiers
+            </span>
+          </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {EVENT_PASSES.map((p) => {
@@ -472,10 +506,11 @@ export default function PlanGrid({ currentPlanSlug, currentPlanIndex, userEmail,
             })}
           </div>
 
-          <p className="text-[11px] text-neutral-500 mt-4 text-center">
-            One-time payment · No recurring charges · Attach to any event after purchase
-          </p>
-        </>
+          <div className="flex items-center justify-center gap-2 mt-4 text-[11px] text-neutral-500 font-medium">
+            <ShieldCheck className="w-3.5 h-3.5 text-neutral-400" />
+            <span>One-time payment · No recurring renewal charges · Attach to any event after purchase</span>
+          </div>
+        </section>
       )}
 
       {/* Event Pass Checkout Modal */}

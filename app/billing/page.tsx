@@ -668,57 +668,117 @@ export default async function BillingPage(props: {
             country={country}
           />
 
-          {/* Campus / scale CTA */}
-          <div className="mt-8 rounded-xl border border-neutral-200/80 bg-white overflow-hidden shadow-xs">
-            <div className="grid grid-cols-1 md:grid-cols-2">
-              <div className="p-6 sm:p-7 flex flex-col justify-between gap-4">
-                <div>
-                  <div className="flex items-center gap-2.5 mb-2.5">
-                    <div className="w-8 h-8 rounded-lg bg-neutral-100 border border-neutral-200/60 flex items-center justify-center">
-                      <Building2 className="w-4 h-4 text-neutral-700" />
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-bold tracking-wider uppercase text-neutral-500">
-                        {isUk ? "UK Campus & Multi-Society" : "Campus & Enterprise"}
-                      </p>
-                      <p className="text-base font-bold tracking-tight text-neutral-900">
-                        {isUk ? "From £149/year" : "Custom volume licensing"}
-                      </p>
-                    </div>
-                  </div>
-                  <p className="text-xs sm:text-sm text-neutral-600 leading-relaxed">
-                    {isUk
-                      ? "Running events across your Students' Union, university societies, or sports clubs? Get institution-wide accounts, dedicated support, and multi-committee access."
-                      : "Running events across a college, company, or multi-team organization? Get institution-wide accounts, dedicated support, and volume pricing."}
-                  </p>
+          {/* ── Campus & Enterprise Plans ── */}
+          <section className="mt-12 pt-10 border-t border-neutral-200/80">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+              <div>
+                <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-neutral-100 border border-neutral-200/60 text-[10px] font-bold tracking-wider uppercase text-neutral-700 mb-1.5">
+                  <Building2 className="w-3.5 h-3.5 text-neutral-700" />
+                  <span>Institution &amp; Campus Licensing</span>
                 </div>
+                <h3 className="text-xl font-bold tracking-tight text-neutral-900">
+                  {isUk ? "UK Campus & Multi-Society Plans" : "Campus & Enterprise Plans"}
+                </h3>
+                <p className="text-xs text-neutral-500 mt-0.5 max-w-2xl">
+                  {isUk
+                    ? "Centralized event platform for university Students' Unions, collegiate societies, and sports clubs across the UK."
+                    : "Centralized event platform for universities, colleges with multiple departments and clubs, and enterprise organizations."}
+                </p>
               </div>
-              <div className="p-6 sm:p-7 flex flex-col justify-between gap-4 md:border-l border-t md:border-t-0 border-neutral-200/60 bg-neutral-50/50">
-                <ul className="grid grid-cols-2 gap-x-4 gap-y-2.5">
-                  {[
-                    isUk ? "Unlimited societies" : "Unlimited organizers",
-                    "Institution analytics",
-                    "Custom domain",
-                    "API & webhooks",
-                    "Priority support",
-                    isUk ? "UK GDPR & DPA compliant" : "Invoice billing",
-                  ].map((f) => (
-                    <li key={f} className="flex items-center gap-2 text-xs font-medium text-neutral-700">
-                      <Check className="w-3.5 h-3.5 text-neutral-900 shrink-0" />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
+              <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-neutral-100 text-neutral-700 border border-neutral-200/60 self-start sm:self-auto shrink-0">
+                Annual Institution Tiers
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Campus Starter Card */}
+              <div className="bg-white border border-neutral-200/80 rounded-xl p-6 flex flex-col justify-between shadow-xs hover:border-neutral-300 transition-colors">
+                <div>
+                  <div className="flex items-center justify-between gap-3 mb-2">
+                    <p className="text-[10px] font-bold tracking-wider uppercase text-neutral-500">Tier 1 · Campus</p>
+                    <span className="text-[9px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200/80 uppercase">
+                      Colleges &amp; Unions
+                    </span>
+                  </div>
+                  <h4 className="text-lg font-bold text-neutral-900">Campus Starter</h4>
+                  <div className="flex items-baseline gap-1 mt-1 mb-2">
+                    <span className="text-2xl font-bold tracking-tight text-neutral-900 tabular-nums">
+                      {isUk ? "from £149" : "from ₹9,999"}
+                    </span>
+                    <span className="text-xs text-neutral-500 font-medium">/year</span>
+                  </div>
+                  <p className="text-xs text-neutral-600 leading-relaxed mb-5">
+                    {isUk
+                      ? "For UK universities, Students' Unions, and student societies running regular campus activities."
+                      : "For colleges with multiple departments, cultural clubs, and technical fests running recurring events."}
+                  </p>
+                  <ul className="flex flex-col gap-2 mb-6">
+                    {[
+                      isUk ? "Unlimited student societies & clubs" : "Unlimited department & club events",
+                      "Multi-committee organizer seats",
+                      "Cross-department attendee analytics",
+                      "Digital pass branding with college crest/logo",
+                      isUk ? "UK GDPR & DPA compliant" : "Direct GST tax invoice billing",
+                    ].map((feature) => (
+                      <li key={feature} className="flex items-start gap-2 text-xs text-neutral-700">
+                        <Check className="w-3.5 h-3.5 text-neutral-900 shrink-0 mt-0.5" />
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
                 <Link
-                  href="/contact"
-                  className="inline-flex items-center justify-center gap-2 py-2.5 px-5 rounded-lg text-xs font-semibold bg-neutral-900 text-white hover:bg-neutral-800 transition-colors shadow-xs w-full md:w-auto self-start"
+                  href="/contact?subject=Campus%20Starter%20Plan"
+                  className="w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-xs font-semibold bg-neutral-900 text-white hover:bg-neutral-800 transition-colors shadow-xs"
                 >
                   <Mail className="w-3.5 h-3.5" />
-                  Contact Enterprise Sales
+                  <span>Inquire for Campus Starter</span>
+                </Link>
+              </div>
+
+              {/* University & Enterprise Scale Card */}
+              <div className="bg-white border border-neutral-200/80 rounded-xl p-6 flex flex-col justify-between shadow-xs hover:border-neutral-300 transition-colors">
+                <div>
+                  <div className="flex items-center justify-between gap-3 mb-2">
+                    <p className="text-[10px] font-bold tracking-wider uppercase text-neutral-500">Tier 2 · Institution</p>
+                    <span className="text-[9px] font-bold px-2 py-0.5 rounded bg-neutral-100 text-neutral-700 border border-neutral-200/60 uppercase">
+                      Enterprise &amp; University Scale
+                    </span>
+                  </div>
+                  <h4 className="text-lg font-bold text-neutral-900">University &amp; Enterprise</h4>
+                  <div className="flex items-baseline gap-1 mt-1 mb-2">
+                    <span className="text-2xl font-bold tracking-tight text-neutral-900">Custom</span>
+                    <span className="text-xs text-neutral-500 font-medium">volume pricing</span>
+                  </div>
+                  <p className="text-xs text-neutral-600 leading-relaxed mb-5">
+                    For multi-campus institutions, university syndicates, and large enterprise networks requiring dedicated SLAs and bespoke compliance.
+                  </p>
+                  <ul className="flex flex-col gap-2 mb-6">
+                    {[
+                      "Unlimited organizers, attendees & concurrent check-in lanes",
+                      "Dedicated account manager & SLA guarantee",
+                      "Enterprise SSO (SAML, Okta, Google Workspace)",
+                      "SCIM user provisioning & audit logs",
+                      "Custom domains, webhook dispatch & REST API keys",
+                      "Priority hardware scanner onboarding & training",
+                    ].map((feature) => (
+                      <li key={feature} className="flex items-start gap-2 text-xs text-neutral-700">
+                        <Check className="w-3.5 h-3.5 text-neutral-900 shrink-0 mt-0.5" />
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <Link
+                  href="/contact?subject=University%20Enterprise%20Plan"
+                  className="w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-xs font-semibold bg-neutral-900 text-white hover:bg-neutral-800 transition-colors shadow-xs"
+                >
+                  <Mail className="w-3.5 h-3.5" />
+                  <span>Talk to Enterprise Sales</span>
                 </Link>
               </div>
             </div>
-          </div>
+          </section>
 
           {/* Footer */}
           <div className="flex items-center justify-center gap-2 mt-10">
