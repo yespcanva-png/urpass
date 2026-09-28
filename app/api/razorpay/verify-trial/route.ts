@@ -144,28 +144,32 @@ export async function POST(req: NextRequest) {
     year: "numeric",
   });
 
-  // Send trial started email
-  if (user.email) {
-    void sendTrialStartedEmail({
-      to: user.email,
-      userName: user.user_metadata?.full_name,
-      planName: targetPlan.name,
-      monthlyPricePaise: pricePaise,
-      trialEndsAt: formattedEndDate,
-    }).catch((err) => console.error("[email] Error sending trial start email:", err));
+  // Send trial started email & notify owner
+  try {
+    await Promise.allSettled([
+      user.email
+        ? sendTrialStartedEmail({
+            to: user.email,
+            userName: user.user_metadata?.full_name,
+            planName: targetPlan.name,
+            monthlyPricePaise: pricePaise,
+            trialEndsAt: formattedEndDate,
+          })
+        : Promise.resolve(),
+      notifyOwnerTrialActivated({
+        buyerName: user.user_metadata?.full_name,
+        buyerEmail: user.email,
+        planName: targetPlan.name,
+        billingInterval: "monthly",
+        futurePricePaise: pricePaise,
+        subscriptionId: subscriptionId ?? undefined,
+        paymentId: paymentId ?? undefined,
+        trialEndsAt: formattedEndDate,
+      }),
+    ]);
+  } catch (err) {
+    console.error("[email] Error sending trial verification emails:", err);
   }
-
-  // Notify owner
-  void notifyOwnerTrialActivated({
-    buyerName: user.user_metadata?.full_name,
-    buyerEmail: user.email,
-    planName: targetPlan.name,
-    billingInterval: "monthly",
-    futurePricePaise: pricePaise,
-    subscriptionId: subscriptionId ?? undefined,
-    paymentId: paymentId ?? undefined,
-    trialEndsAt: formattedEndDate,
-  }).catch((err) => console.error("[email] Error notifying owner of trial:", err));
 
   revalidatePath("/billing");
   revalidatePath("/dashboard");

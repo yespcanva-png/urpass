@@ -190,14 +190,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: msg }, { status: 502 });
   }
 
-  notifyOwnerPaymentAttempt({
-    kind: "subscription",
-    buyerName: user.user_metadata?.full_name,
-    buyerEmail: user.email,
-    itemName: isFounder ? "URPASS Founder Lifetime Access" : `${plan.name} Plan (${effectiveBillingCycle})`,
-    amountPaise: totalAmount,
-    orderId: order.id,
-  }).catch((err: unknown) => console.error("[email]", err));
+  try {
+    await notifyOwnerPaymentAttempt({
+      kind: isFounder ? "one_time" : "subscription",
+      buyerName: user.user_metadata?.full_name,
+      buyerEmail: user.email,
+      itemName: isFounder ? "URPASS Founder Lifetime Access" : `${plan.name} Plan (${effectiveBillingCycle})`,
+      amountPaise: totalAmount,
+      orderId: order.id,
+    });
+  } catch (err: unknown) {
+    console.error("[api/razorpay/order] notifyOwnerPaymentAttempt error:", err);
+  }
 
   return NextResponse.json({
     orderId: order.id,

@@ -8,6 +8,7 @@ import {
 } from "@/lib/razorpay";
 import { getBillingPlan, resolveBillingPlanKey } from "@/lib/billing-plans";
 import { getSupabaseUrl } from "@/lib/supabase/config";
+import { notifyOwnerPaymentAttempt } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 
@@ -167,6 +168,20 @@ export async function POST(req: NextRequest) {
 
     if (dbError) {
       console.warn("[billing-subscriptions] DB save warning:", dbError.message);
+    }
+
+    try {
+      await notifyOwnerPaymentAttempt({
+        kind: "subscription",
+        buyerName: user.user_metadata?.full_name,
+        buyerEmail: user.email,
+        itemName: `${plan.tier} (${plan.interval}) Subscription`,
+        amountPaise: Math.round(plan.price * 100),
+        orderId: rzpSubscription.id,
+        subscriptionId: rzpSubscription.id,
+      });
+    } catch (notifyErr: unknown) {
+      console.error("[billing-subscriptions] notifyOwnerPaymentAttempt error:", notifyErr);
     }
 
     return NextResponse.json({

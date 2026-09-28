@@ -115,25 +115,29 @@ export async function activateEventPass(
   });
 
   const itemName = `Event Pass (${passType.replace("_", " ").toUpperCase()})`;
-  void Promise.allSettled([
-    notifyOwnerOneTimePayment({
-      buyerName: user.user_metadata?.full_name,
-      buyerEmail: user.email,
-      itemName,
-      amountPaise: orderAmountPaise,
-      paymentId: payment.paymentId,
-      orderId: payment.orderId,
-      passType,
-      registrationLimit,
-    }),
-    user.email
-      ? sendUserPaymentSuccessEmail({
-          to: user.email,
-          name: user.user_metadata?.full_name,
-          itemName,
-          amountPaise: orderAmountPaise,
-          kind: "event_pass",
-        })
-      : Promise.resolve(),
-  ]).catch((err: unknown) => console.error("[email]", err));
+  try {
+    await Promise.allSettled([
+      notifyOwnerOneTimePayment({
+        buyerName: user.user_metadata?.full_name,
+        buyerEmail: user.email,
+        itemName,
+        amountPaise: orderAmountPaise,
+        paymentId: payment.paymentId,
+        orderId: payment.orderId,
+        passType,
+        registrationLimit,
+      }),
+      user.email
+        ? sendUserPaymentSuccessEmail({
+            to: user.email,
+            name: user.user_metadata?.full_name,
+            itemName,
+            amountPaise: orderAmountPaise,
+            kind: "event_pass",
+          })
+        : Promise.resolve(),
+    ]);
+  } catch (err: unknown) {
+    console.error("[event-passes] Payment notification error:", err);
+  }
 }

@@ -182,14 +182,18 @@ export async function POST(req: NextRequest) {
         : Promise.resolve(),
     ]);
 
-    notifyOwnerPaymentAttempt({
-      kind: "ticket",
-      buyerName,
-      buyerEmail,
-      itemName: ticketName,
-      amountPaise,
-      orderId: order.id,
-    }).catch((err: unknown) => console.error("[email]", err));
+    try {
+      await notifyOwnerPaymentAttempt({
+        kind: "ticket",
+        buyerName,
+        buyerEmail,
+        itemName: ticketName,
+        amountPaise,
+        orderId: order.id,
+      });
+    } catch (err: unknown) {
+      console.error("[ticket-order] notifyOwnerPaymentAttempt error:", err);
+    }
 
     return NextResponse.json({
       orderId: order.id,

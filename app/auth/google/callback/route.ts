@@ -108,15 +108,19 @@ export async function GET(req: NextRequest) {
         console.error("[google-callback] createUser error:", createErr);
         return NextResponse.redirect(`${appUrl}/login?error=google_auth_failed&step=create`);
       }
-      void Promise.allSettled([
-        notifyOwnerNewUser({
-          name: info.name,
-          email: info.email,
-          provider: "google",
-          userId: createdUser.user?.id,
-        }),
-        sendUserWelcomeEmail({ to: info.email, name: info.name }),
-      ]);
+      try {
+        await Promise.allSettled([
+          notifyOwnerNewUser({
+            name: info.name,
+            email: info.email,
+            provider: "google",
+            userId: createdUser.user?.id,
+          }),
+          sendUserWelcomeEmail({ to: info.email, name: info.name }),
+        ]);
+      } catch (e) {
+        console.error("[google-callback] notification error:", e);
+      }
     }
 
     // Generate a one-time token and verify it via the server client (sets session cookies)

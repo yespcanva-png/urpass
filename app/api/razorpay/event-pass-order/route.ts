@@ -82,14 +82,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: msg }, { status: 502 });
   }
 
-  notifyOwnerPaymentAttempt({
-    kind: "event_pass",
-    buyerName: user.user_metadata?.full_name,
-    buyerEmail: user.email,
-    itemName: PASS_NAMES[passType],
-    amountPaise: totalPaise,
-    orderId: order.id,
-  }).catch((err: unknown) => console.error("[email]", err));
+  try {
+    await notifyOwnerPaymentAttempt({
+      kind: "event_pass",
+      buyerName: user.user_metadata?.full_name,
+      buyerEmail: user.email,
+      itemName: PASS_NAMES[passType],
+      amountPaise: totalPaise,
+      orderId: order.id,
+    });
+  } catch (err: unknown) {
+    console.error("[event-pass-order] notifyOwnerPaymentAttempt error:", err);
+  }
 
   return NextResponse.json({
     orderId:  order.id,

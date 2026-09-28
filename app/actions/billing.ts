@@ -194,24 +194,29 @@ export async function activateFreeTrial(planSlug: string): Promise<ActionResult>
     year: "numeric",
   });
 
-  if (user.email) {
-    void sendTrialStartedEmail({
-      to: user.email,
-      userName: user.user_metadata?.full_name,
-      planName: targetPlan.name,
-      monthlyPricePaise: pricePaiseMap[planSlug] ?? 49900,
-      trialEndsAt: formattedEndDate,
-    }).catch((err) => console.error("[email] Trial started email error:", err));
+  try {
+    await Promise.allSettled([
+      user.email
+        ? sendTrialStartedEmail({
+            to: user.email,
+            userName: user.user_metadata?.full_name,
+            planName: targetPlan.name,
+            monthlyPricePaise: pricePaiseMap[planSlug] ?? 49900,
+            trialEndsAt: formattedEndDate,
+          })
+        : Promise.resolve(),
+      notifyOwnerTrialActivated({
+        buyerName: user.user_metadata?.full_name,
+        buyerEmail: user.email,
+        planName: targetPlan.name,
+        billingInterval: "monthly",
+        futurePricePaise: pricePaiseMap[planSlug] ?? 49900,
+        trialEndsAt: formattedEndDate,
+      }),
+    ]);
+  } catch (err) {
+    console.error("[email] Trial started notification error:", err);
   }
-
-  void notifyOwnerTrialActivated({
-    buyerName: user.user_metadata?.full_name,
-    buyerEmail: user.email,
-    planName: targetPlan.name,
-    billingInterval: "monthly",
-    futurePricePaise: pricePaiseMap[planSlug] ?? 49900,
-    trialEndsAt: formattedEndDate,
-  }).catch((err) => console.error("[email] Trial started owner notification error:", err));
 
   revalidateBillingPaths();
   return undefined;
@@ -330,26 +335,31 @@ export async function activateTrialSubscription(
     year: "numeric",
   });
 
-  if (user.email) {
-    void sendTrialStartedEmail({
-      to: user.email,
-      userName: user.user_metadata?.full_name,
-      planName: targetPlan.name,
-      monthlyPricePaise: pricePaiseMap[planSlug] ?? 49900,
-      trialEndsAt: formattedEndDate,
-    }).catch((err) => console.error("[email] Trial started email error:", err));
+  try {
+    await Promise.allSettled([
+      user.email
+        ? sendTrialStartedEmail({
+            to: user.email,
+            userName: user.user_metadata?.full_name,
+            planName: targetPlan.name,
+            monthlyPricePaise: pricePaiseMap[planSlug] ?? 49900,
+            trialEndsAt: formattedEndDate,
+          })
+        : Promise.resolve(),
+      notifyOwnerTrialActivated({
+        buyerName: user.user_metadata?.full_name,
+        buyerEmail: user.email,
+        planName: targetPlan.name,
+        billingInterval: "monthly",
+        futurePricePaise: pricePaiseMap[planSlug] ?? 49900,
+        subscriptionId: verification.subscriptionId,
+        paymentId: verification.paymentId,
+        trialEndsAt: formattedEndDate,
+      }),
+    ]);
+  } catch (err) {
+    console.error("[email] Trial activation notification error:", err);
   }
-
-  void notifyOwnerTrialActivated({
-    buyerName: user.user_metadata?.full_name,
-    buyerEmail: user.email,
-    planName: targetPlan.name,
-    billingInterval: "monthly",
-    futurePricePaise: pricePaiseMap[planSlug] ?? 49900,
-    subscriptionId: verification.subscriptionId,
-    paymentId: verification.paymentId,
-    trialEndsAt: formattedEndDate,
-  }).catch((err) => console.error("[email] Trial notify error:", err));
 
   revalidateBillingPaths();
 }
@@ -607,30 +617,33 @@ export async function activatePaidSubscription(
 
     const planDisplayName = isFounder ? "Founder Lifetime Plan" : `${normalizedSlug.toUpperCase()} Plan`;
     const itemName = isFounder
-      ? "URPASS Founder Lifetime Access (One-Time)"
+      ? "URPASS Founder Lifetime Access"
       : `${normalizedSlug.toUpperCase()} Plan (${effectiveCycle})`;
-
-    void Promise.allSettled([
-      notifyOwnerPaidSubscription({
-        buyerName: user.user_metadata?.full_name,
-        buyerEmail: user.email,
-        planName: planDisplayName,
-        billingCycle: effectiveCycle,
-        amountPaise: orderAmountPaise,
-        paymentId: verifiedPaymentId,
-        orderId: typeof payment === "object" ? payment.orderId : undefined,
-        subscriptionId: verifiedPaymentId,
-      }),
-      user.email
-        ? sendUserPaymentSuccessEmail({
-            to: user.email,
-            name: user.user_metadata?.full_name,
-            itemName,
-            amountPaise: orderAmountPaise,
-            kind: "subscription",
-          })
-        : Promise.resolve(),
-    ]).catch((err: unknown) => console.error("[email]", err));
+    try {
+      await Promise.allSettled([
+        notifyOwnerPaidSubscription({
+          buyerName: user.user_metadata?.full_name,
+          buyerEmail: user.email,
+          planName: planDisplayName,
+          billingCycle: effectiveCycle,
+          amountPaise: orderAmountPaise,
+          paymentId: verifiedPaymentId,
+          orderId: typeof payment === "object" ? payment.orderId : undefined,
+          subscriptionId: verifiedPaymentId,
+        }),
+        user.email
+          ? sendUserPaymentSuccessEmail({
+              to: user.email,
+              name: user.user_metadata?.full_name,
+              itemName,
+              amountPaise: orderAmountPaise,
+              kind: "subscription",
+            })
+          : Promise.resolve(),
+      ]);
+    } catch (err: unknown) {
+      console.error("[billing] Paid subscription notification error:", err);
+    }
   }
 
   // Record coupon redemption

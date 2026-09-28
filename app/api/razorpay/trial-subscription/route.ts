@@ -5,6 +5,7 @@ import {
   formatRazorpayErrorMessage,
 } from "@/lib/razorpay";
 import { createClient } from "@/lib/supabase/server";
+import { notifyOwnerPaymentAttempt } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 
@@ -159,6 +160,20 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: msg }, { status: 502 });
       }
     }
+  }
+
+  try {
+    await notifyOwnerPaymentAttempt({
+      kind: "trial",
+      buyerName: user.user_metadata?.full_name,
+      buyerEmail: user.email,
+      itemName: `30-Day Free Trial: ${plan.name} Plan`,
+      amountPaise: pricePaise,
+      orderId: orderId ?? subscriptionId,
+      subscriptionId: subscriptionId ?? undefined,
+    });
+  } catch (err: unknown) {
+    console.error("[trial-subscription] notifyOwnerPaymentAttempt error:", err);
   }
 
   return NextResponse.json({

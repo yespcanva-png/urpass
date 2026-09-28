@@ -104,19 +104,23 @@ function SignupContent() {
       setServerError(error.message);
       return;
     }
-    sendSignupNotifications({
-      name: data.full_name,
-      email: data.email,
-      provider: "email",
-      userId: signUpData.user?.id,
-    }).catch((err: unknown) => console.error("[email]", err));
+    try {
+      await sendSignupNotifications({
+        name: data.full_name,
+        email: data.email,
+        provider: "email",
+        userId: signUpData.user?.id,
+      });
+    } catch (err: unknown) {
+      console.error("[signup] sendSignupNotifications error:", err);
+    }
     const target = resolvePostAuthRedirect(
       searchParams,
       typeof document !== "undefined" ? document.referrer : null
     );
     const destination = target !== "/dashboard" ? target : "/onboarding";
     setSuccess(true);
-    setTimeout(() => router.push(destination), 1500);
+    setTimeout(() => router.push(destination), 1200);
   }
 
   async function onSsoSubmit(data: SsoFormData) {

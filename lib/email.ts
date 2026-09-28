@@ -3,17 +3,27 @@ import { Resend } from "resend";
 const RESEND_API_KEY = process.env.RESEND_API_KEY ?? "";
 const isDev = process.env.NODE_ENV === "development";
 
-// In dev without a real key, log emails to console instead of failing silently
+// Dynamically resolve Resend instance using runtime environment variables
 function getResend() {
-  if (!RESEND_API_KEY || RESEND_API_KEY.startsWith("re_your")) {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey || apiKey.startsWith("re_your")) {
     return null;
   }
-  return new Resend(RESEND_API_KEY);
+  return new Resend(apiKey);
 }
 
 // Verified sending domain in Resend
+export function getFromEmail(): string {
+  return process.env.EMAIL_FROM || "URPASS <noreply@urpass.space>";
+}
+
 const FROM = process.env.EMAIL_FROM || "URPASS <noreply@urpass.space>";
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://urpass.space";
+
+export function getOwnerEmail(): string {
+  return process.env.OWNER_EMAIL || "srinithin@yespstudio.com";
+}
+
 const OWNER_EMAIL = "srinithin@yespstudio.com";
 
 function escapeHtml(value: unknown) {
@@ -45,20 +55,28 @@ async function sendEmail(payload: Parameters<Resend["emails"]["send"]>[0]) {
   const resend = getResend();
   if (!resend) {
     console.warn(
-      "[email] RESEND_API_KEY not set — email skipped.\n",
+      "[email] RESEND_API_KEY not set or invalid — email skipped.\n",
       "  To:", payload.to,
       "\n  Subject:", payload.subject
     );
     return;
   }
-  const { error } = await resend.emails.send(payload);
-  if (error) {
-    console.error("[email] Resend error:", error);
-    throw error;
+  try {
+    const { data, error } = await resend.emails.send(payload);
+    if (error) {
+      console.error("[email] Resend API error:", error);
+      throw error;
+    }
+    const recipient = Array.isArray(payload.to) ? payload.to.join(", ") : payload.to;
+    console.log(`[email] Sent to ${recipient} | "${payload.subject}" (id: ${data?.id})`);
+    return data;
+  } catch (err) {
+    console.error("[email] Resend send failure:", err);
+    throw err;
   }
 }
 
-async function sendOwnerNotification({
+export async function sendOwnerNotification({
   subject,
   title,
   rows,
@@ -68,38 +86,49 @@ async function sendOwnerNotification({
   rows: Array<[string, unknown]>;
 }) {
   const safeTitle = escapeHtml(title);
-  await sendEmail({
-    from: FROM,
-    to: OWNER_EMAIL,
-    subject,
-    html: `
+  const targetEmail = getOwnerEmail();
+  const fromEmail = getFromEmail();
+
+  try {
+    console.log(`[email] Dispatching owner notification to ${targetEmail}: "${subject}"`);
+    await sendEmail({
+      from: fromEmail,
+      to: targetEmail,
+      subject,
+      html: `
 <!DOCTYPE html>
 <html lang="en">
 <head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /></head>
 <body style="margin:0;padding:0;background:#f6f4ff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
 <table width="100%" cellpadding="0" cellspacing="0" style="background:#f6f4ff;padding:32px 16px;">
   <tr><td align="center">
-    <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border:1px solid #ede9fe;border-radius:18px;overflow:hidden;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border:1px solid #ede9fe;border-radius:18px;overflow:hidden;box-shadow:0 4px 20px rgba(109,40,217,0.08);">
       <tr><td style="background:#6D28D9;padding:22px 26px;">
-        <p style="margin:0 0 4px;font-size:10px;font-weight:800;letter-spacing:3px;color:rgba(255,255,255,0.62);text-transform:uppercase;">URPASS Admin</p>
-        <h1 style="margin:0;font-size:20px;line-height:1.35;color:#ffffff;">${safeTitle}</h1>
+        <p style="margin:0 0 4px;font-size:10px;font-weight:800;letter-spacing:3px;color:rgba(255,255,255,0.7);text-transform:uppercase;">URPASS Alert</p>
+        <h1 style="margin:0;font-size:20px;line-height:1.35;color:#ffffff;font-weight:700;">${safeTitle}</h1>
       </td></tr>
       <tr><td style="padding:24px 26px;">
         <table width="100%" cellpadding="0" cellspacing="0">
           ${rows.map(([label, value]) => `
             <tr>
-              <td style="padding:9px 0;border-bottom:1px solid #f3f4f6;width:38%;font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;">${escapeHtml(label)}</td>
-              <td style="padding:9px 0;border-bottom:1px solid #f3f4f6;font-size:14px;color:#111827;">${escapeHtml(value || "Not provided")}</td>
+              <td style="padding:10px 0;border-bottom:1px solid #f3f4f6;width:38%;font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;">${escapeHtml(label)}</td>
+              <td style="padding:10px 0;border-bottom:1px solid #f3f4f6;font-size:14px;color:#111827;font-weight:500;">${escapeHtml(value || "Not provided")}</td>
             </tr>
           `).join("")}
         </table>
+        <div style="margin-top:20px;padding-top:16px;border-top:1px dashed #e5e7eb;font-size:12px;color:#9ca3af;text-align:center;">
+          Automated Admin Notification sent to ${escapeHtml(targetEmail)} · URPASS
+        </div>
       </td></tr>
     </table>
   </td></tr>
 </table>
 </body>
 </html>`.trim(),
-  });
+    });
+  } catch (err) {
+    console.error(`[email] Failed sending owner notification to ${targetEmail} ("${subject}"):`, err);
+  }
 }
 
 export async function notifyOwnerNewUser({
@@ -110,16 +139,16 @@ export async function notifyOwnerNewUser({
 }: {
   name?: string | null;
   email?: string | null;
-  provider: "email" | "google";
+  provider: "email" | "google" | "sso";
   userId?: string | null;
 }) {
   await sendOwnerNotification({
-    subject: `New URPASS signup: ${email ?? "unknown email"}`,
-    title: "New user signup",
+    subject: `[URPASS] New User Signup: ${email ?? "unknown email"}`,
+    title: "New User Signup",
     rows: [
       ["Name", name],
       ["Email", email],
-      ["Signup method", provider],
+      ["Signup method", provider.toUpperCase()],
       ["User ID", userId],
       ["Time", new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })],
     ],
@@ -170,24 +199,26 @@ export async function notifyOwnerPaymentAttempt({
   itemName,
   amountPaise,
   orderId,
+  subscriptionId,
 }: {
-  kind: "subscription" | "event_pass" | "ticket";
+  kind: "subscription" | "event_pass" | "ticket" | "trial" | "one_time";
   buyerName?: string | null;
   buyerEmail?: string | null;
   itemName: string;
   amountPaise?: number | null;
   orderId?: string | null;
+  subscriptionId?: string | null;
 }) {
   await sendOwnerNotification({
-    subject: `URPASS payment attempt: ${itemName}`,
-    title: "Payment attempt started",
+    subject: `💳 [URPASS] Payment Started: ${itemName} (${buyerEmail ?? "unknown email"})`,
+    title: "Payment Checkout Initiated",
     rows: [
-      ["Type", kind],
+      ["Type", kind.toUpperCase()],
       ["Item", itemName],
       ["Amount", formatInrFromPaise(amountPaise)],
       ["Buyer name", buyerName],
       ["Buyer email", buyerEmail],
-      ["Razorpay order", orderId],
+      ["Razorpay order / sub", orderId || subscriptionId],
       ["Time", new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })],
     ],
   });
@@ -202,7 +233,7 @@ export async function notifyOwnerPaymentSuccess({
   paymentId,
   orderId,
 }: {
-  kind: "subscription" | "event_pass" | "ticket";
+  kind: "subscription" | "event_pass" | "ticket" | "one_time" | "trial";
   buyerName?: string | null;
   buyerEmail?: string | null;
   itemName: string;
@@ -211,10 +242,10 @@ export async function notifyOwnerPaymentSuccess({
   orderId?: string | null;
 }) {
   await sendOwnerNotification({
-    subject: `URPASS payment captured: ${itemName}`,
-    title: "Payment successful",
+    subject: `💰 [URPASS] Payment Captured: ${itemName} (${buyerEmail ?? "unknown email"})`,
+    title: "Payment Successful",
     rows: [
-      ["Type", kind],
+      ["Type", kind.toUpperCase()],
       ["Item", itemName],
       ["Amount", formatInrFromPaise(amountPaise)],
       ["Buyer name", buyerName],

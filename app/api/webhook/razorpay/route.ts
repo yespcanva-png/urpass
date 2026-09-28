@@ -136,19 +136,23 @@ export async function POST(req: NextRequest) {
           { onConflict: "user_id" }
         );
 
-        void notifyOwnerTrialActivated({
-          buyerName: notes.customer_name || null,
-          buyerEmail: notes.customer_email || null,
-          planName: planSlug.toUpperCase(),
-          billingInterval: subscription.period || "monthly",
-          subscriptionId: subscription.id,
-          paymentId: event.payload?.payment?.entity?.id || null,
-          trialEndsAt: trialEndsAt.toLocaleDateString("en-IN", {
-            day: "numeric",
-            month: "long",
-            year: "numeric",
-          }),
-        }).catch((err) => console.error("[email] Error notifying owner of trial activation:", err));
+        try {
+          await notifyOwnerTrialActivated({
+            buyerName: notes.customer_name || null,
+            buyerEmail: notes.customer_email || null,
+            planName: planSlug.toUpperCase(),
+            billingInterval: subscription.period || "monthly",
+            subscriptionId: subscription.id,
+            paymentId: event.payload?.payment?.entity?.id || null,
+            trialEndsAt: trialEndsAt.toLocaleDateString("en-IN", {
+              day: "numeric",
+              month: "long",
+              year: "numeric",
+            }),
+          });
+        } catch (err) {
+          console.error("[email] Error notifying owner of trial activation:", err);
+        }
       }
       return NextResponse.json({ received: true, event: eventType });
     }
@@ -191,16 +195,20 @@ export async function POST(req: NextRequest) {
           .eq("user_id", userId);
 
         if (payment) {
-          void notifyOwnerPaidSubscription({
-            buyerName: notes.customer_name || payment.email,
-            buyerEmail: notes.customer_email || payment.email,
-            planName: `${planSlug.toUpperCase()} Plan (Renewal/Charge)`,
-            billingCycle: subscription.period || "monthly",
-            amountPaise: payment.amount,
-            paymentId: payment.id,
-            orderId: payment.order_id,
-            subscriptionId: subscription.id,
-          }).catch((err) => console.error("[email] Error notifying owner of subscription charge:", err));
+          try {
+            await notifyOwnerPaidSubscription({
+              buyerName: notes.customer_name || payment.email,
+              buyerEmail: notes.customer_email || payment.email,
+              planName: `${planSlug.toUpperCase()} Plan (Renewal/Charge)`,
+              billingCycle: subscription.period || "monthly",
+              amountPaise: payment.amount,
+              paymentId: payment.id,
+              orderId: payment.order_id,
+              subscriptionId: subscription.id,
+            });
+          } catch (err) {
+            console.error("[email] Error notifying owner of subscription charge:", err);
+          }
         }
       }
       return NextResponse.json({ received: true, event: eventType });
@@ -303,14 +311,18 @@ export async function POST(req: NextRequest) {
 
     const paidOrder = paidOrders?.[0] ?? existingOrder;
     if (paidOrder) {
-      void notifyOwnerOneTimePayment({
-        buyerName: paidOrder.buyer_name,
-        buyerEmail: paidOrder.buyer_email,
-        itemName: notes.ticket_name || "Paid event ticket",
-        amountPaise: paidOrder.amount,
-        paymentId: payment.id,
-        orderId: razorpayOrderId,
-      }).catch((err: unknown) => console.error("[email]", err));
+      try {
+        await notifyOwnerOneTimePayment({
+          buyerName: paidOrder.buyer_name,
+          buyerEmail: paidOrder.buyer_email,
+          itemName: notes.ticket_name || "Paid event ticket",
+          amountPaise: paidOrder.amount,
+          paymentId: payment.id,
+          orderId: razorpayOrderId,
+        });
+      } catch (err: unknown) {
+        console.error("[email] Error notifying owner of ticket order:", err);
+      }
 
       // Fallback recovery: if attendee was not created by the client before drop-off
       if (!paidOrder.attendee_id) {
@@ -441,27 +453,31 @@ export async function POST(req: NextRequest) {
       });
 
       const itemName = `Event Pass (${passType.replace("_", " ").toUpperCase()})`;
-      void Promise.allSettled([
-        notifyOwnerOneTimePayment({
-          buyerName: notes.customer_name,
-          buyerEmail: notes.customer_email || payment.email,
-          itemName,
-          amountPaise: payment.amount,
-          paymentId: payment.id,
-          orderId: payment.order_id,
-          passType,
-          registrationLimit: regLimit,
-        }),
-        (notes.customer_email || payment.email)
-          ? sendUserPaymentSuccessEmail({
-              to: notes.customer_email || payment.email,
-              name: notes.customer_name,
-              itemName,
-              amountPaise: payment.amount,
-              kind: "event_pass",
-            })
-          : Promise.resolve(),
-      ]).catch((err: unknown) => console.error("[email]", err));
+      try {
+        await Promise.allSettled([
+          notifyOwnerOneTimePayment({
+            buyerName: notes.customer_name,
+            buyerEmail: notes.customer_email || payment.email,
+            itemName,
+            amountPaise: payment.amount,
+            paymentId: payment.id,
+            orderId: payment.order_id,
+            passType,
+            registrationLimit: regLimit,
+          }),
+          (notes.customer_email || payment.email)
+            ? sendUserPaymentSuccessEmail({
+                to: notes.customer_email || payment.email,
+                name: notes.customer_name,
+                itemName,
+                amountPaise: payment.amount,
+                kind: "event_pass",
+              })
+            : Promise.resolve(),
+        ]);
+      } catch (err: unknown) {
+        console.error("[email] Error notifying owner of event pass payment:", err);
+      }
     }
 
     void createInvoiceForPayment({
@@ -577,27 +593,31 @@ export async function POST(req: NextRequest) {
       ? "Founder Lifetime Plan"
       : `${rawSlug.toUpperCase()} Plan`;
 
-    void Promise.allSettled([
-      notifyOwnerPaidSubscription({
-        buyerName: notes.customer_name,
-        buyerEmail: notes.customer_email || payment.email,
-        planName: planDisplayName,
-        billingCycle,
-        amountPaise: payment.amount,
-        paymentId: payment.id,
-        orderId: payment.order_id,
-        subscriptionId: payment.subscription_id,
-      }),
-      (notes.customer_email || payment.email)
-        ? sendUserPaymentSuccessEmail({
-            to: notes.customer_email || payment.email,
-            name: notes.customer_name,
-            itemName,
-            amountPaise: payment.amount,
-            kind: "subscription",
-          })
-        : Promise.resolve(),
-    ]).catch((err: unknown) => console.error("[email]", err));
+    try {
+      await Promise.allSettled([
+        notifyOwnerPaidSubscription({
+          buyerName: notes.customer_name,
+          buyerEmail: notes.customer_email || payment.email,
+          planName: planDisplayName,
+          billingCycle,
+          amountPaise: payment.amount,
+          paymentId: payment.id,
+          orderId: payment.order_id,
+          subscriptionId: payment.subscription_id,
+        }),
+        (notes.customer_email || payment.email)
+          ? sendUserPaymentSuccessEmail({
+              to: notes.customer_email || payment.email,
+              name: notes.customer_name,
+              itemName,
+              amountPaise: payment.amount,
+              kind: "subscription",
+            })
+          : Promise.resolve(),
+      ]);
+    } catch (err: unknown) {
+      console.error("[email] Error notifying owner of subscription payment:", err);
+    }
   }
 
   return NextResponse.json({ received: true });

@@ -632,24 +632,28 @@ export async function submitApplication(
           razorpay_order_id: payment.orderId,
         }).catch(() => {});
         const itemName = selectedTicketType ? `${event.name} — ${selectedTicketType.name}` : event.name;
-        Promise.allSettled([
-          notifyOwnerOneTimePayment({
-            buyerName: parsed.data.name,
-            buyerEmail: parsed.data.email,
-            itemName,
-            amountPaise: paymentAmountPaise,
-            paymentId: payment.paymentId,
-            orderId: payment.orderId,
-            passType: "Paid Event Ticket",
-          }),
-          sendUserPaymentSuccessEmail({
-            to: parsed.data.email,
-            name: parsed.data.name,
-            itemName,
-            amountPaise: paymentAmountPaise,
-            kind: "ticket",
-          }),
-        ]).catch((err: unknown) => console.error("[email]", err));
+        try {
+          await Promise.allSettled([
+            notifyOwnerOneTimePayment({
+              buyerName: parsed.data.name,
+              buyerEmail: parsed.data.email,
+              itemName,
+              amountPaise: paymentAmountPaise,
+              paymentId: payment.paymentId,
+              orderId: payment.orderId,
+              passType: "Paid Event Ticket",
+            }),
+            sendUserPaymentSuccessEmail({
+              to: parsed.data.email,
+              name: parsed.data.name,
+              itemName,
+              amountPaise: paymentAmountPaise,
+              kind: "ticket",
+            }),
+          ]);
+        } catch (err: unknown) {
+          console.error("[attendees] Ticket payment notification error:", err);
+        }
       }
 
       return { passToken: pass.pass_token };
@@ -694,24 +698,28 @@ export async function submitApplication(
       .eq("razorpay_order_id", payment.orderId);
 
     const itemName = selectedTicketType ? `${event.name} — ${selectedTicketType.name}` : event.name;
-    Promise.allSettled([
-      notifyOwnerOneTimePayment({
-        buyerName: parsed.data.name,
-        buyerEmail: parsed.data.email,
-        itemName,
-        amountPaise: paymentAmountPaise,
-        paymentId: payment.paymentId,
-        orderId: payment.orderId,
-        passType: "Paid Event Ticket",
-      }),
-      sendUserPaymentSuccessEmail({
-        to: parsed.data.email,
-        name: parsed.data.name,
-        itemName,
-        amountPaise: paymentAmountPaise,
-        kind: "ticket",
-      }),
-    ]).catch((err: unknown) => console.error("[email]", err));
+    try {
+      await Promise.allSettled([
+        notifyOwnerOneTimePayment({
+          buyerName: parsed.data.name,
+          buyerEmail: parsed.data.email,
+          itemName,
+          amountPaise: paymentAmountPaise,
+          paymentId: payment.paymentId,
+          orderId: payment.orderId,
+          passType: "Paid Event Ticket",
+        }),
+        sendUserPaymentSuccessEmail({
+          to: parsed.data.email,
+          name: parsed.data.name,
+          itemName,
+          amountPaise: paymentAmountPaise,
+          kind: "ticket",
+        }),
+      ]);
+    } catch (err: unknown) {
+      console.error("[attendees] Ticket payment notification error:", err);
+    }
   }
 
   sendApplicationConfirmationEmail({
