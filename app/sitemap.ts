@@ -15,6 +15,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE}/compare`, priority: 0.85, changeFrequency: "weekly" as const },
     { url: `${BASE}/sitelinks`, priority: 0.85, changeFrequency: "weekly" as const },
     { url: `${BASE}/contact`, priority: 0.6, changeFrequency: "monthly" as const },
+    { url: `${BASE}/privacy`, priority: 0.7, changeFrequency: "monthly" as const },
     { url: `${BASE}/terms`, priority: 0.4, changeFrequency: "monthly" as const },
     { url: `${BASE}/docs`, priority: 0.6, changeFrequency: "weekly" as const },
     { url: `${BASE}/feedback`, priority: 0.5, changeFrequency: "monthly" as const },
@@ -231,7 +232,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/compare/allevents-alternative",
     "/compare/townscript-alternative",
     "/compare/google-forms-event-registration-alternative",
-  ].map((path) => ({ url: `${BASE}${path}`, priority: 0.8, changeFrequency: "weekly" as const }));
+    "/compare/eventbrite-alternative-uk",
+  ].map((path) => ({ url: `${BASE}${path}`, priority: 0.85, changeFrequency: "weekly" as const }));
+
+  const ukPages = [
+    "/uk",
+    "/uk/london",
+  ].map((path) => ({ url: `${BASE}${path}`, priority: 0.9, changeFrequency: "weekly" as const }));
 
   const mcpPages = [
     "/mcp-event-management",
@@ -294,6 +301,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...locationPages,
     ...guidePages,
     ...comparePages,
+    ...ukPages,
     ...mcpPages,
   ].map((item) => ({ ...item, lastModified: now }));
 

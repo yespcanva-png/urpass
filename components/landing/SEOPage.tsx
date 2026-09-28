@@ -21,6 +21,8 @@ export interface SEOGeo {
   position: string;
   latitude: number;
   longitude: number;
+  country?: string;
+  countryCode?: string;
 }
 
 export interface SEODeepDiveSection {
@@ -134,6 +136,18 @@ const INDIAN_HUBS = [
   { name: "All India", state: "National Hub", href: "/in", tag: "INR Pricing & Razorpay" },
 ];
 
+const UK_HUBS = [
+  { name: "London", region: "Greater London", href: "/uk/london", tag: "Tech, Finance & Summits" },
+  { name: "Manchester", region: "North West", href: "/uk/manchester", tag: "Student Unions & Music" },
+  { name: "Birmingham", region: "West Midlands", href: "/uk/birmingham", tag: "Conferences & Expos" },
+  { name: "Edinburgh", region: "Scotland", href: "/uk/edinburgh", tag: "Festivals & Academic" },
+  { name: "Bristol", region: "South West", href: "/uk/bristol", tag: "Creative & University" },
+  { name: "Oxford & Cambridge", region: "Oxbridge", href: "/uk/oxbridge", tag: "Collegiate & Societies" },
+  { name: "Glasgow", region: "Scotland", href: "/uk/glasgow", tag: "Cultural & Sports" },
+  { name: "Leeds", region: "Yorkshire", href: "/uk/leeds", tag: "Business & Higher Ed" },
+  { name: "All UK", region: "United Kingdom", href: "/uk", tag: "GBP Pricing & UK GDPR" },
+];
+
 export default function SEOPage({ config }: { config: SEOPageConfig }) {
   const steps = config.steps ?? DEFAULT_STEPS;
   const canonical = config.canonicalUrl || "https://urpass.space";
@@ -155,6 +169,9 @@ export default function SEOPage({ config }: { config: SEOPageConfig }) {
       : null;
 
   const isCityPage = canonical.includes("/in/") && canonical !== "https://urpass.space/in";
+  const isUkPage = canonical.includes("/uk");
+  const isUkCityPage = canonical.includes("/uk/") && canonical !== "https://urpass.space/uk";
+  const isUkHubPage = canonical === "https://urpass.space/uk";
   const isGuidePage = canonical.includes("/guides/");
   const isComparePage = canonical.includes("/compare/");
 
@@ -179,6 +196,26 @@ export default function SEOPage({ config }: { config: SEOPageConfig }) {
       position: 3,
       name: config.geo?.placename || config.h1,
       item: canonical,
+    });
+  } else if (isUkCityPage) {
+    breadcrumbItems.push({
+      "@type": "ListItem",
+      position: 2,
+      name: "Events in the UK",
+      item: "https://urpass.space/uk",
+    });
+    breadcrumbItems.push({
+      "@type": "ListItem",
+      position: 3,
+      name: config.geo?.placename || config.h1,
+      item: canonical,
+    });
+  } else if (isUkHubPage) {
+    breadcrumbItems.push({
+      "@type": "ListItem",
+      position: 2,
+      name: "Events in the UK",
+      item: "https://urpass.space/uk",
     });
   } else if (isGuidePage) {
     breadcrumbItems.push({
@@ -236,7 +273,7 @@ export default function SEOPage({ config }: { config: SEOPageConfig }) {
           "@type": "PostalAddress",
           addressLocality: config.geo.placename,
           addressRegion: config.geo.region,
-          addressCountry: "IN",
+          addressCountry: config.geo.countryCode || (isUkPage ? "GB" : "IN"),
         },
       }
     : null;
@@ -258,15 +295,15 @@ export default function SEOPage({ config }: { config: SEOPageConfig }) {
           name: config.geo.placename,
           containedInPlace: {
             "@type": "Country",
-            name: "India",
+            name: config.geo.country || (isUkPage ? "United Kingdom" : "India"),
           },
         },
         serviceOutput: "Digital QR Event Pass & Real-time Attendance Analytics",
         offers: {
           "@type": "AggregateOffer",
-          priceCurrency: "INR",
+          priceCurrency: isUkPage ? "GBP" : "INR",
           lowPrice: "0",
-          highPrice: "2499",
+          highPrice: isUkPage ? "79" : "2499",
           offerCount: "4",
         },
       }
@@ -310,9 +347,9 @@ export default function SEOPage({ config }: { config: SEOPageConfig }) {
             description: `${config.description} — URPASS is an event registration, ticketing, digital pass, QR check-in and attendance management platform for colleges, conferences, workshops and large-scale events.`,
             offers: {
               "@type": "AggregateOffer",
-              priceCurrency: "INR",
+              priceCurrency: isUkPage ? "GBP" : "INR",
               lowPrice: "0",
-              highPrice: "2499",
+              highPrice: isUkPage ? "79" : "2499",
               offerCount: "4",
             },
           }),
@@ -833,8 +870,51 @@ export default function SEOPage({ config }: { config: SEOPageConfig }) {
         <FAQItemSection faqs={config.faqs} />
       )}
 
+      {/* UK Regional Hubs Directory */}
+      {isUkPage && (
+        <section className="py-16 px-5 sm:px-8 bg-neutral-50/80 border-t border-neutral-100">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center max-w-xl mx-auto mb-8">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-brand">UK Regional Ecosystems</span>
+              <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-neutral-900 mt-1">
+                Event Registration &amp; QR Check-In across the UK
+              </h2>
+              <p className="text-xs text-neutral-500 mt-1">
+                Transparent GBP (£) pricing, UK GDPR compliance, and fast sub-second browser QR check-in for universities, students&apos; unions, and conferences.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2.5">
+              {UK_HUBS.map((hub) => {
+                const isActive = canonical.endsWith(hub.href);
+                return (
+                  <Link
+                    key={hub.href}
+                    href={hub.href}
+                    className={`p-3 rounded-2xl border text-left transition-all ${
+                      isActive
+                        ? "bg-white border-brand shadow-xs ring-1 ring-brand/30"
+                        : "bg-white border-neutral-200/80 hover:border-neutral-400 hover:shadow-xs"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-1 mb-1">
+                      <span className="text-xs font-bold text-neutral-900">{hub.name}</span>
+                      {isActive && <span className="w-1.5 h-1.5 rounded-full bg-brand" />}
+                    </div>
+                    <span className="text-[10px] text-neutral-500 block">{hub.region}</span>
+                    <span className="text-[9px] font-semibold text-brand/80 mt-1 block truncate">
+                      {hub.tag}
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Indian Hubs Directory (for Geo & Local SEO Authority) */}
-      {(config.geo || canonical.includes("/in")) && (
+      {!isUkPage && (config.geo || canonical.includes("/in")) && (
         <section className="py-16 px-5 sm:px-8 bg-neutral-50/80 border-t border-neutral-100">
           <div className="max-w-6xl mx-auto">
             <div className="text-center max-w-xl mx-auto mb-8">
