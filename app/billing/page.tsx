@@ -20,6 +20,9 @@ import {
   FileText,
   Flame,
   ArrowRight,
+  Receipt,
+  Sparkles,
+  ExternalLink,
 } from "lucide-react";
 import CancelButton from "@/components/billing/CancelButton";
 import PlanGrid from "@/components/billing/PlanGrid";
@@ -29,25 +32,23 @@ import FounderCheckoutCta from "@/components/billing/FounderCheckoutCta";
 import FounderSpotCounter from "@/components/billing/FounderSpotCounter";
 
 export const metadata: Metadata = {
-  title: "Billing",
-  description: "Manage your URPASS subscription, upgrade your plan, and view billing details.",
+  title: "Billing & Subscriptions | URPASS",
+  description: "Manage your URPASS subscription, review resource quotas, and access official GST tax invoices.",
   robots: { index: false, follow: false },
 };
 
 // ─── Static V1 plan definitions ───────────────────────────────────────────────
-// Source of truth for display. DB plans table is only used for payment lookups.
-
 const PLANS = [
   {
     slug: "free",
     name: "Free",
-    desc: "Try URPASS at no cost.",
+    desc: "For organizers starting out.",
     priceMonthly: 0,
     annualTotal: 0,
     features: [
       "2 events/month",
       "100 registrations/month",
-      "1 organizer",
+      "1 organizer seat",
       "QR passes & check-in",
       "Attendee approval",
       "Basic analytics",
@@ -56,7 +57,7 @@ const PLANS = [
   {
     slug: "starter",
     name: "Starter",
-    desc: "For individual organizers.",
+    desc: "For independent organizers.",
     priceMonthly: 499,
     annualTotal: 4990,
     features: [
@@ -167,8 +168,6 @@ interface Invoice {
 
 function UsageTile({
   icon: Icon,
-  iconBg,
-  iconColor,
   label,
   used,
   limit,
@@ -176,8 +175,6 @@ function UsageTile({
   note,
 }: {
   icon: React.ComponentType<{ className?: string }>;
-  iconBg: string;
-  iconColor: string;
   label: string;
   used: number;
   limit: number;
@@ -185,42 +182,54 @@ function UsageTile({
   note?: string;
 }) {
   const pct = limit > 0 ? Math.min(100, (used / limit) * 100) : 0;
-  const warning = pct >= 80 && pct < 100;
-  const full = pct >= 100;
+  const isHigh = pct >= 80 && pct < 100;
+  const isMax = pct >= 100;
 
   return (
-    <div className="bg-white border border-neutral-100 rounded-2xl p-4 shadow-xs">
-      <div className="flex items-center gap-2 mb-3">
-        <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${iconBg}`}>
-          <Icon className={`w-3.5 h-3.5 ${iconColor}`} />
+    <div className="bg-white border border-slate-200/90 rounded-xl p-5 shadow-xs transition-colors hover:border-slate-300">
+      <div className="flex items-center justify-between gap-2 mb-3">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center border border-slate-200/60">
+            <Icon className="w-4 h-4 text-slate-700" />
+          </div>
+          <p className="text-xs font-semibold text-slate-800">{label}</p>
         </div>
-        <p className="text-xs font-medium text-neutral-700">{label}</p>
+        <span className="text-[11px] font-semibold text-slate-400 tabular-nums">
+          {limit >= 999_999 ? "Unlimited" : `${Math.round(pct)}%`}
+        </span>
       </div>
-      <div className="flex items-baseline gap-1 mb-2">
-        <span className="text-2xl font-bold tracking-tight text-neutral-900">{used.toLocaleString("en-IN")}</span>
-        <span className="text-sm text-neutral-400">/ {limitLabel ?? limit.toLocaleString("en-IN")}</span>
+
+      <div className="flex items-baseline gap-1.5 mb-2.5">
+        <span className="text-2xl font-bold tracking-tight text-slate-900 tabular-nums">
+          {used.toLocaleString("en-IN")}
+        </span>
+        <span className="text-xs font-medium text-slate-500">
+          / {limitLabel ?? limit.toLocaleString("en-IN")}
+        </span>
       </div>
-      <div className="h-1.5 bg-neutral-100 rounded-full overflow-hidden mb-2">
+
+      <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden mb-2">
         <div
-          className="h-full rounded-full transition-all"
+          className="h-full rounded-full transition-all duration-500"
           style={{
-            width: `${Math.max(pct, 2)}%`,
-            background: full ? "#EF4444" : warning ? "#F59E0B" : "#6D28D9",
+            width: `${Math.max(pct, limit >= 999_999 ? 100 : 2)}%`,
+            backgroundColor: isMax ? "#EF4444" : isHigh ? "#F59E0B" : "#0F172A",
           }}
         />
       </div>
-      {full && (
-        <p className="text-xs text-red-500 font-medium">
-          Limit reached — upgrade to continue
+
+      {isMax && (
+        <p className="text-[11px] font-medium text-rose-600 mt-1">
+          Limit reached — upgrade required to continue
         </p>
       )}
-      {warning && !full && (
-        <p className="text-xs text-amber-500 font-medium">
-          {Math.round(pct)}% used — approaching limit
+      {isHigh && !isMax && (
+        <p className="text-[11px] font-medium text-amber-600 mt-1">
+          {Math.round(pct)}% utilized — approaching quota
         </p>
       )}
-      {!warning && !full && note && (
-        <p className="text-xs text-neutral-400">{note}</p>
+      {!isHigh && !isMax && note && (
+        <p className="text-[11px] text-slate-500 mt-1">{note}</p>
       )}
     </div>
   );
@@ -252,85 +261,93 @@ function formatInvoiceStatus(status: string) {
 
 function InvoiceHistory({ invoices }: { invoices: Invoice[] }) {
   return (
-    <section className="mb-8">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+    <section>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3.5">
         <div>
-          <p className="text-[10px] font-bold tracking-widest uppercase text-neutral-400">Invoices</p>
-          <p className="text-xs text-neutral-500 mt-1">Official tax invoices · Secured via Razorpay.</p>
+          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Invoices &amp; Receipts</p>
+          <h2 className="text-base font-bold text-slate-900">Tax Invoice History</h2>
         </div>
+        <p className="text-xs text-slate-500">Official GST-compliant tax invoices for business accounts.</p>
       </div>
 
-      <div className="bg-white border border-neutral-100 rounded-2xl overflow-hidden shadow-xs">
+      <div className="bg-white border border-slate-200/90 rounded-xl overflow-hidden shadow-xs">
         {invoices.length === 0 ? (
-          <div className="p-6 flex items-start gap-3">
-            <div className="w-10 h-10 rounded-xl bg-neutral-100 flex items-center justify-center shrink-0">
-              <FileText className="w-5 h-5 text-neutral-400" />
+          <div className="p-8 text-center flex flex-col items-center justify-center">
+            <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center mb-3 text-slate-400 border border-slate-200/60">
+              <Receipt className="w-5 h-5" />
             </div>
-            <div>
-              <p className="text-sm font-semibold text-neutral-900">No invoices yet</p>
-              <p className="text-xs text-neutral-500 mt-1">
-                Paid invoices will appear here after invoice generation is enabled for payments.
-              </p>
-            </div>
+            <p className="text-sm font-semibold text-slate-900">No invoices recorded</p>
+            <p className="text-xs text-slate-500 max-w-sm mt-1">
+              Your official invoices and Razorpay payment receipts will automatically appear here once payments are processed.
+            </p>
           </div>
         ) : (
-          <div className="divide-y divide-neutral-100">
-            <div className="hidden md:grid grid-cols-[1.5fr_1fr_1fr_0.9fr_1.3fr] gap-4 px-5 py-3 bg-neutral-50 text-[10px] font-bold uppercase tracking-widest text-neutral-400">
-              <span>Invoice &amp; Entity</span>
-              <span>Date</span>
-              <span>Amount</span>
-              <span>Payment &amp; Gateway</span>
-              <span className="text-right">Actions</span>
-            </div>
-            {invoices.map((invoice) => {
-              const isRzp = invoice.payment_id?.includes("rzp") || invoice.payment_id?.startsWith("pay_");
-              return (
-                <div key={invoice.id} className="grid grid-cols-1 md:grid-cols-[1.5fr_1fr_1fr_0.9fr_1.3fr] gap-3 md:gap-4 px-5 py-4 md:items-center">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-bold text-neutral-900">{invoice.invoice_number}</p>
-                      {isRzp && (
-                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">
-                          Razorpay
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-slate-50/80 border-b border-slate-200/80 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                  <th className="py-3 px-4">Invoice # &amp; Entity</th>
+                  <th className="py-3 px-4">Date</th>
+                  <th className="py-3 px-4">Amount</th>
+                  <th className="py-3 px-4">Status</th>
+                  <th className="py-3 px-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-xs">
+                {invoices.map((invoice) => {
+                  const isRzp = invoice.payment_id?.includes("rzp") || invoice.payment_id?.startsWith("pay_");
+                  return (
+                    <tr key={invoice.id} className="hover:bg-slate-50/60 transition-colors">
+                      <td className="py-3.5 px-4">
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-slate-900">{invoice.invoice_number}</span>
+                          {isRzp && (
+                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">
+                              Razorpay
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-slate-500 mt-0.5">
+                          {invoice.customer_name || invoice.seller_name || "URPASS Billing"}
+                        </p>
+                      </td>
+                      <td className="py-3.5 px-4 text-slate-600 font-medium">
+                        {formatInvoiceDate(invoice.invoice_date)}
+                      </td>
+                      <td className="py-3.5 px-4 font-bold text-slate-900 tabular-nums">
+                        {formatInvoiceAmount(invoice.total_amount, invoice.currency)}
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <span className="inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                          {formatInvoiceStatus(invoice.payment_status)}
                         </span>
-                      )}
-                    </div>
-                    <p className="text-xs text-neutral-400 mt-0.5">
-                      {invoice.customer_name || invoice.seller_name || "YESP Corporation"} · {formatInvoiceDate(invoice.invoice_date)}
-                    </p>
-                  </div>
-                  <p className="hidden md:block text-sm text-neutral-600">
-                    {formatInvoiceDate(invoice.invoice_date)}
-                  </p>
-                  <p className="text-sm font-semibold text-neutral-900">
-                    {formatInvoiceAmount(invoice.total_amount, invoice.currency)}
-                  </p>
-                  <div>
-                    <span className="inline-flex items-center rounded-full border border-green-100 bg-green-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-green-700">
-                      {formatInvoiceStatus(invoice.payment_status)}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 md:justify-end">
-                    <a
-                      href={`/api/invoices/${invoice.id}/pdf`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-neutral-200 text-xs font-semibold text-neutral-700 hover:bg-neutral-50 transition-colors"
-                    >
-                      <Eye className="w-3.5 h-3.5" />
-                      View
-                    </a>
-                    <a
-                      href={`/api/invoices/${invoice.id}/pdf?download=1`}
-                      className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-neutral-900 text-xs font-semibold text-white hover:bg-neutral-700 transition-colors"
-                    >
-                      <Download className="w-3.5 h-3.5" />
-                      Download PDF
-                    </a>
-                  </div>
-                </div>
-              );
-            })}
+                      </td>
+                      <td className="py-3.5 px-4 text-right">
+                        <div className="inline-flex items-center gap-1.5 justify-end">
+                          <a
+                            href={`/api/invoices/${invoice.id}/pdf`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md border border-slate-200 text-[11px] font-semibold text-slate-700 hover:bg-slate-100 transition-colors"
+                          >
+                            <Eye className="w-3 h-3" />
+                            <span>View</span>
+                          </a>
+                          <a
+                            href={`/api/invoices/${invoice.id}/pdf?download=1`}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md bg-slate-900 text-[11px] font-semibold text-white hover:bg-slate-800 transition-colors shadow-2xs"
+                          >
+                            <Download className="w-3 h-3" />
+                            <span>PDF</span>
+                          </a>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
@@ -430,7 +447,7 @@ export default async function BillingPage(props: {
       })
     : null;
 
-  const userName = profile?.full_name ?? user.email?.split("@")[0] ?? "";
+  const userName = profile?.full_name ?? user.email?.split("@")[0] ?? "Organizer";
   const userEmail = profile?.email ?? user.email ?? "";
   const currentPlan = PLANS.find((p) => p.slug === currentPlanSlug) ?? PLANS[0];
   const invoices = (invoiceData ?? []) as Invoice[];
@@ -454,225 +471,234 @@ export default async function BillingPage(props: {
     .gte("created_at", periodStart.toISOString());
 
   return (
-    <div className="min-h-screen bg-neutral-950 page-in">
+    <div className="min-h-screen bg-slate-50 text-slate-900 page-in">
       <Suspense fallback={null}>
         <UpgradeCelebration />
       </Suspense>
 
-      {/* ── Dark hero ─────────────────────────────────────────── */}
-      <div className="relative overflow-hidden px-5 pt-10 pb-20">
-        <div
-          className="absolute inset-0 opacity-25 pointer-events-none"
-          style={{ backgroundImage: "radial-gradient(circle at 75% 60%, #6D28D9 0%, transparent 55%)" }}
-        />
-        <div className="relative max-w-5xl mx-auto">
-          <Link
-            href="/dashboard"
-            className="inline-flex items-center gap-2 text-xs font-semibold text-white/60 hover:text-white transition-colors mb-6 group"
-          >
-            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
-            Back to Dashboard
-          </Link>
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-7">
+        {/* ── Top Navigation & Page Title ────────────────────────── */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200/80">
+          <div>
+            <Link
+              href="/dashboard"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-900 transition-colors mb-1.5"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Back to Dashboard</span>
+            </Link>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
+              Billing &amp; Subscriptions
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+              Manage your plan, track monthly resource quotas, and access official tax invoices.
+            </p>
+          </div>
 
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-            <div>
-              <p className="text-[10px] font-bold tracking-widest uppercase text-brand-300 mb-1">Account &amp; Plans</p>
-              <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">Billing &amp; Subscription</h1>
-              <p className="text-sm text-white/60 mt-1">
-                {userName ? `${userName} · ` : ""}{userEmail}
-              </p>
-            </div>
-
-            {/* Current plan summary in hero */}
-            <div className="flex items-center gap-4 bg-white/[0.06] border border-white/10 rounded-2xl px-5 py-4 backdrop-blur-md">
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-white/40">Current Plan</p>
-                <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                  <p className="text-lg font-bold text-white">{currentPlan.name}</p>
-                  <span className="text-xs text-white/50">·</span>
-                  <p className="text-sm font-semibold text-white/80">
-                    {isTrial ? (
-                      isUk ? "30-Day Free Trial (£0 today)" : "30-Day Free Trial (₹0 today)"
-                    ) : isFounderPlan ? (
-                      isUk ? "£249 One-Time (Lifetime License)" : "₹19,999 One-Time (Lifetime License)"
-                    ) : currentPlan.priceMonthly === 0 ? (
-                      "Free forever"
-                    ) : billingCycle === "annual" ? (
-                      isUk
-                        ? `£${UK_PLAN_PRICES[currentPlanSlug]?.annual ?? 300}/year`
-                        : `₹${currentPlan.annualTotal.toLocaleString("en-IN")}/year`
-                    ) : (
-                      isUk
-                        ? `£${UK_PLAN_PRICES[currentPlanSlug]?.monthly ?? 35}/mo`
-                        : `₹${currentPlan.priceMonthly}/mo`
-                    )}
-                  </p>
-                  {isTrial ? (
-                    <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-brand/30 text-brand-200 border border-brand/50 tracking-wider">
-                      FREE TRIAL
-                    </span>
-                  ) : isFounderPlan ? (
-                    <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/30 tracking-wider">
-                      LIFETIME ACCESS
-                    </span>
-                  ) : billingCycle === "annual" && currentPlanSlug !== "free" ? (
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-brand/20 text-brand-200 border border-brand/30 tracking-wide">
-                      ANNUAL
-                    </span>
-                  ) : null}
-                </div>
-
-                {/* Subtitle / Renewal status with 2126 bug eliminated */}
-                {isFounderPlan ? (
-                  <p className="text-xs text-emerald-400 font-medium mt-1">
-                    Permanent Founder Lifetime License · Never expires (Zero renewal fees)
-                  </p>
-                ) : isTrial ? (
-                  <p className="text-xs text-white/50 mt-1">
-                    {isUk ? (
-                      sub?.cancel_at_period_end
-                        ? `Free trial ends ${renewalDate ?? "in 30 days"} (${sub?.has_lifetime_access ? "reverts to Founder Lifetime" : "reverts to Free"})`
-                        : `30-Day Free Trial ends ${renewalDate ?? "in 30 days"} · Direct UK activation · No credit card required`
-                    ) : (
-                      sub?.cancel_at_period_end || sub?.autopay_status === "cancelled"
-                        ? `AutoPay cancelled · Free trial ends ${renewalDate ?? "in 30 days"} (${sub?.has_lifetime_access ? "reverts to Founder Lifetime" : "reverts to Free"})`
-                        : sub?.autopay_status === "active"
-                        ? `First payment of ₹${Math.round(currentPlan.priceMonthly * 1.18).toLocaleString("en-IN")} scheduled for ${renewalDate ?? "end of trial"}`
-                        : `Free trial ends ${renewalDate ?? "in 30 days"} · No card on file (${sub?.has_lifetime_access ? "reverts to Founder Lifetime" : "reverts to Free"})`
-                    )}
-                  </p>
-                ) : currentPlanSlug !== "free" && renewalDate ? (
-                  <p className="text-xs text-white/50 mt-1">
-                    {sub?.cancel_at_period_end
-                      ? `Cancels ${renewalDate} (${sub?.has_lifetime_access ? "reverts to Founder Lifetime" : "reverts to Free"})`
-                      : `Renews ${renewalDate}${sub?.has_lifetime_access ? " · Founder Lifetime protected on cancel" : ""}`}
-                  </p>
-                ) : null}
-              </div>
-
-              <div className="flex items-center gap-3 shrink-0">
-                {sub && !isTrial && (
-                  <span className={`text-[10px] font-bold px-3 py-1.5 rounded-full border tracking-wide uppercase ${
-                    sub.status === "active"
-                      ? "bg-green-400/10 text-green-300 border-green-400/20"
-                      : "bg-amber-400/10 text-amber-300 border-amber-400/20"
-                  }`}>
-                    {sub.status}
-                  </span>
-                )}
-                {/* Cancel button only applies to recurring paid plans, NEVER for permanent lifetime */}
-                {!isFounderPlan && currentPlanSlug !== "free" && sub && !sub.cancel_at_period_end && sub.autopay_status !== "cancelled" && (
-                  <CancelButton />
-                )}
-              </div>
+          <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white border border-slate-200 shadow-2xs">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+              <span className="text-xs font-semibold text-slate-800">{currentPlan.name} Plan</span>
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 uppercase">
+                {isTrial ? "Trial" : isFounderPlan ? "Lifetime" : "Active"}
+              </span>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* ── White card ────────────────────────────────────────── */}
-      <div className="bg-neutral-50 rounded-t-3xl -mt-8 min-h-[60vh]">
-        <div className="max-w-5xl mx-auto px-5 pt-8 pb-12">
+        {/* ── Zoho-style Current Plan Card ──────────────────────── */}
+        <div className="bg-white rounded-xl border border-slate-200 p-5 sm:p-6 shadow-xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+            <div className="space-y-1.5 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Current Subscription</span>
+                {isTrial ? (
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 uppercase">
+                    30-Day Free Trial
+                  </span>
+                ) : isFounderPlan ? (
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase">
+                    Founder Lifetime License
+                  </span>
+                ) : billingCycle === "annual" && currentPlanSlug !== "free" ? (
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200 uppercase">
+                    Annual Billing
+                  </span>
+                ) : null}
+              </div>
 
-          {/* Usage */}
-          <p className="text-[10px] font-bold tracking-widest uppercase text-neutral-400 mb-4">Your usage</p>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8">
+              <div className="flex items-baseline gap-2.5 flex-wrap">
+                <h2 className="text-2xl font-bold tracking-tight text-slate-900">{currentPlan.name}</h2>
+                <span className="text-sm font-semibold text-slate-700">
+                  {isTrial ? (
+                    isUk ? "30-Day Free Trial (£0 today)" : "30-Day Free Trial (₹0 today)"
+                  ) : isFounderPlan ? (
+                    isUk ? "£249 One-Time (Lifetime License)" : "₹19,999 One-Time (Lifetime License)"
+                  ) : currentPlan.priceMonthly === 0 ? (
+                    "Free forever"
+                  ) : billingCycle === "annual" ? (
+                    isUk
+                      ? `£${UK_PLAN_PRICES[currentPlanSlug]?.annual ?? 300}/year`
+                      : `₹${currentPlan.annualTotal.toLocaleString("en-IN")}/year`
+                  ) : (
+                    isUk
+                      ? `£${UK_PLAN_PRICES[currentPlanSlug]?.monthly ?? 35}/month`
+                      : `₹${currentPlan.priceMonthly}/month`
+                  )}
+                </span>
+              </div>
+
+              {isFounderPlan ? (
+                <div className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700 bg-emerald-50/80 border border-emerald-200/70 px-2.5 py-1 rounded-md">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                  <span>Permanent Founder Lifetime Access · Term 2125 · Zero recurring renewal payments</span>
+                </div>
+              ) : isTrial ? (
+                <p className="text-xs text-slate-500">
+                  {isUk ? (
+                    sub?.cancel_at_period_end
+                      ? `Free trial ends ${renewalDate ?? "in 30 days"} (${sub?.has_lifetime_access ? "reverts to Founder Lifetime" : "reverts to Free"})`
+                      : `30-Day Free Trial ends ${renewalDate ?? "in 30 days"} · Direct UK activation · No card required`
+                  ) : (
+                    sub?.cancel_at_period_end || sub?.autopay_status === "cancelled"
+                      ? `AutoPay cancelled · Free trial ends ${renewalDate ?? "in 30 days"} (${sub?.has_lifetime_access ? "reverts to Founder Lifetime" : "reverts to Free"})`
+                      : sub?.autopay_status === "active"
+                      ? `First renewal payment of ₹${Math.round(currentPlan.priceMonthly * 1.18).toLocaleString("en-IN")} scheduled for ${renewalDate ?? "end of trial"}`
+                      : `Free trial ends ${renewalDate ?? "in 30 days"} · No card on file (${sub?.has_lifetime_access ? "reverts to Founder Lifetime" : "reverts to Free"})`
+                  )}
+                </p>
+              ) : currentPlanSlug !== "free" && renewalDate ? (
+                <p className="text-xs text-slate-500">
+                  {sub?.cancel_at_period_end
+                    ? `Cancels ${renewalDate} (${sub?.has_lifetime_access ? "reverts to Founder Lifetime" : "reverts to Free"})`
+                    : `Renews on ${renewalDate}${sub?.has_lifetime_access ? " · Founder Lifetime protected" : ""}`}
+                </p>
+              ) : null}
+            </div>
+
+            <div className="flex items-center gap-2.5 shrink-0 self-start sm:self-center">
+              {!isFounderPlan && currentPlanSlug !== "free" && sub && !sub.cancel_at_period_end && sub.autopay_status !== "cancelled" && (
+                <CancelButton />
+              )}
+              <a
+                href="#plan-catalog"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-slate-900 text-xs font-semibold text-white hover:bg-slate-800 transition-colors shadow-xs"
+              >
+                <span>{currentPlanSlug === "free" ? "Upgrade Plan" : "Change Plan"}</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </a>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Resource Consumption Meters ───────────────────────── */}
+        <div>
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Resource Consumption</p>
+              <h2 className="text-base font-bold text-slate-900">Monthly Usage Quotas</h2>
+            </div>
+            <p className="text-xs text-slate-500 hidden sm:block">
+              Quota resets at the beginning of each billing cycle.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <UsageTile
               icon={CalendarDays}
-              iconBg="bg-violet-50 border border-violet-100"
-              iconColor="text-violet-600"
-              label="Events this month"
+              label="Events Published"
               used={eventsThisPeriod ?? 0}
               limit={eventsLimit}
               limitLabel={eventsLimit >= 999_999 ? "∞" : undefined}
-              note="Counts events published (not drafts)"
+              note="Counts published live events (drafts excluded)"
             />
             <UsageTile
               icon={BarChart2}
-              iconBg="bg-brand-50 border border-brand-100"
-              iconColor="text-brand"
-              label="Registrations this month"
+              label="Registrations Issued"
               used={registrationsUsed}
               limit={registrationLimit}
-              note="Resets at the start of each billing period"
+              limitLabel={registrationLimit >= 999_999 ? "∞" : undefined}
+              note="Attendee registrations created this period"
             />
             <UsageTile
               icon={Users}
-              iconBg="bg-blue-50 border border-blue-100"
-              iconColor="text-blue-600"
-              label="Organizer seats"
+              label="Organizer Seats"
               used={1}
               limit={organizerLimit}
-              note={organizerLimit === 1 ? "Upgrade to add team members" : "Manage team in Settings"}
+              note={organizerLimit === 1 ? "1 seat included on current tier" : `${organizerLimit} seats allocated`}
             />
           </div>
+        </div>
 
-          <InvoiceHistory invoices={invoices} />
+        {/* ── Invoices & Receipts ───────────────────────────────── */}
+        <InvoiceHistory invoices={invoices} />
 
-          {/* ── Founder Lifetime Plan Callout Banner ── */}
-          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-neutral-950 via-purple-950 to-neutral-950 p-6 sm:p-8 border border-purple-500/30 text-white shadow-xl mb-8">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
-              <div className="space-y-2">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-amber-400/10 border border-amber-400/30 text-amber-300">
-                  <Flame className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
-                  <span>
-                    {isFounderPlan
-                      ? "FOUNDER STATUS ACTIVE"
-                      : "FOUNDER DEAL · LIMITED TO 20 ACCOUNTS ONLY"}
-                  </span>
+        {/* ── Founder Lifetime Executive Card ────────────────────── */}
+        <div className="bg-slate-900 rounded-2xl p-6 sm:p-7 border border-slate-800 text-white shadow-sm">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="space-y-2">
+              <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md text-[11px] font-bold bg-amber-400/10 border border-amber-400/30 text-amber-300">
+                <Flame className="w-3.5 h-3.5 text-amber-400" />
+                <span>
+                  {isFounderPlan
+                    ? "FOUNDER STATUS ACTIVE"
+                    : "FOUNDER DEAL · LIMITED TO 20 ACCOUNTS ONLY"}
+                </span>
+              </div>
+              <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
+                {isFounderPlan
+                  ? "You have URPASS Founder Lifetime Access"
+                  : isUk
+                  ? "URPASS Founder Lifetime Access — £249 One-Time"
+                  : "URPASS Founder Lifetime Access — ₹19,999 One-Time"}
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed">
+                {isFounderPlan
+                  ? "Your account has permanent operational access to all core URPASS event creation, check-in, Ticket Studio, and scanner capabilities with zero recurring renewal fees."
+                  : "Permanent access to all currently available URPASS features for a one-time payment. Create your own event landing page on urpass.space and lock in all features for lifetime (Term 2125)."}
+              </p>
+
+              {!isFounderPlan && (
+                <div className="pt-2 max-w-md">
+                  <FounderSpotCounter
+                    claimedCount={14}
+                    totalCount={20}
+                    variant="compact"
+                    showFeaturesLock={true}
+                  />
                 </div>
-                <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
-                  {isFounderPlan
-                    ? "You are a URPASS Founding Organizer"
-                    : isUk
-                    ? "URPASS Founder Lifetime Access — £249 One-Time"
-                    : "URPASS Founder Lifetime Access — ₹19,999 One-Time"}
-                </h3>
-                <p className="text-xs sm:text-sm text-neutral-300 max-w-2xl leading-relaxed">
-                  {isFounderPlan
-                    ? "Your account has permanent operational access to all core URPASS event creation, check-in, Ticket Studio, and scanner capabilities with zero recurring renewal fees."
-                    : "Permanent access to all currently available URPASS features for a one-time payment. Create your own event landing page on urpass.space and lock in all features for lifetime (Term 2125)."}
-                </p>
+              )}
+            </div>
 
-                {!isFounderPlan && (
-                  <div className="pt-2 max-w-lg">
-                    <FounderSpotCounter
-                      claimedCount={14}
-                      totalCount={20}
-                      variant="compact"
-                      showFeaturesLock={true}
-                    />
-                  </div>
-                )}
-              </div>
-
-              <div className="shrink-0 flex items-center gap-3">
-                {isFounderPlan ? (
-                  <span className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-semibold text-xs">
-                    <Check className="w-4 h-4 text-emerald-400" />
-                    Lifetime Active
-                  </span>
-                ) : (
-                  <>
-                    <FounderCheckoutCta
-                      isLoggedIn={true}
-                      userEmail={userEmail}
-                      userName={userName}
-                      variant="billing"
-                    />
-                    <Link
-                      href="/founder-lifetime-deal"
-                      className="inline-flex items-center justify-center gap-1.5 px-4 py-3 rounded-xl bg-white/10 hover:bg-white/15 text-white font-semibold text-xs transition-all border border-white/10"
-                    >
-                      <span>Details</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </Link>
-                  </>
-                )}
-              </div>
+            <div className="shrink-0 flex items-center gap-3">
+              {isFounderPlan ? (
+                <span className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-semibold text-xs">
+                  <Check className="w-4 h-4 text-emerald-400" />
+                  Lifetime Active
+                </span>
+              ) : (
+                <>
+                  <FounderCheckoutCta
+                    isLoggedIn={true}
+                    userEmail={userEmail}
+                    userName={userName}
+                    variant="billing"
+                  />
+                  <Link
+                    href="/founder-lifetime-deal"
+                    className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-lg bg-white/10 hover:bg-white/15 text-white font-semibold text-xs transition-colors border border-white/10"
+                  >
+                    <span>Details</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                </>
+              )}
             </div>
           </div>
+        </div>
 
+        {/* ── Subscription Catalog & Passes ─────────────────────── */}
+        <div id="plan-catalog" className="pt-2">
           <PlanGrid
             currentPlanSlug={currentPlanSlug}
             currentPlanIndex={currentPlanIndex}
@@ -681,73 +707,76 @@ export default async function BillingPage(props: {
             trialUsed={trialUsed}
             country={country}
           />
+        </div>
 
-          {/* Campus / scale CTA */}
-          <div className="mt-8 rounded-2xl border border-neutral-200 bg-white overflow-hidden shadow-xs">
-            <div className="grid grid-cols-1 md:grid-cols-2">
-              <div className="p-6 flex flex-col gap-3">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-neutral-100 flex items-center justify-center">
-                    <Building2 className="w-4 h-4 text-neutral-700" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-bold tracking-widest uppercase text-neutral-400">
-                      {isUk ? "UK Campus & Multi-Society" : "Campus & Enterprise"}
-                    </p>
-                    <p className="text-lg font-bold tracking-tight text-neutral-900">
-                      {isUk ? "From £149/year" : "Custom pricing"}
-                    </p>
-                  </div>
+        {/* ── Campus & Custom Enterprise Inquiries ──────────────── */}
+        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+            <div className="space-y-1.5 max-w-2xl">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center">
+                  <Building2 className="w-4 h-4 text-slate-700" />
                 </div>
-                <p className="text-sm text-neutral-500 leading-relaxed">
-                  {isUk
-                    ? "Running events across your Students' Union, university societies, or sports clubs? Get institution-wide accounts, dedicated support, and multi-committee access."
-                    : "Running events across a college, company, or multi-team organization? Get institution-wide accounts, dedicated support, and volume pricing."}
-                </p>
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                    {isUk ? "UK Higher Education & Campus" : "Campus & Enterprise Solutions"}
+                  </p>
+                  <h3 className="text-base font-bold text-slate-900">
+                    Need institution-wide licensing or custom GST invoicing?
+                  </h3>
+                </div>
               </div>
-              <div className="p-6 flex flex-col justify-center gap-3 md:border-l border-t md:border-t-0 border-neutral-100">
-                <ul className="grid grid-cols-2 gap-x-4 gap-y-2">
-                  {[
-                    isUk ? "Unlimited societies" : "Unlimited organizers",
-                    "Institution analytics",
-                    "Custom domain",
-                    "API & webhooks",
-                    "Priority support",
-                    isUk ? "UK GDPR & DPA compliant" : "Invoice billing",
-                  ].map((f) => (
-                    <li key={f} className="flex items-center gap-1.5 text-xs text-neutral-600">
-                      <Check className="w-3 h-3 text-brand shrink-0" />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                <Link
-                  href="/contact"
-                  className="inline-flex items-center justify-center gap-2 mt-2 py-2.5 px-5 rounded-xl text-sm font-semibold bg-neutral-900 text-white hover:bg-neutral-700 transition-colors w-full md:w-auto"
-                >
-                  <Mail className="w-4 h-4" />
-                  Talk to us
-                </Link>
+              <p className="text-xs text-slate-600 leading-relaxed pt-1">
+                {isUk
+                  ? "We support UK universities, multi-society student unions, and sports syndicates with centralized billing, UK GDPR compliance, and dedicated onboarding."
+                  : "We provide college campuses, multi-department institutions, and event enterprises with bulk organizer seats, official GST purchase orders, and dedicated SLAs."}
+              </p>
+              <div className="flex items-center gap-4 text-xs text-slate-500 pt-1 flex-wrap">
+                <span className="flex items-center gap-1.5">
+                  <Check className="w-3.5 h-3.5 text-emerald-600" />
+                  GST Tax Invoices
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <Check className="w-3.5 h-3.5 text-emerald-600" />
+                  Multi-Committee Seats
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <Check className="w-3.5 h-3.5 text-emerald-600" />
+                  Dedicated Account SLA
+                </span>
               </div>
             </div>
-          </div>
 
-          {/* Footer */}
-          <div className="flex items-center justify-center gap-2.5 mt-10">
-            <ShieldCheck className="w-3.5 h-3.5 text-neutral-300 shrink-0" />
-            <p className="text-xs text-neutral-400">
-              {isUk
-                ? "Direct UK activation · Prices in GBP exclude 20% VAT"
-                : "Payments processed securely via Razorpay · Prices exclude 18% GST"}
-            </p>
-          </div>
-
-          {plan.canUse("api_access") && (
-            <div className="flex items-center justify-center mt-4">
-              <Link href="/dashboard/developer" className="inline-flex items-center gap-1.5 text-sm text-neutral-500 hover:text-brand transition-colors">
-                Developer API →
+            <div className="shrink-0 flex items-center gap-3">
+              <Link
+                href="/contact"
+                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-xs font-semibold bg-slate-900 text-white hover:bg-slate-800 transition-colors shadow-xs"
+              >
+                <Mail className="w-3.5 h-3.5" />
+                <span>Contact Enterprise Sales</span>
               </Link>
             </div>
+          </div>
+        </div>
+
+        {/* ── Corporate Footer Notes ────────────────────────────── */}
+        <div className="pt-4 pb-8 border-t border-slate-200/80 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="w-4 h-4 text-slate-400 shrink-0" />
+            <p>
+              {isUk
+                ? "Direct UK activation · Prices in GBP exclude 20% VAT · UK GDPR & DPA compliant"
+                : "Payments secured via Razorpay · Prices exclude 18% GST · Input tax credit available on registered invoices"}
+            </p>
+          </div>
+          {plan.canUse("api_access") && (
+            <Link
+              href="/dashboard/developer"
+              className="inline-flex items-center gap-1 text-xs font-medium text-slate-600 hover:text-slate-900 transition-colors"
+            >
+              <span>Developer API</span>
+              <ExternalLink className="w-3 h-3" />
+            </Link>
           )}
         </div>
       </div>
