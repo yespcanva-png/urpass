@@ -155,6 +155,42 @@ export async function notifyOwnerNewUser({
   });
 }
 
+export async function notifyOwnerUserLogin({
+  name,
+  email,
+  provider,
+  userId,
+  ipAddress,
+  userAgent,
+}: {
+  name?: string | null;
+  email?: string | null;
+  provider: "email" | "google" | "sso" | "magiclink";
+  userId?: string | null;
+  ipAddress?: string | null;
+  userAgent?: string | null;
+}) {
+  const rows: Array<[string, unknown]> = [
+    ["Email", email],
+    ["Name", name],
+    ["Login method", provider.toUpperCase()],
+    ["User ID", userId],
+    ["Time", new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })],
+  ];
+  if (ipAddress) {
+    rows.push(["IP Address", ipAddress]);
+  }
+  if (userAgent) {
+    rows.push(["Device / Browser", userAgent.slice(0, 120)]);
+  }
+
+  await sendOwnerNotification({
+    subject: `[URPASS] User Login: ${email ?? "unknown email"}`,
+    title: "User Login Alert",
+    rows,
+  });
+}
+
 export async function sendUserWelcomeEmail({
   to,
   name,

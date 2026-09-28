@@ -2,7 +2,7 @@ import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { getSupabaseUrl } from "@/lib/supabase/config";
 import { recordAuditLog } from "./audit";
-import { notifyOwnerNewUser } from "@/lib/email";
+import { notifyOwnerNewUser, notifyOwnerUserLogin } from "@/lib/email";
 import type { OrgRole } from "@/types";
 
 function adminClient() {
@@ -68,6 +68,14 @@ export async function jitProvisionAndSignIn(opts: ProvisioningOptions): Promise<
           sso_protocol: opts.protocol || sso?.protocol || "SAML",
         },
       });
+      notifyOwnerUserLogin({
+        name: displayName,
+        email: normalizedEmail,
+        provider: "sso",
+        userId,
+        ipAddress: opts.ipAddress,
+        userAgent: opts.userAgent,
+      }).catch((e) => console.error("[sso] notifyOwnerUserLogin error:", e));
     } else {
       isNewUser = true;
       const { data: created, error: createErr } = await admin.auth.admin.createUser({

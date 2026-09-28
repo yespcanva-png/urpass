@@ -17,6 +17,7 @@ vi.mock("resend", () => {
 import {
   getOwnerEmail,
   notifyOwnerNewUser,
+  notifyOwnerUserLogin,
   notifyOwnerPaymentAttempt,
   notifyOwnerPaymentSuccess,
   notifyOwnerTrialActivated,
@@ -74,6 +75,26 @@ describe("Owner Email Notifications (srinithin@yespstudio.com)", () => {
     expect(callArgs.html).toContain("Alice Designer");
     expect(callArgs.html).toContain("alice@example.com");
     expect(callArgs.html).toContain("EMAIL");
+  });
+
+  it("sends notifyOwnerUserLogin to srinithin@yespstudio.com on user login", async () => {
+    await notifyOwnerUserLogin({
+      name: "Bob Organizer",
+      email: "bob@example.com",
+      provider: "email",
+      userId: "usr_bob_456",
+      ipAddress: "192.168.1.1",
+      userAgent: "Mozilla/5.0 Mac",
+    });
+
+    expect(mockSend).toHaveBeenCalledTimes(1);
+    const callArgs = mockSend.mock.calls[0][0];
+    expect(callArgs.to).toBe("srinithin@yespstudio.com");
+    expect(callArgs.subject).toContain("[URPASS] User Login: bob@example.com");
+    expect(callArgs.html).toContain("Bob Organizer");
+    expect(callArgs.html).toContain("bob@example.com");
+    expect(callArgs.html).toContain("EMAIL");
+    expect(callArgs.html).toContain("192.168.1.1");
   });
 
   it("sends notifyOwnerPaymentAttempt to srinithin@yespstudio.com when checkout starts", async () => {

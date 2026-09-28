@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient as createSupabaseAdmin } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { getSupabaseUrl } from "@/lib/supabase/config";
-import { notifyOwnerNewUser, sendUserWelcomeEmail } from "@/lib/email";
+import { notifyOwnerNewUser, notifyOwnerUserLogin, sendUserWelcomeEmail } from "@/lib/email";
 import { resolvePostAuthRedirect } from "@/lib/auth-redirect";
 
 export const dynamic = "force-dynamic";
@@ -94,6 +94,16 @@ export async function GET(req: NextRequest) {
           google_id: info.sub,
         },
       });
+      try {
+        await notifyOwnerUserLogin({
+          name: info.name,
+          email: info.email,
+          provider: "google",
+          userId: profileRow.user_id,
+        });
+      } catch (e) {
+        console.error("[google-callback] notifyOwnerUserLogin error:", e);
+      }
     } else {
       const { data: createdUser, error: createErr } = await admin.auth.admin.createUser({
         email: info.email,

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { resolvePostAuthRedirect } from "@/lib/auth-redirect";
-import { notifyOwnerNewUser, sendUserWelcomeEmail } from "@/lib/email";
+import { notifyOwnerNewUser, notifyOwnerUserLogin, sendUserWelcomeEmail } from "@/lib/email";
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
@@ -34,6 +34,17 @@ export async function GET(request: Request) {
           ]);
         } catch (e) {
           console.error("[auth/callback] notifyOwnerNewUser error:", e);
+        }
+      } else {
+        try {
+          await notifyOwnerUserLogin({
+            name: user.user_metadata?.full_name || null,
+            email: user.email || null,
+            provider: (user.app_metadata?.provider as "email" | "google") || "magiclink",
+            userId: user.id,
+          });
+        } catch (e) {
+          console.error("[auth/callback] notifyOwnerUserLogin error:", e);
         }
       }
       return NextResponse.redirect(`${origin}${target}`);

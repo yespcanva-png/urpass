@@ -21,6 +21,7 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { lookupSSOByEmail } from "@/app/actions/sso";
 import { resolvePostAuthRedirect } from "@/lib/auth-redirect";
+import { sendLoginNotifications } from "@/app/actions/notifications";
 
 const passwordSchema = z.object({
   email: z.string().email("Enter a valid email"),
@@ -105,7 +106,7 @@ function LoginContent() {
     }
 
     const supabase = createClient();
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data: signInData, error } = await supabase.auth.signInWithPassword({
       email: data.email,
       password: data.password,
     });
@@ -113,6 +114,19 @@ function LoginContent() {
       setServerError(error.message);
       return;
     }
+
+    try {
+      const user = signInData.user;
+      await sendLoginNotifications({
+        email: data.email,
+        name: user?.user_metadata?.full_name || null,
+        provider: "email",
+        userId: user?.id,
+      });
+    } catch (err) {
+      console.error("[login] sendLoginNotifications error:", err);
+    }
+
     const target = resolvePostAuthRedirect(
       searchParams,
       typeof document !== "undefined" ? document.referrer : null
