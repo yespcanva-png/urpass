@@ -20,7 +20,7 @@ import {
   Building2,
   AlertCircle,
   BarChart3,
-  Sparkles,
+  ShieldCheck,
   ArrowRight,
 } from "lucide-react";
 import { getUserOrganizations } from "@/app/actions/organizations";
@@ -70,29 +70,29 @@ function StatCard({
 }) {
   if (!loaded) {
     return (
-      <div className="bg-white rounded-2xl p-5 shadow-sm">
-        <div className="skeleton w-8 h-8 rounded-xl mb-4" />
-        <div className="skeleton h-8 w-14 rounded mb-1.5" />
+      <div className="bg-white rounded-xl border border-neutral-200/80 p-5 shadow-xs">
+        <div className="skeleton w-8 h-8 rounded-lg mb-3" />
+        <div className="skeleton h-7 w-14 rounded mb-1.5" />
         <div className="skeleton h-3 w-20 rounded" />
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-2xl p-5 shadow-sm hover:shadow-md transition-all">
-      <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-4 ${accent}`}>
+    <div className="bg-white rounded-xl border border-neutral-200/80 p-5 shadow-xs hover:border-neutral-300 transition-colors">
+      <div className={`w-8 h-8 rounded-lg flex items-center justify-center mb-3 ${accent}`}>
         <Icon className="w-4 h-4" />
       </div>
-      <p className="text-3xl font-bold tracking-tight tabular-nums text-neutral-900">{value.toLocaleString()}</p>
-      <p className="text-xs text-neutral-400 mt-1 font-medium">{label}</p>
+      <p className="text-2xl font-bold tracking-tight tabular-nums text-neutral-900">{value.toLocaleString()}</p>
+      <p className="text-xs text-neutral-500 mt-1 font-medium">{label}</p>
     </div>
   );
 }
 
 function EventSkeleton() {
   return (
-    <div className="flex items-center gap-4 bg-white rounded-2xl px-5 py-4 shadow-sm">
-      <div className="skeleton w-10 h-10 rounded-xl shrink-0" />
+    <div className="flex items-center gap-4 bg-white rounded-xl border border-neutral-200/80 px-5 py-3.5 shadow-xs">
+      <div className="skeleton w-10 h-10 rounded-lg shrink-0" />
       <div className="flex-1 flex flex-col gap-2">
         <div className="skeleton h-4 rounded w-48" />
         <div className="skeleton h-3 rounded w-32" />
@@ -262,8 +262,7 @@ export default function DashboardContent() {
 
         <Link
           href="/create-event"
-          className="flex items-center gap-2 text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity shrink-0 shadow-sm"
-          style={{ background: "#6D28D9" }}
+          className="flex items-center gap-2 bg-neutral-900 hover:bg-neutral-800 text-white px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors shrink-0 shadow-xs"
         >
           <Plus className="w-4 h-4" />
           New event
@@ -271,7 +270,7 @@ export default function DashboardContent() {
       </div>
 
       {loadError && (
-        <div className="flex items-start gap-3 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50/70 px-4 py-3 text-sm text-red-700">
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
           <p>{loadError}</p>
         </div>
@@ -279,32 +278,29 @@ export default function DashboardContent() {
 
       {/* ── 30-Day Free Trial Eligibility Banner ─────────────────── */}
       {loaded && trialInfo?.isEligible && (
-        <div
-          className="rounded-2xl p-5 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-md border border-purple-400/30 transition-all"
-          style={{ background: "linear-gradient(135deg, #1e093d 0%, #4c1d95 60%, #6D28D9 100%)" }}
-        >
+        <div className="rounded-xl p-5 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs border border-neutral-800 bg-neutral-900">
           <div className="flex items-start sm:items-center gap-3.5">
-            <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center shrink-0">
-              <Sparkles className="w-5 h-5 text-purple-200" />
+            <div className="w-9 h-9 rounded-lg bg-neutral-800 border border-neutral-700/60 flex items-center justify-center shrink-0">
+              <ShieldCheck className="w-4 h-4 text-emerald-400" />
             </div>
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-[10px] font-extrabold tracking-widest uppercase px-2 py-0.5 rounded-full bg-white/20 text-white border border-white/30">
+                <span className="text-[10px] font-semibold tracking-wider uppercase px-2 py-0.5 rounded bg-neutral-800 text-neutral-300 border border-neutral-700">
                   EXCLUSIVE OFFER
                 </span>
-                <span className="text-xs font-semibold text-purple-200">30 DAYS. ANY PLAN. ₹0.</span>
+                <span className="text-xs font-medium text-neutral-400">30 DAYS · ANY PLAN · ₹0</span>
               </div>
-              <h2 className="text-base sm:text-lg font-bold text-white tracking-tight">
+              <h2 className="text-base sm:text-lg font-semibold text-white tracking-tight">
                 Your account is eligible for one free 30-day plan
               </h2>
-              <p className="text-xs text-white/70 mt-0.5">
+              <p className="text-xs text-neutral-400 mt-0.5">
                 Choose Starter, Pro or Business when you&apos;re ready. Full feature access with no credit card or AutoPay required.
               </p>
             </div>
           </div>
           <Link
             href="/billing"
-            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-white text-neutral-900 hover:bg-purple-50 shadow-sm shrink-0 transition-all hover:scale-105 active:scale-95 whitespace-nowrap"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs font-semibold bg-white text-neutral-950 hover:bg-neutral-100 shadow-xs shrink-0 transition-colors whitespace-nowrap"
           >
             Choose My Free Plan
             <ArrowRight className="w-3.5 h-3.5" />
@@ -314,21 +310,21 @@ export default function DashboardContent() {
 
       {/* ── Active Free Trial Status Card ────────────────────────── */}
       {loaded && trialInfo?.isActiveTrial && (
-        <div className="rounded-2xl p-4 sm:p-5 bg-gradient-to-r from-violet-900 via-purple-900 to-indigo-950 text-white shadow-md border border-purple-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="rounded-xl p-4 sm:p-5 bg-neutral-900 text-white shadow-xs border border-neutral-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-start sm:items-center gap-3.5">
-            <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center shrink-0">
-              <Clock className="w-5 h-5 text-purple-300" />
+            <div className="w-9 h-9 rounded-lg bg-neutral-800 border border-neutral-700/60 flex items-center justify-center shrink-0">
+              <Clock className="w-4 h-4 text-neutral-300" />
             </div>
             <div>
               <div className="flex items-center gap-2 mb-1 flex-wrap">
-                <span className="text-[10px] font-extrabold tracking-widest uppercase px-2 py-0.5 rounded-full bg-purple-500/30 text-purple-200 border border-purple-400/40">
+                <span className="text-[10px] font-semibold tracking-wider uppercase px-2 py-0.5 rounded bg-neutral-800 text-neutral-300 border border-neutral-700">
                   {trialInfo.planName.toUpperCase()} · FREE TRIAL
                 </span>
-                <span className="text-xs font-bold text-emerald-300">
+                <span className="text-xs font-semibold text-emerald-400">
                   {trialInfo.daysRemaining} {trialInfo.daysRemaining === 1 ? "day" : "days"} remaining
                 </span>
               </div>
-              <p className="text-xs sm:text-sm text-white/90 font-medium">
+              <p className="text-xs sm:text-sm text-neutral-300 font-normal">
                 {trialInfo.autopayCancelled
                   ? `AutoPay cancelled · Free trial access active until ${trialInfo.renewalDate}`
                   : trialInfo.hasAutopay
@@ -339,7 +335,7 @@ export default function DashboardContent() {
           </div>
           <Link
             href="/billing"
-            className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-white/10 text-white hover:bg-white/20 border border-white/20 shrink-0 transition-colors whitespace-nowrap"
+            className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-medium bg-neutral-800 text-white hover:bg-neutral-700 border border-neutral-700 shrink-0 transition-colors whitespace-nowrap"
           >
             Manage Subscription
             <ChevronRight className="w-3.5 h-3.5" />
@@ -364,15 +360,14 @@ export default function DashboardContent() {
             <Link
               key={href}
               href={href}
-              className={`flex flex-col items-center justify-center gap-2.5 rounded-2xl px-4 py-5 text-center transition-all hover:scale-[1.02] active:scale-[0.98] ${
+              className={`flex flex-col items-center justify-center gap-2.5 rounded-xl px-4 py-4 text-center transition-all ${
                 primary
-                  ? "text-white shadow-md hover:opacity-90"
-                  : "bg-white text-neutral-700 shadow-sm hover:shadow-md"
+                  ? "bg-neutral-900 text-white border border-neutral-900 hover:bg-neutral-800 shadow-xs"
+                  : "bg-white text-neutral-700 border border-neutral-200/80 hover:border-neutral-300 hover:bg-neutral-50/50 shadow-xs"
               }`}
-              style={primary ? { background: "linear-gradient(135deg, #6D28D9 0%, #4c1d95 100%)" } : {}}
             >
               <Icon className="w-5 h-5" />
-              <span className="text-xs font-semibold">{label}</span>
+              <span className="text-xs font-medium">{label}</span>
             </Link>
           ))}
         </div>
@@ -383,7 +378,7 @@ export default function DashboardContent() {
         <div>
           <div className="flex items-center justify-between mb-3">
             <p className="text-[10px] font-bold tracking-widest uppercase text-neutral-400">Organizations</p>
-            <Link href="/dashboard/organizations" className="flex items-center gap-1 text-xs text-neutral-400 hover:text-brand transition-colors font-medium">
+            <Link href="/dashboard/organizations" className="flex items-center gap-1 text-xs text-neutral-500 hover:text-neutral-900 transition-colors font-medium">
               View all <ChevronRight className="w-3.5 h-3.5" />
             </Link>
           </div>
@@ -392,30 +387,30 @@ export default function DashboardContent() {
               <Link
                 key={org.slug}
                 href={`/org/${org.slug}`}
-                className="flex items-center gap-3 bg-white rounded-2xl px-4 py-3.5 shadow-sm hover:shadow-md transition-all group"
+                className="flex items-center gap-3 bg-white rounded-xl px-4 py-3.5 border border-neutral-200/80 hover:border-neutral-300 shadow-xs hover:shadow-sm transition-all group"
               >
                 <div
-                  className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-base shrink-0"
+                  className="w-9 h-9 rounded-lg flex items-center justify-center text-white font-bold text-sm shrink-0"
                   style={{ background: org.brand_color }}
                 >
                   {org.name.charAt(0).toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-neutral-900 truncate group-hover:text-brand transition-colors">{org.name}</p>
-                  <p className="text-xs text-neutral-400 capitalize">{org.role}</p>
+                  <p className="text-xs text-neutral-500 capitalize">{org.role}</p>
                 </div>
-                <ChevronRight className="w-4 h-4 text-neutral-200 group-hover:text-brand transition-colors shrink-0" />
+                <ChevronRight className="w-4 h-4 text-neutral-300 group-hover:text-neutral-600 transition-colors shrink-0" />
               </Link>
             ))}
             {planSlug !== "free" && (
               <Link
                 href="/dashboard/organizations/new"
-                className="flex items-center gap-3 bg-white rounded-2xl px-4 py-3.5 shadow-sm hover:shadow-md transition-all border-2 border-dashed border-neutral-200 hover:border-brand/30 group"
+                className="flex items-center gap-3 bg-white rounded-xl px-4 py-3.5 shadow-xs hover:shadow-sm transition-all border border-dashed border-neutral-300 hover:border-neutral-400 group"
               >
-                <div className="w-10 h-10 rounded-xl border-2 border-dashed border-neutral-200 group-hover:border-brand/30 flex items-center justify-center shrink-0 group-hover:bg-brand-50 transition-all">
-                  <Plus className="w-4 h-4 text-neutral-300 group-hover:text-brand transition-colors" />
+                <div className="w-9 h-9 rounded-lg border border-dashed border-neutral-300 group-hover:border-neutral-400 flex items-center justify-center shrink-0 group-hover:bg-neutral-50 transition-all">
+                  <Plus className="w-4 h-4 text-neutral-400 group-hover:text-neutral-700 transition-colors" />
                 </div>
-                <p className="text-sm font-medium text-neutral-400 group-hover:text-brand transition-colors">New organization</p>
+                <p className="text-sm font-medium text-neutral-500 group-hover:text-neutral-900 transition-colors">New organization</p>
               </Link>
             )}
           </div>
@@ -426,39 +421,36 @@ export default function DashboardContent() {
       {loaded && orgs.length === 0 && planSlug !== "free" && (
         <Link
           href="/dashboard/organizations/new"
-          className="flex items-center gap-4 bg-white rounded-2xl px-5 py-4 shadow-sm hover:shadow-md transition-all group border-2 border-dashed border-neutral-200 hover:border-brand/30"
+          className="flex items-center gap-4 bg-white rounded-xl px-5 py-4 shadow-xs hover:shadow-sm transition-all group border border-dashed border-neutral-300 hover:border-neutral-400"
         >
-          <div className="w-10 h-10 bg-brand-50 border border-brand-100 rounded-xl flex items-center justify-center shrink-0 group-hover:bg-brand group-hover:border-brand transition-all">
-            <Building2 className="w-4 h-4 text-brand group-hover:text-white transition-colors" />
+          <div className="w-9 h-9 bg-neutral-100 border border-neutral-200 rounded-lg flex items-center justify-center shrink-0 group-hover:bg-neutral-900 group-hover:border-neutral-900 transition-all">
+            <Building2 className="w-4 h-4 text-neutral-600 group-hover:text-white transition-colors" />
           </div>
           <div className="flex-1">
             <p className="text-sm font-semibold text-neutral-900">Create your organization</p>
-            <p className="text-xs text-neutral-400 mt-0.5">Invite your team and manage events together</p>
+            <p className="text-xs text-neutral-500 mt-0.5">Invite your team and manage events together</p>
           </div>
-          <ChevronRight className="w-4 h-4 text-neutral-300 group-hover:text-brand transition-colors shrink-0" />
+          <ChevronRight className="w-4 h-4 text-neutral-300 group-hover:text-neutral-600 transition-colors shrink-0" />
         </Link>
       )}
 
       {/* ── Upgrade prompt (free plan only) ──────────────────────── */}
       {loaded && planSlug === "free" && (
         <div
-          className="relative overflow-hidden rounded-2xl px-6 py-5 flex items-center justify-between gap-4"
-          style={{ background: "linear-gradient(135deg, #6D28D9 0%, #4c1d95 100%)" }}
+          className="rounded-xl px-6 py-4 flex items-center justify-between gap-4 bg-neutral-900 border border-neutral-800 text-white shadow-xs"
         >
-          <div className="absolute right-0 top-0 w-48 h-48 opacity-10 pointer-events-none"
-            style={{ backgroundImage: "radial-gradient(circle, #fff 0%, transparent 70%)", transform: "translate(20%, -30%)" }} />
-          <div className="relative">
+          <div>
             <div className="flex items-center gap-2 mb-1">
-              <Zap className="w-4 h-4 text-yellow-300" />
-              <p className="text-sm font-bold text-white">Upgrade to Starter</p>
+              <Zap className="w-4 h-4 text-amber-400" />
+              <p className="text-sm font-semibold text-white">Upgrade to Starter</p>
             </div>
-            <p className="text-xs text-white/60 leading-relaxed">
+            <p className="text-xs text-neutral-400 leading-relaxed">
               Unlock 5 events, 500 attendees, CSV upload &amp; remove branding
             </p>
           </div>
           <Link
             href="/billing"
-            className="flex items-center gap-1.5 bg-white text-brand px-4 py-2 rounded-xl text-xs font-bold shrink-0 hover:bg-white/90 transition-colors"
+            className="flex items-center gap-1.5 bg-white text-neutral-900 px-3.5 py-2 rounded-lg text-xs font-semibold shrink-0 hover:bg-neutral-100 transition-colors"
           >
             Upgrade <ArrowUpRight className="w-3.5 h-3.5" />
           </Link>
@@ -473,7 +465,7 @@ export default function DashboardContent() {
           </p>
           <Link
             href="/dashboard/events"
-            className="flex items-center gap-1 text-xs text-neutral-400 hover:text-brand transition-colors font-medium"
+            className="flex items-center gap-1 text-xs text-neutral-500 hover:text-neutral-900 transition-colors font-medium"
           >
             View all <ChevronRight className="w-3.5 h-3.5" />
           </Link>
@@ -484,18 +476,17 @@ export default function DashboardContent() {
             {Array.from({ length: 3 }).map((_, i) => <EventSkeleton key={i} />)}
           </div>
         ) : events.length === 0 ? (
-          <div className="bg-white rounded-2xl p-14 text-center shadow-sm border border-dashed border-neutral-200">
-            <div className="w-12 h-12 bg-brand-50 border border-brand-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <Calendar className="w-5 h-5 text-brand" />
+          <div className="bg-white rounded-xl p-12 text-center shadow-xs border border-neutral-200/80">
+            <div className="w-10 h-10 bg-neutral-100 border border-neutral-200 rounded-lg flex items-center justify-center mx-auto mb-3">
+              <Calendar className="w-5 h-5 text-neutral-600" />
             </div>
-            <p className="text-sm font-semibold text-neutral-800 mb-1">No events yet</p>
-            <p className="text-xs text-neutral-400 mb-5 max-w-xs mx-auto">
+            <p className="text-sm font-semibold text-neutral-900 mb-1">No events yet</p>
+            <p className="text-xs text-neutral-500 mb-4 max-w-xs mx-auto">
               Create your first event to start issuing digital passes and scanning attendees
             </p>
             <Link
               href="/create-event"
-              className="inline-flex items-center gap-2 text-sm font-semibold text-white px-5 py-2.5 rounded-xl hover:opacity-90 transition-opacity"
-              style={{ background: "#6D28D9" }}
+              className="inline-flex items-center gap-2 text-xs font-semibold text-white px-4 py-2.5 rounded-lg bg-neutral-900 hover:bg-neutral-800 transition-colors"
             >
               <Plus className="w-3.5 h-3.5" />
               Create your first event
@@ -514,26 +505,26 @@ export default function DashboardContent() {
                 <Link
                   key={event.id}
                   href={`/event/${event.id}`}
-                  className="flex items-center gap-4 bg-white rounded-2xl px-5 py-4 shadow-sm hover:shadow-md transition-all group"
+                  className="flex items-center gap-4 bg-white rounded-xl px-5 py-3.5 border border-neutral-200/80 shadow-xs hover:border-neutral-300 hover:shadow-sm transition-all group"
                 >
                   {/* Date block */}
-                  <div className="w-10 h-10 rounded-xl bg-brand-50 border border-brand-100 flex flex-col items-center justify-center shrink-0 group-hover:bg-brand group-hover:border-brand transition-all">
-                    <span className="text-[8px] font-bold text-brand/70 uppercase group-hover:text-white/70 leading-none">
+                  <div className="w-10 h-10 rounded-lg bg-neutral-100 border border-neutral-200/80 flex flex-col items-center justify-center shrink-0 group-hover:bg-neutral-900 group-hover:border-neutral-900 transition-colors">
+                    <span className="text-[8px] font-bold text-neutral-500 uppercase group-hover:text-neutral-400 leading-none">
                       {new Date(event.event_date).toLocaleDateString("en-IN", { month: "short" })}
                     </span>
-                    <span className="text-sm font-bold text-brand group-hover:text-white leading-none mt-0.5">
+                    <span className="text-sm font-bold text-neutral-900 group-hover:text-white leading-none mt-0.5">
                       {new Date(event.event_date).getDate()}
                     </span>
                   </div>
 
                   {/* Info */}
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-neutral-900 truncate group-hover:text-brand transition-colors">
+                    <p className="text-sm font-semibold text-neutral-900 truncate group-hover:text-neutral-700 transition-colors">
                       {event.name}
                     </p>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-xs text-neutral-400 truncate">{event.venue}</span>
-                      <span className="text-neutral-200 text-xs">·</span>
+                      <span className="text-xs text-neutral-500 truncate">{event.venue}</span>
+                      <span className="text-neutral-300 text-xs">·</span>
                       <span className="flex items-center gap-1 text-xs text-neutral-400 shrink-0">
                         {isPast ? <Clock className="w-3 h-3" /> : <TrendingUp className="w-3 h-3" />}
                         {dateStr}
@@ -542,7 +533,7 @@ export default function DashboardContent() {
                   </div>
 
                   {/* Status */}
-                  <span className={`flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full font-semibold shrink-0 ${cfg.cls}`}>
+                  <span className={`flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full font-medium shrink-0 ${cfg.cls}`}>
                     <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
                     {cfg.label}
                   </span>
@@ -555,14 +546,14 @@ export default function DashboardContent() {
 
       {/* ── Bottom tip ────────────────────────────────────────────── */}
       {loaded && events.length > 0 && (
-        <div className="flex items-center gap-3 bg-white rounded-2xl px-5 py-4 shadow-sm">
-          <div className="w-8 h-8 bg-amber-50 border border-amber-100 rounded-xl flex items-center justify-center shrink-0">
-            <Users className="w-4 h-4 text-amber-600" />
+        <div className="flex items-center gap-3 bg-white rounded-xl px-5 py-3.5 border border-neutral-200/80 shadow-xs">
+          <div className="w-8 h-8 bg-neutral-100 border border-neutral-200 rounded-lg flex items-center justify-center shrink-0">
+            <Users className="w-4 h-4 text-neutral-600" />
           </div>
-          <p className="text-xs text-neutral-500 leading-relaxed">
-            Tip: Open the <span className="font-semibold text-neutral-700">Scanner</span> on your phone at the event entrance to check in attendees instantly via QR code.
+          <p className="text-xs text-neutral-600 leading-relaxed flex-1">
+            Tip: Open the <span className="font-semibold text-neutral-900">Scanner</span> on your phone at the event entrance to check in attendees instantly via QR code.
           </p>
-          <Link href="/scan" className="text-xs font-semibold text-brand shrink-0 hover:underline">
+          <Link href="/scan" className="text-xs font-semibold text-neutral-900 shrink-0 hover:underline">
             Open →
           </Link>
         </div>

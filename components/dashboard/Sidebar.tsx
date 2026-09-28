@@ -120,14 +120,8 @@ export default function Sidebar({ email, fullName, planSlug, campusContext }: Pr
 
   return (
     <aside
-      className="hidden lg:flex flex-col w-64 shrink-0 h-screen sticky top-0"
-      style={{ background: "linear-gradient(160deg, #13111c 0%, #0e0c16 100%)" }}
+      className="hidden lg:flex flex-col w-64 shrink-0 h-screen sticky top-0 bg-[#0e0c16] border-r border-white/5"
     >
-      {/* Subtle top glow */}
-      <div
-        className="absolute top-0 left-0 right-0 h-40 pointer-events-none"
-        style={{ background: "radial-gradient(ellipse 80% 60% at 50% 0%, rgba(109,40,217,0.18) 0%, transparent 100%)" }}
-      />
 
       <div className="relative flex flex-col h-full px-3 py-5 gap-5 overflow-hidden">
 
@@ -227,16 +221,14 @@ export default function Sidebar({ email, fullName, planSlug, campusContext }: Pr
           {(!planSlug || planSlug === "free") && (
             <Link
               href="/billing"
-              className="relative overflow-hidden flex items-center gap-3 px-4 py-3.5 rounded-2xl transition-opacity hover:opacity-90"
-              style={{ background: "linear-gradient(135deg, rgba(109,40,217,0.5), rgba(76,29,149,0.5))" }}
+              className="flex items-center gap-3 px-3.5 py-3 rounded-xl bg-white/5 hover:bg-white/8 border border-white/10 transition-colors"
             >
-              <div className="absolute inset-0 border border-white/10 rounded-2xl pointer-events-none" />
-              <div className="w-7 h-7 bg-white/15 rounded-lg flex items-center justify-center shrink-0">
-                <Zap className="w-3.5 h-3.5 text-yellow-300" />
+              <div className="w-7 h-7 bg-white/10 rounded-lg flex items-center justify-center shrink-0">
+                <Zap className="w-3.5 h-3.5 text-amber-300" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-bold text-white leading-none">Upgrade plan</p>
-                <p className="text-[10px] text-white/50 mt-0.5 leading-none">Unlock more features</p>
+                <p className="text-xs font-semibold text-white leading-none">Upgrade plan</p>
+                <p className="text-[10px] text-white/50 mt-1 leading-none">Unlock more features</p>
               </div>
               <ChevronRight className="w-3.5 h-3.5 text-white/30 shrink-0" />
             </Link>
