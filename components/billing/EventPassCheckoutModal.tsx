@@ -127,7 +127,9 @@ export default function EventPassCheckoutModal({
               setError(result.error);
               return;
             }
-            router.push("/billing?pass=purchased");
+            onClose();
+            router.push(`/billing?pass=purchased&plan=${encodeURIComponent(passName)}`);
+            router.refresh();
           } catch (err) {
             setLoading(false);
             setError(err instanceof Error ? err.message : "Failed to activate event pass.");

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
-import { ArrowRight, ShieldCheck, Loader2 } from "lucide-react";
+import { ArrowRight, ShieldCheck, Loader2, AlertCircle } from "lucide-react";
 import CheckoutModal from "./CheckoutModal";
 import { detectCountryClient } from "@/lib/country-config";
 import { activateUkPlan } from "@/app/actions/billing";
@@ -29,6 +29,7 @@ export default function FounderCheckoutCta({
 }: Props) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const [country, setCountry] = useState<"IN" | "GB">(propCountry || "IN");
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -55,22 +56,28 @@ export default function FounderCheckoutCta({
 
   async function handleUkClaim() {
     setLoading(true);
+    setError("");
     try {
       const res = await activateUkPlan("founder", "lifetime");
       if (res?.error) {
-        alert(res.error);
+        setError(res.error);
         setLoading(false);
       } else {
         router.push("/billing?claim=success");
         router.refresh();
       }
-    } catch {
-      alert("Failed to activate Founder account. Please contact support.");
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Failed to activate Founder account. Please contact support."
+      );
       setLoading(false);
     }
   }
 
   function handleAction() {
+    setError("");
     if (isUk) {
       handleUkClaim();
     } else {
@@ -114,7 +121,7 @@ export default function FounderCheckoutCta({
   }
 
   return (
-    <>
+    <div className="flex flex-col items-center sm:items-start gap-1.5">
       <button
         type="button"
         onClick={handleAction}
@@ -145,6 +152,13 @@ export default function FounderCheckoutCta({
         )}
       </button>
 
+      {error && (
+        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-red-500/10 border border-red-500/20 text-red-300 text-xs mt-1">
+          <AlertCircle className="w-3.5 h-3.5 text-red-400 shrink-0" />
+          <span>{error}</span>
+        </div>
+      )}
+
       {!isUk && (
         <CheckoutModal
           isOpen={open}
@@ -158,6 +172,6 @@ export default function FounderCheckoutCta({
           annualTotal={19999}
         />
       )}
-    </>
+    </div>
   );
 }

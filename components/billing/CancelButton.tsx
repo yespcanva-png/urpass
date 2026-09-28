@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
+import { Loader2, AlertCircle } from "lucide-react";
 import { cancelSubscription } from "@/app/actions/billing";
 
 export default function CancelButton() {
@@ -18,48 +18,71 @@ export default function CancelButton() {
         const result = await cancelSubscription();
         if (result?.error) {
           setError(result.error);
-          setConfirm(false);
         } else {
-          router.refresh();
           setConfirm(false);
+          router.refresh();
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to cancel subscription");
-        setConfirm(false);
+        setError(
+          err instanceof Error ? err.message : "Failed to cancel subscription"
+        );
       }
     });
   }
 
   if (!confirm) {
     return (
-      <button
-        onClick={() => setConfirm(true)}
-        className="text-xs text-neutral-400 hover:text-red-500 transition-colors"
-      >
-        Cancel plan
-      </button>
+      <div className="flex flex-col items-end gap-1">
+        <button
+          onClick={() => {
+            setConfirm(true);
+            setError("");
+          }}
+          className="text-xs font-medium text-neutral-500 hover:text-rose-600 transition-colors px-2 py-1 rounded-md hover:bg-rose-50/60"
+        >
+          Cancel subscription
+        </button>
+        {error && (
+          <div className="inline-flex items-center gap-1.5 text-xs text-rose-600 bg-rose-50 border border-rose-200 rounded-md px-2 py-0.5">
+            <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
+      </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-1.5 items-end">
+    <div className="flex flex-col gap-2 items-end bg-neutral-50 border border-neutral-200/80 rounded-xl p-3 shadow-2xs">
+      <p className="text-[11px] text-neutral-600 font-medium max-w-xs text-right">
+        Cancel auto-renewal? Access stays active until the end of your billing cycle.
+      </p>
       <div className="flex items-center gap-2">
         <button
-          onClick={() => setConfirm(false)}
-          className="text-xs text-neutral-400 hover:text-neutral-700"
+          onClick={() => {
+            setConfirm(false);
+            setError("");
+          }}
+          disabled={isPending}
+          className="px-2.5 py-1 text-xs font-medium text-neutral-600 hover:text-neutral-900 border border-neutral-200 rounded-lg bg-white transition-colors disabled:opacity-50"
         >
           Keep plan
         </button>
         <button
           onClick={handleCancel}
           disabled={isPending}
-          className="flex items-center gap-1.5 text-xs font-medium text-red-600 border border-red-200 rounded-lg px-3 py-1.5 hover:bg-red-50 transition-colors disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-lg transition-colors disabled:opacity-50 shadow-2xs"
         >
-          {isPending && <Loader2 className="w-3 h-3 animate-spin" />}
-          Confirm cancel
+          {isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+          {isPending ? "Cancelling..." : "Confirm cancel"}
         </button>
       </div>
-      {error && <p className="text-xs text-red-500">{error}</p>}
+      {error && (
+        <div className="inline-flex items-center gap-1.5 text-xs text-rose-600 bg-rose-50 border border-rose-200 rounded-md px-2 py-0.5">
+          <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+          <span>{error}</span>
+        </div>
+      )}
     </div>
   );
 }

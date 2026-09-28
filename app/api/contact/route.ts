@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
-  const { name, email, message } = body ?? {};
+  const { name, email, message, subject } = body ?? {};
 
   if (!name || !email || !message) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -24,14 +24,19 @@ export async function POST(req: NextRequest) {
   }
 
   const resend = new Resend(apiKey);
+  const emailSubject = subject
+    ? `[URPASS Inquiry: ${subject}] from ${name}`
+    : `Contact form: ${name}`;
+
   const { error } = await resend.emails.send({
     from: "URPASS Contact <noreply@urpass.space>",
     to: ["srinithin@yespstudio.com"],
     replyTo: email,
-    subject: `Contact form: ${name}`,
+    subject: emailSubject,
     html: `
       <p><strong>Name:</strong> ${escapeHtml(name)}</p>
       <p><strong>Email:</strong> ${escapeHtml(email)}</p>
+      ${subject ? `<p><strong>Inquiry Topic:</strong> ${escapeHtml(subject)}</p>` : ""}
       <p><strong>Message:</strong></p>
       <p style="white-space:pre-wrap">${escapeHtml(message)}</p>
     `,

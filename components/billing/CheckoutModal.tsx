@@ -188,7 +188,9 @@ export default function CheckoutModal({
               setPayError(result.error);
               return;
             }
+            onClose();
             router.push(isLifetime ? "/billing?upgraded=true&plan=Founder%20Lifetime" : `/billing?upgraded=true&plan=${encodeURIComponent(planName)}`);
+            router.refresh();
           } catch (err) {
             setPayLoading(false);
             setPayError(err instanceof Error ? err.message : "Failed to activate subscription.");

@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Check, Sparkles, Zap, Crown, TrendingUp,
   CalendarCheck, Zap as ZapIcon, Star, Flame, ShieldCheck,
+  AlertCircle, X,
 } from "lucide-react";
 import CheckoutButton from "./CheckoutButton";
 import SwitchPlanButton from "./SwitchPlanButton";
@@ -115,6 +117,7 @@ interface Props {
 }
 
 export default function PlanGrid({ currentPlanSlug, currentPlanIndex, userEmail, userName, trialUsed = false, country = "IN" }: Props) {
+  const router = useRouter();
   const [tab, setTab]     = useState<"all" | "subscription" | "one-event">("all");
   const [cycle, setCycle] = useState<"monthly" | "annual">("monthly");
   const [activatingSlug, setActivatingSlug] = useState<string | null>(null);
@@ -123,6 +126,7 @@ export default function PlanGrid({ currentPlanSlug, currentPlanIndex, userEmail,
     passType: string; passName: string; priceRupees: number; registrationLimit: number;
   } | null>(null);
   const [activatingPass, setActivatingPass] = useState<string | null>(null);
+  const [actionNotice, setActionNotice] = useState<{ type: "error" | "success"; message: string } | null>(null);
 
   return (
     <div>
@@ -184,6 +188,27 @@ export default function PlanGrid({ currentPlanSlug, currentPlanIndex, userEmail,
           </Link>
         </div>
       </div>
+
+      {actionNotice && (
+        <div
+          className={`mb-6 p-4 rounded-xl border flex items-center justify-between gap-3 text-xs font-medium shadow-xs ${
+            actionNotice.type === "error"
+              ? "bg-rose-50 border-rose-200 text-rose-800"
+              : "bg-emerald-50 border-emerald-200 text-emerald-800"
+          }`}
+        >
+          <div className="flex items-center gap-2.5">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            <span>{actionNotice.message}</span>
+          </div>
+          <button
+            onClick={() => setActionNotice(null)}
+            className="p-1 rounded-md hover:bg-black/5 transition-colors"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
 
       {/* ── Subscription section ─────────────────────────────── */}
       {(tab === "all" || tab === "subscription") && (
@@ -364,13 +389,20 @@ export default function PlanGrid({ currentPlanSlug, currentPlanIndex, userEmail,
                         <button
                           onClick={async () => {
                             setActivatingSlug(p.slug);
+                            setActionNotice(null);
                             try {
                               const res = await activateUkPlan(p.slug, cycle);
                               if (res?.error) {
-                                alert(res.error);
+                                setActionNotice({ type: "error", message: res.error });
                               } else {
-                                window.location.reload();
+                                router.push(`/billing?upgraded=true&plan=${encodeURIComponent(p.name)}`);
+                                router.refresh();
                               }
+                            } catch (err) {
+                              setActionNotice({
+                                type: "error",
+                                message: err instanceof Error ? err.message : "Failed to activate plan.",
+                              });
                             } finally {
                               setActivatingSlug(null);
                             }
@@ -477,13 +509,20 @@ export default function PlanGrid({ currentPlanSlug, currentPlanIndex, userEmail,
                     onClick={async () => {
                       if (country === "GB") {
                         setActivatingPass(p.slug);
+                        setActionNotice(null);
                         try {
                           const res = await activateUkEventPass(p.slug);
                           if (res?.error) {
-                            alert(res.error);
+                            setActionNotice({ type: "error", message: res.error });
                           } else {
-                            window.location.reload();
+                            router.push(`/billing?pass=purchased&plan=${encodeURIComponent(p.name)}`);
+                            router.refresh();
                           }
+                        } catch (err) {
+                          setActionNotice({
+                            type: "error",
+                            message: err instanceof Error ? err.message : "Failed to activate event pass.",
+                          });
                         } finally {
                           setActivatingPass(null);
                         }
