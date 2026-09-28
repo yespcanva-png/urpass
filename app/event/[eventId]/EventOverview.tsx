@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Users,
   QrCode,
@@ -18,9 +19,12 @@ import {
   Download,
   ArrowUpRight,
   LifeBuoy,
+  Loader2,
+  AlertCircle,
 } from "lucide-react";
 import CopyLinkButton from "@/components/event/CopyLinkButton";
 import { createClient } from "@/lib/supabase/client";
+import { updateEventStatus } from "@/app/actions/events";
 import EventCommunicationsCard from "@/components/event/EventCommunicationsCard";
 import EventAttendeeFeedbackCard from "@/components/event/EventAttendeeFeedbackCard";
 
@@ -110,6 +114,30 @@ export default function EventOverview({ event, initialAttendees = [] }: Props) {
   const [hoveredBarIndex, setHoveredBarIndex] = useState<number | null>(null);
   const [isExporting, setIsExporting] = useState(false);
   const [ticketTypes, setTicketTypes] = useState<{id: string; name: string; price: number; status: string}[]>([]);
+  const router = useRouter();
+  const [currentStatus, setCurrentStatus] = useState<string>(event.status);
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [publishError, setPublishError] = useState("");
+  const [publishSuccess, setPublishSuccess] = useState(false);
+
+  async function handlePublishNow() {
+    setIsPublishing(true);
+    setPublishError("");
+    try {
+      const res = await updateEventStatus(event.id, "active");
+      if (res?.error) {
+        setPublishError(res.error);
+      } else {
+        setCurrentStatus("active");
+        setPublishSuccess(true);
+        router.refresh();
+      }
+    } catch (err) {
+      setPublishError(err instanceof Error ? err.message : "Failed to publish event.");
+    } finally {
+      setIsPublishing(false);
+    }
+  }
 
   useEffect(() => {
     const supabase = createClient();
@@ -326,6 +354,38 @@ export default function EventOverview({ event, initialAttendees = [] }: Props) {
 
   return (
     <div className="max-w-4xl mx-auto page-in">
+
+      {/* ── Draft Alert Banner ─────────────────────────────────── */}
+      {currentStatus === "draft" && (
+        <div className="mb-6 p-4 rounded-xl border border-amber-200 bg-amber-50/90 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-2xs">
+          <div className="flex items-start sm:items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-amber-100 border border-amber-200 flex items-center justify-center shrink-0">
+              <AlertCircle className="w-4 h-4 text-amber-700" />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-amber-900">This event is currently in Draft mode</p>
+              <p className="text-[11px] text-amber-700 mt-0.5">
+                Attendee registration is paused. Publish this event to activate your registration link and start issuing passes.
+              </p>
+              {publishError && <p className="text-xs text-rose-700 font-medium mt-1">{publishError}</p>}
+            </div>
+          </div>
+          <button
+            onClick={handlePublishNow}
+            disabled={isPublishing}
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold text-white bg-neutral-900 hover:bg-neutral-800 transition-colors shrink-0 shadow-xs disabled:opacity-50 cursor-pointer"
+          >
+            {isPublishing && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+            {isPublishing ? "Publishing..." : "Publish Event Now"}
+          </button>
+        </div>
+      )}
+      {publishSuccess && (
+        <div className="mb-6 p-4 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-900 flex items-center gap-2.5 text-xs font-semibold shadow-2xs">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+          <span>Event published successfully! Your registration link is now live and accepting applications.</span>
+        </div>
+      )}
 
       {/* ── Action bar ─────────────────────────────────────────── */}
       <div className="flex flex-wrap items-center justify-between gap-2 mb-6">

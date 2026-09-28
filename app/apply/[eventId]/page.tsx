@@ -139,6 +139,64 @@ export default async function ApplyPage({
   ).maybeSingle();
 
   if (!event) {
+    // Check if current user is the event organizer viewing their own draft/paused event
+    const { data: { user } } = await supabase.auth.getUser();
+    let organizerEvent: { id: string; name: string; status: string; application_enabled: boolean; organizer_id: string } | null = null;
+    if (user) {
+      const admin = adminClient();
+      const draftQuery = admin
+        .from("events")
+        .select("id, name, status, application_enabled, organizer_id")
+        .eq(isUuid ? "id" : "apply_slug", idOrSlug)
+        .maybeSingle();
+      const { data } = await draftQuery;
+      if (data && data.organizer_id === user.id) {
+        organizerEvent = data;
+      }
+    }
+
+    if (organizerEvent) {
+      const isDraft = organizerEvent.status === "draft";
+      return (
+        <div
+          className="min-h-screen flex flex-col items-center justify-center p-6"
+          style={{ background: gradientBg }}
+        >
+          <div className="flex items-center gap-1.5 mb-8 apply-in-1">
+            <Ticket className="w-4 h-4 text-brand" />
+            <span className="text-sm font-bold tracking-widest uppercase text-neutral-900">
+              URPASS
+            </span>
+          </div>
+          <div className="text-center max-w-md w-full bg-white border border-amber-200 rounded-2xl p-6 sm:p-8 shadow-xs apply-in-2">
+            <div className="w-14 h-14 bg-amber-50 border border-amber-200 rounded-2xl flex items-center justify-center mx-auto mb-5">
+              <CalendarDays className="w-6 h-6 text-amber-600" />
+            </div>
+            <div className="inline-block px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 mb-3">
+              Organizer Preview
+            </div>
+            <h1 className="text-xl font-bold mb-2 text-neutral-900">
+              {organizerEvent.name}
+            </h1>
+            <p className="text-sm text-neutral-600 leading-relaxed mb-6">
+              {isDraft
+                ? "This event is currently in Draft mode. Attendee registration is not yet public."
+                : "Registration applications are currently paused for this event."}
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Link
+                href={`/event/${organizerEvent.id}`}
+                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold text-white bg-neutral-900 hover:bg-neutral-800 transition-colors shadow-xs"
+              >
+                Go to Event Dashboard to {isDraft ? "Publish" : "Manage"}
+              </Link>
+            </div>
+          </div>
+          <p className="text-xs text-neutral-400 mt-6">Only visible to you as the event organizer</p>
+        </div>
+      );
+    }
+
     return (
       <div
         className="min-h-screen flex flex-col items-center justify-center p-6"

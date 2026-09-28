@@ -91,6 +91,7 @@ export default function CreateEventForm({
   const [serverError, setServerError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [isNavigating, setIsNavigating] = useState(false);
+  const [submitMode, setSubmitMode] = useState<"active" | "draft">("active");
   const [selectedPlatform, setSelectedPlatform] = useState<"zoom" | "google_meet" | "teams" | "custom" | null>(null);
   const [country, setCountry] = useState<"IN" | "GB">("IN");
 
@@ -108,7 +109,7 @@ export default function CreateEventForm({
   } = useForm<EventInput, unknown, EventInput>({
     resolver: zodResolver(eventSchema) as never,
     defaultValues: {
-      status: "draft",
+      status: "active",
       application_enabled: true,
       auto_approve: false,
       attendee_limit: Math.min(100, maxAttendees),
@@ -175,14 +176,16 @@ export default function CreateEventForm({
     setSuccessMessage("");
     setIsNavigating(false);
     try {
-      const result = await createEvent(data, organizationId);
+      const payload: EventInput = { ...data, status: submitMode };
+      const result = await createEvent(payload, organizationId);
       if (result?.error) {
         setServerError(`Could not create event: ${result.error}`);
         window.scrollTo({ top: 0, behavior: "smooth" });
         return;
       }
       if (result?.eventId) {
-        setSuccessMessage("Event created successfully! Opening your event dashboard...");
+        const actionLabel = submitMode === "active" ? "Event published and live!" : "Event saved as draft!";
+        setSuccessMessage(`${actionLabel} Opening your event dashboard...`);
         setIsNavigating(true);
         router.push(`/event/${result.eventId}`);
       } else {
@@ -644,21 +647,42 @@ export default function CreateEventForm({
             </div>
           )}
 
-          <div className="flex items-center gap-3 justify-end pb-8">
+          <div className="flex flex-col-reverse sm:flex-row items-center gap-3 justify-end pb-8">
             <Link
               href="/dashboard/events"
-              className="text-sm text-neutral-500 hover:text-neutral-900 transition-colors px-4 py-2.5"
+              className="w-full sm:w-auto text-center text-sm text-neutral-500 hover:text-neutral-900 transition-colors px-4 py-2.5"
             >
               Cancel
             </Link>
             <button
               type="submit"
+              onClick={() => {
+                setSubmitMode("draft");
+                setValue("status", "draft");
+              }}
               disabled={isSubmitting || isNavigating || atLimit}
-              className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold text-white hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
-              style={{ background: "#6D28D9" }}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-neutral-700 bg-white border border-neutral-200 hover:bg-neutral-50 transition-colors disabled:opacity-50 shadow-2xs"
             >
-              {(isSubmitting || isNavigating) && <Loader2 className="w-4 h-4 animate-spin" />}
-              {isNavigating ? "Opening event…" : isSubmitting ? "Creating…" : "Create event"}
+              {isSubmitting && submitMode === "draft" && <Loader2 className="w-4 h-4 animate-spin" />}
+              Save as Draft
+            </button>
+            <button
+              type="submit"
+              onClick={() => {
+                setSubmitMode("active");
+                setValue("status", "active");
+              }}
+              disabled={isSubmitting || isNavigating || atLimit}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold text-white bg-neutral-900 hover:bg-neutral-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-xs"
+            >
+              {(isSubmitting && submitMode === "active") || isNavigating ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : null}
+              {isNavigating
+                ? "Opening event…"
+                : isSubmitting && submitMode === "active"
+                ? "Publishing event…"
+                : "Publish & Make Live"}
             </button>
           </div>
         </form>
