@@ -4,6 +4,10 @@ export type Profile = {
   full_name: string;
   email: string;
   avatar_url: string | null;
+  phone?: string | null;
+  company_name?: string | null;
+  gstin?: string | null;
+  billing_address?: string | null;
   created_at: string;
   updated_at: string;
 };

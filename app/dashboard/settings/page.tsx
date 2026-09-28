@@ -89,6 +89,10 @@ export default async function SettingsPage() {
       fullName={fullName}
       email={email}
       initials={initials}
+      phone={(profile?.phone as string | null) ?? null}
+      companyName={(profile?.company_name as string | null) ?? (profile?.org_name as string | null) ?? null}
+      gstin={(profile?.gstin as string | null) ?? null}
+      billingAddress={(profile?.billing_address as string | null) ?? null}
       plan={settingsPlan}
       currentPlan={currentPlan}
       renewalDate={renewalDate}

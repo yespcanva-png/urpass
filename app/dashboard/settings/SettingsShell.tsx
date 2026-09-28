@@ -30,6 +30,10 @@ interface Props {
   fullName: string;
   email: string;
   initials: string;
+  phone?: string | null;
+  companyName?: string | null;
+  gstin?: string | null;
+  billingAddress?: string | null;
   plan: SettingsPlan;
   currentPlan: { name: string; price_monthly: number; slug: string } | null;
   renewalDate: string | null;
@@ -242,7 +246,7 @@ function DeveloperLocked() {
 }
 
 export default function SettingsShell({
-  fullName, email, initials, plan, currentPlan,
+  fullName, email, initials, phone, companyName, gstin, billingAddress, plan, currentPlan,
   renewalDate, cancelAtPeriodEnd, activeEventCount, billingCycle, registrationsUsed, existingPaymentKeyId,
   apiUsage, apiKeys, webhookEndpoints, recentDeliveries,
 }: Props) {
@@ -257,11 +261,19 @@ export default function SettingsShell({
         return (
           <div className="max-w-xl">
             <div className="mb-6">
-              <h2 className="text-lg font-bold tracking-tight text-neutral-900">Profile</h2>
-              <p className="text-sm text-neutral-400 mt-0.5">Update your name and view your account email.</p>
+              <h2 className="text-lg font-bold tracking-tight text-neutral-900">Profile & Organization</h2>
+              <p className="text-sm text-neutral-400 mt-0.5">Manage your personal profile, organizer contact details, and registered business invoicing information.</p>
             </div>
             <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-              <ProfileForm fullName={fullName} email={email} initials={initials} />
+              <ProfileForm
+                fullName={fullName}
+                email={email}
+                initials={initials}
+                phone={phone}
+                companyName={companyName}
+                gstin={gstin}
+                billingAddress={billingAddress}
+              />
             </div>
           </div>
         );
@@ -362,9 +374,17 @@ export default function SettingsShell({
       <div className="lg:hidden space-y-1">
 
         {/* ── Profile ─────────────────────────────────────── */}
-        <SectionLabel>Profile</SectionLabel>
+        <SectionLabel>Profile & Organization</SectionLabel>
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-          <ProfileForm fullName={fullName} email={email} initials={initials} />
+          <ProfileForm
+            fullName={fullName}
+            email={email}
+            initials={initials}
+            phone={phone}
+            companyName={companyName}
+            gstin={gstin}
+            billingAddress={billingAddress}
+          />
         </div>
 
         {/* ── Security ────────────────────────────────────── */}

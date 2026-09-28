@@ -187,18 +187,25 @@ export async function createInvoiceForPayment(
     return existing as InvoiceRecord;
   }
 
-  // Fetch customer details if not fully provided
+  const currency = (params.currency || "INR").toUpperCase();
+  const isUk = currency === "GBP";
+
+  // Fetch customer details from parameters or profile
   let custName = params.customerName;
   let custEmail = params.customerEmail;
-  if (!custName || !custEmail) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("full_name, email")
-      .eq("user_id", params.userId)
-      .maybeSingle();
-    custName = custName || profile?.full_name || "Valued Customer";
-    custEmail = custEmail || profile?.email || "billing@urpass.space";
-  }
+  let custAddress = params.customerAddress;
+  let custGstin = params.customerGstin;
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("full_name, email, company_name, org_name, gstin, billing_address")
+    .eq("user_id", params.userId)
+    .maybeSingle();
+
+  custName = custName || profile?.company_name || profile?.org_name || profile?.full_name || "Valued Customer";
+  custEmail = custEmail || profile?.email || "billing@urpass.space";
+  custAddress = custAddress || profile?.billing_address || (isUk ? "United Kingdom" : null);
+  custGstin = custGstin || profile?.gstin || null;
 
   const date = new Date();
   const dateStr = date.toISOString().slice(0, 10);
@@ -209,9 +216,6 @@ export async function createInvoiceForPayment(
   const subtotal = Math.max(0, Number(params.baseAmountRupees) || 0);
   const discount = Math.max(0, Number(params.discountRupees) || 0);
   const taxableAmount = Math.max(0, subtotal - discount);
-
-  const currency = (params.currency || "INR").toUpperCase();
-  const isUk = currency === "GBP";
 
   let cgstRate = 9;
   let cgstAmount = 0;
@@ -253,8 +257,8 @@ export async function createInvoiceForPayment(
     seller_address: sellerAddress,
     customer_name: custName,
     customer_email: custEmail,
-    customer_address: params.customerAddress ?? (isUk ? "United Kingdom" : null),
-    customer_gstin: params.customerGstin ?? null,
+    customer_address: custAddress,
+    customer_gstin: custGstin,
     place_of_supply: placeOfSupply,
     state_code: stateCode,
     subtotal,

@@ -242,3 +242,81 @@ describe("createDefaultTicketType", () => {
     expect((insertedData as { price: number } | null)?.price).toBe(50000); // 500 * 100 = 50000 paise
   });
 });
+
+describe("validateGstin", () => {
+  it("validates standard 15-character Indian GSTINs correctly", async () => {
+    const { validateGstin } = await import("@/app/actions/auth");
+
+    // Standard valid formats (2 digits state code + 5 chars PAN + 4 digits + 1 char entity + 1 char checksum digit/letter + Z + checksum)
+    expect(validateGstin("29ABCDE1234F1Z5")).toBe(true);
+    expect(validateGstin("07AAAAA0000A1Z5")).toBe(true);
+    expect(validateGstin("33AABCT1332L1ZT")).toBe(true);
+
+    // Case-insensitive / trimmed
+    expect(validateGstin(" 29abcde1234f1z5 ")).toBe(true);
+
+    // Empty/blank string is considered valid (optional field)
+    expect(validateGstin("")).toBe(true);
+    expect(validateGstin("   ")).toBe(true);
+
+    // Invalid GSTIN formats
+    expect(validateGstin("INVALID")).toBe(false);
+    expect(validateGstin("29ABCDE1234F1Z")).toBe(false); // 14 characters
+    expect(validateGstin("29ABCDE1234F1Z50")).toBe(false); // 16 characters
+    expect(validateGstin("29ABCDE1234F195")).toBe(false); // 14th character must be Z
+    expect(validateGstin("XXABCDE1234F1Z5")).toBe(false); // State code must be digits
+  });
+});
+
+describe("updateBillingProfile", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("rejects names shorter than 2 characters", async () => {
+    const supabase = makeSupabase();
+    mockedCreateClient.mockResolvedValue(supabase as never);
+
+    const { updateBillingProfile } = await import("@/app/actions/auth");
+    const result = await updateBillingProfile({ fullName: "A" });
+    expect(result.error).toBe("Full name must be at least 2 characters.");
+  });
+
+  it("rejects invalid GSTIN format", async () => {
+    const supabase = makeSupabase();
+    mockedCreateClient.mockResolvedValue(supabase as never);
+
+    const { updateBillingProfile } = await import("@/app/actions/auth");
+    const result = await updateBillingProfile({ gstin: "NOT_A_GSTIN" });
+    expect(result.error).toContain("Invalid GSTIN format");
+  });
+
+  it("updates billing and company fields when valid", async () => {
+    let updatePayload: Record<string, unknown> | null = null;
+    const supabase = makeSupabase();
+    supabase.update = vi.fn().mockImplementation((payload) => {
+      updatePayload = payload;
+      return {
+        eq: vi.fn().mockResolvedValue({ error: null }),
+      };
+    });
+    mockedCreateClient.mockResolvedValue(supabase as never);
+
+    const { updateBillingProfile } = await import("@/app/actions/auth");
+    const result = await updateBillingProfile({
+      fullName: "Jane Doe",
+      phone: "+91 9876543210",
+      companyName: "Acme Events Pvt Ltd",
+      gstin: "29ABCDE1234F1Z5",
+      billingAddress: "123 Tech Park, Bangalore, KA 560001",
+    });
+
+    expect(result.success).toBe(true);
+    expect(updatePayload).toEqual({
+      full_name: "Jane Doe",
+      phone: "+91 9876543210",
+      company_name: "Acme Events Pvt Ltd",
+      gstin: "29ABCDE1234F1Z5",
+      billing_address: "123 Tech Park, Bangalore, KA 560001",
+    });
+  });
+});
+
