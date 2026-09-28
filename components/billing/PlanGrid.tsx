@@ -171,27 +171,24 @@ export default function PlanGrid({ currentPlanSlug, currentPlanIndex, userEmail,
         <>
           {/* Free trial banner if user has not used trial yet */}
           {!trialUsed && (
-            <div
-              className="mb-6 rounded-2xl p-5 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg border border-purple-500/30"
-              style={{ background: "linear-gradient(135deg, #1e093d 0%, #4c1d95 60%, #6D28D9 100%)" }}
-            >
+            <div className="mb-6 rounded-2xl p-5 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-neutral-900 border border-neutral-800 shadow-sm">
               <div className="flex items-start sm:items-center gap-3.5">
-                <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center shrink-0">
-                  <Sparkles className="w-5 h-5 text-purple-200" />
+                <div className="w-10 h-10 rounded-xl bg-neutral-800 border border-neutral-700 flex items-center justify-center shrink-0">
+                  <CalendarCheck className="w-5 h-5 text-emerald-400" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                    <span className="text-[10px] font-extrabold tracking-widest uppercase px-2 py-0.5 rounded-full bg-white/20 text-white border border-white/30">
+                    <span className="text-[10px] font-semibold tracking-widest uppercase px-2 py-0.5 rounded-full bg-neutral-800 text-neutral-300 border border-neutral-700">
                       YOUR FIRST 30 DAYS ARE FREE
                     </span>
-                    <span className="text-xs font-semibold text-emerald-300">
+                    <span className="text-xs font-medium text-emerald-400">
                       {country === "GB" ? "Direct UK Trial · No Card Required" : "AutoPay Required · Cancel Anytime"}
                     </span>
                   </div>
                   <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
                     TRY ANY URPASS PLAN FREE FOR 30 DAYS
                   </h3>
-                  <p className="text-xs text-white/70 mt-0.5">
+                  <p className="text-xs text-neutral-400 mt-0.5">
                     {country === "GB"
                       ? "Choose Starter, Pro, or Business · 30 days £0 · Direct activation without payment gateway · Cancel anytime"
                       : "Choose Starter, Pro, or Business · AutoPay required · Cancel anytime before first payment · One free trial per account"}
@@ -329,8 +326,7 @@ export default function PlanGrid({ currentPlanSlug, currentPlanIndex, userEmail,
                       <div className="flex flex-col gap-1.5">
                         <button
                           onClick={() => setTrialModal({ planSlug: p.slug, planName: p.name })}
-                          className="w-full py-2.5 text-sm font-bold rounded-xl text-white hover:opacity-95 shadow-md active:scale-[0.99] transition-all"
-                          style={{ background: "linear-gradient(135deg, #1e1035 0%, #6D28D9 100%)" }}
+                          className="w-full py-2.5 text-sm font-semibold rounded-xl text-white bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 transition-colors shadow-xs"
                         >
                           Try {p.name} Free
                         </button>

@@ -9,14 +9,12 @@ import FounderCheckoutCta from "@/components/billing/FounderCheckoutCta";
 import FounderSpotCounter from "@/components/billing/FounderSpotCounter";
 import { detectCountryFromHeaders } from "@/lib/country-config";
 import {
-  Sparkles,
   CheckCircle2,
   AlertCircle,
   ShieldCheck,
   Zap,
   Lock,
   ArrowRight,
-  Flame,
   HelpCircle,
   Layers,
   QrCode,
@@ -236,19 +234,13 @@ export default async function FounderLifetimeDealPage(props: {
       <Navbar />
 
       <main className="min-h-screen bg-neutral-950 text-white selection:bg-brand selection:text-white pt-24 pb-20 overflow-hidden">
-        {/* Ambient background glow */}
-        <div className="fixed inset-0 pointer-events-none z-0">
-          <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[450px] bg-brand/20 blur-[140px] rounded-full" />
-          <div className="absolute bottom-10 right-10 w-[400px] h-[300px] bg-purple-600/15 blur-[120px] rounded-full" />
-        </div>
-
         <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Top Scarcity Pill */}
           <AnimateIn>
             <div className="flex items-center justify-center gap-2 mb-6">
-              <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-amber-500/10 border border-amber-500/20 text-amber-300 shadow-[0_0_20px_rgba(245,158,11,0.15)]">
-                <Flame className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
-                <span>STRICTLY LIMITED TO 20 CUSTOMERS ONLY</span>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-neutral-900 border border-neutral-800 text-neutral-300">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                <span>FOUNDER CHARTER · LIMITED TO 20 ACCOUNTS</span>
               </span>
             </div>
           </AnimateIn>
@@ -258,13 +250,13 @@ export default async function FounderLifetimeDealPage(props: {
             <div className="text-center max-w-3xl mx-auto">
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.1] mb-6">
                 URPASS Founder <br />
-                <span className="bg-gradient-to-r from-purple-400 via-brand-light to-amber-300 bg-clip-text text-transparent">
-                  Lifetime Plan
+                <span className="text-white">
+                  Lifetime Access
                 </span>
               </h1>
               <p className="text-base sm:text-lg text-neutral-300 leading-relaxed mb-8">
                 Get full access to all <strong className="text-white">currently available URPASS features</strong> for a single one-time payment of{" "}
-                <span className="text-amber-300 font-bold">{founderPrice}</span>. Never pay a monthly or annual subscription fee again.
+                <span className="text-white font-bold underline decoration-brand decoration-2 underline-offset-4">{founderPrice}</span>. Never pay a monthly or annual subscription fee again.
               </p>
             </div>
           </AnimateIn>
@@ -283,13 +275,11 @@ export default async function FounderLifetimeDealPage(props: {
 
           {/* Pricing Highlight Card */}
           <AnimateIn delay={100}>
-            <div className="relative bg-gradient-to-b from-white/[0.08] to-white/[0.02] border border-white/10 rounded-3xl p-6 sm:p-10 shadow-2xl backdrop-blur-xl mb-16 overflow-hidden">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-brand/20 blur-3xl rounded-full pointer-events-none" />
-
-              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 pb-8 border-b border-white/10">
+            <div className="relative bg-neutral-900 border border-neutral-800 rounded-2xl p-6 sm:p-10 shadow-sm mb-16 overflow-hidden">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 pb-8 border-b border-neutral-800">
                 <div>
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold mb-3">
-                    <Sparkles className="w-3.5 h-3.5" />
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-neutral-800 border border-neutral-700 text-neutral-300 text-xs font-semibold mb-3">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
                     <span>Permanent Operational License</span>
                   </div>
                   <h2 className="text-3xl font-bold tracking-tight text-white mb-2">
@@ -316,7 +306,7 @@ export default async function FounderLifetimeDealPage(props: {
                     href={`https://wa.me/919001270298?text=${encodeURIComponent(whatsappMessage)}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl font-semibold text-sm bg-white/5 hover:bg-white/10 border border-white/10 text-white transition-all text-center"
+                    className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm bg-neutral-800 hover:bg-neutral-750 border border-neutral-700 text-white transition-colors text-center"
                   >
                     <MessageCircle className="w-4 h-4 text-emerald-400" />
                     <span>Talk on WhatsApp (+91 90012 70298)</span>

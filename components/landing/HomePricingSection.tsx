@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Flame, ArrowRight } from "lucide-react";
+import { ShieldCheck, ArrowRight } from "lucide-react";
 import AnimateIn from "@/components/ui/AnimateIn";
 import { detectCountryClient } from "@/lib/country-config";
 
@@ -187,17 +187,17 @@ export default function HomePricingSection({ initialCountry = "IN" }: Props) {
 
         {/* ── Founder Lifetime Plan Callout Banner ── */}
         <AnimateIn delay={60} from="up">
-          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-neutral-950 via-purple-950 to-neutral-950 p-6 sm:p-8 border border-purple-500/30 text-white shadow-xl mb-8 sm:mb-10">
+          <div className="relative overflow-hidden rounded-2xl bg-neutral-900 border border-neutral-800 p-6 sm:p-8 text-white shadow-sm mb-8 sm:mb-10">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
               <div className="space-y-2">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-amber-400/10 border border-amber-400/30 text-amber-300">
-                  <Flame className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-neutral-800 border border-neutral-700 text-neutral-300">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
                   <span>FOUNDER DEAL · LIMITED TO 20 ACCOUNTS ONLY</span>
                 </div>
                 <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
                   {founderPriceTitle}
                 </h3>
-                <p className="text-xs sm:text-sm text-neutral-300 max-w-2xl leading-relaxed">
+                <p className="text-xs sm:text-sm text-neutral-400 max-w-2xl leading-relaxed">
                   Permanent access to all currently available URPASS features for a one-time payment. Zero renewal fees forever. Valid for the lifetime of URPASS platform.
                 </p>
               </div>
@@ -205,7 +205,7 @@ export default function HomePricingSection({ initialCountry = "IN" }: Props) {
               <div className="shrink-0 flex flex-col sm:flex-row gap-3">
                 <Link
                   href={founderDealHref}
-                  className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-brand to-purple-600 hover:from-brand-light hover:to-purple-500 text-white font-semibold text-xs sm:text-sm transition-all shadow-lg active:scale-95 text-center whitespace-nowrap"
+                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-white text-neutral-900 hover:bg-neutral-100 font-semibold text-xs sm:text-sm transition-colors text-center whitespace-nowrap shadow-sm"
                 >
                   <span>View Lifetime Deal</span>
                   <ArrowRight className="w-4 h-4" />

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X, ArrowRight, Sparkles } from "lucide-react";
+import { Menu, X, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { detectCountryClient } from "@/lib/country-config";
 
@@ -61,22 +61,19 @@ export default function Navbar() {
     <header className="fixed top-0 inset-x-0 z-50 transition-all duration-300">
       {/* ── Top Notification / Announcement Bar ── */}
       {bannerVisible && (
-        <div className="bg-gradient-to-r from-neutral-950 via-purple-950 to-neutral-950 text-white border-b border-purple-900/30 text-[11px] sm:text-xs py-1 sm:py-1.5 px-2.5 sm:px-4 relative z-50 shadow-xs">
-          <div className="max-w-6xl mx-auto flex items-center justify-between gap-1.5 sm:gap-2">
-            <div className="flex-1 flex items-center justify-center gap-1 sm:gap-1.5 text-center leading-tight truncate">
-              <span className="inline-flex items-center text-purple-300 shrink-0">
-                <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-              </span>
-              <span className="text-neutral-200 font-normal">
-                <span className="sm:hidden">{isUk ? "30-day free trial · £0 today." : "30-day free trial · ₹0 today."}</span>
-                <span className="hidden sm:inline">{isUk ? "Start free or try any paid plan with our 30-day free trial. £0 today." : "Start free or try any paid plan with our 30-day free trial. ₹0 today."}</span>
+        <div className="bg-neutral-900 text-neutral-200 border-b border-neutral-800 text-[11px] sm:text-xs py-1.5 px-3 sm:px-4 relative z-50">
+          <div className="max-w-6xl mx-auto flex items-center justify-between gap-2">
+            <div className="flex-1 flex items-center justify-center gap-1.5 sm:gap-2 text-center leading-tight truncate">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+              <span className="text-neutral-300 font-normal">
+                <span className="sm:hidden">{isUk ? "30-day trial · £0 today." : "30-day trial · ₹0 today."}</span>
+                <span className="hidden sm:inline">{isUk ? "Start free or evaluate any paid plan with our 30-day trial. £0 today." : "Start free or evaluate any paid plan with our 30-day trial. ₹0 today."}</span>
               </span>
               <Link
                 href="/pricing"
-                className="inline-flex items-center gap-0.5 font-semibold text-purple-300 hover:text-white transition-colors shrink-0 ml-1 underline-offset-2 hover:underline"
+                className="inline-flex items-center gap-0.5 font-medium text-white hover:text-neutral-300 transition-colors shrink-0 ml-1 underline-offset-2 hover:underline"
               >
-                <span className="sm:hidden">Try free</span>
-                <span className="hidden sm:inline">Try 30 days free</span>
+                <span>{isUk ? "Try free" : "Try free"}</span>
                 <ArrowRight className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
               </Link>
             </div>

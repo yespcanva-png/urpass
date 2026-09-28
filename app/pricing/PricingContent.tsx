@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Check, Minus, ChevronDown, Sparkles, Flame, ArrowRight } from "lucide-react";
+import { Check, Minus, ChevronDown, ShieldCheck, ArrowRight } from "lucide-react";
 import TrialConfirmationModal from "@/components/billing/TrialConfirmationModal";
 import FounderSpotCounter from "@/components/billing/FounderSpotCounter";
 import { detectCountryClient } from "@/lib/country-config";
@@ -307,8 +307,8 @@ export default function PricingContent({
 
           {!trialUsed ? (
             <>
-              <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-brand-50 border border-brand-100 text-brand text-xs font-bold tracking-wider uppercase mb-4">
-                <Sparkles className="w-3.5 h-3.5" />
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-brand-50 border border-brand-100 text-brand text-xs font-semibold tracking-wider uppercase mb-4">
+                <span className="w-1.5 h-1.5 rounded-full bg-brand inline-block" />
                 YOUR FIRST 30 DAYS ARE FREE
               </div>
               <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-neutral-900 mb-4">
@@ -366,11 +366,11 @@ export default function PricingContent({
 
         {/* ── Founder Lifetime Plan Callout Banner ── */}
         <section className="max-w-5xl mx-auto mb-12">
-          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-neutral-950 via-purple-950 to-neutral-950 p-6 sm:p-8 border border-purple-500/30 text-white shadow-xl">
+          <div className="relative overflow-hidden rounded-2xl bg-neutral-900 border border-neutral-800 p-6 sm:p-8 text-white shadow-sm">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
               <div className="space-y-2">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-amber-400/10 border border-amber-400/30 text-amber-300">
-                  <Flame className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-neutral-800 border border-neutral-700 text-neutral-300">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
                   <span>FOUNDER DEAL · LIMITED TO 20 ACCOUNTS ONLY</span>
                 </div>
                 <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
@@ -378,7 +378,7 @@ export default function PricingContent({
                     ? "URPASS Founder Lifetime Access — £249 One-Time"
                     : "URPASS Founder Lifetime Access — ₹19,999 One-Time"}
                 </h3>
-                <p className="text-xs sm:text-sm text-neutral-300 max-w-2xl leading-relaxed">
+                <p className="text-xs sm:text-sm text-neutral-400 max-w-2xl leading-relaxed">
                   Get permanent access to all currently available URPASS features for a one-time payment. Create event landing pages on urpass.space and lock in all features for lifetime (Term 2125).
                 </p>
 
@@ -395,7 +395,7 @@ export default function PricingContent({
               <div className="shrink-0 flex flex-col sm:flex-row gap-3">
                 <Link
                   href={country === "GB" ? "/founder-lifetime-deal?country=GB" : "/founder-lifetime-deal"}
-                  className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-brand to-purple-600 hover:from-brand-light hover:to-purple-500 text-white font-semibold text-xs sm:text-sm transition-all shadow-lg active:scale-95 text-center whitespace-nowrap"
+                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-white text-neutral-900 hover:bg-neutral-100 font-semibold text-xs sm:text-sm transition-colors text-center whitespace-nowrap shadow-sm"
                 >
                   <span>View Lifetime Plan</span>
                   <ArrowRight className="w-4 h-4" />
