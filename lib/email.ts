@@ -1,11 +1,15 @@
 import { Resend } from "resend";
 
-const RESEND_API_KEY = process.env.RESEND_API_KEY ?? "";
 const isDev = process.env.NODE_ENV === "development";
+
+function cleanString(val?: string | null): string {
+  if (!val) return "";
+  return String(val).replace(/^["']|["']$/g, "").trim();
+}
 
 // Dynamically resolve Resend instance using runtime environment variables
 function getResend() {
-  const apiKey = process.env.RESEND_API_KEY;
+  const apiKey = cleanString(process.env.RESEND_API_KEY);
   if (!apiKey || apiKey.startsWith("re_your")) {
     return null;
   }
@@ -14,14 +18,16 @@ function getResend() {
 
 // Verified sending domain in Resend
 export function getFromEmail(): string {
-  return process.env.EMAIL_FROM || "URPASS <noreply@urpass.space>";
+  const raw = cleanString(process.env.EMAIL_FROM);
+  return raw || "URPASS <noreply@urpass.space>";
 }
 
-const FROM = process.env.EMAIL_FROM || "URPASS <noreply@urpass.space>";
+const FROM = getFromEmail();
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://urpass.space";
 
 export function getOwnerEmail(): string {
-  return process.env.OWNER_EMAIL || "srinithin@yespstudio.com";
+  const raw = cleanString(process.env.OWNER_EMAIL);
+  return raw || "srinithin@yespstudio.com";
 }
 
 const OWNER_EMAIL = "srinithin@yespstudio.com";
@@ -62,12 +68,24 @@ async function sendEmail(payload: Parameters<Resend["emails"]["send"]>[0]) {
     return;
   }
   try {
-    const { data, error } = await resend.emails.send(payload);
+    const rawFrom = cleanString(payload.from);
+    const cleanedFrom = rawFrom || getFromEmail();
+    const cleanedTo = typeof payload.to === "string"
+      ? cleanString(payload.to)
+      : Array.isArray(payload.to)
+      ? payload.to.map((t) => (typeof t === "string" ? cleanString(t) : t))
+      : payload.to;
+
+    const { data, error } = await resend.emails.send({
+      ...payload,
+      from: cleanedFrom,
+      to: cleanedTo,
+    });
     if (error) {
       console.error("[email] Resend API error:", error);
       throw error;
     }
-    const recipient = Array.isArray(payload.to) ? payload.to.join(", ") : payload.to;
+    const recipient = Array.isArray(cleanedTo) ? cleanedTo.join(", ") : cleanedTo;
     console.log(`[email] Sent to ${recipient} | "${payload.subject}" (id: ${data?.id})`);
     return data;
   } catch (err) {

@@ -115,8 +115,25 @@ function LoginContent() {
       return;
     }
 
+    const user = signInData.user;
     try {
-      const user = signInData.user;
+      fetch("/api/auth/notify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "login",
+          email: data.email,
+          name: user?.user_metadata?.full_name || null,
+          provider: "email",
+          userId: user?.id,
+        }),
+        keepalive: true,
+      }).catch((err) => console.error("[login] notify API error:", err));
+    } catch (err) {
+      console.error("[login] notify dispatch error:", err);
+    }
+
+    try {
       await sendLoginNotifications({
         email: data.email,
         name: user?.user_metadata?.full_name || null,
