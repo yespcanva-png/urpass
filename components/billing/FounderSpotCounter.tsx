@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Lock, CheckCircle2, ShieldCheck } from "lucide-react";
+import { Sparkles, Users, Lock, CheckCircle2, ShieldCheck } from "lucide-react";
 
 interface Props {
   claimedCount?: number;
@@ -14,7 +14,7 @@ interface Props {
 export default function FounderSpotCounter({
   claimedCount = 14,
   totalCount = 20,
-  variant = "dark",
+  variant = "gradient",
   showFeaturesLock = true,
   className = "",
 }: Props) {
@@ -25,26 +25,29 @@ export default function FounderSpotCounter({
     return (
       <div className={`space-y-2.5 ${className}`}>
         <div className="flex items-center justify-between text-xs">
-          <span className="font-medium text-neutral-200 flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+          <span className="font-semibold text-amber-300 flex items-center gap-1.5">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+            </span>
             <span>{claimedCount} of {totalCount} Founder Spots Claimed</span>
           </span>
-          <span className="text-neutral-400 font-medium">Only {remaining} left</span>
+          <span className="text-white/80 font-medium">Only {remaining} left</span>
         </div>
-        <div className="w-full h-2 rounded-full bg-neutral-800 overflow-hidden border border-neutral-700/60">
+        <div className="w-full h-2.5 rounded-full bg-white/10 overflow-hidden p-0.5 border border-white/10">
           <div
-            className="h-full rounded-full bg-emerald-400 transition-all duration-700"
+            className="h-full rounded-full bg-gradient-to-r from-brand via-purple-500 to-amber-400 transition-all duration-1000 shadow-[0_0_12px_rgba(251,191,36,0.5)]"
             style={{ width: `${percentage}%` }}
           />
         </div>
         {showFeaturesLock && (
-          <div className="flex items-center justify-between text-[11px] text-neutral-400 gap-2 pt-1 border-t border-neutral-800/80">
-            <span className="flex items-center gap-1.5 text-neutral-300">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+          <div className="flex items-center justify-between text-[11px] text-neutral-300 gap-2 pt-1 border-t border-white/10">
+            <span className="flex items-center gap-1.5 text-emerald-400">
+              <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
               Landing page on urpass.space
             </span>
-            <span className="flex items-center gap-1.5 text-neutral-400">
-              <Lock className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
+            <span className="flex items-center gap-1.5 text-amber-300">
+              <Lock className="w-3.5 h-3.5 shrink-0" />
               Lifetime locked (2125)
             </span>
           </div>
@@ -55,45 +58,52 @@ export default function FounderSpotCounter({
 
   return (
     <div
-      className={`rounded-xl border border-neutral-800 p-4 sm:p-5 bg-neutral-900 text-white shadow-xs transition-all ${className}`}
+      className={`rounded-2xl border p-4 sm:p-5 backdrop-blur-md transition-all ${
+        variant === "gradient"
+          ? "bg-gradient-to-r from-brand/15 via-purple-900/20 to-amber-500/10 border-amber-400/30 shadow-[0_4px_24px_rgba(124,58,237,0.15)]"
+          : "bg-white/[0.04] border-white/10"
+      } ${className}`}
     >
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
         <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
-          <p className="text-xs sm:text-sm font-semibold text-white tracking-tight flex items-center gap-1.5">
-            <span className="text-neutral-400">Founder Allocation:</span>
-            <span className="text-white font-bold">{claimedCount} of {totalCount} Claimed</span>
+          <span className="relative flex h-2.5 w-2.5">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
+          </span>
+          <p className="text-xs sm:text-sm font-bold text-white tracking-tight flex items-center gap-1.5">
+            <span>Founder Allocation:</span>
+            <span className="text-amber-300 font-extrabold">{claimedCount} of {totalCount} Claimed</span>
           </p>
         </div>
 
-        <span className="inline-flex items-center self-start sm:self-auto gap-1.5 text-[11px] font-semibold tracking-wider text-neutral-300 bg-neutral-800 border border-neutral-700 px-2.5 py-1 rounded-md">
-          <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+        <span className="inline-flex items-center self-start sm:self-auto gap-1 text-[11px] font-bold uppercase tracking-wider text-amber-300 bg-amber-400/15 border border-amber-400/30 px-2.5 py-1 rounded-full">
+          <Sparkles className="w-3 h-3 text-amber-400" />
           <span>Only {remaining} spots remaining</span>
         </span>
       </div>
 
       {/* Progress Bar Track */}
-      <div className="w-full h-2.5 rounded-full bg-neutral-800 p-0.5 overflow-hidden mb-2.5 border border-neutral-700/60">
+      <div className="w-full h-3 rounded-full bg-white/10 p-0.5 overflow-hidden mb-3 border border-white/10">
         <div
-          className="h-full rounded-full bg-emerald-400 transition-all duration-700"
+          className="h-full rounded-full bg-gradient-to-r from-brand via-purple-500 to-amber-400 transition-all duration-1000 shadow-[0_0_16px_rgba(251,191,36,0.6)]"
           style={{ width: `${percentage}%` }}
         />
       </div>
 
       <div className="flex items-center justify-between text-[11px] text-neutral-400">
         <span>0 claimed</span>
-        <span className="text-neutral-300 font-medium">Cohort closes permanently at 20</span>
+        <span className="text-amber-200/90 font-medium">Cohort closes permanently at 20</span>
         <span>20 max</span>
       </div>
 
       {showFeaturesLock && (
-        <div className="mt-3.5 pt-3.5 border-t border-neutral-800 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-neutral-300">
+        <div className="mt-3.5 pt-3.5 border-t border-white/10 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-neutral-300">
           <div className="flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
             <span>Create landing pages on <strong>urpass.space</strong></span>
           </div>
           <div className="flex items-center gap-2">
-            <Lock className="w-4 h-4 text-neutral-400 shrink-0" />
+            <Lock className="w-4 h-4 text-amber-400 shrink-0" />
             <span>Features locked in for lifetime (Term 2125)</span>
           </div>
         </div>
