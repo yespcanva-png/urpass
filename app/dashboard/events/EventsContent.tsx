@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Plus, Calendar, MapPin, ChevronRight, Search, SlidersHorizontal } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Plus, Calendar, MapPin, ChevronRight, Search, SlidersHorizontal, Copy, Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { duplicateEvent } from "@/app/actions/events";
 
 interface Event {
   id: string; name: string; venue: string; event_date: string; status: string;
@@ -38,6 +40,26 @@ export default function EventsContent() {
   const [loaded, setLoaded] = useState(false);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
+  const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
+  const router = useRouter();
+
+  async function handleDuplicate(e: React.MouseEvent, id: string) {
+    e.preventDefault();
+    e.stopPropagation();
+    setDuplicatingId(id);
+    try {
+      const res = await duplicateEvent(id);
+      if (res?.error) {
+        alert(res.error);
+        setDuplicatingId(null);
+      } else if (res?.newEventId) {
+        router.push(`/event/${res.newEventId}`);
+      }
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to duplicate event");
+      setDuplicatingId(null);
+    }
+  }
 
   useEffect(() => {
     async function load() {
@@ -213,6 +235,20 @@ export default function EventsContent() {
                   <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
                   {cfg.label}
                 </span>
+
+                <button
+                  type="button"
+                  title="Duplicate event"
+                  disabled={duplicatingId === event.id}
+                  onClick={(e) => handleDuplicate(e, event.id)}
+                  className="p-1.5 rounded-lg text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 transition-colors shrink-0 disabled:opacity-50"
+                >
+                  {duplicatingId === event.id ? (
+                    <Loader2 className="w-4 h-4 animate-spin text-brand" />
+                  ) : (
+                    <Copy className="w-4 h-4" />
+                  )}
+                </button>
 
                 <ChevronRight className="w-4 h-4 text-neutral-200 group-hover:text-brand transition-colors shrink-0" />
               </Link>

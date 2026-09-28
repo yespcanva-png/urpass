@@ -21,10 +21,11 @@ import {
   LifeBuoy,
   Loader2,
   AlertCircle,
+  Copy,
 } from "lucide-react";
 import CopyLinkButton from "@/components/event/CopyLinkButton";
 import { createClient } from "@/lib/supabase/client";
-import { updateEventStatus } from "@/app/actions/events";
+import { updateEventStatus, duplicateEvent } from "@/app/actions/events";
 import EventCommunicationsCard from "@/components/event/EventCommunicationsCard";
 import EventAttendeeFeedbackCard from "@/components/event/EventAttendeeFeedbackCard";
 
@@ -136,6 +137,24 @@ export default function EventOverview({ event, initialAttendees = [] }: Props) {
       setPublishError(err instanceof Error ? err.message : "Failed to publish event.");
     } finally {
       setIsPublishing(false);
+    }
+  }
+
+  const [isDuplicating, setIsDuplicating] = useState(false);
+
+  async function handleDuplicateEvent() {
+    setIsDuplicating(true);
+    try {
+      const res = await duplicateEvent(event.id);
+      if (res?.error) {
+        alert(res.error);
+        setIsDuplicating(false);
+      } else if (res?.newEventId) {
+        router.push(`/event/${res.newEventId}`);
+      }
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to duplicate event");
+      setIsDuplicating(false);
     }
   }
 
@@ -421,6 +440,19 @@ export default function EventOverview({ event, initialAttendees = [] }: Props) {
             <LifeBuoy className="w-4 h-4 text-neutral-500" />
             Creator Support
           </a>
+          <button
+            type="button"
+            onClick={handleDuplicateEvent}
+            disabled={isDuplicating}
+            className="flex items-center gap-2 bg-white border border-neutral-200 shadow-sm rounded-xl px-4 py-2 text-sm font-medium text-neutral-700 hover:border-neutral-300 hover:shadow-md transition-all disabled:opacity-50 cursor-pointer"
+          >
+            {isDuplicating ? (
+              <Loader2 className="w-4 h-4 animate-spin text-brand" />
+            ) : (
+              <Copy className="w-4 h-4 text-neutral-500" />
+            )}
+            Duplicate
+          </button>
         </div>
 
         <div className="flex items-center gap-1.5 text-xs">

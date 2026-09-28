@@ -503,3 +503,96 @@ export async function deleteEvent(eventId: string): Promise<ActionResult> {
   revalidatePath("/dashboard/events");
   redirect("/dashboard/events");
 }
+
+export async function duplicateEvent(
+  eventId: string
+): Promise<{ newEventId?: string; error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const { data: source } = await supabase
+    .from("events")
+    .select("*")
+    .eq("id", eventId)
+    .single();
+
+  if (!source) return { error: "Source event not found." };
+
+  let isAuthorized = source.organizer_id === user.id;
+  if (!isAuthorized && source.organization_id) {
+    const { data: member } = await supabase
+      .from("organization_members")
+      .select("role")
+      .eq("organization_id", source.organization_id)
+      .eq("user_id", user.id)
+      .eq("status", "active")
+      .in("role", ["owner", "admin", "event_manager"])
+      .single();
+    isAuthorized = !!member;
+  }
+
+  if (!isAuthorized) {
+    return { error: "You are not authorized to duplicate this event." };
+  }
+
+  const newName = `${source.name} (Copy)`;
+  const apply_slug = generateApplySlug();
+  const tomorrow = new Date(Date.now() + 86400000).toISOString().split("T")[0];
+
+  const insertPayload: Record<string, unknown> = {
+    organizer_id: user.id,
+    organization_id: source.organization_id ?? null,
+    name: newName,
+    description: source.description ?? null,
+    venue: source.venue ?? "Main Venue",
+    event_date: tomorrow,
+    start_time: source.start_time ?? "10:00",
+    end_time: source.end_time ?? "12:00",
+    attendee_limit: source.attendee_limit ?? 100,
+    status: "draft",
+    application_enabled: source.application_enabled !== false,
+    auto_approve: !!source.auto_approve,
+    waitlist_enabled: source.waitlist_enabled ?? true,
+    is_paid_event: !!source.is_paid_event,
+    ticket_price: source.ticket_price ?? 0,
+    currency: source.currency || "INR",
+    timezone: source.timezone || "Asia/Kolkata",
+    event_type: source.event_type || "physical",
+    meeting_url: source.meeting_url ?? null,
+    meeting_platform: source.meeting_platform ?? null,
+    custom_fields: source.custom_fields ?? [],
+    apply_slug,
+  };
+
+  const { data: newEvent, error } = await supabase
+    .from("events")
+    .insert(insertPayload)
+    .select("id")
+    .single();
+
+  if (error || !newEvent) {
+    return { error: error?.message || "Failed to create duplicated event." };
+  }
+
+  // Clone ticket types if any exist
+  const { data: sourceTicketTypes } = await supabase
+    .from("ticket_types")
+    .select("name, description, category, price, capacity, max_per_person, position, status")
+    .eq("event_id", eventId);
+
+  if (sourceTicketTypes && sourceTicketTypes.length > 0) {
+    const ticketTypeInserts = sourceTicketTypes.map((tt) => ({
+      ...tt,
+      event_id: newEvent.id,
+    }));
+    await supabase.from("ticket_types").insert(ticketTypeInserts);
+  }
+
+  void recordApiUsage(user.id, "events", 1);
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/events");
+  return { newEventId: newEvent.id };
+}
