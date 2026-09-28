@@ -216,8 +216,8 @@ export default async function PlatformPage() {
       <section className="pt-28 pb-14 sm:pt-40 sm:pb-28 px-4 sm:px-8 overflow-hidden">
         <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 sm:gap-16 items-center">
           <div>
-            <div className="hero-badge inline-flex items-center gap-2 bg-brand-50 text-brand text-[11px] sm:text-xs font-semibold tracking-wider px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full mb-4 sm:mb-6">
-              <span className="w-1.5 h-1.5 rounded-full bg-brand inline-block" />
+            <div className="hero-badge inline-flex items-center gap-2 bg-neutral-100 text-neutral-800 text-[11px] sm:text-xs font-semibold tracking-wider px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full mb-4 sm:mb-6 border border-neutral-200">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
               EVENT REGISTRATION &amp; QR CHECK-IN PLATFORM
             </div>
 

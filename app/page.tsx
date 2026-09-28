@@ -271,20 +271,21 @@ export default async function LandingPage() {
 
           {/* Left: text — CSS animations (always above fold, no observer) */}
           <div>
-            <div className="flex flex-wrap items-center gap-2 mb-6 sm:mb-8">
-              <div className="hero-badge inline-flex items-center gap-2 bg-neutral-100 text-neutral-800 text-[11px] sm:text-xs font-semibold tracking-wider px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full border border-neutral-200">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
-                DIGITAL EVENT PASS &amp; CHECK-IN OS
-              </div>
-              <Link
-                href="/mcp-event-management"
-                className="inline-flex items-center gap-1.5 bg-neutral-100 hover:bg-neutral-200/80 text-neutral-700 text-[11px] sm:text-xs font-medium px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full transition-colors group border border-neutral-200/60"
-              >
-                <span className="w-1.5 h-1.5 rounded-full bg-neutral-700 inline-block" />
+            <Link
+              href="/mcp-event-management"
+              className="hero-badge group inline-flex items-center gap-2.5 px-3 py-1.5 rounded-full border border-neutral-200/90 bg-neutral-50/70 hover:bg-neutral-100/80 hover:border-neutral-300 transition-all mb-6 sm:mb-8 text-xs max-w-full"
+            >
+              <span className="inline-flex items-center gap-1.5 font-semibold text-neutral-900 bg-white border border-neutral-200 px-2 py-0.5 rounded-full text-[10px] tracking-wide uppercase shrink-0 shadow-xs">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                Digital Pass OS
+              </span>
+              <span className="text-neutral-600 font-medium truncate">
                 MCP Supported for Claude &amp; Cursor
-                <span className="text-neutral-400 group-hover:translate-x-0.5 transition-transform">&rarr;</span>
-              </Link>
-            </div>
+              </span>
+              <span className="text-neutral-400 group-hover:text-neutral-900 group-hover:translate-x-0.5 transition-transform text-xs shrink-0 font-medium">
+                &rarr;
+              </span>
+            </Link>
 
             <h1 className="text-5xl sm:text-6xl lg:text-7xl font-semibold tracking-tight leading-[1.05] mb-4 sm:mb-6">
               <span className="hero-line-1 block">Create.</span>
