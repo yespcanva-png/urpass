@@ -170,36 +170,44 @@ const EVENT_PASSES = [
 
 // ─── FAQ ───────────────────────────────────────────────────────────────────────
 
-const FAQS = [
-  {
-    q: "Can I cancel anytime?",
-    a: "Yes. Cancel from your billing settings at any time. You keep access until the end of your current billing period — no prorated refunds, no lock-in.",
-  },
-  {
-    q: "What happens when I reach my registration limit?",
-    a: "New registrations are paused and a notice is shown to you in the dashboard. Your existing attendee data, passes, and check-in records are always accessible — nothing is deleted.",
-  },
-  {
-    q: "Can I change plans mid-cycle?",
-    a: "Yes. Upgrades take effect immediately. Downgrades take effect at the start of your next billing period so you keep what you paid for.",
-  },
-  {
-    q: "Do attendees need a URPASS account?",
-    a: "No. Attendees receive their QR pass by email or a shareable link. No account, app download, or login required on their side.",
-  },
-  {
-    q: "Can I purchase URPASS for a single event?",
-    a: "Yes. Event passes (₹299 / ₹599 / ₹999) let you run one event without a monthly subscription. You pick the tier based on expected registrations.",
-  },
-  {
-    q: "Can I sell paid tickets?",
-    a: "Yes. Connect Razorpay to sell paid tickets with direct payouts to your Indian bank account via UPI, cards, and net banking — with zero per-ticket platform commissions from URPASS.",
-  },
-  {
-    q: "What happens to my data if I cancel?",
-    a: "Your event and attendee data is retained for 30 days after cancellation, giving you time to export everything. After 30 days, data is permanently deleted.",
-  },
-];
+function getFaqs(country: "IN" | "GB") {
+  return [
+    {
+      q: "Can I cancel anytime?",
+      a: "Yes. Cancel from your billing settings at any time. You keep access until the end of your current billing period — no prorated refunds, no lock-in.",
+    },
+    {
+      q: "What happens when I reach my registration limit?",
+      a: "New registrations are paused and a notice is shown to you in the dashboard. Your existing attendee data, passes, and check-in records are always accessible — nothing is deleted.",
+    },
+    {
+      q: "Can I change plans mid-cycle?",
+      a: "Yes. Upgrades take effect immediately. Downgrades take effect at the start of your next billing period so you keep what you paid for.",
+    },
+    {
+      q: "Do attendees need a URPASS account?",
+      a: "No. Attendees receive their QR pass by email or a shareable link. No account, app download, or login required on their side.",
+    },
+    {
+      q: "Can I purchase URPASS for a single event?",
+      a:
+        country === "GB"
+          ? "Yes. Event passes (£5 / £10 / £19) let you run one event without a monthly subscription. You pick the tier based on expected registrations."
+          : "Yes. Event passes (₹299 / ₹599 / ₹999) let you run one event without a monthly subscription. You pick the tier based on expected registrations.",
+    },
+    {
+      q: "Can I sell paid tickets?",
+      a:
+        country === "GB"
+          ? "Yes. URPASS supports paid ticket sales with zero per-ticket platform commissions, direct payouts, and full UK GDPR compliance."
+          : "Yes. Connect Razorpay to sell paid tickets with direct payouts to your Indian bank account via UPI, cards, and net banking — with zero per-ticket platform commissions from URPASS.",
+    },
+    {
+      q: "What happens to my data if I cancel?",
+      a: "Your event and attendee data is retained for 30 days after cancellation, giving you time to export everything. After 30 days, data is permanently deleted.",
+    },
+  ];
+}
 
 // ─── Helper components ─────────────────────────────────────────────────────────
 
@@ -232,6 +240,7 @@ interface Props {
   trialUsed?: boolean;
   userEmail?: string;
   userName?: string;
+  initialCountry?: "IN" | "GB";
 }
 
 export default function PricingContent({
@@ -239,13 +248,17 @@ export default function PricingContent({
   trialUsed = false,
   userEmail = "",
   userName = "",
+  initialCountry = "IN",
 }: Props = {}) {
   const [cycle, setCycle] = useState<Cycle>("monthly");
-  const [country, setCountry] = useState<"IN" | "GB">("IN");
+  const [country, setCountry] = useState<"IN" | "GB">(initialCountry);
   const [trialModal, setTrialModal] = useState<{ planSlug: string; planName: string } | null>(null);
 
   useEffect(() => {
-    setCountry(detectCountryClient());
+    const detected = detectCountryClient();
+    if (detected) {
+      setCountry(detected);
+    }
   }, []);
 
   function displayPrice(plan: typeof PLANS[0]) {
@@ -361,7 +374,9 @@ export default function PricingContent({
                   <span>FOUNDER DEAL · LIMITED TO 20 ACCOUNTS ONLY</span>
                 </div>
                 <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
-                  URPASS Founder Lifetime Access — ₹19,999 One-Time
+                  {country === "GB"
+                    ? "URPASS Founder Lifetime Access — £249 One-Time"
+                    : "URPASS Founder Lifetime Access — ₹19,999 One-Time"}
                 </h3>
                 <p className="text-xs sm:text-sm text-neutral-300 max-w-2xl leading-relaxed">
                   Get permanent access to all currently available URPASS features for a one-time payment. Create event landing pages on urpass.space and lock in all features for lifetime (Term 2125).
@@ -379,7 +394,7 @@ export default function PricingContent({
 
               <div className="shrink-0 flex flex-col sm:flex-row gap-3">
                 <Link
-                  href="/founder-lifetime-deal"
+                  href={country === "GB" ? "/founder-lifetime-deal?country=GB" : "/founder-lifetime-deal"}
                   className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-brand to-purple-600 hover:from-brand-light hover:to-purple-500 text-white font-semibold text-xs sm:text-sm transition-all shadow-lg active:scale-95 text-center whitespace-nowrap"
                 >
                   <span>View Lifetime Plan</span>
@@ -441,7 +456,7 @@ export default function PricingContent({
                         </button>
                       ) : (
                         <Link
-                          href={`/signup?from=pricing&plan=${plan.slug}&trial=true&next=${encodeURIComponent(`/billing?trial=${plan.slug}`)}`}
+                          href={`/signup?from=pricing&plan=${plan.slug}&trial=true${country === "GB" ? "&country=GB" : ""}&next=${encodeURIComponent(country === "GB" ? `/billing?trial=${plan.slug}&country=GB` : `/billing?trial=${plan.slug}`)}`}
                           className={`w-full text-center py-3 rounded-xl text-sm font-bold transition-all shadow-sm ${
                             plan.highlight
                               ? "bg-white text-neutral-900 hover:bg-neutral-100"
@@ -463,10 +478,10 @@ export default function PricingContent({
                         plan.monthly === 0
                           ? isAuthenticated
                             ? "/dashboard"
-                            : "/signup?from=pricing&next=/billing"
+                            : `/signup?from=pricing${country === "GB" ? "&country=GB" : ""}&next=/billing`
                           : isAuthenticated
-                          ? "/billing"
-                          : `/signup?from=pricing&plan=${plan.slug}&next=/billing`
+                          ? `/billing${country === "GB" ? "?country=GB" : ""}`
+                          : `/signup?from=pricing&plan=${plan.slug}${country === "GB" ? "&country=GB" : ""}&next=/billing`
                       }
                       className={`w-full text-center py-3 rounded-xl text-sm font-semibold transition-colors ${
                         plan.highlight
@@ -632,7 +647,7 @@ export default function PricingContent({
         <section className="max-w-2xl mx-auto pb-28">
           <h2 className="text-xl font-semibold tracking-tight text-neutral-900 mb-6">Frequently asked questions</h2>
           <div className="bg-white border border-neutral-100 rounded-2xl px-6">
-            {FAQS.map((faq) => (
+            {getFaqs(country).map((faq) => (
               <FaqItem key={faq.q} q={faq.q} a={faq.a} />
             ))}
           </div>

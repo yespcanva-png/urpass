@@ -262,7 +262,7 @@ export default function TrialConfirmationModal({
                 {planName} {isYearly ? "— Yearly" : ""}
               </h2>
               <p className="text-xs text-neutral-500 mt-0.5">
-                {priceFormatted}{isYearly ? "/year" : "/month"} + GST
+                {priceFormatted}{isYearly ? "/year" : "/month"} {isUk ? "+ VAT" : "+ GST"}
               </p>
             </div>
             <button
@@ -281,7 +281,7 @@ export default function TrialConfirmationModal({
               <span className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">
                 TODAY
               </span>
-              <span className="text-xl font-extrabold text-neutral-900">₹0</span>
+              <span className="text-xl font-extrabold text-neutral-900">{isUk ? "£0" : "₹0"}</span>
             </div>
 
             <div className="h-px bg-neutral-200/60" />
@@ -310,7 +310,7 @@ export default function TrialConfirmationModal({
                 </span>
               </div>
               <span className="font-bold text-neutral-900 text-sm">
-                {priceFormatted} + GST
+                {priceFormatted} {isUk ? "+ VAT" : "+ GST"}
               </span>
             </div>
 
@@ -322,19 +322,24 @@ export default function TrialConfirmationModal({
                 </>
               ) : (
                 <>
-                  Then {priceFormatted}/month + GST until cancelled.
+                  Then {priceFormatted}/month {isUk ? "+ VAT" : "+ GST"} until cancelled.
                 </>
               )}
             </p>
           </div>
 
-          {/* AutoPay Requirement Notice */}
-          <div className="bg-neutral-100/80 rounded-xl p-3 flex items-center gap-2.5 text-xs text-neutral-600">
-            <ShieldCheck className="w-4 h-4 text-neutral-500 shrink-0" />
-            <span>
-              AutoPay authorization is required. Cancel anytime before your first payment.
-            </span>
-          </div>
+          {/* Requirement Notice */}
+          {isUk ? (
+            <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-3 flex items-center gap-2.5 text-xs text-emerald-800">
+              <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span>Direct UK Trial · No credit card or AutoPay required · Instant access.</span>
+            </div>
+          ) : (
+            <div className="bg-neutral-100/80 rounded-xl p-3 flex items-center gap-2.5 text-xs text-neutral-600">
+              <ShieldCheck className="w-4 h-4 text-neutral-500 shrink-0" />
+              <span>AutoPay authorization is required. Cancel anytime before your first payment.</span>
+            </div>
+          )}
 
           {error && (
             <div className="flex items-center gap-2 text-xs text-red-600 bg-red-50 border border-red-200 rounded-xl px-3.5 py-2.5">
@@ -353,18 +358,20 @@ export default function TrialConfirmationModal({
               {loading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Connecting to Razorpay...
+                  {isUk ? "Activating 30-Day Free Trial..." : "Connecting to Razorpay..."}
                 </>
               ) : (
                 <>
                   <Lock className="w-4 h-4" />
-                  Activate AutoPay & Start Trial
+                  {isUk ? "Start 30-Day Free Trial (£0)" : "Activate AutoPay & Start Trial"}
                 </>
               )}
             </button>
 
             <p className="text-center text-[10px] text-neutral-400">
-              Encrypted & secured by Razorpay · ₹0 charged today · Cancel anytime
+              {isUk
+                ? "30 days £0 · No card required · Instant access · Cancel anytime"
+                : "Encrypted & secured by Razorpay · ₹0 charged today · Cancel anytime"}
             </p>
           </div>
         </div>

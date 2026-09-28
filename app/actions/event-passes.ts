@@ -141,3 +141,31 @@ export async function activateEventPass(
     console.error("[event-passes] Payment notification error:", err);
   }
 }
+
+export async function activateUkEventPass(passType: string): Promise<ActionResult> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const registrationLimit = PASS_REG_LIMITS[passType];
+  const priceRupees       = PASS_PRICES[passType];
+  if (!registrationLimit || !priceRupees) {
+    return { error: "Invalid pass type." };
+  }
+
+  const ukRef = `UK_PASS_${Date.now().toString(36).toUpperCase()}`;
+
+  const { error } = await supabase.from("event_passes").insert({
+    user_id:            user.id,
+    pass_type:          passType,
+    registration_limit: registrationLimit,
+    price_rupees:       priceRupees,
+    payment_id:         ukRef,
+    status:             "available",
+  });
+
+  if (error) return { error: error.message };
+
+  return undefined;
+}
+

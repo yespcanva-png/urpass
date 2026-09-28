@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { headers, cookies } from "next/headers";
 import Navbar from "@/components/landing/Navbar";
 import FAQSection from "@/components/landing/FAQSection";
 import AnimateIn from "@/components/ui/AnimateIn";
 import Footer from "@/components/landing/Footer";
+import HomePricingSection from "@/components/landing/HomePricingSection";
+import { detectCountryFromHeaders } from "@/lib/country-config";
 import {
   FileText,
   Clock,
@@ -14,19 +17,17 @@ import {
   Megaphone,
   Users2,
   Mic,
-  Flame,
-  ArrowRight,
 } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "URPASS — India-Focused Digital Event Registration, QR Pass & Check-In Platform",
+  title: "URPASS — Digital Event Registration, QR Pass & Check-In Platform",
   description:
-    "An India-focused digital event registration, QR pass and check-in platform for colleges, conferences, hackathons, workshops and corporate events. Start free forever or try 30 days free.",
+    "Digital event registration, QR pass and check-in platform for colleges, conferences, hackathons, workshops and corporate events. Start free forever or try 30 days free.",
   alternates: { canonical: "https://urpass.space" },
   openGraph: {
-    title: "URPASS — India-Focused Digital Event Registration, QR Pass & Check-In Platform",
+    title: "URPASS — Digital Event Registration, QR Pass & Check-In Platform",
     description:
-      "An India-focused digital event registration, QR pass and check-in platform for colleges, conferences, hackathons, workshops and corporate events.",
+      "Digital event registration, QR pass and check-in platform for colleges, conferences, hackathons, workshops and corporate events.",
     url: "https://urpass.space",
   },
 };
@@ -67,9 +68,9 @@ function PassCard() {
           <p className="text-[10px] font-semibold tracking-widest text-neutral-400 mb-1">EVENT</p>
           <h3 className="font-semibold text-base sm:text-lg leading-snug text-neutral-900 mb-4 sm:mb-5">Tech Workshop 2026</h3>
           <div className="flex items-center gap-0 mb-4 sm:mb-5">
-            <div className="w-4 sm:w-5 h-4 sm:h-5 rounded-full bg-neutral-100 -ml-7 sm:-ml-9 shrink-0" />
+            <div className="w-4 sm:w-5 h-4 sm:w-5 rounded-full bg-neutral-100 -ml-7 sm:-ml-9 shrink-0" />
             <div className="flex-1 border-t border-dashed border-neutral-200 mx-1" />
-            <div className="w-4 sm:w-5 h-4 sm:h-5 rounded-full bg-neutral-100 -mr-7 sm:-mr-9 shrink-0" />
+            <div className="w-4 sm:w-5 h-4 sm:w-5 rounded-full bg-neutral-100 -mr-7 sm:-mr-9 shrink-0" />
           </div>
           <p className="text-[10px] font-semibold tracking-widest text-neutral-400 mb-1">ATTENDEE</p>
           <p className="font-semibold text-sm sm:text-base text-neutral-900">Srinithin S</p>
@@ -161,16 +162,13 @@ function ScanResult() {
   );
 }
 
-// ─── Plans ────────────────────────────────────────────────────────────────────
-const plans = [
-  { name: "Free",     price: "₹0",      period: "forever",           recommended: false, cta: "Start free",        href: "/signup",                         subtext: "Free forever",                  features: ["2 events/month", "100 registrations/month", "QR passes & check-in", "Attendee approval", "Basic analytics"] },
-  { name: "Starter",  price: "₹499",    period: "/month +GST",       recommended: false, cta: "Try Starter Free",  href: "/signup?plan=starter&trial=true", subtext: "30 days ₹0 · No credit card required", features: ["10 events/month", "500 registrations/month", "2 organizers", "CSV import & export", "Standard analytics"] },
-  { name: "Pro",      price: "₹999",    period: "/month +GST",       recommended: true,  cta: "Try Pro Free",      href: "/signup?plan=pro&trial=true",     subtext: "30 days ₹0 · No credit card required", features: ["Unlimited events", "2,500 registrations/month", "5 organizers", "Custom pass design", "Advanced analytics", "Priority support"] },
-  { name: "Business", price: "₹2,499",  period: "/month +GST",       recommended: false, cta: "Try Business Free", href: "/signup?plan=business&trial=true",subtext: "30 days ₹0 · No credit card required", features: ["Unlimited events", "10,000 registrations/month", "15 organizers", "Custom domain", "API & webhooks"] },
-];
-
 // ─── Page ─────────────────────────────────────────────────────────────────────
-export default function LandingPage() {
+export default async function LandingPage() {
+  const [reqHeaders, cookieStore] = await Promise.all([headers(), cookies()]);
+  const cookieCountry = cookieStore.get("urpass_country")?.value?.toUpperCase();
+  const headerCountry = detectCountryFromHeaders(reqHeaders);
+  const country: "IN" | "GB" = cookieCountry === "GB" || cookieCountry === "UK" ? "GB" : headerCountry === "GB" ? "GB" : "IN";
+
   return (
     <div className="min-h-screen bg-white text-neutral-900">
       <script
@@ -187,12 +185,21 @@ export default function LandingPage() {
                 operatingSystem: "Web, iOS, Android",
                 url: "https://urpass.space",
                 description:
-                  "An India-focused digital event registration, QR pass and check-in platform for colleges, conferences, hackathons, workshops and corporate events.",
-                offers: [
+                  country === "GB"
+                    ? "Digital event registration, QR pass and check-in platform for universities, conferences, hackathons, workshops and corporate events in the UK."
+                    : "An India-focused digital event registration, QR pass and check-in platform for colleges, conferences, hackathons, workshops and corporate events.",
+                offers: country === "GB" ? [
+                  { "@type": "Offer", name: "Free Tier", price: "0", priceCurrency: "GBP", description: "2 events/month, 100 registrations/month" },
+                  { "@type": "Offer", name: "Starter Tier", price: "15", priceCurrency: "GBP", description: "10 events/month, 500 registrations/month" },
+                  { "@type": "Offer", name: "Pro Tier", price: "35", priceCurrency: "GBP", description: "Unlimited events, 2,500 registrations/month" },
+                  { "@type": "Offer", name: "Business Tier", price: "79", priceCurrency: "GBP", description: "Unlimited events, 10,000 registrations/month" },
+                  { "@type": "Offer", name: "Founder Lifetime Deal", price: "249", priceCurrency: "GBP", description: "Lifetime access to all URPASS features, zero platform fees" },
+                ] : [
                   { "@type": "Offer", name: "Free Tier", price: "0", priceCurrency: "INR", description: "2 events/month, 100 registrations/month" },
                   { "@type": "Offer", name: "Starter Tier", price: "499", priceCurrency: "INR", description: "10 events/month, 500 registrations/month" },
                   { "@type": "Offer", name: "Pro Tier", price: "999", priceCurrency: "INR", description: "Unlimited events, 2,500 registrations/month" },
                   { "@type": "Offer", name: "Business Tier", price: "2499", priceCurrency: "INR", description: "Unlimited events, 10,000 registrations/month" },
+                  { "@type": "Offer", name: "Founder Lifetime Deal", price: "19999", priceCurrency: "INR", description: "Lifetime access to all URPASS features, zero platform fees" },
                 ],
               },
               {
@@ -243,7 +250,9 @@ export default function LandingPage() {
                     name: "Can I start for free or try a paid plan?",
                     acceptedAnswer: {
                       "@type": "Answer",
-                      text: "Yes. The permanent free tier lets you host 2 events/month with up to 100 registrations/month at ₹0 forever with no credit card required. You can also try any paid plan (Starter, Pro, or Business) free for 30 days.",
+                      text: country === "GB"
+                        ? "Yes. The permanent free tier lets you host 2 events/month with up to 100 registrations/month at £0 forever with no credit card required. You can also try any paid plan (Starter, Pro, or Business) free for 30 days."
+                        : "Yes. The permanent free tier lets you host 2 events/month with up to 100 registrations/month at ₹0 forever with no credit card required. You can also try any paid plan (Starter, Pro, or Business) free for 30 days.",
                     },
                   },
                 ],
@@ -509,93 +518,10 @@ export default function LandingPage() {
       </section>
 
       {/* ── 07 PRICING ───────────────────────────────────────────────────── */}
-      <section id="pricing" className="py-14 sm:py-28 px-4 sm:px-8 bg-neutral-50">
-        <div className="max-w-5xl mx-auto">
-          <AnimateIn>
-            <div className="text-center mb-10 sm:mb-14">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-50 border border-brand-100 text-brand text-[11px] sm:text-xs font-bold tracking-wider uppercase mb-3">
-                YOUR FIRST 30 DAYS ARE FREE
-              </div>
-              <h2 className="text-2xl sm:text-4xl font-semibold tracking-tight">Choose any plan. Get your first 30 days free.</h2>
-              <p className="mt-2 sm:mt-3 text-neutral-500 text-xs sm:text-sm">No credit card or AutoPay required · Instant access · One free trial per account</p>
-            </div>
-          </AnimateIn>
-
-          {/* ── Founder Lifetime Plan Callout Banner ── */}
-          <AnimateIn delay={60} from="up">
-            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-neutral-950 via-purple-950 to-neutral-950 p-6 sm:p-8 border border-purple-500/30 text-white shadow-xl mb-8 sm:mb-10">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
-                <div className="space-y-2">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-amber-400/10 border border-amber-400/30 text-amber-300">
-                    <Flame className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
-                    <span>FOUNDER DEAL · LIMITED TO 20 ACCOUNTS ONLY</span>
-                  </div>
-                  <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
-                    URPASS Founder Lifetime Access — ₹19,999 One-Time
-                  </h3>
-                  <p className="text-xs sm:text-sm text-neutral-300 max-w-2xl leading-relaxed">
-                    Permanent access to all currently available URPASS features for a one-time payment. Zero renewal fees forever. Valid for the lifetime of URPASS platform.
-                  </p>
-                </div>
-
-                <div className="shrink-0 flex flex-col sm:flex-row gap-3">
-                  <Link
-                    href="/founder-lifetime-deal"
-                    className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-brand to-purple-600 hover:from-brand-light hover:to-purple-500 text-white font-semibold text-xs sm:text-sm transition-all shadow-lg active:scale-95 text-center whitespace-nowrap"
-                  >
-                    <span>View Lifetime Deal</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </AnimateIn>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-stretch">
-            {plans.map((plan, i) => (
-              <AnimateIn key={plan.name} delay={i * 90} from="up">
-                <div className={`relative rounded-2xl flex flex-col p-5 sm:p-7 h-full ${plan.recommended ? "bg-neutral-900 text-white shadow-xl" : "bg-white border border-neutral-100"}`}>
-                  {plan.recommended && (
-                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] font-bold tracking-widest bg-brand text-white px-3 py-1 rounded-full">
-                      RECOMMENDED
-                    </span>
-                  )}
-                  <p className={`text-xs font-semibold tracking-widest mb-3 sm:mb-4 ${plan.recommended ? "text-white/50" : "text-neutral-400"}`}>
-                    {plan.name.toUpperCase()}
-                  </p>
-                  <div className="flex items-baseline gap-1 mb-4 sm:mb-6">
-                    <span className="text-3xl sm:text-4xl font-semibold">{plan.price}</span>
-                    <span className={`text-xs sm:text-sm ${plan.recommended ? "text-white/40" : "text-neutral-400"}`}>{plan.period}</span>
-                  </div>
-                  <ul className="flex flex-col gap-2 sm:gap-2.5 flex-1 mb-6 sm:mb-8">
-                    {plan.features.map((f) => (
-                      <li key={f} className="flex items-center gap-2.5 text-xs sm:text-sm">
-                        <svg className={`w-4 h-4 shrink-0 ${plan.recommended ? "text-brand-200" : "text-brand"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                        <span className={plan.recommended ? "text-white/70" : "text-neutral-600"}>{f}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <div className="flex flex-col gap-1.5">
-                    <Link href={plan.href} className={`w-full text-center py-2.5 sm:py-3 rounded-xl text-sm font-semibold transition-colors ${plan.recommended ? "bg-white text-neutral-900 hover:bg-neutral-100" : "bg-neutral-900 text-white hover:bg-neutral-700"}`}>
-                      {plan.cta}
-                    </Link>
-                    {plan.subtext && (
-                      <p className={`text-[10px] text-center ${plan.recommended ? "text-white/40" : "text-neutral-400"}`}>
-                        {plan.subtext}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </AnimateIn>
-            ))}
-          </div>
-        </div>
-      </section>
+      <HomePricingSection initialCountry={country} />
 
       {/* ── 08 FAQ ───────────────────────────────────────────────────────── */}
-      <FAQSection />
+      <FAQSection initialCountry={country} />
 
       {/* ── 09 FINAL CTA ─────────────────────────────────────────────────── */}
       <section className="py-16 sm:py-28 px-4 sm:px-8 bg-neutral-900 text-center">

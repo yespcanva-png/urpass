@@ -470,7 +470,7 @@ export async function activateUkFreeTrial(planSlug: string): Promise<ActionResul
 
 export async function activateUkPlan(
   planSlug: string,
-  cycle: "monthly" | "annual" = "monthly"
+  cycle: "monthly" | "annual" | "lifetime" = "monthly"
 ): Promise<ActionResult> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -483,17 +483,21 @@ export async function activateUkPlan(
     .eq("user_id", user.id)
     .maybeSingle();
 
+  const isFounder = planSlug === "founder" || planSlug === "lifetime" || cycle === "lifetime";
+  const normalizedSlug = isFounder ? "founder" : planSlug;
+
   const { data: targetPlan } = await admin
     .from("plans")
     .select("id, name, slug")
-    .eq("slug", planSlug)
+    .eq("slug", normalizedSlug)
     .eq("is_active", true)
     .single();
 
   if (!targetPlan) return { error: "Plan not found." };
 
   const now = new Date();
-  const periodEndDate = periodEnd(cycle);
+  const resolvedCycle = isFounder ? "lifetime" : cycle;
+  const periodEndDate = isFounder ? new Date("2125-01-01T00:00:00.000Z") : periodEnd(resolvedCycle);
   const ukReferenceId = `UK_DIRECT_${Date.now().toString(36).toUpperCase()}`;
 
   const { error: updateError } = await admin.from("subscriptions").upsert(
@@ -502,7 +506,7 @@ export async function activateUkPlan(
       plan_id: targetPlan.id,
       status: "active",
       provider: "uk_direct",
-      billing_cycle: cycle,
+      billing_cycle: resolvedCycle,
       provider_subscription_id: ukReferenceId,
       current_period_start: now.toISOString(),
       current_period_end: periodEndDate.toISOString(),
@@ -511,8 +515,8 @@ export async function activateUkPlan(
       is_trial: false,
       autopay_mandate_id: ukReferenceId,
       autopay_status: "active",
-      has_lifetime_access: existingSub?.has_lifetime_access ?? false,
-      lifetime_plan_slug: existingSub?.lifetime_plan_slug ?? null,
+      has_lifetime_access: isFounder ? true : (existingSub?.has_lifetime_access ?? false),
+      lifetime_plan_slug: isFounder ? "founder" : (existingSub?.lifetime_plan_slug ?? null),
       updated_at: now.toISOString(),
     },
     { onConflict: "user_id" }

@@ -65,7 +65,7 @@ export default function Footer() {
               <li>
                 <Link href="/founder-lifetime-deal" className="text-xs text-amber-400 hover:text-amber-300 font-medium transition-colors flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
-                  Founder Lifetime Deal (₹19,999)
+                  Founder Lifetime Deal
                 </Link>
               </li>
               <li>

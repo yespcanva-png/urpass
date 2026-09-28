@@ -11,6 +11,7 @@ import SwitchPlanButton from "./SwitchPlanButton";
 import EventPassCheckoutModal from "./EventPassCheckoutModal";
 import TrialConfirmationModal from "./TrialConfirmationModal";
 import { activateUkPlan } from "@/app/actions/billing";
+import { activateUkEventPass } from "@/app/actions/event-passes";
 
 const UK_PLAN_PRICES: Record<string, { monthly: number; annual: number }> = {
   free: { monthly: 0, annual: 0 },
@@ -121,6 +122,7 @@ export default function PlanGrid({ currentPlanSlug, currentPlanIndex, userEmail,
   const [passModal, setPassModal] = useState<{
     passType: string; passName: string; priceRupees: number; registrationLimit: number;
   } | null>(null);
+  const [activatingPass, setActivatingPass] = useState<string | null>(null);
 
   return (
     <div>
@@ -444,18 +446,33 @@ export default function PlanGrid({ currentPlanSlug, currentPlanIndex, userEmail,
                   </ul>
 
                   <button
-                    onClick={() =>
-                      setPassModal({
-                        passType:          p.slug,
-                        passName:          p.name,
-                        priceRupees:       p.price,
-                        registrationLimit: p.registrationLimit,
-                      })
-                    }
-                    className="w-full py-2.5 text-sm font-semibold rounded-xl text-white hover:opacity-90 transition-opacity"
+                    onClick={async () => {
+                      if (country === "GB") {
+                        setActivatingPass(p.slug);
+                        try {
+                          const res = await activateUkEventPass(p.slug);
+                          if (res?.error) {
+                            alert(res.error);
+                          } else {
+                            window.location.reload();
+                          }
+                        } finally {
+                          setActivatingPass(null);
+                        }
+                      } else {
+                        setPassModal({
+                          passType:          p.slug,
+                          passName:          p.name,
+                          priceRupees:       p.price,
+                          registrationLimit: p.registrationLimit,
+                        });
+                      }
+                    }}
+                    disabled={activatingPass === p.slug}
+                    className="w-full py-2.5 text-sm font-semibold rounded-xl text-white hover:opacity-90 transition-opacity disabled:opacity-50"
                     style={{ background: "#6D28D9" }}
                   >
-                    Buy {p.name}
+                    {activatingPass === p.slug ? "Activating..." : `Buy ${p.name}`}
                   </button>
                 </div>
               );

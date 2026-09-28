@@ -718,7 +718,9 @@ export default async function BillingPage(props: {
           <div className="flex items-center justify-center gap-2.5 mt-10">
             <ShieldCheck className="w-3.5 h-3.5 text-neutral-300 shrink-0" />
             <p className="text-xs text-neutral-400">
-              Payments processed securely via Razorpay · Prices exclude 18% GST
+              {isUk
+                ? "Direct UK activation · Prices in GBP exclude 20% VAT"
+                : "Payments processed securely via Razorpay · Prices exclude 18% GST"}
             </p>
           </div>
 

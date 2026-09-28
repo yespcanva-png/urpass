@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, X, ArrowRight, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { detectCountryClient } from "@/lib/country-config";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -25,6 +26,7 @@ export default function Navbar() {
 
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [isUk, setIsUk] = useState(false);
   const [bannerVisible, setBannerVisible] = useState(() => {
     if (typeof window === "undefined") return true;
     try {
@@ -33,6 +35,10 @@ export default function Navbar() {
       return true;
     }
   });
+
+  useEffect(() => {
+    setIsUk(detectCountryClient() === "GB");
+  }, []);
 
   useEffect(() => {
     function onScroll() {
@@ -62,8 +68,8 @@ export default function Navbar() {
                 <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
               </span>
               <span className="text-neutral-200 font-normal">
-                <span className="sm:hidden">30-day free trial · ₹0 today.</span>
-                <span className="hidden sm:inline">Start free or try any paid plan with our 30-day free trial. ₹0 today.</span>
+                <span className="sm:hidden">{isUk ? "30-day free trial · £0 today." : "30-day free trial · ₹0 today."}</span>
+                <span className="hidden sm:inline">{isUk ? "Start free or try any paid plan with our 30-day free trial. £0 today." : "Start free or try any paid plan with our 30-day free trial. ₹0 today."}</span>
               </span>
               <Link
                 href="/pricing"
