@@ -468,6 +468,64 @@ export async function activateUkFreeTrial(planSlug: string): Promise<ActionResul
   return { success: true };
 }
 
+export async function activateUkPlan(
+  planSlug: string,
+  cycle: "monthly" | "annual" = "monthly"
+): Promise<ActionResult> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const admin = adminClient();
+  const { data: existingSub } = await admin
+    .from("subscriptions")
+    .select("id, has_lifetime_access, lifetime_plan_slug")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  const { data: targetPlan } = await admin
+    .from("plans")
+    .select("id, name, slug")
+    .eq("slug", planSlug)
+    .eq("is_active", true)
+    .single();
+
+  if (!targetPlan) return { error: "Plan not found." };
+
+  const now = new Date();
+  const periodEndDate = periodEnd(cycle);
+  const ukReferenceId = `UK_DIRECT_${Date.now().toString(36).toUpperCase()}`;
+
+  const { error: updateError } = await admin.from("subscriptions").upsert(
+    {
+      user_id: user.id,
+      plan_id: targetPlan.id,
+      status: "active",
+      provider: "uk_direct",
+      billing_cycle: cycle,
+      provider_subscription_id: ukReferenceId,
+      current_period_start: now.toISOString(),
+      current_period_end: periodEndDate.toISOString(),
+      cancel_at_period_end: false,
+      registrations_used: 0,
+      is_trial: false,
+      autopay_mandate_id: ukReferenceId,
+      autopay_status: "active",
+      has_lifetime_access: existingSub?.has_lifetime_access ?? false,
+      lifetime_plan_slug: existingSub?.lifetime_plan_slug ?? null,
+      updated_at: now.toISOString(),
+    },
+    { onConflict: "user_id" }
+  );
+
+  if (updateError) {
+    return { error: updateError.message };
+  }
+
+  revalidateBillingPaths();
+  return { success: true };
+}
+
 export async function switchPlan(
   planSlug: string
 ): Promise<ActionResult> {

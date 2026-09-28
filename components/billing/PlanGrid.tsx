@@ -10,6 +10,20 @@ import CheckoutButton from "./CheckoutButton";
 import SwitchPlanButton from "./SwitchPlanButton";
 import EventPassCheckoutModal from "./EventPassCheckoutModal";
 import TrialConfirmationModal from "./TrialConfirmationModal";
+import { activateUkPlan } from "@/app/actions/billing";
+
+const UK_PLAN_PRICES: Record<string, { monthly: number; annual: number }> = {
+  free: { monthly: 0, annual: 0 },
+  starter: { monthly: 15, annual: 120 },
+  pro: { monthly: 35, annual: 300 },
+  business: { monthly: 79, annual: 699 },
+};
+
+const UK_EVENT_PASS_PRICES: Record<string, number> = {
+  event: 5,
+  event_plus: 10,
+  event_pro: 19,
+};
 
 // ── Subscription plans ────────────────────────────────────────
 const PLANS = [
@@ -102,6 +116,7 @@ interface Props {
 export default function PlanGrid({ currentPlanSlug, currentPlanIndex, userEmail, userName, trialUsed = false, country = "IN" }: Props) {
   const [tab, setTab]     = useState<"subscription" | "one-event">("subscription");
   const [cycle, setCycle] = useState<"monthly" | "annual">("monthly");
+  const [activatingSlug, setActivatingSlug] = useState<string | null>(null);
   const [trialModal, setTrialModal] = useState<{ planSlug: string; planName: string } | null>(null);
   const [passModal, setPassModal] = useState<{
     passType: string; passName: string; priceRupees: number; registrationLimit: number;
@@ -143,7 +158,7 @@ export default function PlanGrid({ currentPlanSlug, currentPlanIndex, userEmail,
             <Flame className="w-3 h-3 text-amber-500 animate-pulse" />
             <span>Lifetime</span>
             <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-200/80 text-amber-900">
-              ₹19,999
+              {country === "GB" ? "£249" : "₹19,999"}
             </span>
           </Link>
         </div>
@@ -167,13 +182,17 @@ export default function PlanGrid({ currentPlanSlug, currentPlanIndex, userEmail,
                     <span className="text-[10px] font-extrabold tracking-widest uppercase px-2 py-0.5 rounded-full bg-white/20 text-white border border-white/30">
                       YOUR FIRST 30 DAYS ARE FREE
                     </span>
-                    <span className="text-xs font-semibold text-emerald-300">AutoPay Required · Cancel Anytime</span>
+                    <span className="text-xs font-semibold text-emerald-300">
+                      {country === "GB" ? "Direct UK Trial · No Card Required" : "AutoPay Required · Cancel Anytime"}
+                    </span>
                   </div>
                   <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
                     TRY ANY URPASS PLAN FREE FOR 30 DAYS
                   </h3>
                   <p className="text-xs text-white/70 mt-0.5">
-                    Choose Starter, Pro, or Business · AutoPay required · Cancel anytime before first payment · One free trial per account
+                    {country === "GB"
+                      ? "Choose Starter, Pro, or Business · 30 days £0 · Direct activation without payment gateway · Cancel anytime"
+                      : "Choose Starter, Pro, or Business · AutoPay required · Cancel anytime before first payment · One free trial per account"}
                   </p>
                 </div>
               </div>
@@ -217,11 +236,18 @@ export default function PlanGrid({ currentPlanSlug, currentPlanIndex, userEmail,
               const planIndex    = PLAN_ORDER[p.slug as PlanSlug] ?? 0;
               const isUpgrade    = !isCurrent && planIndex > currentPlanIndex;
               const Icon         = PLAN_ICONS[p.slug] ?? Sparkles;
+              const ukPlan       = UK_PLAN_PRICES[p.slug] ?? { monthly: 35, annual: 300 };
 
               const displayPrice =
-                p.priceMonthly === 0 ? "Free"
-                : cycle === "annual"  ? `₹${p.annualTotal.toLocaleString("en-IN")}`
-                :                       `₹${p.priceMonthly.toLocaleString("en-IN")}`;
+                p.priceMonthly === 0
+                  ? "Free"
+                  : country === "GB"
+                  ? cycle === "annual"
+                    ? `£${ukPlan.annual}`
+                    : `£${ukPlan.monthly}`
+                  : cycle === "annual"
+                  ? `₹${p.annualTotal.toLocaleString("en-IN")}`
+                  : `₹${p.priceMonthly.toLocaleString("en-IN")}`;
 
               const displayPeriod =
                 p.priceMonthly === 0 ? ""
@@ -229,8 +255,10 @@ export default function PlanGrid({ currentPlanSlug, currentPlanIndex, userEmail,
                 :                       "/mo";
 
               const monthlyEquiv =
-                cycle === "annual" && p.annualTotal > 0
-                  ? `₹${Math.round(p.annualTotal / 12).toLocaleString("en-IN")}/mo`
+                cycle === "annual" && (country === "GB" ? ukPlan.annual > 0 : p.annualTotal > 0)
+                  ? country === "GB"
+                    ? `£${Math.round(ukPlan.annual / 12)}/mo`
+                    : `₹${Math.round(p.annualTotal / 12).toLocaleString("en-IN")}/mo`
                   : null;
 
               return (
@@ -305,21 +333,46 @@ export default function PlanGrid({ currentPlanSlug, currentPlanIndex, userEmail,
                           Try {p.name} Free
                         </button>
                         <p className="text-[10px] text-center text-neutral-400">
-                          ₹0 for 30 days · Cancel before your first payment
+                          {country === "GB"
+                            ? "£0 for 30 days · No card required · Instant access"
+                            : "₹0 for 30 days · Cancel before your first payment"}
                         </p>
                       </div>
                     ) : p.priceMonthly > 0 ? (
-                      <CheckoutButton
-                        planSlug={p.slug}
-                        planName={p.name}
-                        billingCycle={cycle}
-                        userEmail={userEmail}
-                        userName={userName}
-                        className="w-full py-2.5 text-sm font-semibold rounded-xl text-white hover:opacity-90 transition-opacity disabled:opacity-50"
-                        style={{ background: "#6D28D9" }}
-                      >
-                        {isUpgrade ? `Upgrade to ${p.name}` : `Switch to ${p.name}`}
-                      </CheckoutButton>
+                      country === "GB" ? (
+                        <button
+                          onClick={async () => {
+                            setActivatingSlug(p.slug);
+                            try {
+                              const res = await activateUkPlan(p.slug, cycle);
+                              if (res?.error) {
+                                alert(res.error);
+                              } else {
+                                window.location.reload();
+                              }
+                            } finally {
+                              setActivatingSlug(null);
+                            }
+                          }}
+                          disabled={activatingSlug === p.slug}
+                          className="w-full py-2.5 text-sm font-semibold rounded-xl text-white hover:opacity-90 transition-opacity disabled:opacity-50"
+                          style={{ background: "#6D28D9" }}
+                        >
+                          {activatingSlug === p.slug ? "Activating..." : isUpgrade ? `Upgrade to ${p.name}` : `Switch to ${p.name}`}
+                        </button>
+                      ) : (
+                        <CheckoutButton
+                          planSlug={p.slug}
+                          planName={p.name}
+                          billingCycle={cycle}
+                          userEmail={userEmail}
+                          userName={userName}
+                          className="w-full py-2.5 text-sm font-semibold rounded-xl text-white hover:opacity-90 transition-opacity disabled:opacity-50"
+                          style={{ background: "#6D28D9" }}
+                        >
+                          {isUpgrade ? `Upgrade to ${p.name}` : `Switch to ${p.name}`}
+                        </CheckoutButton>
+                      )
                     ) : (
                       <SwitchPlanButton
                         planSlug={p.slug}
@@ -346,6 +399,13 @@ export default function PlanGrid({ currentPlanSlug, currentPlanIndex, userEmail,
             {EVENT_PASSES.map((p) => {
               const gst   = Math.round(p.price * 18) / 100;
               const total = Math.round((p.price + gst) * 100) / 100;
+              const ukPassPrice = UK_EVENT_PASS_PRICES[p.slug] ?? 10;
+              const displayOneTimePrice = country === "GB"
+                ? `£${ukPassPrice}`
+                : `₹${p.price.toLocaleString("en-IN")}`;
+              const displayTaxSub = country === "GB"
+                ? `£${Math.round(ukPassPrice * 1.2)} incl. VAT`
+                : `₹${total.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} incl. GST`;
 
               return (
                 <div
@@ -361,12 +421,12 @@ export default function PlanGrid({ currentPlanSlug, currentPlanIndex, userEmail,
                     </p>
                     <div className="flex items-baseline gap-1">
                       <span className="text-2xl font-bold tracking-tight text-neutral-900">
-                        ₹{p.price.toLocaleString("en-IN")}
+                        {displayOneTimePrice}
                       </span>
                       <span className="text-xs text-neutral-400">/event</span>
                     </div>
                     <p className="text-[11px] text-neutral-400 mt-0.5">
-                      ₹{total.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} incl. GST
+                      {displayTaxSub}
                     </p>
                   </div>
 

@@ -332,7 +332,18 @@ function InvoiceHistory({ invoices }: { invoices: Invoice[] }) {
   );
 }
 
-export default async function BillingPage() {
+const UK_PLAN_PRICES: Record<string, { monthly: number; annual: number }> = {
+  free: { monthly: 0, annual: 0 },
+  starter: { monthly: 15, annual: 120 },
+  pro: { monthly: 35, annual: 300 },
+  business: { monthly: 79, annual: 699 },
+  founder: { monthly: 249, annual: 249 },
+};
+
+export default async function BillingPage(props: {
+  searchParams?: Promise<{ country?: string; trial?: string }>;
+}) {
+  const searchParams = props.searchParams ? await props.searchParams : {};
   const supabase = await createClient();
   const {
     data: { user },
@@ -361,6 +372,12 @@ export default async function BillingPage() {
     ]);
 
   const sub = subData as Subscription | null;
+  const isUkSubscriber = sub?.provider === "uk_direct";
+  const requestedCountry = searchParams?.country?.toUpperCase();
+  const country: "IN" | "GB" =
+    requestedCountry === "GB" || requestedCountry === "UK" || isUkSubscriber ? "GB" : "IN";
+  const isUk = country === "GB";
+
   const isTrial = Boolean(sub?.is_trial && sub?.trial_ends_at && new Date(sub.trial_ends_at) >= new Date());
   const isTrialExpired = Boolean(sub?.is_trial && sub?.trial_ends_at && new Date(sub.trial_ends_at) < new Date());
   const currentPlanSlug = plan.slug;
@@ -368,7 +385,7 @@ export default async function BillingPage() {
   const trialUsed = sub?.trial_used ?? false;
 
   const renewalDate = sub?.current_period_end
-    ? new Date(sub.current_period_end).toLocaleDateString("en-IN", {
+    ? new Date(sub.current_period_end).toLocaleDateString(isUk ? "en-GB" : "en-IN", {
         day: "numeric",
         month: "long",
         year: "numeric",
@@ -419,6 +436,32 @@ export default async function BillingPage() {
             Dashboard
           </Link>
 
+          {/* Market / Country Toggle */}
+          <div className="flex items-center gap-2 mb-6">
+            <div className="inline-flex items-center bg-white/10 p-1 rounded-xl gap-1 text-xs">
+              <Link
+                href="/billing?country=IN"
+                className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
+                  country === "IN"
+                    ? "bg-white text-neutral-900 shadow-sm font-semibold"
+                    : "text-white/60 hover:text-white"
+                }`}
+              >
+                🇮🇳 India (INR ₹)
+              </Link>
+              <Link
+                href="/billing?country=GB"
+                className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
+                  country === "GB"
+                    ? "bg-white text-neutral-900 shadow-sm font-semibold"
+                    : "text-white/60 hover:text-white"
+                }`}
+              >
+                🇬🇧 United Kingdom (GBP £)
+              </Link>
+            </div>
+          </div>
+
           <div
             className="w-12 h-12 rounded-2xl flex items-center justify-center mb-5"
             style={{ background: "linear-gradient(135deg, #6D28D9, #4c1d95)" }}
@@ -440,15 +483,19 @@ export default async function BillingPage() {
                 <p className="text-xl font-bold text-white">{currentPlan.name}</p>
                 <p className="text-sm text-white/40">
                   {isTrial ? (
-                    "30-Day Free Trial (₹0 today)"
+                    isUk ? "30-Day Free Trial (£0 today)" : "30-Day Free Trial (₹0 today)"
                   ) : currentPlanSlug === "founder" || currentPlanSlug === "lifetime" ? (
-                    "₹19,999 One-Time (Lifetime License)"
+                    isUk ? "£249 One-Time (Lifetime License)" : "₹19,999 One-Time (Lifetime License)"
                   ) : currentPlan.priceMonthly === 0 ? (
                     "Free forever"
                   ) : billingCycle === "annual" ? (
-                    `₹${currentPlan.annualTotal.toLocaleString("en-IN")}/year`
+                    isUk
+                      ? `£${UK_PLAN_PRICES[currentPlanSlug]?.annual ?? 300}/year`
+                      : `₹${currentPlan.annualTotal.toLocaleString("en-IN")}/year`
                   ) : (
-                    `₹${currentPlan.priceMonthly}/mo`
+                    isUk
+                      ? `£${UK_PLAN_PRICES[currentPlanSlug]?.monthly ?? 35}/mo`
+                      : `₹${currentPlan.priceMonthly}/mo`
                   )}
                 </p>
                 {isTrial ? (
@@ -471,11 +518,17 @@ export default async function BillingPage() {
               </div>
               {isTrial ? (
                 <p className="text-xs text-white/40 mt-1">
-                  {sub?.cancel_at_period_end || sub?.autopay_status === "cancelled"
-                    ? `AutoPay cancelled · Free trial ends ${renewalDate} (${sub?.has_lifetime_access ? "reverts to Founder Lifetime" : "reverts to Free"})`
-                    : sub?.autopay_status === "active"
-                    ? `First payment of ₹${Math.round(currentPlan.priceMonthly * 1.18).toLocaleString("en-IN")} scheduled for ${renewalDate}`
-                    : `Free trial ends ${renewalDate} · No card on file (${sub?.has_lifetime_access ? "reverts to Founder Lifetime" : "reverts to Free"})`}
+                  {isUk ? (
+                    sub?.cancel_at_period_end
+                      ? `Free trial ends ${renewalDate} (${sub?.has_lifetime_access ? "reverts to Founder Lifetime" : "reverts to Free"})`
+                      : `30-Day Free Trial ends ${renewalDate} · Direct UK activation · No credit card required`
+                  ) : (
+                    sub?.cancel_at_period_end || sub?.autopay_status === "cancelled"
+                      ? `AutoPay cancelled · Free trial ends ${renewalDate} (${sub?.has_lifetime_access ? "reverts to Founder Lifetime" : "reverts to Free"})`
+                      : sub?.autopay_status === "active"
+                      ? `First payment of ₹${Math.round(currentPlan.priceMonthly * 1.18).toLocaleString("en-IN")} scheduled for ${renewalDate}`
+                      : `Free trial ends ${renewalDate} · No card on file (${sub?.has_lifetime_access ? "reverts to Founder Lifetime" : "reverts to Free"})`
+                  )}
                 </p>
               ) : currentPlanSlug === "founder" || currentPlanSlug === "lifetime" ? (
                 <p className="text-xs text-emerald-400/80 mt-0.5">
@@ -561,6 +614,8 @@ export default async function BillingPage() {
                 <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
                   {currentPlanSlug === "founder" || currentPlanSlug === "lifetime"
                     ? "You are a URPASS Founding Organizer"
+                    : isUk
+                    ? "URPASS Founder Lifetime Access — £249 One-Time"
                     : "URPASS Founder Lifetime Access — ₹19,999 One-Time"}
                 </h3>
                 <p className="text-xs sm:text-sm text-neutral-300 max-w-2xl leading-relaxed">
@@ -614,6 +669,7 @@ export default async function BillingPage() {
             userEmail={userEmail}
             userName={userName}
             trialUsed={trialUsed}
+            country={country}
           />
 
           {/* Campus / scale CTA */}
@@ -625,17 +681,30 @@ export default async function BillingPage() {
                     <Building2 className="w-4 h-4 text-neutral-700" />
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold tracking-widest uppercase text-neutral-400">Campus &amp; Enterprise</p>
-                    <p className="text-lg font-bold tracking-tight">Custom pricing</p>
+                    <p className="text-[10px] font-bold tracking-widest uppercase text-neutral-400">
+                      {isUk ? "UK Campus & Multi-Society" : "Campus & Enterprise"}
+                    </p>
+                    <p className="text-lg font-bold tracking-tight">
+                      {isUk ? "From £149/year" : "Custom pricing"}
+                    </p>
                   </div>
                 </div>
                 <p className="text-sm text-neutral-500 leading-relaxed">
-                  Running events across a college, company, or multi-team organization? Get institution-wide accounts, dedicated support, and volume pricing.
+                  {isUk
+                    ? "Running events across your Students' Union, university societies, or sports clubs? Get institution-wide accounts, dedicated support, and multi-committee access."
+                    : "Running events across a college, company, or multi-team organization? Get institution-wide accounts, dedicated support, and volume pricing."}
                 </p>
               </div>
               <div className="p-6 flex flex-col justify-center gap-3 md:border-l border-t md:border-t-0 border-neutral-100">
                 <ul className="grid grid-cols-2 gap-x-4 gap-y-2">
-                  {["Unlimited organizers", "Institution analytics", "Custom domain", "API & webhooks", "Priority support", "Invoice billing"].map((f) => (
+                  {[
+                    isUk ? "Unlimited societies" : "Unlimited organizers",
+                    "Institution analytics",
+                    "Custom domain",
+                    "API & webhooks",
+                    "Priority support",
+                    isUk ? "UK GDPR & DPA compliant" : "Invoice billing",
+                  ].map((f) => (
                     <li key={f} className="flex items-center gap-1.5 text-xs text-neutral-600">
                       <Check className="w-3 h-3 text-brand shrink-0" />
                       {f}
