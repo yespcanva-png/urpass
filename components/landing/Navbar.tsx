@@ -139,16 +139,22 @@ export default function Navbar() {
           </nav>
 
           {/* Desktop CTA */}
-          <div className="hidden md:flex items-center gap-3">
+          <div className="hidden md:flex items-center gap-2.5">
+            <Link
+              href="/contact?subject=Book%20a%20Demo"
+              className="text-sm font-medium text-neutral-600 hover:text-neutral-900 px-3 py-2 rounded-xl hover:bg-neutral-100 transition-colors"
+            >
+              Book a demo
+            </Link>
             <Link
               href={loginHref}
-              className="text-sm text-neutral-500 hover:text-neutral-900 transition-colors"
+              className="text-sm text-neutral-500 hover:text-neutral-900 transition-colors px-1"
             >
               Login
             </Link>
             <Link
               href={signupHref}
-              className="text-sm bg-neutral-900 text-white px-4 py-2 rounded-xl font-medium hover:bg-neutral-700 transition-colors"
+              className="text-sm bg-neutral-900 text-white px-4 py-2 rounded-xl font-medium hover:bg-neutral-700 transition-colors shadow-2xs"
             >
               Create event
             </Link>
@@ -203,6 +209,13 @@ export default function Navbar() {
               Contact
             </Link>
             <div className="pt-2 border-t border-neutral-100 flex flex-col gap-2">
+              <Link
+                href="/contact?subject=Book%20a%20Demo"
+                onClick={() => setOpen(false)}
+                className="text-sm text-center border border-neutral-200 rounded-xl py-2.5 font-medium hover:bg-neutral-50 transition-colors text-neutral-800"
+              >
+                Book a demo
+              </Link>
               <Link
                 href={loginHref}
                 onClick={() => setOpen(false)}

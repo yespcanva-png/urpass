@@ -297,12 +297,15 @@ export default async function LandingPage() {
               Turn event registrations into digital passes with QR check-in. Create your event, share the link, issue passes, and scan attendees at the entrance.
             </p>
 
-            <div className="hero-ctas flex flex-col sm:flex-row gap-3">
-              <Link href="/signup" className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-neutral-900 text-white px-6 py-3.5 rounded-xl text-sm font-semibold hover:bg-neutral-700 transition-colors text-center">
+            <div className="hero-ctas flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              <Link href="/signup" className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-neutral-900 text-white px-6 py-3.5 rounded-xl text-sm font-semibold hover:bg-neutral-700 transition-colors text-center shadow-xs">
                 Create Your Event
                 <span className="text-neutral-400">→</span>
               </Link>
-              <a href="#how-it-works" className="w-full sm:w-auto inline-flex items-center justify-center gap-2 border border-neutral-200 px-6 py-3.5 rounded-xl text-sm font-medium text-neutral-600 hover:bg-neutral-50 transition-colors text-center">
+              <Link href="/contact?subject=Book%20a%20Demo" className="w-full sm:w-auto inline-flex items-center justify-center gap-2 border border-neutral-300 bg-white px-5 py-3.5 rounded-xl text-sm font-semibold text-neutral-800 hover:bg-neutral-50 transition-colors text-center shadow-2xs">
+                Book a Demo
+              </Link>
+              <a href="#how-it-works" className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-3.5 text-sm font-medium text-neutral-500 hover:text-neutral-900 transition-colors text-center">
                 See how it works ↓
               </a>
             </div>
@@ -539,9 +542,12 @@ export default async function LandingPage() {
           </div>
         </AnimateIn>
         <AnimateIn delay={120} from="scale">
-          <div className="mt-8 sm:mt-10">
-            <Link href="/signup" className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white text-neutral-900 px-8 py-3.5 sm:py-4 rounded-xl text-sm font-semibold hover:bg-neutral-100 transition-colors">
+          <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <Link href="/signup" className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white text-neutral-900 px-8 py-3.5 sm:py-4 rounded-xl text-sm font-semibold hover:bg-neutral-100 transition-colors shadow-xs">
               Create Your Event <span>→</span>
+            </Link>
+            <Link href="/contact?subject=Book%20a%20Demo" className="w-full sm:w-auto inline-flex items-center justify-center gap-2 border border-neutral-700 bg-neutral-800 text-white px-8 py-3.5 sm:py-4 rounded-xl text-sm font-semibold hover:bg-neutral-700 transition-colors">
+              Book a Demo
             </Link>
           </div>
           <p className="mt-4 sm:mt-5 text-xs text-white/30">Start free · No credit card required</p>
