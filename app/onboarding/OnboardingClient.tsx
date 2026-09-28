@@ -79,70 +79,103 @@ export default function OnboardingClient({ firstName, canCreateOrg, planSlug }: 
               </div>
 
               <div className="flex flex-col gap-3">
-                {/* Create organization */}
                 {canCreateOrg ? (
-                  <button
-                    type="button"
-                    onClick={() => setStep("create-org")}
-                    className="flex items-center gap-4 bg-white border-2 border-brand rounded-2xl px-5 py-4 text-left hover:bg-brand-50 transition-all group shadow-sm"
-                  >
-                    <div
-                      className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
-                      style={{ background: "linear-gradient(135deg, #6D28D9, #4c1d95)" }}
+                  <>
+                    {/* Create organization */}
+                    <button
+                      type="button"
+                      onClick={() => setStep("create-org")}
+                      className="flex items-center gap-4 bg-white border-2 border-brand rounded-2xl px-5 py-4 text-left hover:bg-brand-50 transition-all group shadow-xs cursor-pointer"
                     >
-                      <Building2 className="w-6 h-6 text-white" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-neutral-900">Create an organization</p>
-                      <p className="text-xs text-neutral-500 mt-0.5">
-                        For colleges, agencies, companies, and teams running multiple events
-                      </p>
-                    </div>
-                    <ChevronRight className="w-5 h-5 text-brand shrink-0" />
-                  </button>
-                ) : (
-                  <div className="flex items-center gap-4 bg-neutral-50 border-2 border-neutral-200 rounded-2xl px-5 py-4 text-left relative overflow-hidden">
-                    <div className="absolute inset-0 opacity-30 pointer-events-none"
-                      style={{ background: "repeating-linear-gradient(-45deg, transparent, transparent 6px, rgba(0,0,0,0.03) 6px, rgba(0,0,0,0.03) 12px)" }} />
-                    <div className="w-12 h-12 rounded-xl bg-neutral-200 flex items-center justify-center shrink-0 relative">
-                      <Building2 className="w-6 h-6 text-neutral-400" />
-                    </div>
-                    <div className="flex-1 min-w-0 relative">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <p className="text-sm font-bold text-neutral-500">Create an organization</p>
-                        <span className="flex items-center gap-1 text-[10px] font-bold text-amber-600 bg-amber-50 border border-amber-100 px-2 py-0.5 rounded-full">
-                          <Zap className="w-2.5 h-2.5" /> Starter+
-                        </span>
+                      <div
+                        className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
+                        style={{ background: "linear-gradient(135deg, #6D28D9, #4c1d95)" }}
+                      >
+                        <Building2 className="w-6 h-6 text-white" />
                       </div>
-                      <p className="text-xs text-neutral-400">
-                        Upgrade to invite your team and manage events together
-                      </p>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <p className="text-sm font-bold text-neutral-900">Create an organization</p>
+                          <span className="text-[10px] font-semibold text-brand bg-brand-50 border border-brand/20 px-2 py-0.5 rounded-full">
+                            Team
+                          </span>
+                        </div>
+                        <p className="text-xs text-neutral-500">
+                          For colleges, agencies, companies, and teams running multiple events
+                        </p>
+                      </div>
+                      <ChevronRight className="w-5 h-5 text-brand shrink-0" />
+                    </button>
+
+                    {/* Personal workspace */}
+                    <Link
+                      href="/dashboard"
+                      className="flex items-center gap-4 bg-white border-2 border-neutral-200 rounded-2xl px-5 py-4 text-left hover:border-neutral-300 hover:shadow-xs transition-all group"
+                    >
+                      <div className="w-12 h-12 rounded-xl bg-neutral-100 flex items-center justify-center shrink-0 group-hover:bg-neutral-200 transition-colors">
+                        <User className="w-6 h-6 text-neutral-500" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-neutral-800">Personal workspace</p>
+                        <p className="text-xs text-neutral-500 mt-0.5">
+                          Manage events individually without team access
+                        </p>
+                      </div>
+                      <ChevronRight className="w-5 h-5 text-neutral-300 group-hover:text-neutral-500 shrink-0 transition-colors" />
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    {/* Personal workspace (Primary for Free) */}
+                    <Link
+                      href="/dashboard"
+                      className="flex items-center gap-4 bg-white border-2 border-brand rounded-2xl px-5 py-4 text-left hover:bg-brand-50/40 hover:shadow-xs transition-all group"
+                    >
+                      <div
+                        className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
+                        style={{ background: "linear-gradient(135deg, #6D28D9, #4c1d95)" }}
+                      >
+                        <User className="w-6 h-6 text-white" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <p className="text-sm font-bold text-neutral-900">Personal workspace</p>
+                          <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                            Recommended • Ready
+                          </span>
+                        </div>
+                        <p className="text-xs text-neutral-600 mt-0.5">
+                          Create events, customize passes, and manage check-ins instantly
+                        </p>
+                      </div>
+                      <ChevronRight className="w-5 h-5 text-brand shrink-0" />
+                    </Link>
+
+                    {/* Team organization (Upgrade hint) */}
+                    <div className="flex items-center gap-4 bg-neutral-50/80 border border-neutral-200 rounded-2xl px-5 py-3.5 text-left">
+                      <div className="w-10 h-10 rounded-xl bg-neutral-100 flex items-center justify-center shrink-0">
+                        <Building2 className="w-5 h-5 text-neutral-400" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="text-xs font-semibold text-neutral-600">Need team workspaces?</p>
+                          <span className="text-[10px] font-medium text-neutral-500 bg-neutral-200/60 px-1.5 py-0.5 rounded">
+                            Starter+
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-neutral-400 mt-0.5">
+                          Invite co-organizers and shared event permissions
+                        </p>
+                      </div>
                       <Link
                         href="/billing"
-                        className="inline-flex items-center gap-1 text-xs font-bold text-brand mt-2 hover:underline"
+                        className="text-xs font-semibold text-brand hover:underline shrink-0"
                       >
-                        Upgrade plan <ArrowRight className="w-3 h-3" />
+                        View plans →
                       </Link>
                     </div>
-                  </div>
+                  </>
                 )}
-
-                {/* Personal workspace */}
-                <Link
-                  href="/dashboard"
-                  className="flex items-center gap-4 bg-white border-2 border-neutral-200 rounded-2xl px-5 py-4 text-left hover:border-neutral-300 hover:shadow-sm transition-all group"
-                >
-                  <div className="w-12 h-12 rounded-xl bg-neutral-100 flex items-center justify-center shrink-0 group-hover:bg-neutral-200 transition-colors">
-                    <User className="w-6 h-6 text-neutral-500" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-neutral-800">Personal workspace</p>
-                    <p className="text-xs text-neutral-500 mt-0.5">
-                      Manage events on your own — you can create an organization any time later
-                    </p>
-                  </div>
-                  <ChevronRight className="w-5 h-5 text-neutral-300 group-hover:text-neutral-500 shrink-0 transition-colors" />
-                </Link>
               </div>
 
               {/* Plan indicator */}
