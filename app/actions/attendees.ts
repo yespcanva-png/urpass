@@ -23,6 +23,7 @@ import {
   markReservationApproved,
 } from "@/lib/capacity-reservation";
 import { communicationService, formatTicketId, buildTicketUrl } from "@/lib/communications";
+import { generatePass } from "./passes";
 import crypto from "crypto";
 
 function adminClient() {
@@ -217,6 +218,64 @@ export async function rejectAttendee(
   revalidateEvent(eventId);
 }
 
+export async function promoteWaitlistAttendee(
+  attendeeId: string,
+  eventId: string
+): Promise<{ success?: boolean; error?: string; passToken?: string }> {
+  const approval = await approveAttendee(attendeeId, eventId);
+  if (approval?.error) return { error: approval.error };
+
+  const passRes = await generatePass(attendeeId, eventId);
+  return { success: true, passToken: passRes?.passToken };
+}
+
+export async function promoteNextWaitlistAttendee(
+  eventId: string
+): Promise<{ success?: boolean; error?: string; attendeeName?: string; passToken?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const event = await getEventForOrganizer(supabase, eventId, user.id);
+  if (!event) return { error: "Event not found." };
+
+  const { count: approvedCount } = await supabase
+    .from("attendees")
+    .select("*", { count: "exact", head: true })
+    .eq("event_id", eventId)
+    .eq("application_status", "approved");
+
+  if ((approvedCount ?? 0) >= event.attendee_limit) {
+    return {
+      error: `Event is at capacity (${event.attendee_limit}). Increase the attendee limit or revoke an approved attendee first.`,
+    };
+  }
+
+  const { data: nextAttendee } = await supabase
+    .from("attendees")
+    .select("id, name, email")
+    .eq("event_id", eventId)
+    .eq("application_status", "waitlisted")
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  if (!nextAttendee) {
+    return { error: "No attendees waiting on the waitlist queue." };
+  }
+
+  const promoRes = await promoteWaitlistAttendee(nextAttendee.id, eventId);
+  if (promoRes.error) return { error: promoRes.error };
+
+  return {
+    success: true,
+    attendeeName: nextAttendee.name,
+    passToken: promoRes.passToken,
+  };
+}
+
 export async function addAttendee(
   eventId: string,
   data: AttendeeInput
@@ -323,12 +382,12 @@ export async function submitApplication(
   payment?: PaymentVerification,
   ticketTypeId?: string | null,
   customResponses?: Record<string, unknown>
-): Promise<{ error?: string; passToken?: string } | undefined> {
+): Promise<{ error?: string; passToken?: string; waitlisted?: boolean; message?: string } | undefined> {
   const admin = adminClient();
 
   const { data: event } = await admin
     .from("events")
-    .select("id, status, application_enabled, auto_approve, attendee_limit, name, event_date, venue, is_paid_event, ticket_price, organizer_id, organization_id, custom_fields")
+    .select("id, status, application_enabled, auto_approve, attendee_limit, waitlist_enabled, name, event_date, venue, is_paid_event, ticket_price, organizer_id, organization_id, custom_fields")
     .eq("id", eventId)
     .eq("status", "active")
     .eq("application_enabled", true)
@@ -567,6 +626,40 @@ export async function submitApplication(
       .eq("application_status", "approved");
 
     if ((approvedCount ?? 0) >= event.attendee_limit) {
+      if (event.waitlist_enabled !== false) {
+        // Automatically join the waitlist queue
+        const attendeeInsert = admin.from("attendees").insert({
+          event_id: eventId,
+          ...parsed.data,
+          application_status: "waitlisted",
+          ticket_type_id: selectedTicketType?.id ?? null,
+          custom_responses: customResponses ?? {},
+        });
+        const { data: waitlistedAttendee, error: wlError } = typeof attendeeInsert.select === "function"
+          ? await attendeeInsert.select("id").single()
+          : await attendeeInsert;
+
+        if (wlError) {
+          if (wlError.code === "23505")
+            return { error: "You have already applied or joined the waitlist for this event." };
+          return { error: wlError.message };
+        }
+
+        incrementRegistrationsUsed();
+        sendWebhooks(event.organizer_id, "registration.waitlisted", {
+          attendee_id: waitlistedAttendee?.id,
+          event_id: eventId,
+          name: parsed.data.name,
+          email: parsed.data.email,
+          application_status: "waitlisted",
+        }).catch(() => {});
+
+        return {
+          waitlisted: true,
+          message: "This event is at capacity. You have been added to the waitlist queue and will be notified as spots open up!",
+        };
+      }
+
       return { error: "This event is at capacity." };
     }
 
@@ -691,10 +784,23 @@ export async function submitApplication(
   }
 
   // Manual approval flow
+  const { count: currentApproved } = await admin
+    .from("attendees")
+    .select("*", { count: "exact", head: true })
+    .eq("event_id", eventId)
+    .eq("application_status", "approved");
+
+  const atCapacity = (currentApproved ?? 0) >= event.attendee_limit;
+  if (atCapacity && event.waitlist_enabled === false) {
+    return { error: "This event is at capacity." };
+  }
+
+  const initialStatus = atCapacity ? "waitlisted" : "pending";
+
   const attendeeInsert = admin.from("attendees").insert({
     event_id: eventId,
     ...parsed.data,
-    application_status: "pending",
+    application_status: initialStatus,
     ticket_type_id: selectedTicketType?.id ?? null,
     custom_responses: customResponses ?? {},
   });
@@ -709,6 +815,21 @@ export async function submitApplication(
   }
 
   incrementRegistrationsUsed();
+
+  if (initialStatus === "waitlisted") {
+    sendWebhooks(event.organizer_id, "registration.waitlisted", {
+      attendee_id: newAttendee?.id,
+      event_id: eventId,
+      name: parsed.data.name,
+      email: parsed.data.email,
+      application_status: "waitlisted",
+    }).catch(() => {});
+
+    return {
+      waitlisted: true,
+      message: "This event is at capacity. You have been added to the waitlist queue and will be notified as spots open up!",
+    };
+  }
 
   if (paymentAmountPaise > 0 && payment && newAttendee) {
     await admin

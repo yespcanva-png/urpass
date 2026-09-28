@@ -42,7 +42,7 @@ interface Branding {
   orgLogoUrl: string | null;
 }
 
-type SuccessState = { type: "pending"; attendeeName: string };
+type SuccessState = { type: "pending" | "waitlisted"; attendeeName: string };
 
 const BG = "radial-gradient(ellipse 100% 50% at 50% -10%, #ede9fe 0%, #f5f3ff 40%, #ffffff 70%)";
 
@@ -200,6 +200,8 @@ export default function ApplyForm({
           }
           if (result?.passToken) {
             router.push(`/pass/${result.passToken}`);
+          } else if (result?.waitlisted) {
+            setSuccess({ type: "waitlisted", attendeeName: data.name });
           } else {
             setSuccess({ type: "pending", attendeeName: data.name });
           }
@@ -270,12 +272,64 @@ export default function ApplyForm({
       }
       if (result?.passToken) {
         router.push(`/pass/${result.passToken}`);
+      } else if (result?.waitlisted) {
+        setSuccess({ type: "waitlisted", attendeeName: data.name });
       } else {
         setSuccess({ type: "pending", attendeeName: data.name });
       }
     } catch (err) {
       setServerError(err instanceof Error ? err.message : "Failed to submit registration.");
     }
+  }
+
+  // ── Waitlisted ────────────────────────────────────────────────────────────
+  if (success?.type === "waitlisted") {
+    return (
+      <div
+        className="min-h-screen flex flex-col items-center justify-center p-5"
+        style={{ background: BG }}
+      >
+        <Wordmark branding={branding} />
+
+        <div className="pass-scale-in w-full max-w-sm">
+          <div
+            className="bg-white rounded-3xl border border-neutral-100 p-8 text-center"
+            style={{ boxShadow: "0 8px 40px 0 rgba(109,40,217,0.10)" }}
+          >
+            <div
+              className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-5"
+              style={{ background: "#faf5ff", border: "1.5px solid #e9d5ff" }}
+            >
+              <Ticket className="w-7 h-7 text-purple-600" />
+            </div>
+
+            <h1 className="text-xl font-bold text-neutral-900 mb-2">
+              You&apos;re on the waitlist!
+            </h1>
+            <p className="text-sm text-neutral-500 leading-relaxed mb-6">
+              Hi {success.attendeeName}, this event is currently at full capacity. We&apos;ve added you to the waitlist queue and will notify you by email as soon as a spot opens up!
+            </p>
+
+            <div className="bg-neutral-50 rounded-2xl p-4 text-left border border-neutral-100">
+              <div className="flex items-center gap-2 text-xs text-neutral-500 mb-2">
+                <CalendarDays className="w-3.5 h-3.5 shrink-0 text-brand" />
+                <span>
+                  {formattedDate} · {event.start_time}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-neutral-500">
+                <MapPin className="w-3.5 h-3.5 shrink-0 text-brand" />
+                <span>{event.venue}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {branding.showUrpassBranding && (
+          <p className="text-xs text-neutral-300 mt-8 pass-in-2">Powered by URPASS</p>
+        )}
+      </div>
+    );
   }
 
   // ── Pending ───────────────────────────────────────────────────────────────

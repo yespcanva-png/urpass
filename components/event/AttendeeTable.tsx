@@ -5,7 +5,7 @@ import {
   UserPlus, Upload, Check, X, Clock, Loader2, Users,
   Search, Ticket, ExternalLink, Download, Lock, Wifi, ClipboardList, RotateCcw,
 } from "lucide-react";
-import { approveAttendee, rejectAttendee, exportAttendeesCSV } from "@/app/actions/attendees";
+import { approveAttendee, rejectAttendee, exportAttendeesCSV, promoteNextWaitlistAttendee } from "@/app/actions/attendees";
 import { undoCheckIn } from "@/app/actions/manual-checkin";
 import { generatePass } from "@/app/actions/passes";
 import AddAttendeeModal from "./AddAttendeeModal";
@@ -16,7 +16,7 @@ import WhatsAppShareButton from "@/components/pass/WhatsAppShareButton";
 import AttendeeDeliveryActions from "./AttendeeDeliveryActions";
 import type { CustomFieldDefinition } from "@/types";
 
-type Status    = "pending" | "approved" | "rejected";
+type Status    = "pending" | "approved" | "rejected" | "waitlisted";
 type FilterTab = "all" | Status;
 
 interface Attendee {
@@ -45,9 +45,10 @@ interface Props {
 }
 
 const statusConfig: Record<Status, { label: string; cls: string; icon: React.ComponentType<{ className?: string }> }> = {
-  pending:  { label: "Pending",  cls: "bg-amber-50 text-amber-700 border-amber-100",  icon: Clock },
-  approved: { label: "Approved", cls: "bg-green-50 text-green-700 border-green-100",  icon: Check },
-  rejected: { label: "Rejected", cls: "bg-red-50 text-red-600 border-red-100",        icon: X },
+  pending:    { label: "Pending",    cls: "bg-amber-50 text-amber-700 border-amber-100",    icon: Clock },
+  approved:   { label: "Approved",   cls: "bg-green-50 text-green-700 border-green-100",    icon: Check },
+  rejected:   { label: "Rejected",   cls: "bg-red-50 text-red-600 border-red-100",          icon: X },
+  waitlisted: { label: "Waitlisted", cls: "bg-purple-50 text-purple-700 border-purple-200", icon: Clock },
 };
 
 function StatusBadge({ status }: { status: Status }) {
@@ -111,6 +112,7 @@ export default function AttendeeTable({
   const [actionErrors, setActionErrors] = useState<Record<string, string>>({});
   const [loadingId, setLoadingId]   = useState<string | null>(null);
   const [undoingId, setUndoingId]   = useState<string | null>(null);
+  const [promotingWaitlist, setPromotingWaitlist] = useState(false);
   const [exporting, setExporting]   = useState(false);
   const [liveConnected, setLiveConnected] = useState(false);
   const [selectedAnswersAttendee, setSelectedAnswersAttendee] = useState<Attendee | null>(null);
@@ -157,10 +159,11 @@ export default function AttendeeTable({
   const atCapacity    = approvedCount >= attendeeLimit;
 
   const counts = {
-    all:      attendees.length,
-    pending:  attendees.filter((a) => a.application_status === "pending").length,
-    approved: approvedCount,
-    rejected: attendees.filter((a) => a.application_status === "rejected").length,
+    all:        attendees.length,
+    pending:    attendees.filter((a) => a.application_status === "pending").length,
+    approved:   approvedCount,
+    rejected:   attendees.filter((a) => a.application_status === "rejected").length,
+    waitlisted: attendees.filter((a) => a.application_status === "waitlisted").length,
   };
 
   const filtered = attendees
@@ -281,7 +284,39 @@ export default function AttendeeTable({
     }
   }
 
-  const tabs: FilterTab[] = ["all", "pending", "approved", "rejected"];
+  async function handlePromoteNextWaitlist() {
+    setPromotingWaitlist(true);
+    try {
+      const res = await promoteNextWaitlistAttendee(eventId);
+      if (res?.error) {
+        alert(res.error);
+      } else if (res?.attendeeName) {
+        setAttendees((prev) => {
+          const firstWlIndex = prev.findIndex((a) => a.application_status === "waitlisted");
+          if (firstWlIndex === -1) return prev;
+          const updated = [...prev];
+          updated[firstWlIndex] = {
+            ...updated[firstWlIndex],
+            application_status: "approved",
+            pass_status: res.passToken ? "generated" : updated[firstWlIndex].pass_status,
+          };
+          return updated;
+        });
+        if (res.passToken) {
+          const promoted = attendees.find((a) => a.name === res.attendeeName);
+          if (promoted) {
+            setPassTokens((prev) => ({ ...prev, [promoted.id]: res.passToken! }));
+          }
+        }
+      }
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to promote attendee");
+    } finally {
+      setPromotingWaitlist(false);
+    }
+  }
+
+  const tabs: FilterTab[] = ["all", "pending", "approved", "rejected", "waitlisted"];
 
   return (
     <>
@@ -367,6 +402,17 @@ export default function AttendeeTable({
                 Export CSV
                 <span className="text-[9px] font-bold uppercase bg-violet-100 text-brand px-1.5 py-0.5 rounded-full">Pro</span>
               </Link>
+            )}
+
+            {counts.waitlisted > 0 && !atCapacity && (
+              <button
+                onClick={handlePromoteNextWaitlist}
+                disabled={promotingWaitlist}
+                className="flex items-center gap-1.5 bg-purple-50 text-purple-700 border border-purple-200 rounded-xl px-3 py-2 text-xs font-semibold hover:bg-purple-100 transition-colors disabled:opacity-50"
+              >
+                {promotingWaitlist ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Clock className="w-3.5 h-3.5" />}
+                Promote next from waitlist ({counts.waitlisted} waiting)
+              </button>
             )}
 
             <button onClick={() => setShowAddModal(true)}
@@ -544,6 +590,17 @@ export default function AttendeeTable({
                               <Btn onClick={() => handleApprove(a.id, a.application_status)} pending={false} variant="primary">
                                 Re-approve
                               </Btn>
+                            )}
+
+                            {a.application_status === "waitlisted" && (
+                              <>
+                                <Btn onClick={() => handleApprove(a.id, a.application_status)} pending={false} variant="primary">
+                                  <Check className="w-3 h-3" /> Promote
+                                </Btn>
+                                <Btn onClick={() => handleReject(a.id, a.application_status)} pending={false} variant="outline">
+                                  Remove
+                                </Btn>
+                              </>
                             )}
                           </div>
                         </td>

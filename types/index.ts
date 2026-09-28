@@ -74,6 +74,7 @@ export type Event = {
   attendee_limit: number;
   status: EventStatus;
   application_enabled: boolean;
+  waitlist_enabled?: boolean;
   is_paid_event: boolean;
   ticket_price: number;
   custom_fields?: CustomFieldDefinition[];
@@ -127,7 +128,7 @@ export type ApiKey = {
   updated_at: string;
 };
 
-export type ApplicationStatus = "pending" | "approved" | "rejected";
+export type ApplicationStatus = "pending" | "approved" | "rejected" | "waitlisted";
 export type PassStatus = "not_generated" | "generated" | "checked_in";
 
 export type Attendee = {

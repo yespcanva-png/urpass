@@ -16,7 +16,8 @@ export type WebhookEventType =
   | "checkin.completed"
   | "pass.issued"
   | "registration.approved"
-  | "registration.rejected";
+  | "registration.rejected"
+  | "registration.waitlisted";
 
 export interface WebhookPayload {
   event_type: WebhookEventType;
