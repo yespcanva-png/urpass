@@ -57,28 +57,26 @@ function QRPattern({ className }: { className?: string }) {
 function PassCard() {
   return (
     <div className="relative w-64 sm:w-72 max-w-full mx-auto select-none">
-      <div className="absolute inset-0 translate-x-2.5 translate-y-2.5 sm:translate-x-5 sm:translate-y-5 bg-brand-100 rounded-3xl animate-float-delayed" />
-      <div className="absolute inset-0 translate-x-1.5 translate-y-1.5 sm:translate-x-2.5 sm:translate-y-2.5 bg-brand-200 rounded-3xl" />
-      <div className="relative bg-white rounded-3xl border border-neutral-150 shadow-2xl overflow-hidden animate-float">
+      <div className="relative bg-white rounded-2xl border border-neutral-200 shadow-[0_20px_50px_rgba(0,0,0,0.08)] overflow-hidden">
         <div className="bg-neutral-900 px-5 sm:px-6 py-3.5 sm:py-4 flex items-center justify-between">
-          <span className="text-xs font-semibold tracking-widest text-white/60">URPASS</span>
-          <span className="text-[11px] sm:text-xs font-semibold tracking-wide text-white bg-white/10 px-2.5 py-1 rounded-full">VALID</span>
+          <span className="text-xs font-bold tracking-widest text-white/80">URPASS</span>
+          <span className="text-[10px] sm:text-[11px] font-semibold tracking-wide text-emerald-300 bg-emerald-950/60 border border-emerald-500/30 px-2 py-0.5 rounded-md">VALID PASS</span>
         </div>
         <div className="px-5 sm:px-6 pt-4 sm:pt-5 pb-5 sm:pb-6">
           <p className="text-[10px] font-semibold tracking-widest text-neutral-400 mb-1">EVENT</p>
           <h3 className="font-semibold text-base sm:text-lg leading-snug text-neutral-900 mb-4 sm:mb-5">Tech Workshop 2026</h3>
           <div className="flex items-center gap-0 mb-4 sm:mb-5">
-            <div className="w-4 sm:w-5 h-4 sm:w-5 rounded-full bg-neutral-100 -ml-7 sm:-ml-9 shrink-0" />
+            <div className="w-4 sm:w-5 h-4 sm:w-5 rounded-full bg-neutral-100 -ml-7 sm:-ml-9 shrink-0 border-r border-neutral-200" />
             <div className="flex-1 border-t border-dashed border-neutral-200 mx-1" />
-            <div className="w-4 sm:w-5 h-4 sm:w-5 rounded-full bg-neutral-100 -mr-7 sm:-mr-9 shrink-0" />
+            <div className="w-4 sm:w-5 h-4 sm:w-5 rounded-full bg-neutral-100 -mr-7 sm:-mr-9 shrink-0 border-l border-neutral-200" />
           </div>
           <p className="text-[10px] font-semibold tracking-widest text-neutral-400 mb-1">ATTENDEE</p>
           <p className="font-semibold text-sm sm:text-base text-neutral-900">Srinithin S</p>
-          <span className="inline-block mt-1.5 text-[10px] font-semibold tracking-widest text-brand bg-brand-50 px-2.5 py-1 rounded-full">
+          <span className="inline-block mt-1.5 text-[10px] font-semibold tracking-wider text-neutral-700 bg-neutral-100 border border-neutral-200 px-2.5 py-0.5 rounded-md">
             PARTICIPANT
           </span>
           <div className="mt-4 sm:mt-5 flex flex-col items-center">
-            <div className="w-24 h-24 sm:w-28 sm:h-28 p-2.5 sm:p-3 bg-white border border-neutral-100 rounded-2xl shadow-sm">
+            <div className="w-24 h-24 sm:w-28 sm:h-28 p-2.5 sm:p-3 bg-white border border-neutral-200/80 rounded-xl shadow-xs">
               <QRPattern className="w-full h-full text-neutral-900" />
             </div>
             <p className="mt-2 text-[10px] text-neutral-400 tracking-widest font-mono">SCAN TO VERIFY</p>
@@ -103,27 +101,31 @@ function DashboardMockup() {
     { name: "Meena R",     type: "Speaker",     status: "pending"    },
   ];
   return (
-    <div className="bg-white rounded-2xl border border-neutral-100 shadow-lg overflow-hidden w-full max-w-lg">
-      <div className="px-4 pt-3 pb-2 border-b border-neutral-100 flex items-center gap-1.5">
-        <div className="w-2.5 h-2.5 rounded-full bg-neutral-200" />
-        <div className="w-2.5 h-2.5 rounded-full bg-neutral-200" />
-        <div className="w-2.5 h-2.5 rounded-full bg-neutral-200" />
+    <div className="bg-white rounded-xl border border-neutral-200/80 shadow-md overflow-hidden w-full max-w-lg">
+      <div className="px-4 py-3 border-b border-neutral-100 flex items-center justify-between bg-neutral-50/50">
+        <div className="flex items-center gap-1.5">
+          <div className="w-2.5 h-2.5 rounded-full bg-neutral-300" />
+          <div className="w-2.5 h-2.5 rounded-full bg-neutral-300" />
+          <div className="w-2.5 h-2.5 rounded-full bg-neutral-300" />
+        </div>
+        <span className="text-[11px] font-mono text-neutral-400">app.urpass.space</span>
+        <div className="w-10" />
       </div>
       <div className="p-4 sm:p-5">
         <h4 className="font-semibold text-xs sm:text-sm text-neutral-900 mb-3 sm:mb-4">AI Workshop 2026</h4>
         <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-4 sm:mb-5">
           {[{ label: "Applications", value: "250" }, { label: "Passes", value: "180" }, { label: "Checked In", value: "127" }].map((s) => (
-            <div key={s.label} className="bg-neutral-50 rounded-xl p-2.5 sm:p-3 text-center">
-              <p className="text-lg sm:text-xl font-semibold text-neutral-900">{s.value}</p>
-              <p className="text-[9px] sm:text-[10px] text-neutral-400 mt-0.5">{s.label}</p>
+            <div key={s.label} className="bg-neutral-50 border border-neutral-100 rounded-lg p-2.5 sm:p-3 text-center">
+              <p className="text-lg sm:text-xl font-bold tracking-tight text-neutral-900">{s.value}</p>
+              <p className="text-[9px] sm:text-[10px] text-neutral-500 mt-0.5 font-medium">{s.label}</p>
             </div>
           ))}
         </div>
-        <div className="flex flex-col divide-y divide-neutral-50">
+        <div className="flex flex-col divide-y divide-neutral-100">
           {rows.map((row, i) => (
             <div key={i} className="flex items-center justify-between py-2 sm:py-2.5">
               <div className="flex items-center gap-2 sm:gap-2.5">
-                <div className="w-6 h-6 rounded-full bg-neutral-100 flex items-center justify-center text-[10px] font-semibold text-neutral-500 shrink-0">
+                <div className="w-6 h-6 rounded-full bg-neutral-100 border border-neutral-200 flex items-center justify-center text-[10px] font-semibold text-neutral-600 shrink-0">
                   {row.name[0]}
                 </div>
                 <div>
@@ -131,7 +133,7 @@ function DashboardMockup() {
                   <p className="text-[10px] text-neutral-400">{row.type}</p>
                 </div>
               </div>
-              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${row.status === "checked_in" ? "bg-emerald-50 text-emerald-600" : "bg-neutral-100 text-neutral-400"}`}>
+              <span className={`text-[10px] font-medium px-2 py-0.5 rounded-md shrink-0 ${row.status === "checked_in" ? "bg-emerald-50 text-emerald-700 border border-emerald-100" : "bg-neutral-100 text-neutral-500 border border-neutral-200"}`}>
                 {row.status === "checked_in" ? "Checked in" : "Pending"}
               </span>
             </div>
@@ -270,15 +272,15 @@ export default async function LandingPage() {
           {/* Left: text — CSS animations (always above fold, no observer) */}
           <div>
             <div className="flex flex-wrap items-center gap-2 mb-6 sm:mb-8">
-              <div className="hero-badge inline-flex items-center gap-2 bg-brand-50 text-brand text-[11px] sm:text-xs font-semibold tracking-wider px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full">
-                <span className="w-1.5 h-1.5 rounded-full bg-brand inline-block" />
-                SIMPLE DIGITAL EVENT PASSES
+              <div className="hero-badge inline-flex items-center gap-2 bg-neutral-100 text-neutral-800 text-[11px] sm:text-xs font-semibold tracking-wider px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full border border-neutral-200">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
+                DIGITAL EVENT PASS &amp; CHECK-IN OS
               </div>
               <Link
                 href="/mcp-event-management"
-                className="inline-flex items-center gap-1.5 bg-neutral-100 hover:bg-neutral-200/80 text-neutral-700 text-[11px] sm:text-xs font-medium px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full transition-colors group"
+                className="inline-flex items-center gap-1.5 bg-neutral-100 hover:bg-neutral-200/80 text-neutral-700 text-[11px] sm:text-xs font-medium px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full transition-colors group border border-neutral-200/60"
               >
-                <span className="w-1.5 h-1.5 rounded-full bg-purple-600 inline-block animate-pulse" />
+                <span className="w-1.5 h-1.5 rounded-full bg-neutral-700 inline-block" />
                 MCP Supported for Claude &amp; Cursor
                 <span className="text-neutral-400 group-hover:translate-x-0.5 transition-transform">&rarr;</span>
               </Link>
@@ -320,14 +322,14 @@ export default async function LandingPage() {
       </section>
 
       {/* ── MCP ONE-LINE STRIP ─────────────────────────────────────────── */}
-      <div className="border-y border-neutral-100 bg-neutral-50/70 py-3 px-4 text-center">
+      <div className="border-y border-neutral-200/70 bg-neutral-50/80 py-2.5 px-4 text-center">
         <p className="text-xs sm:text-sm text-neutral-600">
-          <span className="inline-flex items-center gap-1.5 font-semibold text-purple-700 bg-purple-50 border border-purple-200/70 px-2 py-0.5 rounded-full text-[11px] mr-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-purple-600 animate-pulse" />
-            AI &amp; MCP
+          <span className="inline-flex items-center gap-1.5 font-semibold text-neutral-900 bg-neutral-200/70 border border-neutral-300/80 px-2 py-0.5 rounded-md text-[11px] mr-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
+            Model Context Protocol
           </span>
           Native Model Context Protocol support — control tickets, registrations and check-ins directly inside Claude Desktop &amp; Cursor.{" "}
-          <Link href="/mcp-event-management" className="font-semibold text-brand hover:underline ml-1 inline-flex items-center gap-0.5">
+          <Link href="/mcp-event-management" className="font-semibold text-neutral-900 hover:underline ml-1 inline-flex items-center gap-0.5">
             Explore MCP &rarr;
           </Link>
         </p>
@@ -506,10 +508,10 @@ export default async function LandingPage() {
               <AnimateIn key={label} delay={i * 55} from="scale">
                 <Link
                   href={href}
-                  className="flex items-center gap-2 sm:gap-2.5 border border-neutral-100 rounded-2xl px-4 py-2.5 sm:px-5 sm:py-3 hover:border-brand-200 hover:bg-brand-50 transition-all group"
+                  className="flex items-center gap-2 sm:gap-2.5 border border-neutral-200/80 rounded-xl px-4 py-2.5 sm:px-5 sm:py-3 hover:border-neutral-300 hover:bg-neutral-50 shadow-xs transition-all group"
                 >
-                  <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-neutral-400 group-hover:text-brand transition-colors" />
-                  <span className="text-xs sm:text-sm font-medium text-neutral-700 group-hover:text-brand transition-colors">{label}</span>
+                  <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-neutral-500 group-hover:text-neutral-900 transition-colors" />
+                  <span className="text-xs sm:text-sm font-medium text-neutral-700 group-hover:text-neutral-900 transition-colors">{label}</span>
                 </Link>
               </AnimateIn>
             ))}
