@@ -13,7 +13,8 @@ import {
   AlertCircle,
   ShieldCheck,
 } from "lucide-react";
-import { updateBillingProfile, validateGstin } from "@/app/actions/auth";
+import { updateBillingProfile } from "@/app/actions/auth";
+import { validateGstin } from "@/lib/validations/gstin";
 
 interface ProfileFormProps {
   fullName: string;

@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 
 import { revalidatePath } from "next/cache";
+import { validateGstin } from "@/lib/validations/gstin";
 
 type ActionResult = { success?: boolean; error?: string };
 
@@ -49,13 +50,6 @@ export interface BillingProfileInput {
   companyName?: string | null;
   gstin?: string | null;
   billingAddress?: string | null;
-}
-
-export function validateGstin(gstin: string): boolean {
-  const cleaned = gstin.trim().toUpperCase();
-  if (!cleaned) return true;
-  const gstinRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
-  return gstinRegex.test(cleaned);
 }
 
 export async function updateBillingProfile(data: BillingProfileInput): Promise<ActionResult> {

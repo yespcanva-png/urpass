@@ -245,7 +245,7 @@ describe("createDefaultTicketType", () => {
 
 describe("validateGstin", () => {
   it("validates standard 15-character Indian GSTINs correctly", async () => {
-    const { validateGstin } = await import("@/app/actions/auth");
+    const { validateGstin } = await import("@/lib/validations/gstin");
 
     // Standard valid formats (2 digits state code + 5 chars PAN + 4 digits + 1 char entity + 1 char checksum digit/letter + Z + checksum)
     expect(validateGstin("29ABCDE1234F1Z5")).toBe(true);
