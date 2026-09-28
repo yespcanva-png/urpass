@@ -276,9 +276,22 @@ export default function DashboardContent() {
         </div>
       )}
 
-      {/* ── 30-Day Free Trial Eligibility Banner ─────────────────── */}
-      {loaded && trialInfo?.isEligible && (
-        <div className="rounded-xl p-5 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs border border-neutral-800 bg-neutral-900">
+      {/* ── Free Trial / Status Banner (With Skeleton Placeholder to prevent CLS) ── */}
+      {!loaded ? (
+        <div className="rounded-xl p-5 border border-neutral-200/80 bg-white shadow-xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-start sm:items-center gap-3.5">
+              <div className="skeleton w-9 h-9 rounded-lg shrink-0" />
+              <div className="space-y-2">
+                <div className="skeleton h-4 w-48 rounded" />
+                <div className="skeleton h-3 w-72 rounded" />
+              </div>
+            </div>
+            <div className="skeleton h-9 w-36 rounded-lg shrink-0 hidden sm:block" />
+          </div>
+        </div>
+      ) : trialInfo?.isEligible ? (
+        <div className="rounded-xl p-5 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs border border-neutral-800 bg-neutral-900 content-in">
           <div className="flex items-start sm:items-center gap-3.5">
             <div className="w-9 h-9 rounded-lg bg-neutral-800 border border-neutral-700/60 flex items-center justify-center shrink-0">
               <ShieldCheck className="w-4 h-4 text-emerald-400" />
@@ -306,11 +319,8 @@ export default function DashboardContent() {
             <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>
-      )}
-
-      {/* ── Active Free Trial Status Card ────────────────────────── */}
-      {loaded && trialInfo?.isActiveTrial && (
-        <div className="rounded-xl p-4 sm:p-5 bg-neutral-900 text-white shadow-xs border border-neutral-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      ) : trialInfo?.isActiveTrial ? (
+        <div className="rounded-xl p-4 sm:p-5 bg-neutral-900 text-white shadow-xs border border-neutral-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4 content-in">
           <div className="flex items-start sm:items-center gap-3.5">
             <div className="w-9 h-9 rounded-lg bg-neutral-800 border border-neutral-700/60 flex items-center justify-center shrink-0">
               <Clock className="w-4 h-4 text-neutral-300" />
@@ -341,7 +351,7 @@ export default function DashboardContent() {
             <ChevronRight className="w-3.5 h-3.5" />
           </Link>
         </div>
-      )}
+      ) : null}
 
       {/* ── Stats grid ───────────────────────────────────────────── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -434,8 +444,8 @@ export default function DashboardContent() {
         </Link>
       )}
 
-      {/* ── Upgrade prompt (free plan only) ──────────────────────── */}
-      {loaded && planSlug === "free" && (
+      {/* ── Upgrade prompt (free plan after trial used) ─────────── */}
+      {loaded && planSlug === "free" && !trialInfo?.isEligible && (
         <div
           className="rounded-xl px-6 py-4 flex items-center justify-between gap-4 bg-neutral-900 border border-neutral-800 text-white shadow-xs"
         >
