@@ -8,6 +8,7 @@ import { getUserPlan } from "@/lib/plan";
 import DownloadPassButton from "@/components/pass/DownloadPassButton";
 import AutoDownload from "@/components/pass/AutoDownload";
 import WhatsAppShareButton from "@/components/pass/WhatsAppShareButton";
+import AddToCalendarButton from "@/components/pass/AddToCalendarButton";
 import { Suspense } from "react";
 import { getSupabaseUrl } from "@/lib/supabase/config";
 import {
@@ -87,7 +88,7 @@ export default async function PassPage({
       .single(),
     admin
       .from("events")
-      .select("name, event_date, start_time, end_time, venue, event_type, meeting_url, meeting_platform, organizer_id, custom_pass_design")
+      .select("name, description, event_date, start_time, end_time, venue, event_type, meeting_url, meeting_platform, organizer_id, custom_pass_design")
       .eq("id", pass.event_id)
       .single(),
   ]);
@@ -467,6 +468,17 @@ export default async function PassPage({
       )}
 
       <div className="mt-6 flex flex-col items-center gap-3 w-full max-w-sm pass-in-3">
+        <AddToCalendarButton
+          eventName={event.name}
+          description={event.description}
+          venue={event.venue ?? "Online"}
+          eventDate={event.event_date}
+          startTime={event.start_time}
+          endTime={event.end_time}
+          passToken={pass.pass_token}
+          meetingUrl={event.meeting_url}
+          isOnline={event.event_type === "online" || event.event_type === "hybrid"}
+        />
         <WhatsAppShareButton
           eventName={event.name}
           eventDate={formattedDate}
