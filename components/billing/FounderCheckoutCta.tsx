@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
-import { ArrowRight, Sparkles, Loader2 } from "lucide-react";
+import { ArrowRight, ShieldCheck, Loader2 } from "lucide-react";
 import CheckoutModal from "./CheckoutModal";
 import { detectCountryClient } from "@/lib/country-config";
 import { activateUkPlan } from "@/app/actions/billing";
@@ -94,10 +94,10 @@ export default function FounderCheckoutCta({
       return (
         <Link
           href={signupHref}
-          className={`w-full sm:w-auto px-8 py-3.5 rounded-2xl font-bold text-sm bg-white text-neutral-950 hover:bg-neutral-100 shadow-xl transition-all inline-flex items-center justify-center gap-2 ${className}`}
+          className={`w-full sm:w-auto px-6 py-2.5 rounded-lg font-semibold text-xs bg-white text-neutral-950 hover:bg-neutral-100 shadow-xs transition-colors inline-flex items-center justify-center gap-2 ${className}`}
         >
           <span>Claim Lifetime Access — {founderPriceText}</span>
-          <ArrowRight className="w-4 h-4" />
+          <ArrowRight className="w-3.5 h-3.5" />
         </Link>
       );
     }
@@ -105,10 +105,10 @@ export default function FounderCheckoutCta({
     return (
       <Link
         href={signupHref}
-        className={`inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-2xl font-bold text-sm bg-gradient-to-r from-brand to-purple-600 hover:from-brand-light hover:to-purple-500 text-white shadow-[0_0_30px_rgba(124,58,237,0.4)] transition-all transform active:scale-95 text-center ${className}`}
+        className={`inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-semibold text-xs bg-white text-neutral-950 hover:bg-neutral-100 shadow-xs transition-colors text-center ${className}`}
       >
         <span>Claim Founder Account</span>
-        <ArrowRight className="w-4 h-4" />
+        <ArrowRight className="w-3.5 h-3.5" />
       </Link>
     );
   }
@@ -123,10 +123,10 @@ export default function FounderCheckoutCta({
           children
             ? className
             : variant === "white"
-            ? `w-full sm:w-auto px-8 py-3.5 rounded-2xl font-bold text-sm bg-white text-neutral-950 hover:bg-neutral-100 shadow-xl transition-all inline-flex items-center justify-center gap-2 disabled:opacity-50 ${className}`
+            ? `w-full sm:w-auto px-6 py-2.5 rounded-lg font-semibold text-xs bg-white text-neutral-950 hover:bg-neutral-100 shadow-xs transition-colors inline-flex items-center justify-center gap-2 disabled:opacity-50 ${className}`
             : variant === "billing"
-            ? `inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-brand to-purple-600 hover:from-brand-light hover:to-purple-500 text-white font-semibold text-xs sm:text-sm transition-all shadow-lg active:scale-95 text-center whitespace-nowrap disabled:opacity-50 ${className}`
-            : `inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-2xl font-bold text-sm bg-gradient-to-r from-brand to-purple-600 hover:from-brand-light hover:to-purple-500 text-white shadow-[0_0_30px_rgba(124,58,237,0.4)] transition-all transform active:scale-95 text-center disabled:opacity-50 ${className}`
+            ? `inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-white text-neutral-900 hover:bg-neutral-100 font-semibold text-xs transition-colors shadow-xs text-center whitespace-nowrap disabled:opacity-50 ${className}`
+            : `inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg font-semibold text-xs bg-white text-neutral-950 hover:bg-neutral-100 shadow-xs transition-colors text-center disabled:opacity-50 ${className}`
         }
       >
         {children ? (
@@ -138,9 +138,9 @@ export default function FounderCheckoutCta({
           </>
         ) : (
           <>
-            <Sparkles className="w-4 h-4 text-amber-300" />
+            <ShieldCheck className="w-4 h-4 text-emerald-600" />
             <span>Pay &amp; Claim Founder Account — {founderPriceText}</span>
-            <ArrowRight className="w-4 h-4" />
+            <ArrowRight className="w-3.5 h-3.5" />
           </>
         )}
       </button>

@@ -592,11 +592,11 @@ export default async function BillingPage(props: {
           <InvoiceHistory invoices={invoices} />
 
           {/* ── Founder Lifetime Plan Callout Banner ── */}
-          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-neutral-950 via-purple-950 to-neutral-950 p-6 sm:p-8 border border-purple-500/30 text-white shadow-xl">
+          <div className="relative overflow-hidden rounded-xl bg-neutral-900 border border-neutral-800 p-6 sm:p-7 text-white shadow-xs">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
               <div className="space-y-2">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-amber-400/10 border border-amber-400/30 text-amber-300">
-                  <Flame className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold bg-neutral-800 border border-neutral-700 text-neutral-300">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
                   <span>
                     {currentPlanSlug === "founder" || currentPlanSlug === "lifetime"
                       ? "FOUNDER STATUS ACTIVE"
@@ -610,7 +610,7 @@ export default async function BillingPage(props: {
                     ? "URPASS Founder Lifetime Access — £249 One-Time"
                     : "URPASS Founder Lifetime Access — ₹19,999 One-Time"}
                 </h3>
-                <p className="text-xs sm:text-sm text-neutral-300 max-w-2xl leading-relaxed">
+                <p className="text-xs sm:text-sm text-neutral-400 max-w-2xl leading-relaxed">
                   {currentPlanSlug === "founder" || currentPlanSlug === "lifetime"
                     ? "Your account has permanent operational access to all core URPASS event creation, check-in, Ticket Studio, and scanner capabilities with zero recurring renewal fees."
                     : "Permanent access to all currently available URPASS features for a one-time payment. Create your own event landing page on urpass.space and lock in all features for lifetime (Term 2125)."}
@@ -630,7 +630,7 @@ export default async function BillingPage(props: {
 
               <div className="shrink-0 flex items-center gap-3">
                 {currentPlanSlug === "founder" || currentPlanSlug === "lifetime" ? (
-                  <span className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-semibold text-xs">
+                  <span className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 font-semibold text-xs">
                     <Check className="w-4 h-4 text-emerald-400" />
                     Lifetime Active
                   </span>
@@ -644,7 +644,7 @@ export default async function BillingPage(props: {
                     />
                     <Link
                       href="/founder-lifetime-deal"
-                      className="inline-flex items-center justify-center gap-1.5 px-4 py-3 rounded-xl bg-white/10 hover:bg-white/15 text-white font-semibold text-xs transition-all border border-white/10"
+                      className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-white font-medium text-xs transition-colors border border-neutral-700"
                     >
                       <span>Details</span>
                       <ArrowRight className="w-3.5 h-3.5" />
