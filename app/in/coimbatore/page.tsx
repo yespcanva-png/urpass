@@ -4,13 +4,12 @@ import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
   title: "Event Registration Software for Colleges & Events Coimbatore",
-  description: "URPASS event registration and QR check-in for Coimbatore colleges and events. Used by PSG, Amrita, KCT, SKCET, and more. Free to start.",
+  description: "URPASS event registration and QR check-in built for Coimbatore colleges and events. Suitable for technical symposiums, workshops, and college festivals. Free to start.",
   keywords: [
     "event registration Coimbatore",
     "QR check-in Coimbatore",
-    "PSG tech event registration",
-    "Amrita college events passes",
-    "KCT event passes",
+    "Coimbatore college event registration",
+    "Coimbatore symposium passes",
     "Coimbatore event ticketing software",
   ],
   alternates: { canonical: "https://urpass.space/in/coimbatore" },
@@ -46,7 +45,7 @@ export default function CoimbatorePage() {
         description: "Run college and corporate event registrations in Coimbatore with digital QR passes and phone-based check-in. Trusted by Coimbatore colleges and event teams.",
         ctaLabel: "Start your Coimbatore event",
         features: [
-          { icon: GraduationCap, title: "Coimbatore college events", desc: "Used by PSG College of Technology, Amrita, KCT, SKCET, and other Coimbatore colleges for events and workshops." },
+          { icon: GraduationCap, title: "Coimbatore college events", desc: "Built for events at colleges across Coimbatore. Suitable for technical symposiums, workshops, and college festivals." },
           { icon: MapPin, title: "Local to Coimbatore", desc: "INR pricing, Razorpay payments, and support for the type of events Coimbatore organisers run." },
           { icon: Ticket, title: "Free and paid events", desc: "Run free college events or collect fees for paid workshops and conferences." },
           { icon: QrCode, title: "Digital QR passes", desc: "Issue digital QR passes instantly to every approved attendee — no printing needed." },

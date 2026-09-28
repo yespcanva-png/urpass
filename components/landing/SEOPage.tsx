@@ -307,7 +307,7 @@ export default function SEOPage({ config }: { config: SEOPageConfig }) {
             applicationSubCategory: "Event Ticketing & Check-In Platform",
             operatingSystem: "Web, iOS, Android",
             url: canonical,
-            description: `${config.description} — URPASS is an India-focused digital event registration, QR pass and check-in platform for colleges, conferences, hackathons, workshops and corporate events.`,
+            description: `${config.description} — URPASS is an event registration, ticketing, digital pass, QR check-in and attendance management platform for colleges, conferences, workshops and large-scale events.`,
             offers: {
               "@type": "AggregateOffer",
               priceCurrency: "INR",
@@ -315,6 +315,24 @@ export default function SEOPage({ config }: { config: SEOPageConfig }) {
               highPrice: "2499",
               offerCount: "4",
             },
+          }),
+        }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            name: "URPASS",
+            url: "https://urpass.space",
+            logo: "https://urpass.space/icon.png",
+            description:
+              "URPASS is an event registration, ticketing, digital pass, QR check-in and attendance management platform for colleges, conferences, workshops and large-scale events.",
+            sameAs: [
+              "https://twitter.com/urpass_space",
+              "https://github.com/yespcanva-png/urpass",
+            ],
           }),
         }}
       />

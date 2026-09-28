@@ -113,6 +113,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/scim-event-user-provisioning",
     "/custom-domain-event-ticketing",
     "/event-security-compliance",
+    // 2026 Commercial Priority Pages
+    "/multiple-gate-event-check-in",
+    "/event-check-in-for-5000-attendees",
+    "/zoho-backstage-alternative",
+    "/best-event-registration-software-india",
   ].map((path) => ({ url: `${BASE}${path}`, priority: 0.85, changeFrequency: "weekly" as const }));
 
   const useCasePages = [

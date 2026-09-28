@@ -307,44 +307,44 @@ export default function EventTicketingSoftwareIndiaPage() {
         // Topic Cluster Internal Links
         relatedLinks: [
           {
-            title: "Event Ticketing Software (Master Pillar)",
-            href: "/event-ticketing-software",
+            title: "UPI Event Ticketing",
+            href: "/upi-event-ticketing",
             category: "Product",
           },
           {
-            title: "Event Ticketing with UPI",
-            href: "/event-ticketing-with-upi",
+            title: "Zero Commission Event Ticketing",
+            href: "/zero-commission-event-ticketing",
             category: "Product",
           },
           {
-            title: "Event Ticket Payment Gateway (Razorpay)",
-            href: "/event-ticket-payment-gateway",
+            title: "Event Registration with Payment",
+            href: "/event-registration-with-payment",
+            category: "Product",
+          },
+          {
+            title: "Digital Event Pass & QR Tickets",
+            href: "/digital-event-pass",
+            category: "Product",
+          },
+          {
+            title: "Multiple Gate Event Check-In",
+            href: "/multiple-gate-event-check-in",
+            category: "Product",
+          },
+          {
+            title: "Check In 5,000 Event Attendees",
+            href: "/event-check-in-for-5000-attendees",
             category: "Guide",
           },
           {
-            title: "QR Ticketing System & Check-In",
-            href: "/qr-ticketing-system",
+            title: "Real-Time Event Attendance Software",
+            href: "/event-attendance-software",
             category: "Product",
           },
           {
-            title: "Event Registration Software India",
-            href: "/in",
-            category: "Location",
-          },
-          {
-            title: "College Event Ticketing Platform",
-            href: "/event-ticketing-platform-for-college-events",
-            category: "Use Case",
-          },
-          {
-            title: "Conference Event Ticketing Platform",
-            href: "/event-ticketing-platform-for-conferences",
-            category: "Use Case",
-          },
-          {
-            title: "Workshop Event Ticketing Platform",
-            href: "/event-ticketing-platform-for-workshops",
-            category: "Use Case",
+            title: "Best Event Registration Software India",
+            href: "/best-event-registration-software-india",
+            category: "Comparison",
           },
         ],
 

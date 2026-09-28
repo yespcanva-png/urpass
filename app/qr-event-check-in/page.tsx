@@ -45,6 +45,33 @@ export default function QrEventCheckInPage() {
           "College fests", "Hackathons", "Workshops", "Corporate events",
           "Conferences", "Seminars", "Community events", "Tech events",
         ],
+        relatedLinks: [
+          {
+            title: "Offline QR Event Check-In",
+            href: "/offline-qr-event-check-in",
+            category: "Product",
+          },
+          {
+            title: "Prevent Duplicate Event Entry",
+            href: "/guides/prevent-duplicate-event-entry",
+            category: "Guide",
+          },
+          {
+            title: "Multiple Gate Event Check-In",
+            href: "/multiple-gate-event-check-in",
+            category: "Product",
+          },
+          {
+            title: "High-Volume Check-In for 5,000 Attendees",
+            href: "/event-check-in-for-5000-attendees",
+            category: "Guide",
+          },
+          {
+            title: "Event Capacity Management",
+            href: "/event-capacity-management",
+            category: "Product",
+          },
+        ],
         faqs: [
           { q: "What is QR event check-in?", a: "QR event check-in means each attendee has a unique QR code on their digital pass. Staff scans this QR at the entrance to verify the pass and record the check-in. URPASS handles the full flow from registration to QR generation to scanning." },
           { q: "Do staff need to install an app to scan?", a: "No. The URPASS scanner works directly in any mobile browser. Staff just opens the scanner URL, grants camera permission, and starts scanning." },

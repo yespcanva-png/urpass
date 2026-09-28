@@ -45,6 +45,33 @@ export default function CollegeEventsPage() {
           "Tech workshops", "Hackathons", "Symposiums", "Cultural fests",
           "Guest lectures", "Seminars", "Inter-college events", "Department events",
         ],
+        relatedLinks: [
+          {
+            title: "Google Forms Alternative for Events",
+            href: "/google-forms-alternative-for-events",
+            category: "Comparison",
+          },
+          {
+            title: "Event QR Code Generator",
+            href: "/event-qr-code-generator",
+            category: "Product",
+          },
+          {
+            title: "Multiple Gate Event Check-In",
+            href: "/multiple-gate-event-check-in",
+            category: "Product",
+          },
+          {
+            title: "Event Capacity Management",
+            href: "/event-capacity-management",
+            category: "Product",
+          },
+          {
+            title: "Check In 5,000 Event Attendees",
+            href: "/event-check-in-for-5000-attendees",
+            category: "Guide",
+          },
+        ],
         faqs: [
           { q: "Is URPASS free for college events?", a: "Yes. The free plan supports 2 events per month with up to 100 registrations per month at ₹0 forever. For larger college events and fests, paid plans start at ₹499/month (Starter: 10 events, 500 registrations) and ₹999/month (Pro: unlimited events, 2,500 registrations) with a 30-day free trial." },
           { q: "Can I collect department or year from students?", a: "Yes. You can add custom registration fields for any information you need — department, year, roll number, or college name." },
