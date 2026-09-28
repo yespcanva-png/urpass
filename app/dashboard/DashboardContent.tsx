@@ -486,21 +486,84 @@ export default function DashboardContent() {
             {Array.from({ length: 3 }).map((_, i) => <EventSkeleton key={i} />)}
           </div>
         ) : events.length === 0 ? (
-          <div className="bg-white rounded-xl p-12 text-center shadow-xs border border-neutral-200/80">
-            <div className="w-10 h-10 bg-neutral-100 border border-neutral-200 rounded-lg flex items-center justify-center mx-auto mb-3">
-              <Calendar className="w-5 h-5 text-neutral-600" />
+          <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-xs border border-neutral-200/80">
+            <div className="text-center max-w-md mx-auto mb-8">
+              <div className="w-12 h-12 bg-neutral-100 border border-neutral-200 rounded-xl flex items-center justify-center mx-auto mb-3">
+                <Ticket className="w-6 h-6 text-brand" />
+              </div>
+              <h2 className="text-base sm:text-lg font-bold text-neutral-900">
+                Welcome to UrPass! Let&apos;s launch your first event
+              </h2>
+              <p className="text-xs text-neutral-500 mt-1 leading-relaxed">
+                From registration to contactless gate check-in, here is how UrPass works:
+              </p>
             </div>
-            <p className="text-sm font-semibold text-neutral-900 mb-1">No events yet</p>
-            <p className="text-xs text-neutral-500 mb-4 max-w-xs mx-auto">
-              Create your first event to start issuing digital passes and scanning attendees
-            </p>
-            <Link
-              href="/create-event"
-              className="inline-flex items-center gap-2 text-xs font-semibold text-white px-4 py-2.5 rounded-lg bg-neutral-900 hover:bg-neutral-800 transition-colors"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              Create your first event
-            </Link>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
+              <div className="p-4 rounded-xl border border-neutral-200/70 bg-neutral-50/50 flex flex-col justify-between">
+                <div>
+                  <div className="w-8 h-8 rounded-lg bg-white border border-neutral-200 flex items-center justify-center text-xs font-bold text-neutral-900 mb-3 shadow-2xs">
+                    1
+                  </div>
+                  <h3 className="text-xs font-bold text-neutral-900 mb-1">Create Event</h3>
+                  <p className="text-[11px] text-neutral-500 leading-relaxed">
+                    Set event name, date, venue, and configure free or paid ticket tiers.
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-xl border border-neutral-200/70 bg-neutral-50/50 flex flex-col justify-between">
+                <div>
+                  <div className="w-8 h-8 rounded-lg bg-white border border-neutral-200 flex items-center justify-center text-xs font-bold text-neutral-900 mb-3 shadow-2xs">
+                    2
+                  </div>
+                  <h3 className="text-xs font-bold text-neutral-900 mb-1">Ticket Studio</h3>
+                  <p className="text-[11px] text-neutral-500 leading-relaxed">
+                    Personalize digital event pass layout, brand colors, and security QR codes.
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-xl border border-neutral-200/70 bg-neutral-50/50 flex flex-col justify-between">
+                <div>
+                  <div className="w-8 h-8 rounded-lg bg-white border border-neutral-200 flex items-center justify-center text-xs font-bold text-neutral-900 mb-3 shadow-2xs">
+                    3
+                  </div>
+                  <h3 className="text-xs font-bold text-neutral-900 mb-1">Share & Register</h3>
+                  <p className="text-[11px] text-neutral-500 leading-relaxed">
+                    Publish your registration link. Passes are issued automatically upon approval.
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-xl border border-neutral-200/70 bg-neutral-50/50 flex flex-col justify-between">
+                <div>
+                  <div className="w-8 h-8 rounded-lg bg-white border border-neutral-200 flex items-center justify-center text-xs font-bold text-neutral-900 mb-3 shadow-2xs">
+                    4
+                  </div>
+                  <h3 className="text-xs font-bold text-neutral-900 mb-1">Scan & Check In</h3>
+                  <p className="text-[11px] text-neutral-500 leading-relaxed">
+                    Check in attendees at gates instantly using phone camera or 2D USB scanners.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2 border-t border-neutral-100">
+              <Link
+                href="/create-event"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 text-xs font-semibold text-white px-5 py-2.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 transition-colors shadow-xs"
+              >
+                <Plus className="w-4 h-4" />
+                Create your first event
+              </Link>
+              <Link
+                href="/billing"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 text-xs font-semibold text-neutral-600 hover:text-neutral-900 px-4 py-2.5 rounded-xl border border-neutral-200 hover:bg-neutral-50 transition-colors"
+              >
+                View Plans & Features
+              </Link>
+            </div>
           </div>
         ) : (
           <div className="flex flex-col gap-2 content-in">
