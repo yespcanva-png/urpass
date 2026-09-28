@@ -60,6 +60,8 @@ function SignupContent() {
   const [serverError, setServerError] = useState("");
   const [enforcedSSORedirect, setEnforcedSSORedirect] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [needsEmailConfirmation, setNeedsEmailConfirmation] = useState(false);
+  const [submittedEmail, setSubmittedEmail] = useState("");
   const [googleLoading, setGoogleLoading] = useState(false);
   const [ssoLoading, setSsoLoading] = useState(false);
   const [ssoSuccessMsg, setSsoSuccessMsg] = useState("");
@@ -114,6 +116,13 @@ function SignupContent() {
     } catch (err: unknown) {
       console.error("[signup] sendSignupNotifications error:", err);
     }
+
+    if (!signUpData.session) {
+      setSubmittedEmail(data.email);
+      setNeedsEmailConfirmation(true);
+      return;
+    }
+
     const target = resolvePostAuthRedirect(
       searchParams,
       typeof document !== "undefined" ? document.referrer : null
@@ -163,6 +172,44 @@ function SignupContent() {
     background:
       "radial-gradient(ellipse 100% 50% at 50% -10%, #ede9fe 0%, #f5f3ff 40%, #ffffff 70%)",
   };
+
+  if (needsEmailConfirmation) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-5" style={BG}>
+        <div className="w-full max-w-md bg-white rounded-3xl border border-neutral-100 p-8 shadow-xl text-center pass-scale-in">
+          <div
+            className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5 bg-brand-50 border border-brand/20"
+          >
+            <Mail className="w-8 h-8 text-brand" />
+          </div>
+          <h2 className="text-2xl font-bold text-neutral-900 tracking-tight">Check your email</h2>
+          <p className="mt-2 text-sm text-neutral-600 leading-relaxed">
+            We sent a verification link to <span className="font-semibold text-neutral-900">{submittedEmail}</span>. Click the link in the email to activate your account and start creating events.
+          </p>
+          <div className="mt-6 p-4 rounded-xl bg-neutral-50 border border-neutral-200/80 text-xs text-neutral-500 text-left space-y-1.5">
+            <p className="font-medium text-neutral-700">Didn't see the email?</p>
+            <p>• Check your spam or promotions folder</p>
+            <p>• Make sure <span className="font-mono text-neutral-700">{submittedEmail}</span> was typed correctly</p>
+          </div>
+          <div className="mt-6 flex flex-col gap-2">
+            <Link
+              href="/login"
+              className="w-full py-3 rounded-xl text-sm font-semibold text-white bg-neutral-900 hover:bg-neutral-800 transition-colors shadow-xs"
+            >
+              Go to Sign In
+            </Link>
+            <button
+              type="button"
+              onClick={() => setNeedsEmailConfirmation(false)}
+              className="text-xs text-neutral-500 hover:text-neutral-900 transition-colors py-2 cursor-pointer"
+            >
+              Use a different email address
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (success) {
     return (
