@@ -6,6 +6,7 @@ import { Check, Minus, ChevronDown, Sparkles, Flame, ArrowRight } from "lucide-r
 import TrialConfirmationModal from "@/components/billing/TrialConfirmationModal";
 import FounderSpotCounter from "@/components/billing/FounderSpotCounter";
 import QuickConsultationWidget from "@/components/consultation/QuickConsultationWidget";
+import { detectCountryClient, persistCountryPreference } from "@/lib/country-config";
 
 type Cycle = "monthly" | "annual";
 
@@ -245,20 +246,7 @@ export default function PricingContent({
   const [trialModal, setTrialModal] = useState<{ planSlug: string; planName: string } | null>(null);
 
   useEffect(() => {
-    try {
-      const urlParams = new URLSearchParams(window.location.search);
-      const cParam = urlParams.get("country")?.toUpperCase();
-      if (cParam === "GB" || cParam === "UK") {
-        setCountry("GB");
-        return;
-      }
-      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      if (tz === "Europe/London" || tz === "GMT" || tz === "Europe/Belfast") {
-        setCountry("GB");
-      }
-    } catch {
-      // fallback to IN
-    }
+    setCountry(detectCountryClient());
   }, []);
 
   function displayPrice(plan: typeof PLANS[0]) {
@@ -309,7 +297,10 @@ export default function PricingContent({
             <div className="inline-flex items-center bg-neutral-100 p-1 rounded-xl gap-1 text-xs">
               <button
                 type="button"
-                onClick={() => setCountry("IN")}
+                onClick={() => {
+                  setCountry("IN");
+                  persistCountryPreference("IN");
+                }}
                 className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
                   country === "IN"
                     ? "bg-white text-neutral-900 shadow-sm font-semibold"
@@ -320,7 +311,10 @@ export default function PricingContent({
               </button>
               <button
                 type="button"
-                onClick={() => setCountry("GB")}
+                onClick={() => {
+                  setCountry("GB");
+                  persistCountryPreference("GB");
+                }}
                 className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
                   country === "GB"
                     ? "bg-white text-neutral-900 shadow-sm font-semibold"

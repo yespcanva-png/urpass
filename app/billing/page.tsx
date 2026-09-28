@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
+import { headers, cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
+import { detectCountryFromHeaders } from "@/lib/country-config";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -21,6 +23,7 @@ import {
 } from "lucide-react";
 import CancelButton from "@/components/billing/CancelButton";
 import PlanGrid from "@/components/billing/PlanGrid";
+import BillingMarketSwitcher from "@/components/billing/BillingMarketSwitcher";
 import { getUserPlan } from "@/lib/plan";
 import UpgradeCelebration from "@/components/billing/UpgradeCelebration";
 import FounderCheckoutCta from "@/components/billing/FounderCheckoutCta";
@@ -373,9 +376,26 @@ export default async function BillingPage(props: {
 
   const sub = subData as Subscription | null;
   const isUkSubscriber = sub?.provider === "uk_direct";
+
+  const [reqHeaders, cookieStore] = await Promise.all([headers(), cookies()]);
+  const cookieCountry = cookieStore.get("urpass_country")?.value?.toUpperCase();
+  const headerCountry = detectCountryFromHeaders(reqHeaders);
   const requestedCountry = searchParams?.country?.toUpperCase();
+
   const country: "IN" | "GB" =
-    requestedCountry === "GB" || requestedCountry === "UK" || isUkSubscriber ? "GB" : "IN";
+    requestedCountry === "GB" || requestedCountry === "UK"
+      ? "GB"
+      : requestedCountry === "IN"
+      ? "IN"
+      : isUkSubscriber
+      ? "GB"
+      : cookieCountry === "GB" || cookieCountry === "UK"
+      ? "GB"
+      : cookieCountry === "IN"
+      ? "IN"
+      : headerCountry === "GB"
+      ? "GB"
+      : "IN";
   const isUk = country === "GB";
 
   const isTrial = Boolean(sub?.is_trial && sub?.trial_ends_at && new Date(sub.trial_ends_at) >= new Date());
@@ -436,31 +456,8 @@ export default async function BillingPage(props: {
             Dashboard
           </Link>
 
-          {/* Market / Country Toggle */}
-          <div className="flex items-center gap-2 mb-6">
-            <div className="inline-flex items-center bg-white/10 p-1 rounded-xl gap-1 text-xs">
-              <Link
-                href="/billing?country=IN"
-                className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
-                  country === "IN"
-                    ? "bg-white text-neutral-900 shadow-sm font-semibold"
-                    : "text-white/60 hover:text-white"
-                }`}
-              >
-                🇮🇳 India (INR ₹)
-              </Link>
-              <Link
-                href="/billing?country=GB"
-                className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
-                  country === "GB"
-                    ? "bg-white text-neutral-900 shadow-sm font-semibold"
-                    : "text-white/60 hover:text-white"
-                }`}
-              >
-                🇬🇧 United Kingdom (GBP £)
-              </Link>
-            </div>
-          </div>
+          {/* Market / Country Toggle with Preference Persistence */}
+          <BillingMarketSwitcher currentCountry={country} />
 
           <div
             className="w-12 h-12 rounded-2xl flex items-center justify-center mb-5"

@@ -333,3 +333,103 @@ export function maskPhoneInternational(phone: string | null | undefined): string
 
   return `${prefix} •••••••${suffix}`;
 }
+
+/**
+ * Automatically detects country code from HTTP request headers.
+ * Works seamlessly with Vercel Geo-IP, Cloudflare, AWS CloudFront, and proxy headers.
+ */
+export function detectCountryFromHeaders(headers: {
+  get(name: string): string | null | undefined;
+}): SupportedCountryCode {
+  // 1. Vercel Geo-IP header (injected automatically on Vercel Edge & Serverless)
+  const vercelCountry = headers.get("x-vercel-ip-country")?.trim().toUpperCase();
+  if (vercelCountry === "GB" || vercelCountry === "UK") return "GB";
+  if (vercelCountry === "IN") return "IN";
+  if (vercelCountry === "US") return "US";
+
+  // 2. Cloudflare Geo-IP header
+  const cfCountry = headers.get("cf-ipcountry")?.trim().toUpperCase();
+  if (cfCountry === "GB" || cfCountry === "UK") return "GB";
+  if (cfCountry === "IN") return "IN";
+  if (cfCountry === "US") return "US";
+
+  // 3. AWS CloudFront viewer country header
+  const cfViewer = headers.get("cloudfront-viewer-country")?.trim().toUpperCase();
+  if (cfViewer === "GB" || cfViewer === "UK") return "GB";
+  if (cfViewer === "IN") return "IN";
+  if (cfViewer === "US") return "US";
+
+  // 4. Standard X-Country-Code header
+  const xCountry = headers.get("x-country-code")?.trim().toUpperCase();
+  if (xCountry === "GB" || xCountry === "UK") return "GB";
+  if (xCountry === "IN") return "IN";
+  if (xCountry === "US") return "US";
+
+  // 5. Browser Accept-Language header
+  const acceptLang = headers.get("accept-language")?.toLowerCase() || "";
+  if (acceptLang.includes("en-gb")) return "GB";
+  if (acceptLang.includes("en-in") || acceptLang.includes("hi-in") || acceptLang.includes("ta-in")) return "IN";
+
+  return "IN";
+}
+
+/**
+ * Automatically detects country on the client (browser) without permissions popups.
+ * Priority: Query param -> Saved preference (localStorage) -> Browser Timezone -> Browser Language -> Default (IN).
+ */
+export function detectCountryClient(): "IN" | "GB" {
+  if (typeof window === "undefined") return "IN";
+
+  try {
+    // 1. Explicit query parameter override (e.g. ?country=GB)
+    const urlParams = new URLSearchParams(window.location.search);
+    const qCountry = urlParams.get("country")?.toUpperCase();
+    if (qCountry === "GB" || qCountry === "UK") return "GB";
+    if (qCountry === "IN") return "IN";
+
+    // 2. Persistent user choice from localStorage
+    const stored = window.localStorage.getItem("urpass_country")?.toUpperCase();
+    if (stored === "GB" || stored === "UK") return "GB";
+    if (stored === "IN") return "IN";
+
+    // 3. Browser system timezone (Instant, 0 latency, 0 permissions)
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if (
+      tz === "Europe/London" ||
+      tz === "Europe/Belfast" ||
+      tz === "Europe/Jersey" ||
+      tz === "Europe/Guernsey" ||
+      tz === "Europe/Isle_of_Man" ||
+      tz === "GMT" ||
+      tz === "BST"
+    ) {
+      return "GB";
+    }
+
+    // 4. Browser languages
+    const navLangs = navigator.languages || [navigator.language || ""];
+    for (const l of navLangs) {
+      const lower = l.toLowerCase();
+      if (lower === "en-gb" || lower.startsWith("en-gb")) return "GB";
+    }
+  } catch {
+    // Ignore and fallback
+  }
+
+  return "IN";
+}
+
+/**
+ * Saves user market choice across both localStorage and Cookie so both
+ * server components (Next.js headers/cookies) and client components stay in sync.
+ */
+export function persistCountryPreference(country: "IN" | "GB"): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem("urpass_country", country);
+    document.cookie = `urpass_country=${country}; path=/; max-age=31536000; SameSite=Lax`;
+  } catch {
+    // Ignore
+  }
+}
+

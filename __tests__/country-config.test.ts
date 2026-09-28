@@ -7,6 +7,7 @@ import {
   normalizePhoneInternational,
   isValidE164Phone,
   maskPhoneInternational,
+  detectCountryFromHeaders,
   COUNTRIES,
 } from "@/lib/country-config";
 
@@ -130,4 +131,40 @@ describe("Country Configuration Layer (Enterprise i18n)", () => {
       expect(formattedIN).toBeDefined();
     });
   });
+
+  describe("Automatic Country Detection from Headers", () => {
+    it("detects UK from x-vercel-ip-country header", () => {
+      const mockHeaders = new Map([["x-vercel-ip-country", "GB"]]);
+      expect(detectCountryFromHeaders(mockHeaders)).toBe("GB");
+    });
+
+    it("detects UK from cf-ipcountry header", () => {
+      const mockHeaders = new Map([["cf-ipcountry", "GB"]]);
+      expect(detectCountryFromHeaders(mockHeaders)).toBe("GB");
+    });
+
+    it("detects UK from cloudfront-viewer-country header", () => {
+      const mockHeaders = new Map([["cloudfront-viewer-country", "GB"]]);
+      expect(detectCountryFromHeaders(mockHeaders)).toBe("GB");
+    });
+
+    it("detects UK from accept-language header when geo headers are absent", () => {
+      const mockHeaders = new Map([["accept-language", "en-GB,en;q=0.9"]]);
+      expect(detectCountryFromHeaders(mockHeaders)).toBe("GB");
+    });
+
+    it("detects India from x-vercel-ip-country or accept-language", () => {
+      const mockHeaders = new Map([["x-vercel-ip-country", "IN"]]);
+      expect(detectCountryFromHeaders(mockHeaders)).toBe("IN");
+
+      const langHeaders = new Map([["accept-language", "en-IN,hi;q=0.8"]]);
+      expect(detectCountryFromHeaders(langHeaders)).toBe("IN");
+    });
+
+    it("falls back to IN when no recognizable headers are present", () => {
+      const emptyHeaders = new Map<string, string>();
+      expect(detectCountryFromHeaders(emptyHeaders)).toBe("IN");
+    });
+  });
 });
+
