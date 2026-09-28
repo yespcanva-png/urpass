@@ -14,11 +14,12 @@ import {
   Copy,
   Trash2,
   Loader2,
+  RotateCcw,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import { createGate, deleteGate } from "@/app/actions/scanner-gates";
-import { manualCheckIn } from "@/app/actions/manual-checkin";
+import { manualCheckIn, undoCheckIn } from "@/app/actions/manual-checkin";
 
 type PassType = "participant" | "vip" | "speaker" | "organizer";
 
@@ -110,6 +111,7 @@ export default function CheckinDashboard({
 
   // Manual check-in state per attendee
   const [checkingInId, setCheckingInId] = useState<string | null>(null);
+  const [undoingId, setUndoingId] = useState<string | null>(null);
 
   const checkinSet = new Set(checkins.map((c) => c.attendee_id));
   const checkedInCount = checkins.length;
@@ -143,6 +145,21 @@ export default function CheckinDashboard({
               a.id === entry.attendee_id ? { ...a, pass_status: "checked_in" } : a
             )
           );
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "DELETE", schema: "public", table: "check_ins", filter: `event_id=eq.${event.id}` },
+        (payload) => {
+          const removed = payload.old as Partial<Checkin>;
+          if (removed?.attendee_id) {
+            setCheckins((prev) => prev.filter((c) => c.attendee_id !== removed.attendee_id));
+            setAttendees((prev) =>
+              prev.map((a) =>
+                a.id === removed.attendee_id ? { ...a, pass_status: "generated" } : a
+              )
+            );
+          }
         }
       )
       .subscribe((status) => setLive(status === "SUBSCRIBED"));
@@ -227,6 +244,25 @@ export default function CheckinDashboard({
       }
     } catch {
       setCheckingInId(null);
+    }
+  }
+
+  async function handleUndoCheckIn(attendee: Attendee) {
+    if (undoingId) return;
+    setUndoingId(attendee.id);
+    try {
+      const result = await undoCheckIn(attendee.id, event.id);
+      setUndoingId(null);
+      if (result.success) {
+        setAttendees((prev) =>
+          prev.map((a) =>
+            a.id === attendee.id ? { ...a, pass_status: "generated" } : a
+          )
+        );
+        setCheckins((prev) => prev.filter((c) => c.attendee_id !== attendee.id));
+      }
+    } catch {
+      setUndoingId(null);
     }
   }
 
@@ -571,7 +607,21 @@ export default function CheckinDashboard({
                           {isIn ? "Checked in" : "Not arrived"}
                         </span>
                       </div>
-                      {!isIn && (
+                      {isIn ? (
+                        <button
+                          onClick={() => handleUndoCheckIn(a)}
+                          disabled={undoingId === a.id}
+                          title="Undo check-in (allow re-entry)"
+                          className="flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-lg text-neutral-600 hover:text-red-600 hover:bg-red-50 border border-neutral-200 transition-colors disabled:opacity-50 shrink-0"
+                        >
+                          {undoingId === a.id ? (
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                          ) : (
+                            <RotateCcw className="w-3 h-3" />
+                          )}
+                          <span className="hidden sm:inline">Undo</span>
+                        </button>
+                      ) : (
                         <button
                           onClick={() => handleManualCheckIn(a)}
                           disabled={isChecking}

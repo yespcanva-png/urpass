@@ -36,17 +36,20 @@ import {
   syncOfflineQueue,
   type OfflineVerificationResult,
 } from "@/lib/offline-scanner";
+import { undoCheckIn, undoCheckInByToken } from "@/app/actions/manual-checkin";
 
 const QRScanner = dynamic(() => import("@/components/scan/QRScanner"), { ssr: false });
 
 type ScanState = "idle" | "scanning" | "verifying" | "success" | "duplicate" | "error" | "access_denied";
 
 interface ScanResult {
-  attendee: { name: string; email: string; pass_type: string };
+  attendee: { id?: string; name: string; email: string; pass_type: string };
   passType: string;
   checkedInAt?: string | null;
   gateName?: string | null;
   offline?: boolean;
+  passToken?: string;
+  attendeeId?: string;
 }
 
 interface FeedEntry {
@@ -80,6 +83,7 @@ const PASS_TYPE_LABEL: Record<string, string> = {
 
 const AUTO_RESET_SUCCESS_MS = 600;
 const AUTO_RESET_ALERT_MS = 1800;
+const AUTO_RESET_DUPLICATE_MS = 6000;
 const SAME_TOKEN_DEBOUNCE_MS = 2000; // Debounce same QR code to prevent duplicate triggers
 const RAPID_SCAN_COOLDOWN_MS = 150; // Minimal 150ms cooldown between different tickets
 const SOUND_STORAGE_KEY = "urpass_scanner_sound_enabled";
@@ -119,6 +123,7 @@ export default function ScanEventPage() {
   const [searchResults, setSearchResults] = useState<SearchAttendee[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [checkingInId, setCheckingInId] = useState<string | null>(null);
+  const [undoingCheckIn, setUndoingCheckIn] = useState(false);
 
   // Offline state & synchronization
   const [isOnline, setIsOnline] = useState<boolean>(
@@ -344,7 +349,7 @@ export default function ScanEventPage() {
   }, [eventId, refreshManifest, syncPendingScans]);
 
   const handleOfflineResult = useCallback(
-    (offRes: OfflineVerificationResult) => {
+    (offRes: OfflineVerificationResult, passToken?: string) => {
       if (offRes.status === "CHECKED_IN") {
         playScannerFeedback("CHECKED_IN", { sound: soundEnabled });
         setResult({
@@ -353,6 +358,7 @@ export default function ScanEventPage() {
           checkedInAt: offRes.checkedInAt,
           gateName: selectedGate?.name,
           offline: true,
+          passToken,
         });
         setScanState("success");
         setScanCount((c) => c + 1);
@@ -377,6 +383,7 @@ export default function ScanEventPage() {
           checkedInAt: offRes.checkedInAt,
           gateName: selectedGate?.name,
           offline: true,
+          passToken,
         });
         setScanState("duplicate");
         return;
@@ -482,7 +489,7 @@ export default function ScanEventPage() {
           gateName: selectedGate?.name,
           checkInMethod: "qr",
         });
-        handleOfflineResult(offRes);
+        handleOfflineResult(offRes, rawToken);
         return;
       }
 
@@ -511,7 +518,7 @@ export default function ScanEventPage() {
         // 1. Success check-in (Green ✓, short high chime, 80ms)
         if (data.status === "CHECKED_IN" || data.success) {
           playScannerFeedback("CHECKED_IN", { sound: soundEnabled });
-          setResult(data);
+          setResult({ ...data, passToken: rawToken });
           setScanState("success");
           return;
         }
@@ -519,7 +526,7 @@ export default function ScanEventPage() {
         // 2. Duplicate check-in (Amber ⚠, double low tone, [150, 80, 150])
         if (data.status === "ALREADY_CHECKED_IN" || data.alreadyCheckedIn) {
           playScannerFeedback("ALREADY_CHECKED_IN", { sound: soundEnabled });
-          setResult(data);
+          setResult({ ...data, passToken: rawToken });
           setScanState("duplicate");
           return;
         }
@@ -702,6 +709,66 @@ export default function ScanEventPage() {
     setScanState("idle");
   }, []);
 
+  const handleUndoCheckIn = useCallback(
+    async (attendeeId: string) => {
+      setUndoingCheckIn(true);
+      try {
+        const res = await undoCheckIn(attendeeId, eventId);
+        if (res?.success) {
+          setSearchResults((prev) =>
+            prev.map((a) => (a.id === attendeeId ? { ...a, pass_status: "generated" } : a))
+          );
+          setScanCount((c) => Math.max(0, c - 1));
+          setSyncBanner({
+            message: "Check-in reset. Attendee can now be admitted or re-scanned.",
+            type: "success",
+          });
+          setTimeout(() => setSyncBanner(null), 4000);
+        } else if (res?.error) {
+          alert(res.error);
+        }
+      } catch (err) {
+        alert(err instanceof Error ? err.message : "Failed to reset check-in");
+      } finally {
+        setUndoingCheckIn(false);
+      }
+    },
+    [eventId]
+  );
+
+  const handleDuplicateOverride = useCallback(
+    async () => {
+      const token = result?.passToken;
+      const attendeeId = result?.attendee?.id || result?.attendeeId;
+      if (!token && !attendeeId) return;
+      setUndoingCheckIn(true);
+      try {
+        let res;
+        if (token) {
+          res = await undoCheckInByToken(token, eventId);
+        } else if (attendeeId) {
+          res = await undoCheckIn(attendeeId, eventId);
+        }
+        if (res?.success) {
+          setScanCount((c) => Math.max(0, c - 1));
+          setSyncBanner({
+            message: "Check-in reset successfully. Pass can now be scanned again.",
+            type: "success",
+          });
+          setTimeout(() => setSyncBanner(null), 4000);
+          reset();
+        } else if (res?.error) {
+          alert(res.error);
+        }
+      } catch (err) {
+        alert(err instanceof Error ? err.message : "Failed to reset check-in");
+      } finally {
+        setUndoingCheckIn(false);
+      }
+    },
+    [result, eventId, reset]
+  );
+
   useEffect(() => {
     if (
       scanState === "success" ||
@@ -709,7 +776,12 @@ export default function ScanEventPage() {
       scanState === "error" ||
       scanState === "access_denied"
     ) {
-      const durationMs = scanState === "success" ? AUTO_RESET_SUCCESS_MS : AUTO_RESET_ALERT_MS;
+      const durationMs =
+        scanState === "success"
+          ? AUTO_RESET_SUCCESS_MS
+          : scanState === "duplicate"
+          ? AUTO_RESET_DUPLICATE_MS
+          : AUTO_RESET_ALERT_MS;
       const initTimer = setTimeout(() => setResetProgress(0), 0);
       const step = 100 / (durationMs / 50);
       progressRef.current = setInterval(() => {
@@ -990,9 +1062,24 @@ export default function ScanEventPage() {
                         {PASS_TYPE_LABEL[a.pass_type] ?? a.pass_type}
                       </span>
                       {isIn ? (
-                        <span className="text-[10px] font-bold text-emerald-400 px-2.5 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
-                          Already in
-                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[10px] font-bold text-emerald-400 px-2.5 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+                            Already in
+                          </span>
+                          <button
+                            onClick={() => handleUndoCheckIn(a.id)}
+                            disabled={undoingCheckIn}
+                            title="Reset check-in (allow re-entry)"
+                            className="flex items-center gap-1 text-[11px] font-medium px-2 py-1.5 rounded-xl bg-white/[0.08] text-white/70 hover:text-white hover:bg-white/[0.15] border border-white/[0.1] transition-colors disabled:opacity-50"
+                          >
+                            {undoingCheckIn ? (
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                            ) : (
+                              <RotateCcw className="w-3 h-3" />
+                            )}
+                            <span className="hidden sm:inline">Reset</span>
+                          </button>
+                        </div>
                       ) : (
                         <button
                           onClick={() => manualCheckIn(a)}
@@ -1061,7 +1148,7 @@ export default function ScanEventPage() {
 
               {/* Duplicate */}
               {scanState === "duplicate" && result && (
-                <div className="w-full max-w-xs sm:max-w-sm cursor-pointer select-none" onClick={reset} title="Tap anywhere to scan next">
+                <div className="w-full max-w-xs sm:max-w-sm select-none">
                   <ResultCard
                     variant="duplicate"
                     attendee={result.attendee}
@@ -1071,8 +1158,10 @@ export default function ScanEventPage() {
                     offline={result.offline}
                     onReset={reset}
                     progress={resetProgress}
+                    onAllowReentry={handleDuplicateOverride}
+                    isUndoing={undoingCheckIn}
                   />
-                  <p className="text-center text-[11px] text-white/40 mt-2 font-medium">Tap anywhere to scan next</p>
+                  <p className="text-center text-[11px] text-white/40 mt-2 font-medium">Tap button above to allow re-entry, or tap below to scan next</p>
                 </div>
               )}
 
@@ -1150,15 +1239,19 @@ function ResultCard({
   offline,
   onReset,
   progress,
+  onAllowReentry,
+  isUndoing,
 }: {
   variant: "success" | "duplicate";
-  attendee: { name: string; email: string; pass_type: string };
+  attendee: { id?: string; name: string; email: string; pass_type: string };
   passType: string;
   checkedInAt?: string | null;
   gateName?: string | null;
   offline?: boolean;
   onReset: () => void;
   progress: number;
+  onAllowReentry?: () => void;
+  isUndoing?: boolean;
 }) {
   const ok = variant === "success";
   const color = ok ? "#10b981" : "#f59e0b";
@@ -1244,6 +1337,23 @@ function ResultCard({
 
       {/* Progress + reset */}
       <div className="flex flex-col gap-2.5 pt-1">
+        {variant === "duplicate" && onAllowReentry && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onAllowReentry();
+            }}
+            disabled={isUndoing}
+            className="flex items-center justify-center gap-1.5 w-full py-2.5 px-3 rounded-xl bg-amber-500/20 text-amber-200 border border-amber-500/30 hover:bg-amber-500/30 text-xs font-semibold transition-colors disabled:opacity-50"
+          >
+            {isUndoing ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <RotateCcw className="w-3.5 h-3.5" />
+            )}
+            Allow Re-entry / Reset Check-in
+          </button>
+        )}
         <div className="h-0.5 bg-white/[0.08] rounded-full overflow-hidden">
           <div
             className="h-full rounded-full transition-none"

@@ -3,9 +3,10 @@
 import { useState, useEffect, useRef } from "react";
 import {
   UserPlus, Upload, Check, X, Clock, Loader2, Users,
-  Search, Ticket, ExternalLink, Download, Lock, Wifi, ClipboardList,
+  Search, Ticket, ExternalLink, Download, Lock, Wifi, ClipboardList, RotateCcw,
 } from "lucide-react";
 import { approveAttendee, rejectAttendee, exportAttendeesCSV } from "@/app/actions/attendees";
+import { undoCheckIn } from "@/app/actions/manual-checkin";
 import { generatePass } from "@/app/actions/passes";
 import AddAttendeeModal from "./AddAttendeeModal";
 import CSVUploadModal from "./CSVUploadModal";
@@ -109,6 +110,7 @@ export default function AttendeeTable({
   const [showCSVModal, setShowCSVModal] = useState(false);
   const [actionErrors, setActionErrors] = useState<Record<string, string>>({});
   const [loadingId, setLoadingId]   = useState<string | null>(null);
+  const [undoingId, setUndoingId]   = useState<string | null>(null);
   const [exporting, setExporting]   = useState(false);
   const [liveConnected, setLiveConnected] = useState(false);
   const [selectedAnswersAttendee, setSelectedAnswersAttendee] = useState<Attendee | null>(null);
@@ -241,6 +243,25 @@ export default function AttendeeTable({
     } catch (err) {
       setLoadingId(null);
       setErr(id, err instanceof Error ? err.message : "Failed to load pass");
+    }
+  }
+
+  async function handleUndoCheckIn(id: string) {
+    setUndoingId(id);
+    setErr(id, "");
+    try {
+      const result = await undoCheckIn(id, eventId);
+      setUndoingId(null);
+      if (result?.error) {
+        setErr(id, result.error);
+      } else {
+        setAttendees((prev) =>
+          prev.map((a) => (a.id === id ? { ...a, pass_status: "generated" } : a))
+        );
+      }
+    } catch (err) {
+      setUndoingId(null);
+      setErr(id, err instanceof Error ? err.message : "Failed to undo check-in");
     }
   }
 
@@ -506,6 +527,12 @@ export default function AttendeeTable({
                                       <Download className="w-3 h-3" />
                                     </button>
                                   </>
+                                )}
+                                {a.pass_status === "checked_in" && (
+                                  <Btn onClick={() => handleUndoCheckIn(a.id)} pending={undoingId === a.id} variant="outline">
+                                    <RotateCcw className="w-3 h-3 text-amber-600" />
+                                    <span className="text-amber-700">Undo check-in</span>
+                                  </Btn>
                                 )}
                                 <Btn onClick={() => handleReject(a.id, a.application_status)} pending={false} variant="danger">
                                   Revoke
