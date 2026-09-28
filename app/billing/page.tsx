@@ -23,7 +23,6 @@ import {
 } from "lucide-react";
 import CancelButton from "@/components/billing/CancelButton";
 import PlanGrid from "@/components/billing/PlanGrid";
-import BillingMarketSwitcher from "@/components/billing/BillingMarketSwitcher";
 import { getUserPlan } from "@/lib/plan";
 import UpgradeCelebration from "@/components/billing/UpgradeCelebration";
 import FounderCheckoutCta from "@/components/billing/FounderCheckoutCta";
@@ -455,9 +454,6 @@ export default async function BillingPage(props: {
             <ArrowLeft className="w-4 h-4" />
             Dashboard
           </Link>
-
-          {/* Market / Country Toggle with Preference Persistence */}
-          <BillingMarketSwitcher currentCountry={country} />
 
           <div
             className="w-12 h-12 rounded-2xl flex items-center justify-center mb-5"

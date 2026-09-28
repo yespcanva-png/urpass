@@ -6,7 +6,7 @@ import { Check, Minus, ChevronDown, Sparkles, Flame, ArrowRight } from "lucide-r
 import TrialConfirmationModal from "@/components/billing/TrialConfirmationModal";
 import FounderSpotCounter from "@/components/billing/FounderSpotCounter";
 import QuickConsultationWidget from "@/components/consultation/QuickConsultationWidget";
-import { detectCountryClient, persistCountryPreference } from "@/lib/country-config";
+import { detectCountryClient } from "@/lib/country-config";
 
 type Cycle = "monthly" | "annual";
 
@@ -292,39 +292,6 @@ export default function PricingContent({
 
         {/* ── 01 Hero + Toggle ── */}
         <section className="max-w-5xl mx-auto text-center pt-20 pb-14">
-          {/* Country Selector */}
-          <div className="flex items-center justify-center gap-2 mb-6">
-            <div className="inline-flex items-center bg-neutral-100 p-1 rounded-xl gap-1 text-xs">
-              <button
-                type="button"
-                onClick={() => {
-                  setCountry("IN");
-                  persistCountryPreference("IN");
-                }}
-                className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
-                  country === "IN"
-                    ? "bg-white text-neutral-900 shadow-sm font-semibold"
-                    : "text-neutral-500 hover:text-neutral-800"
-                }`}
-              >
-                🇮🇳 India (INR ₹)
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setCountry("GB");
-                  persistCountryPreference("GB");
-                }}
-                className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
-                  country === "GB"
-                    ? "bg-white text-neutral-900 shadow-sm font-semibold"
-                    : "text-neutral-500 hover:text-neutral-800"
-                }`}
-              >
-                🇬🇧 United Kingdom (GBP £)
-              </button>
-            </div>
-          </div>
 
           {!trialUsed ? (
             <>
