@@ -443,7 +443,7 @@ export default function PlanGrid({
                         <button
                           type="button"
                           onClick={() => setTrialModal({ planSlug: p.slug, planName: p.name })}
-                          className={`w-full py-2.5 text-xs font-semibold rounded-xl text-white shadow-xs transition-all hover:opacity-90 ${
+                          className={`w-full py-2.5 text-xs font-semibold rounded-xl text-white shadow-xs transition-all hover:opacity-90 cursor-pointer ${
                             isMostPopular
                               ? "bg-brand hover:bg-brand-600"
                               : "bg-neutral-900 hover:bg-neutral-800"
@@ -456,10 +456,21 @@ export default function PlanGrid({
                         >
                           Start 30-Day Free Trial
                         </button>
+                        <CheckoutButton
+                          planSlug={p.slug}
+                          planName={p.name}
+                          billingCycle={cycle}
+                          userEmail={userEmail}
+                          userName={userName}
+                          currency={country === "GB" ? "GBP" : "INR"}
+                          className="w-full py-1 text-[11px] font-medium text-neutral-500 hover:text-neutral-900 transition-colors text-center cursor-pointer"
+                        >
+                          or Buy &amp; Upgrade Directly &rarr;
+                        </CheckoutButton>
                         <p className="text-[10px] text-center text-neutral-400 font-medium">
                           {country === "GB"
-                            ? "£0 for 30 days · Cancel anytime"
-                            : "₹0 for 30 days · Cancel anytime"}
+                            ? "£0 for 30 days · No card required"
+                            : "₹0 for 30 days · No card required"}
                         </p>
                       </div>
                     ) : p.priceMonthly > 0 ? (

@@ -15,7 +15,7 @@ import {
   BILLING_PLANS,
   resolveBillingPlanKey,
 } from "@/lib/billing-plans";
-import { activateUkFreeTrial } from "@/app/actions/billing";
+import { activateFreeTrial, activateUkFreeTrial } from "@/app/actions/billing";
 
 declare global {
   interface Window {
@@ -127,120 +127,19 @@ export default function TrialConfirmationModal({
     setLoading(true);
     setError("");
 
-    // For UK: Direct activation without any payment gateway or credit card
-    if (isUk) {
-      try {
-        const result = await activateUkFreeTrial(planSlug);
-        if (result && "error" in result && result.error) {
-          setError(result.error);
-          setLoading(false);
-          return;
-        }
-        router.push("/billing?activated=true");
-        router.refresh();
-      } catch (err: any) {
-        setError(err?.message || "Failed to activate 30-day free trial.");
-        setLoading(false);
-      }
-      return;
-    }
-
-    // For India: Native Razorpay AutoPay recurring mandate
     try {
-      const sdkReady = await loadRazorpay();
-      if (!sdkReady) {
-        setError("Unable to load Razorpay Checkout. Please check your network connection.");
+      const result = isUk ? await activateUkFreeTrial(planSlug) : await activateFreeTrial(planSlug);
+      if (result && "error" in result && result.error) {
+        setError(result.error);
         setLoading(false);
         return;
       }
-
-      // 1. Create Razorpay subscription with start_at = Today + 30 days
-      const res = await fetch("/api/billing/subscriptions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          plan: planKey,
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error || "Failed to initialize free trial subscription.");
-        setLoading(false);
-        return;
-      }
-
-      if (!data.subscriptionId || !data.keyId) {
-        setError("Invalid response received from billing server.");
-        setLoading(false);
-        return;
-      }
-
-      // 2. Open Razorpay Checkout for AutoPay recurring mandate authorization
-      const options = {
-        key: data.keyId,
-        subscription_id: data.subscriptionId,
-        name: "URPASS",
-        description: `${planName} 30-Day Free Trial AutoPay Authorization`,
-        image: "/icon.png",
-        prefill: {
-          name: userName,
-          email: userEmail,
-        },
-        theme: {
-          color: "#0a0a0a",
-        },
-        modal: {
-          ondismiss: () => {
-            setLoading(false);
-          },
-        },
-        handler: async (resp: {
-          razorpay_payment_id?: string;
-          razorpay_subscription_id?: string;
-          razorpay_signature?: string;
-        }) => {
-          if (!resp.razorpay_payment_id || !resp.razorpay_subscription_id || !resp.razorpay_signature) {
-            setError("AutoPay verification details are missing from gateway response.");
-            setLoading(false);
-            return;
-          }
-
-          try {
-            const verifyRes = await fetch("/api/billing/subscriptions/verify", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                plan: planKey,
-                subscriptionId: resp.razorpay_subscription_id,
-                paymentId: resp.razorpay_payment_id,
-                signature: resp.razorpay_signature,
-              }),
-            });
-
-            const verifyData = await verifyRes.json();
-            if (!verifyRes.ok) {
-              setError(verifyData.error || "AutoPay authorization verification failed.");
-              setLoading(false);
-              return;
-            }
-
-            onClose();
-            router.push(`/billing?trial_activated=true&plan=${encodeURIComponent(planName)}`);
-            router.refresh();
-          } catch (err: unknown) {
-            console.error("[verify-error]", err);
-            setError("Failed to verify authorization. Please contact support.");
-            setLoading(false);
-          }
-        },
-      };
-
-      const rzp = new window.Razorpay(options);
-      rzp.open();
+      onClose();
+      router.push(`/billing?activated=true&plan=${encodeURIComponent(planName)}`);
+      router.refresh();
     } catch (err: unknown) {
-      console.error("[activate-trial-error]", err);
-      setError("An unexpected error occurred. Please try again.");
+      const msg = err instanceof Error ? err.message : "Failed to activate 30-day free trial.";
+      setError(msg);
       setLoading(false);
     }
   }
@@ -329,17 +228,10 @@ export default function TrialConfirmationModal({
           </div>
 
           {/* Requirement Notice */}
-          {isUk ? (
-            <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-3 flex items-center gap-2.5 text-xs text-emerald-800">
-              <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-              <span>Direct UK Trial · No credit card or AutoPay required · Instant access.</span>
-            </div>
-          ) : (
-            <div className="bg-neutral-100/80 rounded-xl p-3 flex items-center gap-2.5 text-xs text-neutral-600">
-              <ShieldCheck className="w-4 h-4 text-neutral-500 shrink-0" />
-              <span>AutoPay authorization is required. Cancel anytime before your first payment.</span>
-            </div>
-          )}
+          <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-3 flex items-center gap-2.5 text-xs text-emerald-800">
+            <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+            <span>30-Day Free Trial · No credit card required · Instant full access.</span>
+          </div>
 
           {error && (
             <div className="flex items-center gap-2 text-xs text-red-600 bg-red-50 border border-red-200 rounded-xl px-3.5 py-2.5">
@@ -353,25 +245,23 @@ export default function TrialConfirmationModal({
             <button
               onClick={handleActivateAutoPay}
               disabled={loading}
-              className="w-full flex items-center justify-center gap-2 py-3.5 px-5 rounded-xl text-sm font-bold text-white bg-neutral-900 hover:bg-neutral-800 active:scale-[0.99] transition-all shadow-md disabled:opacity-50"
+              className="w-full flex items-center justify-center gap-2 py-3.5 px-5 rounded-xl text-sm font-bold text-white bg-neutral-900 hover:bg-neutral-800 active:scale-[0.99] transition-all shadow-md disabled:opacity-50 cursor-pointer"
             >
               {loading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  {isUk ? "Activating 30-Day Free Trial..." : "Connecting to Razorpay..."}
+                  Activating 30-Day Free Trial...
                 </>
               ) : (
                 <>
                   <Lock className="w-4 h-4" />
-                  {isUk ? "Start 30-Day Free Trial (£0)" : "Activate AutoPay & Start Trial"}
+                  {isUk ? "Start 30-Day Free Trial (£0)" : "Start 30-Day Free Trial (₹0)"}
                 </>
               )}
             </button>
 
             <p className="text-center text-[10px] text-neutral-400">
-              {isUk
-                ? "30 days £0 · No card required · Instant access · Cancel anytime"
-                : "Encrypted & secured by Razorpay · ₹0 charged today · Cancel anytime"}
+              30 days free · No credit card required · Instant access · Cancel anytime
             </p>
           </div>
         </div>

@@ -13,8 +13,15 @@ export async function POST(req: NextRequest) {
 
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user?.email) {
+
+    // For login, require session user
+    if (body.type === "login" && !user?.email) {
       return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+    }
+
+    const email = user?.email || (typeof body.email === "string" ? body.email.trim() : null);
+    if (!email) {
+      return NextResponse.json({ error: "Email is required" }, { status: 400 });
     }
 
     const provider =
@@ -22,11 +29,8 @@ export async function POST(req: NextRequest) {
         ? body.provider
         : "email";
     const name =
-      typeof user.user_metadata?.full_name === "string"
-        ? user.user_metadata.full_name
-        : typeof body.name === "string"
-        ? body.name
-        : null;
+      (typeof user?.user_metadata?.full_name === "string" ? user.user_metadata.full_name : null) ||
+      (typeof body.name === "string" ? body.name.trim() : null);
 
     const ipAddress =
       req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
@@ -38,12 +42,12 @@ export async function POST(req: NextRequest) {
       await Promise.allSettled([
         notifyOwnerNewUser({
           name,
-          email: user.email,
+          email,
           provider: provider === "google" ? "google" : "email",
-          userId: user.id,
+          userId: user?.id || (typeof body.userId === "string" ? body.userId : null),
         }),
         sendUserWelcomeEmail({
-          to: user.email,
+          to: email,
           name,
         }),
       ]);
@@ -51,9 +55,9 @@ export async function POST(req: NextRequest) {
       // Login notification
       await notifyOwnerUserLogin({
         name,
-        email: user.email,
+        email,
         provider,
-        userId: user.id,
+        userId: user?.id || null,
         ipAddress,
         userAgent,
       });

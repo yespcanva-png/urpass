@@ -526,6 +526,45 @@ export async function activateUkPlan(
     return { error: updateError.message };
   }
 
+  const ukPrices: Record<string, { monthly: number; annual: number }> = {
+    starter: { monthly: 1500, annual: 12000 },
+    pro: { monthly: 3500, annual: 30000 },
+    business: { monthly: 7900, annual: 69900 },
+    founder: { monthly: 24900, annual: 24900 },
+  };
+  const amountPence = isFounder
+    ? 24900
+    : resolvedCycle === "annual"
+    ? (ukPrices[normalizedSlug]?.annual ?? 30000)
+    : (ukPrices[normalizedSlug]?.monthly ?? 3500);
+
+  try {
+    await Promise.allSettled([
+      notifyOwnerPaidSubscription({
+        buyerName: user.user_metadata?.full_name,
+        buyerEmail: user.email,
+        planName: `${targetPlan.name} (UK)`,
+        billingCycle: resolvedCycle,
+        amountPaise: amountPence,
+        paymentId: ukReferenceId,
+        orderId: ukReferenceId,
+        subscriptionId: ukReferenceId,
+        currency: "GBP",
+      }),
+      user.email
+        ? sendUserPaymentSuccessEmail({
+            to: user.email,
+            name: user.user_metadata?.full_name,
+            itemName: `${targetPlan.name} Plan (${resolvedCycle}) [GBP]`,
+            amountPaise: amountPence,
+            kind: "subscription",
+          })
+        : Promise.resolve(),
+    ]);
+  } catch (notifyErr) {
+    console.error("[billing] UK plan activation notification error:", notifyErr);
+  }
+
   revalidateBillingPaths();
   return { success: true };
 }

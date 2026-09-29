@@ -227,6 +227,7 @@ export async function POST(req: NextRequest) {
         : `${plan.name} Plan (${effectiveBillingCycle}) [${currencyCode}]`,
       amountPaise: totalAmount,
       orderId: order.id,
+      currency: currencyCode,
     });
   } catch (err: unknown) {
     console.error("[api/razorpay/order] notifyOwnerPaymentAttempt error:", err);

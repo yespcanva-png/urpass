@@ -136,9 +136,41 @@ export async function POST(req: NextRequest) {
         },
       });
     } catch (rzpErr: unknown) {
-      const msg = formatRazorpayErrorMessage(rzpErr, "Failed to create Razorpay subscription");
-      console.error("[billing-subscriptions] Razorpay subscription create error:", rzpErr);
-      return NextResponse.json({ error: msg }, { status: 502 });
+      console.warn("[billing-subscriptions] Initial plan subscription failed, attempting dynamic plan creation:", rzpErr);
+      try {
+        const createdPlan = await razorpay.plans.create({
+          period: plan.interval === "MONTHLY" ? "monthly" : "yearly",
+          interval: 1,
+          item: {
+            name: plan.displayName,
+            amount: plan.pricePaise,
+            currency: "INR",
+            description: `${plan.tier} subscription on URPASS`,
+          },
+        });
+        rzpSubscription = await razorpay.subscriptions.create({
+          plan_id: createdPlan.id,
+          total_count: totalCount,
+          start_at: startAtSec,
+          customer_notify: 1,
+          notes: {
+            user_id: user.id,
+            workspace_id: body.workspaceId || "",
+            plan_key: rawPlan,
+            tier: plan.tier,
+            interval: plan.interval,
+            customer_email: user.email ?? "",
+            customer_name: user.user_metadata?.full_name ?? "",
+          },
+        });
+      } catch (dynamicErr) {
+        console.warn("[billing-subscriptions] Gateway recurring subscriptions not supported on this merchant account, returning direct trial fallback:", dynamicErr);
+        return NextResponse.json({
+          fallbackToDirectTrial: true,
+          planSlug: plan.planSlug,
+          message: "AutoPay is not enabled for this gateway account. Direct 30-day free trial will be activated.",
+        });
+      }
     }
 
     // 4. Save state as MANDATE_PENDING (AutoPay not yet authorized)

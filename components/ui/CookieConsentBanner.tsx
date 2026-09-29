@@ -3,12 +3,16 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Cookie, ShieldCheck, X } from "lucide-react";
+import { detectCountryClient } from "@/lib/country-config";
+
+type RegionMode = "uk" | "in" | "common";
 
 export function CookieConsentBanner() {
   const [visible, setVisible] = useState(false);
+  const [region, setRegion] = useState<RegionMode>("common");
 
   useEffect(() => {
-    // Check if consent has already been recorded
+    // 1. Check if consent has already been recorded
     try {
       const stored = localStorage.getItem("urpass_cookie_consent");
       if (!stored) {
@@ -17,6 +21,37 @@ export function CookieConsentBanner() {
     } catch {
       // In private browsing or disabled storage, fail gracefully
     }
+
+    // 2. Determine initial region from URL & client environment
+    try {
+      const pathname = window.location.pathname.toLowerCase();
+      if (pathname === "/uk" || pathname.startsWith("/uk/") || pathname.includes("-uk")) {
+        setRegion("uk");
+      } else if (pathname === "/in" || pathname.startsWith("/in/") || pathname.includes("-india")) {
+        setRegion("in");
+      } else {
+        const clientCountry = detectCountryClient();
+        if (clientCountry === "GB") {
+          setRegion("uk");
+        } else if (clientCountry === "IN") {
+          setRegion("in");
+        } else {
+          setRegion("common");
+        }
+
+        // 3. Confirm IP with server-side geo detection in background
+        fetch("/api/geo")
+          .then((res) => res.json())
+          .then((data) => {
+            if (data?.country === "GB") {
+              setRegion("uk");
+            } else if (data?.country === "IN") {
+              setRegion("in");
+            }
+          })
+          .catch(() => {});
+      }
+    } catch {}
   }, []);
 
   const handleAcceptAll = () => {
@@ -37,6 +72,27 @@ export function CookieConsentBanner() {
 
   if (!visible) return null;
 
+  const content = {
+    uk: {
+      title: "Your Privacy & Cookie Choices",
+      description:
+        "We use strictly necessary cookies to run secure event check-in and optional performance cookies to monitor scanning speed. In accordance with the UK GDPR & PECR, you can choose your preferences.",
+      badge: "UK GDPR & PECR Compliant",
+    },
+    in: {
+      title: "Your Privacy & Cookie Choices",
+      description:
+        "We use strictly necessary cookies to run secure event check-in and digital ticket issuance. In accordance with the Digital Personal Data Protection (DPDP) Act, you can choose your preferences.",
+      badge: "DPDP & ISO 27001 Compliant",
+    },
+    common: {
+      title: "Your Privacy & Cookie Choices",
+      description:
+        "We use strictly necessary cookies to run secure event check-in and optional performance cookies to monitor scanning speed. In accordance with global data protection standards, you can choose your preferences.",
+      badge: "Privacy & Security Protected",
+    },
+  }[region];
+
   return (
     <div
       role="region"
@@ -49,10 +105,10 @@ export function CookieConsentBanner() {
         </div>
         <div>
           <h3 className="text-sm font-semibold text-neutral-900 leading-snug">
-            Your Privacy &amp; Cookie Choices
+            {content.title}
           </h3>
           <p className="text-xs text-neutral-500 mt-1 leading-relaxed">
-            We use strictly necessary cookies to run secure event check-in and optional performance cookies to monitor scanning speed. In accordance with the UK GDPR &amp; PECR, you can choose your preferences.
+            {content.description}
           </p>
         </div>
       </div>
@@ -76,9 +132,9 @@ export function CookieConsentBanner() {
         <Link href="/privacy" className="hover:text-neutral-700 underline transition-colors">
           Read Privacy Policy
         </Link>
-        <span className="flex items-center gap-1 text-emerald-600">
+        <span className="flex items-center gap-1 text-emerald-600 font-medium">
           <ShieldCheck className="w-3.5 h-3.5" />
-          UK GDPR Compliant
+          {content.badge}
         </span>
       </div>
     </div>

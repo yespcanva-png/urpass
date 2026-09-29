@@ -53,12 +53,22 @@ function escapeHtml(value: unknown) {
     .replace(/'/g, "&#39;");
 }
 
-function formatInrFromPaise(amountPaise?: number | null) {
-  if (amountPaise == null || Number.isNaN(amountPaise)) return "Not available";
-  return `₹${(amountPaise / 100).toLocaleString("en-IN", {
+function formatAmount(amountMinor?: number | null, currency = "INR") {
+  if (amountMinor == null || Number.isNaN(amountMinor)) return "Not available";
+  if ((currency || "INR").toUpperCase() === "GBP") {
+    return `£${(amountMinor / 100).toLocaleString("en-GB", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
+  }
+  return `₹${(amountMinor / 100).toLocaleString("en-IN", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`;
+}
+
+function formatInrFromPaise(amountPaise?: number | null, currency = "INR") {
+  return formatAmount(amountPaise, currency);
 }
 
 async function sendEmail(payload: Parameters<Resend["emails"]["send"]>[0]) {
@@ -328,6 +338,7 @@ export async function notifyOwnerPaymentAttempt({
   amountPaise,
   orderId,
   subscriptionId,
+  currency = "INR",
 }: {
   kind: "subscription" | "event_pass" | "ticket" | "trial" | "one_time";
   buyerName?: string | null;
@@ -336,14 +347,17 @@ export async function notifyOwnerPaymentAttempt({
   amountPaise?: number | null;
   orderId?: string | null;
   subscriptionId?: string | null;
+  currency?: string | null;
 }) {
+  const curr = (currency || "INR").toUpperCase();
   await sendOwnerNotification({
     subject: `💳 [URPASS] Payment Started: ${itemName} (${buyerEmail ?? "unknown email"})`,
     title: "Payment Checkout Initiated",
     rows: [
       ["Type", kind.toUpperCase()],
       ["Item", itemName],
-      ["Amount", formatInrFromPaise(amountPaise)],
+      ["Amount", formatAmount(amountPaise, curr)],
+      ["Currency", curr],
       ["Buyer name", buyerName],
       ["Buyer email", buyerEmail],
       ["Razorpay order / sub", orderId || subscriptionId],
@@ -362,6 +376,7 @@ export async function notifyOwnerPaymentSuccess({
   amountPaise,
   paymentId,
   orderId,
+  currency = "INR",
 }: {
   kind: "subscription" | "event_pass" | "ticket" | "one_time" | "trial";
   buyerName?: string | null;
@@ -370,14 +385,17 @@ export async function notifyOwnerPaymentSuccess({
   amountPaise?: number | null;
   paymentId?: string | null;
   orderId?: string | null;
+  currency?: string | null;
 }) {
+  const curr = (currency || "INR").toUpperCase();
   await sendOwnerNotification({
     subject: `💰 [URPASS] Payment Captured: ${itemName} (${buyerEmail ?? "unknown email"})`,
     title: "Payment Successful",
     rows: [
       ["Type", kind.toUpperCase()],
       ["Item", itemName],
-      ["Amount", formatInrFromPaise(amountPaise)],
+      ["Amount", formatAmount(amountPaise, curr)],
+      ["Currency", curr],
       ["Buyer name", buyerName],
       ["Buyer email", buyerEmail],
       ["Razorpay payment", paymentId],
@@ -396,6 +414,7 @@ export async function notifyOwnerTrialActivated({
   subscriptionId,
   paymentId,
   trialEndsAt,
+  currency = "INR",
 }: {
   buyerName?: string | null;
   buyerEmail?: string | null;
@@ -405,21 +424,24 @@ export async function notifyOwnerTrialActivated({
   subscriptionId?: string | null;
   paymentId?: string | null;
   trialEndsAt?: string | null;
+  currency?: string | null;
 }) {
+  const curr = (currency || "INR").toUpperCase();
+  const chargedToday = curr === "GBP" ? "£0.00 (30-Day Free Trial)" : "₹0.00 (30-Day Free Trial)";
+
   await sendOwnerNotification({
     subject: `🚀 URPASS 30-Day Free Trial Activated: ${planName} (${buyerEmail ?? "unknown email"})`,
-    title: "30-Day Free Trial Activated & AutoPay Authorized",
+    title: "30-Day Free Trial Activated",
     rows: [
       ["Event", "30-Day Free Trial Started"],
       ["Plan Selected", planName],
       ["Billing Interval", (billingInterval || "monthly").toUpperCase()],
-      ["Charged Today", "₹0.00 (30-Day Free Trial)"],
-      ["Renewal After Trial", formatInrFromPaise(futurePricePaise)],
+      ["Charged Today", chargedToday],
+      ["Renewal After Trial", formatAmount(futurePricePaise, curr)],
       ["Trial Ends At", trialEndsAt || "30 days from now"],
       ["Customer Name", buyerName],
       ["Customer Email", buyerEmail],
-      ["Razorpay Subscription ID", subscriptionId],
-      ["Razorpay Mandate Payment ID", paymentId],
+      ["Reference ID", subscriptionId || paymentId || "Direct Free Trial"],
       ["Time", new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })],
     ],
   });
@@ -434,6 +456,7 @@ export async function notifyOwnerPaidSubscription({
   paymentId,
   orderId,
   subscriptionId,
+  currency = "INR",
 }: {
   buyerName?: string | null;
   buyerEmail?: string | null;
@@ -443,15 +466,18 @@ export async function notifyOwnerPaidSubscription({
   paymentId?: string | null;
   orderId?: string | null;
   subscriptionId?: string | null;
+  currency?: string | null;
 }) {
+  const curr = (currency || "INR").toUpperCase();
   await sendOwnerNotification({
-    subject: `💰 URPASS Paid Subscription: ${planName} — ${formatInrFromPaise(amountPaise)} (${buyerEmail ?? "unknown email"})`,
+    subject: `💰 URPASS Paid Subscription: ${planName} — ${formatAmount(amountPaise, curr)} (${buyerEmail ?? "unknown email"})`,
     title: "Paid Subscription Confirmed",
     rows: [
       ["Event", "Paid Subscription Confirmed"],
       ["Plan", planName],
       ["Billing Cycle", (billingCycle || "monthly").toUpperCase()],
-      ["Amount Paid", formatInrFromPaise(amountPaise)],
+      ["Amount Paid", formatAmount(amountPaise, curr)],
+      ["Currency", curr],
       ["Customer Name", buyerName],
       ["Customer Email", buyerEmail],
       ["Razorpay Payment ID", paymentId],

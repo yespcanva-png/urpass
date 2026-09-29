@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import CancelButton from "./CancelButton";
 import PlanGrid from "./PlanGrid";
+import { detectCountryClient } from "@/lib/country-config";
 
 const UK_PLAN_PRICES: Record<string, { monthly: number; annual: number }> = {
   free: { monthly: 0, annual: 0 },
@@ -230,7 +231,18 @@ export default function BillingClientShell({
     router.replace(`/billing?${params.toString()}`, { scroll: false });
   }
 
-  const isUk = country === "GB";
+  const [resolvedCountry, setResolvedCountry] = useState<"IN" | "GB">(country);
+
+  useEffect(() => {
+    try {
+      const clientCountry = detectCountryClient();
+      if (clientCountry && clientCountry !== resolvedCountry) {
+        setResolvedCountry(clientCountry);
+      }
+    } catch {}
+  }, []);
+
+  const isUk = resolvedCountry === "GB";
 
   // Price formatting
   const formattedPlanPrice = isTrial
@@ -340,7 +352,7 @@ export default function BillingClientShell({
             userEmail={userEmail}
             userName={userName}
             trialUsed={sub?.trial_used ?? false}
-            country={country}
+            country={resolvedCountry}
           />
         </div>
       )}
