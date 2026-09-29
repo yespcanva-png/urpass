@@ -8,6 +8,40 @@ export interface ParamGetter {
   get: (key: string) => string | null;
 }
 
+const FALLBACK_DESTINATION = "/dashboard";
+
+const BLOCKED_AUTH_DESTINATIONS = [
+  "/auth",
+  "/api/auth",
+  "/login",
+  "/signup",
+  "/forgot-password",
+];
+
+function isBlockedDestination(pathname: string) {
+  return BLOCKED_AUTH_DESTINATIONS.some(
+    (path) => pathname === path || pathname.startsWith(`${path}/`)
+  );
+}
+
+function sanitizeInternalDestination(candidate: string | null | undefined) {
+  if (!candidate) return null;
+
+  const trimmed = candidate.trim();
+  if (!trimmed || !trimmed.startsWith("/") || trimmed.startsWith("//")) {
+    return null;
+  }
+
+  try {
+    const parsed = new URL(trimmed, "https://urpass.space");
+    if (parsed.origin !== "https://urpass.space") return null;
+    if (isBlockedDestination(parsed.pathname)) return null;
+    return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+  } catch {
+    return null;
+  }
+}
+
 export function resolvePostAuthRedirect(
   searchParams?: ParamGetter | null,
   referrer?: string | null
@@ -20,10 +54,11 @@ export function resolvePostAuthRedirect(
   const plan = searchParams?.get("plan");
 
   const candidate = next || redirect || returnTo || redirectTo;
+  const safeCandidate = sanitizeInternalDestination(candidate);
 
   // 1. If explicit candidate is already a /billing route, preserve it
-  if (candidate && candidate.startsWith("/billing")) {
-    return candidate;
+  if (safeCandidate && safeCandidate.startsWith("/billing")) {
+    return safeCandidate;
   }
 
   // 2. Check if candidate or 'from' originates from founder-lifetime-deal
@@ -66,9 +101,9 @@ export function resolvePostAuthRedirect(
   }
 
   // 5. If candidate is a safe relative internal route, honor it
-  if (candidate && candidate.startsWith("/") && !candidate.startsWith("//")) {
-    return candidate;
+  if (safeCandidate) {
+    return safeCandidate;
   }
 
-  return "/dashboard";
+  return FALLBACK_DESTINATION;
 }

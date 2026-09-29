@@ -20,7 +20,14 @@ vi.mock("@supabase/supabase-js", () => ({
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { updateOrganization, deleteOrganization } from "@/app/actions/organizations";
-import { updateMemberRole, removeMember, cancelInvite, resendInvite } from "@/app/actions/org-members";
+import {
+  acceptInvite,
+  assignEventToMember,
+  cancelInvite,
+  removeMember,
+  resendInvite,
+  updateMemberRole,
+} from "@/app/actions/org-members";
 import { updateWorkspace, deleteWorkspace, addWorkspaceMember } from "@/app/actions/workspaces";
 import { updateLocation, deleteLocation } from "@/app/actions/locations";
 import { saveOrgPaymentSettings, removeOrgPaymentSettings } from "@/app/actions/org-payment-settings";
@@ -136,6 +143,110 @@ describe("Module 1: Authentication, Workspaces & Multi-Tenant Authorization Secu
 
       const res = await cancelInvite("inv-1", "org-slug");
       expect(res).toBeUndefined();
+    });
+
+    it("acceptInvite: rejects a valid token when the signed-in email does not match the invited email", async () => {
+      const mockSupabase = {
+        auth: {
+          getUser: vi.fn().mockResolvedValue({
+            data: { user: { id: "user-attacker", email: "attacker@example.com" } },
+          }),
+        },
+      };
+      const mockAdmin = {
+        from: vi.fn().mockReturnValue({
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          maybeSingle: vi.fn().mockResolvedValue({
+            data: {
+              id: "member-1",
+              organization_id: "org-1",
+              status: "pending",
+              user_id: null,
+              invited_email: "invited@example.com",
+              organization: { slug: "acme" },
+            },
+          }),
+        }),
+      };
+      vi.mocked(createClient).mockResolvedValue(mockSupabase as any);
+      vi.mocked(createAdminClient).mockReturnValue(mockAdmin as any);
+
+      const res = await acceptInvite("a".repeat(64));
+      expect(res).toEqual({ error: "This invite was sent to a different email address." });
+    });
+
+    it("assignEventToMember: blocks cross-organization event assignment", async () => {
+      const mockSupabase = {
+        auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: "user-owner" } } }) },
+        from: vi.fn().mockImplementation((table: string) => {
+          if (table === "events") {
+            return {
+              select: vi.fn().mockReturnThis(),
+              eq: vi.fn().mockReturnThis(),
+              maybeSingle: vi.fn().mockResolvedValue({ data: { organization_id: "org-event" } }),
+            };
+          }
+          if (table === "organization_members") {
+            return {
+              select: vi.fn().mockReturnThis(),
+              eq: vi.fn().mockReturnThis(),
+              maybeSingle: vi.fn().mockResolvedValue({ data: { organization_id: "org-other" } }),
+            };
+          }
+          if (table === "event_assignments") {
+            return {
+              insert: vi.fn().mockResolvedValue({ error: null }),
+            };
+          }
+          return {};
+        }),
+      };
+      vi.mocked(createClient).mockResolvedValue(mockSupabase as any);
+
+      const res = await assignEventToMember("evt-1", "member-1", "org-slug");
+      expect(res).toEqual({ error: "Member does not belong to this event's organization." });
+      expect(mockSupabase.from).not.toHaveBeenCalledWith("event_assignments");
+    });
+
+    it("assignEventToMember: blocks non-admin callers even inside the same organization", async () => {
+      let orgMemberLookupCount = 0;
+      const mockSupabase = {
+        auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: "user-member" } } }) },
+        from: vi.fn().mockImplementation((table: string) => {
+          if (table === "events") {
+            return {
+              select: vi.fn().mockReturnThis(),
+              eq: vi.fn().mockReturnThis(),
+              maybeSingle: vi.fn().mockResolvedValue({ data: { organization_id: "org-1" } }),
+            };
+          }
+          if (table === "organization_members") {
+            return {
+              select: vi.fn().mockReturnThis(),
+              eq: vi.fn().mockReturnThis(),
+              maybeSingle: vi.fn().mockImplementation(() => {
+                orgMemberLookupCount++;
+                if (orgMemberLookupCount === 1) {
+                  return Promise.resolve({ data: { organization_id: "org-1" } });
+                }
+                return Promise.resolve({ data: { role: "member" } });
+              }),
+            };
+          }
+          if (table === "event_assignments") {
+            return {
+              insert: vi.fn().mockResolvedValue({ error: null }),
+            };
+          }
+          return {};
+        }),
+      };
+      vi.mocked(createClient).mockResolvedValue(mockSupabase as any);
+
+      const res = await assignEventToMember("evt-1", "member-1", "org-slug");
+      expect(res).toEqual({ error: "Only organization owners and admins can assign events." });
+      expect(mockSupabase.from).not.toHaveBeenCalledWith("event_assignments");
     });
   });
 

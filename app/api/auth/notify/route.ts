@@ -1,14 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
 import { notifyOwnerNewUser, notifyOwnerUserLogin, sendUserWelcomeEmail } from "@/lib/email";
+import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => null);
-    if (!body || !body.email) {
-      return NextResponse.json({ error: "Missing email" }, { status: 400 });
+    if (!body || (body.type !== "signup" && body.type !== "login")) {
+      return NextResponse.json({ error: "Invalid notification type" }, { status: 400 });
     }
+
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user?.email) {
+      return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+    }
+
+    const provider =
+      body.provider === "google" || body.provider === "sso" || body.provider === "magiclink"
+        ? body.provider
+        : "email";
+    const name =
+      typeof user.user_metadata?.full_name === "string"
+        ? user.user_metadata.full_name
+        : typeof body.name === "string"
+        ? body.name
+        : null;
 
     const ipAddress =
       req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
@@ -19,23 +37,23 @@ export async function POST(req: NextRequest) {
     if (body.type === "signup") {
       await Promise.allSettled([
         notifyOwnerNewUser({
-          name: body.name || null,
-          email: body.email,
-          provider: body.provider || "email",
-          userId: body.userId || null,
+          name,
+          email: user.email,
+          provider: provider === "google" ? "google" : "email",
+          userId: user.id,
         }),
         sendUserWelcomeEmail({
-          to: body.email,
-          name: body.name || null,
+          to: user.email,
+          name,
         }),
       ]);
     } else {
       // Login notification
       await notifyOwnerUserLogin({
-        name: body.name || null,
-        email: body.email,
-        provider: body.provider || "email",
-        userId: body.userId || null,
+        name,
+        email: user.email,
+        provider,
+        userId: user.id,
         ipAddress,
         userAgent,
       });

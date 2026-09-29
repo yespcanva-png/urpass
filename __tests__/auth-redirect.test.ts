@@ -63,6 +63,27 @@ describe("resolvePostAuthRedirect", () => {
     expect(resolvePostAuthRedirect(params)).toBe("/org/acme/join?token=123");
   });
 
+  it("drops external redirect destinations", () => {
+    const params = makeParams({ next: "https://evil.example/phish" });
+    expect(resolvePostAuthRedirect(params)).toBe("/dashboard");
+  });
+
+  it("drops protocol-relative redirect destinations", () => {
+    const params = makeParams({ next: "//evil.example/phish" });
+    expect(resolvePostAuthRedirect(params)).toBe("/dashboard");
+  });
+
+  it("drops auth callback destinations to avoid auth loops", () => {
+    const params = makeParams({ next: "/auth/callback?code=abc" });
+    expect(resolvePostAuthRedirect(params)).toBe("/dashboard");
+  });
+
+  it("drops login and signup destinations to avoid post-auth loops", () => {
+    expect(resolvePostAuthRedirect(makeParams({ next: "/login" }))).toBe("/dashboard");
+    expect(resolvePostAuthRedirect(makeParams({ next: "/signup?from=pricing" }))).toBe("/billing");
+    expect(resolvePostAuthRedirect(makeParams({ next: "/signup" }))).toBe("/dashboard");
+  });
+
   it("defaults to /dashboard when no params or relevant referrer are present", () => {
     expect(resolvePostAuthRedirect(null, "https://urpass.space/")).toBe("/dashboard");
   });

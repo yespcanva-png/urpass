@@ -5,12 +5,24 @@ import { getSupabaseConfig } from "@/lib/supabase/config";
 const PROTECTED = ["/dashboard", "/event", "/create-event", "/scan", "/billing", "/org"];
 const AUTH_PAGES = ["/login", "/signup"];
 
+function matchesPathSegment(pathname: string, route: string) {
+  return pathname === route || pathname.startsWith(`${route}/`);
+}
+
+export function isProtectedPath(pathname: string) {
+  return PROTECTED.some((p) => matchesPathSegment(pathname, p));
+}
+
+export function isAuthPagePath(pathname: string) {
+  return AUTH_PAGES.some((p) => matchesPathSegment(pathname, p));
+}
+
 export async function updateSession(request: NextRequest) {
   const url = request.nextUrl.clone();
   const pathname = url.pathname;
 
-  const isProtected = PROTECTED.some((p) => pathname.startsWith(p));
-  const isAuthPage = AUTH_PAGES.some((p) => pathname.startsWith(p));
+  const isProtected = isProtectedPath(pathname);
+  const isAuthPage = isAuthPagePath(pathname);
 
   // Only touch Supabase for routes that need auth
   if (!isProtected && !isAuthPage) {
@@ -48,7 +60,10 @@ export async function updateSession(request: NextRequest) {
       url.pathname = `/feedback/${feedbackMatch[1]}`;
       return NextResponse.redirect(url);
     }
+    const destination = `${pathname}${url.search}`;
     url.pathname = "/login";
+    url.search = "";
+    url.searchParams.set("next", destination);
     return NextResponse.redirect(url);
   }
 
