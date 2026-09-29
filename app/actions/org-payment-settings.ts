@@ -24,6 +24,18 @@ export async function saveOrgPaymentSettings(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
+  const { data: member } = await supabase
+    .from("organization_members")
+    .select("role")
+    .eq("organization_id", orgId)
+    .eq("user_id", user.id)
+    .eq("status", "active")
+    .maybeSingle();
+
+  if (!member || (member.role !== "owner" && member.role !== "admin")) {
+    return { error: "Only organization owners and admins can configure payment credentials." };
+  }
+
   const { error } = await supabase.from("org_payment_settings").upsert(
     {
       organization_id: orgId,
@@ -46,6 +58,18 @@ export async function removeOrgPaymentSettings(
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
+
+  const { data: member } = await supabase
+    .from("organization_members")
+    .select("role")
+    .eq("organization_id", orgId)
+    .eq("user_id", user.id)
+    .eq("status", "active")
+    .maybeSingle();
+
+  if (!member || (member.role !== "owner" && member.role !== "admin")) {
+    return { error: "Only organization owners and admins can remove payment credentials." };
+  }
 
   const { error } = await supabase
     .from("org_payment_settings")

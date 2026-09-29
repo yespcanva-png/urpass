@@ -132,20 +132,42 @@ export async function updateWorkspace(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
+  const admin = adminClient();
+  const { data: ws } = await admin
+    .from("workspaces")
+    .select("organization_id")
+    .eq("id", workspaceId)
+    .maybeSingle();
+
+  if (!ws) return { error: "Workspace not found." };
+
+  const { data: member } = await supabase
+    .from("organization_members")
+    .select("role")
+    .eq("organization_id", ws.organization_id)
+    .eq("user_id", user.id)
+    .eq("status", "active")
+    .maybeSingle();
+
+  if (!member || (member.role !== "owner" && member.role !== "admin")) {
+    return { error: "Only organization owners and admins can update workspaces." };
+  }
+
   const parsed = workspaceSchema.safeParse(data);
   if (!parsed.success) {
     return { error: parsed.error.issues[0].message };
   }
 
   try {
-    const { error } = await adminClient()
+    const { error } = await admin
       .from("workspaces")
       .update({
         name: parsed.data.name,
         description: parsed.data.description || null,
         color: parsed.data.color || "#6D28D9",
       })
-      .eq("id", workspaceId);
+      .eq("id", workspaceId)
+      .eq("organization_id", ws.organization_id);
 
     if (error) return { error: error.message };
 
@@ -171,28 +193,35 @@ export async function deleteWorkspace(
     .eq("organization_id", orgId)
     .eq("user_id", user.id)
     .eq("status", "active")
-    .single();
+    .maybeSingle();
 
   if (!member || (member.role !== "owner" && member.role !== "admin")) {
     return { error: "Only organization owners and admins can delete workspaces." };
   }
 
   try {
-    // Check if default
-    const { data: ws } = await adminClient()
+    const admin = adminClient();
+    // Check if default or exists
+    const { data: ws } = await admin
       .from("workspaces")
       .select("is_default")
       .eq("id", workspaceId)
-      .single();
+      .eq("organization_id", orgId)
+      .maybeSingle();
 
-    if (ws?.is_default) {
+    if (!ws) {
+      return { error: "Workspace not found in this organization." };
+    }
+
+    if (ws.is_default) {
       return { error: "The default workspace cannot be deleted." };
     }
 
-    const { error } = await adminClient()
+    const { error } = await admin
       .from("workspaces")
       .delete()
-      .eq("id", workspaceId);
+      .eq("id", workspaceId)
+      .eq("organization_id", orgId);
 
     if (error) return { error: error.message };
 
@@ -223,8 +252,33 @@ export async function addWorkspaceMember(
   memberId: string,
   role: WorkspaceRole = "member"
 ): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const admin = adminClient();
+  const { data: ws } = await admin
+    .from("workspaces")
+    .select("organization_id")
+    .eq("id", workspaceId)
+    .maybeSingle();
+
+  if (!ws) return { error: "Workspace not found." };
+
+  const { data: caller } = await supabase
+    .from("organization_members")
+    .select("role")
+    .eq("organization_id", ws.organization_id)
+    .eq("user_id", user.id)
+    .eq("status", "active")
+    .maybeSingle();
+
+  if (!caller || (caller.role !== "owner" && caller.role !== "admin")) {
+    return { error: "Only organization owners and admins can assign workspace members." };
+  }
+
   try {
-    const { error } = await adminClient()
+    const { error } = await admin
       .from("workspace_members")
       .insert({
         workspace_id: workspaceId,

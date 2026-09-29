@@ -216,6 +216,18 @@ export async function deleteDomain(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { success: false, error: "Authentication required." };
 
+  const { data: member } = await supabase
+    .from("organization_members")
+    .select("role")
+    .eq("organization_id", orgId)
+    .eq("user_id", user.id)
+    .eq("status", "active")
+    .maybeSingle();
+
+  if (!member || (member.role !== "owner" && member.role !== "admin")) {
+    return { success: false, error: "Only organization owners and admins can remove verified domains." };
+  }
+
   const admin = adminClient();
   const { data: domainRec } = await admin
     .from("verified_domains")

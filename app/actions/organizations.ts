@@ -90,6 +90,19 @@ export async function updateOrganization(orgId: string, data: OrgInput): Promise
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
+  // Verify owner or admin role
+  const { data: member } = await supabase
+    .from("organization_members")
+    .select("role")
+    .eq("organization_id", orgId)
+    .eq("user_id", user.id)
+    .eq("status", "active")
+    .maybeSingle();
+
+  if (!member || (member.role !== "owner" && member.role !== "admin")) {
+    return { error: "Only organization owners and admins can update organization settings." };
+  }
+
   const parsed = orgSchema.safeParse(data);
   if (!parsed.success) return { error: parsed.error.issues[0].message };
 
@@ -107,6 +120,19 @@ export async function deleteOrganization(orgId: string): Promise<ActionResult> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
+
+  // Strictly verify owner role
+  const { data: member } = await supabase
+    .from("organization_members")
+    .select("role")
+    .eq("organization_id", orgId)
+    .eq("user_id", user.id)
+    .eq("status", "active")
+    .maybeSingle();
+
+  if (!member || member.role !== "owner") {
+    return { error: "Only the organization owner can delete the organization." };
+  }
 
   const { error } = await supabase
     .from("organizations")
@@ -203,10 +229,13 @@ export async function ensureUserOrganization(userId: string): Promise<string | n
     const baseSlug = toSlug(name) || "org";
     let slug = baseSlug;
     let attempt = 1;
-    while (true) {
+    while (attempt <= 50) {
       const { data: existing } = await admin.from("organizations").select("id").eq("slug", slug).maybeSingle();
       if (!existing) break;
       slug = `${baseSlug}-${attempt++}`;
+    }
+    if (attempt > 50) {
+      slug = `${baseSlug}-${Date.now().toString(36)}`;
     }
 
     const { data: newOrg, error: orgErr } = await admin

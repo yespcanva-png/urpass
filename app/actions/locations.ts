@@ -102,13 +102,34 @@ export async function updateLocation(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
+  const admin = adminClient();
+  const { data: loc } = await admin
+    .from("locations")
+    .select("organization_id")
+    .eq("id", locationId)
+    .maybeSingle();
+
+  if (!loc) return { error: "Location not found." };
+
+  const { data: member } = await supabase
+    .from("organization_members")
+    .select("role")
+    .eq("organization_id", loc.organization_id)
+    .eq("user_id", user.id)
+    .eq("status", "active")
+    .maybeSingle();
+
+  if (!member || !["owner", "admin", "event_manager"].includes(member.role)) {
+    return { error: "Insufficient permissions to update locations." };
+  }
+
   const parsed = locationSchema.safeParse(data);
   if (!parsed.success) {
     return { error: parsed.error.issues[0].message };
   }
 
   try {
-    const { error } = await adminClient()
+    const { error } = await admin
       .from("locations")
       .update({
         name: parsed.data.name,
@@ -127,7 +148,8 @@ export async function updateLocation(
         contact_email: parsed.data.contact_email || null,
         is_active: parsed.data.is_active,
       })
-      .eq("id", locationId);
+      .eq("id", locationId)
+      .eq("organization_id", loc.organization_id);
 
     if (error) return { error: error.message };
 
@@ -152,7 +174,7 @@ export async function deleteLocation(
     .eq("organization_id", orgId)
     .eq("user_id", user.id)
     .eq("status", "active")
-    .single();
+    .maybeSingle();
 
   if (!member || (member.role !== "owner" && member.role !== "admin")) {
     return { error: "Only organization owners and admins can remove locations." };
@@ -162,7 +184,8 @@ export async function deleteLocation(
     const { error } = await adminClient()
       .from("locations")
       .delete()
-      .eq("id", locationId);
+      .eq("id", locationId)
+      .eq("organization_id", orgId);
 
     if (error) return { error: error.message };
 

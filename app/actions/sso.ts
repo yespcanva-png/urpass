@@ -344,11 +344,16 @@ export async function lookupSSOByEmail(email: string): Promise<{
   loginUrl?: string;
   allowEmergencyLogin?: boolean;
 }> {
-  if (!email || !email.includes("@")) {
+  if (!email || typeof email !== "string") {
     return { ssoAvailable: false, enforced: false };
   }
 
-  const domain = email.split("@")[1].toLowerCase().trim();
+  const parts = email.trim().toLowerCase().split("@");
+  if (parts.length !== 2 || !parts[0] || !parts[1] || !parts[1].includes(".")) {
+    return { ssoAvailable: false, enforced: false };
+  }
+
+  const domain = parts[1].trim();
   const admin = adminClient();
 
   // 1. Look up verified domain

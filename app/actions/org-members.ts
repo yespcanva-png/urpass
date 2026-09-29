@@ -148,11 +148,25 @@ export async function updateMemberRole(
 
   const { data: target } = await supabase
     .from("organization_members")
-    .select("role")
+    .select("organization_id, role")
     .eq("id", memberId)
-    .single();
+    .maybeSingle();
 
-  if (target?.role === "owner") return { error: "Cannot change the owner's role." };
+  if (!target) return { error: "Member not found." };
+  if (target.role === "owner") return { error: "Cannot change the owner's role." };
+
+  // Verify caller is owner or admin in this organization
+  const { data: caller } = await supabase
+    .from("organization_members")
+    .select("role")
+    .eq("organization_id", target.organization_id)
+    .eq("user_id", user.id)
+    .eq("status", "active")
+    .maybeSingle();
+
+  if (!caller || (caller.role !== "owner" && caller.role !== "admin")) {
+    return { error: "Only organization owners and admins can update member roles." };
+  }
 
   const { error } = await supabase
     .from("organization_members")
@@ -171,11 +185,28 @@ export async function removeMember(memberId: string, orgSlug: string): Promise<A
 
   const { data: target } = await supabase
     .from("organization_members")
-    .select("role, user_id")
+    .select("organization_id, role, user_id")
     .eq("id", memberId)
-    .single();
+    .maybeSingle();
 
-  if (target?.role === "owner") return { error: "Cannot remove the organization owner." };
+  if (!target) return { error: "Member not found." };
+  if (target.role === "owner") return { error: "Cannot remove the organization owner." };
+
+  // Allow self-removal (leaving org) or removal by owner/admin
+  const isSelf = target.user_id === user.id;
+  if (!isSelf) {
+    const { data: caller } = await supabase
+      .from("organization_members")
+      .select("role")
+      .eq("organization_id", target.organization_id)
+      .eq("user_id", user.id)
+      .eq("status", "active")
+      .maybeSingle();
+
+    if (!caller || (caller.role !== "owner" && caller.role !== "admin")) {
+      return { error: "Only organization owners and admins can remove members." };
+    }
+  }
 
   const { error } = await supabase
     .from("organization_members")
@@ -183,6 +214,102 @@ export async function removeMember(memberId: string, orgSlug: string): Promise<A
     .eq("id", memberId);
 
   if (error) return { error: error.message };
+
+  revalidatePath(`/org/${orgSlug}/members`);
+}
+
+export async function cancelInvite(
+  memberId: string,
+  orgSlug: string
+): Promise<ActionResult> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const { data: target } = await supabase
+    .from("organization_members")
+    .select("organization_id, status")
+    .eq("id", memberId)
+    .maybeSingle();
+
+  if (!target) return { error: "Invitation not found." };
+  if (target.status !== "pending") return { error: "Only pending invitations can be cancelled." };
+
+  const { data: caller } = await supabase
+    .from("organization_members")
+    .select("role")
+    .eq("organization_id", target.organization_id)
+    .eq("user_id", user.id)
+    .eq("status", "active")
+    .maybeSingle();
+
+  if (!caller || (caller.role !== "owner" && caller.role !== "admin")) {
+    return { error: "Only organization owners and admins can cancel invitations." };
+  }
+
+  const { error } = await supabase
+    .from("organization_members")
+    .delete()
+    .eq("id", memberId)
+    .eq("status", "pending");
+
+  if (error) return { error: error.message };
+
+  revalidatePath(`/org/${orgSlug}/members`);
+}
+
+export async function resendInvite(
+  memberId: string,
+  orgSlug: string,
+  orgName: string
+): Promise<ActionResult> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const { data: target } = await supabase
+    .from("organization_members")
+    .select("organization_id, invited_email, role, status")
+    .eq("id", memberId)
+    .maybeSingle();
+
+  if (!target) return { error: "Invitation not found." };
+  if (target.status !== "pending") return { error: "Can only resend pending invitations." };
+
+  const { data: caller } = await supabase
+    .from("organization_members")
+    .select("role")
+    .eq("organization_id", target.organization_id)
+    .eq("user_id", user.id)
+    .eq("status", "active")
+    .maybeSingle();
+
+  if (!caller || (caller.role !== "owner" && caller.role !== "admin")) {
+    return { error: "Only organization owners and admins can resend invitations." };
+  }
+
+  const freshToken = generateToken();
+  const { error: updateError } = await supabase
+    .from("organization_members")
+    .update({ invite_token: freshToken })
+    .eq("id", memberId);
+
+  if (updateError) return { error: updateError.message };
+
+  const inviteUrl = `${APP_URL}/org/${orgSlug}/join?token=${freshToken}`;
+  const { data: inviterProfile } = await supabase
+    .from("profiles")
+    .select("full_name")
+    .eq("user_id", user.id)
+    .single();
+
+  await sendOrgInviteEmail({
+    to: target.invited_email,
+    inviterName: inviterProfile?.full_name ?? "Someone",
+    orgName,
+    role: target.role,
+    inviteUrl,
+  });
 
   revalidatePath(`/org/${orgSlug}/members`);
 }
