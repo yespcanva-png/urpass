@@ -582,6 +582,17 @@ export async function submitApplication(
     // Transition reservation state: RESERVED -> PAID
     // This guarantees manual-approval events consume capacity immediately upon payment.
     await markReservationPaid(admin, payment.orderId);
+
+    const ticketItemName = selectedTicketType ? `${event.name} — ${selectedTicketType.name}` : event.name;
+    void notifyOwnerPaymentSuccess({
+      kind: "ticket",
+      buyerName: data.name,
+      buyerEmail: data.email,
+      itemName: ticketItemName,
+      amountPaise: paymentAmountPaise,
+      paymentId: payment.paymentId,
+      orderId: payment.orderId,
+    }).catch((err) => console.error("[attendees] notifyOwnerPaymentSuccess error:", err));
   }
 
   const parsed = attendeeSchema.safeParse(data);

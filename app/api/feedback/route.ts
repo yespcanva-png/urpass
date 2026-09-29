@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 import { createClient } from "@/lib/supabase/server";
+import { getResendApiKey } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 
@@ -63,7 +64,7 @@ export async function POST(req: NextRequest) {
     console.warn("Could not insert organizer notification:", err);
   }
 
-  const apiKey = process.env.RESEND_API_KEY;
+  const apiKey = getResendApiKey();
   if (!apiKey || apiKey.startsWith("re_your")) {
     console.warn("[email] RESEND_API_KEY not configured — feedback email skipped in development");
     return NextResponse.json({ ok: true, devMode: true });

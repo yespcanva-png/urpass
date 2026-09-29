@@ -42,9 +42,27 @@ export async function sendLoginNotifications({
 }) {
   if (!email) return;
 
+  let resolvedName = name;
+  if (!resolvedName && userId) {
+    try {
+      const { createClient } = await import("@/lib/supabase/server");
+      const supabase = await createClient();
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (profile?.full_name) {
+        resolvedName = profile.full_name;
+      }
+    } catch {
+      // Non-critical fallback
+    }
+  }
+
   try {
     await notifyOwnerUserLogin({
-      name,
+      name: resolvedName,
       email,
       provider,
       userId,

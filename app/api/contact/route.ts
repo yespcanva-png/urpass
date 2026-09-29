@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 
+import { getResendApiKey } from "@/lib/email";
+
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
@@ -17,7 +19,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Message must be between 10 and 5000 characters" }, { status: 400 });
   }
 
-  const apiKey = process.env.RESEND_API_KEY;
+  const apiKey = getResendApiKey();
   if (!apiKey || apiKey.startsWith("re_your")) {
     console.warn("[email] RESEND_API_KEY not configured — contact email skipped");
     return NextResponse.json({ ok: true });
