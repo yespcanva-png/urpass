@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ShieldCheck, ArrowRight } from "lucide-react";
+import { ShieldCheck, ArrowRight, Globe } from "lucide-react";
 import AnimateIn from "@/components/ui/AnimateIn";
 import { detectCountryClient, persistCountryPreference } from "@/lib/country-config";
 
@@ -197,25 +197,34 @@ export default function HomePricingSection({ initialCountry = "IN" }: Props) {
               {subheaderText}
             </p>
 
-            {/* Regional Market Switcher */}
-            <div className="mt-4 inline-flex items-center bg-neutral-200/80 rounded-xl p-1 gap-1 border border-neutral-300/70 shadow-2xs">
+            {/* Corporate Regional Market Switcher */}
+            <div className="mt-4 inline-flex items-center bg-neutral-100/90 rounded-xl p-1 gap-1 border border-neutral-200/80 shadow-2xs">
+              <span className="pl-2 pr-1 text-neutral-400 flex items-center">
+                <Globe className="w-3.5 h-3.5" />
+              </span>
               <button
                 type="button"
                 onClick={() => handleMarketChange("IN")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${!isUk ? "bg-white text-neutral-900 shadow-xs" : "text-neutral-600 hover:text-neutral-900"}`}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+                  !isUk
+                    ? "bg-white text-neutral-900 font-bold shadow-xs border border-neutral-200/70"
+                    : "text-neutral-500 hover:text-neutral-900"
+                }`}
                 title="View India plans in INR (₹) with UPI & Razorpay"
               >
-                <span className="text-sm leading-none">🇮🇳</span>
-                <span>India (₹)</span>
+                <span>India · INR (₹)</span>
               </button>
               <button
                 type="button"
                 onClick={() => handleMarketChange("GB")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${isUk ? "bg-white text-neutral-900 shadow-xs" : "text-neutral-600 hover:text-neutral-900"}`}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+                  isUk
+                    ? "bg-white text-neutral-900 font-bold shadow-xs border border-neutral-200/70"
+                    : "text-neutral-500 hover:text-neutral-900"
+                }`}
                 title="View UK plans in GBP (£) with Razorpay & 0% fee"
               >
-                <span className="text-sm leading-none">🇬🇧</span>
-                <span>UK (£)</span>
+                <span>United Kingdom · GBP (£)</span>
               </button>
             </div>
           </div>

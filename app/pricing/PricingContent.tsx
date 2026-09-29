@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Check, Minus, ChevronDown, ShieldCheck, ArrowRight } from "lucide-react";
+import { Check, Minus, ChevronDown, ShieldCheck, ArrowRight, Globe } from "lucide-react";
+import { cn } from "@/lib/utils";
 import TrialConfirmationModal from "@/components/billing/TrialConfirmationModal";
 import FounderSpotCounter from "@/components/billing/FounderSpotCounter";
 import { detectCountryClient, persistCountryPreference } from "@/lib/country-config";
@@ -301,17 +302,42 @@ export default function PricingContent({
       <header className="border-b border-neutral-100 px-6 py-4 flex items-center justify-between">
         <Link href="/" className="font-semibold tracking-tight text-base text-neutral-900">URPASS</Link>
         <div className="flex items-center gap-3 sm:gap-4">
-          {/* Regional Market Switcher */}
-          <button
-            type="button"
-            onClick={() => handleCountryChange(country === "GB" ? "IN" : "GB")}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-neutral-200/90 bg-neutral-50/80 hover:bg-neutral-100 text-xs font-medium text-neutral-700 transition-all cursor-pointer shadow-2xs"
-            title={country === "GB" ? "Viewing UK pricing (£). Click to switch to India (₹)" : "Viewing India pricing (₹). Click to switch to UK (£)"}
-            aria-label="Toggle currency market"
-          >
-            <span className="text-sm leading-none">{country === "GB" ? "🇬🇧" : "🇮🇳"}</span>
-            <span className="font-semibold text-[11px] tracking-tight">{country === "GB" ? "UK (£)" : "IN (₹)"}</span>
-          </button>
+          {/* Corporate Regional Market Switcher */}
+          <div className="inline-flex items-center p-0.5 rounded-xl border border-neutral-200/90 bg-neutral-100/80 shadow-2xs">
+            <span className="pl-2 pr-1 text-neutral-400 flex items-center justify-center">
+              <Globe className="w-3.5 h-3.5" />
+            </span>
+            <button
+              type="button"
+              onClick={() => handleCountryChange("IN")}
+              className={cn(
+                "px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all cursor-pointer flex items-center gap-1",
+                country !== "GB"
+                  ? "bg-white text-neutral-900 font-bold shadow-xs border border-neutral-200/70"
+                  : "text-neutral-500 hover:text-neutral-800"
+              )}
+              title="India Edition (INR · ₹)"
+              aria-label="Switch to India (INR ₹)"
+            >
+              <span>INR</span>
+              <span className={country !== "GB" ? "text-neutral-500 font-normal" : "text-neutral-400 font-normal"}>₹</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleCountryChange("GB")}
+              className={cn(
+                "px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all cursor-pointer flex items-center gap-1",
+                country === "GB"
+                  ? "bg-white text-neutral-900 font-bold shadow-xs border border-neutral-200/70"
+                  : "text-neutral-500 hover:text-neutral-800"
+              )}
+              title="UK Edition (GBP · £)"
+              aria-label="Switch to UK (GBP £)"
+            >
+              <span>GBP</span>
+              <span className={country === "GB" ? "text-neutral-500 font-normal" : "text-neutral-400 font-normal"}>£</span>
+            </button>
+          </div>
 
           {isAuthenticated ? (
             <Link href="/dashboard" className="text-sm bg-neutral-900 text-white px-4 py-2 rounded-lg hover:bg-neutral-700 transition-colors">
@@ -390,25 +416,26 @@ export default function PricingContent({
               </button>
             </div>
 
-            {/* Market / Currency toggle */}
+            {/* Corporate Market / Currency toggle */}
             <div className="inline-flex items-center bg-neutral-100 rounded-xl p-1 gap-1 border border-neutral-200/60">
+              <span className="pl-2 pr-1 text-neutral-400 flex items-center">
+                <Globe className="w-3.5 h-3.5" />
+              </span>
               <button
                 type="button"
                 onClick={() => handleCountryChange("IN")}
-                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${country === "IN" ? "bg-white text-neutral-900 shadow-sm" : "text-neutral-500 hover:text-neutral-700"}`}
+                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${country === "IN" ? "bg-white text-neutral-900 font-semibold shadow-xs" : "text-neutral-500 hover:text-neutral-700"}`}
                 title="View India pricing in INR (₹) with UPI & Razorpay"
               >
-                <span className="text-base leading-none">🇮🇳</span>
-                <span className="font-medium">India (₹)</span>
+                <span>India · INR (₹)</span>
               </button>
               <button
                 type="button"
                 onClick={() => handleCountryChange("GB")}
-                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${country === "GB" ? "bg-white text-neutral-900 shadow-sm" : "text-neutral-500 hover:text-neutral-700"}`}
+                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${country === "GB" ? "bg-white text-neutral-900 font-semibold shadow-xs" : "text-neutral-500 hover:text-neutral-700"}`}
                 title="View UK pricing in GBP (£) with Razorpay & 0% fee"
               >
-                <span className="text-base leading-none">🇬🇧</span>
-                <span className="font-medium">UK (£)</span>
+                <span>United Kingdom · GBP (£)</span>
               </button>
             </div>
           </div>

@@ -160,14 +160,14 @@ export default function Footer() {
             <p className="text-xs font-semibold text-white tracking-wider uppercase mb-4">Regional Hubs</p>
             <ul className="flex flex-col gap-2.5">
               <li>
-                <Link href="/in" className="text-xs text-neutral-400 hover:text-white transition-colors flex items-center gap-1.5">
-                  <span>🇮🇳</span>
+                <Link href="/in" className="text-xs text-neutral-400 hover:text-white transition-colors flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
                   <span>India Hub (₹ UPI &amp; Razorpay)</span>
                 </Link>
               </li>
               <li>
-                <Link href="/uk" className="text-xs text-neutral-400 hover:text-white transition-colors flex items-center gap-1.5">
-                  <span>🇬🇧</span>
+                <Link href="/uk" className="text-xs text-neutral-400 hover:text-white transition-colors flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0" />
                   <span>UK Hub (£ 0% Commission)</span>
                 </Link>
               </li>
@@ -203,11 +203,11 @@ export default function Footer() {
             <span className="flex items-center gap-1.5">
               <span>Markets:</span>
               <Link href="/in" className="text-neutral-400 hover:text-white transition-colors underline-offset-2 hover:underline">
-                🇮🇳 India (₹)
+                India (INR · ₹)
               </Link>
               <span>·</span>
               <Link href="/uk" className="text-neutral-400 hover:text-white transition-colors underline-offset-2 hover:underline">
-                🇬🇧 UK (£)
+                United Kingdom (GBP · £)
               </Link>
             </span>
           </div>
