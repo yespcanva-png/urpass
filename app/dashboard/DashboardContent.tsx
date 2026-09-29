@@ -263,38 +263,60 @@ export default function DashboardContent() {
         </span>
       </div>
 
-      {/* ── Executive Dashboard Operations Banner ─────────────────────── */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-neutral-950 via-neutral-900 to-brand-950 p-5 sm:p-6 text-white border border-neutral-800 shadow-md">
-        {/* Ambient subtle glow */}
-        <div className="absolute top-0 right-0 -mt-10 -mr-10 w-72 h-72 bg-brand/20 blur-3xl rounded-full pointer-events-none" />
+      {/* ── Dashboard Banner ─────────────────────────────────────────── */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-white via-violet-50 to-white p-5 sm:p-6 border border-violet-100/80 shadow-sm">
+        <div
+          className="absolute inset-0 opacity-60 pointer-events-none"
+          style={{
+            background:
+              "radial-gradient(circle at 92% 18%, rgba(109,40,217,0.16), transparent 32%)",
+          }}
+        />
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5">
-          <div className="space-y-1.5 max-w-2xl">
-            <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-white/10 border border-white/15 text-[10px] font-semibold text-emerald-300 tracking-wide uppercase">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              Event Operations Hub · Real-Time Sync
+          <div className="space-y-3 max-w-2xl">
+            <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-white/80 border border-violet-100 text-[10px] font-bold text-violet-700 tracking-widest uppercase shadow-2xs">
+              <ShieldCheck className="w-3 h-3" />
+              Live operations
             </div>
-            <h1 className="text-lg sm:text-2xl font-bold tracking-tight text-white leading-snug">
-              {greeting}{firstName ? `, ${firstName}` : ""} — Event Command Center
-            </h1>
-            <p className="text-xs sm:text-sm text-neutral-300 leading-relaxed">
-              Launch registrations, design custom passes, and verify attendees at entrance gates in under 0.3s with 0% platform commission.
-            </p>
+            <div className="space-y-1">
+              <h1 className="text-lg sm:text-2xl font-bold tracking-tight text-neutral-950 leading-snug">
+                {greeting}{firstName ? `, ${firstName}` : ""}
+              </h1>
+              <p className="text-xs sm:text-sm text-neutral-500 leading-relaxed">
+                Create, issue passes, and scan entries from one dashboard.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { icon: Calendar, label: "Events" },
+                { icon: Ticket, label: "Passes" },
+                { icon: ScanLine, label: "Scan" },
+              ].map(({ icon: Icon, label }) => (
+                <span
+                  key={label}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-violet-100 bg-white/75 px-2.5 py-1 text-[11px] font-semibold text-neutral-700"
+                >
+                  <Icon className="w-3 h-3 text-violet-600" />
+                  {label}
+                </span>
+              ))}
+            </div>
           </div>
 
           <div className="flex items-center gap-2.5 shrink-0 self-start md:self-auto">
             <Link
               href="/create-event"
-              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-white text-neutral-900 text-xs font-bold hover:bg-neutral-100 transition-colors shadow-sm"
+              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-violet-700 text-white text-xs font-bold hover:bg-violet-800 transition-colors shadow-sm"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>Create Event</span>
+              <span>Create</span>
             </Link>
             <Link
               href="/scan"
-              className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-neutral-800/80 border border-neutral-700 text-white text-xs font-semibold hover:bg-neutral-800 transition-colors"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-white/80 border border-violet-100 text-violet-700 text-xs font-semibold hover:bg-violet-50 transition-colors"
             >
-              <ScanLine className="w-3.5 h-3.5 text-neutral-300" />
-              <span>Gate Scanner</span>
+              <ScanLine className="w-3.5 h-3.5" />
+              <span>Scan</span>
             </Link>
           </div>
         </div>

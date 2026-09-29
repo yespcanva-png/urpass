@@ -3,9 +3,9 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X, ArrowRight, Globe } from "lucide-react";
+import { Menu, X, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { detectCountryClient, persistCountryPreference } from "@/lib/country-config";
+import { detectCountryClient } from "@/lib/country-config";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -48,15 +48,6 @@ export default function Navbar() {
     window.addEventListener("urpass_country_changed", onCountryChanged);
     return () => window.removeEventListener("urpass_country_changed", onCountryChanged);
   }, [pathname]);
-
-  function handleMarketChange(target: "IN" | "GB") {
-    persistCountryPreference(target);
-    setIsUk(target === "GB");
-  }
-
-  function toggleMarket() {
-    handleMarketChange(isUk ? "IN" : "GB");
-  }
 
   useEffect(() => {
     function onScroll() {
@@ -158,43 +149,6 @@ export default function Navbar() {
 
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center gap-2.5">
-            {/* Corporate Regional Market Switcher */}
-            <div className="inline-flex items-center p-0.5 rounded-xl border border-neutral-200/90 bg-neutral-100/80 shadow-2xs">
-              <span className="pl-2 pr-1 text-neutral-400 flex items-center justify-center">
-                <Globe className="w-3.5 h-3.5" />
-              </span>
-              <button
-                type="button"
-                onClick={() => handleMarketChange("IN")}
-                className={cn(
-                  "px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all cursor-pointer flex items-center gap-1",
-                  !isUk
-                    ? "bg-white text-neutral-900 font-bold shadow-xs border border-neutral-200/70"
-                    : "text-neutral-500 hover:text-neutral-800"
-                )}
-                title="India Market (INR · ₹)"
-                aria-label="Switch to Indian Rupee (INR)"
-              >
-                <span>INR</span>
-                <span className={!isUk ? "text-neutral-500 font-normal" : "text-neutral-400 font-normal"}>₹</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleMarketChange("GB")}
-                className={cn(
-                  "px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all cursor-pointer flex items-center gap-1",
-                  isUk
-                    ? "bg-white text-neutral-900 font-bold shadow-xs border border-neutral-200/70"
-                    : "text-neutral-500 hover:text-neutral-800"
-                )}
-                title="UK Market (GBP · £)"
-                aria-label="Switch to British Pound (GBP)"
-              >
-                <span>GBP</span>
-                <span className={isUk ? "text-neutral-500 font-normal" : "text-neutral-400 font-normal"}>£</span>
-              </button>
-            </div>
-
             <Link
               href="/contact?subject=Book%20a%20Demo"
               className="text-sm font-medium text-neutral-600 hover:text-neutral-900 px-3 py-2 rounded-xl hover:bg-neutral-100 transition-colors"
@@ -263,38 +217,6 @@ export default function Navbar() {
             >
               Contact
             </Link>
-
-            {/* Mobile Market Switcher */}
-            <div className="pt-2 border-t border-neutral-100 flex items-center justify-between py-1 text-xs text-neutral-600">
-              <span className="font-medium text-neutral-700 flex items-center gap-1.5">
-                <Globe className="w-3.5 h-3.5 text-neutral-400" />
-                <span>Region &amp; Currency:</span>
-              </span>
-              <div className="inline-flex p-0.5 bg-neutral-100 rounded-lg border border-neutral-200/70">
-                <button
-                  type="button"
-                  onClick={() => handleMarketChange("IN")}
-                  className={cn(
-                    "px-2.5 py-1 rounded-md text-xs font-medium transition-all cursor-pointer flex items-center gap-1",
-                    !isUk ? "bg-white text-neutral-900 font-semibold shadow-xs" : "text-neutral-500 hover:text-neutral-900"
-                  )}
-                >
-                  <span>INR</span>
-                  <span className="text-neutral-400 font-normal">₹</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleMarketChange("GB")}
-                  className={cn(
-                    "px-2.5 py-1 rounded-md text-xs font-medium transition-all cursor-pointer flex items-center gap-1",
-                    isUk ? "bg-white text-neutral-900 font-semibold shadow-xs" : "text-neutral-500 hover:text-neutral-900"
-                  )}
-                >
-                  <span>GBP</span>
-                  <span className="text-neutral-400 font-normal">£</span>
-                </button>
-              </div>
-            </div>
 
             <div className="pt-2 border-t border-neutral-100 flex flex-col gap-2">
               <Link
