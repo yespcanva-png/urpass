@@ -4,14 +4,24 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  Check, Sparkles, Zap, Crown, TrendingUp,
-  CalendarCheck, Zap as ZapIcon, Star, Flame, ShieldCheck,
-  AlertCircle, X,
+  Check,
+  Sparkles,
+  Zap,
+  Crown,
+  TrendingUp,
+  CalendarCheck,
+  Zap as ZapIcon,
+  Star,
+  ShieldCheck,
+  AlertCircle,
+  X,
+  ArrowRight,
 } from "lucide-react";
 import CheckoutButton from "./CheckoutButton";
 import SwitchPlanButton from "./SwitchPlanButton";
 import EventPassCheckoutModal from "./EventPassCheckoutModal";
 import TrialConfirmationModal from "./TrialConfirmationModal";
+import FounderCheckoutCta from "./FounderCheckoutCta";
 import { activateUkPlan } from "@/app/actions/billing";
 import { activateUkEventPass } from "@/app/actions/event-passes";
 
@@ -31,31 +41,70 @@ const UK_EVENT_PASS_PRICES: Record<string, number> = {
 // ── Subscription plans ────────────────────────────────────────
 const PLANS = [
   {
-    slug: "free", name: "Free",
-    priceMonthly: 0, annualTotal: 0,
-    features: ["2 events/month","100 registrations/month","1 organizer","QR passes & check-in","Attendee approval","Basic analytics"],
+    slug: "free",
+    name: "Free",
+    priceMonthly: 0,
+    annualTotal: 0,
+    features: [
+      "2 events/month",
+      "100 registrations/month",
+      "1 organizer seat",
+      "QR passes & check-in",
+      "Attendee approval",
+      "Basic analytics",
+    ],
   },
   {
-    slug: "starter", name: "Starter",
-    priceMonthly: 499, annualTotal: 4990,
-    features: ["10 events/month","500 registrations/month","2 organizer seats","CSV import & export","10 custom fields","Standard analytics"],
+    slug: "starter",
+    name: "Starter",
+    priceMonthly: 499,
+    annualTotal: 4990,
+    features: [
+      "10 events/month",
+      "500 registrations/month",
+      "2 organizer seats",
+      "CSV import & export",
+      "10 custom fields",
+      "Standard analytics",
+    ],
   },
   {
-    slug: "pro", name: "Pro",
-    priceMonthly: 999, annualTotal: 9990,
-    features: ["Unlimited events","2,500 registrations/month","5 organizer seats","Custom pass design & branding","Advanced analytics","Priority support"],
+    slug: "pro",
+    name: "Pro",
+    priceMonthly: 999,
+    annualTotal: 9990,
+    features: [
+      "Unlimited events",
+      "2,500 registrations/month",
+      "5 organizer seats",
+      "Custom pass design & branding",
+      "Advanced analytics",
+      "Priority support",
+    ],
   },
   {
-    slug: "business", name: "Business",
-    priceMonthly: 2499, annualTotal: 24990,
-    features: ["Unlimited events","10,000 registrations/month","15 organizer seats","Custom domain, API & webhooks","Advanced permissions","Cross-event analytics"],
+    slug: "business",
+    name: "Business",
+    priceMonthly: 2499,
+    annualTotal: 24990,
+    features: [
+      "Unlimited events",
+      "10,000 registrations/month",
+      "15 organizer seats",
+      "Custom domain, API & webhooks",
+      "Advanced permissions",
+      "Cross-event analytics",
+    ],
   },
 ] as const;
 
-type PlanSlug = typeof PLANS[number]["slug"];
+type PlanSlug = (typeof PLANS)[number]["slug"];
 const PLAN_ORDER: Record<PlanSlug, number> = { free: 0, starter: 1, pro: 2, business: 3 };
 const PLAN_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
-  free: Sparkles, starter: Zap, pro: Crown, business: TrendingUp,
+  free: Sparkles,
+  starter: Zap,
+  pro: Crown,
+  business: TrendingUp,
 };
 
 // ── One-event passes ──────────────────────────────────────────
@@ -116,76 +165,85 @@ interface Props {
   country?: "IN" | "GB";
 }
 
-export default function PlanGrid({ currentPlanSlug, currentPlanIndex, userEmail, userName, trialUsed = false, country = "IN" }: Props) {
+export default function PlanGrid({
+  currentPlanSlug,
+  currentPlanIndex,
+  userEmail,
+  userName,
+  trialUsed = false,
+  country = "IN",
+}: Props) {
   const router = useRouter();
-  const [tab, setTab]     = useState<"all" | "subscription" | "one-event">("all");
+  const [tab, setTab] = useState<"subscription" | "one-event" | "lifetime" | "all">("subscription");
   const [cycle, setCycle] = useState<"monthly" | "annual">("monthly");
   const [activatingSlug, setActivatingSlug] = useState<string | null>(null);
   const [trialModal, setTrialModal] = useState<{ planSlug: string; planName: string } | null>(null);
   const [passModal, setPassModal] = useState<{
-    passType: string; passName: string; priceRupees: number; registrationLimit: number;
+    passType: string;
+    passName: string;
+    priceRupees: number;
+    registrationLimit: number;
   } | null>(null);
   const [activatingPass, setActivatingPass] = useState<string | null>(null);
   const [actionNotice, setActionNotice] = useState<{ type: "error" | "success"; message: string } | null>(null);
 
   return (
     <div>
-      {/* ── Top-level tab ────────────────────────────────────── */}
+      {/* ── Sub-Navigation Tabs ─────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-          <p className="text-[10px] font-bold tracking-wider uppercase text-neutral-500">
-            {tab === "all"
-              ? `All Plans & Passes · ${PLANS.length} Subscriptions + 3 Event Passes`
-              : tab === "subscription"
-              ? `Subscription Plans · ${PLANS.length}`
-              : "Single Event Passes · 3"}
+          <p className="text-[10px] font-bold tracking-wider uppercase text-slate-500">
+            {tab === "subscription"
+              ? "Recurring Memberships · 4 Tiers"
+              : tab === "one-event"
+              ? "Pay As You Go · Single Event Passes"
+              : tab === "lifetime"
+              ? "Permanent License · Founder Deal"
+              : "All Plans & Passes"}
           </p>
-          <h2 className="text-xl font-bold tracking-tight text-neutral-900 mt-0.5">
+          <h2 className="text-xl font-bold tracking-tight text-slate-900 mt-0.5">
             Select Your Plan or Pass
           </h2>
         </div>
 
-        <div className="flex items-center gap-1 bg-neutral-100 border border-neutral-200/60 rounded-lg p-1 shrink-0 self-start sm:self-auto flex-wrap">
+        <div className="flex items-center gap-1 bg-slate-100 border border-slate-200/80 rounded-lg p-1 shrink-0 self-start sm:self-auto flex-wrap">
           <button
-            onClick={() => setTab("all")}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
-              tab === "all"
-                ? "bg-white text-neutral-900 shadow-2xs"
-                : "text-neutral-500 hover:text-neutral-900"
-            }`}
-          >
-            All Plans &amp; Passes
-          </button>
-          <button
+            type="button"
             onClick={() => setTab("subscription")}
             className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
               tab === "subscription"
-                ? "bg-white text-neutral-900 shadow-2xs"
-                : "text-neutral-500 hover:text-neutral-900"
+                ? "bg-white text-slate-900 shadow-2xs"
+                : "text-slate-600 hover:text-slate-900"
             }`}
           >
             Subscriptions
           </button>
           <button
+            type="button"
             onClick={() => setTab("one-event")}
             className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
               tab === "one-event"
-                ? "bg-white text-neutral-900 shadow-2xs"
-                : "text-neutral-500 hover:text-neutral-900"
+                ? "bg-white text-slate-900 shadow-2xs"
+                : "text-slate-600 hover:text-slate-900"
             }`}
           >
             Single Events
           </button>
-          <Link
-            href="/founder-lifetime-deal"
-            className="px-3 py-1.5 text-xs font-semibold rounded-md transition-all text-neutral-700 hover:text-neutral-900 hover:bg-white/80 flex items-center gap-1.5"
+          <button
+            type="button"
+            onClick={() => setTab("lifetime")}
+            className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all flex items-center gap-1.5 ${
+              tab === "lifetime"
+                ? "bg-white text-slate-900 shadow-2xs"
+                : "text-slate-600 hover:text-slate-900"
+            }`}
           >
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
             <span>Lifetime Deal</span>
-            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-neutral-200/80 text-neutral-800">
+            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-slate-200 text-slate-800">
               {country === "GB" ? "£249" : "₹19,999"}
             </span>
-          </Link>
+          </button>
         </div>
       </div>
 
@@ -202,6 +260,7 @@ export default function PlanGrid({ currentPlanSlug, currentPlanIndex, userEmail,
             <span>{actionNotice.message}</span>
           </div>
           <button
+            type="button"
             onClick={() => setActionNotice(null)}
             className="p-1 rounded-md hover:bg-black/5 transition-colors"
           >
@@ -211,31 +270,28 @@ export default function PlanGrid({ currentPlanSlug, currentPlanIndex, userEmail,
       )}
 
       {/* ── Subscription section ─────────────────────────────── */}
-      {(tab === "all" || tab === "subscription") && (
+      {(tab === "subscription" || tab === "all") && (
         <section className={tab === "all" ? "mb-10" : ""}>
-          {/* Free trial banner if user has not used trial yet */}
+          {/* Corporate 30-Day Free Trial Notice */}
           {!trialUsed && (
-            <div className="mb-6 rounded-2xl p-5 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-neutral-900 border border-neutral-800 shadow-sm">
-              <div className="flex items-start sm:items-center gap-3.5">
-                <div className="w-10 h-10 rounded-xl bg-neutral-800 border border-neutral-700 flex items-center justify-center shrink-0">
-                  <CalendarCheck className="w-5 h-5 text-emerald-400" />
+            <div className="mb-6 rounded-xl p-4 bg-blue-50/70 border border-blue-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-slate-800 shadow-2xs">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-blue-100 border border-blue-200 flex items-center justify-center text-blue-700 shrink-0">
+                  <CalendarCheck className="w-4 h-4" />
                 </div>
                 <div>
-                  <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                    <span className="text-[10px] font-semibold tracking-widest uppercase px-2 py-0.5 rounded-full bg-neutral-800 text-neutral-300 border border-neutral-700">
-                      YOUR FIRST 30 DAYS ARE FREE
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs font-bold text-blue-950">
+                      30-Day Free Trial Included
                     </span>
-                    <span className="text-xs font-medium text-emerald-400">
-                      {country === "GB" ? "Direct UK Trial · No Card Required" : "AutoPay Required · Cancel Anytime"}
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-100 text-blue-800 uppercase tracking-wide">
+                      {country === "GB" ? "No Card Needed" : "AutoPay Protected"}
                     </span>
                   </div>
-                  <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
-                    TRY ANY URPASS PLAN FREE FOR 30 DAYS
-                  </h3>
-                  <p className="text-xs text-neutral-400 mt-0.5">
+                  <p className="text-xs text-blue-700/90 mt-0.5">
                     {country === "GB"
-                      ? "Choose Starter, Pro, or Business · 30 days £0 · Direct activation without payment gateway · Cancel anytime"
-                      : "Choose Starter, Pro, or Business · AutoPay required · Cancel anytime before first payment · One free trial per account"}
+                      ? "Activate Starter, Pro, or Business with 30 days £0 trial. Cancel anytime."
+                      : "Explore Starter, Pro, or Business for 30 days free. Cancel anytime before your first billing."}
                   </p>
                 </div>
               </div>
@@ -243,47 +299,53 @@ export default function PlanGrid({ currentPlanSlug, currentPlanIndex, userEmail,
           )}
 
           {/* Billing cycle toggle & section title */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
             <div>
-              <p className="text-[10px] font-bold tracking-wider uppercase text-neutral-500">Recurring Membership</p>
-              <h3 className="text-lg font-bold tracking-tight text-neutral-900">Monthly / Annual Subscriptions</h3>
+              <p className="text-[10px] font-bold tracking-wider uppercase text-slate-400">
+                Recurring Membership
+              </p>
+              <h3 className="text-base font-bold tracking-tight text-slate-900">
+                Monthly &amp; Annual Subscriptions
+              </h3>
             </div>
-            <div className="flex items-center gap-1 bg-neutral-100 border border-neutral-200/60 rounded-lg p-1 self-start sm:self-auto">
+            <div className="flex items-center gap-1 bg-slate-100 border border-slate-200/80 rounded-lg p-1 self-start sm:self-auto">
               <button
+                type="button"
                 onClick={() => setCycle("monthly")}
                 className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
                   cycle === "monthly"
-                    ? "bg-white text-neutral-900 shadow-2xs"
-                    : "text-neutral-500 hover:text-neutral-900"
+                    ? "bg-white text-slate-900 shadow-2xs"
+                    : "text-slate-600 hover:text-slate-900"
                 }`}
               >
                 Monthly
               </button>
               <button
+                type="button"
                 onClick={() => setCycle("annual")}
                 className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all flex items-center gap-1.5 ${
                   cycle === "annual"
-                    ? "bg-white text-neutral-900 shadow-2xs"
-                    : "text-neutral-500 hover:text-neutral-900"
+                    ? "bg-white text-slate-900 shadow-2xs"
+                    : "text-slate-600 hover:text-slate-900"
                 }`}
               >
                 Annual
                 <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200/70">
-                  2 months free
+                  Save 17%
                 </span>
               </button>
             </div>
           </div>
 
-          {/* Plan cards */}
+          {/* Clean corporate plan cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {PLANS.map((p) => {
-              const isCurrent    = p.slug === currentPlanSlug;
+              const isCurrent = p.slug === currentPlanSlug;
               const isMostPopular = p.slug === "pro" && !isCurrent;
-              const planIndex    = PLAN_ORDER[p.slug as PlanSlug] ?? 0;
-              const isUpgrade    = !isCurrent && planIndex > currentPlanIndex;
-              const Icon         = PLAN_ICONS[p.slug] ?? Sparkles;
-              const ukPlan       = UK_PLAN_PRICES[p.slug] ?? { monthly: 35, annual: 300 };
+              const planIndex = PLAN_ORDER[p.slug as PlanSlug] ?? 0;
+              const isUpgrade = !isCurrent && planIndex > currentPlanIndex;
+              const Icon = PLAN_ICONS[p.slug] ?? Sparkles;
+              const ukPlan = UK_PLAN_PRICES[p.slug] ?? { monthly: 35, annual: 300 };
 
               const displayPrice =
                 p.priceMonthly === 0
@@ -297,9 +359,7 @@ export default function PlanGrid({ currentPlanSlug, currentPlanIndex, userEmail,
                   : `₹${p.priceMonthly.toLocaleString("en-IN")}`;
 
               const displayPeriod =
-                p.priceMonthly === 0 ? ""
-                : cycle === "annual"  ? "/yr"
-                :                       "/mo";
+                p.priceMonthly === 0 ? "" : cycle === "annual" ? "/yr" : "/mo";
 
               const monthlyEquiv =
                 cycle === "annual" && (country === "GB" ? ukPlan.annual > 0 : p.annualTotal > 0)
@@ -311,44 +371,42 @@ export default function PlanGrid({ currentPlanSlug, currentPlanIndex, userEmail,
               return (
                 <div
                   key={p.slug}
-                  className={`relative rounded-xl p-5 flex flex-col gap-4 transition-all ${
+                  className={`relative rounded-xl p-5 flex flex-col gap-4 transition-all bg-white shadow-xs ${
                     isCurrent
-                      ? "bg-neutral-900 text-white border border-neutral-900 shadow-sm"
+                      ? "border-2 border-emerald-600 ring-2 ring-emerald-500/10"
                       : isMostPopular
-                      ? "bg-white border-2 border-neutral-900 shadow-sm"
-                      : "bg-white border border-neutral-200/80 hover:border-neutral-300 shadow-xs"
+                      ? "border-2 border-slate-900"
+                      : "border border-slate-200/90 hover:border-slate-300"
                   }`}
                 >
                   {isCurrent && (
-                    <span className="absolute -top-2.5 left-4 text-[9px] font-bold tracking-wider bg-white text-neutral-900 border border-neutral-200 px-2.5 py-0.5 rounded-full uppercase shadow-2xs">
+                    <span className="absolute -top-2.5 left-4 text-[9px] font-bold tracking-wider bg-emerald-600 text-white px-2.5 py-0.5 rounded-full uppercase shadow-2xs">
                       Active Plan
                     </span>
                   )}
                   {isMostPopular && (
-                    <span className="absolute -top-2.5 left-4 text-[9px] font-bold tracking-wider bg-neutral-900 text-white px-2.5 py-0.5 rounded-full uppercase shadow-2xs">
+                    <span className="absolute -top-2.5 left-4 text-[9px] font-bold tracking-wider bg-slate-900 text-white px-2.5 py-0.5 rounded-full uppercase shadow-2xs">
                       Most Popular
                     </span>
                   )}
 
                   <div>
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center mb-3 ${isCurrent ? "bg-neutral-800 border border-neutral-700" : "bg-neutral-100 border border-neutral-200/60"}`}>
-                      <Icon className={`w-4 h-4 ${isCurrent ? "text-neutral-200" : "text-neutral-700"}`} />
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center mb-3 bg-slate-100 border border-slate-200/60 text-slate-700">
+                      <Icon className="w-4 h-4" />
                     </div>
-                    <p className={`text-[10px] font-bold tracking-wider uppercase mb-1 ${isCurrent ? "text-neutral-400" : "text-neutral-500"}`}>
+                    <p className="text-[10px] font-bold tracking-wider uppercase mb-1 text-slate-500">
                       {p.name}
                     </p>
                     <div className="flex items-baseline gap-1">
-                      <span className={`text-2xl font-bold tracking-tight tabular-nums ${isCurrent ? "text-white" : "text-neutral-900"}`}>
+                      <span className="text-2xl font-bold tracking-tight tabular-nums text-slate-900">
                         {displayPrice}
                       </span>
                       {displayPeriod && (
-                        <span className={`text-xs ${isCurrent ? "text-neutral-400" : "text-neutral-500"}`}>
-                          {displayPeriod}
-                        </span>
+                        <span className="text-xs text-slate-500">{displayPeriod}</span>
                       )}
                     </div>
                     {monthlyEquiv && (
-                      <p className={`text-[11px] mt-0.5 tabular-nums ${isCurrent ? "text-neutral-400" : "text-neutral-500"}`}>
+                      <p className="text-[11px] mt-0.5 tabular-nums text-slate-500">
                         {monthlyEquiv} equivalent
                       </p>
                     )}
@@ -357,36 +415,38 @@ export default function PlanGrid({ currentPlanSlug, currentPlanIndex, userEmail,
                   <ul className="flex flex-col gap-2 flex-1">
                     {p.features.map((f) => (
                       <li key={f} className="flex items-start gap-2">
-                        <span className={`w-3.5 h-3.5 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${isCurrent ? "bg-neutral-800 border border-neutral-700" : "bg-neutral-100 border border-neutral-200/60"}`}>
-                          <Check className={`w-2 h-2 ${isCurrent ? "text-white/80" : "text-neutral-700"}`} />
+                        <span className="w-4 h-4 rounded-full flex items-center justify-center shrink-0 mt-0.5 bg-slate-100 border border-slate-200/60">
+                          <Check className="w-2.5 h-2.5 text-slate-700" />
                         </span>
-                        <span className={`text-xs leading-relaxed ${isCurrent ? "text-neutral-300" : "text-neutral-600"}`}>{f}</span>
+                        <span className="text-xs leading-relaxed text-slate-600">{f}</span>
                       </li>
                     ))}
                   </ul>
 
                   <div>
                     {isCurrent ? (
-                      <div className="w-full text-center text-xs font-semibold py-2.5 rounded-lg border border-white/15 text-neutral-400">
+                      <div className="w-full text-center text-xs font-semibold py-2.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-500">
                         Current Plan
                       </div>
                     ) : !trialUsed && p.priceMonthly > 0 ? (
                       <div className="flex flex-col gap-1.5">
                         <button
+                          type="button"
                           onClick={() => setTrialModal({ planSlug: p.slug, planName: p.name })}
-                          className="w-full py-2.5 text-xs font-semibold rounded-lg text-white bg-neutral-900 hover:bg-neutral-800 transition-colors shadow-xs"
+                          className="w-full py-2.5 text-xs font-semibold rounded-lg text-white bg-slate-900 hover:bg-slate-800 transition-colors shadow-xs"
                         >
                           Start 30-Day Free Trial
                         </button>
-                        <p className="text-[10px] text-center text-neutral-500 font-medium">
+                        <p className="text-[10px] text-center text-slate-500 font-medium">
                           {country === "GB"
-                            ? "£0 for 30 days · No card required · Instant access"
-                            : "₹0 for 30 days · Cancel before first payment"}
+                            ? "£0 for 30 days · Cancel anytime"
+                            : "₹0 for 30 days · Cancel anytime"}
                         </p>
                       </div>
                     ) : p.priceMonthly > 0 ? (
                       country === "GB" ? (
                         <button
+                          type="button"
                           onClick={async () => {
                             setActivatingSlug(p.slug);
                             setActionNotice(null);
@@ -408,9 +468,13 @@ export default function PlanGrid({ currentPlanSlug, currentPlanIndex, userEmail,
                             }
                           }}
                           disabled={activatingSlug === p.slug}
-                          className="w-full py-2.5 text-xs font-semibold rounded-lg text-white bg-neutral-900 hover:bg-neutral-800 transition-colors shadow-xs disabled:opacity-50"
+                          className="w-full py-2.5 text-xs font-semibold rounded-lg text-white bg-slate-900 hover:bg-slate-800 transition-colors shadow-xs disabled:opacity-50"
                         >
-                          {activatingSlug === p.slug ? "Activating..." : isUpgrade ? `Upgrade to ${p.name}` : `Switch to ${p.name}`}
+                          {activatingSlug === p.slug
+                            ? "Activating..."
+                            : isUpgrade
+                            ? `Upgrade to ${p.name}`
+                            : `Switch to ${p.name}`}
                         </button>
                       ) : (
                         <CheckoutButton
@@ -419,7 +483,7 @@ export default function PlanGrid({ currentPlanSlug, currentPlanIndex, userEmail,
                           billingCycle={cycle}
                           userEmail={userEmail}
                           userName={userName}
-                          className="w-full py-2.5 text-xs font-semibold rounded-lg text-white bg-neutral-900 hover:bg-neutral-800 transition-colors shadow-xs disabled:opacity-50"
+                          className="w-full py-2.5 text-xs font-semibold rounded-lg text-white bg-slate-900 hover:bg-slate-800 transition-colors shadow-xs disabled:opacity-50"
                         >
                           {isUpgrade ? `Upgrade to ${p.name}` : `Switch to ${p.name}`}
                         </CheckoutButton>
@@ -428,7 +492,7 @@ export default function PlanGrid({ currentPlanSlug, currentPlanIndex, userEmail,
                       <SwitchPlanButton
                         planSlug={p.slug}
                         planName={p.name}
-                        className="w-full py-2.5 text-xs font-medium rounded-lg border border-neutral-200 text-neutral-700 hover:bg-neutral-50 transition-colors shadow-2xs"
+                        className="w-full py-2.5 text-xs font-medium rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs"
                       />
                     )}
                   </div>
@@ -440,72 +504,70 @@ export default function PlanGrid({ currentPlanSlug, currentPlanIndex, userEmail,
       )}
 
       {/* ── Single Event Passes section ────────────────────── */}
-      {(tab === "all" || tab === "one-event") && (
-        <section className={tab === "all" ? "mt-12 pt-10 border-t border-neutral-200/80" : ""}>
+      {(tab === "one-event" || tab === "all") && (
+        <section className={tab === "all" ? "mt-12 pt-10 border-t border-slate-200/80" : ""}>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
             <div>
-              <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-neutral-100 border border-neutral-200/60 text-[10px] font-bold tracking-wider uppercase text-neutral-700 mb-1">
+              <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200/60 text-[10px] font-bold tracking-wider uppercase text-slate-700 mb-1">
                 Pay As You Go
               </div>
-              <h3 className="text-lg font-bold tracking-tight text-neutral-900">Single Event Passes</h3>
-              <p className="text-xs text-neutral-500 mt-0.5">
+              <h3 className="text-lg font-bold tracking-tight text-slate-900">Single Event Passes</h3>
+              <p className="text-xs text-slate-500 mt-0.5">
                 Don&apos;t run events every month? Pay only for your next event with zero recurring renewal fees. Passes remain attached to your account until used.
               </p>
             </div>
-            <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-neutral-100 text-neutral-700 border border-neutral-200/60 self-start sm:self-auto shrink-0">
+            <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 border border-slate-200/60 self-start sm:self-auto shrink-0">
               3 Single-Event Tiers
             </span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {EVENT_PASSES.map((p) => {
-              const gst   = Math.round(p.price * 18) / 100;
+              const gst = Math.round(p.price * 18) / 100;
               const total = Math.round((p.price + gst) * 100) / 100;
               const ukPassPrice = UK_EVENT_PASS_PRICES[p.slug] ?? 10;
-              const displayOneTimePrice = country === "GB"
-                ? `£${ukPassPrice}`
-                : `₹${p.price.toLocaleString("en-IN")}`;
-              const displayTaxSub = country === "GB"
-                ? `£${Math.round(ukPassPrice * 1.2)} incl. VAT`
-                : `₹${total.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} incl. GST`;
+              const displayOneTimePrice = country === "GB" ? `£${ukPassPrice}` : `₹${p.price.toLocaleString("en-IN")}`;
+              const displayTaxSub =
+                country === "GB"
+                  ? `£${Math.round(ukPassPrice * 1.2)} incl. VAT`
+                  : `₹${total.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} incl. GST`;
 
               return (
                 <div
                   key={p.slug}
-                  className="relative rounded-xl p-5 flex flex-col gap-4 bg-white border border-neutral-200/80 hover:border-neutral-300 shadow-xs transition-all"
+                  className="relative rounded-xl p-5 flex flex-col gap-4 bg-white border border-slate-200/80 hover:border-slate-300 shadow-xs transition-all"
                 >
                   <div>
-                    <div className="w-8 h-8 rounded-lg flex items-center justify-center mb-3 bg-neutral-100 border border-neutral-200/60">
-                      <p.Icon className="w-4 h-4 text-neutral-700" />
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center mb-3 bg-slate-100 border border-slate-200/60 text-slate-700">
+                      <p.Icon className="w-4 h-4" />
                     </div>
-                    <p className="text-[10px] font-bold tracking-wider uppercase mb-1 text-neutral-500">
+                    <p className="text-[10px] font-bold tracking-wider uppercase mb-1 text-slate-500">
                       {p.name}
                     </p>
                     <div className="flex items-baseline gap-1">
-                      <span className="text-2xl font-bold tracking-tight text-neutral-900 tabular-nums">
+                      <span className="text-2xl font-bold tracking-tight text-slate-900 tabular-nums">
                         {displayOneTimePrice}
                       </span>
-                      <span className="text-xs text-neutral-500">/event</span>
+                      <span className="text-xs text-slate-500">/event</span>
                     </div>
-                    <p className="text-[11px] text-neutral-500 mt-0.5 tabular-nums">
-                      {displayTaxSub}
-                    </p>
+                    <p className="text-[11px] text-slate-500 mt-0.5 tabular-nums">{displayTaxSub}</p>
                   </div>
 
-                  <p className="text-xs font-medium text-neutral-600 -mt-2">{p.bestFor}</p>
+                  <p className="text-xs font-medium text-slate-600 -mt-2">{p.bestFor}</p>
 
                   <ul className="flex flex-col gap-2 flex-1">
                     {p.features.map((f) => (
                       <li key={f} className="flex items-start gap-2">
-                        <span className="w-3.5 h-3.5 rounded-full flex items-center justify-center shrink-0 mt-0.5 bg-neutral-100 border border-neutral-200/60">
-                          <Check className="w-2 h-2 text-neutral-700" />
+                        <span className="w-4 h-4 rounded-full flex items-center justify-center shrink-0 mt-0.5 bg-slate-100 border border-slate-200/60">
+                          <Check className="w-2.5 h-2.5 text-slate-700" />
                         </span>
-                        <span className="text-xs leading-relaxed text-neutral-600">{f}</span>
+                        <span className="text-xs leading-relaxed text-slate-600">{f}</span>
                       </li>
                     ))}
                   </ul>
 
                   <button
+                    type="button"
                     onClick={async () => {
                       if (country === "GB") {
                         setActivatingPass(p.slug);
@@ -528,15 +590,15 @@ export default function PlanGrid({ currentPlanSlug, currentPlanIndex, userEmail,
                         }
                       } else {
                         setPassModal({
-                          passType:          p.slug,
-                          passName:          p.name,
-                          priceRupees:       p.price,
+                          passType: p.slug,
+                          passName: p.name,
+                          priceRupees: p.price,
                           registrationLimit: p.registrationLimit,
                         });
                       }
                     }}
                     disabled={activatingPass === p.slug}
-                    className="w-full py-2.5 text-xs font-semibold rounded-lg text-white bg-neutral-900 hover:bg-neutral-800 transition-colors shadow-xs disabled:opacity-50"
+                    className="w-full py-2.5 text-xs font-semibold rounded-lg text-white bg-slate-900 hover:bg-slate-800 transition-colors shadow-xs disabled:opacity-50"
                   >
                     {activatingPass === p.slug ? "Activating..." : `Buy ${p.name}`}
                   </button>
@@ -545,9 +607,73 @@ export default function PlanGrid({ currentPlanSlug, currentPlanIndex, userEmail,
             })}
           </div>
 
-          <div className="flex items-center justify-center gap-2 mt-4 text-[11px] text-neutral-500 font-medium">
-            <ShieldCheck className="w-3.5 h-3.5 text-neutral-400" />
+          <div className="flex items-center justify-center gap-2 mt-4 text-[11px] text-slate-500 font-medium">
+            <ShieldCheck className="w-3.5 h-3.5 text-slate-400" />
             <span>One-time payment · No recurring renewal charges · Attach to any event after purchase</span>
+          </div>
+        </section>
+      )}
+
+      {/* ── Lifetime License section ────────────────────────── */}
+      {(tab === "lifetime" || tab === "all") && (
+        <section className={tab === "all" ? "mt-10 pt-8 border-t border-slate-200/80" : ""}>
+          <div className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-7 shadow-xs">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+              <div className="space-y-2 max-w-2xl">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-purple-50 border border-purple-200 text-purple-700 text-[10px] font-bold tracking-wider uppercase">
+                  <ShieldCheck className="w-3.5 h-3.5 text-purple-600" />
+                  <span>Permanent Founder License</span>
+                </div>
+                <h3 className="text-xl font-bold tracking-tight text-slate-900">
+                  URPASS Founder Lifetime Access — {country === "GB" ? "£249" : "₹19,999"} One-Time
+                </h3>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Permanent operational access to all core URPASS capabilities with zero recurring renewal fees forever (Term 2125). Includes unlimited events, unlimited registrations, and 50 organizer seats.
+                </p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-2 text-xs text-slate-600">
+                  <span className="flex items-center gap-1.5">
+                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    Unlimited Events Forever
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    Unlimited Registrations
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    50 Team Organizer Seats
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    Custom Pass Design &amp; Branding
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    API, Webhooks &amp; Custom Domain
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    Zero Renewal Fees
+                  </span>
+                </div>
+              </div>
+
+              <div className="shrink-0 flex items-center gap-3">
+                <FounderCheckoutCta
+                  isLoggedIn={true}
+                  userEmail={userEmail}
+                  userName={userName}
+                  variant="billing"
+                />
+                <Link
+                  href="/founder-lifetime-deal"
+                  className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 font-semibold text-xs transition-colors"
+                >
+                  <span>Details</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
+            </div>
           </div>
         </section>
       )}
