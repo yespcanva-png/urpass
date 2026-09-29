@@ -20,6 +20,7 @@ vi.mock("@/lib/supabase/server", () => ({
 // Mock Plan check
 vi.mock("@/lib/plan", () => ({
   getUserPlan: vi.fn(() => ({
+    slug: "pro",
     canUse: (feature: string) => feature === "custom_pass_design",
   })),
 }));

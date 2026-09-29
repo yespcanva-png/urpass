@@ -38,10 +38,14 @@ import {
   DEFAULT_TICKET_DESIGN,
   sanitizeTicketDesign,
 } from "@/lib/pass-design";
+import StudioUpgradeModal from "./StudioUpgradeModal";
+import { getStudioPlanLimits } from "@/lib/studio/limits";
+import type { PlanSlug } from "@/lib/plan";
 
 interface TicketStudioProps {
   initialConfig?: unknown;
   isPro: boolean;
+  userPlanTier?: PlanSlug | string;
   eventId?: string;
   eventName?: string;
   eventDate?: string;
@@ -129,6 +133,7 @@ const QR_MATRIX = [
 export default function TicketStudio({
   initialConfig,
   isPro,
+  userPlanTier,
   eventId,
   eventName = "URPASS SUMMIT",
   eventDate = "03 OCT 2026 | 10:00 AM",
@@ -136,6 +141,18 @@ export default function TicketStudio({
   backHref = "/dashboard",
   ticketCategories = [],
 }: TicketStudioProps) {
+  const planTier = userPlanTier || (isPro ? "pro" : "free");
+  const limits = getStudioPlanLimits(planTier);
+
+  // Upgrade Modal State
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+  const [upgradeFeatureName, setUpgradeFeatureName] = useState<string | undefined>(undefined);
+
+  function triggerUpgrade(featureName: string) {
+    setUpgradeFeatureName(featureName);
+    setUpgradeModalOpen(true);
+  }
+
   // 1. Initial State
   const [config, setConfig] = useState<TicketDesignConfig>(() =>
     sanitizeTicketDesign(initialConfig || {})
@@ -260,6 +277,15 @@ export default function TicketStudio({
 
   // Upload handler for Logo, Sponsor Logo & Background via Supabase Storage CDN endpoint
   async function handleFileUpload(file: File, type: "logo" | "sponsor" | "background") {
+    if (type === "background" && !limits.canUploadBackground) {
+      triggerUpgrade("Custom Background Artwork");
+      return;
+    }
+    if (type === "sponsor" && !limits.canUploadSponsorLogo) {
+      triggerUpgrade("Sponsor & Partner Logos");
+      return;
+    }
+
     if (file.size > 5 * 1024 * 1024) {
       setUploadError("Image size must be under 5MB.");
       return;
@@ -302,6 +328,10 @@ export default function TicketStudio({
 
   // Category Colors: Set Accent Color for a Specific Category
   function handleSetCategoryColor(categoryKey: string, hexColor: string) {
+    if (!limits.canUseCategoryColors) {
+      triggerUpgrade("Multi-Tier Category Colors");
+      return;
+    }
     setConfig((prev) => ({
       ...prev,
       categoryColors: {
@@ -313,6 +343,10 @@ export default function TicketStudio({
 
   // Apply Current Primary Color to All Categories
   function handleApplyToAllCategories() {
+    if (!limits.canUseCategoryColors) {
+      triggerUpgrade("Multi-Tier Category Colors");
+      return;
+    }
     const newCategoryColors: Record<string, string> = {};
     categoriesToUse.forEach((cat) => {
       newCategoryColors[cat.name] = config.primaryColor;
@@ -495,6 +529,31 @@ export default function TicketStudio({
                 <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
                 Draft
               </span>
+            )}
+
+            {/* Plan Tier Badge */}
+            <span
+              className={`hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide ${
+                limits.isPro
+                  ? "bg-purple-50 text-purple-700 border border-purple-200"
+                  : limits.isStarter
+                  ? "bg-blue-50 text-blue-700 border border-blue-200"
+                  : "bg-neutral-100 text-neutral-600 border border-neutral-200"
+              }`}
+            >
+              {limits.planTier}
+            </span>
+
+            {/* Upgrade Button if not Pro */}
+            {!limits.isPro && (
+              <button
+                type="button"
+                onClick={() => triggerUpgrade("Ticket Studio Pro Features")}
+                className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-2xs hover:opacity-95 transition-opacity"
+              >
+                <Sparkles className="w-3 h-3 text-amber-300" />
+                <span>Upgrade</span>
+              </button>
             )}
           </div>
         </div>
@@ -711,13 +770,24 @@ export default function TicketStudio({
                     {/* Dark */}
                     <button
                       type="button"
-                      onClick={() => setConfig((prev) => ({ ...prev, template: "dark" }))}
-                      className={`p-3 rounded-xl border text-left flex flex-col items-center justify-center gap-1.5 transition-all ${
+                      onClick={() => {
+                        if (!limits.canUseAllTemplates) {
+                          triggerUpgrade("Dark Obsidian VIP Theme");
+                          return;
+                        }
+                        setConfig((prev) => ({ ...prev, template: "dark" }));
+                      }}
+                      className={`p-3 rounded-xl border text-left flex flex-col items-center justify-center gap-1.5 transition-all relative ${
                         isDark
                           ? "border-neutral-900 bg-neutral-50 ring-2 ring-neutral-900/10 shadow-xs"
                           : "border-neutral-200 hover:border-neutral-300 bg-white"
                       }`}
                     >
+                      {!limits.canUseAllTemplates && (
+                        <span className="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded-full text-[9px] font-extrabold bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-2xs">
+                          PRO
+                        </span>
+                      )}
                       <div className="w-8 h-10 rounded-md border border-neutral-700 bg-[#121216] flex flex-col items-center justify-center p-1 shadow-xs">
                         <div className="w-4 h-0.5 bg-neutral-600 rounded-full mb-1" />
                         <div className="w-4 h-4 bg-neutral-800 rounded-xs flex items-center justify-center border border-neutral-700">
@@ -800,24 +870,34 @@ export default function TicketStudio({
                   </label>
                   <div className="grid grid-cols-3 gap-2">
                     {[
-                      { id: "standard", label: "Standard", desc: "16px radius" },
-                      { id: "rounded", label: "Rounded", desc: "28px radius" },
-                      { id: "compact", label: "Compact", desc: "Condensed" },
+                      { id: "standard", label: "Standard", desc: "16px radius", pro: false },
+                      { id: "rounded", label: "Rounded", desc: "28px radius", pro: true },
+                      { id: "compact", label: "Compact", desc: "Condensed", pro: true },
                     ].map((shapeOpt) => {
                       const isActive = (config.shape || "standard") === shapeOpt.id;
+                      const isLocked = shapeOpt.pro && !limits.canUseCustomShapes;
                       return (
                         <button
                           key={shapeOpt.id}
                           type="button"
-                          onClick={() =>
-                            setConfig((prev) => ({ ...prev, shape: shapeOpt.id as TicketShape }))
-                          }
-                          className={`py-2 px-2.5 rounded-xl border text-center transition-all ${
+                          onClick={() => {
+                            if (isLocked) {
+                              triggerUpgrade(`${shapeOpt.label} Pass Shape`);
+                              return;
+                            }
+                            setConfig((prev) => ({ ...prev, shape: shapeOpt.id as TicketShape }));
+                          }}
+                          className={`py-2 px-2.5 rounded-xl border text-center transition-all relative ${
                             isActive
                               ? "border-neutral-900 bg-neutral-50 text-neutral-900 font-bold shadow-2xs"
                               : "border-neutral-200 text-neutral-600 hover:border-neutral-300 font-medium"
                           }`}
                         >
+                          {isLocked && (
+                            <span className="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded-full text-[8px] font-extrabold bg-purple-100 text-purple-700 border border-purple-200">
+                              PRO
+                            </span>
+                          )}
                           <p className="text-xs">{shapeOpt.label}</p>
                           <p className="text-[10px] text-neutral-400 font-normal">{shapeOpt.desc}</p>
                         </button>
@@ -830,9 +910,16 @@ export default function TicketStudio({
                 <div className="p-3.5 bg-neutral-50 border border-neutral-200 rounded-2xl space-y-3">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-xs font-bold text-neutral-900 uppercase tracking-wider">
-                        Ticket Type Colors
-                      </p>
+                      <div className="flex items-center gap-1.5">
+                        <p className="text-xs font-bold text-neutral-900 uppercase tracking-wider">
+                          Ticket Type Colors
+                        </p>
+                        {!limits.canUseCategoryColors && (
+                          <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-purple-100 text-purple-700 border border-purple-200">
+                            PRO
+                          </span>
+                        )}
+                      </div>
                       <p className="text-[10px] text-neutral-500">
                         Different visual identity for VIP, General, Gold, etc.
                       </p>
@@ -869,6 +956,12 @@ export default function TicketStudio({
                             <input
                               type="color"
                               value={catColor}
+                              onClick={(e) => {
+                                if (!limits.canUseCategoryColors) {
+                                  e.preventDefault();
+                                  triggerUpgrade("Multi-Tier Category Colors");
+                                }
+                              }}
                               onChange={(e) => handleSetCategoryColor(cat.name, e.target.value)}
                               className="w-6 h-6 rounded cursor-pointer border border-neutral-200"
                               title={`Set color for ${cat.name}`}
@@ -901,12 +994,24 @@ export default function TicketStudio({
                       <span>None</span>
                     </label>
 
-                    <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-neutral-700">
+                    <label
+                      onClick={(e) => {
+                        if (!limits.canUploadBackground) {
+                          e.preventDefault();
+                          triggerUpgrade("Custom Background Artwork");
+                        }
+                      }}
+                      className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-neutral-700"
+                    >
                       <input
                         type="radio"
                         name="bgMode"
                         checked={!!config.backgroundImageUrl}
                         onChange={() => {
+                          if (!limits.canUploadBackground) {
+                            triggerUpgrade("Custom Background Artwork");
+                            return;
+                          }
                           if (!config.backgroundImageUrl) {
                             bgInputRef.current?.click();
                           }
@@ -914,6 +1019,11 @@ export default function TicketStudio({
                         className="w-4 h-4 text-neutral-900 border-neutral-300 focus:ring-0"
                       />
                       <span>Image</span>
+                      {!limits.canUploadBackground && (
+                        <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-purple-100 text-purple-700 border border-purple-200">
+                          PRO
+                        </span>
+                      )}
                     </label>
                   </div>
 
@@ -937,7 +1047,13 @@ export default function TicketStudio({
                         <div className="flex items-center gap-1.5">
                           <button
                             type="button"
-                            onClick={() => bgInputRef.current?.click()}
+                            onClick={() => {
+                              if (!limits.canUploadBackground) {
+                                triggerUpgrade("Custom Background Artwork");
+                                return;
+                              }
+                              bgInputRef.current?.click();
+                            }}
                             disabled={isUploadingBg}
                             className="px-2 py-1 text-xs font-medium text-neutral-700 bg-white border border-neutral-200 hover:bg-neutral-100 rounded-md transition-colors"
                           >
@@ -956,7 +1072,13 @@ export default function TicketStudio({
                   ) : (
                     <button
                       type="button"
-                      onClick={() => bgInputRef.current?.click()}
+                      onClick={() => {
+                        if (!limits.canUploadBackground) {
+                          triggerUpgrade("Custom Background Artwork");
+                          return;
+                        }
+                        bgInputRef.current?.click();
+                      }}
                       disabled={isUploadingBg}
                       className="w-full p-3 border border-neutral-200 hover:border-neutral-300 rounded-xl text-center flex items-center justify-center gap-2 transition-colors bg-white hover:bg-neutral-50 text-xs font-semibold text-neutral-700"
                     >
@@ -1341,9 +1463,16 @@ export default function TicketStudio({
                 {/* 2. Sponsor / Co-host Logo */}
                 <div>
                   <div className="mb-2">
-                    <label className="block text-xs font-bold text-neutral-900 uppercase tracking-wider">
-                      Sponsor Logo (Optional)
-                    </label>
+                    <div className="flex items-center gap-1.5">
+                      <label className="block text-xs font-bold text-neutral-900 uppercase tracking-wider">
+                        Sponsor Logo (Optional)
+                      </label>
+                      {!limits.canUploadSponsorLogo && (
+                        <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-purple-100 text-purple-700 border border-purple-200">
+                          PRO
+                        </span>
+                      )}
+                    </div>
                     <p className="text-[11px] text-neutral-500">
                       Secondary partner or title sponsor mark displayed alongside main logo
                     </p>
@@ -1369,7 +1498,13 @@ export default function TicketStudio({
                       <div className="flex items-center gap-1.5">
                         <button
                           type="button"
-                          onClick={() => sponsorLogoInputRef.current?.click()}
+                          onClick={() => {
+                            if (!limits.canUploadSponsorLogo) {
+                              triggerUpgrade("Sponsor & Partner Logos");
+                              return;
+                            }
+                            sponsorLogoInputRef.current?.click();
+                          }}
                           disabled={isUploadingSponsorLogo}
                           className="px-2.5 py-1 text-xs font-medium text-neutral-700 bg-white border border-neutral-200 hover:bg-neutral-100 rounded-md transition-colors"
                         >
@@ -1388,7 +1523,13 @@ export default function TicketStudio({
                   ) : (
                     <button
                       type="button"
-                      onClick={() => sponsorLogoInputRef.current?.click()}
+                      onClick={() => {
+                        if (!limits.canUploadSponsorLogo) {
+                          triggerUpgrade("Sponsor & Partner Logos");
+                          return;
+                        }
+                        sponsorLogoInputRef.current?.click();
+                      }}
                       disabled={isUploadingSponsorLogo}
                       className="w-full p-3.5 border border-dashed border-neutral-300 hover:border-neutral-400 rounded-xl text-center flex items-center justify-center gap-2 transition-colors bg-white hover:bg-neutral-50 text-xs font-semibold text-neutral-700"
                     >
@@ -1422,20 +1563,33 @@ export default function TicketStudio({
                 {/* 3. Urpass Wordmark Status */}
                 <div className="p-3 bg-neutral-50 border border-neutral-200 rounded-xl flex items-center justify-between text-xs">
                   <div>
-                    <p className="font-bold text-neutral-800">URPASS Wordmark</p>
+                    <div className="flex items-center gap-1.5">
+                      <p className="font-bold text-neutral-800">URPASS Wordmark</p>
+                      {!limits.canRemoveBranding && (
+                        <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-purple-100 text-purple-700 border border-purple-200">
+                          PRO
+                        </span>
+                      )}
+                    </div>
                     <p className="text-[10px] text-neutral-500">
-                      {isPro ? "Branding hidden automatically on Pro plan" : "Shown on Free plan passes"}
+                      {limits.canRemoveBranding
+                        ? "URPASS branding removed on your plan (100% white-label)"
+                        : "Included on Free & Starter passes. Upgrade to Pro to remove."}
                     </p>
                   </div>
-                  <span
-                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                      isPro
-                        ? "bg-purple-50 text-purple-700 border border-purple-200"
-                        : "bg-neutral-100 text-neutral-600 border border-neutral-200"
-                    }`}
-                  >
-                    {isPro ? "PRO" : "FREE"}
-                  </span>
+                  {limits.canRemoveBranding ? (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
+                      WHITE-LABEL
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => triggerUpgrade("White-Label (Remove Wordmark)")}
+                      className="px-2.5 py-1 rounded-md text-[10px] font-bold bg-neutral-900 text-white hover:bg-neutral-800 transition-colors shadow-2xs"
+                    >
+                      Remove
+                    </button>
+                  )}
                 </div>
               </div>
             )}
@@ -2121,6 +2275,14 @@ export default function TicketStudio({
           </div>
         </div>
       )}
+
+      {/* Subscription Upgrade Modal */}
+      <StudioUpgradeModal
+        isOpen={upgradeModalOpen}
+        onClose={() => setUpgradeModalOpen(false)}
+        triggerFeature={upgradeFeatureName}
+        currentPlan={limits.planTier}
+      />
     </div>
   );
 }

@@ -17,6 +17,7 @@ import {
   interpolateTokens,
 } from "@/lib/studio/dummy-attendees";
 import { MIN_QR_SIZE, FORMAT_DIMENSIONS, type StudioDesign } from "@/lib/studio/types";
+import { getStudioPlanLimits, sanitizeDesignForPlan } from "@/lib/studio/limits";
 
 describe("URPASS Ticket Studio", () => {
   describe("12 Professional Templates Library", () => {
@@ -240,6 +241,89 @@ describe("URPASS Ticket Studio", () => {
 
       const resolved = resolveStudioDesign(eventStudio, null, null);
       expect(resolved.name).toBe("Event Custom Pass");
+    });
+  });
+
+  describe("Subscription Tier Limits & Ticket Studio Sanitization", () => {
+    it("correctly identifies Free tier capabilities and restricts Pro perks", () => {
+      const limits = getStudioPlanLimits("free");
+      expect(limits.isPro).toBe(false);
+      expect(limits.isFree).toBe(true);
+      expect(limits.canRemoveBranding).toBe(false);
+      expect(limits.canUploadBackground).toBe(false);
+      expect(limits.canUploadSponsorLogo).toBe(false);
+      expect(limits.canUseCategoryColors).toBe(false);
+      expect(limits.canExportSvg).toBe(false);
+      expect(limits.allowedTemplates).not.toContain("dark");
+      expect(limits.allowedShapes).toEqual(["standard"]);
+    });
+
+    it("correctly identifies Starter tier capabilities", () => {
+      const limits = getStudioPlanLimits("starter");
+      expect(limits.isPro).toBe(false);
+      expect(limits.isStarter).toBe(true);
+      expect(limits.canRemoveBranding).toBe(false);
+      expect(limits.canUploadBackground).toBe(false);
+      expect(limits.canUploadSponsorLogo).toBe(false);
+      expect(limits.allowedTemplates).toEqual(["modern", "minimal", "event"]);
+    });
+
+    it("unlocks all studio features for Pro, Business, Campus, and Founder plans", () => {
+      const tiers = ["pro", "business", "campus", "founder", "lifetime", "enterprise"] as const;
+      for (const tier of tiers) {
+        const limits = getStudioPlanLimits(tier);
+        expect(limits.isPro).toBe(true);
+        expect(limits.canRemoveBranding).toBe(true);
+        expect(limits.canUploadBackground).toBe(true);
+        expect(limits.canUploadSponsorLogo).toBe(true);
+        expect(limits.canUseCategoryColors).toBe(true);
+        expect(limits.canExportSvg).toBe(true);
+        expect(limits.allowedTemplates).toContain("dark");
+        expect(limits.allowedShapes).toContain("rounded");
+        expect(limits.allowedShapes).toContain("compact");
+      }
+    });
+
+    it("sanitizes Pro design features for Free tier users without erroring", () => {
+      const proDesign = {
+        template: "dark" as const,
+        shape: "rounded" as const,
+        primaryColor: "#635BFF",
+        backgroundImageUrl: "https://example.com/bg.png",
+        sponsorLogoUrl: "https://example.com/sponsor.png",
+        categoryColors: { VIP: "#FF0000", General: "#00FF00" },
+      };
+
+      const sanitized = sanitizeDesignForPlan(proDesign, "free");
+      // Template reset to allowed template
+      expect(sanitized.template).toBe("modern");
+      // Shape reset to standard
+      expect(sanitized.shape).toBe("standard");
+      // Background & sponsor logo stripped
+      expect(sanitized.backgroundImageUrl).toBeNull();
+      expect(sanitized.sponsorLogoUrl).toBeNull();
+      // Category colors stripped to empty
+      expect(sanitized.categoryColors).toEqual({});
+      // Base colors and flags preserved
+      expect(sanitized.primaryColor).toBe("#635BFF");
+    });
+
+    it("preserves full Pro customization for Pro tier users", () => {
+      const proDesign = {
+        template: "dark" as const,
+        shape: "rounded" as const,
+        primaryColor: "#111827",
+        backgroundImageUrl: "https://example.com/bg.png",
+        sponsorLogoUrl: "https://example.com/sponsor.png",
+        categoryColors: { VIP: "#FFD700" },
+      };
+
+      const sanitized = sanitizeDesignForPlan(proDesign, "pro");
+      expect(sanitized.template).toBe("dark");
+      expect(sanitized.shape).toBe("rounded");
+      expect(sanitized.backgroundImageUrl).toBe("https://example.com/bg.png");
+      expect(sanitized.sponsorLogoUrl).toBe("https://example.com/sponsor.png");
+      expect(sanitized.categoryColors).toEqual({ VIP: "#FFD700" });
     });
   });
 });

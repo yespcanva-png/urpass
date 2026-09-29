@@ -84,10 +84,13 @@ export default async function StudioEventPage({
     userPlan.canUse("custom_pass_design") ||
     (organizerPlan?.canUse("custom_pass_design") ?? false);
 
+  const effectivePlanSlug = organizerPlan ? organizerPlan.slug : userPlan.slug;
+
   return (
     <TicketStudio
       initialConfig={event.custom_pass_design || profile?.custom_pass_design}
       isPro={isPro}
+      userPlanTier={effectivePlanSlug}
       eventId={event.id}
       eventName={event.name}
       eventDate={`${formattedDate} | ${event.start_time || "10:00 AM"}`}

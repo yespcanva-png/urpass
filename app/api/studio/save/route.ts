@@ -2,10 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { getUserPlan } from "@/lib/plan";
-import {
-  type TicketDesignConfig,
-  sanitizeTicketDesign,
-} from "@/lib/pass-design";
+import type { TicketDesignConfig } from "@/lib/pass-design";
+import { sanitizeDesignForPlan, getStudioPlanLimits } from "@/lib/studio/limits";
 
 export const dynamic = "force-dynamic";
 
@@ -35,20 +33,7 @@ export async function POST(req: NextRequest) {
     }
 
     const userPlan = await getUserPlan(supabase, user.id);
-    const userCanDesign = userPlan.canUse("custom_pass_design");
-
-    if (!userCanDesign && !eventId) {
-      return NextResponse.json(
-        { error: "Custom Ticket Design is exclusive to Pro and higher tier plans." },
-        { status: 403 }
-      );
-    }
-
-    const sanitized = sanitizeTicketDesign({
-      ...design,
-      isPublished: design.isPublished !== false,
-      updatedAt: new Date().toISOString(),
-    });
+    let effectivePlanSlug = userPlan.slug;
 
     if (eventId) {
       // Verify event ownership or org role
@@ -62,13 +47,10 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "Event not found or access denied." }, { status: 404 });
       }
 
-      if (!userCanDesign && event.organizer_id) {
+      if (event.organizer_id && event.organizer_id !== user.id) {
         const orgPlan = await getUserPlan(supabase, event.organizer_id);
-        if (!orgPlan.canUse("custom_pass_design")) {
-          return NextResponse.json(
-            { error: "Custom Ticket Design is exclusive to Pro and higher tier plans." },
-            { status: 403 }
-          );
+        if (orgPlan.canUse("custom_pass_design")) {
+          effectivePlanSlug = orgPlan.slug;
         }
       }
 
@@ -93,7 +75,18 @@ export async function POST(req: NextRequest) {
           );
         }
       }
+    }
 
+    const sanitized = sanitizeDesignForPlan(
+      {
+        ...design,
+        isPublished: design.isPublished !== false,
+        updatedAt: new Date().toISOString(),
+      },
+      effectivePlanSlug
+    );
+
+    if (eventId) {
       const { error: updateErr } = await supabase
         .from("events")
         .update({
@@ -115,7 +108,7 @@ export async function POST(req: NextRequest) {
         .from("profiles")
         .update({
           custom_pass_design: sanitized,
-          brand_color: sanitized.primaryColor,
+          updated_at: new Date().toISOString(),
         })
         .eq("user_id", user.id);
 
@@ -124,14 +117,21 @@ export async function POST(req: NextRequest) {
       }
 
       revalidatePath("/dashboard/ticket-design");
-      revalidatePath("/dashboard/branding");
-      revalidatePath("/pass/[passId]", "page");
+      revalidatePath("/dashboard/pass-design");
+      revalidatePath("/studio");
     }
 
-    return NextResponse.json({ success: true, config: sanitized });
+    return NextResponse.json({
+      success: true,
+      data: sanitized,
+      config: sanitized,
+      planTier: effectivePlanSlug,
+      limits: getStudioPlanLimits(effectivePlanSlug),
+    });
   } catch (err) {
+    console.error("[studio/save] Error saving pass design:", err);
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Failed to save design" },
+      { error: err instanceof Error ? err.message : "Internal server error" },
       { status: 500 }
     );
   }

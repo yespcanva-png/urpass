@@ -33,6 +33,7 @@ export default async function StudioDefaultPage() {
     <TicketStudio
       initialConfig={profile?.custom_pass_design}
       isPro={isPro}
+      userPlanTier={plan.slug}
       eventName={profile?.org_name ? `${profile.org_name} SUMMIT` : "URPASS SUMMIT"}
       eventDate="24 OCT 2026 | 10:00 AM"
       venue="The Residency, Coimbatore"
