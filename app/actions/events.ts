@@ -9,6 +9,7 @@ import { generateApplySlug } from "@/lib/utils";
 import { getUserPlan } from "@/lib/plan";
 import { recordApiUsage } from "@/lib/api-usage";
 import { getSupabaseUrl } from "@/lib/supabase/config";
+import { recordLiveOpsEvent } from "@/lib/ops/events";
 import type { CustomFieldDefinition } from "@/types";
 
 function adminClient() {
@@ -184,6 +185,16 @@ export async function createEvent(data: EventInput, organizationId?: string): Pr
   }
 
   void recordApiUsage(user.id, "events", 1);
+  try {
+    recordLiveOpsEvent({
+      level: "SUCCESS",
+      category: "EVENT",
+      message: `New event created: "${baseFields.name}" (${baseFields.venue || "Venue"}) by organiser [${user.id.slice(0, 8)}]`,
+      details: { eventId: event.id, name: baseFields.name, venue: baseFields.venue, organizerId: user.id },
+    });
+  } catch {
+    // Ops log non-blocking
+  }
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/events");
   return { eventId: event.id };
@@ -268,6 +279,17 @@ export async function updateEvent(
     } else {
       return { error: error.message };
     }
+  }
+
+  try {
+    recordLiveOpsEvent({
+      level: "INFO",
+      category: "EVENT",
+      message: `Event updated: "${baseUpdateFields.name || eventId}" [Status: ${baseUpdateFields.status || "active"}]`,
+      details: { eventId, name: baseUpdateFields.name, status: baseUpdateFields.status },
+    });
+  } catch {
+    // Ops log non-blocking
   }
 
   revalidatePath(`/event/${eventId}`);

@@ -82,6 +82,9 @@ export default function OpsDashboard({ onLogout }: Props) {
   const [pinMessage, setPinMessage] = useState("");
   const [pinError, setPinError] = useState("");
 
+  // Accumulated logs state for continuous streaming without dropping or resetting
+  const [accumulatedLogs, setAccumulatedLogs] = useState<OpsLogItem[]>([]);
+
   async function fetchTelemetry(showLoader = false) {
     if (showLoader) setRefreshing(true);
     try {
@@ -90,8 +93,21 @@ export default function OpsDashboard({ onLogout }: Props) {
         onLogout();
         return;
       }
-      const json = await res.json();
+      const json: TelemetryData = await res.json();
       setData(json);
+
+      if (json.logs && Array.isArray(json.logs)) {
+        setAccumulatedLogs((prev) => {
+          const map = new Map<string, OpsLogItem>();
+          for (const item of prev) map.set(item.id, item);
+          for (const item of json.logs) map.set(item.id, item);
+
+          const merged = Array.from(map.values());
+          // Sort chronologically ascending (oldest first, newest at the end)
+          merged.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+          return merged.slice(-250);
+        });
+      }
     } catch (err) {
       console.error("[ops] Telemetry fetch error:", err);
     } finally {
@@ -364,7 +380,7 @@ export default function OpsDashboard({ onLogout }: Props) {
               }`}
             >
               <Zap className="w-3.5 h-3.5 text-emerald-400" />
-              Live Telemetry Terminal ({data?.logs.length ?? 0})
+              Live Telemetry Terminal ({accumulatedLogs.length || data?.logs.length || 0})
             </button>
 
             <button
@@ -389,7 +405,7 @@ export default function OpsDashboard({ onLogout }: Props) {
         {activeTab === "terminal" && (
           <div className="animate-in fade-in duration-200">
             <OpsTerminal
-              logs={data?.logs || []}
+              logs={accumulatedLogs.length > 0 ? accumulatedLogs : (data?.logs || [])}
               isLoading={loading}
               onRefresh={() => fetchTelemetry(true)}
             />

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { notifyOwnerNewUser, notifyOwnerUserLogin, sendUserWelcomeEmail } from "@/lib/email";
 import { createClient } from "@/lib/supabase/server";
+import { recordLiveOpsEvent } from "@/lib/ops/events";
 
 export const dynamic = "force-dynamic";
 
@@ -30,7 +31,10 @@ export async function POST(req: NextRequest) {
         : "email";
     const name =
       (typeof user?.user_metadata?.full_name === "string" ? user.user_metadata.full_name : null) ||
-      (typeof body.name === "string" ? body.name.trim() : null);
+      (typeof body.name === "string" ? body.name.trim() : null) ||
+      "Organiser";
+
+    const targetUserId = user?.id || (typeof body.userId === "string" ? body.userId : null);
 
     const ipAddress =
       req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
@@ -39,12 +43,24 @@ export async function POST(req: NextRequest) {
     const userAgent = req.headers.get("user-agent") || null;
 
     if (body.type === "signup") {
+      // Record in live ops buffer
+      try {
+        recordLiveOpsEvent({
+          level: "SUCCESS",
+          category: "AUTH",
+          message: `Live user signup: ${email} (${name}) registered [Auth: ${provider}]`,
+          details: { email, name, provider, userId: targetUserId, ipAddress },
+        });
+      } catch {
+        // non-blocking
+      }
+
       await Promise.allSettled([
         notifyOwnerNewUser({
           name,
           email,
           provider: provider === "google" ? "google" : "email",
-          userId: user?.id || (typeof body.userId === "string" ? body.userId : null),
+          userId: targetUserId,
         }),
         sendUserWelcomeEmail({
           to: email,
@@ -52,12 +68,24 @@ export async function POST(req: NextRequest) {
         }),
       ]);
     } else {
-      // Login notification
+      // Record in live ops buffer
+      try {
+        recordLiveOpsEvent({
+          level: "SUCCESS",
+          category: "AUTH",
+          message: `Live user login: ${email} (${name}) session started [Provider: ${provider}]`,
+          details: { email, name, provider, userId: targetUserId, ipAddress, userAgent },
+        });
+      } catch {
+        // non-blocking
+      }
+
+      // Login notification email
       await notifyOwnerUserLogin({
         name,
         email,
         provider,
-        userId: user?.id || null,
+        userId: targetUserId,
         ipAddress,
         userAgent,
       });
