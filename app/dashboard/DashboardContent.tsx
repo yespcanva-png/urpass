@@ -29,6 +29,7 @@ import {
 import { getUserOrganizations } from "@/app/actions/organizations";
 import { createClient } from "@/lib/supabase/client";
 import { detectCountryClient } from "@/lib/country-config";
+import HeroBanner from "@/components/landing/HeroBanner";
 
 const emptySubscribe = () => () => {};
 
@@ -254,37 +255,48 @@ export default function DashboardContent() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-6 pb-12">
-      {/* ── Zoho Clean Corporate Header ─────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-1">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-[11px] font-medium text-neutral-400">
-              {dateLabel}
-            </span>
-          </div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-neutral-900">
-            {greeting}{firstName ? `, ${firstName}` : ""}
-          </h1>
-          <p className="text-xs text-neutral-500 mt-0.5">
-            Event Management &amp; Gate Verification Operations
-          </p>
-        </div>
+      {/* ── Top Announcement & Status Banner ─────────────────────────── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
+        <HeroBanner initialCountry={country} />
+        <span className="text-[11px] font-medium text-neutral-400 hidden sm:inline-block">
+          {dateLabel}
+        </span>
+      </div>
 
-        <div className="flex items-center gap-2 shrink-0">
-          <Link
-            href="/scan"
-            className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-medium text-neutral-700 bg-white hover:bg-neutral-50 border border-neutral-200/90 shadow-2xs transition-colors"
-          >
-            <ScanLine className="w-3.5 h-3.5 text-neutral-500" />
-            <span>Gate Scanner</span>
-          </Link>
-          <Link
-            href="/create-event"
-            className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold text-white bg-neutral-900 hover:bg-neutral-800 shadow-2xs transition-colors"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Create Event</span>
-          </Link>
+      {/* ── Executive Dashboard Operations Banner ─────────────────────── */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-neutral-950 via-neutral-900 to-brand-950 p-5 sm:p-6 text-white border border-neutral-800 shadow-md">
+        {/* Ambient subtle glow */}
+        <div className="absolute top-0 right-0 -mt-10 -mr-10 w-72 h-72 bg-brand/20 blur-3xl rounded-full pointer-events-none" />
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5">
+          <div className="space-y-1.5 max-w-2xl">
+            <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-white/10 border border-white/15 text-[10px] font-semibold text-emerald-300 tracking-wide uppercase">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              Event Operations Hub · Real-Time Sync
+            </div>
+            <h1 className="text-lg sm:text-2xl font-bold tracking-tight text-white leading-snug">
+              {greeting}{firstName ? `, ${firstName}` : ""} — Event Command Center
+            </h1>
+            <p className="text-xs sm:text-sm text-neutral-300 leading-relaxed">
+              Launch registrations, design custom passes, and verify attendees at entrance gates in under 0.3s with 0% platform commission.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2.5 shrink-0 self-start md:self-auto">
+            <Link
+              href="/create-event"
+              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-white text-neutral-900 text-xs font-bold hover:bg-neutral-100 transition-colors shadow-sm"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Create Event</span>
+            </Link>
+            <Link
+              href="/scan"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-neutral-800/80 border border-neutral-700 text-white text-xs font-semibold hover:bg-neutral-800 transition-colors"
+            >
+              <ScanLine className="w-3.5 h-3.5 text-neutral-300" />
+              <span>Gate Scanner</span>
+            </Link>
+          </div>
         </div>
       </div>
 

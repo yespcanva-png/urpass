@@ -6,9 +6,6 @@ import FAQSection from "@/components/landing/FAQSection";
 import AnimateIn from "@/components/ui/AnimateIn";
 import Footer from "@/components/landing/Footer";
 import HomePricingSection from "@/components/landing/HomePricingSection";
-import HeroBanner from "@/components/landing/HeroBanner";
-import HeroPassShowcase from "@/components/landing/HeroPassShowcase";
-import HeroTrustBanner from "@/components/landing/HeroTrustBanner";
 import { detectCountryFromHeaders } from "@/lib/country-config";
 import {
   FileText,
@@ -298,59 +295,62 @@ export default async function LandingPage() {
       <Navbar />
 
       {/* ── 01 HERO ─────────────────────────────────────────────────────── */}
-      <section className="relative pt-28 pb-14 sm:pt-36 sm:pb-24 px-4 sm:px-8 overflow-hidden bg-white">
-        {/* Ambient radial lighting & engineering mesh grid */}
-        <div className="absolute inset-0 pointer-events-none -z-10 overflow-hidden">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[450px] bg-gradient-to-b from-brand-500/8 via-brand-200/5 to-transparent blur-3xl rounded-full" />
-          <div className="absolute inset-0 bg-[linear-gradient(to_right,#00000005_1px,transparent_1px),linear-gradient(to_bottom,#00000005_1px,transparent_1px)] bg-[size:32px_32px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_15%,#000_70%,transparent_100%)]" />
-        </div>
+      <section className="pt-28 pb-14 sm:pt-40 sm:pb-28 px-4 sm:px-8 overflow-hidden">
+        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 sm:gap-16 items-center">
 
-        <div className="max-w-6xl mx-auto">
-          {/* Hero Section Announcement Banner */}
-          <div className="mb-6 sm:mb-8 flex justify-center lg:justify-start">
-            <HeroBanner initialCountry={country} />
-          </div>
+          {/* Left: text — CSS animations (always above fold, no observer) */}
+          <div>
+            <Link
+              href="/mcp-event-management"
+              className="hero-badge group inline-flex items-center gap-2.5 px-3 py-1.5 rounded-full border border-neutral-200/90 bg-neutral-50/70 hover:bg-neutral-100/80 hover:border-neutral-300 transition-all mb-6 sm:mb-8 text-xs max-w-full"
+            >
+              <span className="inline-flex items-center gap-1.5 font-semibold text-neutral-900 bg-white border border-neutral-200 px-2 py-0.5 rounded-full text-[10px] tracking-wide uppercase shrink-0 shadow-xs">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                Digital Pass OS
+              </span>
+              <span className="text-neutral-600 font-medium truncate">
+                MCP Supported for Claude &amp; Cursor
+              </span>
+              <span className="text-neutral-400 group-hover:text-neutral-900 group-hover:translate-x-0.5 transition-transform text-xs shrink-0 font-medium">
+                &rarr;
+              </span>
+            </Link>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 sm:gap-16 items-center">
-            {/* Left: text — CSS animations (always above fold, no observer) */}
-            <div>
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.1] mb-4 sm:mb-6 text-neutral-900">
-                Event Registration, Ticketing &amp; QR Check-In — Made Simple
-              </h1>
+            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-semibold tracking-tight leading-[1.05] mb-4 sm:mb-6">
+              <span className="hero-line-1 block">Create.</span>
+              <span className="hero-line-2 block">Share.</span>
+              <span className="hero-line-3 block text-brand">Scan.</span>
+            </h1>
 
-              <p className="hero-sub text-base sm:text-lg text-neutral-600 leading-relaxed max-w-lg mb-8 sm:mb-10 font-normal">
-                URPASS by Yesp Corporation helps organizers manage registrations, payments, digital QR passes and event entry from one platform.
-              </p>
+            <p className="hero-sub text-base sm:text-xl text-neutral-500 leading-relaxed max-w-md mb-8 sm:mb-10">
+              Turn event registrations into digital passes with QR check-in. Create your event, share the link, issue passes, and scan attendees at the entrance.
+            </p>
 
-              <div className="hero-ctas flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                <Link href="/signup" className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-neutral-900 text-white px-6 py-3.5 rounded-xl text-sm font-semibold hover:bg-neutral-700 transition-colors text-center shadow-xs">
-                  Create Your Event
-                  <span className="text-neutral-400">→</span>
-                </Link>
-                <Link href="/contact?subject=Book%20a%20Demo" className="w-full sm:w-auto inline-flex items-center justify-center gap-2 border border-neutral-300 bg-white px-5 py-3.5 rounded-xl text-sm font-semibold text-neutral-800 hover:bg-neutral-50 transition-colors text-center shadow-2xs">
-                  Book a Demo
-                </Link>
-                <a href="#how-it-works" className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-3.5 text-sm font-medium text-neutral-500 hover:text-neutral-900 transition-colors text-center">
-                  See how it works ↓
-                </a>
-              </div>
-
-              <p className="hero-meta mt-6 sm:mt-8 text-xs text-neutral-400">
-                Free to start · Try any paid plan free for 30 days ·{" "}
-                <Link href="/mcp-event-management" className="text-neutral-600 hover:text-brand hover:underline font-medium">
-                  Model Context Protocol (MCP) supported
-                </Link>
-              </p>
+            <div className="hero-ctas flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              <Link href="/signup" className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-neutral-900 text-white px-6 py-3.5 rounded-xl text-sm font-semibold hover:bg-neutral-700 transition-colors text-center shadow-xs">
+                Create Your Event
+                <span className="text-neutral-400">→</span>
+              </Link>
+              <Link href="/contact?subject=Book%20a%20Demo" className="w-full sm:w-auto inline-flex items-center justify-center gap-2 border border-neutral-300 bg-white px-5 py-3.5 rounded-xl text-sm font-semibold text-neutral-800 hover:bg-neutral-50 transition-colors text-center shadow-2xs">
+                Book a Demo
+              </Link>
+              <a href="#how-it-works" className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-3.5 text-sm font-medium text-neutral-500 hover:text-neutral-900 transition-colors text-center">
+                See how it works ↓
+              </a>
             </div>
 
-            {/* Right: Premium Hero Pass Showcase Banner */}
-            <div className="hero-card flex items-center justify-center lg:justify-end py-2 sm:py-4">
-              <HeroPassShowcase />
-            </div>
+            <p className="hero-meta mt-6 sm:mt-8 text-xs text-neutral-400">
+              Free to start · Try any paid plan free for 30 days ·{" "}
+              <Link href="/mcp-event-management" className="text-neutral-600 hover:text-brand hover:underline font-medium">
+                Model Context Protocol (MCP) supported
+              </Link>
+            </p>
           </div>
 
-          {/* Hero Capabilities & Trust Banner Strip */}
-          <HeroTrustBanner />
+          {/* Right: pass card */}
+          <div className="hero-card flex items-center justify-center lg:justify-end py-4 sm:py-8">
+            <PassCard />
+          </div>
         </div>
       </section>
 
