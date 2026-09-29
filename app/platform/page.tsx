@@ -6,6 +6,9 @@ import FAQSection from "@/components/landing/FAQSection";
 import AnimateIn from "@/components/ui/AnimateIn";
 import Footer from "@/components/landing/Footer";
 import HomePricingSection from "@/components/landing/HomePricingSection";
+import HeroBanner from "@/components/landing/HeroBanner";
+import HeroPassShowcase from "@/components/landing/HeroPassShowcase";
+import HeroTrustBanner from "@/components/landing/HeroTrustBanner";
 import { detectCountryFromHeaders } from "@/lib/country-config";
 import {
   FileText,
@@ -213,44 +216,55 @@ export default async function PlatformPage() {
       <Navbar />
 
       {/* ── 01 HERO ─────────────────────────────────────────────────────── */}
-      <section className="pt-28 pb-14 sm:pt-40 sm:pb-28 px-4 sm:px-8 overflow-hidden">
-        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 sm:gap-16 items-center">
-          <div>
-            <div className="hero-badge inline-flex items-center gap-2 bg-neutral-100 text-neutral-800 text-[11px] sm:text-xs font-semibold tracking-wider px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full mb-4 sm:mb-6 border border-neutral-200">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
-              EVENT REGISTRATION &amp; QR CHECK-IN PLATFORM
-            </div>
+      <section className="relative pt-28 pb-14 sm:pt-36 sm:pb-24 px-4 sm:px-8 overflow-hidden bg-white">
+        {/* Ambient radial lighting & engineering mesh grid */}
+        <div className="absolute inset-0 pointer-events-none -z-10 overflow-hidden">
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[450px] bg-gradient-to-b from-brand-500/8 via-brand-200/5 to-transparent blur-3xl rounded-full" />
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,#00000005_1px,transparent_1px),linear-gradient(to_bottom,#00000005_1px,transparent_1px)] bg-[size:32px_32px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_15%,#000_70%,transparent_100%)]" />
+        </div>
 
-            <h1 className="text-2xl sm:text-4xl lg:text-5xl font-semibold tracking-tight leading-[1.18] sm:leading-[1.12] mb-4 sm:mb-5 text-neutral-900">
-              Event Registration &amp; QR Check-In Software for Modern Events
-            </h1>
-
-            <p className="hero-sub text-sm sm:text-lg text-neutral-600 leading-relaxed max-w-xl mb-3">
-              Create event registration forms, issue digital QR passes, manage attendees and check guests in from any phone with URPASS.
-            </p>
-
-            <p className="text-xs sm:text-sm font-semibold tracking-wide text-brand mb-6 sm:mb-8">
-              Built for college fests, conferences, hackathons, workshops, corporate events and communities.
-            </p>
-
-            <div className="hero-ctas flex flex-col sm:flex-row gap-3">
-              <Link href="/signup" className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-neutral-900 text-white px-6 py-3.5 rounded-xl text-sm font-semibold hover:bg-neutral-700 transition-colors text-center">
-                Create Your Event
-                <span className="text-neutral-400">→</span>
-              </Link>
-              <a href="#how-it-works" className="w-full sm:w-auto inline-flex items-center justify-center gap-2 border border-neutral-200 px-6 py-3.5 rounded-xl text-sm font-medium text-neutral-600 hover:bg-neutral-50 transition-colors text-center">
-                See how it works ↓
-              </a>
-            </div>
-
-            <p className="hero-meta mt-6 sm:mt-8 text-xs text-neutral-400">
-              Free to start · Try any paid plan free for 30 days · No credit card required
-            </p>
+        <div className="max-w-6xl mx-auto">
+          {/* Hero Section Announcement Banner */}
+          <div className="mb-6 sm:mb-8 flex justify-center lg:justify-start">
+            <HeroBanner initialCountry={country} />
           </div>
 
-          <div className="hero-card flex items-center justify-center lg:justify-end py-4 sm:py-8">
-            <PassCard />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 sm:gap-16 items-center">
+            <div>
+              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-semibold tracking-tight leading-[1.12] mb-4 sm:mb-5 text-neutral-900">
+                Event Registration &amp; QR Check-In Software for Modern Events
+              </h1>
+
+              <p className="hero-sub text-sm sm:text-lg text-neutral-600 leading-relaxed max-w-xl mb-3">
+                Create event registration forms, issue digital QR passes, manage attendees and check guests in from any phone with URPASS.
+              </p>
+
+              <p className="text-xs sm:text-sm font-semibold tracking-wide text-brand mb-6 sm:mb-8">
+                Built for college fests, conferences, hackathons, workshops, corporate events and communities.
+              </p>
+
+              <div className="hero-ctas flex flex-col sm:flex-row gap-3">
+                <Link href="/signup" className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-neutral-900 text-white px-6 py-3.5 rounded-xl text-sm font-semibold hover:bg-neutral-700 transition-colors text-center shadow-xs">
+                  Create Your Event
+                  <span className="text-neutral-400">→</span>
+                </Link>
+                <a href="#how-it-works" className="w-full sm:w-auto inline-flex items-center justify-center gap-2 border border-neutral-300 bg-white px-6 py-3.5 rounded-xl text-sm font-semibold text-neutral-800 hover:bg-neutral-50 transition-colors text-center shadow-2xs">
+                  See how it works ↓
+                </a>
+              </div>
+
+              <p className="hero-meta mt-6 sm:mt-8 text-xs text-neutral-400">
+                Free to start · Try any paid plan free for 30 days · No credit card required
+              </p>
+            </div>
+
+            <div className="hero-card flex items-center justify-center lg:justify-end py-2 sm:py-4">
+              <HeroPassShowcase />
+            </div>
           </div>
+
+          {/* Hero Capabilities & Trust Banner Strip */}
+          <HeroTrustBanner />
         </div>
       </section>
 
