@@ -258,6 +258,68 @@ export async function sendUserWelcomeEmail({
   });
 }
 
+export async function sendAccountDeletedEmail({
+  to,
+  name,
+}: {
+  to: string;
+  name?: string | null;
+}) {
+  await sendEmail({
+    from: getFromEmail(),
+    to,
+    replyTo: getOwnerEmail(),
+    subject: "Your URPASS Account Has Been Deleted Successfully",
+    html: `
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /></head>
+<body style="margin:0;padding:0;background:#f9fafb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f9fafb;padding:40px 16px;">
+  <tr><td align="center">
+    <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,0.06);border:1px solid #e5e7eb;">
+      <tr><td style="background:#111827;padding:32px 32px 28px;">
+        <p style="margin:0 0 6px;font-size:11px;font-weight:700;letter-spacing:2px;color:#9ca3af;text-transform:uppercase;">URPASS · Account Update</p>
+        <h1 style="margin:0;font-size:22px;font-weight:800;color:#ffffff;line-height:1.3;">Your Account Has Been Deleted</h1>
+      </td></tr>
+      <tr><td style="padding:32px 32px;">
+        <p style="margin:0 0 16px;font-size:15px;color:#1f2937;line-height:1.6;">
+          Hi <strong>${escapeHtml(name || "there")}</strong>,
+        </p>
+        <p style="margin:0 0 16px;font-size:14px;color:#4b5563;line-height:1.6;">
+          As per your request, your URPASS account associated with <strong>${escapeHtml(to)}</strong> and all related data have been successfully and permanently deleted from our system.
+        </p>
+
+        <div style="background:#f3f4f6;border-radius:12px;padding:20px;margin:24px 0;border-left:4px solid #6D28D9;">
+          <p style="margin:0 0 8px;font-size:13px;font-weight:700;color:#111827;text-transform:uppercase;letter-spacing:0.5px;">
+            We Value Your Feedback
+          </p>
+          <p style="margin:0;font-size:13px;color:#4b5563;line-height:1.6;">
+            We are always striving to improve URPASS. If you have a moment, could you let us know what we could have improved or why you decided to leave? Simply reply directly to this email—our founder and team read every message.
+          </p>
+        </div>
+
+        <p style="margin:0 0 24px;font-size:14px;color:#4b5563;line-height:1.6;">
+          If your event ticketing or registration needs ever change in the future, please know that <strong>you are always welcome back</strong>. You can sign up again anytime at <a href="${APP_URL}" style="color:#6D28D9;font-weight:600;text-decoration:none;">urpass.space</a>.
+        </p>
+
+        <p style="margin:0;font-size:14px;color:#111827;font-weight:600;">
+          Warm regards,<br />
+          <span style="font-weight:400;color:#6b7280;">The URPASS Team</span>
+        </p>
+
+        <div style="margin-top:32px;padding-top:20px;border-top:1px solid #f3f4f6;font-size:12px;color:#9ca3af;text-align:center;">
+          URPASS · Digital Pass & QR Event Ticketing Platform · <a href="${APP_URL}" style="color:#9ca3af;text-decoration:underline;">urpass.space</a>
+        </div>
+      </td></tr>
+    </table>
+  </td></tr>
+</table>
+</body>
+</html>`.trim(),
+  });
+}
+
 export async function notifyOwnerPaymentAttempt({
   kind,
   buyerName,

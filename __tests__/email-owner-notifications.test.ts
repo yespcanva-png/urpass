@@ -23,6 +23,7 @@ import {
   notifyOwnerTrialActivated,
   notifyOwnerPaidSubscription,
   sendUserWelcomeEmail,
+  sendAccountDeletedEmail,
   sendOwnerNotification,
 } from "@/lib/email";
 
@@ -186,6 +187,22 @@ describe("Owner Email Notifications (srinithin@yespstudio.com)", () => {
     expect(callArgs.to).toBe("newuser@example.com");
     expect(callArgs.subject).toBe("Welcome to URPASS");
     expect(callArgs.html).toContain("New User");
+  });
+
+  it("sends sendAccountDeletedEmail to user with feedback prompt and welcome back note", async () => {
+    await sendAccountDeletedEmail({
+      to: "rashidk1002@gmail.com",
+      name: "Rashid",
+    });
+
+    expect(mockSend).toHaveBeenCalledTimes(1);
+    const callArgs = mockSend.mock.calls[0][0];
+    expect(callArgs.to).toBe("rashidk1002@gmail.com");
+    expect(callArgs.subject).toBe("Your URPASS Account Has Been Deleted Successfully");
+    expect(callArgs.html).toContain("Rashid");
+    expect(callArgs.html).toContain("rashidk1002@gmail.com");
+    expect(callArgs.html).toContain("We Value Your Feedback");
+    expect(callArgs.html).toContain("you are always welcome back");
   });
 
   it("catches errors gracefully in sendOwnerNotification so caller execution never crashes", async () => {
