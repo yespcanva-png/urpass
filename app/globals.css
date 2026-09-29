@@ -122,6 +122,12 @@ html { scroll-behavior: smooth; }
   animation: shimmer 1.6s ease-in-out infinite;
 }
 
+@keyframes progress {
+  0% { transform: translateX(-100%); }
+  50% { transform: translateX(20%); }
+  100% { transform: translateX(120%); }
+}
+
 /* ── Page entrance ─────────────────────────────────────────────────────── */
 @keyframes pageIn {
   from { opacity: 0; transform: translateY(8px); }

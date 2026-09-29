@@ -9,6 +9,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const core = [
     { url: BASE, priority: 1.0, changeFrequency: "daily" as const },
     { url: `${BASE}/about`, priority: 0.9, changeFrequency: "monthly" as const },
+    { url: `${BASE}/company`, priority: 0.9, changeFrequency: "monthly" as const },
+    { url: `${BASE}/yesp-urpass`, priority: 0.95, changeFrequency: "weekly" as const },
+    { url: `${BASE}/global`, priority: 0.9, changeFrequency: "weekly" as const },
     { url: `${BASE}/faq`, priority: 0.85, changeFrequency: "weekly" as const },
     { url: `${BASE}/pricing`, priority: 0.9, changeFrequency: "weekly" as const },
     { url: `${BASE}/guides`, priority: 0.85, changeFrequency: "weekly" as const },
@@ -22,6 +25,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   const seoPages = [
+    // Entity intent clusters
+    "/event-technology-platform",
+    "/digital-event-ticketing-platform",
+    "/qr-event-management-system",
+    "/event-access-control-software",
+    "/event-entry-management-system",
+    "/attendee-check-in-system",
+    "/mobile-qr-ticket-scanner",
+    "/event-registration-and-payment-system",
+    "/event-registration-and-attendance-system",
+    "/all-in-one-event-platform",
+
     // Core features
     "/platform",
     "/design-your-ticket",

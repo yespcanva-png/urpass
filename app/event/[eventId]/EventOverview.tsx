@@ -406,8 +406,75 @@ export default function EventOverview({ event, initialAttendees = [] }: Props) {
         </div>
       )}
 
-      {/* ── Action bar ─────────────────────────────────────────── */}
-      <div className="flex flex-wrap items-center justify-between gap-2 mb-6">
+      {/* ── Mobile Quick Actions Hub (Mobile Only) ─────────────── */}
+      <div className="block sm:hidden mb-5 bg-white rounded-2xl border border-neutral-100 p-4 shadow-sm">
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-xs font-bold text-neutral-900 uppercase tracking-wider">Quick Actions</span>
+          <div className="flex items-center gap-1.5 text-[11px]">
+            {live ? (
+              <>
+                <Wifi className="w-3 h-3 text-green-500" />
+                <span className="text-green-600 font-semibold">Live Sync</span>
+              </>
+            ) : (
+              <>
+                <Wifi className="w-3 h-3 text-neutral-300" />
+                <span className="text-neutral-400 font-medium">Connecting…</span>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Large Prominent Copy Registration Link */}
+        {event.application_enabled && event.apply_slug && (
+          <div className="mb-3">
+            <CopyLinkButton applySlug={event.apply_slug} />
+          </div>
+        )}
+
+        {/* 4 Touch Tiles */}
+        <div className="grid grid-cols-2 gap-2">
+          <Link
+            href={`/event/${event.id}/attendees`}
+            className="flex items-center gap-2 bg-neutral-50 hover:bg-neutral-100 border border-neutral-200/80 rounded-xl px-3 py-2.5 text-xs font-semibold text-neutral-800 transition-colors"
+          >
+            <div className="w-6 h-6 rounded-lg bg-white border border-neutral-200 flex items-center justify-center shrink-0">
+              <UserPlus className="w-3.5 h-3.5 text-brand" />
+            </div>
+            <span>Add Attendee</span>
+          </Link>
+          <Link
+            href={`/scan/${event.id}`}
+            className="flex items-center gap-2 bg-neutral-50 hover:bg-neutral-100 border border-neutral-200/80 rounded-xl px-3 py-2.5 text-xs font-semibold text-neutral-800 transition-colors"
+          >
+            <div className="w-6 h-6 rounded-lg bg-white border border-neutral-200 flex items-center justify-center shrink-0">
+              <ScanLine className="w-3.5 h-3.5 text-emerald-600" />
+            </div>
+            <span>QR Scanner</span>
+          </Link>
+          <Link
+            href={`/event/${event.id}/checkins`}
+            className="flex items-center gap-2 bg-neutral-50 hover:bg-neutral-100 border border-neutral-200/80 rounded-xl px-3 py-2.5 text-xs font-semibold text-neutral-800 transition-colors"
+          >
+            <div className="w-6 h-6 rounded-lg bg-white border border-neutral-200 flex items-center justify-center shrink-0">
+              <CheckCircle2 className="w-3.5 h-3.5 text-blue-600" />
+            </div>
+            <span>Check-ins</span>
+          </Link>
+          <Link
+            href={`/event/${event.id}/analytics`}
+            className="flex items-center gap-2 bg-neutral-50 hover:bg-neutral-100 border border-neutral-200/80 rounded-xl px-3 py-2.5 text-xs font-semibold text-neutral-800 transition-colors"
+          >
+            <div className="w-6 h-6 rounded-lg bg-white border border-neutral-200 flex items-center justify-center shrink-0">
+              <BarChart3 className="w-3.5 h-3.5 text-purple-600" />
+            </div>
+            <span>Analytics</span>
+          </Link>
+        </div>
+      </div>
+
+      {/* ── Action bar (Desktop) ─────────────────────────────────── */}
+      <div className="hidden sm:flex flex-wrap items-center justify-between gap-2 mb-6">
         <div className="flex flex-wrap items-center gap-2">
           {event.application_enabled && event.apply_slug && (
             <CopyLinkButton applySlug={event.apply_slug} />
@@ -471,7 +538,7 @@ export default function EventOverview({ event, initialAttendees = [] }: Props) {
       </div>
 
       {/* ── Primary stats (3 big) ───────────────────────────────── */}
-      <div className="grid grid-cols-3 gap-3 mb-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
         {/* Total */}
         <div className="bg-white rounded-2xl shadow-sm p-5 flex flex-col gap-3">
           <div className="flex items-center justify-between">
@@ -514,7 +581,7 @@ export default function EventOverview({ event, initialAttendees = [] }: Props) {
       </div>
 
       {/* ── Secondary stats (3 small inline) ───────────────────── */}
-      <div className="grid grid-cols-3 gap-3 mb-5">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
         <div className="bg-white rounded-2xl shadow-sm px-4 py-3.5 flex items-center gap-3">
           <div className="w-7 h-7 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
             <QrCode className="w-3.5 h-3.5 text-blue-600" />
@@ -613,39 +680,41 @@ export default function EventOverview({ event, initialAttendees = [] }: Props) {
             </div>
           ) : (
             <div className="space-y-3">
-              <div className="h-36 w-full flex items-end gap-1.5 sm:gap-2 pt-5 pb-1">
-                {hourlyBars.map((bucket, idx) => {
-                  const heightPct = Math.max(8, Math.round((bucket.count / maxBarScans) * 100));
-                  const isHovered = hoveredBarIndex === idx;
-                  const isPeak = bucket.count > 0 && bucket.count === peakVelocity;
-                  return (
-                    <div
-                      key={bucket.label}
-                      className="relative flex-1 flex flex-col items-center h-full justify-end group cursor-pointer"
-                      onMouseEnter={() => setHoveredBarIndex(idx)}
-                      onMouseLeave={() => setHoveredBarIndex(null)}
-                    >
-                      {isHovered && (
-                        <div className="absolute -top-11 z-20 bg-neutral-900 text-white text-[11px] font-bold rounded-xl px-2.5 py-1 shadow-xl whitespace-nowrap pointer-events-none">
-                          {bucket.range}: {bucket.count} scans ({bucket.pct}%)
-                        </div>
-                      )}
+              <div className="w-full overflow-x-auto scrollbar-none pb-1">
+                <div className="h-36 min-w-[320px] sm:min-w-0 w-full flex items-end gap-1.5 sm:gap-2 pt-5 pb-1">
+                  {hourlyBars.map((bucket, idx) => {
+                    const heightPct = Math.max(8, Math.round((bucket.count / maxBarScans) * 100));
+                    const isHovered = hoveredBarIndex === idx;
+                    const isPeak = bucket.count > 0 && bucket.count === peakVelocity;
+                    return (
                       <div
-                        className={`w-full rounded-t-lg transition-all duration-300 ${
-                          isPeak
-                            ? "bg-gradient-to-t from-brand to-violet-500 shadow-sm"
-                            : bucket.count > 0
-                            ? "bg-violet-400 group-hover:bg-brand"
-                            : "bg-neutral-200/60"
-                        }`}
-                        style={{ height: `${heightPct}%` }}
-                      />
-                      <span className="text-[9px] font-semibold text-neutral-400 mt-1.5 truncate max-w-full group-hover:text-neutral-900 transition-colors">
-                        {bucket.label}
-                      </span>
-                    </div>
-                  );
-                })}
+                        key={bucket.label}
+                        className="relative flex-1 flex flex-col items-center h-full justify-end group cursor-pointer"
+                        onMouseEnter={() => setHoveredBarIndex(idx)}
+                        onMouseLeave={() => setHoveredBarIndex(null)}
+                      >
+                        {isHovered && (
+                          <div className="absolute -top-11 z-20 bg-neutral-900 text-white text-[11px] font-bold rounded-xl px-2.5 py-1 shadow-xl whitespace-nowrap pointer-events-none">
+                            {bucket.range}: {bucket.count} scans ({bucket.pct}%)
+                          </div>
+                        )}
+                        <div
+                          className={`w-full rounded-t-lg transition-all duration-300 ${
+                            isPeak
+                              ? "bg-gradient-to-t from-brand to-violet-500 shadow-sm"
+                              : bucket.count > 0
+                              ? "bg-violet-400 group-hover:bg-brand"
+                              : "bg-neutral-200/60"
+                          }`}
+                          style={{ height: `${heightPct}%` }}
+                        />
+                        <span className="text-[9px] font-semibold text-neutral-400 mt-1.5 truncate max-w-full group-hover:text-neutral-900 transition-colors">
+                          {bucket.label}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
 
               <div className="flex items-center justify-between text-[11px] text-neutral-400 pt-2 border-t border-neutral-200/50">
@@ -914,35 +983,67 @@ export default function EventOverview({ event, initialAttendees = [] }: Props) {
               return (
                 <li
                   key={a.id}
-                  className="flex items-center gap-3 px-5 py-3.5 hover:bg-neutral-50/60 transition-colors"
+                  className="px-4 sm:px-5 py-3.5 hover:bg-neutral-50/60 transition-colors"
                 >
-                  {/* Avatar */}
-                  <div
-                    className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold shrink-0 ${avCls}`}
-                  >
-                    {ini}
+                  {/* Mobile Layout (sm:hidden) */}
+                  <div className="flex sm:hidden flex-col gap-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                        <div
+                          className={`w-7 h-7 rounded-lg flex items-center justify-center text-[11px] font-bold shrink-0 ${avCls}`}
+                        >
+                          {ini}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-semibold text-neutral-900 truncate">{a.name}</p>
+                          <p className="text-[11px] text-neutral-400 truncate">{a.email}</p>
+                        </div>
+                      </div>
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold shrink-0 ${appCfg.cls}`}>
+                        {appCfg.label}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between gap-2 pt-1 border-t border-neutral-100/80 text-[10px]">
+                      <span className="bg-neutral-100 text-neutral-600 px-2 py-0.5 rounded-md capitalize font-medium">
+                        {a.pass_type || "General"}
+                      </span>
+                      <span className={`px-2 py-0.5 rounded-md font-semibold ${passCfg.cls}`}>
+                        {passCfg.label}
+                      </span>
+                    </div>
                   </div>
 
-                  {/* Name + email */}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-neutral-900 truncate">{a.name}</p>
-                    <p className="text-xs text-neutral-400 truncate">{a.email}</p>
+                  {/* Desktop Layout (hidden sm:flex) */}
+                  <div className="hidden sm:flex items-center gap-3">
+                    {/* Avatar */}
+                    <div
+                      className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold shrink-0 ${avCls}`}
+                    >
+                      {ini}
+                    </div>
+
+                    {/* Name + email */}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-neutral-900 truncate">{a.name}</p>
+                      <p className="text-xs text-neutral-400 truncate">{a.email}</p>
+                    </div>
+
+                    {/* Pass type */}
+                    <span className="text-xs bg-neutral-100 text-neutral-600 px-2 py-0.5 rounded-full capitalize font-medium shrink-0">
+                      {a.pass_type}
+                    </span>
+
+                    {/* Application status */}
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-semibold shrink-0 ${appCfg.cls}`}>
+                      {appCfg.label}
+                    </span>
+
+                    {/* Pass status */}
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-semibold shrink-0 ${passCfg.cls}`}>
+                      {passCfg.label}
+                    </span>
                   </div>
-
-                  {/* Pass type */}
-                  <span className="hidden sm:inline text-xs bg-neutral-100 text-neutral-600 px-2 py-0.5 rounded-full capitalize font-medium shrink-0">
-                    {a.pass_type}
-                  </span>
-
-                  {/* Application status */}
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-semibold shrink-0 ${appCfg.cls}`}>
-                    {appCfg.label}
-                  </span>
-
-                  {/* Pass status */}
-                  <span className={`hidden md:inline text-xs px-2 py-0.5 rounded-full font-semibold shrink-0 ${passCfg.cls}`}>
-                    {passCfg.label}
-                  </span>
                 </li>
               );
             })}

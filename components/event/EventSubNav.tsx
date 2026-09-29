@@ -20,7 +20,7 @@ export default function EventSubNav({ eventId }: { eventId: string }) {
   ];
 
   return (
-    <nav className="flex gap-1 -mb-px">
+    <nav className="flex gap-1 -mb-px overflow-x-auto scrollbar-none flex-nowrap">
       {tabs.map(({ label, href, exact }) => {
         const active = exact
           ? pathname === href
@@ -30,7 +30,7 @@ export default function EventSubNav({ eventId }: { eventId: string }) {
             key={href}
             href={href}
             className={cn(
-              "relative px-3 py-2.5 text-sm transition-colors",
+              "relative px-3 py-2.5 text-sm transition-colors shrink-0 whitespace-nowrap",
               active
                 ? "text-neutral-900 font-semibold"
                 : "text-neutral-400 hover:text-neutral-600 font-medium"

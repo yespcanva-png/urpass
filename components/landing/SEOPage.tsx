@@ -340,11 +340,18 @@ export default function SEOPage({ config }: { config: SEOPageConfig }) {
             "@context": "https://schema.org",
             "@type": "SoftwareApplication",
             name: "URPASS",
+            alternateName: ["URPASS by Yesp", "Yesp URPASS"],
             applicationCategory: "BusinessApplication",
             applicationSubCategory: "Event Ticketing & Check-In Platform",
             operatingSystem: "Web, iOS, Android",
             url: canonical,
-            description: `${config.description} — URPASS is an event registration, ticketing, digital pass, QR check-in and attendance management platform for colleges, conferences, workshops and large-scale events.`,
+            publisher: {
+              "@type": "Organization",
+              "@id": "https://urpass.space/#yesp",
+              name: "Yesp Corporation",
+              url: "https://yespstudio.com",
+            },
+            description: `${config.description} — URPASS is an event registration, ticketing, digital pass, QR check-in and attendance management platform for colleges, conferences, workshops and large-scale events developed by Yesp Corporation.`,
             offers: {
               "@type": "AggregateOffer",
               priceCurrency: isUkPage ? "GBP" : "INR",
@@ -364,11 +371,18 @@ export default function SEOPage({ config }: { config: SEOPageConfig }) {
             name: "URPASS",
             url: "https://urpass.space",
             logo: "https://urpass.space/icon.png",
+            parentOrganization: {
+              "@type": "Organization",
+              "@id": "https://urpass.space/#yesp",
+              name: "Yesp Corporation",
+              url: "https://yespstudio.com",
+            },
             description:
-              "URPASS is an event registration, ticketing, digital pass, QR check-in and attendance management platform for colleges, conferences, workshops and large-scale events.",
+              "URPASS is an event registration, ticketing, digital pass, QR check-in and attendance management platform developed by Yesp Corporation.",
             sameAs: [
               "https://twitter.com/urpass_space",
               "https://github.com/yespcanva-png/urpass",
+              "https://yespstudio.com",
             ],
           }),
         }}

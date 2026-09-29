@@ -11,15 +11,26 @@ export default function Footer() {
           {/* Brand & Socials Column */}
           <div className="col-span-2 md:col-span-2 flex flex-col justify-between">
             <div>
-              <div className="flex items-center gap-2 mb-3">
+              <div className="flex items-center gap-2 mb-2">
                 <span className="font-bold text-lg tracking-tight text-white">URPASS</span>
                 <span className="text-[10px] uppercase font-bold tracking-widest bg-brand/20 text-brand-300 border border-brand/30 px-2 py-0.5 rounded-full">
                   Event OS
                 </span>
               </div>
-              <p className="text-xs text-neutral-400 leading-relaxed max-w-sm mb-6">
-                Fast digital event passes, custom ticket designer, and lightning QR check-in. Built for colleges, tech conferences, hackathons, and organizers across India and worldwide.
+              <p className="text-xs text-neutral-400 leading-relaxed max-w-sm mb-3">
+                URPASS by Yesp Corporation is an event registration, digital ticketing and QR check-in platform built for colleges, conferences, hackathons, businesses and event organizers worldwide.
               </p>
+              <div className="mb-6">
+                <a
+                  href="https://yespstudio.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-neutral-400 hover:text-white bg-neutral-900 border border-neutral-800 px-2.5 py-1 rounded-md transition-colors"
+                >
+                  <span>Product of</span>
+                  <span className="text-white underline decoration-neutral-600 underline-offset-2">Yesp Corporation ↗</span>
+                </a>
+              </div>
 
               {/* Social Channels */}
               <div className="flex items-center gap-3">
@@ -205,6 +216,12 @@ export default function Footer() {
             <Link href="/about" className="hover:text-neutral-300 transition-colors">
               About
             </Link>
+            <Link href="/company" className="hover:text-neutral-300 transition-colors">
+              Company
+            </Link>
+            <Link href="/yesp-urpass" className="hover:text-neutral-300 transition-colors">
+              Yesp URPASS
+            </Link>
             <Link href="/faq" className="hover:text-neutral-300 transition-colors">
               FAQ
             </Link>
@@ -230,6 +247,11 @@ export default function Footer() {
               Sitelinks
             </Link>
           </div>
+        </div>
+
+        {/* Contextual Entity Line */}
+        <div className="mt-6 pt-4 border-t border-neutral-900/60 text-center text-[11px] text-neutral-600">
+          <p>URPASS is an event technology product developed by Yesp Corporation.</p>
         </div>
       </div>
     </footer>

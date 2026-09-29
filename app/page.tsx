@@ -23,14 +23,14 @@ import {
 } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "URPASS — Digital Event Registration, QR Pass & Check-In Platform",
+  title: "URPASS by Yesp | Event Registration & QR Check-In Platform",
   description:
-    "Digital event registration, QR pass and check-in platform for colleges, conferences, hackathons, workshops and corporate events. Start free forever or try 30 days free.",
+    "URPASS by Yesp Corporation is an event registration, QR ticketing and check-in platform for colleges, conferences, hackathons and businesses. Create events, issue digital passes, accept payments and scan attendees instantly.",
   alternates: { canonical: "https://urpass.space" },
   openGraph: {
-    title: "URPASS — Digital Event Registration, QR Pass & Check-In Platform",
+    title: "URPASS by Yesp | Event Registration & QR Check-In Platform",
     description:
-      "Digital event registration, QR pass and check-in platform for colleges, conferences, hackathons, workshops and corporate events.",
+      "URPASS by Yesp Corporation is an event registration, QR ticketing and check-in platform for colleges, conferences, hackathons and businesses. Create events, issue digital passes, accept payments and scan attendees instantly.",
     url: "https://urpass.space",
   },
 };
@@ -190,6 +190,28 @@ export default async function LandingPage() {
             "@context": "https://schema.org",
             "@graph": [
               {
+                "@type": "Organization",
+                "@id": "https://urpass.space/#yesp",
+                "name": "Yesp Corporation",
+                "url": "https://yespstudio.com"
+              },
+              {
+                "@type": "SoftwareApplication",
+                "@id": "https://urpass.space/#urpass",
+                "name": "URPASS",
+                "alternateName": [
+                  "URPASS by Yesp",
+                  "Yesp URPASS"
+                ],
+                "url": "https://urpass.space",
+                "applicationCategory": "BusinessApplication",
+                "operatingSystem": "Web",
+                "publisher": {
+                  "@id": "https://urpass.space/#yesp"
+                },
+                "description": "Event registration, ticketing and QR check-in platform developed by Yesp Corporation."
+              },
+              {
                 "@type": "WebApplication",
                 name: "URPASS",
                 applicationCategory: "BusinessApplication",
@@ -292,14 +314,12 @@ export default async function LandingPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 sm:gap-16 items-center">
             {/* Left: text — CSS animations (always above fold, no observer) */}
             <div>
-              <h1 className="text-5xl sm:text-6xl lg:text-7xl font-semibold tracking-tight leading-[1.05] mb-4 sm:mb-6">
-                <span className="hero-line-1 block">Create.</span>
-                <span className="hero-line-2 block">Share.</span>
-                <span className="hero-line-3 block text-brand">Scan.</span>
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.1] mb-4 sm:mb-6 text-neutral-900">
+                Event Registration, Ticketing &amp; QR Check-In — Made Simple
               </h1>
 
-              <p className="hero-sub text-base sm:text-xl text-neutral-500 leading-relaxed max-w-md mb-8 sm:mb-10">
-                Turn event registrations into digital passes with QR check-in. Create your event, share the link, issue passes, and scan attendees at the entrance.
+              <p className="hero-sub text-base sm:text-lg text-neutral-600 leading-relaxed max-w-lg mb-8 sm:mb-10 font-normal">
+                URPASS by Yesp Corporation helps organizers manage registrations, payments, digital QR passes and event entry from one platform.
               </p>
 
               <div className="hero-ctas flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
@@ -535,7 +555,41 @@ export default async function LandingPage() {
       {/* ── 07 PRICING ───────────────────────────────────────────────────── */}
       <HomePricingSection initialCountry={country} />
 
-      {/* ── 08 FAQ ───────────────────────────────────────────────────────── */}
+      {/* ── 08 GEO / AI ENTITY ANSWERS ───────────────────────────────────── */}
+      <section className="py-14 sm:py-20 px-4 sm:px-8 bg-neutral-50/70 border-y border-neutral-100">
+        <div className="max-w-5xl mx-auto">
+          <AnimateIn>
+            <div className="text-center mb-10">
+              <span className="text-xs font-bold uppercase tracking-widest text-brand block mb-2">Entity Specifications &amp; Overview</span>
+              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-neutral-900">
+                URPASS by Yesp Corporation — At a Glance
+              </h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="bg-white p-6 rounded-2xl border border-neutral-200/80 shadow-xs">
+                <h3 className="text-sm font-bold text-neutral-900 mb-2">What is URPASS?</h3>
+                <p className="text-xs sm:text-sm text-neutral-600 leading-relaxed">
+                  URPASS is an event registration, ticketing and QR check-in platform developed by Yesp Corporation. It helps organizers create events, collect registrations, issue digital QR passes, accept payments and verify attendees at event entrances using smartphones.
+                </p>
+              </div>
+              <div className="bg-white p-6 rounded-2xl border border-neutral-200/80 shadow-xs">
+                <h3 className="text-sm font-bold text-neutral-900 mb-2">Who is URPASS for?</h3>
+                <p className="text-xs sm:text-sm text-neutral-600 leading-relaxed">
+                  URPASS is designed for colleges, universities, conferences, hackathons, workshops, corporate events, community events and professional event organizers.
+                </p>
+              </div>
+              <div className="bg-white p-6 rounded-2xl border border-neutral-200/80 shadow-xs">
+                <h3 className="text-sm font-bold text-neutral-900 mb-2">What company owns URPASS?</h3>
+                <p className="text-xs sm:text-sm text-neutral-600 leading-relaxed">
+                  URPASS is a product of Yesp Corporation, a technology company developing digital products and business software. Explore our <Link href="/yesp-urpass" className="text-brand font-medium hover:underline">Yesp URPASS</Link> and <Link href="/company" className="text-brand font-medium hover:underline">Company</Link> profiles.
+                </p>
+              </div>
+            </div>
+          </AnimateIn>
+        </div>
+      </section>
+
+      {/* ── 09 FAQ ───────────────────────────────────────────────────────── */}
       <FAQSection initialCountry={country} />
 
       {/* ── 09 FINAL CTA ─────────────────────────────────────────────────── */}

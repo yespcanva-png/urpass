@@ -48,7 +48,7 @@ export default function AboutPage() {
     parentOrganization: {
       "@type": "Organization",
       name: "Yesp Corporation",
-      url: "https://urpass.space/about",
+      url: "https://yespstudio.com",
       description: "Building simple digital products for businesses and organizations.",
     },
     knowsAbout: [
@@ -195,11 +195,68 @@ export default function AboutPage() {
 
                 <div className="space-y-4 text-neutral-600 text-base leading-relaxed mb-8">
                   <p>
-                    URPASS is a product of <strong>Yesp Corporation</strong>, focused on building simple digital products for businesses and organizations.
+                    <strong>URPASS is developed and operated by Yesp Corporation.</strong> Yesp builds digital products designed to simplify business and organizational workflows. URPASS focuses specifically on event registration, ticketing, attendee management and QR-powered event entry.
                   </p>
                   <p>
                     We believe essential business workflows like ticketing and gate verification shouldn&apos;t require bloated enterprise contracts, proprietary scanner hardware, or 10% platform cuts.
                   </p>
+                </div>
+
+                {/* Entity & Verification Links Cluster */}
+                <div className="p-5 rounded-2xl bg-white border border-neutral-200/80 mb-8">
+                  <p className="text-xs font-bold uppercase tracking-wider text-neutral-400 mb-3">Corporate &amp; Entity Links</p>
+                  <div className="flex flex-wrap gap-2 text-xs">
+                    <a
+                      href="https://yespstudio.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3 py-1.5 rounded-lg bg-neutral-100 text-neutral-800 font-semibold hover:bg-neutral-200 transition-colors inline-flex items-center gap-1"
+                    >
+                      Yesp Website ↗
+                    </a>
+                    <Link
+                      href="/"
+                      className="px-3 py-1.5 rounded-lg bg-neutral-100 text-neutral-800 font-medium hover:bg-neutral-200 transition-colors"
+                    >
+                      URPASS Homepage
+                    </Link>
+                    <Link
+                      href="/company"
+                      className="px-3 py-1.5 rounded-lg bg-neutral-100 text-neutral-800 font-medium hover:bg-neutral-200 transition-colors"
+                    >
+                      Company Profile
+                    </Link>
+                    <Link
+                      href="/yesp-urpass"
+                      className="px-3 py-1.5 rounded-lg bg-neutral-100 text-neutral-800 font-medium hover:bg-neutral-200 transition-colors"
+                    >
+                      Yesp URPASS
+                    </Link>
+                    <Link
+                      href="/contact"
+                      className="px-3 py-1.5 rounded-lg bg-neutral-100 text-neutral-800 font-medium hover:bg-neutral-200 transition-colors"
+                    >
+                      Contact
+                    </Link>
+                    <Link
+                      href="/docs"
+                      className="px-3 py-1.5 rounded-lg bg-neutral-100 text-neutral-800 font-medium hover:bg-neutral-200 transition-colors"
+                    >
+                      Security &amp; Docs
+                    </Link>
+                    <Link
+                      href="/privacy"
+                      className="px-3 py-1.5 rounded-lg bg-neutral-100 text-neutral-800 font-medium hover:bg-neutral-200 transition-colors"
+                    >
+                      Privacy Policy
+                    </Link>
+                    <Link
+                      href="/terms"
+                      className="px-3 py-1.5 rounded-lg bg-neutral-100 text-neutral-800 font-medium hover:bg-neutral-200 transition-colors"
+                    >
+                      Terms of Service
+                    </Link>
+                  </div>
                 </div>
 
                 <div className="p-6 rounded-2xl bg-white border border-neutral-200/80 mb-8">

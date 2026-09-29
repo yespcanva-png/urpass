@@ -135,30 +135,38 @@ export default async function EventLayout({
           </Link>
 
           {/* Title row */}
-          <div className="flex items-start justify-between gap-4 mb-4">
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-4 mb-4">
             <div className="min-w-0 flex-1">
-              <h1 className="text-xl font-bold text-neutral-900 tracking-tight leading-tight truncate">
-                {event.name}
-              </h1>
-              <div className="flex flex-wrap items-center gap-3 mt-2">
-                <span className="inline-flex items-center gap-1.5 text-xs text-neutral-400">
-                  <MapPin className="w-3 h-3 shrink-0" />
-                  {event.venue}
+              <div className="flex items-center justify-between gap-2 sm:block">
+                <h1 className="text-lg sm:text-xl font-bold text-neutral-900 tracking-tight leading-tight truncate">
+                  {event.name}
+                </h1>
+                <span
+                  className={`inline-flex sm:hidden items-center gap-1.5 text-xs font-semibold px-2.5 py-0.5 rounded-full border shrink-0 capitalize ${statusCfg.cls}`}
+                >
+                  <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${statusCfg.dot} ${statusKey === "active" ? "animate-pulse" : ""}`} />
+                  {statusCfg.label}
                 </span>
-                <span className="inline-flex items-center gap-1.5 text-xs text-neutral-400">
+              </div>
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5 sm:mt-2 text-xs text-neutral-400">
+                <span className="inline-flex items-center gap-1.5">
+                  <MapPin className="w-3 h-3 shrink-0" />
+                  <span className="truncate max-w-[200px] sm:max-w-none">{event.venue}</span>
+                </span>
+                <span className="inline-flex items-center gap-1.5">
                   <Calendar className="w-3 h-3 shrink-0" />
                   {formattedDate}
                 </span>
-                <span className="inline-flex items-center gap-1.5 text-xs text-neutral-400">
+                <span className="inline-flex items-center gap-1.5">
                   <Clock className="w-3 h-3 shrink-0" />
                   {formatTime(event.start_time)} – {formatTime(event.end_time)}
                 </span>
               </div>
             </div>
 
-            {/* Status badge */}
+            {/* Desktop Status badge */}
             <span
-              className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full border shrink-0 capitalize ${statusCfg.cls}`}
+              className={`hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full border shrink-0 capitalize ${statusCfg.cls}`}
             >
               <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${statusCfg.dot} ${statusKey === "active" ? "animate-pulse" : ""}`} />
               {statusCfg.label}
