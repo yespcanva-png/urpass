@@ -29,7 +29,14 @@ export const metadata: Metadata = {
     "event attendance tracking India",
     "UPI event ticketing",
   ],
-  alternates: { canonical: "https://urpass.space/in" },
+  alternates: {
+    canonical: "https://urpass.space/in",
+    languages: {
+      "en-IN": "https://urpass.space/in",
+      "en-GB": "https://urpass.space/uk",
+      "x-default": "https://urpass.space",
+    },
+  },
   openGraph: {
     title: "Event Registration & QR Check-In Platform for India | URPASS",
     description:
@@ -37,6 +44,22 @@ export const metadata: Metadata = {
     url: "https://urpass.space/in",
     locale: "en_IN",
     type: "website",
+    images: [
+      {
+        url: "https://urpass.space/og-image-in.png",
+        width: 1200,
+        height: 630,
+        type: "image/png",
+        alt: "URPASS India — Digital Event Registration & QR Check-In Platform",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Event Registration & QR Check-In Platform for India | URPASS",
+    description:
+      "India's event registration, QR pass and check-in platform. Instant UPI payments, zero ticket commission, and sub-second phone scanning.",
+    images: ["https://urpass.space/og-image-in.png"],
   },
   other: {
     "geo.region": "IN",

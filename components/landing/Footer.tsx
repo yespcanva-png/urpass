@@ -144,13 +144,25 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Locations & Sitelinks */}
+          {/* Locations & Regional Markets */}
           <div>
-            <p className="text-xs font-semibold text-white tracking-wider uppercase mb-4">Cities & More</p>
+            <p className="text-xs font-semibold text-white tracking-wider uppercase mb-4">Regional Hubs</p>
             <ul className="flex flex-col gap-2.5">
               <li>
-                <Link href="/in" className="text-xs text-neutral-400 hover:text-white transition-colors">
-                  Events in India (Hub)
+                <Link href="/in" className="text-xs text-neutral-400 hover:text-white transition-colors flex items-center gap-1.5">
+                  <span>🇮🇳</span>
+                  <span>India Hub (₹ UPI &amp; Razorpay)</span>
+                </Link>
+              </li>
+              <li>
+                <Link href="/uk" className="text-xs text-neutral-400 hover:text-white transition-colors flex items-center gap-1.5">
+                  <span>🇬🇧</span>
+                  <span>UK Hub (£ 0% Commission)</span>
+                </Link>
+              </li>
+              <li>
+                <Link href="/uk/london" className="text-xs text-neutral-400 hover:text-white transition-colors">
+                  London &amp; UK Universities
                 </Link>
               </li>
               <li>
@@ -159,18 +171,8 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/in/chennai" className="text-xs text-neutral-400 hover:text-white transition-colors">
-                  Chennai Colleges & Fests
-                </Link>
-              </li>
-              <li>
-                <Link href="/in/coimbatore" className="text-xs text-neutral-400 hover:text-white transition-colors">
-                  Coimbatore Events
-                </Link>
-              </li>
-              <li>
                 <Link href="/in/mumbai" className="text-xs text-neutral-400 hover:text-white transition-colors">
-                  Mumbai & Pune Events
+                  Mumbai &amp; Pune Events
                 </Link>
               </li>
               <li>
@@ -184,10 +186,19 @@ export default function Footer() {
 
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-neutral-900 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-4 text-xs text-neutral-500">
+          <div className="flex flex-wrap items-center gap-3 text-xs text-neutral-500">
             <span>&copy; 2026 URPASS. Built with precision for organizers.</span>
             <span>·</span>
-            <span className="hidden sm:inline">Made in India</span>
+            <span className="flex items-center gap-1.5">
+              <span>Markets:</span>
+              <Link href="/in" className="text-neutral-400 hover:text-white transition-colors underline-offset-2 hover:underline">
+                🇮🇳 India (₹)
+              </Link>
+              <span>·</span>
+              <Link href="/uk" className="text-neutral-400 hover:text-white transition-colors underline-offset-2 hover:underline">
+                🇬🇧 UK (£)
+              </Link>
+            </span>
           </div>
 
           <div className="flex flex-wrap items-center gap-5 text-xs text-neutral-500">

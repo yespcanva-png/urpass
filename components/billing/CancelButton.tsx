@@ -53,7 +53,7 @@ export default function CancelButton() {
   }
 
   return (
-    <div className="flex flex-col gap-2 items-end bg-neutral-50 border border-neutral-200/80 rounded-xl p-3 shadow-2xs">
+    <div className="flex flex-col gap-2 items-end bg-neutral-50 border border-neutral-200/80 rounded-2xl p-3 shadow-xs">
       <p className="text-[11px] text-neutral-600 font-medium max-w-xs text-right">
         Cancel auto-renewal? Access stays active until the end of your billing cycle.
       </p>
@@ -64,14 +64,14 @@ export default function CancelButton() {
             setError("");
           }}
           disabled={isPending}
-          className="px-2.5 py-1 text-xs font-medium text-neutral-600 hover:text-neutral-900 border border-neutral-200 rounded-lg bg-white transition-colors disabled:opacity-50"
+          className="px-2.5 py-1 text-xs font-medium text-neutral-600 hover:text-neutral-900 border border-neutral-200 rounded-xl bg-white transition-colors disabled:opacity-50"
         >
           Keep plan
         </button>
         <button
           onClick={handleCancel}
           disabled={isPending}
-          className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-lg transition-colors disabled:opacity-50 shadow-2xs"
+          className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-xl transition-colors disabled:opacity-50 shadow-xs"
         >
           {isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
           {isPending ? "Cancelling..." : "Confirm cancel"}

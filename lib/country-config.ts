@@ -341,6 +341,17 @@ export function maskPhoneInternational(phone: string | null | undefined): string
 export function detectCountryFromHeaders(headers: {
   get(name: string): string | null | undefined;
 }): SupportedCountryCode {
+  // 0. Path / URL check if forwarded via custom headers
+  const reqPath = (
+    headers.get("x-invoke-path") ||
+    headers.get("x-url") ||
+    headers.get("next-url") ||
+    headers.get("x-pathname") ||
+    ""
+  ).toLowerCase();
+  if (reqPath.startsWith("/uk") || reqPath.includes("-uk")) return "GB";
+  if (reqPath.startsWith("/in") || reqPath.includes("-india")) return "IN";
+
   // 1. Vercel Geo-IP header (injected automatically on Vercel Edge & Serverless)
   const vercelCountry = headers.get("x-vercel-ip-country")?.trim().toUpperCase();
   if (vercelCountry === "GB" || vercelCountry === "UK") return "GB";
@@ -367,21 +378,50 @@ export function detectCountryFromHeaders(headers: {
 
   // 5. Browser Accept-Language header
   const acceptLang = headers.get("accept-language")?.toLowerCase() || "";
+  // Check Indian languages first to prevent false UK detection on Indian browsers
+  if (
+    acceptLang.includes("en-in") ||
+    acceptLang.includes("hi-in") ||
+    acceptLang.includes("ta-in") ||
+    acceptLang.includes("te-in") ||
+    acceptLang.includes("hi") ||
+    acceptLang.includes("ta")
+  ) {
+    return "IN";
+  }
   if (acceptLang.includes("en-gb")) return "GB";
-  if (acceptLang.includes("en-in") || acceptLang.includes("hi-in") || acceptLang.includes("ta-in")) return "IN";
 
   return "IN";
 }
 
 /**
  * Automatically detects country on the client (browser) without permissions popups.
- * Priority: Query param -> Saved preference (localStorage) -> Browser Timezone -> Browser Language -> Default (IN).
+ * Priority: Pathname -> Query param -> Saved preference (localStorage) -> Browser Timezone -> Browser Language -> Default (IN).
  */
 export function detectCountryClient(): "IN" | "GB" {
   if (typeof window === "undefined") return "IN";
 
   try {
-    // 1. Explicit query parameter override (e.g. ?country=GB)
+    // 0. Dedicated regional route pathnames strictly dictate market
+    const pathname = window.location.pathname.toLowerCase();
+    if (
+      pathname === "/uk" ||
+      pathname.startsWith("/uk/") ||
+      pathname.includes("-uk") ||
+      pathname.includes("-uk/")
+    ) {
+      return "GB";
+    }
+    if (
+      pathname === "/in" ||
+      pathname.startsWith("/in/") ||
+      pathname.includes("-india") ||
+      pathname.includes("-india/")
+    ) {
+      return "IN";
+    }
+
+    // 1. Explicit query parameter override (e.g. ?country=GB or ?country=IN)
     const urlParams = new URLSearchParams(window.location.search);
     const qCountry = urlParams.get("country")?.toUpperCase();
     if (qCountry === "GB" || qCountry === "UK") return "GB";
@@ -392,8 +432,21 @@ export function detectCountryClient(): "IN" | "GB" {
     if (stored === "GB" || stored === "UK") return "GB";
     if (stored === "IN") return "IN";
 
-    // 3. Browser system timezone (Instant, 0 latency, 0 permissions)
-    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    // 3. Browser system timezone & offset (Instant, 0 latency, 0 permissions)
+    // CRITICAL: Check Indian timezone FIRST before checking browser languages!
+    // Many Indian users have Macs or PCs configured to English (UK) by default.
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
+    const offset = new Date().getTimezoneOffset(); // Indian Standard Time (IST) is UTC+5:30 -> offset is -330
+    if (
+      tz === "Asia/Kolkata" ||
+      tz === "Asia/Calcutta" ||
+      tz.includes("Kolkata") ||
+      tz.includes("Calcutta") ||
+      offset === -330
+    ) {
+      return "IN";
+    }
+
     if (
       tz === "Europe/London" ||
       tz === "Europe/Belfast" ||
@@ -407,10 +460,36 @@ export function detectCountryClient(): "IN" | "GB" {
     }
 
     // 4. Browser languages
+    // Never return GB if timezone offset indicates Indian Standard Time (-330)
+    // or if navigator.languages also includes an Indian locale.
     const navLangs = navigator.languages || [navigator.language || ""];
+    const hasIndianLang = navLangs.some((l) => {
+      const lower = l.toLowerCase();
+      return (
+        lower === "en-in" ||
+        lower.startsWith("en-in") ||
+        lower.startsWith("hi") ||
+        lower.startsWith("ta") ||
+        lower.startsWith("te") ||
+        lower.startsWith("kn") ||
+        lower.startsWith("mr") ||
+        lower.startsWith("bn") ||
+        lower.startsWith("gu") ||
+        lower.startsWith("ml") ||
+        lower.startsWith("pa")
+      );
+    });
+
+    if (hasIndianLang) {
+      return "IN";
+    }
+
     for (const l of navLangs) {
       const lower = l.toLowerCase();
-      if (lower === "en-gb" || lower.startsWith("en-gb")) return "GB";
+      if (lower === "en-gb" || lower.startsWith("en-gb")) {
+        if (offset === -330) return "IN";
+        return "GB";
+      }
     }
   } catch {
     // Ignore and fallback
@@ -422,12 +501,16 @@ export function detectCountryClient(): "IN" | "GB" {
 /**
  * Saves user market choice across both localStorage and Cookie so both
  * server components (Next.js headers/cookies) and client components stay in sync.
+ * Also dispatches a browser custom event so active UI components update reactively.
  */
 export function persistCountryPreference(country: "IN" | "GB"): void {
   if (typeof window === "undefined") return;
   try {
     window.localStorage.setItem("urpass_country", country);
     document.cookie = `urpass_country=${country}; path=/; max-age=31536000; SameSite=Lax`;
+    window.dispatchEvent(
+      new CustomEvent("urpass_country_changed", { detail: { country } })
+    );
   } catch {
     // Ignore
   }

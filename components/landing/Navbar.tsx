@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, X, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { detectCountryClient } from "@/lib/country-config";
+import { detectCountryClient, persistCountryPreference } from "@/lib/country-config";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -38,7 +38,25 @@ export default function Navbar() {
 
   useEffect(() => {
     setIsUk(detectCountryClient() === "GB");
-  }, []);
+
+    const onCountryChanged = (e: Event) => {
+      const custom = e as CustomEvent<{ country: "IN" | "GB" }>;
+      if (custom.detail?.country) {
+        setIsUk(custom.detail.country === "GB");
+      }
+    };
+    window.addEventListener("urpass_country_changed", onCountryChanged);
+    return () => window.removeEventListener("urpass_country_changed", onCountryChanged);
+  }, [pathname]);
+
+  function handleMarketChange(target: "IN" | "GB") {
+    persistCountryPreference(target);
+    setIsUk(target === "GB");
+  }
+
+  function toggleMarket() {
+    handleMarketChange(isUk ? "IN" : "GB");
+  }
 
   useEffect(() => {
     function onScroll() {
@@ -140,6 +158,18 @@ export default function Navbar() {
 
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center gap-2.5">
+            {/* Regional Market Switcher */}
+            <button
+              type="button"
+              onClick={toggleMarket}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-neutral-200/90 bg-neutral-50/80 hover:bg-neutral-100 hover:border-neutral-300 text-xs font-medium text-neutral-700 transition-all shadow-2xs cursor-pointer"
+              title={isUk ? "Viewing UK market (£ GBP). Click to switch to India (₹ INR)" : "Viewing India market (₹ INR). Click to switch to UK (£ GBP)"}
+              aria-label="Switch regional market"
+            >
+              <span className="text-sm leading-none">{isUk ? "🇬🇧" : "🇮🇳"}</span>
+              <span className="font-semibold text-[11px] tracking-tight">{isUk ? "UK (£)" : "IN (₹)"}</span>
+            </button>
+
             <Link
               href="/contact?subject=Book%20a%20Demo"
               className="text-sm font-medium text-neutral-600 hover:text-neutral-900 px-3 py-2 rounded-xl hover:bg-neutral-100 transition-colors"
@@ -208,6 +238,34 @@ export default function Navbar() {
             >
               Contact
             </Link>
+
+            {/* Mobile Market Switcher */}
+            <div className="pt-2 border-t border-neutral-100 flex items-center justify-between py-1 text-xs text-neutral-600">
+              <span className="font-medium text-neutral-700">Market &amp; Currency:</span>
+              <div className="inline-flex p-0.5 bg-neutral-100 rounded-lg border border-neutral-200/70">
+                <button
+                  type="button"
+                  onClick={() => handleMarketChange("IN")}
+                  className={cn(
+                    "px-2.5 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer",
+                    !isUk ? "bg-white text-neutral-900 shadow-xs" : "text-neutral-500 hover:text-neutral-900"
+                  )}
+                >
+                  🇮🇳 India (₹)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleMarketChange("GB")}
+                  className={cn(
+                    "px-2.5 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer",
+                    isUk ? "bg-white text-neutral-900 shadow-xs" : "text-neutral-500 hover:text-neutral-900"
+                  )}
+                >
+                  🇬🇧 UK (£)
+                </button>
+              </div>
+            </div>
+
             <div className="pt-2 border-t border-neutral-100 flex flex-col gap-2">
               <Link
                 href="/contact?subject=Book%20a%20Demo"

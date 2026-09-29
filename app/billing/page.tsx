@@ -130,14 +130,14 @@ interface Subscription {
 
 function BillingShellSkeleton() {
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-7 animate-pulse">
-      <div className="h-10 bg-slate-200/70 rounded-lg w-1/3" />
-      <div className="h-10 bg-slate-200/50 rounded-lg w-80" />
-      <div className="h-44 bg-white border border-slate-200 rounded-xl" />
+    <div className="max-w-6xl mx-auto space-y-6 animate-pulse">
+      <div className="h-10 bg-neutral-200/70 rounded-2xl w-1/3" />
+      <div className="h-10 bg-neutral-200/50 rounded-xl w-80" />
+      <div className="h-44 bg-white border border-neutral-200/80 rounded-2xl shadow-sm" />
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="h-28 bg-white border border-slate-200 rounded-xl" />
-        <div className="h-28 bg-white border border-slate-200 rounded-xl" />
-        <div className="h-28 bg-white border border-slate-200 rounded-xl" />
+        <div className="h-28 bg-white border border-neutral-200/80 rounded-2xl shadow-sm" />
+        <div className="h-28 bg-white border border-neutral-200/80 rounded-2xl shadow-sm" />
+        <div className="h-28 bg-white border border-neutral-200/80 rounded-2xl shadow-sm" />
       </div>
     </div>
   );
@@ -250,7 +250,7 @@ export default async function BillingPage(props: {
     .gte("created_at", periodStart.toISOString());
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 page-in">
+    <div className="page-in">
       <Suspense fallback={null}>
         <UpgradeCelebration />
       </Suspense>

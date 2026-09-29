@@ -132,8 +132,8 @@ export default function FounderCheckoutCta({
             : variant === "white"
             ? `w-full sm:w-auto px-8 py-3.5 rounded-2xl font-bold text-sm bg-white text-neutral-950 hover:bg-neutral-100 shadow-xl transition-all inline-flex items-center justify-center gap-2 disabled:opacity-50 ${className}`
             : variant === "billing"
-            ? `inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-brand to-purple-600 hover:from-brand-light hover:to-purple-500 text-white font-semibold text-xs sm:text-sm transition-all shadow-lg active:scale-95 text-center whitespace-nowrap disabled:opacity-50 ${className}`
-            : `inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-2xl font-bold text-sm bg-gradient-to-r from-brand to-purple-600 hover:from-brand-light hover:to-purple-500 text-white shadow-[0_0_30px_rgba(124,58,237,0.4)] transition-all transform active:scale-95 text-center disabled:opacity-50 ${className}`
+            ? `inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-brand to-purple-700 hover:opacity-90 text-white font-semibold text-xs sm:text-sm transition-all shadow-xs active:scale-95 text-center whitespace-nowrap disabled:opacity-50 ${className}`
+            : `inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-2xl font-bold text-sm bg-gradient-to-r from-brand to-purple-600 hover:opacity-90 text-white shadow-[0_0_30px_rgba(124,58,237,0.4)] transition-all transform active:scale-95 text-center disabled:opacity-50 ${className}`
         }
       >
         {children ? (

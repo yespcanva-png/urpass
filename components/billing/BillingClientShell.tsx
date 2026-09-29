@@ -12,7 +12,6 @@ import {
   Users,
   ShieldCheck,
   ArrowRight,
-  ArrowLeft,
   Building2,
   Mail,
   Eye,
@@ -107,34 +106,34 @@ function UsageTile({
   const isMax = pct >= 100;
 
   return (
-    <div className="bg-white border border-slate-200/90 rounded-xl p-5 shadow-xs transition-colors hover:border-slate-300">
+    <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-sm transition-colors hover:border-neutral-300">
       <div className="flex items-center justify-between gap-2 mb-3">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center border border-slate-200/60">
-            <Icon className="w-4 h-4 text-slate-700" />
+          <div className="w-8 h-8 rounded-xl bg-brand-50 flex items-center justify-center border border-brand-100/60 text-brand">
+            <Icon className="w-4 h-4" />
           </div>
-          <p className="text-xs font-semibold text-slate-800">{label}</p>
+          <p className="text-xs font-semibold text-neutral-800">{label}</p>
         </div>
-        <span className="text-[11px] font-semibold text-slate-400 tabular-nums">
+        <span className="text-[11px] font-semibold text-neutral-400 tabular-nums">
           {limit >= 999_999 ? "Unlimited" : `${Math.round(pct)}%`}
         </span>
       </div>
 
       <div className="flex items-baseline gap-1.5 mb-2.5">
-        <span className="text-2xl font-bold tracking-tight text-slate-900 tabular-nums">
+        <span className="text-2xl font-bold tracking-tight text-neutral-900 tabular-nums">
           {used.toLocaleString("en-IN")}
         </span>
-        <span className="text-xs font-medium text-slate-500">
+        <span className="text-xs font-medium text-neutral-500">
           / {limitLabel ?? (limit >= 999_999 ? "Unlimited" : limit.toLocaleString("en-IN"))}
         </span>
       </div>
 
-      <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden mb-2">
+      <div className="h-1.5 bg-neutral-100 rounded-full overflow-hidden mb-2">
         <div
           className="h-full rounded-full transition-all duration-500"
           style={{
             width: `${Math.max(pct, limit >= 999_999 ? 100 : 2)}%`,
-            backgroundColor: isMax ? "#EF4444" : isHigh ? "#F59E0B" : "#0F172A",
+            backgroundColor: isMax ? "#EF4444" : isHigh ? "#F59E0B" : "#6D28D9",
           }}
         />
       </div>
@@ -150,7 +149,7 @@ function UsageTile({
         </p>
       )}
       {!isHigh && !isMax && note && (
-        <p className="text-[11px] text-slate-500 mt-1">{note}</p>
+        <p className="text-[11px] text-neutral-400 mt-1">{note}</p>
       )}
     </div>
   );
@@ -254,48 +253,48 @@ export default function BillingClientShell({
     : `₹${priceMonthly}/month`;
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-7">
-      {/* ── Top Navigation & Page Title ────────────────────────── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200/80">
+    <div className="max-w-6xl mx-auto space-y-6">
+      {/* ── Top Header Bar ────────────────────────────────────────── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-neutral-200/80">
         <div>
-          <Link
-            href="/dashboard"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-900 transition-colors mb-1.5"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Back to Dashboard</span>
-          </Link>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
+          <div className="flex items-center gap-1.5 text-xs text-neutral-400 mb-1">
+            <Link href="/dashboard" className="hover:text-neutral-900 transition-colors">
+              Dashboard
+            </Link>
+            <span>/</span>
+            <span className="text-neutral-600 font-medium">Billing</span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-neutral-900">
             Billing &amp; Subscriptions
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+          <p className="text-xs sm:text-sm text-neutral-500 mt-0.5">
             Manage your plan, track monthly resource quotas, and access official tax invoices.
           </p>
         </div>
 
         <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white border border-slate-200 shadow-2xs">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white border border-neutral-200/80 shadow-xs">
             <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
-            <span className="text-xs font-semibold text-slate-800">{currentPlanName} Plan</span>
-            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 uppercase">
+            <span className="text-xs font-semibold text-neutral-800">{currentPlanName} Plan</span>
+            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-brand-50 text-brand border border-brand-100 uppercase">
               {isTrial ? "Trial" : isFounderPlan ? "Lifetime" : "Active"}
             </span>
           </div>
         </div>
       </div>
 
-      {/* ── Zoho Corporate Tab Navigation ──────────────────────── */}
-      <div className="flex items-center gap-1 bg-slate-100/90 border border-slate-200/80 rounded-xl p-1 max-w-fit shadow-2xs">
+      {/* ── Tab Navigation ──────────────────────────────────────── */}
+      <div className="inline-flex items-center gap-1 bg-neutral-100/90 border border-neutral-200/80 rounded-xl p-1 shadow-xs">
         <button
           type="button"
           onClick={() => handleTabChange("overview")}
           className={`flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg transition-all ${
             activeTab === "overview"
-              ? "bg-white text-slate-900 shadow-xs"
-              : "text-slate-600 hover:text-slate-900"
+              ? "bg-white text-neutral-900 shadow-xs"
+              : "text-neutral-500 hover:text-neutral-900"
           }`}
         >
-          <CreditCard className="w-4 h-4 text-slate-500" />
+          <CreditCard className={`w-4 h-4 ${activeTab === "overview" ? "text-brand" : "text-neutral-400"}`} />
           <span>Overview &amp; Quotas</span>
         </button>
 
@@ -304,11 +303,11 @@ export default function BillingClientShell({
           onClick={() => handleTabChange("plans")}
           className={`flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg transition-all ${
             activeTab === "plans"
-              ? "bg-white text-slate-900 shadow-xs"
-              : "text-slate-600 hover:text-slate-900"
+              ? "bg-white text-neutral-900 shadow-xs"
+              : "text-neutral-500 hover:text-neutral-900"
           }`}
         >
-          <Sparkles className="w-4 h-4 text-slate-500" />
+          <Sparkles className={`w-4 h-4 ${activeTab === "plans" ? "text-brand" : "text-neutral-400"}`} />
           <span>Plans &amp; Upgrades</span>
         </button>
 
@@ -317,14 +316,14 @@ export default function BillingClientShell({
           onClick={() => handleTabChange("invoices")}
           className={`flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg transition-all ${
             activeTab === "invoices"
-              ? "bg-white text-slate-900 shadow-xs"
-              : "text-slate-600 hover:text-slate-900"
+              ? "bg-white text-neutral-900 shadow-xs"
+              : "text-neutral-500 hover:text-neutral-900"
           }`}
         >
-          <Receipt className="w-4 h-4 text-slate-500" />
+          <Receipt className={`w-4 h-4 ${activeTab === "invoices" ? "text-brand" : "text-neutral-400"}`} />
           <span>Tax Invoices</span>
           {invoices.length > 0 && (
-            <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-slate-200 text-slate-700">
+            <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-brand-50 text-brand border border-brand-100">
               {invoices.length}
             </span>
           )}
@@ -335,46 +334,46 @@ export default function BillingClientShell({
           TAB 1: OVERVIEW & QUOTAS
       ═════════════════════════════════════════════════════════════ */}
       {activeTab === "overview" && (
-        <div className="space-y-7 animate-in fade-in-50 duration-150">
+        <div className="space-y-6 animate-in fade-in-50 duration-150">
           {/* Active Subscription Summary Card */}
-          <div className="bg-white rounded-xl border border-slate-200 p-5 sm:p-6 shadow-xs">
+          <div className="bg-white rounded-2xl border border-neutral-200/80 p-5 sm:p-6 shadow-sm">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5">
               <div className="space-y-1.5 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">
                     Current Subscription
                   </span>
                   {isTrial ? (
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 uppercase">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-brand-50 text-brand border border-brand-100 uppercase">
                       30-Day Free Trial
                     </span>
                   ) : isFounderPlan ? (
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase">
                       Founder Lifetime License
                     </span>
                   ) : billingCycle === "annual" && currentPlanSlug !== "free" ? (
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200 uppercase">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-brand-50 text-brand border border-brand-100 uppercase">
                       Annual Billing
                     </span>
                   ) : null}
                 </div>
 
                 <div className="flex items-baseline gap-2.5 flex-wrap">
-                  <h2 className="text-2xl font-bold tracking-tight text-slate-900">
+                  <h2 className="text-2xl font-bold tracking-tight text-neutral-900">
                     {currentPlanName} Plan
                   </h2>
-                  <span className="text-sm font-semibold text-slate-700">
+                  <span className="text-sm font-semibold text-neutral-600">
                     {formattedPlanPrice}
                   </span>
                 </div>
 
                 {isFounderPlan ? (
-                  <div className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700 bg-emerald-50/80 border border-emerald-200/70 px-2.5 py-1 rounded-md">
+                  <div className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700 bg-emerald-50/80 border border-emerald-200/70 px-2.5 py-1 rounded-lg">
                     <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                     <span>Permanent Founder Lifetime Access · Term 2125 · Zero recurring renewal payments</span>
                   </div>
                 ) : isTrial ? (
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-neutral-500">
                     {isUk ? (
                       sub?.cancel_at_period_end
                         ? `Free trial ends ${renewalDate ?? "in 30 days"} (${sub?.has_lifetime_access ? "reverts to Founder Lifetime" : "reverts to Free"})`
@@ -388,7 +387,7 @@ export default function BillingClientShell({
                     )}
                   </p>
                 ) : currentPlanSlug !== "free" && renewalDate ? (
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-neutral-500">
                     {sub?.cancel_at_period_end
                       ? `Cancels ${renewalDate} (${sub?.has_lifetime_access ? "reverts to Founder Lifetime" : "reverts to Free"})`
                       : `Renews on ${renewalDate}${sub?.has_lifetime_access ? " · Founder Lifetime protected" : ""}`}
@@ -403,7 +402,8 @@ export default function BillingClientShell({
                 <button
                   type="button"
                   onClick={() => handleTabChange("plans")}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-slate-900 text-xs font-semibold text-white hover:bg-slate-800 transition-colors shadow-xs"
+                  className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold text-white shadow-xs hover:opacity-90 transition-all"
+                  style={{ background: "linear-gradient(135deg, #6D28D9, #4c1d95)" }}
                 >
                   <span>{currentPlanSlug === "free" ? "Upgrade Plan" : "Change Plan"}</span>
                   <ArrowRight className="w-3.5 h-3.5" />
@@ -416,12 +416,12 @@ export default function BillingClientShell({
           <div>
             <div className="flex items-center justify-between gap-3 mb-3">
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">
                   Resource Consumption
                 </p>
-                <h2 className="text-base font-bold text-slate-900">Monthly Usage Quotas</h2>
+                <h2 className="text-base font-bold text-neutral-900">Monthly Usage Quotas</h2>
               </div>
-              <p className="text-xs text-slate-500 hidden sm:block">
+              <p className="text-xs text-neutral-500 hidden sm:block">
                 Quota resets at the beginning of each billing cycle.
               </p>
             </div>
@@ -454,18 +454,18 @@ export default function BillingClientShell({
           </div>
 
           {/* Recent Invoices Mini Card */}
-          <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs">
+          <div className="bg-white rounded-2xl border border-neutral-200/80 p-5 sm:p-6 shadow-sm">
             <div className="flex items-center justify-between gap-4 mb-3">
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">
                   Billing History
                 </p>
-                <h3 className="text-sm font-bold text-slate-900">Tax Invoices &amp; Receipts</h3>
+                <h3 className="text-sm font-bold text-neutral-900">Tax Invoices &amp; Receipts</h3>
               </div>
               <button
                 type="button"
                 onClick={() => handleTabChange("invoices")}
-                className="text-xs font-semibold text-slate-700 hover:text-slate-900 flex items-center gap-1"
+                className="text-xs font-semibold text-neutral-600 hover:text-neutral-900 flex items-center gap-1 transition-colors"
               >
                 <span>View all ({invoices.length})</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -473,29 +473,29 @@ export default function BillingClientShell({
             </div>
 
             {invoices.length === 0 ? (
-              <p className="text-xs text-slate-500 py-2">
+              <p className="text-xs text-neutral-500 py-2">
                 No invoices recorded yet. Invoices and official payment receipts appear automatically after transactions.
               </p>
             ) : (
-              <div className="divide-y divide-slate-100">
+              <div className="divide-y divide-neutral-100">
                 {invoices.slice(0, 3).map((inv) => (
                   <div key={inv.id} className="py-2.5 flex items-center justify-between gap-3 text-xs">
                     <div className="flex items-center gap-3">
-                      <Receipt className="w-4 h-4 text-slate-400 shrink-0" />
+                      <Receipt className="w-4 h-4 text-neutral-400 shrink-0" />
                       <div>
-                        <p className="font-semibold text-slate-900">{inv.invoice_number}</p>
-                        <p className="text-[11px] text-slate-500">{formatInvoiceDate(inv.invoice_date)}</p>
+                        <p className="font-semibold text-neutral-900">{inv.invoice_number}</p>
+                        <p className="text-[11px] text-neutral-400">{formatInvoiceDate(inv.invoice_date)}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className="font-bold text-slate-900 tabular-nums">
+                      <span className="font-bold text-neutral-900 tabular-nums">
                         {formatInvoiceAmount(inv.total_amount, inv.currency)}
                       </span>
                       <a
                         href={`/api/invoices/${inv.id}/pdf`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="p-1 rounded text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+                        className="p-1.5 rounded-lg text-neutral-400 hover:text-neutral-900 hover:bg-neutral-100 transition-colors"
                         title="View PDF"
                       >
                         <Eye className="w-4 h-4" />
@@ -532,24 +532,24 @@ export default function BillingClientShell({
         <div className="space-y-6 animate-in fade-in-50 duration-150">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">
                 Official Billing Records
               </p>
-              <h2 className="text-base font-bold text-slate-900">Tax Invoice History</h2>
+              <h2 className="text-base font-bold text-neutral-900">Tax Invoice History</h2>
             </div>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-neutral-500">
               Official GST-compliant tax invoices with HSN/SAC codes for corporate accounts.
             </p>
           </div>
 
-          <div className="bg-white border border-slate-200/90 rounded-xl overflow-hidden shadow-xs">
+          <div className="bg-white border border-neutral-200/80 rounded-2xl overflow-hidden shadow-sm">
             {invoices.length === 0 ? (
               <div className="p-8 text-center flex flex-col items-center justify-center">
-                <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center mb-3 text-slate-400 border border-slate-200/60">
+                <div className="w-12 h-12 rounded-2xl bg-neutral-100 flex items-center justify-center mb-3 text-neutral-400 border border-neutral-200/60">
                   <Receipt className="w-5 h-5" />
                 </div>
-                <p className="text-sm font-semibold text-slate-900">No invoices recorded</p>
-                <p className="text-xs text-slate-500 max-w-sm mt-1">
+                <p className="text-sm font-semibold text-neutral-900">No invoices recorded</p>
+                <p className="text-xs text-neutral-500 max-w-sm mt-1">
                   Your official invoices and Razorpay payment receipts will automatically appear here once payments are processed.
                 </p>
               </div>
@@ -557,7 +557,7 @@ export default function BillingClientShell({
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="bg-slate-50/80 border-b border-slate-200/80 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                    <tr className="bg-neutral-50/80 border-b border-neutral-200/80 text-[10px] font-bold uppercase tracking-wider text-neutral-500">
                       <th className="py-3 px-4">Invoice # &amp; Entity</th>
                       <th className="py-3 px-4">Date</th>
                       <th className="py-3 px-4">Amount</th>
@@ -565,28 +565,28 @@ export default function BillingClientShell({
                       <th className="py-3 px-4 text-right">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 text-xs">
+                  <tbody className="divide-y divide-neutral-100 text-xs">
                     {invoices.map((invoice) => {
                       const isRzp = invoice.payment_id?.includes("rzp") || invoice.payment_id?.startsWith("pay_");
                       return (
-                        <tr key={invoice.id} className="hover:bg-slate-50/60 transition-colors">
+                        <tr key={invoice.id} className="hover:bg-neutral-50/60 transition-colors">
                           <td className="py-3.5 px-4">
                             <div className="flex items-center gap-2">
-                              <span className="font-semibold text-slate-900">{invoice.invoice_number}</span>
+                              <span className="font-semibold text-neutral-900">{invoice.invoice_number}</span>
                               {isRzp && (
-                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">
+                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-brand-50 text-brand border border-brand-100">
                                   Razorpay
                                 </span>
                               )}
                             </div>
-                            <p className="text-[11px] text-slate-500 mt-0.5">
+                            <p className="text-[11px] text-neutral-400 mt-0.5">
                               {invoice.customer_name || invoice.seller_name || "URPASS Billing"}
                             </p>
                           </td>
-                          <td className="py-3.5 px-4 text-slate-600 font-medium">
+                          <td className="py-3.5 px-4 text-neutral-600 font-medium">
                             {formatInvoiceDate(invoice.invoice_date)}
                           </td>
-                          <td className="py-3.5 px-4 font-bold text-slate-900 tabular-nums">
+                          <td className="py-3.5 px-4 font-bold text-neutral-900 tabular-nums">
                             {formatInvoiceAmount(invoice.total_amount, invoice.currency)}
                           </td>
                           <td className="py-3.5 px-4">
@@ -601,14 +601,14 @@ export default function BillingClientShell({
                                 href={`/api/invoices/${invoice.id}/pdf`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md border border-slate-200 text-[11px] font-semibold text-slate-700 hover:bg-slate-100 transition-colors"
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-neutral-200 text-[11px] font-semibold text-neutral-700 hover:bg-neutral-100 transition-colors"
                               >
                                 <Eye className="w-3 h-3" />
                                 <span>View</span>
                               </a>
                               <a
                                 href={`/api/invoices/${invoice.id}/pdf?download=1`}
-                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md bg-slate-900 text-[11px] font-semibold text-white hover:bg-slate-800 transition-colors shadow-2xs"
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-neutral-900 text-[11px] font-semibold text-white hover:bg-neutral-800 transition-colors shadow-xs"
                               >
                                 <Download className="w-3 h-3" />
                                 <span>PDF</span>
@@ -627,38 +627,38 @@ export default function BillingClientShell({
       )}
 
       {/* ── Corporate Enterprise & Campus Inquiries ─────────────── */}
-      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs">
+      <div className="rounded-2xl border border-neutral-200/80 bg-white p-6 sm:p-7 shadow-sm">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="space-y-1.5 max-w-2xl">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center">
-                <Building2 className="w-4 h-4 text-slate-700" />
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-brand-50 border border-brand-100/60 flex items-center justify-center text-brand">
+                <Building2 className="w-4 h-4" />
               </div>
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">
                   {isUk ? "UK Higher Education & Campus" : "Campus & Enterprise Solutions"}
                 </p>
-                <h3 className="text-base font-bold text-slate-900">
+                <h3 className="text-base font-bold text-neutral-900">
                   Need institution-wide licensing or custom GST invoicing?
                 </h3>
               </div>
             </div>
-            <p className="text-xs text-slate-600 leading-relaxed pt-1">
+            <p className="text-xs text-neutral-600 leading-relaxed pt-1">
               {isUk
                 ? "We support UK universities, multi-society student unions, and sports syndicates with centralized billing, UK GDPR compliance, and dedicated onboarding."
                 : "We provide college campuses, multi-department institutions, and event enterprises with bulk organizer seats, official GST purchase orders, and dedicated SLAs."}
             </p>
-            <div className="flex items-center gap-4 text-xs text-slate-500 pt-1 flex-wrap">
+            <div className="flex items-center gap-4 text-xs text-neutral-500 pt-1 flex-wrap">
               <span className="flex items-center gap-1.5">
-                <Check className="w-3.5 h-3.5 text-emerald-600" />
+                <Check className="w-3.5 h-3.5 text-brand" />
                 GST Tax Invoices
               </span>
               <span className="flex items-center gap-1.5">
-                <Check className="w-3.5 h-3.5 text-emerald-600" />
+                <Check className="w-3.5 h-3.5 text-brand" />
                 Multi-Committee Seats
               </span>
               <span className="flex items-center gap-1.5">
-                <Check className="w-3.5 h-3.5 text-emerald-600" />
+                <Check className="w-3.5 h-3.5 text-brand" />
                 Dedicated Account SLA
               </span>
             </div>
@@ -667,7 +667,7 @@ export default function BillingClientShell({
           <div className="shrink-0 flex items-center gap-3">
             <Link
               href="/contact"
-              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-xs font-semibold bg-slate-900 text-white hover:bg-slate-800 transition-colors shadow-xs"
+              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold bg-neutral-900 text-white hover:bg-neutral-800 transition-colors shadow-xs"
             >
               <Mail className="w-3.5 h-3.5" />
               <span>Contact Enterprise Sales</span>
@@ -677,9 +677,9 @@ export default function BillingClientShell({
       </div>
 
       {/* ── Corporate Footer Notes ────────────────────────────── */}
-      <div className="pt-4 pb-8 border-t border-slate-200/80 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+      <div className="pt-4 pb-8 border-t border-neutral-200/80 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-neutral-400">
         <div className="flex items-center gap-2">
-          <ShieldCheck className="w-4 h-4 text-slate-400 shrink-0" />
+          <ShieldCheck className="w-4 h-4 text-neutral-400 shrink-0" />
           <p>
             {isUk
               ? "Direct UK activation · Prices in GBP exclude 20% VAT · UK GDPR & DPA compliant"
@@ -689,7 +689,7 @@ export default function BillingClientShell({
         {planCanUseApi && (
           <Link
             href="/dashboard/developer"
-            className="inline-flex items-center gap-1 text-xs font-medium text-slate-600 hover:text-slate-900 transition-colors"
+            className="inline-flex items-center gap-1 text-xs font-medium text-neutral-500 hover:text-neutral-900 transition-colors"
           >
             <span>Developer API</span>
             <ExternalLink className="w-3 h-3" />

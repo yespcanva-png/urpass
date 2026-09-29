@@ -192,7 +192,7 @@ export default function PlanGrid({
       {/* ── Sub-Navigation Tabs ─────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-          <p className="text-[10px] font-bold tracking-wider uppercase text-slate-500">
+          <p className="text-[10px] font-bold tracking-wider uppercase text-neutral-400">
             {tab === "subscription"
               ? "Recurring Memberships · 4 Tiers"
               : tab === "one-event"
@@ -201,19 +201,19 @@ export default function PlanGrid({
               ? "Permanent License · Founder Deal"
               : "All Plans & Passes"}
           </p>
-          <h2 className="text-xl font-bold tracking-tight text-slate-900 mt-0.5">
+          <h2 className="text-xl font-bold tracking-tight text-neutral-900 mt-0.5">
             Select Your Plan or Pass
           </h2>
         </div>
 
-        <div className="flex items-center gap-1 bg-slate-100 border border-slate-200/80 rounded-lg p-1 shrink-0 self-start sm:self-auto flex-wrap">
+        <div className="inline-flex items-center gap-1 bg-neutral-100/90 border border-neutral-200/80 rounded-xl p-1 shrink-0 self-start sm:self-auto flex-wrap shadow-xs">
           <button
             type="button"
             onClick={() => setTab("subscription")}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
+            className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
               tab === "subscription"
-                ? "bg-white text-slate-900 shadow-2xs"
-                : "text-slate-600 hover:text-slate-900"
+                ? "bg-white text-neutral-900 shadow-xs"
+                : "text-neutral-500 hover:text-neutral-900"
             }`}
           >
             Subscriptions
@@ -221,10 +221,10 @@ export default function PlanGrid({
           <button
             type="button"
             onClick={() => setTab("one-event")}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
+            className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
               tab === "one-event"
-                ? "bg-white text-slate-900 shadow-2xs"
-                : "text-slate-600 hover:text-slate-900"
+                ? "bg-white text-neutral-900 shadow-xs"
+                : "text-neutral-500 hover:text-neutral-900"
             }`}
           >
             Single Events
@@ -232,15 +232,15 @@ export default function PlanGrid({
           <button
             type="button"
             onClick={() => setTab("lifetime")}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all flex items-center gap-1.5 ${
+            className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 ${
               tab === "lifetime"
-                ? "bg-white text-slate-900 shadow-2xs"
-                : "text-slate-600 hover:text-slate-900"
+                ? "bg-white text-neutral-900 shadow-xs"
+                : "text-neutral-500 hover:text-neutral-900"
             }`}
           >
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+            <ShieldCheck className="w-3.5 h-3.5 text-brand" />
             <span>Lifetime Deal</span>
-            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-slate-200 text-slate-800">
+            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-purple-50 text-purple-700 border border-purple-200/60">
               {country === "GB" ? "£249" : "₹19,999"}
             </span>
           </button>
@@ -249,7 +249,7 @@ export default function PlanGrid({
 
       {actionNotice && (
         <div
-          className={`mb-6 p-4 rounded-xl border flex items-center justify-between gap-3 text-xs font-medium shadow-xs ${
+          className={`mb-6 p-4 rounded-2xl border flex items-center justify-between gap-3 text-xs font-medium shadow-xs ${
             actionNotice.type === "error"
               ? "bg-rose-50 border-rose-200 text-rose-800"
               : "bg-emerald-50 border-emerald-200 text-emerald-800"
@@ -262,7 +262,7 @@ export default function PlanGrid({
           <button
             type="button"
             onClick={() => setActionNotice(null)}
-            className="p-1 rounded-md hover:bg-black/5 transition-colors"
+            className="p-1 rounded-lg hover:bg-black/5 transition-colors"
           >
             <X className="w-3.5 h-3.5" />
           </button>
@@ -274,21 +274,21 @@ export default function PlanGrid({
         <section className={tab === "all" ? "mb-10" : ""}>
           {/* Corporate 30-Day Free Trial Notice */}
           {!trialUsed && (
-            <div className="mb-6 rounded-xl p-4 bg-blue-50/70 border border-blue-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-slate-800 shadow-2xs">
+            <div className="mb-6 rounded-2xl p-4 bg-brand-50/60 border border-brand-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-neutral-800 shadow-xs">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-lg bg-blue-100 border border-blue-200 flex items-center justify-center text-blue-700 shrink-0">
+                <div className="w-9 h-9 rounded-xl bg-brand-100/70 border border-brand-200/80 flex items-center justify-center text-brand shrink-0">
                   <CalendarCheck className="w-4 h-4" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-xs font-bold text-blue-950">
+                    <span className="text-xs font-bold text-neutral-900">
                       30-Day Free Trial Included
                     </span>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-100 text-blue-800 uppercase tracking-wide">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-brand-100 text-brand-700 uppercase tracking-wide">
                       {country === "GB" ? "No Card Needed" : "AutoPay Protected"}
                     </span>
                   </div>
-                  <p className="text-xs text-blue-700/90 mt-0.5">
+                  <p className="text-xs text-neutral-600 mt-0.5">
                     {country === "GB"
                       ? "Activate Starter, Pro, or Business with 30 days £0 trial. Cancel anytime."
                       : "Explore Starter, Pro, or Business for 30 days free. Cancel anytime before your first billing."}
@@ -301,21 +301,21 @@ export default function PlanGrid({
           {/* Billing cycle toggle & section title */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
             <div>
-              <p className="text-[10px] font-bold tracking-wider uppercase text-slate-400">
+              <p className="text-[10px] font-bold tracking-wider uppercase text-neutral-400">
                 Recurring Membership
               </p>
-              <h3 className="text-base font-bold tracking-tight text-slate-900">
+              <h3 className="text-base font-bold tracking-tight text-neutral-900">
                 Monthly &amp; Annual Subscriptions
               </h3>
             </div>
-            <div className="flex items-center gap-1 bg-slate-100 border border-slate-200/80 rounded-lg p-1 self-start sm:self-auto">
+            <div className="inline-flex items-center gap-1 bg-neutral-100/90 border border-neutral-200/80 rounded-xl p-1 self-start sm:self-auto shadow-xs">
               <button
                 type="button"
                 onClick={() => setCycle("monthly")}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
+                className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
                   cycle === "monthly"
-                    ? "bg-white text-slate-900 shadow-2xs"
-                    : "text-slate-600 hover:text-slate-900"
+                    ? "bg-white text-neutral-900 shadow-xs"
+                    : "text-neutral-500 hover:text-neutral-900"
                 }`}
               >
                 Monthly
@@ -323,14 +323,14 @@ export default function PlanGrid({
               <button
                 type="button"
                 onClick={() => setCycle("annual")}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all flex items-center gap-1.5 ${
+                className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 ${
                   cycle === "annual"
-                    ? "bg-white text-slate-900 shadow-2xs"
-                    : "text-slate-600 hover:text-slate-900"
+                    ? "bg-white text-neutral-900 shadow-xs"
+                    : "text-neutral-500 hover:text-neutral-900"
                 }`}
               >
                 Annual
-                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200/70">
+                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-brand-50 text-brand border border-brand-100">
                   Save 17%
                 </span>
               </button>
@@ -371,42 +371,52 @@ export default function PlanGrid({
               return (
                 <div
                   key={p.slug}
-                  className={`relative rounded-xl p-5 flex flex-col gap-4 transition-all bg-white shadow-xs ${
+                  className={`relative rounded-2xl p-6 flex flex-col gap-4 transition-all bg-white ${
                     isCurrent
-                      ? "border-2 border-emerald-600 ring-2 ring-emerald-500/10"
+                      ? "border-2 border-emerald-600 ring-2 ring-emerald-500/10 shadow-sm"
                       : isMostPopular
-                      ? "border-2 border-slate-900"
-                      : "border border-slate-200/90 hover:border-slate-300"
+                      ? "border-2 border-brand ring-2 ring-brand/10 shadow-md"
+                      : "border border-neutral-200/80 hover:border-neutral-300 shadow-sm"
                   }`}
                 >
                   {isCurrent && (
-                    <span className="absolute -top-2.5 left-4 text-[9px] font-bold tracking-wider bg-emerald-600 text-white px-2.5 py-0.5 rounded-full uppercase shadow-2xs">
+                    <span className="absolute -top-2.5 left-4 text-[9px] font-bold tracking-wider bg-emerald-600 text-white px-2.5 py-0.5 rounded-full uppercase shadow-xs">
                       Active Plan
                     </span>
                   )}
                   {isMostPopular && (
-                    <span className="absolute -top-2.5 left-4 text-[9px] font-bold tracking-wider bg-slate-900 text-white px-2.5 py-0.5 rounded-full uppercase shadow-2xs">
+                    <span className="absolute -top-2.5 left-4 text-[9px] font-bold tracking-wider bg-brand text-white px-2.5 py-0.5 rounded-full uppercase shadow-xs">
                       Most Popular
                     </span>
                   )}
 
                   <div>
-                    <div className="w-8 h-8 rounded-lg flex items-center justify-center mb-3 bg-slate-100 border border-slate-200/60 text-slate-700">
+                    <div
+                      className={`w-9 h-9 rounded-xl flex items-center justify-center mb-3 border ${
+                        p.slug === "pro"
+                          ? "bg-brand-50 border-brand-100 text-brand"
+                          : p.slug === "starter"
+                          ? "bg-purple-50 border-purple-100 text-purple-600"
+                          : p.slug === "business"
+                          ? "bg-sky-50 border-sky-100 text-sky-600"
+                          : "bg-neutral-100 border-neutral-200 text-neutral-600"
+                      }`}
+                    >
                       <Icon className="w-4 h-4" />
                     </div>
-                    <p className="text-[10px] font-bold tracking-wider uppercase mb-1 text-slate-500">
+                    <p className="text-[10px] font-bold tracking-wider uppercase mb-1 text-neutral-400">
                       {p.name}
                     </p>
                     <div className="flex items-baseline gap-1">
-                      <span className="text-2xl font-bold tracking-tight tabular-nums text-slate-900">
+                      <span className="text-2xl font-bold tracking-tight tabular-nums text-neutral-900">
                         {displayPrice}
                       </span>
                       {displayPeriod && (
-                        <span className="text-xs text-slate-500">{displayPeriod}</span>
+                        <span className="text-xs text-neutral-400">{displayPeriod}</span>
                       )}
                     </div>
                     {monthlyEquiv && (
-                      <p className="text-[11px] mt-0.5 tabular-nums text-slate-500">
+                      <p className="text-[11px] mt-0.5 tabular-nums text-neutral-400">
                         {monthlyEquiv} equivalent
                       </p>
                     )}
@@ -415,17 +425,17 @@ export default function PlanGrid({
                   <ul className="flex flex-col gap-2 flex-1">
                     {p.features.map((f) => (
                       <li key={f} className="flex items-start gap-2">
-                        <span className="w-4 h-4 rounded-full flex items-center justify-center shrink-0 mt-0.5 bg-slate-100 border border-slate-200/60">
-                          <Check className="w-2.5 h-2.5 text-slate-700" />
+                        <span className="w-4 h-4 rounded-full flex items-center justify-center shrink-0 mt-0.5 bg-brand-50 border border-brand-100/60">
+                          <Check className="w-2.5 h-2.5 text-brand" />
                         </span>
-                        <span className="text-xs leading-relaxed text-slate-600">{f}</span>
+                        <span className="text-xs leading-relaxed text-neutral-600">{f}</span>
                       </li>
                     ))}
                   </ul>
 
                   <div>
                     {isCurrent ? (
-                      <div className="w-full text-center text-xs font-semibold py-2.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-500">
+                      <div className="w-full text-center text-xs font-semibold py-2.5 rounded-xl border border-neutral-200 bg-neutral-50 text-neutral-400">
                         Current Plan
                       </div>
                     ) : !trialUsed && p.priceMonthly > 0 ? (
@@ -433,11 +443,20 @@ export default function PlanGrid({
                         <button
                           type="button"
                           onClick={() => setTrialModal({ planSlug: p.slug, planName: p.name })}
-                          className="w-full py-2.5 text-xs font-semibold rounded-lg text-white bg-slate-900 hover:bg-slate-800 transition-colors shadow-xs"
+                          className={`w-full py-2.5 text-xs font-semibold rounded-xl text-white shadow-xs transition-all hover:opacity-90 ${
+                            isMostPopular
+                              ? "bg-brand hover:bg-brand-600"
+                              : "bg-neutral-900 hover:bg-neutral-800"
+                          }`}
+                          style={
+                            isMostPopular
+                              ? { background: "linear-gradient(135deg, #6D28D9, #4c1d95)" }
+                              : undefined
+                          }
                         >
                           Start 30-Day Free Trial
                         </button>
-                        <p className="text-[10px] text-center text-slate-500 font-medium">
+                        <p className="text-[10px] text-center text-neutral-400 font-medium">
                           {country === "GB"
                             ? "£0 for 30 days · Cancel anytime"
                             : "₹0 for 30 days · Cancel anytime"}
@@ -468,7 +487,12 @@ export default function PlanGrid({
                             }
                           }}
                           disabled={activatingSlug === p.slug}
-                          className="w-full py-2.5 text-xs font-semibold rounded-lg text-white bg-slate-900 hover:bg-slate-800 transition-colors shadow-xs disabled:opacity-50"
+                          className="w-full py-2.5 text-xs font-semibold rounded-xl text-white bg-neutral-900 hover:bg-neutral-800 transition-colors shadow-xs disabled:opacity-50"
+                          style={
+                            isUpgrade && isMostPopular
+                              ? { background: "linear-gradient(135deg, #6D28D9, #4c1d95)" }
+                              : undefined
+                          }
                         >
                           {activatingSlug === p.slug
                             ? "Activating..."
@@ -483,7 +507,12 @@ export default function PlanGrid({
                           billingCycle={cycle}
                           userEmail={userEmail}
                           userName={userName}
-                          className="w-full py-2.5 text-xs font-semibold rounded-lg text-white bg-slate-900 hover:bg-slate-800 transition-colors shadow-xs disabled:opacity-50"
+                          className="w-full py-2.5 text-xs font-semibold rounded-xl text-white bg-neutral-900 hover:bg-neutral-800 transition-colors shadow-xs disabled:opacity-50"
+                          style={
+                            isUpgrade && isMostPopular
+                              ? { background: "linear-gradient(135deg, #6D28D9, #4c1d95)" }
+                              : undefined
+                          }
                         >
                           {isUpgrade ? `Upgrade to ${p.name}` : `Switch to ${p.name}`}
                         </CheckoutButton>
@@ -492,7 +521,7 @@ export default function PlanGrid({
                       <SwitchPlanButton
                         planSlug={p.slug}
                         planName={p.name}
-                        className="w-full py-2.5 text-xs font-medium rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs"
+                        className="w-full py-2.5 text-xs font-medium rounded-xl border border-neutral-200 text-neutral-700 hover:bg-neutral-50 transition-colors shadow-xs"
                       />
                     )}
                   </div>
@@ -505,18 +534,18 @@ export default function PlanGrid({
 
       {/* ── Single Event Passes section ────────────────────── */}
       {(tab === "one-event" || tab === "all") && (
-        <section className={tab === "all" ? "mt-12 pt-10 border-t border-slate-200/80" : ""}>
+        <section className={tab === "all" ? "mt-12 pt-10 border-t border-neutral-200/80" : ""}>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
             <div>
-              <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200/60 text-[10px] font-bold tracking-wider uppercase text-slate-700 mb-1">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-brand-50 border border-brand-100 text-[10px] font-bold tracking-wider uppercase text-brand mb-1">
                 Pay As You Go
               </div>
-              <h3 className="text-lg font-bold tracking-tight text-slate-900">Single Event Passes</h3>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <h3 className="text-lg font-bold tracking-tight text-neutral-900">Single Event Passes</h3>
+              <p className="text-xs text-neutral-500 mt-0.5">
                 Don&apos;t run events every month? Pay only for your next event with zero recurring renewal fees. Passes remain attached to your account until used.
               </p>
             </div>
-            <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 border border-slate-200/60 self-start sm:self-auto shrink-0">
+            <span className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-neutral-100 text-neutral-700 border border-neutral-200 self-start sm:self-auto shrink-0">
               3 Single-Event Tiers
             </span>
           </div>
@@ -535,33 +564,33 @@ export default function PlanGrid({
               return (
                 <div
                   key={p.slug}
-                  className="relative rounded-xl p-5 flex flex-col gap-4 bg-white border border-slate-200/80 hover:border-slate-300 shadow-xs transition-all"
+                  className="relative rounded-2xl p-6 flex flex-col gap-4 bg-white border border-neutral-200/80 hover:border-neutral-300 shadow-sm transition-all"
                 >
                   <div>
-                    <div className="w-8 h-8 rounded-lg flex items-center justify-center mb-3 bg-slate-100 border border-slate-200/60 text-slate-700">
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-3 bg-brand-50 border border-brand-100/60 text-brand">
                       <p.Icon className="w-4 h-4" />
                     </div>
-                    <p className="text-[10px] font-bold tracking-wider uppercase mb-1 text-slate-500">
+                    <p className="text-[10px] font-bold tracking-wider uppercase mb-1 text-neutral-400">
                       {p.name}
                     </p>
                     <div className="flex items-baseline gap-1">
-                      <span className="text-2xl font-bold tracking-tight text-slate-900 tabular-nums">
+                      <span className="text-2xl font-bold tracking-tight text-neutral-900 tabular-nums">
                         {displayOneTimePrice}
                       </span>
-                      <span className="text-xs text-slate-500">/event</span>
+                      <span className="text-xs text-neutral-400">/event</span>
                     </div>
-                    <p className="text-[11px] text-slate-500 mt-0.5 tabular-nums">{displayTaxSub}</p>
+                    <p className="text-[11px] text-neutral-400 mt-0.5 tabular-nums">{displayTaxSub}</p>
                   </div>
 
-                  <p className="text-xs font-medium text-slate-600 -mt-2">{p.bestFor}</p>
+                  <p className="text-xs font-medium text-neutral-600 -mt-2">{p.bestFor}</p>
 
                   <ul className="flex flex-col gap-2 flex-1">
                     {p.features.map((f) => (
                       <li key={f} className="flex items-start gap-2">
-                        <span className="w-4 h-4 rounded-full flex items-center justify-center shrink-0 mt-0.5 bg-slate-100 border border-slate-200/60">
-                          <Check className="w-2.5 h-2.5 text-slate-700" />
+                        <span className="w-4 h-4 rounded-full flex items-center justify-center shrink-0 mt-0.5 bg-brand-50 border border-brand-100/60">
+                          <Check className="w-2.5 h-2.5 text-brand" />
                         </span>
-                        <span className="text-xs leading-relaxed text-slate-600">{f}</span>
+                        <span className="text-xs leading-relaxed text-neutral-600">{f}</span>
                       </li>
                     ))}
                   </ul>
@@ -598,7 +627,7 @@ export default function PlanGrid({
                       }
                     }}
                     disabled={activatingPass === p.slug}
-                    className="w-full py-2.5 text-xs font-semibold rounded-lg text-white bg-slate-900 hover:bg-slate-800 transition-colors shadow-xs disabled:opacity-50"
+                    className="w-full py-2.5 text-xs font-semibold rounded-xl text-white bg-neutral-900 hover:bg-neutral-800 transition-colors shadow-xs disabled:opacity-50"
                   >
                     {activatingPass === p.slug ? "Activating..." : `Buy ${p.name}`}
                   </button>
@@ -607,8 +636,8 @@ export default function PlanGrid({
             })}
           </div>
 
-          <div className="flex items-center justify-center gap-2 mt-4 text-[11px] text-slate-500 font-medium">
-            <ShieldCheck className="w-3.5 h-3.5 text-slate-400" />
+          <div className="flex items-center justify-center gap-2 mt-4 text-[11px] text-neutral-400 font-medium">
+            <ShieldCheck className="w-3.5 h-3.5 text-neutral-400" />
             <span>One-time payment · No recurring renewal charges · Attach to any event after purchase</span>
           </div>
         </section>
@@ -616,43 +645,43 @@ export default function PlanGrid({
 
       {/* ── Lifetime License section ────────────────────────── */}
       {(tab === "lifetime" || tab === "all") && (
-        <section className={tab === "all" ? "mt-10 pt-8 border-t border-slate-200/80" : ""}>
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-7 shadow-xs">
+        <section className={tab === "all" ? "mt-10 pt-8 border-t border-neutral-200/80" : ""}>
+          <div className="bg-white rounded-2xl border border-neutral-200/80 p-6 sm:p-7 shadow-sm">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
               <div className="space-y-2 max-w-2xl">
                 <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-purple-50 border border-purple-200 text-purple-700 text-[10px] font-bold tracking-wider uppercase">
                   <ShieldCheck className="w-3.5 h-3.5 text-purple-600" />
                   <span>Permanent Founder License</span>
                 </div>
-                <h3 className="text-xl font-bold tracking-tight text-slate-900">
+                <h3 className="text-xl font-bold tracking-tight text-neutral-900">
                   URPASS Founder Lifetime Access — {country === "GB" ? "£249" : "₹19,999"} One-Time
                 </h3>
-                <p className="text-xs text-slate-600 leading-relaxed">
+                <p className="text-xs text-neutral-600 leading-relaxed">
                   Permanent operational access to all core URPASS capabilities with zero recurring renewal fees forever (Term 2125). Includes unlimited events, unlimited registrations, and 50 organizer seats.
                 </p>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-2 text-xs text-slate-600">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-2 text-xs text-neutral-600">
                   <span className="flex items-center gap-1.5">
-                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <Check className="w-3.5 h-3.5 text-brand shrink-0" />
                     Unlimited Events Forever
                   </span>
                   <span className="flex items-center gap-1.5">
-                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <Check className="w-3.5 h-3.5 text-brand shrink-0" />
                     Unlimited Registrations
                   </span>
                   <span className="flex items-center gap-1.5">
-                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <Check className="w-3.5 h-3.5 text-brand shrink-0" />
                     50 Team Organizer Seats
                   </span>
                   <span className="flex items-center gap-1.5">
-                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <Check className="w-3.5 h-3.5 text-brand shrink-0" />
                     Custom Pass Design &amp; Branding
                   </span>
                   <span className="flex items-center gap-1.5">
-                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <Check className="w-3.5 h-3.5 text-brand shrink-0" />
                     API, Webhooks &amp; Custom Domain
                   </span>
                   <span className="flex items-center gap-1.5">
-                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <Check className="w-3.5 h-3.5 text-brand shrink-0" />
                     Zero Renewal Fees
                   </span>
                 </div>
@@ -667,7 +696,7 @@ export default function PlanGrid({
                 />
                 <Link
                   href="/founder-lifetime-deal"
-                  className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 font-semibold text-xs transition-colors"
+                  className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-neutral-200 text-neutral-700 hover:bg-neutral-50 font-semibold text-xs transition-colors"
                 >
                   <span>Details</span>
                   <ArrowRight className="w-3.5 h-3.5" />

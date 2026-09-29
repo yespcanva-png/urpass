@@ -274,7 +274,7 @@ describe("POST /api/webhook/razorpay", () => {
     expect(json.received).toBe(true);
   });
 
-  it("returns 400 when payment notes are missing user_id", async () => {
+  it("acknowledges with 200 and ignores when payment notes are missing user_id to prevent Razorpay deactivation", async () => {
     const { POST } = await import("@/app/api/webhook/razorpay/route");
     const body = JSON.stringify({
       event: "payment.captured",
@@ -287,6 +287,50 @@ describe("POST /api/webhook/razorpay", () => {
       headers: { "x-razorpay-signature": sig, "Content-Type": "application/json" },
     });
     const res = await POST(req);
-    expect(res.status).toBe(400);
+    const json = await res.json();
+    expect(res.status).toBe(200);
+    expect(json.received).toBe(true);
+    expect(json.ignored).toBe(true);
+  });
+
+  it("handles GET and HEAD health checks with 200 OK on both routes", async () => {
+    const singular = await import("@/app/api/webhook/razorpay/route");
+    const plural = await import("@/app/api/webhooks/razorpay/route");
+
+    const getResSingular = await singular.GET();
+    expect(getResSingular.status).toBe(200);
+    const getJsonSingular = await getResSingular.json();
+    expect(getJsonSingular.status).toBe("active");
+
+    const headResSingular = await singular.HEAD();
+    expect(headResSingular.status).toBe(200);
+
+    const getResPlural = await plural.GET();
+    expect(getResPlural.status).toBe(200);
+    const getJsonPlural = await getResPlural.json();
+    expect(getJsonPlural.status).toBe("active");
+
+    const headResPlural = await plural.HEAD();
+    expect(headResPlural.status).toBe(200);
+  });
+
+  it("validates signature against RAZORPAY_KEY_SECRET when WEBHOOK_SECRET is fallback", async () => {
+    const KEY_SECRET = "fallback-key-secret";
+    vi.stubEnv("RAZORPAY_WEBHOOK_SECRET", "your_webhook_secret"); // placeholder in env
+    vi.stubEnv("RAZORPAY_KEY_SECRET", KEY_SECRET);
+
+    const { POST } = await import("@/app/api/webhooks/razorpay/route");
+    const body = JSON.stringify({ event: "payment.failed" });
+    const sig = crypto.createHmac("sha256", KEY_SECRET).update(body).digest("hex");
+
+    const req = new NextRequest("http://localhost/api/webhooks/razorpay", {
+      method: "POST",
+      body,
+      headers: { "x-razorpay-signature": sig, "Content-Type": "application/json" },
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json.received).toBe(true);
   });
 });

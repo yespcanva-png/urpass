@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ShieldCheck, ArrowRight } from "lucide-react";
 import AnimateIn from "@/components/ui/AnimateIn";
-import { detectCountryClient } from "@/lib/country-config";
+import { detectCountryClient, persistCountryPreference } from "@/lib/country-config";
 
 interface Props {
   initialCountry?: "IN" | "GB";
@@ -18,7 +18,21 @@ export default function HomePricingSection({ initialCountry = "IN" }: Props) {
     if (detected) {
       setCountry(detected);
     }
+
+    const onCountryChanged = (e: Event) => {
+      const custom = e as CustomEvent<{ country: "IN" | "GB" }>;
+      if (custom.detail?.country) {
+        setCountry(custom.detail.country);
+      }
+    };
+    window.addEventListener("urpass_country_changed", onCountryChanged);
+    return () => window.removeEventListener("urpass_country_changed", onCountryChanged);
   }, []);
+
+  function handleMarketChange(target: "IN" | "GB") {
+    setCountry(target);
+    persistCountryPreference(target);
+  }
 
   const isUk = country === "GB";
 
@@ -182,6 +196,28 @@ export default function HomePricingSection({ initialCountry = "IN" }: Props) {
             <p className="mt-2 sm:mt-3 text-neutral-500 text-xs sm:text-sm">
               {subheaderText}
             </p>
+
+            {/* Regional Market Switcher */}
+            <div className="mt-4 inline-flex items-center bg-neutral-200/80 rounded-xl p-1 gap-1 border border-neutral-300/70 shadow-2xs">
+              <button
+                type="button"
+                onClick={() => handleMarketChange("IN")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${!isUk ? "bg-white text-neutral-900 shadow-xs" : "text-neutral-600 hover:text-neutral-900"}`}
+                title="View India plans in INR (₹) with UPI & Razorpay"
+              >
+                <span className="text-sm leading-none">🇮🇳</span>
+                <span>India (₹)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleMarketChange("GB")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${isUk ? "bg-white text-neutral-900 shadow-xs" : "text-neutral-600 hover:text-neutral-900"}`}
+                title="View UK plans in GBP (£) with Stripe & 0% fee"
+              >
+                <span className="text-sm leading-none">🇬🇧</span>
+                <span>UK (£)</span>
+              </button>
+            </div>
           </div>
         </AnimateIn>
 

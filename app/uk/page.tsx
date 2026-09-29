@@ -29,7 +29,14 @@ export const metadata: Metadata = {
     "university society event management uk",
     "conference qr check-in london",
   ],
-  alternates: { canonical: "https://urpass.space/uk" },
+  alternates: {
+    canonical: "https://urpass.space/uk",
+    languages: {
+      "en-GB": "https://urpass.space/uk",
+      "en-IN": "https://urpass.space/in",
+      "x-default": "https://urpass.space",
+    },
+  },
   openGraph: {
     title: "UK Event Ticketing & QR Check-In Software | 0% Commission | URPASS",
     description:
@@ -37,6 +44,22 @@ export const metadata: Metadata = {
     url: "https://urpass.space/uk",
     locale: "en_GB",
     type: "website",
+    images: [
+      {
+        url: "https://urpass.space/og-image-uk.png",
+        width: 1200,
+        height: 630,
+        type: "image/png",
+        alt: "URPASS UK — 0% Commission Event Ticketing & Lightning QR Check-In",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "UK Event Ticketing & QR Check-In Software | 0% Commission | URPASS",
+    description:
+      "Sell tickets and check in attendees across the UK with 0% platform commission. Browser-based QR scanning in <0.3s, UK GDPR compliance, and transparent GBP plans.",
+    images: ["https://urpass.space/og-image-uk.png"],
   },
   other: {
     "geo.region": "GB",

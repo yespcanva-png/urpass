@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Check, Minus, ChevronDown, ShieldCheck, ArrowRight } from "lucide-react";
 import TrialConfirmationModal from "@/components/billing/TrialConfirmationModal";
 import FounderSpotCounter from "@/components/billing/FounderSpotCounter";
-import { detectCountryClient } from "@/lib/country-config";
+import { detectCountryClient, persistCountryPreference } from "@/lib/country-config";
 
 type Cycle = "monthly" | "annual";
 
@@ -259,7 +259,21 @@ export default function PricingContent({
     if (detected) {
       setCountry(detected);
     }
+
+    const onCountryChanged = (e: Event) => {
+      const custom = e as CustomEvent<{ country: "IN" | "GB" }>;
+      if (custom.detail?.country) {
+        setCountry(custom.detail.country);
+      }
+    };
+    window.addEventListener("urpass_country_changed", onCountryChanged);
+    return () => window.removeEventListener("urpass_country_changed", onCountryChanged);
   }, []);
+
+  function handleCountryChange(newCountry: "IN" | "GB") {
+    setCountry(newCountry);
+    persistCountryPreference(newCountry);
+  }
 
   function displayPrice(plan: typeof PLANS[0]) {
     if (country === "GB") {
@@ -286,7 +300,19 @@ export default function PricingContent({
       {/* ── Header ── */}
       <header className="border-b border-neutral-100 px-6 py-4 flex items-center justify-between">
         <Link href="/" className="font-semibold tracking-tight text-base text-neutral-900">URPASS</Link>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 sm:gap-4">
+          {/* Regional Market Switcher */}
+          <button
+            type="button"
+            onClick={() => handleCountryChange(country === "GB" ? "IN" : "GB")}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-neutral-200/90 bg-neutral-50/80 hover:bg-neutral-100 text-xs font-medium text-neutral-700 transition-all cursor-pointer shadow-2xs"
+            title={country === "GB" ? "Viewing UK pricing (£). Click to switch to India (₹)" : "Viewing India pricing (₹). Click to switch to UK (£)"}
+            aria-label="Toggle currency market"
+          >
+            <span className="text-sm leading-none">{country === "GB" ? "🇬🇧" : "🇮🇳"}</span>
+            <span className="font-semibold text-[11px] tracking-tight">{country === "GB" ? "UK (£)" : "IN (₹)"}</span>
+          </button>
+
           {isAuthenticated ? (
             <Link href="/dashboard" className="text-sm bg-neutral-900 text-white px-4 py-2 rounded-lg hover:bg-neutral-700 transition-colors">
               Dashboard
@@ -341,23 +367,50 @@ export default function PricingContent({
             </>
           )}
 
-          {/* Monthly / Annual toggle */}
-          <div className="inline-flex items-center bg-neutral-100 rounded-xl p-1 gap-1">
-            <button
-              onClick={() => setCycle("monthly")}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${cycle === "monthly" ? "bg-white text-neutral-900 shadow-sm" : "text-neutral-500 hover:text-neutral-700"}`}
-            >
-              Monthly
-            </button>
-            <button
-              onClick={() => setCycle("annual")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${cycle === "annual" ? "bg-white text-neutral-900 shadow-sm" : "text-neutral-500 hover:text-neutral-700"}`}
-            >
-              Annual
-              <span className="text-[10px] font-bold tracking-wider text-brand bg-brand-50 px-2 py-0.5 rounded-full">
-                SAVE 2 MO
-              </span>
-            </button>
+          {/* Toggles Container */}
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            {/* Monthly / Annual billing cycle toggle */}
+            <div className="inline-flex items-center bg-neutral-100 rounded-xl p-1 gap-1">
+              <button
+                type="button"
+                onClick={() => setCycle("monthly")}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${cycle === "monthly" ? "bg-white text-neutral-900 shadow-sm" : "text-neutral-500 hover:text-neutral-700"}`}
+              >
+                Monthly
+              </button>
+              <button
+                type="button"
+                onClick={() => setCycle("annual")}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${cycle === "annual" ? "bg-white text-neutral-900 shadow-sm" : "text-neutral-500 hover:text-neutral-700"}`}
+              >
+                Annual
+                <span className="text-[10px] font-bold tracking-wider text-brand bg-brand-50 px-2 py-0.5 rounded-full">
+                  SAVE 2 MO
+                </span>
+              </button>
+            </div>
+
+            {/* Market / Currency toggle */}
+            <div className="inline-flex items-center bg-neutral-100 rounded-xl p-1 gap-1 border border-neutral-200/60">
+              <button
+                type="button"
+                onClick={() => handleCountryChange("IN")}
+                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${country === "IN" ? "bg-white text-neutral-900 shadow-sm" : "text-neutral-500 hover:text-neutral-700"}`}
+                title="View India pricing in INR (₹) with UPI & Razorpay"
+              >
+                <span className="text-base leading-none">🇮🇳</span>
+                <span className="font-medium">India (₹)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleCountryChange("GB")}
+                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${country === "GB" ? "bg-white text-neutral-900 shadow-sm" : "text-neutral-500 hover:text-neutral-700"}`}
+                title="View UK pricing in GBP (£) with Stripe & 0% fee"
+              >
+                <span className="text-base leading-none">🇬🇧</span>
+                <span className="font-medium">UK (£)</span>
+              </button>
+            </div>
           </div>
           {cycle === "annual" && (
             <p className="mt-3 text-xs text-neutral-400">Save 2 months with annual billing</p>

@@ -75,6 +75,7 @@ export const metadata: Metadata = {
     canonical: BASE_URL,
     languages: {
       "en-IN": `${BASE_URL}/in`,
+      "en-GB": `${BASE_URL}/uk`,
       "en-US": BASE_URL,
       "x-default": BASE_URL,
     },
@@ -87,7 +88,7 @@ export const metadata: Metadata = {
       "Create custom digital event passes, approve attendees, accept Razorpay payments, scan entry QR codes, and collect post-event feedback.",
     url: BASE_URL,
     locale: "en_IN",
-    alternateLocale: ["en_US"],
+    alternateLocale: ["en_GB", "en_US"],
     images: [
       {
         url: `${BASE_URL}/og-image.png`,
@@ -160,6 +161,13 @@ const organizationSchema = {
     "@type": "ImageObject",
     url: `${BASE_URL}/icon.png`,
     caption: "URPASS Logo",
+  },
+  image: {
+    "@type": "ImageObject",
+    url: `${BASE_URL}/og-image.png`,
+    width: "1200",
+    height: "630",
+    caption: "URPASS — Digital Event Passes & Lightning QR Check-In Platform",
   },
   sameAs: [
     "https://www.instagram.com/urpass.space",

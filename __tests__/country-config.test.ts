@@ -8,6 +8,8 @@ import {
   isValidE164Phone,
   maskPhoneInternational,
   detectCountryFromHeaders,
+  detectCountryClient,
+  persistCountryPreference,
   isValidUkPostcode,
   formatUkPostcode,
   getRegistrationFieldPresets,
@@ -233,5 +235,66 @@ describe("Country Configuration Layer (Enterprise i18n)", () => {
       expect(ids).toContain("student_id");
     });
   });
+
+  describe("Client-Side Country Detection & Regional Market Switching", () => {
+    it("respects dedicated UK pathname precedence", () => {
+      window.history.pushState({}, "", "/uk/london");
+      expect(detectCountryClient()).toBe("GB");
+      window.history.pushState({}, "", "/");
+    });
+
+    it("respects dedicated India pathname precedence", () => {
+      window.history.pushState({}, "", "/in/bangalore");
+      expect(detectCountryClient()).toBe("IN");
+      window.history.pushState({}, "", "/");
+    });
+
+    it("never falsely classifies Indian user as UK even if browser language includes en-GB when timezone is IST", () => {
+      window.history.pushState({}, "", "/pricing");
+
+      // Mock localStorage empty
+      window.localStorage.removeItem("urpass_country");
+
+      // Mock Indian timezone
+      const origIntl = Intl.DateTimeFormat;
+      const mockDateTimeFormat = () => ({
+        resolvedOptions: () => ({ timeZone: "Asia/Kolkata" }),
+      });
+      Intl.DateTimeFormat = mockDateTimeFormat as unknown as typeof Intl.DateTimeFormat;
+
+      // Mock browser languages to en-GB (very common on Indian Macs/PCs)
+      Object.defineProperty(navigator, "languages", {
+        value: ["en-GB", "en"],
+        configurable: true,
+      });
+
+      expect(detectCountryClient()).toBe("IN");
+
+      // Restore
+      Intl.DateTimeFormat = origIntl;
+      window.history.pushState({}, "", "/");
+    });
+
+    it("persists country choice and dispatches urpass_country_changed custom event", () => {
+      let eventDetail: { country?: string } | null = null;
+      const listener = (e: Event) => {
+        eventDetail = (e as CustomEvent).detail;
+      };
+      window.addEventListener("urpass_country_changed", listener);
+
+      persistCountryPreference("GB");
+      expect(window.localStorage.getItem("urpass_country")).toBe("GB");
+      expect(document.cookie).toContain("urpass_country=GB");
+      expect(eventDetail).toEqual({ country: "GB" });
+
+      persistCountryPreference("IN");
+      expect(window.localStorage.getItem("urpass_country")).toBe("IN");
+      expect(document.cookie).toContain("urpass_country=IN");
+      expect(eventDetail).toEqual({ country: "IN" });
+
+      window.removeEventListener("urpass_country_changed", listener);
+    });
+  });
 });
+
 
