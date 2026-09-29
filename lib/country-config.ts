@@ -87,8 +87,8 @@ export const COUNTRIES: Record<SupportedCountryCode, CountryConfig> = {
     taxRate: 0.20,
     taxIdLabel: "VAT Number",
     taxIdRegex: /^(GB)?([0-9]{9}([0-9]{3})?|[A-Z]{2}[0-9]{3})$/i,
-    paymentGateway: "stripe",
-    supportedGateways: ["stripe"],
+    paymentGateway: "razorpay",
+    supportedGateways: ["razorpay"],
     terminology: {
       institution: "University",
       department: "School / Department",

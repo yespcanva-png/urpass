@@ -405,7 +405,7 @@ export default function PricingContent({
                 type="button"
                 onClick={() => handleCountryChange("GB")}
                 className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${country === "GB" ? "bg-white text-neutral-900 shadow-sm" : "text-neutral-500 hover:text-neutral-700"}`}
-                title="View UK pricing in GBP (£) with Stripe & 0% fee"
+                title="View UK pricing in GBP (£) with Razorpay & 0% fee"
               >
                 <span className="text-base leading-none">🇬🇧</span>
                 <span className="font-medium">UK (£)</span>

@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
   // Fetch event + organizer_id and organization_id
   const { data: event } = await admin
     .from("events")
-    .select("id, name, is_paid_event, ticket_price, status, application_enabled, organizer_id, organization_id")
+    .select("id, name, is_paid_event, ticket_price, currency, status, application_enabled, organizer_id, organization_id")
     .eq("id", eventId)
     .single();
 
@@ -42,6 +42,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Event is not accepting applications" }, { status: 400 });
   }
 
+  const eventCurrency = ((event as { currency?: string })?.currency || "INR").toUpperCase();
   let amountPaise = event.is_paid_event ? Math.round(event.ticket_price * 100) : 0;
   let ticketName = event.name;
 
@@ -153,7 +154,7 @@ export async function POST(req: NextRequest) {
 
     const order = await razorpay.orders.create({
       amount: amountPaise,
-      currency: "INR",
+      currency: eventCurrency,
       receipt: `ticket_${eventId.slice(0, 8)}_${Date.now()}`,
       notes: {
         event_id: eventId,
@@ -161,6 +162,7 @@ export async function POST(req: NextRequest) {
         buyer_name: buyerName,
         buyer_email: buyerEmail,
         ticket_name: ticketName,
+        currency: eventCurrency,
         type: "ticket",
         reservation_id: reservation.reservationId ?? "",
       },
@@ -172,7 +174,7 @@ export async function POST(req: NextRequest) {
         ticket_type_id: ticketTypeId ?? null,
         razorpay_order_id: order.id,
         amount: amountPaise,
-        currency: "INR",
+        currency: eventCurrency,
         buyer_name: buyerName,
         buyer_email: buyerEmail,
         status: "created",

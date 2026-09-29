@@ -682,7 +682,7 @@ export default function BillingClientShell({
           <ShieldCheck className="w-4 h-4 text-neutral-400 shrink-0" />
           <p>
             {isUk
-              ? "Direct UK activation · Prices in GBP exclude 20% VAT · UK GDPR & DPA compliant"
+              ? "Payments secured via Razorpay in GBP (£) · Prices exclude 20% VAT · UK GDPR & DPA compliant"
               : "Payments secured via Razorpay · Prices exclude 18% GST · Input tax credit available on registered invoices"}
           </p>
         </div>

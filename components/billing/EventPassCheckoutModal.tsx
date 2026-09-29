@@ -15,6 +15,7 @@ interface Props {
   registrationLimit: number;
   userEmail: string;
   userName: string;
+  currency?: "INR" | "GBP";
 }
 
 declare global {
@@ -34,14 +35,17 @@ function loadRazorpay(): Promise<boolean> {
   });
 }
 
-function fmt(n: number) {
-  return n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+function fmtVal(n: number, isUk: boolean) {
+  return isUk
+    ? n.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    : n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 export default function EventPassCheckoutModal({
   isOpen, onClose,
   passType, passName, priceRupees, registrationLimit,
   userEmail, userName,
+  currency = "INR",
 }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState("");
@@ -63,7 +67,13 @@ export default function EventPassCheckoutModal({
 
   if (!isOpen) return null;
 
-  const gst   = Math.round(priceRupees * 18) / 100;
+  const isUk = (currency || "").toUpperCase() === "GBP";
+  const sym = isUk ? "£" : "₹";
+  const taxName = isUk ? "VAT (20%)" : "GST (18%)";
+  const taxRate = isUk ? 0.20 : 0.18;
+  const fmt = (n: number) => fmtVal(n, isUk);
+
+  const gst   = Math.round(priceRupees * taxRate * 100) / 100;
   const total = Math.round((priceRupees + gst) * 100) / 100;
 
   async function handlePay() {
@@ -81,7 +91,7 @@ export default function EventPassCheckoutModal({
       const res = await fetch("/api/razorpay/event-pass-order", {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ passType }),
+        body:    JSON.stringify({ passType, currency: isUk ? "GBP" : "INR" }),
       });
 
       const data = await res.json();
@@ -173,16 +183,16 @@ export default function EventPassCheckoutModal({
           <div className="bg-neutral-50 rounded-2xl p-4 flex flex-col gap-2.5 text-sm">
             <div className="flex items-center justify-between">
               <span className="text-neutral-600">{passName}</span>
-              <span className="font-medium text-neutral-900">₹{fmt(priceRupees)}</span>
+              <span className="font-medium text-neutral-900">{sym}{fmt(priceRupees)}</span>
             </div>
             <div className="flex items-center justify-between text-neutral-500">
-              <span>GST (18%)</span>
-              <span>₹{fmt(gst)}</span>
+              <span>{taxName}</span>
+              <span>{sym}{fmt(gst)}</span>
             </div>
             <div className="h-px bg-neutral-200" />
             <div className="flex items-center justify-between font-semibold">
               <span className="text-neutral-900">Total</span>
-              <span className="text-xl font-bold text-neutral-900">₹{fmt(total)}</span>
+              <span className="text-xl font-bold text-neutral-900">{sym}{fmt(total)}</span>
             </div>
           </div>
 
@@ -201,7 +211,7 @@ export default function EventPassCheckoutModal({
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
               <>
-                Pay ₹{fmt(total)} securely
+                Pay {sym}{fmt(total)} securely
                 <ChevronRight className="w-4 h-4" />
               </>
             )}
@@ -216,7 +226,9 @@ export default function EventPassCheckoutModal({
 
           <div className="flex items-center justify-center gap-2 -mt-1">
             <ShieldCheck className="w-3.5 h-3.5 text-neutral-300 shrink-0" />
-            <p className="text-xs text-neutral-400">Secured by Razorpay · Includes GST</p>
+            <p className="text-xs text-neutral-400">
+              Secured by Razorpay · {isUk ? "Includes 20% VAT" : "Includes 18% GST"}
+            </p>
           </div>
         </div>
       </div>

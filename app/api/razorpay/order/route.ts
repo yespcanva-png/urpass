@@ -9,7 +9,7 @@ import { notifyOwnerPaymentAttempt } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 
-// V1 plan prices in paise — source of truth for what Razorpay charges.
+// V1 plan prices in paise (INR) and pence (GBP) — source of truth for what Razorpay charges.
 // Must stay in sync with PLANS in app/billing/page.tsx and PLAN_PRICES in CheckoutButton.tsx.
 const V1_PRICES_PAISE: Record<string, number> = {
   starter:          49900,
@@ -20,14 +20,28 @@ const V1_PRICES_PAISE: Record<string, number> = {
   founder_lifetime: 1999900,
 };
 
+const UK_PRICES_PENCE: Record<string, { monthly: number; annual: number }> = {
+  starter:          { monthly: 1500,  annual: 12000 },
+  pro:              { monthly: 3500,  annual: 30000 },
+  business:         { monthly: 7900,  annual: 69900 },
+  founder:          { monthly: 24900, annual: 24900 },
+  lifetime:         { monthly: 24900, annual: 24900 },
+  founder_lifetime: { monthly: 24900, annual: 24900 },
+};
+
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json().catch(() => null);
-  const { planSlug, billingCycle = "monthly", couponCode } = body ?? {};
+  const { planSlug, billingCycle = "monthly", couponCode, currency: requestedCurrency = "INR" } = body ?? {};
   if (!planSlug) return NextResponse.json({ error: "Missing planSlug" }, { status: 400 });
+
+  const isUk = (requestedCurrency || "").toUpperCase() === "GBP";
+  const currencyCode = isUk ? "GBP" : "INR";
+  const taxRate = isUk ? 0.20 : 0.18;
+  const taxName = isUk ? "VAT" : "GST";
 
   const rawSlug = String(planSlug).toLowerCase().trim();
   let normalizedSlug = rawSlug
@@ -94,15 +108,25 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: `Plan '${normalizedSlug}' not found in database` }, { status: 400 });
   }
 
-  // Founder = 19,999 INR one-time. Annual = 10 months (2 months free). Prices in paise.
-  const baseAmount: number = isFounder
-    ? 1999900
-    : effectiveBillingCycle === "annual"
-    ? priceMonthlyPaise * 10
-    : priceMonthlyPaise;
+  // Founder = ₹19,999 or £249 one-time. Annual = 10 months (2 months free).
+  let baseAmount: number;
+  if (isUk) {
+    const ukPrices = UK_PRICES_PENCE[normalizedSlug] ?? { monthly: 3500, annual: 30000 };
+    baseAmount = isFounder
+      ? 24900
+      : effectiveBillingCycle === "annual"
+      ? ukPrices.annual
+      : ukPrices.monthly;
+  } else {
+    baseAmount = isFounder
+      ? 1999900
+      : effectiveBillingCycle === "annual"
+      ? priceMonthlyPaise * 10
+      : priceMonthlyPaise;
+  }
 
   // Re-validate coupon server-side to compute the trusted charged amount
-  let discountPaise = 0;
+  let discountAmount = 0;
   let appliedCouponId: string | null = null;
 
   if (couponCode && typeof couponCode === "string") {
@@ -131,22 +155,23 @@ export async function POST(req: NextRequest) {
         appliedCouponId = coupon.id;
 
         if (coupon.discount_type === "percentage") {
-          discountPaise = Math.round((baseAmount * coupon.discount_value) / 100);
+          discountAmount = Math.round((baseAmount * coupon.discount_value) / 100);
           if (coupon.max_discount_amount) {
-            discountPaise = Math.min(discountPaise, Math.round(coupon.max_discount_amount * 100));
+            discountAmount = Math.min(discountAmount, Math.round(coupon.max_discount_amount * 100));
           }
         } else if (coupon.discount_type === "fixed") {
-          discountPaise = Math.min(Math.round(coupon.discount_value * 100), baseAmount);
+          discountAmount = Math.min(Math.round(coupon.discount_value * 100), baseAmount);
         } else if (coupon.discount_type === "free_months") {
-          discountPaise = Math.min(priceMonthlyPaise * coupon.discount_value, baseAmount);
+          const unitMonthly = isUk ? (UK_PRICES_PENCE[normalizedSlug]?.monthly ?? 3500) : priceMonthlyPaise;
+          discountAmount = Math.min(unitMonthly * coupon.discount_value, baseAmount);
         }
       }
     }
   }
 
-  const discountedBase = Math.max(0, baseAmount - discountPaise);
-  const gstAmount = Math.round(discountedBase * 0.18);
-  const totalAmount = Math.round(discountedBase + gstAmount);
+  const discountedBase = Math.max(0, baseAmount - discountAmount);
+  const taxAmount = Math.round(discountedBase * taxRate);
+  const totalAmount = Math.round(discountedBase + taxAmount);
 
   let keyId: string;
   try {
@@ -168,16 +193,18 @@ export async function POST(req: NextRequest) {
     const receipt = `ur_${user.id.slice(0, 8)}_${Date.now()}`.slice(0, 40);
     order = await razorpay.orders.create({
       amount: totalAmount,
-      currency: "INR",
+      currency: currencyCode,
       receipt,
       notes: {
         user_id: String(user.id),
         plan_id: String(plan.id),
         plan_slug: String(normalizedSlug),
         billing_cycle: String(effectiveBillingCycle),
+        currency: currencyCode,
         base_amount: String(baseAmount),
-        discount_paise: String(discountPaise),
-        gst_amount: String(gstAmount),
+        discount_amount: String(discountAmount),
+        tax_amount: String(taxAmount),
+        tax_name: taxName,
         coupon_id: String(appliedCouponId ?? ""),
         coupon_code: String(couponCode ?? ""),
         customer_name: String(user.user_metadata?.full_name ?? ""),
@@ -195,7 +222,9 @@ export async function POST(req: NextRequest) {
       kind: isFounder ? "one_time" : "subscription",
       buyerName: user.user_metadata?.full_name,
       buyerEmail: user.email,
-      itemName: isFounder ? "URPASS Founder Lifetime Access" : `${plan.name} Plan (${effectiveBillingCycle})`,
+      itemName: isFounder
+        ? isUk ? "URPASS Founder Lifetime Access (£249)" : "URPASS Founder Lifetime Access (₹19,999)"
+        : `${plan.name} Plan (${effectiveBillingCycle}) [${currencyCode}]`,
       amountPaise: totalAmount,
       orderId: order.id,
     });

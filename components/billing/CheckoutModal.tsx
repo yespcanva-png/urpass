@@ -17,6 +17,7 @@ interface Props {
   billingCycle: "monthly" | "annual" | "lifetime";
   userEmail: string;
   userName: string;
+  currency?: "INR" | "GBP";
   priceMonthly: number;
   annualTotal: number;
 }
@@ -38,14 +39,17 @@ function loadRazorpay(): Promise<boolean> {
   });
 }
 
-function fmt(n: number) {
-  return n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+function fmtVal(n: number, isUk: boolean) {
+  return isUk
+    ? n.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    : n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 export default function CheckoutModal({
   isOpen, onClose,
   planSlug, planName, billingCycle,
   userEmail, userName,
+  currency = "INR",
   priceMonthly, annualTotal,
 }: Props) {
   const [couponInput, setCouponInput]       = useState("");
@@ -78,13 +82,19 @@ export default function CheckoutModal({
 
   if (!isOpen) return null;
 
+  const isUk = (currency || "").toUpperCase() === "GBP";
+  const sym = isUk ? "£" : "₹";
+  const taxName = isUk ? "VAT (20%)" : "GST (18%)";
+  const fmt = (n: number) => fmtVal(n, isUk);
+
   const isLifetime = billingCycle === "lifetime" || planSlug === "founder" || planSlug === "lifetime";
-  const baseAmount = isLifetime ? (annualTotal || priceMonthly || 19999) : billingCycle === "annual" ? annualTotal : priceMonthly;
-  const baseGst    = Math.round(baseAmount * 18) / 100;
-  const baseTotal  = Math.round((baseAmount + baseGst) * 100) / 100;
+  const defaultFounder = isUk ? 249 : 19999;
+  const baseAmount = isLifetime ? (annualTotal || priceMonthly || defaultFounder) : billingCycle === "annual" ? annualTotal : priceMonthly;
+  const baseTax    = Math.round(baseAmount * (isUk ? 20 : 18)) / 100;
+  const baseTotal  = Math.round((baseAmount + baseTax) * 100) / 100;
 
   const subtotal    = coupon ? coupon.discountedAmountRupees : baseAmount;
-  const gstDisplay  = coupon ? coupon.gstRupees              : baseGst;
+  const taxDisplay  = coupon ? coupon.gstRupees              : baseTax;
   const totalToday  = coupon ? coupon.totalRupees            : baseTotal;
 
   async function applyCoupon() {
@@ -128,6 +138,7 @@ export default function CheckoutModal({
         body: JSON.stringify({
           planSlug,
           billingCycle,
+          currency: isUk ? "GBP" : "INR",
           couponCode: coupon?.code ?? null,
         }),
       });
@@ -297,7 +308,7 @@ export default function CheckoutModal({
               <span className="text-neutral-600">
                 {planName} ({isLifetime ? "Lifetime License · One-Time" : billingCycle === "annual" ? "12 months" : "1 month"})
               </span>
-              <span className="font-medium text-neutral-900">₹{fmt(baseAmount)}</span>
+              <span className="font-medium text-neutral-900">{sym}{fmt(baseAmount)}</span>
             </div>
 
             {coupon && (
@@ -306,7 +317,7 @@ export default function CheckoutModal({
                   {coupon.code}
                   <span className="font-normal text-green-600 ml-1">({coupon.label})</span>
                 </span>
-                <span className="font-semibold text-green-700">− ₹{fmt(coupon.discountAmountRupees)}</span>
+                <span className="font-semibold text-green-700">− {sym}{fmt(coupon.discountAmountRupees)}</span>
               </div>
             )}
 
@@ -314,18 +325,18 @@ export default function CheckoutModal({
 
             <div className="flex items-center justify-between text-neutral-500">
               <span>Subtotal</span>
-              <span>₹{fmt(subtotal)}</span>
+              <span>{sym}{fmt(subtotal)}</span>
             </div>
             <div className="flex items-center justify-between text-neutral-500">
-              <span>GST (18%)</span>
-              <span>₹{fmt(gstDisplay)}</span>
+              <span>{taxName}</span>
+              <span>{sym}{fmt(taxDisplay)}</span>
             </div>
 
             <div className="h-px bg-neutral-200" />
 
             <div className="flex items-center justify-between font-semibold">
               <span className="text-neutral-900">Total today</span>
-              <span className="text-xl font-bold text-neutral-900">₹{fmt(totalToday)}</span>
+              <span className="text-xl font-bold text-neutral-900">{sym}{fmt(totalToday)}</span>
             </div>
           </div>
 
@@ -336,12 +347,12 @@ export default function CheckoutModal({
             </p>
           ) : coupon?.durationMonths ? (
             <p className="text-[11px] text-neutral-400 text-center -mt-2">
-              Renews at ₹{fmt(coupon.renewalTotalRupees)}/{billingCycle === "annual" ? "yr" : "mo"} after{" "}
+              Renews at {sym}{fmt(coupon.renewalTotalRupees)}/{billingCycle === "annual" ? "yr" : "mo"} after{" "}
               {coupon.durationMonths} month{coupon.durationMonths === 1 ? "" : "s"}.
             </p>
           ) : billingCycle === "annual" ? (
             <p className="text-[11px] text-neutral-400 text-center -mt-2">
-              Billed annually. Equivalent to ₹{fmt(Math.round(priceMonthly * 10 / 12))}/mo.
+              Billed annually. Equivalent to {sym}{fmt(Math.round(priceMonthly * 10 / 12))}/mo.
             </p>
           ) : null}
 
@@ -356,7 +367,7 @@ export default function CheckoutModal({
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
               <>
-                Pay ₹{fmt(totalToday)} securely
+                Pay {sym}{fmt(totalToday)} securely
                 <ChevronRight className="w-4 h-4" />
               </>
             )}
@@ -372,7 +383,9 @@ export default function CheckoutModal({
           {/* Footer */}
           <div className="flex items-center justify-center gap-2 -mt-1">
             <ShieldCheck className="w-3.5 h-3.5 text-neutral-300 shrink-0" />
-            <p className="text-xs text-neutral-400">Secured by Razorpay · Prices include GST</p>
+            <p className="text-xs text-neutral-400">
+              Secured by Razorpay · {isUk ? "Prices include 20% VAT" : "Prices include 18% GST"}
+            </p>
           </div>
         </div>
       </div>

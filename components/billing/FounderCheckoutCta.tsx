@@ -46,43 +46,13 @@ export default function FounderCheckoutCta({
   // Auto-open if redirected back from login with ?claim=true or ?checkout=true
   useEffect(() => {
     if (isLoggedIn && (searchParams.get("claim") === "true" || searchParams.get("checkout") === "true")) {
-      if (isUk) {
-        handleUkClaim();
-      } else {
-        setOpen(true);
-      }
+      setOpen(true);
     }
-  }, [isLoggedIn, searchParams, isUk]);
-
-  async function handleUkClaim() {
-    setLoading(true);
-    setError("");
-    try {
-      const res = await activateUkPlan("founder", "lifetime");
-      if (res?.error) {
-        setError(res.error);
-        setLoading(false);
-      } else {
-        router.push("/billing?claim=success");
-        router.refresh();
-      }
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Failed to activate Founder account. Please contact support."
-      );
-      setLoading(false);
-    }
-  }
+  }, [isLoggedIn, searchParams]);
 
   function handleAction() {
     setError("");
-    if (isUk) {
-      handleUkClaim();
-    } else {
-      setOpen(true);
-    }
+    setOpen(true);
   }
 
   if (!isLoggedIn) {
@@ -159,19 +129,18 @@ export default function FounderCheckoutCta({
         </div>
       )}
 
-      {!isUk && (
-        <CheckoutModal
-          isOpen={open}
-          onClose={() => setOpen(false)}
-          planSlug="founder"
-          planName="Founder Lifetime"
-          billingCycle="lifetime"
-          userEmail={userEmail ?? ""}
-          userName={userName ?? ""}
-          priceMonthly={19999}
-          annualTotal={19999}
-        />
-      )}
+      <CheckoutModal
+        isOpen={open}
+        onClose={() => setOpen(false)}
+        planSlug="founder"
+        planName="Founder Lifetime"
+        billingCycle="lifetime"
+        userEmail={userEmail ?? ""}
+        userName={userName ?? ""}
+        currency={isUk ? "GBP" : "INR"}
+        priceMonthly={isUk ? 249 : 19999}
+        annualTotal={isUk ? 249 : 19999}
+      />
     </div>
   );
 }

@@ -9,11 +9,17 @@ import { notifyOwnerPaymentAttempt } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 
-// Prices in paise. Must match EVENT_PASSES in PlanGrid.tsx.
+// Prices in paise (INR). Must match EVENT_PASSES in PlanGrid.tsx.
 const PASS_PRICES_PAISE: Record<string, number> = {
   event:       29900,
   event_plus:  59900,
   event_pro:   99900,
+};
+
+const UK_PASS_PRICES_PENCE: Record<string, number> = {
+  event:       500,
+  event_plus:  1000,
+  event_pro:   1900,
 };
 
 const PASS_NAMES: Record<string, string> = {
@@ -34,15 +40,20 @@ export async function POST(req: NextRequest) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json().catch(() => null);
-  const { passType } = body ?? {};
+  const { passType, currency: requestedCurrency = "INR" } = body ?? {};
 
-  const basePaise = PASS_PRICES_PAISE[passType];
-  if (!basePaise) {
+  const isUk = (requestedCurrency || "").toUpperCase() === "GBP";
+  const currencyCode = isUk ? "GBP" : "INR";
+  const taxRate = isUk ? 0.20 : 0.18;
+  const taxName = isUk ? "VAT" : "GST";
+
+  const baseAmount = isUk ? UK_PASS_PRICES_PENCE[passType] : PASS_PRICES_PAISE[passType];
+  if (!baseAmount) {
     return NextResponse.json({ error: "Invalid pass type." }, { status: 400 });
   }
 
-  const gstPaise   = Math.round(basePaise * 0.18);
-  const totalPaise = basePaise + gstPaise;
+  const taxAmount   = Math.round(baseAmount * taxRate);
+  const totalAmount = baseAmount + taxAmount;
 
   let keyId: string;
   try {
@@ -63,15 +74,17 @@ export async function POST(req: NextRequest) {
     const razorpay = getRazorpayClient();
     const receipt = `ev_${user.id.slice(0, 8)}_${Date.now()}`.slice(0, 40);
     order = await razorpay.orders.create({
-      amount:   totalPaise,
-      currency: "INR",
+      amount:   totalAmount,
+      currency: currencyCode,
       receipt,
       notes: {
         user_id:            String(user.id),
         pass_type:          String(passType),
         registration_limit: String(PASS_REG_LIMITS[passType] ?? ""),
-        base_paise:         String(basePaise),
-        gst_paise:          String(gstPaise),
+        currency:           currencyCode,
+        base_amount:        String(baseAmount),
+        tax_amount:         String(taxAmount),
+        tax_name:           taxName,
         customer_name:      String(user.user_metadata?.full_name ?? ""),
         customer_email:     String(user.email ?? ""),
       },
@@ -87,8 +100,8 @@ export async function POST(req: NextRequest) {
       kind: "event_pass",
       buyerName: user.user_metadata?.full_name,
       buyerEmail: user.email,
-      itemName: PASS_NAMES[passType],
-      amountPaise: totalPaise,
+      itemName: `${PASS_NAMES[passType]} [${currencyCode}]`,
+      amountPaise: totalAmount,
       orderId: order.id,
     });
   } catch (err: unknown) {

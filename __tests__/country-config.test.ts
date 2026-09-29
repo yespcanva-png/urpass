@@ -32,7 +32,7 @@ describe("Country Configuration Layer (Enterprise i18n)", () => {
       expect(getCountryConfig("GBP").currencySymbol).toBe("£");
       expect(getCountryConfig("+44").phoneCountryCode).toBe("+44");
       expect(getCountryConfig("Europe/London").timezone).toBe("Europe/London");
-      expect(getCountryConfig("GB").paymentGateway).toBe("stripe");
+      expect(getCountryConfig("GB").paymentGateway).toBe("razorpay");
       expect(getCountryConfig("GB").taxType).toBe("VAT");
       expect(getCountryConfig("GB").taxRate).toBe(0.20);
     });

@@ -463,60 +463,22 @@ export default function PlanGrid({
                         </p>
                       </div>
                     ) : p.priceMonthly > 0 ? (
-                      country === "GB" ? (
-                        <button
-                          type="button"
-                          onClick={async () => {
-                            setActivatingSlug(p.slug);
-                            setActionNotice(null);
-                            try {
-                              const res = await activateUkPlan(p.slug, cycle);
-                              if (res?.error) {
-                                setActionNotice({ type: "error", message: res.error });
-                              } else {
-                                router.push(`/billing?upgraded=true&plan=${encodeURIComponent(p.name)}`);
-                                router.refresh();
-                              }
-                            } catch (err) {
-                              setActionNotice({
-                                type: "error",
-                                message: err instanceof Error ? err.message : "Failed to activate plan.",
-                              });
-                            } finally {
-                              setActivatingSlug(null);
-                            }
-                          }}
-                          disabled={activatingSlug === p.slug}
-                          className="w-full py-2.5 text-xs font-semibold rounded-xl text-white bg-neutral-900 hover:bg-neutral-800 transition-colors shadow-xs disabled:opacity-50"
-                          style={
-                            isUpgrade && isMostPopular
-                              ? { background: "linear-gradient(135deg, #6D28D9, #4c1d95)" }
-                              : undefined
-                          }
-                        >
-                          {activatingSlug === p.slug
-                            ? "Activating..."
-                            : isUpgrade
-                            ? `Upgrade to ${p.name}`
-                            : `Switch to ${p.name}`}
-                        </button>
-                      ) : (
-                        <CheckoutButton
-                          planSlug={p.slug}
-                          planName={p.name}
-                          billingCycle={cycle}
-                          userEmail={userEmail}
-                          userName={userName}
-                          className="w-full py-2.5 text-xs font-semibold rounded-xl text-white bg-neutral-900 hover:bg-neutral-800 transition-colors shadow-xs disabled:opacity-50"
-                          style={
-                            isUpgrade && isMostPopular
-                              ? { background: "linear-gradient(135deg, #6D28D9, #4c1d95)" }
-                              : undefined
-                          }
-                        >
-                          {isUpgrade ? `Upgrade to ${p.name}` : `Switch to ${p.name}`}
-                        </CheckoutButton>
-                      )
+                      <CheckoutButton
+                        planSlug={p.slug}
+                        planName={p.name}
+                        billingCycle={cycle}
+                        userEmail={userEmail}
+                        userName={userName}
+                        currency={country === "GB" ? "GBP" : "INR"}
+                        className="w-full py-2.5 text-xs font-semibold rounded-xl text-white bg-neutral-900 hover:bg-neutral-800 transition-colors shadow-xs disabled:opacity-50"
+                        style={
+                          isUpgrade && isMostPopular
+                            ? { background: "linear-gradient(135deg, #6D28D9, #4c1d95)" }
+                            : undefined
+                        }
+                      >
+                        {isUpgrade ? `Upgrade to ${p.name}` : `Switch to ${p.name}`}
+                      </CheckoutButton>
                     ) : (
                       <SwitchPlanButton
                         planSlug={p.slug}
@@ -597,39 +559,18 @@ export default function PlanGrid({
 
                   <button
                     type="button"
-                    onClick={async () => {
-                      if (country === "GB") {
-                        setActivatingPass(p.slug);
-                        setActionNotice(null);
-                        try {
-                          const res = await activateUkEventPass(p.slug);
-                          if (res?.error) {
-                            setActionNotice({ type: "error", message: res.error });
-                          } else {
-                            router.push(`/billing?pass=purchased&plan=${encodeURIComponent(p.name)}`);
-                            router.refresh();
-                          }
-                        } catch (err) {
-                          setActionNotice({
-                            type: "error",
-                            message: err instanceof Error ? err.message : "Failed to activate event pass.",
-                          });
-                        } finally {
-                          setActivatingPass(null);
-                        }
-                      } else {
-                        setPassModal({
-                          passType: p.slug,
-                          passName: p.name,
-                          priceRupees: p.price,
-                          registrationLimit: p.registrationLimit,
-                        });
-                      }
+                    onClick={() => {
+                      const passPrice = country === "GB" ? (UK_EVENT_PASS_PRICES[p.slug] ?? 5) : p.price;
+                      setPassModal({
+                        passType: p.slug,
+                        passName: p.name,
+                        priceRupees: passPrice,
+                        registrationLimit: p.registrationLimit,
+                      });
                     }}
-                    disabled={activatingPass === p.slug}
-                    className="w-full py-2.5 text-xs font-semibold rounded-xl text-white bg-neutral-900 hover:bg-neutral-800 transition-colors shadow-xs disabled:opacity-50"
+                    className="w-full py-2.5 text-xs font-semibold rounded-xl text-white bg-neutral-900 hover:bg-neutral-800 transition-colors shadow-xs"
                   >
-                    {activatingPass === p.slug ? "Activating..." : `Buy ${p.name}`}
+                    Buy {p.name}
                   </button>
                 </div>
               );
@@ -716,6 +657,7 @@ export default function PlanGrid({
           passName={passModal.passName}
           priceRupees={passModal.priceRupees}
           registrationLimit={passModal.registrationLimit}
+          currency={country === "GB" ? "GBP" : "INR"}
           userEmail={userEmail}
           userName={userName}
         />

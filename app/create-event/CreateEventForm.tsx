@@ -134,6 +134,28 @@ export default function CreateEventForm({
       setValue("currency", "GBP");
       setValue("timezone", "Europe/London");
     }
+
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const template = params.get("template");
+      if (template === "college_fest") {
+        setValue("name", "Annual College Symposium 2026");
+        setValue("description", "Inter-college technical and cultural festival featuring competitive events, keynote sessions, and hackathon sprints.");
+        setValue("venue", "University Main Auditorium & Tech Campus");
+      } else if (template === "hackathon") {
+        setValue("name", "24-Hour National Hackathon");
+        setValue("description", "Join top developers and builders for 24 hours of innovation, mentorship, and prize showcases.");
+        setValue("venue", "Innovation Hub & Collaborative Labs");
+      } else if (template === "conference") {
+        setValue("name", "Leadership & Tech Summit 2026");
+        setValue("description", "Industry visionary keynote addresses, high-level panel debates, and VIP networking reception.");
+        setValue("venue", "Convention Center & Executive Ballroom");
+      } else if (template === "workshop") {
+        setValue("name", "Hands-on Masterclass & Technical Workshop");
+        setValue("description", "Deep-dive practical training workshop with live interactive demos and verifiable pass credentials.");
+        setValue("venue", "Seminar Hall & Online Hybrid");
+      }
+    }
   }, [setValue]);
 
   const applicationEnabled = watch("application_enabled");

@@ -1,30 +1,36 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore, useMemo } from "react";
 import Link from "next/link";
-
-const emptySubscribe = () => () => {};
 import {
   Plus,
   Calendar,
   QrCode,
   CheckCircle2,
   Ticket,
-  ArrowUpRight,
   ScanLine,
-  Zap,
   ChevronRight,
-  TrendingUp,
-  Users,
   Clock,
   Building2,
   AlertCircle,
-  BarChart3,
   ShieldCheck,
   ArrowRight,
+  Palette,
+  CreditCard,
+  Search,
+  Copy,
+  Check,
+  GraduationCap,
+  Laptop,
+  Mic,
+  BookOpen,
+  Sparkles,
 } from "lucide-react";
 import { getUserOrganizations } from "@/app/actions/organizations";
 import { createClient } from "@/lib/supabase/client";
+import { detectCountryClient } from "@/lib/country-config";
+
+const emptySubscribe = () => () => {};
 
 interface EventRow {
   id: string;
@@ -42,10 +48,10 @@ interface OrgRow {
 }
 
 const STATUS_CONFIG: Record<string, { label: string; cls: string; dot: string }> = {
-  active:    { label: "Active",    cls: "bg-green-50 text-green-700 border border-green-100",    dot: "bg-green-500" },
-  draft:     { label: "Draft",     cls: "bg-neutral-100 text-neutral-500 border border-neutral-200", dot: "bg-neutral-400" },
-  completed: { label: "Completed", cls: "bg-blue-50 text-blue-600 border border-blue-100",       dot: "bg-blue-500" },
-  cancelled: { label: "Cancelled", cls: "bg-red-50 text-red-600 border border-red-100",          dot: "bg-red-500" },
+  active:    { label: "Active",    cls: "bg-emerald-50 text-emerald-700 border border-emerald-200/70", dot: "bg-emerald-500" },
+  draft:     { label: "Draft",     cls: "bg-neutral-100 text-neutral-600 border border-neutral-200",     dot: "bg-neutral-400" },
+  completed: { label: "Completed", cls: "bg-blue-50 text-blue-700 border border-blue-200/70",          dot: "bg-blue-500" },
+  cancelled: { label: "Cancelled", cls: "bg-red-50 text-red-600 border border-red-200/70",             dot: "bg-red-500" },
 };
 
 function getGreeting() {
@@ -61,70 +67,64 @@ function formatDate() {
   });
 }
 
-function StatCard({
-  label, value, icon: Icon, accent, loaded,
-}: {
-  label: string; value: number;
-  icon: React.ComponentType<{ className?: string }>;
-  accent: string; loaded: boolean;
-}) {
-  if (!loaded) {
-    return (
-      <div className="bg-white rounded-xl border border-neutral-200/80 p-5 shadow-xs">
-        <div className="skeleton w-8 h-8 rounded-lg mb-3" />
-        <div className="skeleton h-7 w-14 rounded mb-1.5" />
-        <div className="skeleton h-3 w-20 rounded" />
-      </div>
-    );
-  }
-
-  return (
-    <div className="bg-white rounded-xl border border-neutral-200/80 p-5 shadow-xs hover:border-neutral-300 transition-colors">
-      <div className={`w-8 h-8 rounded-lg flex items-center justify-center mb-3 ${accent}`}>
-        <Icon className="w-4 h-4" />
-      </div>
-      <p className="text-2xl font-bold tracking-tight tabular-nums text-neutral-900">{value.toLocaleString()}</p>
-      <p className="text-xs text-neutral-500 mt-1 font-medium">{label}</p>
-    </div>
-  );
-}
-
-function EventSkeleton() {
-  return (
-    <div className="flex items-center gap-4 bg-white rounded-xl border border-neutral-200/80 px-5 py-3.5 shadow-xs">
-      <div className="skeleton w-10 h-10 rounded-lg shrink-0" />
-      <div className="flex-1 flex flex-col gap-2">
-        <div className="skeleton h-4 rounded w-48" />
-        <div className="skeleton h-3 rounded w-32" />
-      </div>
-      <div className="skeleton h-5 w-16 rounded-full" />
-    </div>
-  );
-}
+const EVENT_TEMPLATES = [
+  {
+    slug: "college_fest",
+    name: "College Fest & Symposium",
+    category: "Campus",
+    icon: GraduationCap,
+    desc: "Multi-track technical fest with roll number check-in and certificate passes.",
+  },
+  {
+    slug: "hackathon",
+    name: "24h Hackathon & Meetup",
+    category: "Developer",
+    icon: Laptop,
+    desc: "Team applications, sponsor badges, and multi-entrance scanner verification.",
+  },
+  {
+    slug: "conference",
+    name: "Corporate Summit & Expo",
+    category: "Executive",
+    icon: Mic,
+    desc: "Keynote sessions, VIP attendee badges, and automatic business invoicing.",
+  },
+  {
+    slug: "workshop",
+    name: "Workshop & Masterclass",
+    category: "Training",
+    icon: BookOpen,
+    desc: "Strict seat caps, attendee pre-approvals, and verified digital entry passes.",
+  },
+];
 
 export default function DashboardContent() {
   const [firstName, setFirstName] = useState("");
   const dateLabel = useSyncExternalStore(emptySubscribe, formatDate, () => "Today");
   const greeting = useSyncExternalStore(emptySubscribe, getGreeting, () => "Welcome");
   const [planSlug, setPlanSlug] = useState("free");
+  const [hasGateway, setHasGateway] = useState(false);
+  const [country, setCountry] = useState<"IN" | "GB">("IN");
   const [trialInfo, setTrialInfo] = useState<{
     isEligible: boolean;
     isActiveTrial: boolean;
     planName: string;
-    planSlug: string;
     daysRemaining: number;
-    scheduledAmountRupees: number;
     renewalDate: string;
-    autopayCancelled: boolean;
-    hasAutopay: boolean;
   } | null>(null);
   const [stats, setStats] = useState({ total: 0, active: 0, passes: 0, checkedIn: 0 });
   const [events, setEvents] = useState<EventRow[]>([]);
   const [orgs, setOrgs] = useState<OrgRow[]>([]);
   const [loadError, setLoadError] = useState("");
   const [loaded, setLoaded] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  // Table Filters
+  const [filterTab, setFilterTab] = useState<"all" | "upcoming" | "draft" | "past">("all");
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
+    setCountry(detectCountryClient());
 
     async function load() {
       try {
@@ -135,18 +135,31 @@ export default function DashboardContent() {
           return;
         }
 
-        const [{ data: profile }, { data: eventRows }, { data: sub }, memberships] = await Promise.all([
+        const [
+          { data: profile },
+          { data: eventRows },
+          { data: sub },
+          { data: paySettings },
+          memberships,
+        ] = await Promise.all([
           supabase.from("profiles").select("full_name").eq("user_id", user.id).single(),
           supabase.from("events").select("id, name, venue, event_date, status")
             .eq("organizer_id", user.id).order("created_at", { ascending: false }),
           supabase
             .from("subscriptions")
-            .select("status, is_trial, trial_used, trial_plan, trial_starts_at, trial_ends_at, current_period_end, autopay_status, cancel_at_period_end, plan:plans(name, slug)")
+            .select("status, is_trial, trial_used, trial_plan, trial_starts_at, trial_ends_at, plan:plans(name, slug)")
             .eq("user_id", user.id)
             .in("status", ["active", "trialing"])
             .maybeSingle(),
+          supabase
+            .from("payment_settings")
+            .select("razorpay_key_id")
+            .eq("user_id", user.id)
+            .maybeSingle(),
           getUserOrganizations(),
         ]);
+
+        setHasGateway(Boolean(paySettings?.razorpay_key_id));
 
         const allIds = eventRows?.map((e) => e.id) ?? [];
         const [{ count: totalPasses }, { count: totalCheckedIn }] = await Promise.all([
@@ -170,42 +183,24 @@ export default function DashboardContent() {
             isEligible: true,
             isActiveTrial: false,
             planName: "",
-            planSlug: "",
             daysRemaining: 0,
-            scheduledAmountRupees: 0,
             renewalDate: "",
-            autopayCancelled: false,
-            hasAutopay: false,
           };
         } else if (isTrial && sub?.trial_ends_at) {
           const endsAt = new Date(sub.trial_ends_at);
           const msRemaining = endsAt.getTime() - Date.now();
           const daysRemaining = Math.max(1, Math.ceil(msRemaining / (1000 * 60 * 60 * 24)));
-          const monthlyPrice = slug === "starter" ? 499 : slug === "business" ? 2499 : 999;
-          const scheduledAmountRupees = Math.round(monthlyPrice * 1.18);
-          const renewalDate = endsAt.toLocaleDateString("en-IN", {
-            day: "numeric",
-            month: "short",
-            year: "numeric",
-          });
-          const autopayCancelled = Boolean(sub?.cancel_at_period_end || sub?.autopay_status === "cancelled");
-          const hasAutopay = sub?.autopay_status === "active";
-
           trialState = {
             isEligible: false,
             isActiveTrial: true,
             planName,
-            planSlug: slug,
             daysRemaining,
-            scheduledAmountRupees,
-            renewalDate,
-            autopayCancelled,
-            hasAutopay,
+            renewalDate: endsAt.toLocaleDateString("en-IN", { day: "numeric", month: "short" }),
           };
         }
         setTrialInfo(trialState);
 
-        setFirstName(profile?.full_name?.split(" ")[0] ?? "there");
+        setFirstName(profile?.full_name?.split(" ")[0] ?? "");
         setPlanSlug(slug);
         setStats({
           total: allIds.length,
@@ -213,7 +208,7 @@ export default function DashboardContent() {
           passes: totalPasses ?? 0,
           checkedIn: totalCheckedIn ?? 0,
         });
-        setEvents((eventRows ?? []).slice(0, 6));
+        setEvents((eventRows ?? []) as EventRow[]);
         setOrgs(
           (memberships ?? []).map((m) => {
             return { slug: m.org.slug, name: m.org.name, brand_color: m.org.brand_color, role: m.role };
@@ -229,44 +224,73 @@ export default function DashboardContent() {
     load();
   }, []);
 
-  const statCards = [
-    { label: "Total Events",  value: stats.total,     icon: Calendar,     accent: "bg-neutral-100 text-neutral-600" },
-    { label: "Active Events", value: stats.active,    icon: Ticket,       accent: "bg-brand-50 text-brand" },
-    { label: "Passes Issued", value: stats.passes,    icon: QrCode,       accent: "bg-blue-50 text-blue-600" },
-    { label: "Checked In",    value: stats.checkedIn, icon: CheckCircle2, accent: "bg-emerald-50 text-emerald-600" },
-  ];
+  function copyEventLink(eventId: string) {
+    if (typeof window === "undefined") return;
+    const url = `${window.location.origin}/apply/${eventId}`;
+    navigator.clipboard.writeText(url);
+    setCopiedId(eventId);
+    setTimeout(() => setCopiedId(null), 2000);
+  }
 
-  const quickActions = [
-    { label: "New event",    href: "/create-event",        icon: Plus,      primary: true },
-    { label: "Analytics",    href: "/dashboard/analytics", icon: BarChart3, primary: false },
-    { label: "Open scanner", href: "/scan",                 icon: ScanLine,  primary: false },
-    { label: "All events",   href: "/dashboard/events",    icon: Calendar,  primary: false },
-  ];
+  // Filtered Events
+  const filteredEvents = useMemo(() => {
+    const now = new Date();
+    return events.filter((ev) => {
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const matches = ev.name.toLowerCase().includes(q) || (ev.venue || "").toLowerCase().includes(q);
+        if (!matches) return false;
+      }
+      if (filterTab === "all") return true;
+      if (filterTab === "draft") return ev.status === "draft";
+      const isPast = new Date(ev.event_date) < now;
+      if (filterTab === "upcoming") return !isPast && ev.status === "active";
+      if (filterTab === "past") return isPast || ev.status === "completed";
+      return true;
+    });
+  }, [events, filterTab, searchQuery]);
+
+  const checkinRate = stats.passes > 0 ? Math.round((stats.checkedIn / stats.passes) * 100) : 0;
 
   return (
-    <div className="max-w-4xl mx-auto page-in space-y-8">
-
-      {/* ── Header ───────────────────────────────────────────────── */}
-      <div className="flex items-start justify-between gap-4">
+    <div className="max-w-5xl mx-auto space-y-6 pb-12">
+      {/* ── Zoho Clean Corporate Header ─────────────────────────────── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-1">
         <div>
-          <p className="text-xs font-semibold tracking-widest uppercase text-neutral-400 mb-1">
-            {dateLabel}
-          </p>
-          <h1 className="text-2xl font-bold tracking-tight text-neutral-900">
-            {greeting}{firstName ? `, ${firstName}` : ""} 👋
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-[11px] font-medium text-neutral-400">
+              {dateLabel}
+            </span>
+            <span className="text-neutral-300">·</span>
+            <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-neutral-500">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              {country === "GB" ? "UK Market · GBP (£)" : "India Market · INR (₹)"}
+            </span>
+          </div>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-neutral-900">
+            {greeting}{firstName ? `, ${firstName}` : ""}
           </h1>
-          <p className="text-sm text-neutral-400 mt-1">
-            Here&apos;s what&apos;s happening across your events
+          <p className="text-xs text-neutral-500 mt-0.5">
+            Event Management &amp; Gate Verification Operations
           </p>
         </div>
 
-        <Link
-          href="/create-event"
-          className="flex items-center gap-2 bg-neutral-900 hover:bg-neutral-800 text-white px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors shrink-0 shadow-xs"
-        >
-          <Plus className="w-4 h-4" />
-          New event
-        </Link>
+        <div className="flex items-center gap-2 shrink-0">
+          <Link
+            href="/scan"
+            className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-medium text-neutral-700 bg-white hover:bg-neutral-50 border border-neutral-200/90 shadow-2xs transition-colors"
+          >
+            <ScanLine className="w-3.5 h-3.5 text-neutral-500" />
+            <span>Gate Scanner</span>
+          </Link>
+          <Link
+            href="/create-event"
+            className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold text-white bg-neutral-900 hover:bg-neutral-800 shadow-2xs transition-colors"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Create Event</span>
+          </Link>
+        </div>
       </div>
 
       {loadError && (
@@ -276,361 +300,399 @@ export default function DashboardContent() {
         </div>
       )}
 
-      {/* ── Free Trial / Status Banner (With Skeleton Placeholder to prevent CLS) ── */}
-      {!loaded ? (
-        <div className="rounded-xl p-5 border border-neutral-200/80 bg-white shadow-xs">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-start sm:items-center gap-3.5">
-              <div className="skeleton w-9 h-9 rounded-lg shrink-0" />
-              <div className="space-y-2">
-                <div className="skeleton h-4 w-48 rounded" />
-                <div className="skeleton h-3 w-72 rounded" />
-              </div>
-            </div>
-            <div className="skeleton h-9 w-36 rounded-lg shrink-0 hidden sm:block" />
-          </div>
-        </div>
-      ) : trialInfo?.isEligible ? (
-        <div className="rounded-xl p-5 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs border border-neutral-800 bg-neutral-900 content-in">
-          <div className="flex items-start sm:items-center gap-3.5">
-            <div className="w-9 h-9 rounded-lg bg-neutral-800 border border-neutral-700/60 flex items-center justify-center shrink-0">
-              <ShieldCheck className="w-4 h-4 text-emerald-400" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-[10px] font-semibold tracking-wider uppercase px-2 py-0.5 rounded bg-neutral-800 text-neutral-300 border border-neutral-700">
-                  EXCLUSIVE OFFER
-                </span>
-                <span className="text-xs font-medium text-neutral-400">30 DAYS · ANY PLAN · ₹0</span>
-              </div>
-              <h2 className="text-base sm:text-lg font-semibold text-white tracking-tight">
-                Your account is eligible for one free 30-day plan
-              </h2>
-              <p className="text-xs text-neutral-400 mt-0.5">
-                Choose Starter, Pro or Business when you&apos;re ready. Full feature access with no credit card or AutoPay required.
-              </p>
-            </div>
+      {/* ── Subtitle Trial Alert (Clean & Compact) ───────────────────── */}
+      {loaded && trialInfo?.isEligible && (
+        <div className="rounded-xl px-4 py-3 bg-neutral-900 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2.5">
+            <Sparkles className="w-4 h-4 text-emerald-400 shrink-0" />
+            <span>
+              <strong>30-Day Free Trial Available:</strong> Try Starter, Pro, or Business with zero platform fees.
+            </span>
           </div>
           <Link
             href="/billing"
-            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs font-semibold bg-white text-neutral-950 hover:bg-neutral-100 shadow-xs shrink-0 transition-colors whitespace-nowrap"
+            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white text-neutral-900 font-semibold text-xs hover:bg-neutral-100 transition-colors whitespace-nowrap self-start sm:self-auto"
           >
-            Choose My Free Plan
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
-        </div>
-      ) : trialInfo?.isActiveTrial ? (
-        <div className="rounded-xl p-4 sm:p-5 bg-neutral-900 text-white shadow-xs border border-neutral-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4 content-in">
-          <div className="flex items-start sm:items-center gap-3.5">
-            <div className="w-9 h-9 rounded-lg bg-neutral-800 border border-neutral-700/60 flex items-center justify-center shrink-0">
-              <Clock className="w-4 h-4 text-neutral-300" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2 mb-1 flex-wrap">
-                <span className="text-[10px] font-semibold tracking-wider uppercase px-2 py-0.5 rounded bg-neutral-800 text-neutral-300 border border-neutral-700">
-                  {trialInfo.planName.toUpperCase()} · FREE TRIAL
-                </span>
-                <span className="text-xs font-semibold text-emerald-400">
-                  {trialInfo.daysRemaining} {trialInfo.daysRemaining === 1 ? "day" : "days"} remaining
-                </span>
-              </div>
-              <p className="text-xs sm:text-sm text-neutral-300 font-normal">
-                {trialInfo.autopayCancelled
-                  ? `AutoPay cancelled · Free trial access active until ${trialInfo.renewalDate}`
-                  : trialInfo.hasAutopay
-                  ? `Your first payment of ₹${trialInfo.scheduledAmountRupees.toLocaleString("en-IN")} + taxes is scheduled for ${trialInfo.renewalDate}.`
-                  : `Free trial active until ${trialInfo.renewalDate} · No card on file (reverts to Free plan)`}
-              </p>
-            </div>
-          </div>
-          <Link
-            href="/billing"
-            className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-medium bg-neutral-800 text-white hover:bg-neutral-700 border border-neutral-700 shrink-0 transition-colors whitespace-nowrap"
-          >
-            Manage Subscription
+            <span>Activate Trial</span>
             <ChevronRight className="w-3.5 h-3.5" />
           </Link>
         </div>
-      ) : null}
+      )}
 
-      {/* ── Stats grid ───────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        {statCards.map((s) => (
-          <StatCard key={s.label} {...s} loaded={loaded} />
-        ))}
-      </div>
+      {/* ── 4 Clean Corporate Metrics ─────────────────────────────────── */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+        {/* Metric 1 */}
+        <div className="bg-white rounded-xl border border-neutral-200/70 p-4 shadow-2xs hover:border-neutral-300 transition-colors">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-neutral-400">Total Events</span>
+            <Calendar className="w-3.5 h-3.5 text-neutral-400" />
+          </div>
+          <p className="text-2xl font-bold tracking-tight text-neutral-900 tabular-nums">
+            {stats.total.toLocaleString()}
+          </p>
+          <p className="text-[11px] text-neutral-400 mt-1">
+            {stats.active} published &amp; active
+          </p>
+        </div>
 
-      {/* ── Quick actions ─────────────────────────────────────────── */}
-      <div>
-        <p className="text-[10px] font-bold tracking-widest uppercase text-neutral-400 mb-3">
-          Quick actions
-        </p>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {quickActions.map(({ label, href, icon: Icon, primary }) => (
-            <Link
-              key={href}
-              href={href}
-              className={`flex flex-col items-center justify-center gap-2.5 rounded-xl px-4 py-4 text-center transition-all ${
-                primary
-                  ? "bg-neutral-900 text-white border border-neutral-900 hover:bg-neutral-800 shadow-xs"
-                  : "bg-white text-neutral-700 border border-neutral-200/80 hover:border-neutral-300 hover:bg-neutral-50/50 shadow-xs"
-              }`}
-            >
-              <Icon className="w-5 h-5" />
-              <span className="text-xs font-medium">{label}</span>
-            </Link>
-          ))}
+        {/* Metric 2 */}
+        <div className="bg-white rounded-xl border border-neutral-200/70 p-4 shadow-2xs hover:border-neutral-300 transition-colors">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-neutral-400">Registrations</span>
+            <QrCode className="w-3.5 h-3.5 text-neutral-400" />
+          </div>
+          <p className="text-2xl font-bold tracking-tight text-neutral-900 tabular-nums">
+            {stats.passes.toLocaleString()}
+          </p>
+          <p className="text-[11px] text-neutral-400 mt-1">
+            Passes generated
+          </p>
+        </div>
+
+        {/* Metric 3 */}
+        <div className="bg-white rounded-xl border border-neutral-200/70 p-4 shadow-2xs hover:border-neutral-300 transition-colors">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-neutral-400">Check-In Rate</span>
+            <CheckCircle2 className="w-3.5 h-3.5 text-neutral-400" />
+          </div>
+          <p className="text-2xl font-bold tracking-tight text-neutral-900 tabular-nums">
+            {checkinRate}%
+          </p>
+          <p className="text-[11px] text-neutral-400 mt-1">
+            {stats.checkedIn} scanned at entrance
+          </p>
+        </div>
+
+        {/* Metric 4 */}
+        <div className="bg-white rounded-xl border border-neutral-200/70 p-4 shadow-2xs hover:border-neutral-300 transition-colors">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-neutral-400">Razorpay Gateway</span>
+            <CreditCard className="w-3.5 h-3.5 text-neutral-400" />
+          </div>
+          <div className="flex items-center gap-1.5 my-1">
+            <span className={`w-2 h-2 rounded-full ${hasGateway ? "bg-emerald-500" : "bg-neutral-300"}`} />
+            <p className="text-sm font-bold text-neutral-900">
+              {hasGateway ? "Live & Ready" : "Unconnected"}
+            </p>
+          </div>
+          <Link
+            href="/dashboard/settings#payment-gateway"
+            className="text-[11px] text-neutral-500 hover:text-neutral-900 hover:underline"
+          >
+            {hasGateway ? "₹ & £ payouts active →" : "Connect Razorpay →"}
+          </Link>
         </div>
       </div>
 
-      {/* ── Organizations ────────────────────────────────────────── */}
+      {/* ── Main Operations Section ──────────────────────────────────── */}
+      {loaded && events.length === 0 ? (
+        /* ── Simple, Clean First-Time User Experience (Zoho Minimalist) ── */
+        <div className="bg-white rounded-2xl border border-neutral-200/80 p-8 sm:p-10 shadow-2xs text-center space-y-8">
+          <div className="max-w-md mx-auto space-y-2">
+            <div className="w-12 h-12 rounded-xl bg-neutral-100 border border-neutral-200/80 flex items-center justify-center mx-auto text-neutral-700 mb-3">
+              <Ticket className="w-6 h-6" />
+            </div>
+            <h2 className="text-lg sm:text-xl font-bold text-neutral-900">
+              Welcome to UrPass Operations
+            </h2>
+            <p className="text-xs sm:text-sm text-neutral-500 leading-relaxed">
+              Create your registration page, design branded digital passes, and scan attendees with sub-second QR recognition.
+            </p>
+            <div className="pt-2">
+              <Link
+                href="/create-event"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold text-white bg-neutral-900 hover:bg-neutral-800 transition-colors shadow-xs"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Create Your First Event</span>
+              </Link>
+            </div>
+          </div>
+
+          {/* 3 Step Workflow Overview */}
+          <div className="pt-4 border-t border-neutral-100">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-4 text-center">
+              How UrPass Works
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-left max-w-2xl mx-auto">
+              <div className="p-4 rounded-xl border border-neutral-100 bg-neutral-50/60">
+                <span className="text-xs font-bold text-neutral-900">1. Setup Registration</span>
+                <p className="text-xs text-neutral-500 mt-1 leading-relaxed">
+                  Publish form with custom fields, ticket tiers, and direct UPI or card checkout.
+                </p>
+              </div>
+              <div className="p-4 rounded-xl border border-neutral-100 bg-neutral-50/60">
+                <span className="text-xs font-bold text-neutral-900">2. Issue Passes</span>
+                <p className="text-xs text-neutral-500 mt-1 leading-relaxed">
+                  Personalize ticket badges in Ticket Studio with verified QR security codes.
+                </p>
+              </div>
+              <div className="p-4 rounded-xl border border-neutral-100 bg-neutral-50/60">
+                <span className="text-xs font-bold text-neutral-900">3. Gate Verification</span>
+                <p className="text-xs text-neutral-500 mt-1 leading-relaxed">
+                  Fast sub-second scanner on any smartphone or handheld 2D scanner.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* 4 Clean Template Pills */}
+          <div className="pt-4 border-t border-neutral-100">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-3 text-center">
+              Or Start With a Template
+            </p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 max-w-3xl mx-auto">
+              {EVENT_TEMPLATES.map((t) => {
+                const Icon = t.icon;
+                return (
+                  <Link
+                    key={t.slug}
+                    href={`/create-event?template=${t.slug}`}
+                    className="p-3 rounded-xl border border-neutral-200/70 hover:border-neutral-900 hover:bg-neutral-50/50 transition-all text-left group"
+                  >
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <Icon className="w-3.5 h-3.5 text-neutral-500 group-hover:text-neutral-900" />
+                      <span className="text-[11px] font-semibold text-neutral-900 truncate">
+                        {t.name.split(" ")[0]}
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-neutral-400 truncate">{t.desc}</p>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      ) : (
+        /* ── Zoho Corporate Event Table (When Events Exist) ── */
+        <div className="bg-white rounded-xl border border-neutral-200/80 shadow-2xs overflow-hidden">
+          {/* Controls Bar */}
+          <div className="p-3.5 sm:px-5 sm:py-3 border-b border-neutral-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-neutral-50/40">
+            {/* Tabs */}
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setFilterTab("all")}
+                className={`px-3 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                  filterTab === "all" ? "bg-white text-neutral-900 shadow-2xs border border-neutral-200/80" : "text-neutral-500 hover:text-neutral-900"
+                }`}
+              >
+                All ({events.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setFilterTab("upcoming")}
+                className={`px-3 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                  filterTab === "upcoming" ? "bg-white text-neutral-900 shadow-2xs border border-neutral-200/80" : "text-neutral-500 hover:text-neutral-900"
+                }`}
+              >
+                Upcoming
+              </button>
+              <button
+                type="button"
+                onClick={() => setFilterTab("draft")}
+                className={`px-3 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                  filterTab === "draft" ? "bg-white text-neutral-900 shadow-2xs border border-neutral-200/80" : "text-neutral-500 hover:text-neutral-900"
+                }`}
+              >
+                Drafts
+              </button>
+              <button
+                type="button"
+                onClick={() => setFilterTab("past")}
+                className={`px-3 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                  filterTab === "past" ? "bg-white text-neutral-900 shadow-2xs border border-neutral-200/80" : "text-neutral-500 hover:text-neutral-900"
+                }`}
+              >
+                Past
+              </button>
+            </div>
+
+            {/* Search */}
+            <div className="relative flex items-center">
+              <Search className="w-3.5 h-3.5 text-neutral-400 absolute left-2.5 pointer-events-none" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search events..."
+                className="pl-8 pr-3 py-1 text-xs rounded-lg border border-neutral-200/90 bg-white focus:border-neutral-900 outline-none transition-colors w-full sm:w-56 text-neutral-900 placeholder:text-neutral-400"
+              />
+            </div>
+          </div>
+
+          {/* Table Rows */}
+          {!loaded ? (
+            <div className="p-4 space-y-3">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-4 p-3 border border-neutral-100 rounded-lg">
+                  <div className="skeleton w-10 h-10 rounded-lg shrink-0" />
+                  <div className="flex-1 space-y-1.5">
+                    <div className="skeleton h-3.5 w-40 rounded" />
+                    <div className="skeleton h-2.5 w-24 rounded" />
+                  </div>
+                  <div className="skeleton h-5 w-16 rounded-full" />
+                </div>
+              ))}
+            </div>
+          ) : filteredEvents.length === 0 ? (
+            <div className="p-8 text-center text-xs text-neutral-500">
+              No events found matching &quot;{searchQuery || filterTab}&quot;.
+            </div>
+          ) : (
+            <div className="divide-y divide-neutral-100">
+              {filteredEvents.map((event) => {
+                const cfg = STATUS_CONFIG[event.status] ?? STATUS_CONFIG.cancelled;
+                const evDate = new Date(event.event_date);
+                const monthStr = evDate.toLocaleDateString("en-IN", { month: "short" }).toUpperCase();
+                const dayStr = evDate.getDate();
+                const dateFull = evDate.toLocaleDateString(country === "GB" ? "en-GB" : "en-IN", {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                });
+
+                return (
+                  <div
+                    key={event.id}
+                    className="p-3.5 sm:px-5 sm:py-3.5 flex flex-col md:flex-row md:items-center justify-between gap-3 hover:bg-neutral-50/50 transition-colors"
+                  >
+                    <div className="flex items-center gap-3.5 min-w-0">
+                      {/* Date badge */}
+                      <div className="w-10 h-10 rounded-lg bg-neutral-100 border border-neutral-200/80 flex flex-col items-center justify-center shrink-0">
+                        <span className="text-[8px] font-bold text-neutral-500 uppercase leading-none">
+                          {monthStr}
+                        </span>
+                        <span className="text-sm font-bold text-neutral-900 leading-none mt-0.5">
+                          {dayStr}
+                        </span>
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                          <Link
+                            href={`/event/${event.id}`}
+                            className="text-xs sm:text-sm font-semibold text-neutral-900 hover:text-brand transition-colors truncate"
+                          >
+                            {event.name}
+                          </Link>
+                          <span className={`inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-medium ${cfg.cls}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
+                            {cfg.label}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 text-[11px] text-neutral-400">
+                          <span className="truncate text-neutral-500">{event.venue || "Venue TBD"}</span>
+                          <span>·</span>
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            {dateFull}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Action buttons */}
+                    <div className="flex items-center gap-1.5 shrink-0 self-end md:self-auto">
+                      <button
+                        type="button"
+                        onClick={() => copyEventLink(event.id)}
+                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium text-neutral-600 hover:text-neutral-900 bg-white border border-neutral-200 hover:bg-neutral-50 transition-colors cursor-pointer"
+                        title="Copy attendee registration link"
+                      >
+                        {copiedId === event.id ? (
+                          <>
+                            <Check className="w-3 h-3 text-emerald-600" />
+                            <span className="text-emerald-700">Copied</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-3 h-3 text-neutral-400" />
+                            <span>Link</span>
+                          </>
+                        )}
+                      </button>
+                      <Link
+                        href={`/studio/${event.id}`}
+                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium text-neutral-600 hover:text-neutral-900 bg-white border border-neutral-200 hover:bg-neutral-50 transition-colors"
+                      >
+                        <Palette className="w-3 h-3 text-neutral-400" />
+                        <span>Studio</span>
+                      </Link>
+                      <Link
+                        href={`/scan/${event.id}`}
+                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium text-neutral-600 hover:text-neutral-900 bg-white border border-neutral-200 hover:bg-neutral-50 transition-colors"
+                      >
+                        <ScanLine className="w-3 h-3 text-neutral-400" />
+                        <span>Scan</span>
+                      </Link>
+                      <Link
+                        href={`/event/${event.id}`}
+                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-semibold text-white bg-neutral-900 hover:bg-neutral-800 transition-colors"
+                      >
+                        <span>Manage</span>
+                        <ChevronRight className="w-3 h-3" />
+                      </Link>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Organization Teams (Clean Minimalist Strip) ─────────────── */}
       {loaded && orgs.length > 0 && (
-        <div>
+        <div className="bg-white rounded-xl border border-neutral-200/80 p-4 shadow-2xs">
           <div className="flex items-center justify-between mb-3">
-            <p className="text-[10px] font-bold tracking-widest uppercase text-neutral-400">Organizations</p>
-            <Link href="/dashboard/organizations" className="flex items-center gap-1 text-xs text-neutral-500 hover:text-neutral-900 transition-colors font-medium">
-              View all <ChevronRight className="w-3.5 h-3.5" />
+            <span className="text-[10px] font-bold tracking-widest uppercase text-neutral-400">Team Workspaces</span>
+            <Link href="/dashboard/organizations" className="text-xs text-neutral-500 hover:text-neutral-900 font-medium">
+              View all →
             </Link>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             {orgs.slice(0, 4).map((org) => (
               <Link
                 key={org.slug}
                 href={`/org/${org.slug}`}
-                className="flex items-center gap-3 bg-white rounded-xl px-4 py-3.5 border border-neutral-200/80 hover:border-neutral-300 shadow-xs hover:shadow-sm transition-all group"
+                className="flex items-center gap-3 p-2.5 rounded-lg border border-neutral-100 hover:border-neutral-200 hover:bg-neutral-50/50 transition-all group"
               >
                 <div
-                  className="w-9 h-9 rounded-lg flex items-center justify-center text-white font-bold text-sm shrink-0"
-                  style={{ background: org.brand_color }}
+                  className="w-7 h-7 rounded-md flex items-center justify-center text-white font-bold text-[10px] shrink-0"
+                  style={{ background: org.brand_color || "#18181b" }}
                 >
                   {org.name.charAt(0).toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-neutral-900 truncate group-hover:text-brand transition-colors">{org.name}</p>
-                  <p className="text-xs text-neutral-500 capitalize">{org.role}</p>
+                  <p className="text-xs font-semibold text-neutral-900 truncate">{org.name}</p>
+                  <p className="text-[10px] text-neutral-400 capitalize">{org.role}</p>
                 </div>
-                <ChevronRight className="w-4 h-4 text-neutral-300 group-hover:text-neutral-600 transition-colors shrink-0" />
+                <ChevronRight className="w-3.5 h-3.5 text-neutral-300 group-hover:text-neutral-600 transition-colors" />
               </Link>
             ))}
-            {planSlug !== "free" && (
-              <Link
-                href="/dashboard/organizations/new"
-                className="flex items-center gap-3 bg-white rounded-xl px-4 py-3.5 shadow-xs hover:shadow-sm transition-all border border-dashed border-neutral-300 hover:border-neutral-400 group"
-              >
-                <div className="w-9 h-9 rounded-lg border border-dashed border-neutral-300 group-hover:border-neutral-400 flex items-center justify-center shrink-0 group-hover:bg-neutral-50 transition-all">
-                  <Plus className="w-4 h-4 text-neutral-400 group-hover:text-neutral-700 transition-colors" />
-                </div>
-                <p className="text-sm font-medium text-neutral-500 group-hover:text-neutral-900 transition-colors">New organization</p>
-              </Link>
-            )}
           </div>
         </div>
       )}
 
-      {/* Starter+ but no orgs yet — suggest creating one */}
-      {loaded && orgs.length === 0 && planSlug !== "free" && (
-        <Link
-          href="/dashboard/organizations/new"
-          className="flex items-center gap-4 bg-white rounded-xl px-5 py-4 shadow-xs hover:shadow-sm transition-all group border border-dashed border-neutral-300 hover:border-neutral-400"
-        >
-          <div className="w-9 h-9 bg-neutral-100 border border-neutral-200 rounded-lg flex items-center justify-center shrink-0 group-hover:bg-neutral-900 group-hover:border-neutral-900 transition-all">
-            <Building2 className="w-4 h-4 text-neutral-600 group-hover:text-white transition-colors" />
-          </div>
-          <div className="flex-1">
-            <p className="text-sm font-semibold text-neutral-900">Create your organization</p>
-            <p className="text-xs text-neutral-500 mt-0.5">Invite your team and manage events together</p>
-          </div>
-          <ChevronRight className="w-4 h-4 text-neutral-300 group-hover:text-neutral-600 transition-colors shrink-0" />
-        </Link>
-      )}
-
-      {/* ── Upgrade prompt (free plan after trial used) ─────────── */}
-      {loaded && planSlug === "free" && !trialInfo?.isEligible && (
-        <div
-          className="rounded-xl px-6 py-4 flex items-center justify-between gap-4 bg-neutral-900 border border-neutral-800 text-white shadow-xs"
-        >
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <Zap className="w-4 h-4 text-amber-400" />
-              <p className="text-sm font-semibold text-white">Upgrade to Starter</p>
-            </div>
-            <p className="text-xs text-neutral-400 leading-relaxed">
-              Unlock 5 events, 500 attendees, CSV upload &amp; remove branding
-            </p>
-          </div>
-          <Link
-            href="/billing"
-            className="flex items-center gap-1.5 bg-white text-neutral-900 px-3.5 py-2 rounded-lg text-xs font-semibold shrink-0 hover:bg-neutral-100 transition-colors"
-          >
-            Upgrade <ArrowUpRight className="w-3.5 h-3.5" />
+      {/* ── Zoho Clean Footer Toolbar ─────────────────────────────────── */}
+      <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-neutral-400 border-t border-neutral-200/60">
+        <div className="flex items-center gap-2">
+          <ShieldCheck className="w-3.5 h-3.5 text-neutral-400" />
+          <span>Enterprise grade · Razorpay Indian UPI &amp; UK GBP ready · 0% commission</span>
+        </div>
+        <div className="flex items-center gap-4 font-medium">
+          <Link href="/dashboard/settings#payment-gateway" className="hover:text-neutral-900">
+            Payment Gateway
+          </Link>
+          <Link href="/dashboard/developer" className="hover:text-neutral-900">
+            API &amp; Webhooks
+          </Link>
+          <Link href="/billing" className="hover:text-neutral-900">
+            Billing
           </Link>
         </div>
-      )}
-
-      {/* ── Recent events ─────────────────────────────────────────── */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <p className="text-[10px] font-bold tracking-widest uppercase text-neutral-400">
-            Recent events
-          </p>
-          <Link
-            href="/dashboard/events"
-            className="flex items-center gap-1 text-xs text-neutral-500 hover:text-neutral-900 transition-colors font-medium"
-          >
-            View all <ChevronRight className="w-3.5 h-3.5" />
-          </Link>
-        </div>
-
-        {!loaded ? (
-          <div className="flex flex-col gap-2">
-            {Array.from({ length: 3 }).map((_, i) => <EventSkeleton key={i} />)}
-          </div>
-        ) : events.length === 0 ? (
-          <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-xs border border-neutral-200/80">
-            <div className="text-center max-w-md mx-auto mb-8">
-              <div className="w-12 h-12 bg-neutral-100 border border-neutral-200 rounded-xl flex items-center justify-center mx-auto mb-3">
-                <Ticket className="w-6 h-6 text-brand" />
-              </div>
-              <h2 className="text-base sm:text-lg font-bold text-neutral-900">
-                Welcome to UrPass! Let&apos;s launch your first event
-              </h2>
-              <p className="text-xs text-neutral-500 mt-1 leading-relaxed">
-                From registration to contactless gate check-in, here is how UrPass works:
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
-              <div className="p-4 rounded-xl border border-neutral-200/70 bg-neutral-50/50 flex flex-col justify-between">
-                <div>
-                  <div className="w-8 h-8 rounded-lg bg-white border border-neutral-200 flex items-center justify-center text-xs font-bold text-neutral-900 mb-3 shadow-2xs">
-                    1
-                  </div>
-                  <h3 className="text-xs font-bold text-neutral-900 mb-1">Create Event</h3>
-                  <p className="text-[11px] text-neutral-500 leading-relaxed">
-                    Set event name, date, venue, and configure free or paid ticket tiers.
-                  </p>
-                </div>
-              </div>
-
-              <div className="p-4 rounded-xl border border-neutral-200/70 bg-neutral-50/50 flex flex-col justify-between">
-                <div>
-                  <div className="w-8 h-8 rounded-lg bg-white border border-neutral-200 flex items-center justify-center text-xs font-bold text-neutral-900 mb-3 shadow-2xs">
-                    2
-                  </div>
-                  <h3 className="text-xs font-bold text-neutral-900 mb-1">Ticket Studio</h3>
-                  <p className="text-[11px] text-neutral-500 leading-relaxed">
-                    Personalize digital event pass layout, brand colors, and security QR codes.
-                  </p>
-                </div>
-              </div>
-
-              <div className="p-4 rounded-xl border border-neutral-200/70 bg-neutral-50/50 flex flex-col justify-between">
-                <div>
-                  <div className="w-8 h-8 rounded-lg bg-white border border-neutral-200 flex items-center justify-center text-xs font-bold text-neutral-900 mb-3 shadow-2xs">
-                    3
-                  </div>
-                  <h3 className="text-xs font-bold text-neutral-900 mb-1">Share & Register</h3>
-                  <p className="text-[11px] text-neutral-500 leading-relaxed">
-                    Publish your registration link. Passes are issued automatically upon approval.
-                  </p>
-                </div>
-              </div>
-
-              <div className="p-4 rounded-xl border border-neutral-200/70 bg-neutral-50/50 flex flex-col justify-between">
-                <div>
-                  <div className="w-8 h-8 rounded-lg bg-white border border-neutral-200 flex items-center justify-center text-xs font-bold text-neutral-900 mb-3 shadow-2xs">
-                    4
-                  </div>
-                  <h3 className="text-xs font-bold text-neutral-900 mb-1">Scan & Check In</h3>
-                  <p className="text-[11px] text-neutral-500 leading-relaxed">
-                    Check in attendees at gates instantly using phone camera or 2D USB scanners.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2 border-t border-neutral-100">
-              <Link
-                href="/create-event"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 text-xs font-semibold text-white px-5 py-2.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 transition-colors shadow-xs"
-              >
-                <Plus className="w-4 h-4" />
-                Create your first event
-              </Link>
-              <Link
-                href="/billing"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 text-xs font-semibold text-neutral-600 hover:text-neutral-900 px-4 py-2.5 rounded-xl border border-neutral-200 hover:bg-neutral-50 transition-colors"
-              >
-                View Plans & Features
-              </Link>
-            </div>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-2 content-in">
-            {events.map((event) => {
-              const cfg = STATUS_CONFIG[event.status] ?? STATUS_CONFIG.cancelled;
-              const dateStr = new Date(event.event_date).toLocaleDateString("en-IN", {
-                day: "numeric", month: "short", year: "numeric",
-              });
-              const isPast = new Date(event.event_date) < new Date();
-
-              return (
-                <Link
-                  key={event.id}
-                  href={`/event/${event.id}`}
-                  className="flex items-center gap-4 bg-white rounded-xl px-5 py-3.5 border border-neutral-200/80 shadow-xs hover:border-neutral-300 hover:shadow-sm transition-all group"
-                >
-                  {/* Date block */}
-                  <div className="w-10 h-10 rounded-lg bg-neutral-100 border border-neutral-200/80 flex flex-col items-center justify-center shrink-0 group-hover:bg-neutral-900 group-hover:border-neutral-900 transition-colors">
-                    <span className="text-[8px] font-bold text-neutral-500 uppercase group-hover:text-neutral-400 leading-none">
-                      {new Date(event.event_date).toLocaleDateString("en-IN", { month: "short" })}
-                    </span>
-                    <span className="text-sm font-bold text-neutral-900 group-hover:text-white leading-none mt-0.5">
-                      {new Date(event.event_date).getDate()}
-                    </span>
-                  </div>
-
-                  {/* Info */}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-neutral-900 truncate group-hover:text-neutral-700 transition-colors">
-                      {event.name}
-                    </p>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-xs text-neutral-500 truncate">{event.venue}</span>
-                      <span className="text-neutral-300 text-xs">·</span>
-                      <span className="flex items-center gap-1 text-xs text-neutral-400 shrink-0">
-                        {isPast ? <Clock className="w-3 h-3" /> : <TrendingUp className="w-3 h-3" />}
-                        {dateStr}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Status */}
-                  <span className={`flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full font-medium shrink-0 ${cfg.cls}`}>
-                    <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
-                    {cfg.label}
-                  </span>
-                </Link>
-              );
-            })}
-          </div>
-        )}
       </div>
-
-      {/* ── Bottom tip ────────────────────────────────────────────── */}
-      {loaded && events.length > 0 && (
-        <div className="flex items-center gap-3 bg-white rounded-xl px-5 py-3.5 border border-neutral-200/80 shadow-xs">
-          <div className="w-8 h-8 bg-neutral-100 border border-neutral-200 rounded-lg flex items-center justify-center shrink-0">
-            <Users className="w-4 h-4 text-neutral-600" />
-          </div>
-          <p className="text-xs text-neutral-600 leading-relaxed flex-1">
-            Tip: Open the <span className="font-semibold text-neutral-900">Scanner</span> on your phone at the event entrance to check in attendees instantly via QR code.
-          </p>
-          <Link href="/scan" className="text-xs font-semibold text-neutral-900 shrink-0 hover:underline">
-            Open →
-          </Link>
-        </div>
-      )}
     </div>
   );
 }

@@ -212,7 +212,7 @@ export default function HomePricingSection({ initialCountry = "IN" }: Props) {
                 type="button"
                 onClick={() => handleMarketChange("GB")}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${isUk ? "bg-white text-neutral-900 shadow-xs" : "text-neutral-600 hover:text-neutral-900"}`}
-                title="View UK plans in GBP (£) with Stripe & 0% fee"
+                title="View UK plans in GBP (£) with Razorpay & 0% fee"
               >
                 <span className="text-sm leading-none">🇬🇧</span>
                 <span>UK (£)</span>
