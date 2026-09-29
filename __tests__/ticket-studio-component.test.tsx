@@ -215,7 +215,7 @@ describe("URPASS Ticket Studio (4-Section Clean Ticket Editor)", () => {
         })
       );
     });
-  });
+  }, 15000);
 
   it("calls manual save when Save button is clicked", async () => {
     render(

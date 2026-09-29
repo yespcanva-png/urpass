@@ -128,15 +128,123 @@ export default function TrialConfirmationModal({
     setError("");
 
     try {
-      const result = isUk ? await activateUkFreeTrial(planSlug) : await activateFreeTrial(planSlug);
-      if (result && "error" in result && result.error) {
-        setError(result.error);
+      if (isUk) {
+        const result = await activateUkFreeTrial(planSlug);
+        if (result && "error" in result && result.error) {
+          setError(result.error);
+          setLoading(false);
+          return;
+        }
+        onClose();
+        router.push(`/billing?activated=true&plan=${encodeURIComponent(planName)}`);
+        router.refresh();
+        return;
+      }
+
+      // India: AutoPay mandate creation via Razorpay
+      const res = await fetch("/api/billing/subscriptions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ planSlug, cycle }),
+      });
+
+      const data = await res.json().catch(() => null);
+
+      if (!res.ok) {
+        // If an explicit error was returned by the subscription API
+        setError(data?.error || "Failed to initiate AutoPay subscription.");
         setLoading(false);
         return;
       }
-      onClose();
-      router.push(`/billing?activated=true&plan=${encodeURIComponent(planName)}`);
-      router.refresh();
+
+      // Fallback if gateway merchant account does not have subscriptions enabled
+      if (data?.fallbackToDirectTrial) {
+        const result = await activateFreeTrial(planSlug);
+        if (result && "error" in result && result.error) {
+          setError(result.error);
+          setLoading(false);
+          return;
+        }
+        onClose();
+        router.push(`/billing?activated=true&plan=${encodeURIComponent(planName)}`);
+        router.refresh();
+        return;
+      }
+
+      if (!data?.subscriptionId || !data?.keyId) {
+        setError("Invalid subscription configuration returned from server.");
+        setLoading(false);
+        return;
+      }
+
+      const sdkLoaded = await loadRazorpay();
+      if (!sdkLoaded || !window.Razorpay) {
+        setError("Could not load payment gateway. Please check your internet connection.");
+        setLoading(false);
+        return;
+      }
+
+      const options = {
+        key: data.keyId,
+        subscription_id: data.subscriptionId,
+        name: "URPASS by Yesp",
+        description: `${planName} - 30-Day Free Trial (AutoPay)`,
+        prefill: {
+          name: userName || "",
+          email: userEmail || "",
+        },
+        notes: {
+          planSlug,
+          cycle,
+          is_trial: "true",
+        },
+        theme: {
+          color: "#0a0a0a",
+        },
+        handler: async function (response: {
+          razorpay_payment_id?: string;
+          razorpay_subscription_id?: string;
+          razorpay_signature?: string;
+        }) {
+          try {
+            setLoading(true);
+            const verifyRes = await fetch("/api/billing/subscriptions/verify", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                planSlug,
+                cycle,
+                subscriptionId: response.razorpay_subscription_id || data.subscriptionId,
+                paymentId: response.razorpay_payment_id,
+                signature: response.razorpay_signature,
+              }),
+            });
+
+            const verifyData = await verifyRes.json().catch(() => null);
+            if (!verifyRes.ok) {
+              setError(verifyData?.error || "AutoPay mandate verification failed.");
+              setLoading(false);
+              return;
+            }
+
+            onClose();
+            router.push(`/billing?activated=true&plan=${encodeURIComponent(planName)}`);
+            router.refresh();
+          } catch (verifyErr: unknown) {
+            const msg = verifyErr instanceof Error ? verifyErr.message : "AutoPay verification failed.";
+            setError(msg);
+            setLoading(false);
+          }
+        },
+        modal: {
+          ondismiss: function () {
+            setLoading(false);
+          },
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to activate 30-day free trial.";
       setError(msg);
@@ -230,7 +338,11 @@ export default function TrialConfirmationModal({
           {/* Requirement Notice */}
           <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-3 flex items-center gap-2.5 text-xs text-emerald-800">
             <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-            <span>30-Day Free Trial · No credit card required · Instant full access.</span>
+            <span>
+              {isUk
+                ? "30-Day Free Trial · Direct instant access · Full access to all features."
+                : "30-Day Free Trial · AutoPay mandate (₹0 today) · Full access to all features."}
+            </span>
           </div>
 
           {error && (
@@ -250,18 +362,22 @@ export default function TrialConfirmationModal({
               {loading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Activating 30-Day Free Trial...
+                  {isUk ? "Activating 30-Day Free Trial..." : "Setting up AutoPay mandate..."}
                 </>
               ) : (
                 <>
                   <Lock className="w-4 h-4" />
-                  {isUk ? "Start 30-Day Free Trial (£0)" : "Start 30-Day Free Trial (₹0)"}
+                  {isUk
+                    ? "Start 30-Day Free Trial (£0)"
+                    : "Authorize AutoPay & Start Trial (₹0)"}
                 </>
               )}
             </button>
 
             <p className="text-center text-[10px] text-neutral-400">
-              30 days free · No credit card required · Instant access · Cancel anytime
+              {isUk
+                ? "30 days free · Direct access · Full feature unlock · Cancel anytime"
+                : `₹0 charged today · AutoPay renews at ${priceFormatted}/mo after 30 days · Cancel anytime`}
             </p>
           </div>
         </div>

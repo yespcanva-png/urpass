@@ -16,18 +16,19 @@ import {
 import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
-  title: "UK Event Ticketing & QR Check-In Software — 0% Commission | URPASS",
+  title: "Event Registration & QR Check-In Software UK | URPASS",
   description:
-    "The modern UK event ticketing and QR check-in platform. 0% ticket commission, transparent GBP (£) plans, 30-day free trial with no credit card required, UK GDPR compliant, and sub-second browser-based QR scanning.",
+    "Run registrations, digital QR tickets and fast attendee check-in for UK conferences, university events, workshops and community events with URPASS.",
   keywords: [
-    "uk event ticketing software",
+    "event registration software uk",
+    "event ticketing software uk",
+    "qr code event check-in uk",
     "event check-in software uk",
-    "qr ticket scanner uk",
-    "zero commission event ticketing uk",
     "eventbrite alternative uk",
-    "students union event ticketing",
-    "university society event management uk",
-    "conference qr check-in london",
+    "qr ticketing system uk",
+    "university event management software uk",
+    "students union ticketing software",
+    "college event registration uk",
   ],
   alternates: {
     canonical: "https://urpass.space/uk",
@@ -38,9 +39,9 @@ export const metadata: Metadata = {
     },
   },
   openGraph: {
-    title: "UK Event Ticketing & QR Check-In Software | 0% Commission | URPASS",
+    title: "Event Registration & QR Check-In Software UK | URPASS",
     description:
-      "Sell tickets and check in attendees across the UK with 0% platform commission. Browser-based QR scanning in <0.3s, UK GDPR compliance, and transparent GBP plans.",
+      "Run registrations, digital QR tickets and fast attendee check-in for UK conferences, university events, workshops and community events with URPASS.",
     url: "https://urpass.space/uk",
     locale: "en_GB",
     type: "website",
@@ -50,15 +51,15 @@ export const metadata: Metadata = {
         width: 1200,
         height: 630,
         type: "image/png",
-        alt: "URPASS UK — 0% Commission Event Ticketing & Lightning QR Check-In",
+        alt: "URPASS UK — Event Registration & QR Check-In Software",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "UK Event Ticketing & QR Check-In Software | 0% Commission | URPASS",
+    title: "Event Registration & QR Check-In Software UK | URPASS",
     description:
-      "Sell tickets and check in attendees across the UK with 0% platform commission. Browser-based QR scanning in <0.3s, UK GDPR compliance, and transparent GBP plans.",
+      "Run registrations, digital QR tickets and fast attendee check-in for UK conferences, university events, workshops and community events with URPASS.",
     images: ["https://urpass.space/og-image-uk.png"],
   },
   other: {
@@ -75,9 +76,9 @@ export default function UkEventTicketingPage() {
       config={{
         canonicalUrl: "https://urpass.space/uk",
         badge: "UK EVENT OS · 0% PLATFORM COMMISSION",
-        h1: "UK Event Ticketing & QR Check-In Software for Universities, Conferences & Organisers",
+        h1: "Event Registration & QR Check-In Software for UK Events",
         description:
-          "Launch branded registration pages, issue digital QR passes, and check in thousands of attendees in <0.3s using standard smartphone browsers. Fully compliant with UK GDPR, with transparent GBP pricing and no per-ticket fees.",
+          "Run registrations, digital QR tickets and fast attendee check-in for UK conferences, university events, workshops and community events. Sub-second smartphone scanning, transparent GBP pricing, and full UK GDPR compliance.",
         ctaLabel: "Start free in the UK",
 
         // 10-Point Standard: Direct Answer (40–60 words)
@@ -249,6 +250,86 @@ export default function UkEventTicketingPage() {
         ],
 
         relatedLinks: [
+          // P0 Core Features & Alternatives
+          {
+            title: "Eventbrite Alternative UK",
+            href: "/uk/eventbrite-alternative",
+            category: "Comparison",
+          },
+          {
+            title: "UK Event Ticketing Software",
+            href: "/uk/event-ticketing-software",
+            category: "Product",
+          },
+          {
+            title: "UK Event Registration Software",
+            href: "/uk/event-registration-software",
+            category: "Product",
+          },
+          {
+            title: "QR Code Event Check-In UK",
+            href: "/uk/qr-code-event-check-in",
+            category: "Product",
+          },
+          {
+            title: "Event Check-In Software UK",
+            href: "/uk/event-check-in-software",
+            category: "Product",
+          },
+          {
+            title: "QR Ticketing System UK",
+            href: "/uk/qr-ticketing-system",
+            category: "Product",
+          },
+
+          // P1 Higher Ed & Verticals
+          {
+            title: "University Event Management Software UK",
+            href: "/uk/university-event-software",
+            category: "Use Case",
+          },
+          {
+            title: "Student Union Event Ticketing",
+            href: "/uk/student-union-event-ticketing",
+            category: "Use Case",
+          },
+          {
+            title: "College Event Registration UK",
+            href: "/uk/college-event-registration",
+            category: "Use Case",
+          },
+          {
+            title: "Conference Registration Software UK",
+            href: "/uk/conference-registration-software",
+            category: "Use Case",
+          },
+          {
+            title: "Workshop Booking Software UK",
+            href: "/uk/workshop-registration-software",
+            category: "Use Case",
+          },
+          {
+            title: "Free Event Registration UK",
+            href: "/uk/free-event-registration",
+            category: "Product",
+          },
+          {
+            title: "Attendee Management Software UK",
+            href: "/uk/attendee-management-software",
+            category: "Product",
+          },
+          {
+            title: "Digital Event Passes UK",
+            href: "/uk/digital-event-passes",
+            category: "Product",
+          },
+          {
+            title: "Event Guest List Software UK",
+            href: "/uk/event-guest-list-software",
+            category: "Product",
+          },
+
+          // P2 Cities
           {
             title: "London Event Registration & Check-In",
             href: "/uk/london",
@@ -270,8 +351,28 @@ export default function UkEventTicketingPage() {
             category: "Location",
           },
           {
+            title: "Glasgow Event Registration & Check-In",
+            href: "/uk/glasgow",
+            category: "Location",
+          },
+          {
+            title: "Leeds Event Registration & Check-In",
+            href: "/uk/leeds",
+            category: "Location",
+          },
+          {
             title: "Bristol Event Registration & Check-In",
             href: "/uk/bristol",
+            category: "Location",
+          },
+          {
+            title: "Liverpool Event Registration & Check-In",
+            href: "/uk/liverpool",
+            category: "Location",
+          },
+          {
+            title: "Cambridge Event Registration & Check-In",
+            href: "/uk/cambridge",
             category: "Location",
           },
           {
@@ -283,11 +384,6 @@ export default function UkEventTicketingPage() {
             title: "University Society Event Ticketing",
             href: "/university-society-event-ticketing",
             category: "Product",
-          },
-          {
-            title: "Eventbrite Alternative UK Comparison",
-            href: "/compare/eventbrite-alternative-uk",
-            category: "Comparison",
           },
         ],
 

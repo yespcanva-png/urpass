@@ -262,12 +262,40 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ].map((path) => ({ url: `${BASE}${path}`, priority: 0.85, changeFrequency: "weekly" as const }));
 
   const ukPages = [
+    // Main UK Hub
     "/uk",
+
+    // P0 Core Features & Alternatives
+    "/uk/event-ticketing-software",
+    "/uk/event-registration-software",
+    "/uk/qr-code-event-check-in",
+    "/uk/event-check-in-software",
+    "/uk/eventbrite-alternative",
+    "/uk/qr-ticketing-system",
+
+    // P1 Higher Ed & Verticals
+    "/uk/university-event-software",
+    "/uk/student-union-event-ticketing",
+    "/uk/college-event-registration",
+    "/uk/conference-registration-software",
+    "/uk/workshop-registration-software",
+    "/uk/free-event-registration",
+    "/uk/attendee-management-software",
+    "/uk/digital-event-passes",
+    "/uk/event-guest-list-software",
+
+    // P2 Cities
     "/uk/london",
     "/uk/manchester",
     "/uk/birmingham",
     "/uk/edinburgh",
+    "/uk/glasgow",
+    "/uk/leeds",
     "/uk/bristol",
+    "/uk/liverpool",
+    "/uk/cambridge",
+
+    // Related Legacy UK Mappings
     "/zero-commission-event-ticketing-uk",
     "/university-society-event-ticketing",
   ].map((path) => ({ url: `${BASE}${path}`, priority: 0.9, changeFrequency: "weekly" as const }));
