@@ -12,23 +12,28 @@ import {
   BarChart3,
   CalendarCheck,
   Lock,
+  Layers,
+  FileText,
+  Clock,
+  ArrowRight,
 } from "lucide-react";
 import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
   title: "Event Registration & QR Check-In Software UK | URPASS",
   description:
-    "Run registrations, digital QR tickets and fast attendee check-in for UK conferences, university events, workshops and community events with URPASS.",
+    "Manage event registration, digital QR passes, attendee check-in and attendance tracking with URPASS. Simple event software for UK conferences, universities, workshops and community events.",
   keywords: [
-    "event registration software uk",
-    "event ticketing software uk",
-    "qr code event check-in uk",
-    "event check-in software uk",
-    "eventbrite alternative uk",
-    "qr ticketing system uk",
-    "university event management software uk",
-    "students union ticketing software",
-    "college event registration uk",
+    "event registration software UK",
+    "event check-in software UK",
+    "QR check-in software UK",
+    "event ticketing software UK",
+    "event registration platform UK",
+    "QR ticketing system UK",
+    "event attendance tracking software UK",
+    "digital event pass UK",
+    "conference registration software UK",
+    "university event management software UK",
   ],
   alternates: {
     canonical: "https://urpass.space/uk",
@@ -41,7 +46,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Event Registration & QR Check-In Software UK | URPASS",
     description:
-      "Run registrations, digital QR tickets and fast attendee check-in for UK conferences, university events, workshops and community events with URPASS.",
+      "Manage event registration, digital QR passes, attendee check-in and attendance tracking with URPASS. Simple event software for UK conferences, universities, workshops and community events.",
     url: "https://urpass.space/uk",
     locale: "en_GB",
     type: "website",
@@ -59,7 +64,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Event Registration & QR Check-In Software UK | URPASS",
     description:
-      "Run registrations, digital QR tickets and fast attendee check-in for UK conferences, university events, workshops and community events with URPASS.",
+      "Manage event registration, digital QR passes, attendee check-in and attendance tracking with URPASS. Simple event software for UK conferences, universities, workshops and community events.",
     images: ["https://urpass.space/og-image-uk.png"],
   },
   other: {
@@ -70,200 +75,225 @@ export const metadata: Metadata = {
   },
 };
 
-export default function UkEventTicketingPage() {
+export default function UkEventPillarPage() {
   return (
     <SEOPage
       config={{
         canonicalUrl: "https://urpass.space/uk",
-        badge: "UK EVENT OS · 0% PLATFORM COMMISSION",
+        badge: "REGISTRATION · DIGITAL PASSES · FAST QR CHECK-IN",
         h1: "Event Registration & QR Check-In Software for UK Events",
         description:
-          "Run registrations, digital QR tickets and fast attendee check-in for UK conferences, university events, workshops and community events. Sub-second smartphone scanning, transparent GBP pricing, and full UK GDPR compliance.",
-        ctaLabel: "Start free in the UK",
+          "URPASS helps event organisers manage registrations, issue digital QR passes, check attendees in at the entrance and track attendance from one place. Run conferences, university events, workshops, seminars, hackathons, exhibitions, community events and business events without juggling forms, spreadsheets and manual guest lists.",
+        ctaLabel: "Create Your Event Free →",
 
         // 10-Point Standard: Direct Answer (40–60 words)
         directAnswer: {
-          title: "What is URPASS UK Event Ticketing & Check-In?",
+          title: "What is URPASS UK Event Registration & QR Check-In Software?",
           summary:
-            "URPASS is dedicated UK event management and gate check-in software built for university societies, students' unions, corporate conferences, and independent organisers. It eliminates punitive 5–8% per-ticket booking fees with transparent flat monthly plans in GBP (£), features sub-second browser scanning without app downloads, and complies strictly with UK GDPR and PECR regulations.",
+            "URPASS is a connected event operating system developed for UK event organisers, universities, conferences, and community hosts. It brings online registration forms, automated digital QR passes, sub-second smartphone gate scanning, duplicate-entry blocking, and real-time attendance analytics into one connected workflow. Designed for fast event entry with zero attendee app downloads and transparent GBP pricing.",
           keyPoints: [
-            "0% commission on ticket sales: retain 100% of your event revenue",
-            "Instant browser QR check-in (<0.3s scan) on any volunteer's smartphone",
-            "30-day full free trial activated directly with zero credit card required",
-            "Strict UK GDPR, Data Protection Act 2018, and PECR compliance",
+            "Online event registration: create branded forms and collect attendee data in minutes",
+            "Digital QR passes delivered automatically to attendee smartphones via email or link",
+            "Sub-second (<0.3s) camera check-in on volunteer phones with zero app downloads",
+            "Real-time attendance analytics distinguishing registered from checked-in guests",
           ],
         },
 
-        // 10-Point Standard: Key Facts & Comparison Table
-        keyFactsTable: {
-          title: "UK Ticketing Comparison & Technical Specifications",
-          subtitle: "How URPASS compares against legacy UK ticketing providers across fees, gate hardware, and data privacy.",
-          headers: ["Evaluation Parameter", "URPASS UK", "Legacy Platforms (Eventbrite UK / Ticket Tailor)"],
-          rows: [
-            {
-              col1: "Platform Commission per Ticket",
-              col2: "0% Commission (Free plan £0, paid tiers from £15/mo)",
-              col3: "6.95% + £0.59 per ticket sold",
-            },
-            {
-              col1: "Attendee Booking Surcharge",
-              col2: "£0 (Attendees pay only face value)",
-              col3: "2% to 4% added to checkout basket",
-            },
-            {
-              col1: "Gate Scanner Hardware",
-              col2: "Any smartphone browser (no app store download required)",
-              col3: "Requires proprietary scanner app or rented handheld hardware",
-            },
-            {
-              col1: "Offline Gate Operation",
-              col2: "Built-in offline cache: scans continue seamlessly without Wi-Fi",
-              col3: "Frequent network freeze errors at underground / low-signal venues",
-            },
-            {
-              col1: "Data Privacy & Compliance",
-              col2: "UK GDPR compliant, DPA 2018 notice, PECR cookie banner",
-              col3: "Third-party ad remarketing and attendee data sharing",
-            },
-            {
-              col1: "UK Free Trial Access",
-              col2: "30-day instant free trial with no card or payment gateway needed",
-              col3: "Immediate card capture or per-transaction deductions",
-            },
-          ],
-        },
-
-        // 10-Point Standard: Visual Product Proof
-        productProof: {
-          badge: "REAL-TIME ENTRY VALIDATION",
-          title: "High-Speed Gate Scanning for UK Venues & Campuses",
-          description:
-            "From historic university halls in Oxford and Edinburgh to busy event venues in London and Manchester, volunteer staff scan attendee QR codes in under 300ms using only their phone cameras. Duplicate entries are blocked immediately across all doors.",
-          type: "scanner",
-        },
-
+        // Core Platform Capabilities: Everything You Need to Run Event Registration
         features: [
           {
+            icon: FileText,
+            title: "Online Event Registration",
+            desc: "Create a registration page and share one simple link with your attendees. Collect the information you need and manage registrations from your organiser dashboard.",
+          },
+          {
             icon: QrCode,
-            title: "Instant Digital QR Passes",
-            desc: "Attendees receive clean, branded digital QR passes via email or direct shareable link. No app download, account creation, or login required.",
+            title: "Digital QR Passes",
+            desc: "Each approved attendee receives a unique digital QR pass for event entry. No printed guest lists. No manual ticket verification.",
           },
           {
             icon: ScanLine,
-            title: "Sub-Second Browser Scanner",
-            desc: "Turn any phone, tablet, or laptop into a fast gate scanner. Instant haptic feedback and clear visual cues validate valid vs duplicate tickets in <0.3s.",
+            title: "QR Event Check-In",
+            desc: "Turn a phone into an event scanner. Scan an attendee's QR pass at the entrance and validate their registration in <0.3s.",
           },
           {
-            icon: Zap,
-            title: "Offline Scanning Engine",
-            desc: "Scans validate locally using cached attendee databases when venue Wi-Fi or mobile reception drops, syncing back automatically when reconnected.",
+            icon: Lock,
+            title: "Duplicate Entry Protection",
+            desc: "Previously scanned or invalid passes are identified immediately during check-in, helping gate teams control event access.",
           },
           {
-            icon: ShieldCheck,
-            title: "UK GDPR & PECR Compliant",
-            desc: "Your attendee data belongs exclusively to you. Built with strict UK Data Protection Act 2018 controls, Article 17 erasure requests, and compliant cookie consent.",
+            icon: BarChart3,
+            title: "Live Attendance Tracking",
+            desc: "See registrations and check-ins from your event dashboard and understand exactly how many attendees have arrived in real time.",
           },
           {
-            icon: Building2,
-            title: "Students' Union & Society Ready",
-            desc: "Capture university-specific fields including Student ID, department, society membership number, dietary requirements, and emergency contacts.",
-          },
-          {
-            icon: Banknote,
-            title: "Zero Commission Ticketing",
-            desc: "Keep 100% of your ticket revenue. Simple monthly or annual subscriptions in GBP (£) with zero per-ticket percentage cuts.",
+            icon: Users,
+            title: "Attendee Management",
+            desc: "Keep attendee information, registration status, custom fields, and check-in activity organised in one centralised place.",
           },
         ],
 
-        // 10-Point Standard: 5 Step How It Works
+        // 6-Step Check-In Process matching user specification
         steps: [
           {
             n: "01",
-            title: "Create Your Event",
-            desc: "Set up your event title, date in DD/MM/YYYY, venue, and customise registration fields like Student ID and society name.",
+            title: "Create your event",
+            desc: "Set up your event title, date, venue, and custom registration fields in your organiser dashboard.",
           },
           {
             n: "02",
-            title: "Distribute Registration Link",
-            desc: "Share your clean event URL across WhatsApp, Instagram, email newsletters, or embed directly into your website.",
+            title: "Share your registration link",
+            desc: "Send your URPASS event page through email, social media, WhatsApp, or embed it on your website.",
           },
           {
             n: "03",
-            title: "Issue QR Passes",
-            desc: "Approve registrations automatically or manually. Attendees receive instant digital QR passes directly to their inbox.",
+            title: "Attendees register",
+            desc: "Registrations appear inside your organiser dashboard with automatic or manual approval queues.",
           },
           {
             n: "04",
-            title: "Scan at the Entrance",
-            desc: "Open the scanner URL on volunteer smartphones. Point the camera at attendee QR passes for instant green check-in.",
+            title: "Generate digital QR passes",
+            desc: "Each attendee receives a unique, mobile-responsive digital event pass delivered straight to their inbox.",
           },
           {
             n: "05",
-            title: "Track Live Attendance",
-            desc: "Watch real-time check-in percentages, entrance velocity, and gate analytics update live on your organiser dashboard.",
+            title: "Scan at the entrance",
+            desc: "Your event team scans the QR code using any smartphone camera for instant green verification.",
+          },
+          {
+            n: "06",
+            title: "Track attendance",
+            desc: "See who has arrived and monitor real-time event entry throughput directly on your dashboard.",
           },
         ],
 
-        // 10-Point Standard: Deep-Dive Sections
+        // Key Facts Table: Workflow Transformation
+        keyFactsTable: {
+          title: "Replace Forms + Spreadsheets + Manual Check-In",
+          subtitle:
+            "How URPASS transforms fragmented manual event tools into one connected workflow from registration to entrance.",
+          headers: ["Event Stage", "Fragmented Manual Workflow", "Connected URPASS Workflow"],
+          rows: [
+            {
+              col1: "1. Registration",
+              col2: "Google Form or generic survey tool",
+              col3: "Branded online registration form with custom fields",
+            },
+            {
+              col1: "2. Data Storage",
+              col2: "Clunky spreadsheet prone to accidental edits",
+              col3: "Centralised attendee management with status tagging",
+            },
+            {
+              col1: "3. Ticket Issuance",
+              col2: "Manual confirmation emails or generic PDF attachments",
+              col3: "Automated digital QR passes sent instantly to attendee phones",
+            },
+            {
+              col1: "4. Gate Entry",
+              col2: "Printed paper sheets with slow pen-and-paper crossing",
+              col3: "Sub-second (<0.3s) camera scanning on any volunteer's phone",
+            },
+            {
+              col1: "5. Duplicate Protection",
+              col2: "Zero detection; forwarded emails or copied tickets pass through",
+              col3: "Immediate red alert flags duplicate or reused tickets",
+            },
+            {
+              col1: "6. Attendance Tracking",
+              col2: "Manual counting after the event ends",
+              col3: "Live real-time check-in stats and arrival velocity curves",
+            },
+          ],
+        },
+
+        // Deep-Dive Sections: Universities, No-Hardware, Simple Alternative, Free & Paid, Multi-Gate
         deepDiveSections: [
           {
-            badge: "COMMISSION-FREE TICKETING",
-            title: "Why UK Organisers Are Moving Away from Eventbrite's Commission Model",
-            paragraphs: [
-              "For years, UK event organisers, students' unions, and professional meetup hosts have been forced to give up 5% to 8% of every ticket sold to ticketing giants. On a 500-person conference charging £30 per ticket, legacy platforms skim over £1,100 in arbitrary processing fees and convenience charges.",
-              "URPASS operates on a transparent SaaS subscription model: you pay a flat monthly fee starting at £15/mo for Starter, £35/mo for Pro, or £79/mo for Business — or use our Free plan for small events. Every single pound from your ticket sales stays with your organisation.",
-            ],
-            bullets: [
-              "No surprise per-ticket deduction upon payout",
-              "No buyer surcharge added at checkout basket",
-              "Direct attendee relationship with zero third-party cross-selling",
-              "Unlimited check-ins across multiple entrances included in all plans",
-            ],
-            takeaway: "Save thousands of pounds each semester or conference cycle by switching to zero-commission software.",
-          },
-          {
             badge: "CAMPUS & HIGHER EDUCATION",
-            title: "Built Specifically for UK Universities, Students' Unions & Societies",
+            title: "Event Registration Software for UK Universities & Students' Unions",
             paragraphs: [
-              "University events face unique logistical challenges: committee handovers every academic year, strict data privacy guidelines, large freshers' fair crowds, and fluctuating budgets. Traditional tools require clunky hardware or charge commercial rates that drain society funds.",
-              "URPASS gives students' unions and societies full control over multi-gate entry, attendee capacity limits, and custom registration questionnaires. Committee members can run check-ins from their personal phones without installing any app from the App Store or Google Play.",
+              "University events often involve multiple departments, societies, organisers, and student volunteers. URPASS helps UK institutions centralise event registrations and attendee entry.",
+              "Whether coordinating student society formals, academic department conferences, university open days, freshers' fairs, technical symposiums, or alumni galas, URPASS gives committees total visibility over registrations and gate flow.",
             ],
             bullets: [
-              "Custom fields for Student ID, course, college, and dietary needs",
-              "Multi-committee access with role-based permissions",
-              "Sub-second verification preventing queue buildup in unpredictable UK weather",
-              "Comprehensive CSV exports for university administration reporting",
+              "Capture mandatory Student IDs, department affiliations, and society memberships",
+              "Multi-committee access with role-based permissions for easy annual handovers",
+              "Fast volunteer training: student door staff start scanning in seconds via phone browser",
+              "Full compliance with UK GDPR and the Data Protection Act 2018",
             ],
-            takeaway: "Empower student committees with enterprise-grade event technology that respects student budgets.",
+            takeaway: "Your organisers can manage registrations while volunteers use QR scanning for attendee entry.",
+          },
+          {
+            badge: "HARDWARE-FREE GATE SCANNING",
+            title: "Event Check-In Software Without Complicated Hardware",
+            paragraphs: [
+              "You shouldn't need specialist laser equipment or rented scanning hardware for a straightforward event. URPASS is designed to make event entry simple.",
+              "Your team can use compatible smartphones (iOS Safari, Android Chrome) to scan QR passes and validate attendees in under 0.3 seconds. This makes URPASS suitable for single entrance events (workshops, intimate meetups), multiple entrances (conferences, society balls), and high-volume venues.",
+            ],
+            bullets: [
+              "Zero app downloads required: runs directly in mobile web browsers",
+              "Offline caching engine keeps scanning functional even when venue Wi-Fi drops",
+              "Multi-door synchronization in real time across unlimited volunteer phones",
+              "Rapid manual search allows door staff to admit guests if phone batteries run out",
+            ],
+            takeaway: "Eliminate expensive hardware rentals and keep entrance queues moving smoothly.",
+          },
+          {
+            badge: "SIMPLICITY & EFFICIENCY",
+            title: "A Simple, Focused Alternative for Event Organisers",
+            paragraphs: [
+              "Large legacy event-management platforms can include dozens of complicated features that smaller organisers may never use, bundled with heavy per-ticket commissions and third-party ads.",
+              "URPASS focuses on the core attendee journey: Register → Receive Pass → Scan → Enter. That makes it suitable for organisers who want straightforward event registration and QR check-in without unnecessary complexity.",
+            ],
+            bullets: [
+              "Simple setup: create your event in under 3 minutes",
+              "Digital-first: replace printed registration sheets with live digital passes",
+              "QR-based entry: validate attendees with precision and speed",
+              "Built for different event sizes: from 20-person workshops to 5,000-person summits",
+            ],
+            takeaway: "Spend less time managing administrative tools and more time delivering a great event.",
+          },
+          {
+            badge: "DATA & REPORTING",
+            title: "Know Who Actually Attended — Not Just Who Registered",
+            paragraphs: [
+              "Registration numbers do not always equal actual attendance. For free events, workshops, and corporate seminars, no-show rates can range from 20% to 50%.",
+              "URPASS allows organisers to distinguish between registered attendees (people who signed up) and checked-in attendees (people who actually arrived at the venue). That gives organisers actionable attendance data for venue health & safety compliance, catering adjustments, and future event planning.",
+            ],
+            bullets: [
+              "Live headcount graphs and entrance velocity tracking",
+              "Instant CSV exports showing exact arrival timestamps and gate numbers",
+              "Identify no-shows for targeted follow-up communication",
+              "Real-time capacity warnings for venue fire safety limits",
+            ],
+            takeaway: "Gain accurate post-event insights backed by verified gate check-in records.",
           },
         ],
 
+        // Built for Events Across the UK
         useCases: [
-          "Students' Union Events & Freshers' Fairs",
-          "University Academic Conferences & Symposiums",
-          "Tech Meetups & Developer Hackathons",
-          "Corporate Seminars & Training Days",
-          "Independent Music & Arts Performances",
-          "Society AGMs & Social Mixers",
-          "Charity Galas & Fundraising Dinners",
-          "Sports Club Matches & Tournaments",
+          "Conferences & Industry Summits",
+          "University & Student Society Events",
+          "Workshops & Professional Masterclasses",
+          "Hackathons & Coding Competitions",
+          "Business Networking & Product Launches",
+          "Community Gatherings & Cultural Festivals",
+          "Educational & CPD Seminars",
+          "Multi-Gate Exhibitions & Trade Shows",
         ],
 
+        // Comprehensive Internal Linking: Core Features, Verticals, and UK Cities
         relatedLinks: [
-          // P0 Core Features & Alternatives
-          {
-            title: "Eventbrite Alternative UK",
-            href: "/uk/eventbrite-alternative",
-            category: "Comparison",
-          },
-          {
-            title: "UK Event Ticketing Software",
-            href: "/uk/event-ticketing-software",
-            category: "Product",
-          },
+          // P0 Core Features
           {
             title: "UK Event Registration Software",
             href: "/uk/event-registration-software",
+            category: "Product",
+          },
+          {
+            title: "UK Event Check-In Software",
+            href: "/uk/event-check-in-software",
             category: "Product",
           },
           {
@@ -272,14 +302,19 @@ export default function UkEventTicketingPage() {
             category: "Product",
           },
           {
-            title: "Event Check-In Software UK",
-            href: "/uk/event-check-in-software",
+            title: "UK Event Ticketing Software",
+            href: "/uk/event-ticketing-software",
             category: "Product",
           },
           {
             title: "QR Ticketing System UK",
             href: "/uk/qr-ticketing-system",
             category: "Product",
+          },
+          {
+            title: "Eventbrite Alternative UK",
+            href: "/uk/eventbrite-alternative",
+            category: "Comparison",
           },
 
           // P1 Higher Ed & Verticals
@@ -329,7 +364,7 @@ export default function UkEventTicketingPage() {
             category: "Product",
           },
 
-          // P2 Cities
+          // P2 UK Cities
           {
             title: "London Event Registration & Check-In",
             href: "/uk/london",
@@ -387,40 +422,54 @@ export default function UkEventTicketingPage() {
           },
         ],
 
-        // 10-Point Standard: 5–8 FAQs
+        // 10 Detailed FAQs matching user specification
         faqs: [
           {
-            q: "How does the 30-day free trial work for UK organisers?",
-            a: "UK organisers can activate a 30-day free trial of Starter, Pro, or Business directly from their account dashboard. No credit card, debit card, or payment gateway details are required. You get immediate, full access to all features of that plan for 30 days.",
+            q: "What is event registration software?",
+            a: "Event registration software allows organisers to collect attendee registrations online, manage participant information and organise the attendee journey before an event. URPASS combines registration with digital QR passes, event entry and attendance tracking.",
           },
           {
-            q: "What are the UK pricing plans after the free trial?",
-            a: "URPASS offers simple, transparent GBP pricing: Free (£0 forever for up to 100 registrations/month), Starter (£15/month or £120/year for 500 registrations), Pro (£35/month or £300/year for 2,500 registrations), and Business (£79/month or £699/year for 10,000 registrations). Unlike Eventbrite, we take 0% commission on your ticket sales.",
+            q: "What is QR event check-in?",
+            a: "QR event check-in allows attendees to present a unique QR code when they arrive. The event team scans the code to validate the attendee and record their entry in under 0.3 seconds.",
           },
           {
-            q: "Do volunteer scanners need to download an app from the App Store?",
-            a: "No. URPASS gate scanning runs entirely in any modern web browser (Safari, Chrome, Edge) on iOS and Android smartphones. Organisers simply share a secure check-in PIN or link with volunteers. Volunteers open the camera in the browser and scan tickets in <0.3s.",
+            q: "Can URPASS be used for events in the UK?",
+            a: "Yes. UK organisers can use URPASS to manage registrations, attendee information, digital passes and event check-in across England, Scotland, Wales, and Northern Ireland.",
           },
           {
-            q: "How does URPASS comply with UK GDPR and PECR?",
-            a: "URPASS is fully compliant with the UK General Data Protection Regulation (UK GDPR), the Data Protection Act 2018, and the Privacy and Electronic Communications Regulations (PECR). Attendee data is stored securely, never sold or shared with advertisers, and can be exported or permanently deleted at any time upon request.",
+            q: "Do attendees need to download an app?",
+            a: "No. URPASS is designed around digital registration and mobile-responsive web QR passes, eliminating the need for attendees to install a separate event app for basic entry.",
           },
           {
-            q: "What happens if venue Wi-Fi drops at the entrance doors?",
-            a: "URPASS features an intelligent offline caching engine. When your door staff load the scanner session, the approved attendee roster is cached in the browser. Passes validate in real-time even with zero internet signal, and synchronize automatically when connectivity is restored.",
+            q: "Can URPASS be used for university events?",
+            a: "Yes. URPASS can be used for university conferences, student society events, workshops, hackathons, symposiums, freshers' fairs, and other campus events with custom Student ID fields.",
           },
           {
-            q: "Can we collect university Student IDs during registration?",
-            a: "Yes. URPASS allows you to configure unlimited custom registration fields on paid plans (and up to 3 on Free). You can easily require Student ID, college affiliation, year of study, dietary requirements, and custom disclaimers.",
+            q: "Can I use URPASS for a free event?",
+            a: "Yes. URPASS supports free event registration workflows. Organisers can create events, collect registrations, generate attendee QR passes, and manage entry completely free of charge.",
           },
           {
-            q: "Can multiple entrances scan tickets simultaneously?",
-            a: "Yes. URPASS synchronises check-in records across unlimited scanner devices in real-time. If an attendee tries to present the same QR code at Entrance A and Entrance B, the second scan immediately flags a prominent red 'ALREADY CHECKED IN' alert with exact timestamp.",
+            q: "Can multiple people scan attendees?",
+            a: "Yes. URPASS is designed to support event entry workflows where unlimited event staff or volunteers handle attendee check-in simultaneously across multiple doors with real-time sync.",
+          },
+          {
+            q: "Can URPASS detect a QR code that has already been scanned?",
+            a: "Yes. URPASS validates attendee passes during check-in and immediately identifies duplicate, reused, or invalid entry attempts with visual and haptic warnings.",
+          },
+          {
+            q: "Does URPASS track attendance?",
+            a: "Yes. Organisers can use registration and check-in information on their dashboard to understand who registered and who actually attended the event.",
+          },
+          {
+            q: "What types of events can use URPASS?",
+            a: "URPASS can be used for conferences, workshops, university events, hackathons, seminars, exhibitions, networking events, community events, and business events.",
           },
         ],
 
-        ctaTitle: "Ready to run your next UK event with 0% commission?",
-        ctaDescription: "Activate your 30-day free trial today. No credit card required. Up and running in minutes.",
+        // High-Converting Primary Conversion Callout
+        ctaTitle: "Run Your Next UK Event With URPASS",
+        ctaDescription:
+          "Registration shouldn't end in a spreadsheet. Bring registration, attendee passes and event entry into one connected workflow. Create your event. Share the link. Scan attendees.",
         geo: {
           region: "GB",
           placename: "United Kingdom",

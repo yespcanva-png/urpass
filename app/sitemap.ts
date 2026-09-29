@@ -145,6 +145,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/event-check-in-for-5000-attendees",
     "/zoho-backstage-alternative",
     "/best-event-registration-software-india",
+    // High-intent commercial acquisition pages
+    "/free-event-registration-software",
+    "/qr-code-event-registration",
+    "/qr-code-check-in-system",
+    "/free-event-ticketing-software",
+    "/college-event-registration-software",
+    "/college-fest-management-software",
+    "/hackathon-registration-platform",
+    "/conference-registration-software",
+    "/workshop-registration-software",
+    "/seminar-registration-software",
+    "/event-guest-management-software",
+    "/event-registration-form-with-qr-code",
+    "/best-qr-check-in-software",
+    "/how-to-create-qr-tickets-for-an-event",
   ].map((path) => ({ url: `${BASE}${path}`, priority: 0.85, changeFrequency: "weekly" as const }));
 
   const useCasePages = [
@@ -259,6 +274,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/compare/townscript-alternative",
     "/compare/google-forms-event-registration-alternative",
     "/compare/eventbrite-alternative-uk",
+    "/compare/urpass-vs-eventbrite",
+    "/compare/urpass-vs-zoho-backstage",
+    "/compare/urpass-vs-bookmyshow",
+    "/compare/urpass-vs-google-forms",
+    "/compare/eventbrite-alternatives",
+    "/compare/zoho-backstage-alternatives",
   ].map((path) => ({ url: `${BASE}${path}`, priority: 0.85, changeFrequency: "weekly" as const }));
 
   const ukPages = [
@@ -272,9 +293,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/uk/event-check-in-software",
     "/uk/eventbrite-alternative",
     "/uk/qr-ticketing-system",
+    "/uk/qr-code-event-registration",
+    "/uk/qr-check-in",
 
     // P1 Higher Ed & Verticals
     "/uk/university-event-software",
+    "/uk/university-event-management-software",
     "/uk/student-union-event-ticketing",
     "/uk/college-event-registration",
     "/uk/conference-registration-software",
@@ -282,7 +306,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/uk/free-event-registration",
     "/uk/attendee-management-software",
     "/uk/digital-event-passes",
+    "/uk/digital-event-pass",
     "/uk/event-guest-list-software",
+    "/uk/hackathon-registration-platform",
+    "/uk/event-attendance-tracking",
 
     // P2 Cities
     "/uk/london",
@@ -294,6 +321,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/uk/bristol",
     "/uk/liverpool",
     "/uk/cambridge",
+    "/uk/cardiff",
+    "/uk/belfast",
 
     // Related Legacy UK Mappings
     "/zero-commission-event-ticketing-uk",

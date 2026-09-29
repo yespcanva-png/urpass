@@ -19,6 +19,7 @@ import {
   Clock,
   Sparkles,
   Search,
+  Ticket,
 } from "lucide-react";
 import OpsTerminal from "./OpsTerminal";
 import type { OpsLogItem } from "@/app/api/ops/telemetry/route";
@@ -101,10 +102,10 @@ export default function OpsDashboard({ onLogout }: Props) {
 
   useEffect(() => {
     fetchTelemetry();
-    // Auto-refresh telemetry every 6 seconds to update live terminal & health
+    // Auto-refresh telemetry every 3 seconds for continuous real-time feed without reload
     const interval = setInterval(() => {
       fetchTelemetry(false);
-    }, 6000);
+    }, 3000);
     return () => clearInterval(interval);
   }, []);
 
@@ -160,20 +161,29 @@ export default function OpsDashboard({ onLogout }: Props) {
       <header className="border-b border-white/10 bg-[#0d091b] px-4 sm:px-8 py-3.5 sticky top-0 z-40 backdrop-blur-md">
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-emerald-500 flex items-center justify-center shadow-lg shadow-purple-500/20">
-              <Activity className="w-5 h-5 text-white" />
+            <div
+              className="w-9 h-9 rounded-xl flex items-center justify-center shadow-lg relative shrink-0"
+              style={{
+                background: "linear-gradient(135deg, #6D28D9, #4c1d95)",
+              }}
+            >
+              <Ticket className="w-5 h-5 text-white" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-base font-black tracking-wider uppercase text-white">
-                  URPASS OPS
-                </h1>
-                <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
-                  COMMAND CENTER
+                <span className="text-base font-black tracking-widest uppercase text-white leading-none">
+                  URPASS
+                </span>
+                <span className="px-1.5 py-0.5 rounded text-[8px] sm:text-[9px] font-mono font-bold bg-purple-500/20 text-purple-300 border border-purple-500/40">
+                  OPS COMMAND
+                </span>
+                <span className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[8px] sm:text-[9px] font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  LIVE (3s)
                 </span>
               </div>
-              <p className="text-[10px] text-white/40 font-mono">
-                PostgreSQL Config · Real-Time Telemetry & Terminal Logs
+              <p className="text-[10px] text-white/50 font-mono hidden sm:block mt-0.5">
+                Real-Time Telemetry · Logins, Signups, Events & Gate Check-Ins
               </p>
             </div>
           </div>
@@ -237,7 +247,7 @@ export default function OpsDashboard({ onLogout }: Props) {
       {/* ── Main Content Area ── */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-8 flex flex-col gap-6">
         {/* ── Stat Cards Grid (Health, Active Users, Subscriptions) ── */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {/* Card 1: User Health Score */}
           <div className="bg-[#100c22] border border-white/10 rounded-2xl p-5 flex flex-col justify-between shadow-xl relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-full blur-xl group-hover:bg-emerald-500/10 transition-colors" />
