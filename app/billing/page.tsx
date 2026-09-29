@@ -193,11 +193,11 @@ export default async function BillingPage(props: {
       ? "IN"
       : isUkSubscriber
       ? "GB"
-      : cookieCountry === "GB" || cookieCountry === "UK"
-      ? "GB"
-      : cookieCountry === "IN"
+      : headerCountry === "IN"
       ? "IN"
       : headerCountry === "GB"
+      ? "GB"
+      : cookieCountry === "GB" || cookieCountry === "UK"
       ? "GB"
       : "IN";
   const isUk = country === "GB";
@@ -277,7 +277,7 @@ export default async function BillingPage(props: {
           registrationLimit={registrationLimit}
           organizerLimit={organizerLimit}
           planCanUseApi={plan.canUse("api_access")}
-          initialTab={searchParams?.tab}
+          initialTab={searchParams?.tab ?? "plans"}
         />
       </Suspense>
     </div>

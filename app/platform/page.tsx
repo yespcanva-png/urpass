@@ -209,7 +209,14 @@ export default async function PlatformPage() {
   const [reqHeaders, cookieStore] = await Promise.all([headers(), cookies()]);
   const cookieCountry = cookieStore.get("urpass_country")?.value?.toUpperCase();
   const headerCountry = detectCountryFromHeaders(reqHeaders);
-  const country: "IN" | "GB" = cookieCountry === "GB" || cookieCountry === "UK" ? "GB" : headerCountry === "GB" ? "GB" : "IN";
+  const country: "IN" | "GB" =
+    headerCountry === "IN"
+      ? "IN"
+      : cookieCountry === "GB" || cookieCountry === "UK"
+      ? "GB"
+      : headerCountry === "GB"
+      ? "GB"
+      : "IN";
 
   return (
     <div className="min-h-screen bg-white text-neutral-900">

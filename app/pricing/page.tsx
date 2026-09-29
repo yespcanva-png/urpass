@@ -179,11 +179,11 @@ export default async function PricingPage(props: {
       ? "GB"
       : requestedCountry === "IN"
       ? "IN"
-      : cookieCountry === "GB" || cookieCountry === "UK"
-      ? "GB"
-      : cookieCountry === "IN"
+      : headerCountry === "IN"
       ? "IN"
       : headerCountry === "GB"
+      ? "GB"
+      : cookieCountry === "GB" || cookieCountry === "UK"
       ? "GB"
       : "IN";
   const isUk = country === "GB";

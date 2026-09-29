@@ -200,31 +200,30 @@ export default function BillingClientShell({
   registrationLimit,
   organizerLimit,
   planCanUseApi,
-  initialTab = "overview",
+  initialTab = "plans",
 }: BillingClientShellProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  // Tab state: "overview" | "plans" | "invoices"
-  const [activeTab, setActiveTab] = useState<"overview" | "plans" | "invoices">(() => {
+  // Tab state: "plans" | "overview" | "invoices"
+  const [activeTab, setActiveTab] = useState<"plans" | "overview" | "invoices">(() => {
     const urlTab = searchParams.get("tab");
     if (urlTab === "plans" || urlTab === "invoices" || urlTab === "overview") {
       return urlTab;
     }
-    if (searchParams.get("claim") === "true" || searchParams.get("plan")) {
-      return "plans";
-    }
-    return (initialTab as "overview" | "plans" | "invoices") || "overview";
+    return (initialTab as "plans" | "overview" | "invoices") || "plans";
   });
 
   useEffect(() => {
     const hash = window.location.hash;
     if (hash === "#plan-catalog" || hash === "#plans") {
       setActiveTab("plans");
+    } else if (hash === "#overview") {
+      setActiveTab("overview");
     }
   }, []);
 
-  function handleTabChange(tab: "overview" | "plans" | "invoices") {
+  function handleTabChange(tab: "plans" | "overview" | "invoices") {
     setActiveTab(tab);
     const params = new URLSearchParams(window.location.search);
     params.set("tab", tab);
@@ -287,19 +286,6 @@ export default function BillingClientShell({
       <div className="inline-flex items-center gap-1 bg-neutral-100/90 border border-neutral-200/80 rounded-xl p-1 shadow-xs">
         <button
           type="button"
-          onClick={() => handleTabChange("overview")}
-          className={`flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg transition-all ${
-            activeTab === "overview"
-              ? "bg-white text-neutral-900 shadow-xs"
-              : "text-neutral-500 hover:text-neutral-900"
-          }`}
-        >
-          <CreditCard className={`w-4 h-4 ${activeTab === "overview" ? "text-brand" : "text-neutral-400"}`} />
-          <span>Overview &amp; Quotas</span>
-        </button>
-
-        <button
-          type="button"
           onClick={() => handleTabChange("plans")}
           className={`flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg transition-all ${
             activeTab === "plans"
@@ -309,6 +295,19 @@ export default function BillingClientShell({
         >
           <Sparkles className={`w-4 h-4 ${activeTab === "plans" ? "text-brand" : "text-neutral-400"}`} />
           <span>Plans &amp; Upgrades</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => handleTabChange("overview")}
+          className={`flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg transition-all ${
+            activeTab === "overview"
+              ? "bg-white text-neutral-900 shadow-xs"
+              : "text-neutral-500 hover:text-neutral-900"
+          }`}
+        >
+          <CreditCard className={`w-4 h-4 ${activeTab === "overview" ? "text-brand" : "text-neutral-400"}`} />
+          <span>Overview &amp; Quotas</span>
         </button>
 
         <button
@@ -331,7 +330,23 @@ export default function BillingClientShell({
       </div>
 
       {/* ═════════════════════════════════════════════════════════════
-          TAB 1: OVERVIEW & QUOTAS
+          TAB 1: PLANS & UPGRADES
+      ═════════════════════════════════════════════════════════════ */}
+      {activeTab === "plans" && (
+        <div className="space-y-8 animate-in fade-in-50 duration-150">
+          <PlanGrid
+            currentPlanSlug={currentPlanSlug}
+            currentPlanIndex={currentPlanIndex}
+            userEmail={userEmail}
+            userName={userName}
+            trialUsed={sub?.trial_used ?? false}
+            country={country}
+          />
+        </div>
+      )}
+
+      {/* ═════════════════════════════════════════════════════════════
+          TAB 2: OVERVIEW & QUOTAS
       ═════════════════════════════════════════════════════════════ */}
       {activeTab === "overview" && (
         <div className="space-y-6 animate-in fade-in-50 duration-150">
@@ -506,22 +521,6 @@ export default function BillingClientShell({
               </div>
             )}
           </div>
-        </div>
-      )}
-
-      {/* ═════════════════════════════════════════════════════════════
-          TAB 2: PLANS & UPGRADES
-      ═════════════════════════════════════════════════════════════ */}
-      {activeTab === "plans" && (
-        <div className="space-y-8 animate-in fade-in-50 duration-150">
-          <PlanGrid
-            currentPlanSlug={currentPlanSlug}
-            currentPlanIndex={currentPlanIndex}
-            userEmail={userEmail}
-            userName={userName}
-            trialUsed={sub?.trial_used ?? false}
-            country={country}
-          />
         </div>
       )}
 

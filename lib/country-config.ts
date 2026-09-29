@@ -354,26 +354,26 @@ export function detectCountryFromHeaders(headers: {
 
   // 1. Vercel Geo-IP header (injected automatically on Vercel Edge & Serverless)
   const vercelCountry = headers.get("x-vercel-ip-country")?.trim().toUpperCase();
-  if (vercelCountry === "GB" || vercelCountry === "UK") return "GB";
   if (vercelCountry === "IN") return "IN";
+  if (vercelCountry === "GB" || vercelCountry === "UK") return "GB";
   if (vercelCountry === "US") return "US";
 
   // 2. Cloudflare Geo-IP header
   const cfCountry = headers.get("cf-ipcountry")?.trim().toUpperCase();
-  if (cfCountry === "GB" || cfCountry === "UK") return "GB";
   if (cfCountry === "IN") return "IN";
+  if (cfCountry === "GB" || cfCountry === "UK") return "GB";
   if (cfCountry === "US") return "US";
 
   // 3. AWS CloudFront viewer country header
   const cfViewer = headers.get("cloudfront-viewer-country")?.trim().toUpperCase();
-  if (cfViewer === "GB" || cfViewer === "UK") return "GB";
   if (cfViewer === "IN") return "IN";
+  if (cfViewer === "GB" || cfViewer === "UK") return "GB";
   if (cfViewer === "US") return "US";
 
   // 4. Standard X-Country-Code header
   const xCountry = headers.get("x-country-code")?.trim().toUpperCase();
-  if (xCountry === "GB" || xCountry === "UK") return "GB";
   if (xCountry === "IN") return "IN";
+  if (xCountry === "GB" || xCountry === "UK") return "GB";
   if (xCountry === "US") return "US";
 
   // 5. Browser Accept-Language header
@@ -396,7 +396,7 @@ export function detectCountryFromHeaders(headers: {
 
 /**
  * Automatically detects country on the client (browser) without permissions popups.
- * Priority: Pathname -> Query param -> Saved preference (localStorage) -> Browser Timezone -> Browser Language -> Default (IN).
+ * Priority: Pathname -> Query param -> Browser Timezone (IST takes precedence for Indian IP) -> Saved preference -> Browser Language -> Default (IN).
  */
 export function detectCountryClient(): "IN" | "GB" {
   if (typeof window === "undefined") return "IN";
@@ -427,14 +427,10 @@ export function detectCountryClient(): "IN" | "GB" {
     if (qCountry === "GB" || qCountry === "UK") return "GB";
     if (qCountry === "IN") return "IN";
 
-    // 2. Persistent user choice from localStorage
-    const stored = window.localStorage.getItem("urpass_country")?.toUpperCase();
-    if (stored === "GB" || stored === "UK") return "GB";
-    if (stored === "IN") return "IN";
-
-    // 3. Browser system timezone & offset (Instant, 0 latency, 0 permissions)
-    // CRITICAL: Check Indian timezone FIRST before checking browser languages!
-    // Many Indian users have Macs or PCs configured to English (UK) by default.
+    // 2. Browser system timezone & offset (Instant, 0 latency, 0 permissions)
+    // CRITICAL: Check Indian timezone FIRST before checking stale localStorage or languages!
+    // If the user's browser is in Indian Standard Time (IST is UTC+5:30 -> offset -330),
+    // they are physically on an Indian IP / device and should ALWAYS see Indian pricing (INR ₹).
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
     const offset = new Date().getTimezoneOffset(); // Indian Standard Time (IST) is UTC+5:30 -> offset is -330
     if (
@@ -446,6 +442,11 @@ export function detectCountryClient(): "IN" | "GB" {
     ) {
       return "IN";
     }
+
+    // 3. Persistent user choice from localStorage (for non-IST visitors who toggled)
+    const stored = window.localStorage.getItem("urpass_country")?.toUpperCase();
+    if (stored === "GB" || stored === "UK") return "GB";
+    if (stored === "IN") return "IN";
 
     if (
       tz === "Europe/London" ||

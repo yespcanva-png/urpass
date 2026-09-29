@@ -261,11 +261,6 @@ export default function DashboardContent() {
             <span className="text-[11px] font-medium text-neutral-400">
               {dateLabel}
             </span>
-            <span className="text-neutral-300">·</span>
-            <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-neutral-500">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-              {country === "GB" ? "UK Market · GBP (£)" : "India Market · INR (₹)"}
-            </span>
           </div>
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-neutral-900">
             {greeting}{firstName ? `, ${firstName}` : ""}
@@ -679,7 +674,7 @@ export default function DashboardContent() {
       <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-neutral-400 border-t border-neutral-200/60">
         <div className="flex items-center gap-2">
           <ShieldCheck className="w-3.5 h-3.5 text-neutral-400" />
-          <span>Enterprise grade · Razorpay Indian UPI &amp; UK GBP ready · 0% commission</span>
+          <span>Enterprise grade</span>
         </div>
         <div className="flex items-center gap-4 font-medium">
           <Link href="/dashboard/settings#payment-gateway" className="hover:text-neutral-900">
