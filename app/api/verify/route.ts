@@ -4,6 +4,7 @@ import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { getSupabaseUrl } from "@/lib/supabase/config";
 import { sendWebhooks } from "@/lib/webhooks";
 import { recordApiUsage } from "@/lib/api-usage";
+import { recordLiveOpsEvent } from "@/lib/ops/events";
 import crypto from "crypto";
 
 export const dynamic = "force-dynamic";
@@ -203,6 +204,12 @@ export async function POST(req: NextRequest) {
             pass_type: res.passType,
             checked_in_at: res.checkedInAt,
           }).catch(() => {});
+          recordLiveOpsEvent({
+            level: "SUCCESS",
+            category: "SCAN",
+            message: `Gate scan verified: ${res.attendee?.name || "Attendee"} (${res.attendee?.email || "Pass"}) admitted`,
+            details: { eventId, passType: res.passType, attendee: res.attendee?.email },
+          });
           void recordApiUsage(organizerId, "check_ins");
           return NextResponse.json(res, { status: 200 });
         }
@@ -412,6 +419,13 @@ export async function POST(req: NextRequest) {
     pass_type: attendee.pass_type,
     checked_in_at: checkedInAt,
   }).catch(() => {});
+
+  recordLiveOpsEvent({
+    level: "SUCCESS",
+    category: "SCAN",
+    message: `Gate scan verified: ${attendee.name || "Attendee"} (${attendee.email || "Pass"}) admitted`,
+    details: { eventId, passId: pass.id, attendee: attendee.email },
+  });
 
   void recordApiUsage(organizerId, "check_ins");
 

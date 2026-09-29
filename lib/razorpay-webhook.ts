@@ -11,6 +11,7 @@ import {
   sendUserPaymentSuccessEmail,
 } from "@/lib/email";
 import { communicationService, formatTicketId, buildTicketUrl } from "@/lib/communications";
+import { recordLiveOpsEvent } from "@/lib/ops/events";
 
 // Use service-role client — webhook runs outside user session
 function adminClient() {
@@ -242,6 +243,13 @@ export async function handleRazorpayWebhook(req: NextRequest): Promise<NextRespo
               year: "numeric",
             }),
           }).catch((err) => console.error("[email] Error notifying owner of trial activation:", err));
+
+          recordLiveOpsEvent({
+            level: "SUCCESS",
+            category: "BILLING",
+            message: `Free trial activated: ${planSlug.toUpperCase()} for user [${(userId || "").slice(0, 8)}] (${notes.customer_email || "user"})`,
+            details: { userId, plan: planSlug, subId: subscription.id },
+          });
         }
         return NextResponse.json({ received: true, event: eventType }, { status: 200 });
       }
@@ -294,6 +302,13 @@ export async function handleRazorpayWebhook(req: NextRequest): Promise<NextRespo
               orderId: payment.order_id,
               subscriptionId: subscription.id,
             }).catch((err) => console.error("[email] Error notifying owner of subscription charge:", err));
+
+            recordLiveOpsEvent({
+              level: "SUCCESS",
+              category: "BILLING",
+              message: `Paid subscription active: ${planSlug.toUpperCase()} (₹${payment ? Math.round(payment.amount / 100) : 0}) for user [${(userId || "").slice(0, 8)}]`,
+              details: { userId, plan: planSlug, amountPaise: payment?.amount },
+            });
           }
         }
         return NextResponse.json({ received: true, event: eventType }, { status: 200 });

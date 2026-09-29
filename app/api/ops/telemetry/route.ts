@@ -81,12 +81,12 @@ export async function GET() {
     const mandatePending = subs.filter((s) => s.status === "MANDATE_PENDING" || s.autopay_status === "pending").length;
     const cancelledSubs = subs.filter((s) => s.status === "cancelled" || s.status === "expired").length;
 
-    const totalAccounts = Math.max(profiles.length, authUsers.length, totalSubs, 1);
+    const totalAccounts = Math.max(profiles.length, authUsers.length, totalSubs);
     const healthScore = totalAccounts > 0
-      ? Math.max(70, Math.min(100, Math.round(((totalAccounts - mandatePending - cancelledSubs) / totalAccounts) * 100)))
+      ? Math.max(0, Math.min(100, Math.round(((totalAccounts - mandatePending - cancelledSubs) / totalAccounts) * 100)))
       : 100;
 
-    // Active users tracking
+    // Active users tracking (real activity only)
     const active1h = authUsers.filter((u) => u.last_sign_in_at && u.last_sign_in_at >= oneHourAgo).length ||
       profiles.filter((p) => p.updated_at && p.updated_at >= oneHourAgo).length;
 
@@ -97,6 +97,7 @@ export async function GET() {
       profiles.filter((p) => (p.updated_at && p.updated_at >= sevenDaysAgo) || (p.created_at && p.created_at >= sevenDaysAgo)).length;
 
     const activeEventsCount = events.filter((e) => e.status === "active" || e.status === "published").length;
+    const openGatesCount = new Set(checkIns.map((c) => c.event_id).filter(Boolean)).size;
 
     // Construct user roster with health indicators
     const userRoster = profiles.map((p) => {
@@ -238,22 +239,6 @@ export async function GET() {
       });
     });
 
-    // 8. Continuous live operational heartbeat (advances every 3s tick)
-    const tickKey = Math.floor(Date.now() / 3000) * 3000;
-    logs.push({
-      id: `sys-heartbeat-${tickKey}`,
-      timestamp: now.toISOString(),
-      level: "INFO",
-      category: "SYSTEM",
-      message: `Daemon heartbeat: DB latency ${dbLatencyMs}ms · Active: ${Math.max(active24h, 1)} users · Scanner network: operational`,
-      details: {
-        dbLatencyMs,
-        activeAccounts: totalAccounts,
-        activeEvents: activeEventsCount,
-        openGates: (checkIns?.length || 0) > 0 ? 3 : 1,
-      },
-    });
-
     // Deduplicate logs by unique ID
     const uniqueLogsMap = new Map<string, OpsLogItem>();
     for (const item of logs) {
@@ -287,13 +272,13 @@ export async function GET() {
         roster: userRoster.slice(0, 50),
       },
       activeUsers: {
-        active1h: Math.max(active1h, 1),
-        active24h: Math.max(active24h, 1),
-        active7d: Math.max(active7d, 1),
+        active1h,
+        active24h,
+        active7d,
         activeEventsCount,
-        openGatesCount: (checkIns?.length || 0) > 0 ? 3 : 1,
+        openGatesCount,
       },
-      logs: uniqueLogs.slice(-100), // Return last 100 chronological logs
+      logs: uniqueLogs.slice(-100), // Return last 100 chronological real logs
     });
   } catch (err: unknown) {
     console.error("[ops/telemetry] Unhandled error:", err);
