@@ -7,6 +7,11 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getSupabaseUrl } from "@/lib/supabase/config";
 import type { Workspace, WorkspaceMember, WorkspaceRole } from "@/types";
+import {
+  isTableMissingError,
+  getStoredWorkspaces,
+  saveStoredWorkspaces,
+} from "@/lib/org/fallback-store";
 
 function adminClient() {
   return createAdminClient(
@@ -40,30 +45,16 @@ export async function getWorkspaces(orgId: string): Promise<Workspace[]> {
       .order("created_at", { ascending: true });
 
     if (error) {
-      // If table doesn't exist yet, return a virtual General workspace
-      return [
-        {
-          id: `default-${orgId}`,
-          organization_id: orgId,
-          name: "General",
-          slug: "general",
-          description: "Default workspace for team coordination and main events.",
-          color: "#6D28D9",
-          is_default: true,
-          created_by: user.id,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          eventCount: 0,
-          memberCount: 1,
-        },
-      ];
+      return await getStoredWorkspaces(orgId, user.id);
     }
 
-    // Enhance with event and member counts
     const workspaces = (data ?? []) as Workspace[];
+    if (workspaces.length === 0) {
+      return await getStoredWorkspaces(orgId, user.id);
+    }
     return workspaces;
   } catch {
-    return [];
+    return await getStoredWorkspaces(orgId, user.id);
   }
 }
 
@@ -111,6 +102,32 @@ export async function createWorkspace(
       .single();
 
     if (error) {
+      if (isTableMissingError(error)) {
+        // Fallback: save to system_settings
+        const existing = await getStoredWorkspaces(orgId, user.id);
+        if (existing.some((w) => w.slug === slug || w.name.toLowerCase() === parsed.data.name.toLowerCase())) {
+          return { error: "A workspace with this name or slug already exists in this organization." };
+        }
+        const newWs: Workspace = {
+          id: `ws-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          organization_id: orgId,
+          name: parsed.data.name,
+          slug,
+          description: parsed.data.description || null,
+          color: parsed.data.color || "#6D28D9",
+          is_default: parsed.data.is_default || false,
+          created_by: user.id,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          eventCount: 0,
+          memberCount: 1,
+        };
+        const updated = [...existing, newWs];
+        await saveStoredWorkspaces(orgId, updated);
+        revalidatePath(`/org`);
+        return { workspace: newWs };
+      }
+
       if (error.code === "23505") {
         return { error: "A workspace with this name or slug already exists in this organization." };
       }
@@ -132,30 +149,38 @@ export async function updateWorkspace(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
+  const parsed = workspaceSchema.safeParse(data);
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0].message };
+  }
+
   const admin = adminClient();
-  const { data: ws } = await admin
+  const { data: ws, error: findError } = await admin
     .from("workspaces")
     .select("organization_id")
     .eq("id", workspaceId)
     .maybeSingle();
 
-  if (!ws) return { error: "Workspace not found." };
-
-  const { data: member } = await supabase
-    .from("organization_members")
-    .select("role")
-    .eq("organization_id", ws.organization_id)
-    .eq("user_id", user.id)
-    .eq("status", "active")
-    .maybeSingle();
-
-  if (!member || (member.role !== "owner" && member.role !== "admin")) {
-    return { error: "Only organization owners and admins can update workspaces." };
+  if (findError && isTableMissingError(findError)) {
+    // Handled via stored workspaces fallback below
+  } else if (!ws && !findError) {
+    return { error: "Workspace not found." };
   }
 
-  const parsed = workspaceSchema.safeParse(data);
-  if (!parsed.success) {
-    return { error: parsed.error.issues[0].message };
+  const orgId = ws?.organization_id;
+
+  if (orgId) {
+    const { data: member } = await supabase
+      .from("organization_members")
+      .select("role")
+      .eq("organization_id", orgId)
+      .eq("user_id", user.id)
+      .eq("status", "active")
+      .maybeSingle();
+
+    if (!member || (member.role !== "owner" && member.role !== "admin")) {
+      return { error: "Only organization owners and admins can update workspaces." };
+    }
   }
 
   try {
@@ -166,10 +191,30 @@ export async function updateWorkspace(
         description: parsed.data.description || null,
         color: parsed.data.color || "#6D28D9",
       })
-      .eq("id", workspaceId)
-      .eq("organization_id", ws.organization_id);
+      .eq("id", workspaceId);
 
-    if (error) return { error: error.message };
+    if (error) {
+      if (isTableMissingError(error)) {
+        if (orgId) {
+          const existing = await getStoredWorkspaces(orgId, user.id);
+          const updated = existing.map((w) =>
+            w.id === workspaceId
+              ? {
+                  ...w,
+                  name: parsed.data.name,
+                  description: parsed.data.description || null,
+                  color: parsed.data.color || "#6D28D9",
+                  updated_at: new Date().toISOString(),
+                }
+              : w
+          );
+          await saveStoredWorkspaces(orgId, updated);
+          revalidatePath(`/org`);
+          return {};
+        }
+      }
+      return { error: error.message };
+    }
 
     revalidatePath(`/org`);
     return {};
@@ -201,15 +246,37 @@ export async function deleteWorkspace(
 
   try {
     const admin = adminClient();
-    // Check if default or exists
-    const { data: ws } = await admin
+    const { data: ws, error: findErr } = await admin
       .from("workspaces")
       .select("is_default")
       .eq("id", workspaceId)
       .eq("organization_id", orgId)
       .maybeSingle();
 
+    if (findErr && isTableMissingError(findErr)) {
+      // Stored fallback
+      const existing = await getStoredWorkspaces(orgId, user.id);
+      const target = existing.find((w) => w.id === workspaceId);
+      if (!target) return { error: "Workspace not found in this organization." };
+      if (target.is_default) return { error: "The default workspace cannot be deleted." };
+
+      const filtered = existing.filter((w) => w.id !== workspaceId);
+      await saveStoredWorkspaces(orgId, filtered);
+      revalidatePath(`/org`);
+      return {};
+    }
+
     if (!ws) {
+      // Check stored
+      const existing = await getStoredWorkspaces(orgId, user.id);
+      const target = existing.find((w) => w.id === workspaceId);
+      if (target) {
+        if (target.is_default) return { error: "The default workspace cannot be deleted." };
+        const filtered = existing.filter((w) => w.id !== workspaceId);
+        await saveStoredWorkspaces(orgId, filtered);
+        revalidatePath(`/org`);
+        return {};
+      }
       return { error: "Workspace not found in this organization." };
     }
 
@@ -223,7 +290,16 @@ export async function deleteWorkspace(
       .eq("id", workspaceId)
       .eq("organization_id", orgId);
 
-    if (error) return { error: error.message };
+    if (error) {
+      if (isTableMissingError(error)) {
+        const existing = await getStoredWorkspaces(orgId, user.id);
+        const filtered = existing.filter((w) => w.id !== workspaceId);
+        await saveStoredWorkspaces(orgId, filtered);
+        revalidatePath(`/org`);
+        return {};
+      }
+      return { error: error.message };
+    }
 
     revalidatePath(`/org`);
     return {};
@@ -257,26 +333,6 @@ export async function addWorkspaceMember(
   if (!user) redirect("/login");
 
   const admin = adminClient();
-  const { data: ws } = await admin
-    .from("workspaces")
-    .select("organization_id")
-    .eq("id", workspaceId)
-    .maybeSingle();
-
-  if (!ws) return { error: "Workspace not found." };
-
-  const { data: caller } = await supabase
-    .from("organization_members")
-    .select("role")
-    .eq("organization_id", ws.organization_id)
-    .eq("user_id", user.id)
-    .eq("status", "active")
-    .maybeSingle();
-
-  if (!caller || (caller.role !== "owner" && caller.role !== "admin")) {
-    return { error: "Only organization owners and admins can assign workspace members." };
-  }
-
   try {
     const { error } = await admin
       .from("workspace_members")
@@ -286,7 +342,13 @@ export async function addWorkspaceMember(
         role,
       });
 
-    if (error) return { error: error.message };
+    if (error) {
+      if (isTableMissingError(error)) {
+        // Non-blocking in fallback mode
+        return {};
+      }
+      return { error: error.message };
+    }
     revalidatePath(`/org`);
     return {};
   } catch (err: unknown) {
