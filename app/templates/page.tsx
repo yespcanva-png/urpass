@@ -2,11 +2,11 @@ import type { Metadata } from "next";
 import TicketTemplatesPage from "@/app/ticket-templates/page";
 
 export const metadata: Metadata = {
-  title: "Event Ticket & Pass Templates | Free & Premium | URPASS",
+  title: "Templates — Launch Your Event Faster | URPASS",
   description:
-    "Browse production-ready event ticket templates, mobile pass designs, and conference badges. 6 Free templates and premium designs from ₹49.",
+    "Start with proven event setups preconfiguring registration forms, attendee QR passes, approval flows, and camera check-in gates for conferences, college fests, VIP galas, and workshops.",
   alternates: {
-    canonical: "https://urpass.space/ticket-templates",
+    canonical: "https://urpass.space/templates",
   },
 };
 

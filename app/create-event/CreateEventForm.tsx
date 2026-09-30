@@ -138,22 +138,81 @@ export default function CreateEventForm({
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
       const template = params.get("template");
-      if (template === "college_fest") {
-        setValue("name", "Annual College Symposium 2026");
+      if (template === "college-fest" || template === "college_fest") {
+        setValue("name", "Annual College Cultural & Tech Fest 2026");
         setValue("description", "Inter-college technical and cultural festival featuring competitive events, keynote sessions, and hackathon sprints.");
         setValue("venue", "University Main Auditorium & Tech Campus");
-      } else if (template === "hackathon") {
-        setValue("name", "24-Hour National Hackathon");
-        setValue("description", "Join top developers and builders for 24 hours of innovation, mentorship, and prize showcases.");
-        setValue("venue", "Innovation Hub & Collaborative Labs");
-      } else if (template === "conference") {
-        setValue("name", "Leadership & Tech Summit 2026");
-        setValue("description", "Industry visionary keynote addresses, high-level panel debates, and VIP networking reception.");
-        setValue("venue", "Convention Center & Executive Ballroom");
+        setValue("auto_approve", true);
+        setValue("event_type", "physical");
+      } else if (template === "corporate-conference" || template === "conference") {
+        setValue("name", "Global Leadership & Tech Summit 2026");
+        setValue("description", "Enterprise leaders, engineers, and product visionaries gathering for keynotes, high-level panel debates, and VIP networking.");
+        setValue("venue", "Convention Center & Grand Ballroom, Bangalore");
+        setValue("auto_approve", true);
+        setValue("event_type", "physical");
+      } else if (template === "rsvp-event") {
+        setValue("name", "Private Wedding Reception & Gala Dinner");
+        setValue("description", "Join us for an intimate celebration, dinner, and cocktails. Private RSVP pass required for entry.");
+        setValue("venue", "The Glass House Gardens, Bangalore");
+        setValue("auto_approve", false);
+        setValue("event_type", "physical");
       } else if (template === "workshop") {
         setValue("name", "Hands-on Masterclass & Technical Workshop");
         setValue("description", "Deep-dive practical training workshop with live interactive demos and verifiable pass credentials.");
-        setValue("venue", "Seminar Hall & Online Hybrid");
+        setValue("venue", "WeWork Labs Arena, Bangalore");
+        setValue("auto_approve", false);
+        setValue("attendee_limit", 40);
+        setValue("event_type", "physical");
+      } else if (template === "exhibition") {
+        setValue("name", "Clean Energy International Trade Expo 2026");
+        setValue("description", "International B2B industrial expo with 350+ exhibitor pavilions, buyer matchmaking, and plenary sessions.");
+        setValue("venue", "Pragati Maidan, Hall 4-7, New Delhi");
+        setValue("auto_approve", true);
+        setValue("event_type", "physical");
+      } else if (template === "networking-meetup") {
+        setValue("name", "SaaS Founders & Builders Mixer");
+        setValue("description", "Casual evening of conversations, product demos, and founder stories with instant mobile pass entry.");
+        setValue("venue", "Third Wave Roasters, Indiranagar, Bangalore");
+        setValue("auto_approve", true);
+        setValue("event_type", "physical");
+      } else if (template === "product-launch") {
+        setValue("name", "ORION V2 Global Product Reveal & Keynote");
+        setValue("description", "Next-generation compute architecture reveal with live hardware keynotes and press briefing.");
+        setValue("venue", "Auditorium Hall A, Aerocity, New Delhi");
+        setValue("auto_approve", false);
+        setValue("event_type", "physical");
+      } else if (template === "vip-invitation") {
+        setValue("name", "Annual Leadership Fellows & Trustee Gala");
+        setValue("description", "Black-tie awards evening honoring global philanthropic trustees. Secret VIP access code required.");
+        setValue("venue", "The Oberoi Grand Ballroom, Mumbai");
+        setValue("auto_approve", false);
+        setValue("event_type", "physical");
+      } else if (template === "paid-event") {
+        setValue("name", "Echoes Live Music & Arts Festival 2026");
+        setValue("description", "2 Days, 3 stages, 24 live artists. Tiered festival ticketing with instant UPI check-in.");
+        setValue("venue", "JLN Stadium Amphitheatre, New Delhi");
+        setValue("is_paid_event", true);
+        setValue("ticket_price", 999);
+        setValue("event_type", "physical");
+      } else if (template === "hackathon") {
+        setValue("name", "HackNation 2026: 36H National Buildathon");
+        setValue("description", "Over 500 hackers building autonomous agents and cloud primitives. Team mentor review and meal tokens.");
+        setValue("venue", "Tech Innovation Hub, IIT Madras Research Park");
+        setValue("auto_approve", false);
+        setValue("event_type", "physical");
+      } else if (template === "sports-tournament") {
+        setValue("name", "Bangalore City 10K & Half Marathon");
+        setValue("description", "Official timed athletic running event with dynamic bib numbers, locker zone permissions, and finish timing.");
+        setValue("venue", "Kanteerava Stadium, Bangalore");
+        setValue("is_paid_event", true);
+        setValue("ticket_price", 499);
+        setValue("event_type", "physical");
+      } else if (template === "employee-event") {
+        setValue("name", "Acme Global Annual Summit & Offsite 2026");
+        setValue("description", "Internal team celebration, annual milestones, townhall address, and team innovation awards.");
+        setValue("venue", "Leela Palace Grand Ballroom & Lawn, Bangalore");
+        setValue("auto_approve", true);
+        setValue("event_type", "physical");
       }
 
       const paramName = params.get("eventName") || params.get("name") || params.get("event_name");

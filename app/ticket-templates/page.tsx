@@ -1,32 +1,32 @@
 import type { Metadata } from "next";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
-import TicketTemplateList from "@/components/templates/TicketTemplateList";
+import EventSetupAcceleratorGallery from "@/components/templates/EventSetupAcceleratorGallery";
 import Link from "next/link";
-import { Sparkles, Palette, Zap, ArrowRight, ShieldCheck } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Event Ticket & Pass Templates: Free & Premium Designs | URPASS",
+  title: "Templates — Launch Your Event Faster | URPASS",
   description:
-    "Browse production-ready event pass templates, mobile ticket designs, and conference badges. 6 Free templates and premium designs from just ₹49 with instant Razorpay UPI.",
+    "Start with proven event setups preconfiguring registration forms, attendee QR passes, approval flows, and camera check-in gates for conferences, college fests, VIP galas, and workshops.",
   keywords: [
-    "ticket templates",
+    "event templates",
+    "conference event setup",
+    "college fest registration template",
     "event pass templates",
     "conference badge template",
-    "printable ticket template",
-    "digital ticket design",
-    "free event ticket templates",
-    "hackathon pass template",
-    "college fest ticket template",
-    "vip event badge design",
+    "RSVP event template",
+    "hackathon registration template",
+    "VIP event pass design",
+    "QR check-in templates",
+    "URPASS templates",
   ],
   alternates: {
     canonical: "https://urpass.space/ticket-templates",
   },
   openGraph: {
-    title: "Event Ticket & Pass Templates: Free & Premium Designs | URPASS",
+    title: "Templates — Launch Your Event Faster | URPASS",
     description:
-      "Choose from digital mobile passes, conference badges, and printable stubs. 6 Free templates and premium designs from just ₹49 with instant Razorpay UPI.",
+      "Start with proven event setups preconfiguring registration forms, attendee QR passes, approval flows, and camera check-in gates for conferences, college fests, and workshops.",
     url: "https://urpass.space/ticket-templates",
     locale: "en_IN",
     type: "website",
@@ -35,24 +35,24 @@ export const metadata: Metadata = {
 
 const TEMPLATE_FAQS = [
   {
-    q: "Are the free ticket templates completely free to use?",
-    a: "Yes. All 6 free templates (including Minimal Monochrome, College Fest, Academic Conference, and Workshop Masterclass) are 100% free with unlimited attendee issuance and sub-0.3s camera QR check-in on URPASS.",
+    q: "What does 'Start with a proven event setup' mean?",
+    a: "Unlike generic graphic galleries, each URPASS template preconfigures your registration form questions, attendee digital QR pass / lanyard badge design, approval rules, and gate check-in permissions in one click.",
   },
   {
-    q: "How does the ₹49 Razorpay payment work for premium templates?",
-    a: "When you select a premium template, our Razorpay checkout opens instantly. You can pay via any UPI app (Google Pay, PhonePe, Paytm, Cred) or debit/credit card. Once approved, the template is permanently unlocked on your account with an unlimited commercial license.",
+    q: "Can I customize the fields and branding before publishing?",
+    a: "Yes. Once you click 'Use Template', your event is created with pre-filled defaults. You can add or remove custom form questions, modify colors, upload your institution logo, and change venue details at any time.",
   },
   {
-    q: "What is the ₹99 All-Access Master Pack?",
-    a: "The All-Access Master Pack unlocks all 12 current and future pro templates for just ₹99 one-time. You get lifetime access across all your past, present, and future events.",
+    q: "What ticket & pass formats are included in each template?",
+    a: "Every template standardizes 4 matching assets: the public Event Page, the Registration Form, the Digital QR Pass (for Apple/Google Wallet & mobile browser), and printable Lanyard Badges.",
   },
   {
-    q: "Can I customize the template with my college logo and brand colors?",
-    a: "Absolutely. Once selected, any template can be opened directly inside our visual Ticket Studio. You can drag and drop your organization logo, modify hex accent colors, adjust font sizes, and toggle dynamic attendee fields.",
+    q: "Can colleges and enterprises save their own custom templates?",
+    a: "Yes. In our Template Studio, organizers can build bespoke multi-gate setups with organization branding and save them as reusable templates across 50+ campus or corporate events.",
   },
   {
-    q: "What ticket formats are supported?",
-    a: "URPASS templates support 3 standard production formats: Digital Mobile Passes (380x680, optimized for smartphone screens), Conference Badges (440x640, with lanyard hole cutouts), and Printable Tickets (780x340, with perforated tear-off stubs).",
+    q: "How fast is QR scanning at the gate?",
+    a: "Sub-0.3 seconds. Scanners run directly in your smartphone browser with encrypted offline verification tokens, zero app download required for gate staff.",
   },
 ];
 
@@ -75,12 +75,12 @@ export default function TicketTemplatesPage() {
     "@type": "BreadcrumbList",
     itemListElement: [
       { "@type": "ListItem", position: 1, name: "Home", item: "https://urpass.space" },
-      { "@type": "ListItem", position: 2, name: "Ticket Templates", item: "https://urpass.space/ticket-templates" },
+      { "@type": "ListItem", position: 2, name: "Templates", item: "https://urpass.space/ticket-templates" },
     ],
   };
 
   return (
-    <div className="min-h-screen bg-neutral-50 text-neutral-900 flex flex-col justify-between selection:bg-violet-100 selection:text-violet-900">
+    <div className="min-h-screen bg-neutral-50 text-neutral-900 flex flex-col justify-between selection:bg-brand-100 selection:text-brand-900">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
@@ -93,82 +93,52 @@ export default function TicketTemplatesPage() {
       <div>
         <Navbar />
 
-        {/* Hero Section */}
-        <section className="pt-32 pb-14 sm:pt-40 sm:pb-18 px-5 sm:px-8 border-b border-neutral-200/80 bg-white">
-          <div className="max-w-4xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-200/80 text-emerald-800 text-xs font-bold px-4 py-1.5 rounded-full mb-4">
-              <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
-              <span>PRODUCTION-READY EVENT TICKET DESIGNS</span>
-            </div>
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-neutral-950 tracking-tight leading-[1.1]">
-              Event Ticket &amp; Pass Templates
-            </h1>
-            <p className="mt-4 text-base sm:text-lg text-neutral-600 max-w-2xl mx-auto leading-relaxed">
-              Browse professionally engineered digital mobile passes, conference lanyard badges, and printable ticket stubs. 6 Free templates included, premium designs from just ₹49 with instant UPI.
-            </p>
+        {/* Templates Hub Canvas */}
+        <div className="pt-28 sm:pt-36 pb-16 bg-neutral-50/60 min-h-screen">
+          <EventSetupAcceleratorGallery />
 
-            {/* Format Feature Badges */}
-            <div className="mt-6 flex flex-wrap items-center justify-center gap-2.5 sm:gap-3 text-xs font-semibold text-neutral-700">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-neutral-100 border border-neutral-200">
-                <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                Apple Wallet Compatible (380×680)
-              </span>
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-neutral-100 border border-neutral-200">
-                <span className="w-2 h-2 rounded-full bg-sky-500" />
-                Conference Lanyard Badges (440×640)
-              </span>
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-neutral-100 border border-neutral-200">
-                <span className="w-2 h-2 rounded-full bg-amber-500" />
-                Perforated Print Stubs (780×340)
-              </span>
-            </div>
-          </div>
-        </section>
-
-        {/* Interactive Template List Component */}
-        <TicketTemplateList />
-
-        {/* FAQs */}
-        <section className="py-16 px-5 sm:px-8 max-w-4xl mx-auto">
-          <h2 className="text-2xl font-black text-neutral-950 text-center mb-8">
-            Frequently Asked Questions
-          </h2>
-          <div className="space-y-4">
-            {TEMPLATE_FAQS.map((faq, idx) => (
-              <div key={idx} className="bg-white border border-neutral-200 rounded-2xl p-5 shadow-xs">
-                <h3 className="text-sm font-bold text-neutral-900">{faq.q}</h3>
-                <p className="text-xs text-neutral-600 mt-2 leading-relaxed">{faq.a}</p>
-              </div>
-            ))}
-          </div>
-
-          {/* Bottom CTA Banner */}
-          <div className="mt-16 bg-gradient-to-br from-neutral-950 to-violet-950 rounded-3xl p-8 sm:p-12 text-center text-white shadow-xl">
-            <h2 className="text-2xl sm:text-3xl font-black tracking-tight">
-              Ready to design passes for your next event?
+          {/* FAQs */}
+          <section className="py-16 px-4 sm:px-8 max-w-4xl mx-auto">
+            <h2 className="text-2xl font-black text-neutral-950 text-center mb-8">
+              Frequently Asked Questions
             </h2>
-            <p className="mt-3 text-neutral-300 text-xs sm:text-sm max-w-xl mx-auto leading-relaxed">
-              Launch your fee-free registration page with custom branded passes in minutes. Zero ticket commissions and sub-0.3s browser camera scanning.
-            </p>
-            <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link
-                href="/signup?ref=templates-cta"
-                className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-white hover:bg-neutral-100 text-neutral-950 font-bold text-sm transition-all shadow-md"
-              >
-                Create Your Free Account →
-              </Link>
-              <Link
-                href="/free-qr-ticket-generator"
-                className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-sm transition-all border border-white/20"
-              >
-                Free QR Ticket Generator
-              </Link>
+            <div className="space-y-4">
+              {TEMPLATE_FAQS.map((faq, idx) => (
+                <div key={idx} className="bg-white border border-neutral-200 rounded-2xl p-5 shadow-xs">
+                  <h3 className="text-sm font-bold text-neutral-900">{faq.q}</h3>
+                  <p className="text-xs text-neutral-600 mt-2 leading-relaxed">{faq.a}</p>
+                </div>
+              ))}
             </div>
-            <p className="text-[11px] text-neutral-400 mt-4">
-              ₹0 forever free tier · Instant Razorpay UPI checkout · Sub-0.3s gate camera scanning
-            </p>
-          </div>
-        </section>
+
+            {/* Bottom CTA Banner */}
+            <div className="mt-16 bg-neutral-900 border border-neutral-800 rounded-3xl p-8 sm:p-12 text-center text-white shadow-xl">
+              <h2 className="text-2xl sm:text-3xl font-black tracking-tight">
+                Ready to launch your event entry?
+              </h2>
+              <p className="mt-3 text-neutral-300 text-xs sm:text-sm max-w-xl mx-auto leading-relaxed">
+                Launch your registration page with custom branded passes in minutes. Zero ticket commissions and sub-0.3s camera gate scanning.
+              </p>
+              <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+                <Link
+                  href="/signup?ref=templates-cta"
+                  className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-white hover:bg-neutral-100 text-neutral-950 font-bold text-sm transition-all shadow-md"
+                >
+                  Create Your Free Account →
+                </Link>
+                <Link
+                  href="/studio"
+                  className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-sm transition-all border border-white/20"
+                >
+                  Launch Template Studio
+                </Link>
+              </div>
+              <p className="text-[11px] text-neutral-400 mt-4">
+                ₹0 forever free tier · Instant setup accelerator · Sub-0.3s gate camera scanning
+              </p>
+            </div>
+          </section>
+        </div>
       </div>
 
       <Footer />

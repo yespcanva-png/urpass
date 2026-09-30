@@ -244,12 +244,10 @@ export default function TicketTemplateList({
   return (
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       {/* ── All-Access Master Pack Floating Offer Banner ── */}
-      <div className="rounded-3xl bg-gradient-to-r from-neutral-950 via-neutral-900 to-indigo-950 p-6 sm:p-8 text-white border border-neutral-800 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden group">
-        <div className="absolute top-0 right-0 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
-
+      <div className="rounded-3xl bg-neutral-900 p-6 sm:p-8 text-white border border-neutral-800 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden group">
         <div className="relative z-10 max-w-xl">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400/20 text-amber-300 text-xs font-bold border border-amber-400/30 mb-3">
-            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-white text-xs font-bold border border-white/20 mb-3">
+            <Sparkles className="w-3.5 h-3.5 text-neutral-300" />
             <span>LIMITED ALL-ACCESS MASTER BUNDLE</span>
           </div>
           <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white">
@@ -264,9 +262,9 @@ export default function TicketTemplateList({
           <button
             type="button"
             onClick={handleOpenBundleCheckout}
-            className="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-neutral-950 font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg transition-all cursor-pointer transform group-hover:scale-[1.02]"
+            className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-white hover:bg-neutral-100 text-neutral-900 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xs transition-colors cursor-pointer"
           >
-            <Zap className="w-4 h-4 text-neutral-950 fill-neutral-950" />
+            <Zap className="w-4 h-4 text-neutral-900 fill-neutral-900" />
             <span>Claim Master Pack for ₹99</span>
           </button>
         </div>
@@ -546,9 +544,9 @@ export default function TicketTemplateList({
                             handleOpenCheckout(template);
                           }
                         }}
-                        className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-neutral-950 font-black text-xs flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer"
+                        className="w-full py-2.5 px-3 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-colors shadow-2xs cursor-pointer"
                       >
-                        <Zap className="w-3.5 h-3.5 text-neutral-950" />
+                        <Zap className="w-3.5 h-3.5 text-amber-400" />
                         <span>Unlock Design — ₹{template.priceINR ?? SINGLE_TEMPLATE_PRICE_INR}</span>
                       </button>
                     )}

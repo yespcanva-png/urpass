@@ -19,6 +19,7 @@ import {
   getFontFamilyCls,
   darkenHex,
 } from "@/lib/pass-design";
+import { RealisticLanyardClip } from "@/components/templates/TicketVisualShowcase";
 
 interface PassPreviewCardProps {
   design: CustomPassDesign;
@@ -410,86 +411,115 @@ export default function PassPreviewCard({
   // ─────────────────────────────────────────────────────────────
   if (design.theme === "badge") {
     return (
-      <div
-        className={`w-full max-w-[340px] mx-auto rounded-3xl bg-white border border-neutral-200 overflow-hidden shadow-xl transition-all duration-300 select-none ${fontCls}`}
-        style={glowStyle}
-      >
-        {/* Realistic Lanyard Slot Cutout */}
-        <div className="w-full bg-neutral-100/90 py-2.5 flex items-center justify-center border-b border-neutral-200">
-          <div className="w-12 h-2.5 rounded-full bg-neutral-300/80 border border-neutral-400/40 shadow-inner" />
-        </div>
+      <div className="flex flex-col items-center w-full max-w-[340px] mx-auto">
+        {/* Realistic Executive Lanyard Strap & Swivel Clasp Assembly */}
+        <RealisticLanyardClip
+          strapColor={design.primaryColor || "#1E293B"}
+          clipColor="silver"
+          accentLabel={orgName || "URPASS DELEGATE"}
+          isSmall={false}
+        />
 
-        {/* Top Header Band */}
-        <div className="px-6 py-4 text-center text-white" style={patternStyle}>
-          <p className="text-[9px] font-bold tracking-widest uppercase opacity-90 mb-0.5">
-            {orgName || "CONFERENCE DELEGATE"}
-          </p>
-          <h3 className="text-sm font-bold leading-tight line-clamp-1">
-            {eventName}
-          </h3>
-        </div>
-
-        {/* Hero Attendee Badge Area */}
-        <div className="px-6 pt-5 pb-5 flex flex-col items-center text-center">
-          <div
-            className="w-14 h-14 rounded-2xl flex items-center justify-center font-bold text-xl text-white shadow-md mb-2"
-            style={{
-              background: `linear-gradient(135deg, ${design.primaryColor} 0%, ${darkSecondary} 100%)`,
-            }}
-          >
-            {attendeeName.charAt(0)}
+        <div
+          className={`w-full rounded-3xl bg-white border border-neutral-200/90 overflow-hidden shadow-xl transition-all duration-300 select-none ${fontCls}`}
+          style={glowStyle}
+        >
+          {/* Top Organization Header Band */}
+          <div className="px-6 py-4 text-center text-white" style={patternStyle}>
+            <div className="flex items-center justify-center gap-1.5 mb-1 text-[9px] font-bold tracking-widest uppercase opacity-90">
+              {orgLogoUrl && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={orgLogoUrl}
+                  alt="Org Logo"
+                  className="w-3.5 h-3.5 rounded object-cover ring-1 ring-white/30"
+                />
+              )}
+              <span>{orgName || "OFFICIAL CONFERENCE PASS"}</span>
+            </div>
+            <h3 className="text-base font-extrabold leading-tight line-clamp-2">
+              {eventName}
+            </h3>
           </div>
 
-          <h2 className="text-xl font-black text-neutral-900 leading-tight">
-            {attendeeName}
-          </h2>
-          <p className="text-xs text-neutral-500 mt-0.5 mb-3">{attendeeEmail}</p>
+          {/* Hero Attendee Badge Area */}
+          <div className="px-6 pt-5 pb-4 flex flex-col items-center text-center">
+            <div
+              className="w-14 h-14 rounded-2xl flex items-center justify-center font-bold text-xl text-white shadow-md mb-2.5"
+              style={{
+                background: `linear-gradient(135deg, ${design.primaryColor} 0%, ${darkSecondary} 100%)`,
+              }}
+            >
+              {attendeeName.charAt(0)}
+            </div>
 
+            <h2 className="text-xl font-black text-neutral-900 leading-tight">
+              {attendeeName}
+            </h2>
+            <p className="text-xs text-neutral-500 mt-0.5 mb-3">{attendeeEmail}</p>
+
+            <div
+              className="px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-wider text-white mb-4 shadow-2xs"
+              style={{
+                backgroundColor: design.primaryColor,
+              }}
+            >
+              {badgeText}
+            </div>
+
+            {/* Event & QR Section */}
+            <div className="w-full flex items-center justify-between bg-neutral-50 rounded-2xl p-3 border border-neutral-100 mb-3">
+              <div className="text-left text-[10px] text-neutral-500 flex flex-col gap-0.5">
+                <span className="font-bold text-neutral-800">{eventDate}</span>
+                <span className="truncate max-w-[130px]">{venue}</span>
+                <span className="font-mono text-[9px] text-neutral-400">#{shortCode}</span>
+              </div>
+
+              <div
+                className={`p-1.5 rounded-xl bg-white ${
+                  design.showQrBorder ? "border-2" : "border border-neutral-200"
+                }`}
+                style={{
+                  borderColor: design.showQrBorder ? design.primaryColor : undefined,
+                }}
+              >
+                <div className="w-12 h-12 grid grid-cols-4 grid-rows-4 gap-0.5 p-0.5">
+                  {Array.from({ length: 16 }).map((_, i) => (
+                    <div
+                      key={i}
+                      className={`rounded-xs ${
+                        [0, 1, 3, 5, 6, 8, 10, 12, 13, 15].includes(i)
+                          ? "bg-neutral-900"
+                          : "bg-neutral-100"
+                      }`}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {design.footerNote && (
+              <p className="text-[9px] text-neutral-400 text-center leading-normal mb-2">
+                {design.footerNote}
+              </p>
+            )}
+
+            {showBranding && (
+              <p className="text-[8px] text-neutral-300 font-bold tracking-widest uppercase">
+                URPASS LANYARD CREDENTIAL
+              </p>
+            )}
+          </div>
+
+          {/* Bottom High-Security Access Tier Bar */}
           <div
-            className="px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-wider text-white mb-4 shadow-2xs"
+            className="w-full py-2.5 px-4 text-center text-[10px] font-black tracking-widest uppercase text-white shadow-xs"
             style={{
               backgroundColor: design.primaryColor,
             }}
           >
-            {badgeText}
+            {badgeText} · OFFICIAL ACCESS PASS
           </div>
-
-          {/* QR Section */}
-          <div className="w-full flex items-center justify-between bg-neutral-50 rounded-2xl p-3 border border-neutral-100 mb-3">
-            <div className="text-left text-[10px] text-neutral-500 flex flex-col gap-0.5">
-              <span className="font-bold text-neutral-800">{eventDate}</span>
-              <span className="truncate max-w-[130px]">{venue}</span>
-              <span className="font-mono text-[9px] text-neutral-400">#{shortCode}</span>
-            </div>
-
-            <div
-              className={`p-1.5 rounded-xl bg-white ${
-                design.showQrBorder ? "border-2" : "border border-neutral-200"
-              }`}
-              style={{
-                borderColor: design.showQrBorder ? design.primaryColor : undefined,
-              }}
-            >
-              <div className="w-12 h-12 grid grid-cols-4 grid-rows-4 gap-0.5 p-0.5">
-                {Array.from({ length: 16 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className={`rounded-xs ${
-                      [0, 1, 3, 5, 6, 8, 10, 12, 13, 15].includes(i)
-                        ? "bg-neutral-900"
-                        : "bg-neutral-100"
-                    }`}
-                  />
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {design.footerNote && (
-            <p className="text-[9px] text-neutral-400 text-center leading-normal">
-              {design.footerNote}
-            </p>
-          )}
         </div>
       </div>
     );

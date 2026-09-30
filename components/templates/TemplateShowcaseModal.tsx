@@ -289,9 +289,9 @@ export default function TemplateShowcaseModal({
               <button
                 type="button"
                 onClick={handleUnlockAction}
-                className="w-full sm:flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-neutral-950 font-black text-xs flex items-center justify-center gap-2 shadow-lg transition-all cursor-pointer"
+                className="w-full sm:flex-1 py-3 px-4 rounded-xl bg-white hover:bg-neutral-100 text-neutral-950 font-bold text-xs flex items-center justify-center gap-2 shadow-xs transition-colors cursor-pointer"
               >
-                <Zap className="w-3.5 h-3.5 text-neutral-950" />
+                <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
                 <span>Unlock for ₹{template.priceINR ?? SINGLE_TEMPLATE_PRICE_INR}</span>
               </button>
 

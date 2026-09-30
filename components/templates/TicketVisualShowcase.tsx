@@ -143,6 +143,66 @@ function CorporateQrCode({
   );
 }
 
+/**
+ * Realistic Executive Lanyard Assembly Component
+ */
+export function RealisticLanyardClip({
+  strapColor = "#1E293B",
+  clipColor = "silver",
+  accentLabel,
+  isSmall = true,
+}: {
+  strapColor?: string;
+  clipColor?: "silver" | "gold" | "black";
+  accentLabel?: string;
+  isSmall?: boolean;
+}) {
+  const isGold = clipColor === "gold";
+  const isBlack = clipColor === "black";
+
+  return (
+    <div className={`relative flex flex-col items-center justify-center select-none z-20 pointer-events-none ${isSmall ? "-mt-2 mb-1.5" : "-mt-3 mb-2"}`}>
+      {/* Woven Lanyard Ribbon with Ribbed Texture */}
+      <div
+        className={`${isSmall ? "w-11 h-3.5" : "w-16 h-5"} rounded-t-sm border-x border-t border-black/30 shadow-xs flex items-center justify-center relative overflow-hidden shrink-0`}
+        style={{ backgroundColor: strapColor }}
+      >
+        <div className="absolute inset-0 opacity-25 bg-[repeating-linear-gradient(45deg,transparent,transparent_2px,#fff_2px,#fff_4px)]" />
+        {accentLabel && (
+          <span className="text-[5.5px] font-mono font-bold tracking-widest text-white/95 uppercase truncate z-10">
+            {accentLabel}
+          </span>
+        )}
+      </div>
+
+      {/* Metallic Swivel Hook & Ring Assembly */}
+      <div className="flex flex-col items-center -mt-0.5">
+        {/* Swivel metal cylinder */}
+        <div
+          className={`${isSmall ? "w-3.5 h-1.5" : "w-4.5 h-2"} rounded-xs border shadow-2xs ${
+            isGold
+              ? "bg-gradient-to-r from-amber-400 via-amber-200 to-amber-500 border-amber-600"
+              : isBlack
+              ? "bg-gradient-to-r from-neutral-800 via-neutral-700 to-neutral-900 border-neutral-950"
+              : "bg-gradient-to-r from-neutral-400 via-neutral-200 to-neutral-500 border-neutral-600"
+          }`}
+        />
+        {/* Metal ring loop clasp */}
+        <div
+          className={`${isSmall ? "w-4.5 h-2" : "w-6 h-2.5"} rounded-full border-[1.5px] bg-transparent -mt-0.5 ${
+            isGold ? "border-amber-400" : isBlack ? "border-neutral-700" : "border-neutral-400"
+          }`}
+        />
+      </div>
+
+      {/* Clear Vinyl Badge Slot Hole Header */}
+      <div className={`${isSmall ? "w-14 h-2.5" : "w-20 h-3.5"} rounded-full bg-neutral-900/10 dark:bg-white/10 border border-neutral-300 dark:border-neutral-700 shadow-inner flex items-center justify-center -mt-1`}>
+        <div className={`${isSmall ? "w-10 h-1" : "w-14 h-1.5"} rounded-full bg-neutral-200 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700`} />
+      </div>
+    </div>
+  );
+}
+
 export default function TicketVisualShowcase({
   template,
   mode = "card",
@@ -389,48 +449,55 @@ export default function TicketVisualShowcase({
   if (id === "college-fest-badge") {
     return (
       <div
-        className={`relative overflow-hidden transition-all duration-200 select-none flex flex-col justify-between bg-white text-neutral-900 border-2 border-neutral-300 shadow-sm ${
+        className={`relative overflow-hidden transition-all duration-200 select-none flex flex-col justify-between bg-white text-neutral-900 border-2 border-neutral-300 shadow-md ${
           isCard
-            ? "w-[205px] h-[270px] rounded-xl p-3.5 text-xs"
-            : "w-[290px] sm:max-w-[310px] min-h-[480px] rounded-2xl p-5 text-sm shadow-xl"
+            ? "w-[205px] h-[270px] rounded-2xl text-xs"
+            : "w-[290px] sm:max-w-[310px] min-h-[480px] rounded-3xl text-sm shadow-2xl"
         }`}
       >
-        {/* Lanyard Punch Slot with Clean Slot Border */}
-        <div className="flex flex-col items-center justify-center -mt-1 mb-1.5 pointer-events-none">
-          <div className="w-10 h-1.5 rounded-full bg-neutral-200 border border-neutral-300" />
-        </div>
+        {/* Realistic Lanyard Ribbon & Swivel Clasp Assembly */}
+        <div className="pt-2 px-3">
+          <RealisticLanyardClip strapColor="#1E3A8A" clipColor="silver" accentLabel="ACADEMIC" isSmall={isCard} />
 
-        {/* Institution Header */}
-        <div className="text-center pb-1.5 border-b border-neutral-200">
-          <span className="text-[7px] font-mono uppercase tracking-[0.16em] font-bold text-neutral-500 block">
-            {hostOrg}
-          </span>
-          <h4 className={`font-bold tracking-tight uppercase leading-tight text-neutral-950 mt-0.5 ${isCard ? "text-[11.5px] line-clamp-1" : "text-base line-clamp-1"}`}>
-            {eventName}
-          </h4>
-        </div>
-
-        {/* High-Legibility Attendee Name Credential */}
-        <div className="my-1.5 p-2.5 rounded-lg bg-neutral-100 border border-neutral-200 text-center">
-          <span className="text-[6.5px] font-mono uppercase tracking-wider text-neutral-500 block font-semibold">
-            ACCREDITED PARTICIPANT
-          </span>
-          <h3 className={`font-bold tracking-tight uppercase text-neutral-900 leading-tight ${isCard ? "text-[12px]" : "text-lg"}`}>
-            {attendeeName}
-          </h3>
-          <span className="text-[6.5px] font-mono text-neutral-600 block mt-0.5">FACULTY OF SCIENCE &amp; TECH</span>
-        </div>
-
-        {/* QR & Verification Zone */}
-        <div className="flex items-center justify-between p-2 rounded-lg bg-neutral-50 border border-neutral-200">
-          <CorporateQrCode size={isCard ? 50 : 75} fgColor="#171717" bgColor="#FFFFFF" />
-          <div className="text-right space-y-0.5">
-            <span className="text-[7px] font-mono font-bold text-neutral-900 uppercase block">ALL-SESSIONS ACCESS</span>
-            <span className="font-mono text-[6.5px] text-neutral-500 block">{ticketId}</span>
-            <span className="text-[6px] font-mono font-bold px-1.5 py-0.2 rounded bg-neutral-900 text-white uppercase inline-block">
-              DELEGATE
+          {/* Institution Header */}
+          <div className="text-center pb-1.5 border-b border-neutral-200">
+            <span className="text-[7px] font-mono uppercase tracking-[0.16em] font-bold text-neutral-500 block">
+              {hostOrg}
             </span>
+            <h4 className={`font-bold tracking-tight uppercase leading-tight text-neutral-950 mt-0.5 ${isCard ? "text-[11px] line-clamp-1" : "text-base line-clamp-1"}`}>
+              {eventName}
+            </h4>
           </div>
+
+          {/* High-Legibility Attendee Name Credential */}
+          <div className="my-1.5 p-2 rounded-xl bg-neutral-50 border border-neutral-200 text-center">
+            <span className="text-[6px] font-mono uppercase tracking-wider text-neutral-500 block font-semibold">
+              ACCREDITED PARTICIPANT
+            </span>
+            <h3 className={`font-bold tracking-tight uppercase text-neutral-950 leading-tight ${isCard ? "text-[12px]" : "text-lg"}`}>
+              {attendeeName}
+            </h3>
+            <span className="text-[6.5px] font-mono text-neutral-600 block mt-0.5">FACULTY OF SCIENCE &amp; TECH</span>
+          </div>
+
+          {/* QR & Verification Zone */}
+          <div className="flex items-center justify-between p-2 rounded-xl bg-neutral-50 border border-neutral-200">
+            <CorporateQrCode size={isCard ? 48 : 72} fgColor="#171717" bgColor="#FFFFFF" />
+            <div className="text-right space-y-0.5">
+              <span className="text-[6.5px] font-mono font-bold text-neutral-900 uppercase block">ALL-SESSIONS</span>
+              <span className="font-mono text-[6px] text-neutral-500 block">{ticketId}</span>
+              <span className="text-[6px] font-mono font-bold px-1.5 py-0.2 rounded bg-neutral-900 text-white uppercase inline-block">
+                DELEGATE
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* High-Visibility Access Tier Bar */}
+        <div className="w-full py-1.5 px-3 bg-[#1E3A8A] text-white text-center mt-1">
+          <span className="text-[6.5px] font-mono font-bold uppercase tracking-wider block">
+            ACADEMIC DELEGATE · PLENARY ACCESS
+          </span>
         </div>
       </div>
     );
@@ -444,49 +511,56 @@ export default function TicketVisualShowcase({
       <div
         className={`relative overflow-hidden transition-all duration-200 select-none flex flex-col justify-between bg-slate-900 text-slate-100 border border-slate-700 shadow-md ${
           isCard
-            ? "w-[205px] h-[270px] rounded-xl p-3.5 text-xs"
-            : "w-[290px] sm:max-w-[310px] min-h-[480px] rounded-2xl p-5 text-sm shadow-xl"
+            ? "w-[205px] h-[270px] rounded-2xl text-xs"
+            : "w-[290px] sm:max-w-[310px] min-h-[480px] rounded-3xl text-sm shadow-2xl"
         }`}
       >
-        {/* Lanyard Slot */}
-        <div className="flex flex-col items-center justify-center -mt-1 mb-1.5 pointer-events-none">
-          <div className="w-10 h-1.5 rounded-full bg-slate-800 border border-slate-700" />
-        </div>
+        {/* Realistic Lanyard Ribbon & Swivel Clasp Assembly */}
+        <div className="pt-2 px-3">
+          <RealisticLanyardClip strapColor="#0F172A" clipColor="silver" accentLabel="KEYNOTE" isSmall={isCard} />
 
-        {/* Header */}
-        <div className="flex items-center justify-between pb-1.5 border-b border-slate-800">
-          <span className="text-[7.5px] font-mono uppercase tracking-[0.16em] font-semibold text-slate-400">
-            CONFERENCE CREDENTIAL
-          </span>
-          <span className="text-[6.5px] font-mono text-slate-400">{ticketId}</span>
-        </div>
-
-        {/* Title */}
-        <div className="my-1 space-y-0.5">
-          <h4 className={`font-bold tracking-tight uppercase leading-tight text-white ${isCard ? "text-[11px] line-clamp-1" : "text-base line-clamp-1"}`}>
-            {eventName}
-          </h4>
-          <p className="text-[7px] text-slate-400 font-mono truncate">{eventDate} · {venueName}</p>
-        </div>
-
-        {/* Name Badge */}
-        <div className="my-1 p-2 rounded-lg bg-slate-800/80 border border-slate-700 text-center">
-          <span className="text-[6px] font-mono text-emerald-400 block uppercase font-semibold">CONFIRMED SPEAKER</span>
-          <h3 className={`font-bold tracking-tight uppercase text-white leading-tight ${isCard ? "text-[12px]" : "text-base"}`}>
-            {attendeeName}
-          </h3>
-          <span className="text-[6.5px] font-mono text-slate-400 block mt-0.5">VP OF PLATFORM // TECH CORP</span>
-        </div>
-
-        {/* QR & Verification */}
-        <div className="flex items-center justify-between p-1.5 rounded-lg bg-slate-950 border border-slate-800">
-          <CorporateQrCode size={isCard ? 48 : 72} fgColor="#0F172A" bgColor="#FFFFFF" />
-          <div className="text-right space-y-0.5">
-            <span className="text-[7px] font-mono font-semibold text-emerald-400 block">KEYNOTE ACCESS</span>
-            <span className="text-[6px] font-mono px-1.5 py-0.2 rounded bg-slate-800 text-slate-200 border border-slate-700 inline-block uppercase">
-              SPEAKER
+          {/* Header */}
+          <div className="flex items-center justify-between pb-1.5 border-b border-slate-800">
+            <span className="text-[7px] font-mono uppercase tracking-[0.16em] font-semibold text-slate-400">
+              CONFERENCE CREDENTIAL
             </span>
+            <span className="text-[6.5px] font-mono text-slate-400">{ticketId}</span>
           </div>
+
+          {/* Title */}
+          <div className="my-1 space-y-0.5">
+            <h4 className={`font-bold tracking-tight uppercase leading-tight text-white ${isCard ? "text-[11px] line-clamp-1" : "text-base line-clamp-1"}`}>
+              {eventName}
+            </h4>
+            <p className="text-[7px] text-slate-400 font-mono truncate">{eventDate} · {venueName}</p>
+          </div>
+
+          {/* Name Badge */}
+          <div className="my-1 p-2 rounded-xl bg-slate-800/80 border border-slate-700 text-center">
+            <span className="text-[6px] font-mono text-emerald-400 block uppercase font-semibold">CONFIRMED SPEAKER</span>
+            <h3 className={`font-bold tracking-tight uppercase text-white leading-tight ${isCard ? "text-[12px]" : "text-base"}`}>
+              {attendeeName}
+            </h3>
+            <span className="text-[6.5px] font-mono text-slate-400 block mt-0.5">VP OF PLATFORM // TECH CORP</span>
+          </div>
+
+          {/* QR & Verification */}
+          <div className="flex items-center justify-between p-1.5 rounded-xl bg-slate-950 border border-slate-800">
+            <CorporateQrCode size={isCard ? 46 : 68} fgColor="#0F172A" bgColor="#FFFFFF" />
+            <div className="text-right space-y-0.5">
+              <span className="text-[6.5px] font-mono font-semibold text-emerald-400 block">KEYNOTE ACCESS</span>
+              <span className="text-[6px] font-mono px-1.5 py-0.2 rounded bg-slate-800 text-slate-200 border border-slate-700 inline-block uppercase">
+                SPEAKER
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* High-Visibility Access Tier Bar */}
+        <div className="w-full py-1.5 px-3 bg-emerald-700 text-white text-center mt-1">
+          <span className="text-[6.5px] font-mono font-bold uppercase tracking-wider block">
+            KEYNOTE SPEAKER · VIP BACKSTAGE ACCESS
+          </span>
         </div>
       </div>
     );
@@ -563,46 +637,52 @@ export default function TicketVisualShowcase({
       <div
         className={`relative overflow-hidden transition-all duration-200 select-none flex flex-col justify-between bg-neutral-950 text-white border border-amber-500/40 shadow-md ${
           isCard
-            ? "w-[205px] h-[270px] rounded-xl p-3.5 text-xs"
-            : "w-[290px] sm:max-w-[310px] min-h-[480px] rounded-2xl p-5 text-sm shadow-xl"
+            ? "w-[205px] h-[270px] rounded-2xl text-xs"
+            : "w-[290px] sm:max-w-[310px] min-h-[480px] rounded-3xl text-sm shadow-2xl"
         }`}
       >
-        {/* Header */}
-        <div className="text-center pb-1.5 border-b border-neutral-800">
-          <div className="flex items-center justify-center gap-1.5 text-[7px] font-mono tracking-[0.2em] font-semibold text-amber-300 uppercase">
-            <Award className="w-2.5 h-2.5 text-amber-400" />
-            <span>EXECUTIVE PATRON PASS</span>
+        {/* Realistic Lanyard Ribbon & Gold Swivel Clasp Assembly */}
+        <div className="pt-2 px-3">
+          <RealisticLanyardClip strapColor="#18181B" clipColor="gold" accentLabel="TRUSTEE" isSmall={isCard} />
+
+          {/* Header */}
+          <div className="text-center pb-1.5 border-b border-neutral-800">
+            <div className="flex items-center justify-center gap-1.5 text-[6.5px] font-mono tracking-[0.2em] font-semibold text-amber-300 uppercase">
+              <Award className="w-2.5 h-2.5 text-amber-400" />
+              <span>EXECUTIVE PATRON PASS</span>
+            </div>
+            <h4 className={`font-bold uppercase tracking-tight text-white mt-0.5 ${isCard ? "text-[11px] line-clamp-1" : "text-base line-clamp-1"}`}>
+              {eventName}
+            </h4>
           </div>
-          <h4 className={`font-bold uppercase tracking-tight text-white mt-0.5 ${isCard ? "text-[11.5px] line-clamp-1" : "text-base line-clamp-1"}`}>
-            {eventName}
-          </h4>
+
+          {/* Attendee Clean Card */}
+          <div className="my-1.5 p-2 rounded-xl bg-neutral-900 border border-amber-500/30 text-center">
+            <span className="text-[6px] font-mono uppercase tracking-wider text-amber-400 block font-semibold">
+              HONORED GUEST
+            </span>
+            <h3 className={`font-bold tracking-tight uppercase text-white leading-tight ${isCard ? "text-[11px]" : "text-base"}`}>
+              {attendeeName}
+            </h3>
+            <span className="text-[6.5px] font-mono text-neutral-400 block">MANAGING PARTNER // STERLING HOLDINGS</span>
+          </div>
+
+          {/* Center QR Zone */}
+          <div className="my-1 flex justify-center">
+            <CorporateQrCode
+              size={isCard ? 58 : 88}
+              fgColor="#09090B"
+              bgColor="#FFFFFF"
+              borderColor="#D97706"
+            />
+          </div>
         </div>
 
-        {/* Attendee Clean Card */}
-        <div className="my-1.5 p-2 rounded-lg bg-neutral-900 border border-amber-500/30 text-center">
-          <span className="text-[6.5px] font-mono uppercase tracking-wider text-amber-400 block font-semibold">
-            HONORED GUEST
+        {/* High-Visibility Access Tier Bar */}
+        <div className="w-full py-1.5 px-3 bg-gradient-to-r from-amber-400 to-amber-500 text-neutral-950 text-center mt-1 shadow-xs">
+          <span className="text-[6.5px] font-mono font-black uppercase tracking-wider block">
+            EXECUTIVE PATRON · TRUSTEE LOUNGE CLEARANCE
           </span>
-          <h3 className={`font-bold tracking-tight uppercase text-white leading-tight ${isCard ? "text-[11px]" : "text-base"}`}>
-            {attendeeName}
-          </h3>
-          <span className="text-[6.5px] font-mono text-neutral-400 block">MANAGING PARTNER // STERLING HOLDINGS</span>
-        </div>
-
-        {/* Center QR Zone */}
-        <div className="my-1 flex justify-center">
-          <CorporateQrCode
-            size={isCard ? 75 : 110}
-            fgColor="#09090B"
-            bgColor="#FFFFFF"
-            borderColor="#D97706"
-          />
-        </div>
-
-        {/* Micro-Details Footer */}
-        <div className="pt-2 border-t border-neutral-800 flex items-center justify-between text-[7px] font-mono text-neutral-400">
-          <span>PRIORITY ADMISSION</span>
-          <span className="text-amber-300 font-semibold">{ticketId}</span>
         </div>
       </div>
     );
@@ -734,50 +814,57 @@ export default function TicketVisualShowcase({
   if (id === "exhibition-trade-expo") {
     return (
       <div
-        className={`relative overflow-hidden transition-all duration-200 select-none flex flex-col justify-between bg-white text-neutral-900 border-2 border-neutral-300 shadow-sm ${
+        className={`relative overflow-hidden transition-all duration-200 select-none flex flex-col justify-between bg-white text-neutral-900 border-2 border-neutral-300 shadow-md ${
           isCard
-            ? "w-[205px] h-[270px] rounded-xl p-3.5 text-xs"
-            : "w-[290px] sm:max-w-[310px] min-h-[480px] rounded-2xl p-5 text-sm shadow-xl"
+            ? "w-[205px] h-[270px] rounded-2xl text-xs"
+            : "w-[290px] sm:max-w-[310px] min-h-[480px] rounded-3xl text-sm shadow-2xl"
         }`}
       >
-        {/* Lanyard Top Slot */}
-        <div className="flex flex-col items-center justify-center -mt-1 mb-1.5 pointer-events-none">
-          <div className="w-10 h-1.5 rounded-full bg-neutral-200 border border-neutral-300" />
-        </div>
+        {/* Realistic Lanyard Ribbon & Swivel Clasp Assembly */}
+        <div className="pt-2 px-3">
+          <RealisticLanyardClip strapColor="#2563EB" clipColor="silver" accentLabel="BUYER" isSmall={isCard} />
 
-        {/* Expo Header */}
-        <div className="text-center pb-1.5 border-b border-neutral-200">
-          <span className="text-[7px] font-mono uppercase tracking-[0.16em] font-bold text-neutral-500 block">
-            TRADE VISITOR CREDENTIAL
-          </span>
-          <h4 className={`font-bold uppercase tracking-tight text-neutral-950 mt-0.5 ${isCard ? "text-[11.5px] line-clamp-1" : "text-base line-clamp-1"}`}>
-            {eventName}
-          </h4>
-        </div>
+          {/* Expo Header */}
+          <div className="text-center pb-1.5 border-b border-neutral-200">
+            <span className="text-[7px] font-mono uppercase tracking-[0.16em] font-bold text-neutral-500 block">
+              TRADE VISITOR CREDENTIAL
+            </span>
+            <h4 className={`font-bold uppercase tracking-tight text-neutral-950 mt-0.5 ${isCard ? "text-[11px] line-clamp-1" : "text-base line-clamp-1"}`}>
+              {eventName}
+            </h4>
+          </div>
 
-        {/* High-Visibility Attendee Card */}
-        <div className="my-1.5 p-2 rounded-lg bg-neutral-100 border border-neutral-200 text-center">
-          <span className="text-[6.5px] font-mono uppercase tracking-wider text-neutral-500 block font-semibold">
-            TRADE BUYER
-          </span>
-          <h3 className={`font-bold tracking-tight uppercase text-neutral-900 leading-tight ${isCard ? "text-[12px]" : "text-lg"}`}>
-            {attendeeName}
-          </h3>
-          <span className="text-[7px] font-semibold text-neutral-600 block uppercase">
-            APEX GLOBAL SOLUTIONS
-          </span>
-        </div>
-
-        {/* QR & Halls */}
-        <div className="flex items-center justify-between p-2 rounded-lg bg-neutral-50 border border-neutral-200">
-          <CorporateQrCode size={isCard ? 48 : 72} fgColor="#0A0A0A" bgColor="#FFFFFF" />
-          <div className="text-right space-y-0.5">
-            <span className="text-[7px] font-mono font-bold text-neutral-800 block uppercase">EXHIBIT HALLS 1-4</span>
-            <span className="font-mono text-[6.5px] text-neutral-500 block">{ticketId}</span>
-            <span className="text-[6px] font-mono font-bold px-1.5 py-0.2 rounded bg-neutral-900 text-white inline-block uppercase">
-              B2B VISITOR
+          {/* High-Visibility Attendee Card */}
+          <div className="my-1.5 p-2 rounded-xl bg-neutral-50 border border-neutral-200 text-center">
+            <span className="text-[6px] font-mono uppercase tracking-wider text-neutral-500 block font-semibold">
+              TRADE BUYER
+            </span>
+            <h3 className={`font-bold tracking-tight uppercase text-neutral-950 leading-tight ${isCard ? "text-[12px]" : "text-lg"}`}>
+              {attendeeName}
+            </h3>
+            <span className="text-[7px] font-semibold text-neutral-600 block uppercase">
+              APEX GLOBAL SOLUTIONS
             </span>
           </div>
+
+          {/* QR & Halls */}
+          <div className="flex items-center justify-between p-2 rounded-xl bg-neutral-50 border border-neutral-200">
+            <CorporateQrCode size={isCard ? 46 : 68} fgColor="#0A0A0A" bgColor="#FFFFFF" />
+            <div className="text-right space-y-0.5">
+              <span className="text-[6.5px] font-mono font-bold text-neutral-800 block uppercase">EXHIBIT HALLS 1-4</span>
+              <span className="font-mono text-[6px] text-neutral-500 block">{ticketId}</span>
+              <span className="text-[6px] font-mono font-bold px-1.5 py-0.2 rounded bg-neutral-900 text-white inline-block uppercase">
+                B2B VISITOR
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* High-Visibility Access Tier Bar */}
+        <div className="w-full py-1.5 px-3 bg-[#2563EB] text-white text-center mt-1">
+          <span className="text-[6.5px] font-mono font-bold uppercase tracking-wider block">
+            ACCREDITED TRADE BUYER · B2B VIP
+          </span>
         </div>
       </div>
     );
