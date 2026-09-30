@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useTransition, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -15,19 +15,17 @@ import {
   Ticket as TicketIcon,
   ShieldCheck,
   Smartphone,
-  Eye,
+  CreditCard,
+  FileText,
   X,
   AlertCircle,
   RefreshCw,
-  Palette,
-  FileText,
-  Award,
-  Send,
-  Building,
-  Phone,
-  Hash,
+  ChevronDown,
+  ChevronUp,
+  Undo2,
+  Redo2,
   Sparkles,
-  ExternalLink,
+  GripVertical,
 } from "lucide-react";
 import {
   type TicketDesignConfig,
@@ -36,6 +34,11 @@ import {
   DEFAULT_TICKET_DESIGN,
   sanitizeTicketDesign,
 } from "@/lib/pass-design";
+import {
+  STUDIO_TEMPLATES,
+  type StudioTemplateDefinition,
+  convertStudioTemplateToTicketDesign,
+} from "@/lib/studio/templates";
 import StudioUpgradeModal from "./StudioUpgradeModal";
 import { getStudioPlanLimits } from "@/lib/studio/limits";
 import type { PlanSlug } from "@/lib/plan";
@@ -52,9 +55,9 @@ interface TicketStudioProps {
   ticketCategories?: Array<{ id: string; name: string }>;
 }
 
-type StudioSection = "design" | "content" | "branding" | "delivery";
+type TicketOutputFormat = "mobile" | "badge" | "print";
 
-const COLOR_SWATCHES = [
+const BRAND_SWATCHES = [
   { name: "Indigo", hex: "#635BFF" },
   { name: "Electric Blue", hex: "#4F46E5" },
   { name: "Emerald", hex: "#059669" },
@@ -64,42 +67,44 @@ const COLOR_SWATCHES = [
 ];
 
 const DEFAULT_CATEGORIES = [
-  { id: "general", name: "General" },
   { id: "vip", name: "VIP" },
-  { id: "gold", name: "Gold" },
-  { id: "backstage", name: "Backstage" },
+  { id: "general", name: "General" },
+  { id: "speaker", name: "Speaker" },
 ];
 
 const SAMPLE_ATTENDEES = [
   {
-    name: "Haarishmitha",
-    ticketType: "VIP",
+    name: "Aarav Mehta",
+    ticketType: "VIP Delegate",
     ticketId: "#URP-02891",
     organization: "TechCorp Labs",
+    designation: "Product Lead",
     phone: "+91 98765 43210",
     regNumber: "REG-2026-089",
-    qrValue: "URP_PASS_HAARISH_02891",
-    email: "haarishmitha@example.com",
-  },
-  {
-    name: "Arun Kumar",
-    ticketType: "General",
-    ticketId: "#URP-04812",
-    organization: "Anna University",
-    phone: "+91 98401 23456",
-    regNumber: "REG-2026-112",
-    qrValue: "URP_PASS_ARUN_04812",
-    email: "arun.kumar@example.com",
+    qrValue: "URP_PASS_AARAV_02891",
+    email: "aarav.mehta@example.com",
   },
   {
     name: "Priya Sharma",
-    ticketType: "Gold",
+    ticketType: "Speaker",
     ticketId: "#URP-07340",
     organization: "Design Hub India",
+    designation: "Design Director",
     phone: "+91 91234 56789",
     regNumber: "REG-2026-004",
     qrValue: "URP_PASS_PRIYA_07340",
     email: "priya.sharma@example.com",
+  },
+  {
+    name: "Arun Kumar",
+    ticketType: "General Entry",
+    ticketId: "#URP-04812",
+    organization: "Anna University",
+    designation: "Researcher",
+    phone: "+91 98401 23456",
+    regNumber: "REG-2026-112",
+    qrValue: "URP_PASS_ARUN_04812",
+    email: "arun.kumar@example.com",
   },
 ];
 
@@ -128,16 +133,91 @@ export default function TicketStudio({
   isPro,
   userPlanTier,
   eventId,
-  eventName = "URPASS SUMMIT",
-  eventDate = "03 OCT 2026 | 10:00 AM",
-  venue = "The Residency, Coimbatore",
+  eventName = "URPASS Summit 2026",
+  eventDate = "12 Oct 2026 | 10:00 AM",
+  venue = "Bengaluru",
   backHref = "/dashboard",
   ticketCategories = [],
 }: TicketStudioProps) {
   const planTier = userPlanTier || (isPro ? "pro" : "free");
   const limits = getStudioPlanLimits(planTier);
 
-  // Upgrade Modal State
+  // 1. Core Config State & History for Undo/Redo
+  const [config, setConfig] = useState<TicketDesignConfig>(() =>
+    sanitizeTicketDesign(initialConfig || {})
+  );
+
+  const [history, setHistory] = useState<TicketDesignConfig[]>([config]);
+  const [historyIndex, setHistoryIndex] = useState<number>(0);
+  const isHistoryNavigating = useRef(false);
+
+  // Track config changes in history
+  const updateConfig = useCallback(
+    (updater: (prev: TicketDesignConfig) => TicketDesignConfig) => {
+      setConfig((prev) => {
+        const next = updater(prev);
+        if (!isHistoryNavigating.current) {
+          setHistory((h) => [...h.slice(0, historyIndex + 1), next]);
+          setHistoryIndex((idx) => idx + 1);
+        }
+        return next;
+      });
+    },
+    [historyIndex]
+  );
+
+  function handleUndo() {
+    if (historyIndex > 0) {
+      isHistoryNavigating.current = true;
+      const prev = history[historyIndex - 1];
+      setHistoryIndex((idx) => idx - 1);
+      setConfig(prev);
+      setTimeout(() => {
+        isHistoryNavigating.current = false;
+      }, 50);
+    }
+  }
+
+  function handleRedo() {
+    if (historyIndex < history.length - 1) {
+      isHistoryNavigating.current = true;
+      const next = history[historyIndex + 1];
+      setHistoryIndex((idx) => idx + 1);
+      setConfig(next);
+      setTimeout(() => {
+        isHistoryNavigating.current = false;
+      }, 50);
+    }
+  }
+
+  // 2. Collapsible Sections in Left Panel
+  const [openSections, setOpenSections] = useState({
+    template: true,
+    branding: true,
+    content: true,
+    qr: false,
+    background: false,
+    advanced: false,
+  });
+
+  const toggleSection = (sectionKey: keyof typeof openSections) => {
+    setOpenSections((prev) => ({
+      ...prev,
+      [sectionKey]: !prev[sectionKey],
+    }));
+  };
+
+  // 3. Preview Controls State
+  const [activeFormat, setActiveFormat] = useState<TicketOutputFormat>("mobile");
+  const [zoomLevel, setZoomLevel] = useState<number>(100);
+  const [activeAttendeeIndex, setActiveAttendeeIndex] = useState<number>(0);
+  const sampleAttendee = SAMPLE_ATTENDEES[activeAttendeeIndex];
+
+  // Mobile viewport view tab
+  const [mobileTab, setMobileTab] = useState<"controls" | "preview">("controls");
+
+  // 4. Modals State
+  const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [upgradeFeatureName, setUpgradeFeatureName] = useState<string | undefined>(undefined);
 
@@ -146,65 +226,34 @@ export default function TicketStudio({
     setUpgradeModalOpen(true);
   }
 
-  // 1. Initial State
-  const [config, setConfig] = useState<TicketDesignConfig>(() =>
-    sanitizeTicketDesign(initialConfig || {})
-  );
-
-  // 2. Active Sections & Selected Element
-  const [activeSection, setActiveSection] = useState<StudioSection>("design");
-  const [selectedElement, setSelectedElement] = useState<string | null>(null);
-
-  function handleSelectElement(elementKey: string, targetSection: StudioSection) {
-    setSelectedElement(elementKey);
-    setActiveSection(targetSection);
-    if (mobileTab === "preview") {
-      setMobileTab("customize");
-    }
-  }
-
-  // 3. UI View Mode: Mobile Pass vs Email Delivery Preview
-  const [previewMode, setPreviewMode] = useState<"mobile" | "email">("mobile");
-  const [mobileTab, setMobileTab] = useState<"customize" | "preview">("customize");
-  const [activeAttendeeIndex, setActiveAttendeeIndex] = useState(0);
-  const sampleAttendee = SAMPLE_ATTENDEES[activeAttendeeIndex];
-
-  // 4. Save & Autosave Status
+  // 5. Save & Autosave State
   const [saveStatus, setSaveStatus] = useState<"saved" | "saving" | "unsaved" | "error">("saved");
   const [saveErrorMessage, setSaveErrorMessage] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [isManualSaving, setIsManualSaving] = useState(false);
 
-  // 5. Test Email Modal State
+  // 6. Test Email Modal State
   const [testModalOpen, setTestModalOpen] = useState(false);
   const [testEmail, setTestEmail] = useState("");
   const [isSendingTest, setIsSendingTest] = useState(false);
   const [testSuccess, setTestSuccess] = useState(false);
   const [testError, setTestError] = useState<string | null>(null);
 
-  // 6. Upload Loading States
+  // 7. File Upload States
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [isUploadingSponsorLogo, setIsUploadingSponsorLogo] = useState(false);
   const [isUploadingBg, setIsUploadingBg] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
-  // Categories list
-  const categoriesToUse =
-    ticketCategories && ticketCategories.length > 0
-      ? ticketCategories
-      : DEFAULT_CATEGORIES;
-
-  // Refs for hidden file inputs
   const logoInputRef = useRef<HTMLInputElement>(null);
   const sponsorLogoInputRef = useRef<HTMLInputElement>(null);
   const bgInputRef = useRef<HTMLInputElement>(null);
 
-  // Track initial mount to prevent immediate autosave on load
+  // Autosave setup
   const isInitialMount = useRef(true);
   const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
-  // Execute Save Action via deterministic REST endpoint
   const performSave = useCallback(
-    async (designToSave: TicketDesignConfig) => {
+    async (designToSave: TicketDesignConfig, targetEventId: string | null = eventId || null) => {
       setSaveStatus("saving");
       setSaveErrorMessage(null);
       try {
@@ -214,7 +263,7 @@ export default function TicketStudio({
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            eventId: eventId || null,
+            eventId: targetEventId,
             design: designToSave,
           }),
         });
@@ -258,14 +307,14 @@ export default function TicketStudio({
     };
   }, [config, performSave]);
 
-  // Manual Immediate Save
-  function handleManualSave() {
+  // Manual save handler
+  async function handleManualSave(asOrgTemplate = false) {
     if (debounceTimer.current) {
       clearTimeout(debounceTimer.current);
     }
-    startTransition(() => {
-      performSave(config);
-    });
+    setIsManualSaving(true);
+    await performSave(config, asOrgTemplate ? null : eventId || null);
+    setIsManualSaving(false);
   }
 
   // Upload handler for Logo, Sponsor Logo & Background
@@ -304,11 +353,11 @@ export default function TicketStudio({
       }
 
       if (type === "logo") {
-        setConfig((prev) => ({ ...prev, logoUrl: data.url }));
+        updateConfig((prev) => ({ ...prev, logoUrl: data.url }));
       } else if (type === "sponsor") {
-        setConfig((prev) => ({ ...prev, sponsorLogoUrl: data.url }));
+        updateConfig((prev) => ({ ...prev, sponsorLogoUrl: data.url }));
       } else {
-        setConfig((prev) => ({ ...prev, backgroundImageUrl: data.url }));
+        updateConfig((prev) => ({ ...prev, backgroundImageUrl: data.url }));
       }
     } catch (err) {
       setUploadError(err instanceof Error ? err.message : "Failed to upload image.");
@@ -319,13 +368,18 @@ export default function TicketStudio({
     }
   }
 
-  // Category Colors: Set Accent Color for a Specific Category
+  // Categories list
+  const categoriesToUse =
+    ticketCategories && ticketCategories.length > 0
+      ? ticketCategories
+      : DEFAULT_CATEGORIES;
+
   function handleSetCategoryColor(categoryKey: string, hexColor: string) {
     if (!limits.canUseCategoryColors) {
       triggerUpgrade("Multi-Tier Category Colors");
       return;
     }
-    setConfig((prev) => ({
+    updateConfig((prev) => ({
       ...prev,
       categoryColors: {
         ...(prev.categoryColors || {}),
@@ -334,31 +388,15 @@ export default function TicketStudio({
     }));
   }
 
-  // Apply Current Primary Color to All Categories
-  function handleApplyToAllCategories() {
-    if (!limits.canUseCategoryColors) {
-      triggerUpgrade("Multi-Tier Category Colors");
-      return;
-    }
-    const newCategoryColors: Record<string, string> = {};
-    categoriesToUse.forEach((cat) => {
-      newCategoryColors[cat.name] = config.primaryColor;
-    });
-    setConfig((prev) => ({
-      ...prev,
-      categoryColors: newCategoryColors,
-    }));
-  }
-
   // Reset Design to defaults
   function handleResetDesign() {
     if (window.confirm("Reset ticket design back to default settings?")) {
-      setConfig({
+      updateConfig(() => ({
         ...DEFAULT_TICKET_DESIGN,
         primaryColor: "#635BFF",
         template: "event",
         shape: "standard",
-      });
+      }));
     }
   }
 
@@ -403,7 +441,7 @@ export default function TicketStudio({
     }
   }
 
-  // Download Sample Pass (Trigger Print dialog)
+  // Download Sample Pass (Print dialog)
   function handleDownloadSample() {
     window.print();
   }
@@ -413,20 +451,17 @@ export default function TicketStudio({
   const isMinimal = config.template === "minimal";
   const isEvent = config.template === "event";
 
-  // Category-specific color override for active sample attendee
   const activeColor =
     (sampleAttendee.ticketType && config.categoryColors?.[sampleAttendee.ticketType]) ||
     config.primaryColor;
 
-  // Shape class
   const shapeRadius =
     config.shape === "rounded"
-      ? "rounded-[28px]"
+      ? "rounded-[24px]"
       : config.shape === "compact"
       ? "rounded-xl"
       : "rounded-2xl";
 
-  const paddingCls = config.shape === "compact" ? "p-4 sm:p-5" : "p-6";
   const cardBg = isDark ? "bg-[#121216] text-white" : "bg-white text-neutral-900";
   const cardBorder = isDark ? "border-neutral-800" : "border-neutral-200";
   const subtextCls = isDark ? "text-neutral-400" : "text-neutral-500";
@@ -438,209 +473,179 @@ export default function TicketStudio({
   if (config.showGateNotice !== false) rulesList.push("Keep this QR ready at the gate");
   if (config.customInstruction) rulesList.push(config.customInstruction);
 
+  // Template name detection
+  const currentTemplateName =
+    config.template === "minimal"
+      ? "Minimal Monochrome"
+      : config.template === "dark"
+      ? "Dark Obsidian"
+      : config.template === "modern"
+      ? "Corporate Executive"
+      : "Standard Event Pass";
+
   return (
-    <div className="flex flex-col h-screen bg-neutral-100 text-neutral-900 overflow-hidden font-sans select-none">
+    <div className="flex flex-col h-screen bg-[#F5F6F7] text-neutral-900 overflow-hidden font-sans select-none">
       {/* ─────────────────────────────────────────────────────────────
-          1. TOP NAVIGATION & STATUS BAR
+          TOP APP HEADER
       ───────────────────────────────────────────────────────────── */}
-      <header className="h-14 border-b border-neutral-200/90 bg-white px-4 sm:px-6 flex items-center justify-between shrink-0 z-20 shadow-2xs">
-        {/* Left: Back & Title */}
+      <header className="h-13 border-b border-neutral-200 bg-white px-4 sm:px-6 flex items-center justify-between shrink-0 z-20">
+        {/* Left: Back & Project Info */}
         <div className="flex items-center gap-3">
           <Link
             href={backHref}
-            className="flex items-center gap-1.5 text-xs font-semibold text-neutral-600 hover:text-neutral-900 px-2.5 py-1.5 rounded-lg hover:bg-neutral-100 transition-colors"
+            className="flex items-center gap-1.5 text-xs font-medium text-neutral-600 hover:text-neutral-900 px-2 py-1.5 rounded-lg hover:bg-neutral-100 transition-colors"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Back</span>
+            <span className="hidden sm:inline">Back</span>
           </Link>
 
           <div className="h-4 w-px bg-neutral-200 hidden sm:block" />
 
           <div className="flex items-center gap-2">
-            <span className="text-sm font-bold text-neutral-900 tracking-tight">
+            <span className="text-sm font-semibold text-neutral-900">
               Ticket Studio
             </span>
-            <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-neutral-100 text-neutral-700 truncate max-w-[200px]">
+            <span className="text-neutral-400 text-xs hidden sm:inline">/</span>
+            <span className="text-xs font-normal text-neutral-500 truncate max-w-[180px] hidden sm:inline">
               {eventName}
             </span>
-            {config.isPublished !== false ? (
-              <span className="hidden md:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                Ready
-              </span>
-            ) : (
-              <span className="hidden md:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                Draft
-              </span>
-            )}
 
             {/* Plan Tier Badge */}
             <span
-              className={`hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+              className={`hidden md:inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wider ${
                 limits.isPro
                   ? "bg-violet-50 text-violet-700 border border-violet-200"
-                  : limits.isStarter
-                  ? "bg-blue-50 text-blue-700 border border-blue-200"
                   : "bg-neutral-100 text-neutral-600 border border-neutral-200"
               }`}
             >
               {limits.planTier}
             </span>
-
-            {/* Upgrade Button if not Pro */}
-            {!limits.isPro && (
-              <button
-                type="button"
-                onClick={() => triggerUpgrade("Ticket Studio Pro Features")}
-                className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-2xs hover:opacity-95 transition-opacity"
-              >
-                <Sparkles className="w-3 h-3 text-amber-300" />
-                <span>Upgrade</span>
-              </button>
-            )}
           </div>
         </div>
 
-        {/* Center: Mobile View Switcher */}
-        <div className="flex md:hidden items-center bg-neutral-100 p-0.5 rounded-xl text-xs font-semibold text-neutral-600">
-          <button
-            type="button"
-            onClick={() => setMobileTab("customize")}
-            className={`px-3 py-1 rounded-lg transition-all ${
-              mobileTab === "customize"
-                ? "bg-white text-neutral-900 shadow-2xs"
-                : "text-neutral-500 hover:text-neutral-900"
-            }`}
-          >
-            Customize
-          </button>
-          <button
-            type="button"
-            onClick={() => setMobileTab("preview")}
-            className={`px-3 py-1 rounded-lg transition-all ${
-              mobileTab === "preview"
-                ? "bg-white text-neutral-900 shadow-2xs"
-                : "text-neutral-500 hover:text-neutral-900"
-            }`}
-          >
-            Live Preview
-          </button>
+        {/* Center: Undo / Redo & Mobile View Switcher */}
+        <div className="flex items-center gap-2">
+          {/* Undo / Redo */}
+          <div className="hidden sm:flex items-center gap-0.5 bg-neutral-100 p-0.5 rounded-lg border border-neutral-200/80">
+            <button
+              type="button"
+              onClick={handleUndo}
+              disabled={historyIndex <= 0}
+              aria-label="Undo"
+              title="Undo"
+              className="p-1 rounded text-neutral-600 hover:text-neutral-900 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors"
+            >
+              <Undo2 className="w-3.5 h-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={handleRedo}
+              disabled={historyIndex >= history.length - 1}
+              aria-label="Redo"
+              title="Redo"
+              className="p-1 rounded text-neutral-600 hover:text-neutral-900 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors"
+            >
+              <Redo2 className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          {/* Mobile Tab Switcher */}
+          <div className="flex md:hidden items-center bg-neutral-100 p-0.5 rounded-lg border border-neutral-200 text-xs font-medium">
+            <button
+              type="button"
+              onClick={() => setMobileTab("controls")}
+              className={`px-3 py-1 rounded-md transition-all ${
+                mobileTab === "controls"
+                  ? "bg-white text-neutral-900 shadow-2xs font-semibold"
+                  : "text-neutral-500 hover:text-neutral-900"
+              }`}
+            >
+              Controls
+            </button>
+            <button
+              type="button"
+              onClick={() => setMobileTab("preview")}
+              className={`px-3 py-1 rounded-md transition-all ${
+                mobileTab === "preview"
+                  ? "bg-white text-neutral-900 shadow-2xs font-semibold"
+                  : "text-neutral-500 hover:text-neutral-900"
+              }`}
+            >
+              Preview
+            </button>
+          </div>
         </div>
 
-        {/* Right: Autosave Status & Manual Save */}
+        {/* Right: Autosave Status & Primary Action */}
         <div className="flex items-center gap-3">
+          {/* Quiet Status */}
           <div className="flex items-center gap-1.5 text-xs">
             {saveStatus === "saving" && (
               <span className="flex items-center gap-1.5 text-neutral-400 font-medium">
-                <Loader2 className="w-3.5 h-3.5 animate-spin text-neutral-400" />
-                <span>Saving...</span>
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <span className="hidden sm:inline">Saving...</span>
               </span>
             )}
             {saveStatus === "saved" && (
-              <span className="flex items-center gap-1.5 text-emerald-600 font-semibold animate-in fade-in duration-200">
+              <span className="flex items-center gap-1.5 text-neutral-500 font-medium">
                 <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[2.5]" />
-                <span>Saved</span>
+                <span className="hidden sm:inline">Saved</span>
               </span>
             )}
             {saveStatus === "unsaved" && (
-              <span className="text-neutral-400 font-medium text-[11px]">
+              <span className="text-neutral-400 font-normal text-[11px] hidden sm:inline">
                 Unsaved changes
               </span>
             )}
             {saveStatus === "error" && (
-              <span className="text-red-500 font-semibold flex items-center gap-1">
+              <span className="text-red-500 font-medium flex items-center gap-1">
                 <AlertCircle className="w-3.5 h-3.5" />
-                <span>Save failed</span>
+                <span className="hidden sm:inline">Save error</span>
               </span>
             )}
           </div>
 
+          {/* Top Send Test Action */}
           <button
             type="button"
-            onClick={handleManualSave}
-            disabled={saveStatus === "saving" || isPending}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-neutral-900 hover:bg-neutral-800 disabled:opacity-50 text-white text-xs font-semibold rounded-xl transition-all shadow-xs cursor-pointer"
+            onClick={() => setTestModalOpen(true)}
+            className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 border border-neutral-200 hover:bg-neutral-50 text-neutral-700 text-xs font-medium rounded-lg transition-colors cursor-pointer"
           >
-            {saveStatus === "saving" ? (
+            <Mail className="w-3.5 h-3.5 text-neutral-500" />
+            <span>Send Test</span>
+          </button>
+
+          {/* Top Manual Save */}
+          <button
+            type="button"
+            onClick={() => handleManualSave(false)}
+            disabled={isManualSaving || saveStatus === "saving"}
+            className="h-9 px-3.5 rounded-lg bg-neutral-900 hover:bg-neutral-800 disabled:opacity-50 text-white font-medium text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+          >
+            {isManualSaving ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
             ) : (
               <Check className="w-3.5 h-3.5" />
             )}
-            <span>Save</span>
+            <span>{eventId ? "Save & Apply" : "Save Design"}</span>
           </button>
         </div>
       </header>
 
       {/* ─────────────────────────────────────────────────────────────
-          2. MAIN BODY: 2-COLUMN DESKTOP LAYOUT
+          MAIN 2-PANEL EDITOR WORKSPACE
       ───────────────────────────────────────────────────────────── */}
       <div className="flex flex-1 overflow-hidden relative">
-        {/* ──────── LEFT COLUMN: 4-SECTION CUSTOMIZE PANEL ──────── */}
+        {/* ──────── LEFT CONTROL PANEL (35–40% width) ──────── */}
         <aside
-          className={`w-full md:w-[440px] lg:w-[460px] shrink-0 border-r border-neutral-200/90 bg-white flex flex-col h-full overflow-hidden ${
-            mobileTab === "customize" ? "flex" : "hidden md:flex"
+          className={`w-full md:w-[380px] lg:w-[410px] xl:w-[430px] shrink-0 border-r border-neutral-200 bg-white flex flex-col h-full overflow-hidden ${
+            mobileTab === "controls" ? "flex" : "hidden md:flex"
           }`}
         >
-          {/* Navigation Tabs */}
-          <div className="grid grid-cols-4 border-b border-neutral-200 bg-neutral-50/80 p-1.5 gap-1 shrink-0">
-            <button
-              type="button"
-              onClick={() => setActiveSection("design")}
-              className={`flex items-center justify-center gap-1.5 py-2 px-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-                activeSection === "design"
-                  ? "bg-white text-neutral-900 shadow-2xs border border-neutral-200/90"
-                  : "text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100/70"
-              }`}
-            >
-              <Palette className="w-3.5 h-3.5 shrink-0" />
-              <span>Design</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveSection("content")}
-              className={`flex items-center justify-center gap-1.5 py-2 px-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-                activeSection === "content"
-                  ? "bg-white text-neutral-900 shadow-2xs border border-neutral-200/90"
-                  : "text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100/70"
-              }`}
-            >
-              <FileText className="w-3.5 h-3.5 shrink-0" />
-              <span>Content</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveSection("branding")}
-              className={`flex items-center justify-center gap-1.5 py-2 px-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-                activeSection === "branding"
-                  ? "bg-white text-neutral-900 shadow-2xs border border-neutral-200/90"
-                  : "text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100/70"
-              }`}
-            >
-              <Award className="w-3.5 h-3.5 shrink-0" />
-              <span>Branding</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveSection("delivery")}
-              className={`flex items-center justify-center gap-1.5 py-2 px-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-                activeSection === "delivery"
-                  ? "bg-white text-neutral-900 shadow-2xs border border-neutral-200/90"
-                  : "text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100/70"
-              }`}
-            >
-              <Send className="w-3.5 h-3.5 shrink-0" />
-              <span>Delivery</span>
-            </button>
-          </div>
-
-          {/* Tab Content Container */}
-          <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-6">
+          {/* Scrollable Controls Area */}
+          <div className="flex-1 overflow-y-auto p-6 space-y-6">
             {uploadError && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 flex items-center justify-between">
+              <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-xs text-red-700 flex items-center justify-between">
                 <span>{uploadError}</span>
                 <button
                   type="button"
@@ -653,288 +658,607 @@ export default function TicketStudio({
             )}
 
             {/* ═════════════════════════════════════════════════════════
-                SECTION 1: DESIGN
+                SECTION 1: TEMPLATE
             ═════════════════════════════════════════════════════════ */}
-            {activeSection === "design" && (
-              <div className="space-y-6 animate-in fade-in-50 duration-150">
-                {/* 1. 3 Ready-made Styles */}
+            <div className="border-b border-neutral-200/80 pb-5">
+              <button
+                type="button"
+                onClick={() => toggleSection("template")}
+                className="flex items-center justify-between w-full text-left py-1 cursor-pointer group"
+              >
                 <div>
-                  <label className="block text-xs font-bold text-neutral-900 uppercase tracking-wider mb-2.5">
-                    3 Design Templates
-                  </label>
-                  <div className="grid grid-cols-3 gap-2.5">
-                    {/* Minimal */}
-                    <button
-                      type="button"
-                      onClick={() => setConfig((prev) => ({ ...prev, template: "minimal" }))}
-                      className={`p-3 rounded-xl border text-left flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                        isMinimal
-                          ? "border-neutral-900 bg-neutral-50 ring-2 ring-neutral-900/10 shadow-xs"
-                          : "border-neutral-200 hover:border-neutral-300 bg-white"
-                      }`}
-                    >
-                      <div className="w-8 h-10 rounded-md border border-neutral-300 bg-white flex flex-col items-center justify-center p-1 shadow-xs">
-                        <div className="w-4 h-0.5 bg-neutral-300 rounded-full mb-1" />
-                        <div className="w-4 h-4 bg-neutral-100 rounded-xs flex items-center justify-center">
-                          <div className="w-2 h-2 bg-neutral-400 rounded-xs" />
-                        </div>
-                      </div>
-                      <span className={`text-xs font-bold ${isMinimal ? "text-neutral-900" : "text-neutral-600"}`}>
-                        Minimal
-                      </span>
-                    </button>
-
-                    {/* Event */}
-                    <button
-                      type="button"
-                      onClick={() => setConfig((prev) => ({ ...prev, template: "event" }))}
-                      className={`p-3 rounded-xl border text-left flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                        isEvent
-                          ? "border-neutral-900 bg-neutral-50 ring-2 ring-neutral-900/10 shadow-xs"
-                          : "border-neutral-200 hover:border-neutral-300 bg-white"
-                      }`}
-                    >
-                      <div className="w-8 h-10 rounded-md border border-neutral-300 bg-white overflow-hidden flex flex-col items-center shadow-xs">
-                        <div className="w-full h-1.5 shrink-0" style={{ backgroundColor: config.primaryColor }} />
-                        <div className="flex-1 flex flex-col items-center justify-center p-1">
-                          <div className="w-4 h-4 bg-neutral-100 rounded-xs flex items-center justify-center">
-                            <div className="w-2 h-2 bg-neutral-800 rounded-xs" />
-                          </div>
-                        </div>
-                      </div>
-                      <span className={`text-xs font-bold ${isEvent ? "text-neutral-900" : "text-neutral-600"}`}>
-                        Event
-                      </span>
-                    </button>
-
-                    {/* Dark */}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (!limits.canUseAllTemplates) {
-                          triggerUpgrade("Dark Obsidian VIP Theme");
-                          return;
-                        }
-                        setConfig((prev) => ({ ...prev, template: "dark" }));
-                      }}
-                      className={`p-3 rounded-xl border text-left flex flex-col items-center justify-center gap-1.5 transition-all relative cursor-pointer ${
-                        isDark
-                          ? "border-neutral-900 bg-neutral-50 ring-2 ring-neutral-900/10 shadow-xs"
-                          : "border-neutral-200 hover:border-neutral-300 bg-white"
-                      }`}
-                    >
-                      {!limits.canUseAllTemplates && (
-                        <span className="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded-full text-[9px] font-extrabold bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-2xs">
-                          PRO
-                        </span>
-                      )}
-                      <div className="w-8 h-10 rounded-md border border-neutral-700 bg-[#121216] flex flex-col items-center justify-center p-1 shadow-xs">
-                        <div className="w-4 h-0.5 bg-neutral-600 rounded-full mb-1" />
-                        <div className="w-4 h-4 bg-neutral-800 rounded-xs flex items-center justify-center border border-neutral-700">
-                          <div className="w-2 h-2 rounded-xs" style={{ backgroundColor: config.primaryColor }} />
-                        </div>
-                      </div>
-                      <span className={`text-xs font-bold ${isDark ? "text-neutral-900" : "text-neutral-600"}`}>
-                        Dark
-                      </span>
-                    </button>
-                  </div>
+                  <h3 className="text-sm font-semibold text-neutral-900 group-hover:text-neutral-700 transition-colors">
+                    1. Template
+                  </h3>
+                  <p className="text-xs text-neutral-500 font-normal mt-0.5">
+                    Selected base layout and structure
+                  </p>
                 </div>
+                {openSections.template ? (
+                  <ChevronUp className="w-4 h-4 text-neutral-400 group-hover:text-neutral-700" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-neutral-400 group-hover:text-neutral-700" />
+                )}
+              </button>
 
-                {/* 2. Primary Brand Color */}
-                <div>
-                  <label className="block text-xs font-bold text-neutral-900 uppercase tracking-wider mb-2.5">
-                    Brand Color
-                  </label>
-
-                  <div className="flex items-center gap-2 flex-wrap">
-                    {COLOR_SWATCHES.map((swatch) => {
-                      const isSelected = config.primaryColor.toLowerCase() === swatch.hex.toLowerCase();
-                      return (
-                        <button
-                          key={swatch.hex}
-                          type="button"
-                          title={swatch.name}
-                          onClick={() => setConfig((prev) => ({ ...prev, primaryColor: swatch.hex }))}
-                          className="w-8 h-8 rounded-full flex items-center justify-center transition-transform hover:scale-105 relative focus:outline-hidden cursor-pointer shadow-xs"
-                          style={{ backgroundColor: swatch.hex }}
-                        >
-                          {isSelected && (
-                            <Check className="w-4 h-4 text-white stroke-[3] drop-shadow-xs" />
-                          )}
-                        </button>
-                      );
-                    })}
-
-                    {/* Custom Color Input */}
-                    <div className="flex items-center gap-1.5 ml-1">
-                      <label
-                        htmlFor="primary-color-picker"
-                        className="w-8 h-8 rounded-full border border-neutral-300 flex items-center justify-center cursor-pointer hover:bg-neutral-50 relative overflow-hidden shrink-0 shadow-xs"
-                        title="Choose custom color"
-                      >
-                        <div
-                          className="w-full h-full rounded-full"
-                          style={{ backgroundColor: config.primaryColor }}
-                        />
-                        <input
-                          id="primary-color-picker"
-                          type="color"
-                          value={config.primaryColor}
-                          onChange={(e) => setConfig((prev) => ({ ...prev, primaryColor: e.target.value }))}
-                          className="sr-only"
-                        />
-                      </label>
-
-                      <input
-                        type="text"
-                        value={config.primaryColor}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          if (/^#[0-9A-Fa-f]{0,6}$/.test(val)) {
-                            setConfig((prev) => ({ ...prev, primaryColor: val }));
-                          }
-                        }}
-                        maxLength={7}
-                        placeholder="#635BFF"
-                        className="w-20 px-2 py-1 text-xs font-mono border border-neutral-200 rounded-lg focus:outline-hidden focus:border-neutral-900 uppercase"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* 3. Ticket Shape: Standard / Rounded / Compact */}
-                <div>
-                  <label className="block text-xs font-bold text-neutral-900 uppercase tracking-wider mb-2">
-                    Ticket Shape
-                  </label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {[
-                      { id: "standard", label: "Standard", desc: "16px radius", pro: false },
-                      { id: "rounded", label: "Rounded", desc: "28px radius", pro: true },
-                      { id: "compact", label: "Compact", desc: "Condensed", pro: true },
-                    ].map((shapeOpt) => {
-                      const isActive = (config.shape || "standard") === shapeOpt.id;
-                      const isLocked = shapeOpt.pro && !limits.canUseCustomShapes;
-                      return (
-                        <button
-                          key={shapeOpt.id}
-                          type="button"
-                          onClick={() => {
-                            if (isLocked) {
-                              triggerUpgrade(`${shapeOpt.label} Pass Shape`);
-                              return;
-                            }
-                            setConfig((prev) => ({ ...prev, shape: shapeOpt.id as TicketShape }));
-                          }}
-                          className={`py-2 px-2.5 rounded-xl border text-center transition-all relative cursor-pointer ${
-                            isActive
-                              ? "border-neutral-900 bg-neutral-50 text-neutral-900 font-bold shadow-2xs"
-                              : "border-neutral-200 text-neutral-600 hover:border-neutral-300 font-medium"
-                          }`}
-                        >
-                          {isLocked && (
-                            <span className="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded-full text-[8px] font-extrabold bg-violet-100 text-violet-700 border border-violet-200">
-                              PRO
-                            </span>
-                          )}
-                          <p className="text-xs">{shapeOpt.label}</p>
-                          <p className="text-[10px] text-neutral-400 font-normal">{shapeOpt.desc}</p>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* 4. Ticket Type Colors */}
-                <div className="p-3.5 bg-neutral-50 border border-neutral-200 rounded-2xl space-y-3">
-                  <div className="flex items-center justify-between">
+              {openSections.template && (
+                <div className="mt-3.5 space-y-3 pt-1">
+                  {/* Selected Template Display Box */}
+                  <div className="flex items-center justify-between p-3 bg-neutral-50 border border-neutral-200 rounded-lg">
                     <div>
-                      <div className="flex items-center gap-1.5">
-                        <p className="text-xs font-bold text-neutral-900 uppercase tracking-wider">
-                          Ticket Type Colors
-                        </p>
-                        {!limits.canUseCategoryColors && (
-                          <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-violet-100 text-violet-700 border border-violet-200">
-                            PRO
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-[10px] text-neutral-500">
-                        Different visual identity for VIP, General, Gold, etc.
+                      <p className="text-xs font-semibold text-neutral-900">
+                        {currentTemplateName}
+                      </p>
+                      <p className="text-[11px] text-neutral-500 mt-0.5 font-normal">
+                        Production pass layout
                       </p>
                     </div>
 
                     <button
                       type="button"
-                      onClick={handleApplyToAllCategories}
-                      className="text-[10px] font-bold text-violet-600 hover:underline cursor-pointer"
+                      onClick={() => setIsTemplateModalOpen(true)}
+                      className="px-2.5 py-1.5 text-xs font-medium text-neutral-700 bg-white border border-neutral-200 hover:bg-neutral-100 rounded-lg transition-colors cursor-pointer shadow-2xs"
                     >
-                      Apply to All
+                      Change Template
                     </button>
                   </div>
 
-                  <div className="space-y-2 pt-1">
-                    {categoriesToUse.map((cat) => {
-                      const catColor = config.categoryColors?.[cat.name] || config.primaryColor;
+                  {/* Quick Style Switcher */}
+                  <div className="grid grid-cols-4 gap-1.5 pt-1">
+                    {[
+                      { id: "minimal", label: "Minimal" },
+                      { id: "event", label: "Event" },
+                      { id: "dark", label: "Dark", pro: true },
+                      { id: "modern", label: "Modern" },
+                    ].map((tplOpt) => {
+                      const isActive = config.template === tplOpt.id;
+                      const isLocked = tplOpt.pro && !limits.canUseAllTemplates;
                       return (
-                        <div
-                          key={cat.id}
-                          className="flex items-center justify-between bg-white px-3 py-2 rounded-xl border border-neutral-200/80"
+                        <button
+                          key={tplOpt.id}
+                          type="button"
+                          onClick={() => {
+                            if (isLocked) {
+                              triggerUpgrade("Dark Obsidian VIP Theme");
+                              return;
+                            }
+                            updateConfig((prev) => ({
+                              ...prev,
+                              template: tplOpt.id as TicketTemplate,
+                            }));
+                          }}
+                          className={`py-1.5 px-2 rounded-lg border text-center transition-all cursor-pointer relative ${
+                            isActive
+                              ? "border-neutral-900 bg-neutral-900 text-white font-medium shadow-2xs"
+                              : "border-neutral-200 text-neutral-600 hover:border-neutral-300 bg-white text-xs"
+                          }`}
                         >
-                          <div className="flex items-center gap-2">
-                            <span
-                              className="w-3 h-3 rounded-full shrink-0"
-                              style={{ backgroundColor: catColor }}
-                            />
-                            <span className="text-xs font-semibold text-neutral-800">
-                              {cat.name}
+                          <span className="text-xs">{tplOpt.label}</span>
+                          {isLocked && (
+                            <span className="absolute -top-1.5 -right-1 px-1 py-0.2 rounded text-[8px] font-bold bg-violet-600 text-white">
+                              PRO
                             </span>
-                          </div>
-
-                          <div className="flex items-center gap-1.5">
-                            <label className="w-5 h-5 rounded-full border border-neutral-200 overflow-hidden cursor-pointer shrink-0">
-                              <input
-                                type="color"
-                                value={catColor}
-                                onChange={(e) => handleSetCategoryColor(cat.name, e.target.value)}
-                                className="sr-only"
-                              />
-                              <div className="w-full h-full" style={{ backgroundColor: catColor }} />
-                            </label>
-                            <span className="text-[10px] font-mono text-neutral-400 uppercase">
-                              {catColor}
-                            </span>
-                          </div>
-                        </div>
+                          )}
+                        </button>
                       );
                     })}
                   </div>
                 </div>
+              )}
+            </div>
 
-                {/* 5. Background Artwork */}
-                <div className="space-y-2.5">
-                  <div className="flex items-center justify-between">
-                    <label className="block text-xs font-bold text-neutral-900 uppercase tracking-wider">
-                      Background Artwork
+            {/* ═════════════════════════════════════════════════════════
+                SECTION 2: BRANDING
+            ═════════════════════════════════════════════════════════ */}
+            <div className="border-b border-neutral-200/80 pb-5">
+              <button
+                type="button"
+                onClick={() => toggleSection("branding")}
+                className="flex items-center justify-between w-full text-left py-1 cursor-pointer group"
+              >
+                <div>
+                  <h3 className="text-sm font-semibold text-neutral-900 group-hover:text-neutral-700 transition-colors">
+                    2. Branding
+                  </h3>
+                  <p className="text-xs text-neutral-500 font-normal mt-0.5">
+                    Logo mark and primary brand color
+                  </p>
+                </div>
+                {openSections.branding ? (
+                  <ChevronUp className="w-4 h-4 text-neutral-400 group-hover:text-neutral-700" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-neutral-400 group-hover:text-neutral-700" />
+                )}
+              </button>
+
+              {openSections.branding && (
+                <div className="mt-3.5 space-y-4 pt-1">
+                  {/* Logo Upload Box */}
+                  <div>
+                    <label className="block text-xs font-medium text-neutral-700 mb-1.5">
+                      Event Logo
                     </label>
-                    {!limits.canUploadBackground && (
-                      <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-violet-100 text-violet-700 border border-violet-200">
-                        PRO
-                      </span>
+
+                    {config.logoUrl ? (
+                      <div className="flex items-center justify-between p-2.5 bg-neutral-50 border border-neutral-200 rounded-lg">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-9 h-9 rounded-md bg-white border border-neutral-200 p-1 flex items-center justify-center overflow-hidden">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={config.logoUrl}
+                              alt="Event Logo"
+                              className="w-full h-full object-contain"
+                            />
+                          </div>
+                          <div>
+                            <p className="text-xs font-medium text-neutral-800">
+                              Logo uploaded
+                            </p>
+                            <p className="text-[11px] text-neutral-400 font-normal">
+                              Optimized for pass
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => logoInputRef.current?.click()}
+                            disabled={isUploadingLogo}
+                            className="px-2.5 py-1 text-xs font-medium text-neutral-700 bg-white border border-neutral-200 hover:bg-neutral-100 rounded-md transition-colors cursor-pointer"
+                          >
+                            {isUploadingLogo ? "Uploading..." : "Replace"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => updateConfig((prev) => ({ ...prev, logoUrl: null }))}
+                            className="p-1 text-neutral-400 hover:text-red-600 rounded-md transition-colors cursor-pointer"
+                            title="Remove Logo"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-between p-3 bg-neutral-50 border border-neutral-200 rounded-lg">
+                        <div>
+                          <p className="text-xs font-medium text-neutral-800">
+                            Add your logo
+                          </p>
+                          <p className="text-[11px] text-neutral-400">
+                            PNG, SVG, JPG up to 5MB
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => logoInputRef.current?.click()}
+                          disabled={isUploadingLogo}
+                          className="px-3 py-1.5 bg-white border border-neutral-200 hover:bg-neutral-100 text-neutral-800 text-xs font-medium rounded-lg transition-colors cursor-pointer shadow-2xs"
+                        >
+                          {isUploadingLogo ? "Uploading..." : "Upload Logo"}
+                        </button>
+                      </div>
                     )}
+
+                    <input
+                      ref={logoInputRef}
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleFileUpload(file, "logo");
+                        e.target.value = "";
+                      }}
+                    />
                   </div>
 
+                  {/* Brand Color Selector */}
+                  <div>
+                    <label className="block text-xs font-medium text-neutral-700 mb-1.5">
+                      Brand Color
+                    </label>
+
+                    <div className="flex items-center gap-2">
+                      {/* Swatch & Hex input */}
+                      <div className="h-10 px-2.5 bg-white border border-neutral-200 rounded-lg flex items-center gap-2 flex-1">
+                        <label
+                          htmlFor="primary-color-picker"
+                          className="w-5 h-5 rounded-full border border-neutral-300 flex items-center justify-center cursor-pointer shrink-0 overflow-hidden shadow-2xs"
+                          title="Pick custom color"
+                        >
+                          <div
+                            className="w-full h-full"
+                            style={{ backgroundColor: config.primaryColor }}
+                          />
+                          <input
+                            id="primary-color-picker"
+                            type="color"
+                            value={config.primaryColor}
+                            onChange={(e) =>
+                              updateConfig((prev) => ({ ...prev, primaryColor: e.target.value }))
+                            }
+                            className="sr-only"
+                          />
+                        </label>
+
+                        <input
+                          type="text"
+                          value={config.primaryColor}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (/^#[0-9A-Fa-f]{0,6}$/.test(val)) {
+                              updateConfig((prev) => ({ ...prev, primaryColor: val }));
+                            }
+                          }}
+                          maxLength={7}
+                          placeholder="#635BFF"
+                          className="w-full text-xs font-mono font-medium text-neutral-800 uppercase focus:outline-hidden"
+                        />
+                      </div>
+
+                      {/* Swatch dots */}
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {BRAND_SWATCHES.map((swatch) => (
+                          <button
+                            key={swatch.hex}
+                            type="button"
+                            title={swatch.name}
+                            onClick={() =>
+                              updateConfig((prev) => ({ ...prev, primaryColor: swatch.hex }))
+                            }
+                            className="w-6 h-6 rounded-full border border-neutral-200/80 flex items-center justify-center transition-transform hover:scale-105 cursor-pointer shadow-2xs"
+                            style={{ backgroundColor: swatch.hex }}
+                          >
+                            {config.primaryColor.toLowerCase() === swatch.hex.toLowerCase() && (
+                              <Check className="w-3 h-3 text-white stroke-[3]" />
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Multi-Tier Category Accent Colors */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="text-xs font-medium text-neutral-700">
+                        Category Colors
+                      </label>
+                      {!limits.canUseCategoryColors && (
+                        <span className="text-[10px] font-bold text-violet-600 uppercase">
+                          Pro
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="space-y-1.5">
+                      {categoriesToUse.map((cat) => {
+                        const catColor =
+                          config.categoryColors?.[cat.name] || config.primaryColor;
+                        return (
+                          <div
+                            key={cat.id}
+                            className="flex items-center justify-between px-3 py-1.5 bg-neutral-50 border border-neutral-200 rounded-lg text-xs"
+                          >
+                            <span className="font-medium text-neutral-700">{cat.name}</span>
+                            <div className="flex items-center gap-2">
+                              <label className="w-4 h-4 rounded-full border border-neutral-300 overflow-hidden cursor-pointer">
+                                <input
+                                  type="color"
+                                  value={catColor}
+                                  onChange={(e) => handleSetCategoryColor(cat.name, e.target.value)}
+                                  className="sr-only"
+                                />
+                                <div
+                                  className="w-full h-full"
+                                  style={{ backgroundColor: catColor }}
+                                />
+                              </label>
+                              <span className="text-[11px] font-mono text-neutral-500 uppercase">
+                                {catColor}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Sponsor / Partner Logo */}
+                  <div>
+                    <label className="block text-xs font-medium text-neutral-700 mb-1.5">
+                      Sponsor Logo (Optional)
+                    </label>
+
+                    {config.sponsorLogoUrl ? (
+                      <div className="flex items-center justify-between p-2.5 bg-neutral-50 border border-neutral-200 rounded-lg">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded bg-white border border-neutral-200 p-0.5 flex items-center justify-center overflow-hidden">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={config.sponsorLogoUrl}
+                              alt="Sponsor"
+                              className="w-full h-full object-contain"
+                            />
+                          </div>
+                          <span className="text-xs text-neutral-800 font-medium">
+                            Sponsor mark active
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => sponsorLogoInputRef.current?.click()}
+                            disabled={isUploadingSponsorLogo}
+                            className="px-2 py-1 text-xs text-neutral-700 bg-white border border-neutral-200 rounded-md hover:bg-neutral-50"
+                          >
+                            Replace
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              updateConfig((prev) => ({ ...prev, sponsorLogoUrl: null }))
+                            }
+                            className="p-1 text-neutral-400 hover:text-red-600 rounded-md"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!limits.canUploadSponsorLogo) {
+                            triggerUpgrade("Sponsor & Partner Logos");
+                            return;
+                          }
+                          sponsorLogoInputRef.current?.click();
+                        }}
+                        disabled={isUploadingSponsorLogo}
+                        className="w-full h-10 px-3 border border-neutral-200 hover:border-neutral-300 bg-neutral-50 hover:bg-neutral-100 rounded-lg text-xs font-medium text-neutral-700 flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                      >
+                        <Upload className="w-3.5 h-3.5 text-neutral-400" />
+                        <span>Upload Sponsor Logo</span>
+                      </button>
+                    )}
+
+                    <input
+                      ref={sponsorLogoInputRef}
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleFileUpload(file, "sponsor");
+                        e.target.value = "";
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* ═════════════════════════════════════════════════════════
+                SECTION 3: TICKET CONTENT
+            ═════════════════════════════════════════════════════════ */}
+            <div className="border-b border-neutral-200/80 pb-5">
+              <button
+                type="button"
+                onClick={() => toggleSection("content")}
+                className="flex items-center justify-between w-full text-left py-1 cursor-pointer group"
+              >
+                <div>
+                  <h3 className="text-sm font-semibold text-neutral-900 group-hover:text-neutral-700 transition-colors">
+                    3. Ticket Content
+                  </h3>
+                  <p className="text-xs text-neutral-500 font-normal mt-0.5">
+                    Select attendee fields displayed on the pass
+                  </p>
+                </div>
+                {openSections.content ? (
+                  <ChevronUp className="w-4 h-4 text-neutral-400 group-hover:text-neutral-700" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-neutral-400 group-hover:text-neutral-700" />
+                )}
+              </button>
+
+              {openSections.content && (
+                <div className="mt-3.5 space-y-1.5 pt-1">
+                  {[
+                    {
+                      key: "showAttendeeName",
+                      label: "Attendee name",
+                      checked: config.showAttendeeName,
+                      sample: sampleAttendee.name,
+                    },
+                    {
+                      key: "showTicketType",
+                      label: "Ticket type",
+                      checked: config.showTicketType,
+                      sample: sampleAttendee.ticketType,
+                    },
+                    {
+                      key: "showEventDate",
+                      label: "Event date",
+                      checked: config.showEventDate !== false,
+                      sample: eventDate,
+                    },
+                    {
+                      key: "showVenue",
+                      label: "Venue",
+                      checked: config.showVenue,
+                      sample: venue,
+                    },
+                    {
+                      key: "showTicketId",
+                      label: "Ticket ID",
+                      checked: config.showTicketId,
+                      sample: sampleAttendee.ticketId,
+                    },
+                    {
+                      key: "showOrganization",
+                      label: "Company",
+                      checked: !!config.showOrganization,
+                      sample: sampleAttendee.organization,
+                    },
+                    {
+                      key: "showPhone",
+                      label: "Phone number",
+                      checked: !!config.showPhone,
+                      sample: sampleAttendee.phone,
+                    },
+                    {
+                      key: "showRegistrationNumber",
+                      label: "Registration number",
+                      checked: !!config.showRegistrationNumber,
+                      sample: sampleAttendee.regNumber,
+                    },
+                  ].map((field) => (
+                    <label
+                      key={field.key}
+                      className="flex items-center justify-between p-2.5 bg-neutral-50/70 hover:bg-neutral-50 border border-neutral-200/80 rounded-lg cursor-pointer transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        <GripVertical className="w-3.5 h-3.5 text-neutral-300" />
+                        <input
+                          type="checkbox"
+                          checked={field.checked}
+                          onChange={(e) =>
+                            updateConfig((prev) => ({
+                              ...prev,
+                              [field.key]: e.target.checked,
+                            }))
+                          }
+                          className="w-4 h-4 rounded text-neutral-900 border-neutral-300 focus:ring-0 cursor-pointer"
+                        />
+                        <span className="text-xs font-medium text-neutral-800">
+                          {field.label}
+                        </span>
+                      </div>
+                      <span className="text-[11px] text-neutral-400 font-normal truncate max-w-[120px]">
+                        {field.sample}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* ═════════════════════════════════════════════════════════
+                SECTION 4: QR / PASS SETTINGS
+            ═════════════════════════════════════════════════════════ */}
+            <div className="border-b border-neutral-200/80 pb-5">
+              <button
+                type="button"
+                onClick={() => toggleSection("qr")}
+                className="flex items-center justify-between w-full text-left py-1 cursor-pointer group"
+              >
+                <div>
+                  <h3 className="text-sm font-semibold text-neutral-900 group-hover:text-neutral-700 transition-colors">
+                    4. QR / Pass Settings
+                  </h3>
+                  <p className="text-xs text-neutral-500 font-normal mt-0.5">
+                    Corner radius and scan readability
+                  </p>
+                </div>
+                {openSections.qr ? (
+                  <ChevronUp className="w-4 h-4 text-neutral-400 group-hover:text-neutral-700" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-neutral-400 group-hover:text-neutral-700" />
+                )}
+              </button>
+
+              {openSections.qr && (
+                <div className="mt-3.5 space-y-4 pt-1">
+                  {/* Shape Selector */}
+                  <div>
+                    <label className="block text-xs font-medium text-neutral-700 mb-1.5">
+                      Pass Corner Shape
+                    </label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[
+                        { id: "standard", label: "Standard", desc: "16px radius" },
+                        { id: "rounded", label: "Rounded", desc: "24px radius" },
+                        { id: "compact", label: "Compact", desc: "12px radius" },
+                      ].map((shapeOpt) => {
+                        const isActive = (config.shape || "standard") === shapeOpt.id;
+                        return (
+                          <button
+                            key={shapeOpt.id}
+                            type="button"
+                            onClick={() =>
+                              updateConfig((prev) => ({
+                                ...prev,
+                                shape: shapeOpt.id as TicketShape,
+                              }))
+                            }
+                            className={`py-2 px-2 rounded-lg border text-center transition-all cursor-pointer ${
+                              isActive
+                                ? "border-neutral-900 bg-neutral-50 font-semibold text-neutral-900"
+                                : "border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300"
+                            }`}
+                          >
+                            <p className="text-xs">{shapeOpt.label}</p>
+                            <p className="text-[10px] text-neutral-400 font-normal mt-0.5">
+                              {shapeOpt.desc}
+                            </p>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Contrast & Scan Reliability Warning */}
+                  <div className="p-3 bg-neutral-50 border border-neutral-200 rounded-lg flex items-start gap-2.5">
+                    <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                    <p className="text-xs text-neutral-600 leading-relaxed">
+                      Keep sufficient contrast for reliable scanning. URPASS isolates the QR target with a guaranteed safety container.
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* ═════════════════════════════════════════════════════════
+                SECTION 5: BACKGROUND
+            ═════════════════════════════════════════════════════════ */}
+            <div className="border-b border-neutral-200/80 pb-5">
+              <button
+                type="button"
+                onClick={() => toggleSection("background")}
+                className="flex items-center justify-between w-full text-left py-1 cursor-pointer group"
+              >
+                <div>
+                  <h3 className="text-sm font-semibold text-neutral-900 group-hover:text-neutral-700 transition-colors">
+                    5. Background
+                  </h3>
+                  <p className="text-xs text-neutral-500 font-normal mt-0.5">
+                    Ticket backdrop artwork and texture
+                  </p>
+                </div>
+                {openSections.background ? (
+                  <ChevronUp className="w-4 h-4 text-neutral-400 group-hover:text-neutral-700" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-neutral-400 group-hover:text-neutral-700" />
+                )}
+              </button>
+
+              {openSections.background && (
+                <div className="mt-3.5 space-y-3 pt-1">
                   <div className="flex items-center gap-4">
-                    <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-neutral-700">
+                    <label className="flex items-center gap-2 cursor-pointer text-xs font-medium text-neutral-700">
                       <input
                         type="radio"
                         name="bgMode"
                         checked={!config.backgroundImageUrl}
-                        onChange={() => setConfig((prev) => ({ ...prev, backgroundImageUrl: null }))}
+                        onChange={() =>
+                          updateConfig((prev) => ({ ...prev, backgroundImageUrl: null }))
+                        }
                         className="w-4 h-4 text-neutral-900 border-neutral-300 focus:ring-0"
                       />
-                      <span>None</span>
+                      <span>No background selected</span>
                     </label>
 
                     <label
@@ -944,7 +1268,7 @@ export default function TicketStudio({
                           triggerUpgrade("Custom Background Artwork");
                         }
                       }}
-                      className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-neutral-700"
+                      className="flex items-center gap-2 cursor-pointer text-xs font-medium text-neutral-700"
                     >
                       <input
                         type="radio"
@@ -961,50 +1285,43 @@ export default function TicketStudio({
                         }}
                         className="w-4 h-4 text-neutral-900 border-neutral-300 focus:ring-0"
                       />
-                      <span>Image</span>
+                      <span>Image artwork</span>
                     </label>
                   </div>
 
                   {config.backgroundImageUrl ? (
-                    <div className="p-3 bg-neutral-50 border border-neutral-200 rounded-xl space-y-2">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2.5">
-                          <div className="w-12 h-8 rounded bg-neutral-200 overflow-hidden border border-neutral-300">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                              src={config.backgroundImageUrl}
-                              alt="Background"
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                          <span className="text-xs font-semibold text-neutral-800">
-                            Artwork active
-                          </span>
+                    <div className="flex items-center justify-between p-2.5 bg-neutral-50 border border-neutral-200 rounded-lg">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-10 h-8 rounded bg-neutral-200 overflow-hidden border border-neutral-300">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={config.backgroundImageUrl}
+                            alt="Background"
+                            className="w-full h-full object-cover"
+                          />
                         </div>
-
-                        <div className="flex items-center gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (!limits.canUploadBackground) {
-                                triggerUpgrade("Custom Background Artwork");
-                                return;
-                              }
-                              bgInputRef.current?.click();
-                            }}
-                            disabled={isUploadingBg}
-                            className="px-2 py-1 text-xs font-medium text-neutral-700 bg-white border border-neutral-200 hover:bg-neutral-100 rounded-md transition-colors cursor-pointer"
-                          >
-                            {isUploadingBg ? "Uploading..." : "Change"}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setConfig((prev) => ({ ...prev, backgroundImageUrl: null }))}
-                            className="p-1 text-neutral-400 hover:text-red-600 rounded-md hover:bg-red-50 transition-colors cursor-pointer"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
+                        <span className="text-xs font-medium text-neutral-800">
+                          Artwork applied
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => bgInputRef.current?.click()}
+                          disabled={isUploadingBg}
+                          className="px-2.5 py-1 text-xs text-neutral-700 bg-white border border-neutral-200 rounded-md hover:bg-neutral-50"
+                        >
+                          {isUploadingBg ? "Uploading..." : "Replace"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            updateConfig((prev) => ({ ...prev, backgroundImageUrl: null }))
+                          }
+                          className="p-1 text-neutral-400 hover:text-red-600 rounded-md"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
                       </div>
                     </div>
                   ) : null}
@@ -1021,647 +1338,245 @@ export default function TicketStudio({
                     }}
                   />
                 </div>
-
-                {/* QR Safety Zone Indicator */}
-                <div className="p-3 bg-emerald-50/70 border border-emerald-200/80 rounded-xl flex items-start gap-2.5">
-                  <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-xs font-bold text-emerald-900">QR Safety Zone Active</p>
-                    <p className="text-[11px] text-emerald-700 leading-relaxed">
-                      High-contrast scan card guarantees 100% scannability under direct sunlight or dark gates, regardless of background image.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
+              )}
+            </div>
 
             {/* ═════════════════════════════════════════════════════════
-                SECTION 2: CONTENT
+                SECTION 6: ADVANCED OPTIONS
             ═════════════════════════════════════════════════════════ */}
-            {activeSection === "content" && (
-              <div className="space-y-6 animate-in fade-in-50 duration-150">
-                {/* 1. Dynamic Ticket Fields */}
+            <div className="border-b border-neutral-200/80 pb-5">
+              <button
+                type="button"
+                onClick={() => toggleSection("advanced")}
+                className="flex items-center justify-between w-full text-left py-1 cursor-pointer group"
+              >
                 <div>
-                  <div className="mb-3">
-                    <label className="block text-xs font-bold text-neutral-900 uppercase tracking-wider">
-                      Dynamic Ticket Fields
-                    </label>
-                    <p className="text-[11px] text-neutral-500">
-                      Select what appears on pass. URPASS controls layout and positioning automatically.
-                    </p>
-                  </div>
-
-                  <div className="space-y-2">
-                    {/* Attendee Name */}
-                    <label className="flex items-center gap-3 p-2.5 bg-neutral-50 hover:bg-neutral-100/70 rounded-xl border border-neutral-200/80 cursor-pointer transition-colors">
-                      <input
-                        type="checkbox"
-                        checked={config.showAttendeeName}
-                        onChange={(e) =>
-                          setConfig((prev) => ({ ...prev, showAttendeeName: e.target.checked }))
-                        }
-                        className="w-4 h-4 rounded text-neutral-900 border-neutral-300 focus:ring-0"
-                      />
-                      <div className="text-xs">
-                        <p className="font-bold text-neutral-800">Attendee Name</p>
-                        <p className="text-[10px] text-neutral-400">e.g. Haarishmitha</p>
-                      </div>
-                    </label>
-
-                    {/* Venue */}
-                    <label className="flex items-center gap-3 p-2.5 bg-neutral-50 hover:bg-neutral-100/70 rounded-xl border border-neutral-200/80 cursor-pointer transition-colors">
-                      <input
-                        type="checkbox"
-                        checked={config.showVenue}
-                        onChange={(e) =>
-                          setConfig((prev) => ({ ...prev, showVenue: e.target.checked }))
-                        }
-                        className="w-4 h-4 rounded text-neutral-900 border-neutral-300 focus:ring-0"
-                      />
-                      <div className="text-xs">
-                        <p className="font-bold text-neutral-800">Venue</p>
-                        <p className="text-[10px] text-neutral-400">e.g. The Residency, Coimbatore</p>
-                      </div>
-                    </label>
-
-                    {/* Company / College */}
-                    <label className="flex items-center gap-3 p-2.5 bg-neutral-50 hover:bg-neutral-100/70 rounded-xl border border-neutral-200/80 cursor-pointer transition-colors">
-                      <input
-                        type="checkbox"
-                        checked={!!config.showOrganization}
-                        onChange={(e) =>
-                          setConfig((prev) => ({ ...prev, showOrganization: e.target.checked }))
-                        }
-                        className="w-4 h-4 rounded text-neutral-900 border-neutral-300 focus:ring-0"
-                      />
-                      <div className="text-xs">
-                        <p className="font-bold text-neutral-800">Company / College</p>
-                        <p className="text-[10px] text-neutral-400">e.g. TechCorp Labs / Anna University</p>
-                      </div>
-                    </label>
-
-                    {/* Ticket Type */}
-                    <label className="flex items-center gap-3 p-2.5 bg-neutral-50 hover:bg-neutral-100/70 rounded-xl border border-neutral-200/80 cursor-pointer transition-colors">
-                      <input
-                        type="checkbox"
-                        checked={config.showTicketType}
-                        onChange={(e) =>
-                          setConfig((prev) => ({ ...prev, showTicketType: e.target.checked }))
-                        }
-                        className="w-4 h-4 rounded text-neutral-900 border-neutral-300 focus:ring-0"
-                      />
-                      <div className="text-xs">
-                        <p className="font-bold text-neutral-800">Ticket Type</p>
-                        <p className="text-[10px] text-neutral-400">e.g. VIP PASS / General Entry pill</p>
-                      </div>
-                    </label>
-
-                    {/* Event Date & Time */}
-                    <label className="flex items-center gap-3 p-2.5 bg-neutral-50 hover:bg-neutral-100/70 rounded-xl border border-neutral-200/80 cursor-pointer transition-colors">
-                      <input
-                        type="checkbox"
-                        checked={config.showEventDate !== false}
-                        onChange={(e) =>
-                          setConfig((prev) => ({ ...prev, showEventDate: e.target.checked }))
-                        }
-                        className="w-4 h-4 rounded text-neutral-900 border-neutral-300 focus:ring-0"
-                      />
-                      <div className="text-xs">
-                        <p className="font-bold text-neutral-800">Event Date & Time</p>
-                        <p className="text-[10px] text-neutral-400">e.g. 03 OCT 2026 | 10:00 AM</p>
-                      </div>
-                    </label>
-
-                    {/* Ticket ID */}
-                    <label className="flex items-center gap-3 p-2.5 bg-neutral-50 hover:bg-neutral-100/70 rounded-xl border border-neutral-200/80 cursor-pointer transition-colors">
-                      <input
-                        type="checkbox"
-                        checked={config.showTicketId}
-                        onChange={(e) =>
-                          setConfig((prev) => ({ ...prev, showTicketId: e.target.checked }))
-                        }
-                        className="w-4 h-4 rounded text-neutral-900 border-neutral-300 focus:ring-0"
-                      />
-                      <div className="text-xs">
-                        <p className="font-bold text-neutral-800">Ticket ID</p>
-                        <p className="text-[10px] text-neutral-400">e.g. #URP-02891</p>
-                      </div>
-                    </label>
-
-                    {/* Phone Number */}
-                    <label className="flex items-center gap-3 p-2.5 bg-neutral-50 hover:bg-neutral-100/70 rounded-xl border border-neutral-200/80 cursor-pointer transition-colors">
-                      <input
-                        type="checkbox"
-                        checked={!!config.showPhone}
-                        onChange={(e) =>
-                          setConfig((prev) => ({ ...prev, showPhone: e.target.checked }))
-                        }
-                        className="w-4 h-4 rounded text-neutral-900 border-neutral-300 focus:ring-0"
-                      />
-                      <div className="text-xs">
-                        <p className="font-bold text-neutral-800">Phone</p>
-                        <p className="text-[10px] text-neutral-400">e.g. +91 98765 43210</p>
-                      </div>
-                    </label>
-
-                    {/* Registration Number */}
-                    <label className="flex items-center gap-3 p-2.5 bg-neutral-50 hover:bg-neutral-100/70 rounded-xl border border-neutral-200/80 cursor-pointer transition-colors">
-                      <input
-                        type="checkbox"
-                        checked={!!config.showRegistrationNumber}
-                        onChange={(e) =>
-                          setConfig((prev) => ({ ...prev, showRegistrationNumber: e.target.checked }))
-                        }
-                        className="w-4 h-4 rounded text-neutral-900 border-neutral-300 focus:ring-0"
-                      />
-                      <div className="text-xs">
-                        <p className="font-bold text-neutral-800">Registration Number</p>
-                        <p className="text-[10px] text-neutral-400">e.g. REG-2026-089</p>
-                      </div>
-                    </label>
-                  </div>
-                </div>
-
-                {/* 2. Custom Message */}
-                <div>
-                  <label className="block text-xs font-bold text-neutral-900 uppercase tracking-wider mb-1">
-                    Custom Message
-                  </label>
-                  <p className="text-[11px] text-neutral-500 mb-2">
-                    Small text printed on pass (e.g. “See you at the event!”)
+                  <h3 className="text-sm font-semibold text-neutral-900 group-hover:text-neutral-700 transition-colors">
+                    6. Advanced Options
+                  </h3>
+                  <p className="text-xs text-neutral-500 font-normal mt-0.5">
+                    Admission rules, custom notices & white-label
                   </p>
-                  <input
-                    type="text"
-                    value={config.customMessage || ""}
-                    onChange={(e) =>
-                      setConfig((prev) => ({ ...prev, customMessage: e.target.value }))
-                    }
-                    placeholder="See you at the event!"
-                    maxLength={160}
-                    className="w-full px-3 py-2 text-xs border border-neutral-300 rounded-xl focus:outline-hidden focus:border-neutral-900"
-                  />
                 </div>
+                {openSections.advanced ? (
+                  <ChevronUp className="w-4 h-4 text-neutral-400 group-hover:text-neutral-700" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-neutral-400 group-hover:text-neutral-700" />
+                )}
+              </button>
 
-                {/* 3. Ticket Rules */}
-                <div className="space-y-3 pt-2 border-t border-neutral-200">
+              {openSections.advanced && (
+                <div className="mt-3.5 space-y-4 pt-1">
+                  {/* Custom Message */}
                   <div>
-                    <label className="block text-xs font-bold text-neutral-900 uppercase tracking-wider">
-                      Ticket Rules
+                    <label className="block text-xs font-medium text-neutral-700 mb-1">
+                      Custom Message
                     </label>
-                    <p className="text-[11px] text-neutral-500">
-                      Admission instructions rendered at the foot of each pass
-                    </p>
+                    <input
+                      type="text"
+                      value={config.customMessage || ""}
+                      onChange={(e) =>
+                        updateConfig((prev) => ({ ...prev, customMessage: e.target.value }))
+                      }
+                      placeholder="e.g. See you at the keynote!"
+                      maxLength={140}
+                      className="w-full h-10 px-3 text-xs bg-white border border-neutral-200 rounded-lg text-neutral-900 placeholder:text-neutral-400 focus:outline-hidden focus:border-neutral-900"
+                    />
                   </div>
 
+                  {/* Rules Checkboxes */}
                   <div className="space-y-2">
-                    <label className="flex items-center gap-2.5 text-xs text-neutral-800 cursor-pointer">
+                    <label className="flex items-center gap-2.5 text-xs text-neutral-700 cursor-pointer">
                       <input
                         type="checkbox"
                         checked={config.showSingleEntryRule !== false}
                         onChange={(e) =>
-                          setConfig((prev) => ({ ...prev, showSingleEntryRule: e.target.checked }))
+                          updateConfig((prev) => ({
+                            ...prev,
+                            showSingleEntryRule: e.target.checked,
+                          }))
                         }
                         className="w-4 h-4 rounded text-neutral-900 border-neutral-300 focus:ring-0"
                       />
-                      <span>Show &ldquo;Valid for one entry&rdquo;</span>
+                      <span>Valid for one entry</span>
                     </label>
 
-                    <label className="flex items-center gap-2.5 text-xs text-neutral-800 cursor-pointer">
+                    <label className="flex items-center gap-2.5 text-xs text-neutral-700 cursor-pointer">
                       <input
                         type="checkbox"
                         checked={config.showGateNotice !== false}
                         onChange={(e) =>
-                          setConfig((prev) => ({ ...prev, showGateNotice: e.target.checked }))
+                          updateConfig((prev) => ({
+                            ...prev,
+                            showGateNotice: e.target.checked,
+                          }))
                         }
                         className="w-4 h-4 rounded text-neutral-900 border-neutral-300 focus:ring-0"
                       />
-                      <span>Show &ldquo;Keep this QR ready at the gate&rdquo;</span>
+                      <span>Keep this QR ready at the gate</span>
                     </label>
 
-                    <label className="flex items-center gap-2.5 text-xs text-neutral-800 cursor-pointer">
+                    <label className="flex items-center gap-2.5 text-xs text-neutral-700 cursor-pointer">
                       <input
                         type="checkbox"
                         checked={!!config.showTermsLink}
                         onChange={(e) =>
-                          setConfig((prev) => ({ ...prev, showTermsLink: e.target.checked }))
+                          updateConfig((prev) => ({
+                            ...prev,
+                            showTermsLink: e.target.checked,
+                          }))
                         }
                         className="w-4 h-4 rounded text-neutral-900 border-neutral-300 focus:ring-0"
                       />
-                      <span>Show Event Terms link</span>
-                    </label>
-
-                    <label className="flex items-center gap-2.5 text-xs text-neutral-800 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={!!config.showOrganizerContact}
-                        onChange={(e) =>
-                          setConfig((prev) => ({ ...prev, showOrganizerContact: e.target.checked }))
-                        }
-                        className="w-4 h-4 rounded text-neutral-900 border-neutral-300 focus:ring-0"
-                      />
-                      <span>Show Organizer Contact note</span>
+                      <span>Event Terms & Conditions link</span>
                     </label>
                   </div>
 
+                  {/* Custom Instruction */}
                   <div>
-                    <label className="block text-[11px] font-bold text-neutral-700 uppercase tracking-wider mb-1">
-                      + Add custom instruction
+                    <label className="block text-xs font-medium text-neutral-700 mb-1">
+                      Custom Admission Note
                     </label>
                     <input
                       type="text"
                       value={config.customInstruction || ""}
                       onChange={(e) =>
-                        setConfig((prev) => ({ ...prev, customInstruction: e.target.value }))
+                        updateConfig((prev) => ({
+                          ...prev,
+                          customInstruction: e.target.value,
+                        }))
                       }
                       placeholder="e.g. Gate opens 30 minutes before keynote."
-                      maxLength={160}
-                      className="w-full px-3 py-2 text-xs border border-neutral-300 rounded-xl focus:outline-hidden focus:border-neutral-900"
+                      maxLength={140}
+                      className="w-full h-10 px-3 text-xs bg-white border border-neutral-200 rounded-lg text-neutral-900 placeholder:text-neutral-400 focus:outline-hidden focus:border-neutral-900"
                     />
                   </div>
-                </div>
-              </div>
-            )}
 
-            {/* ═════════════════════════════════════════════════════════
-                SECTION 3: BRANDING
-            ═════════════════════════════════════════════════════════ */}
-            {activeSection === "branding" && (
-              <div className="space-y-6 animate-in fade-in-50 duration-150">
-                {/* 1. Event / Organization Logo */}
-                <div>
-                  <div className="mb-2">
-                    <label className="block text-xs font-bold text-neutral-900 uppercase tracking-wider">
-                      Event / Company Logo
-                    </label>
-                    <p className="text-[11px] text-neutral-500">
-                      Primary branding with automatic high-resolution CDN optimization
-                    </p>
-                  </div>
-
-                  {config.logoUrl ? (
-                    <div className="p-3 bg-neutral-50 border border-neutral-200 rounded-2xl flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-14 h-10 bg-white border border-neutral-200 rounded-xl flex items-center justify-center p-1 overflow-hidden shadow-2xs">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={config.logoUrl}
-                            alt="Event Logo"
-                            className="w-full h-full object-contain"
-                          />
-                        </div>
-                        <div>
-                          <p className="text-xs font-bold text-neutral-800">Event Logo</p>
-                          <p className="text-[10px] text-neutral-400">CDN synced & optimized</p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => logoInputRef.current?.click()}
-                          disabled={isUploadingLogo}
-                          className="px-2.5 py-1 text-xs font-medium text-neutral-700 bg-white border border-neutral-200 hover:bg-neutral-100 rounded-lg transition-colors cursor-pointer"
-                        >
-                          {isUploadingLogo ? "Uploading..." : "Change"}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setConfig((prev) => ({ ...prev, logoUrl: null }))}
-                          className="p-1 text-neutral-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors cursor-pointer"
-                          title="Remove Logo"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
+                  {/* Wordmark Status */}
+                  <div className="flex items-center justify-between p-3 bg-neutral-50 border border-neutral-200 rounded-lg text-xs">
+                    <div>
+                      <p className="font-medium text-neutral-800">URPASS Wordmark</p>
+                      <p className="text-[11px] text-neutral-500 font-normal">
+                        {limits.canRemoveBranding
+                          ? "White-label active"
+                          : "Included on free & starter passes"}
+                      </p>
                     </div>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => logoInputRef.current?.click()}
-                      disabled={isUploadingLogo}
-                      className="w-full p-4 border-2 border-dashed border-neutral-200 hover:border-neutral-400 rounded-2xl text-center flex flex-col items-center justify-center gap-1 transition-colors bg-neutral-50/50 hover:bg-neutral-50 cursor-pointer"
-                    >
-                      {isUploadingLogo ? (
-                        <div className="flex items-center gap-2 text-xs font-medium text-neutral-600">
-                          <Loader2 className="w-4 h-4 animate-spin text-neutral-500" />
-                          <span>Uploading logo to CDN...</span>
-                        </div>
-                      ) : (
-                        <>
-                          <div className="w-8 h-8 rounded-full bg-white border border-neutral-200 flex items-center justify-center text-neutral-600 mb-0.5 shadow-2xs">
-                            <Upload className="w-4 h-4" />
-                          </div>
-                          <span className="text-xs font-bold text-neutral-800">Upload Logo</span>
-                          <span className="text-[10px] text-neutral-400">PNG, SVG, JPG up to 5MB</span>
-                        </>
-                      )}
-                    </button>
-                  )}
-
-                  <input
-                    ref={logoInputRef}
-                    type="file"
-                    accept="image/png,image/jpeg,image/webp,image/svg+xml"
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) handleFileUpload(file, "logo");
-                      e.target.value = "";
-                    }}
-                  />
-                </div>
-
-                {/* 2. Sponsor / Co-host Logo */}
-                <div>
-                  <div className="mb-2">
-                    <div className="flex items-center gap-1.5">
-                      <label className="block text-xs font-bold text-neutral-900 uppercase tracking-wider">
-                        Sponsor Logo (Optional)
-                      </label>
-                      {!limits.canUploadSponsorLogo && (
-                        <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-violet-100 text-violet-700 border border-violet-200">
-                          PRO
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-[11px] text-neutral-500">
-                      Secondary partner or title sponsor mark displayed alongside main logo
-                    </p>
-                  </div>
-
-                  {config.sponsorLogoUrl ? (
-                    <div className="p-3 bg-neutral-50 border border-neutral-200 rounded-2xl flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-14 h-10 bg-white border border-neutral-200 rounded-xl flex items-center justify-center p-1 overflow-hidden shadow-2xs">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={config.sponsorLogoUrl}
-                            alt="Sponsor Logo"
-                            className="w-full h-full object-contain"
-                          />
-                        </div>
-                        <div>
-                          <p className="text-xs font-bold text-neutral-800">Sponsor Logo</p>
-                          <p className="text-[10px] text-neutral-400">Partner badge active</p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (!limits.canUploadSponsorLogo) {
-                              triggerUpgrade("Sponsor & Partner Logos");
-                              return;
-                            }
-                            sponsorLogoInputRef.current?.click();
-                          }}
-                          disabled={isUploadingSponsorLogo}
-                          className="px-2.5 py-1 text-xs font-medium text-neutral-700 bg-white border border-neutral-200 hover:bg-neutral-100 rounded-lg transition-colors cursor-pointer"
-                        >
-                          {isUploadingSponsorLogo ? "Uploading..." : "Change"}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setConfig((prev) => ({ ...prev, sponsorLogoUrl: null }))}
-                          className="p-1 text-neutral-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors cursor-pointer"
-                          title="Remove Sponsor Logo"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (!limits.canUploadSponsorLogo) {
-                          triggerUpgrade("Sponsor & Partner Logos");
-                          return;
-                        }
-                        sponsorLogoInputRef.current?.click();
-                      }}
-                      disabled={isUploadingSponsorLogo}
-                      className="w-full p-3.5 border border-dashed border-neutral-300 hover:border-neutral-400 rounded-2xl text-center flex items-center justify-center gap-2 transition-colors bg-white hover:bg-neutral-50 text-xs font-semibold text-neutral-700 cursor-pointer"
-                    >
-                      {isUploadingSponsorLogo ? (
-                        <>
-                          <Loader2 className="w-3.5 h-3.5 animate-spin text-neutral-500" />
-                          <span>Uploading sponsor logo...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Upload className="w-3.5 h-3.5 text-neutral-500" />
-                          <span>Upload sponsor / partner logo</span>
-                        </>
-                      )}
-                    </button>
-                  )}
-
-                  <input
-                    ref={sponsorLogoInputRef}
-                    type="file"
-                    accept="image/png,image/jpeg,image/webp,image/svg+xml"
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) handleFileUpload(file, "sponsor");
-                      e.target.value = "";
-                    }}
-                  />
-                </div>
-
-                {/* 3. Urpass Wordmark Status */}
-                <div className="p-3.5 bg-neutral-50 border border-neutral-200 rounded-2xl flex items-center justify-between text-xs">
-                  <div>
-                    <div className="flex items-center gap-1.5">
-                      <p className="font-bold text-neutral-800">URPASS Wordmark</p>
-                      {!limits.canRemoveBranding && (
-                        <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-violet-100 text-violet-700 border border-violet-200">
-                          PRO
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-[10px] text-neutral-500">
-                      {limits.canRemoveBranding
-                        ? "URPASS branding removed on your plan (100% white-label)"
-                        : "Included on Free & Starter passes. Upgrade to Pro to remove."}
-                    </p>
-                  </div>
-                  {limits.canRemoveBranding ? (
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-violet-50 text-violet-700 border border-violet-200">
-                      WHITE-LABEL
-                    </span>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => triggerUpgrade("White-Label (Remove Wordmark)")}
-                      className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-neutral-900 text-white hover:bg-neutral-800 transition-colors shadow-2xs cursor-pointer"
-                    >
-                      Remove
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* ═════════════════════════════════════════════════════════
-                SECTION 4: DELIVERY
-            ═════════════════════════════════════════════════════════ */}
-            {activeSection === "delivery" && (
-              <div className="space-y-6 animate-in fade-in-50 duration-150">
-                {/* 1. Mobile vs Email Preview Mode */}
-                <div>
-                  <label className="block text-xs font-bold text-neutral-900 uppercase tracking-wider mb-2">
-                    Mobile / Email Preview Mode
-                  </label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setPreviewMode("mobile")}
-                      className={`p-3 rounded-xl border text-center transition-all cursor-pointer ${
-                        previewMode === "mobile"
-                          ? "border-neutral-900 bg-neutral-50 text-neutral-900 font-bold shadow-2xs"
-                          : "border-neutral-200 text-neutral-600 hover:border-neutral-300"
-                      }`}
-                    >
-                      <Smartphone className="w-4 h-4 mx-auto mb-1 text-neutral-600" />
-                      <p className="text-xs">Mobile Pass</p>
-                      <p className="text-[10px] text-neutral-400 font-normal">Digital ticket view</p>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setPreviewMode("email")}
-                      className={`p-3 rounded-xl border text-center transition-all cursor-pointer ${
-                        previewMode === "email"
-                          ? "border-neutral-900 bg-neutral-50 text-neutral-900 font-bold shadow-2xs"
-                          : "border-neutral-200 text-neutral-600 hover:border-neutral-300"
-                      }`}
-                    >
-                      <Mail className="w-4 h-4 mx-auto mb-1 text-neutral-600" />
-                      <p className="text-xs">Email Ticket</p>
-                      <p className="text-[10px] text-neutral-400 font-normal">Attendee inbox view</p>
-                    </button>
+                    {limits.canRemoveBranding ? (
+                      <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-violet-50 text-violet-700 border border-violet-200">
+                        White-Label
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => triggerUpgrade("White-Label (Remove Wordmark)")}
+                        className="px-2 py-1 rounded bg-neutral-900 hover:bg-neutral-800 text-white text-[11px] font-medium"
+                      >
+                        Remove
+                      </button>
+                    )}
                   </div>
                 </div>
+              )}
+            </div>
+          </div>
 
-                {/* 2. Design Status */}
-                <div className="p-3.5 bg-neutral-50 border border-neutral-200 rounded-2xl flex items-center justify-between">
-                  <div>
-                    <p className="text-xs font-bold text-neutral-900 uppercase tracking-wider">
-                      Design Status
-                    </p>
-                    <p className="text-[10px] text-neutral-500">
-                      {config.isPublished !== false
-                        ? "Published · Generated passes will use this design"
-                        : "Draft · Testing in progress"}
-                    </p>
-                  </div>
+          {/* Sticky Bottom Actions in Control Panel */}
+          <div className="p-4 border-t border-neutral-200 bg-white space-y-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => handleManualSave(false)}
+              disabled={isManualSaving || saveStatus === "saving"}
+              className="w-full h-10 rounded-lg bg-neutral-900 hover:bg-neutral-800 disabled:opacity-50 text-white font-medium text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+            >
+              {isManualSaving ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Check className="w-3.5 h-3.5" />
+              )}
+              <span>{eventId ? "Save & Apply" : "Save Design"}</span>
+            </button>
 
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setConfig((prev) => ({
-                        ...prev,
-                        isPublished: prev.isPublished === false ? true : false,
-                      }))
-                    }
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
-                      config.isPublished !== false
-                        ? "bg-emerald-600 text-white hover:bg-emerald-700"
-                        : "bg-amber-600 text-white hover:bg-amber-700"
-                    }`}
-                  >
-                    {config.isPublished !== false ? "Ready" : "Draft"}
-                  </button>
-                </div>
+            <button
+              type="button"
+              onClick={() => handleManualSave(true)}
+              className="w-full h-9 rounded-lg border border-neutral-200 hover:bg-neutral-50 text-neutral-700 font-medium text-xs transition-colors cursor-pointer"
+            >
+              {eventId ? "Save as Organisation Template" : "Save as Template"}
+            </button>
 
-                {/* 3. Send Test Ticket */}
-                <div className="p-3.5 bg-white border border-neutral-200 rounded-2xl space-y-2 shadow-2xs">
-                  <div className="flex items-center gap-2">
-                    <Mail className="w-4 h-4 text-neutral-600" />
-                    <p className="text-xs font-bold text-neutral-900">Send Test Ticket</p>
-                  </div>
-                  <p className="text-[11px] text-neutral-500">
-                    Dispatch an authentic test pass with this design directly to your email.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => setTestModalOpen(true)}
-                    className="w-full py-2 px-3 bg-neutral-900 hover:bg-neutral-800 text-white rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer"
-                  >
-                    <Send className="w-3.5 h-3.5" />
-                    <span>Send Test to Organizer</span>
-                  </button>
-                </div>
-
-                {/* 4. Download Sample Pass */}
-                <div>
-                  <button
-                    type="button"
-                    onClick={handleDownloadSample}
-                    className="w-full py-2.5 px-3 border border-neutral-300 hover:border-neutral-400 bg-white hover:bg-neutral-50 text-neutral-800 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors shadow-2xs cursor-pointer"
-                  >
-                    <Download className="w-3.5 h-3.5 text-neutral-600" />
-                    <span>Download Sample Pass (PDF / Print)</span>
-                  </button>
-                </div>
-
-                {/* 5. Reset Design */}
-                <div className="pt-2 border-t border-neutral-200">
-                  <button
-                    type="button"
-                    onClick={handleResetDesign}
-                    className="w-full py-2 px-3 border border-neutral-200 hover:border-neutral-300 hover:bg-neutral-50 text-neutral-600 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-                  >
-                    <RefreshCw className="w-3.5 h-3.5" />
-                    <span>Reset Design to Default</span>
-                  </button>
-                </div>
-              </div>
-            )}
+            <div className="text-center pt-1">
+              <button
+                type="button"
+                onClick={handleResetDesign}
+                className="text-[11px] text-neutral-400 hover:text-neutral-700 font-medium transition-colors cursor-pointer"
+              >
+                Reset Design to Default
+              </button>
+            </div>
           </div>
         </aside>
 
-        {/* ──────── RIGHT COLUMN: PERMANENT LIVE PREVIEW ──────── */}
+        {/* ──────── RIGHT LARGE LIVE TICKET PREVIEW (60–65% width) ──────── */}
         <main
-          className={`flex-1 bg-neutral-100 flex flex-col h-full overflow-y-auto items-center justify-center p-4 sm:p-6 lg:p-8 relative ${
+          className={`flex-1 bg-[#F5F6F7] flex flex-col h-full overflow-hidden ${
             mobileTab === "preview" ? "flex" : "hidden md:flex"
           }`}
-          style={{
-            backgroundImage: "radial-gradient(#d4d4d8 1px, transparent 1px)",
-            backgroundSize: "24px 24px",
-          }}
         >
-          <div className="w-full max-w-[390px] flex flex-col items-center my-auto">
-            {/* Top Toolbar: Live Preview Label, Sample Attendee Switcher */}
-            <div className="w-full flex items-center justify-between mb-3 px-1 text-xs">
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-black tracking-widest uppercase text-neutral-400">
-                  LIVE PREVIEW
-                </span>
-                {config.isPublished !== false ? (
-                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-emerald-100 text-emerald-800">
-                    Ready
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-amber-100 text-amber-800">
-                    Draft
-                  </span>
-                )}
-              </div>
+          {/* Top Preview Controls Toolbar */}
+          <div className="h-13 bg-white border-b border-neutral-200 px-4 sm:px-6 flex items-center justify-between shrink-0">
+            {/* Output Format Switcher */}
+            <div className="inline-flex items-center p-0.5 bg-neutral-100 rounded-lg border border-neutral-200 text-xs font-medium">
+              <button
+                type="button"
+                onClick={() => setActiveFormat("mobile")}
+                className={`flex items-center gap-1 px-3 py-1 rounded-md transition-all cursor-pointer ${
+                  activeFormat === "mobile"
+                    ? "bg-white text-neutral-900 shadow-2xs font-semibold"
+                    : "text-neutral-600 hover:text-neutral-900"
+                }`}
+              >
+                <Smartphone className="w-3.5 h-3.5" />
+                <span>Mobile Pass</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveFormat("badge")}
+                className={`flex items-center gap-1 px-3 py-1 rounded-md transition-all cursor-pointer ${
+                  activeFormat === "badge"
+                    ? "bg-white text-neutral-900 shadow-2xs font-semibold"
+                    : "text-neutral-600 hover:text-neutral-900"
+                }`}
+              >
+                <CreditCard className="w-3.5 h-3.5" />
+                <span>Lanyard Badge</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveFormat("print")}
+                className={`flex items-center gap-1 px-3 py-1 rounded-md transition-all cursor-pointer ${
+                  activeFormat === "print"
+                    ? "bg-white text-neutral-900 shadow-2xs font-semibold"
+                    : "text-neutral-600 hover:text-neutral-900"
+                }`}
+              >
+                <FileText className="w-3.5 h-3.5" />
+                <span>Printable Ticket</span>
+              </button>
+            </div>
 
-              {/* Sample Attendee Quick Switcher */}
-              <div className="flex items-center gap-1 bg-white p-0.5 rounded-xl border border-neutral-200/80 shadow-2xs">
+            {/* Attendee Quick Switcher */}
+            <div className="hidden lg:flex items-center gap-1.5 text-xs text-neutral-500">
+              <span className="text-[11px] font-normal text-neutral-400">Sample:</span>
+              <div className="inline-flex items-center bg-neutral-50 border border-neutral-200 rounded-lg p-0.5">
                 {SAMPLE_ATTENDEES.map((att, i) => (
                   <button
                     key={att.ticketId}
                     type="button"
                     onClick={() => setActiveAttendeeIndex(i)}
-                    className={`px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
+                    className={`px-2.5 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
                       activeAttendeeIndex === i
-                        ? "bg-neutral-900 text-white shadow-2xs"
+                        ? "bg-white text-neutral-900 shadow-2xs font-semibold"
                         : "text-neutral-500 hover:text-neutral-900"
                     }`}
                   >
@@ -1671,418 +1586,452 @@ export default function TicketStudio({
               </div>
             </div>
 
-            {/* ─────────────────────────────────────────────────────────
-                EMAIL VIEW MOCKUP
-            ───────────────────────────────────────────────────────── */}
-            {previewMode === "email" ? (
-              <div className="w-full bg-white rounded-2xl border border-neutral-200 shadow-xl overflow-hidden mb-4">
-                <div className="bg-neutral-100/90 border-b border-neutral-200 px-4 py-2.5 flex flex-col gap-1 text-[11px] text-neutral-500">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-neutral-800 truncate">
-                      [PASS] {eventName} — Official Entry Ticket
-                    </span>
-                    <span className="text-[10px] text-neutral-400">10:00 AM</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-[10px]">
-                    <span className="font-semibold text-neutral-700">From:</span>
-                    <span>URPASS &lt;noreply@urpass.space&gt;</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-[10px]">
-                    <span className="font-semibold text-neutral-700">To:</span>
-                    <span>{sampleAttendee.email}</span>
-                  </div>
-                </div>
-
-                <div className="p-4 sm:p-5 bg-neutral-50/50 flex flex-col items-center">
-                  <p className="text-xs text-neutral-600 mb-3 text-center">
-                    Hello <strong className="text-neutral-900">{sampleAttendee.name}</strong>, here is your confirmed entry pass:
-                  </p>
-
-                  <div
-                    className={`relative w-full ${shapeRadius} border ${cardBorder} ${cardBg} overflow-hidden shadow-md select-none transition-all duration-200`}
-                  >
-                    {(isEvent || config.template === "modern") && (
-                      <div className="h-2 w-full relative z-10" style={{ backgroundColor: activeColor }} />
-                    )}
-
-                    <div className={`relative z-10 ${paddingCls} flex flex-col items-center text-center`}>
-                      <div className="mb-3 flex items-center justify-center gap-2.5">
-                        {config.logoUrl ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={config.logoUrl} alt="Logo" className="h-7 max-w-[110px] object-contain" />
-                        ) : (
-                          <span className="text-[11px] font-black tracking-widest uppercase">URPASS</span>
-                        )}
-                        {config.sponsorLogoUrl && (
-                          <>
-                            <span className="text-neutral-300 text-xs">×</span>
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={config.sponsorLogoUrl} alt="Sponsor" className="h-5 max-w-[80px] object-contain opacity-75" />
-                          </>
-                        )}
-                      </div>
-
-                      <h2 className="text-lg font-bold tracking-tight mb-1.5 uppercase leading-snug">
-                        {eventName}
-                      </h2>
-
-                      {config.showTicketType && (
-                        <div className="mb-2.5">
-                          <span
-                            className="inline-flex items-center gap-1 text-[10px] font-bold tracking-wider uppercase px-2.5 py-0.5 rounded-full border"
-                            style={{
-                              borderColor: `${activeColor}35`,
-                              color: activeColor,
-                              backgroundColor: `${activeColor}12`,
-                            }}
-                          >
-                            <TicketIcon className="w-3 h-3" />
-                            {sampleAttendee.ticketType}
-                          </span>
-                        </div>
-                      )}
-
-                      <div className="my-1.5 p-3.5 bg-white rounded-xl shadow-xs border border-neutral-100 flex flex-col items-center">
-                        <div className="w-32 h-32 flex flex-col justify-between">
-                          {QR_MATRIX.map((row, rIdx) => (
-                            <div key={rIdx} className="flex justify-between w-full h-[6px]">
-                              {row.map((cell, cIdx) => (
-                                <div key={cIdx} className={`w-[6px] h-[6px] ${cell === 1 ? "bg-black" : "bg-white"}`} />
-                              ))}
-                            </div>
-                          ))}
-                        </div>
-                        <span className="text-[8px] font-black tracking-widest text-neutral-400 uppercase mt-1.5">
-                          SCAN FOR ENTRY
-                        </span>
-                      </div>
-
-                      {config.showAttendeeName && (
-                        <p className="text-sm font-bold tracking-tight mt-1">{sampleAttendee.name}</p>
-                      )}
-
-                      {config.showTicketId && (
-                        <p className="text-[10px] font-mono text-neutral-400 mt-0.5">{sampleAttendee.ticketId}</p>
-                      )}
-                    </div>
-                  </div>
-
-                  <p className="text-[10px] text-neutral-400 text-center mt-3">
-                    Add to Apple Wallet / Google Wallet or save this email for venue check-in.
-                  </p>
-                </div>
+            {/* Zoom Controls: − 100% + Fit */}
+            <div className="flex items-center gap-1">
+              <div className="inline-flex items-center bg-white border border-neutral-200 rounded-lg px-1.5 py-0.5 shadow-2xs">
+                <button
+                  type="button"
+                  onClick={() => setZoomLevel((z) => Math.max(75, z - 10))}
+                  disabled={zoomLevel <= 75}
+                  aria-label="Zoom out"
+                  className="w-6 h-6 flex items-center justify-center text-neutral-600 hover:text-neutral-900 disabled:opacity-30 cursor-pointer font-bold text-sm"
+                >
+                  −
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setZoomLevel(100)}
+                  className="px-1.5 text-[11px] font-mono font-medium text-neutral-700 hover:text-neutral-900 cursor-pointer"
+                  title="Reset zoom"
+                >
+                  {zoomLevel}%
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setZoomLevel((z) => Math.min(125, z + 10))}
+                  disabled={zoomLevel >= 125}
+                  aria-label="Zoom in"
+                  className="w-6 h-6 flex items-center justify-center text-neutral-600 hover:text-neutral-900 disabled:opacity-30 cursor-pointer font-bold text-sm"
+                >
+                  +
+                </button>
               </div>
-            ) : (
-              /* ─────────────────────────────────────────────────────────
-                  MOBILE PASS VIEW
-              ───────────────────────────────────────────────────────── */
-              <div
-                id="printable-ticket-card"
-                className={`relative w-full ${shapeRadius} border ${cardBorder} ${cardBg} overflow-hidden shadow-xl select-none transition-all duration-200`}
-                style={{
-                  boxShadow: isDark
-                    ? "0 20px 40px -10px rgba(0, 0, 0, 0.7)"
-                    : "0 20px 35px -10px rgba(0, 0, 0, 0.08)",
-                }}
+
+              <button
+                type="button"
+                onClick={() => setZoomLevel(100)}
+                className="hidden sm:inline-flex px-2 py-1 text-[11px] font-medium text-neutral-600 bg-white border border-neutral-200 hover:bg-neutral-50 rounded-lg transition-colors cursor-pointer"
               >
-                {config.backgroundImageUrl && (
-                  <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={config.backgroundImageUrl}
-                      alt="Ticket Background Artwork"
-                      className="w-full h-full object-cover opacity-15"
-                    />
-                    <div
-                      className={`absolute inset-0 ${
-                        isDark
-                          ? "bg-gradient-to-b from-[#121216]/90 via-[#121216]/85 to-[#121216]/95"
-                          : "bg-gradient-to-b from-white/90 via-white/85 to-white/95"
-                      }`}
-                    />
-                  </div>
-                )}
+                Fit
+              </button>
+            </div>
+          </div>
 
-                {/* Event Accent Strip */}
-                {(isEvent || config.template === "modern") && (
-                  <div
-                    onClick={() => handleSelectElement("accent", "design")}
-                    className="h-2 w-full relative z-10 cursor-pointer hover:opacity-80 transition-opacity"
-                    style={{ backgroundColor: activeColor }}
-                    title="Click to customize Template Accent"
-                  />
-                )}
-
-                {/* Ticket Pass Interior */}
-                <div className={`relative z-10 ${paddingCls} flex flex-col items-center text-center`}>
-                  {/* 1. EVENT LOGO */}
-                  <div
-                    onClick={() => handleSelectElement("logo", "branding")}
-                    className={`mb-3.5 flex items-center justify-center gap-3 cursor-pointer p-1.5 transition-all ${
-                      selectedElement === "logo"
-                        ? "ring-2 ring-violet-600 ring-offset-2 rounded-xl"
-                        : "hover:ring-1 hover:ring-neutral-400 rounded-xl"
-                    }`}
-                    title="Click to customize Logo & Branding"
-                  >
-                    {config.logoUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
+          {/* Canvas Workspace (#F5F6F7 neutral background, subtle shadow) */}
+          <div className="flex-1 overflow-auto flex items-center justify-center p-6 sm:p-10 relative">
+            <div
+              className="transition-transform duration-150 flex items-center justify-center"
+              style={{
+                transform: `scale(${zoomLevel / 100})`,
+                transformOrigin: "center center",
+              }}
+            >
+              {/* ──────── 1. MOBILE PASS FORMAT ──────── */}
+              {activeFormat === "mobile" && (
+                <div
+                  id="printable-ticket-card"
+                  className={`w-[350px] sm:w-[360px] ${shapeRadius} border ${cardBorder} ${cardBg} overflow-hidden shadow-md relative transition-all duration-150`}
+                >
+                  {config.backgroundImageUrl && (
+                    <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
-                        src={config.logoUrl}
-                        alt="Event Logo"
-                        className="h-8 max-w-[130px] object-contain"
+                        src={config.backgroundImageUrl}
+                        alt="Background"
+                        className="w-full h-full object-cover opacity-15"
                       />
-                    ) : (
-                      <span
-                        className="text-[11px] font-black tracking-widest uppercase"
-                        style={{ color: isDark ? "#ffffff" : "#111827" }}
-                      >
-                        URPASS
-                      </span>
-                    )}
-
-                    {config.sponsorLogoUrl && (
-                      <>
-                        <span className="text-neutral-300 text-xs">×</span>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={config.sponsorLogoUrl}
-                          alt="Sponsor Logo"
-                          className="h-6 max-w-[100px] object-contain opacity-80"
-                        />
-                      </>
-                    )}
-                  </div>
-
-                  {/* 2. EVENT NAME */}
-                  <h2
-                    onClick={() => handleSelectElement("eventName", "content")}
-                    className={`text-xl font-bold tracking-tight mb-2 uppercase leading-snug max-w-xs cursor-pointer px-2 py-0.5 transition-all ${
-                      selectedElement === "eventName"
-                        ? "ring-2 ring-violet-600 ring-offset-2 rounded-lg"
-                        : "hover:ring-1 hover:ring-neutral-400 rounded-lg"
-                    }`}
-                    title="Click to view Content settings"
-                  >
-                    {eventName}
-                  </h2>
-
-                  {/* 3. TICKET TYPE PILL */}
-                  {config.showTicketType && (
-                    <div
-                      onClick={() => handleSelectElement("ticketType", "design")}
-                      className={`mb-3 cursor-pointer p-0.5 transition-all ${
-                        selectedElement === "ticketType"
-                          ? "ring-2 ring-violet-600 ring-offset-2 rounded-full"
-                          : "hover:ring-1 hover:ring-neutral-400 rounded-full"
-                      }`}
-                      title="Click to customize Ticket Type Colors & Templates"
-                    >
-                      <span
-                        className="inline-flex items-center gap-1 text-[11px] font-bold tracking-wider uppercase px-3 py-1 rounded-full border shadow-2xs"
-                        style={{
-                          borderColor: `${activeColor}35`,
-                          color: activeColor,
-                          backgroundColor: `${activeColor}12`,
-                        }}
-                      >
-                        <TicketIcon className="w-3 h-3" />
-                        {sampleAttendee.ticketType}
-                      </span>
+                      <div
+                        className={`absolute inset-0 ${
+                          isDark
+                            ? "bg-gradient-to-b from-[#121216]/90 via-[#121216]/85 to-[#121216]/95"
+                            : "bg-gradient-to-b from-white/90 via-white/85 to-white/95"
+                        }`}
+                      />
                     </div>
                   )}
 
-                  {/* 4. LARGE CENTERED QR CODE */}
-                  <div
-                    onClick={() => handleSelectElement("qr", "design")}
-                    className={`my-2 flex flex-col items-center cursor-pointer transition-all ${
-                      selectedElement === "qr"
-                        ? "ring-2 ring-violet-600 ring-offset-2 rounded-2xl"
-                        : "hover:ring-1 hover:ring-neutral-400 rounded-2xl"
-                    }`}
-                    title="QR Safety Zone - Click to customize Design & Template"
-                  >
+                  {/* Accent Top Strip */}
+                  {(isEvent || config.template === "modern") && (
                     <div
-                      className="p-4 bg-white rounded-2xl shadow-xs border border-neutral-100 flex flex-col items-center justify-center"
-                      title={`QR Token: ${sampleAttendee.qrValue}`}
-                    >
+                      className="h-2 w-full relative z-10"
+                      style={{ backgroundColor: activeColor }}
+                    />
+                  )}
+
+                  {/* Card Interior */}
+                  <div className="relative z-10 p-6 flex flex-col items-center text-center">
+                    {/* Event Logo & Sponsor */}
+                    <div className="mb-3.5 flex items-center justify-center gap-3">
+                      {config.logoUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={config.logoUrl}
+                          alt="Logo"
+                          className="h-8 max-w-[130px] object-contain"
+                        />
+                      ) : (
+                        <span
+                          className="text-[11px] font-bold tracking-widest uppercase"
+                          style={{ color: isDark ? "#ffffff" : "#111827" }}
+                        >
+                          URPASS
+                        </span>
+                      )}
+
+                      {config.sponsorLogoUrl && (
+                        <>
+                          <span className="text-neutral-300 text-xs">×</span>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={config.sponsorLogoUrl}
+                            alt="Sponsor"
+                            className="h-6 max-w-[100px] object-contain opacity-80"
+                          />
+                        </>
+                      )}
+                    </div>
+
+                    {/* Event Title */}
+                    <h2 className="text-xl font-bold tracking-tight mb-2 uppercase leading-snug max-w-xs">
+                      {eventName}
+                    </h2>
+
+                    {/* Ticket Type Pill */}
+                    {config.showTicketType && (
+                      <div className="mb-3">
+                        <span
+                          className="inline-flex items-center gap-1 text-[11px] font-semibold tracking-wider uppercase px-3 py-1 rounded-full border shadow-2xs"
+                          style={{
+                            borderColor: `${activeColor}35`,
+                            color: activeColor,
+                            backgroundColor: `${activeColor}12`,
+                          }}
+                        >
+                          <TicketIcon className="w-3 h-3" />
+                          {sampleAttendee.ticketType}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* QR Code Container with High-Contrast Target */}
+                    <div className="my-2 p-4 bg-white rounded-2xl shadow-xs border border-neutral-100 flex flex-col items-center justify-center">
                       <div className="w-36 h-36 flex flex-col justify-between">
                         {QR_MATRIX.map((row, rIdx) => (
                           <div key={rIdx} className="flex justify-between w-full h-[7px]">
                             {row.map((cell, cIdx) => (
                               <div
                                 key={cIdx}
-                                className={`w-[7px] h-[7px] ${cell === 1 ? "bg-black" : "bg-white"}`}
+                                className={`w-[7px] h-[7px] ${
+                                  cell === 1 ? "bg-black" : "bg-white"
+                                }`}
                               />
                             ))}
                           </div>
                         ))}
                       </div>
-                      <span className="text-[9px] font-black tracking-widest text-neutral-400 uppercase mt-2">
+                      <span className="text-[9px] font-bold tracking-widest text-neutral-400 uppercase mt-2">
                         SCAN FOR ENTRY
+                      </span>
+                    </div>
+
+                    {/* Attendee Name */}
+                    {config.showAttendeeName && (
+                      <div className="mt-2.5 mb-0.5">
+                        <p className="text-base font-semibold tracking-tight">
+                          {sampleAttendee.name}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Dynamic Fields */}
+                    {config.showOrganization && sampleAttendee.organization && (
+                      <p className={`text-xs font-normal ${subtextCls} mb-0.5`}>
+                        {sampleAttendee.organization}
+                      </p>
+                    )}
+
+                    {config.showPhone && sampleAttendee.phone && (
+                      <p className={`text-[11px] font-mono ${subtextCls} mb-0.5`}>
+                        {sampleAttendee.phone}
+                      </p>
+                    )}
+
+                    {config.showRegistrationNumber && sampleAttendee.regNumber && (
+                      <div className="my-1">
+                        <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300">
+                          {sampleAttendee.regNumber}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Ticket ID */}
+                    {config.showTicketId && (
+                      <div className="my-1.5 flex items-center justify-center gap-1.5">
+                        <span className="text-[9px] font-semibold tracking-wider uppercase text-neutral-400">
+                          TICKET ID
+                        </span>
+                        <span className="text-xs font-mono font-medium tracking-wide">
+                          {sampleAttendee.ticketId}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Date & Venue */}
+                    {(config.showEventDate !== false || (config.showVenue && venue)) && (
+                      <div
+                        className={`w-full border-t ${dividerCls} pt-2.5 mt-2 flex flex-col items-center gap-1`}
+                      >
+                        {config.showEventDate !== false && eventDate && (
+                          <p
+                            className={`text-xs font-medium tracking-wide ${subtextCls} flex items-center gap-1.5`}
+                          >
+                            <Calendar className="w-3.5 h-3.5 opacity-70 shrink-0" />
+                            <span>{eventDate}</span>
+                          </p>
+                        )}
+                        {config.showVenue && venue && (
+                          <p className={`text-xs ${subtextCls} flex items-center gap-1.5`}>
+                            <MapPin className="w-3.5 h-3.5 opacity-70 shrink-0" />
+                            <span className="truncate max-w-[240px]">{venue}</span>
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Custom Message */}
+                    {config.customMessage && (
+                      <div className="mt-2.5 pt-2 border-t border-dashed border-neutral-200 w-full">
+                        <p className="text-xs italic opacity-85 max-w-xs mx-auto">
+                          &ldquo;{config.customMessage}&rdquo;
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Admission Rules */}
+                    {rulesList.length > 0 && (
+                      <div
+                        className={`mt-3 pt-2.5 border-t ${dividerCls} w-full text-[10px] ${subtextCls} leading-relaxed`}
+                      >
+                        <p className="font-medium">{rulesList.join(" • ")}</p>
+                        {config.showTermsLink && (
+                          <p className="mt-0.5 underline opacity-70">
+                            Event Terms & Conditions apply
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* ──────── 2. LANYARD BADGE FORMAT ──────── */}
+              {activeFormat === "badge" && (
+                <div
+                  id="printable-ticket-card"
+                  className="w-[330px] sm:w-[340px] bg-white rounded-2xl border border-neutral-200 overflow-hidden shadow-md flex flex-col transition-all duration-150"
+                >
+                  {/* Lanyard punch-hole simulation */}
+                  <div className="w-full pt-4 pb-2 flex flex-col items-center">
+                    <div className="w-12 h-2.5 rounded-full bg-neutral-200 border border-neutral-300 shadow-inner" />
+                  </div>
+
+                  {/* Top Branding */}
+                  <div className="px-6 py-3 flex flex-col items-center text-center">
+                    {config.logoUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={config.logoUrl}
+                        alt="Logo"
+                        className="h-7 max-w-[120px] object-contain mb-1"
+                      />
+                    ) : (
+                      <span className="text-[10px] font-bold tracking-widest text-neutral-400 uppercase mb-1">
+                        URPASS CONFERENCE
+                      </span>
+                    )}
+                    <h3 className="text-sm font-semibold text-neutral-800 uppercase tracking-tight line-clamp-1">
+                      {eventName}
+                    </h3>
+                  </div>
+
+                  {/* Large Attendee Name Centerpiece */}
+                  <div className="py-6 px-6 text-center border-t border-b border-neutral-100 bg-neutral-50/50">
+                    <h1 className="text-2xl font-bold text-neutral-900 tracking-tight leading-snug">
+                      {sampleAttendee.name.toUpperCase()}
+                    </h1>
+                    {config.showOrganization && sampleAttendee.organization && (
+                      <p className="text-sm font-medium text-neutral-600 mt-1">
+                        {sampleAttendee.organization}
+                      </p>
+                    )}
+                    <p className="text-xs text-neutral-400 mt-0.5">
+                      {sampleAttendee.designation}
+                    </p>
+                  </div>
+
+                  {/* Ticket Category Full-Width Block */}
+                  <div
+                    className="py-2.5 px-4 text-center"
+                    style={{ backgroundColor: activeColor }}
+                  >
+                    <span className="text-xs font-bold text-white tracking-widest uppercase">
+                      {sampleAttendee.ticketType}
+                    </span>
+                  </div>
+
+                  {/* Bottom Gate QR Section */}
+                  <div className="p-5 flex flex-col items-center text-center space-y-2 bg-white">
+                    <div className="p-2.5 bg-white border border-neutral-200 rounded-xl shadow-2xs">
+                      <div className="w-24 h-24 flex flex-col justify-between">
+                        {QR_MATRIX.map((row, rIdx) => (
+                          <div key={rIdx} className="flex justify-between w-full h-[4.5px]">
+                            {row.map((cell, cIdx) => (
+                              <div
+                                key={cIdx}
+                                className={`w-[4.5px] h-[4.5px] ${
+                                  cell === 1 ? "bg-black" : "bg-white"
+                                }`}
+                              />
+                            ))}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <p className="text-[10px] font-mono text-neutral-400">
+                      {sampleAttendee.ticketId}
+                    </p>
+                    <p className="text-[10px] text-neutral-500">
+                      {venue} • {eventDate}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* ──────── 3. PRINTABLE TICKET STUB FORMAT ──────── */}
+              {activeFormat === "print" && (
+                <div
+                  id="printable-ticket-card"
+                  className="w-[480px] sm:w-[500px] h-[220px] bg-white rounded-xl border border-neutral-200 shadow-md flex overflow-hidden transition-all duration-150 relative"
+                >
+                  {/* Left Body (68%) */}
+                  <div className="w-[68%] p-5 flex flex-col justify-between border-r-2 border-dashed border-neutral-300 relative">
+                    {/* Semi-circular perforation cutouts */}
+                    <div className="absolute -top-3.5 -right-3.5 w-7 h-7 rounded-full bg-[#F5F6F7] border border-neutral-200" />
+                    <div className="absolute -bottom-3.5 -right-3.5 w-7 h-7 rounded-full bg-[#F5F6F7] border border-neutral-200" />
+
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-[10px] font-bold tracking-widest uppercase text-neutral-400">
+                          OFFICIAL ADMISSION
+                        </span>
+                        <span
+                          className="px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider"
+                          style={{
+                            backgroundColor: `${activeColor}15`,
+                            color: activeColor,
+                          }}
+                        >
+                          {sampleAttendee.ticketType}
+                        </span>
+                      </div>
+
+                      <h2 className="text-base font-bold text-neutral-900 uppercase tracking-tight line-clamp-1">
+                        {eventName}
+                      </h2>
+                      <p className="text-sm font-semibold text-neutral-800 mt-1">
+                        {sampleAttendee.name}
+                      </p>
+                      {config.showOrganization && sampleAttendee.organization && (
+                        <p className="text-xs text-neutral-500 font-normal">
+                          {sampleAttendee.organization}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="border-t border-neutral-100 pt-2 flex items-center justify-between text-xs text-neutral-500">
+                      <div>
+                        <p className="text-[11px] font-medium text-neutral-700">
+                          {eventDate}
+                        </p>
+                        <p className="text-[10px] text-neutral-400">{venue}</p>
+                      </div>
+                      <span className="text-[11px] font-mono text-neutral-400">
+                        {sampleAttendee.ticketId}
                       </span>
                     </div>
                   </div>
 
-                  {/* 5. ATTENDEE NAME */}
-                  {config.showAttendeeName && (
-                    <div
-                      onClick={() => handleSelectElement("attendeeName", "content")}
-                      className={`mt-2 mb-0.5 cursor-pointer px-2 py-0.5 transition-all ${
-                        selectedElement === "attendeeName"
-                          ? "ring-2 ring-violet-600 ring-offset-2 rounded-lg"
-                          : "hover:ring-1 hover:ring-neutral-400 rounded-lg"
-                      }`}
-                      title="Click to customize Attendee Name & Fields"
-                    >
-                      <p className="text-base font-bold tracking-tight">
-                        {sampleAttendee.name}
-                      </p>
+                  {/* Right Stub (32%) */}
+                  <div className="w-[32%] p-4 bg-neutral-50 flex flex-col items-center justify-between text-center">
+                    <span className="text-[9px] font-bold tracking-widest text-neutral-400 uppercase">
+                      GATE STUB
+                    </span>
+
+                    <div className="p-1.5 bg-white border border-neutral-200 rounded-lg shadow-2xs">
+                      <div className="w-20 h-20 flex flex-col justify-between">
+                        {QR_MATRIX.map((row, rIdx) => (
+                          <div key={rIdx} className="flex justify-between w-full h-[3.8px]">
+                            {row.map((cell, cIdx) => (
+                              <div
+                                key={cIdx}
+                                className={`w-[3.8px] h-[3.8px] ${
+                                  cell === 1 ? "bg-black" : "bg-white"
+                                }`}
+                              />
+                            ))}
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  )}
 
-                  {/* Dynamic Fields */}
-                  {config.showOrganization && sampleAttendee.organization && (
-                    <p
-                      onClick={() => handleSelectElement("organization", "content")}
-                      className={`text-xs font-medium ${subtextCls} mb-0.5 cursor-pointer hover:underline`}
-                      title="Click to customize Dynamic Fields"
-                    >
-                      {sampleAttendee.organization}
-                    </p>
-                  )}
-
-                  {config.showPhone && sampleAttendee.phone && (
-                    <p
-                      onClick={() => handleSelectElement("phone", "content")}
-                      className={`text-[11px] font-mono ${subtextCls} mb-0.5 cursor-pointer hover:underline`}
-                      title="Click to customize Dynamic Fields"
-                    >
-                      {sampleAttendee.phone}
-                    </p>
-                  )}
-
-                  {config.showRegistrationNumber && sampleAttendee.regNumber && (
-                    <div
-                      onClick={() => handleSelectElement("regNumber", "content")}
-                      className="my-1 cursor-pointer"
-                      title="Click to customize Dynamic Fields"
-                    >
-                      <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 hover:ring-1 hover:ring-violet-400">
-                        {sampleAttendee.regNumber}
-                      </span>
-                    </div>
-                  )}
-
-                  {/* 6. TICKET ID */}
-                  {config.showTicketId && (
-                    <div
-                      onClick={() => handleSelectElement("ticketId", "content")}
-                      className={`my-1.5 flex items-center justify-center gap-1.5 cursor-pointer px-2 py-0.5 transition-all ${
-                        selectedElement === "ticketId"
-                          ? "ring-2 ring-violet-600 ring-offset-2 rounded-lg"
-                          : "hover:ring-1 hover:ring-neutral-400 rounded-lg"
-                      }`}
-                      title="Click to customize Ticket ID"
-                    >
-                      <span className="text-[9px] font-bold tracking-widest uppercase text-neutral-400">
-                        TICKET ID
-                      </span>
-                      <span className="text-xs font-mono font-semibold tracking-wider">
+                    <div>
+                      <p className="text-[9px] font-mono text-neutral-500">
                         {sampleAttendee.ticketId}
+                      </p>
+                      <span className="text-[8px] font-bold tracking-wider text-neutral-400 uppercase">
+                        ENTRY PASS
                       </span>
                     </div>
-                  )}
-
-                  {/* 7. DATE & VENUE */}
-                  {(config.showEventDate !== false || (config.showVenue && venue)) && (
-                    <div
-                      onClick={() => handleSelectElement("dateVenue", "content")}
-                      className={`w-full border-t ${dividerCls} pt-2.5 mt-2 flex flex-col items-center gap-1 cursor-pointer p-1 transition-all ${
-                        selectedElement === "dateVenue"
-                          ? "ring-2 ring-violet-600 ring-offset-2 rounded-lg"
-                          : "hover:ring-1 hover:ring-neutral-400 rounded-lg"
-                      }`}
-                      title="Click to customize Date & Venue display"
-                    >
-                      {config.showEventDate !== false && eventDate && (
-                        <p className={`text-xs font-semibold tracking-wide ${subtextCls} flex items-center gap-1.5`}>
-                          <Calendar className="w-3.5 h-3.5 opacity-70 shrink-0" />
-                          <span>{eventDate}</span>
-                        </p>
-                      )}
-                      {config.showVenue && venue && (
-                        <p className={`text-xs ${subtextCls} flex items-center gap-1.5`}>
-                          <MapPin className="w-3.5 h-3.5 opacity-70 shrink-0" />
-                          <span className="truncate max-w-[240px]">{venue}</span>
-                        </p>
-                      )}
-                    </div>
-                  )}
-
-                  {/* 8. CUSTOM MESSAGE */}
-                  {config.customMessage && (
-                    <div
-                      onClick={() => handleSelectElement("customMessage", "content")}
-                      className={`mt-2.5 pt-2 border-t border-dashed border-neutral-200/80 w-full cursor-pointer p-1 transition-all ${
-                        selectedElement === "customMessage"
-                          ? "ring-2 ring-violet-600 ring-offset-2 rounded-lg"
-                          : "hover:ring-1 hover:ring-neutral-400 rounded-lg"
-                      }`}
-                      title="Click to edit Custom Message"
-                    >
-                      <p className="text-xs italic opacity-85 max-w-xs mx-auto">
-                        &ldquo;{config.customMessage}&rdquo;
-                      </p>
-                    </div>
-                  )}
-
-                  {/* 9. TICKET RULES */}
-                  {rulesList.length > 0 && (
-                    <div
-                      onClick={() => handleSelectElement("rules", "content")}
-                      className={`mt-3 pt-2.5 border-t ${dividerCls} w-full text-[10px] ${subtextCls} leading-relaxed cursor-pointer p-1 transition-all ${
-                        selectedElement === "rules"
-                          ? "ring-2 ring-violet-600 ring-offset-2 rounded-lg"
-                          : "hover:ring-1 hover:ring-neutral-400 rounded-lg"
-                      }`}
-                      title="Click to customize Ticket Rules"
-                    >
-                      <p className="font-medium">{rulesList.join(" • ")}</p>
-                      {config.showTermsLink && (
-                        <p className="mt-0.5 underline opacity-70">
-                          Event Terms & Conditions apply
-                        </p>
-                      )}
-                      {config.showOrganizerContact && (
-                        <p className="mt-0.5 opacity-70">
-                          Need help? Contact organizer
-                        </p>
-                      )}
-                    </div>
-                  )}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
+          </div>
 
-            {/* Bottom Preview Actions */}
-            <div className="w-full flex items-center justify-center gap-3 mt-4">
+          {/* Bottom Preview Helper Actions */}
+          <div className="h-11 bg-white border-t border-neutral-200 px-6 flex items-center justify-between shrink-0 text-xs text-neutral-500">
+            <span className="text-[11px] text-neutral-400 font-normal">
+              Changes reflect live across all formats
+            </span>
+
+            <div className="flex items-center gap-3">
               <button
                 type="button"
                 onClick={() => setTestModalOpen(true)}
-                className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 bg-white border border-neutral-200/90 hover:border-neutral-300 hover:bg-neutral-50 text-neutral-800 text-xs font-semibold rounded-xl shadow-2xs transition-colors cursor-pointer"
+                className="hover:text-neutral-900 transition-colors flex items-center gap-1 cursor-pointer"
               >
-                <Mail className="w-3.5 h-3.5 text-neutral-500" />
+                <Mail className="w-3.5 h-3.5 text-neutral-400" />
                 <span>Send test</span>
               </button>
 
               <button
                 type="button"
                 onClick={handleDownloadSample}
-                className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 bg-white border border-neutral-200/90 hover:border-neutral-300 hover:bg-neutral-50 text-neutral-800 text-xs font-semibold rounded-xl shadow-2xs transition-colors cursor-pointer"
+                className="hover:text-neutral-900 transition-colors flex items-center gap-1 cursor-pointer"
               >
-                <Download className="w-3.5 h-3.5 text-neutral-500" />
-                <span>Download sample</span>
+                <Download className="w-3.5 h-3.5 text-neutral-400" />
+                <span>Download / Print</span>
               </button>
             </div>
           </div>
@@ -2090,17 +2039,89 @@ export default function TicketStudio({
       </div>
 
       {/* ─────────────────────────────────────────────────────────────
-          3. SEND TEST TICKET MODAL
+          CHANGE TEMPLATE MODAL (Clean, quiet selection)
+      ───────────────────────────────────────────────────────────── */}
+      {isTemplateModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-3xl w-full p-6 shadow-2xl space-y-4 max-h-[85vh] flex flex-col">
+            <div className="flex items-center justify-between pb-3 border-b border-neutral-100 shrink-0">
+              <div>
+                <h3 className="text-base font-semibold text-neutral-900">
+                  Select a Ticket Template
+                </h3>
+                <p className="text-xs text-neutral-500 mt-0.5">
+                  Choose from production setups to immediately apply layout and branding structure.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsTemplateModalOpen(false)}
+                className="text-neutral-400 hover:text-neutral-700 p-1 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 overflow-y-auto pr-1">
+              {STUDIO_TEMPLATES.map((tpl) => {
+                const isPaid = tpl.tier === "paid";
+                return (
+                  <div
+                    key={tpl.id}
+                    onClick={() => {
+                      const converted = convertStudioTemplateToTicketDesign(tpl);
+                      updateConfig((prev) => ({
+                        ...prev,
+                        ...converted,
+                        // Preserve organizer custom uploads
+                        logoUrl: prev.logoUrl || converted.logoUrl,
+                        sponsorLogoUrl: prev.sponsorLogoUrl || converted.sponsorLogoUrl,
+                        backgroundImageUrl:
+                          prev.backgroundImageUrl || converted.backgroundImageUrl,
+                      }));
+                      setIsTemplateModalOpen(false);
+                    }}
+                    className="p-3.5 rounded-xl border border-neutral-200 hover:border-neutral-900 hover:shadow-xs transition-all cursor-pointer bg-white flex flex-col justify-between"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-[10px] font-semibold text-neutral-500 uppercase">
+                          {tpl.category}
+                        </span>
+                        <span className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-neutral-100 text-neutral-600">
+                          {isPaid ? "Pro" : "Free"}
+                        </span>
+                      </div>
+                      <h4 className="text-xs font-semibold text-neutral-900">
+                        {tpl.name}
+                      </h4>
+                      <p className="text-[11px] text-neutral-500 mt-1 line-clamp-2">
+                        {tpl.description}
+                      </p>
+                    </div>
+
+                    <div className="pt-3 mt-2 border-t border-neutral-100 flex items-center justify-between text-[11px]">
+                      <span className="text-neutral-400 capitalize">{tpl.format}</span>
+                      <span className="font-semibold text-neutral-900">Select →</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─────────────────────────────────────────────────────────────
+          SEND TEST TICKET MODAL
       ───────────────────────────────────────────────────────────── */}
       {testModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between pb-1 border-b border-neutral-100">
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b border-neutral-100">
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-neutral-100 flex items-center justify-center text-neutral-700">
-                  <Mail className="w-4 h-4" />
-                </div>
-                <h3 className="text-sm font-bold text-neutral-900">
+                <Mail className="w-4 h-4 text-neutral-700" />
+                <h3 className="text-sm font-semibold text-neutral-900">
                   Send Test Ticket
                 </h3>
               </div>
@@ -2114,7 +2135,7 @@ export default function TicketStudio({
             </div>
 
             <p className="text-xs text-neutral-500 leading-relaxed">
-              We&apos;ll send a realistic preview pass with your custom brand colors, logo, and layout directly to your inbox.
+              We&apos;ll dispatch an authentic test pass with this design directly to your email address.
             </p>
 
             {testError && (
@@ -2124,7 +2145,7 @@ export default function TicketStudio({
             )}
 
             {testSuccess && (
-              <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-lg text-xs font-semibold text-emerald-800 flex items-center gap-1.5">
+              <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-lg text-xs font-medium text-emerald-800 flex items-center gap-1.5">
                 <Check className="w-4 h-4 text-emerald-600 shrink-0" />
                 <span>Test ticket sent! Check your inbox.</span>
               </div>
@@ -2132,7 +2153,7 @@ export default function TicketStudio({
 
             <form onSubmit={handleSendTestTicket} className="space-y-3">
               <div>
-                <label className="block text-[11px] font-bold text-neutral-700 uppercase tracking-wider mb-1">
+                <label className="block text-xs font-medium text-neutral-700 mb-1">
                   Recipient Email
                 </label>
                 <input
@@ -2141,7 +2162,7 @@ export default function TicketStudio({
                   placeholder="organizer@example.com"
                   value={testEmail}
                   onChange={(e) => setTestEmail(e.target.value)}
-                  className="w-full px-3 py-2 text-xs border border-neutral-300 rounded-xl focus:outline-hidden focus:border-neutral-900"
+                  className="w-full h-10 px-3 text-xs border border-neutral-200 rounded-lg focus:outline-hidden focus:border-neutral-900"
                 />
               </div>
 
@@ -2149,14 +2170,14 @@ export default function TicketStudio({
                 <button
                   type="button"
                   onClick={() => setTestModalOpen(false)}
-                  className="px-3 py-1.5 text-xs font-semibold text-neutral-600 hover:bg-neutral-100 rounded-lg transition-colors cursor-pointer"
+                  className="px-3 py-1.5 text-xs font-medium text-neutral-600 hover:bg-neutral-100 rounded-lg transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSendingTest}
-                  className="px-4 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-bold rounded-xl transition-colors flex items-center gap-1.5 shadow-2xs cursor-pointer"
+                  className="px-4 py-2 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs"
                 >
                   {isSendingTest ? (
                     <>
@@ -2164,10 +2185,7 @@ export default function TicketStudio({
                       <span>Sending...</span>
                     </>
                   ) : (
-                    <>
-                      <Mail className="w-3.5 h-3.5" />
-                      <span>Send Pass</span>
-                    </>
+                    <span>Send Pass</span>
                   )}
                 </button>
               </div>
