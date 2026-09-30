@@ -36,6 +36,33 @@ URPASS provides 10 native tools for AI assistants and autonomous workflows:
 - **UK Hub**: https://urpass.space/uk — Dedicated to UK university student unions, societies, conferences, and workshops across London, Manchester, Birmingham, Edinburgh, Glasgow, Leeds, Bristol, Liverpool, and Cambridge. Features zero per-ticket commission and full UK GDPR alignment.
 - **Global Hub**: https://urpass.space/global — Dedicated to international summits, developer hackathons, and enterprise conferences worldwide. Features edge-distributed check-in, multi-currency processing, and universal mobile browser gate scanning.
 
+## Specialized Solution Pages
+- Event Badge Printing: https://urpass.space/event-badge-printing-software
+- Fastest Event Check-In: https://urpass.space/fastest-event-check-in-software
+- Instant QR Ticket Generator: https://urpass.space/instant-qr-ticket-generator
+- Event Registration Without Fees: https://urpass.space/event-registration-without-fees
+- University Fest Ticketing: https://urpass.space/university-fest-ticketing-platform
+- Hackathon Check-In System: https://urpass.space/hackathon-check-in-system
+- Developer Conference Registration: https://urpass.space/developer-conference-registration
+- Multi-Gate QR Scanner: https://urpass.space/multi-gate-qr-scanner
+- Offline Event Check-In System: https://urpass.space/offline-event-check-in-system
+- Registration Approval Workflow: https://urpass.space/event-registration-approval-workflow
+- Event Guest List Check-In: https://urpass.space/event-guest-list-check-in
+- Corporate Townhall Registration: https://urpass.space/corporate-townhall-registration
+- Digital Conference Badges: https://urpass.space/digital-conference-badges
+- Zero Fee Ticket Platform: https://urpass.space/zero-fee-ticket-platform
+- Open Source Ticketing Alternative: https://urpass.space/open-source-event-ticketing-alternative
+- Live Attendance Tracker: https://urpass.space/live-event-attendance-tracker
+- Instant UPI Event Ticketing: https://urpass.space/instant-upi-event-ticketing
+- GST Compliant Event Ticketing: https://urpass.space/gst-compliant-event-ticketing
+- Academic Symposium Registration: https://urpass.space/academic-symposium-registration
+- AI Event Management Platform: https://urpass.space/ai-event-management-platform
+- MCP Event Check-In: https://urpass.space/mcp-event-check-in
+- Custom Ticket Branding Software: https://urpass.space/custom-ticket-branding-software
+- No-App Event Check-In: https://urpass.space/no-app-event-check-in
+- Event Entry QR Code System: https://urpass.space/event-entry-qr-code-system
+- Campus Event Management Platform: https://urpass.space/campus-event-management-platform
+
 ## Key URLs & Resources
 - Homepage: https://urpass.space
 - Pricing & Free Trial: https://urpass.space/pricing

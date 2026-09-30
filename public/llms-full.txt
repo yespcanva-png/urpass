@@ -180,3 +180,34 @@ The URPASS MCP Server conforms to the Model Context Protocol standard v1.0.0. It
 
 ### Q: What is the URPASS Model Context Protocol (MCP) server?
 **A:** URPASS features a native Model Context Protocol (MCP) server providing 10 tools that allow AI assistants (such as Claude Desktop and Cursor IDE) and autonomous software agents to query event statistics, filter attendees, approve registrations, and execute check-ins via natural language.
+
+---
+
+## 8. Specialized Solution Directories & Landing Pages
+
+1. **Event Badge Printing Software**: https://urpass.space/event-badge-printing-software - Instant QR event badge and lanyard printing directly from smartphone or desktop browsers with Avery/thermal presets.
+2. **Fastest Event Check-In Software**: https://urpass.space/fastest-event-check-in-software - Sub-0.3s camera-based QR barcode scanner eliminating venue gate congestion.
+3. **Instant QR Ticket Generator**: https://urpass.space/instant-qr-ticket-generator - Automated cryptographic QR pass generation and email/WhatsApp dispatch upon registration.
+4. **Event Registration Without Fees**: https://urpass.space/event-registration-without-fees - 0% per-ticket commission registration software with ₹0 free tier.
+5. **University Fest Ticketing Platform**: https://urpass.space/university-fest-ticketing-platform - Campus cultural fest and symposium ticketing with student ID validation and volunteer scanning gates.
+6. **Hackathon Check-In System**: https://urpass.space/hackathon-check-in-system - Rapid hacker admission, multi-track badge scanning, meal voucher redemptions, and overnight access control.
+7. **Developer Conference Registration**: https://urpass.space/developer-conference-registration - High-concurrency registration and multi-gate check-in engineered for developer and tech summits.
+8. **Multi-Gate QR Scanner**: https://urpass.space/multi-gate-qr-scanner - Real-time distributed gate synchronization across dozens of entrances with zero duplicate entries.
+9. **Offline Event Check-In System**: https://urpass.space/offline-event-check-in-system - IndexedDB offline-first ticket scanning that keeps gates running during venue network blackouts.
+10. **Event Registration Approval Workflow**: https://urpass.space/event-registration-approval-workflow - Vetted and gated admissions with custom application review, single-click approvals, and audit trails.
+11. **Event Guest List Check-In**: https://urpass.space/event-guest-list-check-in - VIP and guest list management with instant search, manual override, and arrival notifications.
+12. **Corporate Townhall Registration**: https://urpass.space/corporate-townhall-registration - Enterprise all-hands, AGM, and internal summit registration with role-based access control.
+13. **Digital Conference Badges**: https://urpass.space/digital-conference-badges - Eco-friendly digital smartphone passes with dynamic QR codes and Apple Wallet styling.
+14. **Zero Fee Ticket Platform**: https://urpass.space/zero-fee-ticket-platform - Modern ticketing software that never takes a cut of ticket sales.
+15. **Open Source Event Ticketing Alternative**: https://urpass.space/open-source-event-ticketing-alternative - Transparent, standards-compliant event infrastructure with REST APIs and MCP integration.
+16. **Live Event Attendance Tracker**: https://urpass.space/live-event-attendance-tracker - Real-time gate telemetry, peak entry velocity graphs, and live attendee headcounts.
+17. **Instant UPI Event Ticketing**: https://urpass.space/instant-upi-event-ticketing - Direct UPI QR payment processing via PhonePe, Google Pay, and Paytm with T+2 payouts.
+18. **GST Compliant Event Ticketing**: https://urpass.space/gst-compliant-event-ticketing - Automated B2B and B2C GST tax invoice generation with HSN/SAC codes and monthly reports.
+19. **Academic Symposium Registration**: https://urpass.space/academic-symposium-registration - Peer-reviewed academic conference passes, faculty ticketing, and paper track management.
+20. **AI Event Management Platform**: https://urpass.space/ai-event-management-platform - Model Context Protocol (MCP) powered event registration and autonomous gate operations.
+21. **MCP Event Check-In**: https://urpass.space/mcp-event-check-in - Official 10-tool Model Context Protocol server for Claude Desktop, Cursor, and AI agents.
+22. **Custom Ticket Branding Software**: https://urpass.space/custom-ticket-branding-software - Multi-ratio Ticket Studio (vertical, horizontal, square) with custom hex colors and organizer logos.
+23. **No-App Event Check-In**: https://urpass.space/no-app-event-check-in - Zero app installation ticket scanning running in mobile Safari and Chrome.
+24. **Event Entry QR Code System**: https://urpass.space/event-entry-qr-code-system - Tamper-proof, cryptographically signed dynamic QR admission codes.
+25. **Campus Event Management Platform**: https://urpass.space/campus-event-management-platform - End-to-end college club, seminar, and student council event software.
+
