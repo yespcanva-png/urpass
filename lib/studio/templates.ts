@@ -1,5 +1,7 @@
 import type { StudioDesign, TicketFormat } from "./types";
 
+export type TemplateTier = "free" | "paid";
+
 export interface StudioTemplateDefinition {
   id: string;
   name: string;
@@ -8,6 +10,9 @@ export interface StudioTemplateDefinition {
   description: string;
   tags: string[];
   thumbnailBg: string;
+  tier?: TemplateTier;
+  priceINR?: number;
+  badgeLabel?: string;
   design: StudioDesign;
 }
 
@@ -18,6 +23,9 @@ export const STUDIO_TEMPLATES: StudioTemplateDefinition[] = [
     name: "Minimal Monochrome",
     category: "Minimal",
     format: "digital",
+    tier: "free",
+    priceINR: 0,
+    badgeLabel: "Free",
     description: "Crisp black and white editorial typography with high contrast and centered QR.",
     tags: ["Minimal", "Clean", "Editorial", "Monochrome"],
     thumbnailBg: "#FFFFFF",
@@ -231,6 +239,9 @@ export const STUDIO_TEMPLATES: StudioTemplateDefinition[] = [
     name: "Concert & Music Fest",
     category: "Concert",
     format: "printable",
+    tier: "paid",
+    priceINR: 49,
+    badgeLabel: "Neon • ₹49",
     description: "Cyberpunk neon dark ticket with perforated stub tear line and VIP stage tags.",
     tags: ["Concert", "Music", "Nightlife", "Neon", "Printable"],
     thumbnailBg: "#0F0F1A",
@@ -470,6 +481,9 @@ export const STUDIO_TEMPLATES: StudioTemplateDefinition[] = [
     name: "Corporate Summit & Gala",
     category: "Corporate",
     format: "digital",
+    tier: "paid",
+    priceINR: 49,
+    badgeLabel: "Pro • ₹49",
     description: "Deep executive navy blue and gold accents tailored for leadership symposiums.",
     tags: ["Corporate", "Executive", "Gold", "Summit", "Professional"],
     thumbnailBg: "#0B132B",
@@ -679,6 +693,9 @@ export const STUDIO_TEMPLATES: StudioTemplateDefinition[] = [
     name: "College Fest & Culturals",
     category: "College",
     format: "badge",
+    tier: "free",
+    priceINR: 0,
+    badgeLabel: "Free",
     description: "Vibrant purple-pink student lanyard badge with prominent college and attendee credentials.",
     tags: ["College", "Fest", "Campus", "Badge", "Students"],
     thumbnailBg: "#6366F1",
@@ -870,6 +887,9 @@ export const STUDIO_TEMPLATES: StudioTemplateDefinition[] = [
     name: "Tech Conference & Keynote",
     category: "Conference",
     format: "badge",
+    tier: "free",
+    priceINR: 0,
+    badgeLabel: "Free",
     description: "Modern dark slate badge layout for engineering summits and keynote talks.",
     tags: ["Tech", "Conference", "Developer", "Badge", "Keynote"],
     thumbnailBg: "#0F172A",
@@ -1059,6 +1079,9 @@ export const STUDIO_TEMPLATES: StudioTemplateDefinition[] = [
     name: "Hackathon Terminal",
     category: "Hackathon",
     format: "digital",
+    tier: "paid",
+    priceINR: 49,
+    badgeLabel: "Cyber • ₹49",
     description: "Cyber hacker terminal aesthetic with neon emerald monospace code blocks.",
     tags: ["Hackathon", "Hacker", "Code", "Terminal", "Emerald"],
     thumbnailBg: "#0B1015",
@@ -1247,6 +1270,9 @@ export const STUDIO_TEMPLATES: StudioTemplateDefinition[] = [
     name: "VIP All-Access Pass",
     category: "VIP",
     format: "badge",
+    tier: "paid",
+    priceINR: 49,
+    badgeLabel: "VIP • ₹49",
     description: "Gold and obsidian luxury badge designed for VIP lounges and security checkpoints.",
     tags: ["VIP", "Luxury", "Gold", "Obsidian", "All-Access"],
     thumbnailBg: "#18181B",
@@ -1434,6 +1460,9 @@ export const STUDIO_TEMPLATES: StudioTemplateDefinition[] = [
     name: "Workshop & Masterclass",
     category: "Workshop",
     format: "printable",
+    tier: "free",
+    priceINR: 0,
+    badgeLabel: "Free",
     description: "Warm terracotta and cream editorial certificate pass for hands-on bootcamps.",
     tags: ["Workshop", "Education", "Bootcamp", "Warm", "Printable"],
     thumbnailBg: "#FAF5F0",
@@ -1670,6 +1699,9 @@ export const STUDIO_TEMPLATES: StudioTemplateDefinition[] = [
     name: "Sports & Arena Ticket",
     category: "Sports",
     format: "printable",
+    tier: "free",
+    priceINR: 0,
+    badgeLabel: "Free",
     description: "Athletic bold red & charcoal arena ticket with Gate, Row, and Seat indicators.",
     tags: ["Sports", "Arena", "Stadium", "Athletic", "Printable"],
     thumbnailBg: "#991B1B",
@@ -1903,6 +1935,9 @@ export const STUDIO_TEMPLATES: StudioTemplateDefinition[] = [
     name: "Exhibition & Trade Expo",
     category: "Exhibition",
     format: "badge",
+    tier: "paid",
+    priceINR: 49,
+    badgeLabel: "Expo • ₹49",
     description: "Corporate expo badge featuring visitor type, booth allocation, and attendee business details.",
     tags: ["Exhibition", "Trade", "Expo", "B2B", "Badge"],
     thumbnailBg: "#2563EB",
@@ -2091,6 +2126,9 @@ export const STUDIO_TEMPLATES: StudioTemplateDefinition[] = [
     name: "Community Meetup",
     category: "Community",
     format: "digital",
+    tier: "free",
+    priceINR: 0,
+    badgeLabel: "Free",
     description: "Friendly indigo and mint layout ideal for developer chapters and networking meetups.",
     tags: ["Community", "Meetup", "Friendly", "Networking", "Digital"],
     thumbnailBg: "#635BFF",
@@ -2266,6 +2304,9 @@ export const STUDIO_TEMPLATES: StudioTemplateDefinition[] = [
     name: "Dark Obsidian Luxury",
     category: "Luxury",
     format: "digital",
+    tier: "paid",
+    priceINR: 49,
+    badgeLabel: "Luxury • ₹49",
     description: "Velvet black obsidian with bronze-gold typography for exclusive private events.",
     tags: ["Luxury", "Obsidian", "Bronze", "VIP", "Exclusive"],
     thumbnailBg: "#121214",
@@ -2674,3 +2715,18 @@ export function createBlankDesign(format: TicketFormat): StudioDesign {
       };
   }
 }
+
+export const SINGLE_TEMPLATE_PRICE_INR = 49;
+export const ALL_ACCESS_BUNDLE_PRICE_INR = 99;
+
+export function getTemplatePrice(template: StudioTemplateDefinition): number {
+  if (template.tier === "paid") {
+    return template.priceINR ?? SINGLE_TEMPLATE_PRICE_INR;
+  }
+  return 0;
+}
+
+export function isTemplateFree(template: StudioTemplateDefinition): boolean {
+  return template.tier !== "paid";
+}
+
