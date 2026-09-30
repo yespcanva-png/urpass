@@ -122,6 +122,13 @@ export default function Navbar() {
               How it works
             </Link>
             <Link
+              href="/ticket-templates"
+              className="text-sm text-neutral-500 hover:text-neutral-900 transition-colors flex items-center gap-1"
+            >
+              <span>Templates</span>
+              <span className="px-1.5 py-0.2 rounded-full bg-violet-100 text-violet-700 text-[10px] font-bold">New</span>
+            </Link>
+            <Link
               href="/pricing"
               className="text-sm text-neutral-500 hover:text-neutral-900 transition-colors"
             >
@@ -188,6 +195,14 @@ export default function Navbar() {
               className="text-sm text-neutral-600 py-1"
             >
               How it works
+            </Link>
+            <Link
+              href="/ticket-templates"
+              onClick={() => setOpen(false)}
+              className="text-sm text-neutral-600 py-1 flex items-center justify-between"
+            >
+              <span>Templates</span>
+              <span className="px-2 py-0.5 rounded-full bg-violet-100 text-violet-700 text-[10px] font-bold">New</span>
             </Link>
             <Link
               href="/pricing"

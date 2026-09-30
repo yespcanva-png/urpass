@@ -80,6 +80,12 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/ticket-templates" className="text-xs text-violet-300 hover:text-white font-medium transition-colors flex items-center gap-1">
+                  <span>Ticket Templates</span>
+                  <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-violet-500/30 text-violet-200">New</span>
+                </Link>
+              </li>
+              <li>
                 <Link href="/design-your-ticket" className="text-xs text-neutral-400 hover:text-white transition-colors">
                   Design Your Ticket
                 </Link>
