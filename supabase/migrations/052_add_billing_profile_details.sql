@@ -10,3 +10,4 @@ ALTER TABLE public.profiles
 COMMENT ON COLUMN public.profiles.gstin IS '15-digit Goods and Services Tax Identification Number for Indian business invoices';
 COMMENT ON COLUMN public.profiles.company_name IS 'Legal company / business entity name for invoicing';
 COMMENT ON COLUMN public.profiles.billing_address IS 'Registered business billing address for GST / VAT invoices';
+ 

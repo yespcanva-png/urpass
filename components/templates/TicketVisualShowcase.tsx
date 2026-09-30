@@ -2,7 +2,7 @@
 
 import React from "react";
 import type { StudioTemplateDefinition } from "@/lib/studio/templates";
-import { Radio } from "lucide-react";
+import { Radio, Sparkles, Shield, Wifi } from "lucide-react";
 
 interface TicketVisualShowcaseProps {
   template: StudioTemplateDefinition;
@@ -16,12 +16,12 @@ interface TicketVisualShowcaseProps {
 }
 
 /**
- * Realistic Code-128 style Barcode Component
+ * Realistic Code-128 Barcode Component
  */
 function RealisticBarcode({
   code = "URP-8492049102",
   color = "#000000",
-  height = 24,
+  height = 22,
 }: {
   code?: string;
   color?: string;
@@ -29,7 +29,7 @@ function RealisticBarcode({
 }) {
   const bars = [2, 1, 3, 1, 2, 3, 1, 2, 1, 3, 2, 1, 3, 1, 2, 1, 2, 3, 1, 2, 1, 3, 2, 1, 3, 1, 2, 3];
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex flex-col items-center select-none">
       <div className="flex items-stretch gap-[1.5px]" style={{ height }}>
         {bars.map((w, idx) => (
           <div
@@ -42,7 +42,7 @@ function RealisticBarcode({
         ))}
       </div>
       <span
-        className="font-mono text-[7px] tracking-[0.16em] uppercase mt-0.5 opacity-70"
+        className="font-mono text-[7px] tracking-[0.18em] uppercase mt-0.5 opacity-70"
         style={{ color }}
       >
         {code}
@@ -55,10 +55,10 @@ function RealisticBarcode({
  * Clean, Vector-Accurate QR Code
  */
 function RealisticQrCode({
-  size = 100,
+  size = 90,
   fgColor = "#09090B",
   bgColor = "#FFFFFF",
-  label = "SUB-0.3s SCAN",
+  label = "SCAN FOR ENTRY",
 }: {
   size?: number;
   fgColor?: string;
@@ -122,8 +122,8 @@ function RealisticQrCode({
         <rect x="80" y="86" width="5" height="5" rx="1" fill={fgColor} />
       </svg>
 
-      {label && size > 90 && (
-        <span className="text-[7px] font-mono font-bold tracking-wider uppercase text-neutral-600 mt-1">
+      {label && size > 80 && (
+        <span className="text-[6.5px] font-mono font-bold tracking-wider uppercase text-neutral-500 mt-1">
           {label}
         </span>
       )}
@@ -162,9 +162,9 @@ function getTemplateTheme(templateId: string): TemplateVisualTheme {
         fg: "#FFFFFF",
         accent: "#F43F5E",
         border: "#831843",
-        pillBg: "#F43F5E20",
+        pillBg: "#F43F5E25",
         pillFg: "#FB7185",
-        pillText: "STAGE VIP ACCESS",
+        pillText: "STAGE VIP",
         tagline: "LIVE FESTIVAL",
       };
     case "corporate-summit-gala":
@@ -173,9 +173,9 @@ function getTemplateTheme(templateId: string): TemplateVisualTheme {
         fg: "#FFFFFF",
         accent: "#38BDF8",
         border: "#1E293B",
-        pillBg: "#0284C720",
+        pillBg: "#0284C725",
         pillFg: "#38BDF8",
-        pillText: "EXECUTIVE DELEGATE",
+        pillText: "EXECUTIVE",
         tagline: "SUMMIT 2026",
       };
     case "college-fest-badge":
@@ -186,7 +186,7 @@ function getTemplateTheme(templateId: string): TemplateVisualTheme {
         border: "#4338CA",
         pillBg: "#FDE04725",
         pillFg: "#FEF08A",
-        pillText: "STUDENT DELEGATE",
+        pillText: "STUDENT",
         tagline: "CAMPUS FESTIVAL",
       };
     case "tech-conf-badge":
@@ -195,9 +195,9 @@ function getTemplateTheme(templateId: string): TemplateVisualTheme {
         fg: "#FFFFFF",
         accent: "#34D399",
         border: "#1E293B",
-        pillBg: "#05966920",
+        pillBg: "#05966925",
         pillFg: "#34D399",
-        pillText: "SPEAKER CREDENTIAL",
+        pillText: "SPEAKER",
         tagline: "DEV CONFERENCE",
       };
     case "hackathon-terminal":
@@ -206,10 +206,10 @@ function getTemplateTheme(templateId: string): TemplateVisualTheme {
         fg: "#4ADE80",
         accent: "#22C55E",
         border: "#14532D",
-        pillBg: "#16653430",
+        pillBg: "#16653435",
         pillFg: "#4ADE80",
         pillText: "[ROOT_ACCESS]",
-        tagline: "> CYBERHACK_PASS",
+        tagline: "> CYBERHACK",
         isMono: true,
       };
     case "vip-all-access":
@@ -221,7 +221,7 @@ function getTemplateTheme(templateId: string): TemplateVisualTheme {
         pillBg: "#CA8A0425",
         pillFg: "#FDE047",
         pillText: "VIP ALL-ACCESS",
-        tagline: "BLACK CARD TIER",
+        tagline: "BLACK CARD",
       };
     case "workshop-masterclass":
       return {
@@ -229,10 +229,10 @@ function getTemplateTheme(templateId: string): TemplateVisualTheme {
         fg: "#FFFFFF",
         accent: "#2DD4BF",
         border: "#115E59",
-        pillBg: "#0D948830",
+        pillBg: "#0D948835",
         pillFg: "#5EEAD4",
-        pillText: "CERTIFIED SEAT",
-        tagline: "MASTERCLASS PASS",
+        pillText: "CERTIFIED",
+        tagline: "MASTERCLASS",
       };
     case "sports-arena-ticket":
       return {
@@ -242,7 +242,7 @@ function getTemplateTheme(templateId: string): TemplateVisualTheme {
         border: "#312E81",
         pillBg: "#EA580C25",
         pillFg: "#FDBA74",
-        pillText: "COURTSIDE VIP",
+        pillText: "COURTSIDE",
         tagline: "ARENA ACCESS",
       };
     case "exhibition-trade-expo":
@@ -251,7 +251,7 @@ function getTemplateTheme(templateId: string): TemplateVisualTheme {
         fg: "#FFFFFF",
         accent: "#60A5FA",
         border: "#334155",
-        pillBg: "#2563EB20",
+        pillBg: "#2563EB25",
         pillFg: "#93C5FD",
         pillText: "TRADE BUYER",
         tagline: "GLOBAL EXPO",
@@ -264,8 +264,8 @@ function getTemplateTheme(templateId: string): TemplateVisualTheme {
         border: "#3730A3",
         pillBg: "#7C3AED25",
         pillFg: "#DDD6FE",
-        pillText: "BUILDER PASS",
-        tagline: "MEETUP COMMUNITY",
+        pillText: "BUILDER",
+        tagline: "MEETUP",
       };
     case "obsidian-luxury":
     default:
@@ -276,7 +276,7 @@ function getTemplateTheme(templateId: string): TemplateVisualTheme {
         border: "#27272A",
         pillBg: "#D9770625",
         pillFg: "#FCD34D",
-        pillText: "PATRON PASS",
+        pillText: "PATRON",
         tagline: "PRIVATE GALA",
       };
   }
@@ -323,7 +323,7 @@ export default function TicketVisualShowcase({
   const ticketId = customTicketId || "#URP-90284";
 
   // ─────────────────────────────────────────────────────────────
-  // 1. DIGITAL MOBILE PASS FORMAT (Apple/Google Wallet aesthetic)
+  // 1. DIGITAL MOBILE PASS (Canva-Grade Apple Wallet Presentation)
   // ─────────────────────────────────────────────────────────────
   if (template.format === "digital") {
     const isLight = theme.bg === "#FFFFFF";
@@ -334,8 +334,8 @@ export default function TicketVisualShowcase({
           theme.isMono ? "font-mono" : ""
         } ${
           isCard
-            ? "w-full max-w-[230px] h-[300px] rounded-2xl p-4 text-xs shadow-md border"
-            : "w-full max-w-[280px] sm:max-w-[300px] min-h-[460px] rounded-3xl p-5 sm:p-6 text-sm shadow-2xl border"
+            ? "w-[200px] h-[260px] rounded-2xl p-3.5 text-xs shadow-md border"
+            : "w-[280px] sm:max-w-[300px] min-h-[460px] rounded-3xl p-5 sm:p-6 text-sm shadow-2xl border"
         }`}
         style={{
           backgroundColor: theme.bg,
@@ -343,53 +343,53 @@ export default function TicketVisualShowcase({
           borderColor: theme.border,
         }}
       >
-        {/* Subtle camera notch island */}
-        <div className="flex justify-center -mt-1 mb-2">
-          <div className="w-10 h-1.5 rounded-full bg-neutral-900/30" />
+        {/* Top Speaker / Dynamic Island Notch */}
+        <div className="flex justify-center -mt-1 mb-1.5 pointer-events-none">
+          <div className="w-9 h-1 rounded-full bg-neutral-900/30" />
         </div>
 
         {/* Header Row */}
-        <div className="flex items-center justify-between pb-2 border-b border-current/15">
-          <span className="text-[8.5px] font-black uppercase tracking-widest opacity-80" style={{ color: theme.accent }}>
+        <div className="flex items-center justify-between pb-1.5 border-b border-current/15">
+          <span className="text-[8px] font-black uppercase tracking-widest opacity-85" style={{ color: theme.accent }}>
             {hostOrg}
           </span>
-          <span className="text-[8.5px] font-mono font-bold opacity-60">{ticketId}</span>
+          <span className="text-[7.5px] font-mono font-bold opacity-60">{ticketId}</span>
         </div>
 
         {/* Event Title */}
-        <div className="my-1.5 space-y-0.5">
-          <h4 className={`font-black tracking-tight leading-tight uppercase ${isCard ? "text-[12px] line-clamp-1" : "text-[15px] line-clamp-1"}`}>
+        <div className="my-1 space-y-0.5">
+          <h4 className={`font-black tracking-tight leading-tight uppercase ${isCard ? "text-[11px] line-clamp-1" : "text-[15px] line-clamp-1"}`}>
             {eventName}
           </h4>
-          <p className="text-[8px] opacity-75 truncate">{eventDate} · {venueName}</p>
+          <p className="text-[7.5px] opacity-75 truncate">{eventDate} · {venueName}</p>
         </div>
 
-        {/* Center QR Pass */}
-        <div className="my-1.5 flex justify-center">
+        {/* Center QR Code Pass */}
+        <div className="my-1 flex justify-center">
           <RealisticQrCode
-            size={isCard ? 92 : 130}
+            size={isCard ? 86 : 130}
             fgColor={isLight ? "#09090B" : "#18181B"}
             bgColor="#FFFFFF"
-            label="SUB-0.3s SCAN"
+            label="SCAN AT GATE"
           />
         </div>
 
         {/* Attendee Details Card */}
         <div
-          className="mt-1 p-2 rounded-xl border flex items-center justify-between"
+          className="mt-1 p-1.5 rounded-xl border flex items-center justify-between"
           style={{
             backgroundColor: theme.pillBg,
             borderColor: theme.border,
           }}
         >
           <div className="min-w-0 pr-1">
-            <span className="text-[7.5px] uppercase tracking-wider font-semibold opacity-60 block">Pass Holder</span>
-            <span className={`font-black uppercase truncate block ${isCard ? "text-[10px]" : "text-[11px]"}`}>
+            <span className="text-[6.5px] uppercase tracking-wider font-semibold opacity-60 block">Pass Holder</span>
+            <span className={`font-black uppercase truncate block ${isCard ? "text-[9.5px]" : "text-[11px]"}`}>
               {attendeeName}
             </span>
           </div>
           <span
-            className="text-[8px] font-bold px-2 py-0.5 rounded-md border shrink-0 uppercase tracking-wider"
+            className="text-[7.5px] font-bold px-2 py-0.5 rounded-md border shrink-0 uppercase tracking-wider"
             style={{
               backgroundColor: theme.pillBg,
               color: theme.pillFg,
@@ -400,9 +400,9 @@ export default function TicketVisualShowcase({
           </span>
         </div>
 
-        {/* Clean Footer Note */}
-        <div className="pt-2 border-t border-current/15 flex items-center justify-between text-[7.5px] opacity-55 font-mono">
-          <span>VERIFIED TICKET</span>
+        {/* Footer info */}
+        <div className="pt-1.5 border-t border-current/15 flex items-center justify-between text-[7px] opacity-55 font-mono">
+          <span>VERIFIED ENTRY</span>
           <span>GATE NORTH</span>
         </div>
       </div>
@@ -410,7 +410,7 @@ export default function TicketVisualShowcase({
   }
 
   // ─────────────────────────────────────────────────────────────
-  // 2. PRINTABLE CONCERT & SPORTS STUB TICKET
+  // 2. PRINTABLE TICKET STUB (Authentic Tear-off Presentation)
   // ─────────────────────────────────────────────────────────────
   if (template.format === "printable") {
     const isLight = theme.bg === "#FFFFFF";
@@ -419,8 +419,8 @@ export default function TicketVisualShowcase({
       <div
         className={`relative overflow-hidden transition-all duration-200 select-none flex flex-row ${
           isCard
-            ? "w-full max-w-[290px] h-[150px] rounded-xl shadow-md border text-xs"
-            : "w-full max-w-[380px] sm:max-w-[400px] h-[185px] rounded-2xl shadow-2xl border text-sm"
+            ? "w-[245px] h-[135px] rounded-xl shadow-md border text-xs my-auto"
+            : "w-[360px] sm:max-w-[390px] h-[180px] rounded-2xl shadow-2xl border text-sm"
         }`}
         style={{
           backgroundColor: theme.bg,
@@ -428,29 +428,29 @@ export default function TicketVisualShowcase({
           borderColor: theme.border,
         }}
       >
-        {/* Left Side: Main Ticket Body (72%) */}
-        <div className="flex-1 p-3 flex flex-col justify-between">
+        {/* Left Side: Main Body (72%) */}
+        <div className="flex-1 p-2.5 sm:p-3 flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="text-[8px] font-mono font-bold uppercase tracking-wider" style={{ color: theme.accent }}>
+            <span className="text-[7.5px] font-mono font-bold uppercase tracking-wider" style={{ color: theme.accent }}>
               ADMISSION PASS
             </span>
-            <span className="text-[7.5px] font-mono opacity-60">SEC 102 · ROW A</span>
+            <span className="text-[7px] font-mono opacity-60">SEC 102 · ROW A</span>
           </div>
 
-          <div className="my-1">
-            <h4 className={`font-black uppercase tracking-tight leading-tight ${isCard ? "text-[11px] line-clamp-1" : "text-sm line-clamp-1"}`}>
+          <div className="my-0.5">
+            <h4 className={`font-black uppercase tracking-tight leading-tight ${isCard ? "text-[10px] line-clamp-1" : "text-sm line-clamp-1"}`}>
               {eventName}
             </h4>
-            <p className="text-[7.5px] opacity-75 truncate">{eventDate} · {venueName}</p>
+            <p className="text-[7px] opacity-75 truncate">{eventDate}</p>
           </div>
 
           <div className="pt-1 border-t border-current/15 flex items-end justify-between">
             <div className="min-w-0 pr-1">
-              <span className="text-[6.5px] uppercase font-semibold opacity-60 block">Attendee</span>
-              <span className="font-bold uppercase text-[9px] truncate block">{attendeeName}</span>
+              <span className="text-[6px] uppercase font-semibold opacity-60 block">Attendee</span>
+              <span className="font-bold uppercase text-[8.5px] truncate block">{attendeeName}</span>
             </div>
             <span
-              className="font-mono text-[8px] font-bold px-1.5 py-0.5 rounded border"
+              className="font-mono text-[7px] font-bold px-1 py-0.5 rounded border"
               style={{
                 backgroundColor: theme.pillBg,
                 color: theme.pillFg,
@@ -462,21 +462,21 @@ export default function TicketVisualShowcase({
           </div>
         </div>
 
-        {/* Perforated Stub Divider with Notch Punch Cutouts */}
+        {/* Perforated Divider with Hole Punches */}
         <div className="relative flex flex-col items-center justify-between py-1 px-0 shrink-0">
-          <div className="w-2.5 h-2.5 rounded-full bg-neutral-900 border border-neutral-700/60 -mt-1 shadow-inner" />
+          <div className="w-2.5 h-2.5 rounded-full bg-[#F4F5F7] border border-neutral-300 -mt-1 shadow-inner" />
           <div className="w-[1px] flex-1 border-l border-dashed border-current/30 my-0.5" />
-          <div className="w-2.5 h-2.5 rounded-full bg-neutral-900 border border-neutral-700/60 -mb-1 shadow-inner" />
+          <div className="w-2.5 h-2.5 rounded-full bg-[#F4F5F7] border border-neutral-300 -mb-1 shadow-inner" />
         </div>
 
         {/* Right Side: Admit One Stub (28%) */}
-        <div className="w-[80px] sm:w-[100px] p-2 bg-black/20 flex flex-col items-center justify-between text-center shrink-0">
-          <span className="text-[7px] font-bold uppercase tracking-widest" style={{ color: theme.accent }}>
+        <div className="w-[72px] sm:w-[96px] p-2 bg-black/15 flex flex-col items-center justify-between text-center shrink-0">
+          <span className="text-[6.5px] font-bold uppercase tracking-widest" style={{ color: theme.accent }}>
             ADMIT ONE
           </span>
 
           <RealisticQrCode
-            size={isCard ? 50 : 64}
+            size={isCard ? 46 : 62}
             fgColor="#000000"
             bgColor="#FFFFFF"
             label=""
@@ -485,7 +485,7 @@ export default function TicketVisualShowcase({
           <RealisticBarcode
             code={ticketId}
             color={isLight ? "#000000" : "#FFFFFF"}
-            height={isCard ? 12 : 16}
+            height={isCard ? 10 : 16}
           />
         </div>
       </div>
@@ -493,14 +493,14 @@ export default function TicketVisualShowcase({
   }
 
   // ─────────────────────────────────────────────────────────────
-  // 3. CONFERENCE & FESTIVAL LANYARD BADGE
+  // 3. CONFERENCE & FESTIVAL LANYARD BADGE (Punch Slot Ready)
   // ─────────────────────────────────────────────────────────────
   return (
     <div
       className={`relative overflow-hidden transition-all duration-200 select-none flex flex-col justify-between ${
         isCard
-          ? "w-full max-w-[230px] h-[300px] rounded-2xl p-4 text-xs shadow-md border"
-          : "w-full max-w-[280px] sm:max-w-[300px] min-h-[460px] rounded-3xl p-5 sm:p-6 text-sm shadow-2xl border"
+          ? "w-[200px] h-[260px] rounded-2xl p-3.5 text-xs shadow-md border"
+          : "w-[280px] sm:max-w-[300px] min-h-[460px] rounded-3xl p-5 sm:p-6 text-sm shadow-2xl border"
       }`}
       style={{
         backgroundColor: theme.bg,
@@ -508,32 +508,32 @@ export default function TicketVisualShowcase({
         borderColor: theme.border,
       }}
     >
-      {/* Top Lanyard Slot Punch Cutout */}
-      <div className="flex flex-col items-center justify-center -mt-1 mb-2 pointer-events-none">
-        <div className="w-10 h-1.5 rounded-full bg-black/40 border border-white/20 shadow-inner" />
+      {/* Top Lanyard Slot Punch Cutout with Metallic Rim */}
+      <div className="flex flex-col items-center justify-center -mt-1 mb-1.5 pointer-events-none">
+        <div className="w-9 h-1.5 rounded-full bg-black/40 border border-white/20 shadow-inner" />
       </div>
 
       {/* Header */}
       <div className="text-center space-y-0.5">
-        <span className="text-[7.5px] font-mono uppercase tracking-widest opacity-80 block" style={{ color: theme.accent }}>
+        <span className="text-[7px] font-mono uppercase tracking-widest opacity-80 block" style={{ color: theme.accent }}>
           OFFICIAL BADGE
         </span>
-        <h4 className={`font-black tracking-tight leading-tight uppercase ${isCard ? "text-[12px] line-clamp-1" : "text-[15px] line-clamp-1"}`}>
+        <h4 className={`font-black tracking-tight leading-tight uppercase ${isCard ? "text-[11px] line-clamp-1" : "text-[15px] line-clamp-1"}`}>
           {eventName}
         </h4>
-        <p className="text-[7.5px] opacity-75 truncate">{eventDate} · {venueName}</p>
+        <p className="text-[7px] opacity-75 truncate">{eventDate} · {venueName}</p>
       </div>
 
-      {/* Giant Attendee Name Insert */}
-      <div className="my-2 p-2.5 sm:p-3 rounded-2xl bg-white text-neutral-950 text-center shadow-md space-y-1">
-        <span className="text-[7px] font-mono font-bold uppercase tracking-wider text-neutral-400 block">
+      {/* Attendee Credential Insert Card */}
+      <div className="my-1.5 p-2 rounded-xl bg-white text-neutral-950 text-center shadow-md space-y-0.5">
+        <span className="text-[6.5px] font-mono font-bold uppercase tracking-wider text-neutral-400 block">
           CREDENTIAL
         </span>
-        <h3 className={`font-black tracking-tight leading-none uppercase text-neutral-950 ${isCard ? "text-xs" : "text-base"}`}>
+        <h3 className={`font-black tracking-tight leading-none uppercase text-neutral-950 ${isCard ? "text-[11px]" : "text-base"}`}>
           {attendeeName}
         </h3>
         <span
-          className="inline-block px-2 py-0.5 rounded-full text-white text-[7.5px] font-bold uppercase tracking-wider"
+          className="inline-block px-2 py-0.5 rounded-full text-white text-[7px] font-bold uppercase tracking-wider"
           style={{ backgroundColor: theme.bg === "#000000" ? "#18181B" : theme.bg }}
         >
           {theme.pillText}
@@ -541,19 +541,19 @@ export default function TicketVisualShowcase({
       </div>
 
       {/* Bottom QR & NFC Scan */}
-      <div className="flex items-center justify-between p-2 rounded-xl bg-current/10 border border-current/15">
+      <div className="flex items-center justify-between p-1.5 rounded-xl bg-current/10 border border-current/15">
         <RealisticQrCode
-          size={isCard ? 50 : 68}
+          size={isCard ? 46 : 68}
           fgColor="#000000"
           bgColor="#FFFFFF"
           label=""
         />
         <div className="text-right space-y-0.5">
-          <div className="flex items-center justify-end gap-1 text-[7.5px] font-bold" style={{ color: theme.accent }}>
+          <div className="flex items-center justify-end gap-1 text-[7px] font-bold" style={{ color: theme.accent }}>
             <Radio className="w-2.5 h-2.5 animate-pulse" />
             <span>NFC TAP</span>
           </div>
-          <span className="font-mono text-[7.5px] block opacity-80">{ticketId}</span>
+          <span className="font-mono text-[7px] block opacity-80">{ticketId}</span>
         </div>
       </div>
     </div>

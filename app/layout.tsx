@@ -16,12 +16,21 @@ const BASE_URL = "https://urpass.space";
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
   title: {
-    default: "URPASS — Free Digital Event Passes & QR Check-in | Try 30-Day Free Trial",
+    default: "URPASS — Official Website | Digital Event Passes & Lightning QR Check-In",
     template: "%s | URPASS",
   },
   description:
-    "Create digital event passes in minutes, manage attendees, and scan QR codes at entry in under 0.3s. Start free forever or try any paid plan with a 30-day free trial. Built for colleges, hackathons, conferences, and event organizers across India and worldwide.",
+    "URPASS (pronounced 'Your Pass' / urpass.space) by Yesp Corporation is the all-in-one digital event pass and lightning QR check-in platform. Create custom passes, manage attendees, and scan entry QR codes in under 0.3s. Built for colleges, hackathons, conferences, and event organizers across India and worldwide.",
   keywords: [
+    "URPASS",
+    "urpass",
+    "urpass.space",
+    "URPASS official site",
+    "URPASS event passes",
+    "URPASS QR check in",
+    "URPASS ticketing",
+    "URPASS login",
+    "URPASS features",
     "digital event pass",
     "QR check-in",
     "event pass generator",
@@ -34,7 +43,6 @@ export const metadata: Metadata = {
     "Razorpay event ticketing",
     "event feedback form",
     "post event survey",
-    "URPASS",
     "free digital event passes",
     "try 30 day free trial",
     "free QR check-in",
@@ -66,10 +74,13 @@ export const metadata: Metadata = {
     },
   },
   verification: {
-    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || "google-site-verification-id",
-    other: {
-      "msvalidate.01": process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION || "",
-    },
+    ...(process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION &&
+    process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION !== "google-site-verification-id"
+      ? { google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION }
+      : {}),
+    ...(process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION
+      ? { other: { "msvalidate.01": process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION } }
+      : {}),
   },
   alternates: {
     canonical: BASE_URL,
@@ -133,9 +144,9 @@ const websiteSchema = {
   "@type": "WebSite",
   "@id": `${BASE_URL}/#website`,
   name: "URPASS",
-  alternateName: ["URPASS Space", "URPASS Event Passes"],
+  alternateName: ["urpass", "urpass.space", "URPASS Space", "URPASS Event Passes", "URPASS by Yesp"],
   url: BASE_URL,
-  description: "Digital event passes, lightning QR check-in, and attendee management platform.",
+  description: "Official website for URPASS (pronounced 'Your Pass') — digital event passes, lightning QR check-in, and zero-commission ticketing.",
   inLanguage: "en-IN",
   publisher: {
     "@id": `${BASE_URL}/#organization`,
@@ -155,12 +166,20 @@ const organizationSchema = {
   "@type": "Organization",
   "@id": `${BASE_URL}/#organization`,
   name: "URPASS",
-  alternateName: "URPASS Space",
+  alternateName: ["urpass", "urpass.space", "URPASS Space"],
   url: BASE_URL,
   logo: {
     "@type": "ImageObject",
     url: `${BASE_URL}/icon.png`,
     caption: "URPASS Logo",
+  },
+  brand: {
+    "@type": "Brand",
+    name: "URPASS",
+    alternateName: ["urpass", "urpass.space"],
+    url: BASE_URL,
+    logo: `${BASE_URL}/icon.png`,
+    slogan: "Create. Share. Scan. Instant digital event passes and sub-second QR check-in.",
   },
   image: {
     "@type": "ImageObject",
@@ -275,11 +294,15 @@ const siteNavSchema = {
   "@type": "ItemList",
   name: "Site Navigation",
   itemListElement: [
-    { "@type": "SiteNavigationElement", position: 1, name: "Pricing", url: `${BASE_URL}/pricing` },
-    { "@type": "SiteNavigationElement", position: 2, name: "QR Event Check-in", url: `${BASE_URL}/qr-event-check-in` },
-    { "@type": "SiteNavigationElement", position: 3, name: "Events in India", url: `${BASE_URL}/in` },
-    { "@type": "SiteNavigationElement", position: 4, name: "College Events", url: `${BASE_URL}/college-events` },
-    { "@type": "SiteNavigationElement", position: 5, name: "Guides & Tutorials", url: `${BASE_URL}/guides/what-is-qr-event-check-in` },
+    { "@type": "SiteNavigationElement", position: 1, name: "Features", url: `${BASE_URL}/features` },
+    { "@type": "SiteNavigationElement", position: 2, name: "Pricing", url: `${BASE_URL}/pricing` },
+    { "@type": "SiteNavigationElement", position: 3, name: "Brand & Media Kit", url: `${BASE_URL}/brand` },
+    { "@type": "SiteNavigationElement", position: 4, name: "Product Suite", url: `${BASE_URL}/product` },
+    { "@type": "SiteNavigationElement", position: 5, name: "Security & Trust", url: `${BASE_URL}/security` },
+    { "@type": "SiteNavigationElement", position: 6, name: "QR Event Check-in", url: `${BASE_URL}/qr-event-check-in` },
+    { "@type": "SiteNavigationElement", position: 7, name: "Support Center", url: `${BASE_URL}/support` },
+    { "@type": "SiteNavigationElement", position: 8, name: "Events in India", url: `${BASE_URL}/in` },
+    { "@type": "SiteNavigationElement", position: 9, name: "College Events", url: `${BASE_URL}/college-events` },
   ],
 };
 

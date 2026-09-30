@@ -12,7 +12,18 @@ const INDEXNOW_ENDPOINT = "https://api.indexnow.org/IndexNow";
 
 const URL_LIST = [
   "https://urpass.space/",
+  "https://urpass.space/features",
+  "https://urpass.space/brand",
+  "https://urpass.space/product",
   "https://urpass.space/pricing",
+  "https://urpass.space/security",
+  "https://urpass.space/support",
+  "https://urpass.space/status",
+  "https://urpass.space/press",
+  "https://urpass.space/signup",
+  "https://urpass.space/login",
+  "https://urpass.space/about",
+  "https://urpass.space/company",
   "https://urpass.space/ticket-fee-calculator",
   "https://urpass.space/free-qr-ticket-generator",
   "https://urpass.space/switch-to-urpass",

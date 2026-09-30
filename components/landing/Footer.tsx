@@ -69,8 +69,23 @@ export default function Footer() {
             <p className="text-xs font-semibold text-white tracking-wider uppercase mb-4">Product</p>
             <ul className="flex flex-col gap-2.5">
               <li>
+                <Link href="/features" className="text-xs text-emerald-400 hover:text-emerald-300 font-medium transition-colors">
+                  Features Overview
+                </Link>
+              </li>
+              <li>
+                <Link href="/product" className="text-xs text-neutral-400 hover:text-white transition-colors">
+                  Product Architecture
+                </Link>
+              </li>
+              <li>
+                <Link href="/security" className="text-xs text-neutral-400 hover:text-white transition-colors">
+                  Security &amp; Trust
+                </Link>
+              </li>
+              <li>
                 <Link href="/pricing" className="text-xs text-neutral-400 hover:text-white transition-colors">
-                  Pricing & Plans
+                  Pricing &amp; Plans
                 </Link>
               </li>
               <li>
@@ -222,8 +237,21 @@ export default function Footer() {
             <Link href="/about" className="hover:text-neutral-300 transition-colors">
               About
             </Link>
+            <Link href="/brand" className="text-emerald-400 hover:text-emerald-300 transition-colors font-medium">
+              Brand &amp; Media Kit
+            </Link>
+            <Link href="/support" className="hover:text-neutral-300 transition-colors">
+              Support Center
+            </Link>
+            <Link href="/status" className="hover:text-neutral-300 transition-colors flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+              Status
+            </Link>
             <Link href="/company" className="hover:text-neutral-300 transition-colors">
               Company
+            </Link>
+            <Link href="/press" className="hover:text-neutral-300 transition-colors">
+              Press
             </Link>
             <Link href="/yesp-urpass" className="hover:text-neutral-300 transition-colors">
               Yesp URPASS

@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Sign in",
-  description: "Sign in to your URPASS account to manage events, attendees, and digital passes.",
-  robots: { index: false, follow: false },
+  title: "Sign in to URPASS — Event Passes & Check-In Portal",
+  description: "Log in to your URPASS organizer account to manage events, issue digital QR passes, accept ticket payments, and scan attendees.",
+  alternates: { canonical: "https://urpass.space/login" },
+  robots: { index: true, follow: true },
 };
 
 export default function LoginLayout({ children }: { children: React.ReactNode }) {

@@ -109,12 +109,23 @@ export default function Navbar() {
       >
         <div className="max-w-6xl mx-auto px-5 sm:px-8 h-16 flex items-center justify-between">
           {/* Logo */}
-          <Link href="/" className="font-semibold tracking-tight text-base text-neutral-900">
+          <Link
+            href="/"
+            title="URPASS — Official Website"
+            aria-label="URPASS Official Website"
+            className="font-semibold tracking-tight text-base text-neutral-900"
+          >
             URPASS
           </Link>
 
           {/* Desktop nav */}
           <nav className="hidden md:flex items-center gap-7">
+            <Link
+              href="/features"
+              className="text-sm text-neutral-500 hover:text-neutral-900 transition-colors"
+            >
+              Features
+            </Link>
             <Link
               href="/#how-it-works"
               className="text-sm text-neutral-500 hover:text-neutral-900 transition-colors"
@@ -189,6 +200,13 @@ export default function Navbar() {
         {/* Mobile drawer */}
         {open && (
           <div className="md:hidden bg-white border-b border-neutral-100 px-5 py-5 flex flex-col gap-4">
+            <Link
+              href="/features"
+              onClick={() => setOpen(false)}
+              className="text-sm text-neutral-600 py-1"
+            >
+              Features
+            </Link>
             <Link
               href="/#how-it-works"
               onClick={() => setOpen(false)}
