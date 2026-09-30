@@ -46,50 +46,50 @@ interface PassDesignerProps {
 }
 
 const COLOR_SWATCHES = [
-  "#6D28D9", // Violet
-  "#0284C7", // Sky Blue
-  "#059669", // Emerald
-  "#EA580C", // Orange
-  "#DC2626", // Red
-  "#4F46E5", // Indigo
-  "#06B6D4", // Cyan
-  "#DB2777", // Pink
-  "#18181B", // Zinc / Noir
-  "#0D9488", // Teal
-  "#D97706", // Amber
-  "#7C3AED", // Royal Purple
+  "#0F172A", // Slate Navy
+  "#18181B", // Executive Charcoal
+  "#1E3A8A", // Royal Corporate Blue
+  "#0F766E", // Deep Pine Teal
+  "#065F46", // Forest Green
+  "#831843", // Deep Burgundy
+  "#4C1D95", // Imperial Indigo
+  "#B45309", // Warm Bronze
+  "#635BFF", // Corporate Indigo
+  "#0284C7", // Cerulean
+  "#475569", // Platinum Slate
+  "#000000", // Pure Obsidian
 ];
 
 const THEMES: { id: PassThemePreset; label: string; desc: string; icon: string }[] = [
   {
     id: "classic",
-    label: "Classic Ticket",
-    desc: "Cutout ticket notches, dashed perforation, and official entry badge.",
+    label: "Executive Boarding",
+    desc: "Refined boarding pass layout with micro-perforations, compartment grid, and formal header.",
     icon: "🎫",
   },
   {
     id: "modern",
-    label: "Glassmorphism",
-    desc: "Translucent frosted card, rounded geometry, and soft glowing accents.",
-    icon: "✨",
+    label: "Enterprise Modern",
+    desc: "Sleek corporate digital wallet pass with executive gradient header and verified delegate badge.",
+    icon: "💼",
   },
   {
     id: "badge",
-    label: "Conference Badge",
-    desc: "Lanyard slot header, hero attendee name, and prominent credential banner.",
+    label: "Delegate Lanyard",
+    desc: "Realistic corporate lanyard badge with slot cutout, hero delegate title, and security token.",
     icon: "🏷️",
   },
   {
     id: "minimal",
-    label: "Noir Minimal",
-    desc: "Swiss typographic simplicity, crisp contrast, and subtle borders.",
+    label: "Swiss Minimal",
+    desc: "Architectural typographic simplicity, hairline dividers, and high-contrast monochrome.",
     icon: "📐",
   },
   {
     id: "cyber",
-    label: "Cyber Matrix",
-    desc: "Dark high-tech futuristic layout, glowing neon frame, and mono text.",
-    icon: "⚡",
+    label: "Obsidian Luxury",
+    desc: "Deep obsidian black with refined champagne-gold accents for galas, summits, and VIPs.",
+    icon: "✨",
   },
 ];
 

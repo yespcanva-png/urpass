@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { MapPin, Calendar, Scissors, Ticket as TicketIcon } from "lucide-react";
+import { MapPin, Calendar, Scissors, Ticket as TicketIcon, ShieldCheck, CheckCircle2 } from "lucide-react";
 import type { TicketDesignConfig } from "@/lib/pass-design";
 
 interface TicketPreviewProps {
@@ -279,7 +279,7 @@ export default function TicketPreview({
             <p className="font-medium">{rulesList.join(" • ")}</p>
             {config.showTermsLink && (
               <p className="mt-0.5 underline opacity-70 cursor-pointer">
-                Event Terms & Conditions apply
+                Event Terms &amp; Conditions apply
               </p>
             )}
             {config.showOrganizerContact && (
@@ -289,6 +289,20 @@ export default function TicketPreview({
             )}
           </div>
         )}
+        {/* Real-time Status Strip */}
+        <div className="w-full mt-3">
+          <div
+            className="w-full flex items-center gap-1.5 rounded-xl px-3 py-2 justify-center text-[10px] font-bold shadow-2xs"
+            style={{
+              backgroundColor: `${activeColor}12`,
+              color: activeColor,
+              border: `1px solid ${activeColor}25`,
+            }}
+          >
+            <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
+            <span>AUTHENTICATED PASS · READY FOR SCAN</span>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -2,7 +2,18 @@ import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { notFound } from "next/navigation";
-import { CalendarDays, MapPin, CheckCircle, Ticket, Wifi, ExternalLink } from "lucide-react";
+import {
+  CalendarDays,
+  MapPin,
+  CheckCircle,
+  Ticket,
+  Wifi,
+  ExternalLink,
+  ShieldCheck,
+  CheckCircle2,
+  Building2,
+  Lock,
+} from "lucide-react";
 import PassQR from "@/components/pass/PassQR";
 import { getUserPlan } from "@/lib/plan";
 import DownloadPassButton from "@/components/pass/DownloadPassButton";
@@ -189,264 +200,283 @@ export default async function PassPage({
         </div>
       ) : (
         <div
-          className={`relative w-full max-w-sm ${shapeRadius} border shadow-sm select-none overflow-hidden transition-all ${
+          className={`relative w-full max-w-[370px] ${shapeRadius} border select-none overflow-hidden transition-all shadow-2xl ${
             isDark
-              ? "bg-[#121216] border-neutral-800 text-white"
+              ? "bg-[#0B0E14] border-neutral-800 text-white"
               : isMinimal
-              ? "bg-white border-neutral-200 text-neutral-900"
-            : "bg-white border-neutral-200/90 text-neutral-900"
-        }`}
-        style={{
-          boxShadow: isDark
-            ? "0 4px 24px -2px rgba(0, 0, 0, 0.5)"
-            : "0 4px 20px -2px rgba(0, 0, 0, 0.05)",
-        }}
-      >
-        {/* Optional background image with contrast-preserving overlay */}
-        {design.backgroundImageUrl && (
-          <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={design.backgroundImageUrl}
-              alt="Ticket Background"
-              className="w-full h-full object-cover opacity-15"
-            />
-            <div
-              className={`absolute inset-0 ${
-                isDark
-                  ? "bg-gradient-to-b from-[#121216]/90 via-[#121216]/85 to-[#121216]/95"
-                  : "bg-gradient-to-b from-white/90 via-white/85 to-white/95"
-              }`}
-            />
-          </div>
-        )}
+              ? "bg-white border-neutral-900 text-neutral-900"
+              : "bg-white border-neutral-200/90 text-neutral-900"
+          }`}
+          style={{
+            boxShadow: isDark
+              ? "0 25px 60px -15px rgba(0, 0, 0, 0.7)"
+              : "0 20px 50px -15px rgba(0, 0, 0, 0.08)",
+          }}
+        >
+          {/* Optional background image with contrast-preserving overlay */}
+          {design.backgroundImageUrl && (
+            <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={design.backgroundImageUrl}
+                alt="Ticket Background"
+                className="w-full h-full object-cover opacity-10"
+              />
+              <div
+                className={`absolute inset-0 ${
+                  isDark
+                    ? "bg-gradient-to-b from-[#0B0E14]/90 via-[#0B0E14]/85 to-[#0B0E14]/95"
+                    : "bg-gradient-to-b from-white/90 via-white/85 to-white/95"
+                }`}
+              />
+            </div>
+          )}
 
-        {/* Top Accent Strip (Event / Modern template) */}
-        {(design.template === "event" || design.template === "modern") && (
+          {/* Top Accent Strip */}
           <div
-            className="h-2 w-full relative z-10"
+            className="h-1.5 w-full relative z-10"
             style={{ backgroundColor: brandColor }}
           />
-        )}
 
-        {/* Ticket Body */}
-        <div className="relative z-10 p-6 flex flex-col items-center text-center">
-          {/* 1. Event Logo & Sponsor Header */}
-          <div className="mb-3.5 flex items-center justify-center gap-3">
-            {logoToDisplay ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={logoToDisplay}
-                alt="Logo"
-                className="h-8 max-w-[130px] object-contain"
-              />
-            ) : (
-              <span
-                className="text-[11px] font-black tracking-widest uppercase"
-                style={{ color: isDark ? "#ffffff" : "#111827" }}
-              >
-                {orgName || "URPASS"}
-              </span>
-            )}
-
-            {design.sponsorLogoUrl && (
-              <>
-                <span className="text-neutral-300 text-xs">×</span>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={design.sponsorLogoUrl}
-                  alt="Sponsor Logo"
-                  className="h-6 max-w-[100px] object-contain opacity-80"
-                />
-              </>
-            )}
-          </div>
-
-          {/* 2. Event Name */}
-          <h1 className="text-xl font-bold tracking-tight mb-2 uppercase leading-snug max-w-xs">
-            {event.name}
-          </h1>
-
-          {/* 3. Ticket Type Pill (if toggled) */}
-          {design.showTicketType && (
-            <div className="mb-3">
-              <span
-                className="inline-flex items-center gap-1 text-[11px] font-bold tracking-wider uppercase px-3 py-1 rounded-full border"
-                style={{
-                  borderColor: `${brandColor}35`,
-                  color: brandColor,
-                  backgroundColor: `${brandColor}12`,
-                }}
-              >
-                <Ticket className="w-3 h-3" />
-                {PASS_TYPE_LABEL[pass.pass_type] ?? pass.pass_type}
-              </span>
-            </div>
-          )}
-
-          {/* 4. Large Centered QR Code with clean high-contrast white card */}
-          {!isOnline && (
-            <div className="my-2 flex flex-col items-center">
-              <div className="p-4 bg-white rounded-2xl shadow-xs border border-neutral-100 flex flex-col items-center justify-center">
-                <PassQR value={pass.pass_token} size={160} />
-                <span className="text-[9px] font-black tracking-widest text-neutral-400 uppercase mt-2">
-                  SCAN FOR ENTRY
-                </span>
-              </div>
-            </div>
-          )}
-
-          {/* Online-only icon area */}
-          {isOnline && (
-            <div className="w-full flex flex-col items-center gap-3 py-4 my-2">
-              <div
-                className="w-16 h-16 rounded-2xl flex items-center justify-center border"
-                style={{
-                  backgroundColor: `${brandColor}15`,
-                  borderColor: `${brandColor}30`,
-                }}
-              >
-                <Wifi className="w-8 h-8" style={{ color: brandColor }} />
-              </div>
-              <p className={`text-sm font-semibold ${isDark ? "text-white" : "text-neutral-900"}`}>
-                Online Event
-              </p>
-              <p className="text-xs text-neutral-400">{platformLabel}</p>
-            </div>
-          )}
-
-          {/* 5. Attendee Name (if toggled) */}
-          {design.showAttendeeName && (
-            <div className="mt-3 mb-0.5">
-              <p className="text-base font-bold tracking-tight">
-                {attendee.name}
-              </p>
-            </div>
-          )}
-
-          {/* Dynamic phone number */}
-          {design.showPhone && attendee.phone && (
-            <p className={`text-[11px] font-mono ${isDark ? "text-neutral-400" : "text-neutral-500"} mb-1`}>
-              {attendee.phone}
-            </p>
-          )}
-
-          {/* Dynamic registration number */}
-          {design.showRegistrationNumber && (
-            <div className="my-1">
-              <span className={`text-[10px] font-mono font-semibold px-2 py-0.5 rounded ${isDark ? "bg-neutral-800 text-neutral-300" : "bg-neutral-100 text-neutral-600"}`}>
-                REG-{shortCode.toUpperCase()}
-              </span>
-            </div>
-          )}
-
-          {/* 6. Ticket ID (if toggled) */}
-          {design.showTicketId && (
-            <div className="mb-3 flex items-center justify-center gap-1.5">
-              <span className="text-[10px] font-bold tracking-wider uppercase text-neutral-400">
-                TICKET ID
-              </span>
-              <span className="text-xs font-mono font-semibold tracking-wider">
-                #{shortCode.toUpperCase()}
-              </span>
-            </div>
-          )}
-
-          {/* 7. Date & Venue (if toggled) */}
-          {(design.showEventDate !== false || (design.showVenue && event.venue)) && (
-            <div
-              className={`w-full border-t pt-3 mt-1 flex flex-col items-center gap-1 ${
-                isDark ? "border-neutral-800" : "border-neutral-100"
-              }`}
-            >
-              {design.showEventDate !== false && (
-                <p
-                  className={`text-xs font-semibold tracking-wide flex items-center gap-1.5 ${
-                    isDark ? "text-neutral-400" : "text-neutral-500"
-                  }`}
-                >
-                  <CalendarDays className="w-3.5 h-3.5 opacity-70 shrink-0" />
-                  <span>
-                    {formattedDate} | {event.start_time}–{event.end_time}
+          {/* Executive Header Segment */}
+          <div className="relative z-10 px-6 pt-5 pb-4 border-b border-neutral-100 dark:border-neutral-800/80">
+            <div className="flex items-center justify-between gap-3 mb-3">
+              <div className="flex items-center gap-2">
+                {logoToDisplay ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={logoToDisplay}
+                    alt="Logo"
+                    className="h-7 max-w-[130px] object-contain"
+                  />
+                ) : (
+                  <span
+                    className="text-[11px] font-black tracking-widest uppercase"
+                    style={{ color: isDark ? "#ffffff" : "#09090b" }}
+                  >
+                    {orgName || "URPASS"}
                   </span>
-                </p>
+                )}
+
+                {design.sponsorLogoUrl && (
+                  <>
+                    <span className="text-neutral-300 text-xs">×</span>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={design.sponsorLogoUrl}
+                      alt="Sponsor Logo"
+                      className="h-5 max-w-[90px] object-contain opacity-80"
+                    />
+                  </>
+                )}
+              </div>
+
+              <span className="inline-flex items-center gap-1 text-[9px] font-extrabold tracking-wider uppercase px-2.5 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700">
+                <ShieldCheck className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                <span>OFFICIAL PASS</span>
+              </span>
+            </div>
+
+            {/* Event Name */}
+            <h1 className="text-lg sm:text-xl font-black tracking-tight uppercase leading-snug line-clamp-2">
+              {event.name}
+            </h1>
+
+            {/* Structured Event Metadata Grid */}
+            <div className="mt-3.5 grid grid-cols-2 gap-2 text-[10px]">
+              {design.showEventDate !== false && (
+                <div className="p-2.5 rounded-xl bg-neutral-50 dark:bg-neutral-900/60 border border-neutral-100 dark:border-neutral-800 flex items-start gap-2">
+                  <CalendarDays className="w-3.5 h-3.5 text-neutral-400 shrink-0 mt-0.5" />
+                  <div className="min-w-0">
+                    <p className="text-[8px] font-bold uppercase tracking-wider text-neutral-400">
+                      SCHEDULE
+                    </p>
+                    <p className="font-semibold text-neutral-800 dark:text-neutral-200 truncate">
+                      {formattedDate}
+                    </p>
+                    <p className="text-neutral-500 text-[9px] truncate">
+                      {event.start_time}–{event.end_time}
+                    </p>
+                  </div>
+                </div>
               )}
 
               {design.showVenue && event.venue && (
-                <p
-                  className={`text-xs flex items-center gap-1.5 ${
-                    isDark ? "text-neutral-400" : "text-neutral-500"
-                  }`}
-                >
-                  <MapPin className="w-3.5 h-3.5 opacity-70 shrink-0" />
-                  <span className="truncate max-w-[240px]">{event.venue}</span>
-                </p>
+                <div className="p-2.5 rounded-xl bg-neutral-50 dark:bg-neutral-900/60 border border-neutral-100 dark:border-neutral-800 flex items-start gap-2">
+                  <MapPin className="w-3.5 h-3.5 text-neutral-400 shrink-0 mt-0.5" />
+                  <div className="min-w-0">
+                    <p className="text-[8px] font-bold uppercase tracking-wider text-neutral-400">
+                      LOCATION
+                    </p>
+                    <p className="font-semibold text-neutral-800 dark:text-neutral-200 truncate">
+                      {event.venue}
+                    </p>
+                    <p className="text-neutral-500 text-[9px] truncate">
+                      Venue Access
+                    </p>
+                  </div>
+                </div>
               )}
             </div>
-          )}
+          </div>
 
-          {/* Custom Message */}
-          {design.customMessage && (
-            <div className="mt-2.5 pt-2 border-t border-dashed border-neutral-200/80 w-full">
-              <p className="text-xs italic opacity-85 max-w-xs mx-auto">
-                &ldquo;{design.customMessage}&rdquo;
-              </p>
-            </div>
-          )}
+          {/* Micro-perforated coupon notch line */}
+          <div className="relative h-4 bg-transparent flex items-center">
+            <div className={`absolute -left-2.5 w-5 h-5 rounded-full ${isDark ? "bg-[#0a0a0d] border-neutral-800" : "bg-neutral-100 border-neutral-200"} border`} />
+            <div className={`absolute -right-2.5 w-5 h-5 rounded-full ${isDark ? "bg-[#0a0a0d] border-neutral-800" : "bg-neutral-100 border-neutral-200"} border`} />
+            <div className={`w-full border-t border-dashed ${isDark ? "border-neutral-800" : "border-neutral-200"} mx-4`} />
+          </div>
 
-          {/* Ticket Rules */}
-          {(design.showSingleEntryRule || design.showGateNotice || design.customInstruction || design.showTermsLink || design.showOrganizerContact) && (
-            <div
-              className={`mt-2.5 pt-2 border-t w-full text-[10px] leading-relaxed ${
-                isDark ? "border-neutral-800 text-neutral-400" : "border-neutral-100 text-neutral-500"
-              }`}
-            >
-              {[
-                design.showSingleEntryRule ? "Valid for one entry" : null,
-                design.showGateNotice ? "Keep this QR ready at the gate" : null,
-                design.customInstruction || null,
-              ]
-                .filter(Boolean)
-                .join(" • ")}
-              {design.showTermsLink && (
-                <p className="mt-0.5 underline opacity-70">
-                  Event Terms & Conditions apply
+          {/* Ticket Body */}
+          <div className="relative z-10 px-6 pb-6 flex flex-col items-center text-center">
+            {/* Attendee Details Card */}
+            <div className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-neutral-50 dark:bg-neutral-900/60 border border-neutral-100 dark:border-neutral-800 mb-3.5">
+              <div className="text-left min-w-0 pr-2">
+                <p className="text-[8px] font-bold tracking-widest uppercase text-neutral-400 mb-0.5">
+                  DELEGATE
                 </p>
-              )}
-              {design.showOrganizerContact && (
-                <p className="mt-0.5 opacity-70">
-                  Need help? Contact organizer
-                </p>
-              )}
-            </div>
-          )}
-
-          {/* Status strip */}
-          <div className="w-full mt-4">
-            {isCheckedIn ? (
-              <div className="w-full flex items-center gap-2 bg-green-50 border border-green-100 rounded-xl px-3 py-2 justify-center">
-                <CheckCircle className="w-4 h-4 text-green-600 shrink-0" />
-                <span className="text-xs font-semibold text-green-700">Checked in</span>
+                {design.showAttendeeName && (
+                  <p className="text-base font-bold text-neutral-950 dark:text-white truncate">
+                    {attendee.name}
+                  </p>
+                )}
+                {design.showPhone && attendee.phone && (
+                  <p className="text-[10px] font-mono text-neutral-500">
+                    {attendee.phone}
+                  </p>
+                )}
               </div>
-            ) : (
-              <div
-                className="w-full flex items-center gap-2 rounded-xl px-3 py-2 justify-center text-xs font-semibold"
-                style={{
-                  backgroundColor: `${brandColor}12`,
-                  color: brandColor,
-                  border: `1px solid ${brandColor}25`,
-                }}
-              >
-                <span
-                  className="w-2 h-2 rounded-full animate-pulse"
-                  style={{ backgroundColor: brandColor }}
-                />
-                <span>{statusText}</span>
+
+              <div className="flex flex-col items-end shrink-0 gap-1">
+                {design.showTicketType && (
+                  <span
+                    className="inline-flex items-center gap-1 text-[10px] font-black tracking-wider uppercase px-2.5 py-1 rounded-full border shadow-2xs"
+                    style={{
+                      borderColor: `${brandColor}40`,
+                      color: brandColor,
+                      backgroundColor: `${brandColor}15`,
+                    }}
+                  >
+                    <Ticket className="w-3 h-3" />
+                    {PASS_TYPE_LABEL[pass.pass_type] ?? pass.pass_type}
+                  </span>
+                )}
+
+                {design.showRegistrationNumber && (
+                  <span className="text-[9px] font-mono font-semibold px-2 py-0.5 rounded bg-white dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700">
+                    REG-{shortCode.toUpperCase()}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* QR Code Container with High-Contrast White Card */}
+            {!isOnline && (
+              <div className="my-1 flex flex-col items-center w-full">
+                <div className="p-4 bg-white rounded-2xl shadow-xs border border-neutral-200/80 flex flex-col items-center justify-center">
+                  <PassQR value={pass.pass_token} size={165} />
+                  <span className="text-[9px] font-mono font-bold tracking-widest text-neutral-400 uppercase mt-2.5">
+                    SCAN AT ENTRANCE TERMINAL
+                  </span>
+                </div>
               </div>
             )}
+
+            {/* Online-only icon area */}
+            {isOnline && (
+              <div className="w-full flex flex-col items-center gap-3 py-4 my-2">
+                <div
+                  className="w-16 h-16 rounded-2xl flex items-center justify-center border"
+                  style={{
+                    backgroundColor: `${brandColor}15`,
+                    borderColor: `${brandColor}30`,
+                  }}
+                >
+                  <Wifi className="w-8 h-8" style={{ color: brandColor }} />
+                </div>
+                <p className={`text-sm font-semibold ${isDark ? "text-white" : "text-neutral-900"}`}>
+                  Online Event Access
+                </p>
+                <p className="text-xs text-neutral-400">{platformLabel}</p>
+              </div>
+            )}
+
+            {/* Ticket ID Tag */}
+            {design.showTicketId && (
+              <div className="mt-2.5 flex items-center justify-center gap-1.5">
+                <span className="text-[9px] font-bold tracking-wider uppercase text-neutral-400">
+                  PASS ID
+                </span>
+                <span className="text-xs font-mono font-bold tracking-wider">
+                  #{shortCode.toUpperCase()}
+                </span>
+              </div>
+            )}
+
+            {/* Custom Message */}
+            {design.customMessage && (
+              <div className="mt-2.5 pt-2 border-t border-dashed border-neutral-200/80 dark:border-neutral-800 w-full">
+                <p className="text-xs italic opacity-85 max-w-xs mx-auto">
+                  &ldquo;{design.customMessage}&rdquo;
+                </p>
+              </div>
+            )}
+
+            {/* Ticket Rules */}
+            {(design.showSingleEntryRule || design.showGateNotice || design.customInstruction || design.showTermsLink || design.showOrganizerContact) && (
+              <div
+                className={`mt-2.5 pt-2 border-t w-full text-[10px] leading-relaxed ${
+                  isDark ? "border-neutral-800 text-neutral-400" : "border-neutral-100 text-neutral-500"
+                }`}
+              >
+                {[
+                  design.showSingleEntryRule ? "Valid for single entry" : null,
+                  design.showGateNotice ? "Keep QR visible at entrance" : null,
+                  design.customInstruction || null,
+                ]
+                  .filter(Boolean)
+                  .join(" • ")}
+                {design.showTermsLink && (
+                  <p className="mt-0.5 underline opacity-70">
+                    Event Terms &amp; Conditions apply
+                  </p>
+                )}
+                {design.showOrganizerContact && (
+                  <p className="mt-0.5 opacity-70">
+                    Need help? Contact event organizer
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Real-time Status Strip */}
+            <div className="w-full mt-4">
+              {isCheckedIn ? (
+                <div className="w-full flex items-center gap-2 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 rounded-xl px-3 py-2.5 justify-center shadow-2xs">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                  <span className="text-xs font-bold text-emerald-800 dark:text-emerald-300">
+                    VERIFIED ENTRY · CHECKED IN
+                  </span>
+                </div>
+              ) : (
+                <div
+                  className="w-full flex items-center gap-2 rounded-xl px-3 py-2.5 justify-center text-xs font-bold shadow-2xs"
+                  style={{
+                    backgroundColor: `${brandColor}12`,
+                    color: brandColor,
+                    border: `1px solid ${brandColor}25`,
+                  }}
+                >
+                  <span
+                    className="w-2 h-2 rounded-full animate-pulse shrink-0"
+                    style={{ backgroundColor: brandColor }}
+                  />
+                  <span>{statusText}</span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
-      </div>
       )}
 
       {showBranding && (
