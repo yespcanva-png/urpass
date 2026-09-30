@@ -155,6 +155,15 @@ export default function CreateEventForm({
         setValue("description", "Deep-dive practical training workshop with live interactive demos and verifiable pass credentials.");
         setValue("venue", "Seminar Hall & Online Hybrid");
       }
+
+      const paramName = params.get("eventName") || params.get("name") || params.get("event_name");
+      if (paramName) {
+        setValue("name", paramName);
+      }
+      const paramVenue = params.get("venue");
+      if (paramVenue) {
+        setValue("venue", paramVenue);
+      }
     }
   }, [setValue]);
 

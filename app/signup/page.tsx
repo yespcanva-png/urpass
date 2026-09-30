@@ -54,6 +54,7 @@ function GoogleIcon() {
 function SignupContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const eventName = searchParams.get("eventName") || searchParams.get("name") || searchParams.get("event_name");
   const [authMode, setAuthMode] = useState<"standard" | "sso">(
     searchParams.get("mode") === "sso" ? "sso" : "standard"
   );
@@ -144,7 +145,11 @@ function SignupContent() {
       searchParams,
       typeof document !== "undefined" ? document.referrer : null
     );
-    const destination = target !== "/dashboard" ? target : "/onboarding";
+    const destination = eventName
+      ? `/create-event?eventName=${encodeURIComponent(eventName)}`
+      : target !== "/dashboard"
+      ? target
+      : "/onboarding";
     setSuccess(true);
     setTimeout(() => router.push(destination), 1200);
   }
@@ -182,7 +187,10 @@ function SignupContent() {
       searchParams,
       typeof document !== "undefined" ? document.referrer : null
     );
-    window.location.href = `/api/auth/google/redirect?next=${encodeURIComponent(target)}`;
+    const destination = eventName
+      ? `/create-event?eventName=${encodeURIComponent(eventName)}`
+      : target;
+    window.location.href = `/api/auth/google/redirect?next=${encodeURIComponent(destination)}`;
   }
 
   const BG = {
@@ -269,6 +277,17 @@ function SignupContent() {
         style={{ boxShadow: "0 4px 32px 0 rgba(109,40,217,0.08)" }}
       >
         <div className="mb-7">
+          {eventName && (
+            <div className="mb-4 p-3 rounded-2xl bg-violet-50 border border-violet-100 flex items-center gap-3 text-xs text-violet-900">
+              <div className="p-2 rounded-xl bg-violet-100 text-violet-700 shrink-0">
+                <Ticket className="w-4 h-4" />
+              </div>
+              <div className="min-w-0">
+                <p className="font-bold text-violet-950 truncate">Publishing &ldquo;{eventName}&rdquo;</p>
+                <p className="text-[11px] text-violet-600 mt-0.5">Create your organizer login to activate your pass & scanner.</p>
+              </div>
+            </div>
+          )}
           <h1 className="text-2xl font-semibold tracking-tight">
             {authMode === "sso" ? "Enterprise SSO" : "Create your account"}
           </h1>
