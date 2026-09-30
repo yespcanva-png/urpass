@@ -15,7 +15,8 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "indexnow": "node scripts/submit-indexnow.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",

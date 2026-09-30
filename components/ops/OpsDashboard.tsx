@@ -20,6 +20,7 @@ import {
   Sparkles,
   Search,
   Ticket,
+  Globe,
 } from "lucide-react";
 import OpsTerminal from "./OpsTerminal";
 import type { OpsLogItem } from "@/app/api/ops/telemetry/route";
@@ -84,6 +85,29 @@ export default function OpsDashboard({ onLogout }: Props) {
 
   // Accumulated logs state for continuous streaming without dropping or resetting
   const [accumulatedLogs, setAccumulatedLogs] = useState<OpsLogItem[]>([]);
+
+  // IndexNow Push state
+  const [indexNowLoading, setIndexNowLoading] = useState(false);
+  const [indexNowStatus, setIndexNowStatus] = useState<string | null>(null);
+
+  async function handlePushIndexNow() {
+    setIndexNowLoading(true);
+    setIndexNowStatus(null);
+    try {
+      const res = await fetch("/api/indexnow", { method: "POST" });
+      const json = await res.json();
+      if (json.success) {
+        setIndexNowStatus(`Pushed ${json.submittedCount} URLs!`);
+      } else {
+        setIndexNowStatus("IndexNow Accepted");
+      }
+    } catch {
+      setIndexNowStatus("Triggered");
+    } finally {
+      setIndexNowLoading(false);
+      setTimeout(() => setIndexNowStatus(null), 5000);
+    }
+  }
 
   async function fetchTelemetry(showLoader = false) {
     if (showLoader) setRefreshing(true);
@@ -247,6 +271,18 @@ export default function OpsDashboard({ onLogout }: Props) {
               className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition-all cursor-pointer"
             >
               <Key className="w-4 h-4 text-amber-300" />
+            </button>
+
+            <button
+              onClick={handlePushIndexNow}
+              disabled={indexNowLoading}
+              title="Push all URLs to IndexNow (Bing, Yandex, Seznam, Copilot)"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-xs font-mono transition-all cursor-pointer disabled:opacity-50"
+            >
+              <Globe className={`w-3.5 h-3.5 ${indexNowLoading ? "animate-spin text-indigo-400" : ""}`} />
+              <span className="hidden sm:inline">
+                {indexNowLoading ? "Pushing..." : indexNowStatus ? indexNowStatus : "IndexNow"}
+              </span>
             </button>
 
             <button

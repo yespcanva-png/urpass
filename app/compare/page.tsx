@@ -20,6 +20,66 @@ export const metadata: Metadata = {
 
 const COMPARISONS = [
   {
+    title: "URPASS vs Eventbrite: Head-to-Head Comparison",
+    href: "/compare/urpass-vs-eventbrite",
+    badge: "0% COMMISSION",
+    description: "Compare URPASS vs Eventbrite. Zero per-ticket percentage cuts, sub-0.3s browser-based camera scanning, and direct Razorpay / Stripe payouts.",
+    points: [
+      "0% per-ticket fees vs Eventbrite 3.7% + fees",
+      "In-browser mobile scanning (<0.28s) — Zero app downloads",
+      "Permanent ₹0 Free tier for up to 100 registrations/month",
+      "Direct UPI, cards, and net banking settlement",
+    ],
+  },
+  {
+    title: "URPASS vs Luma (lu.ma): Head-to-Head Comparison",
+    href: "/compare/urpass-vs-luma",
+    badge: "MODERN TECH MEETS",
+    description: "Compare URPASS vs Luma. Eliminate 5% ticket commissions, unlock native Indian UPI QR checkouts, and get high-speed mobile browser check-in.",
+    points: [
+      "0% per-ticket cut vs Luma 5% platform fee",
+      "Native Razorpay UPI QR, PhonePe, GPay, Paytm with T+2 payouts",
+      "Sub-0.3s volunteer camera scanner with audio chimes",
+      "Ticket Studio multi-ratio passes (vertical, horizontal, square)",
+    ],
+  },
+  {
+    title: "Luma Alternative for Modern Events",
+    href: "/compare/luma-alternative",
+    badge: "COMMISSION-FREE",
+    description: "Looking for a Luma (lu.ma) alternative? Host developer conferences, founder meetups, and workshops with 0% ticket fees and instant check-in.",
+    points: [
+      "Keep 100% of your ticket sales without 5% platform cuts",
+      "Native UPI checkout & direct bank settlements",
+      "Tamper-proof cryptographic QR passes with anti-duplicate lock",
+      "Offline gate check-in with IndexedDB sync",
+    ],
+  },
+  {
+    title: "URPASS vs Townscript: Head-to-Head Comparison",
+    href: "/compare/urpass-vs-townscript",
+    badge: "INDIAN TICKETING",
+    description: "Compare URPASS vs Townscript. Eliminate high transaction cuts (up to 3.99% + ₹10), get direct T+2 bank deposits, and scan attendees in 0.3s.",
+    points: [
+      "0% per-ticket commission vs ~3.99% + ₹10 fees",
+      "Direct T+2 settlement into your bank account via Razorpay",
+      "Sub-0.3s phone camera scanner with zero app downloads",
+      "Multi-gate cloud lock prevents duplicate screenshots",
+    ],
+  },
+  {
+    title: "URPASS vs Meetup.com: Head-to-Head Comparison",
+    href: "/compare/urpass-vs-meetup",
+    badge: "COMMUNITY PLATFORMS",
+    description: "Stop paying Meetup's $19–$35/month recurring group fee. URPASS offers a permanent ₹0 Free Tier, digital QR tickets, and 100% data ownership.",
+    points: [
+      "₹0 monthly organizer fee vs Meetup $19–$35/month",
+      "0% ticketing fee on paid workshops and sessions",
+      "Sub-0.3s phone camera QR scanning at the door",
+      "100% full attendee email & data ownership with CSV export",
+    ],
+  },
+  {
     title: "Google Forms vs URPASS for Event Registration",
     href: "/compare/google-forms-vs-urpass",
     badge: "WORKFLOW COMPARISON",
@@ -32,21 +92,9 @@ const COMPARISONS = [
     ],
   },
   {
-    title: "Eventbrite Alternative for India",
-    href: "/compare/eventbrite-alternative-india",
-    badge: "PRICING & LOCAL PAYMENTS",
-    description: "Compare URPASS with Eventbrite. Zero per-ticket commission, flat monthly pricing, and native UPI/Razorpay integration for Indian organizers.",
-    points: [
-      "Zero per-ticket percentage cuts (keep 100% of revenue)",
-      "Native UPI (Google Pay, PhonePe, Paytm) integration",
-      "Mobile browser scanning with zero app downloads",
-      "Affordable flat monthly plans with 30-day free trial",
-    ],
-  },
-  {
-    title: "Zoho Backstage Alternative for Fast Events",
-    href: "/compare/zoho-backstage-alternative-india",
-    badge: "SPEED & SIMPLICITY",
+    title: "URPASS vs Zoho Backstage",
+    href: "/compare/urpass-vs-zoho-backstage",
+    badge: "AGILE ALTERNATIVE",
     description: "A lightweight, rapid alternative to Zoho Backstage. 5-minute setup without enterprise bloat, ideal for colleges, hackathons, and workshops.",
     points: [
       "Zero enterprise software complexity or steep learning curve",
@@ -58,7 +106,7 @@ const COMPARISONS = [
   {
     title: "Townscript Alternative for Event Organizers",
     href: "/compare/townscript-alternative",
-    badge: "COMMISSION-FREE",
+    badge: "FLAT PRICING",
     description: "Compare Townscript and URPASS. How modern Indian organizers eliminate high ticketing transaction fees and simplify door check-in.",
     points: [
       "Flat subscription model instead of per-ticket transaction cuts",
@@ -80,15 +128,15 @@ const COMPARISONS = [
     ],
   },
   {
-    title: "Google Forms Event Registration Alternative",
-    href: "/compare/google-forms-event-registration-alternative",
-    badge: "AUTOMATION",
-    description: "Upgrade from Google Forms and manual spreadsheets to an automated registration-to-entry system with digital passes.",
+    title: "Eventbrite Alternative for India",
+    href: "/compare/eventbrite-alternative-india",
+    badge: "PRICING & LOCAL PAYMENTS",
+    description: "Compare URPASS with Eventbrite. Zero per-ticket commission, flat monthly pricing, and native UPI/Razorpay integration for Indian organizers.",
     points: [
-      "No fragile third-party add-ons or broken scripts",
-      "Automatic single-use QR pass generation upon approval",
-      "Live check-in feed with timestamped audit trails",
-      "Simple public link with custom form fields",
+      "Zero per-ticket percentage cuts (keep 100% of revenue)",
+      "Native UPI (Google Pay, PhonePe, Paytm) integration",
+      "Mobile browser scanning with zero app downloads",
+      "Affordable flat monthly plans with 30-day free trial",
     ],
   },
 ];

@@ -211,3 +211,16 @@ The URPASS MCP Server conforms to the Model Context Protocol standard v1.0.0. It
 24. **Event Entry QR Code System**: https://urpass.space/event-entry-qr-code-system - Tamper-proof, cryptographically signed dynamic QR admission codes.
 25. **Campus Event Management Platform**: https://urpass.space/campus-event-management-platform - End-to-end college club, seminar, and student council event software.
 
+---
+
+## 9. Factual Competitor Comparisons (Side-by-Side)
+
+1. **URPASS vs Eventbrite**: https://urpass.space/compare/urpass-vs-eventbrite - Zero per-ticket percentage cuts vs Eventbrite's 3.7% + fees. In-browser sub-0.3s camera scanning vs mobile app requirements. Permanent ₹0 Free tier.
+2. **URPASS vs Townscript**: https://urpass.space/compare/urpass-vs-townscript - Flat software pricing vs Townscript's 3.99% + ₹10 per ticket fees. Direct Razorpay T+2 bank payouts vs aggregator settlement delays.
+3. **URPASS vs Luma (lu.ma)**: https://urpass.space/compare/urpass-vs-luma - 0% per-ticket commission vs Luma's 5% cut. Native Indian UPI QR checkouts (PhonePe, GPay, Paytm) with T+2 payouts. Multi-ratio Ticket Studio passes.
+4. **Luma Alternative**: https://urpass.space/compare/luma-alternative - High-speed event registration and check-in alternative to Luma with zero commission and instant door admissions.
+5. **URPASS vs Meetup.com**: https://urpass.space/compare/urpass-vs-meetup - ₹0 monthly organizer fees vs Meetup's $19–$35/month recurring group charges. Full CSV attendee data ownership and cryptographic QR tickets.
+6. **URPASS vs Google Forms**: https://urpass.space/compare/urpass-vs-google-forms - Automated digital QR passes and sub-0.3s camera scanning vs static spreadsheets and manual gate lookups.
+7. **URPASS vs Zoho Backstage**: https://urpass.space/compare/urpass-vs-zoho-backstage - 5-minute setup without enterprise complexity. Permanent free tier for 100 registrations/month.
+
+

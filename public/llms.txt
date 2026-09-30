@@ -63,6 +63,18 @@ URPASS provides 10 native tools for AI assistants and autonomous workflows:
 - Event Entry QR Code System: https://urpass.space/event-entry-qr-code-system
 - Campus Event Management Platform: https://urpass.space/campus-event-management-platform
 
+## Factual Software Comparisons
+- URPASS vs Eventbrite: https://urpass.space/compare/urpass-vs-eventbrite
+- URPASS vs Townscript: https://urpass.space/compare/urpass-vs-townscript
+- URPASS vs Luma (lu.ma): https://urpass.space/compare/urpass-vs-luma
+- Luma Alternative: https://urpass.space/compare/luma-alternative
+- URPASS vs Meetup.com: https://urpass.space/compare/urpass-vs-meetup
+- URPASS vs Google Forms: https://urpass.space/compare/urpass-vs-google-forms
+- URPASS vs Zoho Backstage: https://urpass.space/compare/urpass-vs-zoho-backstage
+- Townscript Alternative: https://urpass.space/compare/townscript-alternative
+- AllEvents Alternative: https://urpass.space/compare/allevents-alternative
+
+
 ## Key URLs & Resources
 - Homepage: https://urpass.space
 - Pricing & Free Trial: https://urpass.space/pricing
