@@ -94,18 +94,34 @@ export default function TicketTemplatesPage() {
         <Navbar />
 
         {/* Hero Section */}
-        <section className="pt-32 pb-12 sm:pt-40 sm:pb-16 px-5 sm:px-8 border-b border-neutral-200/80 bg-white">
+        <section className="pt-32 pb-14 sm:pt-40 sm:pb-18 px-5 sm:px-8 border-b border-neutral-200/80 bg-white">
           <div className="max-w-4xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2 bg-violet-50 border border-violet-100 text-violet-700 text-xs font-semibold px-3.5 py-1.5 rounded-full mb-4">
-              <Palette className="w-3.5 h-3.5" />
-              TICKET STUDIO & TEMPLATE DIRECTORY
+            <div className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-200/80 text-emerald-800 text-xs font-bold px-4 py-1.5 rounded-full mb-4">
+              <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+              <span>PRODUCTION-READY EVENT TICKET DESIGNS</span>
             </div>
-            <h1 className="text-3xl sm:text-5xl font-black text-neutral-950 tracking-tight leading-tight">
-              Event Ticket & Pass Templates
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-neutral-950 tracking-tight leading-[1.1]">
+              Event Ticket &amp; Pass Templates
             </h1>
             <p className="mt-4 text-base sm:text-lg text-neutral-600 max-w-2xl mx-auto leading-relaxed">
-              Choose from production-ready digital mobile passes, conference lanyard badges, and printable ticket stubs. 6 Free designs included, premium templates from just ₹49 with instant UPI.
+              Browse professionally engineered digital mobile passes, conference lanyard badges, and printable ticket stubs. 6 Free templates included, premium designs from just ₹49 with instant UPI.
             </p>
+
+            {/* Format Feature Badges */}
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-2.5 sm:gap-3 text-xs font-semibold text-neutral-700">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-neutral-100 border border-neutral-200">
+                <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                Apple Wallet Compatible (380×680)
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-neutral-100 border border-neutral-200">
+                <span className="w-2 h-2 rounded-full bg-sky-500" />
+                Conference Lanyard Badges (440×640)
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-neutral-100 border border-neutral-200">
+                <span className="w-2 h-2 rounded-full bg-amber-500" />
+                Perforated Print Stubs (780×340)
+              </span>
+            </div>
           </div>
         </section>
 
