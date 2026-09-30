@@ -20,6 +20,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE}/ticket-fee-calculator`, priority: 0.9, changeFrequency: "weekly" as const },
     { url: `${BASE}/calculator`, priority: 0.85, changeFrequency: "weekly" as const },
     { url: `${BASE}/free-qr-ticket-generator`, priority: 0.9, changeFrequency: "weekly" as const },
+    { url: `${BASE}/switch-to-urpass`, priority: 0.95, changeFrequency: "weekly" as const },
+    { url: `${BASE}/import`, priority: 0.85, changeFrequency: "weekly" as const },
     { url: `${BASE}/sponsorship`, priority: 0.9, changeFrequency: "weekly" as const },
     { url: `${BASE}/contact`, priority: 0.6, changeFrequency: "monthly" as const },
     { url: `${BASE}/privacy`, priority: 0.7, changeFrequency: "monthly" as const },
