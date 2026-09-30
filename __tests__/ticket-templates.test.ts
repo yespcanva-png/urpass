@@ -44,28 +44,36 @@ describe("Ticket Template Directory & Tier Rules", () => {
     const paidTpl = STUDIO_TEMPLATES.find((t) => t.tier === "paid");
     expect(paidTpl).toBeDefined();
 
-    // Not unlocked initially
+    // Locked for free user with empty unlocked list
     expect(isTemplateUnlocked(paidTpl!.id, [])).toBe(false);
 
-    // Unlocked when ID is in unlocked list
+    // Unlocked once purchased
     expect(isTemplateUnlocked(paidTpl!.id, [paidTpl!.id])).toBe(true);
 
-    // Unlocked when 'all' is in unlocked list
+    // Unlocked with all-access bundle
     expect(isTemplateUnlocked(paidTpl!.id, ["all"])).toBe(true);
 
-    // Unlocked when user is Pro
+    // Unlocked for Pro users
     expect(isTemplateUnlocked(paidTpl!.id, [], true)).toBe(true);
   });
 
   it("parses unlocked cookie strings correctly", () => {
-    const jsonCookie = encodeURIComponent(JSON.stringify(["vip-all-access", "concert-music-fest"]));
-    const list = parseUnlockedCookie(jsonCookie);
-    expect(list).toContain("vip-all-access");
-    expect(list).toContain("concert-music-fest");
+    expect(parseUnlockedCookie(null)).toEqual([]);
+    expect(parseUnlockedCookie("")).toEqual([]);
 
-    const fallbackList = parseUnlockedCookie("template-1,template-2");
-    expect(fallbackList).toContain("template-1");
-    expect(fallbackList).toContain("template-2");
+    const jsonCookie = encodeURIComponent(JSON.stringify(["vip-all-access", "hackathon-terminal"]));
+    expect(parseUnlockedCookie(jsonCookie)).toEqual(["vip-all-access", "hackathon-terminal"]);
+
+    const commaCookie = "vip-all-access,concert-music-fest";
+    expect(parseUnlockedCookie(commaCookie)).toEqual(["vip-all-access", "concert-music-fest"]);
+  });
+
+  it("verifies all 12 templates cover digital, printable, and badge formats", () => {
+    const formats = new Set(STUDIO_TEMPLATES.map((t) => t.format));
+    expect(formats.has("digital")).toBe(true);
+    expect(formats.has("printable")).toBe(true);
+    expect(formats.has("badge")).toBe(true);
+    expect(STUDIO_TEMPLATES.length).toBe(12);
   });
 });
 
@@ -118,5 +126,29 @@ describe("Razorpay Template Order API", () => {
     expect(json.priceINR).toBe(ALL_ACCESS_BUNDLE_PRICE_INR);
     expect(json.amount).toBe(9900);
     expect(json.templateId).toBe("all");
+  });
+
+  it("verifies and unlocks template payment via /api/razorpay/verify-template", async () => {
+    const { POST } = await import("@/app/api/razorpay/verify-template/route");
+
+    const req = new Request("http://localhost:3000/api/razorpay/verify-template", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        orderId: "order_tpl_test_12345",
+        paymentId: "pay_test_98765",
+        signature: "sig_dummy_test",
+        templateId: "concert-music-fest",
+        templateName: "Concert & Music Fest",
+      }),
+    });
+
+    const res = await POST(req as any);
+    const json = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(json.success).toBe(true);
+    expect(json.templateId).toBe("concert-music-fest");
+    expect(res.headers.get("set-cookie")).toContain("urpass_unlocked_templates");
   });
 });

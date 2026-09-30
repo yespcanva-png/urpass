@@ -12,8 +12,10 @@ import {
   Smartphone,
   CreditCard,
   Ticket,
+  Lock,
 } from "lucide-react";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
 
 interface Props {
   isOpen: boolean;
@@ -62,13 +64,23 @@ export default function TemplateCheckoutModal({
   const [error, setError] = useState<string | null>(null);
   const [unlocked, setUnlocked] = useState(false);
   const [userEmail, setUserEmail] = useState("");
+  const [authRequired, setAuthRequired] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       setUnlocked(false);
       setError(null);
       setLoading(false);
+      setAuthRequired(false);
       document.body.style.overflow = "hidden";
+
+      // Auto-load email from current Supabase session
+      const supabase = createClient();
+      supabase.auth.getUser().then(({ data: { user } }) => {
+        if (user?.email) {
+          setUserEmail(user.email);
+        }
+      });
     } else {
       document.body.style.overflow = "";
     }
@@ -82,6 +94,7 @@ export default function TemplateCheckoutModal({
   async function handlePay() {
     setLoading(true);
     setError(null);
+    setAuthRequired(false);
 
     try {
       const sdkLoaded = await loadRazorpaySdk();
@@ -89,7 +102,7 @@ export default function TemplateCheckoutModal({
         throw new Error("Could not load Razorpay payment SDK. Check your internet connection.");
       }
 
-      // 1. Create Order on backend
+      // 1. Create Order on backend (requires authenticated user)
       const res = await fetch("/api/razorpay/template-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -102,6 +115,13 @@ export default function TemplateCheckoutModal({
       });
 
       const orderData = await res.json();
+      if (res.status === 401 || orderData.requireAuth) {
+        setAuthRequired(true);
+        setError("Please sign in or create an organizer account to unlock ticket templates.");
+        setLoading(false);
+        return;
+      }
+
       if (!res.ok || !orderData.success) {
         throw new Error(orderData.error || "Failed to initialize payment order.");
       }
@@ -117,7 +137,7 @@ export default function TemplateCheckoutModal({
           : `Unlock: ${templateName}`,
         order_id: orderData.orderId,
         prefill: {
-          email: userEmail,
+          email: orderData.userEmail || userEmail,
         },
         theme: {
           color: "#6D28D9",
@@ -133,7 +153,7 @@ export default function TemplateCheckoutModal({
           razorpay_signature: string;
         }) => {
           try {
-            // 3. Verify on backend
+            // 3. Verify on backend & persist to profile
             const verifyRes = await fetch("/api/razorpay/verify-template", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -173,7 +193,10 @@ export default function TemplateCheckoutModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs animate-in fade-in duration-200">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xs animate-in fade-in duration-200"
+      onClick={onClose}
+    >
       <div
         className="w-full max-w-md bg-white rounded-3xl border border-neutral-200 shadow-2xl overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
@@ -188,7 +211,7 @@ export default function TemplateCheckoutModal({
           </button>
 
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-violet-500/25 text-violet-300 text-xs font-semibold mb-2">
-            <Sparkles className="w-3.5 h-3.5" />
+            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
             {isBundle ? "Master Template Bundle" : "Instant Template Unlock"}
           </div>
 
@@ -210,7 +233,7 @@ export default function TemplateCheckoutModal({
               <div className="space-y-1">
                 <h4 className="text-lg font-black text-neutral-950">Template Unlocked!</h4>
                 <p className="text-xs text-neutral-600 max-w-xs mx-auto">
-                  You now have lifetime access to <strong>{templateName}</strong>. You can customize it in Ticket Studio or apply it to any event.
+                  You now have lifetime access to <strong>{templateName}</strong> permanently saved to your organizer profile.
                 </p>
               </div>
 
@@ -230,30 +253,32 @@ export default function TemplateCheckoutModal({
                 </Link>
               </div>
             </div>
+          ) : authRequired ? (
+            <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-950 space-y-3">
+              <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-amber-800">
+                <Lock className="w-4 h-4 text-amber-600" />
+                Sign In Required
+              </div>
+              <p className="text-xs text-amber-800 leading-relaxed">
+                Please sign in or create a free organizer account so your unlocked template is permanently bound to your profile across all devices.
+              </p>
+              <div className="pt-1 flex gap-2">
+                <Link
+                  href="/login?returnTo=/dashboard/templates"
+                  className="flex-1 py-2.5 px-3 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs text-center transition-all shadow-xs"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  href="/signup?returnTo=/dashboard/templates"
+                  className="flex-1 py-2.5 px-3 rounded-xl bg-white hover:bg-amber-100 text-amber-900 border border-amber-300 font-bold text-xs text-center transition-all"
+                >
+                  Create Free Account
+                </Link>
+              </div>
+            </div>
           ) : (
             <>
-              {/* Mini Preview Box */}
-              <div
-                className="w-full h-28 rounded-2xl p-4 flex items-center justify-between border border-neutral-200/80 shadow-xs select-none"
-                style={{ backgroundColor: thumbnailBg }}
-              >
-                <div className="space-y-1">
-                  <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-white/20 text-white">
-                    {format.toUpperCase()}
-                  </span>
-                  <div className="text-sm font-bold text-white truncate max-w-[200px]">
-                    {templateName}
-                  </div>
-                  <div className="text-[10px] text-white/70">
-                    High-Res Vector &middot; Dynamic Attendee Fields
-                  </div>
-                </div>
-
-                <div className="w-12 h-12 rounded-xl bg-white/95 p-1 flex items-center justify-center shadow-md">
-                  <span className="text-[8px] font-mono font-bold text-neutral-900">[ QR PASS ]</span>
-                </div>
-              </div>
-
               {/* Pricing & Value Summary */}
               <div className="bg-neutral-50 p-4 rounded-2xl border border-neutral-200/70 space-y-2.5 text-xs text-neutral-600">
                 <div className="flex items-center justify-between">
@@ -281,7 +306,7 @@ export default function TemplateCheckoutModal({
               {/* Email Input */}
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-neutral-700">
-                  Email for invoice & receipt
+                  Organizer Email for receipt & profile binding
                 </label>
                 <input
                   type="email"

@@ -236,6 +236,12 @@ export default function Sidebar({ email, fullName, planSlug, campusContext }: Pr
           {/* ── Tools nav ─────────────────────────────────────────── */}
           <nav className="flex flex-col gap-0.5">
             <SectionLabel>Tools</SectionLabel>
+            <NavLink
+              href="/dashboard/templates"
+              icon={Sparkles}
+              label="Templates"
+              active={isActive("/dashboard/templates")}
+            />
             <NavLink href="/dashboard/branding" icon={Palette} label="Branding" active={isActive("/dashboard/branding")} />
             <NavLink
               href="/studio"

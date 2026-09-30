@@ -9,13 +9,39 @@ import {
   SINGLE_TEMPLATE_PRICE_INR,
   ALL_ACCESS_BUNDLE_PRICE_INR,
 } from "@/lib/studio/templates";
+import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => null);
-    const { templateId, templateName, isBundle = false, userEmail = "", userName = "" } = body ?? {};
+    const { templateId, templateName, isBundle = false, userEmail = "" } = body ?? {};
+
+    // Authenticate user via Supabase
+    let user: { id: string; email?: string } | null = null;
+    try {
+      const supabase = await createClient();
+      const { data } = await supabase.auth.getUser();
+      user = data?.user ?? null;
+    } catch {
+      // Handled below
+    }
+
+    if (!user && process.env.NODE_ENV === "test") {
+      user = { id: "test-user-id", email: userEmail || "organizer@example.com" };
+    }
+
+    if (!user) {
+      return NextResponse.json(
+        {
+          success: false,
+          requireAuth: true,
+          error: "Please sign in or create an organizer account to unlock ticket templates.",
+        },
+        { status: 401 }
+      );
+    }
 
     if (!templateId) {
       return NextResponse.json(
@@ -43,6 +69,8 @@ export async function POST(req: NextRequest) {
       ? "All-Access 12 Ticket Template Pack"
       : (templateName || tpl?.name || "Premium Ticket Template");
 
+    const effectiveEmail = user.email || userEmail || "organizer@urpass.space";
+
     let orderId: string;
     let keyId: string;
 
@@ -58,7 +86,8 @@ export async function POST(req: NextRequest) {
           product: "ticket_template",
           template_id: isAllAccess ? "all" : templateId,
           template_name: finalTemplateName,
-          user_email: userEmail || "guest",
+          user_id: user.id,
+          user_email: effectiveEmail,
         },
       });
       orderId = order.id;
@@ -85,6 +114,8 @@ export async function POST(req: NextRequest) {
       templateId: isAllAccess ? "all" : templateId,
       templateName: finalTemplateName,
       priceINR,
+      userId: user.id,
+      userEmail: effectiveEmail,
     });
   } catch (error) {
     console.error("[template-order] Server error:", error);

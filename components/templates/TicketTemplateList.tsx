@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
 import {
   STUDIO_TEMPLATES,
   type StudioTemplateDefinition,
@@ -9,6 +10,8 @@ import {
   ALL_ACCESS_BUNDLE_PRICE_INR,
 } from "@/lib/studio/templates";
 import { parseUnlockedCookie, isTemplateUnlocked } from "@/lib/studio/purchases";
+import TicketVisualShowcase from "./TicketVisualShowcase";
+import TemplateShowcaseModal from "./TemplateShowcaseModal";
 import TemplateCheckoutModal from "./TemplateCheckoutModal";
 import {
   Sparkles,
@@ -21,18 +24,39 @@ import {
   Filter,
   CheckCircle2,
   Lock,
-  Tag,
+  Eye,
+  Maximize2,
+  ShieldCheck,
+  Search,
 } from "lucide-react";
 
-export default function TicketTemplateList() {
+interface TicketTemplateListProps {
+  initialUnlocked?: string[];
+  isPro?: boolean;
+  userEmail?: string;
+  isInApp?: boolean;
+}
+
+export default function TicketTemplateList({
+  initialUnlocked = [],
+  isPro = false,
+  userEmail: propUserEmail,
+  isInApp = false,
+}: TicketTemplateListProps) {
   const [selectedFormat, setSelectedFormat] = useState<string>("all");
   const [selectedTier, setSelectedTier] = useState<"all" | "free" | "paid">("all");
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [unlockedList, setUnlockedList] = useState<string[]>([]);
+  const [unlockedList, setUnlockedList] = useState<string[]>(initialUnlocked);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(isInApp);
+  const [currentUserEmail, setCurrentUserEmail] = useState<string>(propUserEmail || "");
+
+  // Showcase Popup Modal State
+  const [selectedShowcaseTemplate, setSelectedShowcaseTemplate] =
+    useState<StudioTemplateDefinition | null>(null);
 
   // Checkout Modal State
-  const [activeModal, setActiveModal] = useState<{
+  const [activeCheckoutModal, setActiveCheckoutModal] = useState<{
     isOpen: boolean;
     templateId: string;
     templateName: string;
@@ -50,15 +74,49 @@ export default function TicketTemplateList() {
     isBundle: false,
   });
 
-  // Load unlocked templates from document cookie on mount
+  // Check auth and cookies on mount
   useEffect(() => {
-    if (typeof document !== "undefined") {
-      const match = document.cookie.match(/urpass_unlocked_templates=([^;]+)/);
-      if (match && match[1]) {
-        setUnlockedList(parseUnlockedCookie(match[1]));
+    async function checkAuthAndPurchases() {
+      // 1. Read cookies
+      if (typeof document !== "undefined") {
+        const match = document.cookie.match(/urpass_unlocked_templates=([^;]+)/);
+        if (match && match[1]) {
+          const fromCookie = parseUnlockedCookie(match[1]);
+          setUnlockedList((prev) => Array.from(new Set([...prev, ...fromCookie])));
+        }
+      }
+
+      // 2. Check Supabase auth
+      try {
+        const supabase = createClient();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        if (user) {
+          setIsAuthenticated(true);
+          setCurrentUserEmail(user.email || "");
+
+          // Check if profile has unlocked_templates
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("unlocked_templates")
+            .eq("user_id", user.id)
+            .maybeSingle();
+
+          if (profile?.unlocked_templates && Array.isArray(profile.unlocked_templates)) {
+            setUnlockedList((prev) =>
+              Array.from(new Set([...prev, ...profile.unlocked_templates]))
+            );
+          }
+        }
+      } catch {
+        // Fallback gracefully
       }
     }
-  }, []);
+
+    checkAuthAndPurchases();
+  }, [isInApp]);
 
   const categories = [
     "All",
@@ -97,22 +155,22 @@ export default function TicketTemplateList() {
     switch (format) {
       case "printable":
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 text-[10px] font-bold uppercase tracking-wider border border-amber-200">
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-bold uppercase tracking-wider border border-amber-400/30 backdrop-blur-md">
             <Ticket className="w-3 h-3" />
             Printable Stub
           </span>
         );
       case "badge":
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-sky-50 text-sky-700 text-[10px] font-bold uppercase tracking-wider border border-sky-200">
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-sky-500/20 text-sky-300 text-[10px] font-bold uppercase tracking-wider border border-sky-400/30 backdrop-blur-md">
             <CreditCard className="w-3 h-3" />
-            Conference Badge
+            Lanyard Badge
           </span>
         );
       case "digital":
       default:
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-violet-50 text-violet-700 text-[10px] font-bold uppercase tracking-wider border border-violet-200">
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-violet-500/20 text-violet-300 text-[10px] font-bold uppercase tracking-wider border border-violet-400/30 backdrop-blur-md">
             <Smartphone className="w-3 h-3" />
             Digital Pass
           </span>
@@ -120,8 +178,12 @@ export default function TicketTemplateList() {
     }
   }
 
-  function handleUnlock(tpl: StudioTemplateDefinition) {
-    setActiveModal({
+  function handleOpenShowcase(tpl: StudioTemplateDefinition) {
+    setSelectedShowcaseTemplate(tpl);
+  }
+
+  function handleOpenCheckout(tpl: StudioTemplateDefinition) {
+    setActiveCheckoutModal({
       isOpen: true,
       templateId: tpl.id,
       templateName: tpl.name,
@@ -132,8 +194,8 @@ export default function TicketTemplateList() {
     });
   }
 
-  function handleUnlockBundle() {
-    setActiveModal({
+  function handleOpenBundleCheckout() {
+    setActiveCheckoutModal({
       isOpen: true,
       templateId: "all-access-bundle",
       templateName: "All-Access 12-Template Master Pack",
@@ -152,18 +214,18 @@ export default function TicketTemplateList() {
   }
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10">
-      {/* ── All-Access Master Pack Banner ── */}
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+      {/* ── All-Access Master Pack Promotion Banner ── */}
       <div className="bg-gradient-to-r from-neutral-950 via-violet-950 to-neutral-900 border border-violet-500/30 rounded-3xl p-6 sm:p-8 text-white shadow-2xl relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="absolute top-0 right-0 w-80 h-80 bg-violet-500/10 rounded-full blur-3xl pointer-events-none" />
 
         <div className="space-y-2 relative z-10 max-w-2xl">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-500/30 text-violet-200 text-xs font-bold uppercase tracking-wider">
             <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-            LIMITED LIFETIME BUNDLE
+            ORGANIZER MASTER PACK
           </div>
           <h2 className="text-2xl sm:text-3xl font-black tracking-tight">
-            Unlock All 12 Pro Templates for Just ₹99
+            Unlock All 12 Pro Ticket Designs for Just ₹99
           </h2>
           <p className="text-xs sm:text-sm text-neutral-300 leading-relaxed">
             Get lifetime unlimited commercial usage for all VIP, Neon Concert, Hackathon Terminal, Luxury, and Expo badge templates. Instant activation with native UPI (GPay, PhonePe, Paytm).
@@ -173,7 +235,7 @@ export default function TicketTemplateList() {
         <div className="shrink-0 relative z-10 flex flex-col sm:flex-row items-center gap-3">
           <button
             type="button"
-            onClick={handleUnlockBundle}
+            onClick={handleOpenBundleCheckout}
             className="w-full sm:w-auto py-3.5 px-6 rounded-2xl bg-white hover:bg-neutral-100 text-neutral-950 font-black text-sm flex items-center justify-center gap-2 transition-all shadow-xl cursor-pointer"
           >
             <span>Unlock All 12 for ₹99</span>
@@ -182,7 +244,7 @@ export default function TicketTemplateList() {
         </div>
       </div>
 
-      {/* ── Filter Controls Toolbar ── */}
+      {/* ── Toolbar: Search & Filter Controls ── */}
       <div className="space-y-4">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           {/* Tier Switcher (All / Free / Paid) */}
@@ -196,7 +258,7 @@ export default function TicketTemplateList() {
                   : "text-neutral-600 hover:text-neutral-900"
               }`}
             >
-              All Templates ({STUDIO_TEMPLATES.length})
+              All Designs ({STUDIO_TEMPLATES.length})
             </button>
             <button
               type="button"
@@ -220,7 +282,7 @@ export default function TicketTemplateList() {
               }`}
             >
               <Zap className="w-3.5 h-3.5 text-amber-300" />
-              Premium ₹49 (6)
+              Pro ₹49 (6)
             </button>
           </div>
 
@@ -295,24 +357,31 @@ export default function TicketTemplateList() {
         </div>
       </div>
 
-      {/* ── Templates Grid ── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* ── High-Fidelity Templates Grid ── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7">
         {filteredTemplates.map((template) => {
           const isFree = template.tier !== "paid";
-          const isUnlocked = isFree || isTemplateUnlocked(template.id, unlockedList);
+          const isUnlocked = isFree || isPro || isTemplateUnlocked(template.id, unlockedList);
 
           return (
             <div
               key={template.id}
-              className="bg-white rounded-3xl border border-neutral-200 overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col justify-between group"
+              onClick={() => handleOpenShowcase(template)}
+              className="bg-white rounded-3xl border border-neutral-200 overflow-hidden shadow-sm hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between group cursor-pointer"
             >
-              {/* Card Top: Mockup Preview Box */}
-              <div
-                className="w-full h-52 p-5 relative flex items-center justify-center select-none overflow-hidden"
-                style={{ backgroundColor: template.thumbnailBg }}
-              >
-                {/* Price Pill Top Left */}
-                <div className="absolute top-3.5 left-3.5 z-10">
+              {/* Card Top: Photorealistic Ticket Display */}
+              <div className="w-full h-80 sm:h-84 bg-gradient-to-b from-neutral-950 to-neutral-900 p-4 sm:p-5 relative flex items-center justify-center select-none overflow-hidden">
+                {/* Ambient glow matching template palette */}
+                <div
+                  className="absolute w-56 h-56 rounded-full blur-2xl opacity-20 pointer-events-none group-hover:opacity-40 transition-opacity"
+                  style={{
+                    backgroundColor:
+                      template.thumbnailBg === "#FFFFFF" ? "#6366F1" : template.thumbnailBg,
+                  }}
+                />
+
+                {/* Price / Status Badge Top Left */}
+                <div className="absolute top-3.5 left-3.5 z-20">
                   {isFree ? (
                     <span className="px-3 py-1 rounded-full bg-emerald-500 text-white text-xs font-black tracking-wider uppercase shadow-md flex items-center gap-1">
                       <Check className="w-3 h-3 stroke-[3]" />
@@ -332,37 +401,27 @@ export default function TicketTemplateList() {
                 </div>
 
                 {/* Format Badge Top Right */}
-                <div className="absolute top-3.5 right-3.5 z-10">
+                <div className="absolute top-3.5 right-3.5 z-20">
                   {getFormatBadge(template.format)}
                 </div>
 
-                {/* Mini Realistic Pass Silhouette */}
-                <div
-                  className="rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-lg border border-white/20 w-full max-w-[240px] transform group-hover:scale-105 transition-transform duration-300"
-                  style={{
-                    backgroundColor:
-                      template.thumbnailBg === "#FFFFFF"
-                        ? "#F8FAFC"
-                        : "rgba(255, 255, 255, 0.12)",
-                    color: template.thumbnailBg === "#FFFFFF" ? "#18181B" : "#FFFFFF",
-                  }}
-                >
-                  <span className="text-[10px] font-black uppercase tracking-widest opacity-80 mb-1">
-                    {template.category}
-                  </span>
-                  <div className="text-sm font-black truncate max-w-[200px] mb-2">
-                    {template.name}
+                {/* Realistic Ticket Visual Render */}
+                <div className="relative z-10 w-full flex items-center justify-center transform group-hover:scale-[1.03] transition-transform duration-300">
+                  <TicketVisualShowcase template={template} mode="card" />
+                </div>
+
+                {/* Hover Showcase Overlay Button */}
+                <div className="absolute inset-0 bg-neutral-950/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-30 backdrop-blur-[2px]">
+                  <div className="px-4 py-2 rounded-2xl bg-white text-neutral-950 font-black text-xs flex items-center gap-2 shadow-2xl transform translate-y-2 group-hover:translate-y-0 transition-transform">
+                    <Maximize2 className="w-3.5 h-3.5" />
+                    <span>Click to Showcase & Preview</span>
                   </div>
-                  <div className="w-12 h-12 bg-white/95 rounded-xl border border-neutral-200/50 flex items-center justify-center text-[7px] font-mono font-bold text-neutral-900 shadow-xs mb-1">
-                    [ QR PASS ]
-                  </div>
-                  <span className="text-[8px] font-mono opacity-70">Sub-0.3s Camera Scan</span>
                 </div>
               </div>
 
-              {/* Card Bottom: Metadata and Action Button */}
+              {/* Card Bottom: Metadata and Direct 1-Click CTAs */}
               <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   <div className="flex items-center justify-between gap-2">
                     <h3 className="text-base font-bold text-neutral-950 group-hover:text-violet-600 transition-colors">
                       {template.name}
@@ -385,8 +444,11 @@ export default function TicketTemplateList() {
                   </div>
                 </div>
 
-                {/* Action CTA */}
-                <div className="pt-3 border-t border-neutral-100">
+                {/* Action CTA Row */}
+                <div
+                  className="pt-3 border-t border-neutral-100"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   {isUnlocked ? (
                     <div className="flex gap-2">
                       <Link
@@ -406,7 +468,13 @@ export default function TicketTemplateList() {
                   ) : (
                     <button
                       type="button"
-                      onClick={() => handleUnlock(template)}
+                      onClick={() => {
+                        if (!isAuthenticated) {
+                          setSelectedShowcaseTemplate(template);
+                        } else {
+                          handleOpenCheckout(template);
+                        }
+                      }}
                       className="w-full py-2.5 px-4 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-md cursor-pointer"
                     >
                       <Zap className="w-3.5 h-3.5 text-amber-300" />
@@ -420,16 +488,41 @@ export default function TicketTemplateList() {
         })}
       </div>
 
-      {/* Checkout Modal */}
+      {/* ── Interactive Showcase Popup Modal ── */}
+      <TemplateShowcaseModal
+        isOpen={Boolean(selectedShowcaseTemplate)}
+        onClose={() => setSelectedShowcaseTemplate(null)}
+        template={selectedShowcaseTemplate}
+        isUnlocked={
+          Boolean(
+            selectedShowcaseTemplate &&
+              (selectedShowcaseTemplate.tier !== "paid" ||
+                isPro ||
+                isTemplateUnlocked(selectedShowcaseTemplate.id, unlockedList))
+          )
+        }
+        isAuthenticated={isAuthenticated}
+        userEmail={currentUserEmail}
+        onUnlockClick={(tpl) => {
+          setSelectedShowcaseTemplate(null);
+          handleOpenCheckout(tpl);
+        }}
+        onUnlockBundleClick={() => {
+          setSelectedShowcaseTemplate(null);
+          handleOpenBundleCheckout();
+        }}
+      />
+
+      {/* ── Razorpay Checkout Sheet Modal ── */}
       <TemplateCheckoutModal
-        isOpen={activeModal.isOpen}
-        onClose={() => setActiveModal((prev) => ({ ...prev, isOpen: false }))}
-        templateId={activeModal.templateId}
-        templateName={activeModal.templateName}
-        priceINR={activeModal.priceINR}
-        format={activeModal.format}
-        thumbnailBg={activeModal.thumbnailBg}
-        isBundle={activeModal.isBundle}
+        isOpen={activeCheckoutModal.isOpen}
+        onClose={() => setActiveCheckoutModal((prev) => ({ ...prev, isOpen: false }))}
+        templateId={activeCheckoutModal.templateId}
+        templateName={activeCheckoutModal.templateName}
+        priceINR={activeCheckoutModal.priceINR}
+        format={activeCheckoutModal.format}
+        thumbnailBg={activeCheckoutModal.thumbnailBg}
+        isBundle={activeCheckoutModal.isBundle}
         onSuccessUnlock={handleSuccessUnlock}
       />
     </div>
