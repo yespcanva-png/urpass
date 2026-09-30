@@ -26,8 +26,6 @@ import {
   Building,
   Phone,
   Hash,
-  Copy,
-  Layers,
   Sparkles,
   ExternalLink,
 } from "lucide-react";
@@ -54,10 +52,8 @@ interface TicketStudioProps {
   ticketCategories?: Array<{ id: string; name: string }>;
 }
 
-// 4 main sections for the simplified Ticket Studio
 type StudioSection = "design" | "content" | "branding" | "delivery";
 
-// Curated brand color swatches
 const COLOR_SWATCHES = [
   { name: "Indigo", hex: "#635BFF" },
   { name: "Electric Blue", hex: "#4F46E5" },
@@ -67,7 +63,6 @@ const COLOR_SWATCHES = [
   { name: "Obsidian", hex: "#18181B" },
 ];
 
-// Default categories if none passed from event
 const DEFAULT_CATEGORIES = [
   { id: "general", name: "General" },
   { id: "vip", name: "VIP" },
@@ -75,7 +70,6 @@ const DEFAULT_CATEGORIES = [
   { id: "backstage", name: "Backstage" },
 ];
 
-// Sample attendees for previewing real-world dynamic pass data
 const SAMPLE_ATTENDEES = [
   {
     name: "Haarishmitha",
@@ -109,7 +103,6 @@ const SAMPLE_ATTENDEES = [
   },
 ];
 
-// Visual QR matrix generated deterministically
 const QR_MATRIX = [
   [1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1],
   [1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1],
@@ -209,7 +202,7 @@ export default function TicketStudio({
   const isInitialMount = useRef(true);
   const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
-  // Execute Save Action via deterministic REST endpoint (immune to server action build-hash rotation)
+  // Execute Save Action via deterministic REST endpoint
   const performSave = useCallback(
     async (designToSave: TicketDesignConfig) => {
       setSaveStatus("saving");
@@ -275,7 +268,7 @@ export default function TicketStudio({
     });
   }
 
-  // Upload handler for Logo, Sponsor Logo & Background via Supabase Storage CDN endpoint
+  // Upload handler for Logo, Sponsor Logo & Background
   async function handleFileUpload(file: File, type: "logo" | "sponsor" | "background") {
     if (type === "background" && !limits.canUploadBackground) {
       triggerUpgrade("Custom Background Artwork");
@@ -357,13 +350,6 @@ export default function TicketStudio({
     }));
   }
 
-  // Duplicate / copy design color to another category
-  function handleDuplicateCategoryColor(sourceCategory: string, targetCategory: string) {
-    const sourceColor =
-      config.categoryColors?.[sourceCategory] || config.primaryColor;
-    handleSetCategoryColor(targetCategory, sourceColor);
-  }
-
   // Reset Design to defaults
   function handleResetDesign() {
     if (window.confirm("Reset ticket design back to default settings?")) {
@@ -441,7 +427,6 @@ export default function TicketStudio({
       : "rounded-2xl";
 
   const paddingCls = config.shape === "compact" ? "p-4 sm:p-5" : "p-6";
-
   const cardBg = isDark ? "bg-[#121216] text-white" : "bg-white text-neutral-900";
   const cardBorder = isDark ? "border-neutral-800" : "border-neutral-200";
   const subtextCls = isDark ? "text-neutral-400" : "text-neutral-500";
@@ -449,64 +434,23 @@ export default function TicketStudio({
 
   // Rules List
   const rulesList: string[] = [];
-  if (config.showSingleEntryRule) rulesList.push("Valid for one entry");
-  if (config.showGateNotice) rulesList.push("Keep this QR ready at the gate");
+  if (config.showSingleEntryRule !== false) rulesList.push("Valid for one entry");
+  if (config.showGateNotice !== false) rulesList.push("Keep this QR ready at the gate");
   if (config.customInstruction) rulesList.push(config.customInstruction);
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col w-screen h-screen overflow-hidden bg-neutral-100 font-sans select-none">
-      {/* Print Styles for Clean Sample Pass Download */}
-      <style
-        dangerouslySetInnerHTML={{
-          __html: `
-            @media print {
-              @page {
-                margin: 10mm;
-                size: auto;
-              }
-              body {
-                background: #ffffff !important;
-                color: #000000 !important;
-              }
-              header, aside, .no-print, button {
-                display: none !important;
-              }
-              main {
-                background: transparent !important;
-                padding: 0 !important;
-                display: flex !important;
-                justify-content: center !important;
-                align-items: center !important;
-                width: 100% !important;
-                height: auto !important;
-                overflow: visible !important;
-              }
-              #printable-ticket-card {
-                box-shadow: none !important;
-                border: 1px solid #d4d4d8 !important;
-                max-width: 380px !important;
-                width: 380px !important;
-                margin: 20px auto !important;
-                page-break-inside: avoid !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-              }
-            }
-          `,
-        }}
-      />
-
+    <div className="flex flex-col h-screen bg-neutral-100 text-neutral-900 overflow-hidden font-sans select-none">
       {/* ─────────────────────────────────────────────────────────────
-          1. TOP APP BAR
+          1. TOP NAVIGATION & STATUS BAR
       ───────────────────────────────────────────────────────────── */}
-      <header className="h-14 border-b border-neutral-200 bg-white px-4 sm:px-6 flex items-center justify-between shrink-0 z-20">
+      <header className="h-14 border-b border-neutral-200/90 bg-white px-4 sm:px-6 flex items-center justify-between shrink-0 z-20 shadow-2xs">
         {/* Left: Back & Title */}
         <div className="flex items-center gap-3">
           <Link
             href={backHref}
-            className="flex items-center gap-1.5 text-xs font-semibold text-neutral-600 hover:text-neutral-900 px-2 py-1.5 rounded-lg hover:bg-neutral-100 transition-colors"
+            className="flex items-center gap-1.5 text-xs font-semibold text-neutral-600 hover:text-neutral-900 px-2.5 py-1.5 rounded-lg hover:bg-neutral-100 transition-colors"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeft className="w-3.5 h-3.5" />
             <span>Back</span>
           </Link>
 
@@ -516,7 +460,7 @@ export default function TicketStudio({
             <span className="text-sm font-bold text-neutral-900 tracking-tight">
               Ticket Studio
             </span>
-            <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-neutral-100 text-neutral-600 truncate max-w-[200px]">
+            <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-neutral-100 text-neutral-700 truncate max-w-[200px]">
               {eventName}
             </span>
             {config.isPublished !== false ? (
@@ -533,9 +477,9 @@ export default function TicketStudio({
 
             {/* Plan Tier Badge */}
             <span
-              className={`hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide ${
+              className={`hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
                 limits.isPro
-                  ? "bg-purple-50 text-purple-700 border border-purple-200"
+                  ? "bg-violet-50 text-violet-700 border border-violet-200"
                   : limits.isStarter
                   ? "bg-blue-50 text-blue-700 border border-blue-200"
                   : "bg-neutral-100 text-neutral-600 border border-neutral-200"
@@ -549,7 +493,7 @@ export default function TicketStudio({
               <button
                 type="button"
                 onClick={() => triggerUpgrade("Ticket Studio Pro Features")}
-                className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-2xs hover:opacity-95 transition-opacity"
+                className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-2xs hover:opacity-95 transition-opacity"
               >
                 <Sparkles className="w-3 h-3 text-amber-300" />
                 <span>Upgrade</span>
@@ -558,14 +502,14 @@ export default function TicketStudio({
           </div>
         </div>
 
-        {/* Center: Mobile Tab Switcher */}
-        <div className="flex md:hidden items-center bg-neutral-100 p-0.5 rounded-lg text-xs font-semibold text-neutral-600">
+        {/* Center: Mobile View Switcher */}
+        <div className="flex md:hidden items-center bg-neutral-100 p-0.5 rounded-xl text-xs font-semibold text-neutral-600">
           <button
             type="button"
             onClick={() => setMobileTab("customize")}
-            className={`px-3 py-1 rounded-md transition-all ${
+            className={`px-3 py-1 rounded-lg transition-all ${
               mobileTab === "customize"
-                ? "bg-white text-neutral-900 shadow-xs"
+                ? "bg-white text-neutral-900 shadow-2xs"
                 : "text-neutral-500 hover:text-neutral-900"
             }`}
           >
@@ -574,9 +518,9 @@ export default function TicketStudio({
           <button
             type="button"
             onClick={() => setMobileTab("preview")}
-            className={`px-3 py-1 rounded-md transition-all ${
+            className={`px-3 py-1 rounded-lg transition-all ${
               mobileTab === "preview"
-                ? "bg-white text-neutral-900 shadow-xs"
+                ? "bg-white text-neutral-900 shadow-2xs"
                 : "text-neutral-500 hover:text-neutral-900"
             }`}
           >
@@ -586,7 +530,6 @@ export default function TicketStudio({
 
         {/* Right: Autosave Status & Manual Save */}
         <div className="flex items-center gap-3">
-          {/* Status Indicator */}
           <div className="flex items-center gap-1.5 text-xs">
             {saveStatus === "saving" && (
               <span className="flex items-center gap-1.5 text-neutral-400 font-medium">
@@ -613,12 +556,11 @@ export default function TicketStudio({
             )}
           </div>
 
-          {/* Manual Save Button */}
           <button
             type="button"
             onClick={handleManualSave}
             disabled={saveStatus === "saving" || isPending}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-neutral-900 hover:bg-neutral-800 disabled:opacity-50 text-white text-xs font-semibold rounded-lg transition-colors shadow-xs"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-neutral-900 hover:bg-neutral-800 disabled:opacity-50 text-white text-xs font-semibold rounded-xl transition-all shadow-xs cursor-pointer"
           >
             {saveStatus === "saving" ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -636,18 +578,18 @@ export default function TicketStudio({
       <div className="flex flex-1 overflow-hidden relative">
         {/* ──────── LEFT COLUMN: 4-SECTION CUSTOMIZE PANEL ──────── */}
         <aside
-          className={`w-full md:w-[440px] lg:w-[470px] shrink-0 border-r border-neutral-200 bg-white flex flex-col h-full overflow-hidden ${
+          className={`w-full md:w-[440px] lg:w-[460px] shrink-0 border-r border-neutral-200/90 bg-white flex flex-col h-full overflow-hidden ${
             mobileTab === "customize" ? "flex" : "hidden md:flex"
           }`}
         >
-          {/* Section Navigation Tabs: Design → Content → Branding → Delivery */}
-          <div className="grid grid-cols-4 border-b border-neutral-200 bg-neutral-50/70 p-1.5 gap-1 shrink-0">
+          {/* Navigation Tabs */}
+          <div className="grid grid-cols-4 border-b border-neutral-200 bg-neutral-50/80 p-1.5 gap-1 shrink-0">
             <button
               type="button"
               onClick={() => setActiveSection("design")}
-              className={`flex items-center justify-center gap-1.5 py-2 px-1 text-xs font-bold rounded-lg transition-all ${
+              className={`flex items-center justify-center gap-1.5 py-2 px-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${
                 activeSection === "design"
-                  ? "bg-white text-neutral-900 shadow-xs border border-neutral-200/80"
+                  ? "bg-white text-neutral-900 shadow-2xs border border-neutral-200/90"
                   : "text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100/70"
               }`}
             >
@@ -658,9 +600,9 @@ export default function TicketStudio({
             <button
               type="button"
               onClick={() => setActiveSection("content")}
-              className={`flex items-center justify-center gap-1.5 py-2 px-1 text-xs font-bold rounded-lg transition-all ${
+              className={`flex items-center justify-center gap-1.5 py-2 px-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${
                 activeSection === "content"
-                  ? "bg-white text-neutral-900 shadow-xs border border-neutral-200/80"
+                  ? "bg-white text-neutral-900 shadow-2xs border border-neutral-200/90"
                   : "text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100/70"
               }`}
             >
@@ -671,9 +613,9 @@ export default function TicketStudio({
             <button
               type="button"
               onClick={() => setActiveSection("branding")}
-              className={`flex items-center justify-center gap-1.5 py-2 px-1 text-xs font-bold rounded-lg transition-all ${
+              className={`flex items-center justify-center gap-1.5 py-2 px-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${
                 activeSection === "branding"
-                  ? "bg-white text-neutral-900 shadow-xs border border-neutral-200/80"
+                  ? "bg-white text-neutral-900 shadow-2xs border border-neutral-200/90"
                   : "text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100/70"
               }`}
             >
@@ -684,9 +626,9 @@ export default function TicketStudio({
             <button
               type="button"
               onClick={() => setActiveSection("delivery")}
-              className={`flex items-center justify-center gap-1.5 py-2 px-1 text-xs font-bold rounded-lg transition-all ${
+              className={`flex items-center justify-center gap-1.5 py-2 px-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${
                 activeSection === "delivery"
-                  ? "bg-white text-neutral-900 shadow-xs border border-neutral-200/80"
+                  ? "bg-white text-neutral-900 shadow-2xs border border-neutral-200/90"
                   : "text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100/70"
               }`}
             >
@@ -696,15 +638,14 @@ export default function TicketStudio({
           </div>
 
           {/* Tab Content Container */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-6">
-            {/* Error Banner if upload fails */}
+          <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-6">
             {uploadError && (
               <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 flex items-center justify-between">
                 <span>{uploadError}</span>
                 <button
                   type="button"
                   onClick={() => setUploadError(null)}
-                  className="text-red-500 hover:text-red-700 p-0.5"
+                  className="text-red-500 hover:text-red-700 p-0.5 cursor-pointer"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -713,7 +654,6 @@ export default function TicketStudio({
 
             {/* ═════════════════════════════════════════════════════════
                 SECTION 1: DESIGN
-                3 Templates · Brand Color · Shape · Category Colors · BG · QR Safety
             ═════════════════════════════════════════════════════════ */}
             {activeSection === "design" && (
               <div className="space-y-6 animate-in fade-in-50 duration-150">
@@ -727,7 +667,7 @@ export default function TicketStudio({
                     <button
                       type="button"
                       onClick={() => setConfig((prev) => ({ ...prev, template: "minimal" }))}
-                      className={`p-3 rounded-xl border text-left flex flex-col items-center justify-center gap-1.5 transition-all ${
+                      className={`p-3 rounded-xl border text-left flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
                         isMinimal
                           ? "border-neutral-900 bg-neutral-50 ring-2 ring-neutral-900/10 shadow-xs"
                           : "border-neutral-200 hover:border-neutral-300 bg-white"
@@ -748,7 +688,7 @@ export default function TicketStudio({
                     <button
                       type="button"
                       onClick={() => setConfig((prev) => ({ ...prev, template: "event" }))}
-                      className={`p-3 rounded-xl border text-left flex flex-col items-center justify-center gap-1.5 transition-all ${
+                      className={`p-3 rounded-xl border text-left flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
                         isEvent
                           ? "border-neutral-900 bg-neutral-50 ring-2 ring-neutral-900/10 shadow-xs"
                           : "border-neutral-200 hover:border-neutral-300 bg-white"
@@ -777,14 +717,14 @@ export default function TicketStudio({
                         }
                         setConfig((prev) => ({ ...prev, template: "dark" }));
                       }}
-                      className={`p-3 rounded-xl border text-left flex flex-col items-center justify-center gap-1.5 transition-all relative ${
+                      className={`p-3 rounded-xl border text-left flex flex-col items-center justify-center gap-1.5 transition-all relative cursor-pointer ${
                         isDark
                           ? "border-neutral-900 bg-neutral-50 ring-2 ring-neutral-900/10 shadow-xs"
                           : "border-neutral-200 hover:border-neutral-300 bg-white"
                       }`}
                     >
                       {!limits.canUseAllTemplates && (
-                        <span className="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded-full text-[9px] font-extrabold bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-2xs">
+                        <span className="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded-full text-[9px] font-extrabold bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-2xs">
                           PRO
                         </span>
                       )}
@@ -816,7 +756,7 @@ export default function TicketStudio({
                           type="button"
                           title={swatch.name}
                           onClick={() => setConfig((prev) => ({ ...prev, primaryColor: swatch.hex }))}
-                          className="w-8 h-8 rounded-full flex items-center justify-center transition-transform hover:scale-105 relative focus:outline-hidden"
+                          className="w-8 h-8 rounded-full flex items-center justify-center transition-transform hover:scale-105 relative focus:outline-hidden cursor-pointer shadow-xs"
                           style={{ backgroundColor: swatch.hex }}
                         >
                           {isSelected && (
@@ -887,14 +827,14 @@ export default function TicketStudio({
                             }
                             setConfig((prev) => ({ ...prev, shape: shapeOpt.id as TicketShape }));
                           }}
-                          className={`py-2 px-2.5 rounded-xl border text-center transition-all relative ${
+                          className={`py-2 px-2.5 rounded-xl border text-center transition-all relative cursor-pointer ${
                             isActive
                               ? "border-neutral-900 bg-neutral-50 text-neutral-900 font-bold shadow-2xs"
                               : "border-neutral-200 text-neutral-600 hover:border-neutral-300 font-medium"
                           }`}
                         >
                           {isLocked && (
-                            <span className="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded-full text-[8px] font-extrabold bg-purple-100 text-purple-700 border border-purple-200">
+                            <span className="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded-full text-[8px] font-extrabold bg-violet-100 text-violet-700 border border-violet-200">
                               PRO
                             </span>
                           )}
@@ -906,7 +846,7 @@ export default function TicketStudio({
                   </div>
                 </div>
 
-                {/* 4. Ticket Type Colors (Category Branding) */}
+                {/* 4. Ticket Type Colors */}
                 <div className="p-3.5 bg-neutral-50 border border-neutral-200 rounded-2xl space-y-3">
                   <div className="flex items-center justify-between">
                     <div>
@@ -915,7 +855,7 @@ export default function TicketStudio({
                           Ticket Type Colors
                         </p>
                         {!limits.canUseCategoryColors && (
-                          <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-purple-100 text-purple-700 border border-purple-200">
+                          <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-violet-100 text-violet-700 border border-violet-200">
                             PRO
                           </span>
                         )}
@@ -928,7 +868,7 @@ export default function TicketStudio({
                     <button
                       type="button"
                       onClick={handleApplyToAllCategories}
-                      className="text-[10px] font-bold text-brand hover:underline"
+                      className="text-[10px] font-bold text-violet-600 hover:underline cursor-pointer"
                     >
                       Apply to All
                     </button>
@@ -952,21 +892,17 @@ export default function TicketStudio({
                             </span>
                           </div>
 
-                          <div className="flex items-center gap-2">
-                            <input
-                              type="color"
-                              value={catColor}
-                              onClick={(e) => {
-                                if (!limits.canUseCategoryColors) {
-                                  e.preventDefault();
-                                  triggerUpgrade("Multi-Tier Category Colors");
-                                }
-                              }}
-                              onChange={(e) => handleSetCategoryColor(cat.name, e.target.value)}
-                              className="w-6 h-6 rounded cursor-pointer border border-neutral-200"
-                              title={`Set color for ${cat.name}`}
-                            />
-                            <span className="text-[11px] font-mono text-neutral-500 uppercase">
+                          <div className="flex items-center gap-1.5">
+                            <label className="w-5 h-5 rounded-full border border-neutral-200 overflow-hidden cursor-pointer shrink-0">
+                              <input
+                                type="color"
+                                value={catColor}
+                                onChange={(e) => handleSetCategoryColor(cat.name, e.target.value)}
+                                className="sr-only"
+                              />
+                              <div className="w-full h-full" style={{ backgroundColor: catColor }} />
+                            </label>
+                            <span className="text-[10px] font-mono text-neutral-400 uppercase">
                               {catColor}
                             </span>
                           </div>
@@ -976,13 +912,20 @@ export default function TicketStudio({
                   </div>
                 </div>
 
-                {/* 5. Background Image & QR Safety Zone */}
-                <div>
-                  <label className="block text-xs font-bold text-neutral-900 uppercase tracking-wider mb-2">
-                    Background
-                  </label>
+                {/* 5. Background Artwork */}
+                <div className="space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold text-neutral-900 uppercase tracking-wider">
+                      Background Artwork
+                    </label>
+                    {!limits.canUploadBackground && (
+                      <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-violet-100 text-violet-700 border border-violet-200">
+                        PRO
+                      </span>
+                    )}
+                  </div>
 
-                  <div className="flex items-center gap-5 mb-3">
+                  <div className="flex items-center gap-4">
                     <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-neutral-700">
                       <input
                         type="radio"
@@ -1019,11 +962,6 @@ export default function TicketStudio({
                         className="w-4 h-4 text-neutral-900 border-neutral-300 focus:ring-0"
                       />
                       <span>Image</span>
-                      {!limits.canUploadBackground && (
-                        <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-purple-100 text-purple-700 border border-purple-200">
-                          PRO
-                        </span>
-                      )}
                     </label>
                   </div>
 
@@ -1055,46 +993,21 @@ export default function TicketStudio({
                               bgInputRef.current?.click();
                             }}
                             disabled={isUploadingBg}
-                            className="px-2 py-1 text-xs font-medium text-neutral-700 bg-white border border-neutral-200 hover:bg-neutral-100 rounded-md transition-colors"
+                            className="px-2 py-1 text-xs font-medium text-neutral-700 bg-white border border-neutral-200 hover:bg-neutral-100 rounded-md transition-colors cursor-pointer"
                           >
                             {isUploadingBg ? "Uploading..." : "Change"}
                           </button>
                           <button
                             type="button"
                             onClick={() => setConfig((prev) => ({ ...prev, backgroundImageUrl: null }))}
-                            className="p-1 text-neutral-400 hover:text-red-600 rounded-md hover:bg-red-50 transition-colors"
+                            className="p-1 text-neutral-400 hover:text-red-600 rounded-md hover:bg-red-50 transition-colors cursor-pointer"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
                       </div>
                     </div>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (!limits.canUploadBackground) {
-                          triggerUpgrade("Custom Background Artwork");
-                          return;
-                        }
-                        bgInputRef.current?.click();
-                      }}
-                      disabled={isUploadingBg}
-                      className="w-full p-3 border border-neutral-200 hover:border-neutral-300 rounded-xl text-center flex items-center justify-center gap-2 transition-colors bg-white hover:bg-neutral-50 text-xs font-semibold text-neutral-700"
-                    >
-                      {isUploadingBg ? (
-                        <>
-                          <Loader2 className="w-3.5 h-3.5 animate-spin text-neutral-500" />
-                          <span>Uploading background to CDN...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Upload className="w-3.5 h-3.5 text-neutral-500" />
-                          <span>Upload background image</span>
-                        </>
-                      )}
-                    </button>
-                  )}
+                  ) : null}
 
                   <input
                     ref={bgInputRef}
@@ -1124,7 +1037,6 @@ export default function TicketStudio({
 
             {/* ═════════════════════════════════════════════════════════
                 SECTION 2: CONTENT
-                Dynamic Fields · Custom Message · Ticket Rules
             ═════════════════════════════════════════════════════════ */}
             {activeSection === "content" && (
               <div className="space-y-6 animate-in fade-in-50 duration-150">
@@ -1139,16 +1051,16 @@ export default function TicketStudio({
                     </p>
                   </div>
 
-                  <div className="space-y-2.5">
+                  <div className="space-y-2">
                     {/* Attendee Name */}
-                    <label className="flex items-center gap-3 p-2.5 bg-neutral-50 rounded-xl border border-neutral-200/80 cursor-pointer">
+                    <label className="flex items-center gap-3 p-2.5 bg-neutral-50 hover:bg-neutral-100/70 rounded-xl border border-neutral-200/80 cursor-pointer transition-colors">
                       <input
                         type="checkbox"
                         checked={config.showAttendeeName}
                         onChange={(e) =>
                           setConfig((prev) => ({ ...prev, showAttendeeName: e.target.checked }))
                         }
-                        className="w-4 h-4 rounded-sm text-neutral-900 border-neutral-300 focus:ring-0"
+                        className="w-4 h-4 rounded text-neutral-900 border-neutral-300 focus:ring-0"
                       />
                       <div className="text-xs">
                         <p className="font-bold text-neutral-800">Attendee Name</p>
@@ -1156,15 +1068,47 @@ export default function TicketStudio({
                       </div>
                     </label>
 
+                    {/* Venue */}
+                    <label className="flex items-center gap-3 p-2.5 bg-neutral-50 hover:bg-neutral-100/70 rounded-xl border border-neutral-200/80 cursor-pointer transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={config.showVenue}
+                        onChange={(e) =>
+                          setConfig((prev) => ({ ...prev, showVenue: e.target.checked }))
+                        }
+                        className="w-4 h-4 rounded text-neutral-900 border-neutral-300 focus:ring-0"
+                      />
+                      <div className="text-xs">
+                        <p className="font-bold text-neutral-800">Venue</p>
+                        <p className="text-[10px] text-neutral-400">e.g. The Residency, Coimbatore</p>
+                      </div>
+                    </label>
+
+                    {/* Company / College */}
+                    <label className="flex items-center gap-3 p-2.5 bg-neutral-50 hover:bg-neutral-100/70 rounded-xl border border-neutral-200/80 cursor-pointer transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={!!config.showOrganization}
+                        onChange={(e) =>
+                          setConfig((prev) => ({ ...prev, showOrganization: e.target.checked }))
+                        }
+                        className="w-4 h-4 rounded text-neutral-900 border-neutral-300 focus:ring-0"
+                      />
+                      <div className="text-xs">
+                        <p className="font-bold text-neutral-800">Company / College</p>
+                        <p className="text-[10px] text-neutral-400">e.g. TechCorp Labs / Anna University</p>
+                      </div>
+                    </label>
+
                     {/* Ticket Type */}
-                    <label className="flex items-center gap-3 p-2.5 bg-neutral-50 rounded-xl border border-neutral-200/80 cursor-pointer">
+                    <label className="flex items-center gap-3 p-2.5 bg-neutral-50 hover:bg-neutral-100/70 rounded-xl border border-neutral-200/80 cursor-pointer transition-colors">
                       <input
                         type="checkbox"
                         checked={config.showTicketType}
                         onChange={(e) =>
                           setConfig((prev) => ({ ...prev, showTicketType: e.target.checked }))
                         }
-                        className="w-4 h-4 rounded-sm text-neutral-900 border-neutral-300 focus:ring-0"
+                        className="w-4 h-4 rounded text-neutral-900 border-neutral-300 focus:ring-0"
                       />
                       <div className="text-xs">
                         <p className="font-bold text-neutral-800">Ticket Type</p>
@@ -1173,14 +1117,14 @@ export default function TicketStudio({
                     </label>
 
                     {/* Event Date & Time */}
-                    <label className="flex items-center gap-3 p-2.5 bg-neutral-50 rounded-xl border border-neutral-200/80 cursor-pointer">
+                    <label className="flex items-center gap-3 p-2.5 bg-neutral-50 hover:bg-neutral-100/70 rounded-xl border border-neutral-200/80 cursor-pointer transition-colors">
                       <input
                         type="checkbox"
                         checked={config.showEventDate !== false}
                         onChange={(e) =>
                           setConfig((prev) => ({ ...prev, showEventDate: e.target.checked }))
                         }
-                        className="w-4 h-4 rounded-sm text-neutral-900 border-neutral-300 focus:ring-0"
+                        className="w-4 h-4 rounded text-neutral-900 border-neutral-300 focus:ring-0"
                       />
                       <div className="text-xs">
                         <p className="font-bold text-neutral-800">Event Date & Time</p>
@@ -1188,31 +1132,15 @@ export default function TicketStudio({
                       </div>
                     </label>
 
-                    {/* Venue */}
-                    <label className="flex items-center gap-3 p-2.5 bg-neutral-50 rounded-xl border border-neutral-200/80 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={config.showVenue}
-                        onChange={(e) =>
-                          setConfig((prev) => ({ ...prev, showVenue: e.target.checked }))
-                        }
-                        className="w-4 h-4 rounded-sm text-neutral-900 border-neutral-300 focus:ring-0"
-                      />
-                      <div className="text-xs">
-                        <p className="font-bold text-neutral-800">Venue</p>
-                        <p className="text-[10px] text-neutral-400">e.g. The Residency, Coimbatore</p>
-                      </div>
-                    </label>
-
                     {/* Ticket ID */}
-                    <label className="flex items-center gap-3 p-2.5 bg-neutral-50 rounded-xl border border-neutral-200/80 cursor-pointer">
+                    <label className="flex items-center gap-3 p-2.5 bg-neutral-50 hover:bg-neutral-100/70 rounded-xl border border-neutral-200/80 cursor-pointer transition-colors">
                       <input
                         type="checkbox"
                         checked={config.showTicketId}
                         onChange={(e) =>
                           setConfig((prev) => ({ ...prev, showTicketId: e.target.checked }))
                         }
-                        className="w-4 h-4 rounded-sm text-neutral-900 border-neutral-300 focus:ring-0"
+                        className="w-4 h-4 rounded text-neutral-900 border-neutral-300 focus:ring-0"
                       />
                       <div className="text-xs">
                         <p className="font-bold text-neutral-800">Ticket ID</p>
@@ -1220,31 +1148,15 @@ export default function TicketStudio({
                       </div>
                     </label>
 
-                    {/* Company / College */}
-                    <label className="flex items-center gap-3 p-2.5 bg-neutral-50 rounded-xl border border-neutral-200/80 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={!!config.showOrganization}
-                        onChange={(e) =>
-                          setConfig((prev) => ({ ...prev, showOrganization: e.target.checked }))
-                        }
-                        className="w-4 h-4 rounded-sm text-neutral-900 border-neutral-300 focus:ring-0"
-                      />
-                      <div className="text-xs">
-                        <p className="font-bold text-neutral-800">Company / College</p>
-                        <p className="text-[10px] text-neutral-400">e.g. TechCorp Labs / Anna University</p>
-                      </div>
-                    </label>
-
                     {/* Phone Number */}
-                    <label className="flex items-center gap-3 p-2.5 bg-neutral-50 rounded-xl border border-neutral-200/80 cursor-pointer">
+                    <label className="flex items-center gap-3 p-2.5 bg-neutral-50 hover:bg-neutral-100/70 rounded-xl border border-neutral-200/80 cursor-pointer transition-colors">
                       <input
                         type="checkbox"
                         checked={!!config.showPhone}
                         onChange={(e) =>
                           setConfig((prev) => ({ ...prev, showPhone: e.target.checked }))
                         }
-                        className="w-4 h-4 rounded-sm text-neutral-900 border-neutral-300 focus:ring-0"
+                        className="w-4 h-4 rounded text-neutral-900 border-neutral-300 focus:ring-0"
                       />
                       <div className="text-xs">
                         <p className="font-bold text-neutral-800">Phone</p>
@@ -1253,14 +1165,14 @@ export default function TicketStudio({
                     </label>
 
                     {/* Registration Number */}
-                    <label className="flex items-center gap-3 p-2.5 bg-neutral-50 rounded-xl border border-neutral-200/80 cursor-pointer">
+                    <label className="flex items-center gap-3 p-2.5 bg-neutral-50 hover:bg-neutral-100/70 rounded-xl border border-neutral-200/80 cursor-pointer transition-colors">
                       <input
                         type="checkbox"
                         checked={!!config.showRegistrationNumber}
                         onChange={(e) =>
                           setConfig((prev) => ({ ...prev, showRegistrationNumber: e.target.checked }))
                         }
-                        className="w-4 h-4 rounded-sm text-neutral-900 border-neutral-300 focus:ring-0"
+                        className="w-4 h-4 rounded text-neutral-900 border-neutral-300 focus:ring-0"
                       />
                       <div className="text-xs">
                         <p className="font-bold text-neutral-800">Registration Number</p>
@@ -1286,7 +1198,7 @@ export default function TicketStudio({
                     }
                     placeholder="See you at the event!"
                     maxLength={160}
-                    className="w-full px-3 py-2 text-xs border border-neutral-300 rounded-lg focus:outline-hidden focus:border-neutral-900"
+                    className="w-full px-3 py-2 text-xs border border-neutral-300 rounded-xl focus:outline-hidden focus:border-neutral-900"
                   />
                 </div>
 
@@ -1309,7 +1221,7 @@ export default function TicketStudio({
                         onChange={(e) =>
                           setConfig((prev) => ({ ...prev, showSingleEntryRule: e.target.checked }))
                         }
-                        className="w-4 h-4 rounded-sm text-neutral-900 border-neutral-300 focus:ring-0"
+                        className="w-4 h-4 rounded text-neutral-900 border-neutral-300 focus:ring-0"
                       />
                       <span>Show &ldquo;Valid for one entry&rdquo;</span>
                     </label>
@@ -1321,7 +1233,7 @@ export default function TicketStudio({
                         onChange={(e) =>
                           setConfig((prev) => ({ ...prev, showGateNotice: e.target.checked }))
                         }
-                        className="w-4 h-4 rounded-sm text-neutral-900 border-neutral-300 focus:ring-0"
+                        className="w-4 h-4 rounded text-neutral-900 border-neutral-300 focus:ring-0"
                       />
                       <span>Show &ldquo;Keep this QR ready at the gate&rdquo;</span>
                     </label>
@@ -1333,7 +1245,7 @@ export default function TicketStudio({
                         onChange={(e) =>
                           setConfig((prev) => ({ ...prev, showTermsLink: e.target.checked }))
                         }
-                        className="w-4 h-4 rounded-sm text-neutral-900 border-neutral-300 focus:ring-0"
+                        className="w-4 h-4 rounded text-neutral-900 border-neutral-300 focus:ring-0"
                       />
                       <span>Show Event Terms link</span>
                     </label>
@@ -1345,7 +1257,7 @@ export default function TicketStudio({
                         onChange={(e) =>
                           setConfig((prev) => ({ ...prev, showOrganizerContact: e.target.checked }))
                         }
-                        className="w-4 h-4 rounded-sm text-neutral-900 border-neutral-300 focus:ring-0"
+                        className="w-4 h-4 rounded text-neutral-900 border-neutral-300 focus:ring-0"
                       />
                       <span>Show Organizer Contact note</span>
                     </label>
@@ -1363,7 +1275,7 @@ export default function TicketStudio({
                       }
                       placeholder="e.g. Gate opens 30 minutes before keynote."
                       maxLength={160}
-                      className="w-full px-3 py-1.5 text-xs border border-neutral-300 rounded-lg focus:outline-hidden focus:border-neutral-900"
+                      className="w-full px-3 py-2 text-xs border border-neutral-300 rounded-xl focus:outline-hidden focus:border-neutral-900"
                     />
                   </div>
                 </div>
@@ -1372,7 +1284,6 @@ export default function TicketStudio({
 
             {/* ═════════════════════════════════════════════════════════
                 SECTION 3: BRANDING
-                Event Logo · Sponsor Logo · White-label Branding
             ═════════════════════════════════════════════════════════ */}
             {activeSection === "branding" && (
               <div className="space-y-6 animate-in fade-in-50 duration-150">
@@ -1388,9 +1299,9 @@ export default function TicketStudio({
                   </div>
 
                   {config.logoUrl ? (
-                    <div className="p-3 bg-neutral-50 border border-neutral-200 rounded-xl flex items-center justify-between">
+                    <div className="p-3 bg-neutral-50 border border-neutral-200 rounded-2xl flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="w-14 h-10 bg-white border border-neutral-200 rounded-lg flex items-center justify-center p-1 overflow-hidden">
+                        <div className="w-14 h-10 bg-white border border-neutral-200 rounded-xl flex items-center justify-center p-1 overflow-hidden shadow-2xs">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={config.logoUrl}
@@ -1409,14 +1320,14 @@ export default function TicketStudio({
                           type="button"
                           onClick={() => logoInputRef.current?.click()}
                           disabled={isUploadingLogo}
-                          className="px-2.5 py-1 text-xs font-medium text-neutral-700 bg-white border border-neutral-200 hover:bg-neutral-100 rounded-md transition-colors"
+                          className="px-2.5 py-1 text-xs font-medium text-neutral-700 bg-white border border-neutral-200 hover:bg-neutral-100 rounded-lg transition-colors cursor-pointer"
                         >
                           {isUploadingLogo ? "Uploading..." : "Change"}
                         </button>
                         <button
                           type="button"
                           onClick={() => setConfig((prev) => ({ ...prev, logoUrl: null }))}
-                          className="p-1 text-neutral-400 hover:text-red-600 rounded-md hover:bg-red-50 transition-colors"
+                          className="p-1 text-neutral-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors cursor-pointer"
                           title="Remove Logo"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -1428,7 +1339,7 @@ export default function TicketStudio({
                       type="button"
                       onClick={() => logoInputRef.current?.click()}
                       disabled={isUploadingLogo}
-                      className="w-full p-4 border-2 border-dashed border-neutral-200 hover:border-neutral-400 rounded-xl text-center flex flex-col items-center justify-center gap-1 transition-colors bg-neutral-50/50 hover:bg-neutral-50"
+                      className="w-full p-4 border-2 border-dashed border-neutral-200 hover:border-neutral-400 rounded-2xl text-center flex flex-col items-center justify-center gap-1 transition-colors bg-neutral-50/50 hover:bg-neutral-50 cursor-pointer"
                     >
                       {isUploadingLogo ? (
                         <div className="flex items-center gap-2 text-xs font-medium text-neutral-600">
@@ -1437,7 +1348,7 @@ export default function TicketStudio({
                         </div>
                       ) : (
                         <>
-                          <div className="w-8 h-8 rounded-full bg-white border border-neutral-200 flex items-center justify-center text-neutral-600 mb-0.5">
+                          <div className="w-8 h-8 rounded-full bg-white border border-neutral-200 flex items-center justify-center text-neutral-600 mb-0.5 shadow-2xs">
                             <Upload className="w-4 h-4" />
                           </div>
                           <span className="text-xs font-bold text-neutral-800">Upload Logo</span>
@@ -1468,7 +1379,7 @@ export default function TicketStudio({
                         Sponsor Logo (Optional)
                       </label>
                       {!limits.canUploadSponsorLogo && (
-                        <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-purple-100 text-purple-700 border border-purple-200">
+                        <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-violet-100 text-violet-700 border border-violet-200">
                           PRO
                         </span>
                       )}
@@ -1479,9 +1390,9 @@ export default function TicketStudio({
                   </div>
 
                   {config.sponsorLogoUrl ? (
-                    <div className="p-3 bg-neutral-50 border border-neutral-200 rounded-xl flex items-center justify-between">
+                    <div className="p-3 bg-neutral-50 border border-neutral-200 rounded-2xl flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="w-14 h-10 bg-white border border-neutral-200 rounded-lg flex items-center justify-center p-1 overflow-hidden">
+                        <div className="w-14 h-10 bg-white border border-neutral-200 rounded-xl flex items-center justify-center p-1 overflow-hidden shadow-2xs">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={config.sponsorLogoUrl}
@@ -1506,14 +1417,14 @@ export default function TicketStudio({
                             sponsorLogoInputRef.current?.click();
                           }}
                           disabled={isUploadingSponsorLogo}
-                          className="px-2.5 py-1 text-xs font-medium text-neutral-700 bg-white border border-neutral-200 hover:bg-neutral-100 rounded-md transition-colors"
+                          className="px-2.5 py-1 text-xs font-medium text-neutral-700 bg-white border border-neutral-200 hover:bg-neutral-100 rounded-lg transition-colors cursor-pointer"
                         >
                           {isUploadingSponsorLogo ? "Uploading..." : "Change"}
                         </button>
                         <button
                           type="button"
                           onClick={() => setConfig((prev) => ({ ...prev, sponsorLogoUrl: null }))}
-                          className="p-1 text-neutral-400 hover:text-red-600 rounded-md hover:bg-red-50 transition-colors"
+                          className="p-1 text-neutral-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors cursor-pointer"
                           title="Remove Sponsor Logo"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -1531,7 +1442,7 @@ export default function TicketStudio({
                         sponsorLogoInputRef.current?.click();
                       }}
                       disabled={isUploadingSponsorLogo}
-                      className="w-full p-3.5 border border-dashed border-neutral-300 hover:border-neutral-400 rounded-xl text-center flex items-center justify-center gap-2 transition-colors bg-white hover:bg-neutral-50 text-xs font-semibold text-neutral-700"
+                      className="w-full p-3.5 border border-dashed border-neutral-300 hover:border-neutral-400 rounded-2xl text-center flex items-center justify-center gap-2 transition-colors bg-white hover:bg-neutral-50 text-xs font-semibold text-neutral-700 cursor-pointer"
                     >
                       {isUploadingSponsorLogo ? (
                         <>
@@ -1561,12 +1472,12 @@ export default function TicketStudio({
                 </div>
 
                 {/* 3. Urpass Wordmark Status */}
-                <div className="p-3 bg-neutral-50 border border-neutral-200 rounded-xl flex items-center justify-between text-xs">
+                <div className="p-3.5 bg-neutral-50 border border-neutral-200 rounded-2xl flex items-center justify-between text-xs">
                   <div>
                     <div className="flex items-center gap-1.5">
                       <p className="font-bold text-neutral-800">URPASS Wordmark</p>
                       {!limits.canRemoveBranding && (
-                        <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-purple-100 text-purple-700 border border-purple-200">
+                        <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-violet-100 text-violet-700 border border-violet-200">
                           PRO
                         </span>
                       )}
@@ -1578,14 +1489,14 @@ export default function TicketStudio({
                     </p>
                   </div>
                   {limits.canRemoveBranding ? (
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-violet-50 text-violet-700 border border-violet-200">
                       WHITE-LABEL
                     </span>
                   ) : (
                     <button
                       type="button"
                       onClick={() => triggerUpgrade("White-Label (Remove Wordmark)")}
-                      className="px-2.5 py-1 rounded-md text-[10px] font-bold bg-neutral-900 text-white hover:bg-neutral-800 transition-colors shadow-2xs"
+                      className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-neutral-900 text-white hover:bg-neutral-800 transition-colors shadow-2xs cursor-pointer"
                     >
                       Remove
                     </button>
@@ -1596,7 +1507,6 @@ export default function TicketStudio({
 
             {/* ═════════════════════════════════════════════════════════
                 SECTION 4: DELIVERY
-                Preview Mode · Status · Send Test · Download · Reset
             ═════════════════════════════════════════════════════════ */}
             {activeSection === "delivery" && (
               <div className="space-y-6 animate-in fade-in-50 duration-150">
@@ -1609,7 +1519,7 @@ export default function TicketStudio({
                     <button
                       type="button"
                       onClick={() => setPreviewMode("mobile")}
-                      className={`p-3 rounded-xl border text-center transition-all ${
+                      className={`p-3 rounded-xl border text-center transition-all cursor-pointer ${
                         previewMode === "mobile"
                           ? "border-neutral-900 bg-neutral-50 text-neutral-900 font-bold shadow-2xs"
                           : "border-neutral-200 text-neutral-600 hover:border-neutral-300"
@@ -1623,7 +1533,7 @@ export default function TicketStudio({
                     <button
                       type="button"
                       onClick={() => setPreviewMode("email")}
-                      className={`p-3 rounded-xl border text-center transition-all ${
+                      className={`p-3 rounded-xl border text-center transition-all cursor-pointer ${
                         previewMode === "email"
                           ? "border-neutral-900 bg-neutral-50 text-neutral-900 font-bold shadow-2xs"
                           : "border-neutral-200 text-neutral-600 hover:border-neutral-300"
@@ -1636,8 +1546,8 @@ export default function TicketStudio({
                   </div>
                 </div>
 
-                {/* 2. Design Status (Draft vs Ready) */}
-                <div className="p-3.5 bg-neutral-50 border border-neutral-200 rounded-xl flex items-center justify-between">
+                {/* 2. Design Status */}
+                <div className="p-3.5 bg-neutral-50 border border-neutral-200 rounded-2xl flex items-center justify-between">
                   <div>
                     <p className="text-xs font-bold text-neutral-900 uppercase tracking-wider">
                       Design Status
@@ -1657,7 +1567,7 @@ export default function TicketStudio({
                         isPublished: prev.isPublished === false ? true : false,
                       }))
                     }
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
                       config.isPublished !== false
                         ? "bg-emerald-600 text-white hover:bg-emerald-700"
                         : "bg-amber-600 text-white hover:bg-amber-700"
@@ -1668,7 +1578,7 @@ export default function TicketStudio({
                 </div>
 
                 {/* 3. Send Test Ticket */}
-                <div className="p-3.5 bg-white border border-neutral-200 rounded-xl space-y-2">
+                <div className="p-3.5 bg-white border border-neutral-200 rounded-2xl space-y-2 shadow-2xs">
                   <div className="flex items-center gap-2">
                     <Mail className="w-4 h-4 text-neutral-600" />
                     <p className="text-xs font-bold text-neutral-900">Send Test Ticket</p>
@@ -1679,7 +1589,7 @@ export default function TicketStudio({
                   <button
                     type="button"
                     onClick={() => setTestModalOpen(true)}
-                    className="w-full py-2 px-3 bg-neutral-900 hover:bg-neutral-800 text-white rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-1.5 shadow-xs"
+                    className="w-full py-2 px-3 bg-neutral-900 hover:bg-neutral-800 text-white rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer"
                   >
                     <Send className="w-3.5 h-3.5" />
                     <span>Send Test to Organizer</span>
@@ -1691,7 +1601,7 @@ export default function TicketStudio({
                   <button
                     type="button"
                     onClick={handleDownloadSample}
-                    className="w-full py-2.5 px-3 border border-neutral-300 hover:border-neutral-400 bg-white hover:bg-neutral-50 text-neutral-800 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors shadow-2xs"
+                    className="w-full py-2.5 px-3 border border-neutral-300 hover:border-neutral-400 bg-white hover:bg-neutral-50 text-neutral-800 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors shadow-2xs cursor-pointer"
                   >
                     <Download className="w-3.5 h-3.5 text-neutral-600" />
                     <span>Download Sample Pass (PDF / Print)</span>
@@ -1703,7 +1613,7 @@ export default function TicketStudio({
                   <button
                     type="button"
                     onClick={handleResetDesign}
-                    className="w-full py-2 px-3 border border-neutral-200 hover:border-neutral-300 hover:bg-neutral-50 text-neutral-600 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
+                    className="w-full py-2 px-3 border border-neutral-200 hover:border-neutral-300 hover:bg-neutral-50 text-neutral-600 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                   >
                     <RefreshCw className="w-3.5 h-3.5" />
                     <span>Reset Design to Default</span>
@@ -1716,40 +1626,40 @@ export default function TicketStudio({
 
         {/* ──────── RIGHT COLUMN: PERMANENT LIVE PREVIEW ──────── */}
         <main
-          className={`flex-1 bg-neutral-100/90 flex flex-col h-full overflow-y-auto items-center justify-center p-4 sm:p-6 lg:p-8 ${
+          className={`flex-1 bg-neutral-100 flex flex-col h-full overflow-y-auto items-center justify-center p-4 sm:p-6 lg:p-8 relative ${
             mobileTab === "preview" ? "flex" : "hidden md:flex"
           }`}
           style={{
             backgroundImage: "radial-gradient(#d4d4d8 1px, transparent 1px)",
-            backgroundSize: "20px 20px",
+            backgroundSize: "24px 24px",
           }}
         >
-          <div className="w-full max-w-[390px] flex flex-col items-center">
-            {/* Top Toolbar: Live Preview Label, Email/Mobile Switcher, Sample Attendee Switcher */}
+          <div className="w-full max-w-[390px] flex flex-col items-center my-auto">
+            {/* Top Toolbar: Live Preview Label, Sample Attendee Switcher */}
             <div className="w-full flex items-center justify-between mb-3 px-1 text-xs">
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-black tracking-widest uppercase text-neutral-400">
                   LIVE PREVIEW
                 </span>
                 {config.isPublished !== false ? (
-                  <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-md text-[9px] font-bold bg-emerald-100 text-emerald-800">
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-emerald-100 text-emerald-800">
                     Ready
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-md text-[9px] font-bold bg-amber-100 text-amber-800">
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-amber-100 text-amber-800">
                     Draft
                   </span>
                 )}
               </div>
 
               {/* Sample Attendee Quick Switcher */}
-              <div className="flex items-center gap-1 bg-white/90 backdrop-blur-xs p-0.5 rounded-lg border border-neutral-200/80 shadow-2xs">
+              <div className="flex items-center gap-1 bg-white p-0.5 rounded-xl border border-neutral-200/80 shadow-2xs">
                 {SAMPLE_ATTENDEES.map((att, i) => (
                   <button
                     key={att.ticketId}
                     type="button"
                     onClick={() => setActiveAttendeeIndex(i)}
-                    className={`px-2 py-0.5 rounded-md text-[10px] font-bold transition-all ${
+                    className={`px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
                       activeAttendeeIndex === i
                         ? "bg-neutral-900 text-white shadow-2xs"
                         : "text-neutral-500 hover:text-neutral-900"
@@ -1762,11 +1672,10 @@ export default function TicketStudio({
             </div>
 
             {/* ─────────────────────────────────────────────────────────
-                IF EMAIL VIEW: RENDER EMAIL CLIENT MOCKUP
+                EMAIL VIEW MOCKUP
             ───────────────────────────────────────────────────────── */}
             {previewMode === "email" ? (
               <div className="w-full bg-white rounded-2xl border border-neutral-200 shadow-xl overflow-hidden mb-4">
-                {/* Email Client Header */}
                 <div className="bg-neutral-100/90 border-b border-neutral-200 px-4 py-2.5 flex flex-col gap-1 text-[11px] text-neutral-500">
                   <div className="flex items-center justify-between">
                     <span className="font-bold text-neutral-800 truncate">
@@ -1784,23 +1693,19 @@ export default function TicketStudio({
                   </div>
                 </div>
 
-                {/* Email Body */}
                 <div className="p-4 sm:p-5 bg-neutral-50/50 flex flex-col items-center">
                   <p className="text-xs text-neutral-600 mb-3 text-center">
                     Hello <strong className="text-neutral-900">{sampleAttendee.name}</strong>, here is your confirmed entry pass:
                   </p>
 
-                  {/* Render the Ticket Pass inside email */}
                   <div
                     className={`relative w-full ${shapeRadius} border ${cardBorder} ${cardBg} overflow-hidden shadow-md select-none transition-all duration-200`}
                   >
-                    {/* Event Accent Strip */}
                     {(isEvent || config.template === "modern") && (
                       <div className="h-2 w-full relative z-10" style={{ backgroundColor: activeColor }} />
                     )}
 
                     <div className={`relative z-10 ${paddingCls} flex flex-col items-center text-center`}>
-                      {/* Logo & Sponsor */}
                       <div className="mb-3 flex items-center justify-center gap-2.5">
                         {config.logoUrl ? (
                           // eslint-disable-next-line @next/next/no-img-element
@@ -1837,7 +1742,6 @@ export default function TicketStudio({
                         </div>
                       )}
 
-                      {/* QR */}
                       <div className="my-1.5 p-3.5 bg-white rounded-xl shadow-xs border border-neutral-100 flex flex-col items-center">
                         <div className="w-32 h-32 flex flex-col justify-between">
                           {QR_MATRIX.map((row, rIdx) => (
@@ -1870,19 +1774,17 @@ export default function TicketStudio({
               </div>
             ) : (
               /* ─────────────────────────────────────────────────────────
-                  MOBILE PASS VIEW (Locked Information Hierarchy):
-                  Event logo → Event name → Ticket type → QR → Attendee name → Ticket ID → Date/venue
+                  MOBILE PASS VIEW
               ───────────────────────────────────────────────────────── */
               <div
                 id="printable-ticket-card"
-                className={`relative w-full ${shapeRadius} border ${cardBorder} ${cardBg} overflow-hidden shadow-lg select-none transition-all duration-200`}
+                className={`relative w-full ${shapeRadius} border ${cardBorder} ${cardBg} overflow-hidden shadow-xl select-none transition-all duration-200`}
                 style={{
                   boxShadow: isDark
-                    ? "0 10px 30px -5px rgba(0, 0, 0, 0.6)"
-                    : "0 10px 25px -5px rgba(0, 0, 0, 0.08)",
+                    ? "0 20px 40px -10px rgba(0, 0, 0, 0.7)"
+                    : "0 20px 35px -10px rgba(0, 0, 0, 0.08)",
                 }}
               >
-                {/* Optional Background Image with automatic contrast shield */}
                 {config.backgroundImageUrl && (
                   <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -1901,7 +1803,7 @@ export default function TicketStudio({
                   </div>
                 )}
 
-                {/* Event Template Top Accent Strip */}
+                {/* Event Accent Strip */}
                 {(isEvent || config.template === "modern") && (
                   <div
                     onClick={() => handleSelectElement("accent", "design")}
@@ -1911,15 +1813,15 @@ export default function TicketStudio({
                   />
                 )}
 
-                {/* Ticket Content Container */}
+                {/* Ticket Pass Interior */}
                 <div className={`relative z-10 ${paddingCls} flex flex-col items-center text-center`}>
-                  {/* 1. EVENT LOGO & SPONSOR LOGO */}
+                  {/* 1. EVENT LOGO */}
                   <div
                     onClick={() => handleSelectElement("logo", "branding")}
                     className={`mb-3.5 flex items-center justify-center gap-3 cursor-pointer p-1.5 transition-all ${
                       selectedElement === "logo"
-                        ? "ring-2 ring-brand ring-offset-2 rounded-xl"
-                        : "hover:ring-1 hover:ring-brand/40 rounded-xl"
+                        ? "ring-2 ring-violet-600 ring-offset-2 rounded-xl"
+                        : "hover:ring-1 hover:ring-neutral-400 rounded-xl"
                     }`}
                     title="Click to customize Logo & Branding"
                   >
@@ -1957,22 +1859,22 @@ export default function TicketStudio({
                     onClick={() => handleSelectElement("eventName", "content")}
                     className={`text-xl font-bold tracking-tight mb-2 uppercase leading-snug max-w-xs cursor-pointer px-2 py-0.5 transition-all ${
                       selectedElement === "eventName"
-                        ? "ring-2 ring-brand ring-offset-2 rounded-lg"
-                        : "hover:ring-1 hover:ring-brand/40 rounded-lg"
+                        ? "ring-2 ring-violet-600 ring-offset-2 rounded-lg"
+                        : "hover:ring-1 hover:ring-neutral-400 rounded-lg"
                     }`}
                     title="Click to view Content settings"
                   >
                     {eventName}
                   </h2>
 
-                  {/* 3. TICKET TYPE PILL (if toggled) */}
+                  {/* 3. TICKET TYPE PILL */}
                   {config.showTicketType && (
                     <div
                       onClick={() => handleSelectElement("ticketType", "design")}
                       className={`mb-3 cursor-pointer p-0.5 transition-all ${
                         selectedElement === "ticketType"
-                          ? "ring-2 ring-brand ring-offset-2 rounded-full"
-                          : "hover:ring-1 hover:ring-brand/40 rounded-full"
+                          ? "ring-2 ring-violet-600 ring-offset-2 rounded-full"
+                          : "hover:ring-1 hover:ring-neutral-400 rounded-full"
                       }`}
                       title="Click to customize Ticket Type Colors & Templates"
                     >
@@ -1990,13 +1892,13 @@ export default function TicketStudio({
                     </div>
                   )}
 
-                  {/* 4. LARGE CENTERED QR CODE CARD (Clean Contrast Shield) */}
+                  {/* 4. LARGE CENTERED QR CODE */}
                   <div
                     onClick={() => handleSelectElement("qr", "design")}
                     className={`my-2 flex flex-col items-center cursor-pointer transition-all ${
                       selectedElement === "qr"
-                        ? "ring-2 ring-brand ring-offset-2 rounded-2xl"
-                        : "hover:ring-1 hover:ring-brand/40 rounded-2xl"
+                        ? "ring-2 ring-violet-600 ring-offset-2 rounded-2xl"
+                        : "hover:ring-1 hover:ring-neutral-400 rounded-2xl"
                     }`}
                     title="QR Safety Zone - Click to customize Design & Template"
                   >
@@ -2022,14 +1924,14 @@ export default function TicketStudio({
                     </div>
                   </div>
 
-                  {/* 5. ATTENDEE NAME (if toggled) */}
+                  {/* 5. ATTENDEE NAME */}
                   {config.showAttendeeName && (
                     <div
                       onClick={() => handleSelectElement("attendeeName", "content")}
                       className={`mt-2 mb-0.5 cursor-pointer px-2 py-0.5 transition-all ${
                         selectedElement === "attendeeName"
-                          ? "ring-2 ring-brand ring-offset-2 rounded-lg"
-                          : "hover:ring-1 hover:ring-brand/40 rounded-lg"
+                          ? "ring-2 ring-violet-600 ring-offset-2 rounded-lg"
+                          : "hover:ring-1 hover:ring-neutral-400 rounded-lg"
                       }`}
                       title="Click to customize Attendee Name & Fields"
                     >
@@ -2039,7 +1941,7 @@ export default function TicketStudio({
                     </div>
                   )}
 
-                  {/* DYNAMIC FIELDS: Organization / College, Phone, Registration Number */}
+                  {/* Dynamic Fields */}
                   {config.showOrganization && sampleAttendee.organization && (
                     <p
                       onClick={() => handleSelectElement("organization", "content")}
@@ -2066,20 +1968,20 @@ export default function TicketStudio({
                       className="my-1 cursor-pointer"
                       title="Click to customize Dynamic Fields"
                     >
-                      <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 hover:ring-1 hover:ring-brand/40">
+                      <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 hover:ring-1 hover:ring-violet-400">
                         {sampleAttendee.regNumber}
                       </span>
                     </div>
                   )}
 
-                  {/* 6. TICKET ID (if toggled) */}
+                  {/* 6. TICKET ID */}
                   {config.showTicketId && (
                     <div
                       onClick={() => handleSelectElement("ticketId", "content")}
                       className={`my-1.5 flex items-center justify-center gap-1.5 cursor-pointer px-2 py-0.5 transition-all ${
                         selectedElement === "ticketId"
-                          ? "ring-2 ring-brand ring-offset-2 rounded-lg"
-                          : "hover:ring-1 hover:ring-brand/40 rounded-lg"
+                          ? "ring-2 ring-violet-600 ring-offset-2 rounded-lg"
+                          : "hover:ring-1 hover:ring-neutral-400 rounded-lg"
                       }`}
                       title="Click to customize Ticket ID"
                     >
@@ -2092,14 +1994,14 @@ export default function TicketStudio({
                     </div>
                   )}
 
-                  {/* 7. DATE & VENUE (if toggled) */}
+                  {/* 7. DATE & VENUE */}
                   {(config.showEventDate !== false || (config.showVenue && venue)) && (
                     <div
                       onClick={() => handleSelectElement("dateVenue", "content")}
                       className={`w-full border-t ${dividerCls} pt-2.5 mt-2 flex flex-col items-center gap-1 cursor-pointer p-1 transition-all ${
                         selectedElement === "dateVenue"
-                          ? "ring-2 ring-brand ring-offset-2 rounded-lg"
-                          : "hover:ring-1 hover:ring-brand/40 rounded-lg"
+                          ? "ring-2 ring-violet-600 ring-offset-2 rounded-lg"
+                          : "hover:ring-1 hover:ring-neutral-400 rounded-lg"
                       }`}
                       title="Click to customize Date & Venue display"
                     >
@@ -2124,8 +2026,8 @@ export default function TicketStudio({
                       onClick={() => handleSelectElement("customMessage", "content")}
                       className={`mt-2.5 pt-2 border-t border-dashed border-neutral-200/80 w-full cursor-pointer p-1 transition-all ${
                         selectedElement === "customMessage"
-                          ? "ring-2 ring-brand ring-offset-2 rounded-lg"
-                          : "hover:ring-1 hover:ring-brand/40 rounded-lg"
+                          ? "ring-2 ring-violet-600 ring-offset-2 rounded-lg"
+                          : "hover:ring-1 hover:ring-neutral-400 rounded-lg"
                       }`}
                       title="Click to edit Custom Message"
                     >
@@ -2135,14 +2037,14 @@ export default function TicketStudio({
                     </div>
                   )}
 
-                  {/* 9. TICKET RULES STRIP */}
+                  {/* 9. TICKET RULES */}
                   {rulesList.length > 0 && (
                     <div
                       onClick={() => handleSelectElement("rules", "content")}
                       className={`mt-3 pt-2.5 border-t ${dividerCls} w-full text-[10px] ${subtextCls} leading-relaxed cursor-pointer p-1 transition-all ${
                         selectedElement === "rules"
-                          ? "ring-2 ring-brand ring-offset-2 rounded-lg"
-                          : "hover:ring-1 hover:ring-brand/40 rounded-lg"
+                          ? "ring-2 ring-violet-600 ring-offset-2 rounded-lg"
+                          : "hover:ring-1 hover:ring-neutral-400 rounded-lg"
                       }`}
                       title="Click to customize Ticket Rules"
                     >
@@ -2163,14 +2065,12 @@ export default function TicketStudio({
               </div>
             )}
 
-            {/* ─────────────────────────────────────────────────────────
-                BOTTOM PREVIEW ACTIONS: Send test · Download sample
-            ───────────────────────────────────────────────────────── */}
-            <div className="w-full flex items-center justify-center gap-3 mt-5">
+            {/* Bottom Preview Actions */}
+            <div className="w-full flex items-center justify-center gap-3 mt-4">
               <button
                 type="button"
                 onClick={() => setTestModalOpen(true)}
-                className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 bg-white border border-neutral-300 hover:border-neutral-400 hover:bg-neutral-50 text-neutral-800 text-xs font-bold rounded-xl shadow-xs transition-colors"
+                className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 bg-white border border-neutral-200/90 hover:border-neutral-300 hover:bg-neutral-50 text-neutral-800 text-xs font-semibold rounded-xl shadow-2xs transition-colors cursor-pointer"
               >
                 <Mail className="w-3.5 h-3.5 text-neutral-500" />
                 <span>Send test</span>
@@ -2179,7 +2079,7 @@ export default function TicketStudio({
               <button
                 type="button"
                 onClick={handleDownloadSample}
-                className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 bg-white border border-neutral-300 hover:border-neutral-400 hover:bg-neutral-50 text-neutral-800 text-xs font-bold rounded-xl shadow-xs transition-colors"
+                className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 bg-white border border-neutral-200/90 hover:border-neutral-300 hover:bg-neutral-50 text-neutral-800 text-xs font-semibold rounded-xl shadow-2xs transition-colors cursor-pointer"
               >
                 <Download className="w-3.5 h-3.5 text-neutral-500" />
                 <span>Download sample</span>
@@ -2193,7 +2093,7 @@ export default function TicketStudio({
           3. SEND TEST TICKET MODAL
       ───────────────────────────────────────────────────────────── */}
       {testModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between pb-1 border-b border-neutral-100">
               <div className="flex items-center gap-2">
@@ -2207,7 +2107,7 @@ export default function TicketStudio({
               <button
                 type="button"
                 onClick={() => setTestModalOpen(false)}
-                className="text-neutral-400 hover:text-neutral-700 p-1"
+                className="text-neutral-400 hover:text-neutral-700 p-1 cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -2241,7 +2141,7 @@ export default function TicketStudio({
                   placeholder="organizer@example.com"
                   value={testEmail}
                   onChange={(e) => setTestEmail(e.target.value)}
-                  className="w-full px-3 py-2 text-xs border border-neutral-300 rounded-lg focus:outline-hidden focus:border-neutral-900"
+                  className="w-full px-3 py-2 text-xs border border-neutral-300 rounded-xl focus:outline-hidden focus:border-neutral-900"
                 />
               </div>
 
@@ -2249,14 +2149,14 @@ export default function TicketStudio({
                 <button
                   type="button"
                   onClick={() => setTestModalOpen(false)}
-                  className="px-3 py-1.5 text-xs font-semibold text-neutral-600 hover:bg-neutral-100 rounded-lg transition-colors"
+                  className="px-3 py-1.5 text-xs font-semibold text-neutral-600 hover:bg-neutral-100 rounded-lg transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSendingTest}
-                  className="px-4 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5 shadow-xs"
+                  className="px-4 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-bold rounded-xl transition-colors flex items-center gap-1.5 shadow-2xs cursor-pointer"
                 >
                   {isSendingTest ? (
                     <>
