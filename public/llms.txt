@@ -79,6 +79,7 @@ URPASS provides 10 native tools for AI assistants and autonomous workflows:
 - Homepage: https://urpass.space
 - Pricing & Free Trial: https://urpass.space/pricing
 - Ticket Fee Calculator: https://urpass.space/ticket-fee-calculator
+- Free QR Ticket Generator: https://urpass.space/free-qr-ticket-generator
 - College Sponsorship: https://urpass.space/sponsorship
 - India Hub: https://urpass.space/in
 - UK Hub: https://urpass.space/uk

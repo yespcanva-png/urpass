@@ -14,6 +14,7 @@ const URL_LIST = [
   "https://urpass.space/",
   "https://urpass.space/pricing",
   "https://urpass.space/ticket-fee-calculator",
+  "https://urpass.space/free-qr-ticket-generator",
   "https://urpass.space/sponsorship",
   "https://urpass.space/platform",
   "https://urpass.space/compare",
