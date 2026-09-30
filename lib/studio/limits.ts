@@ -74,8 +74,8 @@ export function getStudioPlanLimits(tier?: string | null): StudioPlanLimits {
       canUploadSponsorLogo: false,
       canUseAllTemplates: false,
       allowedTemplates: ["modern", "minimal", "event"],
-      canUseCustomShapes: false,
-      allowedShapes: ["standard"],
+      canUseCustomShapes: true,
+      allowedShapes: ["standard", "rounded"],
       canUseCategoryColors: true,
       canExportSvg: false,
       canSendUnlimitedTestEmails: false,
@@ -100,7 +100,7 @@ export function getStudioPlanLimits(tier?: string | null): StudioPlanLimits {
     canUseCategoryColors: false,
     canExportSvg: false,
     canSendUnlimitedTestEmails: false,
-    maxDynamicFields: 4,
+    maxDynamicFields: 6,
   };
 }
 
@@ -137,13 +137,5 @@ export function sanitizeDesignForPlan(
     backgroundImageUrl: limits.canUploadBackground ? base.backgroundImageUrl : null,
     sponsorLogoUrl: limits.canUploadSponsorLogo ? base.sponsorLogoUrl : null,
     categoryColors: limits.canUseCategoryColors ? base.categoryColors : {},
-    // Restrict dynamic fields to tier quota if needed
-    ...(limits.isFree
-      ? {
-          showOrganization: false,
-          showPhone: false,
-          showRegistrationNumber: false,
-        }
-      : {}),
   };
 }

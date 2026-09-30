@@ -80,10 +80,7 @@ export default async function StudioEventPage({
     year: "numeric",
   }).toUpperCase();
 
-  const isPro =
-    userPlan.canUse("custom_pass_design") ||
-    (organizerPlan?.canUse("custom_pass_design") ?? false);
-
+  const isPro = true;
   const effectivePlanSlug = organizerPlan ? organizerPlan.slug : userPlan.slug;
 
   return (

@@ -1,4 +1,5 @@
 import type { StudioDesign, TicketFormat } from "./types";
+import type { TicketDesignConfig, TicketTemplate, TicketShape } from "@/lib/pass-design";
 
 export type TemplateTier = "free" | "paid";
 
@@ -2728,5 +2729,79 @@ export function getTemplatePrice(template: StudioTemplateDefinition): number {
 
 export function isTemplateFree(template: StudioTemplateDefinition): boolean {
   return template.tier !== "paid";
+}
+
+export function convertStudioTemplateToTicketDesign(
+  tpl: StudioTemplateDefinition
+): TicketDesignConfig {
+  let templateTheme: TicketTemplate = "event";
+  if (tpl.id === "minimal-monochrome") {
+    templateTheme = "minimal";
+  } else if (
+    tpl.id.includes("dark") ||
+    tpl.id.includes("hackathon") ||
+    tpl.id.includes("concert") ||
+    tpl.id.includes("vip") ||
+    tpl.id.includes("luxury")
+  ) {
+    templateTheme = "dark";
+  } else if (
+    tpl.id.includes("badge") ||
+    tpl.id.includes("corporate") ||
+    tpl.id.includes("expo") ||
+    tpl.format === "badge"
+  ) {
+    templateTheme = "modern";
+  }
+
+  let shape: TicketShape = "standard";
+  if (tpl.format === "badge") {
+    shape = "rounded";
+  } else if (tpl.format === "printable") {
+    shape = "compact";
+  }
+
+  const primaryColor =
+    tpl.id === "concert-music-fest" ? "#EC4899" :
+    tpl.id === "corporate-summit-gala" ? "#D97706" :
+    tpl.id === "college-fest-badge" ? "#4F46E5" :
+    tpl.id === "tech-conf-badge" ? "#059669" :
+    tpl.id === "hackathon-terminal" ? "#10B981" :
+    tpl.id === "vip-all-access" ? "#F59E0B" :
+    tpl.id === "workshop-masterclass" ? "#D97706" :
+    tpl.id === "sports-arena-ticket" ? "#DC2626" :
+    tpl.id === "exhibition-trade-expo" ? "#2563EB" :
+    tpl.id === "community-meetup" ? "#8B5CF6" :
+    tpl.id === "dark-obsidian-luxury" ? "#18181B" :
+    "#18181B";
+
+  return {
+    template: templateTheme,
+    primaryColor,
+    shape,
+    logoUrl: null,
+    sponsorLogoUrl: null,
+    backgroundImageUrl: null,
+    showAttendeeName: true,
+    showTicketType: true,
+    showEventDate: true,
+    showVenue: true,
+    showTicketId: true,
+    showOrganization: tpl.format === "badge",
+    showPhone: false,
+    showRegistrationNumber: false,
+    customMessage: tpl.description,
+    showSingleEntryRule: true,
+    showGateNotice: true,
+    showTermsLink: false,
+    showOrganizerContact: false,
+    customInstruction: "Scan with any smartphone camera at gate for sub-0.3s check-in.",
+    categoryColors: {
+      VIP: primaryColor,
+      General: "#4F46E5",
+      Speaker: "#059669",
+    },
+    isPublished: true,
+  };
 }
 
