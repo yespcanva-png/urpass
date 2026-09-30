@@ -450,7 +450,37 @@ export default async function PassPage({
       )}
 
       {showBranding && (
-        <p className="text-xs text-neutral-300 mt-12 pass-in-2">Powered by URPASS</p>
+        <div className="mt-8 flex flex-col items-center gap-2 pass-in-2 w-full max-w-sm">
+          <a
+            href="https://urpass.space/signup?ref=ticket-pass"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group flex items-center justify-between w-full px-4 py-2.5 rounded-2xl bg-white/80 dark:bg-white/5 border border-neutral-200/80 dark:border-white/10 hover:border-violet-300 dark:hover:border-violet-500/50 shadow-xs hover:shadow-md transition-all text-left"
+          >
+            <div className="flex flex-col">
+              <span className="text-[11px] font-bold text-neutral-900 dark:text-white group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">
+                Hosting an event, fest, or meetup?
+              </span>
+              <span className="text-[10px] text-neutral-500 dark:text-neutral-400">
+                Create digital QR passes & door scan free · ₹0 forever
+              </span>
+            </div>
+            <span className="text-xs font-semibold text-violet-600 dark:text-violet-400 group-hover:translate-x-0.5 transition-transform shrink-0 ml-2">
+              Start →
+            </span>
+          </a>
+          <p className="text-[11px] text-neutral-400">
+            Ticketing infrastructure by{" "}
+            <a
+              href="https://urpass.space?ref=pass-footer"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-neutral-600 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white underline underline-offset-2"
+            >
+              URPASS
+            </a>
+          </p>
+        </div>
       )}
 
       {/* Join Event button — for online and hybrid events */}

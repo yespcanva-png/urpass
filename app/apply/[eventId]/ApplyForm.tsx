@@ -715,7 +715,29 @@ export default function ApplyForm({
         </div>
 
         {branding.showUrpassBranding && (
-          <p className="text-center text-xs text-neutral-300 mt-6">Powered by URPASS</p>
+          <div className="mt-8 flex flex-col items-center gap-2 text-center">
+            <a
+              href="https://urpass.space/signup?ref=apply-form"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-violet-50 hover:bg-violet-100/80 border border-violet-100 text-violet-700 text-xs font-medium transition-all shadow-2xs"
+            >
+              <span>Hosting your own event?</span>
+              <span className="font-bold underline underline-offset-2">Create free on URPASS →</span>
+            </a>
+            <p className="text-[11px] text-neutral-400">
+              Powered by{" "}
+              <a
+                href="https://urpass.space?ref=apply-footer"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-semibold text-neutral-600 hover:text-neutral-900 underline underline-offset-2"
+              >
+                URPASS
+              </a>{" "}
+              · Zero commission ticketing & fast QR check-in
+            </p>
+          </div>
         )}
       </div>
     </div>

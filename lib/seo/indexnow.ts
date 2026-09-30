@@ -24,6 +24,7 @@ export interface IndexNowSubmissionResult {
 export const CORE_INDEXNOW_URLS: string[] = [
   "https://urpass.space/",
   "https://urpass.space/pricing",
+  "https://urpass.space/ticket-fee-calculator",
   "https://urpass.space/platform",
   "https://urpass.space/compare",
   "https://urpass.space/in",
