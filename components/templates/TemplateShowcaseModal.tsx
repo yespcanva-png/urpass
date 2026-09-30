@@ -1,23 +1,18 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useCallback } from "react";
 import Link from "next/link";
 import type { StudioTemplateDefinition } from "@/lib/studio/templates";
-import { SINGLE_TEMPLATE_PRICE_INR, ALL_ACCESS_BUNDLE_PRICE_INR } from "@/lib/studio/templates";
+import { SINGLE_TEMPLATE_PRICE_INR } from "@/lib/studio/templates";
 import TicketVisualShowcase from "./TicketVisualShowcase";
 import {
   X,
-  Zap,
-  CheckCircle2,
-  ArrowRight,
-  Sparkles,
-  Sliders,
+  Check,
   Smartphone,
   CreditCard,
   Ticket,
-  Maximize2,
-  Lock,
-  Layers,
+  ArrowRight,
+  Sparkles,
 } from "lucide-react";
 
 interface TemplateShowcaseModalProps {
@@ -40,35 +35,36 @@ export default function TemplateShowcaseModal({
   onUnlockClick,
   onUnlockBundleClick,
 }: TemplateShowcaseModalProps) {
-  const [showAuthPrompt, setShowAuthPrompt] = useState(false);
-  const [activeTab, setActiveTab] = useState<"preview" | "customize">("preview");
+  const [showAuthPrompt, setShowAuthPrompt] = React.useState(false);
 
-  // Live interactive preview test fields
-  const [testEventName, setTestEventName] = useState("");
-  const [testAttendeeName, setTestAttendeeName] = useState("");
-  const [testVenue, setTestVenue] = useState("");
-  const [testDate, setTestDate] = useState("");
+  // Handle escape key to close
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+      }
+    },
+    [onClose]
+  );
 
   useEffect(() => {
     if (isOpen && template) {
       document.body.style.overflow = "hidden";
       setShowAuthPrompt(false);
-      setActiveTab("preview");
-      setTestEventName("");
-      setTestAttendeeName("");
-      setTestVenue("");
-      setTestDate("");
+      window.addEventListener("keydown", handleKeyDown);
     } else {
       document.body.style.overflow = "";
     }
     return () => {
       document.body.style.overflow = "";
+      window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [isOpen, template]);
+  }, [isOpen, template, handleKeyDown]);
 
   if (!isOpen || !template) return null;
 
   const isFree = template.tier !== "paid";
+  const price = template.priceINR ?? SINGLE_TEMPLATE_PRICE_INR;
 
   function handleUnlockAction() {
     if (!isAuthenticated) {
@@ -78,264 +74,214 @@ export default function TemplateShowcaseModal({
     onUnlockClick(template!);
   }
 
-  function handleUnlockBundleAction() {
-    if (!isAuthenticated) {
-      setShowAuthPrompt(true);
-      return;
-    }
-    onUnlockBundleClick();
-  }
-
-  function getFormatDetails(format: string) {
+  function getFormatMeta(format: string) {
     switch (format) {
       case "printable":
         return {
-          label: "Printable Stub Ticket",
+          label: "Printable Stub",
           dim: "780 × 340 px",
-          desc: "High-resolution tear-off stub ticket with dual QR & barcode, ready for thermal or A4 printing.",
           icon: Ticket,
         };
       case "badge":
         return {
-          label: "Conference Lanyard Badge",
+          label: "Lanyard Badge",
           dim: "440 × 640 px",
-          desc: "Vertical convention badge with punch-hole slot for lanyards, high-visibility name, and NFC wave.",
           icon: CreditCard,
         };
       case "digital":
       default:
         return {
-          label: "Digital Mobile Pass",
+          label: "Mobile Pass",
           dim: "380 × 680 px",
-          desc: "Mobile-optimized Apple Wallet format pass accessible directly in browser with sub-0.3s QR check-in.",
           icon: Smartphone,
         };
     }
   }
 
-  const formatMeta = getFormatDetails(template.format);
+  const formatMeta = getFormatMeta(template.format);
   const FormatIcon = formatMeta.icon;
+
+  const includedFields = [
+    "High-density QR code",
+    "Attendee name & organization",
+    "Ticket type & category tier",
+    "Event schedule & venue",
+    "Unique serialized ticket ID",
+  ];
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200 overflow-y-auto"
+      role="dialog"
+      aria-modal="true"
+      aria-label={`${template.name} preview`}
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-neutral-900/40 backdrop-blur-xs animate-in fade-in duration-150 overflow-y-auto"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-2xl bg-neutral-950 border border-neutral-800 rounded-3xl p-5 sm:p-7 text-white shadow-2xl flex flex-col justify-between my-auto relative animate-in zoom-in-95 duration-200"
+        className="w-full max-w-[1160px] bg-white border border-neutral-200 rounded-2xl shadow-xl overflow-hidden flex flex-col md:flex-row my-auto relative animate-in zoom-in-95 duration-150 max-h-[88vh]"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Top Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-neutral-800">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-neutral-900 border border-neutral-800 flex items-center justify-center text-neutral-300">
-              <FormatIcon className="w-4 h-4 text-emerald-400" />
+        {/* Floating Close Button */}
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close preview"
+          className="absolute top-3.5 right-3.5 z-20 w-8 h-8 rounded-lg bg-white/90 hover:bg-neutral-100 border border-neutral-200 text-neutral-500 hover:text-neutral-900 flex items-center justify-center transition-colors cursor-pointer"
+        >
+          <X className="w-4 h-4" />
+        </button>
+
+        {/* ── LEFT: 65% Neutral Preview Canvas ── */}
+        <div className="w-full md:w-[65%] bg-[#F5F6F7] p-6 sm:p-10 flex flex-col justify-between items-center relative border-b md:border-b-0 md:border-r border-neutral-200 overflow-y-auto">
+          {/* Subtle Format Indicator */}
+          <div className="w-full flex items-center justify-between text-xs text-neutral-400 font-mono">
+            <span className="inline-flex items-center gap-1.5 font-sans font-medium text-neutral-600">
+              <FormatIcon className="w-3.5 h-3.5 text-neutral-500" />
+              {formatMeta.label}
+            </span>
+            <span>{formatMeta.dim}</span>
+          </div>
+
+          {/* Centered Pass Canvas with subtle shadow */}
+          <div className="w-full flex-1 flex items-center justify-center py-6 sm:py-8">
+            <div className="drop-shadow-sm select-none">
+              <TicketVisualShowcase template={template} mode="showcase" />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-base font-extrabold text-white tracking-tight">
-                  {template.name}
-                </h3>
-                {isFree ? (
-                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-black uppercase tracking-wider border border-emerald-500/30">
-                    FREE
-                  </span>
-                ) : isUnlocked ? (
-                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-bold uppercase tracking-wider border border-emerald-500/30 flex items-center gap-1">
-                    <CheckCircle2 className="w-3 h-3" />
-                    UNLOCKED
-                  </span>
-                ) : (
-                  <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-black uppercase tracking-wider border border-amber-500/30 flex items-center gap-1">
-                    <Zap className="w-3 h-3 text-amber-400" />
-                    PRO ₹{template.priceINR ?? SINGLE_TEMPLATE_PRICE_INR}
-                  </span>
-                )}
-              </div>
-              <p className="text-[11px] text-neutral-400 font-mono">
-                {formatMeta.label} · {formatMeta.dim}
+          </div>
+
+          {/* Minimal Canvas Footer Label */}
+          <div className="w-full text-center">
+            <span className="text-[11px] text-neutral-400 font-mono">
+              Vector SVG preview · Sub-0.3s camera scan ready
+            </span>
+          </div>
+        </div>
+
+        {/* ── RIGHT: 35% Information & Actions Panel ── */}
+        <div className="w-full md:w-[35%] p-6 sm:p-8 flex flex-col justify-between bg-white space-y-6 overflow-y-auto">
+          {showAuthPrompt ? (
+            /* Auth Required View */
+            <div className="space-y-4 my-auto text-left">
+              <span className="text-xs font-semibold text-brand uppercase tracking-wider block">
+                Sign in required
+              </span>
+              <h4 className="text-lg font-semibold text-neutral-900 leading-snug">
+                Sign in to save this template
+              </h4>
+              <p className="text-xs text-neutral-500 leading-relaxed">
+                Log in to your URPASS organizer account to bind this template to your profile and reuse it across your events.
               </p>
+              <div className="pt-2 flex flex-col gap-2">
+                <Link
+                  href={`/login?returnTo=/ticket-templates`}
+                  className="w-full h-10 rounded-lg bg-neutral-900 hover:bg-neutral-800 text-white font-medium text-xs flex items-center justify-center transition-colors"
+                >
+                  Sign In
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => setShowAuthPrompt(false)}
+                  className="w-full h-10 rounded-lg bg-neutral-100 hover:bg-neutral-200 text-neutral-700 font-medium text-xs transition-colors"
+                >
+                  Back to Details
+                </button>
+              </div>
             </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close Preview"
-            className="w-8 h-8 rounded-full bg-neutral-900 hover:bg-neutral-800 text-neutral-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer border border-neutral-800"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-
-        {/* Tab Switcher: Preview vs Interactive Test */}
-        <div className="flex items-center justify-between pt-3 pb-2">
-          <div className="inline-flex items-center p-1 bg-neutral-900 rounded-xl border border-neutral-800 text-xs">
-            <button
-              type="button"
-              onClick={() => setActiveTab("preview")}
-              className={`px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${
-                activeTab === "preview"
-                  ? "bg-white text-neutral-950 shadow-sm"
-                  : "text-neutral-400 hover:text-white"
-              }`}
-            >
-              Full-Scale Showcase
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab("customize")}
-              className={`px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
-                activeTab === "customize"
-                  ? "bg-white text-neutral-950 shadow-sm"
-                  : "text-neutral-400 hover:text-white"
-              }`}
-            >
-              <Sliders className="w-3 h-3 text-emerald-500" />
-              Live Test Fields
-            </button>
-          </div>
-
-          <span className="text-[11px] font-mono text-neutral-500 hidden sm:inline">
-            Category: {template.category}
-          </span>
-        </div>
-
-        {/* Interactive Customization Inputs (if Tab is customize) */}
-        {activeTab === "customize" && (
-          <div className="my-3 p-3.5 rounded-2xl bg-neutral-900/90 border border-neutral-800 grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs animate-in fade-in duration-150">
-            <div>
-              <label className="text-[10px] font-semibold text-neutral-400 block mb-1">
-                Test Event Name
-              </label>
-              <input
-                type="text"
-                placeholder="e.g., TECH CONVERGENCE 2026"
-                value={testEventName}
-                onChange={(e) => setTestEventName(e.target.value)}
-                className="w-full px-3 py-1.5 rounded-lg bg-neutral-950 border border-neutral-800 text-white placeholder:text-neutral-600 focus:outline-hidden focus:border-emerald-500 text-xs"
-              />
-            </div>
-            <div>
-              <label className="text-[10px] font-semibold text-neutral-400 block mb-1">
-                Test Attendee Name
-              </label>
-              <input
-                type="text"
-                placeholder="e.g., ROHIT SHARMA"
-                value={testAttendeeName}
-                onChange={(e) => setTestAttendeeName(e.target.value)}
-                className="w-full px-3 py-1.5 rounded-lg bg-neutral-950 border border-neutral-800 text-white placeholder:text-neutral-600 focus:outline-hidden focus:border-emerald-500 text-xs"
-              />
-            </div>
-            <div>
-              <label className="text-[10px] font-semibold text-neutral-400 block mb-1">
-                Test Venue
-              </label>
-              <input
-                type="text"
-                placeholder="e.g., Convention Center, Delhi"
-                value={testVenue}
-                onChange={(e) => setTestVenue(e.target.value)}
-                className="w-full px-3 py-1.5 rounded-lg bg-neutral-950 border border-neutral-800 text-white placeholder:text-neutral-600 focus:outline-hidden focus:border-emerald-500 text-xs"
-              />
-            </div>
-            <div>
-              <label className="text-[10px] font-semibold text-neutral-400 block mb-1">
-                Test Date &amp; Time
-              </label>
-              <input
-                type="text"
-                placeholder="e.g., 18 NOV 2026 · 09:30 AM"
-                value={testDate}
-                onChange={(e) => setTestDate(e.target.value)}
-                className="w-full px-3 py-1.5 rounded-lg bg-neutral-950 border border-neutral-800 text-white placeholder:text-neutral-600 focus:outline-hidden focus:border-emerald-500 text-xs"
-              />
-            </div>
-          </div>
-        )}
-
-        {/* Centered Ticket Visual */}
-        <div className="py-6 my-auto flex items-center justify-center relative min-h-[300px]">
-          <div className="drop-shadow-2xl">
-            <TicketVisualShowcase
-              template={template}
-              mode="showcase"
-              customEventName={testEventName || undefined}
-              customAttendeeName={testAttendeeName || undefined}
-              customVenue={testVenue || undefined}
-              customDate={testDate || undefined}
-            />
-          </div>
-        </div>
-
-        {/* Format Explanation Pill */}
-        <p className="text-[11px] text-neutral-400 text-center max-w-md mx-auto mb-4 leading-relaxed">
-          {formatMeta.desc}
-        </p>
-
-        {/* Bottom Actions */}
-        <div className="pt-4 border-t border-neutral-800 flex flex-col sm:flex-row items-center justify-between gap-3">
-          {isUnlocked ? (
-            <Link
-              href={`/studio?template=${encodeURIComponent(template.id)}`}
-              className="w-full py-3 px-5 rounded-2xl bg-white hover:bg-neutral-100 text-neutral-950 font-bold text-xs flex items-center justify-center gap-2 shadow-lg transition-all"
-            >
-              <span>Open in Visual Ticket Studio</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
           ) : (
-            <div className="w-full flex flex-col sm:flex-row items-center gap-2.5">
-              <button
-                type="button"
-                onClick={handleUnlockAction}
-                className="w-full sm:flex-1 py-3 px-4 rounded-xl bg-white hover:bg-neutral-100 text-neutral-950 font-bold text-xs flex items-center justify-center gap-2 shadow-xs transition-colors cursor-pointer"
-              >
-                <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
-                <span>Unlock for ₹{template.priceINR ?? SINGLE_TEMPLATE_PRICE_INR}</span>
-              </button>
+            /* Normal Information Panel */
+            <>
+              <div className="space-y-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className="text-xs font-medium text-neutral-500">
+                      {template.category}
+                    </span>
+                    <span className="text-neutral-300">·</span>
+                    <span className="text-xs font-medium text-neutral-500">
+                      {formatMeta.label}
+                    </span>
+                  </div>
 
-              <button
-                type="button"
-                onClick={handleUnlockBundleAction}
-                className="w-full sm:w-auto py-3 px-4 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-white font-bold text-xs border border-neutral-700 flex items-center justify-center gap-1.5 transition-colors cursor-pointer shrink-0"
-              >
-                <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-                <span>Get All 12 for ₹99</span>
-              </button>
-            </div>
+                  <h3 className="text-xl sm:text-2xl font-semibold text-neutral-900 tracking-tight leading-snug">
+                    {template.name}
+                  </h3>
+
+                  <p className="text-xs sm:text-sm text-neutral-500 mt-2 leading-relaxed">
+                    {template.description}
+                  </p>
+                </div>
+
+                {/* Included Specifications */}
+                <div className="space-y-2 pt-2 border-t border-neutral-100">
+                  <span className="text-xs font-semibold text-neutral-700 block">
+                    Includes:
+                  </span>
+                  <div className="space-y-1.5">
+                    {includedFields.map((field, idx) => (
+                      <div
+                        key={idx}
+                        className="flex items-center gap-2 text-xs text-neutral-600"
+                      >
+                        <Check className="w-3.5 h-3.5 text-neutral-900 shrink-0 stroke-[2.5]" />
+                        <span>{field}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* License / Price State */}
+                <div className="pt-3 border-t border-neutral-100 flex items-center justify-between">
+                  <span className="text-xs font-medium text-neutral-500">
+                    License
+                  </span>
+                  <span className="text-sm font-semibold text-neutral-900">
+                    {isFree ? "Free forever" : isUnlocked ? "Unlocked on your account" : `₹${price} one-time`}
+                  </span>
+                </div>
+              </div>
+
+              {/* Bottom Actions Area */}
+              <div className="space-y-3 pt-4 border-t border-neutral-100">
+                {isUnlocked ? (
+                  <Link
+                    href={`/studio?template=${encodeURIComponent(template.id)}`}
+                    className="w-full h-11 rounded-lg bg-neutral-900 hover:bg-neutral-800 text-white font-medium text-sm flex items-center justify-center gap-2 transition-colors shadow-2xs"
+                  >
+                    <span>Use Template</span>
+                    <ArrowRight className="w-4 h-4 text-neutral-400" />
+                  </Link>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleUnlockAction}
+                    className="w-full h-11 rounded-lg bg-brand hover:bg-brand-600 text-white font-medium text-sm flex items-center justify-center gap-2 transition-colors shadow-2xs cursor-pointer"
+                  >
+                    <span>Unlock Template — ₹{price}</span>
+                  </button>
+                )}
+
+                <div className="flex items-center justify-between text-xs pt-1">
+                  <Link
+                    href={`/studio?template=${encodeURIComponent(template.id)}`}
+                    className="text-neutral-600 hover:text-neutral-900 font-medium transition-colors"
+                  >
+                    Customize in Studio →
+                  </Link>
+
+                  {!isUnlocked && (
+                    <button
+                      type="button"
+                      onClick={onUnlockBundleClick}
+                      className="text-neutral-500 hover:text-neutral-800 text-[11px] underline cursor-pointer"
+                    >
+                      All 12 for ₹99
+                    </button>
+                  )}
+                </div>
+              </div>
+            </>
           )}
         </div>
-
-        {/* Auth prompt modal if not logged in */}
-        {showAuthPrompt && (
-          <div className="absolute inset-0 bg-neutral-950/95 backdrop-blur-md rounded-3xl p-6 flex flex-col items-center justify-center text-center z-30 animate-in fade-in duration-150">
-            <div className="w-12 h-12 rounded-2xl bg-amber-400/20 text-amber-400 flex items-center justify-center mb-4">
-              <Zap className="w-6 h-6" />
-            </div>
-            <h4 className="text-lg font-bold text-white mb-2">
-              Sign In to Unlock Template
-            </h4>
-            <p className="text-xs text-neutral-400 max-w-sm mb-6 leading-relaxed">
-              Log in to your URPASS organizer account to save and permanently bind this unlocked template to your profile with instant UPI.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3 w-full max-w-xs">
-              <Link
-                href={`/login?returnTo=/ticket-templates`}
-                className="flex-1 py-2.5 px-4 rounded-xl bg-white hover:bg-neutral-100 text-neutral-950 font-bold text-xs transition-colors"
-              >
-                Sign In
-              </Link>
-              <button
-                type="button"
-                onClick={() => setShowAuthPrompt(false)}
-                className="flex-1 py-2.5 px-4 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-white font-semibold text-xs border border-neutral-700 transition-colors"
-              >
-                Back to Preview
-              </button>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

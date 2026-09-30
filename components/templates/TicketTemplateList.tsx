@@ -17,18 +17,10 @@ import {
   Smartphone,
   Ticket,
   CreditCard,
-  Check,
-  Zap,
-  ArrowRight,
-  CheckCircle2,
-  Sparkles,
   Search,
-  Eye,
-  SlidersHorizontal,
   X,
-  Palette,
-  ShieldCheck,
-  Download,
+  ArrowRight,
+  Check,
 } from "lucide-react";
 
 interface TicketTemplateListProps {
@@ -149,60 +141,15 @@ export default function TicketTemplateList({
     return matchesFormat && matchesTier && matchesCategory && matchesSearch;
   });
 
-  function getFormatBadge(format: string) {
+  function getFormatLabel(format: string) {
     switch (format) {
       case "printable":
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/95 text-neutral-800 text-[10px] font-bold border border-neutral-200/90 shadow-2xs backdrop-blur-md">
-            <Ticket className="w-3 h-3 text-amber-500" />
-            Printable Stub
-          </span>
-        );
+        return "Printable";
       case "badge":
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/95 text-neutral-800 text-[10px] font-bold border border-neutral-200/90 shadow-2xs backdrop-blur-md">
-            <CreditCard className="w-3 h-3 text-sky-500" />
-            Lanyard Badge
-          </span>
-        );
+        return "Badge";
       case "digital":
       default:
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/95 text-neutral-800 text-[10px] font-bold border border-neutral-200/90 shadow-2xs backdrop-blur-md">
-            <Smartphone className="w-3 h-3 text-emerald-600" />
-            Mobile Wallet
-          </span>
-        );
-    }
-  }
-
-  function getTemplateColorSwatches(id: string): string[] {
-    switch (id) {
-      case "minimal-monochrome":
-        return ["#000000", "#71717A", "#FFFFFF"];
-      case "concert-music-fest":
-        return ["#0D0B18", "#F43F5E", "#8B5CF6"];
-      case "corporate-summit-gala":
-        return ["#0A0F1D", "#38BDF8", "#FFFFFF"];
-      case "college-fest-badge":
-        return ["#3730A3", "#FACC15", "#FFFFFF"];
-      case "tech-conf-badge":
-        return ["#0F172A", "#10B981", "#64748B"];
-      case "hackathon-terminal":
-        return ["#050505", "#22C55E", "#14532D"];
-      case "vip-all-access":
-        return ["#18181B", "#F59E0B", "#FDE047"];
-      case "workshop-masterclass":
-        return ["#0F766E", "#2DD4BF", "#FFFFFF"];
-      case "sports-arena-ticket":
-        return ["#1E1B4B", "#FB923C", "#FFFFFF"];
-      case "exhibition-trade-expo":
-        return ["#1E293B", "#3B82F6", "#FFFFFF"];
-      case "community-meetup":
-        return ["#4C1D95", "#A855F7", "#F3E8FF"];
-      case "dark-obsidian-luxury":
-      default:
-        return ["#000000", "#D97706", "#FDE68A"];
+        return "Mobile";
     }
   }
 
@@ -242,190 +189,86 @@ export default function TicketTemplateList({
   }
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-      {/* ── All-Access Master Pack Floating Offer Banner ── */}
-      <div className="rounded-3xl bg-neutral-900 p-6 sm:p-8 text-white border border-neutral-800 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden group">
-        <div className="relative z-10 max-w-xl">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-white text-xs font-bold border border-white/20 mb-3">
-            <Sparkles className="w-3.5 h-3.5 text-neutral-300" />
-            <span>LIMITED ALL-ACCESS MASTER BUNDLE</span>
-          </div>
-          <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white">
-            Unlock All 12 Pro Pass &amp; Ticket Designs for ₹99
-          </h2>
-          <p className="text-xs sm:text-sm text-neutral-300 mt-2 leading-relaxed">
-            Get permanent lifetime access to our entire library of digital passes, lanyard badges, and printable stubs. Instant UPI activation on your URPASS organizer account.
-          </p>
+    <div className="w-full max-w-[1320px] mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+      {/* ── 1. Page Title & Supporting Sentence (No Large Hero) ── */}
+      <div>
+        <h1 className="text-3xl sm:text-4xl lg:text-[40px] font-bold text-neutral-900 tracking-tight leading-tight">
+          Templates
+        </h1>
+        <p className="text-sm sm:text-[15px] text-neutral-500 font-normal mt-2">
+          Browse production-ready event passes, conference badges, and printable stubs.
+        </p>
+      </div>
+
+      {/* ── 2. Compact Search & Filters Utility Row ── */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 pt-1">
+        {/* Search Input (Takes Most of Width) */}
+        <div className="relative flex-1">
+          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400 pointer-events-none" />
+          <input
+            type="text"
+            placeholder="Search templates by name, category, or format..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full h-10 pl-9 pr-8 text-xs sm:text-sm bg-white border border-neutral-200 rounded-lg text-neutral-900 placeholder:text-neutral-400 focus:outline-hidden focus:border-neutral-900 transition-colors"
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery("")}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-700 p-0.5 cursor-pointer"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
 
-        <div className="relative z-10 shrink-0 w-full sm:w-auto flex flex-col sm:flex-row items-center gap-3">
-          <button
-            type="button"
-            onClick={handleOpenBundleCheckout}
-            className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-white hover:bg-neutral-100 text-neutral-900 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xs transition-colors cursor-pointer"
+        {/* Filter Controls: Format, Pricing, Category */}
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar shrink-0">
+          {/* Format Select */}
+          <select
+            value={selectedFormat}
+            onChange={(e) => setSelectedFormat(e.target.value)}
+            className="h-10 px-3 bg-white border border-neutral-200 rounded-lg text-xs font-medium text-neutral-700 focus:outline-hidden focus:border-neutral-900 transition-colors cursor-pointer"
           >
-            <Zap className="w-4 h-4 text-neutral-900 fill-neutral-900" />
-            <span>Claim Master Pack for ₹99</span>
-          </button>
+            <option value="all">All Formats</option>
+            <option value="digital">Mobile Passes</option>
+            <option value="badge">Lanyard Badges</option>
+            <option value="printable">Printable Stubs</option>
+          </select>
+
+          {/* Pricing Select */}
+          <select
+            value={selectedTier}
+            onChange={(e) => setSelectedTier(e.target.value as "all" | "free" | "paid")}
+            className="h-10 px-3 bg-white border border-neutral-200 rounded-lg text-xs font-medium text-neutral-700 focus:outline-hidden focus:border-neutral-900 transition-colors cursor-pointer"
+          >
+            <option value="all">All Pricing</option>
+            <option value="free">Free Forever</option>
+            <option value="paid">₹49 Pro</option>
+          </select>
+
+          {/* Category Select */}
+          <select
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            className="h-10 px-3 bg-white border border-neutral-200 rounded-lg text-xs font-medium text-neutral-700 focus:outline-hidden focus:border-neutral-900 transition-colors cursor-pointer"
+          >
+            {categories.map((cat) => (
+              <option key={cat} value={cat}>
+                {cat === "All" ? "All Categories" : cat}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 
-      {/* ── Studio Search & Filters Control Bar ── */}
-      <div className="space-y-4 pt-2">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h3 className="text-xl sm:text-2xl font-extrabold text-neutral-900 tracking-tight flex items-center gap-2">
-              <Palette className="w-5 h-5 text-emerald-600" />
-              <span>Browse Template Gallery</span>
-              <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-600 border border-neutral-200">
-                {filteredTemplates.length} Available
-              </span>
-            </h3>
-            <p className="text-xs text-neutral-500 mt-0.5">
-              Production-ready passes with atomic anti-duplicate locks and sub-0.3s camera QR validation.
-            </p>
-          </div>
-
-          {/* Search Input */}
-          <div className="relative w-full sm:w-72">
-            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400 pointer-events-none" />
-            <input
-              type="text"
-              placeholder="Search by event, category or tag..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-8 py-2 text-xs bg-white border border-neutral-200/90 rounded-xl focus:outline-hidden focus:border-neutral-900 shadow-2xs transition-all"
-            />
-            {searchQuery && (
-              <button
-                type="button"
-                onClick={() => setSearchQuery("")}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-700 p-0.5 cursor-pointer"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Filter Segments: Format & Pricing Tabs */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
-          {/* Format Tabs */}
-          <div className="inline-flex items-center p-1 bg-neutral-100/90 rounded-2xl border border-neutral-200/80 w-fit flex-wrap gap-1">
-            <button
-              type="button"
-              onClick={() => setSelectedFormat("all")}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                selectedFormat === "all"
-                  ? "bg-white text-neutral-900 shadow-xs"
-                  : "text-neutral-500 hover:text-neutral-900"
-              }`}
-            >
-              All Formats ({STUDIO_TEMPLATES.length})
-            </button>
-            <button
-              type="button"
-              onClick={() => setSelectedFormat("digital")}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                selectedFormat === "digital"
-                  ? "bg-white text-emerald-800 shadow-xs"
-                  : "text-neutral-500 hover:text-neutral-900"
-              }`}
-            >
-              <Smartphone className="w-3.5 h-3.5" />
-              Digital Passes ({STUDIO_TEMPLATES.filter((t) => t.format === "digital").length})
-            </button>
-            <button
-              type="button"
-              onClick={() => setSelectedFormat("badge")}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                selectedFormat === "badge"
-                  ? "bg-white text-sky-800 shadow-xs"
-                  : "text-neutral-500 hover:text-neutral-900"
-              }`}
-            >
-              <CreditCard className="w-3.5 h-3.5" />
-              Lanyard Badges ({STUDIO_TEMPLATES.filter((t) => t.format === "badge").length})
-            </button>
-            <button
-              type="button"
-              onClick={() => setSelectedFormat("printable")}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                selectedFormat === "printable"
-                  ? "bg-white text-amber-800 shadow-xs"
-                  : "text-neutral-500 hover:text-neutral-900"
-              }`}
-            >
-              <Ticket className="w-3.5 h-3.5" />
-              Printable Stubs ({STUDIO_TEMPLATES.filter((t) => t.format === "printable").length})
-            </button>
-          </div>
-
-          {/* Pricing Tier Tabs */}
-          <div className="inline-flex items-center p-1 bg-neutral-100/90 rounded-2xl border border-neutral-200/80 w-fit gap-1">
-            <button
-              type="button"
-              onClick={() => setSelectedTier("all")}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                selectedTier === "all"
-                  ? "bg-white text-neutral-900 shadow-xs"
-                  : "text-neutral-500 hover:text-neutral-900"
-              }`}
-            >
-              All Pricing
-            </button>
-            <button
-              type="button"
-              onClick={() => setSelectedTier("free")}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                selectedTier === "free"
-                  ? "bg-white text-emerald-700 shadow-xs"
-                  : "text-neutral-500 hover:text-neutral-900"
-              }`}
-            >
-              Free Forever ({STUDIO_TEMPLATES.filter((t) => t.tier !== "paid").length})
-            </button>
-            <button
-              type="button"
-              onClick={() => setSelectedTier("paid")}
-              className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                selectedTier === "paid"
-                  ? "bg-white text-amber-700 shadow-xs"
-                  : "text-neutral-500 hover:text-neutral-900"
-              }`}
-            >
-              <Zap className="w-3 h-3 text-amber-500" />
-              Pro ₹49 ({STUDIO_TEMPLATES.filter((t) => t.tier === "paid").length})
-            </button>
-          </div>
-        </div>
-
-        {/* Category Filter Horizontal Scroll */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar pt-1">
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              type="button"
-              onClick={() => setSelectedCategory(cat)}
-              className={`px-3.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
-                selectedCategory === cat
-                  ? "bg-neutral-900 text-white shadow-xs"
-                  : "bg-white text-neutral-600 hover:bg-neutral-100 border border-neutral-200"
-              }`}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* ── 4-Column High-End Gallery Grid ── */}
+      {/* ── 3. Template Grid (Desktop: 4 columns, Tablet: 2-3, Mobile: 1) ── */}
       {filteredTemplates.length === 0 ? (
-        <div className="py-16 text-center rounded-3xl border border-dashed border-neutral-300 bg-white p-8">
-          <Palette className="w-8 h-8 text-neutral-400 mx-auto mb-3" />
-          <h4 className="text-base font-bold text-neutral-900">No templates found</h4>
-          <p className="text-xs text-neutral-500 mt-1 max-w-sm mx-auto">
-            Try adjusting your search query or switching filters to see all available pass formats.
+        <div className="py-16 text-center rounded-xl border border-neutral-200 bg-white p-8">
+          <p className="text-sm font-semibold text-neutral-900">No templates found</p>
+          <p className="text-xs text-neutral-500 mt-1">
+            Try adjusting your search query or switching filters to see all available templates.
           </p>
           <button
             type="button"
@@ -435,103 +278,70 @@ export default function TicketTemplateList({
               setSelectedCategory("All");
               setSearchQuery("");
             }}
-            className="mt-4 px-4 py-2 rounded-xl bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800 transition-colors"
+            className="mt-4 px-4 py-2 rounded-lg bg-neutral-900 text-white text-xs font-medium hover:bg-neutral-800 transition-colors"
           >
-            Reset All Filters
+            Reset Filters
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 sm:gap-6 pt-2">
           {filteredTemplates.map((template) => {
             const isFree = template.tier !== "paid";
             const isUnlocked = isFree || isPro || isTemplateUnlocked(template.id, unlockedList);
-            const swatches = getTemplateColorSwatches(template.id);
+            const formatLabel = getFormatLabel(template.format);
 
             return (
               <div
                 key={template.id}
-                onClick={() => handleOpenShowcase(template)}
-                className="bg-white rounded-3xl border border-neutral-200/90 overflow-hidden shadow-xs hover:shadow-2xl hover:border-neutral-400/80 transition-all duration-300 flex flex-col justify-between group cursor-pointer relative"
+                className="bg-white border border-neutral-200 rounded-2xl p-4 flex flex-col justify-between hover:border-neutral-300 hover:shadow-2xs transition-all duration-150 group"
               >
-                {/* Canvas Showcase Container */}
-                <div className="w-full h-[300px] bg-[#F7F8FA] group-hover:bg-[#F0F2F5] p-4 relative flex items-center justify-center select-none overflow-hidden border-b border-neutral-100 transition-colors">
-                  {/* Floating Format Badge Top-Left */}
-                  <div className="absolute top-3 left-3 z-10">
-                    {getFormatBadge(template.format)}
+                {/* Preview Canvas Area (~65-70% visual attention) */}
+                <div
+                  onClick={() => handleOpenShowcase(template)}
+                  className="w-full h-[230px] bg-[#F7F8FA] rounded-xl p-3 relative flex items-center justify-center cursor-pointer select-none overflow-hidden border border-neutral-100 transition-colors"
+                >
+                  {/* Real State Badge Top-Right */}
+                  <div className="absolute top-2.5 right-2.5 z-10">
+                    <span className="px-2 py-0.5 rounded-md bg-white/95 text-neutral-700 text-[10px] font-medium border border-neutral-200 shadow-2xs backdrop-blur-xs">
+                      {isFree ? "Free" : isUnlocked ? "Unlocked" : `₹${template.priceINR ?? SINGLE_TEMPLATE_PRICE_INR}`}
+                    </span>
                   </div>
 
-                  {/* Floating Price/Tier Badge Top-Right */}
-                  <div className="absolute top-3 right-3 z-10">
-                    {isFree ? (
-                      <span className="px-2.5 py-1 rounded-lg bg-emerald-500 text-white text-[10px] font-black tracking-wider uppercase shadow-xs">
-                        FREE
-                      </span>
-                    ) : isUnlocked ? (
-                      <span className="px-2.5 py-1 rounded-lg bg-emerald-600 text-white text-[10px] font-bold tracking-wider uppercase shadow-xs flex items-center gap-1">
-                        <CheckCircle2 className="w-3 h-3" />
-                        UNLOCKED
-                      </span>
-                    ) : (
-                      <span className="px-2.5 py-1 rounded-lg bg-neutral-950 text-white text-[10px] font-black tracking-wider uppercase shadow-xs flex items-center gap-1 border border-neutral-800">
-                        <Zap className="w-3 h-3 text-amber-400" />
-                        ₹{template.priceINR ?? SINGLE_TEMPLATE_PRICE_INR}
-                      </span>
-                    )}
+                  {/* Format Badge Top-Left */}
+                  <div className="absolute top-2.5 left-2.5 z-10">
+                    <span className="px-2 py-0.5 rounded-md bg-white/95 text-neutral-600 text-[10px] font-medium border border-neutral-200 shadow-2xs backdrop-blur-xs">
+                      {formatLabel}
+                    </span>
                   </div>
 
                   {/* Scaled Ticket Visual Showcase */}
-                  <div className="relative z-10 w-full flex items-center justify-center transform group-hover:scale-[1.03] transition-transform duration-300 drop-shadow-md group-hover:drop-shadow-2xl">
+                  <div className="relative z-10 w-full flex items-center justify-center transform scale-[0.80] sm:scale-[0.82] origin-center drop-shadow-xs">
                     <TicketVisualShowcase template={template} mode="card" />
-                  </div>
-
-                  {/* Hover Floating Action Backdrop */}
-                  <div className="absolute inset-0 bg-neutral-950/40 opacity-0 group-hover:opacity-100 backdrop-blur-[2px] transition-all duration-200 flex flex-col items-center justify-center gap-2.5 p-4 z-20">
-                    <div className="px-4 py-2.5 rounded-xl bg-white text-neutral-950 font-bold text-xs flex items-center gap-2 shadow-2xl transform translate-y-1 group-hover:translate-y-0 transition-transform">
-                      <Eye className="w-3.5 h-3.5 text-neutral-600" />
-                      <span>Quick Preview &amp; Test</span>
-                    </div>
-
-                    <span className="text-[10px] text-white/90 font-medium bg-black/50 px-2.5 py-1 rounded-lg">
-                      Click anywhere to enlarge
-                    </span>
                   </div>
                 </div>
 
-                {/* Card Meta & 1-Click Action */}
-                <div className="p-4 flex-1 flex flex-col justify-between space-y-3.5">
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <h4 className="text-sm font-extrabold text-neutral-900 group-hover:text-emerald-700 transition-colors line-clamp-1">
-                        {template.name}
-                      </h4>
-                      {/* Color Palette Swatches */}
-                      <div className="flex items-center -space-x-1 shrink-0 ml-2" title="Theme Palette">
-                        {swatches.map((color, idx) => (
-                          <span
-                            key={idx}
-                            className="w-3 h-3 rounded-full border border-white shadow-2xs"
-                            style={{ backgroundColor: color }}
-                          />
-                        ))}
-                      </div>
-                    </div>
-
-                    <p className="text-xs text-neutral-500 line-clamp-1">
-                      {template.description}
+                {/* Card Info Below Preview */}
+                <div className="pt-3 flex-1 flex flex-col justify-between">
+                  <div>
+                    <h3
+                      onClick={() => handleOpenShowcase(template)}
+                      className="text-[15px] font-semibold text-neutral-900 line-clamp-1 cursor-pointer hover:text-neutral-700 transition-colors"
+                    >
+                      {template.name}
+                    </h3>
+                    <p className="text-xs text-neutral-500 font-normal mt-0.5">
+                      {template.category} · {formatLabel}
                     </p>
                   </div>
 
-                  {/* Action Button Row */}
-                  <div
-                    className="pt-2 border-t border-neutral-100"
-                    onClick={(e) => e.stopPropagation()}
-                  >
+                  {/* Primary Action Button */}
+                  <div className="pt-3 mt-2 border-t border-neutral-100 flex items-center gap-2">
                     {isUnlocked ? (
                       <Link
                         href={`/studio?template=${encodeURIComponent(template.id)}`}
-                        className="w-full py-2.5 px-3 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-colors shadow-2xs"
+                        className="w-full h-9 rounded-lg bg-neutral-900 hover:bg-neutral-800 text-white font-medium text-xs flex items-center justify-center gap-1.5 transition-colors"
                       >
-                        <span>Open in Studio</span>
+                        <span>Use Template</span>
                         <ArrowRight className="w-3.5 h-3.5 text-neutral-400" />
                       </Link>
                     ) : (
@@ -544,12 +354,20 @@ export default function TicketTemplateList({
                             handleOpenCheckout(template);
                           }
                         }}
-                        className="w-full py-2.5 px-3 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-colors shadow-2xs cursor-pointer"
+                        className="w-full h-9 rounded-lg bg-neutral-900 hover:bg-neutral-800 text-white font-medium text-xs flex items-center justify-center transition-colors cursor-pointer"
                       >
-                        <Zap className="w-3.5 h-3.5 text-amber-400" />
-                        <span>Unlock Design — ₹{template.priceINR ?? SINGLE_TEMPLATE_PRICE_INR}</span>
+                        <span>Unlock — ₹{template.priceINR ?? SINGLE_TEMPLATE_PRICE_INR}</span>
                       </button>
                     )}
+
+                    <button
+                      type="button"
+                      onClick={() => handleOpenShowcase(template)}
+                      className="h-9 px-2.5 rounded-lg border border-neutral-200 text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50 text-xs font-medium transition-colors cursor-pointer shrink-0"
+                      title="Preview Template"
+                    >
+                      Preview
+                    </button>
                   </div>
                 </div>
               </div>
@@ -557,6 +375,25 @@ export default function TicketTemplateList({
           })}
         </div>
       )}
+
+      {/* ── 4. Small Restrained Bundle Strip (After the Grid) ── */}
+      <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mt-8">
+        <div>
+          <h4 className="text-sm font-semibold text-neutral-900">
+            All templates. One bundle.
+          </h4>
+          <p className="text-xs text-neutral-500 mt-0.5">
+            Unlock the complete 12-template collection for ₹99 lifetime access across all your events.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={handleOpenBundleCheckout}
+          className="px-4 py-2 rounded-lg bg-neutral-900 hover:bg-neutral-800 text-white font-medium text-xs transition-colors shrink-0 cursor-pointer"
+        >
+          View Bundle
+        </button>
+      </div>
 
       {/* Showcase Modal */}
       <TemplateShowcaseModal

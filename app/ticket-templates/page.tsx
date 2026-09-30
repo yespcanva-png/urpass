@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
-import EventSetupAcceleratorGallery from "@/components/templates/EventSetupAcceleratorGallery";
+import TicketTemplateList from "@/components/templates/TicketTemplateList";
 import Link from "next/link";
 
 export const metadata: Metadata = {
@@ -94,8 +94,8 @@ export default function TicketTemplatesPage() {
         <Navbar />
 
         {/* Templates Hub Canvas */}
-        <div className="pt-28 sm:pt-36 pb-16 bg-neutral-50/60 min-h-screen">
-          <EventSetupAcceleratorGallery />
+        <div className="pt-24 sm:pt-32 pb-16 bg-white min-h-screen">
+          <TicketTemplateList />
 
           {/* FAQs */}
           <section className="py-16 px-4 sm:px-8 max-w-4xl mx-auto">
