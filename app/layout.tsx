@@ -188,18 +188,31 @@ const organizationSchema = {
     addressRegion: "Tamil Nadu",
     addressLocality: "Chennai",
   },
-  areaServed: {
-    "@type": "Country",
-    name: "India",
-  },
+  areaServed: [
+    {
+      "@type": "Country",
+      name: "India",
+    },
+    {
+      "@type": "Country",
+      name: "United Kingdom",
+    },
+    {
+      "@type": "AdministrativeArea",
+      name: "Worldwide",
+    },
+  ],
   slogan: "Create. Share. Scan. Instant digital event passes and sub-second QR check-in.",
   knowsAbout: [
     "Digital Event Passes",
     "QR Event Check-in",
     "Event Ticketing Software",
+    "Zero Commission Event Ticketing",
     "College Fest Management",
     "Hackathon Pass Generator",
     "Razorpay Event Ticketing",
+    "Model Context Protocol",
+    "Multi-Tenant Event Organizations",
   ],
 };
 
@@ -213,12 +226,15 @@ const softwareSchema = {
   browserRequirements: "Requires HTML5, JavaScript, modern browser",
   url: BASE_URL,
   description:
-    "Fast digital event pass generator with QR code check-in, real-time attendance analytics, customizable attendee feedback surveys, and Razorpay ticket payment integration. Start free forever or try Starter, Pro, or Business with a 30-day free trial.",
+    "Fast digital event pass generator with sub-second QR check-in, real-time attendance analytics, customizable attendee feedback surveys, Model Context Protocol (MCP) server, and zero-commission ticketing. Start free forever or try Starter, Pro, or Business with a 30-day free trial.",
   offers: [
     { "@type": "Offer", name: "Free Tier", price: "0", priceCurrency: "INR", priceValidUntil: "2027-12-31", description: "Free forever. 2 events/month, 100 registrations/month, QR passes & check-in." },
-    { "@type": "Offer", name: "Starter Tier (30-Day Free Trial)", price: "499", priceCurrency: "INR", billingIncrement: "P1M", priceValidUntil: "2027-12-31", description: "Try free for 30 days. 10 events/month, 500 registrations/month, CSV import & export." },
-    { "@type": "Offer", name: "Pro Tier (30-Day Free Trial)", price: "999", priceCurrency: "INR", billingIncrement: "P1M", priceValidUntil: "2027-12-31", description: "Try free for 30 days. Unlimited events, 2,500 registrations/month, custom pass design & branding." },
-    { "@type": "Offer", name: "Business Tier (30-Day Free Trial)", price: "2499", priceCurrency: "INR", billingIncrement: "P1M", priceValidUntil: "2027-12-31", description: "Try free for 30 days. Unlimited events, 10,000 registrations/month, 15 organizers, custom domain & API." },
+    { "@type": "Offer", name: "Starter Tier (30-Day Free Trial)", price: "499", priceCurrency: "INR", billingIncrement: "P1M", priceValidUntil: "2027-12-31", description: "Try free for 30 days at ₹0. 10 events/month, 500 registrations/month, CSV import & export." },
+    { "@type": "Offer", name: "Pro Tier (30-Day Free Trial)", price: "999", priceCurrency: "INR", billingIncrement: "P1M", priceValidUntil: "2027-12-31", description: "Try free for 30 days at ₹0. Unlimited events, 2,500 registrations/month, Ticket Studio custom pass branding." },
+    { "@type": "Offer", name: "Business Tier (30-Day Free Trial)", price: "2499", priceCurrency: "INR", billingIncrement: "P1M", priceValidUntil: "2027-12-31", description: "Try free for 30 days at ₹0. Unlimited events, 10,000 registrations/month, corporate workspaces, API & MCP server." },
+    { "@type": "Offer", name: "Global Starter Tier", price: "9", priceCurrency: "USD", billingIncrement: "P1M", priceValidUntil: "2027-12-31", description: "Global Starter Plan with 30-day free trial at $0." },
+    { "@type": "Offer", name: "Global Pro Tier", price: "19", priceCurrency: "USD", billingIncrement: "P1M", priceValidUntil: "2027-12-31", description: "Global Pro Plan with 30-day free trial at $0." },
+    { "@type": "Offer", name: "Global Business Tier", price: "39", priceCurrency: "USD", billingIncrement: "P1M", priceValidUntil: "2027-12-31", description: "Global Business Plan with 30-day free trial at $0." },
   ],
   aggregateRating: {
     "@type": "AggregateRating",
@@ -233,20 +249,24 @@ const softwareSchema = {
     "Event Ticketing Software",
     "Free Event Registration",
     "30-Day Free Trial",
+    "Zero Commission Ticketing",
     "College Fest Entry Management",
     "Hackathon Check-in",
     "Razorpay Payment Gateway",
+    "Model Context Protocol (MCP)",
     "Generative Engine Optimization",
   ],
   featureList: [
-    "30-Day Free Trial on paid plans",
-    "Instant QR Code Ticket Generation",
-    "Sub-second Mobile QR Entry Scanner",
-    "Customizable Post-Event Feedback Survey Builder",
-    "Real-time Attendance & Check-in Analytics",
-    "Custom Pass Designer with Live Preview",
-    "Razorpay INR Payment Gateway Integration",
-    "Exportable CSV Attendee Reports",
+    "30-Day Free Trial on paid plans without credit card",
+    "0% Per-Ticket Platform Commission",
+    "Sub-second Mobile QR Entry Scanner (<0.3s)",
+    "Bespoke Ticket Studio & Lanyard Badge Designer",
+    "Atomic Anti-Duplicate Entry Protection",
+    "Offline Gate Scanning & Local Manifest Sync",
+    "Native Model Context Protocol (MCP) AI Server",
+    "Multi-Tenant Corporate Workspaces & RBAC",
+    "Razorpay INR Payment Gateway & UPI Checkout",
+    "Exportable CSV Attendee Reports & Audit Logs",
   ],
 };
 
