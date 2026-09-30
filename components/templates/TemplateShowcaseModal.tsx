@@ -1,18 +1,20 @@
 "use client";
 
-import React, { useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import type { StudioTemplateDefinition } from "@/lib/studio/templates";
-import { SINGLE_TEMPLATE_PRICE_INR } from "@/lib/studio/templates";
+import {
+  STUDIO_TEMPLATES,
+  type StudioTemplateDefinition,
+  SINGLE_TEMPLATE_PRICE_INR,
+} from "@/lib/studio/templates";
 import TicketVisualShowcase from "./TicketVisualShowcase";
 import {
   X,
   Check,
-  Smartphone,
-  CreditCard,
-  Ticket,
+  ZoomIn,
+  ZoomOut,
+  Maximize2,
   ArrowRight,
-  Sparkles,
 } from "lucide-react";
 
 interface TemplateShowcaseModalProps {
@@ -29,15 +31,26 @@ interface TemplateShowcaseModalProps {
 export default function TemplateShowcaseModal({
   isOpen,
   onClose,
-  template,
+  template: initialTemplate,
   isUnlocked,
   isAuthenticated,
   onUnlockClick,
   onUnlockBundleClick,
 }: TemplateShowcaseModalProps) {
-  const [showAuthPrompt, setShowAuthPrompt] = React.useState(false);
+  const [currentTemplate, setCurrentTemplate] = useState<StudioTemplateDefinition | null>(
+    initialTemplate
+  );
+  const [zoomLevel, setZoomLevel] = useState<number>(100);
+  const [showAuthPrompt, setShowAuthPrompt] = useState(false);
 
-  // Handle escape key to close
+  // Sync when initialTemplate changes
+  useEffect(() => {
+    setCurrentTemplate(initialTemplate);
+    setZoomLevel(100);
+    setShowAuthPrompt(false);
+  }, [initialTemplate]);
+
+  // Handle escape key
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -48,9 +61,8 @@ export default function TemplateShowcaseModal({
   );
 
   useEffect(() => {
-    if (isOpen && template) {
+    if (isOpen && currentTemplate) {
       document.body.style.overflow = "hidden";
-      setShowAuthPrompt(false);
       window.addEventListener("keydown", handleKeyDown);
     } else {
       document.body.style.overflow = "";
@@ -59,111 +71,184 @@ export default function TemplateShowcaseModal({
       document.body.style.overflow = "";
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [isOpen, template, handleKeyDown]);
+  }, [isOpen, currentTemplate, handleKeyDown]);
 
-  if (!isOpen || !template) return null;
+  if (!isOpen || !currentTemplate) return null;
 
-  const isFree = template.tier !== "paid";
-  const price = template.priceINR ?? SINGLE_TEMPLATE_PRICE_INR;
+  const isFree = currentTemplate.tier !== "paid";
+  const price = currentTemplate.priceINR ?? SINGLE_TEMPLATE_PRICE_INR;
 
   function handleUnlockAction() {
     if (!isAuthenticated) {
       setShowAuthPrompt(true);
       return;
     }
-    onUnlockClick(template!);
+    onUnlockClick(currentTemplate!);
   }
 
-  function getFormatMeta(format: string) {
-    switch (format) {
-      case "printable":
-        return {
-          label: "Printable Stub",
-          dim: "780 × 340 px",
-          icon: Ticket,
-        };
-      case "badge":
-        return {
-          label: "Lanyard Badge",
-          dim: "440 × 640 px",
-          icon: CreditCard,
-        };
-      case "digital":
-      default:
-        return {
-          label: "Mobile Pass",
-          dim: "380 × 680 px",
-          icon: Smartphone,
-        };
+  function handleFormatSwitch(targetFormat: "digital" | "badge" | "printable") {
+    if (currentTemplate?.format === targetFormat) return;
+    // Find a template matching the requested format in the same category or best match
+    const matchingInCat = STUDIO_TEMPLATES.find(
+      (t) => t.format === targetFormat && t.category === currentTemplate?.category
+    );
+    const fallbackMatching = STUDIO_TEMPLATES.find((t) => t.format === targetFormat);
+    const nextTemplate = matchingInCat || fallbackMatching;
+    if (nextTemplate) {
+      setCurrentTemplate(nextTemplate);
+      setZoomLevel(100);
     }
   }
 
-  const formatMeta = getFormatMeta(template.format);
-  const FormatIcon = formatMeta.icon;
+  function getFormatDisplay(format: string) {
+    switch (format) {
+      case "printable":
+        return "Printable Stub";
+      case "badge":
+        return "Lanyard Badge";
+      case "digital":
+      default:
+        return "Mobile Pass";
+    }
+  }
 
-  const includedFields = [
+  function handleZoom(delta: number) {
+    setZoomLevel((prev) => {
+      const next = prev + delta;
+      return Math.min(130, Math.max(70, next));
+    });
+  }
+
+  const includedItems = [
     "High-density QR code",
-    "Attendee name & organization",
-    "Ticket type & category tier",
-    "Event schedule & venue",
-    "Unique serialized ticket ID",
+    "Attendee name",
+    "Ticket category",
+    "Event details",
+    "Ticket ID",
   ];
+
+  const scaleValue = zoomLevel / 100;
 
   return (
     <div
       role="dialog"
       aria-modal="true"
-      aria-label={`${template.name} preview`}
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-neutral-900/40 backdrop-blur-xs animate-in fade-in duration-150 overflow-y-auto"
+      aria-label={`${currentTemplate.name} preview`}
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-neutral-900/40 backdrop-blur-xs animate-in fade-in duration-150 overflow-y-auto"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-[1160px] bg-white border border-neutral-200 rounded-2xl shadow-xl overflow-hidden flex flex-col md:flex-row my-auto relative animate-in zoom-in-95 duration-150 max-h-[88vh]"
+        className="w-full max-w-[1180px] bg-white border border-neutral-200 rounded-2xl shadow-xl overflow-hidden flex flex-col md:flex-row my-auto relative animate-in zoom-in-95 duration-150 max-h-[88vh]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Floating Close Button */}
         <button
           type="button"
           onClick={onClose}
-          aria-label="Close preview"
-          className="absolute top-3.5 right-3.5 z-20 w-8 h-8 rounded-lg bg-white/90 hover:bg-neutral-100 border border-neutral-200 text-neutral-500 hover:text-neutral-900 flex items-center justify-center transition-colors cursor-pointer"
+          aria-label="Close modal"
+          className="absolute top-4 right-4 z-30 w-8 h-8 rounded-lg bg-white/90 hover:bg-neutral-100 border border-neutral-200 text-neutral-500 hover:text-neutral-900 flex items-center justify-center transition-colors cursor-pointer shadow-2xs"
         >
           <X className="w-4 h-4" />
         </button>
 
-        {/* ── LEFT: 65% Neutral Preview Canvas ── */}
-        <div className="w-full md:w-[65%] bg-[#F5F6F7] p-6 sm:p-10 flex flex-col justify-between items-center relative border-b md:border-b-0 md:border-r border-neutral-200 overflow-y-auto">
-          {/* Subtle Format Indicator */}
-          <div className="w-full flex items-center justify-between text-xs text-neutral-400 font-mono">
-            <span className="inline-flex items-center gap-1.5 font-sans font-medium text-neutral-600">
-              <FormatIcon className="w-3.5 h-3.5 text-neutral-500" />
-              {formatMeta.label}
-            </span>
-            <span>{formatMeta.dim}</span>
-          </div>
-
-          {/* Centered Pass Canvas with subtle shadow */}
-          <div className="w-full flex-1 flex items-center justify-center py-6 sm:py-8">
-            <div className="drop-shadow-sm select-none">
-              <TicketVisualShowcase template={template} mode="showcase" />
+        {/* ── PREVIEW SIDE: 68% Canvas ── */}
+        <div className="w-full md:w-[68%] bg-[#F6F7F8] p-5 sm:p-8 flex flex-col justify-between items-center relative border-b md:border-b-0 md:border-r border-neutral-200 overflow-hidden">
+          {/* Top Segmented Format Switcher */}
+          <div className="w-full flex items-center justify-center mb-3">
+            <div className="inline-flex items-center p-0.5 bg-neutral-200/60 rounded-lg text-xs font-medium border border-neutral-200">
+              <button
+                type="button"
+                onClick={() => handleFormatSwitch("digital")}
+                className={`px-3 py-1 rounded-md transition-all cursor-pointer ${
+                  currentTemplate.format === "digital"
+                    ? "bg-white text-neutral-900 shadow-2xs font-semibold"
+                    : "text-neutral-600 hover:text-neutral-900"
+                }`}
+              >
+                Mobile
+              </button>
+              <button
+                type="button"
+                onClick={() => handleFormatSwitch("badge")}
+                className={`px-3 py-1 rounded-md transition-all cursor-pointer ${
+                  currentTemplate.format === "badge"
+                    ? "bg-white text-neutral-900 shadow-2xs font-semibold"
+                    : "text-neutral-600 hover:text-neutral-900"
+                }`}
+              >
+                Badge
+              </button>
+              <button
+                type="button"
+                onClick={() => handleFormatSwitch("printable")}
+                className={`px-3 py-1 rounded-md transition-all cursor-pointer ${
+                  currentTemplate.format === "printable"
+                    ? "bg-white text-neutral-900 shadow-2xs font-semibold"
+                    : "text-neutral-600 hover:text-neutral-900"
+                }`}
+              >
+                Print
+              </button>
             </div>
           </div>
 
-          {/* Minimal Canvas Footer Label */}
-          <div className="w-full text-center">
-            <span className="text-[11px] text-neutral-400 font-mono">
-              Vector SVG preview · Sub-0.3s camera scan ready
+          {/* Centered Real Design Canvas Area */}
+          <div className="w-full flex-1 flex items-center justify-center py-4 sm:py-6 overflow-hidden min-h-[360px]">
+            <div
+              className="drop-shadow-sm select-none transition-transform duration-150 flex items-center justify-center"
+              style={{ transform: `scale(${scaleValue})`, transformOrigin: "center center" }}
+            >
+              <TicketVisualShowcase template={currentTemplate} mode="showcase" />
+            </div>
+          </div>
+
+          {/* Bottom Subtle Zoom Controls */}
+          <div className="w-full flex items-center justify-between text-xs text-neutral-500 pt-2 border-t border-neutral-200/60">
+            <span className="text-[11px] font-mono text-neutral-400">
+              {getFormatDisplay(currentTemplate.format)}
             </span>
+
+            {/* Zoom Widget: [ − ] [ 100% ] [ + ] */}
+            <div className="inline-flex items-center gap-1 bg-white border border-neutral-200 rounded-lg px-1.5 py-0.5 shadow-2xs">
+              <button
+                type="button"
+                onClick={() => handleZoom(-15)}
+                disabled={zoomLevel <= 70}
+                aria-label="Zoom out"
+                className="w-6 h-6 flex items-center justify-center text-neutral-600 hover:text-neutral-900 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer font-bold text-sm"
+              >
+                −
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setZoomLevel(100)}
+                className="px-1.5 text-[11px] font-mono font-medium text-neutral-700 hover:text-neutral-900 cursor-pointer"
+                title="Reset zoom"
+              >
+                {zoomLevel}%
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleZoom(15)}
+                disabled={zoomLevel >= 130}
+                aria-label="Zoom in"
+                className="w-6 h-6 flex items-center justify-center text-neutral-600 hover:text-neutral-900 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer font-bold text-sm"
+              >
+                +
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* ── RIGHT: 35% Information & Actions Panel ── */}
-        <div className="w-full md:w-[35%] p-6 sm:p-8 flex flex-col justify-between bg-white space-y-6 overflow-y-auto">
+        {/* ── RIGHT DETAILS PANEL: 32% ── */}
+        <div className="w-full md:w-[32%] p-6 sm:p-7 flex flex-col justify-between bg-white space-y-6 overflow-y-auto">
           {showAuthPrompt ? (
-            /* Auth Required View */
-            <div className="space-y-4 my-auto text-left">
-              <span className="text-xs font-semibold text-brand uppercase tracking-wider block">
-                Sign in required
+            /* Auth Required State */
+            <div className="space-y-4 my-auto">
+              <span className="text-xs font-semibold text-neutral-500 uppercase tracking-wider block">
+                Account Sign In
               </span>
               <h4 className="text-lg font-semibold text-neutral-900 leading-snug">
                 Sign in to save this template
@@ -188,96 +273,105 @@ export default function TemplateShowcaseModal({
               </div>
             </div>
           ) : (
-            /* Normal Information Panel */
+            /* Standard Product Information Panel */
             <>
               <div className="space-y-4">
                 <div>
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <span className="text-xs font-medium text-neutral-500">
-                      {template.category}
-                    </span>
-                    <span className="text-neutral-300">·</span>
-                    <span className="text-xs font-medium text-neutral-500">
-                      {formatMeta.label}
-                    </span>
-                  </div>
-
                   <h3 className="text-xl sm:text-2xl font-semibold text-neutral-900 tracking-tight leading-snug">
-                    {template.name}
+                    {currentTemplate.name}
                   </h3>
-
-                  <p className="text-xs sm:text-sm text-neutral-500 mt-2 leading-relaxed">
-                    {template.description}
+                  <p className="text-xs font-medium text-neutral-500 mt-1">
+                    {getFormatDisplay(currentTemplate.format)}
+                  </p>
+                  <p className="text-xs sm:text-sm text-neutral-600 mt-2.5 leading-relaxed">
+                    {currentTemplate.description}
                   </p>
                 </div>
 
                 {/* Included Specifications */}
-                <div className="space-y-2 pt-2 border-t border-neutral-100">
-                  <span className="text-xs font-semibold text-neutral-700 block">
-                    Includes:
+                <div className="space-y-2 pt-3 border-t border-neutral-100">
+                  <span className="text-xs font-semibold text-neutral-800 block">
+                    Included
                   </span>
                   <div className="space-y-1.5">
-                    {includedFields.map((field, idx) => (
+                    {includedItems.map((item, idx) => (
                       <div
                         key={idx}
                         className="flex items-center gap-2 text-xs text-neutral-600"
                       >
                         <Check className="w-3.5 h-3.5 text-neutral-900 shrink-0 stroke-[2.5]" />
-                        <span>{field}</span>
+                        <span>{item}</span>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                {/* License / Price State */}
-                <div className="pt-3 border-t border-neutral-100 flex items-center justify-between">
-                  <span className="text-xs font-medium text-neutral-500">
-                    License
+                {/* Pricing Block */}
+                <div className="pt-3 border-t border-neutral-100">
+                  <span className="text-xs font-medium text-neutral-500 block mb-0.5">
+                    Pricing
                   </span>
-                  <span className="text-sm font-semibold text-neutral-900">
-                    {isFree ? "Free forever" : isUnlocked ? "Unlocked on your account" : `₹${price} one-time`}
-                  </span>
+                  <p className="text-sm font-semibold text-neutral-900">
+                    {isFree
+                      ? "Free"
+                      : isUnlocked
+                      ? "Included in All-Access Bundle"
+                      : `₹${price} one-time`}
+                  </p>
                 </div>
               </div>
 
               {/* Bottom Actions Area */}
-              <div className="space-y-3 pt-4 border-t border-neutral-100">
+              <div className="space-y-2.5 pt-4 border-t border-neutral-100">
                 {isUnlocked ? (
-                  <Link
-                    href={`/studio?template=${encodeURIComponent(template.id)}`}
-                    className="w-full h-11 rounded-lg bg-neutral-900 hover:bg-neutral-800 text-white font-medium text-sm flex items-center justify-center gap-2 transition-colors shadow-2xs"
-                  >
-                    <span>Use Template</span>
-                    <ArrowRight className="w-4 h-4 text-neutral-400" />
-                  </Link>
+                  /* Free or Unlocked Template Flow */
+                  <>
+                    <Link
+                      href={`/studio?template=${encodeURIComponent(currentTemplate.id)}`}
+                      className="w-full h-11 rounded-lg bg-neutral-900 hover:bg-neutral-800 text-white font-medium text-sm flex items-center justify-center gap-2 transition-colors shadow-2xs"
+                    >
+                      <span>Use Template</span>
+                      <ArrowRight className="w-4 h-4 text-neutral-400" />
+                    </Link>
+
+                    <div className="text-center pt-1">
+                      <Link
+                        href={`/studio?template=${encodeURIComponent(currentTemplate.id)}`}
+                        className="text-xs text-neutral-500 hover:text-neutral-900 font-medium transition-colors"
+                      >
+                        Customize in Studio →
+                      </Link>
+                    </div>
+                  </>
                 ) : (
-                  <button
-                    type="button"
-                    onClick={handleUnlockAction}
-                    className="w-full h-11 rounded-lg bg-brand hover:bg-brand-600 text-white font-medium text-sm flex items-center justify-center gap-2 transition-colors shadow-2xs cursor-pointer"
-                  >
-                    <span>Unlock Template — ₹{price}</span>
-                  </button>
-                )}
-
-                <div className="flex items-center justify-between text-xs pt-1">
-                  <Link
-                    href={`/studio?template=${encodeURIComponent(template.id)}`}
-                    className="text-neutral-600 hover:text-neutral-900 font-medium transition-colors"
-                  >
-                    Customize in Studio →
-                  </Link>
-
-                  {!isUnlocked && (
+                  /* Paid Template Flow */
+                  <>
                     <button
                       type="button"
-                      onClick={onUnlockBundleClick}
-                      className="text-neutral-500 hover:text-neutral-800 text-[11px] underline cursor-pointer"
+                      onClick={handleUnlockAction}
+                      className="w-full h-11 rounded-lg bg-neutral-900 hover:bg-neutral-800 text-white font-medium text-sm flex items-center justify-center gap-2 transition-colors shadow-2xs cursor-pointer"
                     >
-                      All 12 for ₹99
+                      <span>Unlock Template — ₹{price}</span>
                     </button>
-                  )}
-                </div>
+
+                    <div className="flex items-center justify-between text-xs pt-1">
+                      <button
+                        type="button"
+                        onClick={onUnlockBundleClick}
+                        className="text-neutral-500 hover:text-neutral-800 font-medium cursor-pointer"
+                      >
+                        View Bundle
+                      </button>
+
+                      <Link
+                        href={`/studio?template=${encodeURIComponent(currentTemplate.id)}`}
+                        className="text-neutral-500 hover:text-neutral-800 font-medium"
+                      >
+                        Preview in Studio →
+                      </Link>
+                    </div>
+                  </>
+                )}
               </div>
             </>
           )}

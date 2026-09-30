@@ -14,13 +14,8 @@ import TicketVisualShowcase from "./TicketVisualShowcase";
 import TemplateShowcaseModal from "./TemplateShowcaseModal";
 import TemplateCheckoutModal from "./TemplateCheckoutModal";
 import {
-  Smartphone,
-  Ticket,
-  CreditCard,
   Search,
   X,
-  ArrowRight,
-  Check,
 } from "lucide-react";
 
 interface TicketTemplateListProps {
@@ -141,15 +136,15 @@ export default function TicketTemplateList({
     return matchesFormat && matchesTier && matchesCategory && matchesSearch;
   });
 
-  function getFormatLabel(format: string) {
+  function getFormatDisplay(format: string) {
     switch (format) {
       case "printable":
-        return "Printable";
+        return "Print";
       case "badge":
         return "Badge";
       case "digital":
       default:
-        return "Mobile";
+        return "Mobile Pass";
     }
   }
 
@@ -288,61 +283,50 @@ export default function TicketTemplateList({
           {filteredTemplates.map((template) => {
             const isFree = template.tier !== "paid";
             const isUnlocked = isFree || isPro || isTemplateUnlocked(template.id, unlockedList);
-            const formatLabel = getFormatLabel(template.format);
+            const formatDisplay = getFormatDisplay(template.format);
+            const price = template.priceINR ?? SINGLE_TEMPLATE_PRICE_INR;
 
             return (
               <div
                 key={template.id}
-                className="bg-white border border-neutral-200 rounded-2xl p-4 flex flex-col justify-between hover:border-neutral-300 hover:shadow-2xs transition-all duration-150 group"
+                className="bg-white border border-neutral-200 rounded-[16px] p-4 flex flex-col justify-between hover:border-neutral-300 hover:shadow-xs transition-all duration-150 group"
               >
-                {/* Preview Canvas Area (~65-70% visual attention) */}
+                {/* Large Template Preview Area (65–70% of attention, neutral canvas) */}
                 <div
                   onClick={() => handleOpenShowcase(template)}
-                  className="w-full h-[230px] bg-[#F7F8FA] rounded-xl p-3 relative flex items-center justify-center cursor-pointer select-none overflow-hidden border border-neutral-100 transition-colors"
+                  className="w-full h-[230px] bg-[#F6F7F8] rounded-xl relative flex items-center justify-center cursor-pointer select-none overflow-hidden border border-neutral-100/80"
                 >
-                  {/* Real State Badge Top-Right */}
-                  <div className="absolute top-2.5 right-2.5 z-10">
-                    <span className="px-2 py-0.5 rounded-md bg-white/95 text-neutral-700 text-[10px] font-medium border border-neutral-200 shadow-2xs backdrop-blur-xs">
-                      {isFree ? "Free" : isUnlocked ? "Unlocked" : `₹${template.priceINR ?? SINGLE_TEMPLATE_PRICE_INR}`}
-                    </span>
-                  </div>
-
-                  {/* Format Badge Top-Left */}
-                  <div className="absolute top-2.5 left-2.5 z-10">
-                    <span className="px-2 py-0.5 rounded-md bg-white/95 text-neutral-600 text-[10px] font-medium border border-neutral-200 shadow-2xs backdrop-blur-xs">
-                      {formatLabel}
-                    </span>
-                  </div>
-
-                  {/* Scaled Ticket Visual Showcase */}
+                  {/* Scaled Ticket Visual Showcase - Centered, original aspect ratio */}
                   <div className="relative z-10 w-full flex items-center justify-center transform scale-[0.80] sm:scale-[0.82] origin-center drop-shadow-xs">
                     <TicketVisualShowcase template={template} mode="card" />
                   </div>
                 </div>
 
-                {/* Card Info Below Preview */}
+                {/* Below Preview */}
                 <div className="pt-3 flex-1 flex flex-col justify-between">
                   <div>
+                    {/* Template Name */}
                     <h3
                       onClick={() => handleOpenShowcase(template)}
                       className="text-[15px] font-semibold text-neutral-900 line-clamp-1 cursor-pointer hover:text-neutral-700 transition-colors"
                     >
                       {template.name}
                     </h3>
-                    <p className="text-xs text-neutral-500 font-normal mt-0.5">
-                      {template.category} · {formatLabel}
+
+                    {/* Small Compact Metadata Row */}
+                    <p className="text-xs text-neutral-500 font-normal mt-1">
+                      {formatDisplay} • {isFree ? "Free" : isUnlocked ? "Unlocked" : `₹${price}`}
                     </p>
                   </div>
 
-                  {/* Primary Action Button */}
-                  <div className="pt-3 mt-2 border-t border-neutral-100 flex items-center gap-2">
+                  {/* Actions: One Primary Action + Optional Secondary Text Action */}
+                  <div className="pt-3 mt-2.5 border-t border-neutral-100 flex items-center justify-between gap-2">
                     {isUnlocked ? (
                       <Link
                         href={`/studio?template=${encodeURIComponent(template.id)}`}
-                        className="w-full h-9 rounded-lg bg-neutral-900 hover:bg-neutral-800 text-white font-medium text-xs flex items-center justify-center gap-1.5 transition-colors"
+                        className="flex-1 h-9 rounded-lg bg-neutral-900 hover:bg-neutral-800 text-white font-medium text-xs flex items-center justify-center transition-colors"
                       >
-                        <span>Use Template</span>
-                        <ArrowRight className="w-3.5 h-3.5 text-neutral-400" />
+                        Use Template
                       </Link>
                     ) : (
                       <button
@@ -354,17 +338,16 @@ export default function TicketTemplateList({
                             handleOpenCheckout(template);
                           }
                         }}
-                        className="w-full h-9 rounded-lg bg-neutral-900 hover:bg-neutral-800 text-white font-medium text-xs flex items-center justify-center transition-colors cursor-pointer"
+                        className="flex-1 h-9 rounded-lg bg-neutral-900 hover:bg-neutral-800 text-white font-medium text-xs flex items-center justify-center transition-colors cursor-pointer"
                       >
-                        <span>Unlock — ₹{template.priceINR ?? SINGLE_TEMPLATE_PRICE_INR}</span>
+                        Unlock Template
                       </button>
                     )}
 
                     <button
                       type="button"
                       onClick={() => handleOpenShowcase(template)}
-                      className="h-9 px-2.5 rounded-lg border border-neutral-200 text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50 text-xs font-medium transition-colors cursor-pointer shrink-0"
-                      title="Preview Template"
+                      className="px-2 py-1 text-xs font-medium text-neutral-500 hover:text-neutral-900 transition-colors cursor-pointer shrink-0"
                     >
                       Preview
                     </button>
