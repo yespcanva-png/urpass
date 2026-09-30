@@ -6,6 +6,11 @@ import { useRouter } from "next/navigation";
 import type { StudioTemplateDefinition } from "@/lib/studio/templates";
 import { SINGLE_TEMPLATE_PRICE_INR, ALL_ACCESS_BUNDLE_PRICE_INR } from "@/lib/studio/templates";
 import TicketVisualShowcase from "./TicketVisualShowcase";
+import type { CustomBrandData } from "./LivePassCustomizerToolbar";
+import {
+  downloadTicketMockup,
+  copyTicketMockupToClipboard,
+} from "@/lib/studio/ticket-mockup-exporter";
 import {
   X,
   Sparkles,
@@ -23,6 +28,10 @@ import {
   LogIn,
   UserCheck,
   RefreshCw,
+  Download,
+  Copy,
+  Check,
+  Loader2,
 } from "lucide-react";
 
 interface TemplateShowcaseModalProps {
@@ -32,6 +41,7 @@ interface TemplateShowcaseModalProps {
   isUnlocked: boolean;
   isAuthenticated: boolean;
   userEmail?: string;
+  brandData?: CustomBrandData;
   onUnlockClick: (template: StudioTemplateDefinition) => void;
   onUnlockBundleClick: () => void;
 }
@@ -43,15 +53,17 @@ export default function TemplateShowcaseModal({
   isUnlocked,
   isAuthenticated,
   userEmail,
+  brandData,
   onUnlockClick,
   onUnlockBundleClick,
 }: TemplateShowcaseModalProps) {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<"preview" | "scanner" | "specs">("preview");
   const [sampleAttendeeIndex, setSampleAttendeeIndex] = useState(0);
   const [isScanning, setIsScanning] = useState(false);
   const [scanSuccess, setScanSuccess] = useState(false);
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
 
   const sampleAttendees = [
     { name: "ARJUN KUMAR", role: "VIP ACCESS", zone: "ZONE A • FRONT ROW" },
@@ -66,6 +78,8 @@ export default function TemplateShowcaseModal({
       setScanSuccess(false);
       setIsScanning(false);
       setShowAuthPrompt(false);
+      setIsDownloading(false);
+      setIsCopied(false);
     } else {
       document.body.style.overflow = "";
     }
@@ -79,6 +93,13 @@ export default function TemplateShowcaseModal({
   const isFree = template.tier !== "paid";
   const currentAttendee = sampleAttendees[sampleAttendeeIndex];
 
+  // Active branded details
+  const activeEventName = brandData?.eventName || template.name;
+  const activeHostName = brandData?.hostName || "URPASS OFFICIAL";
+  const activeVenue = brandData?.venue || "Main Auditorium & Arena";
+  const activeDate = brandData?.date || "24 OCT 2026 · 09:30 AM IST";
+  const activeLogoUrl = brandData?.logoUrl;
+
   function handleTriggerScan() {
     setIsScanning(true);
     setScanSuccess(false);
@@ -86,6 +107,49 @@ export default function TemplateShowcaseModal({
       setIsScanning(false);
       setScanSuccess(true);
     }, 900);
+  }
+
+  async function handleDownloadMockup() {
+    if (!template) return;
+    setIsDownloading(true);
+    try {
+      await downloadTicketMockup({
+        template,
+        eventName: activeEventName,
+        hostName: activeHostName,
+        venue: activeVenue,
+        date: activeDate,
+        attendeeName: currentAttendee.name,
+        ticketId: "#URP-90284",
+        logoUrl: activeLogoUrl,
+      });
+    } catch (err) {
+      console.error("Mockup download error:", err);
+    } finally {
+      setIsDownloading(false);
+    }
+  }
+
+  async function handleCopyMockup() {
+    if (!template) return;
+    try {
+      const ok = await copyTicketMockupToClipboard({
+        template,
+        eventName: activeEventName,
+        hostName: activeHostName,
+        venue: activeVenue,
+        date: activeDate,
+        attendeeName: currentAttendee.name,
+        ticketId: "#URP-90284",
+        logoUrl: activeLogoUrl,
+      });
+      if (ok) {
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 2500);
+      }
+    } catch {
+      // Ignored
+    }
   }
 
   function handleUnlockAction() {
@@ -130,6 +194,12 @@ export default function TemplateShowcaseModal({
 
   const formatInfo = getFormatLabel(template.format);
   const FormatIcon = formatInfo.icon;
+
+  const createEventUrl = `/create-event?template=${encodeURIComponent(
+    template.id
+  )}&eventName=${encodeURIComponent(activeEventName)}&venue=${encodeURIComponent(
+    activeVenue
+  )}`;
 
   return (
     <div
@@ -191,7 +261,10 @@ export default function TemplateShowcaseModal({
             {/* Background Ambient Glow */}
             <div
               className="absolute w-72 h-72 rounded-full blur-3xl opacity-20 pointer-events-none"
-              style={{ backgroundColor: template.thumbnailBg === "#FFFFFF" ? "#6366F1" : template.thumbnailBg }}
+              style={{
+                backgroundColor:
+                  template.thumbnailBg === "#FFFFFF" ? "#6366F1" : template.thumbnailBg,
+              }}
             />
 
             {/* Scan Simulation Success Banner */}
@@ -210,6 +283,11 @@ export default function TemplateShowcaseModal({
                 template={template}
                 mode="showcase"
                 customAttendeeName={currentAttendee.name}
+                customEventName={activeEventName}
+                customHostOrg={activeHostName}
+                customVenue={activeVenue}
+                customDate={activeDate}
+                customLogoUrl={activeLogoUrl}
                 showScanSimulation={isScanning}
               />
             </div>
@@ -239,7 +317,7 @@ export default function TemplateShowcaseModal({
             </div>
           </div>
 
-          {/* Right Column: Template Specifications & 1-Click Actions */}
+          {/* Right Column: Template Specifications, Mockup Export & 1-Click Actions */}
           <div className="w-full md:w-[380px] p-6 flex flex-col justify-between space-y-6 bg-white shrink-0">
             <div className="space-y-5">
               {/* Auth Prompt Alert if user tried to pay unauthenticated */}
@@ -268,6 +346,57 @@ export default function TemplateShowcaseModal({
                   </div>
                 </div>
               )}
+
+              {/* Free Committee Mockup Download Banner */}
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-violet-50 to-indigo-50 border border-violet-100 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-violet-700 flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                    Committee & Pitch Mockup
+                  </span>
+                  <span className="text-[9px] px-2 py-0.5 rounded-full bg-violet-600 text-white font-bold">
+                    FREE
+                  </span>
+                </div>
+                <p className="text-xs text-neutral-600 leading-relaxed">
+                  Export this customized ticket as a high-res 2x Retina PNG to share in your WhatsApp committee group or pitch deck.
+                </p>
+
+                <div className="flex gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={handleDownloadMockup}
+                    disabled={isDownloading}
+                    className="flex-1 py-2 px-3 rounded-xl bg-white hover:bg-neutral-50 text-neutral-900 font-bold text-xs flex items-center justify-center gap-1.5 border border-neutral-200 shadow-2xs transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    {isDownloading ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Download className="w-3.5 h-3.5 text-violet-600" />
+                    )}
+                    <span>Download PNG</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleCopyMockup}
+                    className="py-2 px-3 rounded-xl bg-white hover:bg-neutral-50 text-neutral-700 font-semibold text-xs flex items-center justify-center gap-1 border border-neutral-200 shadow-2xs transition-all cursor-pointer"
+                    title="Copy Image to Clipboard"
+                  >
+                    {isCopied ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-emerald-600" />
+                        <span className="text-emerald-700 font-bold">Copied!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5" />
+                        <span>Copy</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
 
               {/* Description */}
               <div className="space-y-1.5">
@@ -303,24 +432,6 @@ export default function TemplateShowcaseModal({
                   </div>
                 </div>
               </div>
-
-              {/* Compatible Hardware Scanners */}
-              <div className="space-y-1 text-xs">
-                <span className="text-[10px] font-black uppercase tracking-wider text-neutral-500 block">
-                  Gate Hardware Compatibility
-                </span>
-                <div className="flex flex-wrap gap-1.5 pt-0.5">
-                  <span className="px-2 py-0.5 rounded-lg bg-neutral-100 text-neutral-700 text-[10px] font-medium">
-                    Phone Browsers (Safari / Chrome)
-                  </span>
-                  <span className="px-2 py-0.5 rounded-lg bg-neutral-100 text-neutral-700 text-[10px] font-medium">
-                    Zebra TC21/TC26
-                  </span>
-                  <span className="px-2 py-0.5 rounded-lg bg-neutral-100 text-neutral-700 text-[10px] font-medium">
-                    Apple & Google Wallet
-                  </span>
-                </div>
-              </div>
             </div>
 
             {/* Bottom Actions */}
@@ -335,10 +446,11 @@ export default function TemplateShowcaseModal({
                     <ArrowRight className="w-4 h-4" />
                   </Link>
                   <Link
-                    href={`/create-event?template=${encodeURIComponent(template.id)}`}
-                    className="w-full py-2.5 px-4 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-800 font-semibold text-xs flex items-center justify-center transition-all"
+                    href={createEventUrl}
+                    className="w-full py-2.5 px-4 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-xs"
                   >
-                    <span>Apply to New Event</span>
+                    <span>Launch Event with this Design</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
                   </Link>
                 </div>
               ) : (

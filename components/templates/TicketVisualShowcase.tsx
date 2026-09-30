@@ -1,20 +1,16 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import type { StudioTemplateDefinition } from "@/lib/studio/templates";
 import {
-  QrCode,
-  Sparkles,
-  ShieldCheck,
-  CheckCircle2,
   Calendar,
   MapPin,
-  User,
   Radio,
   ScanLine,
   Ticket,
   Smartphone,
   CreditCard,
+  ShieldCheck,
 } from "lucide-react";
 
 interface TicketVisualShowcaseProps {
@@ -22,7 +18,10 @@ interface TicketVisualShowcaseProps {
   mode?: "card" | "showcase";
   customAttendeeName?: string;
   customEventName?: string;
+  customHostOrg?: string;
   customVenue?: string;
+  customDate?: string;
+  customLogoUrl?: string;
   customTicketId?: string;
   showScanSimulation?: boolean;
 }
@@ -39,7 +38,6 @@ function RealisticBarcode({
   color?: string;
   height?: number;
 }) {
-  // Deterministic bar widths based on code
   const barPatterns = [2, 1, 3, 1, 2, 4, 1, 2, 3, 1, 1, 3, 2, 1, 4, 2, 1, 2, 3, 1, 2, 1, 3, 2, 1, 4, 1, 2, 2, 3, 1, 2, 3, 1, 2, 1, 3, 2];
   return (
     <div className="flex flex-col items-center">
@@ -165,7 +163,10 @@ export default function TicketVisualShowcase({
   mode = "card",
   customAttendeeName,
   customEventName,
+  customHostOrg,
   customVenue,
+  customDate,
+  customLogoUrl,
   customTicketId,
   showScanSimulation = false,
 }: TicketVisualShowcaseProps) {
@@ -194,6 +195,16 @@ export default function TicketVisualShowcase({
     template.id === "community-meetup" ? "FOUNDERS & BUILDERS MEET" :
     "OBSIDIAN LUXURY PRIVATE GALA"
   );
+
+  const hostOrg = customHostOrg || (
+    template.id === "college-fest-badge" ? "PSG College of Technology" :
+    template.id === "tech-conf-badge" ? "Google Cloud Developers" :
+    template.id === "hackathon-terminal" ? "DevClub & MLH" :
+    template.id === "corporate-summit-gala" ? "Stripe Global" :
+    "URPASS Official"
+  );
+
+  const eventDate = customDate || "24 OCT 2026 · 09:30 AM IST";
 
   const venueName = customVenue || (
     template.id === "concert-music-fest" ? "JLN Arena, Chennai" :
@@ -232,12 +243,20 @@ export default function TicketVisualShowcase({
         {/* Hologram Foil Light Reflection overlay */}
         <div className="absolute -inset-full bg-gradient-to-tr from-transparent via-white/10 to-transparent rotate-45 pointer-events-none opacity-40 hover:opacity-75 transition-opacity" />
 
-        {/* Card Header */}
+        {/* Card Header with optional Custom Logo */}
         <div className="pt-3 pb-2 flex items-center justify-between border-b border-current/10">
           <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-[9px] font-black uppercase tracking-widest opacity-80">
-              {template.category} PASS
+            {customLogoUrl ? (
+              <img
+                src={customLogoUrl}
+                alt="Logo"
+                className="w-5 h-5 rounded-md object-contain bg-white/20 p-0.5"
+              />
+            ) : (
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            )}
+            <span className="text-[9px] font-black uppercase tracking-widest opacity-80 truncate max-w-[130px]">
+              {hostOrg}
             </span>
           </div>
           <span className="text-[9px] font-mono font-bold px-2 py-0.5 rounded-full bg-current/10 opacity-90">
@@ -256,7 +275,7 @@ export default function TicketVisualShowcase({
           </h4>
           <div className="flex items-center gap-1 text-[10px] opacity-75">
             <Calendar className="w-3 h-3 shrink-0" />
-            <span>24 OCT 2026 &middot; 09:30 AM IST</span>
+            <span className="truncate">{eventDate}</span>
           </div>
           <div className="flex items-center gap-1 text-[9.5px] opacity-75 truncate">
             <MapPin className="w-3 h-3 shrink-0" />
@@ -282,10 +301,10 @@ export default function TicketVisualShowcase({
             <span>Category</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className={`font-black tracking-tight uppercase ${isCard ? "text-xs" : "text-sm"}`}>
+            <span className={`font-black tracking-tight uppercase truncate max-w-[170px] ${isCard ? "text-xs" : "text-sm"}`}>
               {attendeeName}
             </span>
-            <span className="text-[10px] font-black px-2 py-0.5 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+            <span className="text-[10px] font-black px-2 py-0.5 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shrink-0">
               VIP ACCESS
             </span>
           </div>
@@ -326,9 +345,18 @@ export default function TicketVisualShowcase({
         <div className="flex-1 p-3.5 sm:p-5 flex flex-col justify-between relative overflow-hidden">
           {/* Top category ribbon */}
           <div className="flex items-center justify-between">
-            <span className="px-2 py-0.5 rounded-md bg-pink-500/20 text-pink-400 border border-pink-500/30 text-[8px] sm:text-[9px] font-black tracking-widest uppercase">
-              LIVE CONCERT // WORLD TOUR
-            </span>
+            <div className="flex items-center gap-1.5">
+              {customLogoUrl && (
+                <img
+                  src={customLogoUrl}
+                  alt="Logo"
+                  className="w-4 h-4 rounded object-contain bg-white/20"
+                />
+              )}
+              <span className="px-2 py-0.5 rounded-md bg-pink-500/20 text-pink-400 border border-pink-500/30 text-[8px] sm:text-[9px] font-black tracking-widest uppercase truncate max-w-[140px]">
+                {hostOrg}
+              </span>
+            </div>
             <span className="text-[8.5px] font-mono opacity-70">
               SEC 102 &bull; ROW A &bull; SEAT 42
             </span>
@@ -343,8 +371,8 @@ export default function TicketVisualShowcase({
             >
               {eventName}
             </h4>
-            <p className="text-[9px] sm:text-[10px] font-semibold text-pink-400 mt-0.5">
-              24 OCT 2026 &middot; GATES OPEN 6:00 PM
+            <p className="text-[9px] sm:text-[10px] font-semibold text-pink-400 mt-0.5 truncate">
+              {eventDate}
             </p>
             <p className="text-[8px] sm:text-[9.5px] opacity-70 truncate mt-0.5">
               {venueName}
@@ -434,9 +462,18 @@ export default function TicketVisualShowcase({
 
       {/* Conference Banner Header */}
       <div className="text-center space-y-1">
-        <span className="inline-block px-2.5 py-0.5 rounded-full bg-white/20 text-white font-mono text-[8.5px] font-bold tracking-widest uppercase">
-          OFFICIAL BADGE &bull; 2026
-        </span>
+        <div className="flex items-center justify-center gap-1.5">
+          {customLogoUrl && (
+            <img
+              src={customLogoUrl}
+              alt="Logo"
+              className="w-4 h-4 rounded object-contain bg-white/20"
+            />
+          )}
+          <span className="inline-block px-2.5 py-0.5 rounded-full bg-white/20 text-white font-mono text-[8.5px] font-bold tracking-widest uppercase truncate max-w-[180px]">
+            {hostOrg}
+          </span>
+        </div>
         <h4
           className={`font-black tracking-tight leading-tight uppercase ${
             isCard ? "text-sm line-clamp-1" : "text-lg line-clamp-1"
@@ -444,8 +481,8 @@ export default function TicketVisualShowcase({
         >
           {eventName}
         </h4>
-        <p className="text-[8.5px] sm:text-[9.5px] opacity-80">
-          24-26 OCT 2026 &bull; {venueName}
+        <p className="text-[8.5px] sm:text-[9.5px] opacity-80 truncate">
+          {eventDate} &bull; {venueName}
         </p>
       </div>
 
@@ -462,7 +499,7 @@ export default function TicketVisualShowcase({
           {attendeeName}
         </h3>
         <p className="text-[9.5px] sm:text-[11px] font-semibold text-neutral-600 truncate">
-          {template.id === "college-fest-badge" ? "PSG College of Tech" : "Google Cloud &bull; Lead Architect"}
+          {hostOrg}
         </p>
         <div className="pt-1.5 flex justify-center">
           <span className="px-3 py-0.5 rounded-full bg-violet-600 text-white text-[9px] font-black uppercase tracking-wider shadow-xs">

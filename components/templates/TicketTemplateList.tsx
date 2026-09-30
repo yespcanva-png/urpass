@@ -13,6 +13,9 @@ import { parseUnlockedCookie, isTemplateUnlocked } from "@/lib/studio/purchases"
 import TicketVisualShowcase from "./TicketVisualShowcase";
 import TemplateShowcaseModal from "./TemplateShowcaseModal";
 import TemplateCheckoutModal from "./TemplateCheckoutModal";
+import LivePassCustomizerToolbar, {
+  type CustomBrandData,
+} from "./LivePassCustomizerToolbar";
 import {
   Sparkles,
   Smartphone,
@@ -37,6 +40,13 @@ interface TicketTemplateListProps {
   isInApp?: boolean;
 }
 
+const DEFAULT_BRAND_DATA: CustomBrandData = {
+  eventName: "DHVANI ANNUAL FEST 2026",
+  hostName: "PSG College of Technology",
+  venue: "Main Campus Amphitheatre",
+  date: "24 OCT 2026 · 09:30 AM",
+};
+
 export default function TicketTemplateList({
   initialUnlocked = [],
   isPro = false,
@@ -50,6 +60,7 @@ export default function TicketTemplateList({
   const [unlockedList, setUnlockedList] = useState<string[]>(initialUnlocked);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(isInApp);
   const [currentUserEmail, setCurrentUserEmail] = useState<string>(propUserEmail || "");
+  const [brandData, setBrandData] = useState<CustomBrandData>(DEFAULT_BRAND_DATA);
 
   // Showcase Popup Modal State
   const [selectedShowcaseTemplate, setSelectedShowcaseTemplate] =
@@ -244,6 +255,13 @@ export default function TicketTemplateList({
         </div>
       </div>
 
+      {/* ── Live Brand Customizer Toolbar ── */}
+      <LivePassCustomizerToolbar
+        brandData={brandData}
+        onChange={setBrandData}
+        onReset={() => setBrandData(DEFAULT_BRAND_DATA)}
+      />
+
       {/* ── Toolbar: Search & Filter Controls ── */}
       <div className="space-y-4">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -363,6 +381,12 @@ export default function TicketTemplateList({
           const isFree = template.tier !== "paid";
           const isUnlocked = isFree || isPro || isTemplateUnlocked(template.id, unlockedList);
 
+          const createEventUrl = `/create-event?template=${encodeURIComponent(
+            template.id
+          )}&eventName=${encodeURIComponent(brandData.eventName)}&venue=${encodeURIComponent(
+            brandData.venue
+          )}`;
+
           return (
             <div
               key={template.id}
@@ -405,9 +429,17 @@ export default function TicketTemplateList({
                   {getFormatBadge(template.format)}
                 </div>
 
-                {/* Realistic Ticket Visual Render */}
+                {/* Realistic Ticket Visual Render with live custom branding */}
                 <div className="relative z-10 w-full flex items-center justify-center transform group-hover:scale-[1.03] transition-transform duration-300">
-                  <TicketVisualShowcase template={template} mode="card" />
+                  <TicketVisualShowcase
+                    template={template}
+                    mode="card"
+                    customEventName={brandData.eventName}
+                    customHostOrg={brandData.hostName}
+                    customVenue={brandData.venue}
+                    customDate={brandData.date}
+                    customLogoUrl={brandData.logoUrl}
+                  />
                 </div>
 
                 {/* Hover Showcase Overlay Button */}
@@ -459,7 +491,7 @@ export default function TicketTemplateList({
                         <ArrowRight className="w-3.5 h-3.5" />
                       </Link>
                       <Link
-                        href={`/create-event?template=${encodeURIComponent(template.id)}`}
+                        href={createEventUrl}
                         className="py-2.5 px-3 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-800 font-semibold text-xs flex items-center justify-center transition-all"
                       >
                         Use in Event
@@ -503,6 +535,7 @@ export default function TicketTemplateList({
         }
         isAuthenticated={isAuthenticated}
         userEmail={currentUserEmail}
+        brandData={brandData}
         onUnlockClick={(tpl) => {
           setSelectedShowcaseTemplate(null);
           handleOpenCheckout(tpl);

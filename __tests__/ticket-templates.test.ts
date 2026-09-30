@@ -152,3 +152,80 @@ describe("Razorpay Template Order API", () => {
     expect(res.headers.get("set-cookie")).toContain("urpass_unlocked_templates");
   });
 });
+
+describe("Ticket Mockup Canvas Exporter", () => {
+  it("exports canvas dimensions according to digital, printable, and badge formats", async () => {
+    const { exportTicketMockupCanvas } = await import("@/lib/studio/ticket-mockup-exporter");
+    const digitalTpl = STUDIO_TEMPLATES.find((t) => t.format === "digital")!;
+    const printableTpl = STUDIO_TEMPLATES.find((t) => t.format === "printable")!;
+    const badgeTpl = STUDIO_TEMPLATES.find((t) => t.format === "badge")!;
+
+    const originalGetContext = HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext = vi.fn().mockReturnValue({
+      fillStyle: "",
+      fillRect: vi.fn(),
+      createRadialGradient: vi.fn().mockReturnValue({ addColorStop: vi.fn() }),
+      save: vi.fn(),
+      restore: vi.fn(),
+      beginPath: vi.fn(),
+      moveTo: vi.fn(),
+      lineTo: vi.fn(),
+      quadraticCurveTo: vi.fn(),
+      closePath: vi.fn(),
+      fill: vi.fn(),
+      stroke: vi.fn(),
+      fillText: vi.fn(),
+      drawImage: vi.fn(),
+      arc: vi.fn(),
+      setLineDash: vi.fn(),
+    }) as any;
+
+    const originalImage = global.Image;
+    global.Image = class {
+      onload: (() => void) | null = null;
+      onerror: (() => void) | null = null;
+      crossOrigin: string = "";
+      set src(_val: string) {
+        setTimeout(() => this.onload && this.onload(), 5);
+      }
+    } as any;
+
+    try {
+      // 1. Digital Pass
+      const dCanvas = await exportTicketMockupCanvas({
+        template: digitalTpl,
+        eventName: "TECH SUMMIT 2026",
+        hostName: "IIT Madras",
+        venue: "Main Auditorium",
+        date: "24 OCT 2026",
+      });
+      expect(dCanvas.width).toBe(800);
+      expect(dCanvas.height).toBe(1420);
+
+      // 2. Printable Stub Ticket
+      const pCanvas = await exportTicketMockupCanvas({
+        template: printableTpl,
+        eventName: "CONCERT LIVE 2026",
+        hostName: "Live Nation",
+        venue: "JLN Arena",
+        date: "05 DEC 2026",
+      });
+      expect(pCanvas.width).toBe(1560);
+      expect(pCanvas.height).toBe(760);
+
+      // 3. Conference Badge
+      const bCanvas = await exportTicketMockupCanvas({
+        template: badgeTpl,
+        eventName: "DEVCON 2026",
+        hostName: "Google Cloud",
+        venue: "The Leela Palace",
+        date: "18 NOV 2026",
+      });
+      expect(bCanvas.width).toBe(880);
+      expect(bCanvas.height).toBe(1380);
+    } finally {
+      HTMLCanvasElement.prototype.getContext = originalGetContext;
+      global.Image = originalImage;
+    }
+  });
+});
