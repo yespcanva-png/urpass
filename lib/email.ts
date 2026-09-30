@@ -1628,4 +1628,79 @@ export async function sendSupportTicketAcknowledgement({
   });
 }
 
+export async function sendSponsorshipApprovalEmail({
+  email,
+  studentName,
+  eventName,
+  collegeName,
+  voucherCode,
+}: {
+  email: string;
+  studentName: string;
+  eventName: string;
+  collegeName: string;
+  voucherCode: string;
+}) {
+  const resend = getResend();
+  if (!resend) return { success: false, error: "Email provider not configured" };
+
+  const safeStudent = escapeHtml(studentName);
+  const safeEvent = escapeHtml(eventName);
+  const safeCollege = escapeHtml(collegeName);
+  const safeCode = escapeHtml(voucherCode);
+
+  return resend.emails.send({
+    from: getFromEmail(),
+    to: email,
+    subject: `🎉 Sponsorship Approved for ${eventName} (${collegeName})! Your Free Pro Voucher`,
+    html: `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"/></head>
+<body style="margin:0;padding:24px;background:#0d091b;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <div style="max-width:540px;margin:0 auto;background:#130f24;border:1px solid rgba(255,255,255,0.1);border-radius:24px;overflow:hidden;color:#ffffff;box-shadow:0 20px 40px rgba(0,0,0,0.5);">
+    <div style="padding:32px;background:linear-gradient(135deg, #6D28D9, #4c1d95);text-align:center;">
+      <span style="display:inline-block;padding:4px 12px;border-radius:999px;background:rgba(255,255,255,0.2);font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#ffffff;margin-bottom:12px;">CAMPUS PARTNERSHIP</span>
+      <h1 style="margin:0;font-size:24px;font-weight:900;letter-spacing:-0.5px;color:#ffffff;">Sponsorship Approved!</h1>
+      <p style="margin:8px 0 0;font-size:14px;color:rgba(255,255,255,0.85);">${safeEvent} &middot; ${safeCollege}</p>
+    </div>
+    <div style="padding:32px;">
+      <p style="font-size:15px;line-height:1.6;color:#e2e8f0;margin:0 0 16px;">
+        Hi <strong>${safeStudent}</strong>,
+      </p>
+      <p style="font-size:14px;line-height:1.6;color:#cbd5e1;margin:0 0 24px;">
+        We are thrilled to sponsor <strong>${safeEvent}</strong> at <strong>${safeCollege}</strong>! You now have full access to our <strong>Pro Tier (100% Free)</strong> with custom pass designer, sub-0.3s camera check-in, and 0% ticket commissions.
+      </p>
+
+      <div style="background:rgba(109,40,217,0.15);border:1px dashed #a78bfa;border-radius:16px;padding:20px;text-align:center;margin-bottom:24px;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:1px;color:#a78bfa;text-transform:uppercase;margin-bottom:8px;">Your 100% Off Pro Sponsorship Voucher</div>
+        <div style="font-size:22px;font-weight:900;letter-spacing:2px;color:#ffffff;font-family:monospace;background:#0d091b;display:inline-block;padding:10px 20px;border-radius:10px;border:1px solid rgba(255,255,255,0.2);">${safeCode}</div>
+        <p style="margin:10px 0 0;font-size:12px;color:#94a3b8;">Redeem on checkout or during account signup.</p>
+      </div>
+
+      <div style="text-align:center;margin-bottom:28px;">
+        <a href="https://urpass.space/signup?ref=campus-sponsor&code=${encodeURIComponent(voucherCode)}" style="display:inline-block;background:#ffffff;color:#0d091b;font-weight:800;font-size:14px;padding:14px 28px;border-radius:12px;text-decoration:none;box-shadow:0 4px 12px rgba(255,255,255,0.2);">
+          Activate Pro & Create Event Passes &rarr;
+        </a>
+      </div>
+
+      <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:16px;font-size:12px;color:#94a3b8;line-height:1.6;">
+        <strong style="color:#ffffff;">What's included in your sponsorship:</strong>
+        <ul style="margin:8px 0 0;padding-left:18px;">
+          <li>0% ticketing commissions on all participant registrations</li>
+          <li>Sub-0.3s mobile browser QR camera scanners (no volunteer apps)</li>
+          <li>Custom badge & lanyard designer with college logo</li>
+          <li>Real-time gate arrival velocity analytics</li>
+        </ul>
+      </div>
+    </div>
+    <div style="padding:16px 32px;background:rgba(0,0,0,0.3);border-top:1px solid rgba(255,255,255,0.05);text-align:center;font-size:11px;color:#64748b;">
+      URPASS Campus Operations &middot; <a href="https://urpass.space" style="color:#a78bfa;text-decoration:none;">urpass.space</a>
+    </div>
+  </div>
+</body>
+</html>`.trim(),
+  });
+}
+
+
 

@@ -3,6 +3,7 @@ import { isOpsAuthenticated } from "@/lib/ops/auth";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { getSupabaseUrl } from "@/lib/supabase/config";
 import { getLiveOpsEvents, type OpsLogItem } from "@/lib/ops/events";
+import { getSponsorshipApplications } from "@/lib/ops/sponsorship";
 
 export const dynamic = "force-dynamic";
 
@@ -98,6 +99,38 @@ export async function GET() {
 
     const activeEventsCount = events.filter((e) => e.status === "active" || e.status === "published").length;
     const openGatesCount = new Set(checkIns.map((c) => c.event_id).filter(Boolean)).size;
+
+    // 100 Daily Target calculation
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+    const todaySignups = Math.max(
+      authUsers.filter((u) => u.created_at && u.created_at >= todayStart).length,
+      profiles.filter((p) => p.created_at && p.created_at >= todayStart).length
+    );
+    const todayEvents = events.filter((e) => e.created_at && e.created_at >= todayStart).length;
+    const todayCheckIns = checkIns.filter((c) => (c.checked_in_at || c.created_at) >= todayStart).length;
+    const dailyTargetGoal = 100;
+    const percentAchieved = Math.min(100, Math.round((todaySignups / dailyTargetGoal) * 100));
+    const remaining = Math.max(0, dailyTargetGoal - todaySignups);
+    const paceStatus = percentAchieved >= 80 ? "accelerating" : percentAchieved >= 30 ? "on_track" : "behind";
+
+    const dailyTarget = {
+      target: dailyTargetGoal,
+      todaySignups,
+      todayEvents,
+      todayCheckIns,
+      percentAchieved,
+      remaining,
+      paceStatus,
+    };
+
+    // Sponsorship applications
+    let sponsorshipsList: any[] = [];
+    try {
+      sponsorshipsList = await getSponsorshipApplications();
+    } catch {
+      sponsorshipsList = [];
+    }
+    const pendingSponsorshipsCount = sponsorshipsList.filter((s) => s.status === "pending").length;
 
     // Construct user roster with health indicators
     const userRoster = profiles.map((p) => {
@@ -277,6 +310,12 @@ export async function GET() {
         active7d,
         activeEventsCount,
         openGatesCount,
+      },
+      dailyTarget,
+      sponsorships: {
+        pendingCount: pendingSponsorshipsCount,
+        totalCount: sponsorshipsList.length,
+        items: sponsorshipsList.slice(0, 50),
       },
       logs: uniqueLogs.slice(-100), // Return last 100 chronological real logs
     });
