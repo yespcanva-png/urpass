@@ -29,7 +29,7 @@ import {
 import { getUserOrganizations } from "@/app/actions/organizations";
 import { createClient } from "@/lib/supabase/client";
 import { detectCountryClient } from "@/lib/country-config";
-import HeroBanner from "@/components/landing/HeroBanner";
+import CorporateWhatsNewCard from "@/components/dashboard/CorporateWhatsNewCard";
 
 const emptySubscribe = () => () => {};
 
@@ -255,13 +255,14 @@ export default function DashboardContent() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-6 pb-12">
-      {/* ── Top Announcement & Status Banner ─────────────────────────── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
-        <HeroBanner initialCountry={country} />
-        <span className="text-[11px] font-medium text-neutral-400 hidden sm:inline-block">
+      {/* ── Top Date & What's New Announcement ─────────────────────── */}
+      <div className="flex items-center justify-end pt-1">
+        <span className="text-[11px] font-medium text-neutral-400">
           {dateLabel}
         </span>
       </div>
+
+      <CorporateWhatsNewCard firstEventId={events[0]?.id} />
 
       {/* ── Dashboard Banner ─────────────────────────────────────────── */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-white via-violet-50 to-white p-5 sm:p-6 border border-violet-100/80 shadow-sm">
