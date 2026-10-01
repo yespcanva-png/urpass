@@ -384,109 +384,20 @@ export default function PublicEventWebsite({
         </div>
       )}
 
-      {/* ── Navigation Bar (Corporate Zoho/Stripe Header) ─────── */}
-      <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-neutral-200">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            {event.logo_url ? (
-              <img
-                src={event.logo_url}
-                alt={event.name}
-                className="w-8 h-8 rounded-lg object-contain border border-neutral-200 shadow-2xs"
-              />
-            ) : (
-              <div className="w-8 h-8 rounded-lg bg-neutral-900 flex items-center justify-center font-bold text-white text-sm shadow-2xs">
-                {event.name.charAt(0)}
-              </div>
-            )}
-            <span className="font-bold text-sm sm:text-base text-neutral-900 tracking-tight truncate max-w-[180px] sm:max-w-xs">
-              {event.name}
-            </span>
-          </div>
-
-          {/* Desktop Nav links */}
-          <nav className="hidden md:flex items-center gap-1.5 text-xs font-semibold text-neutral-600">
-            <button
-              onClick={() => setActiveTab("agenda")}
-              className={`px-3.5 py-1.5 rounded-lg transition-colors ${
-                activeTab === "agenda"
-                  ? "bg-neutral-100 text-neutral-900"
-                  : "hover:text-neutral-900 hover:bg-neutral-50"
-              }`}
-            >
-              Agenda
-            </button>
-            <button
-              onClick={() => setActiveTab("speakers")}
-              className={`px-3.5 py-1.5 rounded-lg transition-colors ${
-                activeTab === "speakers"
-                  ? "bg-neutral-100 text-neutral-900"
-                  : "hover:text-neutral-900 hover:bg-neutral-50"
-              }`}
-            >
-              Speakers ({speakers.length})
-            </button>
-            <button
-              onClick={() => setActiveTab("venue")}
-              className={`px-3.5 py-1.5 rounded-lg transition-colors ${
-                activeTab === "venue"
-                  ? "bg-neutral-100 text-neutral-900"
-                  : "hover:text-neutral-900 hover:bg-neutral-50"
-              }`}
-            >
-              Venue & Access
-            </button>
-            <button
-              onClick={() => setActiveTab("my_agenda")}
-              className={`px-3.5 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 ${
-                activeTab === "my_agenda"
-                  ? "bg-neutral-900 text-white shadow-2xs"
-                  : "hover:text-neutral-900 hover:bg-neutral-50 text-neutral-700"
-              }`}
-            >
-              <Star className="w-3.5 h-3.5 fill-current" />
-              My Agenda
-              {myAgendaSessions.length > 0 && (
-                <span
-                  className={`w-4 h-4 rounded-full text-[10px] flex items-center justify-center font-bold ${
-                    activeTab === "my_agenda"
-                      ? "bg-white text-neutral-900"
-                      : "bg-neutral-900 text-white"
-                  }`}
-                >
-                  {myAgendaSessions.length}
-                </span>
-              )}
-            </button>
-          </nav>
-
-          {/* Right Action CTA */}
-          <div className="flex items-center gap-2">
-            {passToken ? (
-              <Link
-                href={`/pass/${passToken}`}
-                className="px-4 py-2 text-xs font-semibold text-neutral-800 bg-white border border-neutral-200 rounded-lg hover:bg-neutral-50 shadow-2xs transition-colors inline-flex items-center gap-1.5"
-              >
-                <Ticket className="w-3.5 h-3.5 text-neutral-700" />
-                View My Pass
-              </Link>
-            ) : (
-              <Link
-                href={registerUrl}
-                className="px-4 py-2 text-xs font-semibold text-white bg-neutral-900 hover:bg-neutral-800 rounded-lg shadow-xs transition-colors inline-flex items-center gap-1.5"
-              >
-                {website.cta_text || "Register Now"}
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-            )}
-          </div>
-        </div>
-      </header>
-
       {/* ── HERO SECTION (Clean Editorial Corporate Aesthetic) ─── */}
       {sections.hero?.enabled !== false && (
         <section className="relative overflow-hidden pt-14 pb-16 px-4 sm:px-6 bg-white border-b border-neutral-200">
           <div className="relative max-w-4xl mx-auto text-center space-y-4">
+            {event.logo_url && (
+              <div className="flex justify-center mb-1">
+                <img
+                  src={event.logo_url}
+                  alt={event.name}
+                  className="w-14 h-14 rounded-xl object-contain border border-neutral-200 shadow-2xs"
+                />
+              </div>
+            )}
+
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-neutral-100 border border-neutral-200 text-neutral-700 text-xs font-medium">
               <ShieldCheck className="w-3.5 h-3.5 text-neutral-900" />
               Official Conference Schedule & Passes
@@ -516,13 +427,23 @@ export default function PublicEventWebsite({
 
             {/* CTAs */}
             <div className="flex flex-wrap items-center justify-center gap-3 pt-4">
-              <Link
-                href={registerUrl}
-                className="px-6 py-3 text-sm font-semibold text-white bg-neutral-900 hover:bg-neutral-800 rounded-xl shadow-xs transition-all inline-flex items-center gap-2"
-              >
-                {website.cta_text || "Register Now"}
-                <ArrowRight className="w-4 h-4" />
-              </Link>
+              {passToken ? (
+                <Link
+                  href={`/pass/${passToken}`}
+                  className="px-6 py-3 text-sm font-semibold text-neutral-800 bg-white border border-neutral-200 rounded-xl hover:bg-neutral-50 shadow-2xs transition-all inline-flex items-center gap-2"
+                >
+                  <Ticket className="w-4 h-4 text-neutral-700" />
+                  View My Pass
+                </Link>
+              ) : (
+                <Link
+                  href={registerUrl}
+                  className="px-6 py-3 text-sm font-semibold text-white bg-neutral-900 hover:bg-neutral-800 rounded-xl shadow-xs transition-all inline-flex items-center gap-2"
+                >
+                  {website.cta_text || "Register Now"}
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              )}
 
               <button
                 onClick={() => setActiveTab("my_agenda")}
@@ -538,39 +459,59 @@ export default function PublicEventWebsite({
 
       {/* ── MAIN CONTENT AREA WITH TABS ─────────────────────────── */}
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
-        {/* Mobile Tab Switcher */}
-        <div className="flex md:hidden items-center justify-between p-1 bg-white border border-neutral-200 rounded-xl mb-6 overflow-x-auto text-xs font-semibold shadow-2xs">
+        {/* Universal Tab Switcher */}
+        <div className="flex items-center gap-1.5 p-1 bg-white border border-neutral-200 rounded-xl mb-8 overflow-x-auto text-xs font-semibold shadow-2xs">
           <button
             onClick={() => setActiveTab("agenda")}
-            className={`flex-1 py-2 text-center rounded-lg transition-colors ${
-              activeTab === "agenda" ? "bg-neutral-100 text-neutral-900" : "text-neutral-500"
+            className={`px-3.5 py-2 rounded-lg transition-colors whitespace-nowrap ${
+              activeTab === "agenda"
+                ? "bg-neutral-900 text-white shadow-2xs"
+                : "text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50"
             }`}
           >
             Agenda
           </button>
           <button
             onClick={() => setActiveTab("speakers")}
-            className={`flex-1 py-2 text-center rounded-lg transition-colors ${
-              activeTab === "speakers" ? "bg-neutral-100 text-neutral-900" : "text-neutral-500"
+            className={`px-3.5 py-2 rounded-lg transition-colors whitespace-nowrap ${
+              activeTab === "speakers"
+                ? "bg-neutral-900 text-white shadow-2xs"
+                : "text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50"
             }`}
           >
-            Speakers
+            Speakers ({speakers.length})
           </button>
           <button
             onClick={() => setActiveTab("venue")}
-            className={`flex-1 py-2 text-center rounded-lg transition-colors ${
-              activeTab === "venue" ? "bg-neutral-100 text-neutral-900" : "text-neutral-500"
+            className={`px-3.5 py-2 rounded-lg transition-colors whitespace-nowrap ${
+              activeTab === "venue"
+                ? "bg-neutral-900 text-white shadow-2xs"
+                : "text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50"
             }`}
           >
-            Venue
+            Venue & Access
           </button>
           <button
             onClick={() => setActiveTab("my_agenda")}
-            className={`flex-1 py-2 text-center rounded-lg transition-colors ${
-              activeTab === "my_agenda" ? "bg-neutral-900 text-white" : "text-neutral-700"
+            className={`px-3.5 py-2 rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap ${
+              activeTab === "my_agenda"
+                ? "bg-neutral-900 text-white shadow-2xs"
+                : "text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50"
             }`}
           >
-            My Agenda ({myAgendaSessions.length})
+            <Star className="w-3.5 h-3.5 fill-current" />
+            My Agenda
+            {myAgendaSessions.length > 0 && (
+              <span
+                className={`w-4 h-4 rounded-full text-[10px] flex items-center justify-center font-bold ${
+                  activeTab === "my_agenda"
+                    ? "bg-white text-neutral-900"
+                    : "bg-neutral-900 text-white"
+                }`}
+              >
+                {myAgendaSessions.length}
+              </span>
+            )}
           </button>
         </div>
 
