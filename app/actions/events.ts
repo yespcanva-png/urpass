@@ -618,3 +618,66 @@ export async function duplicateEvent(
   revalidatePath("/dashboard/events");
   return { newEventId: newEvent.id };
 }
+
+export async function updateEventPhoto(
+  eventId: string,
+  photoUrl: string,
+  type: "banner" | "logo" = "banner"
+): Promise<{ error?: string; success?: boolean }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const column = type === "logo" ? "logo_url" : "banner_url";
+
+  const { error } = await supabase
+    .from("events")
+    .update({
+      [column]: photoUrl,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", eventId);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath("/dashboard/events");
+  revalidatePath(`/event/${eventId}`);
+  return { success: true };
+}
+
+export async function updateDashboardBanner(
+  bannerUrl: string
+): Promise<{ error?: string; success?: boolean }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const { createClient: createAdminClient } = await import("@supabase/supabase-js");
+  const { getSupabaseUrl } = await import("@/lib/supabase/config");
+  const admin = createAdminClient(
+    getSupabaseUrl(),
+    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
+  const existingMeta = user.user_metadata || {};
+  const { error } = await admin.auth.admin.updateUserById(user.id, {
+    user_metadata: {
+      ...existingMeta,
+      events_dashboard_banner: bannerUrl,
+    },
+  });
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath("/dashboard/events");
+  return { success: true };
+}
+
