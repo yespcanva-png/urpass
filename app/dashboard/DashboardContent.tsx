@@ -119,6 +119,7 @@ export default function DashboardContent() {
   const [loadError, setLoadError] = useState("");
   const [loaded, setLoaded] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [whatsNewDismissed, setWhatsNewDismissed] = useState<boolean | null>(null);
 
   // Table Filters
   const [filterTab, setFilterTab] = useState<"all" | "upcoming" | "draft" | "past">("all");
@@ -135,6 +136,8 @@ export default function DashboardContent() {
           setLoaded(true);
           return;
         }
+
+        setWhatsNewDismissed(Boolean(user.user_metadata?.whats_new_conference_dismissed));
 
         const [
           { data: profile },
@@ -262,7 +265,10 @@ export default function DashboardContent() {
         </span>
       </div>
 
-      <CorporateWhatsNewCard firstEventId={events[0]?.id} />
+      <CorporateWhatsNewCard
+        firstEventId={events[0]?.id}
+        isDismissedInDb={whatsNewDismissed}
+      />
 
       {/* ── Dashboard Banner ─────────────────────────────────────────── */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-white via-violet-50 to-white p-5 sm:p-6 border border-violet-100/80 shadow-sm">
