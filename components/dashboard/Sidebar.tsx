@@ -12,7 +12,6 @@ import {
   Settings,
   LogOut,
   Ticket,
-  Star,
   Key,
   Palette,
   Zap,
@@ -26,7 +25,6 @@ import {
   BookOpen,
   ShieldCheck,
   SlidersHorizontal,
-  Crown,
   Sparkles,
 } from "lucide-react";
 import type { CampusContext, CampusRole } from "@/types";
@@ -114,14 +112,72 @@ export default function Sidebar({ email, fullName, planSlug, campusContext }: Pr
   const initials = fullName
     .split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase() || "U";
 
-  const isBusiness = planSlug === "business" || planSlug === "enterprise";
+  const planSlugNormalized = (planSlug || "free").toLowerCase();
 
-  const planBadge =
-    planSlug === "business"   ? { label: "Business Suite", color: "#f59e0b" }
-    : planSlug === "enterprise" ? { label: "Enterprise",     color: "#94a3b8" }
-    : planSlug === "pro"        ? { label: "Pro",            color: "#fbbf24" }
-    : planSlug === "starter"    ? { label: "Starter",        color: "#a78bfa" }
-    : null;
+  const planConfig: {
+    label: string;
+    badgeClass: string;
+    iconBorder: string;
+    iconBg: string;
+    iconColor: string;
+    subtitle: string;
+  } = {
+    enterprise: {
+      label: "Enterprise",
+      badgeClass: "text-sky-300 bg-sky-500/10 border-sky-500/25",
+      iconBorder: "border-sky-500/30",
+      iconBg: "bg-neutral-900",
+      iconColor: "text-sky-300",
+      subtitle: "Dedicated Cloud",
+    },
+    business: {
+      label: "Business",
+      badgeClass: "text-amber-300 bg-amber-400/10 border-amber-400/25",
+      iconBorder: "border-amber-500/30",
+      iconBg: "bg-neutral-900",
+      iconColor: "text-amber-300",
+      subtitle: "Enterprise Suite",
+    },
+    pro: {
+      label: "Pro",
+      badgeClass: "text-violet-300 bg-violet-500/15 border-violet-500/25",
+      iconBorder: "border-violet-500/30",
+      iconBg: "bg-violet-950/60",
+      iconColor: "text-violet-300",
+      subtitle: "Professional",
+    },
+    starter: {
+      label: "Starter",
+      badgeClass: "text-neutral-300 bg-white/5 border-white/10",
+      iconBorder: "border-white/15",
+      iconBg: "bg-neutral-900",
+      iconColor: "text-neutral-300",
+      subtitle: "Tier 1",
+    },
+    campus: {
+      label: "Campus",
+      badgeClass: "text-emerald-300 bg-emerald-500/10 border-emerald-500/25",
+      iconBorder: "border-emerald-500/30",
+      iconBg: "bg-neutral-900",
+      iconColor: "text-emerald-300",
+      subtitle: "Academic Suite",
+    },
+    free: {
+      label: "Free",
+      badgeClass: "text-neutral-400 bg-white/5 border-white/10",
+      iconBorder: "border-white/10",
+      iconBg: "bg-neutral-900",
+      iconColor: "text-neutral-400",
+      subtitle: "Standard Workspace",
+    },
+  }[planSlugNormalized] || {
+    label: "Free",
+    badgeClass: "text-neutral-400 bg-white/5 border-white/10",
+    iconBorder: "border-white/10",
+    iconBg: "bg-neutral-900",
+    iconColor: "text-neutral-400",
+    subtitle: "Standard Workspace",
+  };
 
   return (
     <aside
@@ -130,62 +186,42 @@ export default function Sidebar({ email, fullName, planSlug, campusContext }: Pr
 
       <div className="relative flex flex-col h-full px-3 py-5 gap-5 overflow-hidden">
 
-        {/* ── Logo ──────────────────────────────────────────────── */}
-        <Link href="/dashboard" className="flex items-center gap-2.5 px-2 py-1 mb-1 shrink-0 group">
-          <div className="relative shrink-0">
-            <div
-              className={cn(
-                "w-8 h-8 rounded-xl flex items-center justify-center shadow-lg relative transition-all duration-300",
-                isBusiness
-                  ? "ring-1.5 ring-amber-400/80 shadow-[0_0_18px_rgba(245,158,11,0.35)] overflow-hidden"
-                  : ""
-              )}
-              style={{
-                background: isBusiness
-                  ? "linear-gradient(135deg, #18181b 0%, #2e1065 45%, #78350f 100%)"
-                  : "linear-gradient(135deg, #6D28D9, #4c1d95)",
-              }}
-            >
-              {isBusiness && (
-                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-amber-400/20 via-transparent to-transparent pointer-events-none" />
-              )}
-              <Ticket className={cn("w-4 h-4", isBusiness ? "text-amber-200" : "text-white")} />
-            </div>
-            {isBusiness ? (
-              <div className="absolute -top-1.5 -right-1.5 bg-gradient-to-tr from-amber-500 via-yellow-400 to-amber-300 border-2 border-[#0e0c16] rounded-full w-4 h-4 flex items-center justify-center shadow-[0_0_10px_rgba(245,158,11,0.6)]">
-                <Crown className="w-2.5 h-2.5 fill-neutral-950 text-neutral-950" />
-              </div>
-            ) : planSlug === "starter" ? (
-              <div className="absolute -top-1 -right-1 bg-amber-400 border-2 border-[#0f0620] rounded-full w-3.5 h-3.5 flex items-center justify-center">
-                <Star className="w-2 h-2 fill-neutral-950 text-neutral-950" />
-              </div>
-            ) : null}
+        {/* ── Corporate Logo Header ─────────────────────────────── */}
+        <Link
+          href="/dashboard"
+          className="flex items-center gap-3 px-2 py-1.5 mb-1 shrink-0 rounded-xl hover:bg-white/4 transition-colors group"
+        >
+          {/* Minimalist Corporate Emblem */}
+          <div
+            className={cn(
+              "w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border transition-all duration-200 shadow-xs",
+              planConfig.iconBg,
+              planConfig.iconBorder
+            )}
+          >
+            <Ticket className={cn("w-4 h-4", planConfig.iconColor)} />
           </div>
-          <div className="flex flex-col">
-            <div className="flex items-center gap-1.5">
-              <span className="text-sm font-black tracking-widest uppercase text-white leading-none">
+
+          {/* Clean Corporate Brand & Plan Hierarchy */}
+          <div className="flex flex-col min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="text-[13px] font-bold tracking-tight text-white leading-none">
                 URPASS
               </span>
-              {isBusiness && (
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-wider bg-gradient-to-r from-amber-400/25 via-yellow-300/20 to-amber-500/25 text-amber-300 border border-amber-400/40 shadow-[0_0_8px_rgba(245,158,11,0.25)]">
-                  <Sparkles className="w-2 h-2 text-amber-300 animate-pulse" />
-                  BUSINESS
+              {planConfig.label !== "Free" && (
+                <span
+                  className={cn(
+                    "px-1.5 py-0.5 rounded text-[9px] font-semibold tracking-wider uppercase border leading-none",
+                    planConfig.badgeClass
+                  )}
+                >
+                  {planConfig.label}
                 </span>
               )}
             </div>
-            {planBadge && !isBusiness && (
-              <span
-                className="text-[9px] font-bold tracking-widest uppercase leading-none mt-0.5"
-                style={{ color: planBadge.color }}
-              >
-                {planBadge.label}
-              </span>
-            )}
-            {isBusiness && (
-              <span className="text-[8.5px] font-semibold text-amber-300/80 tracking-wide mt-0.5">
-                Executive Suite
-              </span>
-            )}
+            <span className="text-[10px] text-white/40 tracking-normal mt-1 font-medium truncate leading-none">
+              {planConfig.subtitle}
+            </span>
           </div>
         </Link>
 
