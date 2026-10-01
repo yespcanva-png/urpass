@@ -48,7 +48,7 @@ export default function HeroBanner({ initialCountry = "IN" }: Props) {
           <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-violet-500" />
         </span>
         <Sparkles className="w-3 h-3 text-amber-300 shrink-0" />
-        <span>Stage 1 Released</span>
+        <span>New Release</span>
       </span>
 
       {/* Main Copy */}
