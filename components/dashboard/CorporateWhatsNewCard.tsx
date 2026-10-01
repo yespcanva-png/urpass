@@ -3,13 +3,13 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
-  CalendarDays,
+  Calendar,
   Users,
   DoorOpen,
-  Globe,
   Sparkles,
   X,
   ArrowRight,
+  CheckCircle2,
 } from "lucide-react";
 
 const STORAGE_KEY = "urpass_whats_new_conference_v1";
@@ -18,100 +18,72 @@ interface CorporateWhatsNewCardProps {
   firstEventId?: string;
 }
 
-function WhatsNewArtwork() {
+/**
+ * Clean Canva-style illustration artwork
+ * Modern pastel palette, generous white space, and crisp vector UI
+ */
+function CanvaCorporateArtwork() {
   return (
-    <div className="relative w-full h-44 sm:h-52 bg-gradient-to-br from-[#1e1b4b] via-[#1a0f37] to-[#0b0819] overflow-hidden select-none">
-      {/* Ambient radial glows */}
-      <div className="absolute -top-16 -left-16 w-60 h-60 bg-violet-600/30 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute top-1/2 -right-10 w-52 h-52 bg-fuchsia-600/25 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-10 left-1/3 w-48 h-48 bg-blue-600/25 rounded-full blur-2xl pointer-events-none" />
+    <div className="relative w-full h-48 bg-gradient-to-b from-[#F7F5FF] via-[#FAF9FF] to-white flex items-center justify-center p-6 select-none overflow-hidden border-b border-neutral-100">
+      {/* Soft ambient pastel shapes */}
+      <div className="absolute -top-12 -left-12 w-48 h-48 rounded-full bg-violet-100/60 blur-2xl pointer-events-none" />
+      <div className="absolute -bottom-8 -right-8 w-44 h-44 rounded-full bg-fuchsia-100/50 blur-2xl pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-32 bg-indigo-50/70 rounded-full blur-xl pointer-events-none" />
 
-      {/* Decorative Grid Lines */}
+      {/* Subtle modern geometric background lines */}
       <svg
-        className="absolute inset-0 w-full h-full opacity-15"
+        className="absolute inset-0 w-full h-full opacity-[0.04] pointer-events-none"
         xmlns="http://www.w3.org/2000/svg"
       >
         <defs>
-          <pattern id="grid-pattern" width="28" height="28" patternUnits="userSpaceOnUse">
-            <path d="M 28 0 L 0 0 0 28" fill="none" stroke="white" strokeWidth="0.8" />
+          <pattern id="canva-dots" width="16" height="16" patternUnits="userSpaceOnUse">
+            <circle cx="2" cy="2" r="1" fill="#000" />
           </pattern>
         </defs>
-        <rect width="100%" height="100%" fill="url(#grid-pattern)" />
+        <rect width="100%" height="100%" fill="url(#canva-dots)" />
       </svg>
 
-      {/* Floating Canvas UI Cards */}
-      <div className="relative w-full h-full flex items-center justify-center">
-        {/* Floating Left: Agenda Card */}
-        <div className="absolute left-3 sm:left-6 top-5 sm:top-7 w-40 sm:w-48 p-2.5 rounded-xl bg-white/[0.08] backdrop-blur-md border border-white/15 shadow-xl -rotate-6 transform hover:rotate-0 transition-transform duration-300">
-          <div className="flex items-center gap-1.5 mb-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-300">
-              Track 1 · Hall A
+      {/* Main Focus: Crisp, beautifully typeset Agenda Schedule Card */}
+      <div className="relative z-10 w-full max-w-[340px] bg-white rounded-2xl p-4 shadow-[0_8px_30px_rgb(0,0,0,0.06)] border border-neutral-150/80">
+        {/* Card Header */}
+        <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-neutral-100">
+          <div className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-violet-600 shrink-0" />
+            <span className="text-[11px] font-bold text-neutral-800 tracking-tight">
+              Main Hall · Track A
             </span>
           </div>
-          <p className="text-[11px] font-bold text-white leading-tight truncate">
-            Opening Keynote Address
+          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            Live Session
+          </span>
+        </div>
+
+        {/* Card Title & Time */}
+        <div className="pt-2.5 pb-2">
+          <p className="text-xs font-bold text-neutral-900 leading-snug">
+            Future of Creative Technology &amp; AI
           </p>
-          <p className="text-[9px] text-white/60 mt-0.5">10:00 AM – 11:00 AM</p>
+          <p className="text-[11px] text-neutral-400 mt-0.5 flex items-center gap-1">
+            <Calendar className="w-3 h-3 text-neutral-400" />
+            10:00 AM – 11:30 AM · Auditorium 1
+          </p>
         </div>
 
-        {/* Center: Digital Pass Card with QR */}
-        <div className="relative z-10 w-44 sm:w-52 p-3 rounded-2xl bg-gradient-to-b from-white/[0.22] to-white/[0.08] backdrop-blur-xl border border-white/30 shadow-2xl rotate-2 transform hover:rotate-0 transition-transform duration-300">
-          <div className="flex items-center justify-between pb-2 border-b border-white/10 mb-2">
-            <div className="flex items-center gap-1.5">
-              <div className="w-5 h-5 rounded-md bg-violet-600 flex items-center justify-center font-bold text-[9px] text-white">
-                UP
-              </div>
-              <span className="text-[10px] font-bold tracking-tight text-white">
-                Conference Pass
-              </span>
+        {/* Card Footer: Speaker chip & seats badge */}
+        <div className="flex items-center justify-between pt-2 border-t border-neutral-100/80 text-[11px]">
+          <div className="flex items-center gap-2">
+            <div className="w-5 h-5 rounded-full bg-violet-100 text-violet-700 font-bold flex items-center justify-center text-[9px] shrink-0">
+              PS
             </div>
-            <span className="text-[8px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-amber-400/25 text-amber-300 border border-amber-400/30">
-              VIP Access
+            <span className="font-semibold text-neutral-700 truncate max-w-[120px]">
+              Priya Sharma
             </span>
           </div>
 
-          <div className="flex items-center gap-2.5">
-            {/* Mini vector QR code */}
-            <div className="w-11 h-11 bg-white rounded-lg p-1 shrink-0 flex items-center justify-center shadow-xs">
-              <svg viewBox="0 0 24 24" className="w-full h-full text-neutral-900 fill-current">
-                <path d="M2 2h8v8H2zm2 2v4h4V4zm-2 8h8v8H2zm2 2v4h4v-4zm10-12h8v8h-8zm2 2v4h4V4zm2 10h-2v2h2zm-2 2h-2v4h4v-2h-2zm4 2h2v2h-2zm-2 2h2v-2h-2zm4-4h2v2h-2zm0 2h-2v2h2zm-2-4h2v-2h-2zm-4 0h2v2h-2z" />
-              </svg>
-            </div>
-            <div className="min-w-0">
-              <p className="text-[11px] font-bold text-white truncate">Elena Rostova</p>
-              <p className="text-[9px] text-white/70 truncate">Keynote Speaker</p>
-              <div className="flex items-center gap-1 mt-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-violet-400" />
-                <span className="text-[8px] font-mono text-violet-300">PASS #9042</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Floating Right: Speaker Badge */}
-        <div className="absolute right-3 sm:right-6 bottom-5 sm:bottom-6 w-36 sm:w-44 p-2.5 rounded-xl bg-white/[0.08] backdrop-blur-md border border-white/15 shadow-xl rotate-6 transform hover:rotate-0 transition-transform duration-300">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-amber-400 to-violet-500 p-0.5 shrink-0">
-              <div className="w-full h-full rounded-full bg-neutral-900 flex items-center justify-center text-[10px] font-bold text-white">
-                SC
-              </div>
-            </div>
-            <div className="min-w-0">
-              <p className="text-[10px] font-bold text-white truncate">Sarah Chen</p>
-              <p className="text-[8px] text-violet-300 font-semibold uppercase tracking-wider">
-                Keynote Speaker
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Ambient floating sparkles */}
-        <div className="absolute top-4 right-16 text-amber-300/80 animate-pulse">
-          <Sparkles className="w-4 h-4" />
-        </div>
-        <div className="absolute bottom-4 left-12 text-violet-300/80 animate-pulse delay-300">
-          <Sparkles className="w-3.5 h-3.5" />
+          <span className="text-[10px] font-semibold text-neutral-500 bg-neutral-50 px-2 py-0.5 rounded-md border border-neutral-150">
+            340 / 500 Seats
+          </span>
         </div>
       </div>
     </div>
@@ -143,7 +115,7 @@ export default function CorporateWhatsNewCard({
     setIsVisible(false);
   }
 
-  // Keyboard shortcut: Escape to close
+  // Escape key handler
   useEffect(() => {
     if (!isVisible) return;
     function handleKeyDown(e: KeyboardEvent) {
@@ -162,131 +134,116 @@ export default function CorporateWhatsNewCard({
   return (
     <div
       onClick={handleDismiss}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-in fade-in duration-200"
       role="dialog"
       aria-modal="true"
       aria-labelledby="whats-new-title"
     >
-      {/* Modal Dialog Card Container */}
+      {/* Modal Dialog (Canva Clean Aesthetic) */}
       <div
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-lg sm:max-w-xl overflow-hidden rounded-3xl bg-white shadow-2xl border border-neutral-100 flex flex-col animate-in zoom-in-95 duration-200 text-neutral-900"
+        className="relative w-full max-w-[460px] overflow-hidden rounded-3xl bg-white shadow-2xl border border-neutral-100 flex flex-col animate-in zoom-in-95 duration-200 text-neutral-900"
       >
-        {/* Floating Close Button */}
+        {/* Subtle Close Button */}
         <button
           onClick={handleDismiss}
           type="button"
-          className="absolute top-3.5 right-3.5 z-30 p-2 rounded-full bg-black/35 hover:bg-black/60 text-white/80 hover:text-white backdrop-blur-md transition-all cursor-pointer shadow-md"
-          title="Dismiss and don't show again"
-          aria-label="Close update announcement"
+          className="absolute top-3.5 right-3.5 z-20 w-8 h-8 rounded-full bg-white/90 hover:bg-white text-neutral-400 hover:text-neutral-700 shadow-xs border border-neutral-200/60 flex items-center justify-center transition-all cursor-pointer"
+          title="Dismiss"
+          aria-label="Close dialog"
         >
           <X className="w-4 h-4" />
         </button>
 
-        {/* ── Top Art Work Illustration Banner ────────────────────────── */}
-        <WhatsNewArtwork />
+        {/* ── Artwork Illustration Banner ─────────────────────────────── */}
+        <CanvaCorporateArtwork />
 
-        {/* ── Modal Content Body ───────────────────────────────────────── */}
-        <div className="p-6 sm:p-7 space-y-4">
-          {/* Header Row: Badge & Subtitle */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-violet-50 border border-violet-200/80 text-violet-700 text-[10px] font-bold uppercase tracking-wider">
+        {/* ── Content Body ────────────────────────────────────────────── */}
+        <div className="p-6 sm:p-7 pt-5 space-y-4">
+          {/* Badge */}
+          <div>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-violet-50 text-violet-700 text-[10px] font-bold tracking-wider uppercase border border-violet-100/80">
               <Sparkles className="w-3 h-3 text-violet-600" />
               What&apos;s New
             </span>
-            <span className="text-[11px] font-semibold text-neutral-400">
-              Stage 1 · Conference &amp; Session Management
-            </span>
           </div>
 
-          {/* Headline & Description */}
+          {/* Headline & Subhead */}
           <div className="space-y-1">
             <h2
               id="whats-new-title"
-              className="text-lg sm:text-xl font-bold text-neutral-950 tracking-tight leading-snug"
+              className="text-lg sm:text-xl font-bold text-neutral-900 tracking-tight leading-snug"
             >
-              Introducing Multi-Track Conference &amp; Agenda Management
+              Conference &amp; Agenda Management
             </h2>
             <p className="text-xs sm:text-sm text-neutral-500 leading-relaxed">
-              Scale beyond basic ticketing into full conference operations. Organize parallel session tracks, manage speakers, configure venue halls, and scan session QR passes seamlessly.
+              Design multi-track conference schedules, manage keynote speakers, and validate room entry with single-pass QR check-ins.
             </p>
           </div>
 
-          {/* Feature Highlights Grid (4 Canva / Zoho Backstage style cards) */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
-            <div className="p-3 rounded-xl bg-neutral-50/80 border border-neutral-100 flex items-start gap-2.5">
-              <div className="w-7 h-7 rounded-lg bg-violet-100 text-violet-700 flex items-center justify-center shrink-0">
-                <CalendarDays className="w-3.5 h-3.5" />
+          {/* Canva-style Vertical Feature Highlights */}
+          <div className="space-y-3 pt-1">
+            <div className="flex items-start gap-3">
+              <div className="w-7 h-7 rounded-xl bg-violet-50 text-violet-700 flex items-center justify-center shrink-0 mt-0.5">
+                <Calendar className="w-3.5 h-3.5" />
               </div>
-              <div className="min-w-0">
-                <p className="text-xs font-bold text-neutral-900 truncate">Multi-Track Agenda</p>
-                <p className="text-[11px] text-neutral-500 leading-tight mt-0.5">
-                  Timeline, calendar grid &amp; track collision prevention
+              <div>
+                <p className="text-xs font-bold text-neutral-900 leading-none">
+                  Multi-Track Scheduling
+                </p>
+                <p className="text-[11px] text-neutral-500 leading-relaxed mt-1">
+                  Organize parallel sessions by tracks, halls, and time blocks with conflict detection.
                 </p>
               </div>
             </div>
 
-            <div className="p-3 rounded-xl bg-neutral-50/80 border border-neutral-100 flex items-start gap-2.5">
-              <div className="w-7 h-7 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center shrink-0">
+            <div className="flex items-start gap-3">
+              <div className="w-7 h-7 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center shrink-0 mt-0.5">
                 <Users className="w-3.5 h-3.5" />
               </div>
-              <div className="min-w-0">
-                <p className="text-xs font-bold text-neutral-900 truncate">Speaker Directory</p>
-                <p className="text-[11px] text-neutral-500 leading-tight mt-0.5">
-                  Keynote profiles, bio linking &amp; double-booking alerts
+              <div>
+                <p className="text-xs font-bold text-neutral-900 leading-none">
+                  Speaker Directory
+                </p>
+                <p className="text-[11px] text-neutral-500 leading-relaxed mt-1">
+                  Highlight keynote speakers, link biographies, and assign them directly to sessions.
                 </p>
               </div>
             </div>
 
-            <div className="p-3 rounded-xl bg-neutral-50/80 border border-neutral-100 flex items-start gap-2.5">
-              <div className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+            <div className="flex items-start gap-3">
+              <div className="w-7 h-7 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0 mt-0.5">
                 <DoorOpen className="w-3.5 h-3.5" />
               </div>
-              <div className="min-w-0">
-                <p className="text-xs font-bold text-neutral-900 truncate">Halls &amp; Session Passes</p>
-                <p className="text-[11px] text-neutral-500 leading-tight mt-0.5">
-                  Seat reservations, room limits &amp; QR check-ins
+              <div>
+                <p className="text-xs font-bold text-neutral-900 leading-none">
+                  Hall Capacities &amp; Check-In
                 </p>
-              </div>
-            </div>
-
-            <div className="p-3 rounded-xl bg-neutral-50/80 border border-neutral-100 flex items-start gap-2.5">
-              <div className="w-7 h-7 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center shrink-0">
-                <Globe className="w-3.5 h-3.5" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-xs font-bold text-neutral-900 truncate">Public Event Website</p>
-                <p className="text-[11px] text-neutral-500 leading-tight mt-0.5">
-                  Live branded landing page with My Agenda bookmarks
+                <p className="text-[11px] text-neutral-500 leading-relaxed mt-1">
+                  Set venue limits, reserve seats, and scan attendee QR badges at hall entrance doors.
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Action Buttons Row */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-neutral-100">
-            <div className="flex items-center gap-2">
-              <Link
-                href={firstEventId ? `/event/${firstEventId}/agenda` : "/create-event"}
-                onClick={handleDismiss}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-neutral-950 text-white text-xs font-semibold hover:bg-neutral-800 transition-colors shadow-xs"
-              >
-                <span>{firstEventId ? "Explore Conference Agenda" : "Create a Conference"}</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
+          {/* Action Row */}
+          <div className="pt-3 border-t border-neutral-100 space-y-2">
+            <Link
+              href={firstEventId ? `/event/${firstEventId}/agenda` : "/create-event"}
+              onClick={handleDismiss}
+              className="w-full py-2.5 px-4 rounded-full bg-neutral-900 hover:bg-neutral-800 text-white font-semibold text-xs transition-colors flex items-center justify-center gap-1.5 shadow-xs"
+            >
+              <span>{firstEventId ? "Explore Conference Agenda" : "Create an Event"}</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
 
-              <button
-                onClick={handleDismiss}
-                type="button"
-                className="px-3.5 py-2 rounded-xl text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100 text-xs font-medium transition-colors cursor-pointer"
-              >
-                Skip for now
-              </button>
-            </div>
-
-            <span className="text-[11px] text-neutral-400">
-              Dismissed updates will not be shown again
-            </span>
+            <button
+              onClick={handleDismiss}
+              type="button"
+              className="w-full text-center py-1 text-xs text-neutral-400 hover:text-neutral-700 transition-colors font-medium cursor-pointer"
+            >
+              Maybe later
+            </button>
           </div>
         </div>
       </div>
