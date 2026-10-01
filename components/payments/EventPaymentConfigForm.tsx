@@ -26,7 +26,7 @@ export default function EventPaymentConfigForm({
   eventId,
   initialConfig,
   sampleTicketPrice = 1000,
-  linkedAccountDisplay = "YESP Events Pvt Ltd ••••4321",
+  linkedAccountDisplay = "Connected Bank Account (Verified Payout Destination)",
 }: EventPaymentConfigFormProps) {
   const [paymentMode, setPaymentMode] = useState<PaymentMode>(
     initialConfig?.paymentMode || "URPASS_MANAGED"

@@ -1,6 +1,7 @@
 import { redirect, notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getOrganizerFinanceMetricsAction, getEventPaymentConfigAction } from "@/app/actions/managed-payments";
+import { getEventFinanceDataAction } from "@/app/actions/finance-payouts";
+import { getEventPaymentConfigAction } from "@/app/actions/managed-payments";
 import OrganizerFinanceDashboard from "@/components/payments/OrganizerFinanceDashboard";
 import EventPaymentConfigForm from "@/components/payments/EventPaymentConfigForm";
 
@@ -13,7 +14,9 @@ export default async function EventFinancePage({
 }) {
   const { eventId } = await params;
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
   const { data: event } = await supabase
@@ -24,11 +27,15 @@ export default async function EventFinancePage({
 
   if (!event) notFound();
 
-  // Fetch metrics and config
+  // Fetch real live finance metrics, transactions, settlements, and payout account
   const [financeData, paymentConfig] = await Promise.all([
-    getOrganizerFinanceMetricsAction(eventId, event.organization_id || undefined),
+    getEventFinanceDataAction(eventId, event.organization_id || undefined),
     getEventPaymentConfigAction(eventId),
   ]);
+
+  const linkedAccountLabel = financeData.payoutAccount?.bankName
+    ? `${financeData.payoutAccount.bankName} (${financeData.payoutAccount.accountNumberMasked})`
+    : financeData.payoutAccount?.upiId || "No bank account connected yet";
 
   return (
     <div className="space-y-10 py-4 max-w-6xl mx-auto">
@@ -41,12 +48,15 @@ export default async function EventFinancePage({
         </p>
       </div>
 
-      {/* Finance Metrics Dashboard */}
+      {/* Finance Metrics Dashboard with Real Working Data */}
       <OrganizerFinanceDashboard
         eventId={eventId}
         organizationId={event.organization_id || undefined}
         initialMetrics={financeData.metrics}
         initialTransactions={financeData.transactions}
+        initialSettlements={financeData.settlements}
+        initialPayoutAccount={financeData.payoutAccount}
+        customGateway={financeData.customGateway}
       />
 
       {/* Event Payment Architecture Configuration */}
@@ -55,6 +65,7 @@ export default async function EventFinancePage({
           eventId={eventId}
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           initialConfig={paymentConfig as any}
+          linkedAccountDisplay={linkedAccountLabel}
         />
       </div>
     </div>
