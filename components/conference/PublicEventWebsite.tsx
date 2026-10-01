@@ -7,7 +7,6 @@ import {
   Clock,
   MapPin,
   Users,
-  Bookmark,
   CheckCircle2,
   AlertTriangle,
   ExternalLink,
@@ -18,10 +17,13 @@ import {
   Ticket,
   Video,
   X,
-  Sparkles,
   ArrowRight,
   Star,
   Info,
+  Building2,
+  CalendarDays,
+  ShieldCheck,
+  Compass,
 } from "lucide-react";
 import type {
   EventSession,
@@ -139,8 +141,6 @@ export default function PublicEventWebsite({
     tickets: { enabled: true, order: 8 },
     contact: { enabled: true, order: 9 },
   };
-
-  const primaryColour = website.primary_colour || "#6C63FF";
 
   // Filtered sessions for Agenda tab
   const filteredSessions = useMemo(() => {
@@ -291,22 +291,22 @@ export default function PublicEventWebsite({
   });
 
   return (
-    <div className="min-h-screen bg-[#0e0c16] text-white selection:bg-purple-600 selection:text-white font-sans antialiased">
+    <div className="min-h-screen bg-slate-50/50 text-neutral-900 selection:bg-neutral-900 selection:text-white font-sans antialiased">
       {/* ── Conflict Alert Modal / Toast ──────────────────────── */}
       {conflictAlert && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-neutral-900 border border-amber-500/40 rounded-2xl p-6 max-w-md w-full shadow-2xl text-left space-y-3">
-            <div className="flex items-center gap-2.5 text-amber-400 font-bold text-sm">
-              <AlertTriangle className="w-5 h-5 shrink-0" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-neutral-900/50 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white border border-amber-200 rounded-2xl p-6 max-w-md w-full shadow-xl text-left space-y-3">
+            <div className="flex items-center gap-2.5 text-amber-700 font-bold text-sm">
+              <AlertTriangle className="w-5 h-5 shrink-0 text-amber-600" />
               Schedule Conflict Detected
             </div>
-            <p className="text-xs text-white/80 leading-relaxed">
+            <p className="text-xs text-neutral-600 leading-relaxed">
               {conflictAlert.message}
             </p>
             <div className="pt-2 flex justify-end">
               <button
                 onClick={() => setConflictAlert(null)}
-                className="px-4 py-2 rounded-xl text-xs font-semibold bg-white text-neutral-900 hover:bg-neutral-200 transition-colors"
+                className="px-4 py-2 rounded-xl text-xs font-semibold bg-neutral-900 text-white hover:bg-neutral-800 transition-colors"
               >
                 Understood
               </button>
@@ -317,28 +317,28 @@ export default function PublicEventWebsite({
 
       {/* ── Attendee Credentials Prompt Modal ─────────────────── */}
       {attendeeInputModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-neutral-900 border border-white/10 rounded-2xl p-6 max-w-md w-full shadow-2xl text-left space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-neutral-900/50 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white border border-neutral-200 rounded-2xl p-6 max-w-md w-full shadow-2xl text-left space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Ticket className="w-5 h-5 text-purple-400" />
-                <h3 className="text-sm font-bold text-white">Attendee Verification</h3>
+                <Ticket className="w-5 h-5 text-neutral-900" />
+                <h3 className="text-sm font-bold text-neutral-900">Attendee Verification</h3>
               </div>
               <button
                 onClick={() => setAttendeeInputModalOpen(false)}
-                className="p-1 rounded-lg text-white/40 hover:text-white"
+                className="p-1 rounded-lg text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <p className="text-xs text-white/60 leading-relaxed">
+            <p className="text-xs text-neutral-500 leading-relaxed">
               Enter your registered event email or pass token to reserve seats and sync your personal agenda.
             </p>
 
             <form onSubmit={handleAttendeePromptSubmit} className="space-y-3">
               <div>
-                <label className="block text-[11px] font-semibold text-white/70 mb-1">
+                <label className="block text-[11px] font-semibold text-neutral-700 mb-1">
                   Registration Email Address
                 </label>
                 <input
@@ -347,12 +347,12 @@ export default function PublicEventWebsite({
                   placeholder="your.email@example.com"
                   value={attendeeEmail}
                   onChange={(e) => setAttendeeEmail(e.target.value)}
-                  className="w-full text-xs px-3.5 py-2.5 rounded-xl bg-white/[0.06] border border-white/10 text-white placeholder-white/30 focus:outline-hidden focus:border-purple-500"
+                  className="w-full text-xs px-3.5 py-2.5 rounded-xl bg-white border border-neutral-300 text-neutral-900 placeholder:text-neutral-400 focus:outline-hidden focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-white/70 mb-1">
+                <label className="block text-[11px] font-semibold text-neutral-700 mb-1">
                   Or Pass Token / ID (Optional)
                 </label>
                 <input
@@ -360,7 +360,7 @@ export default function PublicEventWebsite({
                   placeholder="UP-XXXX or token"
                   value={passToken}
                   onChange={(e) => setPassToken(e.target.value)}
-                  className="w-full text-xs px-3.5 py-2.5 rounded-xl bg-white/[0.06] border border-white/10 text-white placeholder-white/30 focus:outline-hidden focus:border-purple-500 font-mono"
+                  className="w-full text-xs px-3.5 py-2.5 rounded-xl bg-white border border-neutral-300 text-neutral-900 placeholder:text-neutral-400 focus:outline-hidden focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 font-mono"
                 />
               </div>
 
@@ -368,13 +368,13 @@ export default function PublicEventWebsite({
                 <button
                   type="button"
                   onClick={() => setAttendeeInputModalOpen(false)}
-                  className="px-3.5 py-2 text-xs text-white/60 hover:text-white rounded-xl"
+                  className="px-3.5 py-2 text-xs text-neutral-600 hover:text-neutral-900 rounded-xl"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 text-xs font-semibold text-white bg-purple-600 hover:bg-purple-500 rounded-xl shadow-xs transition-colors"
+                  className="px-5 py-2 text-xs font-semibold text-white bg-neutral-900 hover:bg-neutral-800 rounded-xl shadow-xs transition-colors"
                 >
                   Confirm & Reserve
                 </button>
@@ -384,80 +384,96 @@ export default function PublicEventWebsite({
         </div>
       )}
 
-      {/* ── Navigation Bar ────────────────────────────────────── */}
-      <header className="sticky top-0 z-40 bg-[#0e0c16]/80 backdrop-blur-md border-b border-white/[0.08]">
+      {/* ── Navigation Bar (Corporate Zoho/Stripe Header) ─────── */}
+      <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-neutral-200">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             {event.logo_url ? (
-              <img src={event.logo_url} alt={event.name} className="w-8 h-8 rounded-lg object-contain" />
+              <img
+                src={event.logo_url}
+                alt={event.name}
+                className="w-8 h-8 rounded-lg object-contain border border-neutral-200 shadow-2xs"
+              />
             ) : (
-              <div className="w-8 h-8 rounded-lg bg-purple-600 flex items-center justify-center font-bold text-white text-sm shadow-xs">
+              <div className="w-8 h-8 rounded-lg bg-neutral-900 flex items-center justify-center font-bold text-white text-sm shadow-2xs">
                 {event.name.charAt(0)}
               </div>
             )}
-            <span className="font-bold text-sm sm:text-base text-white truncate max-w-[180px] sm:max-w-xs">
+            <span className="font-bold text-sm sm:text-base text-neutral-900 tracking-tight truncate max-w-[180px] sm:max-w-xs">
               {event.name}
             </span>
           </div>
 
-          {/* Nav links */}
-          <nav className="hidden md:flex items-center gap-1 text-xs font-semibold text-white/70">
+          {/* Desktop Nav links */}
+          <nav className="hidden md:flex items-center gap-1.5 text-xs font-semibold text-neutral-600">
             <button
               onClick={() => setActiveTab("agenda")}
-              className={`px-3 py-1.5 rounded-xl transition-colors ${
-                activeTab === "agenda" ? "bg-white/10 text-white" : "hover:text-white"
+              className={`px-3.5 py-1.5 rounded-lg transition-colors ${
+                activeTab === "agenda"
+                  ? "bg-neutral-100 text-neutral-900"
+                  : "hover:text-neutral-900 hover:bg-neutral-50"
               }`}
             >
               Agenda
             </button>
             <button
               onClick={() => setActiveTab("speakers")}
-              className={`px-3 py-1.5 rounded-xl transition-colors ${
-                activeTab === "speakers" ? "bg-white/10 text-white" : "hover:text-white"
+              className={`px-3.5 py-1.5 rounded-lg transition-colors ${
+                activeTab === "speakers"
+                  ? "bg-neutral-100 text-neutral-900"
+                  : "hover:text-neutral-900 hover:bg-neutral-50"
               }`}
             >
               Speakers ({speakers.length})
             </button>
             <button
               onClick={() => setActiveTab("venue")}
-              className={`px-3 py-1.5 rounded-xl transition-colors ${
-                activeTab === "venue" ? "bg-white/10 text-white" : "hover:text-white"
+              className={`px-3.5 py-1.5 rounded-lg transition-colors ${
+                activeTab === "venue"
+                  ? "bg-neutral-100 text-neutral-900"
+                  : "hover:text-neutral-900 hover:bg-neutral-50"
               }`}
             >
-              Venue
+              Venue & Access
             </button>
             <button
               onClick={() => setActiveTab("my_agenda")}
-              className={`px-3 py-1.5 rounded-xl transition-colors flex items-center gap-1.5 ${
+              className={`px-3.5 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 ${
                 activeTab === "my_agenda"
-                  ? "bg-purple-600 text-white shadow-xs"
-                  : "hover:text-white text-purple-300"
+                  ? "bg-neutral-900 text-white shadow-2xs"
+                  : "hover:text-neutral-900 hover:bg-neutral-50 text-neutral-700"
               }`}
             >
               <Star className="w-3.5 h-3.5 fill-current" />
               My Agenda
               {myAgendaSessions.length > 0 && (
-                <span className="w-4 h-4 rounded-full bg-white text-neutral-900 text-[10px] flex items-center justify-center font-bold">
+                <span
+                  className={`w-4 h-4 rounded-full text-[10px] flex items-center justify-center font-bold ${
+                    activeTab === "my_agenda"
+                      ? "bg-white text-neutral-900"
+                      : "bg-neutral-900 text-white"
+                  }`}
+                >
                   {myAgendaSessions.length}
                 </span>
               )}
             </button>
           </nav>
 
-          {/* Right CTA */}
+          {/* Right Action CTA */}
           <div className="flex items-center gap-2">
             {passToken ? (
               <Link
                 href={`/pass/${passToken}`}
-                className="px-4 py-2 text-xs font-semibold text-purple-200 bg-purple-950/80 border border-purple-500/40 rounded-xl hover:bg-purple-900 transition-colors inline-flex items-center gap-1.5"
+                className="px-4 py-2 text-xs font-semibold text-neutral-800 bg-white border border-neutral-200 rounded-lg hover:bg-neutral-50 shadow-2xs transition-colors inline-flex items-center gap-1.5"
               >
-                <Ticket className="w-3.5 h-3.5" />
+                <Ticket className="w-3.5 h-3.5 text-neutral-700" />
                 View My Pass
               </Link>
             ) : (
               <Link
                 href={registerUrl}
-                className="px-4 py-2 text-xs font-semibold text-white bg-purple-600 hover:bg-purple-500 rounded-xl shadow-xs transition-colors inline-flex items-center gap-1.5"
+                className="px-4 py-2 text-xs font-semibold text-white bg-neutral-900 hover:bg-neutral-800 rounded-lg shadow-xs transition-colors inline-flex items-center gap-1.5"
               >
                 {website.cta_text || "Register Now"}
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -467,41 +483,33 @@ export default function PublicEventWebsite({
         </div>
       </header>
 
-      {/* ── HERO SECTION ──────────────────────────────────────── */}
+      {/* ── HERO SECTION (Clean Editorial Corporate Aesthetic) ─── */}
       {sections.hero?.enabled !== false && (
-        <section className="relative overflow-hidden pt-12 pb-16 px-4 sm:px-6 border-b border-white/[0.08]">
-          {/* Background art / glow */}
-          <div
-            className="absolute inset-0 pointer-events-none opacity-20"
-            style={{
-              backgroundImage: `radial-gradient(circle at 50% 30%, ${primaryColour} 0%, transparent 60%)`,
-            }}
-          />
-
+        <section className="relative overflow-hidden pt-14 pb-16 px-4 sm:px-6 bg-white border-b border-neutral-200">
           <div className="relative max-w-4xl mx-auto text-center space-y-4">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-300 text-xs font-semibold">
-              <Sparkles className="w-3.5 h-3.5" />
-              Official Conference Website
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-neutral-100 border border-neutral-200 text-neutral-700 text-xs font-medium">
+              <ShieldCheck className="w-3.5 h-3.5 text-neutral-900" />
+              Official Conference Schedule & Passes
             </div>
 
-            <h1 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight leading-tight">
+            <h1 className="text-3xl sm:text-5xl font-black text-neutral-900 tracking-tight leading-tight">
               {event.name}
             </h1>
 
             {event.description && (
-              <p className="text-sm sm:text-base text-white/60 max-w-2xl mx-auto leading-relaxed">
+              <p className="text-sm sm:text-base text-neutral-600 max-w-2xl mx-auto leading-relaxed">
                 {event.description}
               </p>
             )}
 
-            {/* Date & Venue chips */}
-            <div className="flex flex-wrap items-center justify-center gap-3 pt-2 text-xs text-white/70">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.05] border border-white/[0.08]">
-                <Calendar className="w-3.5 h-3.5 text-purple-400" />
+            {/* Date & Venue Corporate Chips */}
+            <div className="flex flex-wrap items-center justify-center gap-2.5 pt-2 text-xs text-neutral-700 font-medium">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-neutral-50 border border-neutral-200 shadow-2xs">
+                <Calendar className="w-3.5 h-3.5 text-neutral-500" />
                 {formattedEventDate}
               </span>
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.05] border border-white/[0.08]">
-                <MapPin className="w-3.5 h-3.5 text-purple-400" />
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-neutral-50 border border-neutral-200 shadow-2xs">
+                <MapPin className="w-3.5 h-3.5 text-neutral-500" />
                 {event.venue}
               </span>
             </div>
@@ -510,7 +518,7 @@ export default function PublicEventWebsite({
             <div className="flex flex-wrap items-center justify-center gap-3 pt-4">
               <Link
                 href={registerUrl}
-                className="px-6 py-3 text-sm font-semibold text-white bg-purple-600 hover:bg-purple-500 rounded-xl shadow-lg transition-all inline-flex items-center gap-2"
+                className="px-6 py-3 text-sm font-semibold text-white bg-neutral-900 hover:bg-neutral-800 rounded-xl shadow-xs transition-all inline-flex items-center gap-2"
               >
                 {website.cta_text || "Register Now"}
                 <ArrowRight className="w-4 h-4" />
@@ -518,9 +526,9 @@ export default function PublicEventWebsite({
 
               <button
                 onClick={() => setActiveTab("my_agenda")}
-                className="px-5 py-3 text-sm font-semibold text-white/80 bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.1] rounded-xl transition-all inline-flex items-center gap-2"
+                className="px-5 py-3 text-sm font-semibold text-neutral-700 bg-white hover:bg-neutral-50 border border-neutral-200 rounded-xl shadow-2xs transition-all inline-flex items-center gap-2"
               >
-                <Star className="w-4 h-4 text-purple-400" />
+                <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
                 My Agenda ({myAgendaSessions.length})
               </button>
             </div>
@@ -531,35 +539,35 @@ export default function PublicEventWebsite({
       {/* ── MAIN CONTENT AREA WITH TABS ─────────────────────────── */}
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
         {/* Mobile Tab Switcher */}
-        <div className="flex md:hidden items-center justify-between p-1 bg-white/[0.05] rounded-xl mb-6 overflow-x-auto text-xs font-semibold">
+        <div className="flex md:hidden items-center justify-between p-1 bg-white border border-neutral-200 rounded-xl mb-6 overflow-x-auto text-xs font-semibold shadow-2xs">
           <button
             onClick={() => setActiveTab("agenda")}
-            className={`flex-1 py-2 text-center rounded-lg ${
-              activeTab === "agenda" ? "bg-white/10 text-white" : "text-white/60"
+            className={`flex-1 py-2 text-center rounded-lg transition-colors ${
+              activeTab === "agenda" ? "bg-neutral-100 text-neutral-900" : "text-neutral-500"
             }`}
           >
             Agenda
           </button>
           <button
             onClick={() => setActiveTab("speakers")}
-            className={`flex-1 py-2 text-center rounded-lg ${
-              activeTab === "speakers" ? "bg-white/10 text-white" : "text-white/60"
+            className={`flex-1 py-2 text-center rounded-lg transition-colors ${
+              activeTab === "speakers" ? "bg-neutral-100 text-neutral-900" : "text-neutral-500"
             }`}
           >
             Speakers
           </button>
           <button
             onClick={() => setActiveTab("venue")}
-            className={`flex-1 py-2 text-center rounded-lg ${
-              activeTab === "venue" ? "bg-white/10 text-white" : "text-white/60"
+            className={`flex-1 py-2 text-center rounded-lg transition-colors ${
+              activeTab === "venue" ? "bg-neutral-100 text-neutral-900" : "text-neutral-500"
             }`}
           >
             Venue
           </button>
           <button
             onClick={() => setActiveTab("my_agenda")}
-            className={`flex-1 py-2 text-center rounded-lg ${
-              activeTab === "my_agenda" ? "bg-purple-600 text-white" : "text-purple-300"
+            className={`flex-1 py-2 text-center rounded-lg transition-colors ${
+              activeTab === "my_agenda" ? "bg-neutral-900 text-white" : "text-neutral-700"
             }`}
           >
             My Agenda ({myAgendaSessions.length})
@@ -569,19 +577,19 @@ export default function PublicEventWebsite({
         {/* ── TAB 1: AGENDA VIEW ──────────────────────────────── */}
         {activeTab === "agenda" && (
           <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-neutral-200/80">
               <div>
-                <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+                <h2 className="text-xl sm:text-2xl font-bold text-neutral-900 tracking-tight">
                   Conference Schedule
                 </h2>
-                <p className="text-xs text-white/50 mt-1">
-                  Browse keynotes, breakout tracks, workshops, and reserve your seats.
+                <p className="text-xs text-neutral-500 mt-1">
+                  Browse keynotes, executive sessions, workshops, and reserve your seats.
                 </p>
               </div>
 
-              {/* Day switcher */}
+              {/* Day switcher (Pill control) */}
               {uniqueDates.length > 1 && (
-                <div className="flex items-center gap-1.5 p-1 bg-white/[0.05] rounded-xl">
+                <div className="flex items-center gap-1.5 p-1 bg-neutral-100 border border-neutral-200/80 rounded-xl">
                   {uniqueDates.map((date, idx) => {
                     const active = selectedDate === date;
                     const d = new Date(date + "T00:00:00");
@@ -591,8 +599,8 @@ export default function PublicEventWebsite({
                         onClick={() => setSelectedDate(date)}
                         className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
                           active
-                            ? "bg-purple-600 text-white shadow-xs"
-                            : "text-white/60 hover:text-white"
+                            ? "bg-white text-neutral-900 shadow-2xs"
+                            : "text-neutral-600 hover:text-neutral-900"
                         }`}
                       >
                         Day {idx + 1} ({d.toLocaleDateString("en-IN", { month: "short", day: "numeric" })})
@@ -605,41 +613,46 @@ export default function PublicEventWebsite({
 
             {/* Track Filter Pills */}
             {tracks.length > 0 && (
-              <div className="flex flex-wrap items-center gap-2 pt-1 pb-3">
+              <div className="flex flex-wrap items-center gap-2 pt-1 pb-1">
                 <button
                   onClick={() => setSelectedTrackId("all")}
-                  className={`text-xs font-semibold px-3 py-1.5 rounded-full transition-all ${
+                  className={`text-xs font-semibold px-3 py-1.5 rounded-full transition-all border ${
                     selectedTrackId === "all"
-                      ? "bg-white text-neutral-900 shadow-xs"
-                      : "bg-white/[0.06] text-white/70 hover:bg-white/[0.1]"
+                      ? "bg-neutral-900 text-white border-neutral-900 shadow-2xs"
+                      : "bg-white text-neutral-700 border-neutral-200 hover:bg-neutral-50"
                   }`}
                 >
                   All Tracks
                 </button>
-                {tracks.map((t) => (
-                  <button
-                    key={t.id}
-                    onClick={() => setSelectedTrackId(t.id)}
-                    className={`text-xs font-semibold px-3 py-1.5 rounded-full transition-all border ${
-                      selectedTrackId === t.id
-                        ? "text-white shadow-sm"
-                        : "bg-white/[0.04] text-white/70 border-white/[0.08] hover:bg-white/[0.08]"
-                    }`}
-                    style={{
-                      backgroundColor: selectedTrackId === t.id ? t.colour : undefined,
-                      borderColor: selectedTrackId === t.id ? t.colour : undefined,
-                    }}
-                  >
-                    {t.name}
-                  </button>
-                ))}
+                {tracks.map((t) => {
+                  const isSelected = selectedTrackId === t.id;
+                  return (
+                    <button
+                      key={t.id}
+                      onClick={() => setSelectedTrackId(t.id)}
+                      className={`text-xs font-semibold px-3 py-1.5 rounded-full transition-all inline-flex items-center gap-1.5 border ${
+                        isSelected
+                          ? "bg-neutral-900 text-white border-neutral-900 shadow-2xs"
+                          : "bg-white text-neutral-700 border-neutral-200 hover:bg-neutral-50"
+                      }`}
+                    >
+                      <span
+                        className="w-2 h-2 rounded-full shrink-0"
+                        style={{ backgroundColor: t.colour }}
+                      />
+                      {t.name}
+                    </button>
+                  );
+                })}
               </div>
             )}
 
-            {/* Sessions Timeline List */}
+            {/* Sessions List */}
             {filteredSessions.length === 0 ? (
-              <div className="text-center py-16 px-4 bg-white/[0.03] rounded-2xl border border-white/[0.06]">
-                <p className="text-sm font-semibold text-white/70">No sessions match current filters</p>
+              <div className="text-center py-16 px-4 bg-white rounded-2xl border border-neutral-200 shadow-xs">
+                <CalendarDays className="w-8 h-8 text-neutral-300 mx-auto mb-2" />
+                <p className="text-sm font-semibold text-neutral-700">No sessions match current filters</p>
+                <p className="text-xs text-neutral-400 mt-0.5">Try selecting another track or day above.</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -658,27 +671,30 @@ export default function PublicEventWebsite({
                   return (
                     <div
                       key={session.id}
-                      className="bg-white/[0.04] hover:bg-white/[0.06] border border-white/[0.08] hover:border-white/[0.15] rounded-2xl p-5 transition-all shadow-xs"
+                      className="bg-white hover:border-neutral-300 border border-neutral-200/90 rounded-2xl p-5 sm:p-6 transition-all shadow-xs hover:shadow-sm"
                     >
                       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                         <div className="space-y-2 flex-1">
                           {/* Tags row */}
                           <div className="flex flex-wrap items-center gap-2">
-                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-white/10 text-white/80">
+                            <span className="text-[11px] font-medium px-2.5 py-0.5 rounded-md bg-neutral-100 text-neutral-700 border border-neutral-200/60">
                               {typeCfg.label}
                             </span>
 
                             {track && (
                               <span
-                                className="text-[10px] font-semibold px-2 py-0.5 rounded-md text-white"
-                                style={{ backgroundColor: track.colour }}
+                                className="text-[11px] font-medium px-2.5 py-0.5 rounded-md text-neutral-800 bg-neutral-50 border border-neutral-200 inline-flex items-center gap-1.5"
                               >
+                                <span
+                                  className="w-2 h-2 rounded-full"
+                                  style={{ backgroundColor: track.colour }}
+                                />
                                 {track.name}
                               </span>
                             )}
 
                             {session.registration_required && (
-                              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200">
                                 Reservation Required
                               </span>
                             )}
@@ -687,35 +703,35 @@ export default function PublicEventWebsite({
                           {/* Title */}
                           <Link
                             href={`/e/${website.slug || event.id}/session/${session.slug || session.id}`}
-                            className="text-base sm:text-lg font-bold text-white hover:text-purple-300 transition-colors block"
+                            className="text-base sm:text-lg font-bold text-neutral-900 hover:text-neutral-600 transition-colors block"
                           >
                             {session.title}
                           </Link>
 
                           {/* Description */}
                           {session.description && (
-                            <p className="text-xs text-white/60 line-clamp-2 leading-relaxed">
+                            <p className="text-xs sm:text-sm text-neutral-600 line-clamp-2 leading-relaxed">
                               {session.description}
                             </p>
                           )}
 
-                          {/* Meta: Time, Room, Capacity */}
-                          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-white/50 pt-1">
-                            <span className="inline-flex items-center gap-1.5 font-semibold text-white/80">
-                              <Clock className="w-3.5 h-3.5 text-purple-400" />
+                          {/* Meta Details: Time, Room, Capacity */}
+                          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-neutral-500 pt-1">
+                            <span className="inline-flex items-center gap-1.5 font-semibold text-neutral-700">
+                              <Clock className="w-3.5 h-3.5 text-neutral-500" />
                               {formatSessionTimeRange(session.start_time, session.end_time)}
                             </span>
 
                             {room && (
-                              <span className="inline-flex items-center gap-1.5 text-white/60">
-                                <MapPin className="w-3.5 h-3.5 text-purple-400" />
+                              <span className="inline-flex items-center gap-1.5 text-neutral-600">
+                                <MapPin className="w-3.5 h-3.5 text-neutral-500" />
                                 {room.name} {room.floor ? `(${room.floor})` : ""}
                               </span>
                             )}
 
                             {(session.capacity || room?.capacity) && (
-                              <span className="inline-flex items-center gap-1.5 text-white/50">
-                                <Users className="w-3.5 h-3.5 text-white/30" />
+                              <span className="inline-flex items-center gap-1.5 text-neutral-500">
+                                <Users className="w-3.5 h-3.5 text-neutral-400" />
                                 {session.capacity || room?.capacity} Seats
                               </span>
                             )}
@@ -729,20 +745,20 @@ export default function PublicEventWebsite({
                                   type="button"
                                   key={sp.id}
                                   onClick={() => setSelectedSpeaker(sp)}
-                                  className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+                                  className="flex items-center gap-2 group text-left"
                                 >
                                   {sp.photo ? (
                                     <img
                                       src={sp.photo}
                                       alt={sp.name}
-                                      className="w-6 h-6 rounded-full object-cover border border-white/20"
+                                      className="w-6 h-6 rounded-full object-cover border border-neutral-200"
                                     />
                                   ) : (
-                                    <div className="w-6 h-6 rounded-full bg-purple-600 flex items-center justify-center text-[10px] font-bold text-white">
+                                    <div className="w-6 h-6 rounded-full bg-neutral-900 flex items-center justify-center text-[10px] font-bold text-white">
                                       {sp.name.charAt(0)}
                                     </div>
                                   )}
-                                  <span className="text-xs font-semibold text-white/90">
+                                  <span className="text-xs font-semibold text-neutral-800 group-hover:text-neutral-950 transition-colors">
                                     {sp.name}
                                   </span>
                                 </button>
@@ -751,20 +767,20 @@ export default function PublicEventWebsite({
                           )}
                         </div>
 
-                        {/* Interactive Buttons */}
+                        {/* Interactive Action Buttons */}
                         <div className="flex sm:flex-col items-center sm:items-end gap-2 shrink-0 pt-2 sm:pt-0">
                           {session.registration_required && (
                             <button
                               onClick={() => handleReserveSeat(session)}
-                              className={`px-3.5 py-1.5 text-xs font-semibold rounded-xl transition-all inline-flex items-center gap-1.5 ${
+                              className={`px-3.5 py-2 text-xs font-semibold rounded-lg transition-all inline-flex items-center gap-1.5 ${
                                 isReserved
-                                  ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
-                                  : "bg-purple-600 hover:bg-purple-500 text-white shadow-xs"
+                                  ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+                                  : "bg-neutral-900 hover:bg-neutral-800 text-white shadow-2xs"
                               }`}
                             >
                               {isReserved ? (
                                 <>
-                                  <CheckCircle2 className="w-3.5 h-3.5" />
+                                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                                   Seat Reserved
                                 </>
                               ) : (
@@ -775,18 +791,18 @@ export default function PublicEventWebsite({
 
                           <button
                             onClick={() => handleToggleMyAgenda(session)}
-                            className={`px-3 py-1.5 text-xs font-medium rounded-xl border transition-all inline-flex items-center gap-1.5 ${
+                            className={`px-3.5 py-2 text-xs font-semibold rounded-lg border transition-all inline-flex items-center gap-1.5 shadow-2xs ${
                               isSavedInAgenda
-                                ? "bg-white/10 text-white border-white/20"
-                                : "bg-transparent text-white/60 border-white/10 hover:bg-white/[0.06]"
+                                ? "bg-amber-50 text-amber-900 border-amber-200 hover:bg-amber-100/70"
+                                : "bg-white text-neutral-700 border-neutral-200 hover:bg-neutral-50"
                             }`}
                           >
                             <Star
                               className={`w-3.5 h-3.5 ${
-                                isSavedInAgenda ? "fill-purple-400 text-purple-400" : ""
+                                isSavedInAgenda ? "fill-amber-500 text-amber-500" : "text-neutral-400"
                               }`}
                             />
-                            {isSavedInAgenda ? "Saved" : "Add to My Agenda"}
+                            {isSavedInAgenda ? "In My Agenda" : "Add to My Agenda"}
                           </button>
                         </div>
                       </div>
@@ -801,58 +817,58 @@ export default function PublicEventWebsite({
         {/* ── TAB 2: SPEAKERS DIRECTORY ────────────────────────── */}
         {activeTab === "speakers" && (
           <div className="space-y-6">
-            <div>
-              <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
-                Keynote Speakers & Presenters
+            <div className="pb-2 border-b border-neutral-200/80">
+              <h2 className="text-xl sm:text-2xl font-bold text-neutral-900 tracking-tight">
+                Featured Speakers & Presenters
               </h2>
-              <p className="text-xs text-white/50 mt-1">
+              <p className="text-xs text-neutral-500 mt-1">
                 Learn from world-class industry experts, practitioners, and leaders.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {speakers.map((speaker) => (
                 <div
                   key={speaker.id}
                   onClick={() => setSelectedSpeaker(speaker)}
-                  className="bg-white/[0.04] hover:bg-white/[0.07] border border-white/[0.08] rounded-2xl p-5 cursor-pointer transition-all hover:border-purple-500/40 shadow-xs flex flex-col justify-between"
+                  className="bg-white hover:border-neutral-300 border border-neutral-200 rounded-2xl p-5 cursor-pointer transition-all shadow-xs hover:shadow-sm flex flex-col justify-between"
                 >
                   <div>
-                    <div className="flex items-start gap-3 mb-3">
+                    <div className="flex items-start gap-3.5 mb-3">
                       {speaker.photo ? (
                         <img
                           src={speaker.photo}
                           alt={speaker.name}
-                          className="w-14 h-14 rounded-2xl object-cover border border-white/20"
+                          className="w-14 h-14 rounded-xl object-cover border border-neutral-200"
                         />
                       ) : (
-                        <div className="w-14 h-14 rounded-2xl bg-purple-600 flex items-center justify-center text-lg font-bold text-white">
+                        <div className="w-14 h-14 rounded-xl bg-neutral-900 flex items-center justify-center text-lg font-bold text-white shadow-2xs">
                           {speaker.name.charAt(0)}
                         </div>
                       )}
                       <div>
-                        <h3 className="text-base font-bold text-white leading-tight">
+                        <h3 className="text-base font-bold text-neutral-900 leading-tight">
                           {speaker.name}
                         </h3>
                         {speaker.job_title && (
-                          <p className="text-xs text-purple-300 mt-0.5">{speaker.job_title}</p>
+                          <p className="text-xs font-semibold text-neutral-600 mt-0.5">{speaker.job_title}</p>
                         )}
                         {speaker.company && (
-                          <p className="text-xs text-white/50">{speaker.company}</p>
+                          <p className="text-xs text-neutral-400 font-medium">{speaker.company}</p>
                         )}
                       </div>
                     </div>
 
                     {speaker.bio && (
-                      <p className="text-xs text-white/60 line-clamp-3 leading-relaxed">
+                      <p className="text-xs text-neutral-600 line-clamp-3 leading-relaxed">
                         {speaker.bio}
                       </p>
                     )}
                   </div>
 
-                  <div className="pt-3 mt-3 border-t border-white/[0.06] flex items-center justify-between text-[11px] text-white/40">
+                  <div className="pt-3 mt-3 border-t border-neutral-100 flex items-center justify-between text-[11px] font-semibold text-neutral-500">
                     <span>View Profile & Sessions</span>
-                    <ArrowRight className="w-3.5 h-3.5 text-purple-400" />
+                    <ArrowRight className="w-3.5 h-3.5 text-neutral-400" />
                   </div>
                 </div>
               ))}
@@ -863,21 +879,21 @@ export default function PublicEventWebsite({
         {/* ── TAB 3: VENUE & DIRECTIONS ────────────────────────── */}
         {activeTab === "venue" && (
           <div className="space-y-6 max-w-3xl mx-auto">
-            <div>
-              <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+            <div className="pb-2 border-b border-neutral-200/80">
+              <h2 className="text-xl sm:text-2xl font-bold text-neutral-900 tracking-tight">
                 Venue & Access Information
               </h2>
-              <p className="text-xs text-white/50 mt-1">
+              <p className="text-xs text-neutral-500 mt-1">
                 Everything you need to reach the venue and navigate conference halls.
               </p>
             </div>
 
-            <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-6 space-y-4">
+            <div className="bg-white border border-neutral-200 rounded-2xl p-6 sm:p-8 space-y-4 shadow-xs">
               <div className="flex items-start gap-3">
-                <MapPin className="w-5 h-5 text-purple-400 shrink-0 mt-0.5" />
+                <MapPin className="w-5 h-5 text-neutral-900 shrink-0 mt-0.5" />
                 <div>
-                  <h3 className="text-base font-bold text-white">{event.venue}</h3>
-                  <p className="text-xs text-white/60 mt-1">
+                  <h3 className="text-base font-bold text-neutral-900">{event.venue}</h3>
+                  <p className="text-xs text-neutral-600 mt-1 leading-relaxed">
                     Present your digital UrPass QR at the main entrance gate for contactless badge printing and access.
                   </p>
                 </div>
@@ -888,7 +904,7 @@ export default function PublicEventWebsite({
                   href={`https://maps.google.com/?q=${encodeURIComponent(event.venue)}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="px-4 py-2 rounded-xl text-xs font-semibold bg-white text-neutral-900 hover:bg-neutral-200 transition-colors inline-flex items-center gap-1.5"
+                  className="px-4 py-2 rounded-lg text-xs font-semibold bg-neutral-900 text-white hover:bg-neutral-800 transition-colors inline-flex items-center gap-1.5 shadow-2xs"
                 >
                   <ExternalLink className="w-3.5 h-3.5" />
                   Open in Google Maps
@@ -898,20 +914,20 @@ export default function PublicEventWebsite({
 
             {/* Rooms list */}
             {rooms.length > 0 && (
-              <div className="space-y-3">
-                <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+              <div className="space-y-3 pt-2">
+                <h3 className="text-xs font-bold text-neutral-700 uppercase tracking-wider">
                   Conference Halls & Rooms
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {rooms.map((room) => (
                     <div
                       key={room.id}
-                      className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.06] space-y-1"
+                      className="p-4 rounded-xl bg-white border border-neutral-200 space-y-1 shadow-2xs"
                     >
-                      <p className="text-sm font-bold text-white">{room.name}</p>
-                      {room.floor && <p className="text-xs text-purple-300">{room.floor}</p>}
-                      {room.location && <p className="text-xs text-white/50">{room.location}</p>}
-                      <p className="text-[11px] text-white/40 pt-1">Capacity: {room.capacity} seats</p>
+                      <p className="text-sm font-bold text-neutral-900">{room.name}</p>
+                      {room.floor && <p className="text-xs font-semibold text-neutral-600">{room.floor}</p>}
+                      {room.location && <p className="text-xs text-neutral-500">{room.location}</p>}
+                      <p className="text-[11px] text-neutral-400 pt-1 font-medium">Capacity: {room.capacity} seats</p>
                     </div>
                   ))}
                 </div>
@@ -923,13 +939,13 @@ export default function PublicEventWebsite({
         {/* ── TAB 4: MY AGENDA ─────────────────────────────────── */}
         {activeTab === "my_agenda" && (
           <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-neutral-200/80">
               <div>
-                <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight flex items-center gap-2">
-                  <Star className="w-6 h-6 text-purple-400 fill-current" />
+                <h2 className="text-xl sm:text-2xl font-bold text-neutral-900 tracking-tight flex items-center gap-2">
+                  <Star className="w-5 h-5 text-amber-500 fill-amber-500" />
                   My Personal Agenda
                 </h2>
-                <p className="text-xs text-white/50 mt-1">
+                <p className="text-xs text-neutral-500 mt-1">
                   Your customized conference schedule. One attendee. One QR code.
                 </p>
               </div>
@@ -938,7 +954,7 @@ export default function PublicEventWebsite({
                 {passToken && (
                   <Link
                     href={`/pass/${passToken}`}
-                    className="px-4 py-2 text-xs font-semibold text-white bg-purple-600 hover:bg-purple-500 rounded-xl transition-colors inline-flex items-center gap-1.5"
+                    className="px-4 py-2 text-xs font-semibold text-white bg-neutral-900 hover:bg-neutral-800 rounded-lg transition-colors inline-flex items-center gap-1.5 shadow-2xs"
                   >
                     <Ticket className="w-3.5 h-3.5" />
                     Open My UrPass QR
@@ -948,15 +964,15 @@ export default function PublicEventWebsite({
             </div>
 
             {myAgendaSessions.length === 0 ? (
-              <div className="text-center py-16 px-4 bg-white/[0.03] rounded-2xl border border-white/[0.06]">
-                <Star className="w-10 h-10 text-white/10 mx-auto mb-3" />
-                <p className="text-sm font-semibold text-white/70">Your itinerary is currently empty</p>
-                <p className="text-xs text-white/40 mt-1">
+              <div className="text-center py-16 px-4 bg-white rounded-2xl border border-neutral-200 shadow-xs">
+                <Star className="w-10 h-10 text-neutral-300 mx-auto mb-3" />
+                <p className="text-sm font-semibold text-neutral-800">Your itinerary is currently empty</p>
+                <p className="text-xs text-neutral-500 mt-1 max-w-md mx-auto leading-relaxed">
                   Explore the Agenda tab and click "Add to My Agenda" or "Reserve Seat" on talks you wish to attend.
                 </p>
                 <button
                   onClick={() => setActiveTab("agenda")}
-                  className="mt-4 px-4 py-2 text-xs font-semibold text-white bg-purple-600 hover:bg-purple-500 rounded-xl"
+                  className="mt-4 px-4 py-2 text-xs font-semibold text-white bg-neutral-900 hover:bg-neutral-800 rounded-lg shadow-2xs"
                 >
                   Browse Agenda
                 </button>
@@ -966,23 +982,23 @@ export default function PublicEventWebsite({
                 {myAgendaSessions.map((session) => (
                   <div
                     key={session.id}
-                    className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                    className="bg-white border border-neutral-200 rounded-2xl p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs"
                   >
-                    <div className="space-y-1 flex-1">
+                    <div className="space-y-1.5 flex-1">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-semibold text-purple-300">
+                        <span className="text-xs font-semibold text-neutral-600">
                           {session.session_date} • {formatSessionTimeRange(session.start_time, session.end_time)}
                         </span>
                         {myReservedSessionIds.has(session.id) && (
-                          <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                          <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
                             Seat Reserved
                           </span>
                         )}
                       </div>
-                      <h3 className="text-base font-bold text-white">{session.title}</h3>
+                      <h3 className="text-base font-bold text-neutral-900">{session.title}</h3>
                       {session.room && (
-                        <p className="text-xs text-white/50 flex items-center gap-1">
-                          <MapPin className="w-3 h-3 text-purple-400" />
+                        <p className="text-xs text-neutral-500 flex items-center gap-1 font-medium">
+                          <MapPin className="w-3 h-3 text-neutral-400" />
                           {session.room.name}
                         </p>
                       )}
@@ -990,7 +1006,7 @@ export default function PublicEventWebsite({
 
                     <button
                       onClick={() => handleToggleMyAgenda(session)}
-                      className="px-3.5 py-1.5 text-xs text-white/50 hover:text-red-400 rounded-xl border border-white/10 hover:border-red-500/30 transition-colors self-start sm:self-auto"
+                      className="px-3.5 py-1.5 text-xs text-neutral-500 hover:text-red-600 rounded-lg border border-neutral-200 hover:border-red-200 hover:bg-red-50/50 transition-colors self-start sm:self-auto font-medium"
                     >
                       Remove from My Agenda
                     </button>
@@ -1004,11 +1020,11 @@ export default function PublicEventWebsite({
 
       {/* ── Speaker Detail Modal ──────────────────────────────── */}
       {selectedSpeaker && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-neutral-900 border border-white/10 rounded-2xl max-w-lg w-full p-6 text-left shadow-2xl relative space-y-4 max-h-[85vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-neutral-900/50 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white border border-neutral-200 rounded-2xl max-w-lg w-full p-6 text-left shadow-2xl relative space-y-4 max-h-[85vh] overflow-y-auto">
             <button
               onClick={() => setSelectedSpeaker(null)}
-              className="absolute right-4 top-4 p-1 rounded-lg text-white/40 hover:text-white"
+              className="absolute right-4 top-4 p-1 rounded-lg text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
@@ -1018,33 +1034,33 @@ export default function PublicEventWebsite({
                 <img
                   src={selectedSpeaker.photo}
                   alt={selectedSpeaker.name}
-                  className="w-16 h-16 rounded-2xl object-cover border border-white/20 shrink-0"
+                  className="w-16 h-16 rounded-xl object-cover border border-neutral-200 shrink-0"
                 />
               ) : (
-                <div className="w-16 h-16 rounded-2xl bg-purple-600 flex items-center justify-center text-xl font-bold text-white shrink-0">
+                <div className="w-16 h-16 rounded-xl bg-neutral-900 flex items-center justify-center text-xl font-bold text-white shrink-0 shadow-2xs">
                   {selectedSpeaker.name.charAt(0)}
                 </div>
               )}
               <div>
-                <h3 className="text-lg font-bold text-white">{selectedSpeaker.name}</h3>
+                <h3 className="text-lg font-bold text-neutral-900">{selectedSpeaker.name}</h3>
                 {selectedSpeaker.job_title && (
-                  <p className="text-xs text-purple-300">{selectedSpeaker.job_title}</p>
+                  <p className="text-xs font-semibold text-neutral-600">{selectedSpeaker.job_title}</p>
                 )}
                 {selectedSpeaker.company && (
-                  <p className="text-xs text-white/50">{selectedSpeaker.company}</p>
+                  <p className="text-xs text-neutral-400 font-medium">{selectedSpeaker.company}</p>
                 )}
               </div>
             </div>
 
             {selectedSpeaker.bio && (
-              <p className="text-xs text-white/70 leading-relaxed pt-2 border-t border-white/[0.08]">
+              <p className="text-xs text-neutral-600 leading-relaxed pt-2 border-t border-neutral-100">
                 {selectedSpeaker.bio}
               </p>
             )}
 
             {/* Speaking Sessions */}
             <div className="pt-2">
-              <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-2">
+              <h4 className="text-xs font-bold text-neutral-700 uppercase tracking-wider mb-2">
                 Scheduled Sessions
               </h4>
               <div className="space-y-2">
@@ -1057,10 +1073,10 @@ export default function PublicEventWebsite({
                   .map((s) => (
                     <div
                       key={s.id}
-                      className="p-3 rounded-xl bg-white/[0.04] border border-white/[0.08] text-xs space-y-1"
+                      className="p-3 rounded-xl bg-neutral-50 border border-neutral-200 text-xs space-y-1"
                     >
-                      <p className="font-bold text-white">{s.title}</p>
-                      <p className="text-purple-300 text-[11px]">
+                      <p className="font-bold text-neutral-900">{s.title}</p>
+                      <p className="text-neutral-500 text-[11px] font-medium">
                         {s.session_date} • {formatSessionTimeRange(s.start_time, s.end_time)}
                       </p>
                     </div>
@@ -1071,8 +1087,8 @@ export default function PublicEventWebsite({
         </div>
       )}
 
-      {/* ── FOOTER ────────────────────────────────────────────── */}
-      <footer className="mt-20 border-t border-white/[0.08] py-8 text-center text-xs text-white/40">
+      {/* ── FOOTER (Corporate Clean Style) ────────────────────── */}
+      <footer className="mt-20 border-t border-neutral-200 bg-white py-10 text-center text-xs text-neutral-500">
         <p>{website.footer_text || `© ${new Date().getFullYear()} ${event.name}. Powered by UrPass.`}</p>
       </footer>
     </div>
