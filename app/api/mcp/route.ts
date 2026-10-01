@@ -11,6 +11,13 @@ import {
   mcpVerifyCheckin,
   mcpGetEventAnalytics,
   mcpIssuePass,
+  mcpListSessions,
+  mcpCreateSession,
+  mcpListRooms,
+  mcpListSpeakers,
+  mcpAssignSpeaker,
+  mcpVerifySessionCheckin,
+  mcpGetConferenceAnalytics,
   type McpToolContext,
 } from "@/lib/mcp/core";
 
@@ -151,44 +158,174 @@ export const MCP_TOOLS_MANIFEST = [
       required: ["eventId", "name", "email"],
     },
   },
+  {
+    name: "urpass_list_sessions",
+    description: "List conference agenda sessions for an event, filterable by date, room, and track.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        eventId: { type: "string", description: "Event UUID" },
+        date: { type: "string", description: "Filter by session date (YYYY-MM-DD)" },
+        roomId: { type: "string", description: "Filter by room UUID" },
+        trackId: { type: "string", description: "Filter by track UUID" },
+        limit: { type: "number", description: "Max sessions to return" },
+      },
+      required: ["eventId"],
+    },
+  },
+  {
+    name: "urpass_create_session",
+    description: "Create a new conference agenda session with scheduling conflict prevention.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        eventId: { type: "string", description: "Event UUID" },
+        title: { type: "string", description: "Session title" },
+        session_type: { type: "string", description: "Session type (keynote, presentation, workshop, panel, break, networking)" },
+        session_date: { type: "string", description: "Session date (YYYY-MM-DD)" },
+        start_time: { type: "string", description: "Start time (HH:MM)" },
+        end_time: { type: "string", description: "End time (HH:MM)" },
+        room_id: { type: "string", description: "Room UUID" },
+        track_id: { type: "string", description: "Track UUID" },
+        capacity: { type: "number", description: "Session capacity limit" },
+        registration_required: { type: "boolean", description: "Require prior reservation" },
+        description: { type: "string", description: "Session description" },
+      },
+      required: ["eventId", "title", "session_date", "start_time", "end_time"],
+    },
+  },
+  {
+    name: "urpass_list_rooms",
+    description: "List conference halls, rooms, floors, and capacities for an event.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        eventId: { type: "string", description: "Event UUID" },
+      },
+      required: ["eventId"],
+    },
+  },
+  {
+    name: "urpass_list_speakers",
+    description: "List conference speakers, bios, organisations, and social links for an event.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        eventId: { type: "string", description: "Event UUID" },
+      },
+      required: ["eventId"],
+    },
+  },
+  {
+    name: "urpass_assign_speaker",
+    description: "Assign a speaker to an agenda session with double-booking prevention.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        sessionId: { type: "string", description: "Session UUID" },
+        speakerId: { type: "string", description: "Speaker UUID" },
+        role: { type: "string", description: "Role: speaker, moderator, panelist, host, trainer" },
+      },
+      required: ["sessionId", "speakerId"],
+    },
+  },
+  {
+    name: "urpass_verify_session_checkin",
+    description: "Verify an attendee pass and record entry into a specific conference session.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        sessionId: { type: "string", description: "Session UUID" },
+        passToken: { type: "string", description: "Scanned pass token, URL, or attendee UUID" },
+        override: { type: "boolean", description: "Override reservation requirement if full/unreserved" },
+      },
+      required: ["sessionId", "passToken"],
+    },
+  },
+  {
+    name: "urpass_get_conference_analytics",
+    description: "Get real-time conference analytics: room utilisation, session occupancy rates, and peak check-in velocity.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        eventId: { type: "string", description: "Event UUID" },
+      },
+      required: ["eventId"],
+    },
+  },
 ];
 
-export async function GET(req: NextRequest) {
-  // If user provides API Key, authenticate to confirm key validity
-  const auth = await authenticateApiKey(req);
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Authorization, Content-Type, X-Urpass-Client",
+};
 
-  return NextResponse.json({
-    name: "urpass-mcp",
-    version: "1.0.0",
-    protocolVersion: "2024-11-05",
-    description: "URPASS Model Context Protocol (MCP) Server for AI Assistants & Agents",
-    authenticated: Boolean(auth),
-    tools: MCP_TOOLS_MANIFEST,
-    usage: {
-      endpoint: "https://urpass.space/api/mcp",
-      method: "POST",
-      headers: {
-        Authorization: "Bearer urp_live_...",
-        "Content-Type": "application/json",
-      },
-      transport: "JSON-RPC 2.0 / HTTP",
-    },
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 204,
+    headers: CORS_HEADERS,
   });
 }
 
+async function resolveAuth(req: NextRequest) {
+  let effectiveReq = req;
+  const authHeader = req.headers.get("authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    const queryKey = req.nextUrl.searchParams.get("api_key") || req.nextUrl.searchParams.get("apiKey");
+    if (queryKey) {
+      const headers = new Headers(req.headers);
+      headers.set("authorization", `Bearer ${queryKey}`);
+      effectiveReq = new NextRequest(req.url, {
+        method: req.method,
+        headers,
+        body: req.body,
+      });
+    }
+  }
+  return authenticateApiKey(effectiveReq);
+}
+
+export async function GET(req: NextRequest) {
+  // If user provides API Key, authenticate to confirm key validity
+  const auth = await resolveAuth(req);
+
+  return NextResponse.json(
+    {
+      name: "urpass-mcp",
+      version: "1.1.0",
+      protocolVersion: "2024-11-05",
+      description: "URPASS Model Context Protocol (MCP) Server for AI Assistants & Agents",
+      authenticated: Boolean(auth),
+      toolsCount: MCP_TOOLS_MANIFEST.length,
+      tools: MCP_TOOLS_MANIFEST,
+      usage: {
+        endpoint: "https://urpass.space/api/mcp",
+        method: "POST",
+        headers: {
+          Authorization: "Bearer urp_live_...",
+          "Content-Type": "application/json",
+        },
+        transport: "JSON-RPC 2.0 / HTTP",
+      },
+    },
+    { headers: CORS_HEADERS }
+  );
+}
+
 export async function POST(req: NextRequest) {
-  const auth = await authenticateApiKey(req);
+  const auth = await resolveAuth(req);
   if (!auth) {
     return NextResponse.json(
       {
         jsonrpc: "2.0",
         error: {
           code: -32000,
-          message: "Unauthorized. Provide a valid URPASS Bearer API key in Authorization header.",
+          message: "Unauthorized. Provide a valid URPASS Bearer API key in Authorization header or ?api_key query parameter.",
         },
         id: null,
       },
-      { status: 401 }
+      { status: 401, headers: CORS_HEADERS }
     );
   }
 
@@ -214,37 +351,43 @@ export async function POST(req: NextRequest) {
 
   switch (method) {
     case "initialize":
-      return NextResponse.json({
-        jsonrpc: "2.0",
-        id: responseId,
-        result: {
-          protocolVersion: "2024-11-05",
-          serverInfo: {
-            name: "urpass-mcp",
-            version: "1.0.0",
-          },
-          capabilities: {
-            tools: {
-              listChanged: false,
+      return NextResponse.json(
+        {
+          jsonrpc: "2.0",
+          id: responseId,
+          result: {
+            protocolVersion: "2024-11-05",
+            serverInfo: {
+              name: "urpass-mcp",
+              version: "1.1.0",
+            },
+            capabilities: {
+              tools: {
+                listChanged: false,
+              },
             },
           },
         },
-      });
+        { headers: CORS_HEADERS }
+      );
 
     case "notifications/initialized":
-      return NextResponse.json({ jsonrpc: "2.0", id: responseId, result: {} });
+      return NextResponse.json({ jsonrpc: "2.0", id: responseId, result: {} }, { headers: CORS_HEADERS });
 
     case "ping":
-      return NextResponse.json({ jsonrpc: "2.0", id: responseId, result: {} });
+      return NextResponse.json({ jsonrpc: "2.0", id: responseId, result: {} }, { headers: CORS_HEADERS });
 
     case "tools/list":
-      return NextResponse.json({
-        jsonrpc: "2.0",
-        id: responseId,
-        result: {
-          tools: MCP_TOOLS_MANIFEST,
+      return NextResponse.json(
+        {
+          jsonrpc: "2.0",
+          id: responseId,
+          result: {
+            tools: MCP_TOOLS_MANIFEST,
+          },
         },
-      });
+        { headers: CORS_HEADERS }
+      );
 
     case "tools/call": {
       const toolName = (params?.name as string) || "";
@@ -284,44 +427,77 @@ export async function POST(req: NextRequest) {
           case "urpass_issue_pass":
             resultData = await mcpIssuePass(ctx, args as never);
             break;
+          case "urpass_list_sessions":
+            resultData = await mcpListSessions(ctx, args as never);
+            break;
+          case "urpass_create_session":
+            resultData = await mcpCreateSession(ctx, args as never);
+            break;
+          case "urpass_list_rooms":
+            resultData = await mcpListRooms(ctx, args as never);
+            break;
+          case "urpass_list_speakers":
+            resultData = await mcpListSpeakers(ctx, args as never);
+            break;
+          case "urpass_assign_speaker":
+            resultData = await mcpAssignSpeaker(ctx, args as never);
+            break;
+          case "urpass_verify_session_checkin":
+            resultData = await mcpVerifySessionCheckin(ctx, args as never);
+            break;
+          case "urpass_get_conference_analytics":
+            resultData = await mcpGetConferenceAnalytics(ctx, args as never);
+            break;
           default:
-            return NextResponse.json({
-              jsonrpc: "2.0",
-              id: responseId,
-              error: { code: -32601, message: `Tool not found: ${toolName}` },
-            });
+            return NextResponse.json(
+              {
+                jsonrpc: "2.0",
+                id: responseId,
+                error: { code: -32601, message: `Tool not found: ${toolName}` },
+              },
+              { headers: CORS_HEADERS }
+            );
         }
 
-        return NextResponse.json({
-          jsonrpc: "2.0",
-          id: responseId,
-          result: {
-            content: [
-              {
-                type: "text",
-                text: JSON.stringify(resultData, null, 2),
-              },
-            ],
+        return NextResponse.json(
+          {
+            jsonrpc: "2.0",
+            id: responseId,
+            result: {
+              content: [
+                {
+                  type: "text",
+                  text: JSON.stringify(resultData, null, 2),
+                },
+              ],
+            },
           },
-        });
+          { headers: CORS_HEADERS }
+        );
       } catch (toolError: unknown) {
         const errorMsg = toolError instanceof Error ? toolError.message : String(toolError);
-        return NextResponse.json({
-          jsonrpc: "2.0",
-          id: responseId,
-          result: {
-            isError: true,
-            content: [{ type: "text", text: `Error executing ${toolName}: ${errorMsg}` }],
+        return NextResponse.json(
+          {
+            jsonrpc: "2.0",
+            id: responseId,
+            result: {
+              isError: true,
+              content: [{ type: "text", text: `Error executing ${toolName}: ${errorMsg}` }],
+            },
           },
-        });
+          { headers: CORS_HEADERS }
+        );
       }
     }
 
     default:
-      return NextResponse.json({
-        jsonrpc: "2.0",
-        id: responseId,
-        error: { code: -32601, message: `Method not found: ${method}` },
-      });
+      return NextResponse.json(
+        {
+          jsonrpc: "2.0",
+          id: responseId,
+          error: { code: -32601, message: `Method not found: ${method}` },
+        },
+        { headers: CORS_HEADERS }
+      );
   }
 }

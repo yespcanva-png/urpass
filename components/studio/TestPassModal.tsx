@@ -162,7 +162,7 @@ export default function TestPassModal({
           <div className="space-y-4">
             <div>
               <label className="text-xs font-bold text-neutral-700 block mb-1.5">
-                Select Dummy Attendee Profile
+                Select Sample Attendee Profile
               </label>
               <div className="space-y-2">
                 {DUMMY_ATTENDEES.map((att) => {

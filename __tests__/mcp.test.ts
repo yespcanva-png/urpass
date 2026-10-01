@@ -59,6 +59,29 @@ vi.mock("@/lib/mcp/core", () => ({
     success: true,
     passToken: "tok-vip",
   }),
+  mcpListSessions: vi.fn().mockResolvedValue({
+    total: 2,
+    sessions: [{ id: "sess-1", title: "AI Opening Keynote" }],
+  }),
+  mcpCreateSession: vi.fn().mockResolvedValue({
+    success: true,
+    session: { id: "sess-2", title: "Future of AI" },
+  }),
+  mcpListRooms: vi.fn().mockResolvedValue({
+    rooms: [{ id: "rm-1", name: "Main Auditorium", capacity: 500 }],
+  }),
+  mcpListSpeakers: vi.fn().mockResolvedValue({
+    speakers: [{ id: "spk-1", full_name: "Sarah Chen" }],
+  }),
+  mcpAssignSpeaker: vi.fn().mockResolvedValue({ success: true }),
+  mcpVerifySessionCheckin: vi.fn().mockResolvedValue({
+    status: "CHECKED_IN",
+    success: true,
+    attendee: { name: "Alice" },
+  }),
+  mcpGetConferenceAnalytics: vi.fn().mockResolvedValue({
+    analytics: { totalSessions: 10, totalCapacity: 1500 },
+  }),
 }));
 
 describe("MCP Endpoint (/api/mcp)", () => {
@@ -67,18 +90,20 @@ describe("MCP Endpoint (/api/mcp)", () => {
   });
 
   describe("GET /api/mcp", () => {
-    it("returns MCP server capabilities and tool list", async () => {
+    it("returns MCP server capabilities and tool list with CORS headers", async () => {
       mockAuthenticateApiKey.mockResolvedValue(null);
       const req = new NextRequest("http://localhost/api/mcp", { method: "GET" });
       const res = await GET(req);
       expect(res.status).toBe(200);
+      expect(res.headers.get("access-control-allow-origin")).toBe("*");
 
       const json = await res.json();
       expect(json.name).toBe("urpass-mcp");
       expect(json.tools).toBeInstanceOf(Array);
-      expect(json.tools.length).toBe(10);
+      expect(json.tools.length).toBe(17);
       expect(json.tools.map((t: { name: string }) => t.name)).toContain("urpass_list_events");
-      expect(json.tools.map((t: { name: string }) => t.name)).toContain("urpass_verify_checkin");
+      expect(json.tools.map((t: { name: string }) => t.name)).toContain("urpass_list_sessions");
+      expect(json.tools.map((t: { name: string }) => t.name)).toContain("urpass_verify_session_checkin");
     });
   });
 
@@ -91,6 +116,7 @@ describe("MCP Endpoint (/api/mcp)", () => {
       });
       const res = await POST(req);
       expect(res.status).toBe(401);
+      expect(res.headers.get("access-control-allow-origin")).toBe("*");
 
       const json = await res.json();
       expect(json.error.code).toBe(-32000);
@@ -116,7 +142,7 @@ describe("MCP Endpoint (/api/mcp)", () => {
       expect(json.result.capabilities.tools).toBeDefined();
     });
 
-    it("handles tools/list method", async () => {
+    it("handles tools/list method with 17 tools", async () => {
       mockAuthenticateApiKey.mockResolvedValue({ userId: "user-123", keyId: "key-123" });
       const req = new NextRequest("http://localhost/api/mcp", {
         method: "POST",
@@ -130,7 +156,7 @@ describe("MCP Endpoint (/api/mcp)", () => {
       const res = await POST(req);
       expect(res.status).toBe(200);
       const json = await res.json();
-      expect(json.result.tools.length).toBe(10);
+      expect(json.result.tools.length).toBe(17);
     });
 
     it("executes tools/call for urpass_list_events", async () => {
@@ -176,6 +202,59 @@ describe("MCP Endpoint (/api/mcp)", () => {
       const json = await res.json();
       expect(json.error.code).toBe(-32601);
       expect(json.error.message).toContain("Tool not found");
+    });
+
+    it("executes conference tools/call for urpass_list_sessions", async () => {
+      mockAuthenticateApiKey.mockResolvedValue({ userId: "user-123", keyId: "key-123" });
+      const req = new NextRequest("http://localhost/api/mcp", {
+        method: "POST",
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          id: 14,
+          method: "tools/call",
+          params: {
+            name: "urpass_list_sessions",
+            arguments: { eventId: "evt-123" },
+          },
+        }),
+      });
+
+      const res = await POST(req);
+      expect(res.status).toBe(200);
+      const json = await res.json();
+      expect(json.result.content[0].type).toBe("text");
+      const parsed = JSON.parse(json.result.content[0].text);
+      expect(parsed.sessions[0].title).toBe("AI Opening Keynote");
+    });
+
+    it("supports query parameter authentication ?api_key=...", async () => {
+      mockAuthenticateApiKey.mockImplementation((r: NextRequest) => {
+        const auth = r.headers.get("authorization");
+        if (auth === "Bearer urp_live_querykey") {
+          return Promise.resolve({ userId: "user-123", keyId: "key-123" });
+        }
+        return Promise.resolve(null);
+      });
+
+      const req = new NextRequest("http://localhost/api/mcp?api_key=urp_live_querykey", {
+        method: "POST",
+        body: JSON.stringify({ jsonrpc: "2.0", id: 15, method: "ping" }),
+      });
+
+      const res = await POST(req);
+      expect(res.status).toBe(200);
+      const json = await res.json();
+      expect(json.result).toEqual({});
+    });
+  });
+
+  describe("OPTIONS /api/mcp", () => {
+    it("returns 204 with CORS preflight headers", async () => {
+      const { OPTIONS } = await import("@/app/api/mcp/route");
+      const res = await OPTIONS();
+      expect(res.status).toBe(204);
+      expect(res.headers.get("access-control-allow-origin")).toBe("*");
+      expect(res.headers.get("access-control-allow-methods")).toContain("GET, POST, OPTIONS");
     });
   });
 });

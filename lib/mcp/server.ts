@@ -11,6 +11,13 @@ import {
   mcpVerifyCheckin,
   mcpGetEventAnalytics,
   mcpIssuePass,
+  mcpListSessions,
+  mcpCreateSession,
+  mcpListRooms,
+  mcpListSpeakers,
+  mcpAssignSpeaker,
+  mcpVerifySessionCheckin,
+  mcpGetConferenceAnalytics,
   type McpToolContext,
 } from "./core";
 
@@ -223,6 +230,150 @@ export function createUrpassMcpServer(ctx: McpToolContext) {
     async (args) => {
       try {
         const result = await mcpIssuePass(ctx, args);
+        return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        return { isError: true, content: [{ type: "text", text: `Error: ${msg}` }] };
+      }
+    }
+  );
+
+  // 11. urpass_list_sessions
+  server.tool(
+    "urpass_list_sessions",
+    "List conference agenda sessions for an event, filterable by date, room, and track.",
+    {
+      eventId: z.string().describe("Event UUID"),
+      date: z.string().optional().describe("Filter by session date (YYYY-MM-DD)"),
+      roomId: z.string().optional().describe("Filter by room UUID"),
+      trackId: z.string().optional().describe("Filter by track UUID"),
+      limit: z.number().int().min(1).max(100).optional().describe("Max sessions to return"),
+    },
+    async (args) => {
+      try {
+        const result = await mcpListSessions(ctx, args);
+        return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        return { isError: true, content: [{ type: "text", text: `Error: ${msg}` }] };
+      }
+    }
+  );
+
+  // 12. urpass_create_session
+  server.tool(
+    "urpass_create_session",
+    "Create a new conference agenda session with scheduling conflict prevention.",
+    {
+      eventId: z.string().describe("Event UUID"),
+      title: z.string().min(2).describe("Session title"),
+      session_type: z.string().optional().describe("Session type (keynote, presentation, workshop, panel, break, networking)"),
+      session_date: z.string().describe("Session date (YYYY-MM-DD)"),
+      start_time: z.string().describe("Start time (HH:MM)"),
+      end_time: z.string().describe("End time (HH:MM)"),
+      room_id: z.string().optional().describe("Room UUID"),
+      track_id: z.string().optional().describe("Track UUID"),
+      capacity: z.number().int().min(1).optional().describe("Session capacity limit"),
+      registration_required: z.boolean().optional().describe("Require prior seat reservation"),
+      description: z.string().optional().describe("Session description"),
+    },
+    async (args) => {
+      try {
+        const result = await mcpCreateSession(ctx, args);
+        return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        return { isError: true, content: [{ type: "text", text: `Error: ${msg}` }] };
+      }
+    }
+  );
+
+  // 13. urpass_list_rooms
+  server.tool(
+    "urpass_list_rooms",
+    "List conference halls, rooms, floors, and capacities for an event.",
+    {
+      eventId: z.string().describe("Event UUID"),
+    },
+    async (args) => {
+      try {
+        const result = await mcpListRooms(ctx, args);
+        return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        return { isError: true, content: [{ type: "text", text: `Error: ${msg}` }] };
+      }
+    }
+  );
+
+  // 14. urpass_list_speakers
+  server.tool(
+    "urpass_list_speakers",
+    "List conference speakers, bios, organisations, and social links for an event.",
+    {
+      eventId: z.string().describe("Event UUID"),
+    },
+    async (args) => {
+      try {
+        const result = await mcpListSpeakers(ctx, args);
+        return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        return { isError: true, content: [{ type: "text", text: `Error: ${msg}` }] };
+      }
+    }
+  );
+
+  // 15. urpass_assign_speaker
+  server.tool(
+    "urpass_assign_speaker",
+    "Assign a speaker to an agenda session with double-booking prevention.",
+    {
+      sessionId: z.string().describe("Session UUID"),
+      speakerId: z.string().describe("Speaker UUID"),
+      role: z.string().optional().describe("Role: speaker, moderator, panelist, host, trainer"),
+    },
+    async (args) => {
+      try {
+        const result = await mcpAssignSpeaker(ctx, args);
+        return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        return { isError: true, content: [{ type: "text", text: `Error: ${msg}` }] };
+      }
+    }
+  );
+
+  // 16. urpass_verify_session_checkin
+  server.tool(
+    "urpass_verify_session_checkin",
+    "Verify an attendee pass and record entry into a specific conference session.",
+    {
+      sessionId: z.string().describe("Session UUID"),
+      passToken: z.string().describe("Scanned pass token, URL, or attendee UUID"),
+      override: z.boolean().optional().describe("Override reservation requirement if full/unreserved"),
+    },
+    async (args) => {
+      try {
+        const result = await mcpVerifySessionCheckin(ctx, args);
+        return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        return { isError: true, content: [{ type: "text", text: `Error: ${msg}` }] };
+      }
+    }
+  );
+
+  // 17. urpass_get_conference_analytics
+  server.tool(
+    "urpass_get_conference_analytics",
+    "Get real-time conference analytics: room utilisation, session occupancy rates, and peak check-in velocity.",
+    {
+      eventId: z.string().describe("Event UUID"),
+    },
+    async (args) => {
+      try {
+        const result = await mcpGetConferenceAnalytics(ctx, args);
         return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);

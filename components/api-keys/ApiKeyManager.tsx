@@ -275,7 +275,7 @@ export default function ApiKeyManager({ keys: initialKeys }: { keys: ApiKeyRow[]
         </pre>
       </div>
 
-      <McpIntegrationCard />
+      <McpIntegrationCard activeApiKey={newRawKey || undefined} />
     </div>
   );
 }

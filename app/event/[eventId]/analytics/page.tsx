@@ -16,6 +16,8 @@ export async function generateMetadata({
   };
 }
 
+import ConferenceAnalyticsWidget from "@/components/conference/ConferenceAnalyticsWidget";
+
 export default async function EventAnalyticsPage({
   params,
 }: {
@@ -24,5 +26,10 @@ export default async function EventAnalyticsPage({
   const { eventId } = await params;
   const data = await getAnalyticsData(eventId);
 
-  return <AnalyticsDashboard initialData={data} isScopedToEvent={true} />;
+  return (
+    <div className="space-y-6">
+      <AnalyticsDashboard initialData={data} isScopedToEvent={true} />
+      <ConferenceAnalyticsWidget eventId={eventId} />
+    </div>
+  );
 }

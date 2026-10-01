@@ -117,6 +117,12 @@ export default function ScanEventPage() {
   const [selectedGateId, setSelectedGateId] = useState<string | null>(null);
   const [gateDropdownOpen, setGateDropdownOpen] = useState(false);
 
+  // Conference Session Check-in state
+  const [sessions, setSessions] = useState<any[]>([]);
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
+  const [sessionDropdownOpen, setSessionDropdownOpen] = useState(false);
+  const [sessionStats, setSessionStats] = useState<{ checkedIn: number; capacity: number | null; remaining: number | null } | null>(null);
+
   // Manual search mode
   const [manualMode, setManualMode] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -138,6 +144,7 @@ export default function ScanEventPage() {
   const wakeLockRef = useRef<WakeLockController | null>(null);
 
   const selectedGate = gates.find((g) => g.id === selectedGateId) ?? null;
+  const selectedSession = sessions.find((s) => s.id === selectedSessionId) ?? null;
 
   const lastTokenRef = useRef<string | null>(null);
   const lastTokenTimeRef = useRef<number>(0);
@@ -199,13 +206,30 @@ export default function ScanEventPage() {
   useEffect(() => {
     async function fetchData() {
       const supabase = createClient();
-      const [{ data: eventData }, { data: gateData }] = await Promise.all([
+      const [{ data: eventData }, { data: gateData }, { data: sessionData }] = await Promise.all([
         supabase.from("events").select("name").eq("id", eventId).single(),
         supabase
           .from("scanner_gates")
           .select("id, name, zone_id, zone:event_zones(name)")
           .eq("event_id", eventId)
           .order("position"),
+        supabase
+          .from("event_sessions")
+          .select(`
+            id,
+            title,
+            session_date,
+            start_time,
+            end_time,
+            capacity,
+            registration_required,
+            checkin_enabled,
+            require_checkout,
+            room:event_rooms (id, name, capacity)
+          `)
+          .eq("event_id", eventId)
+          .eq("checkin_enabled", true)
+          .order("start_time"),
       ]);
 
       if (eventData) setEventName(eventData.name);
@@ -214,12 +238,20 @@ export default function ScanEventPage() {
         const parsedGates = gateData as unknown as Gate[];
         setGates(parsedGates);
 
-        // Pre-select from URL param or auto-select if only one gate
         const urlGate = searchParams.get("gate");
         if (urlGate && parsedGates.find((g) => g.id === urlGate)) {
           setSelectedGateId(urlGate);
-        } else if (parsedGates.length === 1) {
+        } else if (parsedGates.length === 1 && !searchParams.get("session")) {
           setSelectedGateId(parsedGates[0].id);
+        }
+      }
+
+      if (sessionData && sessionData.length > 0) {
+        setSessions(sessionData);
+        const urlSession = searchParams.get("session");
+        if (urlSession && sessionData.find((s) => s.id === urlSession)) {
+          setSelectedSessionId(urlSession);
+          setSelectedGateId(null);
         }
       }
     }
@@ -479,6 +511,68 @@ export default function ScanEventPage() {
       setTimeout(() => { cooldownRef.current = false; }, RAPID_SCAN_COOLDOWN_MS);
 
       setScanState("verifying");
+
+      // ── Conference Session Check-in Flow ──
+      if (selectedSessionId) {
+        try {
+          const res = await fetch(`/api/sessions/${selectedSessionId}/checkin`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ passToken: rawToken }),
+          });
+          const data = await res.json();
+          if (data.status === "CHECKED_IN" || data.status === "CHECKED_OUT") {
+            playScannerFeedback("CHECKED_IN", { sound: soundEnabled });
+            setResult({
+              attendee: data.attendee,
+              passType: data.attendee?.pass_type || "participant",
+              checkedInAt: data.checkinTime,
+              gateName: `${data.session.title} (${data.session.room})`,
+            });
+            if (data.capacity) {
+              setSessionStats({
+                checkedIn: data.checkedInCount,
+                capacity: data.capacity,
+                remaining: data.remainingSeats,
+              });
+            }
+            setScanState("success");
+            return;
+          }
+          if (data.status === "ALREADY_CHECKED_IN") {
+            playScannerFeedback("ALREADY_CHECKED_IN", { sound: soundEnabled });
+            setResult({
+              attendee: data.attendee,
+              passType: data.attendee?.pass_type || "participant",
+              checkedInAt: data.checkedInAt,
+              gateName: `${data.session.title} (${data.session.room})`,
+            });
+            setScanState("duplicate");
+            return;
+          }
+          if (data.status === "ACCESS_NOT_ALLOWED" || data.status === "SESSION_FULL") {
+            playScannerFeedback("NOT_APPROVED", { sound: soundEnabled });
+            setAccessDeniedMsg(data.error || "Access not allowed for this session");
+            setScanState("access_denied");
+            return;
+          }
+          if (data.status === "WRONG_EVENT") {
+            playScannerFeedback("WRONG_EVENT", { sound: soundEnabled });
+            setErrorMsg(data.error || "Pass is registered for a different event");
+            setScanState("error");
+            return;
+          }
+          playScannerFeedback("INVALID_PASS", { sound: soundEnabled });
+          setErrorMsg(data.error || "Verification failed");
+          setScanState("error");
+          return;
+        } catch {
+          playScannerFeedback("NETWORK_ERROR", { sound: soundEnabled });
+          setErrorMsg("Failed to scan session pass");
+          setScanState("error");
+          return;
+        }
+      }
 
       // ── Offline Verification Flow ──
       if (!isOnline) {
@@ -900,13 +994,58 @@ export default function ScanEventPage() {
                   {gates.map((g) => (
                     <button
                       key={g.id}
-                      onClick={() => { setSelectedGateId(g.id); setGateDropdownOpen(false); }}
+                      onClick={() => { setSelectedGateId(g.id); setSelectedSessionId(null); setGateDropdownOpen(false); }}
                       className={`w-full text-left px-3 py-2.5 text-xs hover:bg-white/[0.06] transition-colors ${selectedGateId === g.id ? "text-white font-medium" : "text-white/50"}`}
                     >
                       <span className="block">{g.name}</span>
                       {g.zone && (
                         <span className="block text-[10px] text-white/30 mt-0.5">{g.zone.name}</span>
                       )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Session selector chip */}
+          {sessions.length > 0 && (
+            <div className="relative">
+              <button
+                onClick={() => setSessionDropdownOpen((o) => !o)}
+                className={`flex items-center gap-1 border rounded-full px-2.5 py-1.5 text-[11px] font-medium transition-colors max-w-[130px] ${
+                  selectedSession
+                    ? "bg-purple-600/20 border-purple-500/40 text-purple-200"
+                    : "bg-white/[0.06] border-white/[0.08] text-white/60 hover:text-white/80"
+                }`}
+              >
+                <span className="truncate">
+                  {selectedSession ? selectedSession.title : "Select Session"}
+                </span>
+                <ChevronDown className="w-3 h-3 shrink-0" />
+              </button>
+              {sessionDropdownOpen && (
+                <div className="absolute right-0 top-full mt-1 z-50 bg-neutral-900 border border-white/[0.08] rounded-xl overflow-hidden shadow-xl min-w-[200px] max-h-64 overflow-y-auto">
+                  <button
+                    onClick={() => { setSelectedSessionId(null); setSessionDropdownOpen(false); }}
+                    className={`w-full text-left px-3 py-2.5 text-xs hover:bg-white/[0.06] transition-colors ${!selectedSessionId ? "text-purple-400 font-medium" : "text-white/50"}`}
+                  >
+                    Main Gate (No Session)
+                  </button>
+                  {sessions.map((s) => (
+                    <button
+                      key={s.id}
+                      onClick={() => {
+                        setSelectedSessionId(s.id);
+                        setSelectedGateId(null);
+                        setSessionDropdownOpen(false);
+                      }}
+                      className={`w-full text-left px-3 py-2.5 text-xs hover:bg-white/[0.06] transition-colors ${selectedSessionId === s.id ? "text-purple-400 font-medium" : "text-white/70"}`}
+                    >
+                      <span className="block truncate font-medium">{s.title}</span>
+                      <span className="block text-[10px] text-white/40 mt-0.5">
+                        {s.room?.name || "Main Venue"} • {s.start_time.slice(0, 5)}
+                      </span>
                     </button>
                   ))}
                 </div>
@@ -1107,6 +1246,31 @@ export default function ScanEventPage() {
           <>
             {/* Center zone */}
             <div className="flex-1 flex flex-col items-center justify-center px-5 py-8">
+              {/* Session mode indicator banner */}
+              {selectedSession && (
+                <div className="w-full max-w-xs sm:max-w-sm mb-3.5 bg-purple-950/60 border border-purple-500/40 rounded-2xl p-3 text-xs text-white shadow-lg animate-in fade-in">
+                  <div className="flex items-center justify-between gap-2 mb-1">
+                    <span className="font-bold text-purple-200 text-sm truncate">{selectedSession.title}</span>
+                    <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-purple-500/30 text-purple-200 border border-purple-500/40 shrink-0">
+                      Session Scan
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-white/60 text-[11px] pt-1 border-t border-purple-500/20">
+                    <span>Room: {selectedSession.room?.name || "Main Venue"}</span>
+                    <span>
+                      Capacity: {selectedSession.capacity || selectedSession.room?.capacity || "Unlimited"}
+                    </span>
+                  </div>
+                  {sessionStats && (
+                    <div className="flex items-center justify-between text-[11px] pt-1 text-purple-300 font-semibold">
+                      <span>Checked In: {sessionStats.checkedIn}</span>
+                      {sessionStats.remaining !== null && (
+                        <span>Remaining: {sessionStats.remaining}</span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Scanner — kept mounted in DOM to prevent hardware teardown and re-initialization */}
               <div className={`w-full max-w-xs sm:max-w-sm ${scanState === "idle" || scanState === "scanning" ? "block" : "hidden"}`}>

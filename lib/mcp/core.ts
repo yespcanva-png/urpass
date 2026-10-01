@@ -2,6 +2,12 @@ import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { getSupabaseUrl } from "@/lib/supabase/config";
 import { getUserPlan } from "@/lib/plan";
 import { sendPassEmail } from "@/lib/email";
+import {
+  checkRoomConflict,
+  checkSpeakerConflicts,
+} from "@/lib/conference/conflict-detection";
+import { computeConferenceAnalytics, slugify } from "@/lib/conference/helpers";
+import type { EventSession, EventRoom } from "@/types/conference";
 
 function adminClient() {
   return createAdminClient(
@@ -651,5 +657,401 @@ export async function mcpIssuePass(
     attendeeId: attendee.id,
     passToken: pass.pass_token,
     passUrl: `https://urpass.space/pass/${pass.pass_token}`,
+  };
+}
+
+// ─────────────────────────────────────────────────────────────
+// Conference Management Tools
+// ─────────────────────────────────────────────────────────────
+
+async function verifyOrganizerEvent(
+  supabase: ReturnType<typeof adminClient>,
+  eventId: string,
+  userId: string
+) {
+  const { data: event, error } = await supabase
+    .from("events")
+    .select("id, name, organizer_id")
+    .eq("id", eventId)
+    .single();
+
+  if (error || !event || event.organizer_id !== userId) {
+    throw new Error(`Event not found or unauthorized: ${eventId}`);
+  }
+  return event;
+}
+
+// 11. list_sessions
+export async function mcpListSessions(
+  ctx: McpToolContext,
+  params: { eventId: string; date?: string; roomId?: string; trackId?: string; limit?: number }
+) {
+  const supabase = adminClient();
+  await verifyOrganizerEvent(supabase, params.eventId, ctx.userId);
+
+  let query = supabase
+    .from("event_sessions")
+    .select(`
+      id,
+      title,
+      session_type,
+      description,
+      session_date,
+      start_time,
+      end_time,
+      capacity,
+      registration_required,
+      checkin_enabled,
+      status,
+      room:event_rooms(id, name, capacity),
+      track:event_tracks(id, name, color),
+      speakers:session_speakers(role, speaker:event_speakers(id, full_name, job_title, company))
+    `)
+    .eq("event_id", params.eventId)
+    .order("session_date", { ascending: true })
+    .order("start_time", { ascending: true });
+
+  if (params.date) query = query.eq("session_date", params.date);
+  if (params.roomId) query = query.eq("room_id", params.roomId);
+  if (params.trackId) query = query.eq("track_id", params.trackId);
+  if (params.limit) query = query.limit(params.limit);
+
+  const { data: sessions, error } = await query;
+  if (error) throw new Error(`Failed to list sessions: ${error.message}`);
+
+  return {
+    eventId: params.eventId,
+    total: sessions?.length || 0,
+    sessions: sessions || [],
+  };
+}
+
+// 12. create_session
+export async function mcpCreateSession(
+  ctx: McpToolContext,
+  params: {
+    eventId: string;
+    title: string;
+    session_type?: string;
+    session_date: string;
+    start_time: string;
+    end_time: string;
+    room_id?: string;
+    track_id?: string;
+    capacity?: number;
+    registration_required?: boolean;
+    description?: string;
+  }
+) {
+  const supabase = adminClient();
+  await verifyOrganizerEvent(supabase, params.eventId, ctx.userId);
+
+  if (params.room_id) {
+    const { data: existingSessions } = await supabase
+      .from("event_sessions")
+      .select("id, title, room_id, session_date, start_time, end_time")
+      .eq("event_id", params.eventId)
+      .eq("room_id", params.room_id)
+      .eq("session_date", params.session_date);
+
+    const conflict = checkRoomConflict(
+      {
+        session_date: params.session_date,
+        start_time: params.start_time,
+        end_time: params.end_time,
+        room_id: params.room_id,
+      },
+      (existingSessions || []) as EventSession[]
+    );
+
+    if (conflict) {
+      throw new Error(`Schedule Conflict: ${conflict.message}`);
+    }
+  }
+
+  const slug = `${slugify(params.title)}-${Date.now().toString(36)}`;
+
+  const { data: session, error } = await supabase
+    .from("event_sessions")
+    .insert({
+      event_id: params.eventId,
+      title: params.title.trim(),
+      slug,
+      session_type: params.session_type || "presentation",
+      session_date: params.session_date,
+      start_time: params.start_time,
+      end_time: params.end_time,
+      room_id: params.room_id || null,
+      track_id: params.track_id || null,
+      capacity: params.capacity || null,
+      registration_required: params.registration_required ?? false,
+      description: params.description || null,
+      status: "published",
+    })
+    .select("*")
+    .single();
+
+  if (error || !session) {
+    throw new Error(`Failed to create session: ${error?.message}`);
+  }
+
+  return {
+    success: true,
+    message: `Session "${session.title}" created successfully.`,
+    session,
+  };
+}
+
+// 13. list_rooms
+export async function mcpListRooms(
+  ctx: McpToolContext,
+  params: { eventId: string }
+) {
+  const supabase = adminClient();
+  await verifyOrganizerEvent(supabase, params.eventId, ctx.userId);
+
+  const { data: rooms, error } = await supabase
+    .from("event_rooms")
+    .select("id, name, location, floor, capacity, checkin_enabled, description")
+    .eq("event_id", params.eventId)
+    .order("name", { ascending: true });
+
+  if (error) throw new Error(`Failed to list rooms: ${error.message}`);
+  return { eventId: params.eventId, rooms: rooms || [] };
+}
+
+// 14. list_speakers
+export async function mcpListSpeakers(
+  ctx: McpToolContext,
+  params: { eventId: string }
+) {
+  const supabase = adminClient();
+  await verifyOrganizerEvent(supabase, params.eventId, ctx.userId);
+
+  const { data: speakers, error } = await supabase
+    .from("event_speakers")
+    .select("id, full_name, job_title, company, bio, linkedin_url, website_url, email, visibility")
+    .eq("event_id", params.eventId)
+    .order("display_order", { ascending: true });
+
+  if (error) throw new Error(`Failed to list speakers: ${error.message}`);
+  return { eventId: params.eventId, speakers: speakers || [] };
+}
+
+// 15. assign_speaker
+export async function mcpAssignSpeaker(
+  ctx: McpToolContext,
+  params: { sessionId: string; speakerId: string; role?: string }
+) {
+  const supabase = adminClient();
+
+  const { data: session } = await supabase
+    .from("event_sessions")
+    .select("id, event_id, title, session_date, start_time, end_time")
+    .eq("id", params.sessionId)
+    .single();
+
+  if (!session) throw new Error("Session not found");
+  await verifyOrganizerEvent(supabase, session.event_id, ctx.userId);
+
+  const { data: speakerSessions } = await supabase
+    .from("session_speakers")
+    .select(`
+      session_id,
+      session:event_sessions (id, title, session_date, start_time, end_time)
+    `)
+    .eq("speaker_id", params.speakerId);
+
+  const existingSpeakerSessions = (speakerSessions || [])
+    .map((s: any) => (Array.isArray(s.session) ? s.session[0] : s.session))
+    .filter(Boolean);
+
+  const conflicts = checkSpeakerConflicts(
+    session as EventSession,
+    [params.speakerId],
+    existingSpeakerSessions as EventSession[]
+  );
+
+  if (conflicts.length > 0) {
+    throw new Error(`Speaker Double-Booking: ${conflicts[0].message}`);
+  }
+
+  const { error } = await supabase
+    .from("session_speakers")
+    .upsert({
+      session_id: params.sessionId,
+      speaker_id: params.speakerId,
+      role: params.role || "speaker",
+    });
+
+  if (error) throw new Error(`Failed to assign speaker: ${error.message}`);
+
+  return {
+    success: true,
+    message: `Speaker assigned to session "${session.title}" as ${params.role || "speaker"}.`,
+  };
+}
+
+// 16. verify_session_checkin
+export async function mcpVerifySessionCheckin(
+  ctx: McpToolContext,
+  params: { sessionId: string; passToken: string; override?: boolean }
+) {
+  const supabase = adminClient();
+
+  const { data: session } = await supabase
+    .from("event_sessions")
+    .select("id, event_id, title, capacity, registration_required, checkin_enabled, room:event_rooms(name, capacity)")
+    .eq("id", params.sessionId)
+    .single();
+
+  if (!session) throw new Error("Session not found");
+  await verifyOrganizerEvent(supabase, session.event_id, ctx.userId);
+
+  let cleanToken = params.passToken.trim();
+  if (cleanToken.includes("/pass/")) {
+    cleanToken = cleanToken.split("/pass/")[1].split("?")[0];
+  }
+
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanToken);
+  let passQuery = supabase
+    .from("passes")
+    .select("id, pass_token, pass_type, event_id, attendee:attendees(id, name, email, application_status)");
+
+  const { data: pass } = await (isUuid
+    ? passQuery.or(`id.eq.${cleanToken},pass_token.eq.${cleanToken}`)
+    : passQuery.eq("pass_token", cleanToken)
+  ).maybeSingle();
+
+  if (!pass) throw new Error("Invalid QR Pass: Pass not found");
+  if (pass.event_id !== session.event_id) throw new Error("Pass registered for a different event");
+
+  const attendee = (pass as any).attendee;
+  if (!attendee || attendee.application_status === "rejected") {
+    throw new Error("Attendee application rejected or invalid");
+  }
+
+  const { data: existingCheckIn } = await supabase
+    .from("session_checkins")
+    .select("id, checkin_time")
+    .eq("session_id", params.sessionId)
+    .eq("attendee_id", attendee.id)
+    .maybeSingle();
+
+  if (existingCheckIn) {
+    return {
+      status: "ALREADY_CHECKED_IN",
+      message: `Already checked in at ${new Date(existingCheckIn.checkin_time).toLocaleTimeString()}`,
+      attendee: { name: attendee.name, email: attendee.email },
+      sessionTitle: session.title,
+    };
+  }
+
+  if (session.registration_required && !params.override) {
+    const { data: res } = await supabase
+      .from("session_reservations")
+      .select("id, status")
+      .eq("session_id", params.sessionId)
+      .eq("attendee_id", attendee.id)
+      .maybeSingle();
+
+    if (!res || res.status !== "reserved") {
+      throw new Error(`ACCESS NOT ALLOWED: ${attendee.name} has not reserved a seat in this session.`);
+    }
+  }
+
+  const checkinTime = new Date().toISOString();
+  await supabase
+    .from("session_checkins")
+    .insert({
+      event_id: session.event_id,
+      session_id: session.id,
+      attendee_id: attendee.id,
+      pass_id: pass.id,
+      checkin_time: checkinTime,
+      checkin_source: "mcp",
+      sync_status: "synced",
+    });
+
+  const roomObj = Array.isArray(session.room) ? session.room[0] : (session.room as any);
+
+  return {
+    status: "CHECKED_IN",
+    success: true,
+    message: `✓ Checked in: ${attendee.name} to ${session.title}`,
+    attendee: { name: attendee.name, email: attendee.email },
+    sessionTitle: session.title,
+    room: roomObj?.name || "Main Venue",
+    checkinTime,
+  };
+}
+
+// 17. get_conference_analytics
+export async function mcpGetConferenceAnalytics(
+  ctx: McpToolContext,
+  params: { eventId: string }
+) {
+  const supabase = adminClient();
+  await verifyOrganizerEvent(supabase, params.eventId, ctx.userId);
+
+  const { data: sessionsRaw } = await supabase
+    .from("event_sessions")
+    .select("id, title, room_id, capacity, session_date, start_time, end_time, status")
+    .eq("event_id", params.eventId);
+
+  const sessionIds = ((sessionsRaw || []) as Array<{ id: string }>).map((s) => s.id);
+
+  const [
+    { data: roomsRaw },
+    { count: speakersCount },
+    { count: tracksCount },
+    { data: reservationsRaw },
+    { data: checkinsRaw },
+  ] = await Promise.all([
+    supabase
+      .from("event_rooms")
+      .select("id, name, capacity")
+      .eq("event_id", params.eventId),
+
+    supabase
+      .from("event_speakers")
+      .select("id", { count: "exact", head: true })
+      .eq("event_id", params.eventId),
+
+    supabase
+      .from("event_tracks")
+      .select("id", { count: "exact", head: true })
+      .eq("event_id", params.eventId),
+
+    sessionIds.length > 0
+      ? supabase
+          .from("session_reservations")
+          .select("session_id, status")
+          .in("session_id", sessionIds)
+      : Promise.resolve({ data: [] }),
+
+    supabase
+      .from("session_checkins")
+      .select("session_id, checkin_time")
+      .eq("event_id", params.eventId),
+  ]);
+
+  const sessions = (sessionsRaw || []) as unknown as EventSession[];
+  const rooms = (roomsRaw || []) as unknown as EventRoom[];
+  const reservations = (reservationsRaw || []) as Array<{ session_id: string; status: string }>;
+  const checkins = (checkinsRaw || []) as Array<{ session_id: string; checkin_time: string }>;
+
+  const analytics = computeConferenceAnalytics(
+    sessions,
+    rooms,
+    speakersCount || 0,
+    tracksCount || 0,
+    reservations,
+    checkins
+  );
+
+  return {
+    eventId: params.eventId,
+    analytics,
   };
 }
