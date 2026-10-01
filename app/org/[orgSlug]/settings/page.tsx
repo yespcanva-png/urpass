@@ -5,6 +5,8 @@ import { getOrgPaymentSettings } from "@/app/actions/org-payment-settings";
 import { getOrganizationSettings } from "@/app/actions/organization-settings";
 import OrgSettingsClient from "./OrgSettingsClient";
 
+import { getOrganizationPaymentAccountAction } from "@/app/actions/managed-payments";
+
 export default async function OrgSettingsPage({ params }: { params: Promise<{ orgSlug: string }> }) {
   const { orgSlug } = await params;
   const supabase = await createClient();
@@ -19,9 +21,10 @@ export default async function OrgSettingsPage({ params }: { params: Promise<{ or
     redirect(`/org/${orgSlug}`);
   }
 
-  const [paymentSettings, orgSettings] = await Promise.all([
+  const [paymentSettings, orgSettings, managedPaymentAccount] = await Promise.all([
     getOrgPaymentSettings(org.id),
     getOrganizationSettings(org.id),
+    getOrganizationPaymentAccountAction(org.id),
   ]);
 
   return (
@@ -31,6 +34,7 @@ export default async function OrgSettingsPage({ params }: { params: Promise<{ or
       userRole={userRole as import("@/types").OrgRole}
       existingPaymentKeyId={paymentSettings?.razorpay_key_id ?? null}
       initialSettings={orgSettings}
+      initialManagedAccount={managedPaymentAccount as any}
     />
   );
 }

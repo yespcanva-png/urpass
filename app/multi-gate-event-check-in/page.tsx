@@ -1,79 +1,83 @@
 import type { Metadata } from "next";
-import { CheckCircle2, Users, ScanLine, ShieldCheck, Clock, Layers, BarChart3 } from "lucide-react";
-import SEOPage from "@/components/landing/SEOPage";
+import BOFUMoneyPage from "@/components/landing/BOFUMoneyPage";
 
 export const metadata: Metadata = {
-  title: "Multi-Gate Event Check-In & Synchronized Access Control",
-  description: "Coordinate multiple entrances, turnstiles, and volunteer check-in lanes in real time. Prevent pass sharing and duplicate entry across large event venues.",
+  title: "Multi-Gate Event Check-In System — Synchronized Scanning & Anti-Duplication | URPASS",
+  description:
+    "Synchronized multi-gate event check-in system for arenas, stadium gates, and large venues. Validate QR passes across 20+ gates in <0.3s with atomic duplicate blocking.",
   keywords: [
-    "multi gate event check in",
-    "event registration software",
-    "QR event check-in",
-    "digital event pass",
-    "event ticketing platform",
-    "URPASS"
+    "multi-gate event check-in",
+    "multi-gate qr check in",
+    "multiple entrance event scanner",
+    "synchronized event check-in",
+    "prevent duplicate event ticket entry",
+    "arena gate scanning software",
   ],
   alternates: { canonical: "https://urpass.space/multi-gate-event-check-in" },
   openGraph: {
-    title: "Multi-Gate Event Check-In & Synchronized Access Control | URPASS",
-    description: "Coordinate multiple entrances, turnstiles, and volunteer check-in lanes in real time. Prevent pass sharing and duplicate entry across large event venues.",
+    title: "Multi-Gate Event Check-In System | Synchronized QR Scanning | URPASS",
+    description:
+      "Coordinate multiple entrance gates with real-time synchronized QR verification. Sub-second scanning, atomic duplicate locks, and zero hardware rentals.",
     url: "https://urpass.space/multi-gate-event-check-in",
     locale: "en_IN",
     type: "website",
   },
+  other: {
+    "geo.region": "IN",
+    "geo.placename": "India",
+    "geo.position": "20.5937;78.9629",
+    "ICBM": "20.5937, 78.9629",
+  },
 };
 
-export default function Page() {
+export default function MultiGateEventCheckInPage() {
   return (
-    <SEOPage
+    <BOFUMoneyPage
       config={{
-        badge: "MULTI-GATE CHECK-IN",
-        h1: "Multi-Gate Event Check-In with Real-Time Cloud Sync",
         canonicalUrl: "https://urpass.space/multi-gate-event-check-in",
-        description: "Coordinate multiple entrances, turnstiles, and volunteer check-in lanes in real time. Prevent pass sharing and duplicate entry across large event venues.",
-        ctaLabel: "Set up multi-gate check-in free",
-        features: [
-          { icon: Users, title: "Real-Time Multi-Gate Sync", desc: "Every scan at Gate A immediately invalidates the ticket at Gate B, Gate C, and VIP entrances." },
-          { icon: ScanLine, title: "Parallel Check-In Lanes", desc: "Deploy multiple scanning volunteers at each gate to divide arrival queues and eliminate entrance wait times." },
-          { icon: ShieldCheck, title: "PIN-Protected Volunteer Access", desc: "Grant gate staff scanner access via secure PIN without exposing your organizer dashboard or revenue." },
-          { icon: Clock, title: "Sub-Second Pass Verification", desc: "Fast QR camera decoding verifies credentials in under 0.3s to maintain continuous line momentum." },
-          { icon: Layers, title: "Gate-Specific Headcounts", desc: "Monitor entry distribution across different venue gates to balance security and staffing in real time." },
-          { icon: BarChart3, title: "Unified Attendance Roster", desc: "All admissions flow into a single central dashboard with live totals, velocity charts, and CSV export." },
+        badge: "MULTI-GATE INFRASTRUCTURE",
+        h1: "Multi-Gate Event Check-In System",
+        hook: "Sell tickets. Accept UPI. Send QR passes. Scan attendees. Keep your event revenue.",
+        subDescription:
+          "Manage synchronized entrance gates across large auditoriums, sports grounds, and convention centers. Atomic database row locks guarantee duplicate passes or shared screenshots are blocked instantly.",
+        primaryCtaLabel: "Book demo",
+        primaryCtaHref: "/contact",
+        secondaryCtaLabel: "Calculate Gate Throughput",
+        secondaryCtaHref: "/event-check-in-calculator",
+        trustHighlights: ["Atomic duplicate locks", "Sub-0.3s validation", "Offline sync", "Zero hardware rentals"],
+        currency: "INR",
+        cluster: "enterprise",
+        description:
+          "Multi-gate event check-in system: synchronize 20+ venue gates simultaneously, prevent duplicate pass reuse, and monitor gate-by-gate attendance in real time.",
+        comparisonRows: [
+          {
+            criteria: "Multi-Gate Synchronization Speed",
+            urpass: "Sub-50ms atomic state replication across all active gates",
+            competitor: "Periodic polling or slow cloud sync causing duplicate passes",
+            urpassAdvantage: true,
+          },
+          {
+            criteria: "Gate Hardware Requirements",
+            urpass: "Any volunteer smartphone browser (Safari / Chrome)",
+            competitor: "Proprietary handheld laser guns costing thousands per gate",
+            urpassAdvantage: true,
+          },
+          {
+            criteria: "Offline Fault Tolerance",
+            urpass: "IndexedDB client queue continues validating if WiFi drops",
+            competitor: "System freezes completely during network blackouts",
+            urpassAdvantage: true,
+          },
+          {
+            criteria: "Gate-by-Gate Live Telemetry",
+            urpass: "Real-time breakdown of arrivals per gate, throughput, and bottleneck alerts",
+            competitor: "Aggregate count only with no gate-specific insights",
+            urpassAdvantage: true,
+          },
         ],
-        steps: [
-          { n: "01", title: "Plan Gate Layout", desc: "Identify entry gates (Main Gate, North Gate, VIP Entrance, Auditorium)." },
-          { n: "02", title: "Share Scanner Links", desc: "Distribute PIN-protected scanner links to volunteer teams at each gate." },
-          { n: "03", title: "Open Browser Cameras", desc: "Staff open the scanner URL on their own phones — no app downloads." },
-          { n: "04", title: "Synchronized Scanning", desc: "Every verified pass updates centrally to block cross-gate pass sharing." },
-          { n: "05", title: "Monitor Gate Loads", desc: "Reallocate volunteers dynamically based on real-time arrival counts." },
-        ],
-        callout: {
-          badge: "CROSS-GATE SECURITY",
-          title: "Zero duplicate entries across all venue entrances.",
-          description: "At large festivals and campuses with multiple gates, attendees frequently attempt to hand passes back through fences. URPASS real-time cloud sync locks out duplicate passes instantly.",
-          bullets: [
-            "Instant cross-gate duplicate pass lockout",
-            "Deploy unlimited scanning phones across all venue gates",
-            "Restricted volunteer access protecting sensitive settings",
-            "Live gate velocity analytics on organizer dashboard",
-          ],
-        },
-        useCases: [
-          "College Campuses with Multiple Entrances",
-          "Multi-Hall Exhibition Centers",
-          "Sports Complexes",
-          "Multi-Track Conference Venues",
-          "Open-Air Music Festivals",
-          "Hackathon Re-Entry Gates",
-        ],
-        faqs: [
-          { q: "How quickly does a scan at Gate 1 sync with Gate 2?", a: "Scans synchronize in milliseconds over standard cellular or Wi-Fi connections, ensuring immediate duplicate lockout across all gates." },
-          { q: "Can we designate specific gates for VIP or Speaker ticket tiers?", a: "Yes. The scanner displays the ticket tier prominently on screen so staff can direct attendees to appropriate zones." },
-          { q: "What if one gate has weak Wi-Fi?", a: "The scanner uses client caching and lightweight payloads to ensure responsive verification even on 3G/4G cellular networks." },
-          { q: "How many volunteers can scan at the same time?", a: "There is no limit on volunteer scanning devices. All devices connect to your live event database simultaneously." },
-        ],
-        ctaTitle: "Start streamlining your event with URPASS",
-        ctaDescription: "Permanent free tier · 30-day free trial on paid plans · Fast sub-second check-in",
+        competitorName: "Hardware Turnstile & Laser Vendors",
+        pageSpecificTakeaway:
+          "Large venues require real-time synchronization between entrance gates. URPASS atomic row locking ensures that once a ticket is scanned at Gate 1, it cannot be reused seconds later at Gate 5.",
       }}
     />
   );

@@ -1,147 +1,83 @@
 import type { Metadata } from "next";
-import {
-  Briefcase,
-  QrCode,
-  ScanLine,
-  ShieldCheck,
-  Zap,
-  Users,
-  Smartphone,
-  BarChart3,
-  Layers,
-} from "lucide-react";
-import SEOPage from "@/components/landing/SEOPage";
+import BOFUMoneyPage from "@/components/landing/BOFUMoneyPage";
 
 export const metadata: Metadata = {
-  title: "Conference Registration Software with QR Check-In | URPASS",
+  title: "Conference Registration Software — Digital Badges, B2B GST & Sub-Second Check-In | URPASS",
   description:
-    "Enterprise-grade conference registration software. Multi-tier ticketing, branded digital passes, sub-0.3s gate check-in, and real-time attendance analytics.",
+    "Enterprise conference registration software. Multi-tier delegate badges, automated B2B GST invoices, instant QR check-in, and 0% ticket commission.",
   keywords: [
     "conference registration software",
     "conference ticketing platform",
-    "conference check in app",
-    "event registration software for conferences",
-    "conference badge qr code system",
-    "corporate summit registration software",
+    "b2b conference registration",
+    "conference badge printing software",
+    "summit registration software",
+    "conference qr check in",
   ],
-  alternates: {
-    canonical: "https://urpass.space/conference-registration-software",
-  },
+  alternates: { canonical: "https://urpass.space/conference-registration-software" },
   openGraph: {
-    title: "Conference Registration Software with QR Check-In | URPASS",
+    title: "Conference Registration Software | Digital Badges & B2B GST | URPASS",
     description:
-      "Modern conference registration and check-in software. Multi-tier passes, in-browser smartphone scanning, and zero ticketing commission.",
+      "Run professional conferences and summits with URPASS. Multi-tier passes, automated GST invoices, fast smartphone scanning, and zero commission.",
     url: "https://urpass.space/conference-registration-software",
     locale: "en_IN",
     type: "website",
+  },
+  other: {
+    "geo.region": "IN",
+    "geo.placename": "India",
+    "geo.position": "20.5937;78.9629",
+    "ICBM": "20.5937, 78.9629",
   },
 };
 
 export default function ConferenceRegistrationSoftwarePage() {
   return (
-    <SEOPage
+    <BOFUMoneyPage
       config={{
         canonicalUrl: "https://urpass.space/conference-registration-software",
-        badge: "CONFERENCES & SUMMITS",
-        h1: "Conference Registration Software With QR Check-In",
+        badge: "CONFERENCE & SUMMIT EDITION",
+        h1: "Conference Registration Software",
+        hook: "Sell tickets. Accept UPI. Send QR passes. Scan attendees. Keep your event revenue.",
+        subDescription:
+          "Power high-profile B2B conferences, developer summits, and medical congresses. Issue multi-tier delegate passes, collect GSTIN numbers at checkout, and scan badges in <0.3s.",
+        primaryCtaLabel: "Book demo",
+        primaryCtaHref: "/contact",
+        secondaryCtaLabel: "Start Selling Tickets",
+        secondaryCtaHref: "/signup",
+        trustHighlights: ["₹0 to start", "Razorpay / UPI", "QR check-in", "Automated GST invoices"],
+        currency: "INR",
+        cluster: "enterprise",
         description:
-          "The modern registration and entrance management solution for business conferences, academic symposiums, and industry summits. Deliver branded digital passes, verify delegate credentials in 0.28 seconds, and track arrival metrics in real time.",
-        ctaLabel: "Create Your Event Free",
-        directAnswer: {
-          title: "How URPASS Streamlines Conference Registration",
-          summary:
-            "Conferences require smooth delegate onboarding, multi-tier pass categories (VIP, Speaker, General Delegate), and fast entrance verification to avoid embarrassing morning lobby lines. URPASS eliminates traditional badge printing bottlenecks with mobile-ready digital QR passes delivered directly to attendees' phones, coupled with in-browser camera scanning that checks in delegates in under 0.28 seconds.",
-          keyPoints: [
-            "Tiered Registration: Set up VIP, Speaker, Media, and Delegate passes with distinct permissions",
-            "Rapid Lobby Entry: 0.28s in-browser smartphone camera scanning eliminates registration queues",
-            "Audience Ownership: You retain 100% of attendee contact information with instant CSV exports",
-            "Transparent Pricing: Permanent free tier for up to 50 delegates, with flat subscription upgrades",
-          ],
-        },
-        productProof: {
-          badge: "DELEGATE ACCESS CONTROL",
-          title: "Sub-Second In-Browser Scanner",
-          description:
-            "Registration staff scan attendee badges in Safari or Chrome. Instant visual confirmation of delegate tier and session access.",
-          type: "scanner",
-        },
-        features: [
+          "Conference registration software: handle multi-track conferences, VIP delegate badges, automated B2B GST tax invoices, and sub-second entrance validation.",
+        comparisonRows: [
           {
-            icon: Briefcase,
-            title: "Multi-Tier Delegate Passes",
-            desc: "Configure Speaker, VIP, Sponsor, and General Attendee tiers with individual seat caps and access permissions.",
+            criteria: "B2B GST Tax Invoicing",
+            urpass: "Automated GSTIN capture and compliant corporate PDF tax invoices",
+            competitor: "Manual invoice generation requested via support emails",
+            urpassAdvantage: true,
           },
           {
-            icon: QrCode,
-            title: "Digital Conference Passes",
-            desc: "Personalized badges featuring delegate name, organization, job title, and encrypted QR token with Apple Wallet support.",
+            criteria: "Badge Customization Studio",
+            urpass: "WYSIWYG Ticket Studio with 12 conference badge formats",
+            competitor: "Generic single-format black and white ticket receipt",
+            urpassAdvantage: true,
           },
           {
-            icon: ScanLine,
-            title: "0.28s Entrance Scanning",
-            desc: "Lobby reception staff scan badges directly on standard smartphones with instant validation chimes.",
+            criteria: "Multi-Gate Delegate Scanning Speed",
+            urpass: "<0.3s validation with audible confirmation tone",
+            competitor: "3 to 5 seconds per delegate causing foyer congestion",
+            urpassAdvantage: true,
           },
           {
-            icon: ShieldCheck,
-            title: "Credential Anti-Fraud",
-            desc: "Prevent badge sharing and unauthorized access with instant cloud verification and duplicate pass lockout.",
-          },
-          {
-            icon: Users,
-            title: "Custom Delegate Fields",
-            desc: "Collect company name, designation, dietary requirements, and invoice GSTIN information during registration.",
-          },
-          {
-            icon: BarChart3,
-            title: "Live Attendance Analytics",
-            desc: "Track real-time arrival velocity, session room headcounts, and overall event show-up rates.",
+            criteria: "Platform Commission on Delegate Tickets",
+            urpass: "0% commission (Keep 100% of high-value conference ticket revenue)",
+            competitor: "5% to 8% cut totaling lakhs of rupees on large summits",
+            urpassAdvantage: true,
           },
         ],
-        steps: [
-          { n: "01", title: "Set Tiers", desc: "Configure delegate categories, early bird pricing, and registration questions." },
-          { n: "02", title: "Launch Registration", desc: "Embed registration links on your conference website and email campaigns." },
-          { n: "03", title: "Deliver Badges", desc: "Delegates receive verified digital passes instantly on mobile web or email." },
-          { n: "04", title: "Check In at Lobby", desc: "Staff scan delegate badges in under 0.28s with zero lobby bottlenecks." },
-        ],
-        callout: {
-          badge: "SUMMIT READY",
-          title: "Deliver a premium, professional check-in experience",
-          description:
-            "First impressions matter. Impress your delegates, keynote speakers, and corporate sponsors with effortless digital entry.",
-          bullets: [
-            "Permanent free plan available for small conferences & seminars",
-            "In-browser scanner runs on any mobile device (<0.28s)",
-            "Instant multi-door cloud sync across venue entry gates",
-            "One-click CSV exports with verified delegate arrival timestamps",
-          ],
-        },
-        useCases: [
-          "Annual industry summits & executive conventions",
-          "Academic symposiums & scientific research conferences",
-          "Tech developer conferences & product launch events",
-          "Healthcare, medical & pharmaceutical congresses",
-          "Investor demo days & venture summits",
-        ],
-        faqs: [
-          {
-            q: "Can I manage multi-tier passes (VIP, Speaker, Delegate)?",
-            a: "Yes! You can configure distinct ticket tiers with specific quantities, pricing, custom registration fields, and gate permissions.",
-          },
-          {
-            q: "Do delegates need to print physical badges?",
-            a: "No! Delegates can present their digital QR pass on their smartphone screen or save it directly to Apple Wallet or Google Wallet. If you also want to print physical badges, URPASS passes can be printed on standard badge paper.",
-          },
-          {
-            q: "Can lobby staff scan badges without downloading an app?",
-            a: "Yes. Organizers share a secure scanner URL with lobby volunteers. Opening the link in Safari or Chrome activates the camera to validate passes in under 0.28 seconds.",
-          },
-          {
-            q: "Does URPASS support GST invoicing and tax collection?",
-            a: "Yes. For paid conferences, you can collect organization GSTIN numbers and business details directly during checkout via Razorpay or Stripe.",
-          },
-        ],
-        ctaTitle: "Elevate your conference check-in today",
-        ctaDescription: "₹0 to start · No credit card · QR passes included",
+        competitorName: "Enterprise Event Aggregators",
+        pageSpecificTakeaway:
+          "For high-ticket B2B conferences, platform percentage cuts severely erode organizer margins. On a ₹50,00,000 conference, traditional platforms deduct ₹2,50,000 to ₹4,00,000. URPASS charges zero commission.",
       }}
     />
   );

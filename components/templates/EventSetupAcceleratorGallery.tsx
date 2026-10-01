@@ -5,53 +5,87 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   EVENT_SETUP_TEMPLATES,
+  ORGANIZATION_TEMPLATES,
   type EventSetupTemplate,
-  type TemplateCategory,
+  type EventTemplateCategory,
+  type TemplateComplexity,
 } from "@/lib/templates/event-setups";
-import SetupAssetPreview from "./SetupAssetPreview";
 import EventSetupModal from "./EventSetupModal";
 import {
   Search,
   X,
   ArrowRight,
   Sparkles,
-  Zap,
-  Sliders,
-  ShieldCheck,
   Building2,
   GraduationCap,
-  Heart,
-  Crown,
   Layers,
-  Eye,
-  Palette,
+  DoorOpen,
+  Calendar,
   CheckCircle2,
-  Ticket,
+  SlidersHorizontal,
+  Bookmark,
+  ChevronDown,
 } from "lucide-react";
 
 export default function EventSetupAcceleratorGallery() {
   const router = useRouter();
-  const [selectedCategory, setSelectedCategory] = useState<TemplateCategory>("All");
+
+  // Filter States
+  const [activeTab, setActiveTab] = useState<"system" | "organization" | "recent">("system");
+  const [selectedCategory, setSelectedCategory] = useState<string>("All");
+  const [selectedEventType, setSelectedEventType] = useState<string>("all");
+  const [selectedPricing, setSelectedPricing] = useState<string>("all");
+  const [selectedComplexity, setSelectedComplexity] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Modal State
   const [activeModalTemplate, setActiveModalTemplate] = useState<EventSetupTemplate | null>(null);
 
-  const CATEGORY_TABS: TemplateCategory[] = [
+  const CATEGORIES: EventTemplateCategory[] = [
     "All",
     "Corporate",
+    "Conference",
     "Campus",
-    "Conferences",
-    "Social",
-    "Ticketed",
-    "Invite Only",
+    "Workshop",
+    "Exhibition",
+    "Networking",
+    "Product Launch",
+    "Hackathon",
+    "Sports",
+    "RSVP",
+    "Private / VIP",
+    "Paid Event",
+    "Internal Employee Event",
+    "Multi-Gate Event",
+    "High-Volume Event",
   ];
 
-  const featuredTemplates = EVENT_SETUP_TEMPLATES.filter((t) => t.featured);
+  // Base list depending on active tab
+  const baseTemplates =
+    activeTab === "organization"
+      ? ORGANIZATION_TEMPLATES
+      : activeTab === "recent"
+      ? EVENT_SETUP_TEMPLATES.slice(0, 3)
+      : EVENT_SETUP_TEMPLATES;
 
-  const filteredTemplates = EVENT_SETUP_TEMPLATES.filter((t) => {
+  // Filter logic
+  const filteredTemplates = baseTemplates.filter((t) => {
     const matchesCategory =
       selectedCategory === "All" ||
       t.category === selectedCategory ||
       t.secondaryCategory === selectedCategory;
+
+    const matchesEventType =
+      selectedEventType === "all" ||
+      t.config.eventDefaults.eventType === selectedEventType;
+
+    const matchesPricing =
+      selectedPricing === "all" ||
+      (selectedPricing === "free" && !t.config.paymentConfig.isPaid) ||
+      (selectedPricing === "paid" && t.config.paymentConfig.isPaid);
+
+    const matchesComplexity =
+      selectedComplexity === "all" || t.complexity === selectedComplexity;
 
     const matchesSearch =
       !searchQuery.trim() ||
@@ -60,473 +94,443 @@ export default function EventSetupAcceleratorGallery() {
       t.bestFor.toLowerCase().includes(searchQuery.toLowerCase()) ||
       t.chips.some((chip) => chip.toLowerCase().includes(searchQuery.toLowerCase()));
 
-    return matchesCategory && matchesSearch;
+    return (
+      matchesCategory &&
+      matchesEventType &&
+      matchesPricing &&
+      matchesComplexity &&
+      matchesSearch
+    );
   });
 
-  // Non-featured or filtered standard list
-  const standardTemplates =
-    selectedCategory === "All" && !searchQuery.trim()
-      ? EVENT_SETUP_TEMPLATES.filter((t) => !t.featured)
-      : filteredTemplates;
+  const featuredTemplates = EVENT_SETUP_TEMPLATES.filter((t) => t.featured);
+  const isDefaultView =
+    activeTab === "system" &&
+    selectedCategory === "All" &&
+    selectedEventType === "all" &&
+    selectedPricing === "all" &&
+    selectedComplexity === "all" &&
+    !searchQuery.trim();
 
-  function handleUseTemplate(template: EventSetupTemplate) {
-    router.push(`/create-event?template=${encodeURIComponent(template.id)}`);
+  const standardTemplates = isDefaultView
+    ? filteredTemplates.filter((t) => !t.featured)
+    : filteredTemplates;
+
+  function handleOpenModal(template: EventSetupTemplate) {
+    setActiveModalTemplate(template);
+  }
+
+  function handleClearFilters() {
+    setSelectedCategory("All");
+    setSelectedEventType("all");
+    setSelectedPricing("all");
+    setSelectedComplexity("all");
+    setSearchQuery("");
   }
 
   return (
-    <div className="w-full max-w-[1360px] mx-auto px-4 sm:px-8 py-8 space-y-12">
-      {/* ── 1. INTRO & SEARCH / FILTER ROW (Compact Notion + Linear Style) ── */}
-      <div className="space-y-6">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-          <div>
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-neutral-950 tracking-tight leading-tight">
-              Templates
-            </h1>
-            <p className="text-sm sm:text-base text-neutral-500 mt-2 font-medium">
-              Launch your event faster with ready-to-use URPASS setups.
-            </p>
-          </div>
+    <div className="w-full max-w-[1360px] mx-auto px-4 sm:px-6 md:px-8 py-6 sm:py-10 space-y-10">
+      {/* ── 1. COMPACT PAGE HEADER (Enterprise B2B SaaS) ── */}
+      <div className="space-y-2">
+        <h1 className="text-3xl sm:text-4xl md:text-[42px] font-bold text-neutral-900 tracking-tight leading-tight">
+          Event Templates
+        </h1>
+        <p className="text-sm sm:text-base text-neutral-600 font-normal">
+          Start with a proven event setup and customize it for your organization.
+        </p>
+        <p className="text-xs sm:text-[13px] text-neutral-400">
+          Templates can configure registration, passes, access, notifications and more.
+        </p>
+      </div>
 
-          {/* Quick Search */}
-          <div className="relative w-full sm:w-80">
-            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400 pointer-events-none" />
-            <input
-              type="text"
-              placeholder="Search setups (e.g. Conference, Fest, VIP)..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-8 py-2.5 text-xs sm:text-sm bg-white border border-neutral-200/90 rounded-2xl focus:outline-hidden focus:border-neutral-900 shadow-2xs transition-all"
-            />
-            {searchQuery && (
-              <button
-                type="button"
-                onClick={() => setSearchQuery("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-700 p-0.5 cursor-pointer"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            )}
-          </div>
+      {/* ── 2. SECTION TABS: URPASS Templates | Organization Templates | Recently Used ── */}
+      <div className="flex items-center justify-between border-b border-neutral-200 gap-4 overflow-x-auto">
+        <div className="flex items-center gap-1 sm:gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab("system");
+              handleClearFilters();
+            }}
+            className={`pb-3 text-xs sm:text-sm font-semibold transition-colors border-b-2 whitespace-nowrap cursor-pointer px-2 ${
+              activeTab === "system"
+                ? "border-neutral-900 text-neutral-900"
+                : "border-transparent text-neutral-500 hover:text-neutral-800"
+            }`}
+          >
+            <span>URPASS Templates</span>
+            <span className="ml-1.5 px-1.5 py-0.5 rounded text-[11px] font-mono bg-neutral-100 text-neutral-600">
+              20
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab("organization");
+              handleClearFilters();
+            }}
+            className={`pb-3 text-xs sm:text-sm font-semibold transition-colors border-b-2 whitespace-nowrap cursor-pointer px-2 ${
+              activeTab === "organization"
+                ? "border-neutral-900 text-neutral-900"
+                : "border-transparent text-neutral-500 hover:text-neutral-800"
+            }`}
+          >
+            <span>Organization Templates</span>
+            <span className="ml-1.5 px-1.5 py-0.5 rounded text-[11px] font-mono bg-neutral-100 text-neutral-600">
+              2
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab("recent");
+              handleClearFilters();
+            }}
+            className={`pb-3 text-xs sm:text-sm font-semibold transition-colors border-b-2 whitespace-nowrap cursor-pointer px-2 ${
+              activeTab === "recent"
+                ? "border-neutral-900 text-neutral-900"
+                : "border-transparent text-neutral-500 hover:text-neutral-800"
+            }`}
+          >
+            <span>Recently Used</span>
+          </button>
         </div>
 
-        {/* Category Tabs: All | Corporate | Campus | Conferences | Social | Ticketed | Invite Only */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar border-b border-neutral-100">
-          {CATEGORY_TABS.map((cat) => (
+        {/* Studio Pass Designer Link */}
+        <Link
+          href="/ticket-templates"
+          className="pb-3 text-xs font-medium text-neutral-500 hover:text-neutral-900 whitespace-nowrap transition-colors"
+        >
+          Browse Ticket Pass Designs →
+        </Link>
+      </div>
+
+      {/* ── 3. SEARCH & FILTERS UTILITY ROW ── */}
+      <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-3">
+        {/* Search Input */}
+        <div className="relative flex-1">
+          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400 pointer-events-none" />
+          <input
+            type="text"
+            placeholder="Search event templates (e.g. Conference, Fest, Multi-Gate, AGM)..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full h-11 pl-10 pr-9 text-xs sm:text-sm bg-white border border-neutral-200 rounded-lg focus:outline-hidden focus:border-neutral-900 shadow-2xs transition-colors"
+          />
+          {searchQuery && (
             <button
-              key={cat}
               type="button"
-              onClick={() => setSelectedCategory(cat)}
-              className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all whitespace-nowrap cursor-pointer ${
-                selectedCategory === cat
-                  ? "bg-neutral-900 text-white shadow-xs"
-                  : "bg-white text-neutral-600 hover:bg-neutral-100/80 hover:text-neutral-900"
-              }`}
+              onClick={() => setSearchQuery("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 p-0.5 cursor-pointer"
             >
-              {cat}
+              <X className="w-3.5 h-3.5" />
             </button>
-          ))}
+          )}
+        </div>
+
+        {/* Dropdowns Row */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Category Dropdown */}
+          <div className="relative">
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="h-11 pl-3 pr-8 text-xs font-medium bg-white border border-neutral-200 rounded-lg appearance-none cursor-pointer focus:outline-hidden focus:border-neutral-900 shadow-2xs text-neutral-700"
+            >
+              <option value="All">All Categories</option>
+              {CATEGORIES.filter((c) => c !== "All").map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="w-3.5 h-3.5 text-neutral-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          </div>
+
+          {/* Event Type Dropdown */}
+          <div className="relative">
+            <select
+              value={selectedEventType}
+              onChange={(e) => setSelectedEventType(e.target.value)}
+              className="h-11 pl-3 pr-8 text-xs font-medium bg-white border border-neutral-200 rounded-lg appearance-none cursor-pointer focus:outline-hidden focus:border-neutral-900 shadow-2xs text-neutral-700"
+            >
+              <option value="all">All Types</option>
+              <option value="conference">Conference</option>
+              <option value="fest">Fest / Campus</option>
+              <option value="workshop">Workshop</option>
+              <option value="exhibition">Exhibition</option>
+              <option value="sports">Sports</option>
+              <option value="corporate">Corporate</option>
+              <option value="vip">VIP / Private</option>
+            </select>
+            <ChevronDown className="w-3.5 h-3.5 text-neutral-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          </div>
+
+          {/* Free / Paid Dropdown */}
+          <div className="relative">
+            <select
+              value={selectedPricing}
+              onChange={(e) => setSelectedPricing(e.target.value)}
+              className="h-11 pl-3 pr-8 text-xs font-medium bg-white border border-neutral-200 rounded-lg appearance-none cursor-pointer focus:outline-hidden focus:border-neutral-900 shadow-2xs text-neutral-700"
+            >
+              <option value="all">Free & Paid</option>
+              <option value="free">Free Forever</option>
+              <option value="paid">Paid Ticketing</option>
+            </select>
+            <ChevronDown className="w-3.5 h-3.5 text-neutral-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          </div>
+
+          {/* Complexity Dropdown */}
+          <div className="relative">
+            <select
+              value={selectedComplexity}
+              onChange={(e) => setSelectedComplexity(e.target.value)}
+              className="h-11 pl-3 pr-8 text-xs font-medium bg-white border border-neutral-200 rounded-lg appearance-none cursor-pointer focus:outline-hidden focus:border-neutral-900 shadow-2xs text-neutral-700"
+            >
+              <option value="all">All Complexity</option>
+              <option value="Simple">Simple</option>
+              <option value="Standard">Standard</option>
+              <option value="Advanced">Advanced</option>
+            </select>
+            <ChevronDown className="w-3.5 h-3.5 text-neutral-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          </div>
+
+          {/* Reset Filters */}
+          {(selectedCategory !== "All" ||
+            selectedEventType !== "all" ||
+            selectedPricing !== "all" ||
+            selectedComplexity !== "all" ||
+            searchQuery) && (
+            <button
+              type="button"
+              onClick={handleClearFilters}
+              className="h-11 px-3 text-xs text-neutral-500 hover:text-neutral-900 font-medium transition-colors cursor-pointer"
+            >
+              Clear
+            </button>
+          )}
         </div>
       </div>
 
-      {/* ── 2. FEATURED TEMPLATES (3 LARGE CARDS IN ONE ROW) ── */}
-      {selectedCategory === "All" && !searchQuery.trim() && (
-        <section className="space-y-4">
+      {/* ── 4. FEATURED EVENT TEMPLATES ROW (Top 3 setups) ── */}
+      {isDefaultView && (
+        <div className="space-y-4 pt-2">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-brand" />
-              <h2 className="text-sm font-bold uppercase tracking-wider text-neutral-500">
-                FEATURED EVENT ACCELERATORS
-              </h2>
-            </div>
-            <span className="text-xs font-mono text-neutral-400">
-              Pre-configured registration + pass + check-in
+            <h2 className="text-base font-semibold text-neutral-900">
+              Featured Operational Setups
+            </h2>
+            <span className="text-xs text-neutral-500 font-mono">
+              Ready-to-launch blueprints
             </span>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
             {featuredTemplates.map((template) => (
-              <div
+              <EventTemplateCard
                 key={template.id}
-                className="bg-white rounded-3xl border border-neutral-200/90 overflow-hidden shadow-xs hover:shadow-xl hover:border-neutral-400/80 transition-all duration-300 flex flex-col justify-between group"
-              >
-                {/* 16:10 Visual Preview Canvas Area (~65-70% attention) */}
-                <div
-                  onClick={() => setActiveModalTemplate(template)}
-                  className="w-full h-[240px] bg-[#F6F7F9] group-hover:bg-[#EFF1F5] p-4 relative flex items-center justify-center cursor-pointer select-none overflow-hidden border-b border-neutral-100 transition-colors"
-                >
-                  {/* Floating category badge */}
-                  <div className="absolute top-3 left-3 z-10">
-                    <span className="px-2.5 py-1 rounded-lg bg-white/95 text-neutral-800 text-[10px] font-bold border border-neutral-200/90 shadow-2xs backdrop-blur-md">
-                      {template.category}
-                    </span>
-                  </div>
-
-                  {/* Floating Action Hint */}
-                  <div className="absolute top-3 right-3 z-10">
-                    <span className="px-2.5 py-1 rounded-lg bg-neutral-900 text-white text-[10px] font-bold uppercase tracking-wider shadow-2xs flex items-center gap-1">
-                      <Sparkles className="w-2.5 h-2.5 text-brand-200" />
-                      FEATURED
-                    </span>
-                  </div>
-
-                  {/* Scaled Preview */}
-                  <div className="relative z-10 w-full flex items-center justify-center transform group-hover:scale-[1.02] transition-transform duration-300">
-                    <SetupAssetPreview template={template} assetType="pass" mode="card" />
-                  </div>
-
-                  {/* Hover Overlay */}
-                  <div className="absolute inset-0 bg-neutral-950/20 opacity-0 group-hover:opacity-100 backdrop-blur-[1px] transition-all flex items-center justify-center z-20">
-                    <div className="px-3.5 py-2 rounded-xl bg-white text-neutral-950 font-bold text-xs flex items-center gap-1.5 shadow-xl">
-                      <Eye className="w-3.5 h-3.5 text-neutral-600" />
-                      <span>Preview Complete Setup</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Content & Action Area */}
-                <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
-                  <div className="space-y-2">
-                    <h3 className="text-base font-extrabold text-neutral-950 tracking-tight">
-                      {template.name}
-                    </h3>
-
-                    {/* Chips */}
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      {template.chips.map((chip, idx) => (
-                        <span
-                          key={idx}
-                          className="text-[9px] font-bold px-2 py-0.5 rounded-md bg-neutral-100 text-neutral-600 border border-neutral-200/80"
-                        >
-                          {chip}
-                        </span>
-                      ))}
-                    </div>
-
-                    <p className="text-xs text-neutral-500 line-clamp-2">
-                      <strong className="text-neutral-700 font-semibold">Best for: </strong>
-                      {template.bestFor}
-                    </p>
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="pt-3 border-t border-neutral-100 flex items-center gap-2.5">
-                    <button
-                      type="button"
-                      onClick={() => setActiveModalTemplate(template)}
-                      className="flex-1 py-2.5 px-3 rounded-xl bg-white hover:bg-neutral-50 text-neutral-900 border border-neutral-200 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-                    >
-                      <Eye className="w-3.5 h-3.5 text-neutral-500" />
-                      <span>Preview</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => handleUseTemplate(template)}
-                      className="flex-1 py-2.5 px-3 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-colors shadow-2xs cursor-pointer"
-                    >
-                      <span>Use Template</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
-              </div>
+                template={template}
+                isFeatured
+                onPreview={() => handleOpenModal(template)}
+                onUse={() => handleOpenModal(template)}
+              />
             ))}
           </div>
-        </section>
+        </div>
       )}
 
-      {/* ── 3. STANDARD & MIXED-SIZE GRID (4-COLUMN + WIDE CARDS) ── */}
-      <section className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-neutral-400" />
-            <h2 className="text-sm font-bold uppercase tracking-wider text-neutral-500">
-              {selectedCategory === "All" && !searchQuery.trim()
-                ? "POPULAR EVENT SETUPS"
-                : `${selectedCategory.toUpperCase()} SETUPS (${standardTemplates.length})`}
+      {/* ── 5. MAIN EVENT TEMPLATE GRID (3 Columns Desktop) ── */}
+      <div className="space-y-4">
+        {isDefaultView && (
+          <div className="flex items-center justify-between pt-6 border-t border-neutral-200">
+            <h2 className="text-base font-semibold text-neutral-900">
+              All Event Blueprints
             </h2>
+            <span className="text-xs text-neutral-500 font-mono">
+              {standardTemplates.length} setups available
+            </span>
           </div>
-          <span className="text-xs font-mono text-neutral-400">
-            {standardTemplates.length} Available
-          </span>
-        </div>
+        )}
 
         {standardTemplates.length === 0 ? (
-          <div className="py-16 text-center rounded-3xl border border-dashed border-neutral-300 bg-white p-8">
-            <Palette className="w-8 h-8 text-neutral-400 mx-auto mb-3" />
-            <h4 className="text-base font-bold text-neutral-900">No setups found</h4>
-            <p className="text-xs text-neutral-500 mt-1 max-w-sm mx-auto">
-              Try adjusting your search query or switching categories to see all available event accelerator setups.
+          <div className="text-center py-16 bg-neutral-50 rounded-2xl border border-neutral-200/80 space-y-3">
+            <Layers className="w-8 h-8 text-neutral-400 mx-auto" />
+            <h3 className="text-sm font-semibold text-neutral-800">
+              No templates match your filters
+            </h3>
+            <p className="text-xs text-neutral-500 max-w-sm mx-auto">
+              Try adjusting your category, event type, or complexity filters.
             </p>
             <button
               type="button"
-              onClick={() => {
-                setSelectedCategory("All");
-                setSearchQuery("");
-              }}
-              className="mt-4 px-4 py-2 rounded-xl bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800 transition-colors"
+              onClick={handleClearFilters}
+              className="mt-2 px-3 py-1.5 text-xs font-semibold bg-neutral-900 text-white rounded-lg cursor-pointer"
             >
               Reset Filters
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {standardTemplates.map((template) => {
-              const isWide = template.wide && selectedCategory === "All";
-
-              return (
-                <div
-                  key={template.id}
-                  className={`bg-white rounded-3xl border border-neutral-200/90 overflow-hidden shadow-xs hover:shadow-xl hover:border-neutral-400/80 transition-all duration-300 flex flex-col justify-between group ${
-                    isWide ? "sm:col-span-2 lg:col-span-2" : ""
-                  }`}
-                >
-                  {/* Visual Preview */}
-                  <div
-                    onClick={() => setActiveModalTemplate(template)}
-                    className={`w-full bg-[#F6F7F9] group-hover:bg-[#EFF1F5] p-3.5 relative flex items-center justify-center cursor-pointer select-none overflow-hidden border-b border-neutral-100 transition-colors ${
-                      isWide ? "h-[220px]" : "h-[200px]"
-                    }`}
-                  >
-                    <div className="absolute top-3 left-3 z-10">
-                      <span className="px-2 py-0.5 rounded-md bg-white/95 text-neutral-800 text-[9px] font-bold border border-neutral-200/90 shadow-2xs">
-                        {template.category}
-                      </span>
-                    </div>
-
-                    <div className="relative z-10 w-full flex items-center justify-center transform group-hover:scale-[1.02] transition-transform duration-300">
-                      <SetupAssetPreview template={template} assetType="pass" mode="card" />
-                    </div>
-
-                    <div className="absolute inset-0 bg-neutral-950/20 opacity-0 group-hover:opacity-100 backdrop-blur-[1px] transition-all flex items-center justify-center z-20">
-                      <div className="px-3 py-1.5 rounded-lg bg-white text-neutral-950 font-bold text-[11px] flex items-center gap-1.5 shadow-xl">
-                        <Eye className="w-3 h-3 text-neutral-600" />
-                        <span>Preview Setup</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Content & Action Area */}
-                  <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-3.5">
-                    <div className="space-y-1.5">
-                      <h4 className="text-sm font-extrabold text-neutral-950 tracking-tight line-clamp-1">
-                        {template.name}
-                      </h4>
-
-                      <div className="flex flex-wrap items-center gap-1">
-                        {template.chips.slice(0, 3).map((chip, idx) => (
-                          <span
-                            key={idx}
-                            className="text-[8.5px] font-bold px-1.5 py-0.5 rounded bg-neutral-100 text-neutral-600 border border-neutral-200/70"
-                          >
-                            {chip}
-                          </span>
-                        ))}
-                      </div>
-
-                      <p className="text-[11px] text-neutral-500 line-clamp-1">
-                        <strong className="text-neutral-700 font-semibold">Best for: </strong>
-                        {template.bestFor}
-                      </p>
-                    </div>
-
-                    <div className="pt-2.5 border-t border-neutral-100 flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setActiveModalTemplate(template)}
-                        className="py-2 px-2.5 rounded-xl bg-white hover:bg-neutral-50 text-neutral-900 border border-neutral-200 font-bold text-xs flex items-center justify-center transition-colors cursor-pointer"
-                        title="Preview Complete Setup"
-                      >
-                        <Eye className="w-3.5 h-3.5 text-neutral-500" />
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => handleUseTemplate(template)}
-                        className="flex-1 py-2 px-3 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-white font-bold text-xs flex items-center justify-center gap-1 transition-colors shadow-2xs cursor-pointer"
-                      >
-                        <span>Use Template</span>
-                        <ArrowRight className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+            {standardTemplates.map((template) => (
+              <EventTemplateCard
+                key={template.id}
+                template={template}
+                onPreview={() => handleOpenModal(template)}
+                onUse={() => handleOpenModal(template)}
+              />
+            ))}
           </div>
         )}
-      </section>
+      </div>
 
-      {/* ── 4. SPECIAL COLLECTIONS SECTION ── */}
-      {selectedCategory === "All" && !searchQuery.trim() && (
-        <section className="space-y-4 pt-4">
+      {/* ── 6. ENTERPRISE ORGANIZATION TEMPLATES BANNER ── */}
+      <div className="p-6 rounded-2xl bg-neutral-50 border border-neutral-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-neutral-900" />
-            <h2 className="text-sm font-bold uppercase tracking-wider text-neutral-500">
-              SPECIAL COLLECTIONS
-            </h2>
+            <Building2 className="w-4 h-4 text-neutral-700" />
+            <h3 className="text-sm font-bold text-neutral-900">
+              Custom Organization Templates
+            </h3>
           </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {/* Corporate Collection */}
-            <div
-              onClick={() => setSelectedCategory("Corporate")}
-              className="p-6 rounded-3xl bg-neutral-900 text-white border border-neutral-800 shadow-lg flex flex-col justify-between space-y-6 cursor-pointer hover:border-neutral-600 transition-all group"
-            >
-              <div className="space-y-2">
-                <div className="w-9 h-9 rounded-2xl bg-white/10 flex items-center justify-center text-white border border-white/10">
-                  <Building2 className="w-4 h-4" />
-                </div>
-                <h3 className="text-lg font-black tracking-tight text-white group-hover:text-brand-200 transition-colors">
-                  Corporate
-                </h3>
-                <p className="text-xs text-neutral-400 leading-relaxed">
-                  B2B conferences, keynotes, trade expos &amp; internal team summits.
-                </p>
-              </div>
-              <span className="text-xs font-bold text-white flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-                <span>Browse Corporate</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </span>
-            </div>
-
-            {/* Campus Collection */}
-            <div
-              onClick={() => setSelectedCategory("Campus")}
-              className="p-6 rounded-3xl bg-neutral-900 text-white border border-neutral-800 shadow-lg flex flex-col justify-between space-y-6 cursor-pointer hover:border-neutral-600 transition-all group"
-            >
-              <div className="space-y-2">
-                <div className="w-9 h-9 rounded-2xl bg-white/10 flex items-center justify-center text-white border border-white/10">
-                  <GraduationCap className="w-4 h-4" />
-                </div>
-                <h3 className="text-lg font-black tracking-tight text-white group-hover:text-brand-200 transition-colors">
-                  Campus
-                </h3>
-                <p className="text-xs text-neutral-400 leading-relaxed">
-                  College fests, 24h hackathons, student symposiums &amp; club events.
-                </p>
-              </div>
-              <span className="text-xs font-bold text-white flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-                <span>Browse Campus</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </span>
-            </div>
-
-            {/* RSVP Collection */}
-            <div
-              onClick={() => setSelectedCategory("Social")}
-              className="p-6 rounded-3xl bg-neutral-900 text-white border border-neutral-800 shadow-lg flex flex-col justify-between space-y-6 cursor-pointer hover:border-neutral-600 transition-all group"
-            >
-              <div className="space-y-2">
-                <div className="w-9 h-9 rounded-2xl bg-white/10 flex items-center justify-center text-white border border-white/10">
-                  <Heart className="w-4 h-4" />
-                </div>
-                <h3 className="text-lg font-black tracking-tight text-white group-hover:text-brand-200 transition-colors">
-                  RSVP
-                </h3>
-                <p className="text-xs text-neutral-400 leading-relaxed">
-                  Weddings, private dinners, receptions &amp; intimate community mixers.
-                </p>
-              </div>
-              <span className="text-xs font-bold text-white flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-                <span>Browse RSVP</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </span>
-            </div>
-
-            {/* Premium / VIP Collection */}
-            <div
-              onClick={() => setSelectedCategory("Invite Only")}
-              className="p-6 rounded-3xl bg-neutral-900 text-white border border-neutral-800 shadow-lg flex flex-col justify-between space-y-6 cursor-pointer hover:border-neutral-600 transition-all group"
-            >
-              <div className="space-y-2">
-                <div className="w-9 h-9 rounded-2xl bg-white/10 flex items-center justify-center text-white border border-white/10">
-                  <Crown className="w-4 h-4" />
-                </div>
-                <h3 className="text-lg font-black tracking-tight text-white group-hover:text-brand-200 transition-colors">
-                  Premium / VIP
-                </h3>
-                <p className="text-xs text-neutral-400 leading-relaxed">
-                  Trustee galas, private dinners, investor retreats &amp; luxury access.
-                </p>
-              </div>
-              <span className="text-xs font-bold text-white flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-                <span>Browse VIP</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </span>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* ── 5. TEMPLATE STUDIO SECTION ("Build once, reuse across 50+ events") ── */}
-      <section className="rounded-3xl bg-neutral-950 p-8 sm:p-12 text-white border border-neutral-800 shadow-2xl relative overflow-hidden">
-        <div className="max-w-3xl space-y-4 relative z-10">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-neutral-300 text-xs font-bold border border-white/20">
-            <Sliders className="w-3.5 h-3.5 text-brand-200" />
-            <span>ENTERPRISE &amp; CAMPUS BUILDER</span>
-          </div>
-
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-white">
-            Template Studio
-          </h2>
-
-          <p className="text-xs sm:text-sm text-neutral-300 leading-relaxed max-w-2xl">
-            Want to build your own bespoke setup? Use our full-canvas studio to preconfigure custom brand assets, registration fields, approval rules, and gate security permissions. Save once, reuse across 50+ events seamlessly.
+          <p className="text-xs text-neutral-600 max-w-2xl leading-relaxed">
+            Enterprise teams and university departments can save standardized registration workflows, turnstile gates, and accredited pass designs as reusable organization blueprints.
           </p>
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 text-xs">
-            <div className="p-3 rounded-2xl bg-white/5 border border-white/10">
-              <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block">
-                1. BRAND
-              </span>
-              <p className="text-neutral-200 mt-1 font-medium">Logo, color hex, cover banner</p>
-            </div>
-            <div className="p-3 rounded-2xl bg-white/5 border border-white/10">
-              <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block">
-                2. PASS
-              </span>
-              <p className="text-neutral-200 mt-1 font-medium">QR placement, credentials, lanyard</p>
-            </div>
-            <div className="p-3 rounded-2xl bg-white/5 border border-white/10">
-              <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block">
-                3. REGISTRATION
-              </span>
-              <p className="text-neutral-200 mt-1 font-medium">Custom inputs, approval, limits</p>
-            </div>
-            <div className="p-3 rounded-2xl bg-white/5 border border-white/10">
-              <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block">
-                4. ACCESS
-              </span>
-              <p className="text-neutral-200 mt-1 font-medium">Gates, zones &amp; check-in staff</p>
-            </div>
-          </div>
-
-          <div className="pt-4 flex flex-col sm:flex-row items-center gap-3">
-            <Link
-              href="/studio"
-              className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-white text-neutral-950 font-bold text-xs sm:text-sm hover:bg-neutral-100 transition-colors shadow-xs flex items-center justify-center gap-2"
-            >
-              <Palette className="w-4 h-4 text-neutral-900" />
-              <span>Launch Template Studio →</span>
-            </Link>
-
-            <Link
-              href="/create-event"
-              className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-white font-semibold text-xs sm:text-sm border border-neutral-700 transition-colors flex items-center justify-center gap-1.5"
-            >
-              <span>Start Blank Event</span>
-            </Link>
-          </div>
         </div>
-      </section>
 
-      {/* ── Canva-Style Modal ── */}
+        <button
+          type="button"
+          onClick={() => {
+            setActiveTab("organization");
+          }}
+          className="px-4 py-2 rounded-lg bg-white border border-neutral-200 hover:bg-neutral-100 text-neutral-900 font-semibold text-xs whitespace-nowrap transition-colors shadow-2xs cursor-pointer"
+        >
+          View Org Blueprints →
+        </button>
+      </div>
+
+      {/* ── 7. PREVIEW MODAL ── */}
       <EventSetupModal
         isOpen={Boolean(activeModalTemplate)}
         onClose={() => setActiveModalTemplate(null)}
         template={activeModalTemplate}
       />
+    </div>
+  );
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// EVENT TEMPLATE CARD COMPONENT
+// ────────────────────────────────────────────────────────────────────────────
+interface EventTemplateCardProps {
+  template: EventSetupTemplate;
+  isFeatured?: boolean;
+  onPreview: () => void;
+  onUse: () => void;
+}
+
+function EventTemplateCard({
+  template,
+  isFeatured = false,
+  onPreview,
+  onUse,
+}: EventTemplateCardProps) {
+  return (
+    <div className="bg-white border border-neutral-200 rounded-2xl p-4 sm:p-5 shadow-xs hover:border-neutral-300 hover:shadow-sm transition-all duration-150 flex flex-col justify-between group">
+      <div className="space-y-3.5">
+        {/* Visual Composition Preview Canvas */}
+        <div
+          onClick={onPreview}
+          className="w-full h-44 bg-[#F5F6F7] rounded-xl border border-neutral-200/80 p-3 relative overflow-hidden flex flex-col justify-between cursor-pointer select-none"
+        >
+          {/* Background Layer: Miniature Event Landing & Form Header */}
+          <div className="w-full bg-white rounded-lg border border-neutral-200 p-2.5 shadow-2xs space-y-1.5 opacity-90">
+            <div className="flex items-center justify-between">
+              <span className="text-[7.5px] font-mono uppercase tracking-wider text-neutral-400 font-bold">
+                {template.category}
+              </span>
+              <span className="text-[7px] font-mono px-1.5 py-0.5 rounded bg-neutral-100 text-neutral-600 font-semibold">
+                {template.complexity}
+              </span>
+            </div>
+            <h5 className="text-[10px] font-bold text-neutral-900 truncate">
+              {template.eventPage.heroTitle}
+            </h5>
+            {/* Input slots */}
+            <div className="space-y-1 pt-0.5">
+              <div className="w-3/4 h-2 rounded bg-neutral-100 border border-neutral-200" />
+              <div className="w-1/2 h-2 rounded bg-neutral-100 border border-neutral-200" />
+            </div>
+          </div>
+
+          {/* Overlaid Floating Miniature QR Pass Badge in Bottom-Right */}
+          <div className="absolute right-3 bottom-8 w-24 bg-white border border-neutral-300 rounded-lg p-1.5 shadow-md transform rotate-2 group-hover:rotate-0 transition-transform duration-150 flex items-center gap-1.5">
+            <div className="w-6 h-6 rounded bg-neutral-900 flex items-center justify-center text-[8px] font-bold text-white shrink-0">
+              QR
+            </div>
+            <div className="min-w-0">
+              <span className="text-[7px] font-bold text-neutral-800 block truncate">
+                {template.qrPass.attendeeName}
+              </span>
+              <span className="text-[6px] font-mono text-neutral-400 block truncate">
+                {template.qrPass.tier}
+              </span>
+            </div>
+          </div>
+
+          {/* Bottom Strip: Gate & Check-in Indicator */}
+          <div className="w-full pt-1.5 border-t border-neutral-200/70 flex items-center justify-between text-[8px] font-mono text-neutral-600">
+            <span className="flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              <span>{template.gateConfig}</span>
+            </span>
+            <span className="text-neutral-400">{template.version}</span>
+          </div>
+        </div>
+
+        {/* Template Information */}
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between gap-2">
+            <h3 className="text-base font-semibold text-neutral-900 tracking-tight leading-snug">
+              {template.name}
+            </h3>
+            {isFeatured && (
+              <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-700 shrink-0">
+                Featured
+              </span>
+            )}
+          </div>
+
+          <p className="text-xs text-neutral-600 line-clamp-2 leading-relaxed">
+            {template.subtitle}
+          </p>
+
+          {/* Small Capability Summary (max 3-4 labels) */}
+          <p className="text-[11px] font-medium text-neutral-500 pt-1">
+            {template.chips.slice(0, 4).join(" • ")}
+          </p>
+        </div>
+      </div>
+
+      {/* Card Actions */}
+      <div className="pt-4 mt-3 border-t border-neutral-100 flex items-center justify-between gap-3">
+        <button
+          type="button"
+          onClick={onPreview}
+          className="text-xs text-neutral-500 hover:text-neutral-900 font-medium transition-colors cursor-pointer"
+        >
+          Preview
+        </button>
+
+        <button
+          type="button"
+          onClick={onUse}
+          className="px-3.5 py-1.5 rounded-lg bg-neutral-900 hover:bg-neutral-800 text-white font-medium text-xs flex items-center gap-1.5 transition-colors shadow-2xs cursor-pointer"
+        >
+          <span>Use Template</span>
+          <ArrowRight className="w-3 h-3 text-neutral-400" />
+        </button>
+      </div>
     </div>
   );
 }

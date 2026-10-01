@@ -16,7 +16,7 @@ vi.mock("@/app/actions/ticket-design", () => ({
   sendTestTicketEmail: vi.fn().mockResolvedValue({ success: true }),
 }));
 
-describe("URPASS Ticket Studio (4-Section Clean Ticket Editor)", () => {
+describe("URPASS Ticket Studio (Professional 2-Panel Ticket Customization Interface)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     global.fetch = vi.fn().mockImplementation((url: string) => {
@@ -42,7 +42,7 @@ describe("URPASS Ticket Studio (4-Section Clean Ticket Editor)", () => {
     });
   });
 
-  it("renders the 4 core sections: Design, Content, Branding, Delivery", () => {
+  it("renders the 2-panel editor structure and core workflow indicator", () => {
     render(
       <TicketStudio
         isPro={true}
@@ -54,14 +54,13 @@ describe("URPASS Ticket Studio (4-Section Clean Ticket Editor)", () => {
     );
 
     expect(screen.getByText("Ticket Studio")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /design/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /content/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /branding/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /delivery/i })).toBeInTheDocument();
-    expect(screen.getByText("LIVE PREVIEW")).toBeInTheDocument();
+    expect(screen.getByText("Workflow:")).toBeInTheDocument();
+    expect(screen.getAllByText(/template/i).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(/branding/i).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(/content/i).length).toBeGreaterThanOrEqual(1);
   });
 
-  it("renders 3 ready-made templates, ticket shapes, and category colors in Design section", () => {
+  it("renders the left control panel sections", () => {
     render(
       <TicketStudio
         isPro={true}
@@ -70,36 +69,63 @@ describe("URPASS Ticket Studio (4-Section Clean Ticket Editor)", () => {
       />
     );
 
-    expect(screen.getByRole("button", { name: /minimal/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /event/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /dark/i })).toBeInTheDocument();
-    expect(screen.getByText("Ticket Shape")).toBeInTheDocument();
-    expect(screen.getByText("Ticket Type Colors")).toBeInTheDocument();
-    expect(screen.getByText("QR Safety Zone Active")).toBeInTheDocument();
+    expect(screen.getAllByText(/1\. Template/i).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(/2\. Branding/i).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(/3\. Ticket Content/i).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText("4. QR / Pass Settings")).toBeInTheDocument();
+    expect(screen.getByText("5. Background")).toBeInTheDocument();
+    expect(screen.getByText("6. Advanced Options")).toBeInTheDocument();
   });
 
-  it("renders dynamic ticket fields and ticket rules in Content section", async () => {
+  it("renders Change Template action and quick template switches in Template section", () => {
     render(
       <TicketStudio
         isPro={true}
         eventId="evt-1"
         eventName="TECHFEST 2026"
-        venue="The Residency, Coimbatore"
       />
     );
 
-    // Switch to Content tab
-    await userEvent.click(screen.getByRole("button", { name: /content/i }));
+    expect(screen.getByRole("button", { name: /change template/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^minimal$/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^event$/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^dark$/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^modern$/i })).toBeInTheDocument();
+  });
 
-    expect(screen.getByText("Dynamic Ticket Fields")).toBeInTheDocument();
+  it("renders compact logo upload, brand color picker, and hex value in Branding section", () => {
+    render(
+      <TicketStudio
+        isPro={true}
+        eventId="evt-1"
+        eventName="TECHFEST 2026"
+      />
+    );
+
+    expect(screen.getByText("Event Logo")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /upload logo/i })).toBeInTheDocument();
+    expect(screen.getByText("Brand Color")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("#635BFF")).toBeInTheDocument();
+  });
+
+  it("renders dynamic ticket fields with checkboxes and reorder handles in Content section", () => {
+    render(
+      <TicketStudio
+        isPro={true}
+        eventId="evt-1"
+        eventName="TECHFEST 2026"
+      />
+    );
+
     expect(screen.getByRole("checkbox", { name: /attendee name/i })).toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: /ticket type/i })).toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: /event date/i })).toBeInTheDocument();
     expect(screen.getByRole("checkbox", { name: /venue/i })).toBeInTheDocument();
-    expect(screen.getByRole("checkbox", { name: /company \/ college/i })).toBeInTheDocument();
-    expect(screen.getByText("Ticket Rules")).toBeInTheDocument();
-    expect(screen.getAllByText(/valid for one entry/i).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByRole("checkbox", { name: /ticket id/i })).toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: /company/i })).toBeInTheDocument();
   });
 
-  it("renders event logo and sponsor logo in Branding section", async () => {
+  it("renders QR settings and scan contrast safety notice", async () => {
     render(
       <TicketStudio
         isPro={true}
@@ -108,96 +134,97 @@ describe("URPASS Ticket Studio (4-Section Clean Ticket Editor)", () => {
       />
     );
 
-    // Switch to Branding tab
-    await userEvent.click(screen.getByRole("button", { name: /branding/i }));
+    // Expand QR section
+    await userEvent.click(screen.getByText("4. QR / Pass Settings"));
 
-    expect(screen.getByText("Event / Company Logo")).toBeInTheDocument();
-    expect(screen.getByText(/sponsor logo/i)).toBeInTheDocument();
+    expect(screen.getByText("QR Target Size")).toBeInTheDocument();
+    expect(screen.getByText("QR Position")).toBeInTheDocument();
+    expect(screen.getByText("Show QR safety border")).toBeInTheDocument();
+    expect(screen.getByText(/Keep sufficient contrast for reliable scanning/i)).toBeInTheDocument();
   });
 
-  it("renders mobile/email view modes and design status in Delivery section", async () => {
+  it("renders realistic sample attendee data on the live ticket preview", () => {
     render(
       <TicketStudio
         isPro={true}
         eventId="evt-1"
-        eventName="TECHFEST 2026"
-      />
-    );
-
-    // Switch to Delivery tab
-    await userEvent.click(screen.getByRole("button", { name: /delivery/i }));
-
-    expect(screen.getByText("Mobile / Email Preview Mode")).toBeInTheDocument();
-    expect(screen.getByText("Design Status")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /send test to organizer/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /download sample pass/i })).toBeInTheDocument();
-  });
-
-  it("strictly renders locked information hierarchy on live preview: Logo -> Event Name -> Ticket Type -> QR -> Attendee -> ID -> Date/Venue", () => {
-    render(
-      <TicketStudio
-        isPro={true}
-        eventId="evt-1"
-        eventName="TECHFEST 2026"
-        eventDate="03 OCT 2026 | 10:00 AM"
-        venue="The Residency, Coimbatore"
+        eventName="URPASS Summit 2026"
+        eventDate="12 Oct 2026 | 10:00 AM"
+        venue="Bengaluru"
       />
     );
 
     // Event Name
-    const headings = screen.getAllByRole("heading", { name: /techfest 2026/i });
+    const headings = screen.getAllByRole("heading", { name: /urpass summit 2026/i });
     expect(headings.length).toBeGreaterThanOrEqual(1);
 
-    // Ticket Type Pill
-    const vipPasses = screen.getAllByText(/vip/i);
-    expect(vipPasses.length).toBeGreaterThanOrEqual(1);
+    // Attendee Name
+    expect(screen.getAllByText("Aarav Mehta").length).toBeGreaterThanOrEqual(1);
 
-    // QR Code Entry text
-    expect(screen.getByText("SCAN FOR ENTRY")).toBeInTheDocument();
-
-    // Attendee Name (Default sample Haarishmitha)
-    expect(screen.getAllByText("Haarishmitha").length).toBeGreaterThanOrEqual(1);
+    // Ticket Type
+    expect(screen.getAllByText(/vip delegate/i).length).toBeGreaterThanOrEqual(1);
 
     // Ticket ID
-    expect(screen.getByText("#URP-02891")).toBeInTheDocument();
+    expect(screen.getAllByText("#URP-02891").length).toBeGreaterThanOrEqual(1);
 
     // Date & Venue
-    expect(screen.getByText("03 OCT 2026 | 10:00 AM")).toBeInTheDocument();
-    expect(screen.getByText("The Residency, Coimbatore")).toBeInTheDocument();
+    expect(screen.getAllByText("12 Oct 2026 | 10:00 AM").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Bengaluru").length).toBeGreaterThanOrEqual(1);
+
+    // QR scan notice
+    expect(screen.getByText("SCAN FOR ENTRY")).toBeInTheDocument();
   });
 
-  it("allows switching sample attendees to preview different guest names", async () => {
+  it("allows switching sample attendees to preview different guest data", async () => {
     render(
       <TicketStudio
         isPro={true}
         eventId="evt-1"
-        eventName="TECHFEST 2026"
+        eventName="URPASS Summit 2026"
       />
     );
 
-    expect(screen.getAllByText("Haarishmitha").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Aarav Mehta").length).toBeGreaterThanOrEqual(1);
 
-    // Click on Arun button
-    const arunBtn = screen.getByRole("button", { name: "Arun" });
-    await userEvent.click(arunBtn);
+    // Click on Priya sample attendee button
+    const priyaBtn = screen.getByRole("button", { name: /Priya/i });
+    await userEvent.click(priyaBtn);
 
-    expect(screen.getByText("Arun Kumar")).toBeInTheDocument();
-    expect(screen.getByText("#URP-04812")).toBeInTheDocument();
+    expect(screen.getAllByText("Priya Sharma").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("#URP-07340").length).toBeGreaterThanOrEqual(1);
   });
 
-  it("opens Send Test modal and submits test pass to email", async () => {
-    const { sendTestTicketEmail } = await import("@/app/actions/ticket-design");
-
+  it("allows format switching between Mobile, Badge, and Print", async () => {
     render(
       <TicketStudio
         isPro={true}
         eventId="evt-1"
-        eventName="TECHFEST 2026"
+        eventName="URPASS Summit 2026"
+      />
+    );
+
+    const badgeBtn = screen.getByRole("button", { name: /^badge$/i });
+    await userEvent.click(badgeBtn);
+    expect(screen.getByText("AARAV MEHTA")).toBeInTheDocument();
+
+    const printBtn = screen.getByRole("button", { name: /^print$/i });
+    await userEvent.click(printBtn);
+    expect(screen.getByText("OFFICIAL ADMISSION")).toBeInTheDocument();
+    expect(screen.getByText("GATE STUB")).toBeInTheDocument();
+  });
+
+  it("opens Send Test modal and submits test pass to email", async () => {
+    render(
+      <TicketStudio
+        isPro={true}
+        eventId="evt-1"
+        eventName="URPASS Summit 2026"
       />
     );
 
     // Click Send test button
-    await userEvent.click(screen.getByRole("button", { name: /send test/i }));
+    const testBtns = screen.getAllByRole("button", { name: /send test/i });
+    await userEvent.click(testBtns[0]);
 
     expect(screen.getByRole("heading", { name: /send test ticket/i })).toBeInTheDocument();
 
@@ -215,9 +242,9 @@ describe("URPASS Ticket Studio (4-Section Clean Ticket Editor)", () => {
         })
       );
     });
-  }, 15000);
+  });
 
-  it("calls manual save when Save button is clicked", async () => {
+  it("calls manual save when Save & Apply button is clicked", async () => {
     render(
       <TicketStudio
         isPro={true}
@@ -226,8 +253,8 @@ describe("URPASS Ticket Studio (4-Section Clean Ticket Editor)", () => {
       />
     );
 
-    const saveBtn = screen.getByRole("button", { name: /^save$/i });
-    await userEvent.click(saveBtn);
+    const saveBtns = screen.getAllByRole("button", { name: /save & apply/i });
+    await userEvent.click(saveBtns[0]);
 
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalledWith(
@@ -238,35 +265,5 @@ describe("URPASS Ticket Studio (4-Section Clean Ticket Editor)", () => {
         })
       );
     });
-  });
-
-  it("switches section and maintains persistent selection when clicking elements on live preview", async () => {
-    render(
-      <TicketStudio
-        isPro={true}
-        eventId="evt-1"
-        eventName="TECHFEST 2026"
-      />
-    );
-
-    // Initial section is Design
-    expect(screen.getByText("3 Design Templates")).toBeInTheDocument();
-
-    // Click on Logo element on preview
-    const logoEl = screen.getByTitle(/click to customize logo & branding/i);
-    await userEvent.click(logoEl);
-
-    // Should switch to Branding section and keep logo selected
-    expect(screen.getByText("Event / Company Logo")).toBeInTheDocument();
-
-    // Click on Attendee name on preview
-    const attendeeEl = screen.getByTitle(/click to customize attendee name & fields/i);
-    await userEvent.click(attendeeEl);
-
-    // Should switch to Content section
-    expect(screen.getByText("Dynamic Ticket Fields")).toBeInTheDocument();
-
-    // Verify printable-ticket-card exists for clean printing
-    expect(document.getElementById("printable-ticket-card")).toBeInTheDocument();
   });
 });

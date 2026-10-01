@@ -19,13 +19,18 @@ import {
   FileText,
   X,
   AlertCircle,
-  RefreshCw,
   ChevronDown,
   ChevronUp,
   Undo2,
   Redo2,
-  Sparkles,
   GripVertical,
+  Maximize2,
+  Minimize2,
+  RotateCcw,
+  Sparkles,
+  ExternalLink,
+  ChevronRight,
+  Eye,
 } from "lucide-react";
 import {
   type TicketDesignConfig,
@@ -58,7 +63,7 @@ interface TicketStudioProps {
 type TicketOutputFormat = "mobile" | "badge" | "print";
 
 const BRAND_SWATCHES = [
-  { name: "Indigo", hex: "#635BFF" },
+  { name: "URPASS Indigo", hex: "#635BFF" },
   { name: "Electric Blue", hex: "#4F46E5" },
   { name: "Emerald", hex: "#059669" },
   { name: "Amber", hex: "#D97706" },
@@ -128,6 +133,13 @@ const QR_MATRIX = [
   [1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 1],
 ];
 
+interface FieldItem {
+  id: string;
+  key: keyof TicketDesignConfig;
+  label: string;
+  sample: string;
+}
+
 export default function TicketStudio({
   initialConfig,
   isPro,
@@ -190,7 +202,8 @@ export default function TicketStudio({
     }
   }
 
-  // 2. Collapsible Sections in Left Panel
+  // 2. Left Control Panel: Collapsible Sections
+  // Only template & branding are open by default to keep interface focused and uncluttered
   const [openSections, setOpenSections] = useState({
     template: true,
     branding: true,
@@ -212,12 +225,15 @@ export default function TicketStudio({
   const [zoomLevel, setZoomLevel] = useState<number>(100);
   const [activeAttendeeIndex, setActiveAttendeeIndex] = useState<number>(0);
   const sampleAttendee = SAMPLE_ATTENDEES[activeAttendeeIndex];
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const previewContainerRef = useRef<HTMLDivElement>(null);
 
   // Mobile viewport view tab
   const [mobileTab, setMobileTab] = useState<"controls" | "preview">("controls");
 
   // 4. Modals State
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
+  const [templateFilterCategory, setTemplateFilterCategory] = useState("All");
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [upgradeFeatureName, setUpgradeFeatureName] = useState<string | undefined>(undefined);
 
@@ -242,11 +258,86 @@ export default function TicketStudio({
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [isUploadingSponsorLogo, setIsUploadingSponsorLogo] = useState(false);
   const [isUploadingBg, setIsUploadingBg] = useState(false);
-  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [logoUploadError, setLogoUploadError] = useState<string | null>(null);
+  const [bgUploadError, setBgUploadError] = useState<string | null>(null);
+  const [sponsorUploadError, setSponsorUploadError] = useState<string | null>(null);
 
   const logoInputRef = useRef<HTMLInputElement>(null);
   const sponsorLogoInputRef = useRef<HTMLInputElement>(null);
   const bgInputRef = useRef<HTMLInputElement>(null);
+
+  // 8. Dynamic Fields Order & Configuration
+  const defaultFieldsList: FieldItem[] = [
+    { id: "showAttendeeName", key: "showAttendeeName", label: "Attendee name", sample: sampleAttendee.name },
+    { id: "showTicketType", key: "showTicketType", label: "Ticket type", sample: sampleAttendee.ticketType },
+    { id: "showEventDate", key: "showEventDate", label: "Event date", sample: eventDate },
+    { id: "showVenue", key: "showVenue", label: "Venue", sample: venue },
+    { id: "showTicketId", key: "showTicketId", label: "Ticket ID", sample: sampleAttendee.ticketId },
+    { id: "showOrganization", key: "showOrganization", label: "Company", sample: sampleAttendee.organization },
+    { id: "showPhone", key: "showPhone", label: "Phone number", sample: sampleAttendee.phone },
+    { id: "showRegistrationNumber", key: "showRegistrationNumber", label: "Registration number", sample: sampleAttendee.regNumber },
+  ];
+
+  const [fieldItems, setFieldItems] = useState<FieldItem[]>(() => {
+    if (config.fieldOrder && config.fieldOrder.length > 0) {
+      const orderMap = new Map(defaultFieldsList.map((f) => [f.id, f]));
+      const ordered: FieldItem[] = [];
+      for (const id of config.fieldOrder) {
+        const item = orderMap.get(id);
+        if (item) {
+          ordered.push(item);
+          orderMap.delete(id);
+        }
+      }
+      return [...ordered, ...Array.from(orderMap.values())];
+    }
+    return defaultFieldsList;
+  });
+
+  const [draggedFieldId, setDraggedFieldId] = useState<string | null>(null);
+
+  const handleDragStart = (e: React.DragEvent, id: string) => {
+    setDraggedFieldId(id);
+    e.dataTransfer.setData("text/plain", id);
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleDragOver = (e: React.DragEvent, targetId: string) => {
+    e.preventDefault();
+    if (!draggedFieldId || draggedFieldId === targetId) return;
+
+    setFieldItems((prev) => {
+      const oldIndex = prev.findIndex((item) => item.id === draggedFieldId);
+      const newIndex = prev.findIndex((item) => item.id === targetId);
+      if (oldIndex === -1 || newIndex === -1) return prev;
+
+      const next = [...prev];
+      const [removed] = next.splice(oldIndex, 1);
+      next.splice(newIndex, 0, removed);
+
+      const newOrder = next.map((item) => item.id);
+      updateConfig((c) => ({ ...c, fieldOrder: newOrder }));
+      return next;
+    });
+  };
+
+  const handleDragEnd = () => {
+    setDraggedFieldId(null);
+  };
+
+  const moveField = (index: number, direction: "up" | "down") => {
+    const targetIndex = direction === "up" ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= fieldItems.length) return;
+
+    setFieldItems((prev) => {
+      const next = [...prev];
+      const [removed] = next.splice(index, 1);
+      next.splice(targetIndex, 0, removed);
+      const newOrder = next.map((item) => item.id);
+      updateConfig((c) => ({ ...c, fieldOrder: newOrder }));
+      return next;
+    });
+  };
 
   // Autosave setup
   const isInitialMount = useRef(true);
@@ -329,14 +420,22 @@ export default function TicketStudio({
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      setUploadError("Image size must be under 5MB.");
+      if (type === "logo") setLogoUploadError("File exceeds 5MB limit.");
+      else if (type === "sponsor") setSponsorUploadError("File exceeds 5MB limit.");
+      else setBgUploadError("File exceeds 5MB limit.");
       return;
     }
 
-    setUploadError(null);
-    if (type === "logo") setIsUploadingLogo(true);
-    else if (type === "sponsor") setIsUploadingSponsorLogo(true);
-    else setIsUploadingBg(true);
+    if (type === "logo") {
+      setLogoUploadError(null);
+      setIsUploadingLogo(true);
+    } else if (type === "sponsor") {
+      setSponsorUploadError(null);
+      setIsUploadingSponsorLogo(true);
+    } else {
+      setBgUploadError(null);
+      setIsUploadingBg(true);
+    }
 
     try {
       const formData = new FormData();
@@ -360,7 +459,10 @@ export default function TicketStudio({
         updateConfig((prev) => ({ ...prev, backgroundImageUrl: data.url }));
       }
     } catch (err) {
-      setUploadError(err instanceof Error ? err.message : "Failed to upload image.");
+      const msg = err instanceof Error ? err.message : "Upload failed.";
+      if (type === "logo") setLogoUploadError(msg);
+      else if (type === "sponsor") setSponsorUploadError(msg);
+      else setBgUploadError(msg);
     } finally {
       if (type === "logo") setIsUploadingLogo(false);
       else if (type === "sponsor") setIsUploadingSponsorLogo(false);
@@ -390,7 +492,7 @@ export default function TicketStudio({
 
   // Reset Design to defaults
   function handleResetDesign() {
-    if (window.confirm("Reset ticket design back to default settings?")) {
+    if (window.confirm("Reset ticket configuration back to default settings?")) {
       updateConfig(() => ({
         ...DEFAULT_TICKET_DESIGN,
         primaryColor: "#635BFF",
@@ -446,34 +548,20 @@ export default function TicketStudio({
     window.print();
   }
 
-  // Style attributes based on current template
-  const isDark = config.template === "dark";
-  const isMinimal = config.template === "minimal";
-  const isEvent = config.template === "event";
+  // Fullscreen toggle
+  function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+      previewContainerRef.current?.requestFullscreen?.().catch(() => {
+        setIsFullscreen(!isFullscreen);
+      });
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen?.().catch(() => {});
+      setIsFullscreen(false);
+    }
+  }
 
-  const activeColor =
-    (sampleAttendee.ticketType && config.categoryColors?.[sampleAttendee.ticketType]) ||
-    config.primaryColor;
-
-  const shapeRadius =
-    config.shape === "rounded"
-      ? "rounded-[24px]"
-      : config.shape === "compact"
-      ? "rounded-xl"
-      : "rounded-2xl";
-
-  const cardBg = isDark ? "bg-[#121216] text-white" : "bg-white text-neutral-900";
-  const cardBorder = isDark ? "border-neutral-800" : "border-neutral-200";
-  const subtextCls = isDark ? "text-neutral-400" : "text-neutral-500";
-  const dividerCls = isDark ? "border-neutral-800" : "border-neutral-100";
-
-  // Rules List
-  const rulesList: string[] = [];
-  if (config.showSingleEntryRule !== false) rulesList.push("Valid for one entry");
-  if (config.showGateNotice !== false) rulesList.push("Keep this QR ready at the gate");
-  if (config.customInstruction) rulesList.push(config.customInstruction);
-
-  // Template name detection
+  // Current Template Display Name
   const currentTemplateName =
     config.template === "minimal"
       ? "Minimal Monochrome"
@@ -483,19 +571,50 @@ export default function TicketStudio({
       ? "Corporate Executive"
       : "Standard Event Pass";
 
+  // Active Category Color
+  const activeColor =
+    (sampleAttendee.ticketType && config.categoryColors?.[sampleAttendee.ticketType]) ||
+    config.primaryColor;
+
+  const isDark = config.template === "dark";
+  const isMinimal = config.template === "minimal";
+  const isModern = config.template === "modern";
+
+  const shapeRadius =
+    config.shape === "rounded"
+      ? "rounded-[24px]"
+      : config.shape === "compact"
+      ? "rounded-[10px]"
+      : "rounded-[16px]";
+
+  const cardBg = isDark ? "bg-[#111317] text-white" : "bg-white text-neutral-900";
+  const cardBorder = isDark ? "border-neutral-800" : "border-neutral-200";
+  const subtextCls = isDark ? "text-neutral-400" : "text-neutral-500";
+  const dividerCls = isDark ? "border-neutral-800" : "border-neutral-100";
+
+  // QR Size scaling
+  const qrSizePx = config.qrSize === "sm" ? 116 : config.qrSize === "lg" ? 164 : 140;
+  const qrCellSizePx = config.qrSize === "sm" ? 5.8 : config.qrSize === "lg" ? 8.2 : 7.0;
+
+  // Admission Rules
+  const rulesList: string[] = [];
+  if (config.showSingleEntryRule !== false) rulesList.push("Valid for one entry");
+  if (config.showGateNotice !== false) rulesList.push("Keep QR ready at gate");
+  if (config.customInstruction) rulesList.push(config.customInstruction);
+
   return (
     <div className="flex flex-col h-screen bg-[#F5F6F7] text-neutral-900 overflow-hidden font-sans select-none">
       {/* ─────────────────────────────────────────────────────────────
-          TOP APP HEADER
+          1. TOP APP BAR (Restrained Enterprise SaaS Header)
       ───────────────────────────────────────────────────────────── */}
-      <header className="h-13 border-b border-neutral-200 bg-white px-4 sm:px-6 flex items-center justify-between shrink-0 z-20">
-        {/* Left: Back & Project Info */}
+      <header className="h-14 border-b border-neutral-200 bg-white px-4 sm:px-6 flex items-center justify-between shrink-0 z-20">
+        {/* Left: Back Link & Context Title */}
         <div className="flex items-center gap-3">
           <Link
             href={backHref}
-            className="flex items-center gap-1.5 text-xs font-medium text-neutral-600 hover:text-neutral-900 px-2 py-1.5 rounded-lg hover:bg-neutral-100 transition-colors"
+            className="flex items-center gap-1.5 text-xs font-medium text-neutral-600 hover:text-neutral-900 px-2.5 py-1.5 rounded-lg hover:bg-neutral-100 transition-colors"
           >
-            <ArrowLeft className="w-3.5 h-3.5" />
+            <ArrowLeft className="w-4 h-4 text-neutral-500" />
             <span className="hidden sm:inline">Back</span>
           </Link>
 
@@ -505,14 +624,14 @@ export default function TicketStudio({
             <span className="text-sm font-semibold text-neutral-900">
               Ticket Studio
             </span>
-            <span className="text-neutral-400 text-xs hidden sm:inline">/</span>
-            <span className="text-xs font-normal text-neutral-500 truncate max-w-[180px] hidden sm:inline">
+            <span className="text-neutral-300 text-xs hidden sm:inline">/</span>
+            <span className="text-xs font-normal text-neutral-500 truncate max-w-[200px] hidden sm:inline">
               {eventName}
             </span>
 
-            {/* Plan Tier Badge */}
+            {/* Plan Tier Pill */}
             <span
-              className={`hidden md:inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wider ${
+              className={`hidden md:inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium uppercase tracking-wider ${
                 limits.isPro
                   ? "bg-violet-50 text-violet-700 border border-violet-200"
                   : "bg-neutral-100 text-neutral-600 border border-neutral-200"
@@ -532,8 +651,8 @@ export default function TicketStudio({
               onClick={handleUndo}
               disabled={historyIndex <= 0}
               aria-label="Undo"
-              title="Undo"
-              className="p-1 rounded text-neutral-600 hover:text-neutral-900 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors"
+              title="Undo (Ctrl+Z)"
+              className="p-1.5 rounded-md text-neutral-600 hover:text-neutral-900 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors"
             >
               <Undo2 className="w-3.5 h-3.5" />
             </button>
@@ -542,14 +661,14 @@ export default function TicketStudio({
               onClick={handleRedo}
               disabled={historyIndex >= history.length - 1}
               aria-label="Redo"
-              title="Redo"
-              className="p-1 rounded text-neutral-600 hover:text-neutral-900 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors"
+              title="Redo (Ctrl+Y)"
+              className="p-1.5 rounded-md text-neutral-600 hover:text-neutral-900 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors"
             >
               <Redo2 className="w-3.5 h-3.5" />
             </button>
           </div>
 
-          {/* Mobile Tab Switcher */}
+          {/* Mobile View Toggle */}
           <div className="flex md:hidden items-center bg-neutral-100 p-0.5 rounded-lg border border-neutral-200 text-xs font-medium">
             <button
               type="button"
@@ -593,7 +712,7 @@ export default function TicketStudio({
               </span>
             )}
             {saveStatus === "unsaved" && (
-              <span className="text-neutral-400 font-normal text-[11px] hidden sm:inline">
+              <span className="text-neutral-400 font-normal text-xs hidden sm:inline">
                 Unsaved changes
               </span>
             )}
@@ -605,7 +724,7 @@ export default function TicketStudio({
             )}
           </div>
 
-          {/* Top Send Test Action */}
+          {/* Test Ticket Action */}
           <button
             type="button"
             onClick={() => setTestModalOpen(true)}
@@ -615,7 +734,7 @@ export default function TicketStudio({
             <span>Send Test</span>
           </button>
 
-          {/* Top Manual Save */}
+          {/* Primary Save Button */}
           <button
             type="button"
             onClick={() => handleManualSave(false)}
@@ -633,7 +752,71 @@ export default function TicketStudio({
       </header>
 
       {/* ─────────────────────────────────────────────────────────────
+          CORE WORKFLOW BAR (Always Visible & Actionable)
+          Template selected → Customize branding → Configure ticket fields → Preview live → Save design → Use for event
+      ───────────────────────────────────────────────────────────── */}
+      <div className="h-8 bg-neutral-50 border-b border-neutral-200/80 px-4 sm:px-6 flex items-center justify-between text-[11px] text-neutral-500 shrink-0 overflow-x-auto whitespace-nowrap">
+        <div className="flex items-center gap-2">
+          <span className="font-semibold uppercase tracking-wider text-[10px] text-neutral-400">
+            Workflow:
+          </span>
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => {
+                setOpenSections((prev) => ({ ...prev, template: true }));
+                if (mobileTab !== "controls") setMobileTab("controls");
+              }}
+              className="text-neutral-700 hover:text-neutral-900 font-medium cursor-pointer"
+            >
+              1. Template
+            </button>
+            <ChevronRight className="w-3 h-3 text-neutral-300" />
+            <button
+              type="button"
+              onClick={() => {
+                setOpenSections((prev) => ({ ...prev, branding: true }));
+                if (mobileTab !== "controls") setMobileTab("controls");
+              }}
+              className="text-neutral-700 hover:text-neutral-900 font-medium cursor-pointer"
+            >
+              2. Branding
+            </button>
+            <ChevronRight className="w-3 h-3 text-neutral-300" />
+            <button
+              type="button"
+              onClick={() => {
+                setOpenSections((prev) => ({ ...prev, content: true }));
+                if (mobileTab !== "controls") setMobileTab("controls");
+              }}
+              className="text-neutral-700 hover:text-neutral-900 font-medium cursor-pointer"
+            >
+              3. Ticket Content
+            </button>
+            <ChevronRight className="w-3 h-3 text-neutral-300" />
+            <button
+              type="button"
+              onClick={() => setMobileTab("preview")}
+              className="text-neutral-700 hover:text-neutral-900 font-medium cursor-pointer"
+            >
+              4. Preview Live
+            </button>
+            <ChevronRight className="w-3 h-3 text-neutral-300" />
+            <span className="text-neutral-500 font-normal">
+              5. Save & Use
+            </span>
+          </div>
+        </div>
+
+        <div className="hidden md:flex items-center gap-3 text-neutral-400 text-[11px]">
+          <span>Changes update instantly in live preview</span>
+        </div>
+      </div>
+
+      {/* ─────────────────────────────────────────────────────────────
           MAIN 2-PANEL EDITOR WORKSPACE
+          LEFT: Controls (35–40%)
+          RIGHT: Large Live Ticket Preview (60–65%)
       ───────────────────────────────────────────────────────────── */}
       <div className="flex flex-1 overflow-hidden relative">
         {/* ──────── LEFT CONTROL PANEL (35–40% width) ──────── */}
@@ -642,14 +825,14 @@ export default function TicketStudio({
             mobileTab === "controls" ? "flex" : "hidden md:flex"
           }`}
         >
-          {/* Scrollable Controls Area */}
+          {/* Scrollable Controls Area with 24px padding and 24px section spacing */}
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
-            {uploadError && (
+            {saveErrorMessage && (
               <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-xs text-red-700 flex items-center justify-between">
-                <span>{uploadError}</span>
+                <span>{saveErrorMessage}</span>
                 <button
                   type="button"
-                  onClick={() => setUploadError(null)}
+                  onClick={() => setSaveErrorMessage(null)}
                   className="text-red-500 hover:text-red-700 p-0.5 cursor-pointer"
                 >
                   <X className="w-3.5 h-3.5" />
@@ -660,7 +843,7 @@ export default function TicketStudio({
             {/* ═════════════════════════════════════════════════════════
                 SECTION 1: TEMPLATE
             ═════════════════════════════════════════════════════════ */}
-            <div className="border-b border-neutral-200/80 pb-5">
+            <div className="border-b border-neutral-200/80 pb-6">
               <button
                 type="button"
                 onClick={() => toggleSection("template")}
@@ -682,7 +865,7 @@ export default function TicketStudio({
               </button>
 
               {openSections.template && (
-                <div className="mt-3.5 space-y-3 pt-1">
+                <div className="mt-4 space-y-3 pt-1">
                   {/* Selected Template Display Box */}
                   <div className="flex items-center justify-between p-3 bg-neutral-50 border border-neutral-200 rounded-lg">
                     <div>
@@ -697,7 +880,7 @@ export default function TicketStudio({
                     <button
                       type="button"
                       onClick={() => setIsTemplateModalOpen(true)}
-                      className="px-2.5 py-1.5 text-xs font-medium text-neutral-700 bg-white border border-neutral-200 hover:bg-neutral-100 rounded-lg transition-colors cursor-pointer shadow-2xs"
+                      className="h-8 px-2.5 text-xs font-medium text-neutral-700 bg-white border border-neutral-200 hover:bg-neutral-100 rounded-lg transition-colors cursor-pointer shadow-2xs"
                     >
                       Change Template
                     </button>
@@ -727,10 +910,10 @@ export default function TicketStudio({
                               template: tplOpt.id as TicketTemplate,
                             }));
                           }}
-                          className={`py-1.5 px-2 rounded-lg border text-center transition-all cursor-pointer relative ${
+                          className={`h-9 px-2 rounded-lg border text-center transition-all cursor-pointer relative flex items-center justify-center ${
                             isActive
                               ? "border-neutral-900 bg-neutral-900 text-white font-medium shadow-2xs"
-                              : "border-neutral-200 text-neutral-600 hover:border-neutral-300 bg-white text-xs"
+                              : "border-neutral-200 text-neutral-700 hover:border-neutral-300 bg-white text-xs font-normal"
                           }`}
                         >
                           <span className="text-xs">{tplOpt.label}</span>
@@ -750,7 +933,7 @@ export default function TicketStudio({
             {/* ═════════════════════════════════════════════════════════
                 SECTION 2: BRANDING
             ═════════════════════════════════════════════════════════ */}
-            <div className="border-b border-neutral-200/80 pb-5">
+            <div className="border-b border-neutral-200/80 pb-6">
               <button
                 type="button"
                 onClick={() => toggleSection("branding")}
@@ -761,7 +944,7 @@ export default function TicketStudio({
                     2. Branding
                   </h3>
                   <p className="text-xs text-neutral-500 font-normal mt-0.5">
-                    Logo mark and primary brand color
+                    Logo mark and brand accent color
                   </p>
                 </div>
                 {openSections.branding ? (
@@ -772,12 +955,21 @@ export default function TicketStudio({
               </button>
 
               {openSections.branding && (
-                <div className="mt-3.5 space-y-4 pt-1">
-                  {/* Logo Upload Box */}
+                <div className="mt-4 space-y-4 pt-1">
+                  {/* Logo Upload Box (Compact & Functional) */}
                   <div>
-                    <label className="block text-xs font-medium text-neutral-700 mb-1.5">
-                      Event Logo
-                    </label>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="text-xs font-medium text-neutral-700">
+                        Event Logo
+                      </label>
+                      <span className="text-[11px] text-neutral-400 font-normal">
+                        PNG / SVG
+                      </span>
+                    </div>
+
+                    {logoUploadError && (
+                      <p className="text-xs text-red-600 mb-1.5">{logoUploadError}</p>
+                    )}
 
                     {config.logoUrl ? (
                       <div className="flex items-center justify-between p-2.5 bg-neutral-50 border border-neutral-200 rounded-lg">
@@ -795,7 +987,7 @@ export default function TicketStudio({
                               Logo uploaded
                             </p>
                             <p className="text-[11px] text-neutral-400 font-normal">
-                              Optimized for pass
+                              Active on all passes
                             </p>
                           </div>
                         </div>
@@ -805,17 +997,17 @@ export default function TicketStudio({
                             type="button"
                             onClick={() => logoInputRef.current?.click()}
                             disabled={isUploadingLogo}
-                            className="px-2.5 py-1 text-xs font-medium text-neutral-700 bg-white border border-neutral-200 hover:bg-neutral-100 rounded-md transition-colors cursor-pointer"
+                            className="h-8 px-2.5 text-xs font-medium text-neutral-700 bg-white border border-neutral-200 hover:bg-neutral-100 rounded-md transition-colors cursor-pointer"
                           >
                             {isUploadingLogo ? "Uploading..." : "Replace"}
                           </button>
                           <button
                             type="button"
                             onClick={() => updateConfig((prev) => ({ ...prev, logoUrl: null }))}
-                            className="p-1 text-neutral-400 hover:text-red-600 rounded-md transition-colors cursor-pointer"
+                            className="p-1.5 text-neutral-400 hover:text-red-600 rounded-md transition-colors cursor-pointer"
                             title="Remove Logo"
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
+                            <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
                       </div>
@@ -826,14 +1018,14 @@ export default function TicketStudio({
                             Add your logo
                           </p>
                           <p className="text-[11px] text-neutral-400">
-                            PNG, SVG, JPG up to 5MB
+                            Recommended: PNG or SVG
                           </p>
                         </div>
                         <button
                           type="button"
                           onClick={() => logoInputRef.current?.click()}
                           disabled={isUploadingLogo}
-                          className="px-3 py-1.5 bg-white border border-neutral-200 hover:bg-neutral-100 text-neutral-800 text-xs font-medium rounded-lg transition-colors cursor-pointer shadow-2xs"
+                          className="h-9 px-3 bg-white border border-neutral-200 hover:bg-neutral-100 text-neutral-800 text-xs font-medium rounded-lg transition-colors cursor-pointer shadow-2xs"
                         >
                           {isUploadingLogo ? "Uploading..." : "Upload Logo"}
                         </button>
@@ -853,19 +1045,19 @@ export default function TicketStudio({
                     />
                   </div>
 
-                  {/* Brand Color Selector */}
+                  {/* Brand Color Selector (Color Swatch + HEX Value) */}
                   <div>
                     <label className="block text-xs font-medium text-neutral-700 mb-1.5">
                       Brand Color
                     </label>
 
                     <div className="flex items-center gap-2">
-                      {/* Swatch & Hex input */}
-                      <div className="h-10 px-2.5 bg-white border border-neutral-200 rounded-lg flex items-center gap-2 flex-1">
+                      {/* Compact Swatch & Hex input */}
+                      <div className="h-10 px-2.5 bg-white border border-neutral-200 rounded-lg flex items-center gap-2.5 flex-1">
                         <label
                           htmlFor="primary-color-picker"
                           className="w-5 h-5 rounded-full border border-neutral-300 flex items-center justify-center cursor-pointer shrink-0 overflow-hidden shadow-2xs"
-                          title="Pick custom color"
+                          title="Pick brand color"
                         >
                           <div
                             className="w-full h-full"
@@ -897,7 +1089,7 @@ export default function TicketStudio({
                         />
                       </div>
 
-                      {/* Swatch dots */}
+                      {/* Swatch Preset Dots */}
                       <div className="flex items-center gap-1.5 shrink-0">
                         {BRAND_SWATCHES.map((swatch) => (
                           <button
@@ -919,11 +1111,11 @@ export default function TicketStudio({
                     </div>
                   </div>
 
-                  {/* Multi-Tier Category Accent Colors */}
+                  {/* Multi-Tier Category Accent Colors (Secondary / Ticket Type) */}
                   <div>
                     <div className="flex items-center justify-between mb-1.5">
                       <label className="text-xs font-medium text-neutral-700">
-                        Category Colors
+                        Category Colors (Optional)
                       </label>
                       {!limits.canUseCategoryColors && (
                         <span className="text-[10px] font-bold text-violet-600 uppercase">
@@ -939,11 +1131,11 @@ export default function TicketStudio({
                         return (
                           <div
                             key={cat.id}
-                            className="flex items-center justify-between px-3 py-1.5 bg-neutral-50 border border-neutral-200 rounded-lg text-xs"
+                            className="flex items-center justify-between px-3 h-9 bg-neutral-50 border border-neutral-200 rounded-lg text-xs"
                           >
                             <span className="font-medium text-neutral-700">{cat.name}</span>
                             <div className="flex items-center gap-2">
-                              <label className="w-4 h-4 rounded-full border border-neutral-300 overflow-hidden cursor-pointer">
+                              <label className="w-4 h-4 rounded-full border border-neutral-300 overflow-hidden cursor-pointer shadow-2xs">
                                 <input
                                   type="color"
                                   value={catColor}
@@ -967,9 +1159,18 @@ export default function TicketStudio({
 
                   {/* Sponsor / Partner Logo */}
                   <div>
-                    <label className="block text-xs font-medium text-neutral-700 mb-1.5">
-                      Sponsor Logo (Optional)
-                    </label>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="text-xs font-medium text-neutral-700">
+                        Sponsor Logo (Optional)
+                      </label>
+                      <span className="text-[11px] text-neutral-400 font-normal">
+                        Co-branding
+                      </span>
+                    </div>
+
+                    {sponsorUploadError && (
+                      <p className="text-xs text-red-600 mb-1.5">{sponsorUploadError}</p>
+                    )}
 
                     {config.sponsorLogoUrl ? (
                       <div className="flex items-center justify-between p-2.5 bg-neutral-50 border border-neutral-200 rounded-lg">
@@ -991,7 +1192,7 @@ export default function TicketStudio({
                             type="button"
                             onClick={() => sponsorLogoInputRef.current?.click()}
                             disabled={isUploadingSponsorLogo}
-                            className="px-2 py-1 text-xs text-neutral-700 bg-white border border-neutral-200 rounded-md hover:bg-neutral-50"
+                            className="h-8 px-2.5 text-xs font-medium text-neutral-700 bg-white border border-neutral-200 rounded-md hover:bg-neutral-50"
                           >
                             Replace
                           </button>
@@ -1000,9 +1201,9 @@ export default function TicketStudio({
                             onClick={() =>
                               updateConfig((prev) => ({ ...prev, sponsorLogoUrl: null }))
                             }
-                            className="p-1 text-neutral-400 hover:text-red-600 rounded-md"
+                            className="p-1.5 text-neutral-400 hover:text-red-600 rounded-md"
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
+                            <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
                       </div>
@@ -1043,7 +1244,7 @@ export default function TicketStudio({
             {/* ═════════════════════════════════════════════════════════
                 SECTION 3: TICKET CONTENT
             ═════════════════════════════════════════════════════════ */}
-            <div className="border-b border-neutral-200/80 pb-5">
+            <div className="border-b border-neutral-200/80 pb-6">
               <button
                 type="button"
                 onClick={() => toggleSection("content")}
@@ -1054,7 +1255,7 @@ export default function TicketStudio({
                     3. Ticket Content
                   </h3>
                   <p className="text-xs text-neutral-500 font-normal mt-0.5">
-                    Select attendee fields displayed on the pass
+                    Toggle and reorder attendee fields on pass
                   </p>
                 </div>
                 {openSections.content ? (
@@ -1065,83 +1266,84 @@ export default function TicketStudio({
               </button>
 
               {openSections.content && (
-                <div className="mt-3.5 space-y-1.5 pt-1">
-                  {[
-                    {
-                      key: "showAttendeeName",
-                      label: "Attendee name",
-                      checked: config.showAttendeeName,
-                      sample: sampleAttendee.name,
-                    },
-                    {
-                      key: "showTicketType",
-                      label: "Ticket type",
-                      checked: config.showTicketType,
-                      sample: sampleAttendee.ticketType,
-                    },
-                    {
-                      key: "showEventDate",
-                      label: "Event date",
-                      checked: config.showEventDate !== false,
-                      sample: eventDate,
-                    },
-                    {
-                      key: "showVenue",
-                      label: "Venue",
-                      checked: config.showVenue,
-                      sample: venue,
-                    },
-                    {
-                      key: "showTicketId",
-                      label: "Ticket ID",
-                      checked: config.showTicketId,
-                      sample: sampleAttendee.ticketId,
-                    },
-                    {
-                      key: "showOrganization",
-                      label: "Company",
-                      checked: !!config.showOrganization,
-                      sample: sampleAttendee.organization,
-                    },
-                    {
-                      key: "showPhone",
-                      label: "Phone number",
-                      checked: !!config.showPhone,
-                      sample: sampleAttendee.phone,
-                    },
-                    {
-                      key: "showRegistrationNumber",
-                      label: "Registration number",
-                      checked: !!config.showRegistrationNumber,
-                      sample: sampleAttendee.regNumber,
-                    },
-                  ].map((field) => (
-                    <label
-                      key={field.key}
-                      className="flex items-center justify-between p-2.5 bg-neutral-50/70 hover:bg-neutral-50 border border-neutral-200/80 rounded-lg cursor-pointer transition-colors"
-                    >
-                      <div className="flex items-center gap-2">
-                        <GripVertical className="w-3.5 h-3.5 text-neutral-300" />
-                        <input
-                          type="checkbox"
-                          checked={field.checked}
-                          onChange={(e) =>
-                            updateConfig((prev) => ({
-                              ...prev,
-                              [field.key]: e.target.checked,
-                            }))
-                          }
-                          className="w-4 h-4 rounded text-neutral-900 border-neutral-300 focus:ring-0 cursor-pointer"
-                        />
-                        <span className="text-xs font-medium text-neutral-800">
-                          {field.label}
-                        </span>
+                <div className="mt-4 space-y-1.5 pt-1">
+                  {fieldItems.map((field, idx) => {
+                    const isChecked =
+                      field.key === "showEventDate"
+                        ? config.showEventDate !== false
+                        : !!config[field.key];
+
+                    return (
+                      <div
+                        key={field.id}
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, field.id)}
+                        onDragOver={(e) => handleDragOver(e, field.id)}
+                        onDragEnd={handleDragEnd}
+                        className={`flex items-center justify-between px-3 h-10 border rounded-lg transition-colors group ${
+                          draggedFieldId === field.id
+                            ? "border-violet-400 bg-violet-50/50 opacity-60"
+                            : "border-neutral-200 bg-neutral-50/70 hover:bg-neutral-50 hover:border-neutral-300"
+                        }`}
+                      >
+                        {/* Left: Drag Grip Handle & Checkbox */}
+                        <div className="flex items-center gap-2.5">
+                          <button
+                            type="button"
+                            className="cursor-grab active:cursor-grabbing text-neutral-300 group-hover:text-neutral-500 p-0.5"
+                            title="Drag to reorder"
+                          >
+                            <GripVertical className="w-3.5 h-3.5" />
+                          </button>
+
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={(e) =>
+                                updateConfig((prev) => ({
+                                  ...prev,
+                                  [field.key]: e.target.checked,
+                                }))
+                              }
+                              className="w-4 h-4 rounded text-neutral-900 border-neutral-300 focus:ring-0 cursor-pointer"
+                            />
+                            <span className="text-xs font-medium text-neutral-800">
+                              {field.label}
+                            </span>
+                          </label>
+                        </div>
+
+                        {/* Right: Sample Preview & Reorder Up/Down */}
+                        <div className="flex items-center gap-2">
+                          <span className="text-[11px] text-neutral-400 font-normal truncate max-w-[110px] hidden sm:inline">
+                            {field.sample}
+                          </span>
+
+                          <div className="opacity-0 group-hover:opacity-100 flex items-center gap-0.5 transition-opacity">
+                            <button
+                              type="button"
+                              onClick={() => moveField(idx, "up")}
+                              disabled={idx === 0}
+                              className="p-1 text-neutral-400 hover:text-neutral-700 disabled:opacity-20 cursor-pointer text-[10px]"
+                              title="Move up"
+                            >
+                              ↑
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => moveField(idx, "down")}
+                              disabled={idx === fieldItems.length - 1}
+                              className="p-1 text-neutral-400 hover:text-neutral-700 disabled:opacity-20 cursor-pointer text-[10px]"
+                              title="Move down"
+                            >
+                              ↓
+                            </button>
+                          </div>
+                        </div>
                       </div>
-                      <span className="text-[11px] text-neutral-400 font-normal truncate max-w-[120px]">
-                        {field.sample}
-                      </span>
-                    </label>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -1149,7 +1351,7 @@ export default function TicketStudio({
             {/* ═════════════════════════════════════════════════════════
                 SECTION 4: QR / PASS SETTINGS
             ═════════════════════════════════════════════════════════ */}
-            <div className="border-b border-neutral-200/80 pb-5">
+            <div className="border-b border-neutral-200/80 pb-6">
               <button
                 type="button"
                 onClick={() => toggleSection("qr")}
@@ -1160,7 +1362,7 @@ export default function TicketStudio({
                     4. QR / Pass Settings
                   </h3>
                   <p className="text-xs text-neutral-500 font-normal mt-0.5">
-                    Corner radius and scan readability
+                    Target sizing, positioning and scan contrast
                   </p>
                 </div>
                 {openSections.qr ? (
@@ -1171,17 +1373,104 @@ export default function TicketStudio({
               </button>
 
               {openSections.qr && (
-                <div className="mt-3.5 space-y-4 pt-1">
-                  {/* Shape Selector */}
+                <div className="mt-4 space-y-4 pt-1">
+                  {/* QR Size Control */}
+                  <div>
+                    <label className="block text-xs font-medium text-neutral-700 mb-1.5">
+                      QR Target Size
+                    </label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[
+                        { id: "sm", label: "Compact" },
+                        { id: "md", label: "Standard" },
+                        { id: "lg", label: "Large" },
+                      ].map((sizeOpt) => {
+                        const isCurrent = (config.qrSize || "md") === sizeOpt.id;
+                        return (
+                          <button
+                            key={sizeOpt.id}
+                            type="button"
+                            onClick={() =>
+                              updateConfig((prev) => ({
+                                ...prev,
+                                qrSize: sizeOpt.id as "sm" | "md" | "lg",
+                              }))
+                            }
+                            className={`h-9 px-2 rounded-lg border text-xs font-medium text-center transition-all cursor-pointer ${
+                              isCurrent
+                                ? "border-neutral-900 bg-neutral-900 text-white shadow-2xs"
+                                : "border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300"
+                            }`}
+                          >
+                            {sizeOpt.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* QR Position Control */}
+                  <div>
+                    <label className="block text-xs font-medium text-neutral-700 mb-1.5">
+                      QR Position
+                    </label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {[
+                        { id: "center", label: "Center" },
+                        { id: "bottom", label: "Bottom" },
+                      ].map((posOpt) => {
+                        const isCurrent = (config.qrPosition || "center") === posOpt.id;
+                        return (
+                          <button
+                            key={posOpt.id}
+                            type="button"
+                            onClick={() =>
+                              updateConfig((prev) => ({
+                                ...prev,
+                                qrPosition: posOpt.id as "center" | "bottom",
+                              }))
+                            }
+                            className={`h-9 px-2 rounded-lg border text-xs font-medium text-center transition-all cursor-pointer ${
+                              isCurrent
+                                ? "border-neutral-900 bg-neutral-900 text-white shadow-2xs"
+                                : "border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300"
+                            }`}
+                          >
+                            {posOpt.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Show QR Border Checkbox */}
+                  <div>
+                    <label className="flex items-center gap-2 cursor-pointer text-xs font-medium text-neutral-800">
+                      <input
+                        type="checkbox"
+                        checked={config.showQrBorder !== false}
+                        onChange={(e) =>
+                          updateConfig((prev) => ({
+                            ...prev,
+                            showQrBorder: e.target.checked,
+                          }))
+                        }
+                        className="w-4 h-4 rounded text-neutral-900 border-neutral-300 focus:ring-0 cursor-pointer"
+                      />
+                      <span>Show QR safety border</span>
+                    </label>
+                  </div>
+
+                  {/* Pass Corner Radius / Shape */}
                   <div>
                     <label className="block text-xs font-medium text-neutral-700 mb-1.5">
                       Pass Corner Shape
                     </label>
                     <div className="grid grid-cols-3 gap-2">
                       {[
-                        { id: "standard", label: "Standard", desc: "16px radius" },
-                        { id: "rounded", label: "Rounded", desc: "24px radius" },
-                        { id: "compact", label: "Compact", desc: "12px radius" },
+                        { id: "standard", label: "Standard", desc: "16px" },
+                        { id: "rounded", label: "Rounded", desc: "24px" },
+                        { id: "compact", label: "Compact", desc: "10px" },
                       ].map((shapeOpt) => {
                         const isActive = (config.shape || "standard") === shapeOpt.id;
                         return (
@@ -1196,12 +1485,12 @@ export default function TicketStudio({
                             }
                             className={`py-2 px-2 rounded-lg border text-center transition-all cursor-pointer ${
                               isActive
-                                ? "border-neutral-900 bg-neutral-50 font-semibold text-neutral-900"
+                                ? "border-neutral-900 bg-neutral-900 text-white font-semibold shadow-2xs"
                                 : "border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300"
                             }`}
                           >
-                            <p className="text-xs">{shapeOpt.label}</p>
-                            <p className="text-[10px] text-neutral-400 font-normal mt-0.5">
+                            <p className="text-xs font-medium">{shapeOpt.label}</p>
+                            <p className={`text-[10px] font-normal mt-0.5 ${isActive ? "text-neutral-300" : "text-neutral-400"}`}>
                               {shapeOpt.desc}
                             </p>
                           </button>
@@ -1210,11 +1499,11 @@ export default function TicketStudio({
                     </div>
                   </div>
 
-                  {/* Contrast & Scan Reliability Warning */}
+                  {/* Scan Reliability & Contrast Assurance Notice */}
                   <div className="p-3 bg-neutral-50 border border-neutral-200 rounded-lg flex items-start gap-2.5">
                     <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <p className="text-xs text-neutral-600 leading-relaxed">
-                      Keep sufficient contrast for reliable scanning. URPASS isolates the QR target with a guaranteed safety container.
+                    <p className="text-xs text-neutral-600 leading-relaxed font-normal">
+                      Keep sufficient contrast for reliable scanning. URPASS guarantees QR code readability by isolating the matrix inside a high-contrast container.
                     </p>
                   </div>
                 </div>
@@ -1224,7 +1513,7 @@ export default function TicketStudio({
             {/* ═════════════════════════════════════════════════════════
                 SECTION 5: BACKGROUND
             ═════════════════════════════════════════════════════════ */}
-            <div className="border-b border-neutral-200/80 pb-5">
+            <div className="border-b border-neutral-200/80 pb-6">
               <button
                 type="button"
                 onClick={() => toggleSection("background")}
@@ -1246,7 +1535,7 @@ export default function TicketStudio({
               </button>
 
               {openSections.background && (
-                <div className="mt-3.5 space-y-3 pt-1">
+                <div className="mt-4 space-y-3 pt-1">
                   <div className="flex items-center gap-4">
                     <label className="flex items-center gap-2 cursor-pointer text-xs font-medium text-neutral-700">
                       <input
@@ -1289,6 +1578,10 @@ export default function TicketStudio({
                     </label>
                   </div>
 
+                  {bgUploadError && (
+                    <p className="text-xs text-red-600">{bgUploadError}</p>
+                  )}
+
                   {config.backgroundImageUrl ? (
                     <div className="flex items-center justify-between p-2.5 bg-neutral-50 border border-neutral-200 rounded-lg">
                       <div className="flex items-center gap-2.5">
@@ -1309,7 +1602,7 @@ export default function TicketStudio({
                           type="button"
                           onClick={() => bgInputRef.current?.click()}
                           disabled={isUploadingBg}
-                          className="px-2.5 py-1 text-xs text-neutral-700 bg-white border border-neutral-200 rounded-md hover:bg-neutral-50"
+                          className="h-8 px-2.5 text-xs text-neutral-700 bg-white border border-neutral-200 rounded-md hover:bg-neutral-50"
                         >
                           {isUploadingBg ? "Uploading..." : "Replace"}
                         </button>
@@ -1318,13 +1611,31 @@ export default function TicketStudio({
                           onClick={() =>
                             updateConfig((prev) => ({ ...prev, backgroundImageUrl: null }))
                           }
-                          className="p-1 text-neutral-400 hover:text-red-600 rounded-md"
+                          className="p-1.5 text-neutral-400 hover:text-red-600 rounded-md"
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
                     </div>
-                  ) : null}
+                  ) : (
+                    <div className="p-3 bg-neutral-50 border border-neutral-200 rounded-lg flex items-center justify-between text-xs text-neutral-500">
+                      <span>No background selected</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!limits.canUploadBackground) {
+                            triggerUpgrade("Custom Background Artwork");
+                            return;
+                          }
+                          bgInputRef.current?.click();
+                        }}
+                        disabled={isUploadingBg}
+                        className="h-8 px-2.5 text-xs font-medium text-neutral-700 bg-white border border-neutral-200 hover:bg-neutral-100 rounded-md transition-colors"
+                      >
+                        Upload Image
+                      </button>
+                    </div>
+                  )}
 
                   <input
                     ref={bgInputRef}
@@ -1344,7 +1655,7 @@ export default function TicketStudio({
             {/* ═════════════════════════════════════════════════════════
                 SECTION 6: ADVANCED OPTIONS
             ═════════════════════════════════════════════════════════ */}
-            <div className="border-b border-neutral-200/80 pb-5">
+            <div className="border-b border-neutral-200/80 pb-6">
               <button
                 type="button"
                 onClick={() => toggleSection("advanced")}
@@ -1366,7 +1677,7 @@ export default function TicketStudio({
               </button>
 
               {openSections.advanced && (
-                <div className="mt-3.5 space-y-4 pt-1">
+                <div className="mt-4 space-y-4 pt-1">
                   {/* Custom Message */}
                   <div>
                     <label className="block text-xs font-medium text-neutral-700 mb-1">
@@ -1470,7 +1781,7 @@ export default function TicketStudio({
                       <button
                         type="button"
                         onClick={() => triggerUpgrade("White-Label (Remove Wordmark)")}
-                        className="px-2 py-1 rounded bg-neutral-900 hover:bg-neutral-800 text-white text-[11px] font-medium"
+                        className="px-2.5 py-1 rounded bg-neutral-900 hover:bg-neutral-800 text-white text-[11px] font-medium"
                       >
                         Remove
                       </button>
@@ -1481,7 +1792,12 @@ export default function TicketStudio({
             </div>
           </div>
 
-          {/* Sticky Bottom Actions in Control Panel */}
+          {/* ─────────────────────────────────────────────────────────────
+              STICKY BOTTOM SAVE AREA
+              Primary: Save Design / Save & Apply
+              Secondary: Save as Template / Save as Organisation Template
+              Optional: Reset
+          ───────────────────────────────────────────────────────────── */}
           <div className="p-4 border-t border-neutral-200 bg-white space-y-2 shrink-0">
             <button
               type="button"
@@ -1505,13 +1821,13 @@ export default function TicketStudio({
               {eventId ? "Save as Organisation Template" : "Save as Template"}
             </button>
 
-            <div className="text-center pt-1">
+            <div className="text-center pt-0.5">
               <button
                 type="button"
                 onClick={handleResetDesign}
                 className="text-[11px] text-neutral-400 hover:text-neutral-700 font-medium transition-colors cursor-pointer"
               >
-                Reset Design to Default
+                Reset to default
               </button>
             </div>
           </div>
@@ -1519,53 +1835,54 @@ export default function TicketStudio({
 
         {/* ──────── RIGHT LARGE LIVE TICKET PREVIEW (60–65% width) ──────── */}
         <main
+          ref={previewContainerRef}
           className={`flex-1 bg-[#F5F6F7] flex flex-col h-full overflow-hidden ${
             mobileTab === "preview" ? "flex" : "hidden md:flex"
           }`}
         >
           {/* Top Preview Controls Toolbar */}
-          <div className="h-13 bg-white border-b border-neutral-200 px-4 sm:px-6 flex items-center justify-between shrink-0">
-            {/* Output Format Switcher */}
+          <div className="h-14 bg-white border-b border-neutral-200 px-4 sm:px-6 flex items-center justify-between shrink-0">
+            {/* Format Selector: Mobile Pass | Lanyard Badge | Printable Ticket */}
             <div className="inline-flex items-center p-0.5 bg-neutral-100 rounded-lg border border-neutral-200 text-xs font-medium">
               <button
                 type="button"
                 onClick={() => setActiveFormat("mobile")}
-                className={`flex items-center gap-1 px-3 py-1 rounded-md transition-all cursor-pointer ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-all cursor-pointer ${
                   activeFormat === "mobile"
                     ? "bg-white text-neutral-900 shadow-2xs font-semibold"
                     : "text-neutral-600 hover:text-neutral-900"
                 }`}
               >
                 <Smartphone className="w-3.5 h-3.5" />
-                <span>Mobile Pass</span>
+                <span>Mobile</span>
               </button>
               <button
                 type="button"
                 onClick={() => setActiveFormat("badge")}
-                className={`flex items-center gap-1 px-3 py-1 rounded-md transition-all cursor-pointer ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-all cursor-pointer ${
                   activeFormat === "badge"
                     ? "bg-white text-neutral-900 shadow-2xs font-semibold"
                     : "text-neutral-600 hover:text-neutral-900"
                 }`}
               >
                 <CreditCard className="w-3.5 h-3.5" />
-                <span>Lanyard Badge</span>
+                <span>Badge</span>
               </button>
               <button
                 type="button"
                 onClick={() => setActiveFormat("print")}
-                className={`flex items-center gap-1 px-3 py-1 rounded-md transition-all cursor-pointer ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-all cursor-pointer ${
                   activeFormat === "print"
                     ? "bg-white text-neutral-900 shadow-2xs font-semibold"
                     : "text-neutral-600 hover:text-neutral-900"
                 }`}
               >
                 <FileText className="w-3.5 h-3.5" />
-                <span>Printable Ticket</span>
+                <span>Print</span>
               </button>
             </div>
 
-            {/* Attendee Quick Switcher */}
+            {/* Realistic Sample Attendee Switcher */}
             <div className="hidden lg:flex items-center gap-1.5 text-xs text-neutral-500">
               <span className="text-[11px] font-normal text-neutral-400">Sample:</span>
               <div className="inline-flex items-center bg-neutral-50 border border-neutral-200 rounded-lg p-0.5">
@@ -1574,25 +1891,25 @@ export default function TicketStudio({
                     key={att.ticketId}
                     type="button"
                     onClick={() => setActiveAttendeeIndex(i)}
-                    className={`px-2.5 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
+                    className={`px-2.5 py-1 rounded text-[11px] font-medium transition-colors cursor-pointer ${
                       activeAttendeeIndex === i
                         ? "bg-white text-neutral-900 shadow-2xs font-semibold"
                         : "text-neutral-500 hover:text-neutral-900"
                     }`}
                   >
-                    {att.name.split(" ")[0]}
+                    {att.name.split(" ")[0]} ({att.ticketType.split(" ")[0]})
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Zoom Controls: − 100% + Fit */}
-            <div className="flex items-center gap-1">
+            {/* Minimal Zoom & Fullscreen Controls: − 100% + Fit Fullscreen */}
+            <div className="flex items-center gap-1.5">
               <div className="inline-flex items-center bg-white border border-neutral-200 rounded-lg px-1.5 py-0.5 shadow-2xs">
                 <button
                   type="button"
-                  onClick={() => setZoomLevel((z) => Math.max(75, z - 10))}
-                  disabled={zoomLevel <= 75}
+                  onClick={() => setZoomLevel((z) => Math.max(70, z - 10))}
+                  disabled={zoomLevel <= 70}
                   aria-label="Zoom out"
                   className="w-6 h-6 flex items-center justify-center text-neutral-600 hover:text-neutral-900 disabled:opacity-30 cursor-pointer font-bold text-sm"
                 >
@@ -1608,8 +1925,8 @@ export default function TicketStudio({
                 </button>
                 <button
                   type="button"
-                  onClick={() => setZoomLevel((z) => Math.min(125, z + 10))}
-                  disabled={zoomLevel >= 125}
+                  onClick={() => setZoomLevel((z) => Math.min(130, z + 10))}
+                  disabled={zoomLevel >= 130}
                   aria-label="Zoom in"
                   className="w-6 h-6 flex items-center justify-center text-neutral-600 hover:text-neutral-900 disabled:opacity-30 cursor-pointer font-bold text-sm"
                 >
@@ -1620,14 +1937,28 @@ export default function TicketStudio({
               <button
                 type="button"
                 onClick={() => setZoomLevel(100)}
-                className="hidden sm:inline-flex px-2 py-1 text-[11px] font-medium text-neutral-600 bg-white border border-neutral-200 hover:bg-neutral-50 rounded-lg transition-colors cursor-pointer"
+                className="hidden sm:inline-flex px-2.5 py-1.5 text-[11px] font-medium text-neutral-600 bg-white border border-neutral-200 hover:bg-neutral-50 rounded-lg transition-colors cursor-pointer"
               >
                 Fit
+              </button>
+
+              <button
+                type="button"
+                onClick={toggleFullscreen}
+                aria-label="Toggle Fullscreen"
+                title="Fullscreen Preview"
+                className="p-1.5 text-neutral-500 hover:text-neutral-900 bg-white border border-neutral-200 hover:bg-neutral-50 rounded-lg transition-colors cursor-pointer"
+              >
+                {isFullscreen ? (
+                  <Minimize2 className="w-3.5 h-3.5" />
+                ) : (
+                  <Maximize2 className="w-3.5 h-3.5" />
+                )}
               </button>
             </div>
           </div>
 
-          {/* Canvas Workspace (#F5F6F7 neutral background, subtle shadow) */}
+          {/* Live Preview Neutral Workspace (#F5F6F7, centered, subtle natural shadow) */}
           <div className="flex-1 overflow-auto flex items-center justify-center p-6 sm:p-10 relative">
             <div
               className="transition-transform duration-150 flex items-center justify-center"
@@ -1640,7 +1971,7 @@ export default function TicketStudio({
               {activeFormat === "mobile" && (
                 <div
                   id="printable-ticket-card"
-                  className={`w-[350px] sm:w-[360px] ${shapeRadius} border ${cardBorder} ${cardBg} overflow-hidden shadow-md relative transition-all duration-150`}
+                  className={`w-[350px] sm:w-[360px] ${shapeRadius} border ${cardBorder} ${cardBg} overflow-hidden shadow-[0_12px_36px_-6px_rgba(0,0,0,0.08),0_4px_12px_-2px_rgba(0,0,0,0.04)] relative transition-all duration-150`}
                 >
                   {config.backgroundImageUrl && (
                     <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
@@ -1653,15 +1984,15 @@ export default function TicketStudio({
                       <div
                         className={`absolute inset-0 ${
                           isDark
-                            ? "bg-gradient-to-b from-[#121216]/90 via-[#121216]/85 to-[#121216]/95"
+                            ? "bg-gradient-to-b from-[#111317]/90 via-[#111317]/85 to-[#111317]/95"
                             : "bg-gradient-to-b from-white/90 via-white/85 to-white/95"
                         }`}
                       />
                     </div>
                   )}
 
-                  {/* Accent Top Strip */}
-                  {(isEvent || config.template === "modern") && (
+                  {/* Accent Top Strip for Event & Modern */}
+                  {(config.template === "event" || isModern) && (
                     <div
                       className="h-2 w-full relative z-10"
                       style={{ backgroundColor: activeColor }}
@@ -1671,7 +2002,7 @@ export default function TicketStudio({
                   {/* Card Interior */}
                   <div className="relative z-10 p-6 flex flex-col items-center text-center">
                     {/* Event Logo & Sponsor */}
-                    <div className="mb-3.5 flex items-center justify-center gap-3">
+                    <div className="mb-3 flex items-center justify-center gap-3">
                       {config.logoUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
@@ -1702,15 +2033,15 @@ export default function TicketStudio({
                     </div>
 
                     {/* Event Title */}
-                    <h2 className="text-xl font-bold tracking-tight mb-2 uppercase leading-snug max-w-xs">
+                    <h2 className="text-lg font-bold tracking-tight mb-2 uppercase leading-snug max-w-xs">
                       {eventName}
                     </h2>
 
                     {/* Ticket Type Pill */}
                     {config.showTicketType && (
-                      <div className="mb-3">
+                      <div className="mb-2.5">
                         <span
-                          className="inline-flex items-center gap-1 text-[11px] font-semibold tracking-wider uppercase px-3 py-1 rounded-full border shadow-2xs"
+                          className="inline-flex items-center gap-1 text-[11px] font-semibold tracking-wider uppercase px-3 py-0.5 rounded-full border"
                           style={{
                             borderColor: `${activeColor}35`,
                             color: activeColor,
@@ -1723,73 +2054,146 @@ export default function TicketStudio({
                       </div>
                     )}
 
-                    {/* QR Code Container with High-Contrast Target */}
-                    <div className="my-2 p-4 bg-white rounded-2xl shadow-xs border border-neutral-100 flex flex-col items-center justify-center">
-                      <div className="w-36 h-36 flex flex-col justify-between">
-                        {QR_MATRIX.map((row, rIdx) => (
-                          <div key={rIdx} className="flex justify-between w-full h-[7px]">
-                            {row.map((cell, cIdx) => (
-                              <div
-                                key={cIdx}
-                                className={`w-[7px] h-[7px] ${
-                                  cell === 1 ? "bg-black" : "bg-white"
-                                }`}
-                              />
-                            ))}
-                          </div>
-                        ))}
+                    {/* QR Code Matrix (Positioned according to config.qrPosition) */}
+                    {config.qrPosition !== "bottom" && (
+                      <div
+                        className={`my-2 p-3.5 bg-white rounded-xl flex flex-col items-center justify-center ${
+                          config.showQrBorder !== false ? "border border-neutral-200/90 shadow-2xs" : ""
+                        }`}
+                        style={{ width: qrSizePx + 28, height: qrSizePx + 44 }}
+                      >
+                        <div
+                          className="flex flex-col justify-between"
+                          style={{ width: qrSizePx, height: qrSizePx }}
+                        >
+                          {QR_MATRIX.map((row, rIdx) => (
+                            <div
+                              key={rIdx}
+                              className="flex justify-between w-full"
+                              style={{ height: `${qrCellSizePx}px` }}
+                            >
+                              {row.map((cell, cIdx) => (
+                                <div
+                                  key={cIdx}
+                                  style={{
+                                    width: `${qrCellSizePx}px`,
+                                    height: `${qrCellSizePx}px`,
+                                  }}
+                                  className={cell === 1 ? "bg-black" : "bg-white"}
+                                />
+                              ))}
+                            </div>
+                          ))}
+                        </div>
+                        <span className="text-[8px] font-bold tracking-widest text-neutral-400 uppercase mt-2">
+                          SCAN FOR ENTRY
+                        </span>
                       </div>
-                      <span className="text-[9px] font-bold tracking-widest text-neutral-400 uppercase mt-2">
-                        SCAN FOR ENTRY
-                      </span>
+                    )}
+
+                    {/* Dynamic Ordered Fields */}
+                    <div className="w-full flex flex-col items-center text-center space-y-1 mt-1">
+                      {fieldItems.map((field) => {
+                        const isVisible =
+                          field.key === "showEventDate"
+                            ? config.showEventDate !== false
+                            : !!config[field.key];
+                        if (!isVisible) return null;
+
+                        if (field.id === "showAttendeeName") {
+                          return (
+                            <p key={field.id} className="text-base font-semibold tracking-tight text-inherit pt-1">
+                              {sampleAttendee.name}
+                            </p>
+                          );
+                        }
+
+                        if (field.id === "showOrganization") {
+                          return (
+                            <p key={field.id} className={`text-xs font-normal ${subtextCls}`}>
+                              {sampleAttendee.organization}
+                            </p>
+                          );
+                        }
+
+                        if (field.id === "showPhone") {
+                          return (
+                            <p key={field.id} className={`text-[11px] font-mono ${subtextCls}`}>
+                              {sampleAttendee.phone}
+                            </p>
+                          );
+                        }
+
+                        if (field.id === "showRegistrationNumber") {
+                          return (
+                            <span key={field.id} className="text-[10px] font-mono font-medium px-2 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300">
+                              {sampleAttendee.regNumber}
+                            </span>
+                          );
+                        }
+
+                        if (field.id === "showTicketId") {
+                          return (
+                            <div key={field.id} className="flex items-center justify-center gap-1.5 py-0.5">
+                              <span className="text-[9px] font-semibold tracking-wider uppercase text-neutral-400">
+                                TICKET ID:
+                              </span>
+                              <span className="text-xs font-mono font-medium tracking-wide">
+                                {sampleAttendee.ticketId}
+                              </span>
+                            </div>
+                          );
+                        }
+
+                        if (field.id === "showEventDate" || field.id === "showVenue") {
+                          return null; // Grouped below cleanly
+                        }
+
+                        return null;
+                      })}
                     </div>
 
-                    {/* Attendee Name */}
-                    {config.showAttendeeName && (
-                      <div className="mt-2.5 mb-0.5">
-                        <p className="text-base font-semibold tracking-tight">
-                          {sampleAttendee.name}
-                        </p>
-                      </div>
-                    )}
-
-                    {/* Dynamic Fields */}
-                    {config.showOrganization && sampleAttendee.organization && (
-                      <p className={`text-xs font-normal ${subtextCls} mb-0.5`}>
-                        {sampleAttendee.organization}
-                      </p>
-                    )}
-
-                    {config.showPhone && sampleAttendee.phone && (
-                      <p className={`text-[11px] font-mono ${subtextCls} mb-0.5`}>
-                        {sampleAttendee.phone}
-                      </p>
-                    )}
-
-                    {config.showRegistrationNumber && sampleAttendee.regNumber && (
-                      <div className="my-1">
-                        <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300">
-                          {sampleAttendee.regNumber}
+                    {/* Bottom QR Code (If QR position is set to 'bottom') */}
+                    {config.qrPosition === "bottom" && (
+                      <div
+                        className={`my-3 p-3.5 bg-white rounded-xl flex flex-col items-center justify-center ${
+                          config.showQrBorder !== false ? "border border-neutral-200/90 shadow-2xs" : ""
+                        }`}
+                        style={{ width: qrSizePx + 28, height: qrSizePx + 44 }}
+                      >
+                        <div
+                          className="flex flex-col justify-between"
+                          style={{ width: qrSizePx, height: qrSizePx }}
+                        >
+                          {QR_MATRIX.map((row, rIdx) => (
+                            <div
+                              key={rIdx}
+                              className="flex justify-between w-full"
+                              style={{ height: `${qrCellSizePx}px` }}
+                            >
+                              {row.map((cell, cIdx) => (
+                                <div
+                                  key={cIdx}
+                                  style={{
+                                    width: `${qrCellSizePx}px`,
+                                    height: `${qrCellSizePx}px`,
+                                  }}
+                                  className={cell === 1 ? "bg-black" : "bg-white"}
+                                />
+                              ))}
+                            </div>
+                          ))}
+                        </div>
+                        <span className="text-[8px] font-bold tracking-widest text-neutral-400 uppercase mt-2">
+                          SCAN FOR ENTRY
                         </span>
                       </div>
                     )}
 
-                    {/* Ticket ID */}
-                    {config.showTicketId && (
-                      <div className="my-1.5 flex items-center justify-center gap-1.5">
-                        <span className="text-[9px] font-semibold tracking-wider uppercase text-neutral-400">
-                          TICKET ID
-                        </span>
-                        <span className="text-xs font-mono font-medium tracking-wide">
-                          {sampleAttendee.ticketId}
-                        </span>
-                      </div>
-                    )}
-
-                    {/* Date & Venue */}
+                    {/* Date & Venue Footer */}
                     {(config.showEventDate !== false || (config.showVenue && venue)) && (
                       <div
-                        className={`w-full border-t ${dividerCls} pt-2.5 mt-2 flex flex-col items-center gap-1`}
+                        className={`w-full border-t ${dividerCls} pt-2.5 mt-2.5 flex flex-col items-center gap-1`}
                       >
                         {config.showEventDate !== false && eventDate && (
                           <p
@@ -1838,7 +2242,7 @@ export default function TicketStudio({
               {activeFormat === "badge" && (
                 <div
                   id="printable-ticket-card"
-                  className="w-[330px] sm:w-[340px] bg-white rounded-2xl border border-neutral-200 overflow-hidden shadow-md flex flex-col transition-all duration-150"
+                  className="w-[330px] sm:w-[340px] bg-white rounded-2xl border border-neutral-200 overflow-hidden shadow-[0_12px_36px_-6px_rgba(0,0,0,0.08),0_4px_12px_-2px_rgba(0,0,0,0.04)] flex flex-col transition-all duration-150"
                 >
                   {/* Lanyard punch-hole simulation */}
                   <div className="w-full pt-4 pb-2 flex flex-col items-center">
@@ -1922,7 +2326,7 @@ export default function TicketStudio({
               {activeFormat === "print" && (
                 <div
                   id="printable-ticket-card"
-                  className="w-[480px] sm:w-[500px] h-[220px] bg-white rounded-xl border border-neutral-200 shadow-md flex overflow-hidden transition-all duration-150 relative"
+                  className="w-[480px] sm:w-[500px] h-[220px] bg-white rounded-xl border border-neutral-200 shadow-[0_12px_36px_-6px_rgba(0,0,0,0.08),0_4px_12px_-2px_rgba(0,0,0,0.04)] flex overflow-hidden transition-all duration-150 relative"
                 >
                   {/* Left Body (68%) */}
                   <div className="w-[68%] p-5 flex flex-col justify-between border-r-2 border-dashed border-neutral-300 relative">
@@ -2039,18 +2443,18 @@ export default function TicketStudio({
       </div>
 
       {/* ─────────────────────────────────────────────────────────────
-          CHANGE TEMPLATE MODAL (Clean, quiet selection)
+          CHANGE TEMPLATE MODAL (Clean, restrained template library)
       ───────────────────────────────────────────────────────────── */}
       {isTemplateModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-3xl w-full p-6 shadow-2xl space-y-4 max-h-[85vh] flex flex-col">
-            <div className="flex items-center justify-between pb-3 border-b border-neutral-100 shrink-0">
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl max-w-3xl w-full p-6 shadow-xl space-y-4 max-h-[85vh] flex flex-col border border-neutral-200">
+            <div className="flex items-center justify-between pb-3 border-b border-neutral-200 shrink-0">
               <div>
                 <h3 className="text-base font-semibold text-neutral-900">
-                  Select a Ticket Template
+                  Select Ticket Template
                 </h3>
                 <p className="text-xs text-neutral-500 mt-0.5">
-                  Choose from production setups to immediately apply layout and branding structure.
+                  Pick a production-tested design foundation to quickly style your passes.
                 </p>
               </div>
               <button
@@ -2062,8 +2466,28 @@ export default function TicketStudio({
               </button>
             </div>
 
+            {/* Category Filter Tabs */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 shrink-0 text-xs">
+              {["All", "Minimal", "Corporate", "Conference", "College", "Concert", "VIP"].map((cat) => (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => setTemplateFilterCategory(cat)}
+                  className={`px-3 py-1 rounded-md transition-colors cursor-pointer ${
+                    templateFilterCategory === cat
+                      ? "bg-neutral-900 text-white font-medium"
+                      : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 overflow-y-auto pr-1">
-              {STUDIO_TEMPLATES.map((tpl) => {
+              {STUDIO_TEMPLATES.filter(
+                (t) => templateFilterCategory === "All" || t.category === templateFilterCategory
+              ).map((tpl) => {
                 const isPaid = tpl.tier === "paid";
                 return (
                   <div
@@ -2073,7 +2497,7 @@ export default function TicketStudio({
                       updateConfig((prev) => ({
                         ...prev,
                         ...converted,
-                        // Preserve organizer custom uploads
+                        // Preserve custom organizer branding uploads
                         logoUrl: prev.logoUrl || converted.logoUrl,
                         sponsorLogoUrl: prev.sponsorLogoUrl || converted.sponsorLogoUrl,
                         backgroundImageUrl:
@@ -2081,7 +2505,7 @@ export default function TicketStudio({
                       }));
                       setIsTemplateModalOpen(false);
                     }}
-                    className="p-3.5 rounded-xl border border-neutral-200 hover:border-neutral-900 hover:shadow-xs transition-all cursor-pointer bg-white flex flex-col justify-between"
+                    className="p-3.5 rounded-lg border border-neutral-200 hover:border-neutral-900 hover:shadow-2xs transition-all cursor-pointer bg-white flex flex-col justify-between"
                   >
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
@@ -2116,8 +2540,8 @@ export default function TicketStudio({
           SEND TEST TICKET MODAL
       ───────────────────────────────────────────────────────────── */}
       {testModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl space-y-4">
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl max-w-sm w-full p-6 shadow-xl space-y-4 border border-neutral-200">
             <div className="flex items-center justify-between pb-2 border-b border-neutral-100">
               <div className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-neutral-700" />
@@ -2134,8 +2558,8 @@ export default function TicketStudio({
               </button>
             </div>
 
-            <p className="text-xs text-neutral-500 leading-relaxed">
-              We&apos;ll dispatch an authentic test pass with this design directly to your email address.
+            <p className="text-xs text-neutral-500 leading-relaxed font-normal">
+              We&apos;ll send an authentic live test pass with this design directly to your inbox.
             </p>
 
             {testError && (

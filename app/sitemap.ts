@@ -399,6 +399,49 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/mcp-event-management-mumbai",
   ].map((path) => ({ url: `${BASE}${path}`, priority: 0.85, changeFrequency: "weekly" as const }));
 
+  const bofuMoneyPages = [
+    // High-converting calculator tools
+    "/event-ticketing-cost-calculator",
+    "/event-check-in-calculator",
+
+    // 35 BOFU Money Pages
+    "/event-ticketing-software-india",
+    "/online-event-ticketing-platform-india",
+    "/zero-commission-event-ticketing-india",
+    "/event-registration-software-india",
+    "/qr-code-event-check-in-software",
+    "/qr-ticketing-system",
+    "/event-check-in-app",
+    "/event-registration-qr-code",
+    "/razorpay-event-ticketing",
+    "/upi-event-ticketing-software",
+    "/whatsapp-event-ticketing",
+    "/event-ticketing-payment-gateway",
+    "/event-registration-payment-gateway",
+    "/college-event-management-software",
+    "/college-fest-registration-software",
+    "/college-fest-ticketing-platform",
+    "/university-event-management-software",
+    "/conference-registration-software",
+    "/conference-ticketing-platform",
+    "/corporate-event-registration-software",
+    "/exhibition-registration-software",
+    "/trade-show-registration-software",
+    "/expo-ticketing-software",
+    "/hackathon-registration-platform",
+    "/workshop-registration-software",
+    "/seminar-registration-software",
+    "/multi-gate-event-check-in",
+    "/event-attendance-tracking-software",
+    "/event-guest-management-software",
+    "/white-label-event-ticketing",
+    "/event-ticketing-api",
+    "/uk/event-ticketing-software",
+    "/uk/eventbrite-alternative",
+    "/uk/qr-event-check-in-software",
+    "/uk/conference-registration-software",
+  ].map((path) => ({ url: `${BASE}${path}`, priority: 0.95, changeFrequency: "daily" as const }));
+
   // Query live events dynamically so public event registration pages get indexed
   let eventEntries: MetadataRoute.Sitemap = [];
   try {
@@ -430,8 +473,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Silently fall back if Supabase is unavailable at build-time
   }
 
-  const staticEntries = [
+  const rawStaticEntries = [
     ...core,
+    ...bofuMoneyPages,
     ...seoPages,
     ...useCasePages,
     ...locationPages,
@@ -439,7 +483,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...comparePages,
     ...ukPages,
     ...mcpPages,
-  ].map((item) => ({ ...item, lastModified: now }));
+  ];
+
+  // Deduplicate entries by URL, giving preference to earlier entries (so bofuMoneyPages keeps 0.95 priority)
+  const seenUrls = new Set<string>();
+  const staticEntries = rawStaticEntries
+    .filter((item) => {
+      if (seenUrls.has(item.url)) return false;
+      seenUrls.add(item.url);
+      return true;
+    })
+    .map((item) => ({ ...item, lastModified: now }));
 
   return [...staticEntries, ...eventEntries];
 }

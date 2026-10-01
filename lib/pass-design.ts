@@ -18,6 +18,12 @@ export interface TicketDesignConfig {
   showOrganization?: boolean;
   showPhone?: boolean;
   showRegistrationNumber?: boolean;
+  fieldOrder?: string[];
+
+  // QR settings
+  qrSize?: "sm" | "md" | "lg";
+  qrPosition?: "center" | "bottom";
+  showQrBorder?: boolean;
 
   // Custom message & Ticket rules
   customMessage?: string;
@@ -49,6 +55,19 @@ export const DEFAULT_TICKET_DESIGN: TicketDesignConfig = {
   showOrganization: false,
   showPhone: false,
   showRegistrationNumber: false,
+  fieldOrder: [
+    "showAttendeeName",
+    "showTicketType",
+    "showEventDate",
+    "showVenue",
+    "showTicketId",
+    "showOrganization",
+    "showPhone",
+    "showRegistrationNumber",
+  ],
+  qrSize: "md",
+  qrPosition: "center",
+  showQrBorder: true,
   customMessage: "",
   showSingleEntryRule: true,
   showGateNotice: true,
@@ -179,6 +198,31 @@ export function sanitizeTicketDesign(input: unknown): TicketDesignConfig {
     }
   }
 
+  const qrSize: "sm" | "md" | "lg" = ["sm", "md", "lg"].includes(String(raw.qrSize))
+    ? (raw.qrSize as "sm" | "md" | "lg")
+    : "md";
+
+  const qrPosition: "center" | "bottom" = ["center", "bottom"].includes(String(raw.qrPosition))
+    ? (raw.qrPosition as "center" | "bottom")
+    : "center";
+
+  const showQrBorder = typeof raw.showQrBorder === "boolean" ? raw.showQrBorder : true;
+
+  const validFields = [
+    "showAttendeeName",
+    "showTicketType",
+    "showEventDate",
+    "showVenue",
+    "showTicketId",
+    "showOrganization",
+    "showPhone",
+    "showRegistrationNumber",
+  ];
+  const fieldOrder =
+    Array.isArray(raw.fieldOrder) && raw.fieldOrder.every((f) => typeof f === "string" && validFields.includes(f))
+      ? (raw.fieldOrder as string[])
+      : DEFAULT_TICKET_DESIGN.fieldOrder;
+
   const isPublished =
     typeof raw.isPublished === "boolean" ? raw.isPublished : true;
 
@@ -197,6 +241,10 @@ export function sanitizeTicketDesign(input: unknown): TicketDesignConfig {
     showOrganization,
     showPhone,
     showRegistrationNumber,
+    fieldOrder,
+    qrSize,
+    qrPosition,
+    showQrBorder,
     customMessage,
     showSingleEntryRule,
     showGateNotice,

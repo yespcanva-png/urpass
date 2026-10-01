@@ -1,79 +1,83 @@
 import type { Metadata } from "next";
-import { CheckCircle2, Smartphone, ScanLine, Zap, ShieldCheck, Users, BarChart3 } from "lucide-react";
-import SEOPage from "@/components/landing/SEOPage";
+import BOFUMoneyPage from "@/components/landing/BOFUMoneyPage";
 
 export const metadata: Metadata = {
-  title: "Event Check-In App for Mobile Web (iOS & Android)",
-  description: "Scan QR passes, verify attendees in under 0.3s, and track real-time admissions. Runs directly in Chrome and Safari on any iOS or Android phone.",
+  title: "Event Check-In App — Browser-Based Smartphone Scanner | URPASS",
+  description:
+    "The fastest event check-in app that requires zero installation. Scan tickets on iOS and Android in <0.3s, track live attendance, and prevent duplicate passes.",
   keywords: [
-    "event check in app",
-    "event registration software",
-    "QR event check-in",
-    "digital event pass",
-    "event ticketing platform",
-    "URPASS"
+    "event check-in app",
+    "event scanner app",
+    "mobile ticket scanner app",
+    "ticket validation app",
+    "best event check in app",
+    "guest check in app",
   ],
   alternates: { canonical: "https://urpass.space/event-check-in-app" },
   openGraph: {
-    title: "Event Check-In App for Mobile Web (iOS & Android) | URPASS",
-    description: "Scan QR passes, verify attendees in under 0.3s, and track real-time admissions. Runs directly in Chrome and Safari on any iOS or Android phone.",
+    title: "Event Check-In App | Browser-Based Smartphone Scanner | URPASS",
+    description:
+      "Transform any smartphone into an event check-in scanner. No app download needed, sub-0.3s QR validation, and real-time gate telemetry.",
     url: "https://urpass.space/event-check-in-app",
     locale: "en_IN",
     type: "website",
   },
+  other: {
+    "geo.region": "IN",
+    "geo.placename": "India",
+    "geo.position": "20.5937;78.9629",
+    "ICBM": "20.5937, 78.9629",
+  },
 };
 
-export default function Page() {
+export default function EventCheckInAppPage() {
   return (
-    <SEOPage
+    <BOFUMoneyPage
       config={{
-        badge: "MOBILE CHECK-IN APP",
-        h1: "Event Check-In App for Any Mobile Browser — No Downloads",
         canonicalUrl: "https://urpass.space/event-check-in-app",
-        description: "Scan QR passes, verify attendees in under 0.3s, and track real-time admissions. Runs directly in Chrome and Safari on any iOS or Android phone.",
-        ctaLabel: "Open mobile check-in app free",
-        features: [
-          { icon: Smartphone, title: "Zero App Store Downloads", desc: "Volunteers and door staff open your check-in URL directly in Safari or Chrome. Ready to scan in 5 seconds." },
-          { icon: ScanLine, title: "Rapid Camera Scanner", desc: "Decodes QR passes from phone screens, printed badges, and awkward angles in under 0.3 seconds." },
-          { icon: Zap, title: "Instant Duplicate Protection", desc: "Screen turns bright green for valid check-in and red for already-used passes with sound feedback." },
-          { icon: ShieldCheck, title: "Search & Manual Check-In", desc: "Search attendee names or emails instantly if a guest's phone battery died or they lost their pass." },
-          { icon: Users, title: "PIN-Protected Access", desc: "Staff access the scanning camera using an event PIN with zero access to financial or account settings." },
-          { icon: BarChart3, title: "Battery & Data Optimized", desc: "Lightweight web application engineered for minimal battery consumption and low cellular data usage." },
+        badge: "NO-INSTALLATION EVENT SCANNER",
+        h1: "Event Check-In App",
+        hook: "Sell tickets. Accept UPI. Send QR passes. Scan attendees. Keep your event revenue.",
+        subDescription:
+          "Turn any volunteer's smartphone into a high-speed optical gate scanner. Works directly inside mobile Safari or Chrome with zero app downloads or account logins.",
+        primaryCtaLabel: "Try check-in",
+        primaryCtaHref: "/signup",
+        secondaryCtaLabel: "Book a Demo",
+        secondaryCtaHref: "/contact",
+        trustHighlights: ["₹0 to start", "Razorpay / UPI", "QR check-in", "WhatsApp passes"],
+        currency: "INR",
+        cluster: "ticketing",
+        description:
+          "Event check-in app: scan passes in <0.3s using any mobile browser, coordinate multiple entrance gates, and monitor attendance live.",
+        comparisonRows: [
+          {
+            criteria: "App Store Installation",
+            urpass: "Zero app download required (In-browser Web Scanner)",
+            competitor: "Volunteers must download 50MB+ mobile app",
+            urpassAdvantage: true,
+          },
+          {
+            criteria: "Gate Volunteer Onboarding",
+            urpass: "Volunteers scan a secure PIN or gate link in 3 seconds",
+            competitor: "Staff must register accounts and verify logins",
+            urpassAdvantage: true,
+          },
+          {
+            criteria: "Scan Verification Latency",
+            urpass: "< 0.3s optical decoding with audio feedback",
+            competitor: "2 to 4 seconds per attendee",
+            urpassAdvantage: true,
+          },
+          {
+            criteria: "Offline Mode Support",
+            urpass: "IndexedDB local cache continues validating tickets",
+            competitor: "Fails or locks out volunteers when WiFi drops",
+            urpassAdvantage: true,
+          },
         ],
-        steps: [
-          { n: "01", title: "Open Scanner URL", desc: "Navigate to your event check-in URL on any smartphone or tablet." },
-          { n: "02", title: "Enter PIN", desc: "Input the event check-in PIN set by the organizer for secure access." },
-          { n: "03", title: "Allow Camera", desc: "Grant one-time browser camera permission with a single tap." },
-          { n: "04", title: "Scan Passes", desc: "Aim camera at attendee passes for instant green/red entry confirmation." },
-          { n: "05", title: "Track Arrivals", desc: "Live headcount updates automatically on the organizer dashboard." },
-        ],
-        callout: {
-          badge: "NO INSTALLATION",
-          title: "The fastest way to deploy volunteer door scanners.",
-          description: "Asking entrance volunteers to download heavy apps, create accounts, and remember passwords creates massive delays. URPASS runs instantly in their browser with zero friction.",
-          bullets: [
-            "Works on any iPhone, iPad, or Android phone",
-            "No Apple App Store or Google Play Store downloads",
-            "Continuous scanning with sub-0.3s recognition speed",
-            "PIN-protected gate security protecting organizer data",
-          ],
-        },
-        useCases: [
-          "Volunteer Gate Staff",
-          "Registration Desk Teams",
-          "Auditorium Ushers",
-          "VIP Door Hosts",
-          "Workshop Entrance Staff",
-          "Late-Night Security Guards",
-        ],
-        faqs: [
-          { q: "Do volunteers need an iPhone or Android specifically?", a: "URPASS works seamlessly on both iOS (Safari) and Android (Chrome) as well as tablets and laptops." },
-          { q: "Does the scanner consume a lot of mobile data?", a: "No. The scanning application is ultra-lightweight and uses minimal network data to verify pass tokens." },
-          { q: "Can volunteers access my organizer account or billing details?", a: "No. Scanner links are restricted strictly to ticket scanning and attendee lookup, keeping your sensitive data private." },
-          { q: "Does the camera scan QR codes in low-light conditions?", a: "Yes. The scanner leverages native camera auto-focus and includes an on-screen torch toggle for evening venues." },
-        ],
-        ctaTitle: "Start streamlining your event with URPASS",
-        ctaDescription: "Permanent free tier · 30-day free trial on paid plans · Fast sub-second check-in",
+        competitorName: "Traditional Mobile Ticketing Apps",
+        pageSpecificTakeaway:
+          "The best event check-in app is one that requires no installation at all. By operating directly inside mobile browsers, URPASS equips entire volunteer teams in seconds without hardware overhead.",
       }}
     />
   );

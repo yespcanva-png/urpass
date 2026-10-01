@@ -293,6 +293,20 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  // If pass is REFUNDED or CANCELLED, immediately deny entry
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  if ((pass as any).ticket_status === "REFUNDED" || (pass as any).ticket_status === "CANCELLED") {
+    return NextResponse.json(
+      {
+        error: `This ticket has been ${(pass as any).ticket_status || "REFUNDED"}. Entry Denied.`,
+        status: "REFUNDED",
+        accessDenied: true,
+        scanOperationId,
+      },
+      { status: 403 }
+    );
+  }
+
   if (pass.status === "checked_in") {
     // Already checked in — return existing record without creating duplicate
     const { data: attendee } = await supabase

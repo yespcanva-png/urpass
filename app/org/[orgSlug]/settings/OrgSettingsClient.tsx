@@ -19,6 +19,8 @@ import { orgSchema, type OrgInput } from "@/lib/validations/organization";
 import { updateOrganization, deleteOrganization } from "@/app/actions/organizations";
 import { updateOrganizationSettings } from "@/app/actions/organization-settings";
 import OrgRazorpayCard from "@/components/org/OrgRazorpayCard";
+import OrganizationPaymentSettings from "@/components/payments/OrganizationPaymentSettings";
+import type { OrganizationPaymentAccount } from "@/lib/payments/types";
 import type { Organization, OrgRole, OrganizationSettings } from "@/types";
 
 const inputCls =
@@ -73,6 +75,7 @@ interface Props {
   userRole: OrgRole;
   existingPaymentKeyId: string | null;
   initialSettings: OrganizationSettings | null;
+  initialManagedAccount?: OrganizationPaymentAccount | null;
 }
 
 export default function OrgSettingsClient({
@@ -81,6 +84,7 @@ export default function OrgSettingsClient({
   userRole,
   existingPaymentKeyId,
   initialSettings,
+  initialManagedAccount,
 }: Props) {
   // General org form
   const [serverError, setServerError] = useState("");
@@ -384,18 +388,24 @@ export default function OrgSettingsClient({
         </button>
       </form>
 
-      {/* ── 3. Payment Integration ───────────────────────────── */}
-      <div className="bg-white rounded-2xl shadow-xs p-6 space-y-4 border border-neutral-200/80">
-        <SectionHeader
-          icon={CreditCard}
-          title="Payment Gateway Integration"
-          subtitle="Collect registration ticket revenue directly to your organization's Razorpay account"
+      {/* ── 3. Payment Integration (Managed Split & Direct Gateway) ───────────────────── */}
+      <div className="space-y-6">
+        <OrganizationPaymentSettings
+          orgId={org.id}
+          initialAccount={initialManagedAccount}
         />
-        <p className="text-xs text-neutral-500 leading-relaxed">
-          Connect Razorpay to accept UPI, RuPay, cards, and net banking for all events in this organization.
-          Revenue goes directly to your bank account — URPASS never holds your money.
-        </p>
-        <OrgRazorpayCard orgId={org.id} orgSlug={orgSlug} existingKeyId={existingPaymentKeyId} />
+
+        <div className="bg-white rounded-2xl shadow-xs p-6 space-y-4 border border-neutral-200/80">
+          <SectionHeader
+            icon={CreditCard}
+            title="Direct Merchant Gateway (BYO Keys)"
+            subtitle="Alternatively connect your own Razorpay keys for direct merchant collections"
+          />
+          <p className="text-xs text-neutral-500 leading-relaxed">
+            If you prefer direct merchant collections instead of URPASS Managed Marketplace Split, configure your Razorpay Key ID and Secret below.
+          </p>
+          <OrgRazorpayCard orgId={org.id} orgSlug={orgSlug} existingKeyId={existingPaymentKeyId} />
+        </div>
       </div>
 
       {/* ── 4. Danger Zone ──────────────────────────────────── */}
