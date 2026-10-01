@@ -17,7 +17,7 @@ import type { EventPaymentConfig, FeeBearer, PaymentMode, RefundPolicy } from "@
 
 interface EventPaymentConfigFormProps {
   eventId: string;
-  initialConfig?: EventPaymentConfig | null;
+  initialConfig?: (EventPaymentConfig & { payment_mode?: PaymentMode; fee_bearer?: FeeBearer; refund_policy?: RefundPolicy }) | null;
   sampleTicketPrice?: number;
   linkedAccountDisplay?: string;
 }
@@ -29,17 +29,17 @@ export default function EventPaymentConfigForm({
   linkedAccountDisplay = "Connected Bank Account (Verified Payout Destination)",
 }: EventPaymentConfigFormProps) {
   const [paymentMode, setPaymentMode] = useState<PaymentMode>(
-    initialConfig?.paymentMode || "URPASS_MANAGED"
+    initialConfig?.paymentMode || initialConfig?.payment_mode || "URPASS_MANAGED"
   );
   const [feeBearer, setFeeBearer] = useState<FeeBearer>(
-    initialConfig?.feeBearer || "ATTENDEE"
+    initialConfig?.feeBearer || initialConfig?.fee_bearer || "ATTENDEE"
   );
   const [refundPolicy, setRefundPolicy] = useState<RefundPolicy>(
-    initialConfig?.refundPolicy || "ORGANIZER_DISCRETION"
+    initialConfig?.refundPolicy || initialConfig?.refund_policy || "ORGANIZER_DISCRETION"
   );
   const [ticketPrice, setTicketPrice] = useState<number>(sampleTicketPrice);
   const [isSaving, setIsSaving] = useState(false);
-  const [statusMessage, setStatusMessage] = useState("");
+  const [status, setStatus] = useState<{ message: string; isError: boolean } | null>(null);
 
   // Calculate live sample fees
   const sampleFees = calculateTicketFees({
@@ -52,7 +52,7 @@ export default function EventPaymentConfigForm({
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     setIsSaving(true);
-    setStatusMessage("");
+    setStatus(null);
 
     try {
       const res = await saveEventPaymentConfigAction({
@@ -65,12 +65,12 @@ export default function EventPaymentConfigForm({
       });
 
       if (res.error) {
-        setStatusMessage(res.error);
+        setStatus({ message: res.error, isError: true });
       } else {
-        setStatusMessage("Event payment architecture saved successfully.");
+        setStatus({ message: "Event payment architecture saved successfully.", isError: false });
       }
     } catch {
-      setStatusMessage("Failed to save event payment settings.");
+      setStatus({ message: "Failed to save event payment settings.", isError: true });
     } finally {
       setIsSaving(false);
     }
@@ -85,9 +85,20 @@ export default function EventPaymentConfigForm({
         </p>
       </div>
 
-      {statusMessage && (
-        <div className="p-3 rounded-lg bg-neutral-100 text-xs text-neutral-800 font-medium">
-          {statusMessage}
+      {status && (
+        <div
+          className={`p-3.5 rounded-xl text-xs font-medium border flex items-center gap-2.5 transition-all ${
+            status.isError
+              ? "bg-red-50/90 text-red-800 border-red-200"
+              : "bg-emerald-50 text-emerald-900 border-emerald-200"
+          }`}
+        >
+          {status.isError ? (
+            <span className="w-2 h-2 rounded-full bg-red-500 shrink-0" />
+          ) : (
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+          )}
+          <span>{status.message}</span>
         </div>
       )}
 

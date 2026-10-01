@@ -63,8 +63,7 @@ export default async function EventFinancePage({
       <div className="pt-6 border-t border-neutral-200">
         <EventPaymentConfigForm
           eventId={eventId}
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          initialConfig={paymentConfig as any}
+          initialConfig={paymentConfig}
           linkedAccountDisplay={linkedAccountLabel}
         />
       </div>

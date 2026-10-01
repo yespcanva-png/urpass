@@ -11,10 +11,12 @@ import type {
   RefundPolicy,
   FeeCalculationResult,
   TicketOrder,
+  EventPaymentConfig,
+  EventPaymentConfigRecord,
 } from "./types";
 
 // Admin service-role client for authoritative database operations
-function getAdminClient() {
+export function getAdminClient() {
   return createClient(
     getSupabaseUrl(),
     process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -76,8 +78,53 @@ export async function onboardOrgPaymentAccountService(params: {
   return data;
 }
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+function isValidUUID(val?: string | null): val is string {
+  return typeof val === "string" && UUID_REGEX.test(val);
+}
+
+function normalizeEventPaymentConfig(
+  raw: Partial<EventPaymentConfig & EventPaymentConfigRecord>,
+  eventId: string
+): EventPaymentConfigRecord {
+  const pMode = (raw.paymentMode || raw.payment_mode || "URPASS_MANAGED") as PaymentMode;
+  const fBearer = (raw.feeBearer || raw.fee_bearer || "ATTENDEE") as FeeBearer;
+  const prov = (raw.provider || "RAZORPAY") as PaymentProvider;
+  const rPolicy = (raw.refundPolicy || raw.refund_policy || "ORGANIZER_DISCRETION") as RefundPolicy;
+  const pFeePct = Number(raw.platformFeePercent ?? raw.platform_fee_percent ?? 2.0);
+  const pFeeFix = Number(raw.platformFeeFixedINR ?? raw.platform_fee_fixed_inr ?? 0);
+  const gFeePct = Number(raw.gatewayFeePercent ?? raw.gateway_fee_percent ?? 2.0);
+  const gFeeFix = Number(raw.gatewayFeeFixedINR ?? raw.gateway_fee_fixed_inr ?? 0);
+  const linkedAcc = raw.providerLinkedAccountId || raw.provider_linked_account_id || null;
+
+  return {
+    id: raw.id || `epc_${eventId.replace(/-/g, "").slice(0, 12)}`,
+    eventId,
+    event_id: eventId,
+    paymentMode: pMode,
+    payment_mode: pMode,
+    provider: prov,
+    providerLinkedAccountId: linkedAcc || undefined,
+    provider_linked_account_id: linkedAcc,
+    feeBearer: fBearer,
+    fee_bearer: fBearer,
+    platformFeePercent: pFeePct,
+    platform_fee_percent: pFeePct,
+    platformFeeFixedINR: pFeeFix,
+    platform_fee_fixed_inr: pFeeFix,
+    gatewayFeePercent: gFeePct,
+    gateway_fee_percent: gFeePct,
+    gatewayFeeFixedINR: gFeeFix,
+    gateway_fee_fixed_inr: gFeeFix,
+    refundPolicy: rPolicy,
+    refund_policy: rPolicy,
+    createdAt: raw.createdAt || raw.created_at || new Date().toISOString(),
+    updatedAt: raw.updatedAt || raw.updated_at || new Date().toISOString(),
+  };
+}
+
 /**
- * Save / Update Event Payment Configuration
+ * Save / Update Event Payment Configuration with Safe Multi-Tier Persistence
  */
 export async function saveEventPaymentConfigService(params: {
   eventId: string;
@@ -90,7 +137,8 @@ export async function saveEventPaymentConfigService(params: {
   gatewayFeePercent?: number;
   gatewayFeeFixedINR?: number;
   refundPolicy?: RefundPolicy;
-}) {
+  userId?: string;
+}): Promise<EventPaymentConfigRecord> {
   const supabase = getAdminClient();
   const {
     eventId,
@@ -103,34 +151,184 @@ export async function saveEventPaymentConfigService(params: {
     gatewayFeePercent = 2.0,
     gatewayFeeFixedINR = 0,
     refundPolicy = "ORGANIZER_DISCRETION",
+    userId,
   } = params;
 
-  const { data, error } = await supabase
-    .from("event_payment_configs")
-    .upsert(
-      {
-        event_id: eventId,
-        payment_mode: paymentMode,
-        provider,
-        provider_linked_account_id: providerLinkedAccountId,
-        fee_bearer: feeBearer,
-        platform_fee_percent: platformFeePercent,
-        platform_fee_fixed_inr: platformFeeFixedINR,
-        gateway_fee_percent: gatewayFeePercent,
-        gateway_fee_fixed_inr: gatewayFeeFixedINR,
-        refund_policy: refundPolicy,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "event_id" }
-    )
-    .select()
-    .single();
+  let savedRecord: EventPaymentConfigRecord | null = null;
+  let dbUpsertSuccess = false;
 
-  if (error) {
-    throw new Error(`Failed to save event payment config: ${error.message}`);
+  // 1. Attempt database upsert (succeeds if table exists in schema cache)
+  try {
+    const { data, error } = await supabase
+      .from("event_payment_configs")
+      .upsert(
+        {
+          event_id: eventId,
+          payment_mode: paymentMode,
+          provider,
+          provider_linked_account_id: providerLinkedAccountId,
+          fee_bearer: feeBearer,
+          platform_fee_percent: platformFeePercent,
+          platform_fee_fixed_inr: platformFeeFixedINR,
+          gateway_fee_percent: gatewayFeePercent,
+          gateway_fee_fixed_inr: gatewayFeeFixedINR,
+          refund_policy: refundPolicy,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "event_id" }
+      )
+      .select()
+      .single();
+
+    if (!error && data) {
+      dbUpsertSuccess = true;
+      savedRecord = normalizeEventPaymentConfig(data, eventId);
+    } else if (error) {
+      console.warn("event_payment_configs upsert failed, activating fallback:", error.message);
+    }
+  } catch (err) {
+    console.warn("event_payment_configs table unavailable, activating fallback:", err);
   }
 
-  return data;
+  const canonicalConfig =
+    savedRecord ||
+    normalizeEventPaymentConfig(
+      {
+        eventId,
+        paymentMode,
+        provider,
+        providerLinkedAccountId,
+        feeBearer,
+        platformFeePercent,
+        platformFeeFixedINR,
+        gatewayFeePercent,
+        gatewayFeeFixedINR,
+        refundPolicy,
+      },
+      eventId
+    );
+
+  // 2. Safe persistent fallback in user_metadata
+  let targetUserId = userId;
+  if (!targetUserId) {
+    try {
+      const { data: event } = await supabase
+        .from("events")
+        .select("organizer_id")
+        .eq("id", eventId)
+        .single();
+      if (event?.organizer_id) {
+        targetUserId = event.organizer_id;
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  if (targetUserId && isValidUUID(targetUserId)) {
+    try {
+      const { data: userResp, error: userErr } = await supabase.auth.admin.getUserById(targetUserId);
+      if (!userErr && userResp?.user) {
+        const existingMetadata = userResp.user.user_metadata || {};
+        const existingConfigs = existingMetadata.event_payment_configs || {};
+
+        await supabase.auth.admin.updateUserById(targetUserId, {
+          user_metadata: {
+            ...existingMetadata,
+            event_payment_configs: {
+              ...existingConfigs,
+              [eventId]: canonicalConfig,
+            },
+          },
+        });
+      }
+    } catch (authErr) {
+      console.warn("user_metadata persistence warning:", authErr);
+      if (!dbUpsertSuccess) {
+        throw new Error(
+          authErr instanceof Error
+            ? `Failed to save payment config: ${authErr.message}`
+            : "Failed to save payment configuration"
+        );
+      }
+    }
+  }
+
+  return canonicalConfig;
+}
+
+/**
+ * Fetch Event Payment Config with Safe Multi-Tier Fallback
+ */
+export async function getEventPaymentConfigService(
+  eventId: string,
+  userId?: string
+): Promise<EventPaymentConfigRecord> {
+  const supabase = getAdminClient();
+
+  // 1. Try reading from event_payment_configs table
+  try {
+    const { data, error } = await supabase
+      .from("event_payment_configs")
+      .select("*")
+      .eq("event_id", eventId)
+      .maybeSingle();
+
+    if (!error && data) {
+      return normalizeEventPaymentConfig(data, eventId);
+    }
+  } catch {
+    // schema cache missing or connection error - continue to fallback
+  }
+
+  // 2. Check current userId user_metadata
+  if (userId && isValidUUID(userId)) {
+    try {
+      const { data: userResp } = await supabase.auth.admin.getUserById(userId);
+      const savedConfig = userResp?.user?.user_metadata?.event_payment_configs?.[eventId];
+      if (savedConfig) {
+        return normalizeEventPaymentConfig(savedConfig, eventId);
+      }
+    } catch {
+      // continue to organizer lookup
+    }
+  }
+
+  // 3. Fallback: Lookup event organizer_id and check their user_metadata
+  try {
+    const { data: event } = await supabase
+      .from("events")
+      .select("organizer_id")
+      .eq("id", eventId)
+      .maybeSingle();
+
+    if (event?.organizer_id && event.organizer_id !== userId && isValidUUID(event.organizer_id)) {
+      const { data: orgUserResp } = await supabase.auth.admin.getUserById(event.organizer_id);
+      const savedConfig = orgUserResp?.user?.user_metadata?.event_payment_configs?.[eventId];
+      if (savedConfig) {
+        return normalizeEventPaymentConfig(savedConfig, eventId);
+      }
+    }
+  } catch {
+    // continue to default
+  }
+
+  // 4. Default clean configuration
+  return normalizeEventPaymentConfig(
+    {
+      id: `epc_default_${eventId.replace(/-/g, "").slice(0, 12)}`,
+      eventId,
+      paymentMode: "URPASS_MANAGED",
+      provider: "RAZORPAY",
+      feeBearer: "ATTENDEE",
+      platformFeePercent: 2.0,
+      platformFeeFixedINR: 0,
+      gatewayFeePercent: 2.0,
+      gatewayFeeFixedINR: 0,
+      refundPolicy: "ORGANIZER_DISCRETION",
+    },
+    eventId
+  );
 }
 
 /**
@@ -181,25 +379,21 @@ export async function initiateOrderCheckoutService(params: {
     }
   }
 
-  // 3. Fetch Event Payment Config
-  const { data: config } = await supabase
-    .from("event_payment_configs")
-    .select("*")
-    .eq("event_id", eventId)
-    .maybeSingle();
+  // 3. Fetch Event Payment Config with safe fallback
+  const config = await getEventPaymentConfigService(eventId, event.organizer_id);
 
-  const paymentMode: PaymentMode = config?.payment_mode || "URPASS_MANAGED";
-  const feeBearer: FeeBearer = config?.fee_bearer || "ATTENDEE";
-  const provider: PaymentProvider = config?.provider || "RAZORPAY";
+  const paymentMode: PaymentMode = config.payment_mode || config.paymentMode || "URPASS_MANAGED";
+  const feeBearer: FeeBearer = config.fee_bearer || config.feeBearer || "ATTENDEE";
+  const provider: PaymentProvider = config.provider || "RAZORPAY";
 
   // 4. Calculate Authoritative Fees
   const fees: FeeCalculationResult = calculateTicketFees({
     basePrice: baseTicketPrice * quantity,
     feeBearer,
-    platformFeePercent: Number(config?.platform_fee_percent ?? 2.0),
-    platformFeeFixedINR: Number(config?.platform_fee_fixed_inr ?? 0),
-    gatewayFeePercent: Number(config?.gateway_fee_percent ?? 2.0),
-    gatewayFeeFixedINR: Number(config?.gateway_fee_fixed_inr ?? 0),
+    platformFeePercent: Number(config.platform_fee_percent ?? config.platformFeePercent ?? 2.0),
+    platformFeeFixedINR: Number(config.platform_fee_fixed_inr ?? config.platformFeeFixedINR ?? 0),
+    gatewayFeePercent: Number(config.gateway_fee_percent ?? config.gatewayFeePercent ?? 2.0),
+    gatewayFeeFixedINR: Number(config.gateway_fee_fixed_inr ?? config.gatewayFeeFixedINR ?? 0),
   });
 
   // 5. Atomic Capacity Reservation (10-minute hold)

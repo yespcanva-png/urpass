@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import {
   onboardOrgPaymentAccountService,
   saveEventPaymentConfigService,
+  getEventPaymentConfigService,
   initiateOrderCheckoutService,
   processOrderRefundService,
 } from "@/lib/payments/service";
@@ -104,8 +105,12 @@ export async function saveEventPaymentConfigAction(params: {
   }
 
   try {
-    const config = await saveEventPaymentConfigService(params);
+    const config = await saveEventPaymentConfigService({
+      ...params,
+      userId: user.id,
+    });
     revalidatePath(`/event/${params.eventId}`);
+    revalidatePath(`/event/${params.eventId}/finance`);
     return { success: true, config };
   } catch (err: unknown) {
     return { error: err instanceof Error ? err.message : "Failed to save payment configuration" };
@@ -117,13 +122,11 @@ export async function saveEventPaymentConfigAction(params: {
  */
 export async function getEventPaymentConfigAction(eventId: string) {
   const supabase = await createClient();
-  const { data } = await supabase
-    .from("event_payment_configs")
-    .select("*")
-    .eq("event_id", eventId)
-    .maybeSingle();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  return data;
+  return await getEventPaymentConfigService(eventId, user?.id);
 }
 
 export type InitiateOrderCheckoutActionResult =

@@ -76,6 +76,20 @@ export interface EventPaymentConfig {
   updatedAt?: string;
 }
 
+export type EventPaymentConfigRecord = EventPaymentConfig & {
+  event_id?: string;
+  payment_mode?: PaymentMode;
+  fee_bearer?: FeeBearer;
+  platform_fee_percent?: number;
+  platform_fee_fixed_inr?: number;
+  gateway_fee_percent?: number;
+  gateway_fee_fixed_inr?: number;
+  refund_policy?: RefundPolicy;
+  provider_linked_account_id?: string | null;
+  created_at?: string;
+  updated_at?: string;
+};
+
 export interface FeeCalculationResult {
   basePrice: number; // Gross ticket price
   feeBearer: FeeBearer;
