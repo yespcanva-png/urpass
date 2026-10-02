@@ -111,6 +111,11 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/qr-code-ticketing-system" className="text-xs text-neutral-400 hover:text-white transition-colors">
+                  QR Ticketing System
+                </Link>
+              </li>
+              <li>
                 <Link href="/qr-code-scanner" className="text-xs text-neutral-400 hover:text-white transition-colors">
                   QR Scanner App
                 </Link>
@@ -144,8 +149,18 @@ export default function Footer() {
             <p className="text-xs font-semibold text-white tracking-wider uppercase mb-4">Solutions</p>
             <ul className="flex flex-col gap-2.5">
               <li>
+                <Link href="/college-event-management-software" className="text-xs text-neutral-400 hover:text-white transition-colors">
+                  College Event Management
+                </Link>
+              </li>
+              <li>
                 <Link href="/college-fests" className="text-xs text-neutral-400 hover:text-white transition-colors">
                   College Fests & Culturals
+                </Link>
+              </li>
+              <li>
+                <Link href="/college-cultural-fest-ticketing" className="text-xs text-neutral-400 hover:text-white transition-colors">
+                  Cultural Fest Ticketing
                 </Link>
               </li>
               <li>
@@ -166,6 +181,26 @@ export default function Footer() {
               <li>
                 <Link href="/corporate-events" className="text-xs text-neutral-400 hover:text-white transition-colors">
                   Corporate Summits
+                </Link>
+              </li>
+              <li>
+                <Link href="/conference-management-software" className="text-xs text-brand-300 hover:text-white transition-colors font-medium">
+                  Conference Management
+                </Link>
+              </li>
+              <li>
+                <Link href="/event-agenda-builder" className="text-xs text-neutral-400 hover:text-white transition-colors">
+                  Agenda Builder
+                </Link>
+              </li>
+              <li>
+                <Link href="/speaker-management-software" className="text-xs text-neutral-400 hover:text-white transition-colors">
+                  Speaker Management
+                </Link>
+              </li>
+              <li>
+                <Link href="/session-qr-check-in" className="text-xs text-neutral-400 hover:text-white transition-colors">
+                  Session QR Check-In
                 </Link>
               </li>
               <li>

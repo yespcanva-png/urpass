@@ -43,7 +43,7 @@ export default function HyderabadPage() {
           latitude: 17.3850,
           longitude: 78.4867,
         },
-        description: "Trusted by Hyderabad's tech community, colleges, and corporate event teams. Manage registrations, issue digital QR passes, and check in attendees with phone-based scanning.",
+        description: "Engineered for Hyderabad's tech community, colleges, and corporate event teams. Manage registrations, issue digital QR passes, and check in attendees with phone-based scanning.",
         ctaLabel: "Start your Hyderabad event",
         features: [
           { icon: Cpu, title: "Hyderabad tech events", desc: "Ideal for HITEC City developer meetups, startup events, and tech conferences." },
@@ -56,23 +56,23 @@ export default function HyderabadPage() {
         callout: {
           badge: "HYDERABAD EVENTS",
           title: "For Hyderabad's growing event ecosystem.",
-          description: "From HITEC City startup events to IIIT Hyderabad hackathons to Jubilee Hills corporate galas — URPASS handles the registration and check-in for any Hyderabad event.",
+          description: "From HITEC City startup events to campus hackathons to Jubilee Hills corporate galas — URPASS handles the registration and check-in for any Hyderabad event.",
           bullets: [
             "Tech meetups in HITEC City",
-            "College events at IIIT, BITS Pilani Hyderabad",
+            "College fests and technical hackathons",
             "Corporate events in Gachibowli",
             "Community events across Hyderabad",
           ],
         },
         useCases: [
-          "HITEC City meetups", "IIIT Hyderabad events", "Gachibowli tech events", "Startup events",
-          "Hyderabad hackathons", "College fests Hyderabad", "Corporate seminars", "Community events",
+          "HITEC City meetups", "Campus hackathons", "Gachibowli tech events", "Startup events",
+          "Developer conferences", "College fests Hyderabad", "Corporate seminars", "Community events",
         ],
         faqs: [
-          { q: "Is URPASS used in Hyderabad?", a: "Yes. URPASS is used by event organisers in Hyderabad for tech meetups, college events, and corporate conferences." },
+          { q: "Can Hyderabad event organisers use URPASS?", a: "Yes. URPASS is designed for event organisers in Hyderabad for tech meetups, college symposiums, and corporate conferences." },
           { q: "Can I use URPASS for a HITEC City tech event?", a: "Yes. URPASS is ideal for Hyderabad's tech event ecosystem in HITEC City, Gachibowli, and Madhapur." },
           { q: "Is there a free plan for Hyderabad events?", a: "Yes. Free plan with 2 events/month, 100 registrations/month, full QR check-in. No credit card required. Paid plans start at ₹499/month with a 30-day free trial." },
-          { q: "Does URPASS support Telangana college events?", a: "Yes. URPASS is used by colleges across Telangana and Andhra Pradesh." },
+          { q: "Does URPASS support Telangana college events?", a: "Yes. URPASS supports college symposiums, workshops, and fests across Telangana and Andhra Pradesh with instant QR passes and gate scanning." },
           { q: "What payment methods work for Hyderabad events?", a: "Razorpay supports UPI, PhonePe, Google Pay, cards, and net banking — all popular in Hyderabad." },
           { q: "Can I run a large Hyderabad conference on URPASS?", a: "Yes. Pro and Business plans support 2,500 to 10,000 registrations/month with multi-gate check-in scanning." },
         ],

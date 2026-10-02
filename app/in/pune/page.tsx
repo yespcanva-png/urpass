@@ -69,7 +69,7 @@ export default function PunePage() {
           "Baner startup events", "Pune hackathons", "Magarpatta corporate events", "Kothrud community events",
         ],
         faqs: [
-          { q: "Is URPASS used in Pune?", a: "Yes. URPASS is used by event organisers across Pune for college events, tech meetups, and corporate conferences." },
+          { q: "Can Pune event organisers use URPASS?", a: "Yes. URPASS is designed for event organisers across Pune for college symposiums, tech meetups, and corporate conferences." },
           { q: "Can Pune college students register for events?", a: "Yes. URPASS registration links are public. Students from any Pune college can register." },
           { q: "Is there a free plan for Pune events?", a: "Yes. Free plan with 2 events/month and 100 registrations/month — no credit card required. Paid plans start at ₹499/month with a 30-day free trial." },
           { q: "Does URPASS work for Hinjewadi IT park events?", a: "Yes. Corporate events in Hinjewadi and other Pune IT parks can be managed professionally on URPASS Pro." },

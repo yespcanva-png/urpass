@@ -78,7 +78,7 @@ export default function TrichyPage() {
           {
             icon: Trophy,
             title: "Central TN Colleges & Institutes",
-            desc: "Trusted by student committees at Bishop Heber, St. Joseph's, SASTRA, and BHEL educational institutions for hassle-free entry logistics.",
+            desc: "Engineered for student committees, department symposiums, and campus events across Trichy educational institutions for hassle-free entry logistics.",
           },
         ],
         callout: {

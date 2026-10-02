@@ -44,11 +44,11 @@ export default function BangalorePage() {
           latitude: 12.9716,
           longitude: 77.5946,
         },
-        description: "Trusted by Bangalore's tech community, startups, and college organisers. Digital QR passes, Razorpay payments, and real-time check-in for every type of Bangalore event.",
+        description: "Engineered for Bangalore's tech community, startups, and college event organisers. Digital QR passes, Razorpay payments, and real-time check-in for every type of Bangalore event.",
         ctaLabel: "Start your Bangalore event",
         features: [
           { icon: Cpu, title: "Bangalore tech events", desc: "Built for Bangalore's tech ecosystem — developer meetups, startup events, AI/ML conferences, and hackathons." },
-          { icon: MapPin, title: "Built for Karnataka", desc: "Trusted by event organisers across Bangalore, Mysore, and Karnataka. INR pricing with Razorpay." },
+          { icon: MapPin, title: "Built for Karnataka", desc: "Engineered for event organisers across Bangalore, Mysore, and Karnataka. INR pricing with Razorpay." },
           { icon: Ticket, title: "Paid and free events", desc: "Accept Razorpay payments for paid events or run free events at zero cost." },
           { icon: QrCode, title: "Digital QR passes", desc: "Unique digital QR passes issued instantly to every approved attendee." },
           { icon: ScanLine, title: "QR check-in at venue", desc: "Scan attendee passes at any Bangalore venue using any smartphone. No hardware." },
@@ -61,24 +61,24 @@ export default function BangalorePage() {
           bullets: [
             "Developer meetups and hackathons",
             "Startup pitch events and demos",
-            "College events at IISC, BITS, and more",
+            "College fests and technical symposiums",
             "Corporate events in Whitefield and Koramangala",
           ],
         },
         useCases: [
-          "Bangalore hackathons", "Startup events", "IISC campus events", "Developer meetups",
-          "Koramangala tech talks", "HSR Layout events", "Whitefield corporate events", "AI Bangalore events",
+          "Bangalore hackathons", "Startup pitch events", "Engineering college symposiums", "Developer meetups",
+          "Koramangala tech talks", "HSR Layout events", "Whitefield corporate events", "AI Bangalore conferences",
         ],
         faqs: [
-          { q: "Is URPASS used by Bangalore event organisers?", a: "Yes. URPASS is used by tech event organisers, startups, and colleges in Bangalore for registration, QR passes, and check-in." },
+          { q: "Can Bangalore event organisers use URPASS?", a: "Yes. URPASS is designed for tech event organisers, startups, and colleges across Bangalore for registration, QR passes, and gate check-in." },
           { q: "Can I use URPASS for a Bangalore startup event?", a: "Yes. URPASS is ideal for Bangalore startup pitch events, demo days, and founder meetups — with both free and paid event support." },
           { q: "Does URPASS support large Bangalore conferences?", a: "Yes. The Pro and Business plans support 2,500 to 10,000 registrations/month — suitable for large Bangalore tech conferences." },
           { q: "Is there a free plan for Bangalore events?", a: "Yes. Free plan with 2 events/month and 100 registrations/month — no credit card required. Perfect for Bangalore community meetups. Paid plans include a 30-day free trial." },
           { q: "Which Bangalore payment methods does URPASS support?", a: "Razorpay integration supports UPI, cards, net banking, and wallets — all the payment methods Bangalore attendees prefer." },
-          { q: "Can I use URPASS for Bangalore college events?", a: "Yes. URPASS is used by college events at IISC, BIT, REVA, PES, RV, and other Bangalore colleges." },
+          { q: "Can I use URPASS for Bangalore college events?", a: "Yes. URPASS is designed for campus events, department symposiums, hackathons, and student clubs across Bangalore colleges and universities." },
         ],
         ctaTitle: "Start your Bangalore event on URPASS",
-        ctaDescription: "Used across Bangalore · Free to start · Tech events · Razorpay",
+        ctaDescription: "Engineered for Bangalore · Free to start · Tech events · Razorpay",
       }}
     />
   );

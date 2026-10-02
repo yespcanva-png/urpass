@@ -70,7 +70,7 @@ export default function DelhiPage() {
           "Connaught Place events", "Nehru Place tech events", "Delhi startup events", "NCR conferences",
         ],
         faqs: [
-          { q: "Is URPASS used in Delhi NCR?", a: "Yes. URPASS is used by Delhi NCR event organisers for college events, corporate conferences, and startup meetups." },
+          { q: "Can Delhi NCR event organisers use URPASS?", a: "Yes. URPASS is designed for Delhi NCR event organisers running college symposiums, corporate conferences, and startup meetups." },
           { q: "Can I use URPASS for Gurugram or Noida events?", a: "Yes. URPASS works for any event in the Delhi NCR region — Delhi, Gurugram, Noida, Faridabad, and Ghaziabad." },
           { q: "Is there a free plan for Delhi events?", a: "Yes. Free plan with 2 events/month and 100 registrations/month — no credit card required. Paid plans start at ₹499/month with a 30-day free trial." },
           { q: "Can I brand passes for a Delhi corporate event?", a: "Yes. Pro plan includes custom branding — company name, logo, and brand colour on every pass." },
@@ -78,7 +78,7 @@ export default function DelhiPage() {
           { q: "Can I manage a large Delhi conference on URPASS?", a: "Yes. Pro and Business plans support 2,500 to 10,000 registrations/month with multi-gate concurrent scanning." },
         ],
         ctaTitle: "Run your Delhi event with URPASS",
-        ctaDescription: "IIT Delhi to Cyber City · Free to start · Professional QR passes",
+        ctaDescription: "Delhi NCR · Free to start · Professional QR passes",
       }}
     />
   );

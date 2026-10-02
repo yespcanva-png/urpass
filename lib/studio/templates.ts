@@ -121,6 +121,192 @@ function createDigitalPassDesign(
   };
 }
 
+/**
+ * Generates a valid StudioDesign for a printable landscape stub ticket
+ */
+function createPrintableTicketDesign(
+  name: string,
+  bgColor = "#FFFFFF",
+  fgColor = "#18181B",
+  accentColor = "#635BFF"
+): StudioDesign {
+  return {
+    version: 2,
+    format: "printable",
+    width: 780,
+    height: 340,
+    name,
+    isPublished: true,
+    background: { type: "color", color: bgColor },
+    elements: [
+      {
+        id: `shape-accent-${Math.random().toString(36).slice(2, 7)}`,
+        type: "shape",
+        name: "Left Accent Strip",
+        shapeType: "rect",
+        fillColor: accentColor,
+        x: 0,
+        y: 0,
+        width: 12,
+        height: 340,
+        zIndex: 1,
+      },
+      {
+        id: `text-event-${Math.random().toString(36).slice(2, 7)}`,
+        type: "dynamic_text",
+        name: "Event Name",
+        fieldKey: "event.name",
+        fallbackText: "EVENT NAME",
+        fontFamily: "sans",
+        fontSize: 22,
+        fontWeight: 800,
+        color: fgColor,
+        textAlign: "left",
+        x: 32,
+        y: 36,
+        width: 480,
+        height: 34,
+        zIndex: 2,
+      },
+      {
+        id: `text-attendee-${Math.random().toString(36).slice(2, 7)}`,
+        type: "dynamic_text",
+        name: "Attendee Name",
+        fieldKey: "attendee.name",
+        fallbackText: "ATTENDEE NAME",
+        fontFamily: "sans",
+        fontSize: 18,
+        fontWeight: 700,
+        color: fgColor,
+        textAlign: "left",
+        x: 32,
+        y: 110,
+        width: 480,
+        height: 28,
+        zIndex: 3,
+      },
+      {
+        id: `divider-${Math.random().toString(36).slice(2, 7)}`,
+        type: "divider",
+        name: "Stub Divider",
+        color: "#E5E7EB",
+        thickness: 2,
+        style: "dashed",
+        x: 540,
+        y: 0,
+        width: 2,
+        height: 340,
+        zIndex: 4,
+      },
+      {
+        id: `qr-${Math.random().toString(36).slice(2, 7)}`,
+        type: "qr",
+        name: "QR Code",
+        size: 160,
+        fgColor: "#000000",
+        bgColor: "#FFFFFF",
+        cornerRadius: 8,
+        showScanLabel: true,
+        scanLabelText: "SCAN AT GATE",
+        contrastSafe: true,
+        x: 575,
+        y: 70,
+        width: 160,
+        height: 160,
+        locked: true,
+        zIndex: 5,
+      },
+    ],
+  };
+}
+
+/**
+ * Generates a valid StudioDesign for an event lanyard badge
+ */
+function createBadgeDesign(
+  name: string,
+  bgColor = "#FFFFFF",
+  fgColor = "#18181B",
+  accentColor = "#635BFF"
+): StudioDesign {
+  return {
+    version: 2,
+    format: "badge",
+    width: 440,
+    height: 640,
+    name,
+    isPublished: true,
+    background: { type: "color", color: bgColor },
+    elements: [
+      {
+        id: `shape-lanyard-${Math.random().toString(36).slice(2, 7)}`,
+        type: "shape",
+        name: "Lanyard Slot Hole",
+        shapeType: "pill",
+        x: 190,
+        y: 18,
+        width: 60,
+        height: 12,
+        fillColor: "#E5E7EB",
+        borderRadius: 999,
+        zIndex: 1,
+      },
+      {
+        id: `text-event-${Math.random().toString(36).slice(2, 7)}`,
+        type: "dynamic_text",
+        name: "Event Name",
+        fieldKey: "event.name",
+        fallbackText: "EVENT NAME",
+        fontFamily: "sans",
+        fontSize: 16,
+        fontWeight: 800,
+        color: accentColor,
+        textAlign: "center",
+        x: 20,
+        y: 54,
+        width: 400,
+        height: 24,
+        zIndex: 2,
+      },
+      {
+        id: `text-attendee-${Math.random().toString(36).slice(2, 7)}`,
+        type: "dynamic_text",
+        name: "Attendee Name",
+        fieldKey: "attendee.name",
+        fallbackText: "ATTENDEE NAME",
+        fontFamily: "sans",
+        fontSize: 24,
+        fontWeight: 800,
+        color: fgColor,
+        textAlign: "center",
+        x: 20,
+        y: 110,
+        width: 400,
+        height: 36,
+        zIndex: 3,
+      },
+      {
+        id: `qr-${Math.random().toString(36).slice(2, 7)}`,
+        type: "qr",
+        name: "QR Code",
+        size: 180,
+        fgColor: "#000000",
+        bgColor: "#FFFFFF",
+        cornerRadius: 8,
+        showScanLabel: true,
+        scanLabelText: "SCAN AT ENTRANCE",
+        contrastSafe: true,
+        x: 130,
+        y: 200,
+        width: 180,
+        height: 180,
+        locked: true,
+        zIndex: 4,
+      },
+    ],
+  };
+}
+
 export const STUDIO_TEMPLATES: StudioTemplateDefinition[] = [
   // ── COLLECTION 1: CORPORATE ──
   {
@@ -263,27 +449,27 @@ export const STUDIO_TEMPLATES: StudioTemplateDefinition[] = [
     id: "workshop-clean",
     name: "Workshop Clean",
     category: "Campus",
-    format: "digital",
+    format: "printable",
     tier: "free",
     priceINR: 0,
     badgeLabel: "Free",
     description: "Simple educational layout with session date, time, and track details prominent for training sessions.",
     tags: ["Campus", "Workshop", "Education", "Training"],
     thumbnailBg: "#FFFFFF",
-    design: createDigitalPassDesign("Workshop Clean", "#FFFFFF", "#134E4A", "#0D9488"),
+    design: createPrintableTicketDesign("Workshop Clean", "#FFFFFF", "#134E4A", "#0D9488"),
   },
   {
     id: "speaker-badge",
     name: "Speaker Badge",
     category: "Campus",
-    format: "digital",
+    format: "badge",
     tier: "paid",
     priceINR: 49,
     badgeLabel: "₹49",
     description: "Mobile pass with prominent speaker credentials, designation, company, and role color strip.",
     tags: ["Campus", "Speaker", "Conference", "Credential"],
     thumbnailBg: "#FFFFFF",
-    design: createDigitalPassDesign("Speaker Badge", "#FFFFFF", "#111827", "#059669"),
+    design: createBadgeDesign("Speaker Badge", "#FFFFFF", "#111827", "#059669"),
   },
 
   // ── COLLECTION 4: EVENTS & ENTERTAINMENT ──
@@ -299,6 +485,19 @@ export const STUDIO_TEMPLATES: StudioTemplateDefinition[] = [
     tags: ["Entertainment", "Concert", "Music", "Neon"],
     thumbnailBg: "#0F0B1E",
     design: createDigitalPassDesign("Festival Neon", "#0F0B1E", "#FFFFFF", "#EC4899"),
+  },
+  {
+    id: "concert-music-fest",
+    name: "Concert Music Fest",
+    category: "Events & Entertainment",
+    format: "printable",
+    tier: "paid",
+    priceINR: 49,
+    badgeLabel: "₹49",
+    description: "Wide stub concert ticket layout with tear-off gate validator and artist accent stripe.",
+    tags: ["Entertainment", "Concert", "Printable", "Stub"],
+    thumbnailBg: "#111827",
+    design: createPrintableTicketDesign("Concert Music Fest", "#111827", "#FFFFFF", "#EC4899"),
   },
   {
     id: "urban-festival",
@@ -317,14 +516,14 @@ export const STUDIO_TEMPLATES: StudioTemplateDefinition[] = [
     id: "sports-arena",
     name: "Sports Arena",
     category: "Events & Entertainment",
-    format: "digital",
+    format: "printable",
     tier: "paid",
     priceINR: 49,
     badgeLabel: "₹49",
     description: "Dynamic diagonal layout with team and stadium gate access indicators for sporting tournaments.",
     tags: ["Entertainment", "Sports", "Arena", "Tournament"],
     thumbnailBg: "#FFFFFF",
-    design: createDigitalPassDesign("Sports Arena", "#FFFFFF", "#111827", "#DC2626"),
+    design: createPrintableTicketDesign("Sports Arena", "#FFFFFF", "#111827", "#DC2626"),
   },
   {
     id: "marathon-pass",
@@ -341,6 +540,20 @@ export const STUDIO_TEMPLATES: StudioTemplateDefinition[] = [
   },
 
   // ── COLLECTION 5: PREMIUM ──
+  {
+    id: "vip-all-access",
+    name: "VIP All-Access Pass",
+    category: "Premium",
+    format: "badge",
+    tier: "paid",
+    priceINR: 49,
+    badgeLabel: "₹49",
+    featured: true,
+    description: "Executive gold laminated pass with VIP access tier indicator and lanyard notch.",
+    tags: ["Premium", "VIP", "Badge", "Access"],
+    thumbnailBg: "#0F172A",
+    design: createBadgeDesign("VIP All-Access Pass", "#0F172A", "#FFFFFF", "#F59E0B"),
+  },
   {
     id: "vip-midnight",
     name: "VIP Midnight",
@@ -385,14 +598,14 @@ export const STUDIO_TEMPLATES: StudioTemplateDefinition[] = [
     id: "expo-pro",
     name: "Expo Pro",
     category: "Premium",
-    format: "digital",
+    format: "badge",
     tier: "paid",
     priceINR: 49,
     badgeLabel: "₹49",
     description: "Company-first mobile credential layout with exhibitor and trade visitor badges for exhibitions and expos.",
     tags: ["Premium", "Exhibition", "Expo", "Trade"],
     thumbnailBg: "#F8FAFC",
-    design: createDigitalPassDesign("Expo Pro", "#F8FAFC", "#0F172A", "#1D4ED8"),
+    design: createBadgeDesign("Expo Pro", "#F8FAFC", "#0F172A", "#1D4ED8"),
   },
 ];
 
@@ -412,7 +625,165 @@ export function cloneTemplateDesign(template: StudioTemplateDefinition): StudioD
  * Creates a blank template design for a chosen format.
  */
 export function createBlankDesign(format: TicketFormat = "digital"): StudioDesign {
-  return createDigitalPassDesign("Untitled Digital Pass", "#FFFFFF", "#111827", "#635BFF");
+  switch (format) {
+    case "printable":
+      return {
+        version: 2,
+        format: "printable",
+        width: 780,
+        height: 340,
+        name: "Untitled Printable Ticket",
+        isPublished: false,
+        background: { type: "color", color: "#FFFFFF" },
+        elements: [
+          {
+            id: `text-${Math.random().toString(36).slice(2, 9)}`,
+            type: "dynamic_text",
+            name: "Event Name",
+            fieldKey: "event.name",
+            fallbackText: "EVENT NAME",
+            fontFamily: "sans",
+            fontSize: 22,
+            fontWeight: 800,
+            color: "#111827",
+            textAlign: "left",
+            x: 32,
+            y: 40,
+            width: 460,
+            height: 34,
+            zIndex: 1,
+          },
+          {
+            id: `text-${Math.random().toString(36).slice(2, 9)}`,
+            type: "dynamic_text",
+            name: "Attendee Name",
+            fieldKey: "attendee.name",
+            fallbackText: "ATTENDEE NAME",
+            fontFamily: "sans",
+            fontSize: 18,
+            fontWeight: 700,
+            color: "#111827",
+            textAlign: "left",
+            x: 32,
+            y: 110,
+            width: 460,
+            height: 28,
+            zIndex: 2,
+          },
+          {
+            id: `divider-${Math.random().toString(36).slice(2, 9)}`,
+            type: "divider",
+            name: "Stub Divider",
+            color: "#E5E7EB",
+            thickness: 2,
+            style: "dashed",
+            x: 540,
+            y: 0,
+            width: 2,
+            height: 340,
+            zIndex: 3,
+          },
+          {
+            id: `qr-${Math.random().toString(36).slice(2, 9)}`,
+            type: "qr",
+            name: "QR Code",
+            size: 160,
+            fgColor: "#000000",
+            bgColor: "#FFFFFF",
+            cornerRadius: 8,
+            showScanLabel: true,
+            scanLabelText: "SCAN AT GATE",
+            contrastSafe: true,
+            x: 575,
+            y: 70,
+            width: 160,
+            height: 160,
+            locked: true,
+            zIndex: 4,
+          },
+        ],
+      };
+    case "badge":
+      return {
+        version: 2,
+        format: "badge",
+        width: 440,
+        height: 640,
+        name: "Untitled Event Badge",
+        isPublished: false,
+        background: { type: "color", color: "#FFFFFF" },
+        elements: [
+          {
+            id: `shape-${Math.random().toString(36).slice(2, 9)}`,
+            type: "shape",
+            name: "Lanyard Slot Hole",
+            shapeType: "pill",
+            x: 190,
+            y: 18,
+            width: 60,
+            height: 12,
+            fillColor: "#E5E7EB",
+            borderRadius: 999,
+            zIndex: 1,
+          },
+          {
+            id: `text-${Math.random().toString(36).slice(2, 9)}`,
+            type: "dynamic_text",
+            name: "Event Name",
+            fieldKey: "event.name",
+            fallbackText: "EVENT NAME",
+            fontFamily: "sans",
+            fontSize: 16,
+            fontWeight: 800,
+            color: "#635BFF",
+            textAlign: "center",
+            x: 20,
+            y: 54,
+            width: 400,
+            height: 24,
+            zIndex: 2,
+          },
+          {
+            id: `text-${Math.random().toString(36).slice(2, 9)}`,
+            type: "dynamic_text",
+            name: "Attendee Name",
+            fieldKey: "attendee.name",
+            fallbackText: "ATTENDEE NAME",
+            fontFamily: "sans",
+            fontSize: 24,
+            fontWeight: 800,
+            color: "#111827",
+            textAlign: "center",
+            x: 20,
+            y: 110,
+            width: 400,
+            height: 36,
+            zIndex: 3,
+          },
+          {
+            id: `qr-${Math.random().toString(36).slice(2, 9)}`,
+            type: "qr",
+            name: "QR Code",
+            size: 180,
+            fgColor: "#000000",
+            bgColor: "#FFFFFF",
+            cornerRadius: 8,
+            showScanLabel: true,
+            scanLabelText: "SCAN AT ENTRANCE",
+            contrastSafe: true,
+            x: 130,
+            y: 200,
+            width: 180,
+            height: 180,
+            locked: true,
+            zIndex: 4,
+          },
+        ],
+      };
+    case "digital":
+    default:
+      return createDigitalPassDesign("Untitled Digital Pass", "#FFFFFF", "#111827", "#635BFF");
+  }
 }
 
 export const SINGLE_TEMPLATE_PRICE_INR = 49;
@@ -540,6 +911,16 @@ export function convertStudioTemplateToTicketDesign(
       templateTheme = "modern";
       shape = "standard";
       primaryColor = "#1D4ED8";
+      break;
+    case "vip-all-access":
+      templateTheme = "dark";
+      shape = "rounded";
+      primaryColor = "#F59E0B";
+      break;
+    case "concert-music-fest":
+      templateTheme = "event";
+      shape = "compact";
+      primaryColor = "#EC4899";
       break;
     default:
       templateTheme = "event";

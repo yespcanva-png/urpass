@@ -20,30 +20,27 @@ import {
 } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "URPASS — Official Website | Digital Event Passes & Lightning QR Check-In",
+  title: "Event Registration & QR Check-In Software | URPASS",
   description:
-    "URPASS (pronounced 'Your Pass' / urpass.space) by Yesp Corporation is the all-in-one digital event pass and lightning QR check-in platform. Create events, issue digital passes, accept payments with 0% commission, and scan entry QR codes in under 0.3s.",
+    "Create event registration pages, issue digital QR passes, accept ticket payments and check attendees in using any smartphone. Start free with URPASS.",
   keywords: [
     "URPASS",
-    "urpass",
-    "urpass.space",
-    "URPASS official site",
-    "URPASS event passes",
-    "URPASS QR check in",
-    "URPASS ticketing",
-    "URPASS login",
+    "event registration software",
+    "QR check-in software",
+    "event ticketing platform",
     "digital event pass",
-    "QR check-in",
     "college event registration",
     "hackathon check in",
     "Razorpay event ticketing",
+    "conference session check in",
   ],
   alternates: { canonical: "https://urpass.space" },
   openGraph: {
-    title: "URPASS — Official Website | Digital Event Passes & Lightning QR Check-In",
+    title: "Event Registration & QR Check-In Software | URPASS",
     description:
-      "URPASS (pronounced 'Your Pass' / urpass.space) is the all-in-one digital event pass and lightning QR check-in platform. Create events, issue digital passes, accept payments with 0% commission, and scan entry QR codes in under 0.3s.",
+      "Create event registration pages, issue digital QR passes, accept ticket payments and check attendees in using any smartphone. Start free with URPASS.",
     url: "https://urpass.space",
+    type: "website",
   },
 };
 
@@ -221,7 +218,7 @@ export default async function LandingPage() {
                 "publisher": {
                   "@id": "https://urpass.space/#yesp"
                 },
-                "description": "Event registration, ticketing and QR check-in platform developed by Yesp Corporation."
+                "description": "URPASS by Yesp Corporation is an event registration, ticketing, digital QR pass and event check-in platform for colleges, universities, conferences, hackathons, workshops, corporate events and communities."
               },
               {
                 "@type": "WebApplication",
@@ -315,31 +312,26 @@ export default async function LandingPage() {
 
           {/* Left: text — CSS animations (always above fold, no observer) */}
           <div>
-            <Link
-              href="/mcp-event-management"
-              className="hero-badge group inline-flex items-center gap-2.5 px-3 py-1.5 rounded-full border border-neutral-200/90 bg-neutral-50/70 hover:bg-neutral-100/80 hover:border-neutral-300 transition-all mb-6 sm:mb-8 text-xs max-w-full"
-            >
-              <span className="inline-flex items-center gap-1.5 font-semibold text-neutral-900 bg-white border border-neutral-200 px-2 py-0.5 rounded-full text-[10px] tracking-wide uppercase shrink-0 shadow-xs">
+            <div className="flex flex-wrap items-center gap-2.5 mb-6 sm:mb-8">
+              <span className="hero-badge inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold tracking-widest uppercase bg-brand/10 text-brand border border-brand/20 shadow-2xs">
+                Create. Share. Scan.
+              </span>
+              <Link
+                href="/mcp-event-management"
+                className="hero-badge group inline-flex items-center gap-2 px-3 py-1 rounded-full border border-neutral-200/90 bg-neutral-50/70 hover:bg-neutral-100/80 hover:border-neutral-300 transition-all text-xs"
+              >
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                Digital Pass OS
-              </span>
-              <span className="text-neutral-600 font-medium truncate">
-                MCP Supported for Claude &amp; Cursor
-              </span>
-              <span className="text-neutral-400 group-hover:text-neutral-900 group-hover:translate-x-0.5 transition-transform text-xs shrink-0 font-medium">
-                &rarr;
-              </span>
-            </Link>
+                <span className="text-neutral-600 font-medium">MCP Supported</span>
+                <span className="text-neutral-400 group-hover:text-neutral-900 group-hover:translate-x-0.5 transition-transform text-xs font-medium">&rarr;</span>
+              </Link>
+            </div>
 
-            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-semibold tracking-tight leading-[1.05] mb-4 sm:mb-6">
-              <span className="sr-only">URPASS — Digital Event Passes &amp; QR Check-in: </span>
-              <span className="hero-line-1 block">Create.</span>
-              <span className="hero-line-2 block">Share.</span>
-              <span className="hero-line-3 block text-brand">Scan.</span>
+            <h1 className="hero-line-1 text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-neutral-950 leading-[1.08] mb-4 sm:mb-6">
+              Event Registration, Ticketing &amp; QR Check-In Software
             </h1>
 
-            <p className="hero-sub text-base sm:text-xl text-neutral-500 leading-relaxed max-w-md mb-8 sm:mb-10">
-              <strong className="font-semibold text-neutral-900">URPASS</strong> turns event registrations into digital passes with sub-second QR check-in. Create your event, share the link, issue passes, and scan attendees at the entrance.
+            <p className="hero-sub text-base sm:text-xl text-neutral-600 leading-relaxed max-w-xl mb-8 sm:mb-10">
+              URPASS helps organisers create event registration pages, issue digital QR tickets, accept payments and scan attendees at the entrance &mdash; from one platform.
             </p>
 
             <div className="hero-ctas flex flex-col sm:flex-row items-stretch sm:items-center gap-3">

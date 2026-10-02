@@ -53,7 +53,7 @@ export default function EventTicketingPlatformPage() {
           { q: "Are there per-ticket fees from URPASS?", a: "No. URPASS charges a monthly subscription. Razorpay applies their standard payment processing fees. No additional per-ticket charges from URPASS." },
           { q: "Can I run both free and paid ticket types in the same event?", a: "Yes. You can create multiple ticket types — some free, some paid — for the same event." },
           { q: "Does URPASS handle refunds?", a: "Refunds are managed through Razorpay directly. URPASS does not process refunds but you can manually update attendee status." },
-          { q: "Is URPASS available in India?", a: "Yes. URPASS is built for the Indian market with Razorpay integration and pricing in INR. It's trusted by colleges, event organizers, and startups across India." },
+          { q: "Is URPASS available in India?", a: "Yes. URPASS is built for the Indian market with Razorpay integration and pricing in INR, engineered for colleges, event organizers, and startups across India." },
         ],
         ctaTitle: "Launch your ticketed event today",
         ctaDescription: "Sell tickets · Digital QR passes · Entry scanning · Built for India",

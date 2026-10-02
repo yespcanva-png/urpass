@@ -44,7 +44,7 @@ export default function MumbaiPage() {
           latitude: 19.0760,
           longitude: 72.8777,
         },
-        description: "Trusted by Mumbai's corporate event teams, startup community, and college organisers. Online registration, digital QR passes, and fast check-in for any Mumbai event.",
+        description: "Built for Mumbai's corporate event teams, startup community, and college organizers. Online registration, digital QR passes, and fast check-in for any Mumbai event.",
         ctaLabel: "Start your Mumbai event",
         features: [
           { icon: Building2, title: "Mumbai corporate events", desc: "For BKC, Lower Parel, and Powai corporate events — professional registration and branded QR passes." },
@@ -57,20 +57,20 @@ export default function MumbaiPage() {
         callout: {
           badge: "MUMBAI EVENTS",
           title: "From BKC boardrooms to college fests.",
-          description: "Mumbai hosts everything from Fortune 500 corporate events to IIT Bombay hackathons to Bandra community meetups. URPASS handles the registration and check-in for all of them.",
+          description: "Mumbai hosts everything from corporate seminars in BKC to engineering college hackathons to Bandra community meetups. URPASS handles the registration and check-in for all of them.",
           bullets: [
             "Corporate events in BKC and Lower Parel",
             "Tech meetups in Powai and Andheri",
-            "College events at IIT Bombay, VJTI, and more",
+            "College fests and technical hackathons",
             "Community events across Mumbai",
           ],
         },
         useCases: [
-          "BKC corporate events", "IIT Bombay hackathons", "Powai tech meetups", "Bandra community events",
-          "Lower Parel conferences", "Mumbai startup events", "VJTI workshops", "Thane college fests",
+          "BKC corporate events", "Campus hackathons", "Powai tech meetups", "Bandra community events",
+          "Lower Parel conferences", "Mumbai startup events", "Engineering workshops", "Navi Mumbai college fests",
         ],
         faqs: [
-          { q: "Is URPASS used in Mumbai?", a: "Yes. URPASS is used by Mumbai event organisers across corporate events, college fests, and community gatherings." },
+          { q: "Can Mumbai event organisers use URPASS?", a: "Yes. URPASS is designed for Mumbai event organisers across corporate conferences, college fests, and community gatherings." },
           { q: "Can I use URPASS for a large Mumbai conference?", a: "Yes. Pro and Business plans support 2,500 to 10,000 registrations/month — suitable for large Mumbai conferences and corporate summits." },
           { q: "Is there a free plan for Mumbai events?", a: "Yes. Free plan with 2 events/month and 100 registrations/month — no credit card required. Paid plans start at ₹499/month with a 30-day free trial." },
           { q: "Can I brand passes for my Mumbai company's events?", a: "Yes. Pro plan includes custom branding — company name, logo, and brand colour on every pass." },

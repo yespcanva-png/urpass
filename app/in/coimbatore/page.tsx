@@ -42,7 +42,7 @@ export default function CoimbatorePage() {
           latitude: 11.0168,
           longitude: 76.9558,
         },
-        description: "Run college and corporate event registrations in Coimbatore with digital QR passes and phone-based check-in. Trusted by Coimbatore colleges and event teams.",
+        description: "Run college and corporate event registrations in Coimbatore with digital QR passes and phone-based check-in. Engineered for Coimbatore colleges, department symposiums, and event teams.",
         ctaLabel: "Start your Coimbatore event",
         features: [
           { icon: GraduationCap, title: "Coimbatore college events", desc: "Built for events at colleges across Coimbatore. Suitable for technical symposiums, workshops, and college festivals." },
@@ -64,19 +64,19 @@ export default function CoimbatorePage() {
           ],
         },
         useCases: [
-          "PSG Tech symposiums", "Amrita college events", "KCT workshops", "SKCET events",
-          "Coimbatore hackathons", "CRI corporate events", "TIDEL Park meetups", "Coimbatore tech events",
+          "Engineering college symposiums", "Department workshops", "Campus cultural fests", "Student paper presentations",
+          "Coimbatore hackathons", "Industrial seminars", "TIDEL Park tech meetups", "Coimbatore tech summits",
         ],
         faqs: [
-          { q: "Is URPASS used by Coimbatore colleges?", a: "Yes. URPASS is used by college event organisers at PSG, Amrita, KCT, SKCET, and other colleges across Coimbatore." },
+          { q: "Can Coimbatore colleges use URPASS for symposiums and fests?", a: "Yes. URPASS is engineered for college departments, student clubs, and tech committees across Coimbatore institutions to manage registrations, digital QR passes, and gate check-in." },
           { q: "Is URPASS free for Coimbatore college events?", a: "Yes. The free plan supports 2 events/month with up to 100 registrations/month at ₹0 forever — perfect for department workshops, symposiums, and student clubs." },
-          { q: "Can I manage a Coimbatore college fest with URPASS?", a: "Yes. Pro and Business plans support 2,500 to 10,000 registrations/month — ideal for large Coimbatore engineering college fests and symposiums." },
+          { q: "Can I manage a Coimbatore college fest with URPASS?", a: "Yes. Pro and Business plans support 2,500 to 10,000 registrations/month — ideal for large Coimbatore engineering college fests and multi-track symposiums." },
           { q: "How do Coimbatore attendees pay for events?", a: "Razorpay supports UPI, cards, and net banking — the payment methods commonly used in Coimbatore." },
           { q: "Can I run events for multiple departments in the same college?", a: "Yes. Each department or club can create their own events from one URPASS account." },
           { q: "Do I need internet at the venue to do QR check-in?", a: "URPASS handles low-connectivity scenarios well. Scans work in poor internet conditions and sync when connectivity is restored." },
         ],
         ctaTitle: "Run your Coimbatore event with URPASS",
-        ctaDescription: "Trusted by Coimbatore colleges · Free to start · QR passes",
+        ctaDescription: "Engineered for Coimbatore campus & corporate events · Free to start · QR passes",
       }}
     />
   );

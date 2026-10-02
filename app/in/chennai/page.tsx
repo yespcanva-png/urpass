@@ -44,11 +44,11 @@ export default function ChennaiPage() {
           latitude: 13.0827,
           longitude: 80.2707,
         },
-        description: "Trusted by college organisers, tech event teams, and corporate event managers across Chennai and Tamil Nadu. Digital QR passes, Razorpay payments, and real-time check-in.",
+        description: "Built for college organisers, tech event teams, and corporate event managers across Chennai and Tamil Nadu. Digital QR passes, Razorpay payments, and real-time check-in.",
         ctaLabel: "Start your Chennai event",
         features: [
-          { icon: GraduationCap, title: "Chennai college events", desc: "Run registration and QR check-in for IIT Madras, Anna University, SRM, VIT, and other Chennai college events." },
-          { icon: MapPin, title: "Built for Tamil Nadu", desc: "Used by event organisers across Chennai, Coimbatore, and Tamil Nadu. INR pricing with Razorpay." },
+          { icon: GraduationCap, title: "Chennai college events", desc: "Run registration and QR check-in for department symposiums, hackathons, workshops, and college cultural fests." },
+          { icon: MapPin, title: "Built for Tamil Nadu", desc: "Engineered for event organisers across Chennai, Coimbatore, and Tamil Nadu. INR pricing with Razorpay." },
           { icon: Ticket, title: "Paid and free events", desc: "Accept Razorpay payments for paid events or run free events at zero cost." },
           { icon: QrCode, title: "Digital QR passes", desc: "Issue unique digital QR passes instantly to every approved attendee." },
           { icon: ScanLine, title: "QR check-in at venue", desc: "Any Chennai event venue — scan attendee passes with any smartphone. No hardware." },
@@ -57,7 +57,7 @@ export default function ChennaiPage() {
         callout: {
           badge: "CHENNAI EVENTS",
           title: "From college fests to corporate events.",
-          description: "Chennai has a vibrant event ecosystem — from Anna University symposiums to OMR tech meetups to Nungambakkam corporate conferences. URPASS is built for all of them.",
+          description: "Chennai has a vibrant event ecosystem — from university symposiums to OMR tech meetups to Nungambakkam corporate conferences. URPASS is built for all of them.",
           bullets: [
             "College fests and symposiums",
             "Tech meetups and hackathons",
@@ -66,19 +66,19 @@ export default function ChennaiPage() {
           ],
         },
         useCases: [
-          "IIT Madras events", "Anna University symposiums", "SRM college fests", "Chennai hackathons",
-          "OMR tech meetups", "T. Nagar corporate events", "Guindy workshops", "Chennai AI events",
+          "Engineering symposiums", "Campus hackathons", "Department workshops", "College cultural fests",
+          "OMR tech meetups", "T. Nagar corporate events", "Guindy tech talks", "Chennai AI conferences",
         ],
         faqs: [
-          { q: "Is URPASS used by Chennai colleges?", a: "Yes. URPASS is used by event organisers at colleges across Chennai and Tamil Nadu for registration, QR passes, and check-in." },
+          { q: "Can Chennai colleges use URPASS for event registrations?", a: "Yes. URPASS is engineered for college departments, student clubs, and tech symposium organizers across Chennai and Tamil Nadu for registration, QR passes, and gate check-in." },
           { q: "Can I use URPASS for a Chennai corporate event?", a: "Yes. Corporate events, product launches, and company offsites in Chennai can be managed on URPASS with branded passes on the Pro plan." },
           { q: "Does URPASS support Tamil language events?", a: "URPASS currently operates in English. Event names and descriptions can be in any language." },
           { q: "Is URPASS free for Chennai events?", a: "Yes. The free plan is available for all Chennai organisers — 2 events/month, 100 registrations/month, full QR check-in, no credit card required. Paid plans start at ₹499/month with a 30-day free trial." },
           { q: "Can I use Razorpay for Chennai event payments?", a: "Yes. Razorpay integration supports all payment methods popular in Chennai — UPI, credit/debit card, and net banking." },
-          { q: "What types of Chennai events use URPASS?", a: "College workshops, hackathons, cultural fests, tech conferences, corporate events, and community meetups across Chennai use URPASS." },
+          { q: "What types of Chennai events can run on URPASS?", a: "College workshops, hackathons, cultural fests, tech conferences, corporate events, and community meetups across Chennai run smoothly on URPASS." },
         ],
         ctaTitle: "Start your Chennai event on URPASS",
-        ctaDescription: "Used across Chennai · Free to start · QR passes · Razorpay payments",
+        ctaDescription: "Engineered for Chennai · Free to start · QR passes · Razorpay payments",
       }}
     />
   );

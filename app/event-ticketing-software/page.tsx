@@ -192,7 +192,7 @@ export default function EventTicketingSoftwarePage() {
             {
               title: "Multi-City Event Hubs",
               description:
-                "Trusted by event organizers across Bengaluru, Chennai, Mumbai, Delhi NCR, Hyderabad, Pune, Coimbatore, and Kochi.",
+                "Engineered for event organizers across Bengaluru, Chennai, Mumbai, Delhi NCR, Hyderabad, Pune, Coimbatore, and Kochi.",
               badge: "Pan-India",
             },
           ],

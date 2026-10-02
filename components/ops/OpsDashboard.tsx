@@ -30,6 +30,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import OpsTerminal from "./OpsTerminal";
+import OpsEmailEngine from "./OpsEmailEngine";
 import type { OpsLogItem } from "@/app/api/ops/telemetry/route";
 
 export interface SponsorshipItem {
@@ -115,7 +116,7 @@ export default function OpsDashboard({ onLogout }: Props) {
   const [data, setData] = useState<TelemetryData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [activeTab, setActiveTab] = useState<"terminal" | "roster" | "sponsorships">("terminal");
+  const [activeTab, setActiveTab] = useState<"terminal" | "roster" | "sponsorships" | "emails">("terminal");
   const [userSearch, setUserSearch] = useState("");
   const [sponsorshipFilter, setSponsorshipFilter] = useState<"pending" | "approved" | "all">("pending");
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
@@ -661,6 +662,18 @@ export default function OpsDashboard({ onLogout }: Props) {
                 </span>
               )}
             </button>
+
+            <button
+              onClick={() => setActiveTab("emails")}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer relative ${
+                activeTab === "emails"
+                  ? "bg-violet-500/25 text-violet-200 border border-violet-500/50 shadow-sm"
+                  : "bg-white/5 text-white/60 hover:text-white hover:bg-white/10"
+              }`}
+            >
+              <Mail className="w-3.5 h-3.5 text-violet-400" />
+              Email Engine
+            </button>
           </div>
 
           <div className="text-[11px] font-mono text-white/40 hidden sm:block">
@@ -978,6 +991,13 @@ export default function OpsDashboard({ onLogout }: Props) {
                 ))
               )}
             </div>
+          </div>
+        )}
+
+        {/* ── Tab 4: Communication Engine & Lifecycle Dispatcher ── */}
+        {activeTab === "emails" && (
+          <div className="animate-in fade-in duration-200">
+            <OpsEmailEngine />
           </div>
         )}
       </main>

@@ -21,10 +21,10 @@ import { getStudioPlanLimits, sanitizeDesignForPlan } from "@/lib/studio/limits"
 
 describe("URPASS Ticket Studio", () => {
   describe("12 Professional Templates Library", () => {
-    it("contains exactly 12 high-quality templates with unique IDs", () => {
-      expect(STUDIO_TEMPLATES.length).toBe(12);
+    it("contains professional templates with unique IDs", () => {
+      expect(STUDIO_TEMPLATES.length).toBeGreaterThanOrEqual(12);
       const ids = STUDIO_TEMPLATES.map((t) => t.id);
-      expect(new Set(ids).size).toBe(12);
+      expect(new Set(ids).size).toBe(STUDIO_TEMPLATES.length);
     });
 
     it("covers Digital Pass, Printable Ticket, and Event Badge formats", () => {
