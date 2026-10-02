@@ -14,6 +14,7 @@ import {
   Search,
   ChevronDown,
   ShieldX,
+  ShieldAlert,
   Volume2,
   VolumeX,
   Wifi,
@@ -123,6 +124,13 @@ export default function ScanEventPage() {
   const [sessionDropdownOpen, setSessionDropdownOpen] = useState(false);
   const [sessionStats, setSessionStats] = useState<{ checkedIn: number; capacity: number | null; remaining: number | null } | null>(null);
 
+  // Zone & Physical Operations state
+  const [zones, setZones] = useState<any[]>([]);
+  const [selectedZoneId, setSelectedZoneId] = useState<string | null>(null);
+  const [zoneDropdownOpen, setZoneDropdownOpen] = useState(false);
+  const [scanDirection, setScanDirection] = useState<"in" | "out">("in");
+  const [lastScannedAttendee, setLastScannedAttendee] = useState<any | null>(null);
+
   // Manual search mode
   const [manualMode, setManualMode] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -145,6 +153,7 @@ export default function ScanEventPage() {
 
   const selectedGate = gates.find((g) => g.id === selectedGateId) ?? null;
   const selectedSession = sessions.find((s) => s.id === selectedSessionId) ?? null;
+  const selectedZone = zones.find((z) => z.id === selectedZoneId) ?? null;
 
   const lastTokenRef = useRef<string | null>(null);
   const lastTokenTimeRef = useRef<number>(0);
@@ -254,6 +263,19 @@ export default function ScanEventPage() {
           setSelectedGateId(null);
         }
       }
+
+      fetch(`/api/event/${eventId}/ops/zones`)
+        .then((r) => r.json())
+        .then((d) => {
+          if (d.success && d.zones) {
+            setZones(d.zones);
+            const urlZone = searchParams.get("zone");
+            if (urlZone && d.zones.some((z: any) => z.id === urlZone)) {
+              setSelectedZoneId(urlZone);
+            }
+          }
+        })
+        .catch(() => {});
     }
     fetchData();
   }, [eventId, searchParams]);
@@ -611,6 +633,49 @@ export default function ScanEventPage() {
 
         // 1. Success check-in (Green ✓, short high chime, 80ms)
         if (data.status === "CHECKED_IN" || data.success) {
+          if (selectedZoneId) {
+            try {
+              const zoneRes = await fetch(`/api/event/${eventId}/ops/scan`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  zoneId: selectedZoneId,
+                  gateId: selectedGateId,
+                  gateName: selectedGate?.name,
+                  direction: scanDirection,
+                  attendee: {
+                    id: data.attendee?.id || rawToken,
+                    name: data.attendee?.name || "Attendee",
+                    badgeType: data.attendee?.pass_type || "attendee",
+                    ticketTypeId: data.attendee?.ticket_type_id,
+                  },
+                }),
+              });
+              const zoneData = await zoneRes.json();
+              if (zoneData.success && !zoneData.allowed) {
+                playScannerFeedback("NOT_APPROVED", { sound: soundEnabled });
+                setAccessDeniedMsg(zoneData.reason || "Access denied for this zone");
+                setLastScannedAttendee({
+                  id: data.attendee?.id || rawToken,
+                  name: data.attendee?.name || "Attendee",
+                  badgeType: data.attendee?.pass_type || "attendee",
+                  ticketTypeId: data.attendee?.ticket_type_id,
+                });
+                setScanState("access_denied");
+                return;
+              }
+              if (zoneData.success && zoneData.occupancy !== undefined) {
+                setZones((prev) =>
+                  prev.map((z) =>
+                    z.id === selectedZoneId ? { ...z, currentOccupancy: zoneData.occupancy } : z
+                  )
+                );
+              }
+            } catch {
+              // network fallback
+            }
+          }
+
           playScannerFeedback("CHECKED_IN", { sound: soundEnabled });
           setResult({ ...data, passToken: rawToken });
           setScanState("success");
@@ -677,8 +742,50 @@ export default function ScanEventPage() {
         handleOfflineResult(offRes);
       }
     },
-    [eventId, isOnline, selectedGateId, selectedGate?.name, soundEnabled, handleOfflineResult]
+    [eventId, isOnline, selectedGateId, selectedGate?.name, soundEnabled, handleOfflineResult, selectedZoneId, scanDirection]
   );
+
+  const handleSupervisorOverride = useCallback(async () => {
+    if (!lastScannedAttendee || !selectedZoneId) return;
+    try {
+      const res = await fetch(`/api/event/${eventId}/ops/scan`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          zoneId: selectedZoneId,
+          gateId: selectedGateId,
+          gateName: selectedGate?.name,
+          direction: scanDirection,
+          override: true,
+          overrideReason: "Supervisor Authorized at Gate",
+          staffName: "Gate Supervisor",
+          attendee: lastScannedAttendee,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        playScannerFeedback("CHECKED_IN", { sound: soundEnabled });
+        setResult({
+          attendee: {
+            name: `${lastScannedAttendee.name} (Override)`,
+            email: "",
+            pass_type: lastScannedAttendee.badgeType || "attendee",
+          },
+          passType: lastScannedAttendee.badgeType || "attendee",
+          checkedInAt: new Date().toISOString(),
+          gateName: selectedZone?.name || selectedGate?.name,
+        });
+        if (selectedZone) {
+          setZones((prev) =>
+            prev.map((z) =>
+              z.id === selectedZoneId ? { ...z, currentOccupancy: data.occupancy } : z
+            )
+          );
+        }
+        setScanState("success");
+      }
+    } catch {}
+  }, [eventId, lastScannedAttendee, selectedZoneId, selectedGateId, selectedGate?.name, scanDirection, selectedZone, soundEnabled]);
 
   // Listen for hardware barcode scanners (Zebra, Honeywell, USB/Bluetooth guns)
   useEffect(() => {
@@ -1053,6 +1160,60 @@ export default function ScanEventPage() {
             </div>
           )}
 
+          {/* Zone selector chip */}
+          {zones.length > 0 && (
+            <div className="relative">
+              <button
+                onClick={() => setZoneDropdownOpen((o) => !o)}
+                className={`flex items-center gap-1 border rounded-full px-2.5 py-1.5 text-[11px] font-medium transition-colors max-w-[130px] ${
+                  selectedZone
+                    ? "bg-purple-600/20 border-purple-500/40 text-purple-200"
+                    : "bg-white/[0.06] border-white/[0.08] text-white/60 hover:text-white/80"
+                }`}
+              >
+                <span className="truncate">
+                  {selectedZone ? selectedZone.name : "All Zones"}
+                </span>
+                <ChevronDown className="w-3 h-3 shrink-0" />
+              </button>
+              {zoneDropdownOpen && (
+                <div className="absolute right-0 top-full mt-1 z-50 bg-neutral-900 border border-white/[0.08] rounded-xl overflow-hidden shadow-xl min-w-[180px] max-h-64 overflow-y-auto">
+                  <button
+                    onClick={() => { setSelectedZoneId(null); setZoneDropdownOpen(false); }}
+                    className={`w-full text-left px-3 py-2 text-xs hover:bg-white/[0.06] transition-colors ${!selectedZoneId ? "text-purple-400 font-medium" : "text-white/50"}`}
+                  >
+                    All Zones (Open)
+                  </button>
+                  {zones.map((z) => (
+                    <button
+                      key={z.id}
+                      onClick={() => { setSelectedZoneId(z.id); setZoneDropdownOpen(false); }}
+                      className={`w-full text-left px-3 py-2 text-xs hover:bg-white/[0.06] transition-colors ${selectedZoneId === z.id ? "text-purple-400 font-medium" : "text-white/70"}`}
+                    >
+                      <span className="block truncate font-medium">{z.name}</span>
+                      <span className="block text-[10px] text-white/40 mt-0.5">
+                        Cap: {z.capacity} • Occ: {z.currentOccupancy}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Direction Toggle (IN / OUT) */}
+          <button
+            onClick={() => setScanDirection((d) => (d === "in" ? "out" : "in"))}
+            className={`px-2.5 py-1.5 rounded-full text-[10px] font-bold tracking-wider uppercase border transition-colors ${
+              scanDirection === "in"
+                ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
+                : "bg-blue-500/20 text-blue-300 border-blue-500/40"
+            }`}
+            title="Toggle Scan Direction (Entry vs Exit)"
+          >
+            {scanDirection.toUpperCase()}
+          </button>
+
           {/* Screen Wake Lock toggle */}
           <button
             onClick={toggleWakeLock}
@@ -1109,6 +1270,38 @@ export default function ScanEventPage() {
         </div>
       </div>
 
+      {/* ── Zone Occupancy Strip ─────────────────────────────────────── */}
+      {selectedZone && (
+        <div className="shrink-0 px-4 py-2.5 bg-neutral-900 border-b border-white/[0.08] flex items-center justify-between text-xs">
+          <div className="flex items-center gap-2">
+            <span
+              className="w-2.5 h-2.5 rounded-full"
+              style={{ backgroundColor: selectedZone.color || "#6D28D9" }}
+            />
+            <span className="font-bold text-white">{selectedZone.name}</span>
+            <span className="text-white/30">·</span>
+            <span className="text-white/70 font-mono">
+              {selectedZone.currentOccupancy} / {selectedZone.capacity} (
+              {selectedZone.capacity > 0
+                ? Math.round((selectedZone.currentOccupancy / selectedZone.capacity) * 100)
+                : 0}
+              %)
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {selectedZone.capacity > 0 && selectedZone.currentOccupancy >= selectedZone.capacity && (
+              <span className="text-[10px] font-bold text-red-400 bg-red-500/20 px-2 py-0.5 rounded-full border border-red-500/40 animate-pulse">
+                ZONE FULL
+              </span>
+            )}
+            <span className="text-[11px] text-white/50">
+              Direction: <strong className="text-white">{scanDirection.toUpperCase()}</strong>
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* ── Offline Reconnection / Sync Result Banner ────────────────── */}
       {syncBanner && (
         <div
@@ -1132,10 +1325,14 @@ export default function ScanEventPage() {
       )}
 
       {/* ── Dropdown backdrop ───────────────────────────────────────── */}
-      {gateDropdownOpen && (
+      {(gateDropdownOpen || sessionDropdownOpen || zoneDropdownOpen) && (
         <div
           className="fixed inset-0 z-40"
-          onClick={() => setGateDropdownOpen(false)}
+          onClick={() => {
+            setGateDropdownOpen(false);
+            setSessionDropdownOpen(false);
+            setZoneDropdownOpen(false);
+          }}
         />
       )}
 
@@ -1331,8 +1528,13 @@ export default function ScanEventPage() {
 
               {/* Access denied */}
               {scanState === "access_denied" && (
-                <div className="w-full max-w-xs sm:max-w-sm cursor-pointer select-none" onClick={reset}>
-                  <AccessDeniedCard message={accessDeniedMsg} onReset={reset} progress={resetProgress} />
+                <div className="w-full max-w-xs sm:max-w-sm select-none">
+                  <AccessDeniedCard
+                    message={accessDeniedMsg}
+                    onReset={reset}
+                    progress={resetProgress}
+                    onOverride={lastScannedAttendee ? handleSupervisorOverride : undefined}
+                  />
                   <p className="text-center text-[11px] text-white/40 mt-2 font-medium">Tap anywhere to scan next</p>
                 </div>
               )}
@@ -1542,10 +1744,12 @@ function AccessDeniedCard({
   message,
   onReset,
   progress,
+  onOverride,
 }: {
   message: string;
   onReset: () => void;
   progress: number;
+  onOverride?: () => void;
 }) {
   return (
     <div className="w-full max-w-xs sm:max-w-sm flex flex-col gap-3">
@@ -1563,8 +1767,22 @@ function AccessDeniedCard({
               Access Denied
             </p>
             <p className="text-lg font-bold text-white leading-tight">Not admitted</p>
-            <p className="text-xs text-red-400/60">{message}</p>
+            <p className="text-xs text-red-400/80">{message}</p>
           </div>
+
+          {onOverride && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onOverride();
+              }}
+              className="mt-2 w-full py-2.5 px-3 rounded-xl bg-amber-500 text-neutral-950 font-bold text-xs hover:bg-amber-400 transition-colors flex items-center justify-center gap-1.5 shadow-md"
+            >
+              <ShieldAlert className="w-4 h-4 text-neutral-950" />
+              <span>Authorize Supervisor Override</span>
+            </button>
+          )}
         </div>
       </div>
 

@@ -11,6 +11,7 @@ import {
   Globe,
   BarChart3,
   Settings,
+  Radio,
 } from "lucide-react";
 
 interface SubNavTab {
@@ -80,6 +81,29 @@ export default function EventSubNav({ eventId }: { eventId: string }) {
         { label: "Attendee List", href: `${base}/attendees`, isActive: (p) => p.startsWith(`${base}/attendees`) },
         { label: "Gate Check-ins", href: `${base}/checkins`, isActive: (p) => p.startsWith(`${base}/checkins`) },
         { label: "Feedback & Reviews", href: `${base}/feedback`, isActive: (p) => p.startsWith(`${base}/feedback`) },
+      ],
+    },
+    {
+      id: "operations",
+      label: "Operations",
+      href: `${base}/operations`,
+      icon: Radio,
+      isActive: (p, b) =>
+        p.startsWith(`${b}/operations`) ||
+        p.startsWith(`${b}/badges`) ||
+        p.startsWith(`${b}/desk`) ||
+        p.startsWith(`${b}/zones`) ||
+        p.startsWith(`${b}/access-rules`) ||
+        p.startsWith(`${b}/staff-devices`) ||
+        p.startsWith(`${b}/operations-analytics`),
+      subTabs: [
+        { label: "Live Ops", href: `${base}/operations`, isActive: (p) => p === `${base}/operations` || p === `${base}/operations/` },
+        { label: "Badge Studio & Print", href: `${base}/badges`, isActive: (p) => p.startsWith(`${base}/badges`) },
+        { label: "Onsite Desk", href: `${base}/desk`, isActive: (p) => p.startsWith(`${base}/desk`) },
+        { label: "Zones & Floor Plan", href: `${base}/zones`, isActive: (p) => p.startsWith(`${base}/zones`) },
+        { label: "Access Rules", href: `${base}/access-rules`, isActive: (p) => p.startsWith(`${base}/access-rules`) },
+        { label: "Staff & Devices", href: `${base}/staff-devices`, isActive: (p) => p.startsWith(`${base}/staff-devices`) },
+        { label: "Audit & Analytics", href: `${base}/operations-analytics`, isActive: (p) => p.startsWith(`${base}/operations-analytics`) },
       ],
     },
     {
