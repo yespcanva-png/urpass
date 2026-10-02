@@ -581,6 +581,7 @@ export async function handleRazorpayWebhook(req: NextRequest): Promise<NextRespo
         description: `Event Pass (${passType.replace("_", " ").toUpperCase()})`,
         baseAmountRupees: priceRupees,
         discountRupees: 0,
+        docType: "TKT",
         customerEmail: payment.email,
         customerName: notes.customer_name,
       });
@@ -695,6 +696,7 @@ export async function handleRazorpayWebhook(req: NextRequest): Promise<NextRespo
       description: invoiceDesc,
       baseAmountRupees: basePaise / 100,
       discountRupees: discountPaise / 100,
+      docType: "SUB",
       customerEmail: payment.email,
       customerName: notes.customer_name,
       billingPeriodStart: periodStart,

@@ -11,6 +11,18 @@ function adminClient() {
   return createClient(url, key);
 }
 
+export type InvoiceDocType = "INV" | "SUB" | "TKT" | "MS" | "CN" | "DN" | "RCP";
+
+export const INVOICE_DOC_TYPES: Record<InvoiceDocType, string> = {
+  INV: "Tax Invoice",
+  SUB: "SaaS Subscription Invoice",
+  TKT: "Ticket / Platform-Fee Invoice",
+  MS: "Managed Services Invoice",
+  CN: "Credit Note",
+  DN: "Debit Note",
+  RCP: "Receipt",
+};
+
 export interface InvoiceCreationParams {
   userId: string;
   subscriptionId?: string | null;
@@ -19,6 +31,7 @@ export interface InvoiceCreationParams {
   baseAmountRupees: number;
   discountRupees?: number;
   currency?: "INR" | "GBP" | "USD";
+  docType?: InvoiceDocType;
   customerName?: string;
   customerEmail?: string;
   customerAddress?: string | null;
@@ -162,29 +175,96 @@ function resolveCustomerState(input: {
   return { state: input.state?.trim() || null, code: null };
 }
 
-function financialYearFor(date: Date) {
+export interface FinancialYearInfo {
+  startYear: number;
+  endYear: number;
+  label: string;      // e.g. "2026-27"
+  startDate: string;  // e.g. "2026-04-01"
+  endDate: string;    // e.g. "2027-03-31"
+}
+
+export function financialYearFor(date: Date = new Date()): FinancialYearInfo {
   const year = date.getFullYear();
+  // Financial year starts on April 1 (month 3 in 0-indexed Date)
   const startsThisCalendarYear = date.getMonth() >= 3;
   const startYear = startsThisCalendarYear ? year : year - 1;
   const endYear = startYear + 1;
+  const endYearShort = String(endYear).slice(-2);
   return {
     startYear,
     endYear,
-    label: `${String(startYear).slice(-2)}-${String(endYear).slice(-2)}`,
+    label: `${startYear}-${endYearShort}`,
+    startDate: `${startYear}-04-01`,
+    endDate: `${endYear}-03-31`,
   };
 }
 
-async function nextInvoiceNumber(supabase: ReturnType<typeof adminClient>, date: Date) {
+export const getFinancialYear = financialYearFor;
+
+export function formatDocumentNumber(
+  docType: InvoiceDocType = "INV",
+  fyLabel: string,
+  sequence: number
+): string {
+  const paddedSeq = String(Math.max(1, Math.floor(sequence))).padStart(6, "0");
+  return `UP/${docType}/${fyLabel}/${paddedSeq}`;
+}
+
+export const formatInvoiceNumber = formatDocumentNumber;
+
+export function parseInvoiceNumber(invoiceNumber: string): {
+  prefix: string;
+  docType: InvoiceDocType;
+  fy: string;
+  sequence: number;
+} | null {
+  if (!invoiceNumber || typeof invoiceNumber !== "string") return null;
+  const match = invoiceNumber.trim().match(/^([A-Z]{2,3})\/([A-Z]{2,4})\/(\d{4}-\d{2})\/(\d{6})$/);
+  if (!match) return null;
+  return {
+    prefix: match[1],
+    docType: match[2] as InvoiceDocType,
+    fy: match[3],
+    sequence: parseInt(match[4], 10),
+  };
+}
+
+export async function nextInvoiceNumber(
+  supabase: ReturnType<typeof adminClient>,
+  date: Date = new Date(),
+  docType: InvoiceDocType = "INV"
+): Promise<string> {
   const fy = financialYearFor(date);
-  const start = `${fy.startYear}-04-01`;
-  const end = `${fy.endYear}-03-31`;
+  const prefix = `UP/${docType}/${fy.label}/`;
+
+  // Count existing invoices for this specific document series in the current financial year
   const { count } = await supabase
     .from("invoices")
     .select("id", { count: "exact", head: true })
-    .gte("invoice_date", start)
-    .lte("invoice_date", end);
+    .gte("invoice_date", fy.startDate)
+    .lte("invoice_date", fy.endDate)
+    .ilike("invoice_number", `${prefix}%`);
 
-  return `URP/${fy.label}/${String((count || 0) + 1).padStart(6, "0")}`;
+  const nextSeq = (count || 0) + 1;
+  return formatDocumentNumber(docType, fy.label, nextSeq);
+}
+
+export async function nextCreditNoteNumber(
+  supabase: ReturnType<typeof adminClient>,
+  date: Date = new Date()
+): Promise<string> {
+  const fy = financialYearFor(date);
+  const prefix = `UP/CN/${fy.label}/`;
+
+  const { count } = await supabase
+    .from("credit_notes")
+    .select("id", { count: "exact", head: true })
+    .gte("document_date", fy.startDate)
+    .lte("document_date", fy.endDate)
+    .ilike("credit_note_number", `${prefix}%`);
+
+  const nextSeq = (count || 0) + 1;
+  return formatDocumentNumber("CN", fy.label, nextSeq);
 }
 
 export function numToWords(n: number): string {
@@ -321,9 +401,21 @@ export async function createInvoiceForPayment(
   custAddress = custAddress || profile?.billing_address || (isUk ? "United Kingdom" : null);
   custGstin = custGstin || profile?.gstin || null;
 
+  let docType: InvoiceDocType = params.docType || "INV";
+  if (!params.docType) {
+    const descLower = (params.description || "").toLowerCase();
+    if (params.subscriptionId || descLower.includes("plan") || descLower.includes("founder") || descLower.includes("subscription")) {
+      docType = "SUB";
+    } else if (descLower.includes("pass") || descLower.includes("ticket")) {
+      docType = "TKT";
+    } else if (descLower.includes("managed") || descLower.includes("service")) {
+      docType = "MS";
+    }
+  }
+
   const date = new Date();
   const dateStr = date.toISOString().slice(0, 10);
-  const invoiceNumber = await nextInvoiceNumber(supabase, date);
+  const invoiceNumber = await nextInvoiceNumber(supabase, date, docType);
 
   const subtotal = Math.max(0, Number(params.baseAmountRupees) || 0);
   const discount = Math.max(0, Number(params.discountRupees) || 0);
@@ -591,7 +683,7 @@ export async function generateInvoicePdf(invoice: InvoiceRecord): Promise<Uint8A
     });
   };
 
-  drawMetaBox(0, "Invoice Number", invoice.invoice_number || "URP/26-27/000001");
+  drawMetaBox(0, "Invoice Number", invoice.invoice_number || "UP/INV/2026-27/000001");
   drawMetaBox(1, "Issue Date", invoice.invoice_date || "20 Sep 2026");
   drawMetaBox(2, "Due Date", invoice.invoice_date || "20 Sep 2026");
   drawMetaBox(

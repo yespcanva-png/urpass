@@ -110,6 +110,7 @@ export async function activateEventPass(
     description: `Event Pass (${passType.replace("_", " ").toUpperCase()})`,
     baseAmountRupees: priceRupees,
     discountRupees: 0,
+    docType: "TKT",
     customerEmail: user.email,
     customerName: user.user_metadata?.full_name,
   });

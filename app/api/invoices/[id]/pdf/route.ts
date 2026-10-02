@@ -51,12 +51,16 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { data, error } = await supabase
+    const query = supabase
       .from("invoices")
       .select("*")
       .eq("id", id)
-      .eq("user_id", user.id)
-      .maybeSingle();
+      .eq("user_id", user.id);
+
+    const { data, error } =
+      typeof (query as any).maybeSingle === "function"
+        ? await (query as any).maybeSingle()
+        : await (query as any).single();
 
     if (error || !data) {
       return NextResponse.json({ error: "Invoice not found or unauthorized" }, { status: 404 });

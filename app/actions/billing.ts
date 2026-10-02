@@ -814,6 +814,7 @@ export async function activatePaidSubscription(
       description: invoiceDescription,
       baseAmountRupees: orderBasePaise / 100,
       discountRupees: orderDiscountPaise / 100,
+      docType: "SUB",
       customerEmail: user.email,
       customerName: user.user_metadata?.full_name,
       billingPeriodStart: periodStart,
