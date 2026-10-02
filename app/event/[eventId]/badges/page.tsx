@@ -33,6 +33,7 @@ import {
   BadgePrintLog,
 } from "@/lib/physical-ops/types";
 import { DEFAULT_ROLE_COLORS } from "@/lib/physical-ops/badge-service";
+import { createClient } from "@/lib/supabase/client";
 
 export default function BadgesOpsPage() {
   const params = useParams();
@@ -62,7 +63,9 @@ export default function BadgesOpsPage() {
   const [reprintTarget, setReprintTarget] = useState<BadgePrintQueueItem | null>(null);
   const [reprintReason, setReprintReason] = useState("Lost Badge at Venue");
 
-  useEffect(() => {
+  const [isBulkQueueing, setIsBulkQueueing] = useState(false);
+
+  const fetchBadgeData = () => {
     fetch(`/api/event/${eventId}/ops`)
       .then((res) => res.json())
       .then((data) => {
@@ -84,6 +87,33 @@ export default function BadgesOpsPage() {
         }
       })
       .catch(() => {});
+  };
+
+  useEffect(() => {
+    fetchBadgeData();
+
+    const supabase = createClient();
+    const channel = supabase
+      .channel(`badges-realtime-${eventId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "badge_print_queue", filter: `event_id=eq.${eventId}` },
+        () => {
+          fetchBadgeData();
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "badge_print_logs", filter: `event_id=eq.${eventId}` },
+        () => {
+          fetchBadgeData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [eventId]);
 
   const handleRoleChange = (role: BadgeRoleType) => {
@@ -96,13 +126,67 @@ export default function BadgesOpsPage() {
     }
   };
 
-  const handleSaveTemplate = () => {
+  const handleSaveTemplate = async () => {
     setIsSaving(true);
-    setTimeout(() => {
+    const activeTemplate = templates.find((t) => t.badgeType === selectedRole) || templates[0];
+    const sizeConfig = BADGE_SIZE_PRESETS[selectedSizePreset] || BADGE_SIZE_PRESETS.lanyard_100x150;
+    const updatedTemplate = {
+      ...activeTemplate,
+      badgeType: selectedRole,
+      orientation: selectedOrientation,
+      sizePreset: selectedSizePreset,
+      widthMm: sizeConfig.widthMm,
+      heightMm: sizeConfig.heightMm,
+      layout: {
+        ...(activeTemplate?.layout || {}),
+        headerTitle,
+        headerColor,
+        accentColor,
+        showLanyardSlot,
+        showQrCode,
+      },
+    };
+
+    try {
+      const res = await fetch(`/api/event/${eventId}/ops/print`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "save_template",
+          template: updatedTemplate,
+          staffName: "Badge Studio",
+        }),
+      });
+      const data = await res.json();
       setIsSaving(false);
-      setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 2500);
-    }, 400);
+      if (data.success && data.template) {
+        setTemplates((prev) =>
+          prev.map((t) => (t.badgeType === selectedRole ? data.template : t))
+        );
+        setSaveSuccess(true);
+        setTimeout(() => setSaveSuccess(false), 2500);
+      }
+    } catch {
+      setIsSaving(false);
+    }
+  };
+
+  const handleBulkQueue = async () => {
+    setIsBulkQueueing(true);
+    try {
+      const res = await fetch(`/api/event/${eventId}/ops/print`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "bulk_queue" }),
+      });
+      const data = await res.json();
+      setIsBulkQueueing(false);
+      if (data.success && data.queue) {
+        setQueue(data.queue);
+      }
+    } catch {
+      setIsBulkQueueing(false);
+    }
   };
 
   const handlePrintBadge = (item: BadgePrintQueueItem) => {
@@ -544,6 +628,16 @@ export default function BadgesOpsPage() {
                   className="w-full pl-8 pr-3 py-1.5 text-xs border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand/20"
                 />
               </div>
+
+              <button
+                type="button"
+                onClick={handleBulkQueue}
+                disabled={isBulkQueueing}
+                className="px-3.5 py-2 rounded-xl bg-brand/10 border border-brand/20 text-brand text-xs font-semibold hover:bg-brand/20 transition-colors whitespace-nowrap shadow-2xs flex items-center gap-1.5"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>{isBulkQueueing ? "Queueing..." : "Queue All Approved Attendees"}</span>
+              </button>
 
               <button
                 type="button"

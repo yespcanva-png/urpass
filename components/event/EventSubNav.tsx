@@ -12,6 +12,7 @@ import {
   BarChart3,
   Settings,
   Radio,
+  Store,
 } from "lucide-react";
 
 interface SubNavTab {
@@ -104,6 +105,31 @@ export default function EventSubNav({ eventId }: { eventId: string }) {
         { label: "Access Rules", href: `${base}/access-rules`, isActive: (p) => p.startsWith(`${base}/access-rules`) },
         { label: "Staff & Devices", href: `${base}/staff-devices`, isActive: (p) => p.startsWith(`${base}/staff-devices`) },
         { label: "Audit & Analytics", href: `${base}/operations-analytics`, isActive: (p) => p.startsWith(`${base}/operations-analytics`) },
+      ],
+    },
+    {
+      id: "commercial",
+      label: "Exhibitors & Sponsors",
+      href: `${base}/exhibitors-sponsors`,
+      icon: Store,
+      isActive: (p, b) =>
+        p.startsWith(`${b}/exhibitors-sponsors`) ||
+        p.startsWith(`${b}/exhibitors-admin`) ||
+        p.startsWith(`${b}/sponsors-admin`) ||
+        p.startsWith(`${b}/booths`) ||
+        p.startsWith(`${b}/lead-retrieval`) ||
+        p.startsWith(`${b}/deliverables`) ||
+        p.startsWith(`${b}/meetings`) ||
+        p.startsWith(`${b}/directory`),
+      subTabs: [
+        { label: "Overview", href: `${base}/exhibitors-sponsors`, isActive: (p) => p === `${base}/exhibitors-sponsors` || p === `${base}/exhibitors-sponsors/` },
+        { label: "Exhibitors", href: `${base}/exhibitors-admin`, isActive: (p) => p.startsWith(`${base}/exhibitors-admin`) },
+        { label: "Sponsors & Tiers", href: `${base}/sponsors-admin`, isActive: (p) => p.startsWith(`${base}/sponsors-admin`) },
+        { label: "Booth Allocation", href: `${base}/booths`, isActive: (p) => p.startsWith(`${base}/booths`) },
+        { label: "Deliverables Tracker", href: `${base}/deliverables`, isActive: (p) => p.startsWith(`${base}/deliverables`) },
+        { label: "Lead Retrieval", href: `${base}/lead-retrieval`, isActive: (p) => p.startsWith(`${base}/lead-retrieval`) },
+        { label: "B2B Meetings", href: `${base}/meetings`, isActive: (p) => p.startsWith(`${base}/meetings`) },
+        { label: "Public Directory", href: `${base}/directory`, isActive: (p) => p.startsWith(`${base}/directory`) },
       ],
     },
     {

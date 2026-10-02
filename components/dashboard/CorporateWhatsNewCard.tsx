@@ -5,10 +5,13 @@ import Link from "next/link";
 import {
   X,
   ArrowRight,
-  CalendarDays,
-  Users,
-  QrCode,
+  Store,
+  Target,
+  Briefcase,
   Sparkles,
+  Layers,
+  Printer,
+  ChevronRight,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { dismissWhatsNewAnnouncement } from "@/app/actions/user-preferences";
@@ -43,7 +46,7 @@ export default function CorporateWhatsNewCard({
 
         if (user) {
           const dismissed = Boolean(
-            user.user_metadata?.whats_new_conference_dismissed
+            user.user_metadata?.whats_new_stage3_dismissed
           );
           if (!dismissed) {
             setIsOpen(true);
@@ -65,20 +68,20 @@ export default function CorporateWhatsNewCard({
 
     try {
       // 1. Update DB via server action
-      dismissWhatsNewAnnouncement("whats_new_conference_dismissed").catch(() => {});
+      dismissWhatsNewAnnouncement("whats_new_stage3_dismissed").catch(() => {});
 
       // 2. Direct API call with keepalive
       fetch("/api/user/dismiss-announcement", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ featureKey: "whats_new_conference_dismissed" }),
+        body: JSON.stringify({ featureKey: "whats_new_stage3_dismissed" }),
         keepalive: true,
       }).catch(() => {});
 
       // 3. Update active client session cache
       const supabase = createClient();
       supabase.auth.updateUser({
-        data: { whats_new_conference_dismissed: true },
+        data: { whats_new_stage3_dismissed: true },
       }).catch(() => {});
     } catch (err) {
       console.error("Failed to update dismissal in database:", err);
@@ -104,15 +107,15 @@ export default function CorporateWhatsNewCard({
   return (
     <div
       onClick={handleDismiss}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-neutral-950/50 backdrop-blur-xs animate-in fade-in duration-150 select-none"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-neutral-950/60 backdrop-blur-xs animate-in fade-in duration-150 select-none"
       role="dialog"
       aria-modal="true"
       aria-labelledby="whats-new-modal-title"
     >
-      {/* ── OpenAI / Zoho Style What's New Card ──────────────────────── */}
+      {/* ── Corporate What's New Card ──────────────────────── */}
       <div
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-[480px] bg-white rounded-3xl shadow-2xl border border-neutral-200/90 overflow-hidden p-6 sm:p-8 animate-in zoom-in-95 duration-150 text-neutral-900"
+        className="relative w-full max-w-[500px] bg-white rounded-3xl shadow-2xl border border-neutral-200 overflow-hidden p-6 sm:p-8 animate-in zoom-in-95 duration-150 text-neutral-900"
       >
         {/* Subtle Close Button in Top Right */}
         <button
@@ -125,68 +128,71 @@ export default function CorporateWhatsNewCard({
           <X className="w-4 h-4" />
         </button>
 
-        {/* ── Header: Centered Icon & Typography (OpenAI Style) ───────── */}
+        {/* ── Header: Centered Icon & Typography ───────── */}
         <div className="text-center space-y-2 mb-6 pt-1">
           <div className="w-12 h-12 rounded-2xl bg-neutral-900 text-white flex items-center justify-center mx-auto shadow-sm">
             <Sparkles className="w-5 h-5 text-amber-300" />
           </div>
 
           <div className="space-y-1">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200 text-[10px] font-bold uppercase tracking-wider">
+              <span>Stage 3 Released</span>
+            </div>
             <h2
               id="whats-new-modal-title"
               className="text-xl font-bold tracking-tight text-neutral-900"
             >
-              What&apos;s new in UrPass
+              Exhibitors, Sponsors &amp; QR Lead Capture
             </h2>
             <p className="text-xs sm:text-sm text-neutral-500 leading-relaxed max-w-sm mx-auto">
-              Introducing Conference &amp; Agenda Management for seamless multi-track event operations.
+              Equip trade shows, commercial expos, and corporate conferences with enterprise monetization and lead retrieval.
             </p>
           </div>
         </div>
 
-        {/* ── Feature Rows (Zoho & OpenAI Style) ──────────────────────── */}
-        <div className="space-y-4 my-6">
-          {/* Row 1: Multi-Track Agendas */}
+        {/* ── Feature Rows ──────────────────────── */}
+        <div className="space-y-3.5 my-6">
+          {/* Row 1: Exhibitor Portal & Lead Capture */}
           <div className="flex items-start gap-3.5">
-            <div className="w-10 h-10 rounded-xl bg-violet-50 text-violet-700 flex items-center justify-center shrink-0 border border-violet-100 mt-0.5">
-              <CalendarDays className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center shrink-0 border border-purple-100 mt-0.5">
+              <Store className="w-5 h-5" />
             </div>
             <div className="space-y-0.5 min-w-0">
               <h3 className="text-sm font-semibold text-neutral-900">
-                Multi-Track Agenda Builder
+                Exhibitor Portal &amp; Booth Check-In
               </h3>
               <p className="text-xs text-neutral-500 leading-relaxed">
-                Build parallel tracks, configure halls, and catch timing collisions automatically with timeline &amp; calendar views.
+                Dedicated token portal for exhibitors to configure booths, manage staff passes, and manage onsite operations.
               </p>
             </div>
           </div>
 
-          {/* Row 2: Speaker Directory */}
-          <div className="flex items-start gap-3.5">
-            <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center shrink-0 border border-blue-100 mt-0.5">
-              <Users className="w-5 h-5" />
-            </div>
-            <div className="space-y-0.5 min-w-0">
-              <h3 className="text-sm font-semibold text-neutral-900">
-                Keynote &amp; Speaker Directory
-              </h3>
-              <p className="text-xs text-neutral-500 leading-relaxed">
-                Publish keynote profiles, company bios, and linked talks with automated double-booking warnings.
-              </p>
-            </div>
-          </div>
-
-          {/* Row 3: Hall Passes & QR Check-In */}
+          {/* Row 2: QR Lead Capture & Qualification */}
           <div className="flex items-start gap-3.5">
             <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0 border border-emerald-100 mt-0.5">
-              <QrCode className="w-5 h-5" />
+              <Target className="w-5 h-5" />
             </div>
             <div className="space-y-0.5 min-w-0">
               <h3 className="text-sm font-semibold text-neutral-900">
-                Hall Passes &amp; QR Check-In
+                Instant QR Lead Qualification
               </h3>
               <p className="text-xs text-neutral-500 leading-relaxed">
-                Enforce room occupancy caps and scan existing attendee passes instantly in 0.28 seconds.
+                Scan attendee badges to capture verified contacts, tag Hot/Warm/Cold ratings, record product interest, and export 1-click CSVs.
+              </p>
+            </div>
+          </div>
+
+          {/* Row 3: Sponsorship Tiers & Deliverables */}
+          <div className="flex items-start gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center shrink-0 border border-blue-100 mt-0.5">
+              <Briefcase className="w-5 h-5" />
+            </div>
+            <div className="space-y-0.5 min-w-0">
+              <h3 className="text-sm font-semibold text-neutral-900">
+                Sponsorship Tiers &amp; Deliverables Matrix
+              </h3>
+              <p className="text-xs text-neutral-500 leading-relaxed">
+                Configure Platinum, Gold, Silver tiers with logo visibility placements, B2B meetings, and real-time deliverables tracking.
               </p>
             </div>
           </div>
@@ -195,21 +201,32 @@ export default function CorporateWhatsNewCard({
         {/* ── Actions: Full-Width Primary CTA + Dismiss ────────────────── */}
         <div className="pt-4 border-t border-neutral-100 space-y-2">
           <Link
-            href={firstEventId ? `/event/${firstEventId}/agenda` : "/create-event"}
+            href={firstEventId ? `/event/${firstEventId}/exhibitors-sponsors` : "/whats-new"}
             onClick={handleDismiss}
             className="w-full py-2.5 px-4 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-white font-semibold text-xs sm:text-sm transition-all duration-150 flex items-center justify-center gap-2 shadow-xs cursor-pointer"
           >
-            <span>{firstEventId ? "Explore Conference Agenda" : "Create an Event"}</span>
+            <span>{firstEventId ? "Explore Exhibitor & Sponsor Suite" : "Explore What's New"}</span>
             <ArrowRight className="w-4 h-4" />
           </Link>
 
-          <button
-            onClick={handleDismiss}
-            type="button"
-            className="w-full text-center py-1.5 text-xs text-neutral-400 hover:text-neutral-600 transition-colors font-medium cursor-pointer"
-          >
-            Maybe later
-          </button>
+          <div className="flex items-center justify-between pt-1">
+            <Link
+              href="/whats-new"
+              onClick={handleDismiss}
+              className="text-xs text-brand hover:underline font-semibold flex items-center gap-1"
+            >
+              <span>View Full Changelog</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </Link>
+
+            <button
+              onClick={handleDismiss}
+              type="button"
+              className="text-xs text-neutral-400 hover:text-neutral-600 transition-colors font-medium cursor-pointer"
+            >
+              Dismiss
+            </button>
+          </div>
         </div>
       </div>
     </div>

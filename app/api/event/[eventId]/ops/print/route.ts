@@ -1,12 +1,14 @@
 import { NextResponse } from "next/server";
 import {
-  queueBadgePrint,
-  updateBadgePrintStatus,
-  recordBadgeReprint,
-  getBadgePrintQueue,
-  getBadgePrintLogs,
+  queueBadgePrintDb,
+  updateBadgePrintStatusDb,
+  recordBadgeReprintDb,
+  getBadgePrintQueueDb,
+  getBadgePrintLogsDb,
+  saveBadgeTemplateDb,
+  bulkQueueApprovedAttendeesDb,
 } from "@/lib/physical-ops/badge-service";
-import { logOpsAudit } from "@/lib/physical-ops/audit-alert-service";
+import { logOpsAuditDb } from "@/lib/physical-ops/audit-alert-service";
 
 export async function GET(
   request: Request,
@@ -14,8 +16,8 @@ export async function GET(
 ) {
   try {
     const { eventId } = await params;
-    const queue = getBadgePrintQueue(eventId);
-    const logs = getBadgePrintLogs(eventId);
+    const queue = await getBadgePrintQueueDb(eventId);
+    const logs = await getBadgePrintLogsDb(eventId);
     return NextResponse.json({ success: true, queue, logs });
   } catch (error) {
     return NextResponse.json(
@@ -32,10 +34,29 @@ export async function POST(
   try {
     const { eventId } = await params;
     const body = await request.json();
-    const { action, attendee, queueId, status, reprintReason, staffName, printerId } = body;
+    const { action, attendee, queueId, status, reprintReason, staffName, printerId, template } = body;
 
-    if (action === "queue_single") {
-      const item = queueBadgePrint({
+    if (action === "save_template" && template) {
+      const saved = await saveBadgeTemplateDb({ ...template, eventId });
+      await logOpsAuditDb(
+        eventId,
+        "badge_reprint",
+        "badge",
+        saved.id,
+        { action: "save_template", templateName: saved.name, badgeType: saved.badgeType },
+        staffName || "Badge Studio"
+      );
+      return NextResponse.json({ success: true, template: saved });
+    }
+
+    if (action === "bulk_queue") {
+      const queuedCount = await bulkQueueApprovedAttendeesDb(eventId);
+      const queue = await getBadgePrintQueueDb(eventId);
+      return NextResponse.json({ success: true, queuedCount, queue });
+    }
+
+    if (action === "queue_single" && attendee) {
+      const item = await queueBadgePrintDb({
         eventId,
         attendeeId: attendee.id,
         attendeeName: attendee.name,
@@ -50,12 +71,12 @@ export async function POST(
     }
 
     if (action === "update_status" && queueId && status) {
-      const updated = updateBadgePrintStatus(eventId, queueId, status, staffName);
+      const updated = await updateBadgePrintStatusDb(eventId, queueId, status, staffName);
       return NextResponse.json({ success: true, item: updated });
     }
 
-    if (action === "reprint") {
-      const reprintLog = recordBadgeReprint({
+    if (action === "reprint" && attendee) {
+      const reprintLog = await recordBadgeReprintDb({
         eventId,
         attendeeId: attendee.id,
         attendeeName: attendee.name,
@@ -66,7 +87,7 @@ export async function POST(
       });
 
       // Queue for reprinting
-      const queueItem = queueBadgePrint({
+      const queueItem = await queueBadgePrintDb({
         eventId,
         attendeeId: attendee.id,
         attendeeName: attendee.name,
@@ -78,7 +99,7 @@ export async function POST(
       });
 
       // Log to Ops audit logs
-      logOpsAudit(
+      await logOpsAuditDb(
         eventId,
         "badge_reprint",
         "badge",

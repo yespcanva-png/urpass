@@ -1,4 +1,5 @@
 import type { VenueFloorPlan, FloorPlanMarker, MarkerType } from "./types";
+import { getAdminClient } from "./db";
 
 export const MARKER_TYPE_CONFIG: Record<
   MarkerType,
@@ -145,6 +146,72 @@ export function getFloorPlans(eventId: string): VenueFloorPlan[] {
   return store[eventId];
 }
 
+export async function getFloorPlansDb(eventId: string): Promise<VenueFloorPlan[]> {
+  const admin = getAdminClient();
+  if (!admin) return getFloorPlans(eventId);
+
+  try {
+    const { data, error } = await admin
+      .from("venue_floor_plans")
+      .select("*")
+      .eq("event_id", eventId)
+      .order("created_at", { ascending: true });
+
+    if (error || !data || data.length === 0) {
+      const defaultPlan = createDefaultFloorPlan(eventId);
+      const { data: inserted } = await admin
+        .from("venue_floor_plans")
+        .insert({
+          event_id: eventId,
+          name: defaultPlan.name,
+          width_px: defaultPlan.widthPx,
+          height_px: defaultPlan.heightPx,
+          markers_json: defaultPlan.markers,
+          is_active: true,
+        })
+        .select()
+        .single();
+
+      if (inserted) {
+        const seeded: VenueFloorPlan = {
+          id: inserted.id,
+          eventId: inserted.event_id,
+          name: inserted.name,
+          imageUrl: inserted.image_url || undefined,
+          widthPx: inserted.width_px,
+          heightPx: inserted.height_px,
+          markers: inserted.markers_json || [],
+          isActive: inserted.is_active,
+          createdAt: inserted.created_at,
+          updatedAt: inserted.updated_at,
+        };
+        globalThis.__urpass_floor_plans![eventId] = [seeded];
+        return [seeded];
+      }
+      return getFloorPlans(eventId);
+    }
+
+    const plans: VenueFloorPlan[] = data.map((d: any) => ({
+      id: d.id,
+      eventId: d.event_id,
+      name: d.name,
+      imageUrl: d.image_url || undefined,
+      widthPx: d.width_px,
+      heightPx: d.height_px,
+      markers: d.markers_json || [],
+      isActive: d.is_active,
+      createdAt: d.created_at,
+      updatedAt: d.updated_at,
+    }));
+
+    globalThis.__urpass_floor_plans![eventId] = plans;
+    return plans;
+  } catch (err) {
+    console.warn("[floor-plan-service] Error reading floor plans from DB:", err);
+    return getFloorPlans(eventId);
+  }
+}
+
 export function saveFloorPlan(plan: VenueFloorPlan): VenueFloorPlan {
   const store = globalThis.__urpass_floor_plans!;
   const list = getFloorPlans(plan.eventId);
@@ -158,4 +225,50 @@ export function saveFloorPlan(plan: VenueFloorPlan): VenueFloorPlan {
   }
   store[plan.eventId] = list;
   return updated;
+}
+
+export async function saveFloorPlanDb(plan: VenueFloorPlan): Promise<VenueFloorPlan> {
+  const local = saveFloorPlan(plan);
+  const admin = getAdminClient();
+  if (!admin) return local;
+
+  try {
+    const payload = {
+      event_id: plan.eventId,
+      name: plan.name,
+      image_url: plan.imageUrl || null,
+      width_px: plan.widthPx,
+      height_px: plan.heightPx,
+      markers_json: plan.markers,
+      is_active: plan.isActive,
+      updated_at: new Date().toISOString(),
+    };
+
+    if (plan.id && !plan.id.startsWith("plan-")) {
+      await admin.from("venue_floor_plans").update(payload).eq("id", plan.id);
+    } else {
+      const { data } = await admin.from("venue_floor_plans").insert(payload).select().single();
+      if (data?.id) local.id = data.id;
+    }
+  } catch (err) {
+    console.warn("[floor-plan-service] Error saving floor plan to DB:", err);
+  }
+
+  return local;
+}
+
+export async function addMarkerDb(eventId: string, marker: FloorPlanMarker): Promise<VenueFloorPlan> {
+  const plans = await getFloorPlansDb(eventId);
+  const plan = plans[0] || createDefaultFloorPlan(eventId);
+  const updatedMarkers = [...plan.markers, marker];
+  const updatedPlan = { ...plan, markers: updatedMarkers };
+  return saveFloorPlanDb(updatedPlan);
+}
+
+export async function deleteMarkerDb(eventId: string, markerId: string): Promise<VenueFloorPlan> {
+  const plans = await getFloorPlansDb(eventId);
+  const plan = plans[0] || createDefaultFloorPlan(eventId);
+  const updatedMarkers = plan.markers.filter((m) => m.id !== markerId);
+  const updatedPlan = { ...plan, markers: updatedMarkers };
+  return saveFloorPlanDb(updatedPlan);
 }

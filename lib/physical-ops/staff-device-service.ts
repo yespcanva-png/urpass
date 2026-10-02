@@ -1,4 +1,5 @@
 import type { OpsStaffAssignment, OpsDevice, StaffRole } from "./types";
+import { getAdminClient } from "./db";
 
 declare global {
   // eslint-disable-next-line no-var
@@ -16,50 +17,52 @@ if (!globalThis.__urpass_devices) {
 
 export function getStaffAssignments(eventId: string): OpsStaffAssignment[] {
   const store = globalThis.__urpass_staff_assignments!;
-  if (!store[eventId] || store[eventId].length === 0) {
-    store[eventId] = [
-      {
-        id: `staff-${eventId}-1`,
-        eventId,
-        staffName: "Priya Sharma",
-        staffEmail: "priya@example.com",
-        pinCode: "1234",
-        role: "registration_desk",
-        isActive: true,
-        createdAt: new Date().toISOString(),
-      },
-      {
-        id: `staff-${eventId}-2`,
-        eventId,
-        staffName: "Arun Kumar",
-        staffEmail: "arun@example.com",
-        pinCode: "5678",
-        role: "gate_scanner",
-        gateName: "Gate A (Main Entrance)",
-        isActive: true,
-        createdAt: new Date().toISOString(),
-      },
-      {
-        id: `staff-${eventId}-3`,
-        eventId,
-        staffName: "David Chen",
-        staffEmail: "david@example.com",
-        pinCode: "9988",
-        role: "zone_monitor",
-        zoneName: "VIP Lounge",
-        isActive: true,
-        createdAt: new Date().toISOString(),
-      },
-    ];
+  return store[eventId] || [];
+}
+
+export async function getStaffAssignmentsDb(eventId: string): Promise<OpsStaffAssignment[]> {
+  const admin = getAdminClient();
+  if (!admin) return getStaffAssignments(eventId);
+
+  try {
+    const { data, error } = await admin
+      .from("ops_staff_assignments")
+      .select("*")
+      .eq("event_id", eventId)
+      .order("created_at", { ascending: false });
+
+    if (error || !data) return getStaffAssignments(eventId);
+
+    const mapped: OpsStaffAssignment[] = data.map((d: any) => ({
+      id: d.id,
+      eventId: d.event_id,
+      staffName: d.staff_name,
+      staffEmail: d.staff_email || undefined,
+      staffPhone: d.staff_phone || undefined,
+      pinCode: d.pin_code,
+      role: d.role as StaffRole,
+      gateId: d.gate_id || undefined,
+      gateName: d.gate_name || undefined,
+      zoneId: d.zone_id || undefined,
+      zoneName: d.zone_name || undefined,
+      isActive: d.is_active,
+      createdAt: d.created_at,
+    }));
+
+    globalThis.__urpass_staff_assignments![eventId] = mapped;
+    return mapped;
+  } catch (err) {
+    console.warn("[staff-device-service] Error reading staff from DB:", err);
+    return getStaffAssignments(eventId);
   }
-  return store[eventId];
 }
 
 export function saveStaffAssignment(
   staff: Partial<OpsStaffAssignment> & { eventId: string; staffName: string; role: StaffRole }
 ): OpsStaffAssignment {
   const store = globalThis.__urpass_staff_assignments!;
-  const list = getStaffAssignments(staff.eventId);
+  if (!store[staff.eventId]) store[staff.eventId] = [];
+  const list = store[staff.eventId];
 
   if (staff.id) {
     const idx = list.findIndex((s) => s.id === staff.id);
@@ -91,6 +94,39 @@ export function saveStaffAssignment(
   return newStaff;
 }
 
+export async function saveStaffAssignmentDb(
+  staff: Partial<OpsStaffAssignment> & { eventId: string; staffName: string; role: StaffRole }
+): Promise<OpsStaffAssignment> {
+  const local = saveStaffAssignment(staff);
+  const admin = getAdminClient();
+  if (!admin) return local;
+
+  try {
+    const payload = {
+      event_id: staff.eventId,
+      staff_name: staff.staffName,
+      staff_email: staff.staffEmail || null,
+      staff_phone: staff.staffPhone || null,
+      pin_code: staff.pinCode || local.pinCode,
+      role: staff.role,
+      gate_name: staff.gateName || null,
+      zone_name: staff.zoneName || null,
+      is_active: staff.isActive ?? true,
+    };
+
+    if (staff.id && !staff.id.startsWith("staff-")) {
+      await admin.from("ops_staff_assignments").update(payload).eq("id", staff.id);
+    } else {
+      const { data } = await admin.from("ops_staff_assignments").insert(payload).select().single();
+      if (data?.id) local.id = data.id;
+    }
+  } catch (err) {
+    console.warn("[staff-device-service] Error saving staff to DB:", err);
+  }
+
+  return local;
+}
+
 export function deleteStaffAssignment(eventId: string, staffId: string): boolean {
   const store = globalThis.__urpass_staff_assignments!;
   const list = getStaffAssignments(eventId);
@@ -98,52 +134,59 @@ export function deleteStaffAssignment(eventId: string, staffId: string): boolean
   return true;
 }
 
+export async function deleteStaffAssignmentDb(eventId: string, staffId: string): Promise<boolean> {
+  deleteStaffAssignment(eventId, staffId);
+  const admin = getAdminClient();
+  if (!admin) return true;
+
+  try {
+    await admin.from("ops_staff_assignments").delete().eq("id", staffId);
+    return true;
+  } catch (err) {
+    console.warn("[staff-device-service] Error deleting staff from DB:", err);
+    return false;
+  }
+}
+
 export function getOpsDevices(eventId: string): OpsDevice[] {
   const store = globalThis.__urpass_devices!;
-  if (!store[eventId] || store[eventId].length === 0) {
-    const now = new Date().toISOString();
-    store[eventId] = [
-      {
-        id: `dev-${eventId}-1`,
-        eventId,
-        deviceId: "ipad-gate-a",
-        deviceName: "Main Entrance iPad #1",
-        deviceType: "tablet",
-        assignedGateName: "Gate A (Main Entrance)",
-        appVersion: "2.4.0",
-        isOnline: true,
-        batteryLevel: 94,
-        lastHeartbeatAt: now,
-        createdAt: now,
-      },
-      {
-        id: `dev-${eventId}-2`,
-        eventId,
-        deviceId: "pixel-vip",
-        deviceName: "VIP Gate Scanner (Pixel 8)",
-        deviceType: "smartphone",
-        assignedGateName: "Gate C (VIP Entrance)",
-        assignedZoneName: "VIP Lounge",
-        appVersion: "2.4.0",
-        isOnline: true,
-        batteryLevel: 81,
-        lastHeartbeatAt: now,
-        createdAt: now,
-      },
-      {
-        id: `dev-${eventId}-3`,
-        eventId,
-        deviceId: "zebra-printer-desk",
-        deviceName: "Registration Desk Zebra ZD621",
-        deviceType: "printer_station",
-        appVersion: "1.2.0",
-        isOnline: true,
-        lastHeartbeatAt: now,
-        createdAt: now,
-      },
-    ];
+  return store[eventId] || [];
+}
+
+export async function getOpsDevicesDb(eventId: string): Promise<OpsDevice[]> {
+  const admin = getAdminClient();
+  if (!admin) return getOpsDevices(eventId);
+
+  try {
+    const { data, error } = await admin
+      .from("ops_devices")
+      .select("*")
+      .eq("event_id", eventId)
+      .order("last_heartbeat_at", { ascending: false });
+
+    if (error || !data) return getOpsDevices(eventId);
+
+    const mapped: OpsDevice[] = data.map((d: any) => ({
+      id: d.id,
+      eventId: d.event_id,
+      deviceId: d.device_id,
+      deviceName: d.device_name,
+      deviceType: d.device_type,
+      assignedGateName: d.assigned_gate_name || undefined,
+      assignedZoneName: d.assigned_zone_name || undefined,
+      appVersion: d.app_version || "2.4.0",
+      batteryLevel: d.battery_level !== null ? Number(d.battery_level) : undefined,
+      isOnline: d.is_online,
+      lastHeartbeatAt: d.last_heartbeat_at,
+      createdAt: d.created_at,
+    }));
+
+    globalThis.__urpass_devices![eventId] = mapped;
+    return mapped;
+  } catch (err) {
+    console.warn("[staff-device-service] Error reading devices from DB:", err);
+    return getOpsDevices(eventId);
   }
-  return store[eventId];
 }
 
 export function recordDeviceHeartbeat(
@@ -155,7 +198,8 @@ export function recordDeviceHeartbeat(
   zoneName?: string
 ): OpsDevice {
   const store = globalThis.__urpass_devices!;
-  const list = getOpsDevices(eventId);
+  if (!store[eventId]) store[eventId] = [];
+  const list = store[eventId];
   const existing = list.find((d) => d.deviceId === deviceId);
   const now = new Date().toISOString();
 
@@ -173,12 +217,16 @@ export function recordDeviceHeartbeat(
     eventId,
     deviceId,
     deviceName,
-    deviceType: "smartphone",
+    deviceType: deviceName.toLowerCase().includes("printer")
+      ? "printer_station"
+      : deviceName.toLowerCase().includes("pad") || deviceName.toLowerCase().includes("tab")
+      ? "tablet"
+      : "smartphone",
     assignedGateName: gateName,
     assignedZoneName: zoneName,
     appVersion: "2.4.0",
     isOnline: true,
-    batteryLevel,
+    batteryLevel: batteryLevel ?? 100,
     lastHeartbeatAt: now,
     createdAt: now,
   };
@@ -186,4 +234,52 @@ export function recordDeviceHeartbeat(
   list.push(newDevice);
   store[eventId] = list;
   return newDevice;
+}
+
+export async function recordDeviceHeartbeatDb(
+  eventId: string,
+  deviceId: string,
+  deviceName: string,
+  batteryLevel?: number,
+  gateName?: string,
+  zoneName?: string
+): Promise<OpsDevice> {
+  const local = recordDeviceHeartbeat(eventId, deviceId, deviceName, batteryLevel, gateName, zoneName);
+  const admin = getAdminClient();
+  if (!admin) return local;
+
+  try {
+    const now = new Date().toISOString();
+    const payload = {
+      event_id: eventId,
+      device_id: deviceId,
+      device_name: deviceName,
+      device_type: local.deviceType,
+      assigned_gate_name: gateName || null,
+      assigned_zone_name: zoneName || null,
+      app_version: "2.4.0",
+      battery_level: batteryLevel !== undefined ? batteryLevel : null,
+      is_online: true,
+      last_heartbeat_at: now,
+    };
+
+    const { data: existing } = await admin
+      .from("ops_devices")
+      .select("id")
+      .eq("event_id", eventId)
+      .eq("device_id", deviceId)
+      .maybeSingle();
+
+    if (existing?.id) {
+      await admin.from("ops_devices").update(payload).eq("id", existing.id);
+      local.id = existing.id;
+    } else {
+      const { data } = await admin.from("ops_devices").insert(payload).select().single();
+      if (data?.id) local.id = data.id;
+    }
+  } catch (err) {
+    console.warn("[staff-device-service] Error updating device heartbeat in DB:", err);
+  }
+
+  return local;
 }

@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
-import { getEventZones } from "@/lib/physical-ops/zone-service";
-import { getBadgeTemplates, getBadgePrintQueue, getBadgePrintLogs } from "@/lib/physical-ops/badge-service";
-import { getOpsAlerts, getOpsAuditLogs } from "@/lib/physical-ops/audit-alert-service";
-import { getStaffAssignments, getOpsDevices } from "@/lib/physical-ops/staff-device-service";
-import { computeStage2Analytics } from "@/lib/physical-ops/analytics-service";
+import { getEventZonesDb } from "@/lib/physical-ops/zone-service";
+import { getBadgeTemplatesDb, getBadgePrintQueueDb, getBadgePrintLogsDb } from "@/lib/physical-ops/badge-service";
+import { getOpsAlertsDb, getOpsAuditLogsDb } from "@/lib/physical-ops/audit-alert-service";
+import { getStaffAssignmentsDb, getOpsDevicesDb } from "@/lib/physical-ops/staff-device-service";
+import { computeStage2AnalyticsDb } from "@/lib/physical-ops/analytics-service";
+import { getAdminClient } from "@/lib/physical-ops/db";
 
 export async function GET(
   request: Request,
@@ -11,18 +12,42 @@ export async function GET(
 ) {
   try {
     const { eventId } = await params;
-    const zones = getEventZones(eventId);
-    const badgeTemplates = getBadgeTemplates(eventId);
-    const printQueue = getBadgePrintQueue(eventId);
-    const printLogs = getBadgePrintLogs(eventId);
-    const alerts = getOpsAlerts(eventId, true);
-    const auditLogs = getOpsAuditLogs(eventId);
-    const staff = getStaffAssignments(eventId);
-    const devices = getOpsDevices(eventId);
-    const analytics = computeStage2Analytics(eventId);
+    const admin = getAdminClient();
+
+    const [
+      zones,
+      badgeTemplates,
+      printQueue,
+      printLogs,
+      alerts,
+      auditLogs,
+      staff,
+      devices,
+      analytics,
+      attendeesRes,
+      checkinsRes,
+    ] = await Promise.all([
+      getEventZonesDb(eventId),
+      getBadgeTemplatesDb(eventId),
+      getBadgePrintQueueDb(eventId),
+      getBadgePrintLogsDb(eventId),
+      getOpsAlertsDb(eventId, true),
+      getOpsAuditLogsDb(eventId),
+      getStaffAssignmentsDb(eventId),
+      getOpsDevicesDb(eventId),
+      computeStage2AnalyticsDb(eventId),
+      admin
+        ? admin.from("attendees").select("id", { count: "exact", head: true }).eq("event_id", eventId)
+        : Promise.resolve({ count: 0 }),
+      admin
+        ? admin.from("check_ins").select("id", { count: "exact", head: true }).eq("event_id", eventId)
+        : Promise.resolve({ count: 0 }),
+    ]);
 
     const totalCapacity = zones.reduce((acc, z) => acc + (z.capacity || 0), 0);
     const totalOccupancy = zones.reduce((acc, z) => acc + (z.currentOccupancy || 0), 0);
+    const registeredCount = attendeesRes.count || 0;
+    const checkedInCount = checkinsRes.count || 0;
 
     return NextResponse.json({
       success: true,
@@ -31,6 +56,8 @@ export async function GET(
         totalCapacity,
         totalOccupancy,
         overallOccupancyPercent: totalCapacity > 0 ? Math.round((totalOccupancy / totalCapacity) * 100) : 0,
+        registeredCount,
+        checkedInCount,
         queuedBadgePrints: printQueue.filter((q) => q.status === "queued").length,
         activeScanners: devices.filter((d) => d.isOnline).length,
         activeStaff: staff.filter((s) => s.isActive).length,

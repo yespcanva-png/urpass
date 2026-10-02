@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import {
-  registerWalkIn,
-  searchDeskAttendees,
-  updateDeskAttendee,
-  checkInDeskAttendee,
+  registerWalkInDb,
+  searchDeskAttendeesDb,
+  updateDeskAttendeeDb,
+  checkInDeskAttendeeDb,
 } from "@/lib/physical-ops/desk-service";
-import { logOpsAudit } from "@/lib/physical-ops/audit-alert-service";
+import { logOpsAuditDb } from "@/lib/physical-ops/audit-alert-service";
 
 export async function GET(
   request: Request,
@@ -15,7 +15,7 @@ export async function GET(
     const { eventId } = await params;
     const url = new URL(request.url);
     const q = url.searchParams.get("q") || "";
-    const attendees = searchDeskAttendees(eventId, q);
+    const attendees = await searchDeskAttendeesDb(eventId, q);
     return NextResponse.json({ success: true, attendees });
   } catch (error) {
     return NextResponse.json(
@@ -35,9 +35,9 @@ export async function POST(
     const { action, payload, attendeeId, updates, staffName } = body;
 
     if (action === "walkin") {
-      const attendee = registerWalkIn({ ...payload, eventId, staffName });
+      const attendee = await registerWalkInDb({ ...payload, eventId, staffName });
 
-      logOpsAudit(
+      await logOpsAuditDb(
         eventId,
         "walkin_registration",
         "attendee",
@@ -57,9 +57,9 @@ export async function POST(
     }
 
     if (action === "update" && attendeeId) {
-      const updated = updateDeskAttendee(eventId, attendeeId, updates);
+      const updated = await updateDeskAttendeeDb(eventId, attendeeId, updates);
       if (updates.paymentStatus) {
-        logOpsAudit(
+        await logOpsAuditDb(
           eventId,
           "payment_status_change",
           "payment",
@@ -72,8 +72,8 @@ export async function POST(
     }
 
     if (action === "checkin" && attendeeId) {
-      const checkedIn = checkInDeskAttendee(eventId, attendeeId);
-      logOpsAudit(
+      const checkedIn = await checkInDeskAttendeeDb(eventId, attendeeId, staffName);
+      await logOpsAuditDb(
         eventId,
         "manual_checkin",
         "attendee",

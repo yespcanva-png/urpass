@@ -192,6 +192,8 @@ export interface AccessRule {
   allowedTicketTypeIds: string[];
   allowedBadgeTypes: BadgeRoleType[];
   allowedRoles: string[];
+  gateId?: string;
+  dayNumber?: number;
   sessionId?: string;
   startTime?: string; // HH:MM:SS
   endTime?: string;   // HH:MM:SS
@@ -211,11 +213,15 @@ export interface ZoneScanRecord {
   gateId?: string;
   gateName?: string;
   attendeeId: string;
-  attendeeName: string;
+  attendeeName?: string;
+  badgeType?: BadgeRoleType;
   passId?: string;
   direction: ScanDirection;
   status: ScanValidationStatus;
   rejectionReason?: string;
+  isOverride?: boolean;
+  overrideReason?: string;
+  overrideBy?: string;
   deviceId?: string;
   staffUserId?: string;
   staffName?: string;

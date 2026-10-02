@@ -28,74 +28,19 @@ export default function AttendeeInteractiveFloorPlanPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedMarker, setSelectedMarker] = useState<FloorPlanMarker | null>(null);
 
-  const markers: FloorPlanMarker[] = [
-    {
-      id: "m-reg",
-      type: "registration_desk",
-      label: "Main Registration Desk & Badge Pickup",
-      details: "Collect lanyard badges, scan QR admission voucher, and report for help.",
-      xPercent: 15,
-      yPercent: 82,
-    },
-    {
-      id: "m-gate-a",
-      type: "gate",
-      label: "Main Gate A Entrance",
-      details: "Express smartphone scanner lanes for general & VIP delegates.",
-      xPercent: 10,
-      yPercent: 50,
-    },
-    {
-      id: "m-hall-keynote",
-      type: "hall",
-      label: "Auditorium 1 (Keynote Arena)",
-      details: "Capacity: 800 seats. Morning keynote sessions & award ceremonies.",
-      xPercent: 45,
-      yPercent: 35,
-    },
-    {
-      id: "m-vip-lounge",
-      type: "zone",
-      label: "VIP & Speaker Green Room",
-      details: "Private networking space, executive desks & refreshments. VIP badge required.",
-      xPercent: 80,
-      yPercent: 25,
-    },
-    {
-      id: "m-booth-101",
-      type: "booth",
-      label: "Innovation Booth #101",
-      details: "Product demos, AI showcase, and merchandise.",
-      boothNumber: "101",
-      xPercent: 42,
-      yPercent: 75,
-    },
-    {
-      id: "m-booth-102",
-      type: "booth",
-      label: "Developer Cloud Booth #102",
-      details: "Hackathon technical support and API key credits.",
-      boothNumber: "102",
-      xPercent: 56,
-      yPercent: 75,
-    },
-    {
-      id: "m-food",
-      type: "food_area",
-      label: "Catering & Coffee Pavilion",
-      details: "Buffet lunch served 12:30 PM - 2:30 PM. Continuous espresso bar.",
-      xPercent: 82,
-      yPercent: 78,
-    },
-    {
-      id: "m-exit-north",
-      type: "emergency_exit",
-      label: "Emergency Exit North",
-      details: "Direct assembly point path. Keep clear at all times.",
-      xPercent: 92,
-      yPercent: 10,
-    },
-  ];
+  const [markers, setMarkers] = useState<FloorPlanMarker[]>([]);
+  const [floorPlanName, setFloorPlanName] = useState("Venue Floor Plan");
+
+  useEffect(() => {
+    fetch(`/api/event/${eventId}/ops/zones`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.success && d.markers) {
+          setMarkers(d.markers);
+          if (d.floorPlan?.name) setFloorPlanName(d.floorPlan.name);
+        }
+      });
+  }, [eventId]);
 
   const filteredMarkers = markers.filter((m) => {
     if (selectedCategory !== "all" && m.type !== selectedCategory) return false;

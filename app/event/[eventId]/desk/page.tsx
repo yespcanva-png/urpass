@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { BadgeRoleType } from "@/lib/physical-ops/types";
 import { OnsiteAttendee } from "@/lib/physical-ops/desk-service";
+import { createClient } from "@/lib/supabase/client";
 
 export default function OnsiteDeskPage() {
   const params = useParams();
@@ -60,7 +61,30 @@ export default function OnsiteDeskPage() {
   };
 
   useEffect(() => {
-    fetchAttendees("");
+    fetchAttendees(searchQuery);
+
+    const supabase = createClient();
+    const channel = supabase
+      .channel(`desk-realtime-${eventId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "attendees", filter: `event_id=eq.${eventId}` },
+        () => {
+          fetchAttendees(searchQuery);
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "check_ins", filter: `event_id=eq.${eventId}` },
+        () => {
+          fetchAttendees(searchQuery);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [eventId]);
 
   const handleSearch = (e: React.FormEvent) => {

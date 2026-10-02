@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import {
-  getStaffAssignments,
-  saveStaffAssignment,
-  deleteStaffAssignment,
-  getOpsDevices,
-  recordDeviceHeartbeat,
+  getStaffAssignmentsDb,
+  saveStaffAssignmentDb,
+  deleteStaffAssignmentDb,
+  getOpsDevicesDb,
+  recordDeviceHeartbeatDb,
 } from "@/lib/physical-ops/staff-device-service";
+import { logOpsAuditDb } from "@/lib/physical-ops/audit-alert-service";
 
 export async function GET(
   request: Request,
@@ -13,8 +14,10 @@ export async function GET(
 ) {
   try {
     const { eventId } = await params;
-    const staff = getStaffAssignments(eventId);
-    const devices = getOpsDevices(eventId);
+    const [staff, devices] = await Promise.all([
+      getStaffAssignmentsDb(eventId),
+      getOpsDevicesDb(eventId),
+    ]);
     return NextResponse.json({ success: true, staff, devices });
   } catch (error) {
     return NextResponse.json(
@@ -31,20 +34,40 @@ export async function POST(
   try {
     const { eventId } = await params;
     const body = await request.json();
-    const { type, staff, staffId, heartbeat } = body;
+    const { type, staff, staffId, heartbeat, device, staffName } = body;
 
     if (type === "save_staff" && staff) {
-      const saved = saveStaffAssignment({ ...staff, eventId });
+      const saved = await saveStaffAssignmentDb({ ...staff, eventId });
+      await logOpsAuditDb(
+        eventId,
+        "manual_checkin",
+        "staff",
+        saved.id,
+        { action: "provision_staff", staffName: saved.staffName, role: saved.role },
+        staffName || "Staff Operations"
+      );
       return NextResponse.json({ success: true, staff: saved });
     }
 
     if (type === "delete_staff" && staffId) {
-      deleteStaffAssignment(eventId, staffId);
+      await deleteStaffAssignmentDb(eventId, staffId);
       return NextResponse.json({ success: true });
     }
 
+    if (type === "register_device" && device) {
+      const dev = await recordDeviceHeartbeatDb(
+        eventId,
+        device.deviceId,
+        device.deviceName || "Hardware Terminal",
+        device.batteryLevel,
+        device.assignedGateName,
+        device.assignedZoneName
+      );
+      return NextResponse.json({ success: true, device: dev });
+    }
+
     if (type === "heartbeat" && heartbeat) {
-      const device = recordDeviceHeartbeat(
+      const dev = await recordDeviceHeartbeatDb(
         eventId,
         heartbeat.deviceId,
         heartbeat.deviceName || "Scanner Device",
@@ -52,7 +75,7 @@ export async function POST(
         heartbeat.gateName,
         heartbeat.zoneName
       );
-      return NextResponse.json({ success: true, device });
+      return NextResponse.json({ success: true, device: dev });
     }
 
     return NextResponse.json({ success: false, error: "Invalid action" }, { status: 400 });

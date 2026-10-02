@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import {
-  getEventZones,
-  getAccessRules,
+  getEventZonesDb,
+  getAccessRulesDb,
   evaluateZoneAccess,
-  recordZoneScan,
+  recordZoneScanDb,
 } from "@/lib/physical-ops/zone-service";
-import { logOpsAudit, triggerOpsAlert } from "@/lib/physical-ops/audit-alert-service";
+import { logOpsAuditDb, triggerOpsAlertDb } from "@/lib/physical-ops/audit-alert-service";
 import type { ScanDirection } from "@/lib/physical-ops/types";
 
 export async function POST(
@@ -34,7 +34,7 @@ export async function POST(
       );
     }
 
-    const zones = getEventZones(eventId);
+    const zones = await getEventZonesDb(eventId);
     const targetZone = zones.find((z) => z.id === zoneId);
     if (!targetZone) {
       return NextResponse.json(
@@ -43,89 +43,56 @@ export async function POST(
       );
     }
 
-    const rules = getAccessRules(eventId, zoneId);
+    const rules = await getAccessRulesDb(eventId, zoneId);
 
-    // Evaluate rules & capacity
-    const evaluation = evaluateZoneAccess({
-      attendee,
-      zoneId,
-      direction: direction as ScanDirection,
-      currentZone: targetZone,
-      rules,
-      override,
-    });
-
-    // If capacity reached 100% and blocked
-    if (evaluation.isCapacityFull) {
-      triggerOpsAlert(
-        eventId,
-        "zone_full",
-        "critical",
-        `Zone "${targetZone.name}" has reached capacity (${targetZone.currentOccupancy}/${targetZone.capacity}). Entry blocked for ${attendee.name}.`,
-        targetZone.name,
-        gateName,
-        deviceId
-      );
-    } else if (evaluation.occupancyPercent >= 85 && evaluation.occupancyPercent < 100) {
-      triggerOpsAlert(
-        eventId,
-        "zone_nearly_full",
-        "warning",
-        `Zone "${targetZone.name}" is nearly full (${evaluation.occupancyPercent}% - ${targetZone.currentOccupancy}/${targetZone.capacity}).`,
-        targetZone.name,
-        gateName,
-        deviceId
-      );
-    }
-
-    // Record the scan in the zone logs
-    const scanRecord = recordZoneScan({
+    // Record the scan in the zone logs & database
+    const scanResult = await recordZoneScanDb(
       eventId,
       zoneId,
-      zoneName: targetZone.name,
-      gateId,
-      gateName,
-      attendeeId: attendee.id,
-      attendeeName: attendee.name,
-      direction: direction as ScanDirection,
-      status: evaluation.status,
-      rejectionReason: evaluation.reason,
-      deviceId,
-      staffName: staffName || "Scanner Staff",
-    });
+      attendee.id,
+      direction as ScanDirection,
+      {
+        badgeType: attendee.badgeType || "attendee",
+        ticketTypeId: attendee.ticketTypeId,
+      },
+      {
+        isOverride: override,
+        overrideReason,
+        overrideBy: staffName,
+        gateName,
+        gateId,
+      }
+    );
 
-    // If override was granted, log to audit log
     if (override) {
-      logOpsAudit(
+      await logOpsAuditDb(
         eventId,
-        "capacity_override",
+        "zone_override",
         "zone",
         zoneId,
         {
           zoneName: targetZone.name,
           attendeeId: attendee.id,
           attendeeName: attendee.name,
-          reason: overrideReason || "Supervisor Authorized",
-          occupancy: targetZone.currentOccupancy,
-          capacity: targetZone.capacity,
+          reason: overrideReason || "Supervisor Authorized Override",
+          gateName,
         },
-        staffName || "Door Supervisor"
+        staffName || "Gate Supervisor"
       );
     }
 
     return NextResponse.json({
       success: true,
-      allowed: evaluation.allowed,
-      status: evaluation.status,
-      reason: evaluation.reason,
-      occupancy: targetZone.currentOccupancy,
-      capacity: targetZone.capacity,
-      occupancyPercent: evaluation.occupancyPercent,
-      scanRecord,
+      allowed: scanResult.allowed,
+      status: scanResult.status,
+      rejectionReason: scanResult.rejectionReason,
+      currentOccupancy: scanResult.currentOccupancy,
+      capacity: scanResult.capacity,
+      occupancyPercent: scanResult.occupancyPercent,
     });
   } catch (error) {
     return NextResponse.json(
-      { success: false, error: error instanceof Error ? error.message : "Zone scan verification failed" },
+      { success: false, error: error instanceof Error ? error.message : "Zone scan operation failed" },
       { status: 500 }
     );
   }

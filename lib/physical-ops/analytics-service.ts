@@ -1,6 +1,6 @@
-import { getEventZones, getZoneScans } from "./zone-service";
-import { getBadgePrintLogs, getBadgePrintQueue } from "./badge-service";
-import { getOpsAuditLogs } from "./audit-alert-service";
+import { getEventZones, getZoneScans, getEventZonesDb, getZoneScansDb } from "./zone-service";
+import { getBadgePrintLogs, getBadgePrintQueue, getBadgePrintLogsDb, getBadgePrintQueueDb } from "./badge-service";
+import { getOpsAuditLogs, getOpsAuditLogsDb } from "./audit-alert-service";
 
 export interface Stage2OpsAnalytics {
   totalBadgePrints: number;
@@ -34,6 +34,28 @@ export function computeStage2Analytics(eventId: string): Stage2OpsAnalytics {
   const printQueue = getBadgePrintQueue(eventId);
   const auditLogs = getOpsAuditLogs(eventId);
 
+  return calculateMetrics(zones, scans, printLogs, printQueue, auditLogs);
+}
+
+export async function computeStage2AnalyticsDb(eventId: string): Promise<Stage2OpsAnalytics> {
+  const [zones, scans, printLogs, printQueue, auditLogs] = await Promise.all([
+    getEventZonesDb(eventId),
+    getZoneScansDb(eventId),
+    getBadgePrintLogsDb(eventId),
+    getBadgePrintQueueDb(eventId),
+    getOpsAuditLogsDb(eventId),
+  ]);
+
+  return calculateMetrics(zones, scans, printLogs, printQueue, auditLogs);
+}
+
+function calculateMetrics(
+  zones: any[],
+  scans: any[],
+  printLogs: any[],
+  printQueue: any[],
+  auditLogs: any[]
+): Stage2OpsAnalytics {
   const reprintLogs = printLogs.filter((l) => l.printType === "reprint");
   const reprintReasons: Record<string, number> = {};
   reprintLogs.forEach((l) => {
