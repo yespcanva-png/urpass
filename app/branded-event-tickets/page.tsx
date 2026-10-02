@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import { Palette, Sparkles, QrCode, ShieldCheck, Ticket, Layers, ArrowRight, CheckCircle2, Smartphone } from "lucide-react";
+import { Palette, Sparkles, QrCode, ShieldCheck, Layers, Smartphone } from "lucide-react";
 import SEOPage from "@/components/landing/SEOPage";
+import { TICKET_OG_IMAGE, TICKET_OG_IMAGE_META } from "@/lib/seo/og-images";
 
 export const metadata: Metadata = {
   title: "Custom Branded Event Tickets & QR Passes | URPASS",
@@ -21,6 +22,11 @@ export const metadata: Metadata = {
     url: "https://urpass.space/branded-event-tickets",
     locale: "en_IN",
     type: "website",
+    images: [TICKET_OG_IMAGE_META],
+  },
+  twitter: {
+    card: "summary_large_image",
+    images: [TICKET_OG_IMAGE],
   },
 };
 

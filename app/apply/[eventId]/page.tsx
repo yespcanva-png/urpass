@@ -5,6 +5,7 @@ import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { CalendarDays, Ticket, ScanLine, Wifi, LayoutGrid } from "lucide-react";
 import ApplyForm from "./ApplyForm";
 import { getSupabaseUrl } from "@/lib/supabase/config";
+import { TICKET_OG_IMAGE, TICKET_OG_IMAGE_META } from "@/lib/seo/og-images";
 
 export const dynamic = "force-dynamic";
 
@@ -49,20 +50,13 @@ export async function generateMetadata({
       url: canonicalUrl,
       siteName: "URPASS",
       locale: "en_IN",
-      images: [
-        {
-          url: "https://urpass.space/og-image.png",
-          width: 1200,
-          height: 630,
-          alt: `${event.name} on URPASS`,
-        },
-      ],
+      images: [{ ...TICKET_OG_IMAGE_META, alt: `${event.name} registration and ticketing on URPASS` }],
     },
     twitter: {
       card: "summary_large_image",
       title: `${event.name} — Register Now`,
       description: desc,
-      images: ["https://urpass.space/og-image.png"],
+      images: [TICKET_OG_IMAGE],
     },
     other: {
       "geo.placename": event.venue || "India",

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import { QrCode, Zap, Mail, ShieldCheck, Smartphone, Share2, Ticket, CheckCircle2 } from "lucide-react";
+import { Zap, Mail, ShieldCheck, Smartphone, Share2, Ticket } from "lucide-react";
 import SEOPage from "@/components/landing/SEOPage";
+import { TICKET_OG_IMAGE, TICKET_OG_IMAGE_META } from "@/lib/seo/og-images";
 
 export const metadata: Metadata = {
   title: "Instant QR Ticket Generator for Events | URPASS",
@@ -21,6 +22,11 @@ export const metadata: Metadata = {
     url: "https://urpass.space/instant-qr-ticket-generator",
     locale: "en_IN",
     type: "website",
+    images: [TICKET_OG_IMAGE_META],
+  },
+  twitter: {
+    card: "summary_large_image",
+    images: [TICKET_OG_IMAGE],
   },
 };
 

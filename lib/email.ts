@@ -1,7 +1,5 @@
 import { Resend } from "resend";
 
-const isDev = process.env.NODE_ENV === "development";
-
 function cleanString(val?: string | null): string {
   if (!val) return "";
   return String(val).replace(/^["']|["']$/g, "").trim();
@@ -41,8 +39,6 @@ export function getOwnerEmail(): string {
   const raw = cleanString(process.env.OWNER_EMAIL);
   return raw || "srinithin@yespstudio.com";
 }
-
-const OWNER_EMAIL = "srinithin@yespstudio.com";
 
 function escapeHtml(value: unknown) {
   return String(value ?? "")
@@ -609,6 +605,14 @@ export async function sendPassEmail({
   const typeLabel = PASS_TYPE_LABEL[passType] ?? "Attendee";
   const typeColor = PASS_TYPE_COLOR[passType] ?? PASS_TYPE_COLOR.participant;
   const qrSrc     = qrUrl(passUrl, 200);
+  const safeEventName = escapeHtml(eventName);
+  const safeAttendeeName = escapeHtml(attendeeName);
+  const safeFormattedDate = escapeHtml(formattedDate);
+  const safeVenue = escapeHtml(venue);
+  const safeEmail = escapeHtml(to);
+  const safeTypeLabel = escapeHtml(typeLabel);
+  const safeShortCode = escapeHtml(shortCode);
+  const safePassUrl = escapeHtml(passUrl);
 
   await sendEmail({
     from: FROM,
@@ -620,93 +624,127 @@ export async function sendPassEmail({
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Your Pass — ${eventName}</title>
+  <title>Your Pass - ${safeEventName}</title>
 </head>
-<body style="margin:0;padding:0;background:#f0effe;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
+<body style="margin:0;padding:0;background:#eef1f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
 
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#f0effe;padding:40px 16px;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#eef1f5;padding:40px 16px;">
   <tr><td align="center">
 
-    <!-- Wordmark -->
-    <p style="margin:0 0 20px;font-size:11px;font-weight:700;letter-spacing:4px;color:#9333ea;text-transform:uppercase;">URPASS</p>
+    <p style="margin:0 0 18px;font-size:11px;font-weight:800;letter-spacing:4px;color:#111827;text-transform:uppercase;">URPASS</p>
 
-    <!-- Pass card -->
-    <table width="100%" cellpadding="0" cellspacing="0" style="max-width:460px;background:#ffffff;border-radius:24px;overflow:hidden;box-shadow:0 8px 40px rgba(109,40,217,0.14);">
+    <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border:1px solid #d8dee8;border-radius:18px;overflow:hidden;box-shadow:0 18px 45px rgba(15,23,42,0.12);">
 
-      <!-- Purple header -->
       <tr>
-        <td style="background:linear-gradient(135deg,#6D28D9 0%,#4c1d95 100%);padding:30px 32px 34px;">
+        <td style="background:#111827;padding:0;">
           <table width="100%" cellpadding="0" cellspacing="0">
             <tr>
-              <td>
-                <p style="margin:0 0 6px;font-size:10px;font-weight:700;letter-spacing:3px;color:rgba(255,255,255,0.5);text-transform:uppercase;">Event Pass</p>
-                <p style="margin:0 0 18px;font-size:21px;font-weight:800;color:#ffffff;line-height:1.3;">${eventName}</p>
-                <p style="margin:0 0 5px;font-size:12px;color:rgba(255,255,255,0.7);">&#128197; ${formattedDate}</p>
-                <p style="margin:0;font-size:12px;color:rgba(255,255,255,0.7);">&#128205; ${venue}</p>
-              </td>
-              <td width="90" valign="top" align="right">
-                <span style="display:inline-block;background:${typeColor.bg};color:${typeColor.color};border:1px solid ${typeColor.border};font-size:11px;font-weight:700;padding:5px 12px;border-radius:20px;white-space:nowrap;">${typeLabel}</span>
-              </td>
+              <td style="height:4px;background:#6D28D9;font-size:0;line-height:0;">&nbsp;</td>
             </tr>
           </table>
         </td>
       </tr>
 
-      <!-- Perforated divider -->
       <tr>
-        <td style="padding:0 28px;">
+        <td style="background:#111827;padding:26px 30px 28px;">
           <table width="100%" cellpadding="0" cellspacing="0">
             <tr>
-              <td width="18" style="background:#f0effe;height:18px;border-radius:0 0 10px 10px;"></td>
-              <td style="border-top:2px dashed #e5e7eb;"></td>
-              <td width="18" style="background:#f0effe;height:18px;border-radius:0 0 10px 10px;"></td>
+              <td valign="top">
+                <p style="margin:0 0 8px;font-size:10px;font-weight:800;letter-spacing:3px;color:#8b95a7;text-transform:uppercase;">Official Event Credential</p>
+                <h1 style="margin:0;font-size:24px;line-height:1.25;color:#ffffff;font-weight:800;">${safeEventName}</h1>
+              </td>
+              <td width="132" valign="top" align="right">
+                <span style="display:inline-block;background:${typeColor.bg};color:${typeColor.color};border:1px solid ${typeColor.border};font-size:11px;font-weight:800;padding:7px 12px;border-radius:999px;white-space:nowrap;text-transform:uppercase;letter-spacing:.04em;">${safeTypeLabel}</span>
+              </td>
             </tr>
           </table>
         </td>
       </tr>
 
-      <!-- Attendee + QR -->
       <tr>
-        <td style="padding:28px 32px;text-align:center;">
-          <p style="margin:0 0 2px;font-size:10px;font-weight:700;letter-spacing:3px;color:#9ca3af;text-transform:uppercase;">Attendee</p>
-          <p style="margin:0 0 4px;font-size:19px;font-weight:800;color:#0a0a0a;">${attendeeName}</p>
-          <p style="margin:0 0 24px;font-size:12px;color:#9ca3af;">${to}</p>
-
-          <!-- QR code via external service (works in all email clients) -->
-          <table cellpadding="0" cellspacing="0" style="margin:0 auto;border:1px solid #e5e7eb;border-radius:14px;overflow:hidden;">
+        <td style="padding:0 30px;background:#ffffff;">
+          <table width="100%" cellpadding="0" cellspacing="0">
             <tr>
-              <td style="padding:14px;background:#fff;">
-                <img src="${qrSrc}" width="180" height="180" alt="Entry QR Code" style="display:block;" />
+              <td style="height:16px;border-bottom:1px dashed #cbd5e1;font-size:0;line-height:0;">&nbsp;</td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+
+      <tr>
+        <td style="padding:26px 30px 8px;">
+          <table width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+              <td valign="top" style="padding-right:18px;">
+                <p style="margin:0 0 5px;font-size:10px;font-weight:800;letter-spacing:2px;color:#94a3b8;text-transform:uppercase;">Pass holder</p>
+                <p style="margin:0 0 4px;font-size:22px;font-weight:800;color:#0f172a;line-height:1.2;">${safeAttendeeName}</p>
+                <p style="margin:0 0 18px;font-size:13px;color:#64748b;">${safeEmail}</p>
+
+                <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e2e8f0;border-radius:14px;background:#f8fafc;">
+                  <tr>
+                    <td style="padding:15px 16px;border-bottom:1px solid #e2e8f0;">
+                      <p style="margin:0 0 4px;font-size:10px;font-weight:800;letter-spacing:2px;color:#94a3b8;text-transform:uppercase;">Schedule</p>
+                      <p style="margin:0;font-size:13px;font-weight:700;color:#1e293b;">${safeFormattedDate}</p>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding:15px 16px;">
+                      <p style="margin:0 0 4px;font-size:10px;font-weight:800;letter-spacing:2px;color:#94a3b8;text-transform:uppercase;">Access location</p>
+                      <p style="margin:0;font-size:13px;font-weight:700;color:#1e293b;">${safeVenue}</p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+
+              <td width="205" valign="top" align="center">
+                <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #d8dee8;border-radius:16px;background:#ffffff;overflow:hidden;">
+                  <tr>
+                    <td style="padding:13px;background:#ffffff;" align="center">
+                      <img src="${qrSrc}" width="170" height="170" alt="Entry QR Code" style="display:block;border:0;" />
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="background:#0f172a;padding:11px 12px;text-align:center;">
+                      <p style="margin:0 0 4px;font-size:9px;font-weight:800;letter-spacing:2px;color:#94a3b8;text-transform:uppercase;">Credential ID</p>
+                      <p style="margin:0;font-size:12px;color:#ffffff;font-family:'Courier New',Courier,monospace;font-weight:700;letter-spacing:2px;">${safeShortCode}</p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+
+      <tr>
+        <td style="padding:18px 30px 30px;">
+          <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;margin-bottom:18px;">
+            <tr>
+              <td style="padding:14px 16px;">
+                <p style="margin:0;font-size:12px;line-height:1.55;color:#475569;">
+                  This credential is verified by URPASS. Open the full pass on your phone and keep the QR ready for scanner validation.
+                </p>
               </td>
             </tr>
           </table>
 
-          <p style="margin:14px 0 6px;font-size:11px;color:#d1d5db;font-family:'Courier New',monospace;letter-spacing:4px;">${shortCode}</p>
-          <p style="margin:0;font-size:12px;color:#9ca3af;">Show this QR code at the entrance</p>
-        </td>
-      </tr>
-
-      <!-- CTA -->
-      <tr>
-        <td style="padding:0 32px 32px;">
-          <a href="${passUrl}" style="display:block;background:#6D28D9;color:#ffffff;text-align:center;padding:15px 24px;border-radius:12px;font-size:14px;font-weight:700;text-decoration:none;letter-spacing:0.2px;">
-            View Full Pass &rarr;
+          <a href="${safePassUrl}" style="display:block;background:#111827;color:#ffffff;text-align:center;padding:15px 24px;border-radius:12px;font-size:14px;font-weight:800;text-decoration:none;letter-spacing:0.2px;">
+            Open Digital Pass &rarr;
           </a>
         </td>
       </tr>
 
-      <!-- Footer -->
       <tr>
-        <td style="border-top:1px solid #f3f4f6;padding:18px 32px;background:#fafafa;border-radius:0 0 24px 24px;">
-          <p style="margin:0;font-size:11px;color:#d1d5db;text-align:center;">
-            This pass is personal &amp; non-transferable. Keep this email safe &mdash; the QR code is your entry ticket.
+        <td style="border-top:1px solid #e2e8f0;padding:17px 30px;background:#f8fafc;">
+          <p style="margin:0;font-size:11px;color:#64748b;text-align:center;line-height:1.55;">
+            Personal and non-transferable. Keep this email safe; the QR code is your official entry ticket.
           </p>
         </td>
       </tr>
 
     </table>
 
-    <p style="margin:20px 0 0;font-size:11px;color:#a78bfa;">Powered by URPASS &middot; <a href="${APP_URL}" style="color:#a78bfa;text-decoration:none;">urpass.space</a></p>
+    <p style="margin:18px 0 0;font-size:11px;color:#64748b;">Powered by URPASS &middot; <a href="${APP_URL}" style="color:#475569;text-decoration:none;">urpass.space</a></p>
 
   </td></tr>
 </table>
@@ -1681,6 +1719,4 @@ export async function sendSponsorshipApprovalEmail({
 </html>`.trim(),
   });
 }
-
-
 

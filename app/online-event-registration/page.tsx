@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import { Globe, ClipboardCheck, QrCode, CreditCard, Users, ShieldCheck, Zap, ArrowRight, Share2 } from "lucide-react";
+import { Globe, ClipboardCheck, QrCode, CreditCard, Users, ShieldCheck } from "lucide-react";
 import SEOPage from "@/components/landing/SEOPage";
+import { TICKET_OG_IMAGE, TICKET_OG_IMAGE_META } from "@/lib/seo/og-images";
 
 export const metadata: Metadata = {
   title: "Online Event Registration System | URPASS",
@@ -21,6 +22,11 @@ export const metadata: Metadata = {
     url: "https://urpass.space/online-event-registration",
     locale: "en_IN",
     type: "website",
+    images: [TICKET_OG_IMAGE_META],
+  },
+  twitter: {
+    card: "summary_large_image",
+    images: [TICKET_OG_IMAGE],
   },
 };
 

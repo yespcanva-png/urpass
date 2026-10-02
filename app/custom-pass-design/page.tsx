@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Palette, Sparkles, Smartphone, Image, Shield, QrCode } from "lucide-react";
 import SEOPage from "@/components/landing/SEOPage";
+import { TICKET_OG_IMAGE, TICKET_OG_IMAGE_META } from "@/lib/seo/og-images";
 
 export const metadata: Metadata = {
   title: "Custom Event Pass Designer & Branded Ticket Maker",
@@ -22,6 +23,11 @@ export const metadata: Metadata = {
     url: "https://urpass.space/custom-pass-design",
     locale: "en_IN",
     type: "website",
+    images: [TICKET_OG_IMAGE_META],
+  },
+  twitter: {
+    card: "summary_large_image",
+    images: [TICKET_OG_IMAGE],
   },
   other: {
     "geo.region": "IN",

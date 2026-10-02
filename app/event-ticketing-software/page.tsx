@@ -1,19 +1,14 @@
 import type { Metadata } from "next";
 import {
   Ticket,
-  QrCode,
   ScanLine,
   CreditCard,
   BarChart3,
-  Zap,
   ShieldCheck,
-  Smartphone,
-  CheckCircle2,
-  Users,
-  Layers,
   Palette,
 } from "lucide-react";
 import SEOPage from "@/components/landing/SEOPage";
+import { TICKET_OG_IMAGE, TICKET_OG_IMAGE_META } from "@/lib/seo/og-images";
 
 export const metadata: Metadata = {
   title: "Event Ticketing Software with QR Check-In & UPI Payments",
@@ -35,6 +30,11 @@ export const metadata: Metadata = {
     url: "https://urpass.space/event-ticketing-software",
     locale: "en_IN",
     type: "website",
+    images: [TICKET_OG_IMAGE_META],
+  },
+  twitter: {
+    card: "summary_large_image",
+    images: [TICKET_OG_IMAGE],
   },
 };
 

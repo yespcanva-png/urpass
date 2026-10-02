@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import { Sliders, Palette, Sparkles, QrCode, Ticket, Eye, ArrowRight, CheckCircle2, Layers } from "lucide-react";
+import { Sliders, Palette, Sparkles, QrCode, Eye, Layers } from "lucide-react";
 import SEOPage from "@/components/landing/SEOPage";
+import { TICKET_OG_IMAGE, TICKET_OG_IMAGE_META } from "@/lib/seo/og-images";
 
 export const metadata: Metadata = {
   title: "Online Event Ticket Designer | URPASS",
@@ -21,6 +22,11 @@ export const metadata: Metadata = {
     url: "https://urpass.space/event-ticket-designer",
     locale: "en_IN",
     type: "website",
+    images: [TICKET_OG_IMAGE_META],
+  },
+  twitter: {
+    card: "summary_large_image",
+    images: [TICKET_OG_IMAGE],
   },
 };
 

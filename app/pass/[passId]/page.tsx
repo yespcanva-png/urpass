@@ -5,13 +5,11 @@ import { notFound } from "next/navigation";
 import {
   CalendarDays,
   MapPin,
-  CheckCircle,
   Ticket,
   Wifi,
   ExternalLink,
   ShieldCheck,
   CheckCircle2,
-  Building2,
   Lock,
 } from "lucide-react";
 import PassQR from "@/components/pass/PassQR";
@@ -382,22 +380,68 @@ export default async function PassPage({
               </div>
             )}
 
-            {/* Online-only icon area */}
+            {/* Online-only executive access module */}
             {isOnline && (
-              <div className="w-full flex flex-col items-center gap-3 py-4 my-2">
+              <div className="w-full my-2 overflow-hidden rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 shadow-xs">
                 <div
-                  className="w-16 h-16 rounded-2xl flex items-center justify-center border"
+                  className="px-4 py-3 text-left"
                   style={{
-                    backgroundColor: `${brandColor}15`,
-                    borderColor: `${brandColor}30`,
+                    background: isDark
+                      ? `linear-gradient(135deg, ${brandColor}24 0%, rgba(255,255,255,0.03) 100%)`
+                      : `linear-gradient(135deg, ${brandColor}14 0%, #ffffff 70%)`,
                   }}
                 >
-                  <Wifi className="w-8 h-8" style={{ color: brandColor }} />
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div
+                        className="w-11 h-11 rounded-xl flex items-center justify-center border shrink-0"
+                        style={{
+                          backgroundColor: `${brandColor}12`,
+                          borderColor: `${brandColor}30`,
+                        }}
+                      >
+                        <Wifi className="w-5 h-5" style={{ color: brandColor }} />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-[8px] font-black tracking-widest uppercase text-neutral-400">
+                          Virtual Credential
+                        </p>
+                        <p className={`text-sm font-black truncate ${isDark ? "text-white" : "text-neutral-950"}`}>
+                          Online Event Access
+                        </p>
+                      </div>
+                    </div>
+                    <span
+                      className="inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[9px] font-black uppercase tracking-wider shrink-0"
+                      style={{
+                        color: brandColor,
+                        borderColor: `${brandColor}35`,
+                        backgroundColor: `${brandColor}12`,
+                      }}
+                    >
+                      <Lock className="w-3 h-3" />
+                      Secured
+                    </span>
+                  </div>
                 </div>
-                <p className={`text-sm font-semibold ${isDark ? "text-white" : "text-neutral-900"}`}>
-                  Online Event Access
-                </p>
-                <p className="text-xs text-neutral-400">{platformLabel}</p>
+                <div className="grid grid-cols-2 divide-x divide-neutral-100 dark:divide-neutral-800 border-t border-neutral-100 dark:border-neutral-800">
+                  <div className="px-4 py-3 text-left">
+                    <p className="text-[8px] font-black tracking-widest uppercase text-neutral-400">
+                      Platform
+                    </p>
+                    <p className={`mt-0.5 text-xs font-bold truncate ${isDark ? "text-neutral-200" : "text-neutral-800"}`}>
+                      {platformLabel}
+                    </p>
+                  </div>
+                  <div className="px-4 py-3 text-left">
+                    <p className="text-[8px] font-black tracking-widest uppercase text-neutral-400">
+                      Access
+                    </p>
+                    <p className={`mt-0.5 text-xs font-bold truncate ${isDark ? "text-neutral-200" : "text-neutral-800"}`}>
+                      Approved attendees
+                    </p>
+                  </div>
+                </div>
               </div>
             )}
 

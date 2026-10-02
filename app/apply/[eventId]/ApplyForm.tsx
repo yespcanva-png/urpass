@@ -15,6 +15,9 @@ import {
   AlertCircle,
   IndianRupee,
   ChevronDown,
+  ShieldCheck,
+  Video,
+  Users,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { attendeeSchema, type AttendeeInput } from "@/lib/validations/attendee";
@@ -32,6 +35,7 @@ interface EventInfo {
   auto_approve: boolean;
   is_paid_event: boolean;
   ticket_price: number;
+  event_type: string;
   custom_fields?: CustomFieldDefinition[];
 }
 
@@ -133,6 +137,14 @@ export default function ApplyForm({
     month: "long",
     year: "numeric",
   });
+  const isOnline = event.event_type === "online";
+  const isHybrid = event.event_type === "hybrid";
+  const attendanceLabel = isOnline ? "Virtual access" : isHybrid ? "Hybrid access" : "Venue access";
+  const attendanceDetail = isOnline
+    ? "Secure join link after approval"
+    : isHybrid
+    ? "Join online or attend in person"
+    : "QR entry at venue";
 
   const selectedTicket = ticketTypes.find((t) => t.id === selectedTicketTypeId) ?? null;
   const effectiveTicketPrice = selectedTicket
@@ -439,11 +451,25 @@ export default function ApplyForm({
         {/* Ticket selector — uses radio inputs so native click handling bypasses any CSS stacking issues */}
         {ticketTypes.length > 0 && (
           <div
-            className="bg-white rounded-3xl border border-neutral-100 p-6 apply-in-3 mb-4 relative z-10"
-            style={{ boxShadow: "0 4px 32px 0 rgba(109,40,217,0.08)" }}
+            className="bg-white rounded-3xl border border-neutral-200/80 p-5 sm:p-6 apply-in-3 mb-4 relative z-10 overflow-hidden"
+            style={{ boxShadow: "0 18px 55px -34px rgba(15,23,42,0.35)" }}
           >
-            <h2 className="text-base font-semibold text-neutral-900 mb-4">Select a ticket</h2>
-            <div className="flex flex-col gap-2">
+            <div className="absolute inset-x-0 top-0 h-1 bg-neutral-950" />
+            <div className="flex items-start justify-between gap-4 mb-5">
+              <div>
+                <p className="text-[10px] font-black tracking-widest uppercase text-neutral-400 mb-1">
+                  Ticket Portfolio
+                </p>
+                <h2 className="text-lg font-bold tracking-tight text-neutral-950">
+                  Select your access tier
+                </h2>
+              </div>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-neutral-200 bg-neutral-50 px-2.5 py-1 text-[11px] font-bold text-neutral-700 shrink-0">
+                {isOnline ? <Video className="w-3.5 h-3.5" /> : <Ticket className="w-3.5 h-3.5" />}
+                {attendanceLabel}
+              </span>
+            </div>
+            <div className="flex flex-col gap-3">
               {ticketTypes.map((tt) => {
                 const isSoldOut = tt.remaining !== null && tt.remaining <= 0;
                 const isUpcoming = !!tt.isUpcoming;
@@ -452,17 +478,40 @@ export default function ApplyForm({
                 const isPaymentUnavailable = tt.price > 0 && !hasPaymentGateway;
                 const isSelected = selectedTicketTypeId === tt.id;
                 const isDisabled = !isAvailable || (isPaymentUnavailable && tt.price > 0);
+                const capacityLabel =
+                  tt.remaining === null
+                    ? "Open capacity"
+                    : `${tt.remaining} seat${tt.remaining !== 1 ? "s" : ""} left`;
+                const statusLabel = isUpcoming
+                  ? tt.sales_start
+                    ? `Opens ${new Date(tt.sales_start).toLocaleDateString("en-IN", {
+                        month: "short",
+                        day: "numeric",
+                      })}`
+                    : "Coming soon"
+                  : isEnded
+                  ? "Sales ended"
+                  : isSoldOut
+                  ? "Sold out"
+                  : isPaymentUnavailable
+                  ? "Payment unavailable"
+                  : "Available";
+
                 return (
                   <label
                     key={tt.id}
-                    className={`flex items-start gap-3 rounded-2xl border p-4 transition-all ${
+                    className={`group relative overflow-hidden rounded-2xl border transition-all ${
                       isSelected
-                        ? "border-brand bg-brand-50 cursor-pointer"
+                        ? "border-neutral-950 bg-neutral-950 text-white shadow-xl shadow-neutral-950/15 cursor-pointer"
                         : isDisabled
-                        ? "border-neutral-100 bg-neutral-50/80 opacity-60 cursor-not-allowed"
-                        : "border-neutral-200 hover:border-brand/40 hover:bg-neutral-50 cursor-pointer"
+                        ? "border-neutral-100 bg-neutral-50/80 opacity-70 cursor-not-allowed"
+                        : "border-neutral-200 bg-white hover:border-neutral-400 hover:shadow-lg hover:shadow-neutral-900/5 cursor-pointer"
                     }`}
                   >
+                    <div
+                      className="absolute inset-y-0 left-0 w-1"
+                      style={{ backgroundColor: isSelected ? branding.brandColor : "#d4d4d8" }}
+                    />
                     {/* Native radio — hidden but drives selection */}
                     <input
                       type="radio"
@@ -474,70 +523,108 @@ export default function ApplyForm({
                       className="sr-only"
                     />
 
-                    {/* Custom radio dot */}
-                    <span
-                      className={`mt-0.5 w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
-                        isSelected
-                          ? "border-brand bg-brand"
-                          : isDisabled
-                          ? "border-neutral-200 bg-neutral-100"
-                          : "border-neutral-300"
-                      }`}
-                    >
-                      {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
-                    </span>
-
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm font-semibold text-neutral-900 truncate">
+                    <div className="grid grid-cols-[1fr_auto] gap-4 p-4 sm:p-5">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span
+                            className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wider ${
+                              isSelected
+                                ? "bg-white/10 text-white"
+                                : isAvailable
+                                ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
+                                : "bg-neutral-100 text-neutral-500 border border-neutral-200"
+                            }`}
+                          >
+                            <ShieldCheck className="w-3 h-3" />
+                            {statusLabel}
+                          </span>
+                          <span
+                            className={`text-[10px] font-bold uppercase tracking-wider ${
+                              isSelected ? "text-white/50" : "text-neutral-400"
+                            }`}
+                          >
+                            {tt.category.replace(/_/g, " ")}
+                          </span>
+                        </div>
+                        <h3
+                          className={`mt-2 text-base font-bold tracking-tight truncate ${
+                            isSelected ? "text-white" : "text-neutral-950"
+                          }`}
+                        >
                           {tt.name}
-                        </span>
-                        {isUpcoming && (
-                          <span className="text-[11px] font-semibold text-blue-700 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-full shrink-0">
-                            {tt.sales_start
-                              ? `Sales start ${new Date(tt.sales_start).toLocaleDateString("en-IN", {
-                                  month: "short",
-                                  day: "numeric",
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                })}`
-                              : "Coming soon"}
-                          </span>
+                        </h3>
+                        {tt.description && (
+                          <p
+                            className={`mt-1 text-xs leading-relaxed line-clamp-2 ${
+                              isSelected ? "text-white/65" : "text-neutral-500"
+                            }`}
+                          >
+                            {tt.description}
+                          </p>
                         )}
-                        {isEnded && !isUpcoming && (
-                          <span className="text-[11px] font-semibold text-neutral-600 bg-neutral-100 border border-neutral-200 px-2 py-0.5 rounded-full shrink-0">
-                            Sales ended
+                        <div
+                          className={`mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[11px] font-semibold ${
+                            isSelected ? "text-white/70" : "text-neutral-500"
+                          }`}
+                        >
+                          <span className="inline-flex items-center gap-1">
+                            {isOnline ? <Video className="w-3.5 h-3.5" /> : <Ticket className="w-3.5 h-3.5" />}
+                            {attendanceDetail}
                           </span>
-                        )}
-                        {isSoldOut && !isUpcoming && !isEnded && (
-                          <span className="text-[11px] font-semibold text-red-600 bg-red-50 border border-red-100 px-2 py-0.5 rounded-full shrink-0">
-                            Sold out
+                          <span className="inline-flex items-center gap-1">
+                            <Users className="w-3.5 h-3.5" />
+                            {capacityLabel}
                           </span>
-                        )}
-                        {isPaymentUnavailable && !isSoldOut && !isUpcoming && !isEnded && (
-                          <span className="text-[11px] font-semibold text-amber-700 bg-amber-50 border border-amber-100 px-2 py-0.5 rounded-full shrink-0">
-                            Payment unavailable
-                          </span>
-                        )}
+                        </div>
                       </div>
-                      {tt.description && (
-                        <p className="text-xs text-neutral-500 mt-0.5 leading-relaxed">
-                          {tt.description}
-                        </p>
-                      )}
-                      {tt.remaining !== null && isAvailable && (
-                        <p className="text-[11px] text-neutral-400 mt-1">
-                          {tt.remaining} spot{tt.remaining !== 1 ? "s" : ""} left
-                        </p>
-                      )}
-                    </div>
 
-                    <span className="text-sm font-bold text-neutral-900 shrink-0 mt-0.5">
-                      {tt.price === 0 ? "Free" : `₹${(tt.price / 100).toLocaleString("en-IN")}`}
-                    </span>
+                      <div className="flex flex-col items-end justify-between gap-4 text-right">
+                        <div>
+                          <p
+                            className={`text-[10px] font-black uppercase tracking-widest ${
+                              isSelected ? "text-white/45" : "text-neutral-400"
+                            }`}
+                          >
+                            Price
+                          </p>
+                          <p
+                            className={`text-xl font-black tabular-nums ${
+                              isSelected ? "text-white" : "text-neutral-950"
+                            }`}
+                          >
+                            {tt.price === 0 ? "Free" : `₹${(tt.price / 100).toLocaleString("en-IN")}`}
+                          </p>
+                        </div>
+                        <span
+                          className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
+                            isSelected
+                              ? "border-white bg-white"
+                              : isDisabled
+                              ? "border-neutral-200 bg-neutral-100"
+                              : "border-neutral-300 group-hover:border-neutral-500"
+                          }`}
+                        >
+                          {isSelected && (
+                            <span
+                              className="w-2 h-2 rounded-full"
+                              style={{ backgroundColor: branding.brandColor }}
+                            />
+                          )}
+                        </span>
+                      </div>
+                    </div>
                   </label>
                 );
               })}
+            </div>
+            <div className="mt-4 rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-3">
+              <p className="text-[11px] font-semibold leading-relaxed text-neutral-600">
+                {isOnline
+                  ? "Your approved pass unlocks the online event join button. Meeting details stay protected until registration is confirmed."
+                  : isHybrid
+                  ? "Your approved pass works for venue check-in and includes online joining instructions where enabled."
+                  : "Your approved pass includes a verifiable QR credential for venue entry."}
+              </p>
             </div>
           </div>
         )}
