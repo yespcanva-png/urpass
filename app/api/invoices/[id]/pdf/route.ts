@@ -1,8 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createAdminClient } from "@supabase/supabase-js";
+import { getSupabaseUrl } from "@/lib/supabase/config";
+import { isOpsAuthenticated } from "@/lib/ops/auth";
 import { generateInvoicePdf, type InvoiceRecord } from "@/lib/invoices";
 
 export const dynamic = "force-dynamic";
+
+function adminClient() {
+  return createAdminClient(
+    getSupabaseUrl(),
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 export async function GET(
   req: NextRequest,
@@ -13,25 +23,46 @@ export async function GET(
     return NextResponse.json({ error: "Missing invoice ID" }, { status: 400 });
   }
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  let invoice: InvoiceRecord | null = null;
 
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  // 1. Allow Ops admin to access any invoice
+  const isOps = await isOpsAuthenticated();
+  if (isOps) {
+    const admin = adminClient();
+    const { data } = await admin
+      .from("invoices")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle();
+
+    if (data) {
+      invoice = data as InvoiceRecord;
+    }
   }
 
-  // Look up invoice scoped to the authenticated user
-  const { data: invoice, error } = await supabase
-    .from("invoices")
-    .select("*")
-    .eq("id", id)
-    .eq("user_id", user.id)
-    .single();
+  // 2. Normal authenticated user scoped to their own invoice
+  if (!invoice) {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-  if (error || !invoice) {
-    return NextResponse.json({ error: "Invoice not found or unauthorized" }, { status: 404 });
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { data, error } = await supabase
+      .from("invoices")
+      .select("*")
+      .eq("id", id)
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (error || !data) {
+      return NextResponse.json({ error: "Invoice not found or unauthorized" }, { status: 404 });
+    }
+
+    invoice = data as InvoiceRecord;
   }
 
   const pdfBytes = await generateInvoicePdf(invoice as InvoiceRecord);

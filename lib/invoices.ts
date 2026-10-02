@@ -23,6 +23,8 @@ export interface InvoiceCreationParams {
   customerEmail?: string;
   customerAddress?: string | null;
   customerGstin?: string | null;
+  customerState?: string | null;
+  customerStateCode?: string | null;
   billingPeriodStart?: Date | string | null;
   billingPeriodEnd?: Date | string | null;
 }
@@ -69,9 +71,120 @@ const SELLER = {
   address: "Tamil Nadu, India",
   website: "urpass.space",
   email: "urpass.space@yespstudio.com",
-  placeOfSupply: "Tamil Nadu (33)",
+  placeOfSupply: "Tamil Nadu",
   stateCode: "33",
 };
+
+const URPASS_SERVICE = {
+  name: "URPASS SaaS Subscription",
+  description: "Monthly subscription for access to the URPASS event management platform.",
+  sac: "997331",
+  sacNote: "SAC 997331: Licensing services for the right to use computer software and databases.",
+  gstRate: 18,
+};
+
+const GST_STATE_CODES: Record<string, string> = {
+  "01": "Jammu & Kashmir",
+  "02": "Himachal Pradesh",
+  "03": "Punjab",
+  "04": "Chandigarh",
+  "05": "Uttarakhand",
+  "06": "Haryana",
+  "07": "Delhi",
+  "08": "Rajasthan",
+  "09": "Uttar Pradesh",
+  "10": "Bihar",
+  "11": "Sikkim",
+  "12": "Arunachal Pradesh",
+  "13": "Nagaland",
+  "14": "Manipur",
+  "15": "Mizoram",
+  "16": "Tripura",
+  "17": "Meghalaya",
+  "18": "Assam",
+  "19": "West Bengal",
+  "20": "Jharkhand",
+  "21": "Odisha",
+  "22": "Chhattisgarh",
+  "23": "Madhya Pradesh",
+  "24": "Gujarat",
+  "26": "Dadra & Nagar Haveli and Daman & Diu",
+  "27": "Maharashtra",
+  "29": "Karnataka",
+  "30": "Goa",
+  "31": "Lakshadweep",
+  "32": "Kerala",
+  "33": "Tamil Nadu",
+  "34": "Puducherry",
+  "35": "Andaman & Nicobar Islands",
+  "36": "Telangana",
+  "37": "Andhra Pradesh",
+  "38": "Ladakh",
+  "97": "Other Territory",
+};
+
+function formatStateLabel(state?: string | null, code?: string | null) {
+  const cleanState = state?.trim();
+  const cleanCode = code?.trim();
+  if (cleanState && cleanCode) return `${cleanState} (${cleanCode})`;
+  if (cleanState) return cleanState;
+  if (cleanCode && GST_STATE_CODES[cleanCode]) return `${GST_STATE_CODES[cleanCode]} (${cleanCode})`;
+  if (cleanCode) return `State Code ${cleanCode}`;
+  return "Not provided";
+}
+
+function resolveCustomerState(input: {
+  gstin?: string | null;
+  address?: string | null;
+  state?: string | null;
+  stateCode?: string | null;
+}): { state: string | null; code: string | null } {
+  const explicitCode = input.stateCode?.trim();
+  if (explicitCode) {
+    return { state: input.state?.trim() || GST_STATE_CODES[explicitCode] || null, code: explicitCode };
+  }
+
+  const gstCode = input.gstin?.trim().slice(0, 2);
+  if (gstCode && GST_STATE_CODES[gstCode]) {
+    return { state: GST_STATE_CODES[gstCode], code: gstCode };
+  }
+
+  const haystack = `${input.state || ""} ${input.address || ""}`.toLowerCase();
+  for (const [code, state] of Object.entries(GST_STATE_CODES)) {
+    if (haystack.includes(state.toLowerCase())) {
+      return { state, code };
+    }
+  }
+
+  if (haystack.includes("tn")) return { state: "Tamil Nadu", code: "33" };
+  if (haystack.includes("karnataka")) return { state: "Karnataka", code: "29" };
+  return { state: input.state?.trim() || null, code: null };
+}
+
+function financialYearFor(date: Date) {
+  const year = date.getFullYear();
+  const startsThisCalendarYear = date.getMonth() >= 3;
+  const startYear = startsThisCalendarYear ? year : year - 1;
+  const endYear = startYear + 1;
+  return {
+    startYear,
+    endYear,
+    label: `${String(startYear).slice(-2)}-${String(endYear).slice(-2)}`,
+  };
+}
+
+async function nextInvoiceNumber(supabase: ReturnType<typeof adminClient>, date: Date) {
+  const fy = financialYearFor(date);
+  const start = `${fy.startYear}-04-01`;
+  const end = `${fy.endYear}-03-31`;
+  const { count } = await supabase
+    .from("invoices")
+    .select("id", { count: "exact", head: true })
+    .gte("invoice_date", start)
+    .lte("invoice_date", end);
+
+  return `URP/${fy.label}/${String((count || 0) + 1).padStart(6, "0")}`;
+}
 
 export function numToWords(n: number): string {
   const units = [
@@ -209,17 +322,24 @@ export async function createInvoiceForPayment(
 
   const date = new Date();
   const dateStr = date.toISOString().slice(0, 10);
-  const yyyymm = dateStr.slice(0, 7).replace("-", "");
-  const randomSuffix = Math.floor(1000 + Math.random() * 9000);
-  const invoiceNumber = `INV-${yyyymm}-${randomSuffix}`;
+  const invoiceNumber = await nextInvoiceNumber(supabase, date);
 
   const subtotal = Math.max(0, Number(params.baseAmountRupees) || 0);
   const discount = Math.max(0, Number(params.discountRupees) || 0);
   const taxableAmount = Math.max(0, subtotal - discount);
 
-  let cgstRate = 9;
+  const customerState = resolveCustomerState({
+    gstin: custGstin,
+    address: custAddress,
+    state: params.customerState,
+    stateCode: params.customerStateCode,
+  });
+
+  const isIntraState = !isUk && customerState.code === SELLER.stateCode;
+
+  let cgstRate = 0;
   let cgstAmount = 0;
-  let sgstRate = 9;
+  let sgstRate = 0;
   let sgstAmount = 0;
   let igstRate = 0;
   let igstAmount = 0;
@@ -233,9 +353,17 @@ export async function createInvoiceForPayment(
     igstAmount = Math.round(taxableAmount * 0.20 * 100) / 100;
     totalAmount = Math.round((taxableAmount + igstAmount) * 100) / 100;
   } else {
-    cgstAmount = Math.round(taxableAmount * 0.09 * 100) / 100;
-    sgstAmount = Math.round(taxableAmount * 0.09 * 100) / 100;
-    totalAmount = Math.round((taxableAmount + cgstAmount + sgstAmount) * 100) / 100;
+    if (isIntraState) {
+      cgstRate = 9;
+      sgstRate = 9;
+      cgstAmount = Math.round(taxableAmount * 0.09 * 100) / 100;
+      sgstAmount = Math.round(taxableAmount * 0.09 * 100) / 100;
+      totalAmount = Math.round((taxableAmount + cgstAmount + sgstAmount) * 100) / 100;
+    } else {
+      igstRate = 18;
+      igstAmount = Math.round(taxableAmount * 0.18 * 100) / 100;
+      totalAmount = Math.round((taxableAmount + igstAmount) * 100) / 100;
+    }
   }
 
   const toDateString = (d?: Date | string | null) =>
@@ -244,8 +372,8 @@ export async function createInvoiceForPayment(
   const sellerName = isUk ? "Yesp Corporation UK" : SELLER.name;
   const sellerGstin = isUk ? "GB 987 6543 21" : SELLER.gstin;
   const sellerAddress = isUk ? "London, United Kingdom" : SELLER.address;
-  const placeOfSupply = isUk ? "United Kingdom" : SELLER.placeOfSupply;
-  const stateCode = isUk ? "GB" : SELLER.stateCode;
+  const placeOfSupply = isUk ? "United Kingdom" : formatStateLabel(customerState.state, customerState.code);
+  const stateCode = isUk ? "GB" : (customerState.code || "");
 
   const invoiceRow = {
     invoice_number: invoiceNumber,
@@ -325,6 +453,21 @@ export async function generateInvoicePdf(invoice: InvoiceRecord): Promise<Uint8A
   const margin = 50;
   const contentWidth = width - margin * 2; // 495.28 pt
   const rightEdge = width - margin;
+  const isUkInvoice = (invoice.currency || "").toUpperCase() === "GBP";
+  const currencyCode = isUkInvoice ? "GBP" : "INR";
+  const rawAddress = invoice.customer_address?.trim();
+  const customerAddress =
+    !rawAddress || rawAddress.toLowerCase() === "customer billing address"
+      ? "Not provided"
+      : rawAddress;
+  const rawGstin = invoice.customer_gstin?.trim();
+  const customerGstin =
+    !rawGstin || rawGstin === "29ABCDE1234F1Z5"
+      ? "Not registered / Not provided"
+      : rawGstin;
+  const placeOfSupply = invoice.place_of_supply?.trim() || "Not provided";
+  const customerStateCode = invoice.state_code?.trim() || "Not provided";
+  const paymentMethod = isUkInvoice ? "Card / Bank Transfer" : "UPI / Card / Net Banking";
 
   // Helper: draw text right-aligned to rightEdge
   const drawTextRight = (text: string, y: number, size: number, font: typeof fontRegular, color: typeof dark) => {
@@ -380,7 +523,7 @@ export async function generateInvoicePdf(invoice: InvoiceRecord): Promise<Uint8A
   });
 
   // Top-Right: TAX INVOICE & PAID Badge
-  const titleText = "TAX INVOICE";
+  const titleText = "TAX INVOICE - PAID";
   const titleWidth = fontBold.widthOfTextAtSize(titleText, 20);
   page.drawText(titleText, {
     x: rightEdge - titleWidth,
@@ -390,7 +533,7 @@ export async function generateInvoicePdf(invoice: InvoiceRecord): Promise<Uint8A
     color: dark,
   });
 
-  // Elegant green PAID pill badge
+  // Elegant green paid status pill
   const badgeW = 48;
   const badgeH = 18;
   const badgeX = rightEdge - badgeW;
@@ -447,7 +590,7 @@ export async function generateInvoicePdf(invoice: InvoiceRecord): Promise<Uint8A
     });
   };
 
-  drawMetaBox(0, "Invoice Number", invoice.invoice_number || "URP/26-27/0001");
+  drawMetaBox(0, "Invoice Number", invoice.invoice_number || "URP/26-27/000001");
   drawMetaBox(1, "Issue Date", invoice.invoice_date || "20 Sep 2026");
   drawMetaBox(2, "Due Date", invoice.invoice_date || "20 Sep 2026");
   drawMetaBox(
@@ -470,13 +613,11 @@ export async function generateInvoicePdf(invoice: InvoiceRecord): Promise<Uint8A
   });
 
   // ---------------- 3. SELLER & CUSTOMER SECTION ----------------
-  const isUkInvoice = (invoice.currency || "").toUpperCase() === "GBP";
-  const currencyCode = isUkInvoice ? "GBP" : "INR";
   const partiesY = metaDividerY - 32;
   const colHalf = contentWidth / 2;
 
   // FROM (SELLER)
-  page.drawText("FROM (SELLER)", { x: margin, y: partiesY, size: 8, font: fontBold, color: muted });
+  page.drawText("FROM - SELLER", { x: margin, y: partiesY, size: 8, font: fontBold, color: muted });
   page.drawText(invoice.seller_name || (isUkInvoice ? "Yesp Corporation UK" : "Yesp Corporation"), { x: margin, y: partiesY - 18, size: 12, font: fontBold, color: dark });
   page.drawText(
     isUkInvoice
@@ -485,26 +626,30 @@ export async function generateInvoicePdf(invoice: InvoiceRecord): Promise<Uint8A
     { x: margin, y: partiesY - 34, size: 9, font: fontBold, color: bodyText }
   );
   page.drawText(invoice.seller_address || (isUkInvoice ? "London, United Kingdom" : "Tamil Nadu, India"), { x: margin, y: partiesY - 49, size: 9, font: fontRegular, color: muted });
-  page.drawText("Website: urpass.space", { x: margin, y: partiesY - 64, size: 9, font: fontRegular, color: muted });
-  page.drawText(isUkInvoice ? "Email: billing@urpass.space" : "Email: urpass.space@yespstudio.com", { x: margin, y: partiesY - 79, size: 9, font: fontRegular, color: primary });
+  page.drawText(isUkInvoice ? "Country: United Kingdom" : `State: ${SELLER.placeOfSupply} (${SELLER.stateCode})`, { x: margin, y: partiesY - 64, size: 9, font: fontRegular, color: muted });
+  page.drawText("Website: urpass.space", { x: margin, y: partiesY - 79, size: 9, font: fontRegular, color: muted });
+  page.drawText(isUkInvoice ? "Email: billing@urpass.space" : "Email: urpass.space@yespstudio.com", { x: margin, y: partiesY - 94, size: 9, font: fontRegular, color: primary });
 
   // BILL TO (CUSTOMER)
   const custX = margin + colHalf;
-  page.drawText("BILL TO (CUSTOMER)", { x: custX, y: partiesY, size: 8, font: fontBold, color: muted });
-  page.drawText(invoice.customer_name || "ABC Events Pvt Ltd", { x: custX, y: partiesY - 18, size: 12, font: fontBold, color: dark });
-  page.drawText(invoice.customer_address || (isUkInvoice ? "United Kingdom" : "Customer Billing Address"), { x: custX, y: partiesY - 34, size: 9, font: fontRegular, color: muted });
+  page.drawText("BILL TO - CUSTOMER", { x: custX, y: partiesY, size: 8, font: fontBold, color: muted });
+  page.drawText(invoice.customer_name || "Valued Customer", { x: custX, y: partiesY - 18, size: 12, font: fontBold, color: dark });
+  page.drawText(customerAddress, { x: custX, y: partiesY - 34, size: 9, font: fontRegular, color: muted });
   if (isUkInvoice) {
     if (invoice.customer_gstin) {
       page.drawText(`VAT ID: ${invoice.customer_gstin}`, { x: custX, y: partiesY - 49, size: 9, font: fontBold, color: bodyText });
     }
   } else {
-    page.drawText(`GSTIN: ${invoice.customer_gstin || "29ABCDE1234F1Z5"}`, { x: custX, y: partiesY - 49, size: 9, font: fontBold, color: bodyText });
+    page.drawText(`GSTIN: ${customerGstin}`, { x: custX, y: partiesY - 49, size: 9, font: fontBold, color: bodyText });
   }
-  page.drawText(isUkInvoice ? "Country: United Kingdom" : `State: ${invoice.place_of_supply || "Karnataka (29)"}`, { x: custX, y: partiesY - 64, size: 9, font: fontRegular, color: muted });
-  page.drawText(`Email: ${invoice.customer_email || "billing@abcevents.com"}`, { x: custX, y: partiesY - 79, size: 9, font: fontRegular, color: primary });
+  page.drawText(isUkInvoice ? "Country: United Kingdom" : `Place of Supply: ${placeOfSupply}`, { x: custX, y: partiesY - 64, size: 9, font: fontRegular, color: muted });
+  if (!isUkInvoice) {
+    page.drawText(`State Code: ${customerStateCode}`, { x: custX, y: partiesY - 79, size: 9, font: fontRegular, color: muted });
+  }
+  page.drawText(`Email: ${invoice.customer_email || "Not provided"}`, { x: custX, y: partiesY - 94, size: 9, font: fontRegular, color: primary });
 
   // Divider above table
-  const partiesDividerY = partiesY - 102;
+  const partiesDividerY = partiesY - 108;
   page.drawLine({
     start: { x: margin, y: partiesDividerY },
     end: { x: rightEdge, y: partiesDividerY },
@@ -513,7 +658,7 @@ export async function generateInvoicePdf(invoice: InvoiceRecord): Promise<Uint8A
   });
 
   // ---------------- 4. ITEM TABLE ----------------
-  const tableY = partiesDividerY - 32;
+  const tableY = partiesDividerY - 28;
 
   // Table header background
   page.drawRectangle({
@@ -529,7 +674,7 @@ export async function generateInvoicePdf(invoice: InvoiceRecord): Promise<Uint8A
   // Table Columns
   const colNumX = margin + 14;
   const colDescX = margin + 42;
-  const colSacX = margin + 245;
+  const colSacX = margin + 255;
   const colQtyX = margin + 320;
   const colRateX = margin + 410;
   const colAmountX = rightEdge - 14;
@@ -544,7 +689,7 @@ export async function generateInvoicePdf(invoice: InvoiceRecord): Promise<Uint8A
 
   // Line item 1
   const rowY = tableY - 32;
-  const taxableVal = Number(invoice.taxable_amount || 1999);
+  const taxableVal = Number(invoice.taxable_amount || 0);
   const formattedRate = isUkInvoice
     ? taxableVal.toFixed(2)
     : taxableVal.toLocaleString("en-IN", { minimumFractionDigits: 2 });
@@ -553,18 +698,12 @@ export async function generateInvoicePdf(invoice: InvoiceRecord): Promise<Uint8A
     : taxableVal.toLocaleString("en-IN", { minimumFractionDigits: 2 });
 
   page.drawText("1", { x: colNumX, y: rowY, size: 9, font: fontRegular, color: dark });
-  page.drawText(invoice.description || "URPASS Software License", { x: colDescX, y: rowY, size: 10.5, font: fontBold, color: dark });
-  const subHeading = invoice.description?.includes("Founder") || invoice.description?.includes("Lifetime")
-    ? "Lifetime Operational Access · Single Payment"
-    : invoice.description?.includes("Event Pass")
-    ? "Single Event Registration License"
-    : invoice.description?.includes("annual") || invoice.description?.includes("Annual")
-    ? "Annual Software Subscription"
-    : "Monthly Software Subscription";
+  page.drawText(URPASS_SERVICE.name, { x: colDescX, y: rowY, size: 10.5, font: fontBold, color: dark });
+  const subHeading = URPASS_SERVICE.description;
   page.drawText(subHeading, {
     x: colDescX,
     y: rowY - 14,
-    size: 8.5,
+    size: 8,
     font: fontRegular,
     color: muted,
   });
@@ -581,7 +720,7 @@ export async function generateInvoicePdf(invoice: InvoiceRecord): Promise<Uint8A
     color: lightMuted,
   });
 
-  page.drawText("998313", { x: colSacX, y: rowY, size: 9, font: fontRegular, color: bodyText });
+  page.drawText(URPASS_SERVICE.sac, { x: colSacX, y: rowY, size: 9, font: fontRegular, color: bodyText });
   page.drawText("1", { x: colQtyX + 4, y: rowY, size: 9, font: fontRegular, color: bodyText });
   drawTextRightAt(formattedRate, colRateX, rowY, 9, fontRegular, bodyText);
   drawTextRightAt(formattedAmount, colAmountX, rowY, 9.5, fontBold, dark);
@@ -595,8 +734,16 @@ export async function generateInvoicePdf(invoice: InvoiceRecord): Promise<Uint8A
     thickness: 1,
   });
 
+  page.drawText(URPASS_SERVICE.sacNote, {
+    x: colDescX,
+    y: rowBottomY - 14,
+    size: 7.5,
+    font: fontRegular,
+    color: lightMuted,
+  });
+
   // ---------------- 5. PAYMENT & TOTALS SECTION ----------------
-  const calcTopY = rowBottomY - 36;
+  const calcTopY = rowBottomY - 50;
 
   // Left: PAYMENT DETAILS
   page.drawText("PAYMENT DETAILS", { x: margin, y: calcTopY, size: 8, font: fontBold, color: muted });
@@ -609,8 +756,8 @@ export async function generateInvoicePdf(invoice: InvoiceRecord): Promise<Uint8A
   };
 
   drawPaymentItem("Payment Status:", "PAID", true);
-  drawPaymentItem("Payment Method:", isUkInvoice ? "Direct UK / Card" : "UPI");
-  drawPaymentItem("Transaction ID:", invoice.payment_id || "pay_Qr7H9k3LmN2");
+  drawPaymentItem("Payment Method:", paymentMethod);
+  drawPaymentItem("Transaction ID:", invoice.payment_id || "Not available");
   drawPaymentItem("Payment Date:", invoice.invoice_date || "20 Sep 2026");
 
   // Subtle thank you card
@@ -656,10 +803,12 @@ export async function generateInvoicePdf(invoice: InvoiceRecord): Promise<Uint8A
     currentSumY -= 18;
   };
 
-  const subtotalVal = Number(invoice.subtotal || 1999);
-  const cgstVal = Number(invoice.cgst_amount || 179.91);
-  const sgstVal = Number(invoice.sgst_amount || 179.91);
-  const totalVal = Number(invoice.total_amount || 2358.82);
+  const subtotalVal = Number(invoice.subtotal || taxableVal || 0);
+  const taxableAmountVal = Number(invoice.taxable_amount || taxableVal || 0);
+  const cgstVal = Number(invoice.cgst_amount || 0);
+  const sgstVal = Number(invoice.sgst_amount || 0);
+  const igstVal = Number(invoice.igst_amount || 0);
+  const totalVal = Number(invoice.total_amount || taxableAmountVal + cgstVal + sgstVal + igstVal);
 
   if (isUkInvoice) {
     const vatVal = Number(invoice.igst_amount || Math.round(subtotalVal * 0.20 * 100) / 100);
@@ -667,8 +816,16 @@ export async function generateInvoicePdf(invoice: InvoiceRecord): Promise<Uint8A
     drawTotalLine("VAT (20%):", `GBP ${vatVal.toFixed(2)}`);
   } else {
     drawTotalLine("Subtotal:", `INR ${subtotalVal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`);
-    drawTotalLine("CGST (9%):", `INR ${cgstVal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`);
-    drawTotalLine("SGST (9%):", `INR ${sgstVal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`);
+    if (Number(invoice.discount || 0) > 0) {
+      drawTotalLine("Discount:", `INR ${Number(invoice.discount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`);
+    }
+    drawTotalLine("Taxable Value:", `INR ${taxableAmountVal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`);
+    if (igstVal > 0 || Number(invoice.igst_rate || 0) > 0) {
+      drawTotalLine(`IGST (${Number(invoice.igst_rate || 18)}%):`, `INR ${igstVal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`);
+    } else {
+      drawTotalLine(`CGST (${Number(invoice.cgst_rate || 9)}%):`, `INR ${cgstVal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`);
+      drawTotalLine(`SGST (${Number(invoice.sgst_rate || 9)}%):`, `INR ${sgstVal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`);
+    }
   }
 
   // Hairline before Total Box
@@ -763,7 +920,7 @@ export async function generateInvoicePdf(invoice: InvoiceRecord): Promise<Uint8A
       font: fontRegular,
       color: lightMuted,
     });
-    drawTextRight("This is a computer-generated tax invoice issued in compliance with GST Rules.", 20, 7.5, fontRegular, lightMuted);
+    drawTextRight("Computer-generated tax invoice. Confirm SAC classification with your CA for permanent filing.", 20, 7.5, fontRegular, lightMuted);
   }
 
   return await pdfDoc.save();

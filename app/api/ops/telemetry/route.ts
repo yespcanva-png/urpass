@@ -7,6 +7,27 @@ import { getSponsorshipApplications } from "@/lib/ops/sponsorship";
 
 export const dynamic = "force-dynamic";
 
+export interface OpsInvoiceItem {
+  id: string;
+  invoice_number: string;
+  invoice_date: string;
+  customer_name: string;
+  customer_email: string;
+  customer_gstin: string | null;
+  place_of_supply: string | null;
+  state_code: string | null;
+  taxable_amount: number | string | null;
+  cgst_amount: number | string | null;
+  sgst_amount: number | string | null;
+  igst_amount: number | string | null;
+  total_amount: number | string | null;
+  currency: string | null;
+  payment_status: string;
+  invoice_status: string;
+  payment_id: string | null;
+  created_at: string;
+}
+
 function adminClient() {
   return createAdminClient(
     getSupabaseUrl(),
@@ -32,7 +53,7 @@ export async function GET() {
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
     // Parallel fetch with corrected schema columns
-    const [subsRes, profRes, evRes, ciRes, auditRes, authRes] = await Promise.all([
+    const [subsRes, profRes, evRes, ciRes, auditRes, invRes, authRes] = await Promise.all([
       admin
         .from("subscriptions")
         .select("id, user_id, status, provider, autopay_status, billing_cycle, updated_at, created_at")
@@ -63,6 +84,13 @@ export async function GET() {
         .order("created_at", { ascending: false })
         .limit(30),
 
+      admin
+        .from("invoices")
+        .select("id, invoice_number, invoice_date, customer_name, customer_email, customer_gstin, place_of_supply, state_code, taxable_amount, cgst_amount, sgst_amount, igst_amount, total_amount, currency, payment_status, invoice_status, payment_id, created_at")
+        .order("invoice_date", { ascending: false })
+        .order("created_at", { ascending: false })
+        .limit(100),
+
       admin.auth.admin.listUsers({ page: 1, perPage: 50 }).catch(() => ({ data: { users: [] } })),
     ]);
 
@@ -71,6 +99,7 @@ export async function GET() {
     const events = evRes.data || [];
     const checkIns = ciRes.data || [];
     const auditLogs = auditRes.data || [];
+    const invoices = (invRes.data || []) as OpsInvoiceItem[];
     const authUsers = authRes.data?.users || [];
 
     const dbLatencyMs = Date.now() - startTime;
@@ -260,6 +289,23 @@ export async function GET() {
       });
     });
 
+    invoices.slice(0, 25).forEach((inv) => {
+      logs.push({
+        id: `invoice-${inv.id}`,
+        timestamp: inv.created_at || inv.invoice_date,
+        level: inv.payment_status === "paid" ? "SUCCESS" : "INFO",
+        category: "BILLING",
+        message: `Invoice issued: ${inv.invoice_number} for ${inv.customer_email} total=${inv.currency || "INR"} ${inv.total_amount}`,
+        details: {
+          invoiceId: inv.id,
+          customer: inv.customer_name,
+          placeOfSupply: inv.place_of_supply,
+          stateCode: inv.state_code,
+          paymentId: inv.payment_id,
+        },
+      });
+    });
+
     // 7. Enterprise audit logs
     auditLogs.forEach((a) => {
       logs.push({
@@ -316,6 +362,10 @@ export async function GET() {
         pendingCount: pendingSponsorshipsCount,
         totalCount: sponsorshipsList.length,
         items: sponsorshipsList.slice(0, 50),
+      },
+      invoices: {
+        totalCount: invoices.length,
+        items: invoices,
       },
       logs: uniqueLogs.slice(-100), // Return last 100 chronological real logs
     });
