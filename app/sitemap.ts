@@ -204,6 +204,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/how-to-create-qr-tickets-for-an-event",
     // 25 High-Intent SEO & GEO Pages
     "/event-badge-printing-software",
+    "/event-lead-retrieval-software",
+    "/exhibitor-management-software",
+    "/event-sponsorship-management-software",
+    "/b2b-event-matchmaking-software",
+    "/event-zone-access-control-software",
+    "/onsite-event-registration-software",
     "/fastest-event-check-in-software",
     "/instant-qr-ticket-generator",
     "/event-registration-without-fees",

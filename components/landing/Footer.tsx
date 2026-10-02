@@ -136,6 +136,21 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/event-badge-printing-software" className="text-xs text-neutral-400 hover:text-white transition-colors">
+                  Badge Printing Studio
+                </Link>
+              </li>
+              <li>
+                <Link href="/onsite-event-registration-software" className="text-xs text-neutral-400 hover:text-white transition-colors">
+                  Onsite Registration Desk
+                </Link>
+              </li>
+              <li>
+                <Link href="/event-zone-access-control-software" className="text-xs text-neutral-400 hover:text-white transition-colors">
+                  Zone Access Control
+                </Link>
+              </li>
+              <li>
                 <Link href="/mcp-event-management" className="text-xs text-purple-300 hover:text-white transition-colors flex items-center gap-1.5 font-medium">
                   <span className="w-1.5 h-1.5 rounded-full bg-purple-400"></span>
                   Model Context Protocol (MCP)
@@ -206,6 +221,26 @@ export default function Footer() {
               <li>
                 <Link href="/community-events" className="text-xs text-neutral-400 hover:text-white transition-colors">
                   Community Meetups
+                </Link>
+              </li>
+              <li>
+                <Link href="/event-lead-retrieval-software" className="text-xs text-neutral-400 hover:text-white transition-colors">
+                  Lead Retrieval App
+                </Link>
+              </li>
+              <li>
+                <Link href="/exhibitor-management-software" className="text-xs text-neutral-400 hover:text-white transition-colors">
+                  Exhibitor Management
+                </Link>
+              </li>
+              <li>
+                <Link href="/event-sponsorship-management-software" className="text-xs text-neutral-400 hover:text-white transition-colors">
+                  Sponsorship Portal
+                </Link>
+              </li>
+              <li>
+                <Link href="/b2b-event-matchmaking-software" className="text-xs text-neutral-400 hover:text-white transition-colors">
+                  B2B Matchmaking Scheduler
                 </Link>
               </li>
             </ul>

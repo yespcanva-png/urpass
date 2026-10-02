@@ -1,100 +1,153 @@
 import type { Metadata } from "next";
-import { Ticket, Printer, Smartphone, ShieldCheck, QrCode, Sparkles, Layers, Download } from "lucide-react";
+import { Printer, Palette, QrCode, ShieldCheck, RefreshCw, Layers, CheckCircle2, Zap } from "lucide-react";
 import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
-  title: "Event Badge Printing & Digital Pass Software | URPASS",
+  title: "Event Badge Printing Software & Badge Studio | URPASS",
   description:
-    "Design and generate professional conference badges, printable PDF event passes, and digital QR tickets. Built-in Ticket Studio with vertical lanyard and digital formats.",
+    "Design custom attendee badges, print single or bulk credentials onsite, and track reprint audit logs. Compatible with standard thermal, laser, and inkjet badge printers.",
   keywords: [
     "event badge printing software",
     "conference badge printing",
-    "printable event tickets",
-    "lanyard badge generator",
-    "digital event badges",
-    "ticket studio URPASS",
+    "onsite badge printing software",
+    "event badge studio",
+    "attendee badge printer",
+    "thermal badge printing for events",
+    "conference lanyard badge software",
+    "reprint audit log badge system",
   ],
   alternates: { canonical: "https://urpass.space/event-badge-printing-software" },
   openGraph: {
-    title: "Event Badge Printing & Digital Pass Software | URPASS",
-    description: "Design and generate conference badges, printable passes, and digital QR tickets.",
+    title: "Event Badge Printing Software & Onsite Credential Studio | URPASS",
+    description:
+      "Design drag-and-drop badge templates for Attendees, VIPs, Speakers, and Sponsors. Print onsite in seconds with automated audit tracking.",
     url: "https://urpass.space/event-badge-printing-software",
-    locale: "en_IN",
+    siteName: "URPASS by Yesp Corporation",
     type: "website",
   },
 };
 
-export default function Page() {
+export default function EventBadgePrintingPage() {
   return (
     <SEOPage
       config={{
-        badge: "TICKET STUDIO & BADGING",
-        h1: "Event Badge Printing & Digital Pass Design Software",
         canonicalUrl: "https://urpass.space/event-badge-printing-software",
+        badge: "ONSITE CREDENTIALING & PRINTING",
+        h1: "Event Badge Printing Software & Credential Studio",
         description:
-          "Design bespoke digital passes, printable event tickets, and vertical conference lanyard badges with dynamic attendee names, custom branding, and high-contrast QR codes.",
-        ctaLabel: "Design Your Badges Free",
+          "Design professional lanyard badges, print on-demand at check-in desks or in bulk prior to showtime, and track reprint histories with cryptographic audit logs.",
+        ctaLabel: "Design & Print Badges Free",
         directAnswer: {
-          title: "How Does URPASS Generate and Print Event Badges?",
+          title: "How does onsite event badge printing work with URPASS?",
           summary:
-            "URPASS includes a built-in Ticket Studio that allows organizers to create professional event passes across three production formats: Mobile Digital Pass (380x680), Printable Ticket (780x340), and Vertical Conference Lanyard Badge (440x640). Passes dynamically inject attendee names, ticket tiers, and cryptographically verified QR codes ready for immediate print export or instant mobile delivery.",
+            "URPASS combines an in-browser Badge Studio with high-speed onsite print queue management. Organizers design templates with dynamic attendee names, company names, ticket tiers, and QR codes. At the registration desk, scanning an attendee pass or checking in a walk-in automatically triggers print execution on any connected thermal printer (Zebra, Brother, Rollo, Dymo) or standard laser printer, generating a crisp physical badge in under 3 seconds.",
           keyPoints: [
-            "Three standardized pass formats: Digital Mobile, Printable PDF, and Vertical Lanyard Badge",
-            "Dynamic attendee data injection: name, company/college, ticket tier, and single-use QR token",
-            "Zero design software needed: style brand colors, logo emblems, and pass labels directly in-browser",
-            "High-contrast QR barcodes optimized for under 0.3-second scanning under direct sunlight or dim auditoriums",
+            "Drag-and-drop Badge Studio supporting Portrait (CR80, 4x6, 4x3) and Landscape credential layouts",
+            "Role-specific design presets for Attendees, VIPs, Keynote Speakers, Staff, Sponsors, and Press",
+            "Single-badge on-demand printing at check-in or high-volume background batch printing",
+            "Tamper-proof reprint tracking with supervisor reason capture to prevent credential duplication fraud",
           ],
         },
         keyFactsTable: {
-          title: "Badge Design & Print Specifications",
-          subtitle: "Standardized dimensions, print layouts, and digital pass compatibility.",
-          headers: ["Format / Feature", "Specification Details", "Typical Use Case"],
+          title: "Onsite On-Demand Badge Printing vs Pre-Printed Badges",
+          subtitle: "Why modern corporate conferences and trade expos choose on-demand printing.",
+          headers: ["Capability", "URPASS On-Demand Badge Studio", "Traditional Pre-Printed Badges"],
           rows: [
-            { col1: "Vertical Lanyard Badge", col2: "440 x 640 px (standard conference clip)", col3: "Multi-day tech conferences, summits, and symposiums" },
-            { col1: "Printable Horizontal Ticket", col2: "780 x 340 px (high-res A4 printable)", col3: "Workshops, seminars, and physical paper desk check-in" },
-            { col1: "Mobile Digital Pass", col2: "380 x 680 px (responsive smartphone view)", col3: "College fests, hackathons, and paperless mobile entry" },
-            { col1: "QR Barcode Encoding", col2: "High-contrast ECC Level M with UUID token", col3: "Sub-0.3s gate camera scanning without focus lag" },
-            { col1: "Export Options", col2: "Instant PDF, high-res PNG image, and direct URL", col3: "Bulk pre-printing or automated email pass dispatch" },
+            { col1: "Wasted Pre-Printed Badges", col2: "0% — Badges printed only upon attendee arrival", col3: "30%–45% uncollected plastic waste and expense" },
+            { col1: "Last-Minute Registrations", col2: "Instant badge generation for walk-ins in < 3s", col3: "Handwritten labels or messy manual stick-ons" },
+            { col1: "Reprint Fraud Protection", col2: "Audited reprint logs with required supervisor notes", col3: "Zero audit trail; badge counterfeiting risk" },
+            { col1: "Printer Hardware Flexibility", col2: "Direct browser printing to standard thermal & laser printers", col3: "Locked into expensive proprietary rental hardware" },
+            { col1: "Multi-Role Credentialing", col2: "Color-coded tags for VIPs, Speakers, Press, and Staff", col3: "Single generic template with manual ribbon ribbons" },
           ],
         },
         features: [
-          { icon: Printer, title: "Lanyard & Conference Badge Layouts", desc: "Generate vertical badges formatted for standard clear lanyard sleeves with high-visibility attendee names and company affiliations." },
-          { icon: Smartphone, title: "Paperless Mobile Passes", desc: "Attendees open responsive passes directly in mobile Safari or Chrome with zero app downloads or account logins required." },
-          { icon: QrCode, title: "High-Contrast QR Codes", desc: "Decodable in under 0.3s by smartphone cameras, even on cracked phone screens or under challenging lighting." },
-          { icon: ShieldCheck, title: "Cryptographic Single-Use Tokens", desc: "Each badge embeds a unique UUID token that registers as invalid if duplicated or shared via screenshot." },
-          { icon: Sparkles, title: "Brand Identity Customization", desc: "Customize badge primary colors, accent tones, organizer logos, and custom registration fields in Ticket Studio." },
-          { icon: Download, title: "Bulk PDF & Image Export", desc: "Download high-resolution badges ready for venue badge printers or send direct pass links via email and WhatsApp." },
+          {
+            icon: Palette,
+            title: "Visual Drag-and-Drop Badge Studio",
+            desc: "Place attendee names, company titles, QR codes, logos, and custom fields with millimeter precision. Toggle lanyard hole cutouts and portrait/landscape orientations.",
+          },
+          {
+            icon: Printer,
+            title: "Single & High-Volume Bulk Printing",
+            desc: "Print badges automatically upon gate check-in, send individual reprints, or queue thousands of pre-event badges for sorted delegate pickup.",
+          },
+          {
+            icon: QrCode,
+            title: "Cryptographic QR Pass Integration",
+            desc: "Each printed badge features a single-use high-contrast QR code linked directly to the attendee record for zone scanning and lead retrieval.",
+          },
+          {
+            icon: ShieldCheck,
+            title: "Reprint Audit Logging & Fraud Control",
+            desc: "Every reprint request logs the timestamp, operator identity, and mandatory reason (lost, damaged, typo) to block unauthorized duplicate badges.",
+          },
+          {
+            icon: Layers,
+            title: "Role-Based Credential Styling",
+            desc: "Apply dynamic color accents and bold typography banners for VIP Executives, Exhibitors, Keynote Speakers, and Crew members.",
+          },
+          {
+            icon: Zap,
+            title: "Browser-Based Universal Printing",
+            desc: "No proprietary print drivers or dongles needed. Print directly through standard system dialogs on macOS, Windows, Linux, and iOS.",
+          },
         ],
         steps: [
-          { n: "01", title: "Select Badge Layout", desc: "Choose Vertical Lanyard Badge, Printable Ticket, or Mobile Digital Pass in Ticket Studio." },
-          { n: "02", title: "Apply Event Branding", desc: "Set your brand palette, upload event logos, and customize pass header labels." },
-          { n: "03", title: "Preview Live Roster", desc: "Inspect how attendee names, ticket tiers, and QR tokens render in real-time." },
-          { n: "04", title: "Export or Dispatch", desc: "Download print-ready badges for on-site distribution or email passes automatically upon registration." },
-          { n: "05", title: "Scan at Venue Entrances", desc: "Volunteers scan badges with smartphone cameras in <0.3s, tracking arrival timestamps in real-time." },
+          {
+            n: "01",
+            title: "Design Your Badge Template",
+            desc: "Choose a size preset (4x6in, 4x3in, or credit-card CR80) and configure dynamic attendee fields in the visual studio.",
+          },
+          {
+            n: "02",
+            title: "Connect Any Thermal or Laser Printer",
+            desc: "Hook up your standard Zebra, Brother, or Epson printer to your registration desk computer or tablet.",
+          },
+          {
+            n: "03",
+            title: "Print On Arrival",
+            desc: "Scan the delegate digital pass or search by name. The badge prints immediately as the attendee is checked in.",
+          },
         ],
-        callout: {
-          badge: "ZERO PAPER WASTE",
-          title: "Eliminate expensive badge printing hardware and disposable waste.",
-          description: "URPASS gives organizers the flexibility of instant mobile passes for paperless events, alongside high-resolution badge exports for traditional corporate lanyard conferences.",
-          bullets: [
-            "Seamless switch between paperless digital passes and printed lanyard badges",
-            "Automatic single-use cryptographic token assigned to every attendee",
-            "No expensive proprietary badge printers or software licenses required",
-            "Full attendance analytics logged automatically as badges are scanned at gates",
-          ],
-        },
+        useCases: [
+          "Corporate Summits & User Conferences",
+          "Medical & Academic Congresses",
+          "B2B Trade Shows & Expo Pavilions",
+          "Technical Symposiums & Hackathons",
+          "VIP Networking Galas & Award Banquets",
+          "Government & Enterprise Assemblies",
+        ],
         faqs: [
-          { q: "Can I print badges before the event begins?", a: "Yes. Organizers can export all approved attendee badges as print-ready high-resolution files for pre-event lanyard assembly or print them individually on demand." },
-          { q: "What dimensions are supported for printed conference badges?", a: "Ticket Studio natively outputs vertical lanyard conference badges (440x640 px) and horizontal printable tickets (780x340 px), both formatted for standard paper and card stocks." },
-          { q: "Do attendees need to print their badges to enter?", a: "No. URPASS passes are fully digital by default. Attendees can simply present the QR pass on their smartphone screen, which scans in under 0.3s." },
-          { q: "How does URPASS prevent people from copying or reprinting badges?", a: "Each badge contains a cryptographically unique token. Once scanned at an entrance gate, the token is permanently locked in the database, preventing any duplicate copies from gaining admission." },
+          {
+            q: "What printers work with URPASS Badge Printing?",
+            a: "URPASS uses web-standard print technology compatible with any printer connected via USB, Wi-Fi, or network. It works seamlessly with Zebra ZD-series, Brother QL-series, Rollo, Dymo, and standard office laser printers.",
+          },
+          {
+            q: "Can we print badges without internet connectivity?",
+            a: "Yes. Once badge templates and attendee rosters are synced locally, the onsite registration desk can execute prints and cache check-in logs for automatic synchronization when connectivity resumes.",
+          },
+          {
+            q: "How does URPASS prevent badge sharing or duplicate reprints?",
+            a: "Each badge is bound to a single attendee UUID and cryptographic QR code. When an attendee requests a reprint, staff must log an explicit audit reason, and previously issued pass tokens can be invalidated instantly.",
+          },
+          {
+            q: "What sizes are supported?",
+            a: "URPASS supports standard conference badge dimensions including 4x6 inch (102x152mm), 4x3 inch (102x76mm), CR80 Credit Card size (85.6x54mm), and custom dimension continuous rolls.",
+          },
+          {
+            q: "Is badge printing included in the free plan?",
+            a: "Yes! URPASS provides free access to the Badge Studio and single badge printing for up to 50 attendees per event, with full tier upgrades available for enterprise conferences.",
+          },
         ],
         relatedLinks: [
-          { title: "Pass & Ticket Studio", href: "/design-your-ticket", category: "Product" },
-          { title: "Browser QR Code Scanner", href: "/qr-code-scanner", category: "Product" },
-          { title: "How to Create Digital Passes", href: "/guides/how-to-create-digital-event-passes", category: "Guide" },
-          { title: "Conference Registration Software", href: "/conference-registration-software", category: "Use Case" },
+          { title: "Digital Conference Badges", href: "/digital-conference-badges", category: "Product" },
+          { title: "Onsite Registration Desk Software", href: "/onsite-event-registration-software", category: "Product" },
+          { title: "Event Zone Access Control", href: "/event-zone-access-control-software", category: "Product" },
+          { title: "Trade Show Lead Retrieval Software", href: "/event-lead-retrieval-software", category: "Product" },
+          { title: "Conference Management Software", href: "/conference-management-software", category: "Product" },
         ],
+        ctaTitle: "Elevate your onsite badge experience",
+        ctaDescription: "Sub-3-second on-demand printing · Visual drag-and-drop studio · Zero waste",
       }}
     />
   );
