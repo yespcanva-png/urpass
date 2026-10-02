@@ -1273,15 +1273,20 @@ export default function OpsDashboard({ onLogout }: Props) {
                             </td>
                             <td className="py-3 px-4">
                               <div className="flex flex-col gap-1">
-                                <span
-                                  className={`inline-flex w-fit items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase ${
-                                    invoice.payment_status === "paid"
-                                      ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/30"
-                                      : "bg-amber-500/15 text-amber-300 border border-amber-500/30"
-                                  }`}
-                                >
-                                  {invoice.payment_status}
-                                </span>
+                                <div className="flex items-center gap-1.5">
+                                  <span
+                                    className={`inline-flex w-fit items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase ${
+                                      invoice.payment_status === "paid"
+                                        ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/30"
+                                        : "bg-amber-500/15 text-amber-300 border border-amber-500/30"
+                                    }`}
+                                  >
+                                    {invoice.payment_status}
+                                  </span>
+                                  <span className="px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-[10px] font-bold font-mono text-white/60">
+                                    EFT
+                                  </span>
+                                </div>
                                 {invoice.payment_id && (
                                   <div className="flex items-center gap-1 text-[10px] text-white/35">
                                     <span className="truncate max-w-[130px]">{invoice.payment_id}</span>

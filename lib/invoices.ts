@@ -62,6 +62,7 @@ export interface InvoiceRecord {
   invoice_status: string;
   pdf_url: string | null;
   created_at: string;
+  payment_method?: string;
   description?: string;
 }
 
@@ -467,7 +468,7 @@ export async function generateInvoicePdf(invoice: InvoiceRecord): Promise<Uint8A
       : rawGstin;
   const placeOfSupply = invoice.place_of_supply?.trim() || "Not provided";
   const customerStateCode = invoice.state_code?.trim() || "Not provided";
-  const paymentMethod = isUkInvoice ? "Card / Bank Transfer" : "UPI / Card / Net Banking";
+  const paymentMethod = invoice.payment_method || "EFT";
 
   // Helper: draw text right-aligned to rightEdge
   const drawTextRight = (text: string, y: number, size: number, font: typeof fontRegular, color: typeof dark) => {
@@ -920,7 +921,6 @@ export async function generateInvoicePdf(invoice: InvoiceRecord): Promise<Uint8A
       font: fontRegular,
       color: lightMuted,
     });
-    drawTextRight("Computer-generated tax invoice. Confirm SAC classification with your CA for permanent filing.", 20, 7.5, fontRegular, lightMuted);
   }
 
   return await pdfDoc.save();
