@@ -6,8 +6,17 @@ import {
 } from "@/lib/razorpay";
 import { createClient } from "@/lib/supabase/server";
 import { notifyOwnerPaymentAttempt } from "@/lib/email";
+import { validateGstin } from "@/lib/validations/gstin";
 
 export const dynamic = "force-dynamic";
+
+interface BillingDetailsInput {
+  companyName?: string | null;
+  billingAddress?: string | null;
+  gstin?: string | null;
+  state?: string | null;
+  stateCode?: string | null;
+}
 
 // V1 plan prices in paise (INR) and pence (GBP) — source of truth for what Razorpay charges.
 // Must stay in sync with PLANS in app/billing/page.tsx and PLAN_PRICES in CheckoutButton.tsx.
@@ -36,12 +45,39 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json().catch(() => null);
   const { planSlug, billingCycle = "monthly", couponCode, currency: requestedCurrency = "INR" } = body ?? {};
+  const billingDetails = (body?.billingDetails ?? null) as BillingDetailsInput | null;
   if (!planSlug) return NextResponse.json({ error: "Missing planSlug" }, { status: 400 });
 
   const isUk = (requestedCurrency || "").toUpperCase() === "GBP";
   const currencyCode = isUk ? "GBP" : "INR";
   const taxRate = isUk ? 0.20 : 0.18;
   const taxName = isUk ? "VAT" : "GST";
+  const billingAddress = billingDetails?.billingAddress?.trim() || "";
+  const billingState = billingDetails?.state?.trim() || "";
+  const billingStateCode = billingDetails?.stateCode?.trim() || "";
+  const companyName = billingDetails?.companyName?.trim() || "";
+  const gstin = billingDetails?.gstin?.trim().toUpperCase() || "";
+
+  if (!isUk) {
+    if (!billingAddress) {
+      return NextResponse.json({ error: "Billing address is required before payment." }, { status: 400 });
+    }
+    if (!billingStateCode) {
+      return NextResponse.json({ error: "Billing state is required for GST invoicing." }, { status: 400 });
+    }
+    if (gstin && !validateGstin(gstin)) {
+      return NextResponse.json({ error: "Invalid GSTIN format." }, { status: 400 });
+    }
+
+    await supabase
+      .from("profiles")
+      .update({
+        company_name: companyName || null,
+        billing_address: billingAddress,
+        gstin: gstin || null,
+      })
+      .eq("user_id", user.id);
+  }
 
   const rawSlug = String(planSlug).toLowerCase().trim();
   let normalizedSlug = rawSlug
@@ -207,6 +243,11 @@ export async function POST(req: NextRequest) {
         tax_name: taxName,
         coupon_id: String(appliedCouponId ?? ""),
         coupon_code: String(couponCode ?? ""),
+        billing_address: billingAddress,
+        billing_state: billingState,
+        billing_state_code: billingStateCode,
+        customer_gstin: gstin,
+        company_name: companyName,
         customer_name: String(user.user_metadata?.full_name ?? ""),
         customer_email: String(user.email ?? ""),
       },

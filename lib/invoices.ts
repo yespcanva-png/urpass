@@ -137,6 +137,17 @@ const GST_STATE_CODES: Record<string, string> = {
   "97": "Other Territory",
 };
 
+export function formatInvoiceDisplayDate(date?: string | Date | null): string {
+  if (!date) return "Not provided";
+  const parsed = date instanceof Date ? date : new Date(String(date));
+  if (Number.isNaN(parsed.getTime())) return String(date).slice(0, 10);
+  return parsed.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+}
+
 function formatStateLabel(state?: string | null, code?: string | null) {
   const cleanState = state?.trim();
   const cleanCode = code?.trim();
@@ -147,7 +158,7 @@ function formatStateLabel(state?: string | null, code?: string | null) {
   return "Not provided";
 }
 
-function resolveCustomerState(input: {
+export function resolveCustomerState(input: {
   gstin?: string | null;
   address?: string | null;
   state?: string | null;
@@ -173,6 +184,69 @@ function resolveCustomerState(input: {
   if (haystack.includes("tn")) return { state: "Tamil Nadu", code: "33" };
   if (haystack.includes("karnataka")) return { state: "Karnataka", code: "29" };
   return { state: input.state?.trim() || null, code: null };
+}
+
+export function calculateInvoiceTaxes(input: {
+  taxableAmount: number;
+  currency?: string | null;
+  customerGstin?: string | null;
+  customerAddress?: string | null;
+  customerState?: string | null;
+  customerStateCode?: string | null;
+}) {
+  const currency = (input.currency || "INR").toUpperCase();
+  const taxableAmount = Math.max(0, Number(input.taxableAmount) || 0);
+  const customerState = resolveCustomerState({
+    gstin: input.customerGstin,
+    address: input.customerAddress,
+    state: input.customerState,
+    stateCode: input.customerStateCode,
+  });
+
+  if (currency === "GBP") {
+    const vatAmount = Math.round(taxableAmount * 0.20 * 100) / 100;
+    return {
+      placeOfSupply: "United Kingdom",
+      stateCode: "GB",
+      cgstRate: 0,
+      cgstAmount: 0,
+      sgstRate: 0,
+      sgstAmount: 0,
+      igstRate: 20,
+      igstAmount: vatAmount,
+      totalAmount: Math.round((taxableAmount + vatAmount) * 100) / 100,
+    };
+  }
+
+  const isIntraState = customerState.code === SELLER.stateCode;
+  if (isIntraState) {
+    const cgstAmount = Math.round(taxableAmount * 0.09 * 100) / 100;
+    const sgstAmount = Math.round(taxableAmount * 0.09 * 100) / 100;
+    return {
+      placeOfSupply: formatStateLabel(customerState.state, customerState.code),
+      stateCode: customerState.code || "",
+      cgstRate: 9,
+      cgstAmount,
+      sgstRate: 9,
+      sgstAmount,
+      igstRate: 0,
+      igstAmount: 0,
+      totalAmount: Math.round((taxableAmount + cgstAmount + sgstAmount) * 100) / 100,
+    };
+  }
+
+  const igstAmount = Math.round(taxableAmount * 0.18 * 100) / 100;
+  return {
+    placeOfSupply: formatStateLabel(customerState.state, customerState.code),
+    stateCode: customerState.code || "",
+    cgstRate: 0,
+    cgstAmount: 0,
+    sgstRate: 0,
+    sgstAmount: 0,
+    igstRate: 18,
+    igstAmount,
+    totalAmount: Math.round((taxableAmount + igstAmount) * 100) / 100,
+  };
 }
 
 export interface FinancialYearInfo {
@@ -421,43 +495,14 @@ export async function createInvoiceForPayment(
   const discount = Math.max(0, Number(params.discountRupees) || 0);
   const taxableAmount = Math.max(0, subtotal - discount);
 
-  const customerState = resolveCustomerState({
-    gstin: custGstin,
-    address: custAddress,
-    state: params.customerState,
-    stateCode: params.customerStateCode,
+  const taxes = calculateInvoiceTaxes({
+    taxableAmount,
+    currency,
+    customerGstin: custGstin,
+    customerAddress: custAddress,
+    customerState: params.customerState,
+    customerStateCode: params.customerStateCode,
   });
-
-  const isIntraState = !isUk && customerState.code === SELLER.stateCode;
-
-  let cgstRate = 0;
-  let cgstAmount = 0;
-  let sgstRate = 0;
-  let sgstAmount = 0;
-  let igstRate = 0;
-  let igstAmount = 0;
-  let totalAmount = taxableAmount;
-
-  if (isUk) {
-    // UK 20% Standard VAT
-    cgstRate = 0;
-    sgstRate = 0;
-    igstRate = 20;
-    igstAmount = Math.round(taxableAmount * 0.20 * 100) / 100;
-    totalAmount = Math.round((taxableAmount + igstAmount) * 100) / 100;
-  } else {
-    if (isIntraState) {
-      cgstRate = 9;
-      sgstRate = 9;
-      cgstAmount = Math.round(taxableAmount * 0.09 * 100) / 100;
-      sgstAmount = Math.round(taxableAmount * 0.09 * 100) / 100;
-      totalAmount = Math.round((taxableAmount + cgstAmount + sgstAmount) * 100) / 100;
-    } else {
-      igstRate = 18;
-      igstAmount = Math.round(taxableAmount * 0.18 * 100) / 100;
-      totalAmount = Math.round((taxableAmount + igstAmount) * 100) / 100;
-    }
-  }
 
   const toDateString = (d?: Date | string | null) =>
     d ? (d instanceof Date ? d.toISOString().slice(0, 10) : String(d).slice(0, 10)) : null;
@@ -465,8 +510,8 @@ export async function createInvoiceForPayment(
   const sellerName = isUk ? "Yesp Corporation UK" : SELLER.name;
   const sellerGstin = isUk ? "GB 987 6543 21" : SELLER.gstin;
   const sellerAddress = isUk ? "London, United Kingdom" : SELLER.address;
-  const placeOfSupply = isUk ? "United Kingdom" : formatStateLabel(customerState.state, customerState.code);
-  const stateCode = isUk ? "GB" : (customerState.code || "");
+  const placeOfSupply = taxes.placeOfSupply;
+  const stateCode = taxes.stateCode;
 
   const invoiceRow = {
     invoice_number: invoiceNumber,
@@ -485,13 +530,13 @@ export async function createInvoiceForPayment(
     subtotal,
     discount,
     taxable_amount: taxableAmount,
-    cgst_rate: cgstRate,
-    cgst_amount: cgstAmount,
-    sgst_rate: sgstRate,
-    sgst_amount: sgstAmount,
-    igst_rate: igstRate,
-    igst_amount: igstAmount,
-    total_amount: totalAmount,
+    cgst_rate: taxes.cgstRate,
+    cgst_amount: taxes.cgstAmount,
+    sgst_rate: taxes.sgstRate,
+    sgst_amount: taxes.sgstAmount,
+    igst_rate: taxes.igstRate,
+    igst_amount: taxes.igstAmount,
+    total_amount: taxes.totalAmount,
     currency: isUk ? "GBP" : "INR",
     invoice_date: dateStr,
     billing_period_start: toDateString(params.billingPeriodStart),
@@ -615,8 +660,8 @@ export async function generateInvoicePdf(invoice: InvoiceRecord): Promise<Uint8A
     color: muted,
   });
 
-  // Top-Right: TAX INVOICE & PAID Badge
-  const titleText = "TAX INVOICE - PAID";
+  // Top-Right: TAX INVOICE
+  const titleText = "TAX INVOICE";
   const titleWidth = fontBold.widthOfTextAtSize(titleText, 20);
   page.drawText(titleText, {
     x: rightEdge - titleWidth,
@@ -624,32 +669,6 @@ export async function generateInvoicePdf(invoice: InvoiceRecord): Promise<Uint8A
     size: 20,
     font: fontBold,
     color: dark,
-  });
-
-  // Elegant green paid status pill
-  const badgeW = 48;
-  const badgeH = 18;
-  const badgeX = rightEdge - badgeW;
-  const badgeY = startY - 26;
-
-  page.drawRectangle({
-    x: badgeX,
-    y: badgeY,
-    width: badgeW,
-    height: badgeH,
-    color: greenBg,
-    borderColor: greenBorder,
-    borderWidth: 1,
-  });
-
-  const paidLabel = "PAID";
-  const paidLabelW = fontBold.widthOfTextAtSize(paidLabel, 8.5);
-  page.drawText(paidLabel, {
-    x: badgeX + (badgeW - paidLabelW) / 2,
-    y: badgeY + 5,
-    size: 8.5,
-    font: fontBold,
-    color: greenText,
   });
 
   // Header hairline divider
@@ -684,16 +703,16 @@ export async function generateInvoicePdf(invoice: InvoiceRecord): Promise<Uint8A
   };
 
   drawMetaBox(0, "Invoice Number", invoice.invoice_number || "UP/INV/2026-27/000001");
-  drawMetaBox(1, "Issue Date", invoice.invoice_date || "20 Sep 2026");
-  drawMetaBox(2, "Due Date", invoice.invoice_date || "20 Sep 2026");
+  drawMetaBox(1, "Issue Date", formatInvoiceDisplayDate(invoice.invoice_date));
+  drawMetaBox(2, "Due Date", formatInvoiceDisplayDate(invoice.invoice_date));
   drawMetaBox(
     3,
     "Billing Period",
     invoice.billing_period_start && invoice.billing_period_end
       ? (invoice.billing_period_end.startsWith("212") || invoice.description?.includes("Founder") || invoice.description?.includes("Lifetime")
-        ? `Lifetime (from ${invoice.billing_period_start})`
-        : `${invoice.billing_period_start} – ${invoice.billing_period_end}`)
-      : (invoice.invoice_date || "One-Time")
+        ? `Lifetime (from ${formatInvoiceDisplayDate(invoice.billing_period_start)})`
+        : `${formatInvoiceDisplayDate(invoice.billing_period_start)} to ${formatInvoiceDisplayDate(invoice.billing_period_end)}`)
+      : (formatInvoiceDisplayDate(invoice.invoice_date) || "One-Time")
   );
 
   // Meta hairline divider
@@ -802,9 +821,9 @@ export async function generateInvoicePdf(invoice: InvoiceRecord): Promise<Uint8A
   });
   const periodText = invoice.billing_period_start && invoice.billing_period_end
     ? (invoice.billing_period_end.startsWith("212") || invoice.description?.includes("Founder") || invoice.description?.includes("Lifetime")
-      ? `Validity: Lifetime Access (Activated: ${invoice.billing_period_start})`
-      : `Billing Period: ${invoice.billing_period_start} – ${invoice.billing_period_end}`)
-    : `Invoice Date: ${invoice.invoice_date || new Date().toISOString().slice(0, 10)}`;
+      ? `Validity: Lifetime Access (Activated: ${formatInvoiceDisplayDate(invoice.billing_period_start)})`
+      : `Billing Period: ${formatInvoiceDisplayDate(invoice.billing_period_start)} to ${formatInvoiceDisplayDate(invoice.billing_period_end)}`)
+    : `Invoice Date: ${formatInvoiceDisplayDate(invoice.invoice_date || new Date())}`;
   page.drawText(periodText, {
     x: colDescX,
     y: rowY - 26,
@@ -838,8 +857,8 @@ export async function generateInvoicePdf(invoice: InvoiceRecord): Promise<Uint8A
   // ---------------- 5. PAYMENT & TOTALS SECTION ----------------
   const calcTopY = rowBottomY - 50;
 
-  // Left: PAYMENT DETAILS
-  page.drawText("PAYMENT DETAILS", { x: margin, y: calcTopY, size: 8, font: fontBold, color: muted });
+  // Left: TRANSACTION DETAILS
+  page.drawText("TRANSACTION DETAILS", { x: margin, y: calcTopY, size: 8, font: fontBold, color: muted });
 
   let payInfoY = calcTopY - 18;
   const drawPaymentItem = (label: string, val: string, isGreen = false) => {
@@ -848,10 +867,9 @@ export async function generateInvoicePdf(invoice: InvoiceRecord): Promise<Uint8A
     payInfoY -= 16;
   };
 
-  drawPaymentItem("Payment Status:", "PAID", true);
   drawPaymentItem("Payment Method:", paymentMethod);
   drawPaymentItem("Transaction ID:", invoice.payment_id || "Not available");
-  drawPaymentItem("Payment Date:", invoice.invoice_date || "20 Sep 2026");
+  drawPaymentItem("Payment Date:", formatInvoiceDisplayDate(invoice.invoice_date));
 
   // Subtle thank you card
   const msgCardY = payInfoY - 36;
@@ -1013,6 +1031,7 @@ export async function generateInvoicePdf(invoice: InvoiceRecord): Promise<Uint8A
       font: fontRegular,
       color: lightMuted,
     });
+    drawTextRight("This is a computer-generated invoice.", 20, 7.5, fontRegular, lightMuted);
   }
 
   return await pdfDoc.save();

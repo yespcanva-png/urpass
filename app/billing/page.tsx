@@ -219,9 +219,9 @@ export default async function BillingPage(props: {
     isPeriodEndCentury;
 
   const renewalDate = sub?.current_period_end && !isPeriodEndCentury
-    ? new Date(sub.current_period_end).toLocaleDateString(isUk ? "en-GB" : "en-IN", {
-        day: "numeric",
-        month: "long",
+    ? new Date(sub.current_period_end).toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "2-digit",
         year: "numeric",
       })
     : null;

@@ -157,9 +157,9 @@ function UsageTile({
 }
 
 function formatInvoiceDate(date: string) {
-  return new Date(date).toLocaleDateString("en-IN", {
+  return new Date(date).toLocaleDateString("en-GB", {
     day: "2-digit",
-    month: "short",
+    month: "2-digit",
     year: "numeric",
   });
 }

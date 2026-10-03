@@ -9,10 +9,12 @@ export const dynamic = "force-dynamic";
 
 export interface OpsInvoiceItem {
   id: string;
+  user_id: string;
   invoice_number: string;
   invoice_date: string;
   customer_name: string;
   customer_email: string;
+  customer_address: string | null;
   customer_gstin: string | null;
   place_of_supply: string | null;
   state_code: string | null;
@@ -86,7 +88,7 @@ export async function GET() {
 
       admin
         .from("invoices")
-        .select("id, invoice_number, invoice_date, customer_name, customer_email, customer_gstin, place_of_supply, state_code, taxable_amount, cgst_amount, sgst_amount, igst_amount, total_amount, currency, payment_status, invoice_status, payment_id, created_at")
+        .select("id, user_id, invoice_number, invoice_date, customer_name, customer_email, customer_address, customer_gstin, place_of_supply, state_code, taxable_amount, cgst_amount, sgst_amount, igst_amount, total_amount, currency, payment_status, invoice_status, payment_id, created_at")
         .order("invoice_date", { ascending: false })
         .order("created_at", { ascending: false })
         .limit(100),

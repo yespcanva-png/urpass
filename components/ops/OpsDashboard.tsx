@@ -31,10 +31,105 @@ import {
   Receipt,
   FileDown,
   Eye,
+  Pencil,
+  X,
 } from "lucide-react";
 import OpsTerminal from "./OpsTerminal";
 import OpsEmailEngine from "./OpsEmailEngine";
 import type { OpsInvoiceItem, OpsLogItem } from "@/app/api/ops/telemetry/route";
+
+function getInvoiceSeriesBadge(invoiceNumber: string) {
+  if (!invoiceNumber) return null;
+  const parts = invoiceNumber.split("/");
+  if (parts.length >= 2 && parts[0] === "UP") {
+    const docType = parts[1];
+    switch (docType) {
+      case "SUB":
+        return (
+          <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30">
+            SUB
+          </span>
+        );
+      case "TKT":
+        return (
+          <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+            TKT
+          </span>
+        );
+      case "MS":
+        return (
+          <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30">
+            MS
+          </span>
+        );
+      case "CN":
+        return (
+          <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30">
+            CN
+          </span>
+        );
+      case "DN":
+        return (
+          <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+            DN
+          </span>
+        );
+      case "RCP":
+        return (
+          <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-teal-500/20 text-teal-300 border border-teal-500/30">
+            RCP
+          </span>
+        );
+      default:
+        return (
+          <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-white/10 text-white/70 border border-white/20">
+            {docType}
+          </span>
+        );
+    }
+  }
+  return null;
+}
+
+const INDIA_STATES = [
+  { code: "33", name: "Tamil Nadu" },
+  { code: "29", name: "Karnataka" },
+  { code: "32", name: "Kerala" },
+  { code: "36", name: "Telangana" },
+  { code: "37", name: "Andhra Pradesh" },
+  { code: "27", name: "Maharashtra" },
+  { code: "07", name: "Delhi" },
+  { code: "09", name: "Uttar Pradesh" },
+  { code: "24", name: "Gujarat" },
+  { code: "08", name: "Rajasthan" },
+  { code: "19", name: "West Bengal" },
+  { code: "06", name: "Haryana" },
+  { code: "03", name: "Punjab" },
+  { code: "10", name: "Bihar" },
+  { code: "21", name: "Odisha" },
+  { code: "23", name: "Madhya Pradesh" },
+  { code: "22", name: "Chhattisgarh" },
+  { code: "20", name: "Jharkhand" },
+  { code: "05", name: "Uttarakhand" },
+  { code: "02", name: "Himachal Pradesh" },
+  { code: "01", name: "Jammu & Kashmir" },
+  { code: "30", name: "Goa" },
+  { code: "34", name: "Puducherry" },
+  { code: "04", name: "Chandigarh" },
+  { code: "38", name: "Ladakh" },
+  { code: "35", name: "Andaman & Nicobar Islands" },
+  { code: "11", name: "Sikkim" },
+  { code: "12", name: "Arunachal Pradesh" },
+  { code: "13", name: "Nagaland" },
+  { code: "14", name: "Manipur" },
+  { code: "15", name: "Mizoram" },
+  { code: "16", name: "Tripura" },
+  { code: "17", name: "Meghalaya" },
+  { code: "18", name: "Assam" },
+  { code: "26", name: "Dadra & Nagar Haveli and Daman & Diu" },
+  { code: "31", name: "Lakshadweep" },
+  { code: "97", name: "Other Territory" },
+];
 
 export interface SponsorshipItem {
   id: string;
@@ -145,6 +240,59 @@ export default function OpsDashboard({ onLogout }: Props) {
   // IndexNow Push state
   const [indexNowLoading, setIndexNowLoading] = useState(false);
   const [indexNowStatus, setIndexNowStatus] = useState<string | null>(null);
+
+  // Edit invoice number modal state
+  const [editingInvoice, setEditingInvoice] = useState<OpsInvoiceItem | null>(null);
+  const [editInvoiceNumber, setEditInvoiceNumber] = useState("");
+  const [editCustomerName, setEditCustomerName] = useState("");
+  const [editCustomerAddress, setEditCustomerAddress] = useState("");
+  const [editCustomerGstin, setEditCustomerGstin] = useState("");
+  const [editCustomerStateCode, setEditCustomerStateCode] = useState("33");
+  const [editInvoiceLoading, setEditInvoiceLoading] = useState(false);
+  const [editInvoiceError, setEditInvoiceError] = useState("");
+  const [editInvoiceSuccess, setEditInvoiceSuccess] = useState("");
+
+  async function handleUpdateInvoiceNumber(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editingInvoice) return;
+    setEditInvoiceLoading(true);
+    setEditInvoiceError("");
+    setEditInvoiceSuccess("");
+
+    try {
+      const res = await fetch("/api/ops/invoices", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          invoiceId: editingInvoice.id,
+          invoiceNumber: editInvoiceNumber.trim(),
+          customerName: editCustomerName.trim(),
+          customerAddress: editCustomerAddress.trim(),
+          customerGstin: editCustomerGstin.trim().toUpperCase(),
+          customerStateCode: editCustomerStateCode,
+          customerState: INDIA_STATES.find((state) => state.code === editCustomerStateCode)?.name || "",
+        }),
+      });
+
+      const resData = await res.json();
+      if (!res.ok || !resData.success) {
+        throw new Error(resData.error || "Failed to update invoice number");
+      }
+
+      setEditInvoiceSuccess(`Invoice updated to ${resData.invoiceNumber}`);
+      setTimeout(() => {
+        setEditingInvoice(null);
+        setEditInvoiceSuccess("");
+      }, 1200);
+
+      // Re-fetch telemetry so dashboard immediately displays new number
+      await fetchTelemetry(false);
+    } catch (err: unknown) {
+      setEditInvoiceError(err instanceof Error ? err.message : "Failed to update invoice number");
+    } finally {
+      setEditInvoiceLoading(false);
+    }
+  }
 
   async function handlePushIndexNow() {
     setIndexNowLoading(true);
@@ -367,7 +515,7 @@ export default function OpsDashboard({ onLogout }: Props) {
     if (!date) return "Not available";
     return new Date(date).toLocaleDateString("en-IN", {
       day: "2-digit",
-      month: "short",
+      month: "2-digit",
       year: "numeric",
     });
   }
@@ -1221,18 +1369,35 @@ export default function OpsDashboard({ onLogout }: Props) {
                           <tr key={invoice.id} className="hover:bg-white/[0.02] transition-colors">
                             <td className="py-3 px-4">
                               <div className="flex flex-col gap-1">
-                                <div className="flex items-center gap-1.5">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  {getInvoiceSeriesBadge(invoice.invoice_number)}
                                   <span className="font-bold text-white">{invoice.invoice_number}</span>
                                   <button
                                     onClick={() => handleCopy(invoice.invoice_number)}
                                     title="Copy invoice number"
-                                    className="text-white/30 hover:text-white transition-colors"
+                                    className="text-white/30 hover:text-white transition-colors cursor-pointer"
                                   >
                                     {copiedCode === invoice.invoice_number ? (
                                       <Check className="w-3 h-3 text-emerald-400" />
                                     ) : (
                                       <Copy className="w-3 h-3" />
                                     )}
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      setEditingInvoice(invoice);
+                                      setEditInvoiceNumber(invoice.invoice_number);
+                                      setEditCustomerName(invoice.customer_name || "");
+                                      setEditCustomerAddress(invoice.customer_address || "");
+                                      setEditCustomerGstin(invoice.customer_gstin || "");
+                                      setEditCustomerStateCode(invoice.state_code || "33");
+                                      setEditInvoiceError("");
+                                      setEditInvoiceSuccess("");
+                                    }}
+                                    title="Edit invoice number"
+                                    className="text-white/30 hover:text-amber-400 transition-colors p-0.5 cursor-pointer"
+                                  >
+                                    <Pencil className="w-3 h-3" />
                                   </button>
                                 </div>
                                 <span className="text-[11px] text-white/40">{formatDate(invoice.invoice_date)}</span>
@@ -1307,6 +1472,23 @@ export default function OpsDashboard({ onLogout }: Props) {
                             </td>
                             <td className="py-3 px-4 text-right">
                               <div className="flex items-center justify-end gap-2">
+                                <button
+                                  onClick={() => {
+                                    setEditingInvoice(invoice);
+                                    setEditInvoiceNumber(invoice.invoice_number);
+                                    setEditCustomerName(invoice.customer_name || "");
+                                    setEditCustomerAddress(invoice.customer_address || "");
+                                    setEditCustomerGstin(invoice.customer_gstin || "");
+                                    setEditCustomerStateCode(invoice.state_code || "33");
+                                    setEditInvoiceError("");
+                                    setEditInvoiceSuccess("");
+                                  }}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white/5 hover:bg-amber-500/20 border border-white/10 hover:border-amber-500/40 text-white/70 hover:text-amber-200 transition-colors text-[11px] cursor-pointer"
+                                  title="Edit invoice number"
+                                >
+                                  <Pencil className="w-3 h-3 text-amber-400" />
+                                  <span>Edit</span>
+                                </button>
                                 <a
                                   href={`/api/invoices/${invoice.id}/pdf`}
                                   target="_blank"
@@ -1402,6 +1584,174 @@ export default function OpsDashboard({ onLogout }: Props) {
                   className="px-4 py-2 rounded-xl text-xs font-bold text-neutral-950 bg-emerald-400 hover:bg-emerald-300 transition-all disabled:opacity-40 cursor-pointer"
                 >
                   {pinLoading ? "Saving to DB..." : "Update in Database"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Edit Invoice Billing Modal ── */}
+      {editingInvoice && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs animate-in fade-in duration-200">
+          <div
+            className="w-full max-w-lg bg-[#130f24] border border-white/10 rounded-2xl p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setEditingInvoice(null)}
+              className="absolute top-4 right-4 text-white/40 hover:text-white transition-colors cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="flex items-center gap-2 mb-3">
+              <Receipt className="w-5 h-5 text-amber-400" />
+              <h3 className="text-base font-bold text-white">Update Invoice Billing</h3>
+            </div>
+
+            <p className="text-xs text-white/60 mb-4 leading-relaxed">
+              Updating invoice for{" "}
+              <span className="text-white font-semibold">
+                {editingInvoice.customer_name || editingInvoice.customer_email}
+              </span>{" "}
+              ({formatMoney(editingInvoice.total_amount, editingInvoice.currency)}).
+            </p>
+
+            <form onSubmit={handleUpdateInvoiceNumber} className="flex flex-col gap-4">
+              <div>
+                <label className="text-xs font-semibold text-white/70 block mb-1.5">
+                  Invoice Number (UP/DOC_TYPE/FY/SEQ)
+                </label>
+                <input
+                  type="text"
+                  value={editInvoiceNumber}
+                  onChange={(e) => setEditInvoiceNumber(e.target.value)}
+                  placeholder="UP/SUB/2026-27/000001"
+                  required
+                  className="w-full bg-black/50 border border-white/15 rounded-xl px-3.5 py-2.5 text-sm text-white font-mono focus:outline-hidden focus:border-amber-400 placeholder-white/30"
+                />
+
+                <div className="flex flex-wrap items-center gap-1.5 mt-2.5">
+                  <span className="text-[10px] text-white/40 mr-1">Doc Types:</span>
+                  {(["SUB", "TKT", "INV", "MS", "CN", "DN", "RCP"] as const).map((code) => (
+                    <button
+                      key={code}
+                      type="button"
+                      onClick={() => {
+                        const parts = editInvoiceNumber.split("/");
+                        const fy = parts[2] || "2026-27";
+                        const seq = parts[3] || "000001";
+                        setEditInvoiceNumber(`UP/${code}/${fy}/${seq}`);
+                      }}
+                      className="px-2 py-0.5 rounded text-[10px] font-bold bg-white/5 hover:bg-white/15 text-white/70 hover:text-white transition-colors cursor-pointer"
+                    >
+                      {code}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-3 rounded-2xl bg-black/25 border border-white/10 p-4">
+                <div>
+                  <label className="text-xs font-semibold text-white/70 block mb-1.5">
+                    Customer / Company Name
+                  </label>
+                  <input
+                    type="text"
+                    value={editCustomerName}
+                    onChange={(e) => setEditCustomerName(e.target.value)}
+                    placeholder="Legal billing name"
+                    className="w-full bg-black/50 border border-white/15 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-hidden focus:border-amber-400 placeholder-white/30"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold text-white/70 block mb-1.5">
+                    Billing Address
+                  </label>
+                  <textarea
+                    value={editCustomerAddress}
+                    onChange={(e) => setEditCustomerAddress(e.target.value)}
+                    placeholder="Registered billing address"
+                    rows={3}
+                    className="w-full resize-none bg-black/50 border border-white/15 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-hidden focus:border-amber-400 placeholder-white/30"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-semibold text-white/70 block mb-1.5">
+                      GSTIN
+                    </label>
+                    <input
+                      type="text"
+                      value={editCustomerGstin}
+                      onChange={(e) => setEditCustomerGstin(e.target.value.toUpperCase())}
+                      placeholder="Optional"
+                      maxLength={15}
+                      className="w-full bg-black/50 border border-white/15 rounded-xl px-3.5 py-2.5 text-sm text-white font-mono uppercase focus:outline-hidden focus:border-amber-400 placeholder-white/30"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-semibold text-white/70 block mb-1.5">
+                      Billing State
+                    </label>
+                    <select
+                      value={editCustomerStateCode}
+                      onChange={(e) => setEditCustomerStateCode(e.target.value)}
+                      className="w-full bg-black/50 border border-white/15 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-hidden focus:border-amber-400"
+                    >
+                      {INDIA_STATES.map((state) => (
+                        <option key={state.code} value={state.code} className="bg-[#130f24] text-white">
+                          {state.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <p className="text-[11px] text-white/45">
+                  Tamil Nadu invoices print CGST + SGST. Other billing states print IGST only.
+                </p>
+              </div>
+
+              {editInvoiceError && (
+                <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 shrink-0 text-rose-400" />
+                  <span>{editInvoiceError}</span>
+                </div>
+              )}
+
+              {editInvoiceSuccess && (
+                <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
+                  <span>{editInvoiceSuccess}</span>
+                </div>
+              )}
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-white/5">
+                <button
+                  type="button"
+                  onClick={() => setEditingInvoice(null)}
+                  className="px-3 py-2 rounded-xl text-xs text-white/60 hover:text-white cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={editInvoiceLoading || !editInvoiceNumber.trim()}
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-neutral-950 bg-amber-400 hover:bg-amber-300 transition-all disabled:opacity-40 flex items-center gap-1.5 cursor-pointer"
+                >
+                  {editInvoiceLoading ? (
+                    <>
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    <span>Save to Database</span>
+                  )}
                 </button>
               </div>
             </form>

@@ -105,4 +105,39 @@ describe("Ops Security & Database PIN Verification", () => {
     const isTampered = verifyOpsSessionToken(token + "tamper");
     expect(isTampered).toBe(false);
   });
+
+  describe("PATCH /api/ops/invoices", () => {
+    it("validates invoice format and rejects invalid numbering", async () => {
+      const auth = await import("@/lib/ops/auth");
+      vi.spyOn(auth, "isOpsAuthenticated").mockResolvedValue(true);
+
+      const { PATCH } = await import("@/app/api/ops/invoices/route");
+      const req = new Request("http://localhost/api/ops/invoices", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          invoiceId: "inv-123",
+          invoiceNumber: "INVALID-INV-123",
+        }),
+      });
+
+      const res = await PATCH(req);
+      expect(res.status).toBe(400);
+      const json = await res.json();
+      expect(json.error).toContain("Invalid invoice number format");
+    });
+
+    it("accepts valid UP/{DOC_TYPE}/{FY}/{SEQUENCE} format", async () => {
+      const { parseInvoiceNumber } = await import("@/lib/invoices");
+      const validNumber = "UP/SUB/2026-27/000001";
+      const parsed = parseInvoiceNumber(validNumber);
+
+      expect(parsed).toEqual({
+        prefix: "UP",
+        docType: "SUB",
+        fy: "2026-27",
+        sequence: 1,
+      });
+    });
+  });
 });

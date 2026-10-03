@@ -636,11 +636,20 @@ interface CouponRedemptionData {
   billingCyclesRemaining: number | null;
 }
 
+interface CheckoutBillingDetails {
+  companyName?: string | null;
+  billingAddress?: string | null;
+  gstin?: string | null;
+  state?: string | null;
+  stateCode?: string | null;
+}
+
 export async function activatePaidSubscription(
   planSlug: string,
   payment?: PaymentVerificationInput | { orderId?: string; paymentId?: string; signature?: string } | string,
   cycle: BillingCycle = "monthly",
-  couponRedemption?: CouponRedemptionData
+  couponRedemption?: CouponRedemptionData,
+  checkoutBillingDetails?: CheckoutBillingDetails
 ): Promise<ActionResult> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -700,6 +709,7 @@ export async function activatePaidSubscription(
   let orderBasePaise = 0;
   let orderDiscountPaise = 0;
   let orderAmountPaise = 0;
+  let orderBillingDetails: CheckoutBillingDetails | undefined = checkoutBillingDetails;
 
   if (normalizedSlug !== "free") {
     if (!payment || typeof payment === "string" || !payment.orderId || !payment.paymentId || !payment.signature) {
@@ -738,7 +748,14 @@ export async function activatePaidSubscription(
       orderBasePaise = notes.base_amount
         ? Number(notes.base_amount)
         : (order.amount ? Math.round(Number(order.amount) / 1.18) : 0);
-      orderDiscountPaise = notes.discount_paise ? Number(notes.discount_paise) : 0;
+      orderDiscountPaise = notes.discount_amount ? Number(notes.discount_amount) : 0;
+      orderBillingDetails = {
+        companyName: checkoutBillingDetails?.companyName ?? notes.company_name ?? null,
+        billingAddress: checkoutBillingDetails?.billingAddress ?? notes.billing_address ?? null,
+        gstin: checkoutBillingDetails?.gstin ?? notes.customer_gstin ?? null,
+        state: checkoutBillingDetails?.state ?? notes.billing_state ?? null,
+        stateCode: checkoutBillingDetails?.stateCode ?? notes.billing_state_code ?? null,
+      };
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Gateway order lookup failed";
       return { error: `Payment verification failed: ${msg}` };
@@ -803,6 +820,24 @@ export async function activatePaidSubscription(
 
   // Issue invoice for paid activation
   if (verifiedPaymentId && normalizedSlug !== "free") {
+    const companyName = orderBillingDetails?.companyName?.trim() || undefined;
+    const billingAddress = orderBillingDetails?.billingAddress?.trim() || undefined;
+    const gstin = orderBillingDetails?.gstin?.trim().toUpperCase() || undefined;
+    const state = orderBillingDetails?.state?.trim() || undefined;
+    const stateCode = orderBillingDetails?.stateCode?.trim() || undefined;
+
+    if (billingAddress || gstin || companyName) {
+      const profileUpdates: Record<string, string | null> = {};
+      if (companyName) profileUpdates.company_name = companyName;
+      if (billingAddress) profileUpdates.billing_address = billingAddress;
+      if (orderBillingDetails?.gstin !== undefined) profileUpdates.gstin = gstin ?? null;
+
+      await admin
+        .from("profiles")
+        .update(profileUpdates)
+        .eq("user_id", user.id);
+    }
+
     const invoiceDescription = isFounder
       ? "URPASS Founder Lifetime Access (One-Time)"
       : `${normalizedSlug.toUpperCase()} Plan (${effectiveCycle})`;
@@ -816,7 +851,11 @@ export async function activatePaidSubscription(
       discountRupees: orderDiscountPaise / 100,
       docType: "SUB",
       customerEmail: user.email,
-      customerName: user.user_metadata?.full_name,
+      customerName: companyName || user.user_metadata?.full_name,
+      customerAddress: billingAddress,
+      customerGstin: gstin,
+      customerState: state,
+      customerStateCode: stateCode,
       billingPeriodStart: periodStart,
       billingPeriodEnd: periodEndTime,
     });

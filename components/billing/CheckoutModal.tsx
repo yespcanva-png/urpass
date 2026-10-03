@@ -8,6 +8,7 @@ import {
 import { useRouter } from "next/navigation";
 import { validateCoupon, type ValidatedCoupon } from "@/app/actions/coupons";
 import { activatePaidSubscription } from "@/app/actions/billing";
+import { validateGstin } from "@/lib/validations/gstin";
 
 interface Props {
   isOpen: boolean;
@@ -27,6 +28,46 @@ declare global {
     Razorpay: new (options: Record<string, unknown>) => { open: () => void };
   }
 }
+
+const INDIA_STATES = [
+  { code: "33", name: "Tamil Nadu" },
+  { code: "29", name: "Karnataka" },
+  { code: "32", name: "Kerala" },
+  { code: "36", name: "Telangana" },
+  { code: "37", name: "Andhra Pradesh" },
+  { code: "27", name: "Maharashtra" },
+  { code: "07", name: "Delhi" },
+  { code: "09", name: "Uttar Pradesh" },
+  { code: "24", name: "Gujarat" },
+  { code: "08", name: "Rajasthan" },
+  { code: "19", name: "West Bengal" },
+  { code: "06", name: "Haryana" },
+  { code: "03", name: "Punjab" },
+  { code: "10", name: "Bihar" },
+  { code: "21", name: "Odisha" },
+  { code: "23", name: "Madhya Pradesh" },
+  { code: "22", name: "Chhattisgarh" },
+  { code: "20", name: "Jharkhand" },
+  { code: "05", name: "Uttarakhand" },
+  { code: "02", name: "Himachal Pradesh" },
+  { code: "01", name: "Jammu & Kashmir" },
+  { code: "30", name: "Goa" },
+  { code: "34", name: "Puducherry" },
+  { code: "04", name: "Chandigarh" },
+  { code: "38", name: "Ladakh" },
+  { code: "35", name: "Andaman & Nicobar Islands" },
+  { code: "11", name: "Sikkim" },
+  { code: "12", name: "Arunachal Pradesh" },
+  { code: "13", name: "Nagaland" },
+  { code: "14", name: "Manipur" },
+  { code: "15", name: "Mizoram" },
+  { code: "16", name: "Tripura" },
+  { code: "17", name: "Meghalaya" },
+  { code: "18", name: "Assam" },
+  { code: "26", name: "Dadra & Nagar Haveli and Daman & Diu" },
+  { code: "31", name: "Lakshadweep" },
+  { code: "97", name: "Other Territory" },
+];
 
 function loadRazorpay(): Promise<boolean> {
   return new Promise((resolve) => {
@@ -58,6 +99,10 @@ export default function CheckoutModal({
   const [coupon, setCoupon]                 = useState<ValidatedCoupon | null>(null);
   const [payLoading, setPayLoading]         = useState(false);
   const [payError, setPayError]             = useState("");
+  const [companyName, setCompanyName]       = useState(userName || "");
+  const [billingAddress, setBillingAddress] = useState("");
+  const [billingStateCode, setBillingStateCode] = useState("33");
+  const [gstin, setGstin]                   = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
@@ -71,6 +116,10 @@ export default function CheckoutModal({
       setCoupon(null);
       setPayError("");
       setPayLoading(false);
+      setCompanyName(userName || "");
+      setBillingAddress("");
+      setBillingStateCode("33");
+      setGstin("");
     }
   }
 
@@ -125,6 +174,29 @@ export default function CheckoutModal({
     setPayError("");
 
     try {
+      const trimmedCompany = companyName.trim();
+      const trimmedAddress = billingAddress.trim();
+      const trimmedGstin = gstin.trim().toUpperCase();
+      const selectedState = INDIA_STATES.find((state) => state.code === billingStateCode);
+
+      if (!isUk && !trimmedAddress) {
+        setPayError("Billing address is required before payment.");
+        setPayLoading(false);
+        return;
+      }
+
+      if (!isUk && !billingStateCode) {
+        setPayError("Select the billing state for GST.");
+        setPayLoading(false);
+        return;
+      }
+
+      if (!isUk && trimmedGstin && !validateGstin(trimmedGstin)) {
+        setPayError("Invalid GSTIN format. Leave it blank if the customer is not GST registered.");
+        setPayLoading(false);
+        return;
+      }
+
       const loaded = await loadRazorpay();
       if (!loaded) {
         setPayError("Could not load payment SDK. Check your connection.");
@@ -140,6 +212,15 @@ export default function CheckoutModal({
           billingCycle,
           currency: isUk ? "GBP" : "INR",
           couponCode: coupon?.code ?? null,
+          billingDetails: isUk
+            ? undefined
+            : {
+                companyName: trimmedCompany || userName,
+                billingAddress: trimmedAddress,
+                gstin: trimmedGstin || null,
+                state: selectedState?.name || "",
+                stateCode: billingStateCode,
+              },
         }),
       });
 
@@ -193,6 +274,16 @@ export default function CheckoutModal({
                     billingCyclesRemaining: coupon.durationMonths,
                   }
                 : undefined
+              ,
+              isUk
+                ? undefined
+                : {
+                    companyName: trimmedCompany || userName,
+                    billingAddress: trimmedAddress,
+                    gstin: trimmedGstin || null,
+                    state: selectedState?.name || "",
+                    stateCode: billingStateCode,
+                  }
             );
             setPayLoading(false);
             if (result?.error) {
@@ -299,6 +390,63 @@ export default function CheckoutModal({
                   {couponError}
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Price breakdown */}
+          {!isUk && (
+            <div className="rounded-2xl border border-neutral-200 bg-white p-4 flex flex-col gap-3">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Billing details</p>
+                <p className="text-[11px] text-neutral-500 mt-0.5">
+                  Used for GST invoice and saved for future billing.
+                </p>
+              </div>
+
+              <input
+                type="text"
+                value={companyName}
+                onChange={(e) => setCompanyName(e.target.value)}
+                placeholder="Legal name or company name"
+                className="w-full rounded-xl border border-neutral-200 px-3 py-2.5 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/10"
+              />
+
+              <textarea
+                value={billingAddress}
+                onChange={(e) => setBillingAddress(e.target.value)}
+                placeholder="Billing address"
+                rows={3}
+                required
+                className="w-full resize-none rounded-xl border border-neutral-200 px-3 py-2.5 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/10"
+              />
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <select
+                  value={billingStateCode}
+                  onChange={(e) => setBillingStateCode(e.target.value)}
+                  required
+                  className="w-full rounded-xl border border-neutral-200 px-3 py-2.5 text-sm text-neutral-900 focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/10 bg-white"
+                >
+                  {INDIA_STATES.map((state) => (
+                    <option key={state.code} value={state.code}>
+                      {state.name}
+                    </option>
+                  ))}
+                </select>
+
+                <input
+                  type="text"
+                  value={gstin}
+                  onChange={(e) => setGstin(e.target.value.toUpperCase())}
+                  placeholder="GSTIN (optional)"
+                  maxLength={15}
+                  className="w-full rounded-xl border border-neutral-200 px-3 py-2.5 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/10 font-mono uppercase"
+                />
+              </div>
+
+              <p className="text-[11px] text-neutral-500">
+                Tamil Nadu uses CGST + SGST. Other states use IGST.
+              </p>
             </div>
           )}
 
