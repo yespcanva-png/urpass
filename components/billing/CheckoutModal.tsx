@@ -316,24 +316,24 @@ export default function CheckoutModal({
       />
 
       {/* Dialog */}
-      <div className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-y-auto">
-        <div className="px-6 pb-6 pt-5 flex flex-col gap-5">
+      <div className="relative w-full max-w-md bg-white rounded-xl shadow-2xl flex flex-col max-h-[90vh] overflow-y-auto">
+        <div className="px-6 pb-6 pt-5 flex flex-col gap-4">
           {/* Header */}
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-[10px] font-bold tracking-widest uppercase text-neutral-400 mb-0.5">
+              <p className="text-[10px] font-semibold tracking-widest uppercase text-neutral-500 mb-1">
                 Checkout
               </p>
-              <h2 className="text-lg font-bold tracking-tight text-neutral-900">
+              <h2 className="text-lg font-semibold tracking-tight text-neutral-950">
                 {planName}
-                <span className="text-neutral-400 font-normal">
+                <span className="text-neutral-500 font-normal">
                   {" "}— {isLifetime ? "Lifetime Access" : billingCycle === "annual" ? "Annual" : "Monthly"}
                 </span>
               </h2>
             </div>
             <button
               onClick={onClose}
-              className="w-8 h-8 flex items-center justify-center rounded-xl bg-neutral-100 text-neutral-500 hover:bg-neutral-200 transition-colors shrink-0 mt-0.5"
+              className="w-8 h-8 flex items-center justify-center rounded-lg bg-neutral-100 text-neutral-500 hover:bg-neutral-200 transition-colors shrink-0 mt-0.5"
             >
               <X className="w-4 h-4" />
             </button>
@@ -341,9 +341,9 @@ export default function CheckoutModal({
 
           {/* Coupon input */}
           {coupon ? (
-            <div className="flex items-center justify-between gap-2 bg-green-50 border border-green-200 rounded-xl px-3.5 py-3">
+            <div className="flex items-center justify-between gap-2 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2.5">
               <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-lg bg-green-100 flex items-center justify-center shrink-0">
+                <div className="w-7 h-7 rounded-md bg-emerald-100 flex items-center justify-center shrink-0">
                   <Check className="w-3.5 h-3.5 text-green-700" />
                 </div>
                 <div>
@@ -373,13 +373,13 @@ export default function CheckoutModal({
                     }}
                     onKeyDown={(e) => { if (e.key === "Enter") applyCoupon(); }}
                     placeholder="Coupon code"
-                    className="w-full pl-9 pr-3 py-2.5 text-sm border border-neutral-200 rounded-xl focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/10 placeholder:text-neutral-400 font-mono tracking-wider uppercase"
+                    className="w-full pl-9 pr-3 py-2.5 text-sm border border-neutral-300 rounded-lg focus:outline-none focus:border-neutral-700 focus:ring-2 focus:ring-neutral-900/10 placeholder:text-neutral-400 font-mono tracking-wider uppercase"
                   />
                 </div>
                 <button
                   onClick={applyCoupon}
                   disabled={couponLoading || !couponInput.trim()}
-                  className="px-4 py-2.5 text-sm font-semibold rounded-xl bg-neutral-900 text-white hover:bg-neutral-700 disabled:opacity-40 transition-colors shrink-0 flex items-center gap-1.5"
+                  className="px-4 py-2.5 text-sm font-semibold rounded-lg bg-neutral-900 text-white hover:bg-neutral-700 disabled:opacity-40 transition-colors shrink-0 flex items-center gap-1.5"
                 >
                   {couponLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Apply"}
                 </button>
@@ -395,77 +395,83 @@ export default function CheckoutModal({
 
           {/* Price breakdown */}
           {!isUk && (
-            <div className="rounded-2xl border border-neutral-200 bg-white p-4 flex flex-col gap-3">
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Billing details</p>
-                <p className="text-[11px] text-neutral-500 mt-0.5">
-                  Used for GST invoice and saved for future billing.
-                </p>
+            <div className="rounded-lg border border-neutral-200 bg-white p-4 flex flex-col gap-3">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-xs font-semibold text-neutral-950">Tax invoice details</p>
+                <span className="text-[10px] font-medium uppercase tracking-wider text-neutral-500">India GST</span>
               </div>
 
-              <input
-                type="text"
-                value={companyName}
-                onChange={(e) => setCompanyName(e.target.value)}
-                placeholder="Legal name or company name"
-                className="w-full rounded-xl border border-neutral-200 px-3 py-2.5 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/10"
-              />
-
-              <textarea
-                value={billingAddress}
-                onChange={(e) => setBillingAddress(e.target.value)}
-                placeholder="Billing address"
-                rows={3}
-                required
-                className="w-full resize-none rounded-xl border border-neutral-200 px-3 py-2.5 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/10"
-              />
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <select
-                  value={billingStateCode}
-                  onChange={(e) => setBillingStateCode(e.target.value)}
-                  required
-                  className="w-full rounded-xl border border-neutral-200 px-3 py-2.5 text-sm text-neutral-900 focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/10 bg-white"
-                >
-                  {INDIA_STATES.map((state) => (
-                    <option key={state.code} value={state.code}>
-                      {state.name}
-                    </option>
-                  ))}
-                </select>
-
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[11px] font-medium text-neutral-600">Billing name</label>
                 <input
                   type="text"
-                  value={gstin}
-                  onChange={(e) => setGstin(e.target.value.toUpperCase())}
-                  placeholder="GSTIN (optional)"
-                  maxLength={15}
-                  className="w-full rounded-xl border border-neutral-200 px-3 py-2.5 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/10 font-mono uppercase"
+                  value={companyName}
+                  onChange={(e) => setCompanyName(e.target.value)}
+                  placeholder="Legal name or company name"
+                  className="w-full rounded-lg border border-neutral-300 px-3 py-2.5 text-sm text-neutral-950 placeholder:text-neutral-400 focus:outline-none focus:border-neutral-700 focus:ring-2 focus:ring-neutral-900/10"
                 />
               </div>
 
-              <p className="text-[11px] text-neutral-500">
-                Tamil Nadu uses CGST + SGST. Other states use IGST.
-              </p>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[11px] font-medium text-neutral-600">Billing address</label>
+                <textarea
+                  value={billingAddress}
+                  onChange={(e) => setBillingAddress(e.target.value)}
+                  placeholder="Registered billing address"
+                  rows={2}
+                  required
+                  className="w-full resize-none rounded-lg border border-neutral-300 px-3 py-2.5 text-sm text-neutral-950 placeholder:text-neutral-400 focus:outline-none focus:border-neutral-700 focus:ring-2 focus:ring-neutral-900/10"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[11px] font-medium text-neutral-600">State</label>
+                  <select
+                    value={billingStateCode}
+                    onChange={(e) => setBillingStateCode(e.target.value)}
+                    required
+                    className="w-full rounded-lg border border-neutral-300 px-3 py-2.5 text-sm text-neutral-950 focus:outline-none focus:border-neutral-700 focus:ring-2 focus:ring-neutral-900/10 bg-white"
+                  >
+                    {INDIA_STATES.map((state) => (
+                      <option key={state.code} value={state.code}>
+                        {state.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[11px] font-medium text-neutral-600">GSTIN</label>
+                  <input
+                    type="text"
+                    value={gstin}
+                    onChange={(e) => setGstin(e.target.value.toUpperCase())}
+                    placeholder="Optional"
+                    maxLength={15}
+                    className="w-full rounded-lg border border-neutral-300 px-3 py-2.5 text-sm text-neutral-950 placeholder:text-neutral-400 focus:outline-none focus:border-neutral-700 focus:ring-2 focus:ring-neutral-900/10 font-mono uppercase"
+                  />
+                </div>
+              </div>
             </div>
           )}
 
           {/* Price breakdown */}
-          <div className="bg-neutral-50 rounded-2xl p-4 flex flex-col gap-2.5 text-sm">
+          <div className="bg-neutral-50 border border-neutral-200 rounded-lg p-4 flex flex-col gap-2.5 text-sm">
             <div className="flex items-center justify-between">
-              <span className="text-neutral-600">
+              <span className="text-neutral-700 font-medium">
                 {planName} ({isLifetime ? "Lifetime License · One-Time" : billingCycle === "annual" ? "12 months" : "1 month"})
               </span>
-              <span className="font-medium text-neutral-900">{sym}{fmt(baseAmount)}</span>
+              <span className="font-semibold text-neutral-950">{sym}{fmt(baseAmount)}</span>
             </div>
 
             {coupon && (
               <div className="flex items-center justify-between">
-                <span className="text-green-700 font-medium">
+                <span className="text-emerald-700 font-medium">
                   {coupon.code}
-                  <span className="font-normal text-green-600 ml-1">({coupon.label})</span>
+                  <span className="font-normal text-emerald-600 ml-1">({coupon.label})</span>
                 </span>
-                <span className="font-semibold text-green-700">− {sym}{fmt(coupon.discountAmountRupees)}</span>
+                <span className="font-semibold text-emerald-700">− {sym}{fmt(coupon.discountAmountRupees)}</span>
               </div>
             )}
 
@@ -483,8 +489,8 @@ export default function CheckoutModal({
             <div className="h-px bg-neutral-200" />
 
             <div className="flex items-center justify-between font-semibold">
-              <span className="text-neutral-900">Total today</span>
-              <span className="text-xl font-bold text-neutral-900">{sym}{fmt(totalToday)}</span>
+              <span className="text-neutral-950">Total</span>
+              <span className="text-xl font-semibold text-neutral-950">{sym}{fmt(totalToday)}</span>
             </div>
           </div>
 
@@ -508,14 +514,13 @@ export default function CheckoutModal({
           <button
             onClick={handlePay}
             disabled={payLoading}
-            className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-sm font-bold text-white transition-all disabled:opacity-50 active:scale-[0.98]"
-            style={{ background: "linear-gradient(135deg, #1a0840, #6D28D9)" }}
+            className="w-full flex items-center justify-center gap-2 py-3.5 rounded-lg bg-neutral-950 text-sm font-semibold text-white transition-all hover:bg-neutral-800 disabled:opacity-50 active:scale-[0.98]"
           >
             {payLoading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
               <>
-                Pay {sym}{fmt(totalToday)} securely
+                Pay {sym}{fmt(totalToday)}
                 <ChevronRight className="w-4 h-4" />
               </>
             )}
@@ -532,7 +537,7 @@ export default function CheckoutModal({
           <div className="flex items-center justify-center gap-2 -mt-1">
             <ShieldCheck className="w-3.5 h-3.5 text-neutral-300 shrink-0" />
             <p className="text-xs text-neutral-400">
-              Secured by Razorpay · {isUk ? "Prices include 20% VAT" : "Prices include 18% GST"}
+              Razorpay secure checkout · {isUk ? "Includes 20% VAT" : "Includes 18% GST"}
             </p>
           </div>
         </div>
