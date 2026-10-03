@@ -18,6 +18,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { sendWebhooks } from "@/lib/webhooks";
 import { recordApiUsage } from "@/lib/api-usage";
 import { getSupabaseUrl } from "@/lib/supabase/config";
+import { getRazorpayCredentials } from "@/lib/razorpay";
+import { getEventPaymentConfigService } from "@/lib/payments/service";
 import {
   markReservationPaid,
   markReservationApproved,
@@ -520,8 +522,18 @@ export async function submitApplication(
     }
 
     let secretKey: string | null = null;
+    const paymentConfig = await getEventPaymentConfigService(eventId, event.organizer_id);
+    const paymentMode = paymentConfig.payment_mode || paymentConfig.paymentMode || "URPASS_MANAGED";
 
-    if (event.organization_id) {
+    if (paymentMode === "URPASS_MANAGED") {
+      try {
+        secretKey = getRazorpayCredentials().keySecret;
+      } catch {
+        return { error: "URPASS Managed Payments are not configured for this event." };
+      }
+    }
+
+    if (paymentMode === "ORGANIZER_GATEWAY" && event.organization_id) {
       const { data: orgSettings } = await admin
         .from("org_payment_settings")
         .select("razorpay_key_secret")
@@ -533,7 +545,7 @@ export async function submitApplication(
       }
     }
 
-    if (!secretKey) {
+    if (paymentMode === "ORGANIZER_GATEWAY" && !secretKey) {
       const { data: paymentSettings } = await admin
         .from("payment_settings")
         .select("razorpay_key_secret")
@@ -565,7 +577,7 @@ export async function submitApplication(
       .eq("event_id", eventId)
       .single();
 
-    if (!ticketOrder || ticketOrder.amount !== paymentAmountPaise) {
+    if (!ticketOrder || Number(ticketOrder.amount) < paymentAmountPaise) {
       return { error: "Payment amount does not match the selected ticket." };
     }
 
@@ -589,7 +601,7 @@ export async function submitApplication(
       buyerName: data.name,
       buyerEmail: data.email,
       itemName: ticketItemName,
-      amountPaise: paymentAmountPaise,
+      amountPaise: Number(ticketOrder.amount),
       paymentId: payment.paymentId,
       orderId: payment.orderId,
     }).catch((err) => console.error("[attendees] notifyOwnerPaymentSuccess error:", err));

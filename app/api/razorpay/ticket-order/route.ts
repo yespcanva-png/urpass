@@ -3,6 +3,10 @@ import Razorpay from "razorpay";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { getSupabaseUrl } from "@/lib/supabase/config";
 import { notifyOwnerPaymentAttempt } from "@/lib/email";
+import { getRazorpayCredentials } from "@/lib/razorpay";
+import { getEventPaymentConfigService } from "@/lib/payments/service";
+import { calculateTicketFees } from "@/lib/payments/fees";
+import type { FeeBearer, PaymentMode } from "@/lib/payments/types";
 import {
   reserveEventCapacity,
   linkOrderToReservation,
@@ -105,11 +109,42 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Fetch Razorpay credentials (check organization settings first, then user settings)
+  const paymentConfig = await getEventPaymentConfigService(eventId, event.organizer_id);
+  const paymentMode = (paymentConfig.payment_mode || paymentConfig.paymentMode || "URPASS_MANAGED") as PaymentMode;
+  const feeBearer = (paymentConfig.fee_bearer || paymentConfig.feeBearer || "ATTENDEE") as FeeBearer;
+  const platformFeePercent = Number(paymentConfig.platform_fee_percent ?? paymentConfig.platformFeePercent ?? 2);
+  const platformFeeFixedINR = Number(paymentConfig.platform_fee_fixed_inr ?? paymentConfig.platformFeeFixedINR ?? 0);
+  const gatewayFeePercent = Number(paymentConfig.gateway_fee_percent ?? paymentConfig.gatewayFeePercent ?? 2);
+  const gatewayFeeFixedINR = Number(paymentConfig.gateway_fee_fixed_inr ?? paymentConfig.gatewayFeeFixedINR ?? 0);
+
+  const baseAmountRupees = amountPaise / 100;
+  const feeBreakdown = calculateTicketFees({
+    basePrice: baseAmountRupees,
+    feeBearer,
+    platformFeePercent,
+    platformFeeFixedINR,
+    gatewayFeePercent,
+    gatewayFeeFixedINR,
+    currency: eventCurrency,
+  });
+  const chargeAmountPaise = Math.round(feeBreakdown.attendeeTotalPayable * 100);
+
+  // Fetch Razorpay credentials. URPASS managed events use platform credentials;
+  // organizer-gateway events use organization/user credentials.
   let keyId: string | null = null;
   let keySecret: string | null = null;
 
-  if (event.organization_id) {
+  if (paymentMode === "URPASS_MANAGED") {
+    try {
+      const creds = getRazorpayCredentials();
+      keyId = creds.keyId;
+      keySecret = creds.keySecret;
+    } catch {
+      // handled below with managed-specific error
+    }
+  }
+
+  if (paymentMode === "ORGANIZER_GATEWAY" && event.organization_id) {
     const { data: orgSettings } = await admin
       .from("org_payment_settings")
       .select("razorpay_key_id, razorpay_key_secret")
@@ -122,7 +157,7 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  if (!keyId || !keySecret) {
+  if (paymentMode === "ORGANIZER_GATEWAY" && (!keyId || !keySecret)) {
     const { data: userSettings } = await admin
       .from("payment_settings")
       .select("razorpay_key_id, razorpay_key_secret")
@@ -141,7 +176,12 @@ export async function POST(req: NextRequest) {
       await releaseReservation(admin, { reservationId: reservation.reservationId });
     }
     return NextResponse.json(
-      { error: "The event organizer has not connected a payment gateway yet." },
+      {
+        error:
+          paymentMode === "URPASS_MANAGED"
+            ? "URPASS Managed Payments are not configured. Please set platform Razorpay credentials."
+            : "The event organizer has not connected a payment gateway yet.",
+      },
       { status: 400 }
     );
   }
@@ -152,8 +192,21 @@ export async function POST(req: NextRequest) {
       key_secret: keySecret,
     });
 
-    const order = await razorpay.orders.create({
-      amount: amountPaise,
+    let linkedAccountId = paymentConfig.provider_linked_account_id || paymentConfig.providerLinkedAccountId || null;
+    if (paymentMode === "URPASS_MANAGED" && !linkedAccountId && event.organization_id) {
+      const { data: orgAccount } = await admin
+        .from("organization_payment_accounts")
+        .select("provider_vendor_id")
+        .eq("organization_id", event.organization_id)
+        .eq("provider", "RAZORPAY")
+        .eq("payments_enabled", true)
+        .maybeSingle();
+
+      linkedAccountId = orgAccount?.provider_vendor_id || null;
+    }
+
+    const orderPayload: Record<string, unknown> = {
+      amount: chargeAmountPaise,
       currency: eventCurrency,
       receipt: `ticket_${eventId.slice(0, 8)}_${Date.now()}`,
       notes: {
@@ -165,15 +218,40 @@ export async function POST(req: NextRequest) {
         currency: eventCurrency,
         type: "ticket",
         reservation_id: reservation.reservationId ?? "",
+        payment_mode: paymentMode,
+        fee_bearer: feeBearer,
+        base_amount: String(amountPaise),
+        platform_fee: String(Math.round(feeBreakdown.platformFee * 100)),
+        gateway_fee: String(Math.round(feeBreakdown.gatewayFee * 100)),
+        organizer_share: String(Math.round(feeBreakdown.organizerNetShare * 100)),
       },
-    });
+    };
+
+    if (paymentMode === "URPASS_MANAGED" && linkedAccountId) {
+      orderPayload.transfers = [
+        {
+          account: linkedAccountId,
+          amount: Math.round(feeBreakdown.organizerNetShare * 100),
+          currency: eventCurrency,
+          notes: {
+            purpose: "organizer_ticket_share",
+            event_id: eventId,
+          },
+          on_hold: 0,
+        },
+      ];
+    }
+
+    // Razorpay Route supports `transfers`, but the SDK type is narrower.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const order = await (razorpay.orders as any).create(orderPayload);
 
     await Promise.all([
       admin.from("ticket_orders").insert({
         event_id: eventId,
         ticket_type_id: ticketTypeId ?? null,
         razorpay_order_id: order.id,
-        amount: amountPaise,
+        amount: chargeAmountPaise,
         currency: eventCurrency,
         buyer_name: buyerName,
         buyer_email: buyerEmail,
@@ -190,7 +268,7 @@ export async function POST(req: NextRequest) {
         buyerName,
         buyerEmail,
         itemName: ticketName,
-        amountPaise,
+        amountPaise: chargeAmountPaise,
         orderId: order.id,
       });
     } catch (err: unknown) {
@@ -203,6 +281,13 @@ export async function POST(req: NextRequest) {
       currency: order.currency,
       keyId,
       eventName: ticketName,
+      paymentMode,
+      fees: {
+        baseAmount: amountPaise,
+        platformFee: Math.round(feeBreakdown.platformFee * 100),
+        gatewayFee: Math.round(feeBreakdown.gatewayFee * 100),
+        organizerShare: Math.round(feeBreakdown.organizerNetShare * 100),
+      },
       reservationId: reservation.reservationId,
       expiresAt: reservation.expiresAt,
     });
@@ -227,4 +312,3 @@ export async function DELETE(req: NextRequest) {
   await releaseReservation(admin, { reservationId, orderId });
   return NextResponse.json({ success: true });
 }
-
