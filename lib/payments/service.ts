@@ -60,8 +60,10 @@ export async function onboardOrgPaymentAccountService(params: {
         settlement_details: {
           accountNumberMasked: settlementDetails.accountNumberMasked,
           ifscCode: settlementDetails.ifscCode,
+          sortCode: settlementDetails.sortCode,
           beneficiaryName: settlementDetails.beneficiaryName,
           bankName: settlementDetails.bankName || "Verified Bank",
+          countryCode: settlementDetails.countryCode,
         },
         payments_enabled: true,
         refunds_enabled: true,

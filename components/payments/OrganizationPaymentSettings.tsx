@@ -34,6 +34,10 @@ export default function OrganizationPaymentSettings({
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
+  const [country, setCountry] = useState<"IN" | "GB">(
+    account?.businessDetails?.countryCode === "GB" || account?.settlementDetails?.countryCode === "GB" ? "GB" : "IN"
+  );
+
   // Form State
   const [businessName, setBusinessName] = useState(account?.businessDetails?.legalBusinessName || "");
   const [businessType, setBusinessType] = useState<BusinessDetails["businessType"]>(
@@ -41,12 +45,15 @@ export default function OrganizationPaymentSettings({
   );
   const [pan, setPan] = useState(account?.businessDetails?.pan || "");
   const [gstin, setGstin] = useState(account?.businessDetails?.gstin || "");
+  const [companyNumber, setCompanyNumber] = useState(account?.businessDetails?.companyNumber || "");
+  const [vatNumber, setVatNumber] = useState(account?.businessDetails?.vatNumber || "");
   const [contactEmail, setContactEmail] = useState(account?.businessDetails?.contactEmail || "");
   const [contactPhone, setContactPhone] = useState(account?.businessDetails?.contactPhone || "");
 
   const [accountNumber, setAccountNumber] = useState("");
   const [confirmAccount, setConfirmAccount] = useState("");
   const [ifscCode, setIfscCode] = useState(account?.settlementDetails?.ifscCode || "");
+  const [sortCode, setSortCode] = useState(account?.settlementDetails?.sortCode || "");
   const [beneficiaryName, setBeneficiaryName] = useState(account?.settlementDetails?.beneficiaryName || "");
 
   async function handleSubmit(e: React.FormEvent) {
@@ -71,15 +78,20 @@ export default function OrganizationPaymentSettings({
         {
           legalBusinessName: businessName,
           businessType,
-          pan: pan.toUpperCase(),
-          gstin: gstin.toUpperCase() || undefined,
+          pan: country === "IN" ? pan.toUpperCase() : undefined,
+          gstin: country === "IN" ? (gstin.toUpperCase() || undefined) : undefined,
+          companyNumber: country === "GB" ? companyNumber : undefined,
+          vatNumber: country === "GB" ? (vatNumber.toUpperCase() || undefined) : undefined,
           contactEmail,
           contactPhone,
+          countryCode: country,
         },
         {
           accountNumberMasked: masked,
-          ifscCode: ifscCode.toUpperCase(),
+          ifscCode: country === "IN" ? ifscCode.toUpperCase() : undefined,
+          sortCode: country === "GB" ? sortCode.trim() : undefined,
           beneficiaryName,
+          countryCode: country,
         },
         "RAZORPAY"
       );
@@ -226,11 +238,37 @@ export default function OrganizationPaymentSettings({
             </div>
           )}
 
+          {/* Country / Region Selector */}
+          <div className="flex items-center gap-2 p-1.5 bg-neutral-100 rounded-xl w-fit">
+            <button
+              type="button"
+              onClick={() => setCountry("IN")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                country === "IN"
+                  ? "bg-white text-neutral-900 shadow-2xs"
+                  : "text-neutral-600 hover:text-neutral-900"
+              }`}
+            >
+              🇮🇳 India (INR / UPI / GST)
+            </button>
+            <button
+              type="button"
+              onClick={() => setCountry("GB")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                country === "GB"
+                  ? "bg-white text-neutral-900 shadow-2xs"
+                  : "text-neutral-600 hover:text-neutral-900"
+              }`}
+            >
+              🇬🇧 United Kingdom (GBP / Sort Code / VAT)
+            </button>
+          </div>
+
           {/* Section A: Business Details */}
           <div className="space-y-4">
             <h5 className="text-xs font-semibold uppercase tracking-wider text-neutral-500 flex items-center gap-1.5">
               <Building2 className="w-3.5 h-3.5 text-neutral-400" />
-              <span>1. Business Entity Details</span>
+              <span>1. Business Entity Details ({country === "GB" ? "United Kingdom" : "India"})</span>
             </h5>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -241,7 +279,7 @@ export default function OrganizationPaymentSettings({
                 <input
                   type="text"
                   required
-                  placeholder="e.g. YESP Events Pvt Ltd"
+                  placeholder={country === "GB" ? "e.g. London Tech Events Ltd" : "e.g. YESP Events Pvt Ltd"}
                   value={businessName}
                   onChange={(e) => setBusinessName(e.target.value)}
                   className="w-full h-10 px-3 text-xs bg-white border border-neutral-200 rounded-lg focus:outline-hidden focus:border-neutral-900 shadow-2xs"
@@ -257,40 +295,84 @@ export default function OrganizationPaymentSettings({
                   onChange={(e) => setBusinessType(e.target.value as BusinessDetails["businessType"])}
                   className="w-full h-10 px-3 text-xs bg-white border border-neutral-200 rounded-lg focus:outline-hidden focus:border-neutral-900 shadow-2xs"
                 >
-                  <option value="private_limited">Private Limited Company</option>
-                  <option value="llp">Limited Liability Partnership (LLP)</option>
-                  <option value="partnership">Partnership Firm</option>
-                  <option value="individual">Sole Proprietorship / Individual</option>
-                  <option value="society">College / Student Union / Society</option>
+                  {country === "GB" ? (
+                    <>
+                      <option value="private_limited">Private Limited Company (Ltd)</option>
+                      <option value="llp">Limited Liability Partnership (LLP)</option>
+                      <option value="individual">Sole Trader / Individual</option>
+                      <option value="society">University Society / Student Union (SU)</option>
+                      <option value="charity">Registered Charity / CIC</option>
+                    </>
+                  ) : (
+                    <>
+                      <option value="private_limited">Private Limited Company</option>
+                      <option value="llp">Limited Liability Partnership (LLP)</option>
+                      <option value="partnership">Partnership Firm</option>
+                      <option value="individual">Sole Proprietorship / Individual</option>
+                      <option value="society">College / Student Union / Society</option>
+                    </>
+                  )}
                 </select>
               </div>
 
-              <div>
-                <label className="text-xs font-semibold text-neutral-800 block mb-1">
-                  Company PAN
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. ABCDE1234F"
-                  value={pan}
-                  onChange={(e) => setPan(e.target.value)}
-                  className="w-full h-10 px-3 text-xs uppercase font-mono bg-white border border-neutral-200 rounded-lg focus:outline-hidden focus:border-neutral-900 shadow-2xs"
-                />
-              </div>
+              {country === "GB" ? (
+                <>
+                  <div>
+                    <label className="text-xs font-semibold text-neutral-800 block mb-1">
+                      Company Number <span className="text-neutral-400 font-normal">(Companies House - Optional)</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. 12345678"
+                      value={companyNumber}
+                      onChange={(e) => setCompanyNumber(e.target.value)}
+                      className="w-full h-10 px-3 text-xs uppercase font-mono bg-white border border-neutral-200 rounded-lg focus:outline-hidden focus:border-neutral-900 shadow-2xs"
+                    />
+                  </div>
 
-              <div>
-                <label className="text-xs font-semibold text-neutral-800 block mb-1">
-                  GSTIN <span className="text-neutral-400 font-normal">(Optional)</span>
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. 29ABCDE1234F1Z5"
-                  value={gstin}
-                  onChange={(e) => setGstin(e.target.value)}
-                  className="w-full h-10 px-3 text-xs uppercase font-mono bg-white border border-neutral-200 rounded-lg focus:outline-hidden focus:border-neutral-900 shadow-2xs"
-                />
-              </div>
+                  <div>
+                    <label className="text-xs font-semibold text-neutral-800 block mb-1">
+                      VAT Number <span className="text-neutral-400 font-normal">(Optional)</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. GB 123 4567 89"
+                      value={vatNumber}
+                      onChange={(e) => setVatNumber(e.target.value)}
+                      className="w-full h-10 px-3 text-xs uppercase font-mono bg-white border border-neutral-200 rounded-lg focus:outline-hidden focus:border-neutral-900 shadow-2xs"
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div>
+                    <label className="text-xs font-semibold text-neutral-800 block mb-1">
+                      Company PAN
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. ABCDE1234F"
+                      value={pan}
+                      onChange={(e) => setPan(e.target.value)}
+                      className="w-full h-10 px-3 text-xs uppercase font-mono bg-white border border-neutral-200 rounded-lg focus:outline-hidden focus:border-neutral-900 shadow-2xs"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-semibold text-neutral-800 block mb-1">
+                      GSTIN <span className="text-neutral-400 font-normal">(Optional)</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. 29ABCDE1234F1Z5"
+                      value={gstin}
+                      onChange={(e) => setGstin(e.target.value)}
+                      className="w-full h-10 px-3 text-xs uppercase font-mono bg-white border border-neutral-200 rounded-lg focus:outline-hidden focus:border-neutral-900 shadow-2xs"
+                    />
+                  </div>
+                </>
+              )}
 
               <div>
                 <label className="text-xs font-semibold text-neutral-800 block mb-1">
@@ -313,7 +395,7 @@ export default function OrganizationPaymentSettings({
                 <input
                   type="tel"
                   required
-                  placeholder="+91 98765 43210"
+                  placeholder={country === "GB" ? "+44 7123 456789" : "+91 98765 43210"}
                   value={contactPhone}
                   onChange={(e) => setContactPhone(e.target.value)}
                   className="w-full h-10 px-3 text-xs bg-white border border-neutral-200 rounded-lg focus:outline-hidden focus:border-neutral-900 shadow-2xs"
@@ -326,7 +408,7 @@ export default function OrganizationPaymentSettings({
           <div className="space-y-4 pt-4 border-t border-neutral-100">
             <h5 className="text-xs font-semibold uppercase tracking-wider text-neutral-500 flex items-center gap-1.5">
               <Landmark className="w-3.5 h-3.5 text-neutral-400" />
-              <span>2. Settlement Bank Account Details</span>
+              <span>2. Settlement Bank Account Details ({country === "GB" ? "UK Bank" : "Indian Bank"})</span>
             </h5>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -344,27 +426,43 @@ export default function OrganizationPaymentSettings({
                 />
               </div>
 
-              <div>
-                <label className="text-xs font-semibold text-neutral-800 block mb-1">
-                  Bank IFSC Code
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. HDFC0000240"
-                  value={ifscCode}
-                  onChange={(e) => setIfscCode(e.target.value)}
-                  className="w-full h-10 px-3 text-xs uppercase font-mono bg-white border border-neutral-200 rounded-lg focus:outline-hidden focus:border-neutral-900 shadow-2xs"
-                />
-              </div>
+              {country === "GB" ? (
+                <div>
+                  <label className="text-xs font-semibold text-neutral-800 block mb-1">
+                    UK Bank Sort Code (6 Digits)
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. 20-00-00"
+                    value={sortCode}
+                    onChange={(e) => setSortCode(e.target.value)}
+                    className="w-full h-10 px-3 text-xs uppercase font-mono bg-white border border-neutral-200 rounded-lg focus:outline-hidden focus:border-neutral-900 shadow-2xs"
+                  />
+                </div>
+              ) : (
+                <div>
+                  <label className="text-xs font-semibold text-neutral-800 block mb-1">
+                    Bank IFSC Code
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. HDFC0000240"
+                    value={ifscCode}
+                    onChange={(e) => setIfscCode(e.target.value)}
+                    className="w-full h-10 px-3 text-xs uppercase font-mono bg-white border border-neutral-200 rounded-lg focus:outline-hidden focus:border-neutral-900 shadow-2xs"
+                  />
+                </div>
+              )}
 
               <div>
                 <label className="text-xs font-semibold text-neutral-800 block mb-1">
-                  Account Number
+                  {country === "GB" ? "UK Account Number (8 Digits)" : "Account Number"}
                 </label>
                 <input
                   type="password"
-                  placeholder={account?.settlementDetails?.accountNumberMasked ? "Leave blank to keep existing account" : "Enter bank account number"}
+                  placeholder={account?.settlementDetails?.accountNumberMasked ? "Leave blank to keep existing account" : (country === "GB" ? "8-digit account number" : "Enter bank account number")}
                   value={accountNumber}
                   onChange={(e) => setAccountNumber(e.target.value)}
                   className="w-full h-10 px-3 text-xs font-mono bg-white border border-neutral-200 rounded-lg focus:outline-hidden focus:border-neutral-900 shadow-2xs"
@@ -377,7 +475,7 @@ export default function OrganizationPaymentSettings({
                 </label>
                 <input
                   type="text"
-                  placeholder="Re-enter bank account number"
+                  placeholder={country === "GB" ? "Re-enter 8-digit account number" : "Re-enter bank account number"}
                   value={confirmAccount}
                   onChange={(e) => setConfirmAccount(e.target.value)}
                   className="w-full h-10 px-3 text-xs font-mono bg-white border border-neutral-200 rounded-lg focus:outline-hidden focus:border-neutral-900 shadow-2xs"

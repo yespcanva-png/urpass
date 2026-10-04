@@ -29,19 +29,24 @@ export type TicketValidationStatus = "VALID" | "USED" | "REFUNDED" | "CANCELLED"
 
 export interface BusinessDetails {
   legalBusinessName: string;
-  businessType: "individual" | "partnership" | "llp" | "private_limited" | "public_limited" | "trust" | "society";
-  pan: string;
+  businessType: "individual" | "partnership" | "llp" | "private_limited" | "public_limited" | "trust" | "society" | "charity" | "ltd";
+  pan?: string;
   gstin?: string;
+  companyNumber?: string; // UK Companies House Number
+  vatNumber?: string; // UK / EU VAT Number
   contactEmail: string;
   contactPhone: string;
   businessAddress?: string;
+  countryCode?: "IN" | "GB" | "US";
 }
 
 export interface SettlementDetails {
   accountNumberMasked: string; // e.g. "••••4321"
-  ifscCode: string;
+  ifscCode?: string; // India IFSC
+  sortCode?: string; // UK Sort Code (6 digits e.g. 20-00-00)
   beneficiaryName: string;
   bankName?: string;
+  countryCode?: "IN" | "GB" | "US";
 }
 
 export interface OrganizationPaymentAccount {

@@ -28,13 +28,13 @@ export default function UkPage() {
   return (
     <SEOPage
       config={{
-  "badge": "UK EVENT PLATFORM · FAST QR ENTRY",
-  "h1": "Event Registration & QR Check-In Software UK",
+  "badge": "ZERO COMMISSION · SUB-300MS QR ENTRY",
+  "h1": "Event Ticketing Without the Ticket Tax",
   "canonicalUrl": "https://urpass.space/uk",
-  "description": "Online event registration, digital QR passes, and sub-second smartphone check-in for UK conferences, universities, and festivals. Flat GBP pricing and UK GDPR compliant.",
-  "ctaLabel": "Create Your UK Event Free →",
+  "description": "Create events, issue digital QR tickets, manage multiple gates, and scan attendees in under 300ms — with 0% UrPass ticket commission. Built for UK universities, conferences, and event agencies.",
+  "ctaLabel": "Create Your Event Free →",
   "ctaTitle": "Run Your Next UK Event With URPASS",
-  "ctaDescription": "Set up registration in 3 minutes. Issue mobile QR tickets. Scan attendees in under 0.3s on any phone. Transparent GBP pricing with 0% ticketing commission.",
+  "ctaDescription": "Set up registration in 3 minutes. Issue mobile QR tickets. Scan attendees in under 300ms on any phone. Transparent GBP pricing with 0% ticketing commission.",
   "directAnswer": {
     "title": "What is URPASS UK Event Registration & QR Check-In Software?",
     "summary": "URPASS is an event registration and QR check-in platform that lets UK organisers create custom registration pages, issue digital QR passes, manage attendees, and scan tickets at event entrances using standard phones. It supports free and paid events with 0% ticketing commission and provides real-time attendance tracking from the organiser dashboard.",

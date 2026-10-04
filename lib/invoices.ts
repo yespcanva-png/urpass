@@ -706,13 +706,13 @@ export async function generateInvoicePdf(invoice: InvoiceRecord): Promise<Uint8A
     color: muted,
   });
 
-  // Top-Right: TAX INVOICE
-  const titleText = "TAX INVOICE";
-  const titleWidth = fontBold.widthOfTextAtSize(titleText, 20);
+  // Top-Right: TAX INVOICE / COMMERCIAL INVOICE
+  const titleText = isUkInvoice ? "COMMERCIAL INVOICE" : "TAX INVOICE";
+  const titleWidth = fontBold.widthOfTextAtSize(titleText, 18);
   page.drawText(titleText, {
     x: rightEdge - titleWidth,
     y: startY + 2,
-    size: 20,
+    size: 18,
     font: fontBold,
     color: dark,
   });
@@ -840,7 +840,7 @@ export async function generateInvoicePdf(invoice: InvoiceRecord): Promise<Uint8A
   const headerTextY = tableY + 1;
   page.drawText("#", { x: colNumX, y: headerTextY, size: 8, font: fontBold, color: muted });
   page.drawText("DESCRIPTION", { x: colDescX, y: headerTextY, size: 8, font: fontBold, color: muted });
-  page.drawText("SAC", { x: colSacX, y: headerTextY, size: 8, font: fontBold, color: muted });
+  page.drawText(isUkInvoice ? "CODE" : "SAC", { x: colSacX, y: headerTextY, size: 8, font: fontBold, color: muted });
   page.drawText("QTY", { x: colQtyX, y: headerTextY, size: 8, font: fontBold, color: muted });
   drawTextRightAt(`RATE (${currencyCode})`, colRateX, headerTextY, 8, fontBold, muted);
   drawTextRightAt(`AMOUNT (${currencyCode})`, colAmountX, headerTextY, 8, fontBold, muted);
@@ -878,7 +878,7 @@ export async function generateInvoicePdf(invoice: InvoiceRecord): Promise<Uint8A
     color: lightMuted,
   });
 
-  page.drawText(URPASS_SERVICE.sac, { x: colSacX, y: rowY, size: 9, font: fontRegular, color: bodyText });
+  page.drawText(isUkInvoice ? "SAAS-01" : URPASS_SERVICE.sac, { x: colSacX, y: rowY, size: 9, font: fontRegular, color: bodyText });
   page.drawText("1", { x: colQtyX + 4, y: rowY, size: 9, font: fontRegular, color: bodyText });
   drawTextRightAt(formattedRate, colRateX, rowY, 9, fontRegular, bodyText);
   drawTextRightAt(formattedAmount, colAmountX, rowY, 9.5, fontBold, dark);
@@ -892,13 +892,15 @@ export async function generateInvoicePdf(invoice: InvoiceRecord): Promise<Uint8A
     thickness: 1,
   });
 
-  page.drawText(URPASS_SERVICE.sacNote, {
-    x: colDescX,
-    y: rowBottomY - 14,
-    size: 7.5,
-    font: fontRegular,
-    color: lightMuted,
-  });
+  if (!isUkInvoice) {
+    page.drawText(URPASS_SERVICE.sacNote, {
+      x: colDescX,
+      y: rowBottomY - 14,
+      size: 7.5,
+      font: fontRegular,
+      color: lightMuted,
+    });
+  }
 
   // ---------------- 5. PAYMENT & TOTALS SECTION ----------------
   const calcTopY = rowBottomY - 50;
