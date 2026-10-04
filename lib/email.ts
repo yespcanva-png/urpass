@@ -1822,4 +1822,251 @@ export async function sendAttendeeRejectionAndRefundEmail({
   }
 }
 
+export async function notifyEventTeamNewApplication({
+  teamEmails,
+  organizerName,
+  eventName,
+  eventDate,
+  venue,
+  attendeeName,
+  attendeeEmail,
+  attendeePhone,
+  passType,
+  ticketTierName,
+  ticketPricePaise,
+  status,
+  customResponses,
+  customFields,
+  eventId,
+}: {
+  teamEmails: string | string[];
+  organizerName?: string | null;
+  eventName: string;
+  eventDate: string;
+  venue: string;
+  attendeeName: string;
+  attendeeEmail: string;
+  attendeePhone?: string | null;
+  passType?: string | null;
+  ticketTierName?: string | null;
+  ticketPricePaise?: number | null;
+  status: "approved" | "pending" | "waitlisted";
+  customResponses?: Record<string, unknown> | null;
+  customFields?: Array<{ id: string; label: string; type?: string }> | null;
+  eventId: string;
+}): Promise<boolean> {
+  const recipients = Array.isArray(teamEmails) ? teamEmails.filter(Boolean) : [teamEmails].filter(Boolean);
+  if (recipients.length === 0) {
+    recipients.push(getOwnerEmail());
+  }
+
+  const safeEventName = escapeHtml(eventName);
+  const safeAttendeeName = escapeHtml(attendeeName);
+  const safeAttendeeEmail = escapeHtml(attendeeEmail);
+  const safeAttendeePhone = attendeePhone ? escapeHtml(attendeePhone) : "Not provided";
+  const safeVenue = escapeHtml(venue);
+  const safeTier = escapeHtml(ticketTierName || passType || "Participant");
+  const formattedPrice = ticketPricePaise && ticketPricePaise > 0
+    ? formatInrFromPaise(ticketPricePaise)
+    : "Free / Complimentary";
+
+  const formattedDate = new Date(eventDate).toLocaleDateString("en-IN", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+  const safeFormattedDate = escapeHtml(formattedDate);
+
+  let statusHeading = "New Registration";
+  let statusBadgeBg = "#ecfdf5";
+  let statusBadgeColor = "#047857";
+  let statusBadgeBorder = "#a7f3d0";
+  let statusBadgeText = "APPROVED & PASS ISSUED";
+  let subjectEmoji = "🎉";
+
+  if (status === "pending") {
+    statusHeading = "New Application Awaiting Review";
+    statusBadgeBg = "#fffbeb";
+    statusBadgeColor = "#b45309";
+    statusBadgeBorder = "#fde68a";
+    statusBadgeText = "ACTION REQUIRED: PENDING REVIEW";
+    subjectEmoji = "📋";
+  } else if (status === "waitlisted") {
+    statusHeading = "New Waitlist Entry";
+    statusBadgeBg = "#eff6ff";
+    statusBadgeColor = "#1d4ed8";
+    statusBadgeBorder = "#bfdbfe";
+    statusBadgeText = "WAITLISTED (CAPACITY REACHED)";
+    subjectEmoji = "⏳";
+  }
+
+  const subject = `${subjectEmoji} [${statusBadgeText}] ${attendeeName} applied for ${eventName}`;
+
+  // Build custom fields rows if provided
+  const customRows: Array<{ label: string; value: string }> = [];
+  if (customResponses && typeof customResponses === "object") {
+    const fieldMap = new Map<string, string>();
+    if (customFields && Array.isArray(customFields)) {
+      for (const cf of customFields) {
+        if (cf.id && cf.label) fieldMap.set(cf.id, cf.label);
+      }
+    }
+
+    for (const [key, val] of Object.entries(customResponses)) {
+      if (val !== undefined && val !== null && val !== "") {
+        const label = fieldMap.get(key) || key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+        const displayVal = typeof val === "boolean" ? (val ? "Yes" : "No") : String(val);
+        customRows.push({ label, value: displayVal });
+      }
+    }
+  }
+
+  const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>${escapeHtml(subject)}</title>
+</head>
+<body style="margin:0;padding:0;background:#f6f4ff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f6f4ff;padding:36px 16px;">
+  <tr><td align="center">
+    <table width="100%" cellpadding="0" cellspacing="0" style="max-width:580px;background:#ffffff;border:1px solid #ede9fe;border-radius:20px;overflow:hidden;box-shadow:0 8px 32px rgba(109,40,217,0.08);">
+      
+      <!-- Top header banner -->
+      <tr>
+        <td style="background:linear-gradient(135deg, #4c1d95 0%, #6D28D9 100%);padding:28px 32px;">
+          <table width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+              <td>
+                <p style="margin:0 0 6px;font-size:10px;font-weight:800;letter-spacing:2.5px;color:rgba(255,255,255,0.7);text-transform:uppercase;">URPASS · EVENT TEAM ALERT</p>
+                <h1 style="margin:0;font-size:22px;line-height:1.3;color:#ffffff;font-weight:800;">${escapeHtml(statusHeading)}</h1>
+                <p style="margin:6px 0 0;font-size:14px;color:rgba(255,255,255,0.9);font-weight:500;">${safeEventName}</p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+
+      <!-- Main body -->
+      <tr>
+        <td style="padding:28px 32px;">
+
+          <!-- Status badge bar -->
+          <div style="margin-bottom:22px;display:inline-block;background:${statusBadgeBg};color:${statusBadgeColor};border:1px solid ${statusBadgeBorder};padding:6px 14px;border-radius:999px;font-size:11px;font-weight:800;letter-spacing:0.5px;">
+            ${statusBadgeText}
+          </div>
+
+          <!-- Attendee Summary Card -->
+          <table width="100%" cellpadding="0" cellspacing="0" style="background:#fcfaff;border:1px solid #ede9fe;border-radius:14px;margin-bottom:24px;overflow:hidden;">
+            <tr>
+              <td style="padding:18px 20px;">
+                <p style="margin:0 0 4px;font-size:10px;font-weight:800;letter-spacing:1.5px;color:#6b7280;text-transform:uppercase;">Applicant Name</p>
+                <p style="margin:0 0 12px;font-size:18px;font-weight:800;color:#111827;">${safeAttendeeName}</p>
+
+                <table width="100%" cellpadding="0" cellspacing="0" style="font-size:13px;">
+                  <tr>
+                    <td style="padding:5px 0;color:#6b7280;width:35%;font-weight:600;">Email:</td>
+                    <td style="padding:5px 0;color:#111827;font-weight:600;"><a href="mailto:${safeAttendeeEmail}" style="color:#6D28D9;text-decoration:none;">${safeAttendeeEmail}</a></td>
+                  </tr>
+                  <tr>
+                    <td style="padding:5px 0;color:#6b7280;font-weight:600;">Phone:</td>
+                    <td style="padding:5px 0;color:#111827;">${safeAttendeePhone}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:5px 0;color:#6b7280;font-weight:600;">Ticket / Tier:</td>
+                    <td style="padding:5px 0;color:#111827;font-weight:700;">${safeTier}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:5px 0;color:#6b7280;font-weight:600;">Amount:</td>
+                    <td style="padding:5px 0;color:#047857;font-weight:700;">${escapeHtml(formattedPrice)}</td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+
+          <!-- Event Details Card -->
+          <table width="100%" cellpadding="0" cellspacing="0" style="background:#f9fafb;border:1px solid #f3f4f6;border-radius:14px;padding:16px 20px;margin-bottom:24px;font-size:12px;">
+            <tr>
+              <td style="padding:4px 0;color:#6b7280;width:35%;font-weight:600;">Event Date:</td>
+              <td style="padding:4px 0;color:#111827;font-weight:600;">${safeFormattedDate}</td>
+            </tr>
+            <tr>
+              <td style="padding:4px 0;color:#6b7280;font-weight:600;">Venue:</td>
+              <td style="padding:4px 0;color:#111827;font-weight:600;">${safeVenue}</td>
+            </tr>
+          </table>
+
+          ${customRows.length > 0 ? `
+          <!-- Custom Registration Form Answers -->
+          <div style="margin-bottom:24px;">
+            <p style="margin:0 0 10px;font-size:11px;font-weight:800;letter-spacing:1px;color:#4b5563;text-transform:uppercase;">Registration Form Responses</p>
+            <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;background:#ffffff;font-size:13px;">
+              ${customRows.map((row) => `
+              <tr style="border-bottom:1px solid #f3f4f6;">
+                <td style="padding:10px 14px;color:#6b7280;width:40%;font-weight:600;background:#fafafa;">${escapeHtml(row.label)}</td>
+                <td style="padding:10px 14px;color:#111827;font-weight:500;">${escapeHtml(row.value)}</td>
+              </tr>
+              `).join("")}
+            </table>
+          </div>
+          ` : ""}
+
+          <!-- Action Buttons -->
+          <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:28px;">
+            <tr>
+              <td style="padding-bottom:12px;">
+                <a href="${APP_URL}/event/${eventId}/attendees" style="display:block;background:#6D28D9;color:#ffffff;text-align:center;padding:14px 24px;border-radius:12px;font-size:14px;font-weight:700;text-decoration:none;box-shadow:0 4px 14px rgba(109,40,217,0.25);">
+                  Manage Attendees in Dashboard &rarr;
+                </a>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <a href="${APP_URL}/event/${eventId}" style="display:block;background:#f3f4f6;color:#374151;text-align:center;padding:12px 24px;border-radius:12px;font-size:13px;font-weight:600;text-decoration:none;">
+                  View Event Console
+                </a>
+              </td>
+            </tr>
+          </table>
+
+        </td>
+      </tr>
+
+      <!-- Footer -->
+      <tr>
+        <td style="border-top:1px solid #f3f4f6;padding:18px 32px;background:#fafafa;text-align:center;">
+          <p style="margin:0;font-size:11px;color:#9ca3af;line-height:1.5;">
+            You are receiving this real-time notification because you are an organizer or active team member for <strong>${safeEventName}</strong>.<br />
+            Powered by URPASS · <a href="${APP_URL}" style="color:#6D28D9;text-decoration:none;">urpass.space</a>
+          </p>
+        </td>
+      </tr>
+
+    </table>
+  </td></tr>
+</table>
+</body>
+</html>`.trim();
+
+  try {
+    await sendEmail({
+      from: getFromEmail(),
+      to: recipients.length === 1 ? recipients[0] : recipients,
+      replyTo: attendeeEmail,
+      subject,
+      html,
+    });
+    console.log(`[email] Dispatched event team notification to ${recipients.join(", ")} for ${attendeeName} (${eventName})`);
+    return true;
+  } catch (err) {
+    console.error(`[email] Failed to send event team notification to ${recipients.join(", ")}:`, err);
+    return false;
+  }
+}
+
+
 

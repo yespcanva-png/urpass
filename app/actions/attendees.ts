@@ -28,6 +28,7 @@ import {
   markReservationApproved,
 } from "@/lib/capacity-reservation";
 import { communicationService, formatTicketId, buildTicketUrl } from "@/lib/communications";
+import { notifyEventTeamOnApplication } from "@/lib/notifications/event-team-notification";
 import { generatePass } from "./passes";
 import crypto from "crypto";
 
@@ -846,6 +847,25 @@ export async function submitApplication(
           application_status: "waitlisted",
         }).catch(() => {});
 
+        void notifyEventTeamOnApplication({
+          eventId,
+          eventName: event.name,
+          eventDate: event.event_date,
+          venue: event.venue,
+          organizerId: event.organizer_id,
+          organizationId: event.organization_id,
+          attendeeId: waitlistedAttendee?.id || null,
+          attendeeName: parsed.data.name,
+          attendeeEmail: parsed.data.email,
+          attendeePhone: parsed.data.phone || null,
+          passType: parsed.data.pass_type,
+          ticketTierName: selectedTicketType?.name || null,
+          ticketPricePaise: paymentAmountPaise,
+          status: "waitlisted",
+          customResponses: customResponses ?? null,
+          customFields: (event.custom_fields as Array<{ id: string; label: string; type?: string }>) ?? null,
+        }).catch((err) => console.error("[submitApplication] notifyEventTeam error:", err));
+
         return {
           waitlisted: true,
           message: "This event is at capacity. You have been added to the waitlist queue and will be notified as spots open up!",
@@ -925,6 +945,25 @@ export async function submitApplication(
         application_status: "approved",
       }).catch(() => {});
 
+      void notifyEventTeamOnApplication({
+        eventId,
+        eventName: event.name,
+        eventDate: event.event_date,
+        venue: event.venue,
+        organizerId: event.organizer_id,
+        organizationId: event.organization_id,
+        attendeeId: attendee.id,
+        attendeeName: parsed.data.name,
+        attendeeEmail: parsed.data.email,
+        attendeePhone: parsed.data.phone || null,
+        passType: attendee.pass_type,
+        ticketTierName: selectedTicketType?.name || null,
+        ticketPricePaise: paymentAmountPaise,
+        status: "approved",
+        customResponses: customResponses ?? null,
+        customFields: (event.custom_fields as Array<{ id: string; label: string; type?: string }>) ?? null,
+      }).catch((err) => console.error("[submitApplication] notifyEventTeam error:", err));
+
       if (paymentAmountPaise > 0 && payment) {
         sendWebhooks(event.organizer_id, "payment.success", {
           attendee_id: attendee.id,
@@ -980,6 +1019,25 @@ export async function submitApplication(
       email: parsed.data.email,
       application_status: "approved",
     }).catch(() => {});
+
+    void notifyEventTeamOnApplication({
+      eventId,
+      eventName: event.name,
+      eventDate: event.event_date,
+      venue: event.venue,
+      organizerId: event.organizer_id,
+      organizationId: event.organization_id,
+      attendeeId: attendee.id,
+      attendeeName: parsed.data.name,
+      attendeeEmail: parsed.data.email,
+      attendeePhone: parsed.data.phone || null,
+      passType: attendee.pass_type,
+      ticketTierName: selectedTicketType?.name || null,
+      ticketPricePaise: paymentAmountPaise,
+      status: "approved",
+      customResponses: customResponses ?? null,
+      customFields: (event.custom_fields as Array<{ id: string; label: string; type?: string }>) ?? null,
+    }).catch((err) => console.error("[submitApplication] notifyEventTeam error:", err));
 
     // Schedule background self-healing retry
     void (async () => {
@@ -1039,6 +1097,25 @@ export async function submitApplication(
       application_status: "waitlisted",
     }).catch(() => {});
 
+    void notifyEventTeamOnApplication({
+      eventId,
+      eventName: event.name,
+      eventDate: event.event_date,
+      venue: event.venue,
+      organizerId: event.organizer_id,
+      organizationId: event.organization_id,
+      attendeeId: newAttendee?.id || null,
+      attendeeName: parsed.data.name,
+      attendeeEmail: parsed.data.email,
+      attendeePhone: parsed.data.phone || null,
+      passType: parsed.data.pass_type,
+      ticketTierName: selectedTicketType?.name || null,
+      ticketPricePaise: paymentAmountPaise,
+      status: "waitlisted",
+      customResponses: customResponses ?? null,
+      customFields: (event.custom_fields as Array<{ id: string; label: string; type?: string }>) ?? null,
+    }).catch((err) => console.error("[submitApplication] notifyEventTeam error:", err));
+
     return {
       waitlisted: true,
       message: "This event is at capacity. You have been added to the waitlist queue and will be notified as spots open up!",
@@ -1092,6 +1169,25 @@ export async function submitApplication(
     email: parsed.data.email,
     application_status: "pending",
   }).catch(() => {});
+
+  void notifyEventTeamOnApplication({
+    eventId,
+    eventName: event.name,
+    eventDate: event.event_date,
+    venue: event.venue,
+    organizerId: event.organizer_id,
+    organizationId: event.organization_id,
+    attendeeId: newAttendee?.id ?? null,
+    attendeeName: parsed.data.name,
+    attendeeEmail: parsed.data.email,
+    attendeePhone: parsed.data.phone || null,
+    passType: parsed.data.pass_type,
+    ticketTierName: selectedTicketType?.name || null,
+    ticketPricePaise: paymentAmountPaise,
+    status: "pending",
+    customResponses: customResponses ?? null,
+    customFields: (event.custom_fields as Array<{ id: string; label: string; type?: string }>) ?? null,
+  }).catch((err) => console.error("[submitApplication] notifyEventTeam error:", err));
 }
 
 export async function exportAttendeesCSV(
