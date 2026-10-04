@@ -26,7 +26,7 @@ describe("UK GEO SEO Pages", () => {
 
     it("renders London page content and direct answer", () => {
       render(<LondonPage />);
-      expect(screen.getByRole("heading", { level: 1, name: /Event Registration & Fast QR Check-In Software for London Events/i })).toBeInTheDocument();
+      expect(screen.getByRole("heading", { level: 1, name: /Event Registration & QR Check-In Software London/i })).toBeInTheDocument();
       expect(screen.getByText(/Why Choose URPASS for London Events & Conferences\?/i)).toBeInTheDocument();
     });
   });
@@ -40,8 +40,8 @@ describe("UK GEO SEO Pages", () => {
 
     it("renders Manchester page content and direct answer", () => {
       render(<ManchesterPage />);
-      expect(screen.getByRole("heading", { level: 1, name: /Event Registration & Fast QR Check-In Software for Manchester Events/i })).toBeInTheDocument();
-      expect(screen.getByText(/Why Choose URPASS for Manchester Events & Summits\?/i)).toBeInTheDocument();
+      expect(screen.getByRole("heading", { level: 1, name: /Event Registration Software for Manchester Events/i })).toBeInTheDocument();
+      expect(screen.getByText(/Why Use URPASS for Manchester Events & Summits\?/i)).toBeInTheDocument();
       expect(screen.getAllByText(/Manchester Central/i)[0]).toBeInTheDocument();
     });
   });
@@ -55,8 +55,8 @@ describe("UK GEO SEO Pages", () => {
 
     it("renders Birmingham page content and direct answer", () => {
       render(<BirminghamPage />);
-      expect(screen.getByRole("heading", { level: 1, name: /Event Registration & Fast QR Check-In Software for Birmingham Events/i })).toBeInTheDocument();
-      expect(screen.getByText(/Why Choose URPASS for Birmingham Events & Conferences\?/i)).toBeInTheDocument();
+      expect(screen.getByRole("heading", { level: 1, name: /QR Event Registration & Check-In Birmingham/i })).toBeInTheDocument();
+      expect(screen.getByText(/Why Choose URPASS for Birmingham Events\?/i)).toBeInTheDocument();
       expect(screen.getAllByText(/NEC Birmingham/i)[0]).toBeInTheDocument();
     });
   });
@@ -70,8 +70,8 @@ describe("UK GEO SEO Pages", () => {
 
     it("renders Edinburgh page content and direct answer", () => {
       render(<EdinburghPage />);
-      expect(screen.getByRole("heading", { level: 1, name: /Event Registration & Fast QR Check-In Software for Edinburgh Events/i })).toBeInTheDocument();
-      expect(screen.getByText(/Why Choose URPASS for Edinburgh Events & Festivals\?/i)).toBeInTheDocument();
+      expect(screen.getByRole("heading", { level: 1, name: /Event Registration & QR Check-In Edinburgh/i })).toBeInTheDocument();
+      expect(screen.getByText(/Why Choose URPASS for Edinburgh Events\?/i)).toBeInTheDocument();
       expect(screen.getAllByText(/EICC/i)[0]).toBeInTheDocument();
     });
   });
@@ -85,8 +85,8 @@ describe("UK GEO SEO Pages", () => {
 
     it("renders Bristol page content and direct answer", () => {
       render(<BristolPage />);
-      expect(screen.getByRole("heading", { level: 1, name: /Event Registration & Fast QR Check-In Software for Bristol Events/i })).toBeInTheDocument();
-      expect(screen.getByText(/Why Choose URPASS for Bristol Events & Summits\?/i)).toBeInTheDocument();
+      expect(screen.getByRole("heading", { level: 1, name: /Event Registration Platform Bristol/i })).toBeInTheDocument();
+      expect(screen.getByText(/Why Choose URPASS for Bristol Events\?/i)).toBeInTheDocument();
       expect(screen.getAllByText(/Bristol Beacon/i)[0]).toBeInTheDocument();
     });
   });
@@ -130,7 +130,6 @@ describe("UK GEO SEO Pages", () => {
       expect(document.querySelector('a[href="/uk/edinburgh"]')).not.toBeNull();
       expect(document.querySelector('a[href="/uk/bristol"]')).not.toBeNull();
       expect(document.querySelector('a[href="/zero-commission-event-ticketing-uk"]')).not.toBeNull();
-      expect(document.querySelector('a[href="/university-society-event-ticketing"]')).not.toBeNull();
     });
   });
 });

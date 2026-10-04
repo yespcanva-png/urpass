@@ -64,7 +64,25 @@ export const DUMMY_ATTENDEES: DummyAttendee[] = [
     zone: "STUDENT GATE 4",
     seat: "BALCONY ROW G",
   },
+  {
+    id: "att-extreme-stress",
+    name: "Alexander Bartholomew Constantine Montgomery-Sutherland von Hohenzollern-Sigmaringen Jr.",
+    email: "alexander.bartholomew.constantine.montgomery.sutherland.von.hohenzollern@computational-neuroscience-research-consortium.cambridge-oxford-mit-joint-alliance.ac.uk",
+    phone: "+44 7700 900077 / Ext 4892 (Primary Direct Line)",
+    company: "Global Intercontinental Enterprise Corporation of Artificial Intelligence, Biotechnology, Quantum Computing & Advanced Robotics Systems Ltd.",
+    ticketCategory: "VIP ALL-ACCESS EXECUTIVE SPEAKER & PATRON OF HONOUR PASS",
+    ticketId: "#URP-2026-XTRM-998877665544",
+    zone: "GATE 12 · NORTH-WEST GRAND VIP LOUNGE MEZZANINE CORRIDOR WING C",
+    seat: "ROW ZZZ · AISLE SEAT 104 · EXECUTIVE BALCONY PRIVATE BOX 4",
+  },
 ];
+
+export const EXTREME_SAMPLE_EVENT: SampleEventData = {
+  name: "24th International Conference on High-Performance Scalable Cloud Infrastructure, Distributed Machine Learning Systems & Next-Generation Quantum Algorithms Expo 2026",
+  date: "WEDNESDAY, 31 DECEMBER 2026 - SUNDAY, 04 JANUARY 2027",
+  time: "07:30 AM IST (PROMPT) - 11:45 PM IST (NETWORKING GALA RECEPTION)",
+  venue: "Grand International Exhibition and Convention Center, Hall 4B & Multi-Purpose Auditorium, Silicon Valley Park, Bangalore 560100",
+};
 
 export const DEFAULT_SAMPLE_EVENT: SampleEventData = {
   name: "URPASS TECH SUMMIT 2026",

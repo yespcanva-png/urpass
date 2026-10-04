@@ -171,7 +171,15 @@ export type CheckIn = {
 };
 
 export type OrgTier = "free" | "starter" | "pro" | "enterprise";
-export type OrgRole = "owner" | "admin" | "event_manager" | "checkin_staff" | "viewer" | "member";
+export type OrgRole =
+  | "owner"
+  | "admin"
+  | "event_manager"
+  | "finance"
+  | "gate_manager"
+  | "checkin_staff"
+  | "viewer"
+  | "member";
 export type MemberStatus = "active" | "pending";
 
 export type Organization = {
@@ -369,11 +377,14 @@ export interface VerifiedDomain {
 export interface EnterpriseAuditLog {
   id: string;
   organization_id: string;
+  event_id?: string | null;
   user_id: string | null;
   actor_email: string | null;
   action: string;
   resource_type: string;
   resource_id: string | null;
+  old_values?: Record<string, unknown> | null;
+  new_values?: Record<string, unknown> | null;
   details: Record<string, unknown>;
   ip_address: string | null;
   user_agent: string | null;

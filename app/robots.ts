@@ -1,19 +1,31 @@
 import type { MetadataRoute } from "next";
 
+const DISALLOWED_PATHS = [
+  "/dashboard/",
+  "/event/",
+  "/billing/",
+  "/scan/",
+  "/auth/",
+  "/ops/",
+  "/pass/",
+  "/org/",
+  "/portal/",
+  "/onboarding",
+  "/onboarding/",
+  "/login",
+  "/forgot-password",
+  "/api/",
+];
+
+const ALLOWED_PATHS = ["/", "/api/mcp", "/llms.txt", "/llms-full.txt"];
+
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: [
       {
         userAgent: "*",
-        allow: ["/", "/api/mcp", "/llms.txt", "/llms-full.txt"],
-        disallow: [
-          "/dashboard/",
-          "/event/",
-          "/billing/",
-          "/scan/",
-          "/auth/",
-          "/ops/",
-        ],
+        allow: ALLOWED_PATHS,
+        disallow: DISALLOWED_PATHS,
       },
       {
         userAgent: [
@@ -29,39 +41,18 @@ export default function robots(): MetadataRoute.Robots {
           "cohere-ai",
           "Amazonbot",
         ],
-        allow: ["/", "/api/mcp", "/llms.txt", "/llms-full.txt"],
-        disallow: [
-          "/dashboard/",
-          "/event/",
-          "/billing/",
-          "/scan/",
-          "/auth/",
-          "/ops/",
-        ],
+        allow: ALLOWED_PATHS,
+        disallow: DISALLOWED_PATHS,
       },
       {
         userAgent: "Googlebot",
-        allow: ["/", "/api/mcp", "/llms.txt", "/llms-full.txt"],
-        disallow: [
-          "/dashboard/",
-          "/event/",
-          "/billing/",
-          "/scan/",
-          "/auth/",
-          "/ops/",
-        ],
+        allow: ALLOWED_PATHS,
+        disallow: DISALLOWED_PATHS,
       },
       {
         userAgent: "Bingbot",
-        allow: ["/", "/api/mcp", "/llms.txt", "/llms-full.txt"],
-        disallow: [
-          "/dashboard/",
-          "/event/",
-          "/billing/",
-          "/scan/",
-          "/auth/",
-          "/ops/",
-        ],
+        allow: ALLOWED_PATHS,
+        disallow: DISALLOWED_PATHS,
       },
     ],
     sitemap: "https://urpass.space/sitemap.xml",

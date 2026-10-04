@@ -9,6 +9,8 @@ const ROLE_BADGE: Record<OrgRole, { label: string; cls: string }> = {
   owner:         { label: "Owner",          cls: "bg-brand-50 text-brand border-brand-100" },
   admin:         { label: "Admin",          cls: "bg-blue-50 text-blue-700 border-blue-100" },
   event_manager: { label: "Event Manager",  cls: "bg-amber-50 text-amber-700 border-amber-100" },
+  finance:       { label: "Finance",        cls: "bg-indigo-50 text-indigo-700 border-indigo-100" },
+  gate_manager:  { label: "Gate Manager",   cls: "bg-teal-50 text-teal-700 border-teal-100" },
   checkin_staff: { label: "Check-in Staff", cls: "bg-green-50 text-green-700 border-green-100" },
   viewer:        { label: "Viewer",         cls: "bg-neutral-100 text-neutral-500 border-neutral-200" },
   member:        { label: "Member",         cls: "bg-neutral-100 text-neutral-600 border-neutral-200" },
@@ -17,6 +19,8 @@ const ROLE_BADGE: Record<OrgRole, { label: string; cls: string }> = {
 const ASSIGNABLE_ROLES: { value: OrgRole; label: string }[] = [
   { value: "admin",         label: "Admin" },
   { value: "event_manager", label: "Event Manager" },
+  { value: "finance",       label: "Finance" },
+  { value: "gate_manager",  label: "Gate Manager" },
   { value: "checkin_staff", label: "Check-in Staff" },
   { value: "viewer",        label: "Viewer" },
   { value: "member",        label: "Member" },

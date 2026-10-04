@@ -20,6 +20,62 @@ const nextConfig: NextConfig = {
         destination: "/founder-lifetime-deal",
         permanent: true,
       },
+      // Consolidation 301 redirects: Merge duplicate & cannibalistic commercial landing pages
+      {
+        source: "/event-registration-platform",
+        destination: "/event-registration-software",
+        permanent: true,
+      },
+      {
+        source: "/event-ticketing-platform",
+        destination: "/event-ticketing-software",
+        permanent: true,
+      },
+      {
+        source: "/multiple-gate-event-check-in",
+        destination: "/multi-gate-event-check-in",
+        permanent: true,
+      },
+      {
+        source: "/google-forms-event-registration-alternative",
+        destination: "/google-forms-alternative-for-events",
+        permanent: true,
+      },
+      {
+        source: "/eventbrite-alternative-india",
+        destination: "/eventbrite-alternative",
+        permanent: true,
+      },
+      {
+        source: "/online-event-registration-system",
+        destination: "/online-event-registration",
+        permanent: true,
+      },
+      {
+        source: "/online-ticket-booking-system-for-events",
+        destination: "/online-ticket-generator-for-events",
+        permanent: true,
+      },
+      {
+        source: "/qr-event-tickets",
+        destination: "/qr-event-registration",
+        permanent: true,
+      },
+      {
+        source: "/attendee-check-in-system",
+        destination: "/event-check-in-software",
+        permanent: true,
+      },
+      {
+        source: "/event-entry-management",
+        destination: "/event-entry-management-software",
+        permanent: true,
+      },
+      {
+        source: "/qr-ticketing-system",
+        destination: "/qr-code-ticketing-system",
+        permanent: true,
+      },
     ];
   },
 };

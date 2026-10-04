@@ -39,7 +39,7 @@ export default async function ScanIndexPage() {
     .select("organization_id")
     .eq("user_id", user.id)
     .eq("status", "active")
-    .in("role", ["owner", "admin", "event_manager", "checkin_staff"]);
+    .in("role", ["owner", "admin", "event_manager", "gate_manager", "checkin_staff"]);
 
   const orgIds = (memberships ?? []).map((m) => m.organization_id);
   const { data: orgEvents } = orgIds.length > 0

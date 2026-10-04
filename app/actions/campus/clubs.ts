@@ -60,22 +60,21 @@ export async function getCampusClubs(
 
     if (error || !clubs) return [];
 
-    // Fetch event counts for each club
-    const enhanced = await Promise.all(
-      clubs.map(async (c) => {
-        const { count: eventsCount } = await supabase
-          .from("events")
-          .select("*", { count: "exact", head: true })
-          .eq("club_id", c.id);
+    // Batch aggregate event counts in a single query across all clubs (eliminates N+1)
+    const clubIds = clubs.map((c) => c.id);
+    const { data: eventsRes } = clubIds.length > 0
+      ? await supabase.from("events").select("club_id").in("club_id", clubIds)
+      : { data: [] };
 
-        return {
-          ...(c as unknown as CampusClub),
-          events_count: eventsCount ?? 0,
-        };
-      })
-    );
+    const eventsCountMap: Record<string, number> = {};
+    for (const r of eventsRes ?? []) {
+      if (r.club_id) eventsCountMap[r.club_id] = (eventsCountMap[r.club_id] || 0) + 1;
+    }
 
-    return enhanced;
+    return clubs.map((c) => ({
+      ...(c as unknown as CampusClub),
+      events_count: eventsCountMap[c.id] ?? 0,
+    }));
   } catch {
     return [];
   }

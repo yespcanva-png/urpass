@@ -7,7 +7,7 @@ export const ssoConnectionSchema = z.object({
   domains: z.array(z.string().trim().toLowerCase()).default([]),
   enforce_sso: z.boolean().default(false),
   jit_provisioning: z.boolean().default(true),
-  default_role: z.enum(["owner", "admin", "event_manager", "checkin_staff", "viewer", "member"]).default("member"),
+  default_role: z.enum(["owner", "admin", "event_manager", "finance", "gate_manager", "checkin_staff", "viewer", "member"]).default("member"),
 
   // SAML fields
   idp_entity_id: z.string().trim().optional().nullable(),

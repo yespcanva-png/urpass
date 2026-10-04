@@ -1,7 +1,17 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getUserPlan } from "@/lib/plan";
 import OnboardingClient from "./OnboardingClient";
+
+export const metadata: Metadata = {
+  title: "Onboarding — URPASS",
+  robots: {
+    index: false,
+    follow: false,
+    nocache: true,
+  },
+};
 
 export default async function OnboardingPage() {
   const supabase = await createClient();

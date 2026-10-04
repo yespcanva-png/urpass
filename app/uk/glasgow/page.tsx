@@ -1,45 +1,17 @@
 import type { Metadata } from "next";
-import {
-  QrCode,
-  ScanLine,
-  ShieldCheck,
-  Building2,
-  CheckCircle2,
-  Smartphone,
-  Banknote,
-  Users,
-  Zap,
-  BarChart3,
-  MapPin,
-  Clock,
-} from "lucide-react";
+import { Banknote, Building2, ScanLine, ShieldCheck, Users, Zap } from "lucide-react";
 import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
-  title: "Event Registration & QR Check-In Software Glasgow | 0% Commission | URPASS",
-  description:
-    "High-speed event registration and QR check-in software for Glasgow venues, SEC conferences, university societies, and Finnieston creative meetups. Sub-second scanning, offline caching, and 0% ticket commission.",
-  keywords: [
-    "event registration software glasgow",
-    "qr event check-in glasgow",
-    "glasgow conference check-in app",
-    "sec glasgow event ticketing",
-    "strathclyde student union ticketing",
-    "glasgow university society events",
-    "zero commission event ticketing glasgow",
-    "eventbrite alternative glasgow",
-  ],
+  title: "Event Registration & QR Ticketing Glasgow | URPASS",
+  description: "Fast event registration and sub-second QR ticketing for Glasgow concerts, SEC conferences, and university societies. Hydro arena scale, 0% ticket commission.",
+  keywords: ["event registration software Glasgow", "QR ticketing Glasgow", "Glasgow event check-in", "SEC Glasgow conference registration", "University of Glasgow event ticketing", "Strathclyde union check-in", "Eventbrite alternative Glasgow"],
   alternates: {
     canonical: "https://urpass.space/uk/glasgow",
-    languages: {
-      "en-GB": "https://urpass.space/uk/glasgow",
-      "x-default": "https://urpass.space/uk",
-    },
   },
   openGraph: {
-    title: "Event Registration & QR Check-In Glasgow | URPASS",
-    description:
-      "Run seamless gate check-ins across Glasgow venues from the SEC to SWG3. Sub-second phone scanning, student union features, offline mode, and 0% ticket commission.",
+    title: "Event Registration & QR Ticketing Glasgow | URPASS",
+    description: "Fast event registration and sub-second QR ticketing for Glasgow concerts, SEC conferences, and university societies. Hydro arena scale, 0% ticket commission.",
     url: "https://urpass.space/uk/glasgow",
     locale: "en_GB",
     type: "website",
@@ -52,214 +24,241 @@ export const metadata: Metadata = {
   },
 };
 
-export default function GlasgowEventTicketingPage() {
+export default function UkGlasgowPage() {
   return (
     <SEOPage
       config={{
-        canonicalUrl: "https://urpass.space/uk/glasgow",
-        badge: "GLASGOW EVENT TECH · HIGHLAND & CITY ENTRY CONTROL",
-        h1: "Event Registration & Fast QR Check-In Software for Glasgow Events",
-        description:
-          "Keep entrance queues moving across Glasgow's premier event spaces. From major trade exhibitions at the Scottish Event Campus (SEC) and creative gatherings in Finnieston to student society balls at Glasgow and Strathclyde universities, URPASS delivers sub-second phone scanning with 0% ticket fees.",
-        ctaLabel: "Start Free in Glasgow",
-
-        directAnswer: {
-          title: "Why choose URPASS for Glasgow events and university operations?",
-          summary:
-            "URPASS is tailored to Glasgow's vibrant live event, academic, and conference culture. Designed to handle unpredictable Scottish weather, it eliminates outdoor entrance queues by enabling door volunteers to scan attendee QR passes in under 0.3s on standard smartphone browsers. With multi-door real-time sync, local offline caching for thick-walled Victorian halls, and 0% ticket commission, URPASS keeps Glasgow event costs low and door flows seamless.",
-          keyPoints: [
-            "Sub-second (<0.3s) camera scanning clears outdoor queues before Scottish rain causes frustration",
-            "Local offline database caching keeps scanning operational in thick-walled venues without Wi-Fi",
-            "0% commission on ticket sales saves thousands for Glasgow independent organisers and societies",
-            "Student ID verification tailored for University of Glasgow and Strathclyde student unions",
-          ],
-        },
-
-        keyFactsTable: {
-          title: "Glasgow Venue Check-In & Entry Performance",
-          subtitle: "Comparison of URPASS operations against traditional ticketing apps in Glasgow venues.",
-          headers: ["Operational Metric", "URPASS Glasgow", "Traditional Ticket Apps (Eventbrite / Skiddle)"],
-          rows: [
-            {
-              col1: "Gate Check-In Speed",
-              col2: "<0.3 seconds per scan (camera reads from 30cm away)",
-              col3: "2.5 to 5 seconds per attendee",
-            },
-            {
-              col1: "Platform Commission",
-              col2: "0% Commission (Free plan £0, paid tiers from £15/mo)",
-              col3: "6.5% + booking surcharge per ticket",
-            },
-            {
-              col1: "Scanner Hardware",
-              col2: "Any volunteer smartphone (Safari / Chrome, no app download)",
-              col3: "Requires proprietary scanner app download or laser terminal rentals",
-            },
-            {
-              col1: "Offline Failover",
-              col2: "Full offline caching for basement clubs or converted warehouses",
-              col3: "Gate app freezes when venue Wi-Fi or cellular data drops",
-            },
-            {
-              col1: "Student Union Support",
-              col2: "Custom Student ID fields, course capture, and role-based permissions",
-              col3: "Generic ticketing with no university-specific integration",
-            },
-          ],
-        },
-
-        productProof: {
-          badge: "REAL-TIME ENTRY SPEED",
-          title: "Rapid Gate Check-In for Glasgow Crowds",
-          description:
-            "From SEC Glasgow exhibition concourses and the OVO Hydro to SWG3 warehouse raves and George Square festival entrances, volunteer stewards scan mobile QR passes in under 300ms using ordinary phone cameras.",
-          type: "scanner",
-        },
-
-        features: [
-          {
-            icon: ScanLine,
-            title: "Sub-Second Camera Scanning",
-            desc: "Turn student committee phones or venue steward devices into high-speed scanners. Scans validate in <0.3s with clear haptic cues.",
-          },
-          {
-            icon: Zap,
-            title: "Offline Vault Caching",
-            desc: "Scanners continue validating passes without interruption even in thick Victorian stone buildings or underground club basements.",
-          },
-          {
-            icon: Banknote,
-            title: "0% Ticket Commission",
-            desc: "Keep 100% of your box office revenue. Transparent flat plans in GBP (£) with zero per-ticket cuts or booking fee surcharges.",
-          },
-          {
-            icon: ShieldCheck,
-            title: "UK GDPR & DPA 2018 Compliant",
-            desc: "Scottish attendee personal data is held under strict UK privacy laws, never remarketed to competing events or third parties.",
-          },
-          {
-            icon: Building2,
-            title: "Glasgow Higher Education Ready",
-            desc: "Capture institutional Student IDs and society membership credentials for Glasgow University (GUU & QMU) and Strathclyde Union events.",
-          },
-          {
-            icon: Users,
-            title: "Multi-Gate Cloud Synchronisation",
-            desc: "Synchronise attendance across multiple entrances (such as East and West SEC gates) in real time to prevent ticket sharing.",
-          },
-        ],
-
-        steps: [
-          {
-            n: "01",
-            title: "Set Up Glasgow Event",
-            desc: "Configure event details, ticket categories, and custom fields like Student ID or company affiliation.",
-          },
-          {
-            n: "02",
-            title: "Distribute Registration URL",
-            desc: "Share the direct link across university portals, society Instagram pages, or conference marketing newsletters.",
-          },
-          {
-            n: "03",
-            title: "Deliver Digital Passes",
-            desc: "Attendees receive clean mobile QR passes directly via email, ready to display on smartphone screens.",
-          },
-          {
-            n: "04",
-            title: "Scan at the Entrance",
-            desc: "Door staff open the browser scanner on their phones and check in attendees in <0.3s with instant green verification.",
-          },
-          {
-            n: "05",
-            title: "Review Attendance Stats",
-            desc: "Access live arrival graphs, gate velocities, and complete CSV attendee reports on your organiser dashboard.",
-          },
-        ],
-
-        deepDiveSections: [
-          {
-            badge: "SCOTTISH EVENT HUBS",
-            title: "Built for Glasgow's Distinctive Venue Landscape",
-            paragraphs: [
-              "Glasgow hosts Scotland's most intensive event calendar, spanning massive international trade summits at the Scottish Event Campus (SEC) on the River Clyde, cutting-edge creative showcases at SWG3 in Finnieston, and vibrant student gatherings in the West End.",
-              "Traditional ticketing providers burden local organizers with punitive 6% to 8% booking fees and clunky scanner apps that require extensive staff training. URPASS simplifies entrance logistics: door stewards open a browser link, enter a 4-digit PIN, and begin admitting guests at rapid speed.",
-            ],
-            bullets: [
-              "Check in 60+ guests per minute per door steward",
-              "Works in outdoor festival setups in George Square and Glasgow Green",
-              "Prevents duplicate admissions with real-time cloud conflict checks",
-              "Instant 30-day free trial for Glasgow organisers with no card required",
-            ],
-            takeaway: "Empower your Glasgow event team with fast, zero-commission check-in technology.",
-          },
-        ],
-
-        useCases: [
-          "SEC Glasgow Conferences & Trade Shows",
-          "University of Glasgow Society Balls & Formals",
-          "University of Strathclyde Union Club Nights",
-          "SWG3 Finnieston Creative & Music Showcases",
-          "Glasgow Tech Meetups & Developer Hackathons",
-          "George Square & Merchant City Festivals",
-        ],
-
-        relatedLinks: [
-          {
-            title: "Edinburgh Event Registration & Check-In",
-            href: "/uk/edinburgh",
-            category: "Location",
-          },
-          {
-            title: "University Event Management Software UK",
-            href: "/uk/university-event-software",
-            category: "Use Case",
-          },
-          {
-            title: "Student Union Event Ticketing",
-            href: "/uk/student-union-event-ticketing",
-            category: "Use Case",
-          },
-          {
-            title: "UK Event Ticketing Software",
-            href: "/uk/event-ticketing-software",
-            category: "Product",
-          },
-          {
-            title: "QR Code Event Check-In UK",
-            href: "/uk/qr-code-event-check-in",
-            category: "Product",
-          },
-        ],
-
-        faqs: [
-          {
-            q: "Can URPASS handle large events at SEC Glasgow or OVO Hydro?",
-            a: "Yes. URPASS is built on high-performance cloud infrastructure capable of processing thousands of concurrent check-ins across dozens of entrance doors with sub-50ms synchronization latency.",
-          },
-          {
-            q: "Does the scanner work in basement venues or areas with weak mobile reception?",
-            a: "Yes. URPASS features an offline caching engine. The approved attendee roster is cached in the browser locally upon opening the scanner session, allowing tickets to validate with zero internet connection.",
-          },
-          {
-            q: "Can Glasgow student societies use URPASS for free?",
-            a: "Yes. URPASS provides a Free Forever tier for events with up to 100 registrations per month. For larger balls and freshers events, paid plans start at just £15/month with zero ticket commissions.",
-          },
-        ],
-
-        ctaTitle: "Ready to run your next Glasgow event?",
-        ctaDescription:
-          "Start your 30-day free trial on URPASS today. Sub-second scanning, 0% commission, and full UK GDPR compliance.",
-        geo: {
-          region: "GB-GLG",
-          placename: "Glasgow",
-          position: "55.8642;-4.2518",
-          latitude: 55.8642,
-          longitude: -4.2518,
-          country: "United Kingdom",
-          countryCode: "GB",
-        },
-      }}
+  "badge": "GLASGOW EVENT TECH · FAST QR ENTRY",
+  "h1": "Event Registration & QR Ticketing Glasgow",
+  "canonicalUrl": "https://urpass.space/uk/glasgow",
+  "description": "Fast event registration and sub-second QR ticketing for Glasgow concerts, SEC conferences, and university societies. Hydro arena scale, 0% ticket commission.",
+  "ctaLabel": "Start Free in Glasgow →",
+  "ctaTitle": "Power Fast Event Entry in Glasgow",
+  "ctaDescription": "From SEC Glasgow summits and Hydro arena gatherings to University of Glasgow student events, URPASS turns any phone into a sub-second scanner.",
+  "directAnswer": {
+    "title": "Why Choose URPASS for Glasgow Events?",
+    "summary": "URPASS is high-speed event registration and QR check-in software built for Glasgow concerts, academic conferences, and university events. It replaces slow paper guest lists with sub-second QR scanning on volunteer smartphones. Featuring offline caching for crowded venues, 0% ticket fees, and full UK GDPR compliance, URPASS keeps Glasgow entrance lines moving.",
+    "keyPoints": [
+      "Sub-second (<0.3s) camera scanning with instant green/red verification",
+      "Proven for high-capacity venue throughput across SEC, Hydro, and SWG3",
+      "0% per-ticket commission with flat GBP subscriptions",
+      "Used by University of Glasgow, Strathclyde, and GCU student teams"
+    ]
+  },
+  "whatIs": {
+    "title": "What is Event Registration Software Glasgow?",
+    "definition": "Event registration software in Glasgow is a complete digital event pass and gate management platform. It streamlines delegate registrations, processes ticket fees in GBP, issues unique digital QR passes, and verifies entry across multiple venue doors simultaneously.",
+    "details": [
+      "Handles morning arrival surges at major Clyde-side conference centers",
+      "Eliminates paper guest lists and manual pen ticking at entrance gates",
+      "Runs on standard mobile browsers with zero software downloads needed",
+      "Blocks duplicate entry attempts in real time across all venue doors"
+    ]
+  },
+  "howItWorksTitle": "How URPASS Powers Glasgow Events",
+  "howItWorksSubtitle": "From online registration to high-speed entrance flow.",
+  "steps": [
+    {
+      "n": "01",
+      "title": "Create your event",
+      "desc": "Set your event details, ticket categories, and custom fields in GBP."
+    },
+    {
+      "n": "02",
+      "title": "Share registration link",
+      "desc": "Send your clean URL to delegates, performers, or students."
+    },
+    {
+      "n": "03",
+      "title": "Attendees register",
+      "desc": "Guests register with zero friction or forced account signups."
+    },
+    {
+      "n": "04",
+      "title": "Automated digital passes",
+      "desc": "Instant scannable mobile QR passes arrive in attendees' inboxes."
+    },
+    {
+      "n": "05",
+      "title": "Scan at the entrance",
+      "desc": "Door volunteers scan passes with phone cameras in <0.3s."
+    },
+    {
+      "n": "06",
+      "title": "Live attendance analytics",
+      "desc": "Monitor arrival throughput and hall capacities in real time."
+    }
+  ],
+  "featuresTitle": "Features for Glasgow Music Venues & Summits",
+  "featuresSubtitle": "Sub-second camera scans, multi-gate sync, and zero ticketing commission.",
+  "features": [
+    {
+      icon: ScanLine,
+      "title": "Sub-Second Gate Scanning",
+      "desc": "Admit 40 to 50 attendees per minute per volunteer phone with instant green audio and visual feedback."
+    },
+    {
+      icon: Users,
+      "title": "Multi-Gate Sync",
+      "desc": "Managing multiple doors across SEC or SWG3? Scans sync within 150ms to prevent duplicate pass usage."
+    },
+    {
+      icon: Zap,
+      "title": "Offline Scanning Engine",
+      "desc": "Dense crowds can jam local cellular networks. URPASS offline mode keeps scanning uninterrupted."
+    },
+    {
+      icon: Building2,
+      "title": "Glasgow Universities",
+      "desc": "Tailored for University of Glasgow, Strathclyde, and GCU societies with custom Student ID fields."
+    },
+    {
+      icon: ShieldCheck,
+      "title": "UK GDPR & DPA Compliance",
+      "desc": "Attendee data is stored securely in compliant UK infrastructure with zero third-party marketing brokers."
+    },
+    {
+      icon: Banknote,
+      "title": "0% Commission on Tickets",
+      "desc": "Keep 100% of your ticket revenue with simple flat monthly GBP plans and no per-ticket penalty fees."
+    }
+  ],
+  "whoShouldUse": {
+    "title": "Who Should Use URPASS in Glasgow?",
+    "subtitle": "From Clyde-side conferences to West End student formals.",
+    "personas": [
+      {
+        "badge": "CAMPUS",
+        "title": "University Societies & Student Unions",
+        "desc": "UofG, Strathclyde, and GCU student union formals, freshers' fairs, and society nights."
+      },
+      {
+        "badge": "CONFERENCES",
+        "title": "SEC Glasgow Conferences",
+        "desc": "National and international industry summits, medical congresses, and exhibitions."
+      },
+      {
+        "badge": "MUSIC & ARTS",
+        "title": "SWG3 & Live Gigs",
+        "desc": "Music venues, club nights, and cultural arts festivals needing rapid mobile ticket entry."
+      },
+      {
+        "badge": "COMMUNITY",
+        "title": "Community Gatherings & Sports",
+        "desc": "Local charity runs, sports tournaments, and community hall events with free registration."
+      }
+    ]
+  },
+  "howQrCheckInWorks": {
+    "title": "How Glasgow QR Check-In Works",
+    "subtitle": "Pure speed on any volunteer smartphone.",
+    "description": "Staff open the scanner link in Safari or Chrome. The camera reads the attendee's QR pass from 30cm away in under 0.3s, checks the pass against the event registry, produces an audible chime, and records the gate arrival. If venue Wi-Fi drops, the local browser cache continues verifying passes uninterrupted.",
+    "points": [
+      "Zero equipment costs: no need to rent expensive laser scanner hardware.",
+      "Fast volunteer onboarding: staff begin scanning within 15 seconds of receiving the link.",
+      "Atomic row-locking prevents shared pass screenshots across different entrances.",
+      "Manual guest lookup available if an attendee's phone battery runs out."
+    ]
+  },
+  "keyFactsTable": {
+    "title": "Glasgow Event Check-In Comparison",
+    "subtitle": "How URPASS outperforms legacy ticketing platforms in Glasgow venues.",
+    "headers": [
+      "Feature / Metric",
+      "URPASS Glasgow",
+      "Legacy Ticketing Apps"
+    ],
+    "rows": [
+      {
+        "col1": "Check-In Speed",
+        "col2": "<0.3s per scan (45+ attendees/min)",
+        "col3": "2.5 to 4.0s (slow camera tap confirmations)"
+      },
+      {
+        "col1": "Crowded Venue Network",
+        "col2": "Local offline memory validation",
+        "col3": "Freezes or times out on low signal"
+      },
+      {
+        "col1": "Hardware Demands",
+        "col2": "Any volunteer phone browser",
+        "col3": "Proprietary apps or rented hardware"
+      },
+      {
+        "col1": "Multi-Gate Sync",
+        "col2": "Sub-150ms atomic state replication",
+        "col3": "Periodic sync allows duplicate entries"
+      },
+      {
+        "col1": "Ticket Fee Model",
+        "col2": "0% commission; flat GBP plan",
+        "col3": "Up to 6.95% + £0.59 deducted per ticket"
+      }
+    ]
+  },
+  "faqs": [
+    {
+      "q": "What is event registration software Glasgow?",
+      "a": "It is an event registration and smartphone check-in platform designed for Glasgow organisers to create registration pages, issue digital QR passes, and admit attendees quickly."
+    },
+    {
+      "q": "Can URPASS handle large Glasgow events at the SEC or Hydro?",
+      "a": "Yes. URPASS supports high-throughput multi-gate scanning with sub-150ms sync and offline fallback, making it ideal for large arena events."
+    },
+    {
+      "q": "Does URPASS charge per-ticket commission in Glasgow?",
+      "a": "No. URPASS charges 0% commission on ticket sales. Organisers pay a transparent flat GBP monthly subscription."
+    },
+    {
+      "q": "Can Glasgow university societies use URPASS for balls and fests?",
+      "a": "Yes. Student societies across the University of Glasgow, Strathclyde, and GCU use URPASS for seamless ball and festival check-ins."
+    },
+    {
+      "q": "How fast can volunteers start scanning at the door?",
+      "a": "Volunteers just click a link on their smartphone browser and can start scanning within 15 seconds. No app download or account creation required."
+    },
+    {
+      "q": "Does URPASS prevent people from sharing screenshots of tickets?",
+      "a": "Yes. Once a ticket is scanned at any door, the system atomically invalidates it. Subsequent attempts display an immediate red alert."
+    }
+  ],
+  "relatedLinks": [
+    {
+      "title": "UK Event Registration Software",
+      "href": "/uk",
+      "category": "Location"
+    },
+    {
+      "title": "Edinburgh Event Registration & QR Check-In",
+      "href": "/uk/edinburgh",
+      "category": "Location"
+    },
+    {
+      "title": "Manchester Event Registration Software",
+      "href": "/uk/manchester",
+      "category": "Location"
+    },
+    {
+      "title": "Festival Registration, Tickets & QR Entry",
+      "href": "/festival-registration-software",
+      "category": "Use Case"
+    },
+    {
+      "title": "Multi-Gate QR Check-In for Large Events",
+      "href": "/multi-gate-event-check-in",
+      "category": "Product"
+    }
+  ],
+  "geo": {
+    "region": "GB-GLG",
+    "placename": "Glasgow",
+    "position": "55.8642;-4.2518",
+    "latitude": 55.8642,
+    "longitude": -4.2518,
+    "country": "United Kingdom",
+    "countryCode": "GB"
+  }
+}}
     />
   );
 }

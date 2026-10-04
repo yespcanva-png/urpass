@@ -22,6 +22,9 @@ import {
   CloudUpload,
   RefreshCw,
   Sun,
+  DoorOpen,
+  Flashlight,
+  FlashlightOff,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { createClient } from "@/lib/supabase/client";
@@ -151,6 +154,10 @@ export default function ScanEventPage() {
   const [wakeLockActive, setWakeLockActive] = useState<boolean>(false);
   const wakeLockRef = useRef<WakeLockController | null>(null);
 
+  // Torch control
+  const [torchOn, setTorchOn] = useState<boolean>(false);
+  const [torchSupported, setTorchSupported] = useState<boolean>(false);
+
   const selectedGate = gates.find((g) => g.id === selectedGateId) ?? null;
   const selectedSession = sessions.find((s) => s.id === selectedSessionId) ?? null;
   const selectedZone = zones.find((z) => z.id === selectedZoneId) ?? null;
@@ -161,7 +168,27 @@ export default function ScanEventPage() {
   const progressRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const isScannerActive = !manualMode && (scanState === "idle" || scanState === "scanning" || scanState === "success");
+  // Force gate selection before scanning begins if gates are configured
+  const isGateRequired = gates.length > 0 && !selectedGateId && !selectedSessionId;
+  const isScannerActive = !manualMode && !isGateRequired && (scanState === "idle" || scanState === "scanning" || scanState === "success");
+
+  const toggleTorch = useCallback(async () => {
+    try {
+      const videoEl = document.getElementById("urpass-qr-scanner")?.querySelector("video") as HTMLVideoElement | null;
+      const stream = videoEl?.srcObject as MediaStream | null;
+      const videoTrack = stream?.getVideoTracks?.()[0];
+      if (!videoTrack) return;
+
+      const nextTorch = !torchOn;
+      // @ts-ignore
+      await videoTrack.applyConstraints({
+        advanced: [{ torch: nextTorch } as any],
+      });
+      setTorchOn(nextTorch);
+    } catch (err) {
+      console.warn("Failed to toggle torch:", err);
+    }
+  }, [torchOn]);
 
   // Keep screen awake during scanning
   useEffect(() => {
@@ -250,8 +277,13 @@ export default function ScanEventPage() {
         const urlGate = searchParams.get("gate");
         if (urlGate && parsedGates.find((g) => g.id === urlGate)) {
           setSelectedGateId(urlGate);
-        } else if (parsedGates.length === 1 && !searchParams.get("session")) {
-          setSelectedGateId(parsedGates[0].id);
+        } else {
+          try {
+            const savedGate = localStorage.getItem(`urpass_gate_${eventId}`);
+            if (savedGate && parsedGates.find((g) => g.id === savedGate)) {
+              setSelectedGateId(savedGate);
+            }
+          } catch {}
         }
       }
 
@@ -531,6 +563,14 @@ export default function ScanEventPage() {
       lastTokenRef.current = rawToken;
       lastTokenTimeRef.current = now;
       setTimeout(() => { cooldownRef.current = false; }, RAPID_SCAN_COOLDOWN_MS);
+
+      // Enforce gate selection before scanning
+      if (isGateRequired) {
+        playScannerFeedback("INVALID_PASS", { sound: soundEnabled });
+        setErrorMsg("Please select an entry gate before scanning passes.");
+        setScanState("error");
+        return;
+      }
 
       setScanState("verifying");
 
@@ -1083,28 +1123,35 @@ export default function ScanEventPage() {
             <div className="relative">
               <button
                 onClick={() => setGateDropdownOpen((o) => !o)}
-                className="flex items-center gap-1 bg-white/[0.06] border border-white/[0.08] rounded-full px-2.5 py-1.5 text-[11px] font-medium text-white/60 hover:text-white/80 hover:bg-white/[0.09] transition-colors max-w-[120px]"
+                className={`flex items-center gap-1 border rounded-full px-2.5 py-1.5 text-[11px] font-medium transition-colors max-w-[130px] ${
+                  selectedGate
+                    ? "bg-white/[0.06] border-white/[0.08] text-white/80 hover:bg-white/[0.09]"
+                    : "bg-amber-500/20 border-amber-500/40 text-amber-300 animate-pulse font-bold"
+                }`}
               >
                 <span className="truncate">
-                  {selectedGate ? selectedGate.name : "No gate"}
+                  {selectedGate ? selectedGate.name : "Select Gate *"}
                 </span>
                 <ChevronDown className="w-3 h-3 shrink-0" />
               </button>
               {gateDropdownOpen && (
-                <div className="absolute right-0 top-full mt-1 z-50 bg-neutral-900 border border-white/[0.08] rounded-xl overflow-hidden shadow-xl min-w-[160px]">
-                  <button
-                    onClick={() => { setSelectedGateId(null); setGateDropdownOpen(false); }}
-                    className={`w-full text-left px-3 py-2.5 text-xs hover:bg-white/[0.06] transition-colors ${!selectedGateId ? "text-white font-medium" : "text-white/50"}`}
-                  >
-                    No gate
-                  </button>
+                <div className="absolute right-0 top-full mt-1 z-50 bg-neutral-900 border border-white/[0.08] rounded-xl overflow-hidden shadow-xl min-w-[180px]">
                   {gates.map((g) => (
                     <button
                       key={g.id}
-                      onClick={() => { setSelectedGateId(g.id); setSelectedSessionId(null); setGateDropdownOpen(false); }}
-                      className={`w-full text-left px-3 py-2.5 text-xs hover:bg-white/[0.06] transition-colors ${selectedGateId === g.id ? "text-white font-medium" : "text-white/50"}`}
+                      onClick={() => {
+                        setSelectedGateId(g.id);
+                        setSelectedSessionId(null);
+                        setGateDropdownOpen(false);
+                        try {
+                          localStorage.setItem(`urpass_gate_${eventId}`, g.id);
+                        } catch {}
+                      }}
+                      className={`w-full text-left px-3 py-2.5 text-xs hover:bg-white/[0.06] transition-colors ${
+                        selectedGateId === g.id ? "text-purple-400 font-bold bg-white/[0.04]" : "text-white/70"
+                      }`}
                     >
-                      <span className="block">{g.name}</span>
+                      <span className="block font-medium">{g.name}</span>
                       {g.zone && (
                         <span className="block text-[10px] text-white/30 mt-0.5">{g.zone.name}</span>
                       )}
@@ -1226,6 +1273,25 @@ export default function ScanEventPage() {
             aria-label={wakeLockActive ? "Screen wake lock active" : "Screen wake lock inactive"}
           >
             <Sun className={`w-3.5 h-3.5 ${wakeLockActive ? "text-amber-400 animate-pulse" : "text-white/30"}`} />
+          </button>
+
+          {/* Torch / Flashlight toggle */}
+          <button
+            onClick={toggleTorch}
+            className={`flex items-center gap-1.5 border rounded-full px-2.5 py-1.5 text-[11px] font-medium transition-colors ${
+              torchOn
+                ? "bg-amber-400 text-neutral-950 border-amber-400 shadow-[0_0_12px_rgba(251,191,36,0.6)] font-bold"
+                : "bg-white/[0.06] border-white/[0.08] text-white/60 hover:text-white"
+            }`}
+            title={torchOn ? "Turn flashlight off" : "Turn flashlight on for low-light venue scanning"}
+            aria-label={torchOn ? "Flashlight on" : "Flashlight off"}
+          >
+            {torchOn ? (
+              <Flashlight className="w-3.5 h-3.5 fill-current" />
+            ) : (
+              <FlashlightOff className="w-3.5 h-3.5 text-white/40" />
+            )}
+            <span className="hidden lg:inline">{torchOn ? "Torch On" : "Torch"}</span>
           </button>
 
           {/* Audio Chime / Haptic toggle */}
@@ -1469,10 +1535,46 @@ export default function ScanEventPage() {
                 </div>
               )}
 
-              {/* Scanner — kept mounted in DOM to prevent hardware teardown and re-initialization */}
-              <div className={`w-full max-w-xs sm:max-w-sm ${scanState === "idle" || scanState === "scanning" ? "block" : "hidden"}`}>
-                <QRScanner onScan={verify} active={isScannerActive} statusVariant={scanState} />
-              </div>
+              {/* Gate selection forced before scanning begins */}
+              {isGateRequired ? (
+                <div className="w-full max-w-xs sm:max-w-sm bg-neutral-900 border border-purple-500/30 rounded-3xl p-6 text-center shadow-2xl space-y-4 animate-in fade-in">
+                  <div className="w-12 h-12 rounded-2xl bg-purple-950 border border-purple-800 flex items-center justify-center text-purple-400 mx-auto">
+                    <DoorOpen className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-white">Select Scanner Entry Gate</h3>
+                    <p className="text-xs text-white/50 mt-1 leading-relaxed">
+                      Select your assigned entrance gate to activate the QR scanner. This ensures check-ins are accurately attributed and zone rules are enforced.
+                    </p>
+                  </div>
+                  <div className="space-y-2 pt-2">
+                    {gates.map((g) => (
+                      <button
+                        key={g.id}
+                        onClick={() => {
+                          setSelectedGateId(g.id);
+                          try {
+                            localStorage.setItem(`urpass_gate_${eventId}`, g.id);
+                          } catch {}
+                        }}
+                        className="w-full py-3 px-4 rounded-xl text-xs font-semibold bg-neutral-800 hover:bg-purple-600 hover:text-white text-neutral-200 border border-white/10 transition-all flex items-center justify-between"
+                      >
+                        <span className="font-bold">{g.name}</span>
+                        {g.zone && (
+                          <span className="text-[10px] text-purple-300 bg-purple-950 px-2 py-0.5 rounded-full border border-purple-800">
+                            {g.zone.name}
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                /* Scanner — kept mounted in DOM to prevent hardware teardown and re-initialization */
+                <div className={`w-full max-w-xs sm:max-w-sm ${scanState === "idle" || scanState === "scanning" ? "block" : "hidden"}`}>
+                  <QRScanner onScan={verify} active={isScannerActive} statusVariant={scanState} />
+                </div>
+              )}
 
               {/* Verifying */}
               {scanState === "verifying" && (

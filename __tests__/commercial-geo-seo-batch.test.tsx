@@ -41,9 +41,9 @@ describe("Commercial Priority Pages Batch", () => {
     expect(zohoMetadata.alternates?.canonical).toBe("https://urpass.space/zoho-backstage-alternative");
 
     render(<ZohoBackstagePage />);
-    expect(screen.getByRole("heading", { level: 1, name: /Is URPASS a Good Zoho Backstage Alternative/i })).toBeInTheDocument();
-    expect(screen.getByText(/Why choose URPASS over Zoho Backstage\?/i)).toBeInTheDocument();
-    expect(screen.getByText(/Detailed Feature Comparison: URPASS vs Zoho Backstage/i)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: /Zoho Backstage Alternative/i })).toBeInTheDocument();
+    expect(screen.getByText(/Why is URPASS the Best Zoho Backstage Alternative\?/i)).toBeInTheDocument();
+    expect(screen.getByText(/How URPASS Replaces Zoho Backstage/i)).toBeInTheDocument();
   });
 
   it("renders /best-event-registration-software-india with comprehensive evaluation", () => {

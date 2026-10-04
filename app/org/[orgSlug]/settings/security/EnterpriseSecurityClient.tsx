@@ -987,6 +987,8 @@ export default function EnterpriseSecurityClient({
                   className={inputCls}
                 >
                   <option value="checkin_staff">Staff (checkin_staff) — Gate check-in</option>
+                  <option value="gate_manager">Gate Manager — Gates, volunteers &amp; check-in ops</option>
+                  <option value="finance">Finance — Invoices, refunds &amp; billing</option>
                   <option value="member">Member — Standard tenant member</option>
                   <option value="viewer">Viewer — Read-only access</option>
                   <option value="event_manager">Event Manager — Can create &amp; manage events</option>

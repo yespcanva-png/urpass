@@ -1,106 +1,248 @@
 import type { Metadata } from "next";
-import { FormInput, Sliders, CheckSquare, ShieldCheck, Ticket, Users, Layers, Sparkles, ArrowRight, CheckCircle2 } from "lucide-react";
+import { Banknote, BarChart3, FileText, Lock, QrCode, ScanLine } from "lucide-react";
 import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
-  title: "Event Registration Form Builder | URPASS",
-  description: "Build custom event registration forms in minutes. Collect attendee details, add conditional fields, validate credentials, and auto-issue QR passes.",
-  keywords: [
-    "event registration form builder",
-    "event form builder",
-    "event signup form builder",
-    "custom registration form",
-    "event application form",
-    "online event form creator",
-    "URPASS"
-  ],
-  alternates: { canonical: "https://urpass.space/event-registration-form-builder" },
+  title: "Event Registration Form Builder with QR Passes | URPASS",
+  description: "Custom event registration form builder with automated QR passes, payment collection, conditional fields, and sub-second phone check-in. 0% ticket fees.",
+  keywords: ["event registration form builder", "custom event form maker", "registration form with qr code", "online event registration form", "event intake form builder", "custom fields event registration"],
+  alternates: {
+    canonical: "https://urpass.space/event-registration-form-builder",
+  },
   openGraph: {
-    title: "Event Registration Form Builder | URPASS",
-    description: "Build custom event registration forms in minutes with instant QR pass issuance.",
+    title: "Event Registration Form Builder with QR Passes | URPASS",
+    description: "Custom event registration form builder with automated QR passes, payment collection, conditional fields, and sub-second phone check-in. 0% ticket fees.",
     url: "https://urpass.space/event-registration-form-builder",
-    locale: "en_IN",
+    locale: "en_US",
     type: "website",
   },
 };
 
-export default function Page() {
+export default function EventRegistrationFormBuilderPage() {
   return (
     <SEOPage
       config={{
-        badge: "CUSTOM FORM BUILDER",
-        h1: "Build Custom Event Registration Forms",
-        canonicalUrl: "https://urpass.space/event-registration-form-builder",
-        description:
-          "An event registration form builder allows organizers to design customized questionnaires, validate participant credentials, segment questions by ticket tier, and trigger automated QR pass issuance upon submission or payment. URPASS combines dynamic form creation with real-time entry scanning, eliminating disconnected spreadsheets.",
-        ctaLabel: "Build Registration Form",
-        features: [
-          { icon: FormInput, title: "Versatile Field Types", desc: "Add single-line text, multi-line notes, dropdown selectors, checkboxes, file uploads, and number fields customized to your event." },
-          { icon: Sliders, title: "Conditional Requirements", desc: "Mark fields as mandatory or optional, set character bounds, and validate email addresses, phone numbers, and IDs automatically." },
-          { icon: Ticket, title: "Tier-Specific Questions", desc: "Attach specific questions to particular ticket categories — request student IDs on student passes or company names on corporate passes." },
-          { icon: ShieldCheck, title: "Spam & Duplicate Protection", desc: "Prevent duplicate submissions and bot spam with built-in submission verification and unique email enforcement." },
-          { icon: Users, title: "Unified Attendee Records", desc: "Every form response maps directly to the attendee's profile, digital pass, and entrance check-in history." },
-          { icon: CheckSquare, title: "Instant CSV/Excel Export", desc: "Download full registrant datasets with all custom field answers in one click for sponsors, caterers, or college records." },
-        ],
-        steps: [
-          { n: "01", title: "Add Custom Fields", desc: "Define required questions, dropdown options, and participant details in the visual builder." },
-          { n: "02", title: "Set Ticket Limits", desc: "Configure capacities per ticket tier and toggle instant approval, manual review, or paid checkout." },
-          { n: "03", title: "Preview & Publish", desc: "Preview your mobile-optimized form across devices before sharing the public URL." },
-          { n: "04", title: "Collect Submissions", desc: "Share your clean, fast-loading form URL across social, chat, WhatsApp, and email." },
-          { n: "05", title: "Auto-Issue QR Passes", desc: "Submissions immediately generate cryptographic digital QR passes sent to attendee inboxes." },
-        ],
-        callout: {
-          badge: "NO MORE FORM CHAOS",
-          title: "Stop losing registration data between disjointed apps.",
-          description: "When you build forms on generic survey tools like Google Forms or Typeform, attendee data is stranded in a disconnected spreadsheet. URPASS links your form directly to admission control, ticket tier quotas, and instant entrance scanning.",
-          bullets: [
-            "Frictionless mobile form interface with industry-leading completion rates",
-            "Automatic digital pass dispatch upon submission or payment confirmation",
-            "Zero coding or technical integration required to launch in minutes",
-            "Direct synchronization with volunteer gate scanners on event day",
-          ],
-        },
-        deepDiveSections: [
-          {
-            badge: "FORM ARCHITECTURE",
-            title: "How does an integrated event registration form builder differ from generic survey tools?",
-            paragraphs: [
-              "Generic survey tools (like Google Forms) simply capture rows of text into a spreadsheet. They cannot reserve ticket inventory, take payments with automatic reconciliation, enforce hard capacity limits, or generate scannable digital passes.",
-              "URPASS's form builder is deeply connected to your event's gate operations. When an attendee submits your form, their data is instantly transformed into an authenticated digital pass linked to live gate scanners.",
-            ],
-            takeaway: "An integrated form builder eliminates manual data exporting, email drafting, and ticket mail merges.",
-          },
-          {
-            badge: "TIER TARGETING",
-            title: "How can organizers ask different questions for different ticket categories?",
-            paragraphs: [
-              "Different attendee segments have different informational requirements. For a tech conference, general attendees might only need to provide their name and t-shirt size, whereas hackathon participants must submit their GitHub profile and team name, and VIPs specify dietary requirements.",
-              "URPASS lets you attach question blocks to specific ticket tiers. Attendees only see questions relevant to the pass they select, resulting in higher form completion rates and cleaner attendee data.",
-            ],
-            takeaway: "Contextual question targeting reduces attendee form fatigue and delivers cleaner data to event organizers.",
-          },
-        ],
-        faqs: [
-          {
-            q: "Can I collect file attachments (e.g. resumes, student ID cards) in the form?",
-            a: "Yes. Attendees can upload images and PDF documents directly through the registration form.",
-          },
-          {
-            q: "Can I embed the registration form on my own custom website?",
-            a: "Yes. You can share your dedicated URPASS event URL or embed the registration widget directly into Webflow, WordPress, or custom sites.",
-          },
-          {
-            q: "Can I restrict registrations to specific corporate or university email domains?",
-            a: "Yes. You can enforce email domain restrictions (e.g., '@college.edu' or '@company.com') to ensure only eligible participants register.",
-          },
-        ],
-        relatedLinks: [
-          { title: "Google Forms Event Alternative", href: "/google-forms-alternative-for-events", category: "Comparison" },
-          { title: "Event Registration with Payment", href: "/event-registration-with-payment", category: "Product" },
-          { title: "Event Attendee CSV Export", href: "/event-attendee-data-export", category: "Product" },
-          { title: "Branded Event Tickets", href: "/branded-event-tickets", category: "Product" },
-        ],
-      }}
+  "badge": "FORM BUILDER & QR PASSES",
+  "h1": "Event Registration Form Builder with QR Passes",
+  "canonicalUrl": "https://urpass.space/event-registration-form-builder",
+  "description": "Custom event registration form builder with automated QR passes, payment collection, conditional fields, and sub-second phone check-in. 0% ticket fees.",
+  "ctaLabel": "Build Registration Form Free →",
+  "ctaTitle": "Create Custom Registration Forms Connected to QR Passes",
+  "ctaDescription": "Build branded registration forms with custom fields, collect payments directly with 0% ticketing commission, and issue scannable QR passes automatically.",
+  "directAnswer": {
+    "title": "What is an Event Registration Form Builder?",
+    "summary": "An event registration form builder is a software tool that allows organizers to create custom intake forms for collecting attendee details, processing payments, and configuring ticket options. URPASS connects form submissions directly to automated digital QR pass generation, eliminating manual data entry and enabling sub-0.3s smartphone door check-in.",
+    "keyPoints": [
+      "Custom fields: text, dropdowns, radio buttons, file uploads, and Student IDs",
+      "Instant automated digital QR pass delivery upon form submission or payment",
+      "Direct payment collection via Stripe or Razorpay with 0% ticketing commission",
+      "Sub-second (<0.3s) camera check-in on volunteer phones with zero app downloads"
+    ]
+  },
+  "whatIs": {
+    "title": "What is an Event Registration Form Builder?",
+    "definition": "An event registration form builder is a drag-and-drop or configurable tool that generates online signup pages for events. Unlike generic survey forms, an event form builder connects registrant data directly to event inventory, capacity capping, payment gateways, and entrance check-in credentials.",
+    "details": [
+      "Collects essential attendee data including dietary requirements, job titles, and affiliations",
+      "Caps capacity automatically to prevent venue overcrowding and overbooking",
+      "Generates personalized digital QR tickets immediately upon submission",
+      "Eliminates disconnected Google Sheets and manual confirmation mail merges"
+    ]
+  },
+  "howItWorksTitle": "How the Form Builder Operates",
+  "howItWorksSubtitle": "From form design to door check-in in six simple steps.",
+  "steps": [
+    {
+      "n": "01",
+      "title": "Build your custom form",
+      "desc": "Add custom questions, dropdowns, file uploads, and ticket categories in minutes."
+    },
+    {
+      "n": "02",
+      "title": "Connect direct payments",
+      "desc": "Link your Stripe or Razorpay account to accept paid registrations directly."
+    },
+    {
+      "n": "03",
+      "title": "Publish branded link",
+      "desc": "Share your fast-loading registration link across email, social media, or your website."
+    },
+    {
+      "n": "04",
+      "title": "Attendees submit details",
+      "desc": "Guests register with zero friction or forced account signups."
+    },
+    {
+      "n": "05",
+      "title": "Automated QR pass issuance",
+      "desc": "The platform generates a unique, mobile-responsive QR pass delivered straight to their inbox."
+    },
+    {
+      "n": "06",
+      "title": "Scan at the entrance",
+      "desc": "Door volunteers scan the QR pass with phone cameras in <0.3s for green entry."
+    }
+  ],
+  "featuresTitle": "Form Capabilities Built for Event Organizers",
+  "featuresSubtitle": "Custom fields, payment integration, and automated QR passes.",
+  "features": [
+    {
+      icon: FileText,
+      "title": "Flexible Custom Fields",
+      "desc": "Add text inputs, dropdown menus, radio selectors, file uploads, and checkbox agreements easily."
+    },
+    {
+      icon: QrCode,
+      "title": "Automated QR Pass Delivery",
+      "desc": "Every confirmed form submission automatically receives a unique encrypted digital QR pass via email."
+    },
+    {
+      icon: Banknote,
+      "title": "Direct Payment Integration",
+      "desc": "Accept payments via Cards, UPI, or Netbanking with 0% platform commission on ticket sales."
+    },
+    {
+      icon: Lock,
+      "title": "Automated Capacity Capping",
+      "desc": "Set maximum registrant limits. Registration halts automatically once capacity is reached to prevent overbooking."
+    },
+    {
+      icon: ScanLine,
+      "title": "Sub-0.3s Door Scanning",
+      "desc": "Scan attendees at the door in under 0.3 seconds using any volunteer smartphone browser."
+    },
+    {
+      icon: BarChart3,
+      "title": "Exportable Attendee Data",
+      "desc": "Download all custom field responses and check-in timestamps to CSV in one click at any time."
+    }
+  ],
+  "whoShouldUse": {
+    "title": "Who Needs a Registration Form Builder?",
+    "subtitle": "Built for event teams who need custom attendee data.",
+    "personas": [
+      {
+        "badge": "CONFERENCES",
+        "title": "Conference & Summit Organizers",
+        "desc": "Collect company names, job titles, dietary restrictions, and workshop track preferences."
+      },
+      {
+        "badge": "COLLEGES",
+        "title": "Universities & Student Clubs",
+        "desc": "Mandate Student IDs, roll numbers, department branches, and emergency contacts."
+      },
+      {
+        "badge": "WORKSHOPS",
+        "title": "Workshop Instructors & Trainers",
+        "desc": "Capture participant experience levels, software prerequisites, and equipment needs."
+      },
+      {
+        "badge": "CORPORATE",
+        "title": "Corporate Event Planners",
+        "desc": "Collect employee department codes, NDA agreements, and hotel shuttle requirements."
+      }
+    ]
+  },
+  "howQrCheckInWorks": {
+    "title": "How Form Submissions Connect to Gate Entry",
+    "subtitle": "Sub-second camera scanning on volunteer phones.",
+    "description": "Attendees display their mobile QR pass on their phone screen. Volunteer staff open the scanner URL in Safari or Chrome on their smartphones. Pointing the camera at the pass validates the ticket in under 0.3 seconds with an audible green chime, verifying their registration without needing a paper roster.",
+    "points": [
+      "Zero equipment costs: volunteers use their personal mobile phones.",
+      "Offline engine pre-loads ticket databases to validate passes with zero network connectivity.",
+      "Atomic row-locking prevents shared pass screenshots across different gate tents.",
+      "Rapid manual lookup by name if an attendee's phone battery has died."
+    ]
+  },
+  "keyFactsTable": {
+    "title": "URPASS Form Builder vs Google Forms",
+    "subtitle": "Why dedicated event form builders outperform generic survey tools.",
+    "headers": [
+      "Form Capability",
+      "Google Forms",
+      "URPASS Event Form Builder"
+    ],
+    "rows": [
+      {
+        "col1": "Pass Generation",
+        "col2": "Requires fragile Sheet add-ons or manual mail merge",
+        "col3": "Automated unique encrypted digital QR pass"
+      },
+      {
+        "col1": "Payment Collection",
+        "col2": "No native payment gateway; manual bank slips",
+        "col3": "Direct payment checkout via Stripe or Razorpay"
+      },
+      {
+        "col1": "Entrance Check-In",
+        "col2": "Printing paper sheets and ticking with pens",
+        "col3": "Sub-second (<0.3s) camera scan on volunteer phone"
+      },
+      {
+        "col1": "Duplicate Protection",
+        "col2": "Zero detection; forwarded emails get admitted twice",
+        "col3": "Atomic locking immediately flags duplicate scans"
+      }
+    ]
+  },
+  "faqs": [
+    {
+      "q": "What is an event registration form builder?",
+      "a": "It is an online tool that allows organizers to create customized registration forms to collect attendee details, accept payments, and issue digital QR passes for event entry."
+    },
+    {
+      "q": "Can I add custom questions like dietary needs or Student IDs?",
+      "a": "Yes! You can add unlimited custom fields including text inputs, dropdowns, checkboxes, and file uploads to capture exactly what you need."
+    },
+    {
+      "q": "Does submitting the form automatically generate a QR code for the attendee?",
+      "a": "Yes. As soon as an attendee completes registration or payment, URPASS automatically generates a unique digital QR pass and delivers it to their email."
+    },
+    {
+      "q": "Can I collect payments directly through my registration form?",
+      "a": "Yes. You can connect your Stripe or Razorpay account to collect ticket payments directly with 0% platform commission."
+    },
+    {
+      "q": "Is the form builder free for free events?",
+      "a": "Yes! URPASS is completely free for free events with full access to custom form fields, automated QR pass issuance, and mobile camera scanning."
+    },
+    {
+      "q": "Can I add conditional logic or dropdown fields to the registration form?",
+      "a": "Yes. Add text fields, dropdown selectors, checkboxes, file uploads, and conditional questions tailored to your event requirements."
+    },
+    {
+      "q": "Can I embed the registration form on my own WordPress or Webflow website?",
+      "a": "Yes. You can embed the registration widget via a lightweight iframe snippet or link directly to your custom-branded event URL."
+    }
+  ],
+  "relatedLinks": [
+    {
+      "title": "Event Registration with QR Code Tickets",
+      "href": "/event-registration-with-qr-code",
+      "category": "Product"
+    },
+    {
+      "title": "Google Forms Alternative for Event Registration",
+      "href": "/google-forms-event-registration-alternative",
+      "category": "Comparison"
+    },
+    {
+      "title": "Digital Event Pass Generator with QR Codes",
+      "href": "/digital-event-pass-generator",
+      "category": "Product"
+    },
+    {
+      "title": "Online Event Ticket Generator with QR Code",
+      "href": "/online-ticket-generator-for-events",
+      "category": "Product"
+    },
+    {
+      "title": "Conference Registration Software with QR Check-In",
+      "href": "/conference-registration-software",
+      "category": "Use Case"
+    }
+  ]
+}}
     />
   );
 }

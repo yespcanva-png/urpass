@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
-import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { notFound } from "next/navigation";
 import {
   CalendarDays,
@@ -13,26 +12,15 @@ import {
   Lock,
 } from "lucide-react";
 import PassQR from "@/components/pass/PassQR";
-import { getUserPlan } from "@/lib/plan";
 import DownloadPassButton from "@/components/pass/DownloadPassButton";
 import AutoDownload from "@/components/pass/AutoDownload";
 import WhatsAppShareButton from "@/components/pass/WhatsAppShareButton";
 import AddToCalendarButton from "@/components/pass/AddToCalendarButton";
 import { Suspense } from "react";
-import { getSupabaseUrl } from "@/lib/supabase/config";
-import {
-  resolveTicketDesign,
-} from "@/lib/pass-design";
+import { resolveTicketDesign } from "@/lib/pass-design";
 import StudioPassRenderer from "@/components/studio/StudioPassRenderer";
 import { isStudioDesign } from "@/lib/studio/resolver";
-
-function adminClient() {
-  return createAdminClient(
-    getSupabaseUrl(),
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
-}
+import { getHardenedPublicPass } from "@/lib/passes/public-pass";
 
 export async function generateMetadata({
   params,
@@ -79,49 +67,19 @@ export default async function PassPage({
   params: Promise<{ passId: string }>;
 }) {
   const { passId: passToken } = await params;
-  const admin = adminClient();
+  const publicPass = await getHardenedPublicPass(passToken);
 
-  const { data: pass } = await admin
-    .from("passes")
-    .select("pass_token, pass_type, status, attendee_id, event_id")
-    .eq("pass_token", passToken)
-    .single();
+  if (!publicPass) notFound();
 
-  if (!pass) notFound();
+  const { pass, attendee, event, branding } = publicPass;
 
-  const [{ data: attendee }, { data: event }] = await Promise.all([
-    admin
-      .from("attendees")
-      .select("name, email, phone, application_status")
-      .eq("id", pass.attendee_id)
-      .single(),
-    admin
-      .from("events")
-      .select("name, description, event_date, start_time, end_time, venue, event_type, meeting_url, meeting_platform, organizer_id, custom_pass_design")
-      .eq("id", pass.event_id)
-      .single(),
-  ]);
-
-  if (!attendee || !event) notFound();
-  const organizerId = event.organizer_id as string | null ?? null;
-  const [plan, { data: orgProfile }] = await Promise.all([
-    organizerId ? getUserPlan(admin, organizerId) : Promise.resolve(null),
-    organizerId
-      ? admin
-          .from("profiles")
-          .select("org_name, brand_color, org_logo_url, hide_urpass_branding, custom_pass_design")
-          .eq("user_id", organizerId)
-          .single()
-      : Promise.resolve({ data: null }),
-  ]);
-
-  const showBranding = !(plan?.canRemoveBranding && orgProfile?.hide_urpass_branding);
-  const isPro = plan ? plan.canUse("custom_pass_design") : false;
-  const rawCustomDesign = event.custom_pass_design || orgProfile?.custom_pass_design;
+  const showBranding = branding.showBranding;
+  const isPro = branding.isPro;
+  const rawCustomDesign = branding.customDesign;
   const isStudio = isPro && isStudioDesign(rawCustomDesign) && rawCustomDesign.isPublished !== false;
 
   const design = isPro
-    ? resolveTicketDesign(event.custom_pass_design, orgProfile?.custom_pass_design, orgProfile?.brand_color)
+    ? resolveTicketDesign(event.custom_pass_design, branding.customDesign, null)
     : resolveTicketDesign(null, null, null);
 
   const categoryColor = pass.pass_type ? design.categoryColors?.[pass.pass_type] : null;
@@ -134,8 +92,8 @@ export default async function PassPage({
       : "rounded-2xl";
   const isDark = design.template === "dark";
   const isMinimal = design.template === "minimal";
-  const orgName = (isPro && orgProfile?.org_name) ? orgProfile.org_name : null;
-  const orgLogoUrl = (isPro && orgProfile?.org_logo_url) ? orgProfile.org_logo_url : null;
+  const orgName = branding.orgName;
+  const orgLogoUrl = branding.orgLogoUrl;
   const logoToDisplay = design.logoUrl || orgLogoUrl;
 
   const isCheckedIn = pass.status === "checked_in";
@@ -191,7 +149,7 @@ export default async function PassPage({
           <StudioPassRenderer
             design={rawCustomDesign}
             attendee={attendee}
-            event={event}
+            event={{ ...event, venue: event.venue ?? undefined }}
             passToken={pass.pass_token}
             ticketId={`#${shortCode.toUpperCase()}`}
           />
@@ -589,7 +547,6 @@ export default async function PassPage({
           venue={event.venue ?? "Online"}
           passToken={pass.pass_token}
           attendeeName={attendee.name}
-          phone={attendee.phone}
         />
         <DownloadPassButton
           passToken={pass.pass_token}

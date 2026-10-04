@@ -146,6 +146,21 @@ export async function createTicketType(
       ? sales_end.trim()
       : null;
 
+  const { data: eventRow } = await supabase
+    .from("events")
+    .select("event_date")
+    .eq("id", eventId)
+    .single();
+
+  if (eventRow?.event_date && sanitizedSalesEnd) {
+    const eventDate = new Date(eventRow.event_date);
+    eventDate.setHours(23, 59, 59, 999);
+    const salesEndDate = new Date(sanitizedSalesEnd);
+    if (!isNaN(eventDate.getTime()) && !isNaN(salesEndDate.getTime()) && salesEndDate > eventDate) {
+      return { error: `Ticket sales end date cannot be after the event date (${eventRow.event_date}).` };
+    }
+  }
+
   const insertData = {
     event_id: eventId,
     name,
@@ -225,6 +240,34 @@ export async function updateTicketType(
     sales_end && typeof sales_end === "string" && sales_end.trim() !== ""
       ? sales_end.trim()
       : null;
+
+  const { data: eventRow } = await supabase
+    .from("events")
+    .select("event_date")
+    .eq("id", existing.event_id)
+    .single();
+
+  if (eventRow?.event_date && sanitizedSalesEnd) {
+    const eventDate = new Date(eventRow.event_date);
+    eventDate.setHours(23, 59, 59, 999);
+    const salesEndDate = new Date(sanitizedSalesEnd);
+    if (!isNaN(eventDate.getTime()) && !isNaN(salesEndDate.getTime()) && salesEndDate > eventDate) {
+      return { error: `Ticket sales end date cannot be after the event date (${eventRow.event_date}).` };
+    }
+  }
+
+  // Cross-field validation: capacity cannot be lowered below already sold count for this ticket type
+  if (capacity != null) {
+    const { count: soldCount } = await supabase
+      .from("attendees")
+      .select("id", { count: "exact", head: true })
+      .eq("ticket_type_id", ticketTypeId)
+      .eq("application_status", "approved");
+
+    if (soldCount && capacity < soldCount) {
+      return { error: `Capacity cannot be set below ${soldCount} (tickets already sold for this tier).` };
+    }
+  }
 
   const updateData = {
     name,

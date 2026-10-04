@@ -49,6 +49,8 @@ supabase/.temp/
 # test reports & benchmarks
 *-results.json
 stress-test-results.json
-
-
+# python
+__pycache__/
+*.py[cod]
+*$py.class
 

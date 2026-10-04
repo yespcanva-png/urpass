@@ -1,45 +1,17 @@
 import type { Metadata } from "next";
-import {
-  QrCode,
-  ScanLine,
-  ShieldCheck,
-  Building2,
-  CheckCircle2,
-  Smartphone,
-  Banknote,
-  Users,
-  Zap,
-  BarChart3,
-  MapPin,
-  GraduationCap,
-} from "lucide-react";
+import { Banknote, Building2, ScanLine, ShieldCheck, Users, Zap } from "lucide-react";
 import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
-  title: "Event Registration & QR Check-In Software Cambridge | 0% Commission | URPASS",
-  description:
-    "High-speed event registration and QR check-in software for Cambridge deep-tech summits, university college formal dinners, May Balls, and Judge Business School conferences. Sub-second scanning, offline caching, and 0% ticket commission.",
-  keywords: [
-    "event registration software cambridge",
-    "qr event check-in cambridge",
-    "cambridge college event ticketing",
-    "silicon fen tech event software",
-    "cambridge may ball ticketing",
-    "cambridge judge business school conferences",
-    "zero commission event ticketing cambridge",
-    "eventbrite alternative cambridge",
-  ],
+  title: "Event Registration for Cambridge Conferences & Events | URPASS",
+  description: "Collegiate event registration and sub-second QR check-in software for Cambridge academic colloquiums, Science Park summits, and May balls. 0% ticket fees.",
+  keywords: ["event registration software Cambridge", "Cambridge conference registration", "QR check-in Cambridge", "Cambridge collegiate event ticketing", "Cambridge Science Park conference software", "Cambridge May ball ticketing", "Eventbrite alternative Cambridge"],
   alternates: {
     canonical: "https://urpass.space/uk/cambridge",
-    languages: {
-      "en-GB": "https://urpass.space/uk/cambridge",
-      "x-default": "https://urpass.space/uk",
-    },
   },
   openGraph: {
-    title: "Event Registration & QR Check-In Cambridge | URPASS",
-    description:
-      "Run seamless gate check-ins across Cambridge collegiate halls and Silicon Fen tech hubs. Sub-second phone scanning, collegiate features, and 0% ticket commission.",
+    title: "Event Registration for Cambridge Conferences & Events | URPASS",
+    description: "Collegiate event registration and sub-second QR check-in software for Cambridge academic colloquiums, Science Park summits, and May balls. 0% ticket fees.",
     url: "https://urpass.space/uk/cambridge",
     locale: "en_GB",
     type: "website",
@@ -52,168 +24,246 @@ export const metadata: Metadata = {
   },
 };
 
-export default function CambridgeEventTicketingPage() {
+export default function UkCambridgePage() {
   return (
     <SEOPage
       config={{
-        canonicalUrl: "https://urpass.space/uk/cambridge",
-        badge: "CAMBRIDGE EVENT TECH · SILICON FEN & COLLEGIATE ENTRY CONTROL",
-        h1: "Event Registration & Fast QR Check-In Software for Cambridge Events",
-        description:
-          "Keep entrance queues moving across Cambridge's world-leading collegiate colleges and deep-tech innovation hubs. From high-stakes life science summits and Cambridge Judge Business School forums to collegiate May Balls and guest lectures, URPASS delivers sub-second phone scanning with 0% ticket commission.",
-        ctaLabel: "Start Free in Cambridge",
-
-        directAnswer: {
-          title: "Why choose URPASS for Cambridge events, colleges, and tech symposiums?",
-          summary:
-            "URPASS is designed to meet the rigorous demands of Cambridge's world-class academic institutions and Silicon Fen technology cluster. In historic collegiate colleges where thick medieval stone walls block cellular reception, URPASS's offline caching engine enables porters and student committees to validate attendee QR passes in under 0.3s without internet signal. With mandatory Student ID capture, VIP plus-one screening, and 0% per-ticket commission, URPASS protects budgets and delivers flawless entrance control.",
-          keyPoints: [
-            "Sub-second (<0.3s) camera scanning on any smartphone browser without app downloads",
-            "Offline caching ensures scanning functions perfectly inside medieval stone college halls",
-            "Collegiate student ID verification and meal preference capture for formal dinners",
-            "0% commission on ticket sales saves thousands for Cambridge societies, colleges, and startups",
-          ],
-        },
-
-        keyFactsTable: {
-          title: "Cambridge Venue Check-In & Entry Performance",
-          subtitle: "Comparison of URPASS operations against traditional ticketing apps in Cambridge venues.",
-          headers: ["Operational Metric", "URPASS Cambridge", "Traditional Ticketing Apps (Eventbrite / FIXR)"],
-          rows: [
-            {
-              col1: "Gate Check-In Speed",
-              col2: "<0.3 seconds per scan (camera reads from 30cm away)",
-              col3: "2.5 to 5 seconds per attendee",
-            },
-            {
-              col1: "Platform Commission",
-              col2: "0% Commission (Free plan £0, paid tiers from £15/mo)",
-              col3: "6.5% + booking surcharge per ticket",
-            },
-            {
-              col1: "Historic Hall Offline Caching",
-              col2: "Local browser caching: scans continue seamlessly with zero Wi-Fi/cellular",
-              col3: "Frequent network freeze errors in historic stone courts and chapel foyers",
-            },
-            {
-              col1: "Collegiate & Society Integration",
-              col2: "Custom Student ID, CRSId (@cam.ac.uk), college affiliation, and formal meal choices",
-              col3: "Generic ticketing with no collegiate or university format validation",
-            },
-            {
-              col1: "Scanner Hardware",
-              col2: "Standard smartphones (Safari / Chrome, no app download required)",
-              col3: "Requires proprietary scanner app download or handheld hardware rental",
-            },
-          ],
-        },
-
-        productProof: {
-          badge: "REAL-TIME ENTRY SPEED",
-          title: "Rapid Gate Check-In for Cambridge Audiences",
-          description:
-            "From Cambridge Corn Exchange and West Cambridge Innovation Campus to historic college dining halls (Trinity, King's, St John's, Jesus) and the Cambridge Union, volunteer stewards scan mobile QR passes in under 300ms using ordinary phone cameras.",
-          type: "scanner",
-        },
-
-        features: [
-          {
-            icon: ScanLine,
-            title: "Sub-Second Camera Scanning",
-            desc: "Turn student committee phones or college porter devices into high-speed scanners. Scans validate in <0.3s with clear haptic cues.",
-          },
-          {
-            icon: Zap,
-            title: "Offline Vault Caching",
-            desc: "Scanners continue validating passes without interruption even in thick medieval stone courts or college chapels with zero mobile signal.",
-          },
-          {
-            icon: Banknote,
-            title: "0% Ticket Commission",
-            desc: "Keep 100% of your ticket revenue. Transparent flat plans in GBP (£) with zero per-ticket cuts or booking fee surcharges.",
-          },
-          {
-            icon: ShieldCheck,
-            title: "UK GDPR & DPA 2018 Compliant",
-            desc: "Academic and biotech attendee personal data is held under strict UK privacy laws, never remarketed to competing events or third parties.",
-          },
-          {
-            icon: GraduationCap,
-            title: "Cambridge Collegiate Ready",
-            desc: "Capture Cambridge CRSIds (@cam.ac.uk), college affiliation, student ID numbers, and dietary requirements for formal hall sittings.",
-          },
-          {
-            icon: Users,
-            title: "VIP & Plus-One Screening",
-            desc: "Screen guest applications and manage named plus-ones for prestigious college balls, venture capital pitch days, and private dinners.",
-          },
-        ],
-
-        useCases: [
-          "Silicon Fen Deep-Tech & Biotech Summits",
-          "Collegiate May Balls & Winter Formals",
-          "Cambridge Judge Business School Conferences",
-          "Cambridge Union Society Debating Events",
-          "University Open Days & Admissions Inductions",
-          "West Cambridge Science Park Research Expos",
-        ],
-
-        relatedLinks: [
-          {
-            title: "London Event Registration & Check-In",
-            href: "/uk/london",
-            category: "Location",
-          },
-          {
-            title: "University Event Management Software UK",
-            href: "/uk/university-event-software",
-            category: "Use Case",
-          },
-          {
-            title: "College Event Registration UK",
-            href: "/uk/college-event-registration",
-            category: "Use Case",
-          },
-          {
-            title: "Student Union Event Ticketing",
-            href: "/uk/student-union-event-ticketing",
-            category: "Use Case",
-          },
-          {
-            title: "Eventbrite Alternative UK",
-            href: "/uk/eventbrite-alternative",
-            category: "Comparison",
-          },
-        ],
-
-        faqs: [
-          {
-            q: "How does URPASS work in historic Cambridge college dining halls with no Wi-Fi?",
-            a: "URPASS includes an offline caching engine. The approved attendee roster is cached in the browser locally upon opening the scanner session at the porter's lodge or hall entrance, allowing tickets to validate with zero internet connection.",
-          },
-          {
-            q: "Can we restrict event tickets exclusively to verified Cambridge students (@cam.ac.uk)?",
-            a: "Yes. Organisers can require attendees to sign up with a valid University of Cambridge CRSId email address (@cam.ac.uk) or enter a valid Student ID number before receiving a ticket.",
-          },
-          {
-            q: "Can we manage formal hall dining choices and seating allocations?",
-            a: "Yes. Organisers can create custom dropdown and text fields during registration to collect meal preferences (vegan, halal, gluten-free), table selections, and plus-one details.",
-          },
-        ],
-
-        ctaTitle: "Ready to run your next Cambridge event?",
-        ctaDescription:
-          "Start your 30-day free trial on URPASS today. Sub-second scanning, 0% commission, and full UK GDPR compliance.",
-        geo: {
-          region: "GB-CAM",
-          placename: "Cambridge",
-          position: "52.2053;0.1218",
-          latitude: 52.2053,
-          longitude: 0.1218,
-          country: "United Kingdom",
-          countryCode: "GB",
-        },
-      }}
+  "badge": "CAMBRIDGE EVENT TECH · SUB-SECOND ENTRY",
+  "h1": "Event Registration for Cambridge Conferences & Events",
+  "canonicalUrl": "https://urpass.space/uk/cambridge",
+  "description": "Collegiate event registration and sub-second QR check-in software for Cambridge academic colloquiums, Science Park summits, and May balls. 0% ticket fees.",
+  "ctaLabel": "Start Free in Cambridge →",
+  "ctaTitle": "Run Prestigious Cambridge Conferences & Balls",
+  "ctaDescription": "From Cambridge Science Park biotech symposiums and Judge Business School conferences to collegiate May balls, URPASS provides flawless entrance validation.",
+  "directAnswer": {
+    "title": "Why Choose URPASS for Cambridge Events & Conferences?",
+    "summary": "URPASS is high-precision event registration and QR check-in software designed for Cambridge academic colloquiums, collegiate societies, and biotech summits. It replaces slow paper lists with sub-second QR scanning on volunteer smartphones. It features 0% ticketing commission, offline resilience for historic college halls, and strict UK GDPR data protection.",
+    "keyPoints": [
+      "Sub-second (<0.3s) camera scanning with instant green/red verification",
+      "Tailored for collegiate societies with college affiliation and Student ID fields",
+      "Offline caching designed for ancient stone chapels and historic college dining halls",
+      "0% per-ticket commission with flat GBP subscriptions"
+    ]
+  },
+  "whatIs": {
+    "title": "What is Event Registration for Cambridge Events?",
+    "definition": "Event registration software in Cambridge is an entrance management platform tailored for the unique collegiate, research, and biotech ecosystem of Cambridge. It coordinates delegate accreditation, academic ticket tiers, digital QR pass issuance, and rapid smartphone gate check-in.",
+    "details": [
+      "Manages collegiate society formals, May balls, and international academic congresses",
+      "Handles custom delegate data including college affiliation, faculty, and dietary needs",
+      "Operates hardware-free on volunteer phones with zero app downloads required",
+      "Syncs multi-entrance scanning to protect exclusive collegiate events from pass duplication"
+    ]
+  },
+  "howItWorksTitle": "How URPASS Powers Cambridge Events",
+  "howItWorksSubtitle": "From online registration to high-speed entrance flow.",
+  "steps": [
+    {
+      "n": "01",
+      "title": "Create your event",
+      "desc": "Set your event details, ticket categories, and custom fields in GBP."
+    },
+    {
+      "n": "02",
+      "title": "Share registration link",
+      "desc": "Send your clean URL to delegates, performers, or students."
+    },
+    {
+      "n": "03",
+      "title": "Attendees register",
+      "desc": "Guests register with zero friction or forced account signups."
+    },
+    {
+      "n": "04",
+      "title": "Automated digital passes",
+      "desc": "Instant scannable mobile QR passes arrive in attendees' inboxes."
+    },
+    {
+      "n": "05",
+      "title": "Scan at the entrance",
+      "desc": "Door volunteers scan passes with phone cameras in <0.3s."
+    },
+    {
+      "n": "06",
+      "title": "Live attendance analytics",
+      "desc": "Monitor arrival throughput and hall capacities in real time."
+    }
+  ],
+  "featuresTitle": "Features for Cambridge Colleges & Science Parks",
+  "featuresSubtitle": "Sub-second camera scans, stone hall offline mode, and zero ticketing commission.",
+  "features": [
+    {
+      icon: ScanLine,
+      "title": "Sub-Second Gate Scanning",
+      "desc": "Admit 40 to 50 attendees per minute per volunteer phone with instant green audio and visual feedback."
+    },
+    {
+      icon: Building2,
+      "title": "Cambridge Collegiate Fields",
+      "desc": "Capture college affiliations (Trinity, St John's, King's, etc.), matriculation status, and dietary requirements."
+    },
+    {
+      icon: Zap,
+      "title": "Historic Stone Hall Offline Mode",
+      "desc": "Ancient stone college dining halls often block mobile reception. URPASS offline mode keeps scanning uninterrupted."
+    },
+    {
+      icon: ShieldCheck,
+      "title": "UK GDPR & DPA Compliance",
+      "desc": "Attendee data is stored securely in compliant UK infrastructure with zero third-party marketing brokers."
+    },
+    {
+      icon: Users,
+      "title": "Multi-Gate Sync",
+      "desc": "Coordinating multiple entrance gates for May balls or West Road Concert Hall? Scans sync within 150ms."
+    },
+    {
+      icon: Banknote,
+      "title": "0% Commission on Tickets",
+      "desc": "Keep 100% of your ticket revenue with simple flat monthly GBP plans and no per-ticket penalty fees."
+    }
+  ],
+  "whoShouldUse": {
+    "title": "Who Should Use URPASS in Cambridge?",
+    "subtitle": "From collegiate committees to Science Park tech summits.",
+    "personas": [
+      {
+        "badge": "COLLEGIATE",
+        "title": "College Committees & May Balls",
+        "desc": "Exclusive collegiate balls, garden parties, bops, and formal hall guest lists."
+      },
+      {
+        "badge": "ACADEMIC",
+        "title": "Academic Departments & Colloquiums",
+        "desc": "Cambridge Judge Business School, Cavendish Laboratory, and faculty conferences."
+      },
+      {
+        "badge": "BIOTECH",
+        "title": "Cambridge Science Park & Silicon Fen",
+        "desc": "Biotech summits, AI conferences, and tech startup pitch showcases."
+      },
+      {
+        "badge": "STUDENTS",
+        "title": "Cambridge Student Societies",
+        "desc": "Cambridge Union Society, athletic clubs, and musical societies with member ticket tiers."
+      }
+    ]
+  },
+  "howQrCheckInWorks": {
+    "title": "How Cambridge QR Check-In Works",
+    "subtitle": "Pure speed on any volunteer smartphone.",
+    "description": "Staff open the scanner link in Safari or Chrome. The camera reads the attendee's QR pass from 30cm away in under 0.3s, checks the pass against the event registry, produces an audible chime, and records the gate arrival. If venue Wi-Fi drops, the local browser cache continues verifying passes uninterrupted.",
+    "points": [
+      "Zero equipment costs: no need to rent expensive laser scanner hardware.",
+      "Fast volunteer onboarding: staff begin scanning within 15 seconds of receiving the link.",
+      "Atomic row-locking prevents shared pass screenshots across different entrances.",
+      "Manual guest lookup available if an attendee's phone battery runs out."
+    ]
+  },
+  "keyFactsTable": {
+    "title": "Cambridge Event Check-In Comparison",
+    "subtitle": "How URPASS outperforms legacy ticketing platforms in Cambridge venues.",
+    "headers": [
+      "Feature / Metric",
+      "URPASS Cambridge",
+      "Legacy Ticketing Apps"
+    ],
+    "rows": [
+      {
+        "col1": "Check-In Speed",
+        "col2": "<0.3s per scan (45+ attendees/min)",
+        "col3": "2.5 to 4.0s (slow camera tap confirmations)"
+      },
+      {
+        "col1": "Stone Hall Reception",
+        "col2": "Local offline memory validation",
+        "col3": "Freezes or times out on low signal"
+      },
+      {
+        "col1": "Hardware Demands",
+        "col2": "Any volunteer phone browser",
+        "col3": "Proprietary apps or rented hardware"
+      },
+      {
+        "col1": "Multi-Gate Sync",
+        "col2": "Sub-150ms atomic state replication",
+        "col3": "Periodic sync allows duplicate entries"
+      },
+      {
+        "col1": "Ticket Fee Model",
+        "col2": "0% commission; flat GBP plan",
+        "col3": "Up to 6.95% + £0.59 deducted per ticket"
+      }
+    ]
+  },
+  "faqs": [
+    {
+      "q": "What is event registration software Cambridge?",
+      "a": "It is an event registration and smartphone check-in platform designed for Cambridge organisers to create registration pages, issue digital QR passes, and admit attendees quickly."
+    },
+    {
+      "q": "Can Cambridge college committees use URPASS for May balls?",
+      "a": "Yes. May ball and collegiate committees use URPASS to manage thousands of ticket holders, guest quotas, and multi-entrance scanning."
+    },
+    {
+      "q": "Does URPASS charge per-ticket commission in Cambridge?",
+      "a": "No. URPASS charges 0% commission on ticket sales. Organisers pay a transparent flat GBP monthly subscription."
+    },
+    {
+      "q": "Does URPASS work inside historic Cambridge stone colleges without Wi-Fi?",
+      "a": "Yes. URPASS pre-caches the guest registry in memory, enabling seamless validation even inside thick stone dining halls and chapels."
+    },
+    {
+      "q": "How fast can volunteers start scanning at the door?",
+      "a": "Volunteers just click a link on their smartphone browser and can start scanning within 15 seconds. No app download or account creation required."
+    },
+    {
+      "q": "Does URPASS prevent people from sharing screenshots of tickets?",
+      "a": "Yes. Once a ticket is scanned at any door, the system atomically invalidates it. Subsequent attempts display an immediate red alert."
+    }
+  ],
+  "relatedLinks": [
+    {
+      "title": "UK Event Registration Software",
+      "href": "/uk",
+      "category": "Location"
+    },
+    {
+      "title": "Oxford Event Registration & QR Check-In",
+      "href": "/uk/oxford",
+      "category": "Location"
+    },
+    {
+      "title": "London Event Registration & QR Check-In",
+      "href": "/uk/london",
+      "category": "Location"
+    },
+    {
+      "title": "Conference Registration Software with QR Check-In",
+      "href": "/conference-registration-software",
+      "category": "Use Case"
+    },
+    {
+      "title": "University Event Registration & QR Check-In Software",
+      "href": "/university-event-management-software",
+      "category": "Use Case"
+    },
+    {
+      "title": "Multi-Gate QR Check-In for Large Events",
+      "href": "/multi-gate-event-check-in",
+      "category": "Product"
+    }
+  ],
+  "geo": {
+    "region": "GB-CAM",
+    "placename": "Cambridge",
+    "position": "52.2053;0.1218",
+    "latitude": 52.2053,
+    "longitude": 0.1218,
+    "country": "United Kingdom",
+    "countryCode": "GB"
+  }
+}}
     />
   );
 }

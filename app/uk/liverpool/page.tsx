@@ -1,45 +1,17 @@
 import type { Metadata } from "next";
-import {
-  QrCode,
-  ScanLine,
-  ShieldCheck,
-  Building2,
-  CheckCircle2,
-  Smartphone,
-  Banknote,
-  Users,
-  Zap,
-  BarChart3,
-  MapPin,
-  Clock,
-} from "lucide-react";
+import { Banknote, Building2, ScanLine, ShieldCheck, Users, Zap } from "lucide-react";
 import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
-  title: "Event Registration & QR Check-In Software Liverpool | 0% Commission | URPASS",
-  description:
-    "High-speed event registration and QR check-in software for Liverpool venues, ACC Liverpool conferences, Baltic Triangle creative gatherings, and Liverpool Guild of Students societies. Sub-second scanning, offline caching, and 0% ticket commission.",
-  keywords: [
-    "event registration software liverpool",
-    "qr event check-in liverpool",
-    "acc liverpool conference ticketing",
-    "liverpool guild of students ticketing",
-    "baltic triangle event software",
-    "sound city liverpool ticketing",
-    "zero commission event ticketing liverpool",
-    "eventbrite alternative liverpool",
-  ],
+  title: "Event Registration Software Liverpool | URPASS",
+  description: "Sub-second event registration and QR check-in software for Liverpool conferences, Baltic Triangle creative events, and university societies. 0% ticket fees.",
+  keywords: ["event registration software Liverpool", "Liverpool event check-in", "QR check-in Liverpool", "ACC Liverpool conference registration", "University of Liverpool ticketing", "Baltic Triangle event registration", "Eventbrite alternative Liverpool"],
   alternates: {
     canonical: "https://urpass.space/uk/liverpool",
-    languages: {
-      "en-GB": "https://urpass.space/uk/liverpool",
-      "x-default": "https://urpass.space/uk",
-    },
   },
   openGraph: {
-    title: "Event Registration & QR Check-In Liverpool | URPASS",
-    description:
-      "Run seamless gate check-ins across Liverpool venues from ACC Liverpool to Camp and Furnace. Sub-second phone scanning, student union features, and 0% ticket commission.",
+    title: "Event Registration Software Liverpool | URPASS",
+    description: "Sub-second event registration and QR check-in software for Liverpool conferences, Baltic Triangle creative events, and university societies. 0% ticket fees.",
     url: "https://urpass.space/uk/liverpool",
     locale: "en_GB",
     type: "website",
@@ -52,168 +24,241 @@ export const metadata: Metadata = {
   },
 };
 
-export default function LiverpoolEventTicketingPage() {
+export default function UkLiverpoolPage() {
   return (
     <SEOPage
       config={{
-        canonicalUrl: "https://urpass.space/uk/liverpool",
-        badge: "LIVERPOOL EVENT TECH · MERSEYSIDE GATE CONTROL",
-        h1: "Event Registration & Fast QR Check-In Software for Liverpool Events",
-        description:
-          "Keep entrance queues moving across Liverpool's world-class waterfront venues. From major conferences at ACC Liverpool and Exhibition Centre Liverpool to creative gatherings in the Baltic Triangle and society balls at Liverpool Guild of Students, URPASS delivers sub-second phone scanning with 0% ticket commission.",
-        ctaLabel: "Start Free in Liverpool",
-
-        directAnswer: {
-          title: "Why choose URPASS for Liverpool events and university operations?",
-          summary:
-            "URPASS is designed for Liverpool's rich musical, cultural, academic, and conference ecosystem. It eliminates entrance delays by allowing door staff and student volunteers to scan attendee QR passes in under 0.3 seconds directly within standard smartphone web browsers. Featuring multi-door cloud sync across large waterfront exhibition halls, offline caching for historic dock buildings, and 0% per-ticket commission, URPASS keeps Merseyside event costs transparent and guest entry rapid.",
-          keyPoints: [
-            "Sub-second (<0.3s) camera scanning on any smartphone browser without app downloads",
-            "0% commission on ticket sales saves thousands compared to Eventbrite UK or Skiddle",
-            "Student ID verification built for University of Liverpool Guild of Students and JMSU",
-            "Offline caching ensures entrance continuity in historic dock buildings and waterfront spaces",
-          ],
-        },
-
-        keyFactsTable: {
-          title: "Liverpool Venue Check-In & Entry Performance",
-          subtitle: "Comparison of URPASS operations against traditional ticketing apps in Liverpool venues.",
-          headers: ["Operational Metric", "URPASS Liverpool", "Traditional Ticketing Apps (Eventbrite / Skiddle)"],
-          rows: [
-            {
-              col1: "Gate Check-In Speed",
-              col2: "<0.3 seconds per scan (camera reads from 30cm away)",
-              col3: "2.5 to 5 seconds per attendee",
-            },
-            {
-              col1: "Platform Commission",
-              col2: "0% Commission (Free plan £0, paid tiers from £15/mo)",
-              col3: "6.5% + booking surcharge per ticket",
-            },
-            {
-              col1: "Scanner Hardware",
-              col2: "Standard smartphones (Safari / Chrome, no app download)",
-              col3: "Requires proprietary scanner app download or handheld hardware rental",
-            },
-            {
-              col1: "Offline Failover",
-              col2: "Local browser caching: scans continue seamlessly without Wi-Fi",
-              col3: "Frequent network freeze errors in historic waterfront or warehouse venues",
-            },
-            {
-              col1: "Student Union Integration",
-              col2: "Custom Student ID fields, course capture, and role-based permissions",
-              col3: "Generic ticketing with no university-specific integration",
-            },
-          ],
-        },
-
-        productProof: {
-          badge: "REAL-TIME ENTRY SPEED",
-          title: "Rapid Gate Check-In for Merseyside Crowds",
-          description:
-            "From ACC Liverpool Kings Dock and St George's Hall to Camp and Furnace in the Baltic Triangle and Liverpool Guild of Students Mountford Hall, volunteer stewards scan mobile QR passes in under 300ms using ordinary phone cameras.",
-          type: "scanner",
-        },
-
-        features: [
-          {
-            icon: ScanLine,
-            title: "Sub-Second Camera Scanning",
-            desc: "Turn student committee phones or event steward devices into high-speed scanners. Scans validate in <0.3s with clear haptic cues.",
-          },
-          {
-            icon: Zap,
-            title: "Offline Vault Caching",
-            desc: "Scanners continue validating passes without interruption even in thick stone buildings or dockside venues with fluctuating cellular signal.",
-          },
-          {
-            icon: Banknote,
-            title: "0% Ticket Commission",
-            desc: "Keep 100% of your ticket revenue. Transparent flat plans in GBP (£) with zero per-ticket cuts or booking fee surcharges.",
-          },
-          {
-            icon: ShieldCheck,
-            title: "UK GDPR & DPA 2018 Compliant",
-            desc: "Merseyside attendee personal data is held under strict UK privacy laws, never remarketed to competing events or third parties.",
-          },
-          {
-            icon: Building2,
-            title: "Liverpool Student Guild Ready",
-            desc: "Capture institutional Student IDs and society membership credentials for University of Liverpool Guild of Students and Liverpool John Moores SU.",
-          },
-          {
-            icon: Users,
-            title: "Multi-Gate Cloud Synchronisation",
-            desc: "Synchronise attendance across multiple entrances (such as Kings Dock Hall A & Hall B) in real time to prevent ticket sharing across doors.",
-          },
-        ],
-
-        useCases: [
-          "ACC Liverpool Conferences & Exhibitions",
-          "Liverpool Guild of Students Formals & Gig Nights",
-          "Baltic Triangle Tech & Creative Showcases",
-          "Liverpool Sound City Industry Showcases",
-          "St George's Hall Cultural Galas & Banquets",
-          "Liverpool John Moores University (JMSU) Freshers Events",
-        ],
-
-        relatedLinks: [
-          {
-            title: "Manchester Event Registration & Check-In",
-            href: "/uk/manchester",
-            category: "Location",
-          },
-          {
-            title: "University Event Management Software UK",
-            href: "/uk/university-event-software",
-            category: "Use Case",
-          },
-          {
-            title: "Student Union Event Ticketing",
-            href: "/uk/student-union-event-ticketing",
-            category: "Use Case",
-          },
-          {
-            title: "UK Event Ticketing Software",
-            href: "/uk/event-ticketing-software",
-            category: "Product",
-          },
-          {
-            title: "Eventbrite Alternative UK",
-            href: "/uk/eventbrite-alternative",
-            category: "Comparison",
-          },
-        ],
-
-        faqs: [
-          {
-            q: "Can Liverpool student societies use URPASS for formals and gigs at Mountford Hall?",
-            a: "Yes. URPASS is ideally suited for student society balls, sports socials, and club gigs at venues like Mountford Hall. Organisers collect Student IDs and dietary preferences with zero ticket commission.",
-          },
-          {
-            q: "How does the scanner handle waterfront venues where cellular signal is weak?",
-            a: "URPASS includes an intelligent offline caching engine. The approved attendee roster is cached in the browser locally upon opening the scanner session, allowing tickets to validate with zero internet connection.",
-          },
-          {
-            q: "Can door stewards scan tickets without installing an app from the App Store?",
-            a: "Yes. Organisers simply share a secure scanner link and a 4-digit gate PIN. Stewards open the link in Safari or Chrome and start scanning tickets immediately.",
-          },
-        ],
-
-        ctaTitle: "Ready to run your next Liverpool event?",
-        ctaDescription:
-          "Start your 30-day free trial on URPASS today. Sub-second scanning, 0% commission, and full UK GDPR compliance.",
-        geo: {
-          region: "GB-LIV",
-          placename: "Liverpool",
-          position: "53.4084;-2.9916",
-          latitude: 53.4084,
-          longitude: -2.9916,
-          country: "United Kingdom",
-          countryCode: "GB",
-        },
-      }}
+  "badge": "LIVERPOOL EVENT TECH · FAST ENTRY",
+  "h1": "Event Registration Software Liverpool",
+  "canonicalUrl": "https://urpass.space/uk/liverpool",
+  "description": "Sub-second event registration and QR check-in software for Liverpool conferences, Baltic Triangle creative events, and university societies. 0% ticket fees.",
+  "ctaLabel": "Start Free in Liverpool →",
+  "ctaTitle": "Power Seamless Event Entry in Liverpool",
+  "ctaDescription": "From ACC Liverpool waterfront conferences and Exhibition Centre events to Baltic Triangle creative showcases, URPASS keeps entrance lines moving.",
+  "directAnswer": {
+    "title": "Why Choose URPASS for Liverpool Events?",
+    "summary": "URPASS is high-speed event registration and QR check-in software built for Liverpool conferences, university societies, and waterfront exhibitions. It replaces paper checklists with sub-second QR scanning on volunteer smartphones. It features offline caching for converted warehouse venues, 0% ticketing commission, and full UK GDPR compliance.",
+    "keyPoints": [
+      "Sub-second (<0.3s) camera scanning with instant audio and visual verification",
+      "Offline resilience designed for converted docks and warehouse spaces",
+      "0% per-ticket commission with flat GBP subscriptions",
+      "Used by University of Liverpool, LJMU, and Liverpool Hope student teams"
+    ]
+  },
+  "whatIs": {
+    "title": "What is Event Registration Software Liverpool?",
+    "definition": "Event registration software in Liverpool is a digital system for managing delegate registrations, ticket sales, digital QR pass issuance, and rapid entrance scanning across Merseyside venues.",
+    "details": [
+      "Streamlines attendee registration for conferences, creative showcases, and student balls",
+      "Replaces printed guest lists with real-time digital pass verification",
+      "Operates directly in mobile web browsers on volunteers' existing phones",
+      "Prevents duplicate entry attempts across multiple entrance gates"
+    ]
+  },
+  "howItWorksTitle": "How URPASS Powers Liverpool Events",
+  "howItWorksSubtitle": "From online registration to high-speed entrance flow.",
+  "steps": [
+    {
+      "n": "01",
+      "title": "Create your event",
+      "desc": "Set your event details, ticket categories, and custom fields in GBP."
+    },
+    {
+      "n": "02",
+      "title": "Share registration link",
+      "desc": "Send your clean URL to delegates, performers, or students."
+    },
+    {
+      "n": "03",
+      "title": "Attendees register",
+      "desc": "Guests register with zero friction or forced account signups."
+    },
+    {
+      "n": "04",
+      "title": "Automated digital passes",
+      "desc": "Instant scannable mobile QR passes arrive in attendees' inboxes."
+    },
+    {
+      "n": "05",
+      "title": "Scan at the entrance",
+      "desc": "Door volunteers scan passes with phone cameras in <0.3s."
+    },
+    {
+      "n": "06",
+      "title": "Live attendance analytics",
+      "desc": "Monitor arrival throughput and hall capacities in real time."
+    }
+  ],
+  "featuresTitle": "Features for Liverpool Waterfront Venues",
+  "featuresSubtitle": "Sub-second camera scans, multi-gate sync, and zero ticketing commission.",
+  "features": [
+    {
+      icon: ScanLine,
+      "title": "Sub-Second Gate Scanning",
+      "desc": "Admit 40 to 50 attendees per minute per volunteer phone with instant green audio and visual feedback."
+    },
+    {
+      icon: Zap,
+      "title": "Docks & Warehouse Offline Mode",
+      "desc": "Historic dock warehouses can have weak cellular signals. URPASS offline mode ensures gate staff never stop scanning."
+    },
+    {
+      icon: Building2,
+      "title": "Liverpool Universities",
+      "desc": "Tailored for University of Liverpool, LJMU, and Hope societies with custom Student ID fields."
+    },
+    {
+      icon: ShieldCheck,
+      "title": "UK GDPR & DPA Compliance",
+      "desc": "Attendee data is stored securely in compliant UK infrastructure with zero third-party marketing brokers."
+    },
+    {
+      icon: Users,
+      "title": "Multi-Gate Sync",
+      "desc": "Managing multiple doors across ACC Liverpool? Scans sync within 150ms to prevent duplicate pass usage."
+    },
+    {
+      icon: Banknote,
+      "title": "0% Commission on Tickets",
+      "desc": "Keep 100% of your ticket revenue with simple flat monthly GBP plans and no per-ticket penalty fees."
+    }
+  ],
+  "whoShouldUse": {
+    "title": "Who Should Use URPASS in Liverpool?",
+    "subtitle": "From waterfront conventions to Baltic Triangle arts events.",
+    "personas": [
+      {
+        "badge": "CONVENTIONS",
+        "title": "ACC Liverpool Conferences",
+        "desc": "Major medical, business, and political conventions at Kings Dock requiring synchronized multi-door entry."
+      },
+      {
+        "badge": "CAMPUS",
+        "title": "University of Liverpool & LJMU",
+        "desc": "Student union societies, formal balls, sports club socials, and graduation celebration events."
+      },
+      {
+        "badge": "CREATIVE",
+        "title": "Baltic Triangle Events",
+        "desc": "Creative agencies, music venues, and tech meetups in converted industrial spaces."
+      },
+      {
+        "badge": "COMMUNITY",
+        "title": "Community & Sports Tournaments",
+        "desc": "Local football tournaments, charity galas, and community festivals needing simple QR check-in."
+      }
+    ]
+  },
+  "howQrCheckInWorks": {
+    "title": "How Liverpool QR Check-In Works",
+    "subtitle": "Pure speed on any volunteer smartphone.",
+    "description": "Staff open the scanner link in Safari or Chrome. The camera reads the attendee's QR pass from 30cm away in under 0.3s, checks the pass against the event registry, produces an audible chime, and records the gate arrival. If venue Wi-Fi drops, the local browser cache continues verifying passes uninterrupted.",
+    "points": [
+      "Zero equipment costs: no need to rent expensive laser scanner hardware.",
+      "Fast volunteer onboarding: staff begin scanning within 15 seconds of receiving the link.",
+      "Atomic row-locking prevents shared pass screenshots across different entrances.",
+      "Manual guest lookup available if an attendee's phone battery runs out."
+    ]
+  },
+  "keyFactsTable": {
+    "title": "Liverpool Event Check-In Comparison",
+    "subtitle": "How URPASS outperforms legacy ticketing platforms in Liverpool venues.",
+    "headers": [
+      "Feature / Metric",
+      "URPASS Liverpool",
+      "Legacy Ticketing Apps"
+    ],
+    "rows": [
+      {
+        "col1": "Check-In Speed",
+        "col2": "<0.3s per scan (45+ attendees/min)",
+        "col3": "2.5 to 4.0s (slow camera tap confirmations)"
+      },
+      {
+        "col1": "Dock Warehouse Network",
+        "col2": "Local offline memory validation",
+        "col3": "Freezes or times out on low signal"
+      },
+      {
+        "col1": "Hardware Demands",
+        "col2": "Any volunteer phone browser",
+        "col3": "Proprietary apps or rented hardware"
+      },
+      {
+        "col1": "Multi-Gate Sync",
+        "col2": "Sub-150ms atomic state replication",
+        "col3": "Periodic sync allows duplicate entries"
+      },
+      {
+        "col1": "Ticket Fee Model",
+        "col2": "0% commission; flat GBP plan",
+        "col3": "Up to 6.95% + £0.59 deducted per ticket"
+      }
+    ]
+  },
+  "faqs": [
+    {
+      "q": "What is event registration software Liverpool?",
+      "a": "It is an event registration and smartphone check-in platform designed for Liverpool organisers to create registration pages, issue digital QR passes, and admit attendees quickly."
+    },
+    {
+      "q": "Can URPASS handle large conferences at ACC Liverpool?",
+      "a": "Yes. URPASS supports high-throughput multi-gate scanning with sub-150ms sync and offline fallback, making it ideal for waterfront convention halls."
+    },
+    {
+      "q": "Does URPASS charge per-ticket commission in Liverpool?",
+      "a": "No. URPASS charges 0% commission on ticket sales. Organisers pay a transparent flat GBP monthly subscription."
+    },
+    {
+      "q": "Can Liverpool student unions use URPASS for balls and fests?",
+      "a": "Yes. Student societies across the University of Liverpool and LJMU use URPASS for seamless ball and festival check-ins."
+    },
+    {
+      "q": "How fast can volunteers start scanning at the door?",
+      "a": "Volunteers just click a link on their smartphone browser and can start scanning within 15 seconds. No app download or account creation required."
+    },
+    {
+      "q": "Does URPASS prevent people from sharing screenshots of tickets?",
+      "a": "Yes. Once a ticket is scanned at any door, the system atomically invalidates it. Subsequent attempts display an immediate red alert."
+    }
+  ],
+  "relatedLinks": [
+    {
+      "title": "UK Event Registration Software",
+      "href": "/uk",
+      "category": "Location"
+    },
+    {
+      "title": "Manchester Event Registration Software",
+      "href": "/uk/manchester",
+      "category": "Location"
+    },
+    {
+      "title": "Conference Registration Software with QR Check-In",
+      "href": "/conference-registration-software",
+      "category": "Use Case"
+    },
+    {
+      "title": "Eventbrite Alternative UK",
+      "href": "/eventbrite-alternative-uk",
+      "category": "Comparison"
+    },
+    {
+      "title": "Multi-Gate QR Check-In for Large Events",
+      "href": "/multi-gate-event-check-in",
+      "category": "Product"
+    }
+  ],
+  "geo": {
+    "region": "GB-LIV",
+    "placename": "Liverpool",
+    "position": "53.4084;-2.9916",
+    "latitude": 53.4084,
+    "longitude": -2.9916,
+    "country": "United Kingdom",
+    "countryCode": "GB"
+  }
+}}
     />
   );
 }

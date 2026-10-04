@@ -25,6 +25,9 @@ export const INVOICE_DOC_TYPES: Record<InvoiceDocType, string> = {
 
 export interface InvoiceCreationParams {
   userId: string;
+  organizationId?: string | null;
+  eventId?: string | null;
+  attendeeId?: string | null;
   subscriptionId?: string | null;
   paymentId: string;
   description: string;
@@ -46,6 +49,9 @@ export interface InvoiceRecord {
   id: string;
   invoice_number: string;
   user_id: string;
+  organization_id?: string | null;
+  event_id?: string | null;
+  attendee_id?: string | null;
   subscription_id: string | null;
   payment_id: string | null;
   seller_name: string;
@@ -311,7 +317,20 @@ export async function nextInvoiceNumber(
   const fy = financialYearFor(date);
   const prefix = `UP/${docType}/${fy.label}/`;
 
-  // Count existing invoices for this specific document series in the current financial year
+  // 1. Try atomic PostgreSQL sequence table with locked increment
+  try {
+    const { data: seq, error: rpcError } = await supabase.rpc("get_next_document_sequence", {
+      p_doc_type: docType,
+      p_financial_year: fy.label,
+    });
+    if (!rpcError && typeof seq === "number" && seq > 0) {
+      return formatDocumentNumber(docType, fy.label, seq);
+    }
+  } catch {
+    // Non-blocking fallback if RPC not installed yet
+  }
+
+  // 2. Resilient fallback: count existing invoices in the financial year
   const { count } = await supabase
     .from("invoices")
     .select("id", { count: "exact", head: true })
@@ -330,14 +349,38 @@ export async function nextCreditNoteNumber(
   const fy = financialYearFor(date);
   const prefix = `UP/CN/${fy.label}/`;
 
-  const { count } = await supabase
-    .from("credit_notes")
-    .select("id", { count: "exact", head: true })
-    .gte("document_date", fy.startDate)
-    .lte("document_date", fy.endDate)
-    .ilike("credit_note_number", `${prefix}%`);
+  // 1. Try atomic PostgreSQL sequence table with locked increment
+  try {
+    const { data: seq, error: rpcError } = await supabase.rpc("get_next_document_sequence", {
+      p_doc_type: "CN",
+      p_financial_year: fy.label,
+    });
+    if (!rpcError && typeof seq === "number" && seq > 0) {
+      return formatDocumentNumber("CN", fy.label, seq);
+    }
+  } catch {
+    // Non-blocking fallback if RPC not installed yet
+  }
 
-  const nextSeq = (count || 0) + 1;
+  // 2. Resilient fallback: count existing credit notes in the financial year
+  let count = 0;
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let query: any = supabase
+      .from("credit_notes")
+      .select("id", { count: "exact", head: true });
+
+    if (typeof query?.gte === "function") query = query.gte("document_date", fy.startDate);
+    if (typeof query?.lte === "function") query = query.lte("document_date", fy.endDate);
+    if (typeof query?.ilike === "function") query = query.ilike("credit_note_number", `${prefix}%`);
+
+    const res = await query;
+    count = res?.count ?? 0;
+  } catch {
+    count = 0;
+  }
+
+  const nextSeq = count + 1;
   return formatDocumentNumber("CN", fy.label, nextSeq);
 }
 
@@ -516,6 +559,9 @@ export async function createInvoiceForPayment(
   const invoiceRow = {
     invoice_number: invoiceNumber,
     user_id: params.userId,
+    organization_id: params.organizationId ?? null,
+    event_id: params.eventId ?? null,
+    attendee_id: params.attendeeId ?? null,
     subscription_id: params.subscriptionId ?? null,
     payment_id: params.paymentId,
     seller_name: sellerName,
@@ -1035,4 +1081,97 @@ export async function generateInvoicePdf(invoice: InvoiceRecord): Promise<Uint8A
   }
 
   return await pdfDoc.save();
+}
+
+export interface CreditNoteCreationParams {
+  paymentId: string;
+  reason: string;
+  amountRupees?: number;
+  userId?: string | null;
+  attendeeId?: string | null;
+  eventId?: string | null;
+  customerName?: string;
+  customerEmail?: string;
+}
+
+/**
+ * Creates an authoritative GST Credit Note (UP/CN/...) for refunded payments or cancelled registrations.
+ * Links to original tax invoice and transitions invoice to 'credited' / 'refunded'.
+ */
+export async function createCreditNoteForPayment(
+  params: CreditNoteCreationParams
+): Promise<{ id: string; creditNoteNumber: string } | null> {
+  const supabase = adminClient();
+
+  // 1. Look up existing invoice by payment_id
+  let existingInvoice: InvoiceRecord | null = null;
+  if (params.paymentId) {
+    const { data: inv } = await supabase
+      .from("invoices")
+      .select("*")
+      .eq("payment_id", params.paymentId)
+      .maybeSingle();
+    if (inv) {
+      existingInvoice = inv as InvoiceRecord;
+    }
+  }
+
+  // 2. Determine refund amounts
+  const totalAmount = params.amountRupees ?? existingInvoice?.total_amount ?? 0;
+  let subtotal = totalAmount;
+  let taxAmount = 0;
+  if (existingInvoice && existingInvoice.total_amount > 0) {
+    const ratio = totalAmount / existingInvoice.total_amount;
+    subtotal = Math.round((existingInvoice.taxable_amount * ratio) * 100) / 100;
+    taxAmount = Math.round(((existingInvoice.cgst_amount + existingInvoice.sgst_amount + existingInvoice.igst_amount) * ratio) * 100) / 100;
+  } else {
+    subtotal = Math.round((totalAmount / 1.18) * 100) / 100;
+    taxAmount = Math.round((totalAmount - subtotal) * 100) / 100;
+  }
+
+  // 3. Generate sequential GST Credit Note Number
+  const creditNoteNumber = await nextCreditNoteNumber(supabase);
+
+  // 4. Insert credit note record
+  const { data: cn, error: cnErr } = await supabase
+    .from("credit_notes")
+    .insert({
+      credit_note_number: creditNoteNumber,
+      invoice_id: existingInvoice?.id || null,
+      user_id: params.userId || existingInvoice?.user_id || null,
+      attendee_id: params.attendeeId || null,
+      event_id: params.eventId || null,
+      payment_id: params.paymentId,
+      customer_name: params.customerName || existingInvoice?.customer_name || "Valued Customer",
+      customer_email: params.customerEmail || existingInvoice?.customer_email || "",
+      reason: params.reason,
+      subtotal,
+      tax_amount: taxAmount,
+      total_amount: totalAmount,
+      currency: existingInvoice?.currency || "INR",
+      document_date: new Date().toISOString().split("T")[0],
+    })
+    .select("id, credit_note_number")
+    .single();
+
+  if (cnErr) {
+    console.error("[invoices] Error creating credit note:", cnErr);
+    return null;
+  }
+
+  // 5. Update invoice status to refunded/credited if found
+  if (existingInvoice?.id) {
+    await supabase
+      .from("invoices")
+      .update({
+        payment_status: "refunded",
+        invoice_status: "credited",
+      })
+      .eq("id", existingInvoice.id);
+  }
+
+  return {
+    id: cn.id,
+    creditNoteNumber: cn.credit_note_number,
+  };
 }

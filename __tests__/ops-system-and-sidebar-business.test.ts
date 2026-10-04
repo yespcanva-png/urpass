@@ -75,7 +75,7 @@ describe("Ops Security & Database PIN Verification", () => {
     expect(mockUpsert).toHaveBeenCalledWith(
       expect.objectContaining({
         key: "ops_pin",
-        value: "123456",
+        value: expect.stringMatching(/^scrypt\$/),
       }),
       { onConflict: "key" }
     );

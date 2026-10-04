@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyOpsPin } from "@/lib/ops/pin";
+import { verifyOpsPinWithRateLimit } from "@/lib/ops/pin";
 import { signOpsSessionToken, OPS_COOKIE_NAME } from "@/lib/ops/auth";
 
 export const dynamic = "force-dynamic";
@@ -16,11 +16,22 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const isValid = await verifyOpsPin(pin);
+    const forwarded = req.headers.get("x-forwarded-for");
+    const ip = (forwarded ? forwarded.split(",")[0] : req.headers.get("x-real-ip") || "127.0.0.1").trim();
+    const userAgent = req.headers.get("user-agent") || undefined;
 
-    if (!isValid) {
+    const verification = await verifyOpsPinWithRateLimit(pin, ip, userAgent);
+
+    if (verification.rateLimited) {
       return NextResponse.json(
-        { error: "Access Denied: Incorrect operational PIN." },
+        { error: verification.error || "Too many failed attempts. Ops PIN verification is temporarily locked." },
+        { status: 429 }
+      );
+    }
+
+    if (!verification.valid) {
+      return NextResponse.json(
+        { error: verification.error || "Access Denied: Incorrect operational PIN." },
         { status: 401 }
       );
     }

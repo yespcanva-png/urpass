@@ -227,24 +227,17 @@ describe("MCP Endpoint (/api/mcp)", () => {
       expect(parsed.sessions[0].title).toBe("AI Opening Keynote");
     });
 
-    it("supports query parameter authentication ?api_key=...", async () => {
-      mockAuthenticateApiKey.mockImplementation((r: NextRequest) => {
-        const auth = r.headers.get("authorization");
-        if (auth === "Bearer urp_live_querykey") {
-          return Promise.resolve({ userId: "user-123", keyId: "key-123" });
-        }
-        return Promise.resolve(null);
-      });
-
+    it("rejects query parameter authentication ?api_key=... with 400 Bad Request", async () => {
       const req = new NextRequest("http://localhost/api/mcp?api_key=urp_live_querykey", {
         method: "POST",
         body: JSON.stringify({ jsonrpc: "2.0", id: 15, method: "ping" }),
       });
 
       const res = await POST(req);
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(400);
       const json = await res.json();
-      expect(json.result).toEqual({});
+      expect(json.error.code).toBe(-32600);
+      expect(json.error.message).toContain("strictly forbidden");
     });
   });
 

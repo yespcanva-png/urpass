@@ -29,7 +29,7 @@ export default async function AttendeesPage({ params }: Props) {
       .eq("organization_id", event.organization_id)
       .eq("user_id", user.id)
       .eq("status", "active")
-      .in("role", ["owner", "admin", "event_manager", "checkin_staff"])
+      .in("role", ["owner", "admin", "event_manager", "finance", "gate_manager", "checkin_staff"])
       .maybeSingle();
     if (!member) redirect("/dashboard");
   }

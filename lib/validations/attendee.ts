@@ -4,7 +4,10 @@ export const PASS_TYPES = ["participant", "vip", "speaker", "organizer"] as cons
 
 export const attendeeSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email("Enter a valid email"),
+  email: z
+    .string()
+    .email("Enter a valid email")
+    .transform((val) => val.trim().toLowerCase()),
   phone: z.string().optional(),
   pass_type: z.enum(PASS_TYPES, {
     errorMap: () => ({ message: "Select a valid pass type" }),

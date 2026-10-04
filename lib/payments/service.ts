@@ -2,6 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import { getSupabaseUrl } from "@/lib/supabase/config";
 import { getPaymentProvider } from "./providers";
 import { calculateTicketFees } from "./fees";
+import { reserveEventCapacity } from "@/lib/capacity-reservation";
 import type {
   BusinessDetails,
   SettlementDetails,
@@ -398,22 +399,19 @@ export async function initiateOrderCheckoutService(params: {
 
   // 5. Atomic Capacity Reservation (10-minute hold)
   let reservationId: string | null = null;
-  if (typeof supabase.rpc === "function") {
-    try {
-      const { data: rpcRes } = await supabase.rpc("reserve_ticket_capacity", {
-        p_event_id: eventId,
-        p_ticket_type_id: ticketTypeId || null,
-        p_buyer_email: customerEmail,
-        p_buyer_name: customerName,
-        p_window_seconds: 600, // 10 minutes
-      });
-      if (rpcRes && rpcRes.reservation_id) {
-        reservationId = rpcRes.reservation_id;
-      }
-    } catch {
-      // Fallback
-    }
+  const reservationResult = await reserveEventCapacity({
+    adminClient: supabase,
+    eventId,
+    ticketTypeId,
+    buyerEmail: customerEmail,
+    buyerName: customerName,
+    windowSeconds: 600, // 10 minutes
+  });
+
+  if (!reservationResult.success) {
+    throw new Error(reservationResult.message || "Selected ticket tier or event capacity is sold out.");
   }
+  reservationId = reservationResult.reservationId || null;
 
   // Generate unique human-readable order number
   const orderNumber = `URP-ORD-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;

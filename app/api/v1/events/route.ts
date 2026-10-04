@@ -27,10 +27,15 @@ export async function GET(req: NextRequest) {
 
   let query = supabase
     .from("events")
-    .select("id, name, description, event_date, start_time, end_time, venue, status, is_paid_event, ticket_price, attendee_limit, application_enabled, apply_slug, created_at", { count: "exact" })
-    .eq("organizer_id", auth.userId)
+    .select("id, name, description, event_date, start_time, end_time, venue, status, is_paid_event, ticket_price, attendee_limit, application_enabled, apply_slug, organization_id, created_at", { count: "exact" })
     .order("event_date", { ascending: false })
     .range(offset, offset + limit - 1);
+
+  if (auth.organizationId) {
+    query = query.or(`organization_id.eq.${auth.organizationId},organizer_id.eq.${auth.userId}`);
+  } else {
+    query = query.eq("organizer_id", auth.userId);
+  }
 
   if (status) query = query.eq("status", status);
 

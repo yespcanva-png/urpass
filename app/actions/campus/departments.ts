@@ -49,32 +49,66 @@ export async function getCampusDepartments(institutionId: string): Promise<Campu
 
     if (error || !depts) return [];
 
-    // Fetch counts for clubs, events, and students
-    const enhanced = await Promise.all(
-      depts.map(async (d) => {
-        const [
-          { count: clubsCount },
-          { count: eventsCount },
-          { count: studentsCount },
-          { count: organizersCount },
-        ] = await Promise.all([
-          supabase.from("campus_clubs").select("*", { count: "exact", head: true }).eq("department_id", d.id),
-          supabase.from("events").select("*", { count: "exact", head: true }).eq("department_id", d.id),
-          supabase.from("campus_students").select("*", { count: "exact", head: true }).eq("department_id", d.id),
-          supabase.from("campus_members").select("*", { count: "exact", head: true }).eq("department_id", d.id),
-        ]);
+    // Try single-query SQL aggregation RPC
+    try {
+      const { data: metrics, error: rpcError } = await supabase.rpc(
+        "get_campus_department_metrics",
+        { p_institution_id: institutionId }
+      );
+      if (!rpcError && metrics && Array.isArray(metrics)) {
+        const metricsMap = new Map<string, { clubs_count: number; events_count: number; students_count: number; organizers_count: number }>();
+        for (const m of metrics as Array<{ department_id: string; clubs_count: number; events_count: number; students_count: number; organizers_count: number }>) {
+          metricsMap.set(m.department_id, {
+            clubs_count: Number(m.clubs_count || 0),
+            events_count: Number(m.events_count || 0),
+            students_count: Number(m.students_count || 0),
+            organizers_count: Number(m.organizers_count || 0),
+          });
+        }
+        return depts.map((d) => {
+          const met = metricsMap.get(d.id);
+          return {
+            ...(d as CampusDepartment),
+            clubs_count: met?.clubs_count ?? 0,
+            events_count: met?.events_count ?? 0,
+            students_count: met?.students_count ?? 0,
+            organizers_count: met?.organizers_count ?? 0,
+          };
+        });
+      }
+    } catch {
+      // Fallback to bulk in-memory grouping
+    }
 
-        return {
-          ...(d as CampusDepartment),
-          clubs_count: clubsCount ?? 0,
-          events_count: eventsCount ?? 0,
-          students_count: studentsCount ?? 0,
-          organizers_count: organizersCount ?? 0,
-        };
-      })
-    );
+    // High-performance batch aggregation fallback (4 queries total across ALL departments, not 4*N)
+    const deptIds = depts.map((d) => d.id);
+    const [clubsRes, eventsRes, studentsRes, membersRes] = await Promise.all([
+      supabase.from("campus_clubs").select("department_id").in("department_id", deptIds),
+      supabase.from("events").select("department_id").in("department_id", deptIds),
+      supabase.from("campus_students").select("department_id").in("department_id", deptIds),
+      supabase.from("campus_members").select("department_id").in("department_id", deptIds),
+    ]);
 
-    return enhanced;
+    const countByDept = (rows: Array<{ department_id: string | null }> | null) => {
+      const counts: Record<string, number> = {};
+      for (const r of rows ?? []) {
+        if (r.department_id) counts[r.department_id] = (counts[r.department_id] || 0) + 1;
+      }
+      return counts;
+    };
+
+    const clubsCountMap = countByDept(clubsRes.data as Array<{ department_id: string }>);
+    const eventsCountMap = countByDept(eventsRes.data as Array<{ department_id: string }>);
+    const studentsCountMap = countByDept(studentsRes.data as Array<{ department_id: string }>);
+    const membersCountMap = countByDept(membersRes.data as Array<{ department_id: string }>);
+
+    return depts.map((d) => ({
+      ...(d as CampusDepartment),
+      clubs_count: clubsCountMap[d.id] ?? 0,
+      events_count: eventsCountMap[d.id] ?? 0,
+      students_count: studentsCountMap[d.id] ?? 0,
+      organizers_count: membersCountMap[d.id] ?? 0,
+    }));
   } catch {
     return [];
   }

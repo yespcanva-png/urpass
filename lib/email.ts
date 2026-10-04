@@ -827,6 +827,8 @@ export async function sendApplicationConfirmationEmail({
 const ROLE_LABEL: Record<string, string> = {
   admin:         "Admin",
   event_manager: "Event Manager",
+  finance:       "Finance",
+  gate_manager:  "Gate Manager",
   checkin_staff: "Check-in Staff",
   viewer:        "Viewer",
 };
@@ -1719,4 +1721,105 @@ export async function sendSponsorshipApprovalEmail({
 </html>`.trim(),
   });
 }
+
+/**
+ * Notifies attendee when their registration application is rejected,
+ * confirming automatic full payment refund via Razorpay, credit note number, and timeline.
+ */
+export async function sendAttendeeRejectionAndRefundEmail({
+  to,
+  attendeeName,
+  eventName,
+  amountINR,
+  refundId,
+  creditNoteNumber,
+  reason,
+}: {
+  to: string;
+  attendeeName: string;
+  eventName: string;
+  amountINR: number;
+  refundId?: string;
+  creditNoteNumber?: string;
+  reason?: string;
+}): Promise<boolean> {
+  const safeName = escapeHtml(attendeeName || "Attendee");
+  const safeEvent = escapeHtml(eventName || "Event");
+  const safeReason = escapeHtml(reason || "Registration capacity / organizer review");
+  const formattedAmount = `₹${Math.round(amountINR).toLocaleString("en-IN")}`;
+  const fromEmail = getFromEmail();
+
+  try {
+    await sendEmail({
+      from: fromEmail,
+      to,
+      subject: `Application Update & Refund Processed: ${eventName}`,
+      text: `Hi ${safeName},\n\nYour application for ${eventName} could not be approved by the organizer.\n\nBecause you paid ${formattedAmount} for your ticket, a full refund of ${formattedAmount} has been initiated directly to your original payment method via Razorpay.\n\nRefund Reference: ${refundId || "Processed"}\nGST Credit Note: ${creditNoteNumber || "UP/CN"}\nTimeline: 5–7 business days\n\nIf you have any questions, reply to this email.\n— URPASS Operations`,
+      html: `
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"/><title>Application Update & Refund</title></head>
+<body style="margin:0;padding:24px;background:#0d091b;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#f8fafc;">
+  <div style="max-width:580px;margin:0 auto;background:#17112d;border:1px solid rgba(255,255,255,0.08);border-radius:20px;overflow:hidden;">
+    <div style="background:linear-gradient(135deg, #e11d48, #9f1239);padding:36px 32px;text-align:center;">
+      <span style="display:inline-block;padding:4px 12px;border-radius:999px;background:rgba(255,255,255,0.2);font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#ffffff;margin-bottom:12px;">REGISTRATION UPDATE</span>
+      <h1 style="margin:0;font-size:24px;font-weight:900;letter-spacing:-0.5px;color:#ffffff;">Application Update & Full Refund</h1>
+      <p style="margin:8px 0 0;font-size:14px;color:rgba(255,255,255,0.9);">${safeEvent}</p>
+    </div>
+    <div style="padding:32px;">
+      <p style="font-size:15px;line-height:1.6;color:#e2e8f0;margin:0 0 16px;">
+        Hi <strong>${safeName}</strong>,
+      </p>
+      <p style="font-size:14px;line-height:1.6;color:#cbd5e1;margin:0 0 20px;">
+        Thank you for your interest in <strong>${safeEvent}</strong>. Due to capacity constraints or organizer review, your application could not be accommodated:
+      </p>
+
+      <div style="background:rgba(244,63,94,0.08);border:1px solid rgba(244,63,94,0.25);border-radius:12px;padding:16px;margin-bottom:24px;font-size:13px;color:#fda4af;line-height:1.5;">
+        <strong>Reason:</strong> ${safeReason}
+      </div>
+
+      <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:24px;margin-bottom:24px;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:1px;color:#94a3b8;text-transform:uppercase;margin-bottom:12px;">Automatic Refund Summary</div>
+        <table style="width:100%;border-collapse:collapse;font-size:14px;color:#cbd5e1;">
+          <tr>
+            <td style="padding:6px 0;color:#94a3b8;">Refunded Amount:</td>
+            <td style="padding:6px 0;text-align:right;font-weight:800;color:#34d399;font-size:16px;">${formattedAmount}</td>
+          </tr>
+          ${refundId ? `<tr>
+            <td style="padding:6px 0;color:#94a3b8;">Refund Reference:</td>
+            <td style="padding:6px 0;text-align:right;font-family:monospace;color:#ffffff;">${escapeHtml(refundId)}</td>
+          </tr>` : ""}
+          ${creditNoteNumber ? `<tr>
+            <td style="padding:6px 0;color:#94a3b8;">GST Credit Note:</td>
+            <td style="padding:6px 0;text-align:right;font-family:monospace;color:#ffffff;">${escapeHtml(creditNoteNumber)}</td>
+          </tr>` : ""}
+          <tr>
+            <td style="padding:6px 0;color:#94a3b8;">Destination:</td>
+            <td style="padding:6px 0;text-align:right;color:#ffffff;">Original Payment Method (Razorpay)</td>
+          </tr>
+          <tr>
+            <td style="padding:6px 0;color:#94a3b8;">Estimated Settlement:</td>
+            <td style="padding:6px 0;text-align:right;color:#ffffff;">5–7 business days</td>
+          </tr>
+        </table>
+      </div>
+
+      <p style="font-size:13px;line-height:1.6;color:#94a3b8;margin:0;">
+        Any passes associated with this registration have been revoked. If you do not see the refund reflected in your bank statement within 7 business days, please contact <a href="mailto:support@urpass.space" style="color:#a78bfa;text-decoration:none;">support@urpass.space</a>.
+      </p>
+    </div>
+    <div style="padding:16px 32px;background:rgba(0,0,0,0.3);border-top:1px solid rgba(255,255,255,0.05);text-align:center;font-size:11px;color:#64748b;">
+      URPASS Payments &middot; <a href="https://urpass.space" style="color:#a78bfa;text-decoration:none;">urpass.space</a>
+    </div>
+  </div>
+</body>
+</html>`.trim(),
+    });
+    return true;
+  } catch (err) {
+    console.error("[email] Error sending refund notification:", err);
+    return false;
+  }
+}
+
 

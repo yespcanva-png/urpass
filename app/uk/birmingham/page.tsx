@@ -1,39 +1,17 @@
 import type { Metadata } from "next";
-import {
-  QrCode,
-  ScanLine,
-  ShieldCheck,
-  Building2,
-  Smartphone,
-  Banknote,
-  Users,
-  Zap,
-  Clock,
-  Sparkles,
-  Layers,
-  MapPin,
-} from "lucide-react";
+import { Banknote, Building2, ScanLine, ShieldCheck, Users, Zap } from "lucide-react";
 import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
-  title: "Event Registration & Fast QR Check-In Software Birmingham | URPASS",
-  description:
-    "High-speed event registration and QR check-in software for Birmingham conferences, trade shows at NEC & ICC, and university societies. 0.3s camera scanning, offline gate sync, 0% ticket fees, and UK GDPR compliance.",
-  keywords: [
-    "event registration software birmingham",
-    "qr event check-in birmingham",
-    "event ticketing software birmingham",
-    "nec birmingham event check-in app",
-    "icc birmingham conference ticketing",
-    "university of birmingham society tickets",
-    "zero commission event ticketing midlands",
-    "eventbrite alternative birmingham",
-  ],
-  alternates: { canonical: "https://urpass.space/uk/birmingham" },
+  title: "QR Event Registration & Check-In Birmingham | URPASS",
+  description: "High-speed event registration and QR check-in software for Birmingham expos, NEC conferences, and university societies. Sub-second scanning, 0% ticket commission.",
+  keywords: ["event registration software Birmingham", "QR check-in Birmingham", "Birmingham event ticketing", "NEC Birmingham event check-in", "ICC Birmingham conference registration", "Aston University event ticketing", "Eventbrite alternative Birmingham"],
+  alternates: {
+    canonical: "https://urpass.space/uk/birmingham",
+  },
   openGraph: {
-    title: "Event Registration & Fast QR Check-In Birmingham | URPASS",
-    description:
-      "Run seamless event check-ins across Birmingham venues. Sub-second QR scanning, multi-gate sync, offline mode for massive halls, and 0% ticket cut.",
+    title: "QR Event Registration & Check-In Birmingham | URPASS",
+    description: "High-speed event registration and QR check-in software for Birmingham expos, NEC conferences, and university societies. Sub-second scanning, 0% ticket commission.",
     url: "https://urpass.space/uk/birmingham",
     locale: "en_GB",
     type: "website",
@@ -46,242 +24,246 @@ export const metadata: Metadata = {
   },
 };
 
-export default function BirminghamEventTicketingPage() {
+export default function UkBirminghamPage() {
   return (
     <SEOPage
       config={{
-        canonicalUrl: "https://urpass.space/uk/birmingham",
-        badge: "BIRMINGHAM EVENT TECH · SUB-SECOND GATE ENTRY",
-        h1: "Event Registration & Fast QR Check-In Software for Birmingham Events",
-        description:
-          "Keep entrance lines flowing at NEC Birmingham, ICC, and Midlands venues. Turn volunteer smartphones into instant QR scanners with <0.3s validation, real-time multi-door sync, offline resilience in large exhibition halls, and 0% ticket fees.",
-        ctaLabel: "Start free in Birmingham",
-
-        directAnswer: {
-          title: "Why Choose URPASS for Birmingham Events & Conferences?",
-          summary:
-            "URPASS is high-speed event registration and gate check-in software engineered for Birmingham venues, NEC exhibitions, and university societies. It replaces slow barcode scanners and expensive device rentals with browser-based QR scanning in under 0.3s on standard smartphones. Featuring offline caching for massive halls, UK GDPR compliance, and 0% per-ticket commission, URPASS keeps Midlands queues moving smoothly.",
-          keyPoints: [
-            "Sub-second (<0.3s) camera scanning with instant green/red verification",
-            "Offline validation engine keeps scanning even when hall Wi-Fi drops",
-            "0% commission on ticket sales — save thousands compared to Eventbrite UK",
-            "30-day instant free trial for Birmingham organisers with no card required",
-          ],
-        },
-
-        keyFactsTable: {
-          title: "Birmingham Event Check-In & Gate Operations Benchmark",
-          subtitle: "How URPASS speeds up entrance gates compared to traditional ticketing providers.",
-          headers: ["Feature / Metric", "URPASS Birmingham", "Legacy Ticketing Apps (Eventbrite / Ticketmaster)"],
-          rows: [
-            {
-              col1: "Scan Speed per Attendee",
-              col2: "<0.3 seconds per scan (camera detects from 30cm away)",
-              col3: "2.5 to 4.0 seconds (requires screen wake & tap confirmations)",
-            },
-            {
-              col1: "Large Exhibition Hall Resilience",
-              col2: "Full offline caching: validates tickets without cell signal or Wi-Fi",
-              col3: "Fails or displays 'network timeout' under dense Wi-Fi congestion",
-            },
-            {
-              col1: "Staff Hardware Requirements",
-              col2: "Any volunteer smartphone (browser-based, zero app store downloads)",
-              col3: "Mandatory app store downloads or leased handheld hardware",
-            },
-            {
-              col1: "Multi-Gate Fraud Prevention",
-              col2: "Instant cross-door sync flags duplicate scans within 150ms",
-              col3: "Sync lag allows duplicate passes to slip through secondary doors",
-            },
-            {
-              col1: "Pricing Model",
-              col2: "Flat GBP subscription (£0 / £15 / £35 / £79/mo) with 0% ticket cut",
-              col3: "Up to 6.95% + £0.59 deducted from every single ticket sold",
-            },
-          ],
-        },
-
-        productProof: {
-          badge: "MIDLANDS QUEUE ELIMINATION",
-          title: "Engineered for NEC Expos, Digbeth Meetups & University Events",
-          description:
-            "From national trade fairs at NEC Birmingham and executive summits at ICC to student society fests at University of Birmingham and Aston, URPASS validates attendees rapidly so guests spend their time networking, not queuing in entrance foyers.",
-          type: "scanner",
-        },
-
-        features: [
-          {
-            icon: ScanLine,
-            title: "Sub-Second Gate Scanning",
-            desc: "Validate passes at a rate of 40–50 attendees per minute per volunteer. High-contrast visual feedback and audio cues confirm entry instantly.",
-          },
-          {
-            icon: Zap,
-            title: "NEC & Exhibition Hall Offline Mode",
-            desc: "Cell networks get jammed when 5,000+ attendees fill an exhibition hall. URPASS pre-caches the guest list in memory so scanning never stalls.",
-          },
-          {
-            icon: Users,
-            title: "Multi-Door Synchronisation",
-            desc: "Managing multiple entrance halls or VIP doors at ICC Birmingham? Scans sync instantaneously across all door teams in real time.",
-          },
-          {
-            icon: ShieldCheck,
-            title: "UK GDPR & DPA 2018 Compliant",
-            desc: "Full conformity with UK data privacy regulations. Attendee data is stored safely with no ad tracking or dark patterns.",
-          },
-          {
-            icon: Building2,
-            title: "Birmingham Guild of Students & Societies",
-            desc: "Ideal for University of Birmingham, Aston, and BCU events. Capture Student IDs, verify society memberships, and run multi-tier ticketing effortlessly.",
-          },
-          {
-            icon: Banknote,
-            title: "0% Commission on Ticket Sales",
-            desc: "Keep 100% of your ticket revenue. Pay a straightforward GBP (£) monthly subscription with zero per-ticket percentage cuts.",
-          },
-        ],
-
-        steps: [
-          {
-            n: "01",
-            title: "Setup Event & Birmingham Venue Details",
-            desc: "Configure your event time in GMT/BST (Europe/London), set venue location, and customize registration fields.",
-          },
-          {
-            n: "02",
-            title: "Issue QR Passes Instantly",
-            desc: "Attendees receive clean digital passes with unique QR codes via email or direct shareable link.",
-          },
-          {
-            n: "03",
-            title: "Share Scanner PIN with Door Crew",
-            desc: "Your door stewards enter the 6-digit PIN on Safari or Chrome — no app installation needed.",
-          },
-          {
-            n: "04",
-            title: "Scan Tickets in Under 0.3s",
-            desc: "Hold phone camera over the pass for instant green confirmation with attendee name and ticket tier.",
-          },
-          {
-            n: "05",
-            title: "Live Attendance Velocity Analytics",
-            desc: "Track entry speed, peak arrival windows, and gate distribution in real time from your organiser dashboard.",
-          },
-        ],
-
-        deepDiveSections: [
-          {
-            badge: "HIGH-CAPACITY ENTRY",
-            title: "Eliminating Registration Queues in Birmingham's Busiest Halls",
-            paragraphs: [
-              "Birmingham hosts some of the UK's largest exhibitions, trade shows, and conferences. When hundreds of delegates disembark from Birmingham New Street or Birmingham International at the same time, entrance halls can get overwhelmed in minutes.",
-              "Traditional check-in systems that rely on slow hardware scanners or manual name searches create disastrous queues. URPASS reads digital QR codes instantly from attendees' phone screens, processing up to 50 entries per minute per lane.",
-            ],
-            bullets: [
-              "Up to 50 check-ins per minute per entrance line",
-              "Operates smoothly under bright convention lighting and dark auditoriums",
-              "Stewards use their personal iPhones or Android devices with zero hardware cost",
-              "Haptic vibration confirms successful scan in noisy trade environments",
-            ],
-            takeaway: "Clear Birmingham entrance halls 3x faster with smartphone camera scanning.",
-          },
-          {
-            badge: "DATA PRIVACY & SOVEREIGNTY",
-            title: "UK GDPR Standards for Birmingham Enterprise & Guild Events",
-            paragraphs: [
-              "Corporate exhibitors and university student guilds require complete control over attendee data. Using legacy platforms that retarget attendees or share data with third-party advertisers creates compliance issues.",
-              "URPASS ensures full compliance with UK GDPR and the Data Protection Act 2018. Your attendee lists belong strictly to your organisation, with one-click CSV export and instant deletion endpoints.",
-            ],
-            bullets: [
-              "Zero attendee retargeting or cross-site tracking pixels",
-              "Compliant UK Data Protection Agreement available for enterprise clients",
-              "One-click complete CSV data export",
-              "Automated attendee data anonymisation and deletion workflows",
-            ],
-            takeaway: "Meet UK enterprise compliance and university union standards effortlessly.",
-          },
-        ],
-
-        useCases: [
-          "NEC Birmingham Trade Shows & Expos",
-          "ICC Birmingham Corporate & Medical Conferences",
-          "University of Birmingham Guild of Students Fairs",
-          "Aston University Tech & Innovation Hackathons",
-          "Digbeth Custard Factory Creative Events",
-          "O2 Academy Birmingham Music & Club Gigs",
-          "Birmingham Tech Week Seminars & Panels",
-          "Solihull & Colmore Row Business Roundtables",
-        ],
-
-        relatedLinks: [
-          {
-            title: "UK Event Ticketing Master Hub",
-            href: "/uk",
-            category: "Location",
-          },
-          {
-            title: "London Event Registration & Check-In",
-            href: "/uk/london",
-            category: "Location",
-          },
-          {
-            title: "Manchester Event Registration & Check-In",
-            href: "/uk/manchester",
-            category: "Location",
-          },
-          {
-            title: "Zero Commission Event Ticketing UK",
-            href: "/zero-commission-event-ticketing-uk",
-            category: "Product",
-          },
-          {
-            title: "University Society Event Ticketing",
-            href: "/university-society-event-ticketing",
-            category: "Product",
-          },
-        ],
-
-        faqs: [
-          {
-            q: "How does URPASS perform at large venues like the NEC Birmingham?",
-            a: "Large halls at the NEC often suffer from mobile signal degradation when thousands of attendees connect simultaneously. URPASS pre-caches the full attendee database into browser memory when door staff open the scanner. Scanning continues smoothly offline and synchronises ticket states automatically when network connectivity is available.",
-          },
-          {
-            q: "Can University of Birmingham Guild societies use URPASS?",
-            a: "Yes. URPASS is designed for student unions and societies. You can record Student ID numbers, course details, verify society memberships, and scan passes at campus venues with 0% ticketing commission.",
-          },
-          {
-            q: "How much does URPASS cost for Birmingham event organisers?",
-            a: "URPASS offers simple, flat GBP pricing: Free (£0 forever for up to 100 registrations/month), Starter (£15/mo for 500 registrations), Pro (£35/mo for 2,500 registrations), and Business (£79/mo for 10,000 registrations). No ticket commission is ever deducted.",
-          },
-          {
-            q: "Do Birmingham door stewards need to download an app?",
-            a: "No app download is needed. Stewards open a short link or enter a 6-digit PIN in Safari or Chrome on their own smartphones and start scanning immediately.",
-          },
-          {
-            q: "How does URPASS prevent pass screenshot sharing at multiple doors?",
-            a: "When a QR pass is scanned at any door, it is recorded in the central database within 150ms. If another attendee tries to enter using a screenshot at another gate, the scanner alerts door staff with a prominent red duplicate warning.",
-          },
-          {
-            q: "How do I start the 30-day free trial in Birmingham?",
-            a: "Sign up at urpass.space and select Starter, Pro, or Business. For UK accounts, your 30-day free trial activates directly with no credit card or payment gateway setup required.",
-          },
-        ],
-
-        ctaTitle: "Accelerate your next Birmingham event entrance",
-        ctaDescription: "Join Birmingham organisers slashing entrance queues and ticketing fees. Start your 30-day free trial today.",
-        geo: {
-          region: "GB-BIR",
-          placename: "Birmingham",
-          position: "52.4862;-1.8904",
-          latitude: 52.4862,
-          longitude: -1.8904,
-          country: "United Kingdom",
-          countryCode: "GB",
-        },
-      }}
+  "badge": "BIRMINGHAM EVENT TECH · FAST ENTRY",
+  "h1": "QR Event Registration & Check-In Birmingham",
+  "canonicalUrl": "https://urpass.space/uk/birmingham",
+  "description": "High-speed event registration and QR check-in software for Birmingham expos, NEC conferences, and university societies. Sub-second scanning, 0% ticket commission.",
+  "ctaLabel": "Start Free in Birmingham →",
+  "ctaTitle": "Run High-Capacity Birmingham Events with URPASS",
+  "ctaDescription": "From NEC Birmingham trade shows and ICC conventions to Digbeth creative events, URPASS turns any phone into a sub-second entrance scanner.",
+  "directAnswer": {
+    "title": "Why Choose URPASS for Birmingham Events?",
+    "summary": "URPASS is high-speed event registration and QR check-in software engineered for Birmingham trade expos, conventions, and campus gatherings. It enables organisers to create branded registration pages, issue digital QR passes, and validate entries in under 0.3s on volunteer phones without renting expensive scanners. Features 0% ticket fees, offline resilience, and UK GDPR compliance.",
+    "keyPoints": [
+      "Sub-second (<0.3s) camera scanning with instant green/red verification",
+      "Proven for large Birmingham venue throughput (NEC, ICC, Vox)",
+      "0% per-ticket commission with flat GBP subscriptions",
+      "Used by University of Birmingham, Aston, and BCU event teams"
+    ]
+  },
+  "whatIs": {
+    "title": "What is Event Registration Software Birmingham?",
+    "definition": "Event registration software in Birmingham is a complete digital attendance system designed for West Midlands event organisers. It coordinates attendee signups, ticket categories, digital credential delivery, and rapid entrance verification across single or multiple venue doors.",
+    "details": [
+      "Coordinates high-volume delegate throughput at major national exhibition centers",
+      "Replaces paper printouts and slow pen-and-paper desk check-in",
+      "Works directly in mobile web browsers without requiring native app installations",
+      "Syncs multi-entrance scanning to block counterfeit or duplicated passes"
+    ]
+  },
+  "howItWorksTitle": "How URPASS Powers Birmingham Events",
+  "howItWorksSubtitle": "From online registration to high-speed entrance flow.",
+  "steps": [
+    {
+      "n": "01",
+      "title": "Create your event",
+      "desc": "Set your event details, delegate ticket tiers, and custom fields in GBP."
+    },
+    {
+      "n": "02",
+      "title": "Share registration link",
+      "desc": "Send your clean URL to delegates, exhibitors, or students."
+    },
+    {
+      "n": "03",
+      "title": "Attendees register",
+      "desc": "Guests register with zero friction or forced account signups."
+    },
+    {
+      "n": "04",
+      "title": "Automated digital passes",
+      "desc": "Instant scannable mobile QR passes arrive in attendees' inboxes."
+    },
+    {
+      "n": "05",
+      "title": "Scan at the entrance",
+      "desc": "Door volunteers scan passes with phone cameras in <0.3s."
+    },
+    {
+      "n": "06",
+      "title": "Live attendance analytics",
+      "desc": "Monitor arrival throughput and hall capacities in real time."
+    }
+  ],
+  "featuresTitle": "Built for Birmingham Trade Expos & Summits",
+  "featuresSubtitle": "Sub-second camera scans, multi-gate sync, and zero ticketing commission.",
+  "features": [
+    {
+      icon: ScanLine,
+      "title": "Sub-Second Gate Scanning",
+      "desc": "Admit 40 to 50 attendees per minute per volunteer phone with instant green audio and visual feedback."
+    },
+    {
+      icon: Users,
+      "title": "Multi-Gate Sync",
+      "desc": "Managing multiple hall doors at the NEC or ICC? Scans sync within 150ms to block duplicate entries."
+    },
+    {
+      icon: Zap,
+      "title": "Offline Scanning Engine",
+      "desc": "Crowded exhibition halls can overload Wi-Fi. URPASS offline mode ensures gate staff never stop scanning."
+    },
+    {
+      icon: Building2,
+      "title": "Birmingham Universities",
+      "desc": "Tailored for UoB, Aston, and BCU student balls, symposiums, and departmental conferences."
+    },
+    {
+      icon: ShieldCheck,
+      "title": "UK GDPR & DPA Compliance",
+      "desc": "Attendee data is stored securely in compliant UK infrastructure with zero third-party advertising brokers."
+    },
+    {
+      icon: Banknote,
+      "title": "0% Commission on Tickets",
+      "desc": "Keep 100% of your ticket revenue with simple flat monthly GBP plans and no per-ticket penalty fees."
+    }
+  ],
+  "whoShouldUse": {
+    "title": "Who Should Use URPASS in Birmingham?",
+    "subtitle": "From NEC trade expos to Digbeth creative festivals.",
+    "personas": [
+      {
+        "badge": "EXPOS",
+        "title": "Trade Show & Expo Organisers",
+        "desc": "Manage visitor badging and multi-hall door scanning at NEC Birmingham and ICC."
+      },
+      {
+        "badge": "CAMPUS",
+        "title": "University Societies & Student Unions",
+        "desc": "University of Birmingham Guild of Students and Aston student union events."
+      },
+      {
+        "badge": "CREATIVE",
+        "title": "Digbeth Creative & Music Festivals",
+        "desc": "Warehouse events, indie markets, and art exhibitions requiring quick phone entry."
+      },
+      {
+        "badge": "CORPORATE",
+        "title": "West Midlands Corporate Summits",
+        "desc": "Business conferences, supplier days, and regional economic forums with branded passes."
+      }
+    ]
+  },
+  "howQrCheckInWorks": {
+    "title": "How Birmingham QR Check-In Works",
+    "subtitle": "Pure speed on any volunteer smartphone.",
+    "description": "Staff open the scanner link in Safari or Chrome. The camera reads the attendee's QR pass from 30cm away in under 0.3s, checks the pass against the event registry, produces an audible chime, and records the gate arrival. If venue Wi-Fi drops, the local browser cache continues verifying passes uninterrupted.",
+    "points": [
+      "Zero equipment costs: no need to rent expensive laser scanner hardware.",
+      "Fast volunteer onboarding: staff begin scanning within 15 seconds of receiving the link.",
+      "Atomic row-locking prevents shared pass screenshots across different entrances.",
+      "Manual guest lookup available if an attendee's phone battery runs out."
+    ]
+  },
+  "keyFactsTable": {
+    "title": "Birmingham Event Check-In Comparison",
+    "subtitle": "How URPASS outperforms legacy ticketing platforms in Birmingham venues.",
+    "headers": [
+      "Feature / Metric",
+      "URPASS Birmingham",
+      "Legacy Ticketing Apps"
+    ],
+    "rows": [
+      {
+        "col1": "Check-In Speed",
+        "col2": "<0.3s per scan (45+ attendees/min)",
+        "col3": "2.5 to 4.0s (slow camera tap confirmations)"
+      },
+      {
+        "col1": "Expo Hall Wi-Fi Drops",
+        "col2": "Local offline memory validation",
+        "col3": "Freezes or times out on low signal"
+      },
+      {
+        "col1": "Hardware Demands",
+        "col2": "Any volunteer phone browser",
+        "col3": "Proprietary apps or rented hardware"
+      },
+      {
+        "col1": "Multi-Gate Sync",
+        "col2": "Sub-150ms atomic state replication",
+        "col3": "Periodic sync allows duplicate entries"
+      },
+      {
+        "col1": "Ticket Fee Model",
+        "col2": "0% commission; flat GBP plan",
+        "col3": "Up to 6.95% + £0.59 deducted per ticket"
+      }
+    ]
+  },
+  "faqs": [
+    {
+      "q": "What is event registration software Birmingham?",
+      "a": "It is an event registration and smartphone check-in platform designed for Birmingham organisers to create registration pages, issue digital QR passes, and admit attendees quickly."
+    },
+    {
+      "q": "Can URPASS handle large Birmingham exhibitions at the NEC?",
+      "a": "Yes. URPASS supports high-throughput multi-gate scanning with sub-150ms sync and offline fallback, making it ideal for large trade shows."
+    },
+    {
+      "q": "Does URPASS charge per-ticket commission in Birmingham?",
+      "a": "No. URPASS charges 0% commission on ticket sales. Organisers pay a transparent flat GBP monthly subscription."
+    },
+    {
+      "q": "Can Birmingham student unions use URPASS for balls and fests?",
+      "a": "Yes. Student societies across the University of Birmingham, Aston, and BCU use URPASS for seamless ball and festival check-ins."
+    },
+    {
+      "q": "How fast can volunteers start scanning at the door?",
+      "a": "Volunteers just click a link on their smartphone browser and can start scanning within 15 seconds. No app download or account creation required."
+    },
+    {
+      "q": "Does URPASS prevent people from sharing screenshots of tickets?",
+      "a": "Yes. Once a ticket is scanned at any door, the system atomically invalidates it. Subsequent attempts display an immediate red alert."
+    }
+  ],
+  "relatedLinks": [
+    {
+      "title": "UK Event Registration Software",
+      "href": "/uk",
+      "category": "Location"
+    },
+    {
+      "title": "London Event Registration & QR Check-In",
+      "href": "/uk/london",
+      "category": "Location"
+    },
+    {
+      "title": "Manchester Event Registration Software",
+      "href": "/uk/manchester",
+      "category": "Location"
+    },
+    {
+      "title": "Conference Registration Software with QR Check-In",
+      "href": "/conference-registration-software",
+      "category": "Use Case"
+    },
+    {
+      "title": "Trade Show Registration & Visitor Check-In Software",
+      "href": "/trade-show-registration-software",
+      "category": "Use Case"
+    },
+    {
+      "title": "Multi-Gate QR Check-In for Large Events",
+      "href": "/multi-gate-event-check-in",
+      "category": "Product"
+    }
+  ],
+  "geo": {
+    "region": "GB-BIR",
+    "placename": "Birmingham",
+    "position": "52.4862;-1.8904",
+    "latitude": 52.4862,
+    "longitude": -1.8904,
+    "country": "United Kingdom",
+    "countryCode": "GB"
+  }
+}}
     />
   );
 }

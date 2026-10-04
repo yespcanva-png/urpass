@@ -135,6 +135,7 @@ export function handleWebhookHead() {
  * Core Razorpay Webhook Event Processor
  */
 export async function handleRazorpayWebhook(req: NextRequest): Promise<NextResponse> {
+  let currentEventId: string | null = null;
   try {
     const rawBody = await req.text();
     const signature = req.headers.get("x-razorpay-signature") ?? "";
@@ -162,26 +163,78 @@ export async function handleRazorpayWebhook(req: NextRequest): Promise<NextRespo
       return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
     }
 
-    // Webhook event deduplication / idempotency
-    const eventId = event.event_id || req.headers.get("x-razorpay-event-id") || "";
-    if (eventId) {
-      if (processedWebhookEvents.has(eventId)) {
-        return NextResponse.json({ received: true, duplicate: true }, { status: 200 });
-      }
-      processedWebhookEvents.add(eventId);
-      if (processedWebhookEvents.size > 5000) {
-        const first = processedWebhookEvents.values().next().value;
-        if (first) processedWebhookEvents.delete(first);
-      }
+    const eventType = (event?.event || "unknown").toString();
+    const supabase = adminClient();
+
+    // Durable Webhook Deduplication / Idempotency (L1 In-Memory + L2 PostgreSQL Database)
+    const eventId =
+      event.event_id ||
+      req.headers.get("x-razorpay-event-id") ||
+      (event.payload?.payment?.entity?.id ? `${eventType}_${event.payload.payment.entity.id}` : null) ||
+      (event.payload?.subscription?.entity?.id ? `${eventType}_${event.payload.subscription.entity.id}` : null) ||
+      crypto.createHash("sha256").update(rawBody).digest("hex");
+
+    currentEventId = eventId;
+
+    const payloadHash = crypto.createHash("sha256").update(rawBody).digest("hex");
+
+    // L1 Check
+    if (processedWebhookEvents.has(eventId)) {
+      return NextResponse.json({ received: true, duplicate: true }, { status: 200 });
     }
 
-    const eventType = event.event;
-    const supabase = adminClient();
+    // L2 Database check & lock via unique constraint in processed_webhook_events
+    try {
+      const { error: insertError } = await supabase
+        .from("processed_webhook_events")
+        .insert({
+          provider: "razorpay",
+          event_id: eventId,
+          event_type: eventType,
+          payload_hash: payloadHash,
+          status: "processing",
+        });
+
+      if (insertError) {
+        if (
+          insertError.code === "23505" ||
+          insertError.message?.toLowerCase().includes("duplicate") ||
+          insertError.message?.toLowerCase().includes("unique")
+        ) {
+          processedWebhookEvents.add(eventId);
+          return NextResponse.json({ received: true, duplicate: true }, { status: 200 });
+        }
+      }
+    } catch (dbErr) {
+      console.warn("[razorpay-webhook] Warning during idempotency insert:", dbErr);
+    }
+
+    processedWebhookEvents.add(eventId);
+    if (processedWebhookEvents.size > 5000) {
+      const first = processedWebhookEvents.values().next().value;
+      if (first) processedWebhookEvents.delete(first);
+    }
+
+    const respondSuccess = async (body: Record<string, unknown> = { received: true }) => {
+      if (currentEventId) {
+        try {
+          await supabase
+            .from("processed_webhook_events")
+            .update({
+              status: "completed",
+              completed_at: new Date().toISOString(),
+            })
+            .eq("provider", "razorpay")
+            .eq("event_id", currentEventId);
+        } catch {}
+      }
+      return NextResponse.json(body, { status: 200 });
+    };
 
     // ─── 1. Subscription Mandate & Lifecycle Events ──────────────────────────
     if (typeof eventType === "string" && eventType.startsWith("subscription.")) {
       const subscription = event.payload?.subscription?.entity;
-      if (!subscription) return NextResponse.json({ received: true }, { status: 200 });
+      if (!subscription) return respondSuccess({ received: true });
 
       const notes = subscription.notes ?? {};
       const userId = notes.user_id;
@@ -251,7 +304,7 @@ export async function handleRazorpayWebhook(req: NextRequest): Promise<NextRespo
             details: { userId, plan: planSlug, subId: subscription.id },
           });
         }
-        return NextResponse.json({ received: true, event: eventType }, { status: 200 });
+        return respondSuccess({ received: true, event: eventType });
       }
 
       if (eventType === "subscription.activated") {
@@ -265,7 +318,7 @@ export async function handleRazorpayWebhook(req: NextRequest): Promise<NextRespo
             })
             .eq("user_id", userId);
         }
-        return NextResponse.json({ received: true, event: eventType }, { status: 200 });
+        return respondSuccess({ received: true, event: eventType });
       }
 
       if (eventType === "subscription.charged") {
@@ -311,7 +364,7 @@ export async function handleRazorpayWebhook(req: NextRequest): Promise<NextRespo
             });
           }
         }
-        return NextResponse.json({ received: true, event: eventType }, { status: 200 });
+        return respondSuccess({ received: true, event: eventType });
       }
 
       if (eventType === "subscription.pending") {
@@ -326,7 +379,7 @@ export async function handleRazorpayWebhook(req: NextRequest): Promise<NextRespo
             })
             .eq("user_id", userId);
         }
-        return NextResponse.json({ received: true, event: eventType }, { status: 200 });
+        return respondSuccess({ received: true, event: eventType });
       }
 
       if (eventType === "subscription.halted") {
@@ -340,7 +393,7 @@ export async function handleRazorpayWebhook(req: NextRequest): Promise<NextRespo
             })
             .eq("user_id", userId);
         }
-        return NextResponse.json({ received: true, event: eventType }, { status: 200 });
+        return respondSuccess({ received: true, event: eventType });
       }
 
       if (eventType === "subscription.cancelled") {
@@ -367,26 +420,26 @@ export async function handleRazorpayWebhook(req: NextRequest): Promise<NextRespo
             })
             .eq("user_id", userId);
         }
-        return NextResponse.json({ received: true, event: eventType }, { status: 200 });
+        return respondSuccess({ received: true, event: eventType });
       }
 
-      return NextResponse.json({ received: true, event: eventType }, { status: 200 });
+      return respondSuccess({ received: true, event: eventType });
     }
 
     // ─── 2. Payment Captured Handling ─────────────────────────────────────────
     if (event.event !== "payment.captured") {
-      return NextResponse.json({ received: true }, { status: 200 });
+      return respondSuccess({ received: true });
     }
 
     const payment = event.payload?.payment?.entity;
-    if (!payment) return NextResponse.json({ received: true }, { status: 200 });
+    if (!payment) return respondSuccess({ received: true });
 
     const notes = payment.notes ?? {};
 
     // ── 2A. Ticket payment ──
     if (notes.type === "ticket") {
       const razorpayOrderId: string = payment.order_id;
-      if (!razorpayOrderId) return NextResponse.json({ received: true }, { status: 200 });
+      if (!razorpayOrderId) return respondSuccess({ received: true });
 
       const { data: existingOrder } = await supabase
         .from("ticket_orders")
@@ -524,7 +577,7 @@ export async function handleRazorpayWebhook(req: NextRequest): Promise<NextRespo
         }
       }
 
-      return NextResponse.json({ received: true }, { status: 200 });
+      return respondSuccess({ received: true });
     }
 
     // ── 2B. Event Pass payment ──
@@ -586,7 +639,7 @@ export async function handleRazorpayWebhook(req: NextRequest): Promise<NextRespo
         customerName: notes.customer_name,
       });
 
-      return NextResponse.json({ received: true }, { status: 200 });
+      return respondSuccess({ received: true });
     }
 
     // ── 2C. Subscription payment ──
@@ -613,10 +666,7 @@ export async function handleRazorpayWebhook(req: NextRequest): Promise<NextRespo
       console.warn(
         `[razorpay-webhook] Payment ${payment.id} received without user_id or plan_id notes. Acknowledged with 200 OK to prevent delivery retries.`
       );
-      return NextResponse.json(
-        { received: true, ignored: true, reason: "Missing notes" },
-        { status: 200 }
-      );
+      return respondSuccess({ received: true, ignored: true, reason: "Missing notes" });
     }
 
     const now = new Date();
@@ -734,9 +784,22 @@ export async function handleRazorpayWebhook(req: NextRequest): Promise<NextRespo
       ]).catch((err) => console.error("[email] Error notifying owner of subscription payment:", err));
     }
 
-    return NextResponse.json({ received: true }, { status: 200 });
+    return respondSuccess({ received: true });
   } catch (fatalErr) {
     console.error("[razorpay-webhook] Unexpected error in webhook processing:", fatalErr);
+    if (currentEventId) {
+      try {
+        const supabase = adminClient();
+        await supabase
+          .from("processed_webhook_events")
+          .update({
+            status: "failed",
+            error_message: fatalErr instanceof Error ? fatalErr.message : String(fatalErr),
+          })
+          .eq("provider", "razorpay")
+          .eq("event_id", currentEventId);
+      } catch {}
+    }
     // Always acknowledge 200 to Razorpay so it does not disable the webhook
     return NextResponse.json({ received: true, error: "Internal processing error logged" }, { status: 200 });
   }

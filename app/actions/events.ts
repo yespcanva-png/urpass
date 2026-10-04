@@ -10,6 +10,7 @@ import { getUserPlan } from "@/lib/plan";
 import { recordApiUsage } from "@/lib/api-usage";
 import { getSupabaseUrl } from "@/lib/supabase/config";
 import { recordLiveOpsEvent } from "@/lib/ops/events";
+import { validateEventPreflightReadiness } from "@/lib/events/preflight";
 import type { CustomFieldDefinition } from "@/types";
 
 function adminClient() {
@@ -241,6 +242,21 @@ export async function updateEvent(
     return { error: "You are not authorized to update this event." };
   }
 
+  // Cross-field validation: capacity cannot be lowered below already confirmed/sold attendees
+  if (parsed.data.attendee_limit !== undefined) {
+    const { count: confirmedCount } = await supabase
+      .from("attendees")
+      .select("id", { count: "exact", head: true })
+      .eq("event_id", eventId)
+      .in("application_status", ["approved"]);
+
+    if (confirmedCount && parsed.data.attendee_limit < confirmedCount) {
+      return {
+        error: `Capacity cannot be set below ${confirmedCount} (number of confirmed attendees/tickets already sold).`,
+      };
+    }
+  }
+
   const { workspace_id, location_id, ...baseUpdateFields } = parsed.data;
   const updatePayload: Record<string, unknown> = {
     name: baseUpdateFields.name,
@@ -385,7 +401,7 @@ export async function updateEventStatus(
 
   const { data: event } = await supabase
     .from("events")
-    .select("id, organizer_id, organization_id")
+    .select("id, organizer_id, organization_id, status")
     .eq("id", eventId)
     .single();
 
@@ -408,8 +424,16 @@ export async function updateEventStatus(
     return { error: "You are not authorized to update this event." };
   }
 
-  // Enforce events-per-month limit at publish time, not at draft creation.
+  // Enforce events-per-month limit and pre-flight readiness at publish time
   if (status === "active") {
+    // 1. Pre-flight readiness check before publishing event to public
+    const preflight = await validateEventPreflightReadiness(eventId, supabase);
+    if (!preflight.ready && preflight.errors.length > 0) {
+      return {
+        error: `Pre-flight readiness check failed before publishing:\n• ${preflight.errors.map((e) => e.message).join("\n• ")}`,
+      };
+    }
+
     const ownerId = event.organizer_id || user.id;
     const [plan, { data: sub }] = await Promise.all([
       getUserPlan(supabase, ownerId),
@@ -475,6 +499,25 @@ export async function updateEventStatus(
     .eq("id", eventId);
 
   if (error) return { error: error.message };
+
+  if (event.organization_id) {
+    const { recordEnterpriseAudit } = await import("@/lib/audit/enterprise-audit");
+    void recordEnterpriseAudit({
+      organizationId: event.organization_id,
+      eventId: event.id,
+      userId: user.id,
+      actorEmail: user.email,
+      action: `EVENT_STATUS_${status.toUpperCase()}`,
+      resourceType: "event",
+      resourceId: event.id,
+      oldValues: { status: event.status },
+      newValues: { status },
+      details: {
+        previousStatus: event.status,
+        newStatus: status,
+      },
+    });
+  }
 
   revalidatePath(`/event/${eventId}`);
   revalidatePath(`/event/${eventId}/settings`);

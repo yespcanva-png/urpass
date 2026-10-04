@@ -86,18 +86,53 @@ export interface SEOCompetitorComparison {
   }>;
 }
 
+export interface SEOPersona {
+  title: string;
+  desc: string;
+  badge?: string;
+}
+
+export interface SEOWhatIs {
+  title?: string;
+  definition: string;
+  details?: string[];
+}
+
+export interface SEOWhoShouldUse {
+  title?: string;
+  subtitle?: string;
+  personas: SEOPersona[];
+}
+
+export interface SEOHowQrCheckInWorks {
+  title?: string;
+  subtitle?: string;
+  description: string;
+  points?: string[];
+}
+
 export interface SEOPageConfig {
   badge: string;
   h1: string;
   description: string;
   directAnswer?: SEODirectAnswer;
+  whatIs?: SEOWhatIs;
   keyFactsTable?: SEOKeyFactsTable;
   productProof?: SEOProductProof;
   indiaHighlights?: SEOIndiaHighlights;
   competitorComparison?: SEOCompetitorComparison;
   ctaLabel?: string;
+  ctaHref?: string;
+  secondaryCtaLabel?: string;
+  secondaryCtaHref?: string;
+  featuresTitle?: string;
+  featuresSubtitle?: string;
   features: SEOFeature[];
+  howItWorksTitle?: string;
+  howItWorksSubtitle?: string;
   steps?: { n: string; title: string; desc: string }[];
+  whoShouldUse?: SEOWhoShouldUse;
+  howQrCheckInWorks?: SEOHowQrCheckInWorks;
   callout?: {
     badge: string;
     title: string;
@@ -112,6 +147,7 @@ export interface SEOPageConfig {
   ctaDescription?: string;
   geo?: SEOGeo;
   canonicalUrl?: string;
+  isArticle?: boolean;
 }
 
 const DEFAULT_STEPS = [
@@ -137,14 +173,20 @@ const INDIAN_HUBS = [
 ];
 
 const UK_HUBS = [
-  { name: "London", region: "Greater London", href: "/uk/london", tag: "Tech, Finance & Summits" },
-  { name: "Manchester", region: "North West", href: "/uk/manchester", tag: "Student Unions & Music" },
-  { name: "Birmingham", region: "West Midlands", href: "/uk/birmingham", tag: "Conferences & Expos" },
+  { name: "London", region: "Greater London", href: "/uk/london", tag: "Conferences & Summits" },
+  { name: "Manchester", region: "North West", href: "/uk/manchester", tag: "Universities & Media" },
+  { name: "Birmingham", region: "West Midlands", href: "/uk/birmingham", tag: "NEC & Trade Expos" },
   { name: "Edinburgh", region: "Scotland", href: "/uk/edinburgh", tag: "Festivals & Academic" },
+  { name: "Glasgow", region: "Scotland", href: "/uk/glasgow", tag: "Cultural & Arenas" },
+  { name: "Liverpool", region: "North West", href: "/uk/liverpool", tag: "Conventions & Creative" },
+  { name: "Leeds", region: "Yorkshire", href: "/uk/leeds", tag: "Corporate & Tech" },
   { name: "Bristol", region: "South West", href: "/uk/bristol", tag: "Creative & University" },
-  { name: "Oxford & Cambridge", region: "Oxbridge", href: "/uk/oxbridge", tag: "Collegiate & Societies" },
-  { name: "Glasgow", region: "Scotland", href: "/uk/glasgow", tag: "Cultural & Sports" },
-  { name: "Leeds", region: "Yorkshire", href: "/uk/leeds", tag: "Business & Higher Ed" },
+  { name: "Cambridge", region: "East of England", href: "/uk/cambridge", tag: "Science & Colloquiums" },
+  { name: "Oxford", region: "South East", href: "/uk/oxford", tag: "Collegiate & Research" },
+  { name: "Cardiff", region: "Wales", href: "/uk/cardiff", tag: "Capital & Tech Hub" },
+  { name: "Nottingham", region: "East Midlands", href: "/uk/nottingham", tag: "Student Fests & Summits" },
+  { name: "Sheffield", region: "Yorkshire", href: "/uk/sheffield", tag: "Digital & Engineering" },
+  { name: "Newcastle", region: "North East", href: "/uk/newcastle", tag: "Business & Higher Ed" },
   { name: "All UK", region: "United Kingdom", href: "/uk", tag: "GBP Pricing & UK GDPR" },
 ];
 
@@ -255,6 +297,7 @@ export default function SEOPage({ config }: { config: SEOPageConfig }) {
   const breadcrumbSchema = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
+    "@id": `${canonical}#breadcrumb`,
     itemListElement: breadcrumbItems,
   };
 
@@ -321,6 +364,64 @@ export default function SEOPage({ config }: { config: SEOPageConfig }) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
       />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebPage",
+            "@id": `${canonical}#webpage`,
+            url: canonical,
+            name: config.h1,
+            description: config.description,
+            isPartOf: {
+              "@type": "WebSite",
+              "@id": "https://urpass.space/#website",
+              name: "URPASS",
+              url: "https://urpass.space",
+            },
+            breadcrumb: {
+              "@id": `${canonical}#breadcrumb`,
+            },
+            about: {
+              "@id": `${canonical}#software`,
+            },
+          }),
+        }}
+      />
+      {config.isArticle && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Article",
+              "@id": `${canonical}#article`,
+              headline: config.h1,
+              description: config.description,
+              url: canonical,
+              mainEntityOfPage: {
+                "@type": "WebPage",
+                "@id": `${canonical}#webpage`,
+              },
+              author: {
+                "@type": "Organization",
+                name: "URPASS Editorial Team",
+                url: "https://urpass.space",
+              },
+              publisher: {
+                "@type": "Organization",
+                name: "URPASS",
+                url: "https://urpass.space",
+                logo: {
+                  "@type": "ImageObject",
+                  url: "https://urpass.space/icon.png",
+                },
+              },
+            }),
+          }}
+        />
+      )}
       {geoSchema && (
         <script
           type="application/ld+json"
@@ -339,6 +440,7 @@ export default function SEOPage({ config }: { config: SEOPageConfig }) {
           __html: JSON.stringify({
             "@context": "https://schema.org",
             "@type": "SoftwareApplication",
+            "@id": `${canonical}#software`,
             name: "URPASS",
             alternateName: ["URPASS by Yesp", "Yesp URPASS"],
             applicationCategory: "BusinessApplication",
@@ -424,17 +526,17 @@ export default function SEOPage({ config }: { config: SEOPageConfig }) {
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
-              href="/signup"
-              className="inline-flex items-center justify-center gap-2 bg-neutral-900 text-white px-7 py-3.5 rounded-xl text-sm font-semibold hover:bg-neutral-700 transition-colors"
+              href={config.ctaHref ?? "/signup"}
+              className="inline-flex items-center justify-center gap-2 bg-neutral-900 text-white px-7 py-3.5 rounded-xl text-sm font-semibold hover:bg-neutral-700 transition-colors shadow-sm"
             >
               {config.ctaLabel ?? "Start for free"}
               <span className="text-neutral-400">→</span>
             </Link>
             <Link
-              href="/pricing"
+              href={config.secondaryCtaHref ?? "/pricing"}
               className="inline-flex items-center justify-center gap-2 border border-neutral-200 px-7 py-3.5 rounded-xl text-sm font-medium text-neutral-600 hover:bg-neutral-50 transition-colors"
             >
-              View pricing
+              {config.secondaryCtaLabel ?? "View pricing"}
             </Link>
           </div>
           <p className="mt-6 text-xs text-neutral-400">Free plan available · No credit card required</p>
@@ -466,6 +568,34 @@ export default function SEOPage({ config }: { config: SEOPageConfig }) {
         </div>
       </section>
 
+      {/* What is [keyword]? Section designed for Google Snippets & AI answers */}
+      {config.whatIs && (
+        <section className="py-16 px-5 sm:px-8 bg-white border-y border-neutral-100">
+          <div className="max-w-4xl mx-auto">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="w-2 h-2 rounded-full bg-brand" />
+              <p className="text-xs font-bold uppercase tracking-wider text-brand">DEFINITION &amp; AI OVERVIEW</p>
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-neutral-900 mb-4">
+              {config.whatIs.title || `What is ${config.h1}?`}
+            </h2>
+            <p className="text-base sm:text-lg text-neutral-700 leading-relaxed font-normal mb-6">
+              {config.whatIs.definition}
+            </p>
+            {config.whatIs.details && config.whatIs.details.length > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                {config.whatIs.details.map((point, idx) => (
+                  <div key={idx} className="flex items-start gap-2.5 p-3.5 rounded-xl bg-neutral-50 border border-neutral-100 text-xs sm:text-sm text-neutral-700">
+                    <span className="text-brand font-bold shrink-0">✓</span>
+                    <span>{point}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
       {/* Features */}
       <section className="py-20 px-5 sm:px-8 bg-neutral-50">
         <div className="max-w-5xl mx-auto">
@@ -473,8 +603,11 @@ export default function SEOPage({ config }: { config: SEOPageConfig }) {
             <div className="text-center mb-14">
               <p className="text-xs font-semibold tracking-widest text-brand mb-3">FEATURES</p>
               <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight">
-                Everything you need
+                {config.featuresTitle ?? "Everything you need"}
               </h2>
+              {config.featuresSubtitle && (
+                <p className="text-sm text-neutral-500 mt-2 max-w-2xl mx-auto">{config.featuresSubtitle}</p>
+              )}
             </div>
           </AnimateIn>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -702,20 +835,24 @@ export default function SEOPage({ config }: { config: SEOPageConfig }) {
           <AnimateIn>
             <div className="text-center mb-16">
               <p className="text-xs font-semibold tracking-widest text-brand mb-3">HOW IT WORKS</p>
-              <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight">One simple workflow</h2>
+              <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight">
+                {config.howItWorksTitle ?? "One simple workflow"}
+              </h2>
+              {config.howItWorksSubtitle && (
+                <p className="text-sm text-neutral-500 mt-2 max-w-2xl mx-auto">{config.howItWorksSubtitle}</p>
+              )}
             </div>
           </AnimateIn>
-          <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
+          <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 ${steps.length >= 6 ? "lg:grid-cols-6" : steps.length === 5 ? "lg:grid-cols-5" : "lg:grid-cols-4"} gap-4`}>
             {steps.map((step, i) => (
               <AnimateIn key={step.n} delay={i * 80} from="up">
                 <div className="relative h-full">
-                  {i < steps.length - 1 && (
-                    <div className="hidden sm:block absolute top-5 left-full w-full h-px bg-neutral-100 z-0" />
-                  )}
-                  <div className="relative bg-white border border-neutral-100 rounded-2xl p-5 hover:border-brand-200 hover:shadow-sm transition-all h-full">
-                    <span className="text-xs font-mono text-neutral-300 mb-3 block">{step.n}</span>
-                    <h3 className="font-semibold text-neutral-900 mb-1.5">{step.title}</h3>
-                    <p className="text-xs text-neutral-500 leading-relaxed">{step.desc}</p>
+                  <div className="relative bg-white border border-neutral-100 rounded-2xl p-5 hover:border-brand-200 hover:shadow-sm transition-all h-full flex flex-col justify-between">
+                    <div>
+                      <span className="text-xs font-mono text-neutral-300 mb-3 block">{step.n}</span>
+                      <h3 className="font-semibold text-neutral-900 mb-1.5">{step.title}</h3>
+                      <p className="text-xs text-neutral-500 leading-relaxed">{step.desc}</p>
+                    </div>
                   </div>
                 </div>
               </AnimateIn>
@@ -723,6 +860,69 @@ export default function SEOPage({ config }: { config: SEOPageConfig }) {
           </div>
         </div>
       </section>
+
+      {/* Who should use it? */}
+      {config.whoShouldUse && (
+        <section className="py-20 px-5 sm:px-8 bg-neutral-50/70 border-t border-neutral-100">
+          <div className="max-w-5xl mx-auto">
+            <div className="text-center max-w-2xl mx-auto mb-12">
+              <p className="text-xs font-semibold tracking-widest text-brand mb-2">TARGET ORGANISERS</p>
+              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-neutral-900">
+                {config.whoShouldUse.title || "Who should use it?"}
+              </h2>
+              {config.whoShouldUse.subtitle && (
+                <p className="text-sm text-neutral-500 mt-2">{config.whoShouldUse.subtitle}</p>
+              )}
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {config.whoShouldUse.personas.map((persona, idx) => (
+                <div key={idx} className="bg-white rounded-2xl border border-neutral-200/80 p-5 shadow-2xs hover:border-brand-200 transition-all">
+                  {persona.badge && (
+                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-brand-50 text-brand inline-block mb-3">
+                      {persona.badge}
+                    </span>
+                  )}
+                  <h3 className="text-sm font-bold text-neutral-900 mb-1.5">{persona.title}</h3>
+                  <p className="text-xs text-neutral-500 leading-relaxed">{persona.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* How QR check-in works */}
+      {config.howQrCheckInWorks && (
+        <section className="py-20 px-5 sm:px-8 bg-white border-t border-neutral-100">
+          <div className="max-w-4xl mx-auto">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="w-2 h-2 rounded-full bg-brand" />
+              <p className="text-xs font-bold uppercase tracking-wider text-brand">FAST GATE OPERATIONS</p>
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-neutral-900 mb-4">
+              {config.howQrCheckInWorks.title || "How QR check-in works"}
+            </h2>
+            {config.howQrCheckInWorks.subtitle && (
+              <p className="text-sm font-semibold text-brand mb-3">{config.howQrCheckInWorks.subtitle}</p>
+            )}
+            <p className="text-base text-neutral-700 leading-relaxed mb-6 font-normal">
+              {config.howQrCheckInWorks.description}
+            </p>
+            {config.howQrCheckInWorks.points && (
+              <div className="space-y-3">
+                {config.howQrCheckInWorks.points.map((pt, idx) => (
+                  <div key={idx} className="flex items-start gap-3 p-4 rounded-xl bg-neutral-50 border border-neutral-100 text-sm text-neutral-700">
+                    <span className="font-mono text-xs font-bold text-brand bg-white px-2 py-0.5 rounded border border-neutral-200 mt-0.5">
+                      {`0${idx + 1}`}
+                    </span>
+                    <span>{pt}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+      )}
 
       {/* Callout / dark section */}
       {config.callout && (
@@ -982,17 +1182,17 @@ export default function SEOPage({ config }: { config: SEOPageConfig }) {
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Link
-                href="/signup"
-                className="inline-flex items-center justify-center gap-2 bg-white text-neutral-900 px-7 py-3.5 rounded-xl text-sm font-semibold hover:bg-neutral-100 transition-colors"
+                href={config.ctaHref ?? "/signup"}
+                className="inline-flex items-center justify-center gap-2 bg-white text-neutral-900 px-7 py-3.5 rounded-xl text-sm font-semibold hover:bg-neutral-100 transition-colors shadow-sm"
               >
-                Create free account
+                {config.ctaLabel ?? "Create free account"}
                 <span className="text-neutral-400">→</span>
               </Link>
               <Link
-                href="/pricing"
+                href={config.secondaryCtaHref ?? "/pricing"}
                 className="inline-flex items-center justify-center gap-2 border border-white/20 text-white px-7 py-3.5 rounded-xl text-sm font-medium hover:bg-white/10 transition-colors"
               >
-                See plans
+                {config.secondaryCtaLabel ?? "See plans"}
               </Link>
             </div>
           </AnimateIn>

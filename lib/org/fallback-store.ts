@@ -3,6 +3,9 @@ import { getSupabaseUrl } from "@/lib/supabase/config";
 import type { Workspace, Location } from "@/types";
 
 function adminClient() {
+  if ((globalThis as any).__urpass_admin_client) {
+    return (globalThis as any).__urpass_admin_client;
+  }
   return createAdminClient(
     getSupabaseUrl(),
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
@@ -28,26 +31,23 @@ export function isTableMissingError(error: unknown): boolean {
   );
 }
 
-// ── Workspaces System Settings Persistence ──
+// ── Workspaces Relational Persistence ──
 
 export async function getStoredWorkspaces(orgId: string, userId?: string): Promise<Workspace[]> {
   try {
     const admin = adminClient();
-    const key = `org_workspaces_${orgId}`;
-    const { data } = await admin
-      .from("system_settings")
-      .select("value")
-      .eq("key", key)
-      .maybeSingle();
+    const { data, error } = await admin
+      .from("workspaces")
+      .select("*")
+      .eq("organization_id", orgId)
+      .order("is_default", { ascending: false })
+      .order("created_at", { ascending: true });
 
-    if (data?.value) {
-      const parsed = JSON.parse(data.value);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed as Workspace[];
-      }
+    if (!error && data && data.length > 0) {
+      return data as Workspace[];
     }
   } catch (err) {
-    console.warn("[workspaces] Error reading from system_settings:", err);
+    console.warn("[workspaces] Error reading from relational workspaces table:", err);
   }
 
   // Default initial workspace if none stored
@@ -72,16 +72,24 @@ export async function getStoredWorkspaces(orgId: string, userId?: string): Promi
 export async function saveStoredWorkspaces(orgId: string, workspaces: Workspace[]): Promise<boolean> {
   try {
     const admin = adminClient();
-    const key = `org_workspaces_${orgId}`;
-    const { error } = await admin.from("system_settings").upsert({
-      key,
-      value: JSON.stringify(workspaces),
-      description: `Persisted workspaces for organization ${orgId}`,
-      updated_at: new Date().toISOString(),
-    });
-    return !error;
+    // Persist relationally to public.workspaces
+    for (const ws of workspaces) {
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(ws.id);
+      const row = {
+        ...(isUuid ? { id: ws.id } : {}),
+        organization_id: orgId,
+        name: ws.name,
+        slug: ws.slug,
+        description: ws.description || null,
+        color: ws.color || "#6D28D9",
+        is_default: Boolean(ws.is_default),
+        updated_at: new Date().toISOString(),
+      };
+      await admin.from("workspaces").upsert(row, { onConflict: "organization_id,slug" });
+    }
+    return true;
   } catch (err) {
-    console.error("[workspaces] Error saving to system_settings:", err);
+    console.error("[workspaces] Error saving to relational workspaces table:", err);
     return false;
   }
 }

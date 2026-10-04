@@ -4,6 +4,7 @@ import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { getSupabaseUrl } from "@/lib/supabase/config";
 import { sendWebhooks } from "@/lib/webhooks";
 import { recordApiUsage } from "@/lib/api-usage";
+import { recordLiveOpsEvent } from "@/lib/ops/events";
 
 export const dynamic = "force-dynamic";
 
@@ -64,7 +65,7 @@ export async function POST(req: NextRequest) {
       .eq("organization_id", event.organization_id)
       .eq("user_id", user.id)
       .eq("status", "active")
-      .in("role", ["owner", "admin", "event_manager", "checkin_staff"])
+      .in("role", ["owner", "admin", "event_manager", "gate_manager", "checkin_staff"])
       .single();
     hasOrgAccess = !!member;
   }
@@ -81,7 +82,87 @@ export async function POST(req: NextRequest) {
 
   const gateMap = new Map((gateList || []).map((g) => [g.id, g.name]));
 
-  // Track reconciliation results
+  // =========================================================================
+  // 1. FAST-PATH: Atomic Database Bulk RPC (Single roundtrip, avoids Vercel timeout)
+  // =========================================================================
+  try {
+    const { data: rpcResults, error: rpcErr } = await supabase.rpc("sync_offline_scans_bulk", {
+      p_event_id: eventId,
+      p_user_id: user.id,
+      p_scans: scans,
+    });
+
+    if (!rpcErr && Array.isArray(rpcResults) && rpcResults.length > 0) {
+      let syncedCount = 0;
+      let conflictCount = 0;
+      let errorCount = 0;
+
+      const formattedResults = rpcResults.map((r: any) => {
+        const winningGateName = r.winningGateId ? gateMap.get(r.winningGateId) || "Another gate" : null;
+        if (r.status === "CHECKED_IN") {
+          syncedCount++;
+        } else if (r.conflict || r.status === "ALREADY_CHECKED_IN") {
+          conflictCount++;
+        } else {
+          errorCount++;
+        }
+
+        return {
+          scanOperationId: r.scanOperationId,
+          status: r.status,
+          success: Boolean(r.success),
+          conflict: Boolean(r.conflict),
+          conflictMessage: r.conflictMessage || (r.conflict ? `Already checked in at ${winningGateName || "another gate"}` : undefined),
+          winningGateId: r.winningGateId || null,
+          winningGateName,
+          winningCheckedInAt: r.winningCheckedInAt || null,
+          checkedInAt: r.checkedInAt || null,
+        };
+      });
+
+      // Raise immediate LiveOps security alert if offline conflicts occurred
+      if (conflictCount > 0) {
+        recordLiveOpsEvent({
+          level: "ERROR",
+          category: "SECURITY",
+          message: `CRITICAL: ${conflictCount} offline duplicate QR scan conflict(s) detected at gates during reconnection sync for "${event.name}"!`,
+          details: {
+            type: "offline_duplicate_conflict",
+            eventId,
+            eventName: event.name,
+            conflictCount,
+            conflicts: formattedResults.filter((r) => r.conflict),
+            syncedByUserId: user.id,
+          },
+        });
+      }
+
+      if (syncedCount > 0) {
+        sendWebhooks(event.organizer_id, "checkin.completed", {
+          event_id: eventId,
+          synced_count: syncedCount,
+          is_offline: true,
+        }).catch(() => {});
+
+        void recordApiUsage(event.organizer_id, "check_ins");
+      }
+
+      return NextResponse.json({
+        eventId,
+        total: scans.length,
+        synced: syncedCount,
+        conflicts: conflictCount,
+        errors: errorCount,
+        results: formattedResults,
+      });
+    }
+  } catch (err) {
+    console.warn("[sync_scans] Bulk RPC fallback to batch processing:", err);
+  }
+
+  // =========================================================================
+  // 2. FALLBACK PATH: Resilient Batch Loop (for environments without bulk RPC)
+  // =========================================================================
   const results: Array<{
     scanOperationId: string;
     status: "CHECKED_IN" | "ALREADY_CHECKED_IN" | "INVALID_PASS" | "ACCESS_DENIED" | "ERROR";
@@ -299,6 +380,23 @@ export async function POST(req: NextRequest) {
       checkedInAt: actualScannedAt,
     });
     syncedCount++;
+  }
+
+  // Raise immediate LiveOps security alert if fallback loop detected offline conflicts
+  if (conflictCount > 0) {
+    recordLiveOpsEvent({
+      level: "ERROR",
+      category: "SECURITY",
+      message: `CRITICAL: ${conflictCount} offline duplicate QR scan conflict(s) detected at gates during reconnection sync for "${event.name}"!`,
+      details: {
+        type: "offline_duplicate_conflict",
+        eventId,
+        eventName: event.name,
+        conflictCount,
+        conflicts: results.filter((r) => r.conflict),
+        syncedByUserId: user.id,
+      },
+    });
   }
 
   return NextResponse.json({

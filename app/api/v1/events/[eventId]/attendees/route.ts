@@ -30,16 +30,22 @@ export async function GET(
 
   const supabase = adminClient();
 
-  // Verify event belongs to this API user
+  // Verify event belongs to this API user or their organization (Tenant Isolation)
   const { data: event } = await supabase
     .from("events")
-    .select("id")
+    .select("id, organizer_id, organization_id")
     .eq("id", eventId)
-    .eq("organizer_id", auth.userId)
     .single();
 
   if (!event) {
     return NextResponse.json({ error: "Event not found" }, { status: 404 });
+  }
+
+  const isOwner = event.organizer_id === auth.userId;
+  const isOrgMatch = Boolean(auth.organizationId && event.organization_id === auth.organizationId);
+
+  if (!isOwner && !isOrgMatch) {
+    return NextResponse.json({ error: "Unauthorized access to tenant event" }, { status: 403 });
   }
 
   let query = supabase

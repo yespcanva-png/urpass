@@ -268,26 +268,27 @@ export async function OPTIONS() {
   });
 }
 
+function hasInsecureQueryApiKey(req: NextRequest): boolean {
+  return req.nextUrl.searchParams.has("api_key") || req.nextUrl.searchParams.has("apiKey");
+}
+
 async function resolveAuth(req: NextRequest) {
-  let effectiveReq = req;
-  const authHeader = req.headers.get("authorization");
-  if (!authHeader?.startsWith("Bearer ")) {
-    const queryKey = req.nextUrl.searchParams.get("api_key") || req.nextUrl.searchParams.get("apiKey");
-    if (queryKey) {
-      const headers = new Headers(req.headers);
-      headers.set("authorization", `Bearer ${queryKey}`);
-      effectiveReq = new NextRequest(req.url, {
-        method: req.method,
-        headers,
-        body: req.body,
-      });
-    }
-  }
-  return authenticateApiKey(effectiveReq);
+  // Strict Enterprise Security: Do NOT accept API keys through URL query parameters
+  return authenticateApiKey(req);
 }
 
 export async function GET(req: NextRequest) {
-  // If user provides API Key, authenticate to confirm key validity
+  if (hasInsecureQueryApiKey(req)) {
+    return NextResponse.json(
+      {
+        error: "INSECURE_AUTH_METHOD",
+        message: "API keys in URL query parameters are strictly forbidden for security. Pass your API key via the 'Authorization: Bearer <token>' header.",
+      },
+      { status: 400, headers: CORS_HEADERS }
+    );
+  }
+
+  // If user provides Bearer API Key, authenticate to confirm key validity
   const auth = await resolveAuth(req);
 
   return NextResponse.json(
@@ -314,6 +315,20 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  if (hasInsecureQueryApiKey(req)) {
+    return NextResponse.json(
+      {
+        jsonrpc: "2.0",
+        error: {
+          code: -32600,
+          message: "Invalid Request: API keys in URL query parameters are strictly forbidden for security. Provide your API key in the 'Authorization: Bearer <token>' header.",
+        },
+        id: null,
+      },
+      { status: 400, headers: CORS_HEADERS }
+    );
+  }
+
   const auth = await resolveAuth(req);
   if (!auth) {
     return NextResponse.json(
@@ -321,7 +336,7 @@ export async function POST(req: NextRequest) {
         jsonrpc: "2.0",
         error: {
           code: -32000,
-          message: "Unauthorized. Provide a valid URPASS Bearer API key in Authorization header or ?api_key query parameter.",
+          message: "Unauthorized. Provide a valid URPASS Bearer API key in the 'Authorization: Bearer <token>' header.",
         },
         id: null,
       },

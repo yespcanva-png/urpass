@@ -44,8 +44,11 @@ export default function QRCodeElement({
         boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
       }}
     >
-      {/* QR Code Graphic */}
-      <div className="flex items-center justify-center">
+      {/* QR Code Graphic with Quiet Safe Zone */}
+      <div
+        className="flex items-center justify-center rounded-lg p-2"
+        style={{ backgroundColor: element.bgColor || "#FFFFFF" }}
+      >
         <QRCodeSVG
           value={passValue}
           size={qrInnerSize}

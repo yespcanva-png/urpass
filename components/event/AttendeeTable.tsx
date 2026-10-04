@@ -121,6 +121,8 @@ export default function AttendeeTable({
   const [exporting, setExporting]   = useState(false);
   const [liveConnected, setLiveConnected] = useState(false);
   const [selectedAnswersAttendee, setSelectedAnswersAttendee] = useState<Attendee | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(50);
   const initialRef = useRef(initial);
 
   // Sync when server re-renders with fresh props
@@ -130,6 +132,11 @@ export default function AttendeeTable({
       setAttendees(initial);
     }
   }, [initial]);
+
+  // Reset page when filter or search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab, search, pageSize]);
 
   // Supabase realtime — new applications appear instantly
   useEffect(() => {
@@ -307,20 +314,9 @@ export default function AttendeeTable({
     }
   }
 
-  async function handleExport() {
-    setExporting(true);
-    try {
-      const result = await exportAttendeesCSV(eventId);
-      setExporting(false);
-      if (result.error || !result.csv) return;
-      const blob = new Blob([result.csv], { type: "text/csv;charset=utf-8;" });
-      const url  = URL.createObjectURL(blob);
-      const a    = document.createElement("a");
-      a.href = url; a.download = `attendees-${eventId.slice(0, 8)}.csv`; a.click();
-      URL.revokeObjectURL(url);
-    } catch {
-      setExporting(false);
-    }
+  function handleExport() {
+    // Stream directly from server-side chunked export endpoint
+    window.location.href = `/api/event/${eventId}/export/csv`;
   }
 
   async function handlePromoteNextWaitlist() {
@@ -354,6 +350,12 @@ export default function AttendeeTable({
       setPromotingWaitlist(false);
     }
   }
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const safePage = Math.min(currentPage, totalPages);
+  const startIndex = (safePage - 1) * pageSize;
+  const endIndex = Math.min(startIndex + pageSize, filtered.length);
+  const paginatedList = filtered.slice(startIndex, endIndex);
 
   const tabs: FilterTab[] = ["all", "pending", "approved", "rejected", "waitlisted"];
 
@@ -554,7 +556,7 @@ export default function AttendeeTable({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-neutral-50">
-                  {filtered.map((a) => {
+                  {paginatedList.map((a) => {
                     const isLoading  = loadingId === a.id;
                     const hasToken   = !!passTokens[a.id];
                     const passExists = a.pass_status === "generated" || a.pass_status === "checked_in";
@@ -690,10 +692,49 @@ export default function AttendeeTable({
                 </tbody>
               </table>
             </div>
-            <div className="px-4 py-2.5 border-t border-neutral-100 bg-neutral-50">
-              <p className="text-xs text-neutral-400">
-                Showing {filtered.length} of {attendees.length} attendee{attendees.length !== 1 ? "s" : ""}
-              </p>
+            <div className="px-4 py-2.5 border-t border-neutral-100 bg-neutral-50 flex flex-col sm:flex-row items-center justify-between gap-2">
+              <div className="flex items-center gap-3 text-xs text-neutral-500">
+                <span>
+                  Showing {filtered.length > 0 ? startIndex + 1 : 0}–{endIndex} of {filtered.length} attendee{filtered.length !== 1 ? "s" : ""}
+                </span>
+                {filtered.length > 25 && (
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-neutral-400">Rows:</span>
+                    <select
+                      value={pageSize}
+                      onChange={(e) => setPageSize(Number(e.target.value))}
+                      className="bg-white border border-neutral-200 rounded px-1.5 py-0.5 text-xs text-neutral-700"
+                    >
+                      <option value={25}>25</option>
+                      <option value={50}>50</option>
+                      <option value={100}>100</option>
+                      <option value={250}>250</option>
+                    </select>
+                  </div>
+                )}
+              </div>
+
+              {totalPages > 1 && (
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={safePage <= 1}
+                    className="px-2.5 py-1 text-xs border border-neutral-200 rounded-lg hover:bg-neutral-100 transition-colors disabled:opacity-40 disabled:pointer-events-none"
+                  >
+                    Previous
+                  </button>
+                  <span className="text-xs px-2 text-neutral-600 font-medium">
+                    Page {safePage} of {totalPages}
+                  </span>
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={safePage >= totalPages}
+                    className="px-2.5 py-1 text-xs border border-neutral-200 rounded-lg hover:bg-neutral-100 transition-colors disabled:opacity-40 disabled:pointer-events-none"
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         )}

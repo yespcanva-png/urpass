@@ -2,19 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { getSupabaseUrl } from "@/lib/supabase/config";
+import { validateAndSanitizeUpload } from "@/lib/uploads/secure-upload";
 import crypto from "crypto";
 
 export const dynamic = "force-dynamic";
-
-const ALLOWED_MIME_TYPES = new Set([
-  "image/png",
-  "image/jpeg",
-  "image/jpg",
-  "image/webp",
-  "image/svg+xml",
-]);
-
-const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
 
 export async function POST(req: NextRequest) {
   try {
@@ -37,26 +28,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No image file provided" }, { status: 400 });
     }
 
-    if (file.size > MAX_FILE_SIZE_BYTES) {
+    const rawBuffer = Buffer.from(await file.arrayBuffer());
+
+    // Secure verification: MIME, magic bytes, size limits & SVG sanitization
+    const validation = await validateAndSanitizeUpload(rawBuffer, file.type);
+    if (!validation.valid || !validation.sanitizedBuffer || !validation.mimeType) {
       return NextResponse.json(
-        { error: "Image file exceeds maximum allowed size of 5MB" },
+        { error: validation.error || "File validation failed" },
         { status: 400 }
       );
     }
 
-    const mimeType = file.type || "image/png";
-    if (!ALLOWED_MIME_TYPES.has(mimeType)) {
-      return NextResponse.json(
-        { error: "Invalid image format. Supported formats: PNG, JPG, WebP, SVG" },
-        { status: 400 }
-      );
-    }
-
-    // Determine extension
-    let extension = "png";
-    if (mimeType === "image/jpeg" || mimeType === "image/jpg") extension = "jpg";
-    else if (mimeType === "image/webp") extension = "webp";
-    else if (mimeType === "image/svg+xml") extension = "svg";
+    const mimeType = validation.mimeType;
+    const extension = validation.extension || "png";
+    const buffer = validation.sanitizedBuffer;
 
     const fileName = `${user.id}/${Date.now()}-${crypto.randomBytes(6).toString("hex")}.${extension}`;
 
@@ -73,8 +58,6 @@ export async function POST(req: NextRequest) {
     } catch {
       // Bucket may already exist
     }
-
-    const buffer = Buffer.from(await file.arrayBuffer());
 
     const { error: uploadError } = await admin.storage
       .from(bucketName)

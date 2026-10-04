@@ -1,37 +1,19 @@
 import type { Metadata } from "next";
-import {
-  Ticket,
-  QrCode,
-  ScanLine,
-  Gift,
-  Zap,
-  ShieldCheck,
-  BarChart3,
-  Users,
-} from "lucide-react";
+import { BarChart3, FileText, Lock, QrCode, ScanLine, Users } from "lucide-react";
 import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
-  title: "Free Event Ticketing Software with QR Check-In | URPASS",
-  description:
-    "Free event ticketing software for workshops, college events, and conferences. Issue digital QR tickets, scan attendees at the entrance, and manage RSVPs at ₹0 forever.",
-  keywords: [
-    "free event ticketing software",
-    "free event ticketing platform",
-    "free qr ticketing software",
-    "free online event ticketing",
-    "event ticketing software free",
-    "free ticket generator for events",
-  ],
+  title: "Free Event Ticketing & QR Check-In Software | URPASS",
+  description: "100% free event ticketing software with automated digital QR passes, mobile phone check-in, custom registration forms, and zero ticketing fees.",
+  keywords: ["free event ticketing software", "free event registration platform", "free qr code ticket generator", "free event check-in app", "free ticketing platform for non-profits", "free community event ticketing"],
   alternates: {
     canonical: "https://urpass.space/free-event-ticketing-software",
   },
   openGraph: {
-    title: "Free Event Ticketing Software with QR Check-In | URPASS",
-    description:
-      "Ticket your free events at zero cost. Digital QR tickets, mobile phone gate scanning, and permanent free plan with no credit card required.",
+    title: "Free Event Ticketing & QR Check-In Software | URPASS",
+    description: "100% free event ticketing software with automated digital QR passes, mobile phone check-in, custom registration forms, and zero ticketing fees.",
     url: "https://urpass.space/free-event-ticketing-software",
-    locale: "en_IN",
+    locale: "en_US",
     type: "website",
   },
 };
@@ -40,108 +22,227 @@ export default function FreeEventTicketingSoftwarePage() {
   return (
     <SEOPage
       config={{
-        canonicalUrl: "https://urpass.space/free-event-ticketing-software",
-        badge: "PERMANENT FREE TIER",
-        h1: "Free Event Ticketing Software With QR Check-In",
-        description:
-          "Ticket your community events, student meetups, and workshops at zero cost. Issue encrypted mobile QR tickets, scan attendees at the door using any phone camera, and monitor attendance in real time.",
-        ctaLabel: "Create Your Event Free",
-        directAnswer: {
-          title: "Is There Free Event Ticketing Software with QR Passes?",
-          summary:
-            "Yes. URPASS offers a permanent free tier specifically designed for non-profit gatherings, university clubs, and community organizers. Unlike commercial ticketing engines that charge per-ticket fees or impose 14-day trials, URPASS provides automated digital QR ticket generation, custom registration fields, and in-browser camera scanning for up to 50 attendees per event at ₹0 forever with no credit card required.",
-          keyPoints: [
-            "Permanently Free: ₹0 forever for up to 50 attendees per event (no trial expiration)",
-            "Zero Setup Fees: No credit card or billing information needed to launch",
-            "Digital QR Passes: Personalized mobile tickets delivered directly to attendees",
-            "Phone Camera Scanner: <0.28s in-browser gate validation with duplicate prevention",
-          ],
-        },
-        productProof: {
-          badge: "ZERO COST TICKETING",
-          title: "Complete Ticketing & Scanning Toolkit",
-          description:
-            "Create your ticket types, configure registration questions, and scan attendees at the venue entrance without downloading native apps.",
-          type: "passes",
-        },
-        features: [
-          {
-            icon: Ticket,
-            title: "Multiple Ticket Tiers",
-            desc: "Configure General Admission, Student Pass, or VIP tiers with customized capacity limits and automated sold-out triggers.",
-          },
-          {
-            icon: QrCode,
-            title: "Automated QR Passes",
-            desc: "Every attendee receives a personalized mobile pass with anti-fraud verification and Apple/Google Wallet integration.",
-          },
-          {
-            icon: ScanLine,
-            title: "Sub-Second In-Browser Scanner",
-            desc: "Scan and validate ticket barcodes in under 0.28s directly in any mobile browser without installing third-party apps.",
-          },
-          {
-            icon: ShieldCheck,
-            title: "Duplicate Ticket Lockout",
-            desc: "Prevent ticket forwarding and screenshot fraud. Each digital pass can only be checked in once at the gates.",
-          },
-          {
-            icon: BarChart3,
-            title: "Real-Time Gate Analytics",
-            desc: "Monitor live check-in counts, arrival velocity, and gate capacity from your centralized organizer dashboard.",
-          },
-          {
-            icon: Gift,
-            title: "Zero Hidden Fees",
-            desc: "No transaction fees, no per-ticket deductions, and no credit card required to access the permanent free tier.",
-          },
-        ],
-        steps: [
-          { n: "01", title: "Create Tickets", desc: "Set up your event name, ticket tiers, and capacity in 2 minutes." },
-          { n: "02", title: "Publish Link", desc: "Share your clean, fast-loading event link across messaging apps and social." },
-          { n: "03", title: "Deliver Passes", desc: "Attendees register and receive encrypted QR passes instantly." },
-          { n: "04", title: "Scan at Door", desc: "Volunteers scan attendee badges with any smartphone camera." },
-        ],
-        callout: {
-          badge: "COMMUNITY-FIRST ARCHITECTURE",
-          title: "Ticket your free event at zero cost forever",
-          description:
-            "Stop paying platform fees for zero-cost community events. URPASS gives you enterprise-grade ticketing and access control at ₹0.",
-          bullets: [
-            "Permanent free plan with no credit card required",
-            "Up to 50 attendees free per event",
-            "In-browser smartphone camera scanning (<0.28s)",
-            "One-click CSV exports with verified arrival timestamps",
-          ],
-        },
-        useCases: [
-          "College tech fests & campus workshops",
-          "Student club meetups & hackathons",
-          "Professional webinars & skill seminars",
-          "Open source developer meetups",
-          "Non-profit & community social events",
-        ],
-        faqs: [
-          {
-            q: "Is URPASS free ticketing software really free?",
-            a: "Yes! URPASS provides a permanent free plan with ₹0 platform fees for up to 50 attendees per event (and up to 100 registrations per month across events) with full QR pass issuance and in-browser camera scanning.",
-          },
-          {
-            q: "Can I upgrade to paid tickets later?",
-            a: "Yes. When you are ready to sell paid tickets, you can connect Razorpay (for India UPI/cards) or Stripe (for global cards) and upgrade to Starter or Pro plans with 0% ticketing commission.",
-          },
-          {
-            q: "How do volunteers scan tickets at the door?",
-            a: "Organizers share a secure scanner link. Volunteers open it in Safari or Chrome on their smartphones, grant camera access, and scan tickets in under 0.28 seconds.",
-          },
-          {
-            q: "Does URPASS display ads on my free event pages?",
-            a: "No! URPASS never displays third-party ads or competitor listings on your registration pages. Your event remains clean and branded.",
-          },
-        ],
-        ctaTitle: "Start ticketing your free event today",
-        ctaDescription: "₹0 to start · No credit card · QR passes included",
-      }}
+  "badge": "100% FREE FOR FREE EVENTS",
+  "h1": "Free Event Ticketing & QR Check-In Software",
+  "canonicalUrl": "https://urpass.space/free-event-ticketing-software",
+  "description": "100% free event ticketing software with automated digital QR passes, mobile phone check-in, custom registration forms, and zero ticketing fees.",
+  "ctaLabel": "Create Free Event Ticket →",
+  "ctaTitle": "Run Free Events with Professional Digital Passes",
+  "ctaDescription": "Create registration pages, issue dynamic digital QR passes, and check attendees in in <0.3s with volunteer smartphones. Completely free.",
+  "directAnswer": {
+    "title": "What is Free Event Ticketing Software?",
+    "summary": "Free event ticketing software is a digital event platform that allows organizers to create registration pages, issue digital QR passes, and manage entrance check-in for free events without paying platform fees. URPASS offers a 100% free plan for free events, providing full access to custom forms, automated QR pass issuance, and mobile camera scanning.",
+    "keyPoints": [
+      "100% free with zero hidden platform charges for free events",
+      "Automated unique digital QR passes delivered instantly to attendees",
+      "Sub-second (<0.3s) camera check-in on volunteer phones with zero app downloads",
+      "Live real-time attendance dashboard replacing fragile paper guest lists"
+    ]
+  },
+  "whatIs": {
+    "title": "What is Free Event Ticketing Software?",
+    "definition": "Free event ticketing software is an event management platform built for community organizers, universities, non-profits, and meetups that host free admission events. It provides RSVP collection, capacity capping, digital credential issuance, and door validation without charging subscription or ticketing fees.",
+    "details": [
+      "Allows non-profits and community groups to look professional without software costs",
+      "Replaces printed guest lists and manual pen ticking with instant smartphone scanning",
+      "Prevents room overcrowding with automated waitlists and capacity limits",
+      "Gives organizers full ownership of their attendee list with zero third-party ads"
+    ]
+  },
+  "howItWorksTitle": "How Free Event Ticketing Operates",
+  "howItWorksSubtitle": "From free event setup to entrance door check-in in six simple steps.",
+  "steps": [
+    {
+      "n": "01",
+      "title": "Create your free event",
+      "desc": "Set date, venue, guest capacity, and custom registration fields in 3 minutes."
+    },
+    {
+      "n": "02",
+      "title": "Share registration link",
+      "desc": "Post your clean event link on social media, community groups, or your website."
+    },
+    {
+      "n": "03",
+      "title": "Attendees RSVP online",
+      "desc": "Guests register in seconds with zero friction or forced account signups."
+    },
+    {
+      "n": "04",
+      "title": "Instant digital QR passes",
+      "desc": "Attendees receive unique, mobile-responsive QR passes delivered straight to their inboxes."
+    },
+    {
+      "n": "05",
+      "title": "Scan at the entrance",
+      "desc": "Door volunteers scan passes with phone cameras in <0.3s for green entry."
+    },
+    {
+      "n": "06",
+      "title": "Live attendance telemetry",
+      "desc": "Monitor check-in velocity and know who is in the room in real time."
+    }
+  ],
+  "featuresTitle": "Enterprise Features Included on the Free Plan",
+  "featuresSubtitle": "Custom forms, digital passes, and sub-second phone scanning.",
+  "features": [
+    {
+      icon: QrCode,
+      "title": "Automated Digital QR Passes",
+      "desc": "Every RSVP automatically receives a unique encrypted mobile QR pass via email and web link."
+    },
+    {
+      icon: ScanLine,
+      "title": "Sub-0.3s Phone Camera Scanning",
+      "desc": "Turn any volunteer phone into an entrance scanner. Scan passes in under 0.3 seconds without printing paper sheets."
+    },
+    {
+      icon: Lock,
+      "title": "Duplicate Entry Protection",
+      "desc": "Prevent shared passes. When a ticket is scanned at the entrance, it is atomically locked across all doors."
+    },
+    {
+      icon: FileText,
+      "title": "Custom Registration Fields",
+      "desc": "Collect mandatory dietary needs, job titles, Student IDs, and file uploads with custom intake questions."
+    },
+    {
+      icon: Users,
+      "title": "Accurate Capacity Caps",
+      "desc": "Set maximum venue limits. Registration halts automatically once capacity is reached to prevent overbooking."
+    },
+    {
+      icon: BarChart3,
+      "title": "Live Attendance Telemetry",
+      "desc": "Distinguish registered signups from actual attendees. Track no-show rates live from your dashboard."
+    }
+  ],
+  "whoShouldUse": {
+    "title": "Who Uses Free Event Ticketing Software?",
+    "subtitle": "From community meetups to non-profit galas.",
+    "personas": [
+      {
+        "badge": "COMMUNITY",
+        "title": "Community Meetups & User Groups",
+        "desc": "Tech meetups, book clubs, and creative freelancer mixers hosting free monthly gatherings."
+      },
+      {
+        "badge": "CAMPUS",
+        "title": "University Clubs & Student Unions",
+        "desc": "Free campus lectures, student orientation events, and club freshers' fairs."
+      },
+      {
+        "badge": "NON-PROFIT",
+        "title": "Charities & Non-Profits",
+        "desc": "Volunteer training days, fundraising information evenings, and community town halls."
+      },
+      {
+        "badge": "OPEN SOURCE",
+        "title": "Developer Hackathons",
+        "desc": "Free hackathons and developer build jams needing fast Saturday morning check-in."
+      }
+    ]
+  },
+  "howQrCheckInWorks": {
+    "title": "How Free Event Check-In Operates",
+    "subtitle": "Sub-second camera scanning on volunteer phones.",
+    "description": "Attendees display their mobile QR pass on their phone screen. Volunteer staff open the scanner URL in Safari or Chrome on their smartphones. Pointing the camera at the pass validates the ticket in under 0.3 seconds with an audible green chime, verifying their registration without needing a paper roster.",
+    "points": [
+      "Zero equipment costs: volunteers use their personal mobile phones.",
+      "Offline engine pre-loads ticket databases to validate passes with zero network connectivity.",
+      "Atomic row-locking prevents shared pass screenshots across different gate tents.",
+      "Rapid manual lookup by name if an attendee's phone battery has died."
+    ]
+  },
+  "keyFactsTable": {
+    "title": "URPASS Free Plan vs Legacy Ticketing Platforms",
+    "subtitle": "Why community organizers choose URPASS for free events.",
+    "headers": [
+      "Platform Feature",
+      "Legacy Ticketing Networks (Eventbrite)",
+      "URPASS Free Plan"
+    ],
+    "rows": [
+      {
+        "col1": "Free Event Cost",
+        "col2": "Paywalled behind mandatory organizer subscriptions",
+        "col3": "100% free with unlimited free event registrations"
+      },
+      {
+        "col1": "Competitor Event Ads",
+        "col2": "Promotes competitor events on your confirmation page",
+        "col3": "100% white-label and ad-free experience"
+      },
+      {
+        "col1": "Door Check-In Speed",
+        "col2": "2.5 to 4.0s on heavy native scanner apps",
+        "col3": "<0.3s camera scan on any mobile phone browser"
+      },
+      {
+        "col1": "Attendee Data Privacy",
+        "col2": "Collects attendee data for platform marketing",
+        "col3": "Strict data privacy; you own your attendee list"
+      }
+    ]
+  },
+  "faqs": [
+    {
+      "q": "Is URPASS really free for free events?",
+      "a": "Yes! URPASS is 100% free for free events. There are no setup fees, no monthly listing charges, and no per-ticket fees for free registration."
+    },
+    {
+      "q": "Are there any limits on how many attendees can register on the free plan?",
+      "a": "No. You can collect unlimited registrations and issue unlimited digital QR passes for your free events."
+    },
+    {
+      "q": "Do attendees need to download an app to access their tickets?",
+      "a": "No. Attendees receive their digital QR ticket via email and can open it in any mobile web browser without installing an app."
+    },
+    {
+      "q": "How do volunteers scan tickets at the door?",
+      "a": "Volunteers open a private scanner link in mobile Safari or Chrome and can start scanning attendee passes immediately with their phone cameras."
+    },
+    {
+      "q": "Can I export my attendee list to CSV?",
+      "a": "Yes. You can export complete attendee rosters and check-in records to CSV in one click at any time."
+    },
+    {
+      "q": "Are there hidden fees for free event tickets on URPASS?",
+      "a": "No. URPASS is 100% free for free events. No credit card required, no per-ticket fees, and no attendee limits on free tiers."
+    },
+    {
+      "q": "Can I approve or reject free registrations before tickets are sent?",
+      "a": "Yes. You can enable \"Require Approval\" mode so only vetted applicants receive a valid QR entry pass."
+    }
+  ],
+  "relatedLinks": [
+    {
+      "title": "Zero-Commission Event Ticketing Platform",
+      "href": "/zero-commission-event-ticketing",
+      "category": "Product"
+    },
+    {
+      "title": "Event Registration with QR Code Tickets",
+      "href": "/event-registration-with-qr-code",
+      "category": "Product"
+    },
+    {
+      "title": "Meetup Registration & QR Check-In Platform",
+      "href": "/meetup-registration-software",
+      "category": "Use Case"
+    },
+    {
+      "title": "Event Check-In App with QR Scanner",
+      "href": "/event-check-in-app",
+      "category": "Product"
+    },
+    {
+      "title": "Google Forms Alternative for Event Registration",
+      "href": "/google-forms-event-registration-alternative",
+      "category": "Comparison"
+    }
+  ]
+}}
     />
   );
 }

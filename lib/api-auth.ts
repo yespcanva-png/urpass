@@ -15,6 +15,7 @@ function adminClient() {
 export interface ApiAuthResult {
   userId: string;
   keyId: string;
+  organizationId?: string | null;
 }
 
 export async function authenticateApiKey(
@@ -36,7 +37,7 @@ export async function authenticateApiKey(
 
   const { data: apiKey } = await supabase
     .from("api_keys")
-    .select("id, user_id, is_active, expires_at, environment")
+    .select("id, user_id, organization_id, is_active, expires_at, environment")
     .eq("key_hash", keyHash)
     .single();
 

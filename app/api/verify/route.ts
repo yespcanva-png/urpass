@@ -111,7 +111,7 @@ export async function POST(req: NextRequest) {
           .eq("organization_id", event.organization_id)
           .eq("user_id", user.id)
           .eq("status", "active")
-          .in("role", ["owner", "admin", "event_manager", "checkin_staff"])
+          .in("role", ["owner", "admin", "event_manager", "gate_manager", "checkin_staff"])
           .single();
         hasOrgAccess = !!member;
       }
@@ -216,6 +216,18 @@ export async function POST(req: NextRequest) {
         if (res.status === "ALREADY_CHECKED_IN") {
           return NextResponse.json(res, { status: 200 });
         }
+        if (res.status === "EVENT_INACTIVE") {
+          return NextResponse.json(res, { status: 403 });
+        }
+        if (res.status === "REVOKED") {
+          return NextResponse.json(res, { status: 403 });
+        }
+        if (res.status === "CANCELLED") {
+          return NextResponse.json(res, { status: 403 });
+        }
+        if (res.status === "EXPIRED") {
+          return NextResponse.json(res, { status: 403 });
+        }
         if (res.status === "ACCESS_DENIED") {
           return NextResponse.json(res, { status: 403 });
         }
@@ -232,6 +244,24 @@ export async function POST(req: NextRequest) {
   }
 
   // ── 3. Fallback: Conditional Atomic Check-In ──
+  // First, verify that the event itself is active
+  const { data: currentEvent } = await safeMaybeSingle(
+    supabase.from("events").select("status").eq("id", eventId)
+  );
+
+  if (currentEvent?.status && currentEvent.status !== "active") {
+    return NextResponse.json(
+      {
+        error: `Check-in is blocked: Event is ${currentEvent.status.toUpperCase()}`,
+        status: "EVENT_INACTIVE",
+        eventStatus: currentEvent.status,
+        accessDenied: true,
+        scanOperationId,
+      },
+      { status: 403 }
+    );
+  }
+
   // Fetch pass by token, scoped to this event
   const { data: pass } = await supabase
     .from("passes")
@@ -293,13 +323,42 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // If pass is REFUNDED or CANCELLED, immediately deny entry
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  if ((pass as any).ticket_status === "REFUNDED" || (pass as any).ticket_status === "CANCELLED") {
+  // Enforce pass status checks (REVOKED / CANCELLED / EXPIRED / REFUNDED)
+  if (pass.status === "revoked") {
     return NextResponse.json(
       {
-        error: `This ticket has been ${(pass as any).ticket_status || "REFUNDED"}. Entry Denied.`,
-        status: "REFUNDED",
+        error: "Pass has been revoked by the organizer.",
+        status: "REVOKED",
+        accessDenied: true,
+        scanOperationId,
+      },
+      { status: 403 }
+    );
+  }
+
+  if (
+    pass.status === "cancelled" ||
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (pass as any).ticket_status === "CANCELLED" ||
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (pass as any).ticket_status === "REFUNDED"
+  ) {
+    return NextResponse.json(
+      {
+        error: "This ticket has been cancelled or refunded. Entry Denied.",
+        status: "CANCELLED",
+        accessDenied: true,
+        scanOperationId,
+      },
+      { status: 403 }
+    );
+  }
+
+  if (pass.status === "expired") {
+    return NextResponse.json(
+      {
+        error: "Pass has expired.",
+        status: "EXPIRED",
         accessDenied: true,
         scanOperationId,
       },

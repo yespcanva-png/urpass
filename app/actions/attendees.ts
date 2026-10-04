@@ -12,7 +12,10 @@ import {
   sendApprovalEmail,
   sendPassEmail,
   sendUserPaymentSuccessEmail,
+  sendAttendeeRejectionAndRefundEmail,
 } from "@/lib/email";
+import Razorpay from "razorpay";
+import { createCreditNoteForPayment } from "@/lib/invoices";
 import { getUserPlan } from "@/lib/plan";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { sendWebhooks } from "@/lib/webhooks";
@@ -60,7 +63,7 @@ async function getEventForOrganizer(
 ) {
   const { data } = await supabase
     .from("events")
-    .select("id, attendee_limit, status, application_enabled, organizer_id, organization_id")
+    .select("id, name, attendee_limit, status, application_enabled, organizer_id, organization_id")
     .eq("id", eventId)
     .eq("organizer_id", userId)
     .single();
@@ -71,7 +74,7 @@ async function getEventForOrganizer(
   try {
     const { data: orgEvent } = await supabase
       .from("events")
-      .select("id, attendee_limit, status, application_enabled, organizer_id, organization_id")
+      .select("id, name, attendee_limit, status, application_enabled, organizer_id, organization_id")
       .eq("id", eventId)
       .single();
 
@@ -154,12 +157,32 @@ export async function approveAttendee(
     }).catch((err: unknown) => console.error("[email]", err));
   }
 
+  if (event.organization_id) {
+    const { recordEnterpriseAudit } = await import("@/lib/audit/enterprise-audit");
+    void recordEnterpriseAudit({
+      organizationId: event.organization_id,
+      eventId: event.id,
+      userId: user.id,
+      actorEmail: user.email,
+      action: "ATTENDEE_APPROVED",
+      resourceType: "attendee",
+      resourceId: attendeeId,
+      oldValues: { application_status: "pending" },
+      newValues: { application_status: "approved" },
+      details: {
+        attendeeName: att?.name,
+        attendeeEmail: att?.email,
+      },
+    });
+  }
+
   revalidateEvent(eventId);
 }
 
 export async function rejectAttendee(
   attendeeId: string,
-  eventId: string
+  eventId: string,
+  rejectionReason?: string
 ): Promise<ActionResult> {
   const supabase = await createClient();
   const {
@@ -172,49 +195,193 @@ export async function rejectAttendee(
 
   const { data: attendee } = await supabase
     .from("attendees")
-    .select("application_status")
+    .select("id, name, email, application_status, pass_status, ticket_type_id")
     .eq("id", attendeeId)
     .eq("event_id", eventId)
     .single();
 
   if (!attendee) return { error: "Attendee not found." };
 
+  // 1. Mark attendee as rejected and pass_status as revoked
   const { error } = await supabase
     .from("attendees")
-    .update({ application_status: "rejected" })
+    .update({ application_status: "rejected", pass_status: "revoked" })
     .eq("id", attendeeId)
     .eq("event_id", eventId);
 
   if (error) return { error: error.message };
 
+  // 2. Invalidate / Revoke any existing passes in passes table
+  await supabase
+    .from("passes")
+    .update({ status: "revoked", updated_at: new Date().toISOString() })
+    .eq("attendee_id", attendeeId);
+
+  // 3. Decrement registrations used if not already rejected
   if (attendee.application_status !== "rejected") {
-    const attachedPass = await optionalSingle<{ id: string }>(
-      supabase
-        .from("event_passes")
-        .select("id")
-        .eq("event_id", eventId)
-        .eq("status", "attached")
-    );
+    let subQuery = supabase
+      .from("subscriptions")
+      .select("registrations_used")
+      .eq("user_id", event.organizer_id);
+    if (typeof subQuery.in === "function") {
+      subQuery = subQuery.in("status", ["active", "trialing"]);
+    }
+    const subscription = await optionalSingle<{ registrations_used: number | null }>(subQuery);
 
-      let subQuery = supabase
+    if (subscription && (subscription.registrations_used ?? 0) > 0) {
+      let updateQuery = supabase
         .from("subscriptions")
-        .select("registrations_used")
+        .update({ registrations_used: (subscription.registrations_used ?? 0) - 1 })
         .eq("user_id", event.organizer_id);
-      if (typeof subQuery.in === "function") {
-        subQuery = subQuery.in("status", ["active", "trialing"]);
+      if (typeof updateQuery.in === "function") {
+        updateQuery = updateQuery.in("status", ["active", "trialing"]);
       }
-      const subscription = await optionalSingle<{ registrations_used: number | null }>(subQuery);
+      await updateQuery;
+    }
+  }
 
-      if (subscription && (subscription.registrations_used ?? 0) > 0) {
-        let updateQuery = supabase
-          .from("subscriptions")
-          .update({ registrations_used: (subscription.registrations_used ?? 0) - 1 })
-          .eq("user_id", event.organizer_id);
-        if (typeof updateQuery.in === "function") {
-          updateQuery = updateQuery.in("status", ["active", "trialing"]);
+  // 4. AUTOMATIC REFUND FOR PAID TICKETS
+  const admin = adminClient();
+  const { data: paidOrders } = await admin
+    .from("ticket_orders")
+    .select("*")
+    .eq("event_id", eventId)
+    .eq("status", "paid")
+    .or(`attendee_id.eq.${attendeeId},buyer_email.eq.${attendee.email}`);
+
+  const paidOrder = paidOrders && paidOrders.length > 0 ? paidOrders[0] : null;
+  let refundId: string | undefined = undefined;
+  let creditNoteNumber: string | undefined = undefined;
+
+  if (paidOrder && paidOrder.razorpay_payment_id && paidOrder.refund_status !== "processed") {
+
+    try {
+      const paymentConfig = await getEventPaymentConfigService(eventId, event.organizer_id);
+      const paymentMode = paymentConfig.payment_mode || paymentConfig.paymentMode || "URPASS_MANAGED";
+
+      let keyId: string | null = null;
+      let keySecret: string | null = null;
+
+      if (paymentMode === "URPASS_MANAGED") {
+        const creds = getRazorpayCredentials();
+        keyId = creds.keyId;
+        keySecret = creds.keySecret;
+      } else if (event.organization_id) {
+        const { data: orgSettings } = await admin
+          .from("org_payment_settings")
+          .select("razorpay_key_id, razorpay_key_secret")
+          .eq("organization_id", event.organization_id)
+          .maybeSingle();
+
+        if (orgSettings?.razorpay_key_secret) {
+          keyId = orgSettings.razorpay_key_id;
+          keySecret = orgSettings.razorpay_key_secret;
         }
-        await updateQuery;
       }
+
+      if (!keyId || !keySecret) {
+        const { data: paymentSettings } = await admin
+          .from("payment_settings")
+          .select("razorpay_key_id, razorpay_key_secret")
+          .eq("user_id", event.organizer_id)
+          .maybeSingle();
+
+        if (paymentSettings?.razorpay_key_secret) {
+          keyId = paymentSettings.razorpay_key_id;
+          keySecret = paymentSettings.razorpay_key_secret;
+        }
+      }
+
+      if (keyId && keySecret) {
+        const rzp = new Razorpay({ key_id: keyId, key_secret: keySecret });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const refundResult: any = await (rzp.payments as any).refund(paidOrder.razorpay_payment_id, {
+          amount: paidOrder.amount,
+          notes: {
+            reason: rejectionReason || "Organizer rejected registration application",
+            attendee_id: attendeeId,
+            event_id: eventId,
+          },
+        });
+
+        refundId = refundResult?.id || `rfnd_${Date.now()}`;
+
+        await admin
+          .from("ticket_orders")
+          .update({
+            status: "refunded",
+            refund_id: refundId,
+            refund_status: "processed",
+            refunded_at: new Date().toISOString(),
+            refund_amount: paidOrder.amount,
+            refund_reason: rejectionReason || "Application rejected by organizer",
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", paidOrder.id);
+      }
+    } catch (refundErr) {
+      console.error("[rejectAttendee] Error processing Razorpay refund:", refundErr);
+      await admin
+        .from("ticket_orders")
+        .update({
+          refund_status: "pending",
+          refund_reason: rejectionReason || "Application rejected — automated refund failed, queued for retry",
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", paidOrder.id);
+    }
+
+    // 5. Generate GST Credit Note
+    try {
+      const cnResult = await createCreditNoteForPayment({
+        paymentId: paidOrder.razorpay_payment_id,
+        reason: rejectionReason || "Application rejected by organizer — Full Refund",
+        amountRupees: (paidOrder.amount || 0) / 100,
+        userId: event.organizer_id,
+        attendeeId: attendee.id,
+        eventId: event.id,
+        customerName: attendee.name,
+        customerEmail: attendee.email,
+      });
+      if (cnResult?.creditNoteNumber) {
+        creditNoteNumber = cnResult.creditNoteNumber;
+      }
+    } catch (cnErr) {
+      console.error("[rejectAttendee] Error generating credit note:", cnErr);
+    }
+
+    // 6. Send attendee rejection & refund confirmation email
+    void sendAttendeeRejectionAndRefundEmail({
+      to: attendee.email,
+      attendeeName: attendee.name,
+      eventName: event.name,
+      amountINR: (paidOrder.amount || 0) / 100,
+      refundId,
+      creditNoteNumber,
+      reason: rejectionReason,
+    }).catch((emailErr) => console.error("[rejectAttendee] Error sending refund notification:", emailErr));
+  }
+
+  if (event.organization_id) {
+    const { recordEnterpriseAudit } = await import("@/lib/audit/enterprise-audit");
+    void recordEnterpriseAudit({
+      organizationId: event.organization_id,
+      eventId: event.id,
+      userId: user.id,
+      actorEmail: user.email,
+      action: "ATTENDEE_REJECTED",
+      resourceType: "attendee",
+      resourceId: attendeeId,
+      oldValues: { application_status: attendee.application_status },
+      newValues: { application_status: "rejected" },
+      details: {
+        attendeeName: attendee.name,
+        attendeeEmail: attendee.email,
+        rejectionReason: rejectionReason || null,
+        refundId: refundId || null,
+        creditNoteNumber: creditNoteNumber || null,
+      },
+    });
   }
 
   revalidateEvent(eventId);
@@ -293,6 +460,7 @@ export async function addAttendee(
 
   const parsed = attendeeSchema.safeParse(data);
   if (!parsed.success) return { error: parsed.error.issues[0].message };
+
 
   const { error } = await supabase.from("attendees").insert({
     event_id: eventId,
@@ -384,7 +552,7 @@ export async function submitApplication(
   payment?: PaymentVerification,
   ticketTypeId?: string | null,
   customResponses?: Record<string, unknown>
-): Promise<{ error?: string; passToken?: string; waitlisted?: boolean; message?: string } | undefined> {
+): Promise<{ error?: string; passToken?: string; waitlisted?: boolean; message?: string; passPending?: boolean; attendeeId?: string } | undefined> {
   const admin = adminClient();
 
   const { data: event } = await admin
@@ -640,6 +808,7 @@ export async function submitApplication(
     })().catch(() => {});
   }
 
+
   if (event.auto_approve) {
     // Capacity check before auto-approving
     const { count: approvedCount } = await admin
@@ -793,7 +962,16 @@ export async function submitApplication(
       return { passToken: pass.pass_token };
     }
 
-    // Pass generation failed — still accepted
+    // Pass generation failed — track for recovery retry and notify ops
+    await admin
+      .from("attendees")
+      .update({
+        pass_status: "pending_retry",
+        pass_error_details: passError ? passError.message : "Initial pass generation timed out",
+        pass_retry_count: 1,
+      })
+      .eq("id", attendee.id);
+
     incrementRegistrationsUsed();
     sendWebhooks(event.organizer_id, "registration.created", {
       attendee_id: attendee.id,
@@ -803,7 +981,20 @@ export async function submitApplication(
       application_status: "approved",
     }).catch(() => {});
 
-    return {};
+    // Schedule background self-healing retry
+    void (async () => {
+      try {
+        await retryPassGeneration(attendee.id, eventId);
+      } catch (retryErr) {
+        console.error("[submitApplication] Auto-retry pass recovery failed:", retryErr);
+      }
+    })();
+
+    return {
+      passPending: true,
+      attendeeId: attendee.id,
+      message: "Registration confirmed. Pass generation is processing and will arrive in your email shortly.",
+    };
   }
 
   // Manual approval flow
@@ -971,4 +1162,107 @@ export async function exportAttendeesCSV(
   ].join("\n");
 
   return { csv };
+}
+
+/**
+ * Retries pass generation for an attendee whose pass failed or is pending retry.
+ * Can be called by background self-healer, attendee confirmation page, or Ops Command Center.
+ */
+export async function retryPassGeneration(
+  attendeeId: string,
+  eventId: string
+): Promise<{ success: boolean; passToken?: string; error?: string }> {
+  const admin = adminClient();
+
+  const { data: attendee, error: attError } = await admin
+    .from("attendees")
+    .select("id, name, email, phone, pass_type, application_status, pass_status, ticket_type_id, pass_retry_count")
+    .eq("id", attendeeId)
+    .eq("event_id", eventId)
+    .single();
+
+  if (attError || !attendee) {
+    return { success: false, error: "Attendee not found." };
+  }
+
+  if (attendee.application_status !== "approved") {
+    return { success: false, error: "Only approved attendees can generate entrance passes." };
+  }
+
+  // 1. Check if pass already exists in passes table
+  const { data: existingPass } = await admin
+    .from("passes")
+    .select("pass_token, status")
+    .eq("attendee_id", attendeeId)
+    .maybeSingle();
+
+  if (existingPass?.pass_token) {
+    await admin
+      .from("attendees")
+      .update({ pass_status: "generated", pass_error_details: null })
+      .eq("id", attendeeId);
+
+    return { success: true, passToken: existingPass.pass_token };
+  }
+
+  // 2. Fetch event metadata for communications
+  const { data: event } = await admin
+    .from("events")
+    .select("name, event_date, venue")
+    .eq("id", eventId)
+    .single();
+
+  // 3. Attempt insert
+  const { data: newPass, error: passErr } = await admin
+    .from("passes")
+    .insert({
+      event_id: eventId,
+      attendee_id: attendee.id,
+      pass_type: attendee.pass_type,
+      ticket_type_id: attendee.ticket_type_id ?? null,
+    })
+    .select("pass_token")
+    .single();
+
+  if (passErr || !newPass) {
+    await admin
+      .from("attendees")
+      .update({
+        pass_status: "failed",
+        pass_error_details: passErr?.message || "Pass generation retry failed",
+        pass_retry_count: (attendee.pass_retry_count ?? 0) + 1,
+      })
+      .eq("id", attendee.id);
+
+    return { success: false, error: passErr?.message || "Failed to generate pass." };
+  }
+
+  // 4. Update attendee pass status to generated
+  await admin
+    .from("attendees")
+    .update({ pass_status: "generated", pass_error_details: null })
+    .eq("id", attendee.id);
+
+  // 5. Send communications
+  if (event) {
+    void communicationService
+      .sendTicketCommunications({
+        eventId,
+        eventName: event.name,
+        eventDate: event.event_date,
+        venue: event.venue,
+        ticketId: formatTicketId(newPass.pass_token),
+        passToken: newPass.pass_token,
+        attendeeId: attendee.id,
+        attendeeName: attendee.name,
+        email: attendee.email,
+        phone: attendee.phone || null,
+        passType: attendee.pass_type,
+        ticketUrl: buildTicketUrl(newPass.pass_token),
+        version: `attendee_${attendee.id}_retry`,
+      })
+      .catch((err: unknown) => console.error("[communications retry]", err));
+  }
+
+  return { success: true, passToken: newPass.pass_token };
 }

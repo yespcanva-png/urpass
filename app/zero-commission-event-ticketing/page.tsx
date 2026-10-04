@@ -1,42 +1,19 @@
 import type { Metadata } from "next";
-import {
-  Percent,
-  IndianRupee,
-  ShieldCheck,
-  Building2,
-  CheckCircle2,
-  Zap,
-  CreditCard,
-  QrCode,
-  TrendingUp,
-  Sliders,
-  DollarSign,
-  Scale,
-} from "lucide-react";
+import { Banknote, BarChart3, CreditCard, Lock, QrCode, ScanLine } from "lucide-react";
 import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
-  title: "Zero Commission Event Ticketing — 0% Platform Fees in India | URPASS",
-  description:
-    "Sell event tickets with 0% platform commission. Connect your own payment gateway (Razorpay), receive direct bank settlements, and stop paying 5%–10% per ticket to event portals.",
-  keywords: [
-    "zero commission event ticketing",
-    "0 commission event ticketing india",
-    "no commission ticketing platform",
-    "free event ticketing software india",
-    "sell tickets zero commission",
-    "event ticketing without commission",
-    "townscript alternative zero commission",
-    "eventbrite alternative zero fees",
-    "URPASS zero commission",
-  ],
-  alternates: { canonical: "https://urpass.space/zero-commission-event-ticketing" },
+  title: "Zero-Commission Event Ticketing Platform | URPASS",
+  description: "Zero-commission event ticketing platform. Keep 100% of your ticket sales with flat subscription pricing, automated QR passes, and sub-second phone scanning.",
+  keywords: ["zero commission event ticketing", "zero fee ticketing platform", "0% commission event tickets", "no fee event ticketing", "flat fee event ticketing software", "event ticketing without commission"],
+  alternates: {
+    canonical: "https://urpass.space/zero-commission-event-ticketing",
+  },
   openGraph: {
-    title: "Zero Commission Event Ticketing Software | URPASS",
-    description:
-      "Keep 100% of your ticket sales. URPASS charges 0% per-ticket commission with direct bank deposits and sub-second QR entrance passes.",
+    title: "Zero-Commission Event Ticketing Platform | URPASS",
+    description: "Zero-commission event ticketing platform. Keep 100% of your ticket sales with flat subscription pricing, automated QR passes, and sub-second phone scanning.",
     url: "https://urpass.space/zero-commission-event-ticketing",
-    locale: "en_IN",
+    locale: "en_US",
     type: "website",
   },
 };
@@ -45,315 +22,227 @@ export default function ZeroCommissionEventTicketingPage() {
   return (
     <SEOPage
       config={{
-        canonicalUrl: "https://urpass.space/zero-commission-event-ticketing",
-        badge: "0% PLATFORM COMMISSION",
-        h1: "Zero Commission Event Ticketing: Keep 100% of Your Ticket Sales",
-        description:
-          "Stop paying 6% to 10% on every ticket you sell. URPASS connects directly to your Razorpay account so registration revenue deposits straight into your bank with ₹0 platform deductions.",
-        ctaLabel: "Start Selling with 0% Commission",
-
-        // 10-Point Standard: Direct Answer at the Top (40-80 words)
-        directAnswer: {
-          title: "What is Zero Commission Event Ticketing?",
-          summary:
-            "Zero commission event ticketing is a software pricing model where the ticketing platform charges no percentage cut on ticket sales. Instead of surrendering 5% to 10% of gross revenue to ticketing portals like Townscript or Eventbrite, organizers use URPASS under a predictable flat plan. Funds flow directly through the organizer's own Razorpay or payment gateway into their Indian bank account, subject only to standard payment processing costs (~2%).",
-          keyPoints: [
-            "0% URPASS platform cut: keep 100% of your ticket proceeds on every tier sold",
-            "Direct merchant settlement: funds land directly in your Indian bank account on T+2 schedule",
-            "Zero portal escrow lockup: no waiting 15–30 days after your event ends to receive your funds",
-            "No surprise 'convenience fees' or booking charges tacked onto attendee checkout screens",
-            "Includes Ticket Studio, sub-second QR gate scanner, and WhatsApp pass distribution",
-          ],
-        },
-
-        // 10-Point Standard: Key Facts & Specifications Table
-        keyFactsTable: {
-          title: "Gross Revenue Retained Across Different Event Sizes",
-          subtitle: "Financial comparison showing how much money you keep with URPASS vs traditional 6%–10% portals.",
-          headers: ["Ticket Revenue", "URPASS (0% Commission)", "Traditional Portals (Townscript / Eventbrite)"],
-          rows: [
-            {
-              col1: "₹1,00,000 (Small Fest / 200 tickets @ ₹500)",
-              col2: "₹1,00,000 kept (Save ₹8,400+)",
-              col3: "₹79,500–₹91,600 kept (Portal takes ₹8,400–₹20,500)",
-            },
-            {
-              col1: "₹5,00,000 (Conference / 500 tickets @ ₹1,000)",
-              col2: "₹5,00,000 kept (Save ₹38,000+)",
-              col3: "₹428,000–₹462,000 kept (Portal takes ₹38,000–₹72,000)",
-            },
-            {
-              col1: "₹10,00,000 (College Culturals / 2,000 tickets @ ₹500)",
-              col2: "₹10,00,000 kept (Save ₹85,000+)",
-              col3: "₹820,000–₹915,000 kept (Portal takes ₹85,000–₹1,80,000)",
-            },
-            {
-              col1: "₹25,00,000 (Flagship Expo / 5,000 tickets @ ₹500)",
-              col2: "₹25,00,000 kept (Save ₹2,15,000+)",
-              col3: "₹20,40,000–₹22,85,000 kept (Portal takes ₹2,15,000–₹4,60,000)",
-            },
-            {
-              col1: "Payout Timeline",
-              col2: "Direct daily/T+2 deposits to your bank",
-              col3: "Held until 10–30 days after event ends",
-            },
-          ],
-        },
-
-        // Core Features
-        features: [
-          {
-            icon: Percent,
-            title: "0% Platform Commission",
-            desc: "Sell 100 tickets or 10,000 passes without paying a single rupee of commission to URPASS. Your ticket earnings belong entirely to you.",
-          },
-          {
-            icon: Building2,
-            title: "Direct Merchant Settlement",
-            desc: "Link your verified Razorpay merchant ID. Ticket sales deposit straight into your corporate or institutional bank account with automated reconciliation.",
-          },
-          {
-            icon: Zap,
-            title: "Real-Time Cash Flow",
-            desc: "Stop waiting weeks after your festival ends to collect funds. Daily settlements provide continuous liquidity to pay stage, audio, and venue vendors.",
-          },
-          {
-            icon: QrCode,
-            title: "Automated QR Passes",
-            desc: "Every purchase automatically provisions a tamper-proof digital pass with dynamic QR codes delivered straight to the attendee via WhatsApp and Email.",
-          },
-          {
-            icon: ShieldCheck,
-            title: "1-Click Refund Management",
-            desc: "Execute instant or partial attendee refunds directly from your organizer console with automated pass revocation across all gate scanners.",
-          },
-          {
-            icon: Scale,
-            title: "GST Invoice Generation",
-            desc: "Collect attendee GSTINs and automatically issue compliant tax invoices for corporate ticket buyers without manual bookkeeping.",
-          },
-        ],
-
-        // 10-Point Standard: Real Product Proof
-        productProof: {
-          badge: "FEE COMPARISON CALCULATOR",
-          title: "Calculated Savings: Over ₹45 Lakhs Saved by Indian Organizers",
-          description:
-            "College unions, tech associations, and independent event producers retain thousands of rupees on every single event by adopting URPASS's flat SaaS model.",
-          type: "analytics",
-        },
-
-        // 10-Point Standard: India-Specific Details
-        indiaHighlights: {
-          title: "Built for Indian Event Budgets & Cash-Flow Realities",
-          subtitle: "Why 0% commission ticketing is revolutionizing event production across India.",
-          items: [
-            {
-              title: "Funding Vendor Advances on Time",
-              description:
-                "Indian sound, lighting, venue, and celebrity vendors require 50% advances days before showtime. Commission portals holding funds until post-event create severe budget crises. Direct settlements solve this completely.",
-              badge: "Vendor Liquidity",
-            },
-            {
-              title: "Transparent Attendee Checkouts",
-              description:
-                "Indian ticket buyers hate surprise 'Internet Handling Fees' and hidden checkout charges. With URPASS, the price you advertise is the exact amount the attendee pays.",
-              badge: "Zero Buyer Fatigue",
-            },
-            {
-              title: "College & Non-Profit Preservation",
-              description:
-                "Student departmental symposiums operate on shoestring budgets funded by ticket entries. Surrendering ₹40,000 in portal commissions often erases the entire prize money pool.",
-              badge: "Student Friendly",
-            },
-            {
-              title: "Native UPI Dominance",
-              description:
-                "Zero commission applies seamlessly across PhonePe, Google Pay, Paytm, and net banking, allowing fast checkout on the payment rails Indians prefer.",
-              badge: "UPI Integrated",
-            },
-          ],
-        },
-
-        // Step-by-Step Workflow
-        steps: [
-          {
-            n: "01",
-            title: "Connect Your Payment Gateway",
-            desc: "Paste your Razorpay Key ID and Key Secret in settings. Connects in under 2 minutes with instant test mode verification.",
-          },
-          {
-            n: "02",
-            title: "Set Your Ticket Tiers & Prices",
-            desc: "Create early bird, general admission, or VIP tiers with custom capacities, pricing in INR, and custom registration fields.",
-          },
-          {
-            n: "03",
-            title: "Keep 100% of Your Revenue",
-            desc: "Share your branded registration link. Attendee payments deposit directly to your bank account with zero commission deducted by URPASS.",
-          },
-        ],
-
-        // Deep Dive Educational Sections
-        deepDiveSections: [
-          {
-            badge: "PRICING ECONOMICS",
-            title: "Why Percentage-Based Ticketing Portals Are Obsolete",
-            paragraphs: [
-              "When ticketing platforms launched in the early 2000s, charging a 5% to 10% fee was justified by the high cost of manual server provisioning, specialized physical ticket printing, and proprietary gate hardware.",
-              "In 2026, the marginal cloud cost of issuing a cryptographic digital QR pass and updating a database is less than ₹0.05. Charging ₹50 on a ₹500 ticket represents an exorbitant 1,000x markup on underlying technology costs.",
-              "URPASS operates like modern cloud infrastructure providers: you pay a flat, predictable software subscription (or use our free tier for smaller events), and connect your own payment rails. Whether you sell 200 tickets or 10,000 tickets, your software costs stay fixed while your profit grows.",
-            ],
-            bullets: [
-              "Software infrastructure costs do not increase proportionally with ticket price",
-              "Flat subscription models align platform incentives with organizer success",
-              "You never face penalty fees for selling higher-priced VIP packages",
-              "Complete freedom from proprietary merchant lock-in",
-            ],
-            takeaway:
-              "Fixed software pricing replaces predatory percentage fees with transparent, predictable budgeting.",
-          },
-          {
-            badge: "CASH FLOW FREEDOM",
-            title: "The Hidden Danger of Ticket Aggregator Escrow Holds",
-            paragraphs: [
-              "Few first-time organizers read the fine print of legacy ticketing portals. Most contracts state that all ticket revenue is held in the portal's escrow account until 7 to 30 days after the event concludes successfully.",
-              "This lockup forces organizers to take high-interest short-term loans or pay out of personal savings to cover security deposits, artist fees, catering, and venue rental advances.",
-              "With URPASS, you are the merchant of record. Every ticket payment is processed through your own Razorpay account and settles directly to your bank account via standard banking settlement schedules (T+2 days). You retain continuous control over your working capital.",
-            ],
-            bullets: [
-              "Direct merchant settlement ensures daily cash flow leading up to the event",
-              "Zero risk of portal insolvency or unilateral payout freezes",
-              "Immediate processing of refunds without bureaucratic third-party ticket queues",
-              "Clean bank statements that match internal accounting ledgers 1-to-1",
-            ],
-            takeaway:
-              "Direct merchant settlement gives organizers full financial independence and immediate liquidity.",
-          },
-        ],
-
-        // 10-Point Standard: Competitor Comparison Table
-        competitorComparison: {
-          title: "URPASS Zero Commission vs Major Ticketing Portals",
-          subtitle: "Detailed breakdown of platform fees, payout terms, and attendee experience.",
-          competitorName: "Commission Ticketing Aggregators",
-          rows: [
-            {
-              criteria: "Platform Ticketing Commission",
-              urpass: "0% Commission",
-              competitor: "5% to 10% taken per ticket",
-              urpassAdvantage: true,
-            },
-            {
-              criteria: "Payout Timing",
-              urpass: "Direct T+2 daily bank deposits",
-              competitor: "Held for 15–30 days after event ends",
-              urpassAdvantage: true,
-            },
-            {
-              criteria: "Added 'Convenience Fee' to Buyer",
-              urpass: "₹0 (Clean transparent checkout)",
-              competitor: "₹25–₹150 surprise fee added at final checkout step",
-              urpassAdvantage: true,
-            },
-            {
-              criteria: "Attendee Data Ownership",
-              urpass: "100% owned by organizer (Exportable CSV anytime)",
-              competitor: "Portal retains data and markets competitor events to your guests",
-              urpassAdvantage: true,
-            },
-            {
-              criteria: "Entrance Gate Scanner Included",
-              urpass: "Yes (Sub-second in-browser phone scanner included free)",
-              competitor: "Requires paying for rental devices or scanner apps",
-              urpassAdvantage: true,
-            },
-            {
-              criteria: "Digital Pass Maker / Ticket Studio",
-              urpass: "Full drag-and-drop designer included",
-              competitor: "Generic uncustomizable portal template",
-              urpassAdvantage: true,
-            },
-          ],
-        },
-
-        // Target Event Formats
-        useCases: [
-          "College Technical Symposiums & Cultural Fests",
-          "Tech Conferences, Developer Summits & Hackathons",
-          "Music Festivals, Concerts & Comedy Shows",
-          "Corporate Summits & Business Offsites",
-          "Paid Workshops, Bootcamps & Masterclasses",
-          "Trade Shows, Consumer Expos & B2B Summits",
-        ],
-
-        // Topic Cluster Internal Links
-        relatedLinks: [
-          {
-            title: "Event Ticketing Software Pillar",
-            href: "/event-ticketing-software",
-            category: "Product",
-          },
-          {
-            title: "Event Registration Software Pillar",
-            href: "/event-registration-software",
-            category: "Product",
-          },
-          {
-            title: "Event Registration with UPI",
-            href: "/event-registration-with-upi",
-            category: "Product",
-          },
-          {
-            title: "Pricing & Plans",
-            href: "/pricing",
-            category: "Product",
-          },
-          {
-            title: "Townscript Alternative India",
-            href: "/compare/townscript-alternative",
-            category: "Comparison",
-          },
-          {
-            title: "Eventbrite Alternative India",
-            href: "/compare/eventbrite-alternative-india",
-            category: "Comparison",
-          },
-          {
-            title: "Digital Event Pass Maker",
-            href: "/digital-event-pass",
-            category: "Product",
-          },
-        ],
-
-        // Comprehensive FAQs
-        faqs: [
-          {
-            q: "How can URPASS offer 0% commission on event tickets?",
-            a: "URPASS operates on a transparent SaaS subscription model (with plans starting from ₹0 on our permanent Free tier up to flat monthly plans) rather than taking a percentage cut of your revenue. You connect your own payment gateway (Razorpay), so you never pay URPASS a commission per ticket.",
-          },
-          {
-            q: "What payment processing fees will I still pay?",
-            a: "You only pay the standard payment gateway transaction fee charged directly by your gateway provider (e.g. ~2% for Razorpay UPI/Cards). URPASS takes 0% on top of that.",
-          },
-          {
-            q: "How quickly do ticket funds reach my bank account?",
-            a: "Because payments are processed through your own merchant gateway, funds settle according to your gateway's standard settlement cycle (typically T+2 business days in India). You do not have to wait for URPASS to approve or release payouts.",
-          },
-          {
-            q: "Can I sell free tickets alongside paid tickets?",
-            a: "Yes. You can configure free tiers (such as Volunteer or Speaker passes) and paid tiers (Early Bird, General Admission, VIP) within the same event registration form.",
-          },
-          {
-            q: "Is there any setup fee to start using zero-commission ticketing?",
-            a: "No. You can sign up, create your event, and connect your payment gateway with zero setup fees and zero credit card required.",
-          },
-          {
-            q: "Can I offer discount promo codes to attendees?",
-            a: "Yes. You can generate percentage-off or flat-rupee discount coupon codes with custom usage limits and expiration dates.",
-          },
-        ],
-      }}
+  "badge": "0% TICKETING COMMISSION",
+  "h1": "Zero-Commission Event Ticketing Platform",
+  "canonicalUrl": "https://urpass.space/zero-commission-event-ticketing",
+  "description": "Zero-commission event ticketing platform. Keep 100% of your ticket sales with flat subscription pricing, automated QR passes, and sub-second phone scanning.",
+  "ctaLabel": "Keep 100% of Ticket Revenue →",
+  "ctaTitle": "Retain 100% of Your Gross Ticket Revenue",
+  "ctaDescription": "Stop paying 5% to 10% ticketing aggregator commissions. Connect your payment gateway, pay simple flat monthly subscriptions, and keep every penny.",
+  "directAnswer": {
+    "title": "What is a Zero-Commission Event Ticketing Platform?",
+    "summary": "A zero-commission event ticketing platform is an online ticketing system that charges 0% percentage cuts on your ticket sales. Unlike traditional ticketing aggregators that take 5% to 10% of gross revenue, URPASS operates on transparent flat monthly subscriptions, settling 100% of your ticket sales directly into your merchant bank account.",
+    "keyPoints": [
+      "0% platform ticketing commission — retain 100% of your ticket price",
+      "Direct payment gateway settlement via Stripe or Razorpay to your bank",
+      "Automated digital QR pass generation and instant mobile delivery",
+      "Sub-second (<0.3s) camera check-in on volunteer phones with zero hardware rentals"
+    ]
+  },
+  "whatIs": {
+    "title": "What is Zero-Commission Event Ticketing?",
+    "definition": "Zero-commission event ticketing is a business model and software platform that replaces variable per-ticket percentage penalties with flat software subscription pricing. Organizers connect their own payment gateway, collect ticket funds directly, and pay zero commission to the ticketing software provider.",
+    "details": [
+      "Saves event organizers thousands in unnecessary ticketing aggregator commissions",
+      "Eliminates delayed payout cycles where platforms hold your ticket money until after the event",
+      "Provides full ownership of attendee contact records with zero third-party promotional ads",
+      "Includes enterprise-grade gate operations with sub-second smartphone camera check-in"
+    ]
+  },
+  "howItWorksTitle": "How Zero-Commission Ticketing Works",
+  "howItWorksSubtitle": "Keep your ticket revenue in six simple steps.",
+  "steps": [
+    {
+      "n": "01",
+      "title": "Create your event",
+      "desc": "Set your ticket prices, tier categories, and capacity caps in 3 minutes."
+    },
+    {
+      "n": "02",
+      "title": "Connect direct gateway",
+      "desc": "Link your Stripe or Razorpay account to receive ticket revenues directly."
+    },
+    {
+      "n": "03",
+      "title": "Publish branded ticketing page",
+      "desc": "Share your clean, fast-loading ticket page with zero competitor ads."
+    },
+    {
+      "n": "04",
+      "title": "Attendees buy tickets",
+      "desc": "100% of the ticket price lands directly in your bank account with zero platform cuts."
+    },
+    {
+      "n": "05",
+      "title": "Automated QR pass issuance",
+      "desc": "Buyers receive secure digital QR tickets via email and mobile web immediately."
+    },
+    {
+      "n": "06",
+      "title": "Scan at the entrance",
+      "desc": "Door volunteers scan passes in <0.3s with smartphone cameras for green entry."
+    }
+  ],
+  "featuresTitle": "Capabilities Designed to Maximize Organizer Profit",
+  "featuresSubtitle": "Zero percentage fees, direct bank payouts, and sub-second phone scanning.",
+  "features": [
+    {
+      icon: Banknote,
+      "title": "0% Per-Ticket Commission",
+      "desc": "Keep 100% of your ticket price. On a £10,000 / $10,000 event, traditional platforms deduct £700 to £1,000. URPASS charges zero commission."
+    },
+    {
+      icon: CreditCard,
+      "title": "Direct Gateway Settlement",
+      "desc": "Connect your own Stripe or Razorpay account. Ticket funds deposit directly to your bank on your standard schedule."
+    },
+    {
+      icon: QrCode,
+      "title": "Instant QR Ticket Issuance",
+      "desc": "Automated delivery of unique, mobile-responsive QR passes immediately upon successful payment."
+    },
+    {
+      icon: ScanLine,
+      "title": "Sub-0.3s Gate Validation",
+      "desc": "Scan tickets in under 0.3 seconds using any volunteer smartphone browser. Clear queues rapidly."
+    },
+    {
+      icon: Lock,
+      "title": "Atomic Fraud Protection",
+      "desc": "Prevent ticket counterfeiting and screenshot sharing. Scanned tickets are locked across all doors in <150ms."
+    },
+    {
+      icon: BarChart3,
+      "title": "Real-Time Revenue Telemetry",
+      "desc": "Track ticket sales velocity, tier inventory, and revenue totals live from your organizer dashboard."
+    }
+  ],
+  "whoShouldUse": {
+    "title": "Who Benefits from Zero-Commission Ticketing?",
+    "subtitle": "Built for commercial event organizers who value their profit margins.",
+    "personas": [
+      {
+        "badge": "CONFERENCES",
+        "title": "B2B Conferences & Summits",
+        "desc": "Save thousands in platform fees on high-ticket delegate passes and issue automated tax invoices."
+      },
+      {
+        "badge": "WORKSHOPS",
+        "title": "Masterclasses & Professional Training",
+        "desc": "Collect course fees directly and verify enrolled attendees at the door in seconds."
+      },
+      {
+        "badge": "CONCERTS",
+        "title": "Music Festivals & Nightlife",
+        "desc": "Sell tickets with zero commission and scan mobile QR codes at venue doors in <0.3s."
+      },
+      {
+        "badge": "COLLEGES",
+        "title": "College Fests & Student Balls",
+        "desc": "Keep 100% of ticket revenue for student clubs instead of paying aggregator cuts."
+      }
+    ]
+  },
+  "howQrCheckInWorks": {
+    "title": "How Zero-Commission Event Check-In Operates",
+    "subtitle": "Sub-second camera scanning on volunteer phones.",
+    "description": "Attendees display their mobile QR pass on their phone screen. Volunteer staff open the scanner URL in Safari or Chrome on their smartphones. Pointing the camera at the pass validates the ticket in under 0.3 seconds with an audible green chime, verifying their registration without needing a paper roster.",
+    "points": [
+      "Zero equipment costs: volunteers use their personal mobile phones.",
+      "Offline engine pre-loads ticket databases to validate passes with zero network connectivity.",
+      "Atomic row-locking prevents shared pass screenshots across different gate tents.",
+      "Rapid manual lookup by name if an attendee's phone battery has died."
+    ]
+  },
+  "keyFactsTable": {
+    "title": "Zero Commission vs Commission Aggregators",
+    "subtitle": "How URPASS flat pricing compares to percentage cuts on ticket sales.",
+    "headers": [
+      "Financial Dimension",
+      "Percentage Aggregators (Eventbrite / Ticketmaster)",
+      "URPASS Zero-Commission Platform"
+    ],
+    "rows": [
+      {
+        "col1": "Fee on £10,000 Sales",
+        "col2": "£700 to £1,000 deducted in ticketing fees",
+        "col3": "£0 commission; flat £35/mo subscription"
+      },
+      {
+        "col1": "Payout Control",
+        "col2": "Platform holds your money until weeks after the event",
+        "col3": "Direct settlement to your bank via Stripe/Razorpay"
+      },
+      {
+        "col1": "Competitor Ads",
+        "col2": "Promotes competitor events on your checkout page",
+        "col3": "100% white-label and ad-free experience"
+      },
+      {
+        "col1": "Entrance Check-In",
+        "col2": "Slow native apps or expensive rented hardware",
+        "col3": "Sub-second (<0.3s) camera scan on volunteer phone"
+      }
+    ]
+  },
+  "faqs": [
+    {
+      "q": "What is zero-commission event ticketing?",
+      "a": "It is an event ticketing model where the software platform charges 0% percentage cuts on your ticket sales, allowing organizers to retain 100% of their ticket revenue."
+    },
+    {
+      "q": "How does URPASS make money if there is 0% commission?",
+      "a": "URPASS operates on transparent flat monthly subscriptions (£15 / £35 / £79/mo or INR equivalent) for organizers hosting paid events, regardless of how many tickets you sell."
+    },
+    {
+      "q": "Do I have to pay credit card processing fees?",
+      "a": "Yes. Standard payment processing fees charged by your gateway (Stripe or Razorpay, typically ~1.4% to 2.9%) still apply, but URPASS adds zero platform markup."
+    },
+    {
+      "q": "When do I receive my ticket money?",
+      "a": "Because you connect your own Stripe or Razorpay account, all ticket payments land directly into your own merchant account on your standard payout schedule."
+    },
+    {
+      "q": "Can I cancel my monthly subscription after my event finishes?",
+      "a": "Yes! You can pause or cancel your subscription at any time with no lock-in contracts or cancellation penalties."
+    },
+    {
+      "q": "How can URPASS offer zero platform commission?",
+      "a": "URPASS operates on transparent SaaS subscription plans or optional organizer upgrades, never taking a percentage cut from your ticket sales."
+    },
+    {
+      "q": "Do attendees pay booking fees or convenience charges on checkout?",
+      "a": "No. Organizers can choose to absorb standard payment gateway fees (e.g., Stripe/Razorpay) so attendees pay exactly the face value of the ticket."
+    }
+  ],
+  "relatedLinks": [
+    {
+      "title": "Paid Event Registration & Online Ticketing Software",
+      "href": "/paid-event-registration-software",
+      "category": "Product"
+    },
+    {
+      "title": "Eventbrite Alternative",
+      "href": "/eventbrite-alternative",
+      "category": "Comparison"
+    },
+    {
+      "title": "Eventbrite Alternative UK",
+      "href": "/eventbrite-alternative-uk",
+      "category": "Comparison"
+    },
+    {
+      "title": "Event Ticketing with Razorpay, UPI & QR Passes",
+      "href": "/event-ticketing-with-razorpay",
+      "category": "Product"
+    },
+    {
+      "title": "Conference Registration Software with QR Check-In",
+      "href": "/conference-registration-software",
+      "category": "Use Case"
+    }
+  ]
+}}
     />
   );
 }

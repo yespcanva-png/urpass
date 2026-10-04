@@ -7,6 +7,10 @@ interface Props {
 }
 
 export default function TextElement({ element }: Props) {
+  const fontSizeVal = element.fontSize || 14;
+  const lineHeightVal = element.lineHeight || 1.25;
+  const maxLines = Math.max(1, Math.floor(element.height / (fontSizeVal * lineHeightVal)));
+
   return (
     <div
       style={{
@@ -18,24 +22,22 @@ export default function TextElement({ element }: Props) {
             : element.fontFamily === "serif"
             ? "ui-serif, Georgia, Cambria, Times, serif"
             : "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-        fontSize: `${element.fontSize}px`,
+        fontSize: `${fontSizeVal}px`,
         fontWeight: element.fontWeight,
         color: element.color,
         textAlign: element.textAlign,
         letterSpacing: element.letterSpacing ? `${element.letterSpacing}px` : undefined,
-        lineHeight: element.lineHeight || 1.25,
+        lineHeight: lineHeightVal,
         textTransform: element.textTransform || "none",
         opacity: element.opacity !== undefined ? element.opacity : 1,
         wordBreak: "break-word",
-        display: "flex",
-        alignItems: "center",
-        justifyContent:
-          element.textAlign === "center"
-            ? "center"
-            : element.textAlign === "right"
-            ? "flex-end"
-            : "flex-start",
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+        display: "-webkit-box",
+        WebkitLineClamp: maxLines,
+        WebkitBoxOrient: "vertical",
       }}
+      title={element.content}
     >
       {element.content}
     </div>

@@ -1,48 +1,20 @@
 import type { Metadata } from "next";
-import {
-  Zap,
-  QrCode,
-  CreditCard,
-  Users,
-  BarChart3,
-  Gift,
-  ShieldCheck,
-  CheckCircle2,
-  Sliders,
-  DollarSign,
-  Palette,
-  Smartphone,
-} from "lucide-react";
+import { Banknote, Lock, ScanLine, ShieldCheck, Users, Zap } from "lucide-react";
 import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
-  title: "Zoho Backstage Alternative in India | Fast QR Ticketing & 0% Fees | URPASS",
-  description:
-    "Looking for a faster, simpler Zoho Backstage alternative? URPASS offers instant 5-minute setup, digital QR passes, built-in Ticket Studio, Razorpay UPI, and zero bloated enterprise menus.",
-  keywords: [
-    "zoho backstage alternative",
-    "zoho backstage alternative india",
-    "simpler alternative to zoho backstage",
-    "free zoho backstage alternative",
-    "zoho backstage event check in",
-    "URPASS vs zoho backstage",
-    "event registration software india",
-    "college event management software",
-  ],
-  alternates: { canonical: "https://urpass.space/zoho-backstage-alternative" },
-  openGraph: {
-    title: "Zoho Backstage Alternative for Fast Event Ticketing | URPASS",
-    description:
-      "Skip the bloated menus and steep learning curve. URPASS gives you event registration, Ticket Studio badges, and sub-second QR check-in in under 5 minutes.",
-    url: "https://urpass.space/zoho-backstage-alternative",
-    locale: "en_IN",
-    type: "website",
+  title: "Zoho Backstage Alternative for Registration & Check-In | URPASS",
+  description: "The lightweight, agile Zoho Backstage alternative. 3-minute event setup, sub-second QR check-in, 0% ticket fees, and zero enterprise bloat.",
+  keywords: ["Zoho Backstage alternative", "Zoho Backstage competitor", "lightweight event registration software", "fast event check-in software", "simple conference registration platform", "zero commission event ticketing"],
+  alternates: {
+    canonical: "https://urpass.space/zoho-backstage-alternative",
   },
-  other: {
-    "geo.region": "IN",
-    "geo.placename": "India",
-    "geo.position": "20.5937;78.9629",
-    "ICBM": "20.5937, 78.9629",
+  openGraph: {
+    title: "Zoho Backstage Alternative for Registration & Check-In | URPASS",
+    description: "The lightweight, agile Zoho Backstage alternative. 3-minute event setup, sub-second QR check-in, 0% ticket fees, and zero enterprise bloat.",
+    url: "https://urpass.space/zoho-backstage-alternative",
+    locale: "en_US",
+    type: "website",
   },
 };
 
@@ -50,190 +22,232 @@ export default function ZohoBackstageAlternativePage() {
   return (
     <SEOPage
       config={{
-        canonicalUrl: "https://urpass.space/zoho-backstage-alternative",
-        badge: "ZOHO BACKSTAGE ALTERNATIVE",
-        h1: "Is URPASS a Good Zoho Backstage Alternative for Fast Event Registration?",
-        description:
-          "Replace clunky enterprise dashboards with streamlined event registration, custom Ticket Studio passes, instant UPI ticket sales via Razorpay, and sub-second phone browser QR scanning.",
-        ctaLabel: "Start free with URPASS",
-
-        // Direct Answer (40–60 words) immediately beneath H1
-        directAnswer: {
-          title: "Why choose URPASS over Zoho Backstage?",
-          summary:
-            "URPASS is a streamlined, developer-friendly alternative to Zoho Backstage purpose-built for conferences, college symposiums, and community workshops. While Zoho Backstage is designed for multi-track enterprise conventions with complex agenda builders and high per-event subscription pricing, URPASS focuses on what organizers actually need: 5-minute event setup, custom digital passes, zero platform commission, direct Razorpay UPI payments, and browser-based QR check-in.",
-          keyPoints: [
-            "5-minute event launch: no mandatory CRM linking, training calls, or complex multi-step setups",
-            "Built-in visual Ticket Studio: design custom lanyard badges and digital passes in your browser",
-            "Zero app downloads for gate staff: volunteers scan QR passes directly in Chrome or Safari",
-            "Direct Razorpay UPI payments: funds deposit into your Indian bank account on T+2 schedule",
-            "Permanent Free Plan: host up to 2 events and 100 attendees every month with zero credit card needed",
-          ],
-        },
-
-        // Key facts & feature comparison table
-        keyFactsTable: {
-          title: "Detailed Feature Comparison: URPASS vs Zoho Backstage",
-          subtitle: "Side-by-side comparison for event organizers in India across speed, cost, and check-in ease.",
-          headers: ["Feature / Parameter", "URPASS", "Zoho Backstage"],
-          rows: [
-            {
-              col1: "Setup Time from Zero to Live",
-              col2: "3 to 5 minutes (clean 3-step wizard)",
-              col3: "2 to 4 hours (complex agenda, tracks, speaker matrices)",
-            },
-            {
-              col1: "Gate Check-In Technology",
-              col2: "Instant phone browser camera scanner (0 app install)",
-              col3: "Requires downloading dedicated Zoho mobile app from app store",
-            },
-            {
-              col1: "Ticket & Pass Design",
-              col2: "Visual Ticket Studio (live canvas preview, dynamic fonts)",
-              col3: "Generic static PDF ticket templates",
-            },
-            {
-              col1: "Indian Payment Gateway",
-              col2: "Native Razorpay (Instant UPI, PhonePe, Cards, Netbanking)",
-              col3: "Zoho Checkout or third-party international gateway wrappers",
-            },
-            {
-              col1: "Platform Commission on Ticket Sales",
-              col2: "0% commission on all tiers",
-              col3: "Varies by tier + high base monthly / annual software cost",
-            },
-            {
-              col1: "Free Plan Availability",
-              col2: "Permanent Free Tier (100 registrations/month)",
-              col3: "14-day trial only; mandatory paid upgrade thereafter",
-            },
-          ],
-        },
-
-        productProof: {
-          badge: "DESIGNED FOR VELOCITY",
-          title: "Eliminate 90% of Admin Overlap with Built-in Event OS",
-          description:
-            "Zoho Backstage forces organizers through dozens of menus for session tracks, sponsor booths, and travel logistics. URPASS focuses on the core conversion engine: custom forms, instant QR pass generation, WhatsApp and email delivery, and multi-gate entrance check-in.",
-          type: "ticket-studio",
-        },
-
-        features: [
-          {
-            icon: Zap,
-            title: "5-Minute Event Launch",
-            desc: "Create registration forms, set ticket tiers, customize fields, and publish in under 5 minutes without technical training.",
-          },
-          {
-            icon: Palette,
-            title: "Visual Ticket Studio",
-            desc: "Design custom badges, lanyard cards, and digital phone passes. Attendees receive stunning tickets with scannable QR codes.",
-          },
-          {
-            icon: CreditCard,
-            title: "Razorpay UPI Payments",
-            desc: "Collect ticket revenue in Indian Rupees directly into your business or personal bank account via Razorpay.",
-          },
-          {
-            icon: QrCode,
-            title: "Browser-Based QR Check-In",
-            desc: "Volunteers scan attendee tickets using any smartphone browser. No app store downloads or bulky scanner hardware.",
-          },
-          {
-            icon: Gift,
-            title: "Permanent Free Tier",
-            desc: "Run free community and college events without paying a single rupee. No credit card required to get started.",
-          },
-          {
-            icon: BarChart3,
-            title: "Real-Time Attendance Analytics",
-            desc: "Track registrations, check-in velocity, gate throughput, and peak arrival times from your live organizer dashboard.",
-          },
-        ],
-
-        steps: [
-          {
-            n: "01",
-            title: "Create Event in 60s",
-            desc: "Enter event name, dates, venue, and upload your cover banner. No complex agenda matrices required.",
-          },
-          {
-            n: "02",
-            title: "Design Custom Tickets",
-            desc: "Use the built-in Ticket Studio to customize pass colors, attendee fields, event branding, and badges.",
-          },
-          {
-            n: "03",
-            title: "Collect Registrations & Payments",
-            desc: "Share your clean event link. Attendees register and pay via UPI with instant receipt and pass generation.",
-          },
-          {
-            n: "04",
-            title: "Scan & Check In at the Gate",
-            desc: "Volunteers open the scanner link on their phones and check in hundreds of attendees per hour with zero queues.",
-          },
-        ],
-
-        deepDiveSections: [
-          {
-            badge: "FEATURE BLOAT COMPARISON",
-            title: "Why Less is More: The Problem with Enterprise Event Platforms",
-            paragraphs: [
-              "Enterprise tools like Zoho Backstage and Cvent were engineered for massive multi-day industry expos with 40 breakout rooms, paid exhibitors, and trade show floor plans. If you are organizing a single-day tech conference, a college cultural festival, or a corporate workshop, 85% of those features get in your way.",
-              "Organizers report spending hours trying to disable irrelevant session booking requirements, navigate permission trees, and explain complex attendee mobile apps to volunteers. URPASS was created as a modern antidote: everything you need to sell tickets, issue digital passes, and check people in at the door, with zero friction.",
-            ],
-            bullets: [
-              "Zero clutter: intuitive UI designed for fast execution",
-              "Lightweight attendee experience: zero login or app download required for guests",
-              "Accessible on any mobile device, laptop, or tablet",
-            ],
-            takeaway: "Spend your time promoting your event, not configuring complex enterprise software.",
-          },
-        ],
-
-        useCases: [
-          "Technical symposiums, college fests, and campus hackathons",
-          "Single-day and multi-day developer conferences and workshops",
-          "Startup pitch days, networking meetups, and investor summits",
-          "Corporate seminars, customer appreciation events, and internal training",
-          "Paid creator workshops, sports meets, and community gatherings",
-        ],
-
-        relatedLinks: [
-          { title: "Event Ticketing Software India", href: "/event-ticketing-software-india", category: "Product" },
-          { title: "Eventbrite Alternative India", href: "/eventbrite-alternative-india", category: "Comparison" },
-          { title: "Zero Commission Event Ticketing", href: "/zero-commission-event-ticketing", category: "Product" },
-          { title: "UPI Event Ticketing", href: "/upi-event-ticketing", category: "Product" },
-          { title: "Multiple Gate Event Check-In", href: "/multiple-gate-event-check-in", category: "Product" },
-        ],
-
-        faqs: [
-          {
-            q: "Is URPASS an Eventbrite and Zoho Backstage alternative?",
-            a: "Yes. URPASS is built specifically for Indian and international organizers who want a clean, fast alternative to Zoho Backstage and Eventbrite without high per-ticket commissions, clunky mobile apps, or enterprise setup delays.",
-          },
-          {
-            q: "How does URPASS pricing compare to Zoho Backstage?",
-            a: "Zoho Backstage charges high recurring subscription fees or per-event organizer license costs. URPASS offers a permanent Free tier for up to 100 registrations/month, and affordable flat plans starting at ₹499/month with 0% platform commission on ticket sales.",
-          },
-          {
-            q: "Does URPASS support UPI payments like Google Pay and PhonePe?",
-            a: "Yes. URPASS integrates directly with Razorpay, supporting instant UPI QR codes, UPI Intent (auto-launch PhonePe, GPay, Paytm on mobile), credit/debit cards, and net banking with automated GST tax invoices.",
-          },
-          {
-            q: "Can volunteers scan tickets without creating accounts?",
-            a: "Yes. Unlike Zoho Backstage where volunteers must be invited as users or download dedicated apps, URPASS allows organizers to share a secure scanner link. Volunteers open it in Chrome or Safari on their personal phones and scan immediately.",
-          },
-          {
-            q: "What is URPASS?",
-            a: "URPASS is an event registration, ticketing, digital pass, QR check-in and attendance management platform for colleges, conferences, workshops and large-scale events.",
-          },
-          {
-            q: "Can I customize the design of my event tickets?",
-            a: "Yes. URPASS includes Ticket Studio, an interactive visual canvas where you can customize pass colors, badges, typography, logos, and attendee details, ensuring your tickets match your brand identity.",
-          },
-        ],
-      }}
+  "badge": "AGILE EVENT PLATFORM",
+  "h1": "Zoho Backstage Alternative for Registration & Check-In",
+  "canonicalUrl": "https://urpass.space/zoho-backstage-alternative",
+  "description": "The lightweight, agile Zoho Backstage alternative. 3-minute event setup, sub-second QR check-in, 0% ticket fees, and zero enterprise bloat.",
+  "ctaLabel": "Switch from Zoho Free →",
+  "ctaTitle": "Escape Complex Enterprise Event Bloat",
+  "ctaDescription": "Set up your event in 3 minutes instead of 3 weeks. Issue digital QR passes, scan attendees in <0.3s, and keep 100% of your ticket revenue.",
+  "directAnswer": {
+    "title": "Why is URPASS the Best Zoho Backstage Alternative?",
+    "summary": "Zoho Backstage is bloated, complex, and tied to the heavy Zoho enterprise ecosystem, requiring steep learning curves and rigid configurations. URPASS is an agile, lightweight alternative focused on the core organizer workflow: fast registration, automated digital QR passes, and sub-second smartphone check-in with zero ticketing commission and 3-minute setup.",
+    "keyPoints": [
+      "3-minute setup vs days spent configuring complex Zoho CRM workflows",
+      "Sub-second (<0.3s) camera check-in on volunteer phones with zero app downloads",
+      "0% platform ticketing commission with transparent, flat subscription tiers",
+      "Lightweight, mobile-responsive attendee experience with zero clutter"
+    ]
+  },
+  "whatIs": {
+    "title": "What is a Zoho Backstage Alternative?",
+    "definition": "A Zoho Backstage alternative is an event registration and check-in platform that eliminates unnecessary enterprise complexity. It focuses on delivering high-speed registration, digital QR credentials, and seamless entrance gate operations without requiring enterprise software subscriptions or dedicated IT training.",
+    "details": [
+      "Streamlines event creation without navigating dozens of nested Zoho settings tabs",
+      "Replaces slow, heavy check-in apps with instant browser-based smartphone scanning",
+      "Provides clean, high-converting registration pages that load in milliseconds",
+      "Allows standalone operation without forcing your organization into a proprietary CRM ecosystem"
+    ]
+  },
+  "howItWorksTitle": "How URPASS Replaces Zoho Backstage",
+  "howItWorksSubtitle": "From clean registration setup to high-speed entrance flow.",
+  "steps": [
+    {
+      "n": "01",
+      "title": "Create event in 3 minutes",
+      "desc": "Set your event date, ticket tiers, and custom registration fields without training."
+    },
+    {
+      "n": "02",
+      "title": "Publish lightweight page",
+      "desc": "Share your fast-loading registration link with zero corporate bloat."
+    },
+    {
+      "n": "03",
+      "title": "Attendees register smoothly",
+      "desc": "Guests register with zero friction or confusing multi-step forms."
+    },
+    {
+      "n": "04",
+      "title": "Deliver digital QR passes",
+      "desc": "Attendees receive responsive mobile QR passes instantly via email."
+    },
+    {
+      "n": "05",
+      "title": "Scan at the entrance",
+      "desc": "Door volunteers scan passes with phone cameras in <0.3s for green entry."
+    },
+    {
+      "n": "06",
+      "title": "Live attendance telemetry",
+      "desc": "Monitor check-in velocity and hall capacities in real time on a clean dashboard."
+    }
+  ],
+  "featuresTitle": "Focus on What Truly Matters for Your Event",
+  "featuresSubtitle": "Speed, simplicity, and reliable gate control.",
+  "features": [
+    {
+      icon: Zap,
+      "title": "3-Minute Setup Time",
+      "desc": "Configure events instantly. No complex CRM mappings, custom module scripting, or IT support required."
+    },
+    {
+      icon: ScanLine,
+      "title": "Sub-0.3s Door Scanning",
+      "desc": "Admit 40+ attendees per minute per volunteer phone with instant green audio and visual feedback."
+    },
+    {
+      icon: Banknote,
+      "title": "0% Ticketing Commission",
+      "desc": "Retain 100% of event revenue. Pay simple flat monthly subscriptions with zero hidden percentage cuts."
+    },
+    {
+      icon: Lock,
+      "title": "Atomic Duplicate Protection",
+      "desc": "Synchronize scanning across multiple entrances in real time, preventing duplicate ticket reuse."
+    },
+    {
+      icon: Users,
+      "title": "No Forced Ecosystem Lock-in",
+      "desc": "URPASS works independently. You don't need Zoho CRM, Zoho Books, or Zoho One to run an event."
+    },
+    {
+      icon: ShieldCheck,
+      "title": "Enterprise-Grade Security",
+      "desc": "Attendee records are protected with bank-grade encryption and full data privacy compliance."
+    }
+  ],
+  "whoShouldUse": {
+    "title": "Who Should Switch from Zoho Backstage?",
+    "subtitle": "Built for agile event teams who prioritize speed over enterprise bloat.",
+    "personas": [
+      {
+        "badge": "CONFERENCES",
+        "title": "Conference & Summit Organizers",
+        "desc": "Run professional multi-track conferences with fast gate flow without enterprise complexity."
+      },
+      {
+        "badge": "COLLEGES",
+        "title": "Universities & Student Unions",
+        "desc": "Organize campus fests and academic symposiums without navigating rigid enterprise software."
+      },
+      {
+        "badge": "CORPORATE",
+        "title": "Agile Corporate Event Planners",
+        "desc": "Host company town halls, partner summits, and client days with fast, branded digital passes."
+      },
+      {
+        "badge": "WORKSHOPS",
+        "title": "Workshop Instructors & Trainers",
+        "desc": "Manage seat capacities, collect fees, and verify attendees at the door in seconds."
+      }
+    ]
+  },
+  "howQrCheckInWorks": {
+    "title": "How URPASS QR Check-In Works",
+    "subtitle": "Sub-second camera scanning on volunteer phones.",
+    "description": "Volunteers open the private scanner URL on their own smartphone browser (Safari or Chrome). No app download or account creation required. Pointing the camera at an attendee's QR pass decodes and verifies the ticket in under 0.3 seconds with an audible green chime and instant name confirmation, admitting 45+ attendees per minute per volunteer.",
+    "points": [
+      "Zero app store downloads: volunteers start scanning in 15 seconds.",
+      "Atomic row-locking prevents shared pass screenshots between attendees.",
+      "Offline resilience ensures check-in continues during convention hall Wi-Fi drops.",
+      "Instant search bar enables rapid manual lookup by name or email."
+    ]
+  },
+  "keyFactsTable": {
+    "title": "URPASS vs Zoho Backstage Comparison",
+    "subtitle": "Direct comparison across complexity, check-in speed, and pricing.",
+    "headers": [
+      "Platform Metric",
+      "URPASS",
+      "Zoho Backstage"
+    ],
+    "rows": [
+      {
+        "col1": "Setup Complexity",
+        "col2": "Ready in 3 minutes; zero training required",
+        "col3": "Steep learning curve with complex CRM setup"
+      },
+      {
+        "col1": "Check-In Speed",
+        "col2": "<0.3s camera scan on any phone browser",
+        "col3": "2 to 4s requiring heavy native app installation"
+      },
+      {
+        "col1": "Ecosystem Lock-in",
+        "col2": "Standalone platform; connects to any tool",
+        "col3": "Tightly coupled to the proprietary Zoho ecosystem"
+      },
+      {
+        "col1": "Volunteer Onboarding",
+        "col2": "Open a web link and scan immediately",
+        "col3": "Complex staff account invites and role setups"
+      },
+      {
+        "col1": "Pricing Transparency",
+        "col2": "0% commission; simple flat plans",
+        "col3": "High tier pricing bundled with enterprise features"
+      }
+    ]
+  },
+  "faqs": [
+    {
+      "q": "What makes URPASS a better alternative to Zoho Backstage?",
+      "a": "URPASS is lightweight, faster to set up (3 minutes vs days), does not require buying into the Zoho ecosystem, provides sub-second smartphone check-in without app downloads, and charges 0% ticketing commission."
+    },
+    {
+      "q": "Do I need other software to run URPASS?",
+      "a": "No. URPASS is completely standalone. You do not need a CRM, accounting software, or complex IT infrastructure to manage registrations and scan tickets."
+    },
+    {
+      "q": "How does door scanning compare between URPASS and Zoho Backstage?",
+      "a": "Zoho Backstage requires door staff to download an app and authenticate with accounts. URPASS lets volunteers open a private web link in Safari or Chrome and start scanning passes in under 0.3s."
+    },
+    {
+      "q": "Can I export my attendee data to my own CRM?",
+      "a": "Yes. URPASS allows one-click CSV data exports, webhooks, and API integrations with any CRM platform you prefer."
+    },
+    {
+      "q": "Is URPASS suitable for large conferences?",
+      "a": "Yes. URPASS is engineered for scale, supporting multi-gate atomic synchronization, offline caching, and high-throughput entrance validation for thousands of attendees."
+    },
+    {
+      "q": "How does URPASS pricing compare to Zoho Backstage subscriptions?",
+      "a": "Zoho Backstage requires monthly or annual software subscriptions plus per-event fees. URPASS offers zero platform commission, direct payment gateway payouts, and pay-as-you-grow transparency."
+    },
+    {
+      "q": "Is URPASS easier to set up than Zoho Backstage?",
+      "a": "Yes. While Zoho Backstage has complex multi-module configuration steps, URPASS allows organizers to create a complete registration and ticketing page in under 3 minutes."
+    }
+  ],
+  "relatedLinks": [
+    {
+      "title": "Eventbrite Alternative",
+      "href": "/eventbrite-alternative",
+      "category": "Comparison"
+    },
+    {
+      "title": "Eventbrite Alternative UK",
+      "href": "/eventbrite-alternative-uk",
+      "category": "Comparison"
+    },
+    {
+      "title": "Google Forms Alternative for Event Registration",
+      "href": "/google-forms-event-registration-alternative",
+      "category": "Comparison"
+    },
+    {
+      "title": "Conference Registration Software with QR Check-In",
+      "href": "/conference-registration-software",
+      "category": "Use Case"
+    },
+    {
+      "title": "Multi-Gate QR Check-In for Large Events",
+      "href": "/multi-gate-event-check-in",
+      "category": "Product"
+    }
+  ]
+}}
     />
   );
 }

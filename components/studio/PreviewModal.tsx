@@ -9,9 +9,15 @@ import {
   Users,
   Download,
   Scissors,
+  Sparkles,
 } from "lucide-react";
 import type { StudioDesign } from "@/lib/studio/types";
-import { DUMMY_ATTENDEES, type DummyAttendee } from "@/lib/studio/dummy-attendees";
+import {
+  DUMMY_ATTENDEES,
+  type DummyAttendee,
+  DEFAULT_SAMPLE_EVENT,
+  EXTREME_SAMPLE_EVENT,
+} from "@/lib/studio/dummy-attendees";
 import TextElement from "./elements/TextElement";
 import DynamicTextElement from "./elements/DynamicTextElement";
 import ImageElement from "./elements/ImageElement";
@@ -37,8 +43,11 @@ export default function PreviewModal({
   onSelectAttendee,
 }: Props) {
   const [deviceMode, setDeviceMode] = useState<DeviceMode>("mobile");
+  const [useExtremeEvent, setUseExtremeEvent] = useState(false);
 
   if (!isOpen) return null;
+
+  const currentEvent = useExtremeEvent ? EXTREME_SAMPLE_EVENT : DEFAULT_SAMPLE_EVENT;
 
   function renderElement(el: StudioDesign["elements"][0]) {
     if (el.hidden) return null;
@@ -46,7 +55,7 @@ export default function PreviewModal({
       case "text":
         return <TextElement element={el} />;
       case "dynamic_text":
-        return <DynamicTextElement element={el} attendee={activeAttendee} />;
+        return <DynamicTextElement element={el} attendee={activeAttendee} event={currentEvent} />;
       case "image":
         return <ImageElement element={el} />;
       case "shape":
@@ -131,6 +140,21 @@ export default function PreviewModal({
                 ))}
               </select>
             </div>
+
+            {/* Extreme Event Stress Toggle */}
+            <button
+              type="button"
+              onClick={() => setUseExtremeEvent((prev) => !prev)}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
+                useExtremeEvent
+                  ? "bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-xs"
+                  : "bg-neutral-800 text-neutral-400 border-neutral-700/80 hover:text-white"
+              }`}
+              title="Stress test layout with very long multi-line event titles & venue names"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+              <span className="hidden sm:inline">{useExtremeEvent ? "Extreme Event: ON" : "Stress Event Data"}</span>
+            </button>
           </div>
 
           <button

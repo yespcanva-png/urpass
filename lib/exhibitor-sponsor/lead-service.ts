@@ -30,42 +30,57 @@ export async function captureLeadFromQrDb(input: CaptureLeadInput): Promise<Exhi
 
   if (admin) {
     try {
-      const cleanToken = input.tokenOrAttendeeId.trim();
+      const rawInput = input.tokenOrAttendeeId.trim();
+      const cleanToken = rawInput
+        .replace(/^https?:\/\/[^\/]+\/pass\//i, "")
+        .replace(/^pass\//i, "")
+        .trim();
 
-      // First try finding pass by token
-      const { data: pass } = await admin
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanToken);
+
+      // 1. First try finding pass by pass_token or pass id
+      let passQuery = admin
         .from("passes")
         .select(`
           id,
-          token,
-          attendee:attendees (
+          pass_token,
+          attendee_id,
+          attendees (
             id,
             name,
             email,
             phone,
             ticket_types ( name )
           )
-        `)
-        .eq("token", cleanToken)
-        .maybeSingle();
+        `);
 
-      if (pass?.attendee) {
-        attendeeRecord = pass.attendee;
+      if (isUuid) {
+        passQuery = passQuery.or(`pass_token.eq.${cleanToken},id.eq.${cleanToken}`);
       } else {
-        // Fallback: try finding attendee by id
-        const { data: att } = await admin
-          .from("attendees")
-          .select(`
-            id,
-            name,
-            email,
-            phone,
-            ticket_types ( name )
-          `)
-          .eq("id", cleanToken)
-          .maybeSingle();
+        passQuery = passQuery.eq("pass_token", cleanToken);
+      }
 
-        if (att) attendeeRecord = att;
+      const { data: pass } = await passQuery.maybeSingle();
+
+      if (pass?.attendees) {
+        attendeeRecord = pass.attendees;
+      } else {
+        // Fallback: try finding attendee directly by ID if cleanToken is UUID
+        if (isUuid) {
+          const { data: att } = await admin
+            .from("attendees")
+            .select(`
+              id,
+              name,
+              email,
+              phone,
+              ticket_types ( name )
+            `)
+            .eq("id", cleanToken)
+            .maybeSingle();
+
+          if (att) attendeeRecord = att;
+        }
       }
     } catch (err) {
       console.warn("[lead-service] Error resolving attendee for lead scan:", err);
@@ -75,7 +90,9 @@ export async function captureLeadFromQrDb(input: CaptureLeadInput): Promise<Exhi
   const attendeeName = attendeeRecord?.name || "Trade Delegate";
   const attendeeEmail = attendeeRecord?.email || `attendee-${Date.now()}@event.urpass.space`;
   const attendeePhone = attendeeRecord?.phone || undefined;
-  const attendeeId = attendeeRecord?.id || input.tokenOrAttendeeId;
+  const rawAttendeeId = attendeeRecord?.id || input.tokenOrAttendeeId;
+  const isAttendeeUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(rawAttendeeId);
+  const attendeeId = isAttendeeUuid ? rawAttendeeId : undefined;
   const ticketName = attendeeRecord?.ticket_types?.name || "Delegate Pass";
 
   const lead: ExhibitorLead = {
@@ -84,7 +101,7 @@ export async function captureLeadFromQrDb(input: CaptureLeadInput): Promise<Exhi
     exhibitorId: input.exhibitorId,
     staffId: input.staffId,
     staffName: input.staffName || "Booth Scanner",
-    attendeeId,
+    attendeeId: rawAttendeeId,
     attendeeName,
     attendeeEmail,
     attendeePhone,
@@ -109,33 +126,39 @@ export async function captureLeadFromQrDb(input: CaptureLeadInput): Promise<Exhi
   if (!admin) return lead;
 
   try {
-    const { data: inserted } = await admin
-      .from("exhibitor_leads")
-      .insert({
-        event_id: input.eventId,
-        exhibitor_id: input.exhibitorId,
-        staff_id: input.staffId || null,
-        attendee_id: attendeeId && !attendeeId.startsWith("PASS-") ? attendeeId : null,
-        attendee_name: attendeeName,
-        attendee_email: attendeeEmail,
-        attendee_phone: attendeePhone || null,
-        attendee_company: lead.attendeeCompany || null,
-        ticket_name: ticketName,
-        qualification_rating: lead.qualificationRating,
-        notes: lead.notes || null,
-        interested_products: lead.interestedProducts,
-        tags: lead.tags,
-        follow_up_status: lead.followUpStatus,
-        follow_up_required: lead.followUpRequired,
-        consent_confirmed: true,
-        custom_fields: lead.customFields,
-      })
-      .select()
-      .single();
+    const isStaffUuid = input.staffId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(input.staffId);
 
-    if (inserted?.id) lead.id = inserted.id;
+    if (input.eventId && input.exhibitorId) {
+      const { data: inserted, error: insertErr } = await admin
+        .from("exhibitor_leads")
+        .insert({
+          event_id: input.eventId,
+          exhibitor_id: input.exhibitorId,
+          staff_id: isStaffUuid ? input.staffId : null,
+          attendee_id: attendeeId || null,
+          attendee_name: attendeeName,
+          attendee_email: attendeeEmail,
+          attendee_phone: attendeePhone || null,
+          attendee_company: lead.attendeeCompany || null,
+          ticket_name: ticketName,
+          qualification_rating: lead.qualificationRating,
+          notes: lead.notes || null,
+          interested_products: lead.interestedProducts,
+          tags: lead.tags,
+          follow_up_status: lead.followUpStatus,
+          follow_up_required: lead.followUpRequired,
+          consent_confirmed: true,
+          custom_fields: lead.customFields,
+        })
+        .select()
+        .single();
+
+      if (!insertErr && inserted?.id) {
+        lead.id = inserted.id;
+      }
+    }
   } catch (err) {
-    console.warn("[lead-service] Error saving lead to DB:", err);
+    console.warn("[lead-service] Error saving lead to relational DB:", err);
   }
 
   return lead;
@@ -280,13 +303,18 @@ export function exportLeadsToCsv(leads: ExhibitorLead[]): string {
 
 export function captureLeadFromQr(input: CaptureLeadInput): ExhibitorLead {
   const now = new Date().toISOString();
+  const rawInput = input.tokenOrAttendeeId.trim();
+  const cleanToken = rawInput
+    .replace(/^https?:\/\/[^\/]+\/pass\//i, "")
+    .replace(/^pass\//i, "")
+    .trim();
   const lead: ExhibitorLead = {
     id: `lead-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
     eventId: input.eventId,
     exhibitorId: input.exhibitorId,
     staffId: input.staffId,
     staffName: input.staffName || "Booth Scanner",
-    attendeeId: input.tokenOrAttendeeId,
+    attendeeId: cleanToken,
     attendeeName: "Verified Delegate",
     attendeeEmail: `attendee-${Date.now()}@event.urpass.space`,
     attendeePhone: undefined,
