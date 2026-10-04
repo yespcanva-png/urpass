@@ -28,14 +28,14 @@ export async function captureLeadFromQrDb(input: CaptureLeadInput): Promise<Exhi
   const now = new Date().toISOString();
   let attendeeRecord: any = null;
 
+  const rawInput = input.tokenOrAttendeeId.trim();
+  const cleanToken = rawInput
+    .replace(/^https?:\/\/[^\/]+\/pass\//i, "")
+    .replace(/^pass\//i, "")
+    .trim();
+
   if (admin) {
     try {
-      const rawInput = input.tokenOrAttendeeId.trim();
-      const cleanToken = rawInput
-        .replace(/^https?:\/\/[^\/]+\/pass\//i, "")
-        .replace(/^pass\//i, "")
-        .trim();
-
       const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanToken);
 
       // 1. First try finding pass by pass_token or pass id
@@ -50,6 +50,7 @@ export async function captureLeadFromQrDb(input: CaptureLeadInput): Promise<Exhi
             name,
             email,
             phone,
+            custom_responses,
             ticket_types ( name )
           )
         `);
@@ -74,6 +75,7 @@ export async function captureLeadFromQrDb(input: CaptureLeadInput): Promise<Exhi
               name,
               email,
               phone,
+              custom_responses,
               ticket_types ( name )
             `)
             .eq("id", cleanToken)
@@ -87,13 +89,33 @@ export async function captureLeadFromQrDb(input: CaptureLeadInput): Promise<Exhi
     }
   }
 
-  const attendeeName = attendeeRecord?.name || "Trade Delegate";
-  const attendeeEmail = attendeeRecord?.email || `attendee-${Date.now()}@event.urpass.space`;
+  const customResponses = (attendeeRecord?.custom_responses as Record<string, unknown>) || {};
+  let extractedCompany = "";
+  let extractedDesignation = "";
+
+  if (typeof customResponses === "object" && customResponses !== null) {
+    for (const [key, val] of Object.entries(customResponses)) {
+      const lowerKey = key.toLowerCase();
+      if (typeof val === "string" && val.trim()) {
+        if (!extractedCompany && (lowerKey.includes("company") || lowerKey.includes("org") || lowerKey.includes("college") || lowerKey.includes("work") || lowerKey.includes("university") || lowerKey.includes("institution"))) {
+          extractedCompany = val.trim();
+        }
+        if (!extractedDesignation && (lowerKey.includes("designation") || lowerKey.includes("role") || lowerKey.includes("title") || lowerKey.includes("job") || lowerKey.includes("position"))) {
+          extractedDesignation = val.trim();
+        }
+      }
+    }
+  }
+
+  const attendeeName = attendeeRecord?.name || (cleanToken ? `Attendee (${cleanToken.slice(0, 8)})` : "Attendee");
+  const attendeeEmail = attendeeRecord?.email || "";
   const attendeePhone = attendeeRecord?.phone || undefined;
   const rawAttendeeId = attendeeRecord?.id || input.tokenOrAttendeeId;
   const isAttendeeUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(rawAttendeeId);
   const attendeeId = isAttendeeUuid ? rawAttendeeId : undefined;
-  const ticketName = attendeeRecord?.ticket_types?.name || "Delegate Pass";
+  const ticketName = attendeeRecord?.ticket_types?.name || (attendeeRecord ? "Standard Pass" : "Delegate Pass");
+  const attendeeCompany = extractedCompany || attendeeRecord?.company || "";
+  const attendeeDesignation = extractedDesignation || attendeeRecord?.designation || "";
 
   const lead: ExhibitorLead = {
     id: `lead-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
@@ -105,7 +127,8 @@ export async function captureLeadFromQrDb(input: CaptureLeadInput): Promise<Exhi
     attendeeName,
     attendeeEmail,
     attendeePhone,
-    attendeeCompany: "Verified Visitor",
+    attendeeCompany: attendeeCompany || undefined,
+    attendeeDesignation: attendeeDesignation || undefined,
     ticketName,
     qualificationRating: input.qualificationRating || "warm",
     notes: input.notes || "",
@@ -315,10 +338,10 @@ export function captureLeadFromQr(input: CaptureLeadInput): ExhibitorLead {
     staffId: input.staffId,
     staffName: input.staffName || "Booth Scanner",
     attendeeId: cleanToken,
-    attendeeName: "Verified Delegate",
-    attendeeEmail: `attendee-${Date.now()}@event.urpass.space`,
+    attendeeName: "Trade Delegate",
+    attendeeEmail: "",
     attendeePhone: undefined,
-    attendeeCompany: "Verified Visitor",
+    attendeeCompany: undefined,
     ticketName: "Delegate Pass",
     qualificationRating: input.qualificationRating || "warm",
     notes: input.notes || "",

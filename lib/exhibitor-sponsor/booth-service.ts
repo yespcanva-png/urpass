@@ -61,38 +61,11 @@ export async function getEventBoothsDb(eventId: string): Promise<EventBooth[]> {
       .eq("event_id", eventId)
       .order("position", { ascending: true });
 
-    if (error || !data || data.length === 0) {
-      // Seed preset booths
-      const now = new Date().toISOString();
-      const presets = DEFAULT_PRESET_BOOTHS.map((b, idx) => ({
-        event_id: eventId,
-        booth_number: b.boothNumber,
-        size_sqft: b.sizeSqft,
-        hall_name: b.hallName,
-        status: b.status,
-        position: idx,
-      }));
+    if (error || !data) return getEventBooths(eventId);
 
-      const { data: inserted } = await admin.from("event_booths").insert(presets).select();
-      if (inserted && inserted.length > 0) {
-        const seeded: EventBooth[] = inserted.map((row: any) => ({
-          id: row.id,
-          eventId: row.event_id,
-          boothNumber: row.booth_number,
-          sizeSqft: Number(row.size_sqft),
-          hallName: row.hall_name,
-          zoneId: row.zone_id || undefined,
-          status: row.status as BoothStatus,
-          notes: row.notes || undefined,
-          position: row.position || 0,
-          createdAt: row.created_at || now,
-          updatedAt: row.updated_at || now,
-        }));
-        globalThis.__urpass_booths![eventId] = seeded;
-        return seeded;
-      }
-
-      return getEventBooths(eventId);
+    if (data.length === 0) {
+      globalThis.__urpass_booths![eventId] = [];
+      return [];
     }
 
     // Query exhibitors to match assigned booth

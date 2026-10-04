@@ -68,38 +68,11 @@ export async function getEventZonesDb(eventId: string): Promise<EventZone[]> {
       .eq("event_id", eventId)
       .order("position", { ascending: true });
 
-    if (error || !data || data.length === 0) {
-      // Seed preset zones into DB
-      const presets = DEFAULT_PRESET_ZONES.map((pz, idx) => ({
-        event_id: eventId,
-        name: pz.name,
-        capacity: pz.capacity,
-        zone_type: pz.zoneType,
-        color: pz.color,
-        current_occupancy: 0,
-        peak_occupancy: 0,
-        position: idx,
-      }));
+    if (error || !data) return getEventZones(eventId);
 
-      const { data: inserted } = await admin.from("event_zones").insert(presets).select();
-      if (inserted && inserted.length > 0) {
-        const seeded: EventZone[] = inserted.map((row: any) => ({
-          id: row.id,
-          eventId: row.event_id,
-          name: row.name,
-          description: row.description || "",
-          zoneType: row.zone_type || "custom",
-          color: row.color || "#6D28D9",
-          capacity: row.capacity || 100,
-          currentOccupancy: row.current_occupancy || 0,
-          peakOccupancy: row.peak_occupancy || 0,
-          position: row.position || 0,
-          createdAt: row.created_at,
-        }));
-        globalThis.__urpass_zones![eventId] = seeded;
-        return seeded;
-      }
-      return getEventZones(eventId);
+    if (data.length === 0) {
+      globalThis.__urpass_zones![eventId] = [];
+      return [];
     }
 
     const zones: EventZone[] = data.map((row: any) => ({
