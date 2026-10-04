@@ -45,7 +45,32 @@ Target Markets: India (National & 32 Tier 1/2 Cities), United Kingdom, and Globa
 - **Offline Scanning**: If venue Wi-Fi or cellular data drops, door staff continue scanning without interruption.
 - **Background Synchronization**: Timestamped check-in records sync automatically with the cloud database upon network restoration (`/api/scan/sync`).
 
-### 2.5 Enterprise Organizations, Workspaces & Multi-Tenancy
+### 2.5 Multi-Track Conference Engine & Conflict Guard
+- **Parallel Stage Scheduling**: Manage multi-day, multi-track conference programs (e.g., Keynote Stage, Track A - AI & Cloud, Hands-on Workshop Lab).
+- **Automated Conflict Detection**: Real-time cross-validation flags speaker double-bookings across concurrent tracks and room scheduling overlaps before publication.
+- **Speaker Directory & Talk Portfolios**: Maintain speaker bios, company affiliations, talk descriptions, and automatically provision VIP speaker badges.
+- **Calendar & iCal Sync**: RFC 5545 compliant `.ics` calendar sync for attendees to add sessions directly to Google Calendar and Apple iCal.
+
+### 2.6 Physical Event Operations, Zone Headcount & Badge Print Queue
+- **Onsite Reception Desk**: Keyboard-first rapid attendee lookup by name, email, phone, or reference code with single-click check-in and walk-in pass generation.
+- **Zone Headcount & Active Telemetry**: Live occupancy tracking across VIP lounges, workshop rooms, and main halls with capacity threshold alarms.
+- **Badge Print Queue**: Support for network thermal label printers (Zebra ZD420/ZD620, Brother QL-820NWB) via ESC/POS/ZPL and high-resolution CR80 lanyard PDF exports.
+- **Staff Device PIN Pairing**: Authorize temporary door volunteer devices using 6-digit PIN codes without revealing organizer account passwords.
+
+### 2.7 Commercial Hub: Sponsorships, Booth Floor Plans & Lead Retrieval
+- **Sponsorship Tier & Deliverables Tracker**: Configure tiers (Title, Platinum, Gold, Silver) and track contractual fulfillment (passes, keynote slot, booth allocation, logo proof) with approval workflows.
+- **Interactive Booth Floor Plan**: Visual trade show floor layout with booth dimensions, power/Wi-Fi specifications, status tracking, and 1-click exhibitor booth allocation.
+- **Exhibitor Portal & Team Passes**: Provision exhibitor representatives with branded portal access and booth staff passes.
+- **Real-Time Badge Lead Capture**: Booth staff scan attendee badge QR codes to retrieve verified names, emails, company/designation from custom forms, 1-5 star ratings, and conversation notes with instant CSV export.
+- **1:1 B2B Matchmaking**: Attendees and exhibitors can book dedicated networking meetings in designated rooms with automated time slot conflict checks.
+
+### 2.8 Finance & Split Settlements (0% Platform Commission)
+- **Zero Commission Model**: URPASS never deducts per-ticket percentage cuts. Organizers keep 100% of their ticket revenues.
+- **Route Split Payouts**: Automatically divide incoming ticket proceeds among co-organizers, university departments, or commercial partners by percentage shares.
+- **Settlement Cycles**: Direct T+2 business day settlements to verified bank accounts via Razorpay Route.
+- **GST Compliance & Invoicing**: Automated GST tax invoices with 18% GST breakdown, HSN/SAC codes (998596 / 998313), and organizer/attendee GSTIN input tax credit support.
+
+### 2.9 Enterprise Organizations, Workspaces & Multi-Tenancy
 - **Corporate Multi-Tenancy**: Organizations can manage multiple independent events, departments, or clubs from a centralized dashboard.
 - **Workspaces & Locations**: Group events by operational units (e.g., Marketing, Engineering, Student Council) and manage physical campus venue terminals.
 - **Role-Based Access Control (RBAC)**: Five discrete roles:

@@ -35,6 +35,17 @@ import {
   Globe2,
   HardDriveDownload,
   RefreshCw,
+  Calendar,
+  Printer,
+  Store,
+  DollarSign,
+  Briefcase,
+  UserCheck,
+  AlertTriangle,
+  FileText,
+  Clock,
+  MapPin,
+  Sparkles,
 } from "lucide-react";
 import { CodeBlock } from "@/components/docs/CodeBlock";
 
@@ -87,7 +98,7 @@ const faqSchema = {
       name: "What is URPASS?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "URPASS is a modern digital event pass, ticketing, and verification platform designed for organizers, colleges, tech conferences, and enterprise teams.",
+        text: "URPASS is a modern digital event pass, ticketing, conference scheduling, and verification platform designed for organizers, colleges, tech conferences, and enterprise teams.",
       },
     },
     {
@@ -96,6 +107,38 @@ const faqSchema = {
       acceptedAnswer: {
         "@type": "Answer",
         text: "No app is required. Attendees receive a responsive web pass that opens on any device, with optional Apple Wallet (.pkpass) export. Organizers and staff can scan QR passes using any phone browser at urpass.space/scan.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "How does the Multi-Track Conference Engine detect schedule conflicts?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "The engine automatically cross-checks speaker allocations and room bookings across all concurrent tracks in real-time. If a speaker is double-booked across parallel sessions or room capacity limits are exceeded, organizers receive instant visual collision warnings.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "How does physical event badge printing and zone headcount tracking work?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "URPASS Physical Ops features an onsite reception desk for rapid search and check-in, real-time zone occupancy tracking, staff roaming device pairing with 6-digit PINs, and a badge print engine supporting ESC/POS, Zebra, and Brother thermal printers alongside CR80 lanyard badges.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "How does Exhibitor Lead Retrieval and B2B Matchmaking work?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Exhibitor booth reps scan attendee badge QR codes to instantly capture qualified leads with real company and designation data, 1-5 star ratings, and follow-up notes. Attendees and exhibitors can also schedule 1:1 B2B matchmaking meetings with automated time slot conflict checks.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "How do zero-commission split payouts and GST invoicing work?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "URPASS charges 0% per-ticket platform commission. Organizers can configure Route Split Payouts to automatically distribute percentage shares to co-organizers or partners on direct T+2 settlement cycles with automated 18% GST tax invoices.",
       },
     },
     {
@@ -146,7 +189,7 @@ const docSchema = {
   "@type": "TechArticle",
   headline: "URPASS Complete Documentation — Developer & Organizer Guide",
   description:
-    "Full reference for creating digital event passes, managing attendees, running multi-gate QR check-in, and integrating the URPASS REST API and Webhooks.",
+    "Full reference for creating digital event passes, managing multi-track conference programs, physical operations & badge printing, commercial exhibitor hubs, split payouts, and integrating the URPASS REST API and Webhooks.",
   author: { "@type": "Organization", name: "URPASS", url: "https://urpass.space" },
   publisher: { "@type": "Organization", name: "URPASS", url: "https://urpass.space" },
   inLanguage: "en-IN",
@@ -156,9 +199,13 @@ const docSchema = {
 const SECTIONS = [
   { id: "getting-started", label: "Getting started" },
   { id: "events", label: "Events & formats" },
+  { id: "program", label: "Multi-track program" },
   { id: "attendees", label: "Attendees & import" },
   { id: "tickets-passes", label: "Tickets & passes" },
   { id: "gates-checkin", label: "Gates & check-in" },
+  { id: "physical-ops", label: "Physical ops & badges" },
+  { id: "commercial-hub", label: "Exhibitors & sponsors" },
+  { id: "finance-payouts", label: "Finance & split payouts" },
   { id: "organizations", label: "Organizations & roles" },
   { id: "enterprise-identity", label: "Enterprise SSO & SCIM" },
   { id: "api", label: "REST API reference" },
@@ -500,6 +547,94 @@ export default function DocsPage() {
               </div>
             </section>
 
+            {/* ── Section: Multi-Track Program ─────────────────────── */}
+            <section id="program" className="mb-14 scroll-mt-20">
+              <div className="flex items-center gap-2.5 mb-6">
+                <div className="w-8 h-8 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center shrink-0">
+                  <Calendar className="w-4 h-4 text-indigo-600" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-neutral-900">Multi-track program &amp; schedule</h2>
+                  <p className="text-xs text-neutral-500">Timeline builder, speaker directory, real-time conflict detection, and calendar sync</p>
+                </div>
+              </div>
+
+              {/* Program Overview */}
+              <div className="bg-white border border-neutral-200 rounded-2xl p-6 mb-6 shadow-2xs">
+                <h3 className="text-sm font-semibold text-neutral-900 mb-2">Conference &amp; summit agenda engine</h3>
+                <p className="text-sm text-neutral-600 leading-relaxed mb-4">
+                  For complex multi-stage summits, hackathons, and academic symposiums, URPASS provides an integrated
+                  multi-track program engine. Organizers can configure multiple parallel tracks (e.g., &ldquo;Main Stage&rdquo;,
+                  &ldquo;Track A — AI &amp; Cloud&rdquo;, &ldquo;Hands-on Workshop Lab&rdquo;), schedule sessions across multiple days,
+                  and publish an interactive live agenda.
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                  <div className="p-3 bg-neutral-50 rounded-xl border border-neutral-100">
+                    <p className="font-semibold text-neutral-900 mb-1 flex items-center gap-1.5">
+                      <Clock className="w-3.5 h-3.5 text-indigo-600" />
+                      Concurrent Tracks
+                    </p>
+                    <p className="text-neutral-500">Run parallel stages with custom colors and room allocations.</p>
+                  </div>
+                  <div className="p-3 bg-neutral-50 rounded-xl border border-neutral-100">
+                    <p className="font-semibold text-neutral-900 mb-1 flex items-center gap-1.5">
+                      <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
+                      Conflict Guard
+                    </p>
+                    <p className="text-neutral-500">Detects speaker double-bookings and room time collisions automatically.</p>
+                  </div>
+                  <div className="p-3 bg-neutral-50 rounded-xl border border-neutral-100">
+                    <p className="font-semibold text-neutral-900 mb-1 flex items-center gap-1.5">
+                      <Download className="w-3.5 h-3.5 text-emerald-600" />
+                      iCal (.ics) Export
+                    </p>
+                    <p className="text-neutral-500">Attendees download and sync sessions to Google Calendar and Apple iCal.</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Conflict Detection Matrix */}
+              <div className="bg-white border border-neutral-200 rounded-2xl p-6 mb-6 shadow-2xs">
+                <div className="flex items-center gap-2 mb-3">
+                  <AlertTriangle className="w-4 h-4 text-amber-500" />
+                  <h3 className="text-sm font-semibold text-neutral-900">Real-time schedule conflict detection</h3>
+                </div>
+                <p className="text-sm text-neutral-600 leading-relaxed mb-4">
+                  As organizers drag, edit, or adjust session timings, URPASS runs automated background collision validation:
+                </p>
+                <div className="space-y-2 text-xs">
+                  <div className="p-3 bg-amber-50/60 border border-amber-200/80 rounded-xl text-amber-950">
+                    <strong className="font-semibold">Speaker Collision Warning:</strong> When a speaker is assigned to two concurrent sessions overlapping in time, the timeline card displays a high-visibility warning badge and lists the colliding track and session.
+                  </div>
+                  <div className="p-3 bg-blue-50/60 border border-blue-200/80 rounded-xl text-blue-950">
+                    <strong className="font-semibold">Room &amp; Venue Overlap:</strong> Prevents scheduling two distinct talks in the same physical room or hall during overlapping hours.
+                  </div>
+                  <div className="p-3 bg-neutral-50 border border-neutral-200 rounded-xl text-neutral-700">
+                    <strong className="font-semibold">Capacity Threshold Alerts:</strong> Warns when expected session RSVPs exceed room seating capacity so organizers can reassign to larger halls.
+                  </div>
+                </div>
+              </div>
+
+              {/* Speaker Profiles & Public Agenda */}
+              <div className="bg-white border border-neutral-200 rounded-2xl px-6 py-2 shadow-2xs">
+                <FeatureRow
+                  icon={Users}
+                  title="Speaker Directory & Bios"
+                  description="Manage headshots, company titles, biographies, social links, and automatically provision VIP Speaker passes for all registered presenters."
+                />
+                <FeatureRow
+                  icon={Sliders}
+                  title="Interactive Public Schedule"
+                  description="Public agenda page (/events/[slug]/program) with instant keyword search, track filter buttons, and difficulty level badges (Beginner, Intermediate, Advanced)."
+                />
+                <FeatureRow
+                  icon={Calendar}
+                  title="Calendar Subscriptions"
+                  description="One-click subscription links generate RFC 5545 compliant iCalendar (.ics) files with venue geolocation and session descriptions."
+                />
+              </div>
+            </section>
+
             {/* ── Section 3: Attendees ─────────────────────────────── */}
             <section id="attendees" className="mb-14 scroll-mt-20">
               <div className="flex items-center gap-2.5 mb-6">
@@ -769,6 +904,187 @@ if (result.success) {
   "passType": "vip"
 }`}
                     />
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* ── Section: Physical Operations & Badges ────────────── */}
+            <section id="physical-ops" className="mb-14 scroll-mt-20">
+              <div className="flex items-center gap-2.5 mb-6">
+                <div className="w-8 h-8 rounded-xl bg-orange-50 border border-orange-100 flex items-center justify-center shrink-0">
+                  <Printer className="w-4 h-4 text-orange-600" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-neutral-900">Physical operations &amp; badges</h2>
+                  <p className="text-xs text-neutral-500">Onsite desk check-in, real-time zone headcounts, badge printing, and roaming device pairing</p>
+                </div>
+              </div>
+
+              {/* Onsite Desk & Headcount */}
+              <div className="bg-white border border-neutral-200 rounded-2xl p-6 mb-6 shadow-2xs">
+                <h3 className="text-sm font-semibold text-neutral-900 mb-2">Onsite reception &amp; desk management</h3>
+                <p className="text-sm text-neutral-600 leading-relaxed mb-4">
+                  For large-scale physical summits and expos, URPASS Physical Ops provides reception staff with an optimized,
+                  keyboard-first terminal to search attendees, process walk-in registrations, print physical badges, and monitor zone headcounts.
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                  <div className="p-3 bg-neutral-50 rounded-xl border border-neutral-100">
+                    <p className="font-semibold text-neutral-900 mb-1 flex items-center gap-1.5">
+                      <UserCheck className="w-3.5 h-3.5 text-orange-600" />
+                      Rapid Search Desk
+                    </p>
+                    <p className="text-neutral-500">Instant lookup by name, email, phone, or reference code with 1-click check-in.</p>
+                  </div>
+                  <div className="p-3 bg-neutral-50 rounded-xl border border-neutral-100">
+                    <p className="font-semibold text-neutral-900 mb-1 flex items-center gap-1.5">
+                      <Layers className="w-3.5 h-3.5 text-blue-600" />
+                      Zone Headcount Telemetry
+                    </p>
+                    <p className="text-neutral-500">Live active occupancy tracking across VIP lounges, workshop rooms, and main halls.</p>
+                  </div>
+                  <div className="p-3 bg-neutral-50 rounded-xl border border-neutral-100">
+                    <p className="font-semibold text-neutral-900 mb-1 flex items-center gap-1.5">
+                      <Key className="w-3.5 h-3.5 text-purple-600" />
+                      Device PIN Pairing
+                    </p>
+                    <p className="text-neutral-500">Pair volunteer phones with 6-digit PINs without sharing master organizer passwords.</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Badge Printing Engine */}
+              <div className="bg-white border border-neutral-200 rounded-2xl overflow-hidden mb-6 shadow-2xs">
+                <div className="px-6 py-4 border-b border-neutral-100 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Printer className="w-4 h-4 text-orange-600" />
+                    <h3 className="text-sm font-semibold text-neutral-900">High-speed badge print queue</h3>
+                  </div>
+                  <span className="text-[11px] font-mono text-neutral-400">ESC/POS · Zebra · Brother · Standard CR80</span>
+                </div>
+                <div className="px-6 py-5">
+                  <p className="text-sm text-neutral-600 leading-relaxed mb-4">
+                    When attendees check in at reception, URPASS automatically dispatches badge print jobs to connected network
+                    thermal printers or desktop queues. Print templates support high-contrast QR tokens, attendee company/designation,
+                    and tier-specific color coding.
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs mb-4">
+                    <div className="p-3 bg-neutral-50 rounded-xl border border-neutral-200/80">
+                      <p className="font-semibold text-neutral-900 mb-1">Thermal Label Printers</p>
+                      <p className="text-neutral-500 leading-relaxed">Direct ESC/POS and ZPL network drivers for Zebra ZD420/ZD620 and Brother QL-820NWB thermal rolls.</p>
+                    </div>
+                    <div className="p-3 bg-neutral-50 rounded-xl border border-neutral-200/80">
+                      <p className="font-semibold text-neutral-900 mb-1">Standard CR80 &amp; Lanyards</p>
+                      <p className="text-neutral-500 leading-relaxed">High-resolution PDF layouts formatted for standard 440×640 px conference lanyard card stock.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* ── Section: Exhibitors & Sponsors Hub ───────────────── */}
+            <section id="commercial-hub" className="mb-14 scroll-mt-20">
+              <div className="flex items-center gap-2.5 mb-6">
+                <div className="w-8 h-8 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center shrink-0">
+                  <Store className="w-4 h-4 text-emerald-600" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-neutral-900">Exhibitors &amp; sponsors hub</h2>
+                  <p className="text-xs text-neutral-500">Tier deliverable tracking, booth floor plans, team pass provisioning, lead retrieval, and B2B meetings</p>
+                </div>
+              </div>
+
+              {/* Commercial Suite Features */}
+              <div className="bg-white border border-neutral-200 rounded-2xl px-6 py-2 mb-6 shadow-2xs">
+                <FeatureRow
+                  icon={Briefcase}
+                  title="Sponsorship Tier &amp; Deliverables Matrix"
+                  description="Configure custom packages (Title, Platinum, Gold, Silver) and track contract milestones (Logo on Pass, Keynote Talk, Social Mentions, Booth Space) with proof file approvals."
+                />
+                <FeatureRow
+                  icon={Store}
+                  title="Interactive Booth Floor Plan"
+                  description="Interactive trade show floor plan map with booth dimensions, power/Wi-Fi amenities, status tracking (Available, Reserved, Occupied), and 1-click exhibitor assignment."
+                />
+                <FeatureRow
+                  icon={Users}
+                  title="Exhibitor Team Pass Provisioning"
+                  description="Exhibitors receive a branded portal to manage their company profile, assign representative staff passes, and coordinate booth operations."
+                />
+                <FeatureRow
+                  icon={QrCode}
+                  title="Real-Time Lead Capture &amp; Qualification"
+                  description="Booth reps scan visitor badge QR codes to immediately capture attendee name, verified email, organization, designation, 1–5 star rating, and custom follow-up notes with instant CSV export."
+                />
+                <FeatureRow
+                  icon={Calendar}
+                  title="1:1 B2B Matchmaking Meetings"
+                  description="Attendees and exhibitors can request and schedule dedicated networking sessions in designated meeting rooms with automated conflict checks."
+                />
+              </div>
+
+              {/* Lead Capture Details */}
+              <div className="bg-white border border-neutral-200 rounded-2xl p-6 shadow-2xs">
+                <div className="flex items-center gap-2 mb-3">
+                  <QrCode className="w-4 h-4 text-emerald-600" />
+                  <h3 className="text-sm font-semibold text-neutral-900">How real-time lead capture works</h3>
+                </div>
+                <p className="text-sm text-neutral-600 leading-relaxed mb-4">
+                  Every attendee badge QR contains a signed pass token. When scanned via the Exhibitor Portal lead scanner:
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                  <div className="p-3 bg-neutral-50 rounded-xl border border-neutral-100">
+                    <span className="font-bold text-emerald-700 block mb-1">1. Token Resolution</span>
+                    <p className="text-neutral-500">Extracts verified attendee details directly from the core database without mock placeholders.</p>
+                  </div>
+                  <div className="p-3 bg-neutral-50 rounded-xl border border-neutral-100">
+                    <span className="font-bold text-emerald-700 block mb-1">2. Dynamic Form Mapping</span>
+                    <p className="text-neutral-500">Maps custom registration form responses to extract Company and Designation metadata.</p>
+                  </div>
+                  <div className="p-3 bg-neutral-50 rounded-xl border border-neutral-100">
+                    <span className="font-bold text-emerald-700 block mb-1">3. Live Qualification</span>
+                    <p className="text-neutral-500">Add lead scores (1-5 stars), conversation notes, and export clean CSV lead lists instantly.</p>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* ── Section: Finance & Split Payouts ─────────────────── */}
+            <section id="finance-payouts" className="mb-14 scroll-mt-20">
+              <div className="flex items-center gap-2.5 mb-6">
+                <div className="w-8 h-8 rounded-xl bg-teal-50 border border-teal-100 flex items-center justify-center shrink-0">
+                  <DollarSign className="w-4 h-4 text-teal-600" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-neutral-900">Finance &amp; split payouts</h2>
+                  <p className="text-xs text-neutral-500">Zero platform commissions, multi-stakeholder split settlements, and GST tax compliance</p>
+                </div>
+              </div>
+
+              <div className="bg-white border border-neutral-200 rounded-2xl p-6 mb-6 shadow-2xs">
+                <h3 className="text-sm font-semibold text-neutral-900 mb-2">0% Platform commission ticketing</h3>
+                <p className="text-sm text-neutral-600 leading-relaxed mb-4">
+                  Unlike traditional ticketing aggregators that deduct 3% to 10% per ticket, URPASS operates on a strict <strong>0% ticket commission</strong> model.
+                  100% of ticket revenues flow directly to the event organizer, settling on standard T+2 business day cycles.
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                  <div className="p-4 bg-teal-50/50 border border-teal-100 rounded-xl text-teal-950">
+                    <p className="font-bold text-teal-900 mb-1 flex items-center gap-1.5">
+                      <Zap className="w-3.5 h-3.5 text-teal-600" />
+                      Route Split Payouts
+                    </p>
+                    <p className="text-teal-800 leading-relaxed">
+                      Automatically divide incoming ticket proceeds among co-organizers, university departments, or commercial partners by percentage shares.
+                    </p>
+                  </div>
+                  <div className="p-4 bg-purple-50/50 border border-purple-100 rounded-xl text-purple-950">
+                    <p className="font-bold text-purple-900 mb-1 flex items-center gap-1.5">
+                      <FileText className="w-3.5 h-3.5 text-purple-600" />
+                      GST Tax Compliance &amp; Invoices
+                    </p>
+                    <p className="text-purple-800 leading-relaxed">
+                      Every ticket purchase automatically generates a compliant GST invoice with 18% tax breakdown, SAC/HSN codes, and B2B GSTIN recording for input tax credits.
+                    </p>
                   </div>
                 </div>
               </div>

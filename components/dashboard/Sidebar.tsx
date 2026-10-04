@@ -26,6 +26,7 @@ import {
   ShieldCheck,
   SlidersHorizontal,
   Sparkles,
+  HelpCircle,
 } from "lucide-react";
 import type { CampusContext, CampusRole } from "@/types";
 
@@ -54,8 +55,9 @@ const campusNav: {
 ];
 
 const bottomNav = [
-  { label: "Billing",  href: "/billing",            icon: CreditCard },
-  { label: "Settings", href: "/dashboard/settings", icon: Settings },
+  { label: "How to Use", href: "/docs",             icon: HelpCircle },
+  { label: "Billing",    href: "/billing",          icon: CreditCard },
+  { label: "Settings",   href: "/dashboard/settings", icon: Settings },
 ];
 
 type Props = {
