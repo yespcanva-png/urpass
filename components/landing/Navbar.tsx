@@ -183,7 +183,7 @@ export default function Navbar() {
               href={signupHref}
               className="text-sm bg-neutral-900 text-white px-4 py-2 rounded-xl font-medium hover:bg-neutral-700 transition-colors shadow-2xs"
             >
-              Create event
+              Create Free Event
             </Link>
           </div>
 
@@ -271,7 +271,7 @@ export default function Navbar() {
                 onClick={() => setOpen(false)}
                 className="text-sm text-center bg-neutral-900 text-white rounded-xl py-2.5 font-medium hover:bg-neutral-700 transition-colors"
               >
-                Create event
+                Create Free Event
               </Link>
             </div>
           </div>

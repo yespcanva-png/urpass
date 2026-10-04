@@ -76,6 +76,77 @@ const nextConfig: NextConfig = {
         destination: "/qr-code-ticketing-system",
         permanent: true,
       },
+      // City flat route consolidation into geo hubs
+      {
+        source: "/event-registration-software-delhi",
+        destination: "/in/delhi",
+        permanent: true,
+      },
+      {
+        source: "/event-registration-software-bangalore",
+        destination: "/in/bangalore",
+        permanent: true,
+      },
+      {
+        source: "/event-registration-software-chennai",
+        destination: "/in/chennai",
+        permanent: true,
+      },
+      {
+        source: "/event-registration-software-mumbai",
+        destination: "/in/mumbai",
+        permanent: true,
+      },
+      {
+        source: "/event-registration-software-hyderabad",
+        destination: "/in/hyderabad",
+        permanent: true,
+      },
+      {
+        source: "/event-registration-software-gurgaon",
+        destination: "/in/gurgaon",
+        permanent: true,
+      },
+      {
+        source: "/event-registration-software-noida",
+        destination: "/in/noida",
+        permanent: true,
+      },
+      {
+        source: "/event-registration-software-pune",
+        destination: "/in/pune",
+        permanent: true,
+      },
+      {
+        source: "/event-registration-software-kolkata",
+        destination: "/in/kolkata",
+        permanent: true,
+      },
+      {
+        source: "/event-registration-software-coimbatore",
+        destination: "/in/coimbatore",
+        permanent: true,
+      },
+      {
+        source: "/event-registration-software-ahmedabad",
+        destination: "/in/ahmedabad",
+        permanent: true,
+      },
+      {
+        source: "/event-registration-software-jaipur",
+        destination: "/in/jaipur",
+        permanent: true,
+      },
+      {
+        source: "/event-registration-software-chandigarh",
+        destination: "/in/chandigarh",
+        permanent: true,
+      },
+      {
+        source: "/event-registration-software-kochi",
+        destination: "/in/kochi",
+        permanent: true,
+      },
     ];
   },
 };

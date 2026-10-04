@@ -255,13 +255,6 @@ const softwareSchema = {
     { "@type": "Offer", name: "Global Pro Tier", price: "19", priceCurrency: "USD", billingIncrement: "P1M", priceValidUntil: "2027-12-31", description: "Global Pro Plan with 30-day free trial at $0." },
     { "@type": "Offer", name: "Global Business Tier", price: "39", priceCurrency: "USD", billingIncrement: "P1M", priceValidUntil: "2027-12-31", description: "Global Business Plan with 30-day free trial at $0." },
   ],
-  aggregateRating: {
-    "@type": "AggregateRating",
-    ratingValue: "4.9",
-    reviewCount: "168",
-    bestRating: "5",
-    worstRating: "1",
-  },
   knowsAbout: [
     "Digital Event Passes",
     "QR Check-in System",

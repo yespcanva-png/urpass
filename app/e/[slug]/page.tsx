@@ -17,30 +17,71 @@ export async function generateMetadata({
   // Try website slug first
   const { data: website } = await supabase
     .from("event_websites")
-    .select("seo_title, seo_description, event:events(name, description)")
+    .select("seo_title, seo_description, is_published, event:events(name, description, status)")
     .eq("slug", slug)
     .maybeSingle();
 
   if (website) {
-    const eventName = (website.event as any)?.name || "Conference";
+    const eventData = website.event as any;
+    const eventName = eventData?.name || "Conference";
+    const status = eventData?.status || "active";
+    const isPublic = website.is_published !== false && status === "active";
+    const isCompletedOrCancelled = status === "completed" || status === "cancelled";
+
     return {
-      title: website.seo_title || `${eventName} — Conference Schedule & Passes`,
-      description: website.seo_description || (website.event as any)?.description || undefined,
+      title: website.seo_title || `${eventName} — Schedule & Passes`,
+      description: website.seo_description || eventData?.description || `Attend ${eventName}. Complete agenda and passes.`,
+      alternates: { canonical: `https://urpass.space/e/${slug}` },
+      robots: isPublic
+        ? {
+            index: true,
+            follow: true,
+            googleBot: {
+              index: true,
+              follow: true,
+              "max-image-preview": "large",
+            },
+          }
+        : isCompletedOrCancelled
+        ? { index: false, follow: true }
+        : { index: false, follow: false },
     };
   }
 
   // Try event apply_slug or ID
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug);
   const { data: event } = await (isUuid
-    ? supabase.from("events").select("name, description").eq("id", slug)
-    : supabase.from("events").select("name, description").eq("apply_slug", slug)
+    ? supabase.from("events").select("name, description, status").eq("id", slug)
+    : supabase.from("events").select("name, description, status").eq("apply_slug", slug)
   ).maybeSingle();
 
-  if (!event) return { title: "Conference — URPASS" };
+  if (!event) {
+    return {
+      title: "Event Not Found — URPASS",
+      robots: { index: false, follow: false },
+    };
+  }
+
+  const isPublic = event.status === "active";
+  const isCompletedOrCancelled = event.status === "completed" || event.status === "cancelled";
 
   return {
     title: `${event.name} — Schedule & Passes`,
-    description: event.description || `Attend ${event.name}. Complete agenda and speaker line-up.`,
+    description: event.description || `Attend ${event.name}. Complete agenda and passes.`,
+    alternates: { canonical: `https://urpass.space/e/${slug}` },
+    robots: isPublic
+      ? {
+          index: true,
+          follow: true,
+          googleBot: {
+            index: true,
+            follow: true,
+            "max-image-preview": "large",
+          },
+        }
+      : isCompletedOrCancelled
+      ? { index: false, follow: true }
+      : { index: false, follow: false },
   };
 }
 
