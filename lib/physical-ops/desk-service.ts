@@ -71,7 +71,7 @@ export async function searchDeskAttendeesDb(eventId: string, query: string): Pro
         amount_paid,
         created_at,
         ticket_type_id,
-        passes ( id, token, status ),
+        passes ( id, pass_token, status ),
         ticket_types ( name ),
         check_ins ( id, checked_in_at )
       `)
@@ -121,7 +121,7 @@ export async function searchDeskAttendeesDb(eventId: string, query: string): Pro
         badgeType: badgeRole,
         paymentStatus: row.payment_status === "paid" || row.payment_status === "waived" ? row.payment_status : "paid",
         amountPaid: Number(row.amount_paid) || 0,
-        passToken: pass?.token || undefined,
+        passToken: pass?.pass_token || pass?.token || undefined,
         isCheckedIn,
         checkedInAt: latestCheckin,
         badgePrinted: printedAttendeeIds.has(row.id),
