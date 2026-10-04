@@ -170,20 +170,24 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  // Seamless Fallback: If organizer hasn't connected their own gateway, use URPASS Platform Payment Method
   if (!keyId || !keySecret) {
-    // Release the capacity reservation before failing
-    if (reservation.reservationId) {
-      await releaseReservation(admin, { reservationId: reservation.reservationId });
+    try {
+      const creds = getRazorpayCredentials();
+      keyId = creds.keyId;
+      keySecret = creds.keySecret;
+    } catch {
+      // Release the capacity reservation before failing
+      if (reservation.reservationId) {
+        await releaseReservation(admin, { reservationId: reservation.reservationId });
+      }
+      return NextResponse.json(
+        {
+          error: "Payment gateway is not configured on the server. Please check platform credentials.",
+        },
+        { status: 500 }
+      );
     }
-    return NextResponse.json(
-      {
-        error:
-          paymentMode === "URPASS_MANAGED"
-            ? "URPASS Managed Payments are not configured. Please set platform Razorpay credentials."
-            : "The event organizer has not connected a payment gateway yet.",
-      },
-      { status: 400 }
-    );
   }
 
   try {

@@ -385,6 +385,11 @@ export default async function ApplyPage({
         .maybeSingle();
       hasPaymentGateway = !!(ps?.razorpay_key_id);
     }
+
+    // Seamless Fallback: If organizer hasn't connected their own gateway, use UrPass Managed Payments
+    if (!hasPaymentGateway) {
+      hasPaymentGateway = Boolean(process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_ID);
+    }
   }
 
   const eventSchema = {

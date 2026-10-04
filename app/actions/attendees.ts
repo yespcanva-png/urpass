@@ -293,6 +293,16 @@ export async function rejectAttendee(
         }
       }
 
+      if (!keyId || !keySecret) {
+        try {
+          const creds = getRazorpayCredentials();
+          keyId = creds.keyId;
+          keySecret = creds.keySecret;
+        } catch {
+          // platform credentials not available
+        }
+      }
+
       if (keyId && keySecret) {
         const rzp = new Razorpay({ key_id: keyId, key_secret: keySecret });
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -727,7 +737,11 @@ export async function submitApplication(
     }
 
     if (!secretKey) {
-      return { error: "Payment gateway not configured for this event." };
+      try {
+        secretKey = getRazorpayCredentials().keySecret;
+      } catch {
+        return { error: "Payment gateway not configured for this event." };
+      }
     }
 
     const expected = crypto
