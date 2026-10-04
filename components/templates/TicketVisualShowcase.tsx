@@ -37,7 +37,7 @@ function wrapFormat(
     return (
       <div className="flex flex-col items-center select-none animate-in fade-in duration-150">
         <RealisticLanyardClip isSmall={isCard} strapColor="#0F172A" accentLabel="CREDENTIAL" />
-        <div className="relative rounded-2xl p-1 bg-white/70 border border-neutral-300 shadow-md">
+        <div className="relative rounded-2xl p-1 bg-white/70 dark:bg-white/10 backdrop-blur-md border border-neutral-300 dark:border-neutral-700 shadow-md">
           {card}
         </div>
       </div>

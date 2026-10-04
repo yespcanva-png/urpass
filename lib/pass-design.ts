@@ -486,37 +486,55 @@ export function getPatternStyle(
   secondaryColor: string,
   headerStyle: HeaderStyle = "gradient"
 ): React.CSSProperties {
+  const isGlass = headerStyle === "glass";
   const baseBg =
     headerStyle === "solid"
       ? primaryColor
+      : headerStyle === "glass"
+      ? `linear-gradient(135deg, ${primaryColor}E6 0%, ${secondaryColor}CC 100%)`
       : `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)`;
+
+  const glassProps: React.CSSProperties = isGlass
+    ? {
+        backdropFilter: "blur(16px)",
+        WebkitBackdropFilter: "blur(16px)",
+      }
+    : {};
 
   // Always use separate backgroundColor and backgroundImage to prevent React style conflicts
   switch (pattern) {
     case "mesh":
       return {
-        backgroundColor: primaryColor,
-        backgroundImage: `radial-gradient(at 10% 20%, rgba(255,255,255,0.25) 0px, transparent 50%), radial-gradient(at 90% 80%, rgba(0,0,0,0.3) 0px, transparent 50%), linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)`,
+        ...glassProps,
+        backgroundColor: isGlass ? `${primaryColor}CC` : primaryColor,
+        backgroundImage: `radial-gradient(at 10% 20%, rgba(255,255,255,0.3) 0px, transparent 50%), radial-gradient(at 90% 80%, rgba(0,0,0,0.2) 0px, transparent 50%), ${baseBg}`,
       };
     case "dots":
       return {
-        backgroundColor: primaryColor,
-        backgroundImage: `radial-gradient(rgba(255, 255, 255, 0.22) 1.5px, transparent 1.5px), linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)`,
+        ...glassProps,
+        backgroundColor: isGlass ? `${primaryColor}CC` : primaryColor,
+        backgroundImage: `radial-gradient(rgba(255, 255, 255, 0.25) 1.5px, transparent 1.5px), ${baseBg}`,
         backgroundSize: "16px 16px, 100% 100%",
       };
     case "stripes":
       return {
-        backgroundColor: primaryColor,
-        backgroundImage: `repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.07) 0px, rgba(255, 255, 255, 0.07) 2px, transparent 2px, transparent 10px), linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)`,
+        ...glassProps,
+        backgroundColor: isGlass ? `${primaryColor}CC` : primaryColor,
+        backgroundImage: `repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.08) 0px, rgba(255, 255, 255, 0.08) 2px, transparent 2px, transparent 10px), ${baseBg}`,
       };
     case "radial":
       return {
-        backgroundColor: primaryColor,
-        backgroundImage: `radial-gradient(circle at 85% 30%, rgba(255, 255, 255, 0.28) 0%, transparent 60%), linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)`,
+        ...glassProps,
+        backgroundColor: isGlass ? `${primaryColor}CC` : primaryColor,
+        backgroundImage: `radial-gradient(circle at 85% 30%, rgba(255, 255, 255, 0.35) 0%, transparent 60%), ${baseBg}`,
       };
     case "clean":
     default:
-      return { backgroundColor: primaryColor, backgroundImage: baseBg };
+      return {
+        ...glassProps,
+        backgroundColor: isGlass ? `${primaryColor}CC` : primaryColor,
+        backgroundImage: baseBg,
+      };
   }
 }
 

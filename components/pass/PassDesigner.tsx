@@ -754,18 +754,21 @@ export default function PassDesigner({
             </div>
 
             {/* Render Live Pass Preview */}
-            <div className="w-full py-4 flex justify-center">
-              <PassPreviewCard
-                design={inheritFromOrg && orgDefaultDesign ? orgDefaultDesign : design}
-                orgName={orgName}
-                orgLogoUrl={orgLogoUrl}
-                eventName={eventName}
-                eventDate={eventDate}
-                venue={venue}
-                attendeeName="Arun Kumar"
-                attendeeEmail="arun.kumar@example.com"
-                shortCode="8F42-99B1"
-              />
+            <div className="w-full py-6 px-4 rounded-3xl bg-gradient-to-b from-neutral-100/80 via-neutral-50/50 to-neutral-100/80 border border-neutral-200/60 relative overflow-hidden flex justify-center shadow-inner">
+              <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-gradient-to-tr from-brand/20 via-purple-400/10 to-transparent blur-3xl pointer-events-none rounded-full" />
+              <div className="relative z-10 w-full flex justify-center">
+                <PassPreviewCard
+                  design={inheritFromOrg && orgDefaultDesign ? orgDefaultDesign : design}
+                  orgName={orgName}
+                  orgLogoUrl={orgLogoUrl}
+                  eventName={eventName}
+                  eventDate={eventDate}
+                  venue={venue}
+                  attendeeName="Arun Kumar"
+                  attendeeEmail="arun.kumar@example.com"
+                  shortCode="8F42-99B1"
+                />
+              </div>
             </div>
 
             <p className="text-[11px] text-neutral-400 text-center mt-3">

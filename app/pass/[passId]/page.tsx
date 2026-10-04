@@ -128,16 +128,20 @@ export default async function PassPage({
 
   return (
     <div
-      className="min-h-screen flex flex-col items-center justify-center p-5 pb-16"
+      className="min-h-screen flex flex-col items-center justify-center p-5 pb-16 relative overflow-hidden"
       style={{
         backgroundColor: isDark ? "#0a0a0d" : "#f8fafc",
       }}
     >
+      {/* Background ambient light orbs for rich translucent glass refraction */}
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-gradient-to-tr from-brand/20 via-purple-500/10 to-transparent blur-3xl pointer-events-none rounded-full" />
+      <div className="absolute bottom-1/4 left-1/3 -translate-x-1/2 w-[400px] h-[400px] bg-gradient-to-br from-indigo-500/15 via-pink-500/10 to-transparent blur-3xl pointer-events-none rounded-full" />
+
       {/* Wordmark — shown only on Free plan */}
       {showBranding && (
-        <div className="flex items-center gap-1.5 mb-8 apply-in-1">
+        <div className="flex items-center gap-1.5 mb-8 apply-in-1 relative z-10">
           <Ticket className="w-4 h-4 text-brand" />
-          <span className="text-xs font-bold tracking-widest uppercase text-neutral-900">
+          <span className="text-xs font-bold tracking-widest uppercase text-neutral-900 dark:text-white">
             URPASS
           </span>
         </div>
@@ -145,7 +149,7 @@ export default async function PassPage({
 
       {/* Visual Ticket Pass Card: Studio Design or Standard Template */}
       {isStudio ? (
-        <div className="w-full max-w-sm flex justify-center mb-6">
+        <div className="w-full max-w-sm flex justify-center mb-6 relative z-10">
           <StudioPassRenderer
             design={rawCustomDesign}
             attendee={attendee}
@@ -156,17 +160,17 @@ export default async function PassPage({
         </div>
       ) : (
         <div
-          className={`relative w-full max-w-[370px] ${shapeRadius} border select-none overflow-hidden transition-all shadow-2xl ${
+          className={`relative z-10 w-full max-w-[370px] ${shapeRadius} border select-none overflow-hidden transition-all shadow-2xl backdrop-blur-2xl ${
             isDark
-              ? "bg-[#0B0E14] border-neutral-800 text-white"
+              ? "bg-[#0B0E14]/85 border-neutral-800/80 text-white"
               : isMinimal
-              ? "bg-white border-neutral-900 text-neutral-900"
-              : "bg-white border-neutral-200/90 text-neutral-900"
+              ? "bg-white/85 border-neutral-900/80 text-neutral-900"
+              : "bg-white/85 border-white/60 dark:border-white/10 text-neutral-900"
           }`}
           style={{
             boxShadow: isDark
-              ? "0 25px 60px -15px rgba(0, 0, 0, 0.7)"
-              : "0 20px 50px -15px rgba(0, 0, 0, 0.08)",
+              ? "0 25px 60px -15px rgba(0, 0, 0, 0.7), 0 0 40px -10px rgba(109, 40, 217, 0.15)"
+              : "0 20px 50px -15px rgba(0, 0, 0, 0.08), 0 0 30px -10px rgba(99, 91, 255, 0.1)",
           }}
         >
           {/* Optional background image with contrast-preserving overlay */}
@@ -227,7 +231,7 @@ export default async function PassPage({
                 )}
               </div>
 
-              <span className="inline-flex items-center gap-1 text-[9px] font-extrabold tracking-wider uppercase px-2.5 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700">
+              <span className="inline-flex items-center gap-1 text-[9px] font-extrabold tracking-wider uppercase px-2.5 py-1 rounded-full bg-neutral-100/90 dark:bg-neutral-800/90 text-neutral-700 dark:text-neutral-300 border border-neutral-200/80 dark:border-neutral-700 shadow-2xs backdrop-blur-xs">
                 <ShieldCheck className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
                 <span>OFFICIAL PASS</span>
               </span>
@@ -241,7 +245,7 @@ export default async function PassPage({
             {/* Structured Event Metadata Grid */}
             <div className="mt-3.5 grid grid-cols-2 gap-2 text-[10px]">
               {design.showEventDate !== false && (
-                <div className="p-2.5 rounded-xl bg-neutral-50 dark:bg-neutral-900/60 border border-neutral-100 dark:border-neutral-800 flex items-start gap-2">
+                <div className="p-2.5 rounded-xl bg-white/70 dark:bg-white/5 backdrop-blur-md border border-neutral-200/70 dark:border-white/10 flex items-start gap-2 shadow-2xs">
                   <CalendarDays className="w-3.5 h-3.5 text-neutral-400 shrink-0 mt-0.5" />
                   <div className="min-w-0">
                     <p className="text-[8px] font-bold uppercase tracking-wider text-neutral-400">
@@ -258,7 +262,7 @@ export default async function PassPage({
               )}
 
               {design.showVenue && event.venue && (
-                <div className="p-2.5 rounded-xl bg-neutral-50 dark:bg-neutral-900/60 border border-neutral-100 dark:border-neutral-800 flex items-start gap-2">
+                <div className="p-2.5 rounded-xl bg-white/70 dark:bg-white/5 backdrop-blur-md border border-neutral-200/70 dark:border-white/10 flex items-start gap-2 shadow-2xs">
                   <MapPin className="w-3.5 h-3.5 text-neutral-400 shrink-0 mt-0.5" />
                   <div className="min-w-0">
                     <p className="text-[8px] font-bold uppercase tracking-wider text-neutral-400">
@@ -278,15 +282,15 @@ export default async function PassPage({
 
           {/* Micro-perforated coupon notch line */}
           <div className="relative h-4 bg-transparent flex items-center">
-            <div className={`absolute -left-2.5 w-5 h-5 rounded-full ${isDark ? "bg-[#0a0a0d] border-neutral-800" : "bg-neutral-100 border-neutral-200"} border`} />
-            <div className={`absolute -right-2.5 w-5 h-5 rounded-full ${isDark ? "bg-[#0a0a0d] border-neutral-800" : "bg-neutral-100 border-neutral-200"} border`} />
+            <div className={`absolute -left-2.5 w-5 h-5 rounded-full ${isDark ? "bg-[#0a0a0d]/90 border-neutral-800" : "bg-neutral-100/90 border-neutral-200"} border backdrop-blur-xs`} />
+            <div className={`absolute -right-2.5 w-5 h-5 rounded-full ${isDark ? "bg-[#0a0a0d]/90 border-neutral-800" : "bg-neutral-100/90 border-neutral-200"} border backdrop-blur-xs`} />
             <div className={`w-full border-t border-dashed ${isDark ? "border-neutral-800" : "border-neutral-200"} mx-4`} />
           </div>
 
           {/* Ticket Body */}
           <div className="relative z-10 px-6 pb-6 flex flex-col items-center text-center">
             {/* Attendee Details Card */}
-            <div className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-neutral-50 dark:bg-neutral-900/60 border border-neutral-100 dark:border-neutral-800 mb-3.5">
+            <div className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-white/70 dark:bg-white/5 backdrop-blur-md border border-neutral-200/70 dark:border-white/10 mb-3.5 shadow-2xs">
               <div className="text-left min-w-0 pr-2">
                 <p className="text-[8px] font-bold tracking-widest uppercase text-neutral-400 mb-0.5">
                   DELEGATE
@@ -297,7 +301,7 @@ export default async function PassPage({
                   </p>
                 )}
                 {design.showPhone && attendee.phone && (
-                  <p className="text-[10px] font-mono text-neutral-500">
+                  <p className="text-[10px] font-mono text-neutral-500 dark:text-neutral-400">
                     {attendee.phone}
                   </p>
                 )}
@@ -306,7 +310,7 @@ export default async function PassPage({
               <div className="flex flex-col items-end shrink-0 gap-1">
                 {design.showTicketType && (
                   <span
-                    className="inline-flex items-center gap-1 text-[10px] font-black tracking-wider uppercase px-2.5 py-1 rounded-full border shadow-2xs"
+                    className="inline-flex items-center gap-1 text-[10px] font-black tracking-wider uppercase px-2.5 py-1 rounded-full border shadow-2xs backdrop-blur-xs"
                     style={{
                       borderColor: `${brandColor}40`,
                       color: brandColor,
@@ -319,7 +323,7 @@ export default async function PassPage({
                 )}
 
                 {design.showRegistrationNumber && (
-                  <span className="text-[9px] font-mono font-semibold px-2 py-0.5 rounded bg-white dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700">
+                  <span className="text-[9px] font-mono font-semibold px-2 py-0.5 rounded bg-white/90 dark:bg-neutral-800 border border-neutral-200/80 dark:border-neutral-700 text-neutral-600 dark:text-neutral-300 shadow-2xs">
                     REG-{shortCode.toUpperCase()}
                   </span>
                 )}
@@ -329,7 +333,7 @@ export default async function PassPage({
             {/* QR Code Container with High-Contrast White Card */}
             {!isOnline && (
               <div className="my-1 flex flex-col items-center w-full">
-                <div className="p-4 bg-white rounded-2xl shadow-xs border border-neutral-200/80 flex flex-col items-center justify-center">
+                <div className="p-4 bg-white/95 dark:bg-white backdrop-blur-md rounded-2xl shadow-xs border border-neutral-200/80 flex flex-col items-center justify-center">
                   <PassQR value={pass.pass_token} size={165} />
                   <span className="text-[9px] font-mono font-bold tracking-widest text-neutral-400 uppercase mt-2.5">
                     SCAN AT ENTRANCE TERMINAL

@@ -96,12 +96,12 @@ export default function HeroPassShowcase() {
       </div>
 
       {/* Main Luxury Pass Card */}
-      <div className="relative bg-white rounded-3xl border border-neutral-200/90 shadow-[0_24px_60px_-12px_rgba(0,0,0,0.12),0_4px_16px_rgba(109,40,217,0.06)] overflow-hidden transition-transform duration-500 hover:scale-[1.01]">
+      <div className="relative bg-white/85 dark:bg-[#0B0E14]/85 backdrop-blur-2xl rounded-3xl border border-white/60 dark:border-white/10 shadow-[0_24px_60px_-12px_rgba(0,0,0,0.14),0_0_35px_rgba(109,40,217,0.1)] overflow-hidden transition-transform duration-500 hover:scale-[1.01]">
         {/* Holographic foil top strip */}
         <div className="h-1.5 w-full bg-gradient-to-r from-brand via-purple-400 via-pink-400 to-amber-300" />
 
         {/* Executive Header */}
-        <div className="bg-gradient-to-b from-neutral-950 to-neutral-900 px-5 sm:px-6 py-4 text-white flex items-center justify-between border-b border-neutral-800">
+        <div className="bg-gradient-to-b from-neutral-950/90 to-neutral-900/90 backdrop-blur-md px-5 sm:px-6 py-4 text-white flex items-center justify-between border-b border-white/10">
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-lg bg-brand flex items-center justify-center shadow-xs">
               <Sparkles className="w-3 h-3 text-white" />
@@ -111,47 +111,47 @@ export default function HeroPassShowcase() {
               <span className="text-[8px] font-semibold text-neutral-400 tracking-wider uppercase mt-0.5">VIP Credential</span>
             </div>
           </div>
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-400/30 text-emerald-300 text-[10px] font-semibold tracking-wide">
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-400/30 text-emerald-300 text-[10px] font-semibold tracking-wide backdrop-blur-xs shadow-2xs">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
             <span>0.28s VERIFIED</span>
           </div>
         </div>
 
         {/* Card Body */}
-        <div className="p-5 sm:p-6 bg-gradient-to-b from-white via-neutral-50/50 to-white">
+        <div className="p-5 sm:p-6 bg-gradient-to-b from-white/90 via-neutral-50/60 to-white/90 dark:from-white/5 dark:via-transparent dark:to-white/5 backdrop-blur-md">
           {/* Event Info */}
           <div className="mb-4">
             <span className="text-[9px] font-bold tracking-widest text-neutral-400 uppercase">OFFICIAL EVENT PASS</span>
-            <h3 className="font-bold text-lg sm:text-xl text-neutral-900 leading-snug tracking-tight mt-0.5">
+            <h3 className="font-bold text-lg sm:text-xl text-neutral-900 dark:text-white leading-snug tracking-tight mt-0.5">
               Global Tech Summit 2026
             </h3>
-            <p className="text-[11px] text-neutral-500 font-medium mt-0.5">Exhibition Center · Main Hall</p>
+            <p className="text-[11px] text-neutral-500 dark:text-neutral-400 font-medium mt-0.5">Exhibition Center · Main Hall</p>
           </div>
 
           {/* Ticket Notch & Perforation Line */}
           <div className="relative flex items-center my-4">
-            <div className="w-5 h-5 rounded-full bg-neutral-100 -ml-8 shrink-0 border-r border-neutral-200/80 shadow-inner" />
-            <div className="flex-1 border-t border-dashed border-neutral-300 mx-2" />
-            <div className="w-5 h-5 rounded-full bg-neutral-100 -mr-8 shrink-0 border-l border-neutral-200/80 shadow-inner" />
+            <div className="w-5 h-5 rounded-full bg-neutral-100/90 dark:bg-neutral-900/90 -ml-8 shrink-0 border-r border-neutral-200/80 dark:border-neutral-800 shadow-inner backdrop-blur-xs" />
+            <div className="flex-1 border-t border-dashed border-neutral-300/80 dark:border-neutral-700 mx-2" />
+            <div className="w-5 h-5 rounded-full bg-neutral-100/90 dark:bg-neutral-900/90 -mr-8 shrink-0 border-l border-neutral-200/80 dark:border-neutral-800 shadow-inner backdrop-blur-xs" />
           </div>
 
           {/* Attendee Details */}
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-4 p-3 rounded-2xl bg-white/70 dark:bg-white/5 border border-neutral-200/70 dark:border-white/10 backdrop-blur-md shadow-2xs">
             <div>
               <span className="text-[9px] font-bold tracking-widest text-neutral-400 uppercase block">ATTENDEE</span>
-              <p className="font-semibold text-sm sm:text-base text-neutral-900">Srinithin S</p>
+              <p className="font-semibold text-sm sm:text-base text-neutral-900 dark:text-white">Srinithin S</p>
             </div>
             <div className="text-right">
               <span className="text-[9px] font-bold tracking-widest text-neutral-400 uppercase block">STATUS</span>
-              <span className="inline-flex items-center gap-1 text-[10px] font-bold tracking-wider text-emerald-800 bg-emerald-50 border border-emerald-200/70 px-2 py-0.5 rounded-md mt-0.5">
-                <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+              <span className="inline-flex items-center gap-1 text-[10px] font-bold tracking-wider text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/70 dark:border-emerald-800/60 px-2 py-0.5 rounded-md mt-0.5 shadow-2xs">
+                <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
                 ADMITTED
               </span>
             </div>
           </div>
 
           {/* High-res QR code with animated laser scan beam */}
-          <div className="relative flex flex-col items-center justify-center p-4 bg-white border border-neutral-200/80 rounded-2xl shadow-xs overflow-hidden">
+          <div className="relative flex flex-col items-center justify-center p-4 bg-white/95 dark:bg-white border border-neutral-200/80 rounded-2xl shadow-xs overflow-hidden backdrop-blur-sm">
             <div className="relative w-28 h-28 sm:w-32 sm:h-32">
               <QRPattern className="w-full h-full text-neutral-900" />
               {/* Laser beam sweep overlay */}
@@ -167,7 +167,7 @@ export default function HeroPassShowcase() {
           </div>
 
           {/* Gate Verification Telemetry Footer */}
-          <div className="mt-4 pt-3 border-t border-neutral-100 flex items-center justify-between text-[10px] text-neutral-500 font-medium">
+          <div className="mt-4 pt-3 border-t border-neutral-100/80 dark:border-white/10 flex items-center justify-between text-[10px] text-neutral-500 font-medium">
             <span className="flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
               Gate 01 Check-In: 09:41 AM
