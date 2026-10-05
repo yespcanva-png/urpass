@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import type {
   EventSummary,
   Gate,
@@ -9,6 +9,7 @@ import type {
 import { StorageService } from "../services/storage";
 import { OfflineDb } from "../services/offlineDb";
 import { SyncService } from "../services/syncService";
+import { SupabaseOpsService } from "../services/supabaseService";
 import { CONFIG } from "../constants/config";
 
 interface EventContextType {
@@ -81,110 +82,123 @@ const DEFAULT_EVENTS: EventSummary[] = [
   },
 ];
 
-const DEFAULT_GATES: Record<string, Gate[]> = {
-  "evt-tech-summit-2026": [
-    {
-      id: "gate-a-main",
-      eventId: "evt-tech-summit-2026",
-      name: "Gate A – Main Concourse",
-      zoneName: "Main Entrance",
-      mode: "entry",
-      status: "open",
-      capacity: 3500,
-      activeScannersCount: 4,
-      scansCount: 1640,
-      allowedTicketTypes: [],
-      allowedBadgeTypes: ["participant", "vip", "speaker", "delegate", "student"],
-    },
-    {
-      id: "gate-b-vip",
-      eventId: "evt-tech-summit-2026",
-      name: "Gate B – VIP & Keynote Speakers",
-      zoneName: "VIP Concourse",
-      mode: "both",
-      status: "open",
-      capacity: 500,
-      activeScannersCount: 2,
-      scansCount: 420,
-      allowedTicketTypes: [],
-      allowedBadgeTypes: ["vip", "speaker", "sponsor"],
-    },
-    {
-      id: "gate-c-expo",
-      eventId: "evt-tech-summit-2026",
-      name: "Gate C – Exhibition Pavilion",
-      zoneName: "Expo Hall",
-      mode: "both",
-      status: "open",
-      capacity: 1500,
-      activeScannersCount: 2,
-      scansCount: 890,
-      allowedBadgeTypes: ["participant", "exhibitor", "vip", "staff"],
-    },
-    {
-      id: "gate-d-staff",
-      eventId: "evt-tech-summit-2026",
-      name: "Gate D – Staff & Crew Loading",
-      zoneName: "Backstage / Crew",
-      mode: "both",
-      status: "open",
-      capacity: 200,
-      activeScannersCount: 1,
-      scansCount: 290,
-      allowedBadgeTypes: ["staff", "exhibitor"],
-    },
-  ],
-};
-
 const EventContext = createContext<EventContextType | undefined>(undefined);
 
 export function EventProvider({ children }: { children: React.ReactNode }) {
-  const [organizations] = useState<OrganizationSummary[]>(DEFAULT_ORGS);
+  const [organizations, setOrganizations] = useState<OrganizationSummary[]>(DEFAULT_ORGS);
   const [selectedOrg, setSelectedOrg] = useState<OrganizationSummary | null>(DEFAULT_ORGS[0]);
   const [events, setEvents] = useState<EventSummary[]>(DEFAULT_EVENTS);
   const [selectedEvent, setSelectedEvent] = useState<EventSummary | null>(DEFAULT_EVENTS[0]);
-  const [gates, setGates] = useState<Gate[]>(DEFAULT_GATES["evt-tech-summit-2026"]);
-  const [assignedGate, setAssignedGate] = useState<Gate | null>(DEFAULT_GATES["evt-tech-summit-2026"][0]);
+  const [gates, setGates] = useState<Gate[]>([]);
+  const [assignedGate, setAssignedGate] = useState<Gate | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    async function loadSavedEventSelection() {
+  // Load organizations & live events from Supabase
+  const loadInitialData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const liveOrgs = await SupabaseOpsService.fetchOrganizations();
+      if (liveOrgs.length > 0) {
+        setOrganizations(liveOrgs);
+      }
+
       const savedOrgId = await StorageService.getItem(CONFIG.STORAGE_KEYS.LAST_ORG_ID);
+      const activeOrg = liveOrgs.find((o) => o.id === savedOrgId) || liveOrgs[0] || DEFAULT_ORGS[0];
+      setSelectedOrg(activeOrg);
+
+      const liveEvents = await SupabaseOpsService.fetchEvents(activeOrg?.id);
+      if (liveEvents.length > 0) {
+        setEvents(liveEvents);
+      }
+
       const savedEventId = await StorageService.getItem(CONFIG.STORAGE_KEYS.LAST_EVENT_ID);
-      const savedGateId = await StorageService.getItem(CONFIG.STORAGE_KEYS.ASSIGNED_GATE_ID);
+      const activeEvent = liveEvents.find((e) => e.id === savedEventId) || liveEvents[0] || DEFAULT_EVENTS[0];
+      setSelectedEvent(activeEvent);
 
-      if (savedOrgId) {
-        const foundOrg = DEFAULT_ORGS.find((o) => o.id === savedOrgId);
-        if (foundOrg) setSelectedOrg(foundOrg);
+      if (activeEvent) {
+        const liveGates = await SupabaseOpsService.fetchGates(activeEvent.id);
+        setGates(liveGates);
+
+        const savedGateId = await StorageService.getItem(CONFIG.STORAGE_KEYS.ASSIGNED_GATE_ID);
+        const activeGate = liveGates.find((g) => g.id === savedGateId) || liveGates[0] || null;
+        setAssignedGate(activeGate);
+
+        // Pre-download local manifest for lightning-fast sub-0.3s scans
+        await SyncService.downloadEventManifest(activeEvent.id);
       }
-
-      if (savedEventId) {
-        const foundEvt = DEFAULT_EVENTS.find((e) => e.id === savedEventId);
-        if (foundEvt) {
-          setSelectedEvent(foundEvt);
-          const evtGates = DEFAULT_GATES[foundEvt.id] || [];
-          setGates(evtGates);
-
-          if (savedGateId) {
-            const foundGate = evtGates.find((g) => g.id === savedGateId);
-            if (foundGate) setAssignedGate(foundGate);
-          }
-        }
-      }
+    } finally {
+      setIsLoading(false);
     }
-
-    loadSavedEventSelection();
   }, []);
+
+  useEffect(() => {
+    loadInitialData();
+  }, [loadInitialData]);
+
+  // Set up Supabase Realtime check-in updates
+  useEffect(() => {
+    if (!selectedEvent) return;
+
+    try {
+      const supabase = SupabaseOpsService.getClient();
+      const channel = supabase
+        .channel(`event-checkins-${selectedEvent.id}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "check_ins",
+            filter: `event_id=eq.${selectedEvent.id}`,
+          },
+          (payload) => {
+            // Live broadcast of newly scanned ticket
+            const newScan = payload.new as any;
+            if (newScan) {
+              setSelectedEvent((prev) => {
+                if (!prev) return null;
+                const isEntry = newScan.direction === "in";
+                return {
+                  ...prev,
+                  checkedInCount: isEntry ? prev.checkedInCount + 1 : prev.checkedInCount,
+                  currentlyInsideCount: isEntry
+                    ? prev.currentlyInsideCount + 1
+                    : Math.max(0, prev.currentlyInsideCount - 1),
+                  checkedOutCount: !isEntry ? prev.checkedOutCount + 1 : prev.checkedOutCount,
+                };
+              });
+
+              setGates((prev) =>
+                prev.map((g) =>
+                  g.id === newScan.gate_id
+                    ? { ...g, scansCount: g.scansCount + 1 }
+                    : g
+                )
+              );
+            }
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    } catch {
+      // Realtime subscription fallback
+    }
+  }, [selectedEvent?.id]);
 
   function selectOrganization(orgId: string) {
     const org = organizations.find((o) => o.id === orgId);
     if (org) {
       setSelectedOrg(org);
       StorageService.setItem(CONFIG.STORAGE_KEYS.LAST_ORG_ID, org.id);
-      const filteredEvents = events.filter((e) => !e.organizationId || e.organizationId === org.id);
-      if (filteredEvents.length > 0) {
-        selectEvent(filteredEvents[0].id);
-      }
+      SupabaseOpsService.fetchEvents(org.id).then((evts) => {
+        if (evts.length > 0) {
+          setEvents(evts);
+          selectEvent(evts[0].id);
+        }
+      });
     }
   }
 
@@ -196,19 +210,9 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
         setSelectedEvent(evt);
         await StorageService.setItem(CONFIG.STORAGE_KEYS.LAST_EVENT_ID, evt.id);
 
-        const evtGates = DEFAULT_GATES[evt.id] || [
-          {
-            id: `gate-${evt.id}-main`,
-            eventId: evt.id,
-            name: "Main Entrance",
-            mode: "entry",
-            status: "open",
-            activeScannersCount: 2,
-            scansCount: evt.checkedInCount,
-          },
-        ];
-        setGates(evtGates);
-        setAssignedGate(evtGates[0] || null);
+        const liveGates = await SupabaseOpsService.fetchGates(evt.id);
+        setGates(liveGates);
+        setAssignedGate(liveGates[0] || null);
 
         // Pre-download manifest for offline resilience
         await SyncService.downloadEventManifest(evt.id);
@@ -248,6 +252,8 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
     if (!selectedEvent) return;
     setIsLoading(true);
     try {
+      const liveGates = await SupabaseOpsService.fetchGates(selectedEvent.id);
+      setGates(liveGates);
       await SyncService.downloadEventManifest(selectedEvent.id);
     } finally {
       setIsLoading(false);

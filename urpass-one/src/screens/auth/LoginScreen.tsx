@@ -8,7 +8,6 @@ import {
   SafeAreaView,
   ScrollView,
   StatusBar,
-  Alert,
 } from "react-native";
 import { COLORS } from "../../constants/colors";
 import { useAuth } from "../../context/AuthContext";
@@ -69,7 +68,7 @@ export function LoginScreen({ navigation }: LoginScreenProps) {
     }
     setErrorMsg("");
     setStep("otp");
-    setOtp("123456"); // Pre-fill default test OTP for seamless testing
+    setOtp("123456"); // Pre-fill default test OTP for field testing
   }
 
   async function handleVerifyOtp() {
@@ -100,32 +99,28 @@ export function LoginScreen({ navigation }: LoginScreenProps) {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" />
       <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
-        {/* Logo / Hero Header */}
-        <View style={styles.heroSection}>
-          <View style={styles.logoBadge}>
-            <Text style={styles.logoText}>⚡ URPASS ONE</Text>
+        {/* Brand Header */}
+        <View style={styles.brandHeader}>
+          <View style={styles.logoRow}>
+            <View style={styles.logoMark}>
+              <Text style={styles.logoMarkText}>⚡</Text>
+            </View>
+            <View>
+              <Text style={styles.brandTitle}>UrPass One</Text>
+              <Text style={styles.brandSubtitle}>Mobile Event Operations</Text>
+            </View>
           </View>
-          <Text style={styles.heroTitle}>Event Operations & Gate Control</Text>
-          <Text style={styles.heroSubtitle}>
-            High-speed mobile check-in, duplicate prevention, and live telemetry for gate staff & organizers.
-          </Text>
-        </View>
-
-        {/* Device ID Banner */}
-        <View style={styles.deviceBanner}>
-          <Text style={styles.deviceLabel}>DEVICE ID</Text>
-          <Text style={styles.deviceIdText}>{deviceId}</Text>
-          <Badge label="Hardware Paired" variant="green" size="sm" />
+          <Badge label={`DEV: ${deviceId}`} variant="neutral" size="sm" />
         </View>
 
         {/* Login Form Box */}
         <View style={styles.formCard}>
           <Text style={styles.cardHeader}>
-            {step === "credentials" ? "Sign In to Organization" : "Two-Step Verification"}
+            {step === "credentials" ? "Sign In" : "Two-Step Verification"}
           </Text>
           <Text style={styles.cardSubtext}>
             {step === "credentials"
-              ? "Enter your staff email address to receive access"
+              ? "Enter your staff email to access live event gates"
               : `Enter the 6-digit code sent to ${email}`}
           </Text>
 
@@ -154,6 +149,7 @@ export function LoginScreen({ navigation }: LoginScreenProps) {
                 title="Continue with OTP"
                 onPress={handleSendOtp}
                 loading={isLoading}
+                variant="brand"
                 size="lg"
                 style={styles.actionBtn}
               />
@@ -192,11 +188,11 @@ export function LoginScreen({ navigation }: LoginScreenProps) {
           )}
         </View>
 
-        {/* Quick Role Simulation / Field Testing */}
+        {/* Quick Role Switcher */}
         <View style={styles.presetsSection}>
-          <Text style={styles.presetHeading}>QUICK FIELD PRESETS (ROLE SIMULATION)</Text>
+          <Text style={styles.presetHeading}>QUICK FIELD PROFILES</Text>
           <Text style={styles.presetSubheading}>
-            Select a role profile for immediate access without authentication barriers:
+            Select a role preset for immediate evaluation without OTP:
           </Text>
 
           <View style={styles.presetGrid}>
@@ -219,7 +215,6 @@ export function LoginScreen({ navigation }: LoginScreenProps) {
                   />
                 </View>
                 <Text style={styles.presetDesc}>{preset.desc}</Text>
-                <Text style={styles.presetEmail}>{preset.email}</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -238,72 +233,50 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: 40,
   },
-  heroSection: {
-    marginTop: 10,
-    marginBottom: 24,
-  },
-  logoBadge: {
-    backgroundColor: COLORS.surfaceLight,
-    borderWidth: 1,
-    borderColor: COLORS.surfaceBorder,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 20,
-    alignSelf: "flex-start",
-    marginBottom: 12,
-  },
-  logoText: {
-    color: COLORS.white,
-    fontWeight: "900",
-    fontSize: 12,
-    letterSpacing: 1,
-  },
-  heroTitle: {
-    fontSize: 26,
-    fontWeight: "900",
-    color: COLORS.textPrimary,
-    letterSpacing: -0.8,
-  },
-  heroSubtitle: {
-    fontSize: 13,
-    color: COLORS.textSecondary,
-    lineHeight: 18,
-    marginTop: 6,
-  },
-  deviceBanner: {
+  brandHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: COLORS.surface,
-    borderWidth: 1,
-    borderColor: COLORS.surfaceBorder,
+    marginTop: 10,
+    marginBottom: 24,
+  },
+  logoRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  logoMark: {
+    width: 40,
+    height: 40,
     borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    marginBottom: 20,
+    backgroundColor: COLORS.brand,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  deviceLabel: {
-    fontSize: 10,
-    fontWeight: "700",
-    color: COLORS.textMuted,
-    letterSpacing: 0.5,
+  logoMarkText: {
+    fontSize: 20,
   },
-  deviceIdText: {
-    fontSize: 12,
-    fontWeight: "700",
+  brandTitle: {
+    fontSize: 20,
+    fontWeight: "900",
     color: COLORS.textPrimary,
-    fontFamily: "monospace",
+    letterSpacing: -0.5,
+  },
+  brandSubtitle: {
+    fontSize: 12,
+    color: COLORS.textSecondary,
+    marginTop: 1,
   },
   formCard: {
     backgroundColor: COLORS.surface,
     borderWidth: 1,
-    borderColor: COLORS.surfaceBorder,
-    borderRadius: 16,
-    padding: 18,
+    borderColor: COLORS.surfaceBorderSubtle,
+    borderRadius: 18,
+    padding: 20,
     marginBottom: 28,
   },
   cardHeader: {
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: "800",
     color: COLORS.textPrimary,
   },
@@ -311,14 +284,14 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: COLORS.textSecondary,
     marginTop: 4,
-    marginBottom: 16,
+    marginBottom: 18,
   },
   errorBox: {
     backgroundColor: COLORS.redLight,
     borderColor: COLORS.redBorder,
     borderWidth: 1,
     padding: 10,
-    borderRadius: 8,
+    borderRadius: 10,
     marginBottom: 14,
   },
   errorText: {
@@ -330,27 +303,27 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   inputLabel: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "700",
     color: COLORS.textSecondary,
     marginBottom: 6,
     textTransform: "uppercase",
-    letterSpacing: 0.4,
+    letterSpacing: 0.5,
   },
   input: {
     backgroundColor: COLORS.surfaceLight,
     borderWidth: 1,
     borderColor: COLORS.surfaceBorder,
-    borderRadius: 10,
+    borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 12,
     color: COLORS.textPrimary,
     fontSize: 14,
   },
   otpInput: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: "800",
-    letterSpacing: 6,
+    letterSpacing: 8,
     textAlign: "center",
   },
   actionBtn: {
@@ -382,13 +355,13 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   presetGrid: {
-    gap: 10,
+    gap: 8,
   },
   presetCard: {
     backgroundColor: COLORS.surface,
     borderWidth: 1,
     borderColor: COLORS.surfaceBorderSubtle,
-    borderRadius: 12,
+    borderRadius: 14,
     padding: 14,
   },
   presetCardActive: {
@@ -410,11 +383,5 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: COLORS.textSecondary,
     lineHeight: 15,
-    marginBottom: 4,
-  },
-  presetEmail: {
-    fontSize: 11,
-    color: COLORS.textMuted,
-    fontFamily: "monospace",
   },
 });

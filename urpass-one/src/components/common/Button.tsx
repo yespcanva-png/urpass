@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { COLORS } from "../../constants/colors";
 
-export type ButtonVariant = "primary" | "secondary" | "danger" | "success" | "ghost" | "amber";
+export type ButtonVariant = "primary" | "secondary" | "danger" | "success" | "ghost" | "amber" | "brand";
 export type ButtonSize = "sm" | "md" | "lg";
 
 interface ButtonProps {
@@ -37,14 +37,23 @@ export function Button({
 }: ButtonProps) {
   const getVariantStyles = (): { button: ViewStyle; text: TextStyle } => {
     switch (variant) {
+      case "brand":
+        return {
+          button: { backgroundColor: COLORS.brand },
+          text: { color: COLORS.white, fontWeight: "700" },
+        };
       case "primary":
         return {
           button: { backgroundColor: COLORS.white },
-          text: { color: COLORS.textDark, fontWeight: "700" },
+          text: { color: COLORS.textDark, fontWeight: "800" },
         };
       case "secondary":
         return {
-          button: { backgroundColor: COLORS.surfaceLight, borderWidth: 1, borderColor: COLORS.surfaceBorder },
+          button: {
+            backgroundColor: COLORS.surfaceLight,
+            borderWidth: 1,
+            borderColor: COLORS.surfaceBorder,
+          },
           text: { color: COLORS.textPrimary, fontWeight: "600" },
         };
       case "danger":
@@ -55,12 +64,12 @@ export function Button({
       case "success":
         return {
           button: { backgroundColor: COLORS.green },
-          text: { color: COLORS.white, fontWeight: "700" },
+          text: { color: COLORS.white, fontWeight: "800" },
         };
       case "amber":
         return {
           button: { backgroundColor: COLORS.amber },
-          text: { color: COLORS.textDark, fontWeight: "700" },
+          text: { color: COLORS.textDark, fontWeight: "800" },
         };
       case "ghost":
         return {
@@ -70,7 +79,7 @@ export function Button({
       default:
         return {
           button: { backgroundColor: COLORS.white },
-          text: { color: COLORS.textDark, fontWeight: "700" },
+          text: { color: COLORS.textDark, fontWeight: "800" },
         };
     }
   };
@@ -84,13 +93,13 @@ export function Button({
         };
       case "lg":
         return {
-          button: { paddingVertical: 16, paddingHorizontal: 20, borderRadius: 14 },
-          text: { fontSize: 16 },
+          button: { paddingVertical: 15, paddingHorizontal: 20, borderRadius: 14 },
+          text: { fontSize: 15 },
         };
       default:
         return {
           button: { paddingVertical: 12, paddingHorizontal: 16, borderRadius: 12 },
-          text: { fontSize: 14 },
+          text: { fontSize: 13 },
         };
     }
   };
@@ -100,7 +109,7 @@ export function Button({
 
   return (
     <TouchableOpacity
-      activeOpacity={0.8}
+      activeOpacity={0.82}
       onPress={onPress}
       disabled={disabled || loading}
       style={[
@@ -139,6 +148,6 @@ const styles = StyleSheet.create({
     letterSpacing: -0.2,
   },
   disabledButton: {
-    opacity: 0.5,
+    opacity: 0.45,
   },
 });

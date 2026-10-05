@@ -18,7 +18,6 @@ import { Header } from "../../components/common/Header";
 import { MetricCard } from "../../components/common/MetricCard";
 import { Badge } from "../../components/common/Badge";
 import { Card } from "../../components/common/Card";
-import { Button } from "../../components/common/Button";
 
 interface EventOperationsHomeScreenProps {
   navigation?: any;
@@ -50,7 +49,7 @@ export function EventOperationsHomeScreen({ navigation }: EventOperationsHomeScr
             disabled={isSyncing}
           >
             <Text style={styles.syncIconText}>
-              {isSyncing ? "⏳" : isOnline ? "🟢 Sync" : "🔴 Offline"}
+              {isSyncing ? "⏳ Syncing" : isOnline ? "🟢 Live" : "🔴 Offline"}
             </Text>
           </TouchableOpacity>
         }
@@ -98,11 +97,11 @@ export function EventOperationsHomeScreen({ navigation }: EventOperationsHomeScr
               <Text style={styles.capacityLabel}>LIVE VENUE CAPACITY</Text>
               <Text style={styles.capacityCount}>
                 {insideCount.toLocaleString()} / {venueCapacity.toLocaleString()}{" "}
-                <Text style={styles.capacityUnit}>Attendees Inside</Text>
+                <Text style={styles.capacityUnit}>Inside</Text>
               </Text>
             </View>
             <Badge
-              label={`${capacityPercent}% Capacity`}
+              label={`${capacityPercent}% Loaded`}
               variant={
                 capacityPercent >= 90
                   ? "red"
@@ -177,14 +176,16 @@ export function EventOperationsHomeScreen({ navigation }: EventOperationsHomeScr
         <TouchableOpacity
           style={styles.primaryScanBtn}
           onPress={() => navigation?.navigate("QRScanner")}
-          activeOpacity={0.85}
+          activeOpacity={0.88}
         >
           <View style={styles.scanBtnLeft}>
-            <Text style={styles.scanBtnIcon}>⚡</Text>
+            <View style={styles.scanIconBadge}>
+              <Text style={styles.scanBtnIcon}>📷</Text>
+            </View>
             <View>
-              <Text style={styles.scanBtnTitle}>Open High-Speed Scanner</Text>
+              <Text style={styles.scanBtnTitle}>Launch High-Speed Scanner</Text>
               <Text style={styles.scanBtnSub}>
-                Active Gate: {assignedGate?.name || "Main Entrance"} (Tap to Scan)
+                Active Gate: {assignedGate?.name || "Main Entrance"}
               </Text>
             </View>
           </View>
@@ -208,7 +209,7 @@ export function EventOperationsHomeScreen({ navigation }: EventOperationsHomeScr
           >
             <Text style={styles.actionIcon}>🚪</Text>
             <Text style={styles.actionTitle}>Gate Dashboard</Text>
-            <Text style={styles.actionDesc}>Telemetry & Throughput</Text>
+            <Text style={styles.actionDesc}>Live telemetry & throughput</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -217,7 +218,7 @@ export function EventOperationsHomeScreen({ navigation }: EventOperationsHomeScr
           >
             <Text style={styles.actionIcon}>📋</Text>
             <Text style={styles.actionTitle}>Audit Log</Text>
-            <Text style={styles.actionDesc}>Every scan attempt & override</Text>
+            <Text style={styles.actionDesc}>Security logs & overrides</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -225,16 +226,16 @@ export function EventOperationsHomeScreen({ navigation }: EventOperationsHomeScr
             onPress={() => navigation?.navigate("GateStaffManagement")}
           >
             <Text style={styles.actionIcon}>👥</Text>
-            <Text style={styles.actionTitle}>Staff & Devices</Text>
-            <Text style={styles.actionDesc}>Scanner hardware & crew</Text>
+            <Text style={styles.actionTitle}>Staff & Crew</Text>
+            <Text style={styles.actionDesc}>Scanner devices & PINs</Text>
           </TouchableOpacity>
         </View>
 
         {/* Active Gates Breakdown */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>ACTIVE GATES OVERVIEW</Text>
+          <Text style={styles.sectionTitle}>ACTIVE GATES TELEMETRY</Text>
           <TouchableOpacity onPress={() => navigation?.navigate("LiveGateDashboard")}>
-            <Text style={styles.sectionLink}>View Live Telemetry →</Text>
+            <Text style={styles.sectionLink}>View All Gates →</Text>
           </TouchableOpacity>
         </View>
 
@@ -246,7 +247,7 @@ export function EventOperationsHomeScreen({ navigation }: EventOperationsHomeScr
                 <View style={styles.gateCardTop}>
                   <View style={styles.gateNameGroup}>
                     <Text style={styles.gateTitle}>{gate.name}</Text>
-                    <Text style={styles.gateZone}>Zone: {gate.zoneName || "General"}</Text>
+                    <Text style={styles.gateZone}>Zone: {gate.zoneName || "General Area"}</Text>
                   </View>
                   <Badge
                     label={gate.status.toUpperCase()}
@@ -296,7 +297,7 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   syncIconButton: {
-    paddingVertical: 4,
+    paddingVertical: 5,
     paddingHorizontal: 10,
     backgroundColor: COLORS.surfaceLight,
     borderRadius: 8,
@@ -304,7 +305,7 @@ const styles = StyleSheet.create({
     borderColor: COLORS.surfaceBorder,
   },
   syncIconText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "700",
     color: COLORS.textPrimary,
   },
@@ -313,8 +314,8 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   alertCard: {
-    padding: 12,
-    borderRadius: 12,
+    padding: 14,
+    borderRadius: 14,
     borderWidth: 1,
   },
   alertWarning: {
@@ -334,23 +335,24 @@ const styles = StyleSheet.create({
   alertTitle: {
     fontSize: 13,
     fontWeight: "800",
-    color: COLORS.textDark,
+    color: COLORS.textPrimary,
   },
   alertDismiss: {
     fontSize: 11,
     fontWeight: "700",
-    color: COLORS.textDark,
-    opacity: 0.7,
+    color: COLORS.textSecondary,
   },
   alertMessage: {
     fontSize: 12,
-    color: COLORS.textDark,
-    opacity: 0.9,
+    color: COLORS.textSecondary,
     lineHeight: 16,
   },
   capacityCard: {
     marginBottom: 16,
-    padding: 16,
+    padding: 18,
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.surfaceBorderSubtle,
   },
   capacityHeader: {
     flexDirection: "row",
@@ -375,15 +377,15 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
   },
   capacityBarTrack: {
-    height: 8,
+    height: 6,
     backgroundColor: COLORS.surfaceLight,
-    borderRadius: 4,
+    borderRadius: 3,
     marginTop: 12,
     overflow: "hidden",
   },
   capacityBarFill: {
     height: "100%",
-    borderRadius: 4,
+    borderRadius: 3,
   },
   capacityFooter: {
     flexDirection: "row",
@@ -405,16 +407,16 @@ const styles = StyleSheet.create({
   primaryScanBtn: {
     backgroundColor: COLORS.brand,
     borderRadius: 16,
-    padding: 18,
+    padding: 16,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 18,
+    marginBottom: 16,
     shadowColor: COLORS.brand,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 10,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
   scanBtnLeft: {
     flexDirection: "row",
@@ -422,12 +424,20 @@ const styles = StyleSheet.create({
     gap: 12,
     flex: 1,
   },
+  scanIconBadge: {
+    width: 42,
+    height: 42,
+    borderRadius: 12,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   scanBtnIcon: {
-    fontSize: 26,
+    fontSize: 20,
   },
   scanBtnTitle: {
-    fontSize: 17,
-    fontWeight: "900",
+    fontSize: 16,
+    fontWeight: "800",
     color: COLORS.white,
     letterSpacing: -0.3,
   },
@@ -452,7 +462,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     backgroundColor: COLORS.surface,
     borderWidth: 1,
-    borderColor: COLORS.surfaceBorder,
+    borderColor: COLORS.surfaceBorderSubtle,
     borderRadius: 14,
     padding: 14,
   },
@@ -462,7 +472,7 @@ const styles = StyleSheet.create({
   },
   actionTitle: {
     fontSize: 13,
-    fontWeight: "700",
+    fontWeight: "800",
     color: COLORS.textPrimary,
   },
   actionDesc: {
@@ -492,6 +502,10 @@ const styles = StyleSheet.create({
   },
   gateSummaryCard: {
     padding: 14,
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.surfaceBorderSubtle,
+    borderRadius: 14,
   },
   gateCardTop: {
     flexDirection: "row",

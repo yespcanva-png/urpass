@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   View,
   Text,
@@ -34,8 +34,6 @@ export function OrgEventSelectScreen({ navigation }: OrgEventSelectScreenProps) 
     isLoading,
   } = useEvent();
 
-  const [activeStep, setActiveStep] = useState<"org" | "event" | "gate">("event");
-
   const filteredEvents = events.filter(
     (e) => !e.organizationId || e.organizationId === selectedOrg?.id
   );
@@ -56,7 +54,7 @@ export function OrgEventSelectScreen({ navigation }: OrgEventSelectScreenProps) 
         {/* Top User Session Header */}
         <View style={styles.topSessionHeader}>
           <View>
-            <Text style={styles.welcomeText}>Signed in as</Text>
+            <Text style={styles.welcomeText}>ACTIVE STAFF SESSION</Text>
             <Text style={styles.userName}>{user?.name || "Operations Staff"}</Text>
             <Text style={styles.userRoleText}>{user?.role?.replace("_", " ").toUpperCase()}</Text>
           </View>
@@ -70,8 +68,8 @@ export function OrgEventSelectScreen({ navigation }: OrgEventSelectScreenProps) 
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionNumber}>01</Text>
             <View>
-              <Text style={styles.sectionTitle}>Select Organization</Text>
-              <Text style={styles.sectionSubtitle}>Choose which organizer workspace to access</Text>
+              <Text style={styles.sectionTitle}>Organization</Text>
+              <Text style={styles.sectionSubtitle}>Select organizer tenant workspace</Text>
             </View>
           </View>
 
@@ -107,8 +105,8 @@ export function OrgEventSelectScreen({ navigation }: OrgEventSelectScreenProps) 
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionNumber}>02</Text>
             <View>
-              <Text style={styles.sectionTitle}>Select Live Event</Text>
-              <Text style={styles.sectionSubtitle}>Choose the active event for check-in & gate control</Text>
+              <Text style={styles.sectionTitle}>Live Event</Text>
+              <Text style={styles.sectionSubtitle}>Choose the active event for gate check-in</Text>
             </View>
           </View>
 
@@ -135,7 +133,7 @@ export function OrgEventSelectScreen({ navigation }: OrgEventSelectScreenProps) 
                   </View>
 
                   <Text style={styles.eventVenue}>
-                    📍 {evt.venue || "Main Convention Center"} • {evt.eventDate}
+                    📍 {evt.venue || "Convention Center"} • {evt.eventDate}
                   </Text>
 
                   <View style={styles.kpiRow}>
@@ -145,7 +143,7 @@ export function OrgEventSelectScreen({ navigation }: OrgEventSelectScreenProps) 
                     </View>
                     <View style={styles.kpiItem}>
                       <Text style={styles.kpiValue}>{evt.currentlyInsideCount}</Text>
-                      <Text style={styles.kpiLabel}>Currently Inside</Text>
+                      <Text style={styles.kpiLabel}>Inside</Text>
                     </View>
                     <View style={styles.kpiItem}>
                       <Text style={styles.kpiValue}>{checkinPercent}%</Text>
@@ -165,7 +163,7 @@ export function OrgEventSelectScreen({ navigation }: OrgEventSelectScreenProps) 
               <Text style={styles.sectionNumber}>03</Text>
               <View>
                 <Text style={styles.sectionTitle}>Assigned Gate / Scanner Post</Text>
-                <Text style={styles.sectionSubtitle}>Assign this hardware device to a specific gate</Text>
+                <Text style={styles.sectionSubtitle}>Select the entry point for this device</Text>
               </View>
             </View>
 
@@ -205,6 +203,7 @@ export function OrgEventSelectScreen({ navigation }: OrgEventSelectScreenProps) 
           onPress={handleConfirmAndEnter}
           disabled={!selectedEvent}
           loading={isLoading}
+          variant="brand"
           size="lg"
           style={styles.enterBtn}
         />
@@ -228,26 +227,26 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     backgroundColor: COLORS.surface,
     borderWidth: 1,
-    borderColor: COLORS.surfaceBorder,
-    borderRadius: 14,
-    padding: 14,
+    borderColor: COLORS.surfaceBorderSubtle,
+    borderRadius: 16,
+    padding: 16,
     marginBottom: 20,
   },
   welcomeText: {
-    fontSize: 11,
+    fontSize: 10,
     color: COLORS.textMuted,
     textTransform: "uppercase",
-    fontWeight: "700",
-    letterSpacing: 0.5,
+    fontWeight: "800",
+    letterSpacing: 0.6,
   },
   userName: {
     fontSize: 16,
-    fontWeight: "800",
+    fontWeight: "900",
     color: COLORS.textPrimary,
-    marginTop: 1,
+    marginTop: 2,
   },
   userRoleText: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: "800",
     color: COLORS.brand,
     marginTop: 2,
@@ -276,10 +275,10 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   sectionNumber: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: "900",
     color: COLORS.brand,
-    backgroundColor: COLORS.surfaceLight,
+    backgroundColor: COLORS.brandLight,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,
@@ -300,8 +299,8 @@ const styles = StyleSheet.create({
   orgCard: {
     backgroundColor: COLORS.surface,
     borderWidth: 1,
-    borderColor: COLORS.surfaceBorder,
-    borderRadius: 12,
+    borderColor: COLORS.surfaceBorderSubtle,
+    borderRadius: 14,
     padding: 14,
   },
   orgCardSelected: {
@@ -317,12 +316,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   orgName: {
-    fontSize: 15,
-    fontWeight: "700",
+    fontSize: 14,
+    fontWeight: "800",
     color: COLORS.textPrimary,
   },
   orgMeta: {
-    fontSize: 12,
+    fontSize: 11,
     color: COLORS.textSecondary,
     marginTop: 2,
   },
@@ -334,9 +333,9 @@ const styles = StyleSheet.create({
   eventCard: {
     backgroundColor: COLORS.surface,
     borderWidth: 1,
-    borderColor: COLORS.surfaceBorder,
-    borderRadius: 14,
-    padding: 14,
+    borderColor: COLORS.surfaceBorderSubtle,
+    borderRadius: 16,
+    padding: 16,
   },
   eventCardSelected: {
     borderColor: COLORS.brand,
@@ -358,13 +357,13 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: COLORS.textSecondary,
     marginTop: 4,
-    marginBottom: 10,
+    marginBottom: 12,
   },
   kpiRow: {
     flexDirection: "row",
     gap: 8,
     backgroundColor: COLORS.surfaceDark,
-    borderRadius: 8,
+    borderRadius: 10,
     padding: 10,
   },
   kpiItem: {
@@ -385,9 +384,9 @@ const styles = StyleSheet.create({
   gateCard: {
     backgroundColor: COLORS.surface,
     borderWidth: 1,
-    borderColor: COLORS.surfaceBorder,
-    borderRadius: 12,
-    padding: 12,
+    borderColor: COLORS.surfaceBorderSubtle,
+    borderRadius: 14,
+    padding: 14,
   },
   gateCardSelected: {
     borderColor: COLORS.green,
@@ -400,7 +399,7 @@ const styles = StyleSheet.create({
   },
   gateName: {
     fontSize: 14,
-    fontWeight: "700",
+    fontWeight: "800",
     color: COLORS.textPrimary,
   },
   gateMode: {

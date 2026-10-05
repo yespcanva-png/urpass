@@ -16,13 +16,12 @@ import { CameraViewfinder } from "../../components/scanner/CameraViewfinder";
 import { ScanFeedbackBanner } from "../../components/scanner/ScanFeedbackBanner";
 import { ManualOverrideModal } from "./ManualOverrideModal";
 import { Badge } from "../../components/common/Badge";
-import type { ScanDirection } from "../../types";
 
 const TEST_QR_PAYLOADS = [
   { label: "Valid VIP Pass", payload: "UP_VIP_001_VALID", desc: "Arjun Mehta (VIP)" },
   { label: "Valid Delegate", payload: "UP_DEL_002_VALID", desc: "Neha Gupta (Delegate)" },
-  { label: "Duplicate Pass (Already Inside)", payload: "UP_DUP_003_ALREADY_IN", desc: "Trigger duplicate protection" },
-  { label: "Cancelled Ticket", payload: "UP_CANCELLED_004", desc: "Revoked registration" },
+  { label: "Duplicate Pass (Already Inside)", payload: "UP_DUP_003_ALREADY_IN", desc: "Trigger duplicate alert" },
+  { label: "Cancelled Ticket", payload: "UP_CANCELLED_004", desc: "Revoked pass" },
   { label: "Wrong Gate Pass", payload: "UP_WRONG_GATE_005", desc: "Non-whitelisted zone" },
   { label: "Expired Pass", payload: "UP_EXPIRED_006", desc: "Out of validity period" },
 ];
@@ -36,10 +35,9 @@ export function QRScannerScreen({ navigation }: { navigation?: any }) {
     toggleTorch,
     processQRCode,
     openOverrideModal,
-    clearScanResult,
   } = useScanner();
 
-  const { assignedGate, gates, assignGate, selectedEvent } = useEvent();
+  const { assignedGate } = useEvent();
   const { user } = useAuth();
   const [showSimPanel, setShowSimPanel] = useState(false);
 
@@ -57,7 +55,7 @@ export function QRScannerScreen({ navigation }: { navigation?: any }) {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" />
 
-      {/* Top Scanner Control Bar */}
+      {/* Top Scanner Bar */}
       <View style={styles.topBar}>
         <TouchableOpacity
           onPress={() => navigation?.goBack()}
@@ -66,7 +64,7 @@ export function QRScannerScreen({ navigation }: { navigation?: any }) {
           <Text style={styles.backBtnText}>← Back</Text>
         </TouchableOpacity>
 
-        {/* Gate Indicator */}
+        {/* Gate Badge */}
         <View style={styles.gateBadgeContainer}>
           <Text style={styles.gateBadgeLabel}>ACTIVE GATE</Text>
           <Text style={styles.gateBadgeName} numberOfLines={1}>
@@ -89,7 +87,7 @@ export function QRScannerScreen({ navigation }: { navigation?: any }) {
                 scanDirection === "in" && styles.directionBtnTextActive,
               ]}
             >
-              ENTRY
+              IN
             </Text>
           </TouchableOpacity>
 
@@ -106,7 +104,7 @@ export function QRScannerScreen({ navigation }: { navigation?: any }) {
                 scanDirection === "out" && styles.directionBtnTextActive,
               ]}
             >
-              EXIT
+              OUT
             </Text>
           </TouchableOpacity>
         </View>
@@ -136,14 +134,14 @@ export function QRScannerScreen({ navigation }: { navigation?: any }) {
         </CameraViewfinder>
       </View>
 
-      {/* Quick Access Action Bar */}
+      {/* Bottom Floating Action Bar */}
       <View style={styles.bottomBar}>
         <TouchableOpacity
           style={styles.bottomActionBtn}
           onPress={() => navigation?.navigate("AttendeeSearch")}
         >
           <Text style={styles.bottomActionIcon}>🔍</Text>
-          <Text style={styles.bottomActionText}>Manual Search</Text>
+          <Text style={styles.bottomActionText}>Lookup</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -151,7 +149,7 @@ export function QRScannerScreen({ navigation }: { navigation?: any }) {
           onPress={() => setShowSimPanel((prev) => !prev)}
         >
           <Text style={styles.bottomActionIcon}>🧪</Text>
-          <Text style={styles.bottomActionText}>Test QR Passes</Text>
+          <Text style={styles.bottomActionText}>Test QR</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -159,15 +157,15 @@ export function QRScannerScreen({ navigation }: { navigation?: any }) {
           onPress={() => navigation?.navigate("ScanAuditLog")}
         >
           <Text style={styles.bottomActionIcon}>📋</Text>
-          <Text style={styles.bottomActionText}>Audit Trail</Text>
+          <Text style={styles.bottomActionText}>Audit</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Test Simulation Panel */}
+      {/* Test QR Simulation Panel */}
       {showSimPanel && (
         <View style={styles.simPanel}>
           <View style={styles.simPanelHeader}>
-            <Text style={styles.simPanelTitle}>FIELD QR PASS SIMULATOR</Text>
+            <Text style={styles.simPanelTitle}>FIELD PASS SIMULATOR (TAP TO SCAN)</Text>
             <TouchableOpacity onPress={() => setShowSimPanel(false)}>
               <Text style={styles.simPanelClose}>✕</Text>
             </TouchableOpacity>
@@ -205,7 +203,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingVertical: 12,
     backgroundColor: COLORS.surfaceDark,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.surfaceBorderSubtle,
@@ -223,7 +221,7 @@ const styles = StyleSheet.create({
   },
   gateBadgeContainer: {
     alignItems: "center",
-    maxWidth: 140,
+    maxWidth: 150,
   },
   gateBadgeLabel: {
     fontSize: 9,
@@ -232,15 +230,16 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   gateBadgeName: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: "800",
     color: COLORS.textPrimary,
+    marginTop: 1,
   },
   directionToggle: {
     flexDirection: "row",
-    backgroundColor: COLORS.surface,
+    backgroundColor: COLORS.surfaceLight,
     borderRadius: 8,
-    padding: 3,
+    padding: 2,
     borderWidth: 1,
     borderColor: COLORS.surfaceBorder,
   },
@@ -284,8 +283,8 @@ const styles = StyleSheet.create({
   bottomActionBtn: {
     alignItems: "center",
     paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 8,
+    paddingHorizontal: 16,
+    borderRadius: 10,
   },
   bottomActionBtnActive: {
     backgroundColor: COLORS.surfaceLight,

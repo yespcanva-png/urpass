@@ -18,7 +18,7 @@ import { OfflineDb } from "../../services/offlineDb";
 import { ValidationService } from "../../services/validationService";
 import { Header } from "../../components/common/Header";
 import { Badge } from "../../components/common/Badge";
-import type { Attendee, PassType, PresenceStatus } from "../../types";
+import type { Attendee, PassType } from "../../types";
 
 const PASS_FILTERS: (PassType | "all")[] = [
   "all",
@@ -198,7 +198,7 @@ export function AttendeeSearchScreen({ navigation }: { navigation?: any }) {
           return (
             <TouchableOpacity
               style={styles.attendeeCard}
-              activeOpacity={0.8}
+              activeOpacity={0.85}
               onPress={() => navigation?.navigate("AttendeeProfile", { attendeeId: item.id })}
             >
               <View style={styles.cardMain}>
@@ -240,7 +240,7 @@ export function AttendeeSearchScreen({ navigation }: { navigation?: any }) {
                 disabled={isLoadingThis}
               >
                 <Text style={styles.quickCheckinText}>
-                  {isLoadingThis ? "..." : isInside ? "Check Out 🚪" : "Check In ⚡"}
+                  {isLoadingThis ? "..." : isInside ? "Exit 🚪" : "Check In ⚡"}
                 </Text>
               </TouchableOpacity>
             </TouchableOpacity>
@@ -258,7 +258,7 @@ const styles = StyleSheet.create({
   },
   searchContainer: {
     paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingVertical: 12,
     backgroundColor: COLORS.surfaceDark,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.surfaceBorderSubtle,
@@ -267,14 +267,14 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surfaceLight,
     borderWidth: 1,
     borderColor: COLORS.surfaceBorder,
-    borderRadius: 10,
+    borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 10,
     color: COLORS.textPrimary,
     fontSize: 13,
   },
   filtersWrapper: {
-    paddingVertical: 8,
+    paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.surfaceBorderSubtle,
   },
@@ -283,9 +283,9 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   filterChip: {
-    paddingVertical: 6,
+    paddingVertical: 5,
     paddingHorizontal: 12,
-    borderRadius: 8,
+    borderRadius: 20,
     backgroundColor: COLORS.surface,
     borderWidth: 1,
     borderColor: COLORS.surfaceBorder,
@@ -311,7 +311,7 @@ const styles = StyleSheet.create({
   presenceBtn: {
     flex: 1,
     paddingVertical: 6,
-    borderRadius: 6,
+    borderRadius: 8,
     backgroundColor: COLORS.surface,
     borderWidth: 1,
     borderColor: COLORS.surfaceBorder,
@@ -336,7 +336,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   emptyBox: {
-    padding: 30,
+    padding: 40,
     alignItems: "center",
   },
   emptyTitle: {
@@ -352,9 +352,9 @@ const styles = StyleSheet.create({
   attendeeCard: {
     backgroundColor: COLORS.surface,
     borderWidth: 1,
-    borderColor: COLORS.surfaceBorder,
-    borderRadius: 14,
-    padding: 14,
+    borderColor: COLORS.surfaceBorderSubtle,
+    borderRadius: 16,
+    padding: 16,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -377,6 +377,7 @@ const styles = StyleSheet.create({
   attendeeEmail: {
     fontSize: 12,
     color: COLORS.textSecondary,
+    marginTop: 2,
   },
   attendeeTicket: {
     fontSize: 11,
@@ -392,11 +393,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    marginTop: 8,
+    marginTop: 10,
   },
   quickCheckinBtn: {
     paddingVertical: 10,
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
     borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",

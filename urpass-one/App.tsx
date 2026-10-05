@@ -1,5 +1,6 @@
 import React from "react";
-import { StatusBar, View, StyleSheet } from "react-native";
+import { StatusBar, View, StyleSheet, Platform } from "react-native";
+import { registerRootComponent } from "expo";
 import { COLORS } from "./src/constants/colors";
 import { AuthProvider } from "./src/context/AuthContext";
 import { EventProvider } from "./src/context/EventContext";
@@ -31,5 +32,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
+    height: Platform.OS === "web" ? "100vh" : "100%",
+    width: "100%",
   },
 });
+
+registerRootComponent(App);

@@ -27,9 +27,9 @@ export function Badge({ label, variant = "neutral", size = "md", style }: BadgeP
       case "amber":
         return { bg: COLORS.amberLight, text: COLORS.amber, border: COLORS.amberBorder };
       case "blue":
-        return { bg: COLORS.blueLight, text: COLORS.blue, border: COLORS.blue };
+        return { bg: COLORS.blueLight, text: COLORS.blue, border: COLORS.blueBorder };
       case "brand":
-        return { bg: COLORS.brandLight, text: COLORS.brandDark, border: COLORS.brand };
+        return { bg: COLORS.brandLight, text: COLORS.brand, border: COLORS.brand };
       default:
         return { bg: COLORS.surfaceLight, text: COLORS.textSecondary, border: COLORS.surfaceBorder };
     }
@@ -46,7 +46,7 @@ export function Badge({ label, variant = "neutral", size = "md", style }: BadgeP
           backgroundColor: colors.bg,
           borderColor: colors.border,
           paddingVertical: isSm ? 2 : 4,
-          paddingHorizontal: isSm ? 6 : 8,
+          paddingHorizontal: isSm ? 7 : 10,
         },
         style,
       ]}
@@ -68,13 +68,15 @@ export function Badge({ label, variant = "neutral", size = "md", style }: BadgeP
 
 const styles = StyleSheet.create({
   badge: {
-    borderRadius: 6,
+    borderRadius: 20,
     borderWidth: 1,
     alignSelf: "flex-start",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
   },
   text: {
     fontWeight: "700",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
+    letterSpacing: 0.3,
   },
 });
