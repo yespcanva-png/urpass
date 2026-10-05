@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 
 import { revalidatePath } from "next/cache";
 import { validateGstin } from "@/lib/validations/gstin";
+import { getAuthResetRedirectUrl } from "@/lib/auth-redirect";
 
 type ActionResult = { success?: boolean; error?: string };
 
@@ -15,9 +16,9 @@ export async function sendPasswordReset(): Promise<ActionResult> {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  const redirectTo = getAuthResetRedirectUrl();
   const { error } = await supabase.auth.resetPasswordForEmail(user.email!, {
-    redirectTo: `${appUrl}/auth/reset-password`,
+    redirectTo,
   });
 
   if (error) return { error: error.message };

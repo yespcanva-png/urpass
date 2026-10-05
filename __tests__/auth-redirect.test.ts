@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { resolvePostAuthRedirect } from "@/lib/auth-redirect";
+import { resolvePostAuthRedirect, getAuthResetRedirectUrl } from "@/lib/auth-redirect";
 
 describe("resolvePostAuthRedirect", () => {
   function makeParams(obj: Record<string, string>): { get: (k: string) => string | null } {
@@ -86,5 +86,29 @@ describe("resolvePostAuthRedirect", () => {
 
   it("defaults to /dashboard when no params or relevant referrer are present", () => {
     expect(resolvePostAuthRedirect(null, "https://urpass.space/")).toBe("/dashboard");
+  });
+});
+
+describe("getAuthResetRedirectUrl", () => {
+  it("never returns localhost when passed localhost origin", () => {
+    const url = getAuthResetRedirectUrl("http://localhost:3000");
+    expect(url).toBe("https://urpass.space/auth/reset-password");
+    expect(url).not.toContain("localhost");
+  });
+
+  it("never returns 127.0.0.1 when passed loopback origin", () => {
+    const url = getAuthResetRedirectUrl("http://127.0.0.1:3000");
+    expect(url).toBe("https://urpass.space/auth/reset-password");
+    expect(url).not.toContain("127.0.0.1");
+  });
+
+  it("uses production domain https://urpass.space/auth/reset-password as standard default", () => {
+    const url = getAuthResetRedirectUrl(null);
+    expect(url).toBe("https://urpass.space/auth/reset-password");
+  });
+
+  it("preserves valid public domain origin when hosted on custom or staging subdomain", () => {
+    const url = getAuthResetRedirectUrl("https://staging.urpass.space");
+    expect(url).toBe("https://staging.urpass.space/auth/reset-password");
   });
 });

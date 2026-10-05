@@ -107,3 +107,56 @@ export function resolvePostAuthRedirect(
 
   return FALLBACK_DESTINATION;
 }
+
+/**
+ * Resolves the password reset redirect URL.
+ * Strictly avoids localhost / local loopback addresses in email callbacks to guarantee
+ * that password reset links work reliably on mobile devices and external networks.
+ */
+export function getAuthResetRedirectUrl(customOrigin?: string | null): string {
+  const PRODUCTION_RESET_URL = "https://urpass.space/auth/reset-password";
+
+  // 1. Check customOrigin (e.g. window.location.origin) if valid non-local domain
+  if (customOrigin && typeof customOrigin === "string") {
+    const trimmed = customOrigin.trim();
+    if (
+      trimmed &&
+      !trimmed.includes("localhost") &&
+      !trimmed.includes("127.0.0.1") &&
+      !trimmed.includes("0.0.0.0") &&
+      trimmed.startsWith("http")
+    ) {
+      try {
+        const parsed = new URL(trimmed);
+        if (
+          parsed.hostname &&
+          !parsed.hostname.includes("localhost") &&
+          !parsed.hostname.includes("127.0.0.1")
+        ) {
+          return `${parsed.origin}/auth/reset-password`;
+        }
+      } catch {
+        // Fall through to production URL
+      }
+    }
+  }
+
+  // 2. Check environment variables
+  const envUrl =
+    process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL;
+  if (envUrl && typeof envUrl === "string") {
+    const trimmed = envUrl.trim();
+    if (
+      trimmed &&
+      !trimmed.includes("localhost") &&
+      !trimmed.includes("127.0.0.1") &&
+      !trimmed.includes("0.0.0.0") &&
+      trimmed.startsWith("http")
+    ) {
+      return `${trimmed.replace(/\/$/, "")}/auth/reset-password`;
+    }
+  }
+
+  // 3. Fallback strictly to production domain
+  return PRODUCTION_RESET_URL;
+}
