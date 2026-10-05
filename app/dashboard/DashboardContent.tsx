@@ -30,6 +30,7 @@ import { getUserOrganizations } from "@/app/actions/organizations";
 import { createClient } from "@/lib/supabase/client";
 import { detectCountryClient } from "@/lib/country-config";
 import CorporateWhatsNewCard from "@/components/dashboard/CorporateWhatsNewCard";
+import PersonalConciergeBanner from "@/components/dashboard/PersonalConciergeBanner";
 
 const emptySubscribe = () => () => {};
 
@@ -120,6 +121,7 @@ export default function DashboardContent() {
   const [loaded, setLoaded] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [whatsNewDismissed, setWhatsNewDismissed] = useState<boolean | null>(null);
+  const [currentUser, setCurrentUser] = useState<{ email?: string | null; id?: string | null } | null>(null);
 
   // Table Filters
   const [filterTab, setFilterTab] = useState<"all" | "upcoming" | "draft" | "past">("all");
@@ -137,6 +139,7 @@ export default function DashboardContent() {
           return;
         }
 
+        setCurrentUser({ email: user.email, id: user.id });
         setWhatsNewDismissed(Boolean(user.user_metadata?.whats_new_conference_dismissed));
 
         const [
@@ -268,6 +271,12 @@ export default function DashboardContent() {
       <CorporateWhatsNewCard
         firstEventId={events[0]?.id}
         isDismissedInDb={whatsNewDismissed}
+      />
+
+      {/* ── Targeted VIP Concierge Banner (Only for Isha) ──────────── */}
+      <PersonalConciergeBanner
+        userEmail={currentUser?.email}
+        userId={currentUser?.id}
       />
 
       {/* ── Dashboard Banner ─────────────────────────────────────────── */}

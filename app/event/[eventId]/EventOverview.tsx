@@ -28,6 +28,7 @@ import { createClient } from "@/lib/supabase/client";
 import { updateEventStatus, duplicateEvent } from "@/app/actions/events";
 import EventCommunicationsCard from "@/components/event/EventCommunicationsCard";
 import EventAttendeeFeedbackCard from "@/components/event/EventAttendeeFeedbackCard";
+import PersonalConciergeBanner from "@/components/dashboard/PersonalConciergeBanner";
 
 type PassStatus = "not_generated" | "generated" | "checked_in";
 type AppStatus = "pending" | "approved" | "rejected";
@@ -372,7 +373,10 @@ export default function EventOverview({ event, initialAttendees = [] }: Props) {
   const previewAttendees = attendees.slice(0, 10);
 
   return (
-    <div className="max-w-4xl mx-auto page-in">
+    <div className="max-w-4xl mx-auto page-in space-y-6">
+
+      {/* ── Targeted VIP Concierge Banner (Only for Isha) ──────────── */}
+      <PersonalConciergeBanner />
 
       {/* ── Draft Alert Banner ─────────────────────────────────── */}
       {currentStatus === "draft" && (
