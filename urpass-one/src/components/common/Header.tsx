@@ -35,7 +35,10 @@ export function Header({
             onPress={onEventPress}
             style={styles.eventBox}
           >
-            <Text style={styles.eventOrg}>{user?.orgName || "Organization"}</Text>
+            <View style={styles.brandRow}>
+              <Text style={styles.brandBadge}>URPASS</Text>
+              <Text style={styles.eventOrg}>{user?.orgName || "Organization"}</Text>
+            </View>
             <View style={styles.eventNameRow}>
               <Text style={styles.eventName} numberOfLines={1}>
                 {selectedEvent.name}
@@ -45,7 +48,7 @@ export function Header({
             {assignedGate && (
               <View style={styles.gateRow}>
                 <Badge
-                  label={assignedGate.name}
+                  label={`📍 ${assignedGate.name}`}
                   variant={assignedGate.status === "open" ? "green" : "red"}
                   size="sm"
                 />
@@ -54,6 +57,9 @@ export function Header({
           </TouchableOpacity>
         ) : (
           <View style={styles.titleBox}>
+            <View style={styles.brandRow}>
+              <Text style={styles.brandBadge}>URPASS</Text>
+            </View>
             {title && <Text style={styles.mainTitle}>{title}</Text>}
             {subtitle && <Text style={styles.subTitle}>{subtitle}</Text>}
           </View>
@@ -78,6 +84,18 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
   },
+  brandRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 3,
+  },
+  brandBadge: {
+    fontSize: 10,
+    fontWeight: "900",
+    color: COLORS.brandAccent,
+    letterSpacing: 1.5,
+  },
   eventBox: {
     flex: 1,
     paddingRight: 12,
@@ -92,11 +110,11 @@ const styles = StyleSheet.create({
   eventNameRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
+    gap: 6,
     marginTop: 1,
   },
   eventName: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: "800",
     color: COLORS.textPrimary,
     letterSpacing: -0.3,
@@ -106,7 +124,7 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
   },
   gateRow: {
-    marginTop: 4,
+    marginTop: 5,
   },
   titleBox: {
     flex: 1,
@@ -115,6 +133,8 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "800",
     color: COLORS.textPrimary,
+    letterSpacing: -0.3,
+    marginTop: 1,
   },
   subTitle: {
     fontSize: 12,

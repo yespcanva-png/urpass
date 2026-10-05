@@ -18,6 +18,7 @@ import { Header } from "../../components/common/Header";
 import { Card } from "../../components/common/Card";
 import { Badge } from "../../components/common/Badge";
 import { Button } from "../../components/common/Button";
+import { TicketPassCard } from "../../components/pass/TicketPassCard";
 import type { Attendee, ScanAuditLog } from "../../types";
 
 interface AttendeeProfileScreenProps {
@@ -33,6 +34,7 @@ export function AttendeeProfileScreen({ route, navigation }: AttendeeProfileScre
   const [attendee, setAttendee] = useState<Attendee | null>(null);
   const [scanHistory, setScanHistory] = useState<ScanAuditLog[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<"pass" | "details">("pass");
 
   useEffect(() => {
     async function loadProfile() {
@@ -156,66 +158,110 @@ export function AttendeeProfileScreen({ route, navigation }: AttendeeProfileScre
       />
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Profile Card Header */}
-        <Card style={styles.profileCard}>
-          <View style={styles.profileTop}>
-            <View style={styles.avatarBox}>
-              <Text style={styles.avatarText}>{attendee.name.charAt(0)}</Text>
-            </View>
-
-            <View style={styles.nameGroup}>
-              <Text style={styles.nameText}>{attendee.name}</Text>
-              <Text style={styles.emailText}>{attendee.email}</Text>
-              {attendee.phone && <Text style={styles.phoneText}>📞 {attendee.phone}</Text>}
-              {attendee.company && <Text style={styles.companyText}>🏢 {attendee.company}</Text>}
-            </View>
-          </View>
-
-          {/* Status Badges Row */}
-          <View style={styles.badgesRow}>
-            <Badge label={attendee.passType.toUpperCase()} variant="brand" />
-            <Badge
-              label={isInside ? "CURRENTLY INSIDE" : "CURRENTLY OUTSIDE"}
-              variant={isInside ? "green" : "neutral"}
-            />
-            <Badge label={attendee.applicationStatus} variant="neutral" />
-          </View>
-        </Card>
-
-        {/* Operational Stats Grid */}
-        <Card style={styles.statsCard}>
-          <Text style={styles.sectionHeading}>PRESENCE & ACCESS COUNTERS</Text>
-          <View style={styles.statsGrid}>
-            <View style={styles.statCell}>
-              <Text style={styles.statNumber}>{attendee.checkinCount}</Text>
-              <Text style={styles.statLabel}>Check-ins</Text>
-            </View>
-            <View style={styles.statCell}>
-              <Text style={styles.statNumber}>{attendee.checkoutCount}</Text>
-              <Text style={styles.statLabel}>Check-outs</Text>
-            </View>
-            <View style={styles.statCell}>
-              <Text style={styles.statNumber}>{attendee.lastGateName ? "Yes" : "None"}</Text>
-              <Text style={styles.statLabel}>Gate Logged</Text>
-            </View>
-          </View>
-
-          {attendee.lastCheckinAt && (
-            <Text style={styles.lastScanTimeText}>
-              Last Scan: {new Date(attendee.lastCheckinAt).toLocaleTimeString()} at {attendee.lastGateName || "Main Gate"}
+        {/* Tab View Switcher */}
+        <View style={styles.tabBar}>
+          <TouchableOpacity
+            style={[styles.tabBtn, activeTab === "pass" && styles.tabBtnActive]}
+            onPress={() => setActiveTab("pass")}
+          >
+            <Text style={[styles.tabText, activeTab === "pass" && styles.tabTextActive]}>
+              Digital Pass
             </Text>
-          )}
-        </Card>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tabBtn, activeTab === "details" && styles.tabBtnActive]}
+            onPress={() => setActiveTab("details")}
+          >
+            <Text style={[styles.tabText, activeTab === "details" && styles.tabTextActive]}>
+              Telemetry & History
+            </Text>
+          </TouchableOpacity>
+        </View>
 
-        {/* Allowed Access Zones */}
-        <Card style={styles.zonesCard}>
-          <Text style={styles.sectionHeading}>AUTHORIZED ZONES & ACCESS RULES</Text>
-          <View style={styles.zonesPills}>
-            {(attendee.assignedZones || ["Main Entrance", "General Area"]).map((zone) => (
-              <Badge key={zone} label={zone} variant="blue" />
-            ))}
+        {activeTab === "pass" ? (
+          <View style={styles.passTabContainer}>
+            {/* Signature Digital Pass Ticket from urpass.space */}
+            <TicketPassCard
+              attendee={attendee}
+              eventName={selectedEvent?.name || "Event 2026"}
+              venue={selectedEvent?.venue || "Main Hall"}
+              style={styles.ticketCardWrapper}
+            />
+
+            {/* Presence Status Quick Indicator */}
+            <View style={styles.presenceBanner}>
+              <Text style={styles.presenceLabel}>CURRENT PRESENCE:</Text>
+              <Badge
+                label={isInside ? "CURRENTLY INSIDE VENUE" : "CURRENTLY OUTSIDE VENUE"}
+                variant={isInside ? "green" : "neutral"}
+                size="md"
+              />
+            </View>
           </View>
-        </Card>
+        ) : (
+          <View style={styles.detailsContainer}>
+            {/* Profile Card Header */}
+            <Card style={styles.profileCard}>
+              <View style={styles.profileTop}>
+                <View style={styles.avatarBox}>
+                  <Text style={styles.avatarText}>{attendee.name.charAt(0)}</Text>
+                </View>
+
+                <View style={styles.nameGroup}>
+                  <Text style={styles.nameText}>{attendee.name}</Text>
+                  <Text style={styles.emailText}>{attendee.email}</Text>
+                  {attendee.phone && <Text style={styles.phoneText}>📞 {attendee.phone}</Text>}
+                  {attendee.company && <Text style={styles.companyText}>🏢 {attendee.company}</Text>}
+                </View>
+              </View>
+
+              {/* Status Badges Row */}
+              <View style={styles.badgesRow}>
+                <Badge label={attendee.passType.toUpperCase()} variant="brand" />
+                <Badge
+                  label={isInside ? "INSIDE" : "OUTSIDE"}
+                  variant={isInside ? "green" : "neutral"}
+                />
+                <Badge label={attendee.applicationStatus} variant="neutral" />
+              </View>
+            </Card>
+
+            {/* Operational Stats Grid */}
+            <Card style={styles.statsCard}>
+              <Text style={styles.sectionHeading}>PRESENCE & ACCESS COUNTERS</Text>
+              <View style={styles.statsGrid}>
+                <View style={styles.statCell}>
+                  <Text style={styles.statNumber}>{attendee.checkinCount}</Text>
+                  <Text style={styles.statLabel}>Check-ins</Text>
+                </View>
+                <View style={styles.statCell}>
+                  <Text style={styles.statNumber}>{attendee.checkoutCount}</Text>
+                  <Text style={styles.statLabel}>Check-outs</Text>
+                </View>
+                <View style={styles.statCell}>
+                  <Text style={styles.statNumber}>{attendee.lastGateName ? "Yes" : "None"}</Text>
+                  <Text style={styles.statLabel}>Gate Logged</Text>
+                </View>
+              </View>
+
+              {attendee.lastCheckinAt && (
+                <Text style={styles.lastScanTimeText}>
+                  Last Scan: {new Date(attendee.lastCheckinAt).toLocaleTimeString()} at {attendee.lastGateName || "Main Gate"}
+                </Text>
+              )}
+            </Card>
+
+            {/* Allowed Access Zones */}
+            <Card style={styles.zonesCard}>
+              <Text style={styles.sectionHeading}>AUTHORIZED ZONES & ACCESS RULES</Text>
+              <View style={styles.zonesPills}>
+                {(attendee.assignedZones || ["Main Entrance", "General Area"]).map((zone) => (
+                  <Badge key={zone} label={zone} variant="blue" />
+                ))}
+              </View>
+            </Card>
+          </View>
+        )}
 
         {/* Primary Action Buttons */}
         <View style={styles.actionsBox}>
@@ -282,6 +328,62 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     fontSize: 14,
   },
+  tabBar: {
+    flexDirection: "row",
+    backgroundColor: COLORS.surface,
+    borderRadius: 12,
+    padding: 4,
+    borderWidth: 1,
+    borderColor: COLORS.surfaceBorder,
+    marginBottom: 16,
+  },
+  tabBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: "center",
+    borderRadius: 8,
+  },
+  tabBtnActive: {
+    backgroundColor: COLORS.brand,
+  },
+  tabText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: COLORS.textSecondary,
+  },
+  tabTextActive: {
+    color: COLORS.white,
+  },
+  passTabContainer: {
+    marginBottom: 16,
+    alignItems: "center",
+  },
+  ticketCardWrapper: {
+    width: "100%",
+    maxWidth: 340,
+  },
+  presenceBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    width: "100%",
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.surfaceBorder,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginTop: 14,
+  },
+  presenceLabel: {
+    fontSize: 10,
+    fontWeight: "800",
+    color: COLORS.textMuted,
+    letterSpacing: 0.8,
+  },
+  detailsContainer: {
+    marginBottom: 16,
+  },
   profileCard: {
     padding: 18,
     marginBottom: 14,
@@ -292,15 +394,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   avatarBox: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 54,
+    height: 54,
+    borderRadius: 27,
     backgroundColor: COLORS.brand,
     alignItems: "center",
     justifyContent: "center",
   },
   avatarText: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: "900",
     color: COLORS.white,
   },

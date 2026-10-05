@@ -20,31 +20,31 @@ const ROLE_PRESETS: { role: UserRole; label: string; email: string; desc: string
     role: "event_manager",
     label: "Event Manager",
     email: "manager@urpass.space",
-    desc: "Full ops, gates, overrides, staff & analytics",
+    desc: "Full operations, gates, overrides, crew & telemetry",
   },
   {
     role: "gate_manager",
     label: "Gate Manager",
     email: "gatemgr@urpass.space",
-    desc: "Gate config, attendee lookup & overrides",
+    desc: "Gate config, attendee lookup & manual overrides",
   },
   {
     role: "gate_staff",
     label: "Gate Staff / Scanner",
     email: "scanner@urpass.space",
-    desc: "High-speed QR scanning & check-in",
+    desc: "High-speed QR scanning & instant entry check-in",
   },
   {
     role: "super_admin",
     label: "Super Admin",
     email: "admin@urpass.space",
-    desc: "Full platform permissions & all events",
+    desc: "Platform administration & cross-organization control",
   },
   {
     role: "view_only_ops",
     label: "View-Only Ops",
     email: "viewer@urpass.space",
-    desc: "Live gate telemetry & headcount observer",
+    desc: "Live gate throughput & venue capacity observer",
   },
 ];
 
@@ -68,7 +68,7 @@ export function LoginScreen({ navigation }: LoginScreenProps) {
     }
     setErrorMsg("");
     setStep("otp");
-    setOtp("123456"); // Pre-fill default test OTP for field testing
+    setOtp("123456"); // Pre-fill default test OTP for seamless gate check-in flow
   }
 
   async function handleVerifyOtp() {
@@ -99,28 +99,34 @@ export function LoginScreen({ navigation }: LoginScreenProps) {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" />
       <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
-        {/* Brand Header */}
+        {/* Brand Header with urpass.space tagline */}
         <View style={styles.brandHeader}>
+          <View style={styles.taglineRow}>
+            <View style={styles.taglineBadge}>
+              <Text style={styles.taglineText}>CREATE. SHARE. SCAN.</Text>
+            </View>
+            <Badge label={`DEVICE: ${deviceId}`} variant="neutral" size="sm" />
+          </View>
+
           <View style={styles.logoRow}>
             <View style={styles.logoMark}>
               <Text style={styles.logoMarkText}>⚡</Text>
             </View>
             <View>
-              <Text style={styles.brandTitle}>UrPass One</Text>
-              <Text style={styles.brandSubtitle}>Mobile Event Operations</Text>
+              <Text style={styles.brandTitle}>URPASS ONE</Text>
+              <Text style={styles.brandSubtitle}>Event Operations & Gate Command</Text>
             </View>
           </View>
-          <Badge label={`DEV: ${deviceId}`} variant="neutral" size="sm" />
         </View>
 
         {/* Login Form Box */}
         <View style={styles.formCard}>
           <Text style={styles.cardHeader}>
-            {step === "credentials" ? "Sign In" : "Two-Step Verification"}
+            {step === "credentials" ? "Sign In to Gate Console" : "Two-Step Verification"}
           </Text>
           <Text style={styles.cardSubtext}>
             {step === "credentials"
-              ? "Enter your staff email to access live event gates"
+              ? "Authenticate with your organizer account to operate entrances"
               : `Enter the 6-digit code sent to ${email}`}
           </Text>
 
@@ -136,7 +142,7 @@ export function LoginScreen({ navigation }: LoginScreenProps) {
                 <Text style={styles.inputLabel}>Staff Email</Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="name@organization.com"
+                  placeholder="manager@organization.com"
                   placeholderTextColor={COLORS.textMuted}
                   value={email}
                   onChangeText={setEmail}
@@ -146,7 +152,7 @@ export function LoginScreen({ navigation }: LoginScreenProps) {
               </View>
 
               <Button
-                title="Continue with OTP"
+                title="Send Verification Code ⚡"
                 onPress={handleSendOtp}
                 loading={isLoading}
                 variant="brand"
@@ -170,7 +176,7 @@ export function LoginScreen({ navigation }: LoginScreenProps) {
               </View>
 
               <Button
-                title="Verify & Enter Workspace"
+                title="Verify & Launch Console 🚀"
                 onPress={handleVerifyOtp}
                 loading={isLoading}
                 size="lg"
@@ -190,9 +196,9 @@ export function LoginScreen({ navigation }: LoginScreenProps) {
 
         {/* Quick Role Switcher */}
         <View style={styles.presetsSection}>
-          <Text style={styles.presetHeading}>QUICK FIELD PROFILES</Text>
+          <Text style={styles.presetHeading}>QUICK ACCESS FIELD PRESETS</Text>
           <Text style={styles.presetSubheading}>
-            Select a role preset for immediate evaluation without OTP:
+            Select a role preset to evaluate gate permissions immediately:
           </Text>
 
           <View style={styles.presetGrid}>
@@ -209,8 +215,14 @@ export function LoginScreen({ navigation }: LoginScreenProps) {
                 <View style={styles.presetTop}>
                   <Text style={styles.presetLabel}>{preset.label}</Text>
                   <Badge
-                    label={preset.role.replace("_", " ")}
-                    variant={preset.role === "event_manager" ? "brand" : preset.role === "gate_staff" ? "green" : "neutral"}
+                    label={preset.role.replace("_", " ").toUpperCase()}
+                    variant={
+                      preset.role === "event_manager"
+                        ? "brand"
+                        : preset.role === "gate_staff"
+                        ? "green"
+                        : "neutral"
+                    }
                     size="sm"
                   />
                 </View>
@@ -234,30 +246,51 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   brandHeader: {
+    marginTop: 8,
+    marginBottom: 24,
+  },
+  taglineRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginTop: 10,
-    marginBottom: 24,
+    marginBottom: 16,
+  },
+  taglineBadge: {
+    backgroundColor: COLORS.brandLight,
+    borderWidth: 1,
+    borderColor: COLORS.brandBorder || "rgba(109, 40, 217, 0.3)",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 20,
+  },
+  taglineText: {
+    fontSize: 10,
+    fontWeight: "800",
+    color: COLORS.brandAccent,
+    letterSpacing: 1.2,
   },
   logoRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: 14,
   },
   logoMark: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
+    width: 44,
+    height: 44,
+    borderRadius: 14,
     backgroundColor: COLORS.brand,
     alignItems: "center",
     justifyContent: "center",
+    shadowColor: COLORS.brand,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
   },
   logoMarkText: {
-    fontSize: 20,
+    fontSize: 22,
   },
   brandTitle: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: "900",
     color: COLORS.textPrimary,
     letterSpacing: -0.5,
@@ -265,7 +298,7 @@ const styles = StyleSheet.create({
   brandSubtitle: {
     fontSize: 12,
     color: COLORS.textSecondary,
-    marginTop: 1,
+    marginTop: 2,
   },
   formCard: {
     backgroundColor: COLORS.surface,
@@ -273,7 +306,7 @@ const styles = StyleSheet.create({
     borderColor: COLORS.surfaceBorderSubtle,
     borderRadius: 18,
     padding: 20,
-    marginBottom: 28,
+    marginBottom: 26,
   },
   cardHeader: {
     fontSize: 18,
@@ -303,12 +336,12 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   inputLabel: {
-    fontSize: 11,
-    fontWeight: "700",
+    fontSize: 10,
+    fontWeight: "800",
     color: COLORS.textSecondary,
     marginBottom: 6,
     textTransform: "uppercase",
-    letterSpacing: 0.5,
+    letterSpacing: 0.8,
   },
   input: {
     backgroundColor: COLORS.surfaceLight,
@@ -321,10 +354,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   otpInput: {
-    fontSize: 22,
-    fontWeight: "800",
-    letterSpacing: 8,
+    fontSize: 24,
+    fontWeight: "900",
+    letterSpacing: 10,
     textAlign: "center",
+    color: COLORS.brandAccent,
   },
   actionBtn: {
     marginTop: 6,
@@ -343,10 +377,10 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   presetHeading: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: "800",
     color: COLORS.textMuted,
-    letterSpacing: 0.8,
+    letterSpacing: 1,
     marginBottom: 4,
   },
   presetSubheading: {
