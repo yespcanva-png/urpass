@@ -10,6 +10,7 @@ interface AuthContextType {
   deviceId: string;
   isLoading: boolean;
   loginWithPassword: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  signUp: (fullName: string, email: string, password: string) => Promise<{ success: boolean; error?: string; needsEmailConfirmation?: boolean }>;
   loginWithOtp: (email: string) => Promise<{ success: boolean; error?: string }>;
   verifyOtp: (email: string, otp: string) => Promise<boolean>;
   login: (email: string, role?: UserRole) => Promise<boolean>;
@@ -81,6 +82,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { success: false, error: result.error || "Authentication failed" };
     } catch (err: any) {
       return { success: false, error: err?.message || "Network error during login" };
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  async function signUp(
+    fullName: string,
+    email: string,
+    password: string
+  ): Promise<{ success: boolean; error?: string; needsEmailConfirmation?: boolean }> {
+    setIsLoading(true);
+    try {
+      const res = await SupabaseOpsService.signUp(fullName, email, password);
+      if (res.needsEmailConfirmation) {
+        return { success: true, needsEmailConfirmation: true };
+      }
+      if (res.user) {
+        const token = `sb_signup_${Date.now()}`;
+        await StorageService.setItem(CONFIG.STORAGE_KEYS.AUTH_TOKEN, token);
+        await StorageService.setJSON(CONFIG.STORAGE_KEYS.USER_PROFILE, res.user);
+        setAuthToken(token);
+        setUser(res.user);
+        return { success: true };
+      }
+      return { success: false, error: res.error || "Registration failed" };
+    } catch (err: any) {
+      return { success: false, error: err?.message || "Network error during registration" };
     } finally {
       setIsLoading(false);
     }
@@ -178,6 +206,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         deviceId,
         isLoading,
         loginWithPassword,
+        signUp,
         loginWithOtp,
         verifyOtp,
         login,

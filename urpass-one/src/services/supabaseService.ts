@@ -24,6 +24,44 @@ export class SupabaseOpsService {
   }
 
   /**
+   * Real Supabase Email & Password Sign Up
+   */
+  public static async signUp(
+    fullName: string,
+    email: string,
+    password: string
+  ): Promise<{ user: UserProfile | null; error: string | null; needsEmailConfirmation?: boolean }> {
+    try {
+      const supabase = this.getClient();
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName,
+          },
+        },
+      });
+
+      if (error) {
+        return { user: null, error: error.message };
+      }
+
+      if (data.user) {
+        if (!data.session) {
+          return { user: null, error: null, needsEmailConfirmation: true };
+        }
+        const profile = await this.buildUserProfileFromSupabase(data.user);
+        return { user: profile, error: null, needsEmailConfirmation: false };
+      }
+
+      return { user: null, error: "Registration failed." };
+    } catch (err: any) {
+      return { user: null, error: err?.message || "Network error during sign up." };
+    }
+  }
+
+  /**
    * Real Supabase Email & Password Sign In
    */
   public static async signInWithPassword(email: string, password: string): Promise<{ user: UserProfile | null; error: string | null }> {

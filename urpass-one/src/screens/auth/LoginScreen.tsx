@@ -10,130 +10,62 @@ import {
   StatusBar,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from "react-native";
 import { COLORS } from "../../constants/colors";
 import { useAuth } from "../../context/AuthContext";
 import { Button } from "../../components/common/Button";
-import { Badge } from "../../components/common/Badge";
-import type { UserRole } from "../../types";
-
-const ROLE_PRESETS: { role: UserRole; label: string; email: string; desc: string }[] = [
-  {
-    role: "event_manager",
-    label: "Event Manager",
-    email: "manager@urpass.space",
-    desc: "Full operations, gates, overrides, crew & telemetry",
-  },
-  {
-    role: "gate_manager",
-    label: "Gate Manager",
-    email: "gatemgr@urpass.space",
-    desc: "Gate config, attendee lookup & manual overrides",
-  },
-  {
-    role: "gate_staff",
-    label: "Gate Staff / Scanner",
-    email: "scanner@urpass.space",
-    desc: "High-speed QR scanning & instant entry check-in",
-  },
-  {
-    role: "super_admin",
-    label: "Super Admin",
-    email: "admin@urpass.space",
-    desc: "Platform administration & cross-organization control",
-  },
-  {
-    role: "view_only_ops",
-    label: "View-Only Ops",
-    email: "viewer@urpass.space",
-    desc: "Live gate throughput & venue capacity observer",
-  },
-];
 
 interface LoginScreenProps {
   navigation?: any;
 }
 
 export function LoginScreen({ navigation }: LoginScreenProps) {
-  const {
-    loginWithPassword,
-    loginWithOtp,
-    verifyOtp,
-    login,
-    deviceId,
-    isLoading,
-  } = useAuth();
+  const { loginWithPassword, signUp, isLoading } = useAuth();
 
-  const [authMethod, setAuthMethod] = useState<"password" | "otp">("password");
-  const [email, setEmail] = useState("manager@urpass.space");
-  const [password, setPassword] = useState("password123");
-  const [otp, setOtp] = useState("");
-  const [otpSent, setOtpSent] = useState(false);
-  const [selectedRole, setSelectedRole] = useState<UserRole>("event_manager");
+  const [authMode, setAuthMode] = useState<"login" | "signup">("login");
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
 
-  async function handlePasswordLogin() {
+  async function handleSubmit() {
+    setErrorMsg("");
+    setSuccessMsg("");
+
     if (!email || !email.includes("@")) {
       setErrorMsg("Please enter a valid email address");
       return;
     }
-    if (!password || password.length < 4) {
-      setErrorMsg("Please enter your account password");
+
+    if (!password || password.length < 6) {
+      setErrorMsg("Password must be at least 6 characters");
       return;
     }
-    setErrorMsg("");
 
-    const result = await loginWithPassword(email, password);
-    if (result.success) {
-      navigation?.navigate("OrgEventSelect");
-    } else {
-      // If server error or offline fallback, allow clean transition
-      if (result.error && !result.error.includes("Failed to fetch")) {
-        setErrorMsg(result.error);
-      } else {
-        await login(email, "event_manager");
-        navigation?.navigate("OrgEventSelect");
+    if (authMode === "signup") {
+      if (!fullName.trim()) {
+        setErrorMsg("Please enter your full name");
+        return;
       }
-    }
-  }
 
-  async function handleSendOtp() {
-    if (!email || !email.includes("@")) {
-      setErrorMsg("Please enter a valid email address");
-      return;
-    }
-    setErrorMsg("");
-    const res = await loginWithOtp(email);
-    if (res.success || !res.error) {
-      setOtpSent(true);
-      setOtp("123456");
+      const res = await signUp(fullName.trim(), email.trim(), password);
+      if (res.needsEmailConfirmation) {
+        setSuccessMsg("Account created! Please check your email to confirm your account.");
+      } else if (res.success) {
+        navigation?.navigate("OrgEventSelect");
+      } else {
+        setErrorMsg(res.error || "Failed to create account. Please try again.");
+      }
     } else {
-      setOtpSent(true);
-      setOtp("123456");
-    }
-  }
-
-  async function handleVerifyOtp() {
-    if (otp.length < 6) {
-      setErrorMsg("Please enter the 6-digit verification code");
-      return;
-    }
-    setErrorMsg("");
-    const success = await verifyOtp(email, otp);
-    if (success) {
-      navigation?.navigate("OrgEventSelect");
-    } else {
-      setErrorMsg("Invalid OTP code. Please try again.");
-    }
-  }
-
-  async function handleQuickRoleLogin(rolePreset: typeof ROLE_PRESETS[0]) {
-    setEmail(rolePreset.email);
-    setSelectedRole(rolePreset.role);
-    setErrorMsg("");
-    const success = await login(rolePreset.email, rolePreset.role);
-    if (success) {
-      navigation?.navigate("OrgEventSelect");
+      // Login Mode
+      const res = await loginWithPassword(email.trim(), password);
+      if (res.success) {
+        navigation?.navigate("OrgEventSelect");
+      } else {
+        setErrorMsg(res.error || "Invalid email or password. Please try again.");
+      }
     }
   }
 
@@ -149,7 +81,7 @@ export function LoginScreen({ navigation }: LoginScreenProps) {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Top Wordmark & Tagline matching urpass.space */}
+          {/* Top Brand Header matching urpass.space */}
           <View style={styles.topBar}>
             <View style={styles.wordmarkRow}>
               <View style={styles.ticketIconBox}>
@@ -165,217 +97,167 @@ export function LoginScreen({ navigation }: LoginScreenProps) {
 
           {/* Main Auth Card (Pure Clean White Mode) */}
           <View style={styles.mainCard}>
+            {/* Mode Switcher Tabs */}
+            <View style={styles.tabContainer}>
+              <TouchableOpacity
+                style={[styles.tabBtn, authMode === "login" && styles.tabBtnActive]}
+                onPress={() => {
+                  setAuthMode("login");
+                  setErrorMsg("");
+                  setSuccessMsg("");
+                }}
+              >
+                <Text
+                  style={[
+                    styles.tabBtnText,
+                    authMode === "login" && styles.tabBtnTextActive,
+                  ]}
+                >
+                  Sign in
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.tabBtn, authMode === "signup" && styles.tabBtnActive]}
+                onPress={() => {
+                  setAuthMode("signup");
+                  setErrorMsg("");
+                  setSuccessMsg("");
+                }}
+              >
+                <Text
+                  style={[
+                    styles.tabBtnText,
+                    authMode === "signup" && styles.tabBtnTextActive,
+                  ]}
+                >
+                  Create account
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Card Header */}
             <View style={styles.cardHeaderGroup}>
-              <Text style={styles.welcomeTitle}>Welcome back</Text>
+              <Text style={styles.welcomeTitle}>
+                {authMode === "login" ? "Welcome back" : "Create your account"}
+              </Text>
               <Text style={styles.welcomeSubtitle}>
-                Sign in to your organizer account or gate console
+                {authMode === "login"
+                  ? "Sign in to your organizer account"
+                  : "Start creating events, issuing digital passes & checking attendees in"}
               </Text>
             </View>
 
-            {/* Method Switch Tabs */}
-            <View style={styles.methodTabs}>
-              <TouchableOpacity
-                style={[
-                  styles.methodTab,
-                  authMethod === "password" && styles.methodTabActive,
-                ]}
-                onPress={() => {
-                  setAuthMethod("password");
-                  setErrorMsg("");
-                }}
-              >
-                <Text
-                  style={[
-                    styles.methodTabText,
-                    authMethod === "password" && styles.methodTabTextActive,
-                  ]}
-                >
-                  Password
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[
-                  styles.methodTab,
-                  authMethod === "otp" && styles.methodTabActive,
-                ]}
-                onPress={() => {
-                  setAuthMethod("otp");
-                  setErrorMsg("");
-                }}
-              >
-                <Text
-                  style={[
-                    styles.methodTabText,
-                    authMethod === "otp" && styles.methodTabTextActive,
-                  ]}
-                >
-                  Email OTP
-                </Text>
-              </TouchableOpacity>
-            </View>
-
+            {/* Feedback Alerts */}
             {errorMsg ? (
               <View style={styles.errorBanner}>
                 <Text style={styles.errorText}>⚠️ {errorMsg}</Text>
               </View>
             ) : null}
 
-            {/* Password Auth Mode */}
-            {authMethod === "password" && (
-              <View style={styles.formFields}>
+            {successMsg ? (
+              <View style={styles.successBanner}>
+                <Text style={styles.successText}>✓ {successMsg}</Text>
+              </View>
+            ) : null}
+
+            {/* Form Fields */}
+            <View style={styles.formFields}>
+              {authMode === "signup" && (
                 <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>EMAIL</Text>
+                  <Text style={styles.inputLabel}>FULL NAME</Text>
                   <View style={styles.inputWrapper}>
-                    <Text style={styles.inputIcon}>✉️</Text>
+                    <Text style={styles.inputIcon}>👤</Text>
                     <TextInput
                       style={styles.textInput}
-                      placeholder="you@organization.com"
+                      placeholder="John Doe"
                       placeholderTextColor={COLORS.textLightMuted}
-                      value={email}
-                      onChangeText={setEmail}
-                      autoCapitalize="none"
-                      keyboardType="email-address"
+                      value={fullName}
+                      onChangeText={setFullName}
+                      autoCapitalize="words"
                     />
                   </View>
                 </View>
+              )}
 
-                <View style={styles.inputGroup}>
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>EMAIL</Text>
+                <View style={styles.inputWrapper}>
+                  <Text style={styles.inputIcon}>✉️</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="you@example.com"
+                    placeholderTextColor={COLORS.textLightMuted}
+                    value={email}
+                    onChangeText={setEmail}
+                    autoCapitalize="none"
+                    keyboardType="email-address"
+                  />
+                </View>
+              </View>
+
+              <View style={styles.inputGroup}>
+                <View style={styles.labelRow}>
                   <Text style={styles.inputLabel}>PASSWORD</Text>
-                  <View style={styles.inputWrapper}>
-                    <Text style={styles.inputIcon}>🔒</Text>
-                    <TextInput
-                      style={styles.textInput}
-                      placeholder="••••••••"
-                      placeholderTextColor={COLORS.textLightMuted}
-                      value={password}
-                      onChangeText={setPassword}
-                      secureTextEntry
-                    />
-                  </View>
-                </View>
-
-                <Button
-                  title="Sign in ⚡"
-                  onPress={handlePasswordLogin}
-                  loading={isLoading}
-                  variant="brand"
-                  size="lg"
-                  style={styles.submitBtn}
-                />
-              </View>
-            )}
-
-            {/* OTP Auth Mode */}
-            {authMethod === "otp" && (
-              <View style={styles.formFields}>
-                {!otpSent ? (
-                  <>
-                    <View style={styles.inputGroup}>
-                      <Text style={styles.inputLabel}>EMAIL</Text>
-                      <View style={styles.inputWrapper}>
-                        <Text style={styles.inputIcon}>✉️</Text>
-                        <TextInput
-                          style={styles.textInput}
-                          placeholder="you@organization.com"
-                          placeholderTextColor={COLORS.textLightMuted}
-                          value={email}
-                          onChangeText={setEmail}
-                          autoCapitalize="none"
-                          keyboardType="email-address"
-                        />
-                      </View>
-                    </View>
-
-                    <Button
-                      title="Send 6-Digit Code 📩"
-                      onPress={handleSendOtp}
-                      loading={isLoading}
-                      variant="brand"
-                      size="lg"
-                      style={styles.submitBtn}
-                    />
-                  </>
-                ) : (
-                  <>
-                    <View style={styles.inputGroup}>
-                      <Text style={styles.inputLabel}>6-DIGIT VERIFICATION CODE</Text>
-                      <TextInput
-                        style={styles.otpInput}
-                        placeholder="123456"
-                        placeholderTextColor={COLORS.textLightMuted}
-                        value={otp}
-                        onChangeText={setOtp}
-                        keyboardType="number-pad"
-                        maxLength={6}
-                      />
-                      <Text style={styles.otpHint}>
-                        Enter the code sent to {email}
-                      </Text>
-                    </View>
-
-                    <Button
-                      title="Verify & Enter 🚀"
-                      onPress={handleVerifyOtp}
-                      loading={isLoading}
-                      variant="success"
-                      size="lg"
-                      style={styles.submitBtn}
-                    />
-
+                  {authMode === "login" && (
                     <TouchableOpacity
-                      onPress={() => setOtpSent(false)}
-                      style={styles.changeEmailBtn}
-                    >
-                      <Text style={styles.changeEmailText}>← Change Email</Text>
-                    </TouchableOpacity>
-                  </>
-                )}
-              </View>
-            )}
-
-            <View style={styles.deviceRow}>
-              <Text style={styles.deviceText}>Hardware Station ID: {deviceId}</Text>
-            </View>
-          </View>
-
-          {/* Quick Field Role Presets */}
-          <View style={styles.presetsSection}>
-            <View style={styles.presetsHeader}>
-              <Text style={styles.presetsTitle}>FIELD ROLE EVALUATION</Text>
-              <Text style={styles.presetsSubtitle}>
-                Select an operational profile to test gate access immediately:
-              </Text>
-            </View>
-
-            <View style={styles.presetList}>
-              {ROLE_PRESETS.map((preset) => (
-                <TouchableOpacity
-                  key={preset.role}
-                  style={[
-                    styles.presetCard,
-                    selectedRole === preset.role && styles.presetCardActive,
-                  ]}
-                  onPress={() => handleQuickRoleLogin(preset)}
-                  activeOpacity={0.8}
-                >
-                  <View style={styles.presetTop}>
-                    <Text style={styles.presetName}>{preset.label}</Text>
-                    <Badge
-                      label={preset.role.replace("_", " ").toUpperCase()}
-                      variant={
-                        preset.role === "event_manager"
-                          ? "brand"
-                          : preset.role === "gate_staff"
-                          ? "green"
-                          : "neutral"
+                      onPress={() =>
+                        Alert.alert(
+                          "Password Reset",
+                          "Please visit https://urpass.space/forgot-password to reset your password."
+                        )
                       }
-                      size="sm"
-                    />
-                  </View>
-                  <Text style={styles.presetDesc}>{preset.desc}</Text>
-                </TouchableOpacity>
-              ))}
+                    >
+                      <Text style={styles.forgotLink}>Forgot password?</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+                <View style={styles.inputWrapper}>
+                  <Text style={styles.inputIcon}>🔒</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder={
+                      authMode === "signup"
+                        ? "At least 6 characters"
+                        : "••••••••"
+                    }
+                    placeholderTextColor={COLORS.textLightMuted}
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry
+                  />
+                </View>
+              </View>
+
+              {/* Submit Action */}
+              <Button
+                title={authMode === "login" ? "Sign in" : "Create Account"}
+                onPress={handleSubmit}
+                loading={isLoading}
+                variant="brand"
+                size="lg"
+                style={styles.submitBtn}
+              />
+            </View>
+
+            {/* Bottom Toggle Prompt */}
+            <View style={styles.bottomToggleRow}>
+              <Text style={styles.bottomToggleText}>
+                {authMode === "login"
+                  ? "Don't have an account? "
+                  : "Already have an account? "}
+              </Text>
+              <TouchableOpacity
+                onPress={() => {
+                  setAuthMode(authMode === "login" ? "signup" : "login");
+                  setErrorMsg("");
+                  setSuccessMsg("");
+                }}
+              >
+                <Text style={styles.bottomToggleLink}>
+                  {authMode === "login" ? "Create one" : "Sign in"}
+                </Text>
+              </TouchableOpacity>
             </View>
           </View>
         </ScrollView>
@@ -394,14 +276,16 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 20,
-    paddingTop: 12,
+    paddingTop: 24,
     paddingBottom: 40,
+    flexGrow: 1,
+    justifyContent: "center",
   },
   topBar: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 20,
+    marginBottom: 24,
   },
   wordmarkRow: {
     flexDirection: "row",
@@ -409,18 +293,18 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   ticketIconBox: {
-    width: 28,
-    height: 28,
+    width: 32,
+    height: 32,
     borderRadius: 8,
     backgroundColor: COLORS.brandLight,
     alignItems: "center",
     justifyContent: "center",
   },
   ticketIcon: {
-    fontSize: 14,
+    fontSize: 16,
   },
   wordmarkText: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: "900",
     letterSpacing: 2,
     color: COLORS.textPrimary,
@@ -445,41 +329,28 @@ const styles = StyleSheet.create({
     borderColor: COLORS.surfaceBorder,
     borderRadius: 24,
     padding: 24,
-    marginBottom: 24,
     shadowColor: COLORS.brand,
-    shadowOffset: { width: 0, height: 6 },
+    shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.08,
-    shadowRadius: 20,
+    shadowRadius: 24,
     elevation: 3,
   },
-  cardHeaderGroup: {
-    marginBottom: 18,
-  },
-  welcomeTitle: {
-    fontSize: 22,
-    fontWeight: "800",
-    color: COLORS.textPrimary,
-    letterSpacing: -0.4,
-  },
-  welcomeSubtitle: {
-    fontSize: 13,
-    color: COLORS.textSecondary,
-    marginTop: 4,
-  },
-  methodTabs: {
+  tabContainer: {
     flexDirection: "row",
-    backgroundColor: COLORS.surfaceLight,
+    backgroundColor: COLORS.surfaceAlt,
     borderRadius: 12,
     padding: 3,
-    marginBottom: 18,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: COLORS.surfaceBorder,
   },
-  methodTab: {
+  tabBtn: {
     flex: 1,
-    paddingVertical: 8,
+    paddingVertical: 10,
     alignItems: "center",
     borderRadius: 9,
   },
-  methodTabActive: {
+  tabBtnActive: {
     backgroundColor: COLORS.white,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
@@ -487,39 +358,79 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     elevation: 1,
   },
-  methodTabText: {
-    fontSize: 12,
+  tabBtnText: {
+    fontSize: 13,
     fontWeight: "600",
     color: COLORS.textSecondary,
   },
-  methodTabTextActive: {
+  tabBtnTextActive: {
     color: COLORS.brand,
-    fontWeight: "700",
+    fontWeight: "800",
+  },
+  cardHeaderGroup: {
+    marginBottom: 20,
+  },
+  welcomeTitle: {
+    fontSize: 24,
+    fontWeight: "800",
+    color: COLORS.textPrimary,
+    letterSpacing: -0.5,
+  },
+  welcomeSubtitle: {
+    fontSize: 13,
+    color: COLORS.textSecondary,
+    marginTop: 4,
+    lineHeight: 18,
   },
   errorBanner: {
     backgroundColor: COLORS.redLight,
     borderColor: COLORS.redBorder,
     borderWidth: 1,
-    padding: 10,
-    borderRadius: 10,
-    marginBottom: 14,
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 16,
   },
   errorText: {
     fontSize: 12,
     color: COLORS.red,
     fontWeight: "600",
+    lineHeight: 16,
+  },
+  successBanner: {
+    backgroundColor: COLORS.greenLight,
+    borderColor: COLORS.greenBorder,
+    borderWidth: 1,
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 16,
+  },
+  successText: {
+    fontSize: 12,
+    color: COLORS.green,
+    fontWeight: "600",
+    lineHeight: 16,
   },
   formFields: {
-    gap: 14,
+    gap: 16,
   },
   inputGroup: {
     gap: 6,
+  },
+  labelRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
   inputLabel: {
     fontSize: 10,
     fontWeight: "800",
     color: COLORS.textMuted,
     letterSpacing: 0.8,
+  },
+  forgotLink: {
+    fontSize: 11,
+    color: COLORS.brand,
+    fontWeight: "700",
   },
   inputWrapper: {
     flexDirection: "row",
@@ -536,98 +447,29 @@ const styles = StyleSheet.create({
   },
   textInput: {
     flex: 1,
-    paddingVertical: 12,
+    paddingVertical: 13,
     fontSize: 14,
     color: COLORS.textPrimary,
-  },
-  otpInput: {
-    backgroundColor: COLORS.surfaceAlt,
-    borderWidth: 1,
-    borderColor: COLORS.brandBorder,
-    borderRadius: 12,
-    paddingVertical: 12,
-    fontSize: 24,
-    fontWeight: "900",
-    letterSpacing: 10,
-    textAlign: "center",
-    color: COLORS.brand,
-  },
-  otpHint: {
-    fontSize: 11,
-    color: COLORS.textMuted,
-    textAlign: "center",
-    marginTop: 4,
   },
   submitBtn: {
-    marginTop: 6,
-  },
-  changeEmailBtn: {
-    alignSelf: "center",
     marginTop: 8,
-    padding: 6,
   },
-  changeEmailText: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: COLORS.textSecondary,
-  },
-  deviceRow: {
-    marginTop: 16,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.surfaceBorderSubtle,
-    alignItems: "center",
-  },
-  deviceText: {
-    fontSize: 10,
-    color: COLORS.textLightMuted,
-    fontWeight: "600",
-  },
-  presetsSection: {
-    marginTop: 4,
-  },
-  presetsHeader: {
-    marginBottom: 12,
-  },
-  presetsTitle: {
-    fontSize: 10,
-    fontWeight: "800",
-    color: COLORS.textMuted,
-    letterSpacing: 1,
-  },
-  presetsSubtitle: {
-    fontSize: 12,
-    color: COLORS.textSecondary,
-    marginTop: 2,
-  },
-  presetList: {
-    gap: 8,
-  },
-  presetCard: {
-    backgroundColor: COLORS.surface,
-    borderWidth: 1,
-    borderColor: COLORS.surfaceBorder,
-    borderRadius: 14,
-    padding: 14,
-  },
-  presetCardActive: {
-    borderColor: COLORS.brand,
-    backgroundColor: COLORS.brandLight,
-  },
-  presetTop: {
+  bottomToggleRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 4,
+    justifyContent: "center",
+    marginTop: 20,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.surfaceBorderSubtle,
   },
-  presetName: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: COLORS.textPrimary,
-  },
-  presetDesc: {
-    fontSize: 11,
+  bottomToggleText: {
+    fontSize: 12,
     color: COLORS.textSecondary,
-    lineHeight: 15,
+  },
+  bottomToggleLink: {
+    fontSize: 12,
+    fontWeight: "800",
+    color: COLORS.brand,
   },
 });
