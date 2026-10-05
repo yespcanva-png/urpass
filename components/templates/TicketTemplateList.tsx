@@ -13,6 +13,7 @@ import { parseUnlockedCookie, isTemplateUnlocked } from "@/lib/studio/purchases"
 import TicketVisualShowcase from "./TicketVisualShowcase";
 import TemplateShowcaseModal from "./TemplateShowcaseModal";
 import TemplateCheckoutModal from "./TemplateCheckoutModal";
+import SelectEventTemplateModal from "./SelectEventTemplateModal";
 import { Search, X, Sparkles } from "lucide-react";
 
 interface TicketTemplateListProps {
@@ -46,6 +47,10 @@ export default function TicketTemplateList({
 
   // Showcase Popup Modal State
   const [selectedShowcaseTemplate, setSelectedShowcaseTemplate] =
+    useState<StudioTemplateDefinition | null>(null);
+
+  // Select Event Modal State
+  const [selectEventTemplate, setSelectEventTemplate] =
     useState<StudioTemplateDefinition | null>(null);
 
   // Checkout Modal State
@@ -286,12 +291,13 @@ export default function TicketTemplateList({
                     {/* Actions */}
                     <div className="pt-3 mt-2.5 border-t border-neutral-100 flex items-center justify-between gap-2">
                       {isUnlocked ? (
-                        <Link
-                          href={`/studio?template=${encodeURIComponent(template.id)}`}
-                          className="flex-1 h-9 rounded-lg bg-neutral-900 hover:bg-neutral-800 text-white font-medium text-xs flex items-center justify-center transition-colors"
+                        <button
+                          type="button"
+                          onClick={() => setSelectEventTemplate(template)}
+                          className="flex-1 h-9 rounded-lg bg-neutral-900 hover:bg-neutral-800 text-white font-medium text-xs flex items-center justify-center transition-colors cursor-pointer"
                         >
                           Use Template
-                        </Link>
+                        </button>
                       ) : (
                         <button
                           type="button"
@@ -394,12 +400,13 @@ export default function TicketTemplateList({
                     {/* Actions: One Primary Action + Optional Secondary Text Action */}
                     <div className="pt-3 mt-2.5 border-t border-neutral-100 flex items-center justify-between gap-2">
                       {isUnlocked ? (
-                        <Link
-                          href={`/studio?template=${encodeURIComponent(template.id)}`}
-                          className="flex-1 h-9 rounded-lg bg-neutral-900 hover:bg-neutral-800 text-white font-medium text-xs flex items-center justify-center transition-colors"
+                        <button
+                          type="button"
+                          onClick={() => setSelectEventTemplate(template)}
+                          className="flex-1 h-9 rounded-lg bg-neutral-900 hover:bg-neutral-800 text-white font-medium text-xs flex items-center justify-center transition-colors cursor-pointer"
                         >
                           Use Template
-                        </Link>
+                        </button>
                       ) : (
                         <button
                           type="button"
@@ -458,6 +465,10 @@ export default function TicketTemplateList({
         template={selectedShowcaseTemplate}
         allTemplates={filteredTemplates}
         onSelectTemplate={(tpl) => setSelectedShowcaseTemplate(tpl)}
+        onUseTemplate={(tpl) => {
+          setSelectedShowcaseTemplate(null);
+          setSelectEventTemplate(tpl);
+        }}
         isUnlocked={
           Boolean(selectedShowcaseTemplate) &&
           (selectedShowcaseTemplate?.tier !== "paid" ||
@@ -474,6 +485,13 @@ export default function TicketTemplateList({
           setSelectedShowcaseTemplate(null);
           handleOpenBundleCheckout();
         }}
+      />
+
+      {/* Select Event Modal Popup */}
+      <SelectEventTemplateModal
+        isOpen={Boolean(selectEventTemplate)}
+        onClose={() => setSelectEventTemplate(null)}
+        template={selectEventTemplate}
       />
 
       {/* Razorpay Checkout Modal */}

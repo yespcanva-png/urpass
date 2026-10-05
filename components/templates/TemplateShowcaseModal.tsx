@@ -29,6 +29,7 @@ interface TemplateShowcaseModalProps {
   template: StudioTemplateDefinition | null;
   allTemplates?: StudioTemplateDefinition[];
   onSelectTemplate?: (template: StudioTemplateDefinition) => void;
+  onUseTemplate?: (template: StudioTemplateDefinition) => void;
   isUnlocked: boolean;
   isAuthenticated: boolean;
   userEmail?: string;
@@ -44,6 +45,7 @@ export default function TemplateShowcaseModal({
   template: initialTemplate,
   allTemplates = [],
   onSelectTemplate,
+  onUseTemplate,
   isUnlocked,
   isAuthenticated,
   onUnlockClick,
@@ -152,6 +154,10 @@ export default function TemplateShowcaseModal({
 
   // Handle template selection / application
   function handleUseTemplate() {
+    if (onUseTemplate && currentTemplate) {
+      onUseTemplate(currentTemplate);
+      return;
+    }
     setIsApplying(true);
     // Smooth microinteraction state before routing
     setTimeout(() => {

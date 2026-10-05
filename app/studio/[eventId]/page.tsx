@@ -4,6 +4,11 @@ import { createClient } from "@/lib/supabase/server";
 import { getUserPlan } from "@/lib/plan";
 import TicketStudio from "@/components/studio/TicketStudio";
 
+import {
+  STUDIO_TEMPLATES,
+  convertStudioTemplateToTicketDesign,
+} from "@/lib/studio/templates";
+
 export const metadata: Metadata = {
   title: "Ticket Studio — Full Screen Event Pass Designer | Urpass",
   description: "Visual drag-and-drop ticket and pass builder for your event.",
@@ -14,10 +19,14 @@ export const dynamic = "force-dynamic";
 
 export default async function StudioEventPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ eventId: string }>;
+  searchParams?: Promise<{ template?: string }>;
 }) {
   const { eventId } = await params;
+  const sParams = searchParams ? await searchParams : {};
+  const templateId = sParams?.template;
   const supabase = await createClient();
 
   const {
@@ -83,9 +92,17 @@ export default async function StudioEventPage({
   const isPro = true;
   const effectivePlanSlug = organizerPlan ? organizerPlan.slug : userPlan.slug;
 
+  let initialConfig = event.custom_pass_design || profile?.custom_pass_design;
+  if (templateId) {
+    const selectedTemplate = STUDIO_TEMPLATES.find((t) => t.id === templateId);
+    if (selectedTemplate) {
+      initialConfig = convertStudioTemplateToTicketDesign(selectedTemplate);
+    }
+  }
+
   return (
     <TicketStudio
-      initialConfig={event.custom_pass_design || profile?.custom_pass_design}
+      initialConfig={initialConfig}
       isPro={isPro}
       userPlanTier={effectivePlanSlug}
       eventId={event.id}
