@@ -9,6 +9,7 @@ import {
   SafeAreaView,
   StatusBar,
 } from "react-native";
+import { Building2, Search, Ticket } from "lucide-react-native";
 import { COLORS } from "../../constants/colors";
 import { useAuth } from "../../context/AuthContext";
 import { useEvent } from "../../context/EventContext";
@@ -55,7 +56,7 @@ export function OrgSelectionScreen({ navigation }: OrgSelectionScreenProps) {
       <View style={styles.topBar}>
         <View style={styles.wordmarkRow}>
           <View style={styles.ticketIconBox}>
-            <Text style={styles.ticketIcon}>🎟️</Text>
+            <Ticket size={15} color={COLORS.brand} />
           </View>
           <Text style={styles.wordmarkText}>URPASS</Text>
         </View>
@@ -76,7 +77,7 @@ export function OrgSelectionScreen({ navigation }: OrgSelectionScreenProps) {
       {/* Search Input Bar */}
       <View style={styles.searchContainer}>
         <View style={styles.searchWrapper}>
-          <Text style={styles.searchIcon}>🔍</Text>
+          <Search size={16} color={COLORS.textMuted} style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
             placeholder="Search organisations..."
@@ -97,7 +98,7 @@ export function OrgSelectionScreen({ navigation }: OrgSelectionScreenProps) {
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyIcon}>🏢</Text>
+            <Building2 size={28} color={COLORS.textLightMuted} />
             <Text style={styles.emptyTitle}>No organisations found</Text>
             <Text style={styles.emptySubtitle}>
               You don't currently have access to an UrPass organisation matching your search. Contact your administrator.
@@ -174,9 +175,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  ticketIcon: {
-    fontSize: 13,
-  },
   wordmarkText: {
     fontSize: 15,
     fontWeight: "900",
@@ -227,7 +225,6 @@ const styles = StyleSheet.create({
     height: 46,
   },
   searchIcon: {
-    fontSize: 14,
     marginRight: 8,
   },
   searchInput: {

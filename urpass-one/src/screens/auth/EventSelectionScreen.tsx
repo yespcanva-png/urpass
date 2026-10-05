@@ -9,6 +9,7 @@ import {
   SafeAreaView,
   StatusBar,
 } from "react-native";
+import { ArrowLeft, CalendarDays, MapPin, Search } from "lucide-react-native";
 import { COLORS } from "../../constants/colors";
 import { useAuth } from "../../context/AuthContext";
 import { useEvent } from "../../context/EventContext";
@@ -78,7 +79,8 @@ export function EventSelectionScreen({ navigation }: EventSelectionScreenProps) 
           style={styles.backButton}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <Text style={styles.backButtonText}>← Change Org</Text>
+          <ArrowLeft size={14} color={COLORS.textSecondary} />
+          <Text style={styles.backButtonText}>Change Org</Text>
         </TouchableOpacity>
 
         <View style={styles.orgTag}>
@@ -99,7 +101,7 @@ export function EventSelectionScreen({ navigation }: EventSelectionScreenProps) 
       {/* Search Bar */}
       <View style={styles.searchContainer}>
         <View style={styles.searchWrapper}>
-          <Text style={styles.searchIcon}>🔍</Text>
+          <Search size={16} color={COLORS.textMuted} style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
             placeholder="Search events by name or venue..."
@@ -150,7 +152,7 @@ export function EventSelectionScreen({ navigation }: EventSelectionScreenProps) 
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyIcon}>📅</Text>
+            <CalendarDays size={28} color={COLORS.textLightMuted} />
             <Text style={styles.emptyTitle}>No events in this view</Text>
             <Text style={styles.emptySubtitle}>
               There are no events matching your filter. Try switching between Live, Upcoming and Past.
@@ -178,7 +180,10 @@ export function EventSelectionScreen({ navigation }: EventSelectionScreenProps) 
                   <Text style={styles.eventName} numberOfLines={2}>
                     {item.name}
                   </Text>
-                  <Text style={styles.eventDate}>📅 {item.eventDate}</Text>
+                  <View style={styles.metaRow}>
+                    <CalendarDays size={12} color={COLORS.textMuted} />
+                    <Text style={styles.eventDate}>{item.eventDate}</Text>
+                  </View>
                 </View>
 
                 <Badge
@@ -189,9 +194,12 @@ export function EventSelectionScreen({ navigation }: EventSelectionScreenProps) 
               </View>
 
               {/* Venue Row */}
-              <Text style={styles.venueText} numberOfLines={1}>
-                📍 {item.venue || "Convention Center"}
-              </Text>
+              <View style={styles.venueRow}>
+                <MapPin size={13} color={COLORS.textMuted} />
+                <Text style={styles.venueText} numberOfLines={1}>
+                  {item.venue || "Convention Center"}
+                </Text>
+              </View>
 
               {/* Footer Meta: Role & Gate Status */}
               <View style={styles.eventFooter}>
@@ -231,6 +239,9 @@ const styles = StyleSheet.create({
     borderBottomColor: COLORS.surfaceBorderSubtle,
   },
   backButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
     paddingVertical: 5,
     paddingHorizontal: 10,
     backgroundColor: COLORS.surfaceAlt,
@@ -288,7 +299,6 @@ const styles = StyleSheet.create({
     height: 46,
   },
   searchIcon: {
-    fontSize: 14,
     marginRight: 8,
   },
   searchInput: {
@@ -343,10 +353,6 @@ const styles = StyleSheet.create({
     borderColor: COLORS.surfaceBorder,
     borderRadius: 16,
     marginTop: 10,
-  },
-  emptyIcon: {
-    fontSize: 32,
-    marginBottom: 8,
   },
   emptyTitle: {
     fontSize: 15,
@@ -409,13 +415,24 @@ const styles = StyleSheet.create({
   eventDate: {
     fontSize: 11,
     color: COLORS.textMuted,
+  },
+  metaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
     marginTop: 3,
   },
-  venueText: {
-    fontSize: 12,
-    color: COLORS.textSecondary,
+  venueRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
     marginTop: 10,
     marginBottom: 12,
+  },
+  venueText: {
+    flex: 1,
+    fontSize: 12,
+    color: COLORS.textSecondary,
   },
   eventFooter: {
     flexDirection: "row",

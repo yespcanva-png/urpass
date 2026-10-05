@@ -13,7 +13,6 @@ interface AuthContextType {
   signUp: (fullName: string, email: string, password: string) => Promise<{ success: boolean; error?: string; needsEmailConfirmation?: boolean }>;
   loginWithOtp: (email: string) => Promise<{ success: boolean; error?: string }>;
   verifyOtp: (email: string, otp: string) => Promise<boolean>;
-  login: (email: string, role?: UserRole) => Promise<boolean>;
   logout: () => Promise<void>;
   logoutAllDevices: () => Promise<void>;
   updateRole: (newRole: UserRole) => void;
@@ -47,17 +46,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setAuthToken(token);
           setUser(profile);
         } else {
-          // Default demo supervisor user for immediate operation
-          const defaultUser: UserProfile = {
-            id: "usr-ops-lead",
-            name: "Alex Gate Supervisor",
-            email: "ops@urpass.space",
-            role: "event_manager",
-            orgId: "org-101",
-            orgName: "UrPass Global Events",
-          };
-          setUser(defaultUser);
-          setAuthToken("demo-auth-token-123");
+          setAuthToken(null);
+          setUser(null);
         }
       } finally {
         setIsLoading(false);
@@ -71,11 +61,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
     try {
       const result = await SupabaseOpsService.signInWithPassword(email, password);
-      if (result.user) {
-        const token = `sb_${Date.now()}`;
-        await StorageService.setItem(CONFIG.STORAGE_KEYS.AUTH_TOKEN, token);
+      if (result.user && result.accessToken) {
+        await StorageService.setItem(CONFIG.STORAGE_KEYS.AUTH_TOKEN, result.accessToken);
         await StorageService.setJSON(CONFIG.STORAGE_KEYS.USER_PROFILE, result.user);
-        setAuthToken(token);
+        setAuthToken(result.accessToken);
         setUser(result.user);
         return { success: true };
       }
@@ -98,11 +87,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (res.needsEmailConfirmation) {
         return { success: true, needsEmailConfirmation: true };
       }
-      if (res.user) {
-        const token = `sb_signup_${Date.now()}`;
-        await StorageService.setItem(CONFIG.STORAGE_KEYS.AUTH_TOKEN, token);
+      if (res.user && res.accessToken) {
+        await StorageService.setItem(CONFIG.STORAGE_KEYS.AUTH_TOKEN, res.accessToken);
         await StorageService.setJSON(CONFIG.STORAGE_KEYS.USER_PROFILE, res.user);
-        setAuthToken(token);
+        setAuthToken(res.accessToken);
         setUser(res.user);
         return { success: true };
       }
@@ -134,45 +122,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       // 1. Try real Supabase OTP verification
       const res = await SupabaseOpsService.verifyOtp(email, otp);
-      if (res.user) {
-        const token = `sb_otp_${Date.now()}`;
-        await StorageService.setItem(CONFIG.STORAGE_KEYS.AUTH_TOKEN, token);
+      if (res.user && res.accessToken) {
+        await StorageService.setItem(CONFIG.STORAGE_KEYS.AUTH_TOKEN, res.accessToken);
         await StorageService.setJSON(CONFIG.STORAGE_KEYS.USER_PROFILE, res.user);
-        setAuthToken(token);
+        setAuthToken(res.accessToken);
         setUser(res.user);
         return true;
       }
 
-      // 2. Demo fallback if field test mode (6 digits)
-      if (otp.length === 6) {
-        return await login(email);
-      }
-
       return false;
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  async function login(email: string, role: UserRole = "event_manager"): Promise<boolean> {
-    setIsLoading(true);
-    try {
-      const demoToken = `jwt_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
-      const profile: UserProfile = {
-        id: `usr_${Math.random().toString(36).substring(2, 8)}`,
-        name: email.split("@")[0].replace(".", " ").replace(/^./, (str) => str.toUpperCase()),
-        email,
-        role,
-        orgId: "org-101",
-        orgName: "UrPass Global Events",
-      };
-
-      await StorageService.setItem(CONFIG.STORAGE_KEYS.AUTH_TOKEN, demoToken);
-      await StorageService.setJSON(CONFIG.STORAGE_KEYS.USER_PROFILE, profile);
-
-      setAuthToken(demoToken);
-      setUser(profile);
-      return true;
     } finally {
       setIsLoading(false);
     }
@@ -209,7 +167,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         signUp,
         loginWithOtp,
         verifyOtp,
-        login,
         logout,
         logoutAllDevices,
         updateRole,

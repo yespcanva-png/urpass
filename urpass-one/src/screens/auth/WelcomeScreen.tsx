@@ -8,6 +8,7 @@ import {
   SafeAreaView,
   StatusBar,
 } from "react-native";
+import { ShieldCheck, Wifi, Zap } from "lucide-react-native";
 import { COLORS } from "../../constants/colors";
 
 interface WelcomeScreenProps {
@@ -45,7 +46,7 @@ export function WelcomeScreen({ navigation }: WelcomeScreenProps) {
           <View style={styles.featuresContainer}>
             <View style={styles.featureRow}>
               <View style={styles.featureIconBox}>
-                <Text style={styles.featureEmoji}>⚡</Text>
+                <Zap size={17} color={COLORS.brand} />
               </View>
               <View style={styles.featureTextBox}>
                 <Text style={styles.featureTitle}>Sub-Second QR Validation</Text>
@@ -55,7 +56,7 @@ export function WelcomeScreen({ navigation }: WelcomeScreenProps) {
 
             <View style={styles.featureRow}>
               <View style={styles.featureIconBox}>
-                <Text style={styles.featureEmoji}>🔒</Text>
+                <ShieldCheck size={17} color={COLORS.brand} />
               </View>
               <View style={styles.featureTextBox}>
                 <Text style={styles.featureTitle}>Duplicate Re-Use Protection</Text>
@@ -65,7 +66,7 @@ export function WelcomeScreen({ navigation }: WelcomeScreenProps) {
 
             <View style={styles.featureRow}>
               <View style={styles.featureIconBox}>
-                <Text style={styles.featureEmoji}>📶</Text>
+                <Wifi size={17} color={COLORS.brand} />
               </View>
               <View style={styles.featureTextBox}>
                 <Text style={styles.featureTitle}>Offline Resilient Ops</Text>
@@ -159,9 +160,6 @@ const styles = StyleSheet.create({
     borderColor: COLORS.surfaceBorder,
     alignItems: "center",
     justifyContent: "center",
-  },
-  featureEmoji: {
-    fontSize: 16,
   },
   featureTextBox: {
     flex: 1,

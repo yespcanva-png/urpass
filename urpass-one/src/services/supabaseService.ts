@@ -12,6 +12,13 @@ function isUuid(id?: string | null): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id);
 }
 
+type ProductionAuthResult = {
+  user: UserProfile | null;
+  accessToken: string | null;
+  error: string | null;
+  needsEmailConfirmation?: boolean;
+};
+
 export class SupabaseOpsService {
   private static client: SupabaseClient | null = null;
 
@@ -35,7 +42,7 @@ export class SupabaseOpsService {
     fullName: string,
     email: string,
     password: string
-  ): Promise<{ user: UserProfile | null; error: string | null; needsEmailConfirmation?: boolean }> {
+  ): Promise<ProductionAuthResult> {
     try {
       const supabase = this.getClient();
       const { data, error } = await supabase.auth.signUp({
@@ -49,43 +56,48 @@ export class SupabaseOpsService {
       });
 
       if (error) {
-        return { user: null, error: error.message };
+        return { user: null, accessToken: null, error: error.message };
       }
 
       if (data.user) {
         if (!data.session) {
-          return { user: null, error: null, needsEmailConfirmation: true };
+          return { user: null, accessToken: null, error: null, needsEmailConfirmation: true };
         }
         const profile = await this.buildUserProfileFromSupabase(data.user);
-        return { user: profile, error: null, needsEmailConfirmation: false };
+        return {
+          user: profile,
+          accessToken: data.session.access_token,
+          error: null,
+          needsEmailConfirmation: false,
+        };
       }
 
-      return { user: null, error: "Registration failed." };
+      return { user: null, accessToken: null, error: "Registration failed." };
     } catch (err: any) {
-      return { user: null, error: err?.message || "Network error during sign up." };
+      return { user: null, accessToken: null, error: err?.message || "Network error during sign up." };
     }
   }
 
   /**
    * Real Supabase Email & Password Sign In
    */
-  public static async signInWithPassword(email: string, password: string): Promise<{ user: UserProfile | null; error: string | null }> {
+  public static async signInWithPassword(email: string, password: string): Promise<ProductionAuthResult> {
     try {
       const supabase = this.getClient();
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
       if (error) {
-        return { user: null, error: error.message };
+        return { user: null, accessToken: null, error: error.message };
       }
 
-      if (data.user) {
+      if (data.user && data.session) {
         const profile = await this.buildUserProfileFromSupabase(data.user);
-        return { user: profile, error: null };
+        return { user: profile, accessToken: data.session.access_token, error: null };
       }
 
-      return { user: null, error: "No user returned from Supabase authentication." };
+      return { user: null, accessToken: null, error: "No user session returned from Supabase authentication." };
     } catch (err: any) {
-      return { user: null, error: err?.message || "Network error during authentication." };
+      return { user: null, accessToken: null, error: err?.message || "Network error during authentication." };
     }
   }
 
@@ -108,7 +120,7 @@ export class SupabaseOpsService {
   /**
    * Real Supabase OTP Token Verification
    */
-  public static async verifyOtp(email: string, token: string): Promise<{ user: UserProfile | null; error: string | null }> {
+  public static async verifyOtp(email: string, token: string): Promise<ProductionAuthResult> {
     try {
       const supabase = this.getClient();
       const { data, error } = await supabase.auth.verifyOtp({
@@ -118,17 +130,17 @@ export class SupabaseOpsService {
       });
 
       if (error) {
-        return { user: null, error: error.message };
+        return { user: null, accessToken: null, error: error.message };
       }
 
-      if (data.user) {
+      if (data.user && data.session) {
         const profile = await this.buildUserProfileFromSupabase(data.user);
-        return { user: profile, error: null };
+        return { user: profile, accessToken: data.session.access_token, error: null };
       }
 
-      return { user: null, error: "Verification failed." };
+      return { user: null, accessToken: null, error: "Verification failed." };
     } catch (err: any) {
-      return { user: null, error: err?.message || "Verification error." };
+      return { user: null, accessToken: null, error: err?.message || "Verification error." };
     }
   }
 
@@ -593,4 +605,3 @@ export class SupabaseOpsService {
 }
 
 export const SupabaseService = SupabaseOpsService;
-

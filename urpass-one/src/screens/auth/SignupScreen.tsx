@@ -16,7 +16,7 @@ import {
 import { COLORS } from "../../constants/colors";
 import { useAuth } from "../../context/AuthContext";
 
-interface LoginScreenProps {
+interface SignupScreenProps {
   navigation?: any;
 }
 
@@ -28,10 +28,11 @@ function GoogleIcon() {
   );
 }
 
-export function LoginScreen({ navigation }: LoginScreenProps) {
-  const { loginWithPassword, loginWithOtp, isLoading } = useAuth();
+export function SignupScreen({ navigation }: SignupScreenProps) {
+  const { signUp, loginWithOtp, isLoading } = useAuth();
 
   const [authMode, setAuthMode] = useState<"standard" | "sso">("standard");
+  const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -39,50 +40,60 @@ export function LoginScreen({ navigation }: LoginScreenProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [ssoLoading, setSsoLoading] = useState(false);
+  const [needsEmailConfirmation, setNeedsEmailConfirmation] = useState(false);
+  const [submittedEmail, setSubmittedEmail] = useState("");
 
-  async function handlePasswordSubmit() {
+  async function handleSignupSubmit() {
     setServerError("");
+    const trimmedName = fullName.trim();
     const trimmedEmail = email.trim();
+
+    if (!trimmedName || trimmedName.length < 2) {
+      setServerError("Name must be at least 2 characters.");
+      return;
+    }
 
     if (!trimmedEmail || !trimmedEmail.includes("@")) {
       setServerError("Enter a valid email address.");
       return;
     }
 
-    if (!password || password.length < 6) {
-      setServerError("Password must be at least 6 characters.");
+    if (!password || password.length < 8) {
+      setServerError("Password must be at least 8 characters.");
       return;
     }
 
     setIsSubmitting(true);
     try {
-      const res = await loginWithPassword(trimmedEmail, password);
-      if (res.success) {
-        // Direct navigation to Dashboard / Operations Home or Org/Event Select
+      const res = await signUp(trimmedName, trimmedEmail, password);
+      if (res.needsEmailConfirmation) {
+        setSubmittedEmail(trimmedEmail);
+        setNeedsEmailConfirmation(true);
+      } else if (res.success) {
         navigation?.navigate("OrgSelection");
       } else {
-        setServerError(res.error || "We couldn't sign you in. Check your credentials and try again.");
+        setServerError(res.error || "Registration failed. Please try again.");
       }
     } catch {
-      setServerError("We couldn't sign you in. Check your credentials and try again.");
+      setServerError("Registration failed. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
   }
 
-  async function handleGoogleLogin() {
+  async function handleGoogleSignup() {
     setServerError("");
     setGoogleLoading(true);
     try {
       Alert.alert(
         "Google Workspace",
-        "Sign in with your Google account (e.g. ops@urpass.space)",
+        "Sign up with your Google account",
         [
           { text: "Cancel", style: "cancel", onPress: () => setGoogleLoading(false) },
           {
             text: "Continue",
             onPress: async () => {
-              const demoEmail = "ops.lead@urpass.space";
+              const demoEmail = "organizer.lead@urpass.space";
               const ok = await loginWithOtp(demoEmail);
               setGoogleLoading(false);
               if (ok) {
@@ -101,7 +112,7 @@ export function LoginScreen({ navigation }: LoginScreenProps) {
     setServerError("");
     const trimmedEmail = email.trim();
     if (!trimmedEmail || !trimmedEmail.includes("@")) {
-      setServerError("Enter your corporate or school email address.");
+      setServerError("Enter your corporate or school email.");
       return;
     }
 
@@ -109,11 +120,11 @@ export function LoginScreen({ navigation }: LoginScreenProps) {
     setTimeout(() => {
       setSsoLoading(false);
       Alert.alert(
-        "Enterprise SSO",
-        `Routing @${trimmedEmail.split("@")[1]} to corporate SAML 2.0 / OIDC Identity Provider.`,
+        "Enterprise SSO Registration",
+        `Routing @${trimmedEmail.split("@")[1]} to corporate SAML 2.0 / OIDC Identity Provider for auto-provisioning.`,
         [
           {
-            text: "Authenticate",
+            text: "Continue to IdP",
             onPress: async () => {
               await loginWithOtp(trimmedEmail);
               navigation?.navigate("OrgSelection");
@@ -124,10 +135,47 @@ export function LoginScreen({ navigation }: LoginScreenProps) {
     }, 600);
   }
 
-  function handleForgotPassword() {
-    Alert.alert(
-      "Reset Password",
-      "To reset your password, visit https://urpass.space/forgot-password or check your registered email for a recovery link."
+  // Email Confirmation State Screen
+  if (needsEmailConfirmation) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="dark-content" backgroundColor="#FAF8FC" />
+        <View style={styles.confirmContainer}>
+          <View style={styles.card}>
+            <View style={styles.confirmIconBadge}>
+              <Text style={styles.confirmEmoji}>✉️</Text>
+            </View>
+
+            <Text style={styles.confirmTitle}>Check your email</Text>
+            <Text style={styles.confirmSubtitle}>
+              We sent a verification link to{" "}
+              <Text style={styles.confirmEmailHighlight}>{submittedEmail}</Text>. Click the link in the
+              email to activate your account.
+            </Text>
+
+            <View style={styles.confirmHelpBox}>
+              <Text style={styles.confirmHelpHeader}>Didn't see the email?</Text>
+              <Text style={styles.confirmHelpItem}>• Check your spam or promotions folder</Text>
+              <Text style={styles.confirmHelpItem}>• Make sure {submittedEmail} was typed correctly</Text>
+            </View>
+
+            <TouchableOpacity
+              style={styles.submitButton}
+              onPress={() => navigation?.navigate("Login")}
+              activeOpacity={0.88}
+            >
+              <Text style={styles.submitButtonText}>Go to Sign In</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.backToStandardBtn}
+              onPress={() => setNeedsEmailConfirmation(false)}
+            >
+              <Text style={styles.backToStandardText}>Use a different email address</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </SafeAreaView>
     );
   }
 
@@ -147,7 +195,7 @@ export function LoginScreen({ navigation }: LoginScreenProps) {
           {/* Top row: Back link + URPASS Wordmark */}
           <View style={styles.topRow}>
             <TouchableOpacity
-              onPress={() => navigation?.goBack?.() || navigation?.navigate("Welcome")}
+              onPress={() => navigation?.goBack?.() || navigation?.navigate("Login")}
               style={styles.backButton}
               hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
             >
@@ -164,17 +212,17 @@ export function LoginScreen({ navigation }: LoginScreenProps) {
             <View style={styles.headerRightSpacer} />
           </View>
 
-          {/* Main Card — 100% Identical to https://urpass.space/login */}
+          {/* Main Card — 100% Identical to https://urpass.space/signup */}
           <View style={styles.card}>
             {/* Header section */}
             <View style={styles.cardHeader}>
               <Text style={styles.cardTitle}>
-                {authMode === "sso" ? "Enterprise SSO" : "Welcome back"}
+                {authMode === "sso" ? "Enterprise SSO" : "Create your account"}
               </Text>
               <Text style={styles.cardSubtitle}>
                 {authMode === "sso"
-                  ? "Sign in using your organization's SAML 2.0 or OIDC Identity Provider"
-                  : "Sign in to your organizer account"}
+                  ? "Join your organization via SAML 2.0 or OIDC Single Sign-On"
+                  : "Start on the free plan — no credit card required"}
               </Text>
             </View>
 
@@ -183,7 +231,7 @@ export function LoginScreen({ navigation }: LoginScreenProps) {
                 {/* Google OAuth Button */}
                 <TouchableOpacity
                   style={styles.googleButton}
-                  onPress={handleGoogleLogin}
+                  onPress={handleGoogleSignup}
                   disabled={googleLoading || isSubmitting}
                   activeOpacity={0.85}
                 >
@@ -213,8 +261,27 @@ export function LoginScreen({ navigation }: LoginScreenProps) {
                 {/* Divider */}
                 <View style={styles.dividerRow}>
                   <View style={styles.dividerLine} />
-                  <Text style={styles.dividerText}>or email password</Text>
+                  <Text style={styles.dividerText}>or create with email</Text>
                   <View style={styles.dividerLine} />
+                </View>
+
+                {/* Full Name Field */}
+                <View style={styles.fieldGroup}>
+                  <Text style={styles.fieldLabel}>FULL NAME</Text>
+                  <View style={styles.inputWrapper}>
+                    <Text style={styles.inputLeftIcon}>👤</Text>
+                    <TextInput
+                      style={styles.textInput}
+                      placeholder="Srinithin S"
+                      placeholderTextColor="#94A3B8"
+                      value={fullName}
+                      onChangeText={(t) => {
+                        setFullName(t);
+                        setServerError("");
+                      }}
+                      autoCapitalize="words"
+                    />
+                  </View>
                 </View>
 
                 {/* Email Field */}
@@ -240,12 +307,7 @@ export function LoginScreen({ navigation }: LoginScreenProps) {
 
                 {/* Password Field */}
                 <View style={styles.fieldGroup}>
-                  <View style={styles.passwordLabelRow}>
-                    <Text style={styles.fieldLabel}>PASSWORD</Text>
-                    <TouchableOpacity onPress={handleForgotPassword}>
-                      <Text style={styles.forgotPasswordLink}>Forgot password?</Text>
-                    </TouchableOpacity>
-                  </View>
+                  <Text style={styles.fieldLabel}>PASSWORD</Text>
                   <View style={styles.inputWrapper}>
                     <Text style={styles.inputLeftIcon}>🔒</Text>
                     <TextInput
@@ -279,25 +341,30 @@ export function LoginScreen({ navigation }: LoginScreenProps) {
                   </View>
                 )}
 
-                {/* Sign in Button */}
+                {/* Create account Button */}
                 <TouchableOpacity
                   style={[styles.submitButton, isSubmitting && styles.submitButtonDisabled]}
-                  onPress={handlePasswordSubmit}
+                  onPress={handleSignupSubmit}
                   disabled={isSubmitting || googleLoading}
                   activeOpacity={0.88}
                 >
                   {isSubmitting ? (
                     <ActivityIndicator size="small" color="#FFFFFF" />
                   ) : (
-                    <Text style={styles.submitButtonText}>Sign in</Text>
+                    <Text style={styles.submitButtonText}>Create account</Text>
                   )}
                 </TouchableOpacity>
 
-                {/* Bottom Signup Switch */}
+                {/* Terms Notice */}
+                <Text style={styles.termsText}>
+                  By continuing, you agree to our Terms of Service and Privacy Policy.
+                </Text>
+
+                {/* Bottom Login Switch */}
                 <View style={styles.bottomSwitchRow}>
-                  <Text style={styles.bottomSwitchText}>Don't have an account? </Text>
-                  <TouchableOpacity onPress={() => navigation?.navigate("Signup")}>
-                    <Text style={styles.bottomSwitchLink}>Create one</Text>
+                  <Text style={styles.bottomSwitchText}>Already have an account? </Text>
+                  <TouchableOpacity onPress={() => navigation?.navigate("Login")}>
+                    <Text style={styles.bottomSwitchLink}>Sign in</Text>
                   </TouchableOpacity>
                 </View>
               </>
@@ -309,7 +376,7 @@ export function LoginScreen({ navigation }: LoginScreenProps) {
                     <Text style={styles.ssoShieldIcon}>🛡️</Text>
                   </View>
                   <Text style={styles.ssoInfoText}>
-                    Enter your work or university email to be securely routed to your organization's identity provider.
+                    Enter your corporate or school email to join via SAML 2.0 / OIDC Single Sign-On.
                   </Text>
                 </View>
 
@@ -360,7 +427,7 @@ export function LoginScreen({ navigation }: LoginScreenProps) {
                     setAuthMode("standard");
                   }}
                 >
-                  <Text style={styles.backToStandardText}>← Back to standard login</Text>
+                  <Text style={styles.backToStandardText}>← Back to standard signup</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -371,13 +438,16 @@ export function LoginScreen({ navigation }: LoginScreenProps) {
   );
 }
 
-// Export as SignInScreen as well for backwards compatibility
-export const SignInScreen = LoginScreen;
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#FAF8FC",
+  },
+  confirmContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 20,
   },
   keyboardView: {
     flex: 1,
@@ -546,17 +616,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0.8,
     marginBottom: 6,
   },
-  passwordLabelRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 6,
-  },
-  forgotPasswordLink: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: "#6D28D9",
-  },
   inputWrapper: {
     position: "relative",
     justifyContent: "center",
@@ -636,13 +695,20 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
   },
+  termsText: {
+    fontSize: 11,
+    color: "#94A3B8",
+    textAlign: "center",
+    marginTop: 12,
+    lineHeight: 16,
+  },
 
   /* Bottom Switch */
   bottomSwitchRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 20,
+    marginTop: 18,
   },
   bottomSwitchText: {
     fontSize: 13,
@@ -698,5 +764,59 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "500",
     color: "#64748B",
+  },
+
+  /* Confirm email */
+  confirmIconBadge: {
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+    backgroundColor: "#FAF5FF",
+    borderWidth: 1,
+    borderColor: "#E9D5FF",
+    alignItems: "center",
+    justifyContent: "center",
+    alignSelf: "center",
+    marginBottom: 16,
+  },
+  confirmEmoji: {
+    fontSize: 26,
+  },
+  confirmTitle: {
+    fontSize: 22,
+    fontWeight: "700",
+    color: "#0F172A",
+    textAlign: "center",
+    marginBottom: 8,
+  },
+  confirmSubtitle: {
+    fontSize: 13,
+    color: "#475569",
+    textAlign: "center",
+    lineHeight: 18,
+    marginBottom: 18,
+  },
+  confirmEmailHighlight: {
+    fontWeight: "700",
+    color: "#0F172A",
+  },
+  confirmHelpBox: {
+    backgroundColor: "#F8FAFC",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 20,
+  },
+  confirmHelpHeader: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#334155",
+    marginBottom: 6,
+  },
+  confirmHelpItem: {
+    fontSize: 12,
+    color: "#64748B",
+    lineHeight: 18,
   },
 });

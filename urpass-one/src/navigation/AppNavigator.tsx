@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView } from "react-native";
 import { COLORS } from "../constants/colors";
 import { useAuth } from "../context/AuthContext";
@@ -8,6 +8,7 @@ import { useEvent } from "../context/EventContext";
 import { SplashScreen } from "../screens/splash/SplashScreen";
 import { WelcomeScreen } from "../screens/auth/WelcomeScreen";
 import { SignInScreen } from "../screens/auth/SignInScreen";
+import { SignupScreen } from "../screens/auth/SignupScreen";
 import { TwoStepVerifyScreen } from "../screens/auth/TwoStepVerifyScreen";
 import { OrgSelectionScreen } from "../screens/auth/OrgSelectionScreen";
 import { EventSelectionScreen } from "../screens/auth/EventSelectionScreen";
@@ -28,6 +29,7 @@ export type ScreenName =
   | "Splash"
   | "Welcome"
   | "SignIn"
+  | "Signup"
   | "TwoStepVerify"
   | "OrgSelection"
   | "EventSelection"
@@ -44,21 +46,52 @@ export type ScreenName =
   | "GateStaffManagement"
   | "ScanAuditLog";
 
+const AUTH_FLOW_SCREENS: ScreenName[] = [
+  "Splash",
+  "Welcome",
+  "SignIn",
+  "Signup",
+  "TwoStepVerify",
+  "OrgSelection",
+  "EventSelection",
+  "Login",
+  "OrgEventSelect",
+];
+
+function getSignedInScreen(selectedOrg: unknown, selectedEvent: unknown): ScreenName {
+  if (selectedEvent) return "OperationsHome";
+  if (selectedOrg) return "EventSelection";
+  return "OrgSelection";
+}
+
 export function AppNavigator() {
   const { authToken, isLoading } = useAuth();
   const { selectedOrg, selectedEvent } = useEvent();
 
   const [currentScreen, setCurrentScreen] = useState<ScreenName>(
-    authToken
-      ? selectedEvent
-        ? "OperationsHome"
-        : selectedOrg
-        ? "EventSelection"
-        : "OrgSelection"
-      : "Welcome"
+    authToken ? getSignedInScreen(selectedOrg, selectedEvent) : "SignIn"
   );
   const [screenParams, setScreenParams] = useState<any>({});
   const [navHistory, setNavHistory] = useState<ScreenName[]>([]);
+
+  useEffect(() => {
+    if (isLoading) return;
+
+    if (!authToken) {
+      if (!AUTH_FLOW_SCREENS.includes(currentScreen) || currentScreen === "Welcome") {
+        setCurrentScreen("SignIn");
+        setScreenParams({});
+        setNavHistory([]);
+      }
+      return;
+    }
+
+    if (AUTH_FLOW_SCREENS.includes(currentScreen)) {
+      setCurrentScreen(getSignedInScreen(selectedOrg, selectedEvent));
+      setScreenParams({});
+      setNavHistory([]);
+    }
+  }, [authToken, currentScreen, isLoading, selectedEvent, selectedOrg]);
 
   const navigation = {
     navigate: (screen: ScreenName, params?: any) => {
@@ -76,7 +109,7 @@ export function AppNavigator() {
         setNavHistory((hist) => hist.slice(0, hist.length - 1));
         setCurrentScreen(prev);
       } else {
-        setCurrentScreen("OperationsHome");
+        setCurrentScreen(authToken ? "OperationsHome" : "SignIn");
       }
     },
   };
@@ -93,6 +126,8 @@ export function AppNavigator() {
         return <WelcomeScreen navigation={navigation} />;
       case "SignIn":
         return <SignInScreen navigation={navigation} />;
+      case "Signup":
+        return <SignupScreen navigation={navigation} />;
       case "TwoStepVerify":
         return <TwoStepVerifyScreen navigation={navigation} route={{ params: screenParams }} />;
       case "OrgSelection":
@@ -128,16 +163,7 @@ export function AppNavigator() {
     }
   };
 
-  const isAuthOrSelectionScreen = [
-    "Splash",
-    "Welcome",
-    "SignIn",
-    "TwoStepVerify",
-    "OrgSelection",
-    "EventSelection",
-    "Login",
-    "OrgEventSelect",
-  ].includes(currentScreen);
+  const isAuthOrSelectionScreen = AUTH_FLOW_SCREENS.includes(currentScreen);
 
   const showBottomNav = !isAuthOrSelectionScreen && currentScreen !== "QRScanner";
 

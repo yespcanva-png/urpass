@@ -13,9 +13,17 @@ import {
   Platform,
   Alert,
 } from "react-native";
+import {
+  AlertTriangle,
+  ArrowLeft,
+  Eye,
+  EyeOff,
+  KeyRound,
+  LockKeyhole,
+  Mail,
+} from "lucide-react-native";
 import { COLORS } from "../../constants/colors";
 import { useAuth } from "../../context/AuthContext";
-import { Button } from "../../components/common/Button";
 
 interface SignInScreenProps {
   navigation?: any;
@@ -50,8 +58,7 @@ export function SignInScreen({ navigation }: SignInScreenProps) {
       const res = await loginWithPassword(trimmedEmail, password);
 
       if (res.success) {
-        // Navigate to Step 3: Two-Step Verification
-        navigation?.navigate("TwoStepVerify", { email: trimmedEmail });
+        navigation?.navigate("OperationsHome");
       } else {
         // Formulate clear enterprise error
         if (res.error?.toLowerCase().includes("network") || res.error?.toLowerCase().includes("fetch")) {
@@ -69,57 +76,27 @@ export function SignInScreen({ navigation }: SignInScreenProps) {
     }
   }
 
-  async function handleGoogleSignIn() {
+  async function handleEmailCodeSignIn() {
     setErrorMsg("");
-    Alert.alert(
-      "Google Workspace Authentication",
-      "Sign in with your enterprise Google Workspace account.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Continue",
-          onPress: () => {
-            const demoEmail = "ops.manager@enterprise.com";
-            navigation?.navigate("TwoStepVerify", { email: demoEmail });
-          },
-        },
-      ]
-    );
-  }
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail || !trimmedEmail.includes("@")) {
+      setErrorMsg("Enter your work email first, then request a one-time code.");
+      return;
+    }
 
-  function handleSsoSignIn() {
-    setErrorMsg("");
-    Alert.prompt
-      ? Alert.prompt(
-          "Enterprise SSO",
-          "Enter your corporate email domain (e.g. @company.com):",
-          [
-            { text: "Cancel", style: "cancel" },
-            {
-              text: "Continue with SSO",
-              onPress: (corpEmail) => {
-                if (corpEmail && corpEmail.includes("@")) {
-                  navigation?.navigate("TwoStepVerify", { email: corpEmail });
-                } else {
-                  setErrorMsg("Please enter a valid corporate email.");
-                }
-              },
-            },
-          ]
-        )
-      : Alert.alert(
-          "Enterprise Single Sign-On (SAML / OIDC)",
-          "Redirecting to identity provider for corporate authentication.",
-          [
-            { text: "Cancel", style: "cancel" },
-            {
-              text: "Proceed",
-              onPress: () => {
-                navigation?.navigate("TwoStepVerify", { email: "sso.lead@techcorp.io" });
-              },
-            },
-          ]
-        );
+    setIsSubmitting(true);
+    try {
+      const res = await loginWithOtp(trimmedEmail);
+      if (res.success) {
+        navigation?.navigate("TwoStepVerify", { email: trimmedEmail });
+      } else {
+        setErrorMsg(res.error || "Could not send a verification code. Try again.");
+      }
+    } catch {
+      setErrorMsg("Could not send a verification code. Try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   function handleContactAdmin() {
@@ -155,7 +132,8 @@ export function SignInScreen({ navigation }: SignInScreenProps) {
               style={styles.backButton}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
-              <Text style={styles.backButtonText}>← Back</Text>
+              <ArrowLeft size={14} color={COLORS.textSecondary} />
+              <Text style={styles.backButtonText}>Back</Text>
             </TouchableOpacity>
 
             <Image
@@ -178,7 +156,7 @@ export function SignInScreen({ navigation }: SignInScreenProps) {
             {/* Error Notification Banner */}
             {errorMsg ? (
               <View style={styles.errorBanner}>
-                <Text style={styles.errorIcon}>⚠️</Text>
+                <AlertTriangle size={16} color={COLORS.red} style={styles.errorIcon} />
                 <Text style={styles.errorText}>{errorMsg}</Text>
               </View>
             ) : null}
@@ -187,7 +165,7 @@ export function SignInScreen({ navigation }: SignInScreenProps) {
             <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>EMAIL ADDRESS</Text>
               <View style={styles.inputWrapper}>
-                <Text style={styles.inputIcon}>✉️</Text>
+                <Mail size={17} color={COLORS.textMuted} style={styles.inputIcon} />
                 <TextInput
                   style={styles.textInput}
                   placeholder="name@organisation.com"
@@ -210,7 +188,7 @@ export function SignInScreen({ navigation }: SignInScreenProps) {
                 </TouchableOpacity>
               </View>
               <View style={styles.inputWrapper}>
-                <Text style={styles.inputIcon}>🔒</Text>
+                <LockKeyhole size={17} color={COLORS.textMuted} style={styles.inputIcon} />
                 <TextInput
                   style={styles.textInput}
                   placeholder="••••••••"
@@ -225,7 +203,11 @@ export function SignInScreen({ navigation }: SignInScreenProps) {
                   style={styles.showHideToggle}
                   hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 >
-                  <Text style={styles.showHideText}>{showPassword ? "Hide" : "Show"}</Text>
+                  {showPassword ? (
+                    <EyeOff size={18} color={COLORS.textSecondary} />
+                  ) : (
+                    <Eye size={18} color={COLORS.textSecondary} />
+                  )}
                 </TouchableOpacity>
               </View>
             </View>
@@ -249,24 +231,15 @@ export function SignInScreen({ navigation }: SignInScreenProps) {
               <View style={styles.dividerLine} />
             </View>
 
-            {/* Secondary CTA: Continue with Google */}
+            {/* Secondary CTA: Email OTP */}
             <TouchableOpacity
               style={styles.secondaryButton}
-              onPress={handleGoogleSignIn}
+              onPress={handleEmailCodeSignIn}
+              disabled={isSubmitting || isLoading}
               activeOpacity={0.85}
             >
-              <Text style={styles.googleIconText}>G</Text>
-              <Text style={styles.secondaryButtonText}>Continue with Google</Text>
-            </TouchableOpacity>
-
-            {/* Enterprise SSO CTA */}
-            <TouchableOpacity
-              style={styles.ssoButton}
-              onPress={handleSsoSignIn}
-              activeOpacity={0.85}
-            >
-              <Text style={styles.ssoIcon}>🏢</Text>
-              <Text style={styles.ssoButtonText}>Continue with SSO</Text>
+              <KeyRound size={17} color={COLORS.brand} />
+              <Text style={styles.secondaryButtonText}>Email me a one-time code</Text>
             </TouchableOpacity>
 
             {/* Bottom Support Text */}
@@ -303,6 +276,9 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   backButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
     paddingVertical: 6,
     paddingHorizontal: 10,
     backgroundColor: COLORS.surfaceAlt,
@@ -357,7 +333,6 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   errorIcon: {
-    fontSize: 14,
     marginTop: 1,
   },
   errorText: {
@@ -398,7 +373,6 @@ const styles = StyleSheet.create({
     height: 48,
   },
   inputIcon: {
-    fontSize: 14,
     marginRight: 8,
   },
   textInput: {
@@ -409,11 +383,8 @@ const styles = StyleSheet.create({
   },
   showHideToggle: {
     paddingHorizontal: 6,
-  },
-  showHideText: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: COLORS.textSecondary,
+    minWidth: 30,
+    alignItems: "flex-end",
   },
   signInButton: {
     height: 50,

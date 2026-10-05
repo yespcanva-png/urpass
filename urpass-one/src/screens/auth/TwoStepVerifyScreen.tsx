@@ -12,6 +12,14 @@ import {
   Platform,
   Alert,
 } from "react-native";
+import {
+  AlertTriangle,
+  ArrowLeft,
+  Check,
+  ShieldCheck,
+  Shield,
+  Ticket,
+} from "lucide-react-native";
 import { COLORS } from "../../constants/colors";
 import { useAuth } from "../../context/AuthContext";
 import { useEvent } from "../../context/EventContext";
@@ -23,7 +31,7 @@ interface TwoStepVerifyScreenProps {
 
 export function TwoStepVerifyScreen({ route, navigation }: TwoStepVerifyScreenProps) {
   const targetEmail = route?.params?.email || "ops@urpass.space";
-  const { verifyOtp, deviceId, isLoading } = useAuth();
+  const { loginWithOtp, verifyOtp, deviceId, isLoading } = useAuth();
   const { organizations, events } = useEvent();
 
   const [otpDigits, setOtpDigits] = useState<string[]>(["", "", "", "", "", ""]);
@@ -118,32 +126,22 @@ export function TwoStepVerifyScreen({ route, navigation }: TwoStepVerifyScreenPr
     }
   }
 
-  function handleResendCode() {
+  async function handleResendCode() {
     if (resendCooldown > 0) return;
-    setResendCooldown(30);
     setErrorMsg("");
-    Alert.alert("Code Sent", `A fresh 6-digit verification code was sent to ${targetEmail}.`);
+    const res = await loginWithOtp(targetEmail);
+    if (res.success) {
+      setResendCooldown(30);
+      Alert.alert("Code sent", `A fresh verification code was sent to ${targetEmail}.`);
+    } else {
+      setErrorMsg(res.error || "Could not send a new verification code.");
+    }
   }
 
   function handleAlternativeMethod() {
     Alert.alert(
       "Alternative Verification",
-      "Choose an alternate verification channel:",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "SMS to Registered Mobile (+91 ••••• ••456)",
-          onPress: () => {
-            Alert.alert("SMS Sent", "Verification code dispatched via SMS.");
-          },
-        },
-        {
-          text: "Hardware Security Token",
-          onPress: () => {
-            Alert.alert("Hardware Token", "Tap physical security key or enter 6-digit TOTP from authenticator app.");
-          },
-        },
-      ]
+      "Use the production email code sent to your account, or contact your organisation administrator if you need another verified sign-in method."
     );
   }
 
@@ -166,12 +164,13 @@ export function TwoStepVerifyScreen({ route, navigation }: TwoStepVerifyScreenPr
               style={styles.backButton}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
-              <Text style={styles.backButtonText}>← Back</Text>
+              <ArrowLeft size={14} color={COLORS.textSecondary} />
+              <Text style={styles.backButtonText}>Back</Text>
             </TouchableOpacity>
 
             <View style={styles.logoBadge}>
               <View style={styles.ticketIconBox}>
-                <Text style={styles.ticketIcon}>🎟️</Text>
+                <Ticket size={15} color={COLORS.brand} />
               </View>
               <Text style={styles.logoWordmark}>URPASS</Text>
             </View>
@@ -182,7 +181,7 @@ export function TwoStepVerifyScreen({ route, navigation }: TwoStepVerifyScreenPr
             {/* Header Group */}
             <View style={styles.headerGroup}>
               <View style={styles.shieldBadge}>
-                <Text style={styles.shieldIcon}>🔒</Text>
+                <ShieldCheck size={13} color={COLORS.brand} />
                 <Text style={styles.shieldText}>2-STEP VERIFICATION</Text>
               </View>
               <Text style={styles.headerTitle}>Verify your identity</Text>
@@ -195,7 +194,7 @@ export function TwoStepVerifyScreen({ route, navigation }: TwoStepVerifyScreenPr
             {/* Error Banner */}
             {errorMsg ? (
               <View style={styles.errorBanner}>
-                <Text style={styles.errorIcon}>⚠️</Text>
+                <AlertTriangle size={16} color={COLORS.red} style={styles.errorIcon} />
                 <Text style={styles.errorText}>{errorMsg}</Text>
               </View>
             ) : null}
@@ -231,7 +230,7 @@ export function TwoStepVerifyScreen({ route, navigation }: TwoStepVerifyScreenPr
               activeOpacity={0.8}
             >
               <View style={[styles.checkbox, enableBiometrics && styles.checkboxActive]}>
-                {enableBiometrics && <Text style={styles.checkmark}>✓</Text>}
+                {enableBiometrics && <Check size={13} color={COLORS.white} />}
               </View>
               <View style={styles.biometricTextBox}>
                 <Text style={styles.biometricTitle}>Remember this device</Text>
@@ -284,7 +283,7 @@ export function TwoStepVerifyScreen({ route, navigation }: TwoStepVerifyScreenPr
 
             {/* Security Guarantee Note */}
             <View style={styles.securityNoteRow}>
-              <Text style={styles.securityNoteIcon}>🛡️</Text>
+              <Shield size={14} color={COLORS.textMuted} />
               <Text style={styles.securityNoteText}>
                 Your account is protected with two-step verification.
               </Text>
@@ -321,6 +320,9 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   backButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
     paddingVertical: 6,
     paddingHorizontal: 10,
     backgroundColor: COLORS.surfaceAlt,
@@ -347,9 +349,6 @@ const styles = StyleSheet.create({
     borderColor: COLORS.brandBorder,
     alignItems: "center",
     justifyContent: "center",
-  },
-  ticketIcon: {
-    fontSize: 13,
   },
   logoWordmark: {
     fontSize: 15,
@@ -384,9 +383,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignSelf: "flex-start",
     marginBottom: 12,
-  },
-  shieldIcon: {
-    fontSize: 11,
   },
   shieldText: {
     fontSize: 9,
@@ -424,7 +420,6 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   errorIcon: {
-    fontSize: 14,
     marginTop: 1,
   },
   errorText: {
@@ -484,11 +479,6 @@ const styles = StyleSheet.create({
   checkboxActive: {
     backgroundColor: COLORS.brand,
     borderColor: COLORS.brand,
-  },
-  checkmark: {
-    color: COLORS.white,
-    fontSize: 12,
-    fontWeight: "900",
   },
   biometricTextBox: {
     flex: 1,
@@ -554,9 +544,6 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: COLORS.surfaceBorderSubtle,
     gap: 6,
-  },
-  securityNoteIcon: {
-    fontSize: 12,
   },
   securityNoteText: {
     fontSize: 11,
