@@ -128,7 +128,7 @@ export function ActivityFeedScreen({ navigation }: { navigation?: any }) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="dark-content" />
       <Header
         title="Live Activity Stream"
         subtitle="Real-time check-in stream & security audit"
@@ -193,7 +193,7 @@ export function ActivityFeedScreen({ navigation }: { navigation?: any }) {
                 <View style={styles.feedFooter}>
                   <Badge label={item.gateName} size="sm" variant="neutral" />
                   <Badge
-                    label={item.type.replace("_", " ")}
+                    label={item.type.replace("_", " ").toUpperCase()}
                     size="sm"
                     variant={
                       item.severity === "success"
@@ -223,21 +223,24 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingHorizontal: 16,
     paddingVertical: 10,
-    backgroundColor: COLORS.surfaceDark,
+    backgroundColor: COLORS.white,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.surfaceBorderSubtle,
+    borderBottomColor: COLORS.surfaceBorder,
   },
   filterBtn: {
     paddingVertical: 6,
     paddingHorizontal: 10,
-    borderRadius: 6,
-    backgroundColor: COLORS.surface,
+    borderRadius: 8,
+    backgroundColor: COLORS.surfaceAlt,
+    borderWidth: 1,
+    borderColor: COLORS.surfaceBorder,
   },
   filterBtnActive: {
     backgroundColor: COLORS.brand,
+    borderColor: COLORS.brand,
   },
   filterBtnText: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: "700",
     color: COLORS.textSecondary,
   },
@@ -263,15 +266,20 @@ const styles = StyleSheet.create({
   verticalLine: {
     width: 2,
     flex: 1,
-    backgroundColor: COLORS.surfaceBorderSubtle,
+    backgroundColor: COLORS.surfaceBorder,
   },
   contentColumn: {
     flex: 1,
     backgroundColor: COLORS.surface,
     borderWidth: 1,
     borderColor: COLORS.surfaceBorder,
-    borderRadius: 12,
-    padding: 12,
+    borderRadius: 14,
+    padding: 14,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 4,
+    elevation: 1,
   },
   feedHeaderRow: {
     flexDirection: "row",

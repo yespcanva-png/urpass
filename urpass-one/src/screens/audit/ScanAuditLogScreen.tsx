@@ -61,7 +61,7 @@ export function ScanAuditLogScreen({ navigation }: { navigation?: any }) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="dark-content" />
       <Header
         title="Scan Audit Trail & Security Log"
         subtitle={`${filteredLogs.length} Scans Recorded`}
@@ -78,7 +78,7 @@ export function ScanAuditLogScreen({ navigation }: { navigation?: any }) {
         <TextInput
           style={styles.searchInput}
           placeholder="Filter by Attendee, Pass Token, Gate, or Staff..."
-          placeholderTextColor={COLORS.textMuted}
+          placeholderTextColor={COLORS.textLightMuted}
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
@@ -160,12 +160,19 @@ export function ScanAuditLogScreen({ navigation }: { navigation?: any }) {
                 </View>
               )}
 
-              {/* Security Telemetry Footer */}
+              {item.rejectionReason && !isOverride && (
+                <View style={styles.rejectionBox}>
+                  <Text style={styles.rejectionText}>
+                    ⛔ Denied: {item.rejectionReason}
+                  </Text>
+                </View>
+              )}
+
+              {/* Forensic Details */}
               <View style={styles.logFooter}>
-                <Text style={styles.telemetryText}>
-                  Staff: {item.userName} • Dev: {item.deviceId}
-                </Text>
-                <Text style={styles.tokenText}>{item.qrPayload}</Text>
+                <Text style={styles.footerField}>Scanner: {item.userName}</Text>
+                <Text style={styles.footerField}>Device: {item.deviceId}</Text>
+                <Text style={styles.footerField}>{item.isOfflineQueued ? "Offline Sync" : "Live"}</Text>
               </View>
             </View>
           );
@@ -181,32 +188,30 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
   },
   exportBtn: {
-    backgroundColor: COLORS.surfaceLight,
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderRadius: 8,
+    backgroundColor: COLORS.surfaceAlt,
     borderWidth: 1,
     borderColor: COLORS.surfaceBorder,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 8,
   },
   exportBtnText: {
-    color: COLORS.textPrimary,
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "700",
+    color: COLORS.textPrimary,
   },
   searchBar: {
     paddingHorizontal: 16,
-    paddingVertical: 10,
-    backgroundColor: COLORS.surfaceDark,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.surfaceBorderSubtle,
+    paddingTop: 12,
+    paddingBottom: 6,
   },
   searchInput: {
-    backgroundColor: COLORS.surfaceLight,
+    backgroundColor: COLORS.surfaceAlt,
     borderWidth: 1,
     borderColor: COLORS.surfaceBorder,
-    borderRadius: 10,
+    borderRadius: 12,
     paddingHorizontal: 14,
-    paddingVertical: 8,
+    paddingVertical: 10,
     color: COLORS.textPrimary,
     fontSize: 13,
   },
@@ -215,14 +220,12 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingHorizontal: 16,
     paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.surfaceBorderSubtle,
   },
   filterPill: {
     flex: 1,
     paddingVertical: 6,
-    borderRadius: 6,
-    backgroundColor: COLORS.surface,
+    borderRadius: 8,
+    backgroundColor: COLORS.surfaceAlt,
     borderWidth: 1,
     borderColor: COLORS.surfaceBorder,
     alignItems: "center",
@@ -233,7 +236,7 @@ const styles = StyleSheet.create({
   },
   filterPillText: {
     fontSize: 10,
-    fontWeight: "800",
+    fontWeight: "700",
     color: COLORS.textSecondary,
   },
   filterPillTextActive: {
@@ -263,13 +266,19 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surface,
     borderWidth: 1,
     borderColor: COLORS.surfaceBorder,
-    borderRadius: 12,
-    padding: 14,
+    borderRadius: 16,
+    padding: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 4,
+    elevation: 1,
   },
   logHeader: {
     flexDirection: "row",
-    alignItems: "flex-start",
     justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 8,
   },
   logNameGroup: {
     flex: 1,
@@ -289,31 +298,41 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.amberLight,
     borderColor: COLORS.amberBorder,
     borderWidth: 1,
-    borderRadius: 6,
+    borderRadius: 8,
     padding: 8,
-    marginTop: 8,
+    marginBottom: 8,
   },
   overrideText: {
-    color: COLORS.amber,
     fontSize: 11,
+    color: COLORS.amber,
+    fontWeight: "600",
+  },
+  rejectionBox: {
+    backgroundColor: COLORS.redLight,
+    borderColor: COLORS.redBorder,
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 8,
+    marginBottom: 8,
+  },
+  rejectionText: {
+    fontSize: 11,
+    color: COLORS.red,
     fontWeight: "600",
   },
   logFooter: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: 10,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.surfaceBorderSubtle,
+    backgroundColor: COLORS.surfaceAlt,
+    borderWidth: 1,
+    borderColor: COLORS.surfaceBorder,
+    borderRadius: 8,
+    padding: 8,
+    marginTop: 4,
   },
-  telemetryText: {
+  footerField: {
     fontSize: 10,
-    color: COLORS.textMuted,
-  },
-  tokenText: {
-    fontSize: 9,
-    fontFamily: "monospace",
+    fontWeight: "600",
     color: COLORS.textMuted,
   },
 });

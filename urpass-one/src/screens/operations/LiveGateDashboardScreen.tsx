@@ -63,7 +63,7 @@ export function LiveGateDashboardScreen({ navigation }: LiveGateDashboardScreenP
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="dark-content" />
       <Header
         title="Live Gate Dashboard"
         subtitle={`${selectedEvent?.name || "Event"} Telemetry`}
@@ -156,7 +156,7 @@ export function LiveGateDashboardScreen({ navigation }: LiveGateDashboardScreenP
                     <Text style={styles.badgeTypesLabel}>Allowed Passes:</Text>
                     <View style={styles.badgePillsContainer}>
                       {gate.allowedBadgeTypes.map((type) => (
-                        <Badge key={type} label={type} size="sm" variant="brand" />
+                        <Badge key={type} label={type.toUpperCase()} size="sm" variant="brand" />
                       ))}
                     </View>
                   </View>
@@ -217,31 +217,46 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   overviewCard: {
-    padding: 16,
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.surfaceBorder,
+    borderRadius: 18,
+    padding: 18,
     marginBottom: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 4,
+    elevation: 1,
   },
   overviewLabel: {
     fontSize: 10,
     fontWeight: "800",
     color: COLORS.textMuted,
     letterSpacing: 0.8,
-    marginBottom: 10,
+    marginBottom: 12,
   },
   overviewStatsRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    backgroundColor: COLORS.surfaceAlt,
+    borderWidth: 1,
+    borderColor: COLORS.surfaceBorder,
+    borderRadius: 12,
+    padding: 12,
   },
   overviewStat: {
     flex: 1,
+    alignItems: "center",
   },
   statNumber: {
-    fontSize: 22,
+    fontSize: 18,
     fontWeight: "900",
     color: COLORS.textPrimary,
   },
   statLabel: {
-    fontSize: 11,
-    color: COLORS.textSecondary,
+    fontSize: 10,
+    color: COLORS.textMuted,
+    fontWeight: "600",
     marginTop: 2,
   },
   filterRow: {
@@ -250,12 +265,13 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   filterPill: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    backgroundColor: COLORS.surface,
+    flex: 1,
+    paddingVertical: 8,
+    borderRadius: 10,
+    backgroundColor: COLORS.surfaceAlt,
     borderWidth: 1,
     borderColor: COLORS.surfaceBorder,
+    alignItems: "center",
   },
   filterPillActive: {
     backgroundColor: COLORS.brand,
@@ -273,16 +289,25 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   gateCard: {
-    padding: 16,
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.surfaceBorder,
+    borderRadius: 18,
+    padding: 18,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 4,
+    elevation: 1,
   },
   gateHeader: {
     flexDirection: "row",
-    alignItems: "flex-start",
     justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 12,
   },
   gateTitleGroup: {
     flex: 1,
-    paddingRight: 8,
   },
   gateName: {
     fontSize: 16,
@@ -296,76 +321,80 @@ const styles = StyleSheet.create({
   },
   metricsGrid: {
     flexDirection: "row",
-    backgroundColor: COLORS.surfaceDark,
-    borderRadius: 10,
+    backgroundColor: COLORS.surfaceAlt,
+    borderWidth: 1,
+    borderColor: COLORS.surfaceBorder,
+    borderRadius: 12,
     padding: 12,
-    marginTop: 12,
+    marginBottom: 14,
   },
   metricCell: {
     flex: 1,
+    alignItems: "center",
   },
   metricVal: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: "800",
     color: COLORS.textPrimary,
   },
   metricLbl: {
-    fontSize: 10,
-    color: COLORS.textMuted,
+    fontSize: 9,
     fontWeight: "600",
+    color: COLORS.textMuted,
     marginTop: 2,
   },
   badgeTypesRow: {
-    marginTop: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginBottom: 14,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.surfaceBorderSubtle,
   },
   badgeTypesLabel: {
     fontSize: 10,
-    fontWeight: "700",
     color: COLORS.textMuted,
-    textTransform: "uppercase",
-    marginBottom: 6,
+    fontWeight: "700",
   },
   badgePillsContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 6,
+    gap: 4,
+    flex: 1,
   },
   controlsBar: {
     flexDirection: "row",
-    alignItems: "center",
     gap: 8,
-    marginTop: 14,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.surfaceBorderSubtle,
+    alignItems: "center",
   },
   controlBtn: {
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 8,
   },
-  btnDanger: {
-    backgroundColor: COLORS.redLight,
-    borderWidth: 1,
-    borderColor: COLORS.redBorder,
-  },
   btnSuccess: {
     backgroundColor: COLORS.greenLight,
     borderWidth: 1,
     borderColor: COLORS.greenBorder,
   },
+  btnDanger: {
+    backgroundColor: COLORS.redLight,
+    borderWidth: 1,
+    borderColor: COLORS.redBorder,
+  },
   controlBtnText: {
     fontSize: 11,
-    fontWeight: "700",
+    fontWeight: "800",
     color: COLORS.textPrimary,
   },
   controlBtnSecondary: {
+    backgroundColor: COLORS.surfaceAlt,
+    borderWidth: 1,
+    borderColor: COLORS.surfaceBorder,
     paddingVertical: 8,
     paddingHorizontal: 10,
     borderRadius: 8,
-    backgroundColor: COLORS.surfaceLight,
-    borderWidth: 1,
-    borderColor: COLORS.surfaceBorder,
   },
   controlBtnSecText: {
     fontSize: 11,
@@ -374,25 +403,27 @@ const styles = StyleSheet.create({
   },
   assignDeviceBtn: {
     marginLeft: "auto",
+    backgroundColor: COLORS.brandLight,
+    borderWidth: 1,
+    borderColor: COLORS.brandBorder,
     paddingVertical: 8,
-    paddingHorizontal: 10,
+    paddingHorizontal: 12,
     borderRadius: 8,
-    backgroundColor: COLORS.white,
   },
   assignDeviceText: {
     fontSize: 11,
-    fontWeight: "800",
-    color: COLORS.textDark,
+    fontWeight: "700",
+    color: COLORS.brand,
   },
   assignedIndicator: {
     marginLeft: "auto",
+    backgroundColor: COLORS.greenLight,
     paddingVertical: 6,
     paddingHorizontal: 10,
-    borderRadius: 6,
-    backgroundColor: COLORS.greenLight,
+    borderRadius: 8,
   },
   assignedIndicatorText: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: "800",
     color: COLORS.green,
   },

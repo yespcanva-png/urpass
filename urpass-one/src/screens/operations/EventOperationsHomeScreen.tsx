@@ -39,7 +39,7 @@ export function EventOperationsHomeScreen({ navigation }: EventOperationsHomeScr
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="dark-content" />
       <Header
         onEventPress={() => navigation?.navigate("OrgEventSelect")}
         rightAction={
@@ -161,7 +161,7 @@ export function EventOperationsHomeScreen({ navigation }: EventOperationsHomeScr
               label="Approved"
               value={approvedCount.toLocaleString()}
               subtitle={`${selectedEvent?.totalRegistrations || 0} registered`}
-              accentColor={COLORS.white}
+              accentColor={COLORS.textPrimary}
             />
             <MetricCard
               label="Sync Queue"
@@ -352,7 +352,13 @@ const styles = StyleSheet.create({
     padding: 18,
     backgroundColor: COLORS.surface,
     borderWidth: 1,
-    borderColor: COLORS.surfaceBorderSubtle,
+    borderColor: COLORS.surfaceBorder,
+    borderRadius: 18,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2,
   },
   capacityHeader: {
     flexDirection: "row",
@@ -414,7 +420,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     shadowColor: COLORS.brand,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.25,
     shadowRadius: 8,
     elevation: 6,
   },
@@ -462,9 +468,14 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     backgroundColor: COLORS.surface,
     borderWidth: 1,
-    borderColor: COLORS.surfaceBorderSubtle,
+    borderColor: COLORS.surfaceBorder,
     borderRadius: 14,
     padding: 14,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 4,
+    elevation: 1,
   },
   actionIcon: {
     fontSize: 20,
@@ -504,8 +515,13 @@ const styles = StyleSheet.create({
     padding: 14,
     backgroundColor: COLORS.surface,
     borderWidth: 1,
-    borderColor: COLORS.surfaceBorderSubtle,
+    borderColor: COLORS.surfaceBorder,
     borderRadius: 14,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 4,
+    elevation: 1,
   },
   gateCardTop: {
     flexDirection: "row",
@@ -527,7 +543,9 @@ const styles = StyleSheet.create({
   },
   gateCardMeta: {
     flexDirection: "row",
-    backgroundColor: COLORS.surfaceDark,
+    backgroundColor: COLORS.surfaceAlt,
+    borderWidth: 1,
+    borderColor: COLORS.surfaceBorder,
     borderRadius: 8,
     padding: 10,
     marginTop: 10,

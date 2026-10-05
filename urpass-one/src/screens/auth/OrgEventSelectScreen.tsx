@@ -47,7 +47,7 @@ export function OrgEventSelectScreen({ navigation }: OrgEventSelectScreenProps) 
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="dark-content" />
       <OfflineBanner />
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -126,7 +126,7 @@ export function OrgEventSelectScreen({ navigation }: OrgEventSelectScreenProps) 
                   <View style={styles.eventTop}>
                     <Text style={styles.eventName}>{evt.name}</Text>
                     <Badge
-                      label={evt.status}
+                      label={evt.status.toUpperCase()}
                       variant={evt.status === "active" ? "green" : "neutral"}
                       size="sm"
                     />
@@ -162,8 +162,8 @@ export function OrgEventSelectScreen({ navigation }: OrgEventSelectScreenProps) 
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionNumber}>03</Text>
               <View>
-                <Text style={styles.sectionTitle}>Assigned Gate / Scanner Post</Text>
-                <Text style={styles.sectionSubtitle}>Select the entry point for this device</Text>
+                <Text style={styles.sectionTitle}>Station Gate Assignment</Text>
+                <Text style={styles.sectionSubtitle}>Assign this scanner device to an entry point</Text>
               </View>
             </View>
 
@@ -177,18 +177,18 @@ export function OrgEventSelectScreen({ navigation }: OrgEventSelectScreenProps) 
                     onPress={() => assignGate(gate.id)}
                     activeOpacity={0.8}
                   >
-                    <View style={styles.gateRow}>
-                      <View>
-                        <Text style={styles.gateName}>{gate.name}</Text>
-                        <Text style={styles.gateMode}>
-                          Mode: {gate.mode.toUpperCase()} • {gate.activeScannersCount} Scanners Active
-                        </Text>
-                      </View>
+                    <View style={styles.gateTop}>
+                      <Text style={styles.gateName}>{gate.name}</Text>
                       <Badge
-                        label={isSelected ? "Assigned" : gate.status}
-                        variant={isSelected ? "green" : "neutral"}
+                        label={gate.status.toUpperCase()}
+                        variant={gate.status === "open" ? "green" : "red"}
                         size="sm"
                       />
+                    </View>
+                    <Text style={styles.gateZone}>📍 Zone: {gate.zoneName || "Main Entrance"}</Text>
+                    <View style={styles.gateMetaRow}>
+                      <Text style={styles.gateMeta}>Mode: {gate.mode.toUpperCase()}</Text>
+                      <Text style={styles.gateMeta}>Live Scans: {gate.scansCount}</Text>
                     </View>
                   </TouchableOpacity>
                 );
@@ -197,15 +197,15 @@ export function OrgEventSelectScreen({ navigation }: OrgEventSelectScreenProps) 
           </View>
         )}
 
-        {/* Enter Workspace CTA */}
+        {/* Launch Gate Console Button */}
         <Button
-          title={selectedEvent ? `Enter ${selectedEvent.name}` : "Select an Event"}
+          title="Launch Event Operations 🚀"
           onPress={handleConfirmAndEnter}
           disabled={!selectedEvent}
           loading={isLoading}
           variant="brand"
           size="lg"
-          style={styles.enterBtn}
+          style={styles.confirmBtn}
         />
       </ScrollView>
     </SafeAreaView>
@@ -218,73 +218,82 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
   },
   scrollContent: {
-    padding: 16,
+    padding: 18,
     paddingBottom: 40,
   },
   topSessionHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: COLORS.surface,
+    backgroundColor: COLORS.surfaceAlt,
     borderWidth: 1,
-    borderColor: COLORS.surfaceBorderSubtle,
+    borderColor: COLORS.surfaceBorder,
     borderRadius: 16,
     padding: 16,
-    marginBottom: 20,
+    marginBottom: 18,
   },
   welcomeText: {
-    fontSize: 10,
-    color: COLORS.textMuted,
-    textTransform: "uppercase",
+    fontSize: 9,
     fontWeight: "800",
-    letterSpacing: 0.6,
+    color: COLORS.textMuted,
+    letterSpacing: 1,
   },
   userName: {
     fontSize: 16,
-    fontWeight: "900",
+    fontWeight: "800",
     color: COLORS.textPrimary,
     marginTop: 2,
   },
   userRoleText: {
     fontSize: 11,
-    fontWeight: "800",
+    fontWeight: "700",
     color: COLORS.brand,
     marginTop: 2,
-    letterSpacing: 0.5,
   },
   logoutBtn: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
     backgroundColor: COLORS.surfaceLight,
     borderWidth: 1,
     borderColor: COLORS.surfaceBorder,
     borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
   },
   logoutBtnText: {
+    fontSize: 11,
+    fontWeight: "700",
     color: COLORS.textSecondary,
-    fontSize: 12,
-    fontWeight: "600",
   },
   sectionCard: {
-    marginBottom: 20,
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.surfaceBorder,
+    borderRadius: 18,
+    padding: 18,
+    marginBottom: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.03,
+    shadowRadius: 6,
+    elevation: 2,
   },
   sectionHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
-    marginBottom: 10,
+    gap: 12,
+    marginBottom: 14,
   },
   sectionNumber: {
-    fontSize: 12,
+    fontSize: 18,
     fontWeight: "900",
     color: COLORS.brand,
     backgroundColor: COLORS.brandLight,
-    paddingHorizontal: 8,
+    paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 6,
+    borderRadius: 8,
+    overflow: "hidden",
   },
   sectionTitle: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: "800",
     color: COLORS.textPrimary,
   },
@@ -294,18 +303,18 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
   list: {
-    gap: 8,
+    gap: 10,
   },
   orgCard: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: COLORS.surfaceAlt,
     borderWidth: 1,
-    borderColor: COLORS.surfaceBorderSubtle,
-    borderRadius: 14,
+    borderColor: COLORS.surfaceBorder,
+    borderRadius: 12,
     padding: 14,
   },
   orgCardSelected: {
     borderColor: COLORS.brand,
-    backgroundColor: COLORS.surfaceLight,
+    backgroundColor: COLORS.brandLight,
   },
   orgRow: {
     flexDirection: "row",
@@ -317,57 +326,59 @@ const styles = StyleSheet.create({
   },
   orgName: {
     fontSize: 14,
-    fontWeight: "800",
+    fontWeight: "700",
     color: COLORS.textPrimary,
   },
   orgMeta: {
     fontSize: 11,
-    color: COLORS.textSecondary,
+    color: COLORS.textMuted,
     marginTop: 2,
   },
   selectArrow: {
-    color: COLORS.textMuted,
     fontSize: 12,
-    fontWeight: "600",
+    fontWeight: "700",
+    color: COLORS.brand,
   },
   eventCard: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: COLORS.surfaceAlt,
     borderWidth: 1,
-    borderColor: COLORS.surfaceBorderSubtle,
-    borderRadius: 16,
-    padding: 16,
+    borderColor: COLORS.surfaceBorder,
+    borderRadius: 14,
+    padding: 14,
   },
   eventCardSelected: {
     borderColor: COLORS.brand,
-    backgroundColor: COLORS.surfaceLight,
+    backgroundColor: COLORS.brandLight,
   },
   eventTop: {
     flexDirection: "row",
-    alignItems: "flex-start",
+    alignItems: "center",
     justifyContent: "space-between",
-    gap: 8,
+    marginBottom: 4,
   },
   eventName: {
-    flex: 1,
     fontSize: 15,
     fontWeight: "800",
     color: COLORS.textPrimary,
+    flex: 1,
+    marginRight: 8,
   },
   eventVenue: {
     fontSize: 12,
     color: COLORS.textSecondary,
-    marginTop: 4,
-    marginBottom: 12,
+    marginBottom: 10,
   },
   kpiRow: {
     flexDirection: "row",
-    gap: 8,
-    backgroundColor: COLORS.surfaceDark,
+    backgroundColor: COLORS.white,
     borderRadius: 10,
-    padding: 10,
+    borderWidth: 1,
+    borderColor: COLORS.surfaceBorder,
+    padding: 8,
   },
   kpiItem: {
     flex: 1,
+    alignItems: "center",
   },
   kpiValue: {
     fontSize: 14,
@@ -375,39 +386,49 @@ const styles = StyleSheet.create({
     color: COLORS.textPrimary,
   },
   kpiLabel: {
-    fontSize: 10,
+    fontSize: 9,
     color: COLORS.textMuted,
     fontWeight: "600",
-    textTransform: "uppercase",
     marginTop: 1,
   },
   gateCard: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: COLORS.surfaceAlt,
     borderWidth: 1,
-    borderColor: COLORS.surfaceBorderSubtle,
-    borderRadius: 14,
+    borderColor: COLORS.surfaceBorder,
+    borderRadius: 12,
     padding: 14,
   },
   gateCardSelected: {
-    borderColor: COLORS.green,
-    backgroundColor: COLORS.surfaceLight,
+    borderColor: COLORS.brand,
+    backgroundColor: COLORS.brandLight,
   },
-  gateRow: {
+  gateTop: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    marginBottom: 4,
   },
   gateName: {
     fontSize: 14,
-    fontWeight: "800",
+    fontWeight: "700",
     color: COLORS.textPrimary,
   },
-  gateMode: {
+  gateZone: {
     fontSize: 11,
     color: COLORS.textSecondary,
-    marginTop: 2,
+    marginBottom: 6,
   },
-  enterBtn: {
-    marginTop: 10,
+  gateMetaRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  gateMeta: {
+    fontSize: 10,
+    fontWeight: "600",
+    color: COLORS.textMuted,
+  },
+  confirmBtn: {
+    marginTop: 8,
+    marginBottom: 16,
   },
 });

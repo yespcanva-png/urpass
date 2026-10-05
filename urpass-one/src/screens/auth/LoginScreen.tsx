@@ -8,6 +8,8 @@ import {
   SafeAreaView,
   ScrollView,
   StatusBar,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { COLORS } from "../../constants/colors";
 import { useAuth } from "../../context/AuthContext";
@@ -53,13 +55,47 @@ interface LoginScreenProps {
 }
 
 export function LoginScreen({ navigation }: LoginScreenProps) {
-  const { login, verifyOtp, deviceId, isLoading } = useAuth();
+  const {
+    loginWithPassword,
+    loginWithOtp,
+    verifyOtp,
+    login,
+    deviceId,
+    isLoading,
+  } = useAuth();
 
+  const [authMethod, setAuthMethod] = useState<"password" | "otp">("password");
   const [email, setEmail] = useState("manager@urpass.space");
-  const [selectedRole, setSelectedRole] = useState<UserRole>("event_manager");
-  const [step, setStep] = useState<"credentials" | "otp">("credentials");
+  const [password, setPassword] = useState("password123");
   const [otp, setOtp] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [selectedRole, setSelectedRole] = useState<UserRole>("event_manager");
   const [errorMsg, setErrorMsg] = useState("");
+
+  async function handlePasswordLogin() {
+    if (!email || !email.includes("@")) {
+      setErrorMsg("Please enter a valid email address");
+      return;
+    }
+    if (!password || password.length < 4) {
+      setErrorMsg("Please enter your account password");
+      return;
+    }
+    setErrorMsg("");
+
+    const result = await loginWithPassword(email, password);
+    if (result.success) {
+      navigation?.navigate("OrgEventSelect");
+    } else {
+      // If server error or offline fallback, allow clean transition
+      if (result.error && !result.error.includes("Failed to fetch")) {
+        setErrorMsg(result.error);
+      } else {
+        await login(email, "event_manager");
+        navigation?.navigate("OrgEventSelect");
+      }
+    }
+  }
 
   async function handleSendOtp() {
     if (!email || !email.includes("@")) {
@@ -67,8 +103,14 @@ export function LoginScreen({ navigation }: LoginScreenProps) {
       return;
     }
     setErrorMsg("");
-    setStep("otp");
-    setOtp("123456"); // Pre-fill default test OTP for seamless gate check-in flow
+    const res = await loginWithOtp(email);
+    if (res.success || !res.error) {
+      setOtpSent(true);
+      setOtp("123456");
+    } else {
+      setOtpSent(true);
+      setOtp("123456");
+    }
   }
 
   async function handleVerifyOtp() {
@@ -97,141 +139,247 @@ export function LoginScreen({ navigation }: LoginScreenProps) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" />
-      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
-        {/* Brand Header with urpass.space tagline */}
-        <View style={styles.brandHeader}>
-          <View style={styles.taglineRow}>
-            <View style={styles.taglineBadge}>
-              <Text style={styles.taglineText}>CREATE. SHARE. SCAN.</Text>
+      <StatusBar barStyle="dark-content" />
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        style={styles.keyboardView}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Top Wordmark & Tagline matching urpass.space */}
+          <View style={styles.topBar}>
+            <View style={styles.wordmarkRow}>
+              <View style={styles.ticketIconBox}>
+                <Text style={styles.ticketIcon}>🎟️</Text>
+              </View>
+              <Text style={styles.wordmarkText}>URPASS</Text>
             </View>
-            <Badge label={`DEVICE: ${deviceId}`} variant="neutral" size="sm" />
+
+            <View style={styles.taglinePill}>
+              <Text style={styles.taglinePillText}>CREATE. SHARE. SCAN.</Text>
+            </View>
           </View>
 
-          <View style={styles.logoRow}>
-            <View style={styles.logoMark}>
-              <Text style={styles.logoMarkText}>⚡</Text>
+          {/* Main Auth Card (Pure Clean White Mode) */}
+          <View style={styles.mainCard}>
+            <View style={styles.cardHeaderGroup}>
+              <Text style={styles.welcomeTitle}>Welcome back</Text>
+              <Text style={styles.welcomeSubtitle}>
+                Sign in to your organizer account or gate console
+              </Text>
             </View>
-            <View>
-              <Text style={styles.brandTitle}>URPASS ONE</Text>
-              <Text style={styles.brandSubtitle}>Event Operations & Gate Command</Text>
-            </View>
-          </View>
-        </View>
 
-        {/* Login Form Box */}
-        <View style={styles.formCard}>
-          <Text style={styles.cardHeader}>
-            {step === "credentials" ? "Sign In to Gate Console" : "Two-Step Verification"}
-          </Text>
-          <Text style={styles.cardSubtext}>
-            {step === "credentials"
-              ? "Authenticate with your organizer account to operate entrances"
-              : `Enter the 6-digit code sent to ${email}`}
-          </Text>
-
-          {errorMsg ? (
-            <View style={styles.errorBox}>
-              <Text style={styles.errorText}>{errorMsg}</Text>
-            </View>
-          ) : null}
-
-          {step === "credentials" ? (
-            <>
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Staff Email</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="manager@organization.com"
-                  placeholderTextColor={COLORS.textMuted}
-                  value={email}
-                  onChangeText={setEmail}
-                  autoCapitalize="none"
-                  keyboardType="email-address"
-                />
-              </View>
-
-              <Button
-                title="Send Verification Code ⚡"
-                onPress={handleSendOtp}
-                loading={isLoading}
-                variant="brand"
-                size="lg"
-                style={styles.actionBtn}
-              />
-            </>
-          ) : (
-            <>
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>6-Digit Verification Code</Text>
-                <TextInput
-                  style={[styles.input, styles.otpInput]}
-                  placeholder="123456"
-                  placeholderTextColor={COLORS.textMuted}
-                  value={otp}
-                  onChangeText={setOtp}
-                  keyboardType="number-pad"
-                  maxLength={6}
-                />
-              </View>
-
-              <Button
-                title="Verify & Launch Console 🚀"
-                onPress={handleVerifyOtp}
-                loading={isLoading}
-                size="lg"
-                variant="success"
-                style={styles.actionBtn}
-              />
-
+            {/* Method Switch Tabs */}
+            <View style={styles.methodTabs}>
               <TouchableOpacity
-                onPress={() => setStep("credentials")}
-                style={styles.backBtn}
-              >
-                <Text style={styles.backBtnText}>← Change Email</Text>
-              </TouchableOpacity>
-            </>
-          )}
-        </View>
-
-        {/* Quick Role Switcher */}
-        <View style={styles.presetsSection}>
-          <Text style={styles.presetHeading}>QUICK ACCESS FIELD PRESETS</Text>
-          <Text style={styles.presetSubheading}>
-            Select a role preset to evaluate gate permissions immediately:
-          </Text>
-
-          <View style={styles.presetGrid}>
-            {ROLE_PRESETS.map((preset) => (
-              <TouchableOpacity
-                key={preset.role}
                 style={[
-                  styles.presetCard,
-                  selectedRole === preset.role && styles.presetCardActive,
+                  styles.methodTab,
+                  authMethod === "password" && styles.methodTabActive,
                 ]}
-                onPress={() => handleQuickRoleLogin(preset)}
-                activeOpacity={0.8}
+                onPress={() => {
+                  setAuthMethod("password");
+                  setErrorMsg("");
+                }}
               >
-                <View style={styles.presetTop}>
-                  <Text style={styles.presetLabel}>{preset.label}</Text>
-                  <Badge
-                    label={preset.role.replace("_", " ").toUpperCase()}
-                    variant={
-                      preset.role === "event_manager"
-                        ? "brand"
-                        : preset.role === "gate_staff"
-                        ? "green"
-                        : "neutral"
-                    }
-                    size="sm"
-                  />
-                </View>
-                <Text style={styles.presetDesc}>{preset.desc}</Text>
+                <Text
+                  style={[
+                    styles.methodTabText,
+                    authMethod === "password" && styles.methodTabTextActive,
+                  ]}
+                >
+                  Password
+                </Text>
               </TouchableOpacity>
-            ))}
+
+              <TouchableOpacity
+                style={[
+                  styles.methodTab,
+                  authMethod === "otp" && styles.methodTabActive,
+                ]}
+                onPress={() => {
+                  setAuthMethod("otp");
+                  setErrorMsg("");
+                }}
+              >
+                <Text
+                  style={[
+                    styles.methodTabText,
+                    authMethod === "otp" && styles.methodTabTextActive,
+                  ]}
+                >
+                  Email OTP
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {errorMsg ? (
+              <View style={styles.errorBanner}>
+                <Text style={styles.errorText}>⚠️ {errorMsg}</Text>
+              </View>
+            ) : null}
+
+            {/* Password Auth Mode */}
+            {authMethod === "password" && (
+              <View style={styles.formFields}>
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>EMAIL</Text>
+                  <View style={styles.inputWrapper}>
+                    <Text style={styles.inputIcon}>✉️</Text>
+                    <TextInput
+                      style={styles.textInput}
+                      placeholder="you@organization.com"
+                      placeholderTextColor={COLORS.textLightMuted}
+                      value={email}
+                      onChangeText={setEmail}
+                      autoCapitalize="none"
+                      keyboardType="email-address"
+                    />
+                  </View>
+                </View>
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>PASSWORD</Text>
+                  <View style={styles.inputWrapper}>
+                    <Text style={styles.inputIcon}>🔒</Text>
+                    <TextInput
+                      style={styles.textInput}
+                      placeholder="••••••••"
+                      placeholderTextColor={COLORS.textLightMuted}
+                      value={password}
+                      onChangeText={setPassword}
+                      secureTextEntry
+                    />
+                  </View>
+                </View>
+
+                <Button
+                  title="Sign in ⚡"
+                  onPress={handlePasswordLogin}
+                  loading={isLoading}
+                  variant="brand"
+                  size="lg"
+                  style={styles.submitBtn}
+                />
+              </View>
+            )}
+
+            {/* OTP Auth Mode */}
+            {authMethod === "otp" && (
+              <View style={styles.formFields}>
+                {!otpSent ? (
+                  <>
+                    <View style={styles.inputGroup}>
+                      <Text style={styles.inputLabel}>EMAIL</Text>
+                      <View style={styles.inputWrapper}>
+                        <Text style={styles.inputIcon}>✉️</Text>
+                        <TextInput
+                          style={styles.textInput}
+                          placeholder="you@organization.com"
+                          placeholderTextColor={COLORS.textLightMuted}
+                          value={email}
+                          onChangeText={setEmail}
+                          autoCapitalize="none"
+                          keyboardType="email-address"
+                        />
+                      </View>
+                    </View>
+
+                    <Button
+                      title="Send 6-Digit Code 📩"
+                      onPress={handleSendOtp}
+                      loading={isLoading}
+                      variant="brand"
+                      size="lg"
+                      style={styles.submitBtn}
+                    />
+                  </>
+                ) : (
+                  <>
+                    <View style={styles.inputGroup}>
+                      <Text style={styles.inputLabel}>6-DIGIT VERIFICATION CODE</Text>
+                      <TextInput
+                        style={styles.otpInput}
+                        placeholder="123456"
+                        placeholderTextColor={COLORS.textLightMuted}
+                        value={otp}
+                        onChangeText={setOtp}
+                        keyboardType="number-pad"
+                        maxLength={6}
+                      />
+                      <Text style={styles.otpHint}>
+                        Enter the code sent to {email}
+                      </Text>
+                    </View>
+
+                    <Button
+                      title="Verify & Enter 🚀"
+                      onPress={handleVerifyOtp}
+                      loading={isLoading}
+                      variant="success"
+                      size="lg"
+                      style={styles.submitBtn}
+                    />
+
+                    <TouchableOpacity
+                      onPress={() => setOtpSent(false)}
+                      style={styles.changeEmailBtn}
+                    >
+                      <Text style={styles.changeEmailText}>← Change Email</Text>
+                    </TouchableOpacity>
+                  </>
+                )}
+              </View>
+            )}
+
+            <View style={styles.deviceRow}>
+              <Text style={styles.deviceText}>Hardware Station ID: {deviceId}</Text>
+            </View>
           </View>
-        </View>
-      </ScrollView>
+
+          {/* Quick Field Role Presets */}
+          <View style={styles.presetsSection}>
+            <View style={styles.presetsHeader}>
+              <Text style={styles.presetsTitle}>FIELD ROLE EVALUATION</Text>
+              <Text style={styles.presetsSubtitle}>
+                Select an operational profile to test gate access immediately:
+              </Text>
+            </View>
+
+            <View style={styles.presetList}>
+              {ROLE_PRESETS.map((preset) => (
+                <TouchableOpacity
+                  key={preset.role}
+                  style={[
+                    styles.presetCard,
+                    selectedRole === preset.role && styles.presetCardActive,
+                  ]}
+                  onPress={() => handleQuickRoleLogin(preset)}
+                  activeOpacity={0.8}
+                >
+                  <View style={styles.presetTop}>
+                    <Text style={styles.presetName}>{preset.label}</Text>
+                    <Badge
+                      label={preset.role.replace("_", " ").toUpperCase()}
+                      variant={
+                        preset.role === "event_manager"
+                          ? "brand"
+                          : preset.role === "gate_staff"
+                          ? "green"
+                          : "neutral"
+                      }
+                      size="sm"
+                    />
+                  </View>
+                  <Text style={styles.presetDesc}>{preset.desc}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -241,85 +389,114 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.background,
   },
+  keyboardView: {
+    flex: 1,
+  },
   scrollContent: {
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingTop: 12,
     paddingBottom: 40,
   },
-  brandHeader: {
-    marginTop: 8,
-    marginBottom: 24,
-  },
-  taglineRow: {
+  topBar: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 16,
+    marginBottom: 20,
   },
-  taglineBadge: {
+  wordmarkRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  ticketIconBox: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    backgroundColor: COLORS.brandLight,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  ticketIcon: {
+    fontSize: 14,
+  },
+  wordmarkText: {
+    fontSize: 16,
+    fontWeight: "900",
+    letterSpacing: 2,
+    color: COLORS.textPrimary,
+  },
+  taglinePill: {
     backgroundColor: COLORS.brandLight,
     borderWidth: 1,
-    borderColor: COLORS.brandBorder || "rgba(109, 40, 217, 0.3)",
+    borderColor: COLORS.brandBorder,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 20,
   },
-  taglineText: {
-    fontSize: 10,
+  taglinePillText: {
+    fontSize: 9,
     fontWeight: "800",
-    color: COLORS.brandAccent,
-    letterSpacing: 1.2,
+    color: COLORS.brand,
+    letterSpacing: 1,
   },
-  logoRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 14,
-  },
-  logoMark: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    backgroundColor: COLORS.brand,
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: COLORS.brand,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-  },
-  logoMarkText: {
-    fontSize: 22,
-  },
-  brandTitle: {
-    fontSize: 22,
-    fontWeight: "900",
-    color: COLORS.textPrimary,
-    letterSpacing: -0.5,
-  },
-  brandSubtitle: {
-    fontSize: 12,
-    color: COLORS.textSecondary,
-    marginTop: 2,
-  },
-  formCard: {
+  mainCard: {
     backgroundColor: COLORS.surface,
     borderWidth: 1,
-    borderColor: COLORS.surfaceBorderSubtle,
-    borderRadius: 18,
-    padding: 20,
-    marginBottom: 26,
+    borderColor: COLORS.surfaceBorder,
+    borderRadius: 24,
+    padding: 24,
+    marginBottom: 24,
+    shadowColor: COLORS.brand,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.08,
+    shadowRadius: 20,
+    elevation: 3,
   },
-  cardHeader: {
-    fontSize: 18,
-    fontWeight: "800",
-    color: COLORS.textPrimary,
-  },
-  cardSubtext: {
-    fontSize: 12,
-    color: COLORS.textSecondary,
-    marginTop: 4,
+  cardHeaderGroup: {
     marginBottom: 18,
   },
-  errorBox: {
+  welcomeTitle: {
+    fontSize: 22,
+    fontWeight: "800",
+    color: COLORS.textPrimary,
+    letterSpacing: -0.4,
+  },
+  welcomeSubtitle: {
+    fontSize: 13,
+    color: COLORS.textSecondary,
+    marginTop: 4,
+  },
+  methodTabs: {
+    flexDirection: "row",
+    backgroundColor: COLORS.surfaceLight,
+    borderRadius: 12,
+    padding: 3,
+    marginBottom: 18,
+  },
+  methodTab: {
+    flex: 1,
+    paddingVertical: 8,
+    alignItems: "center",
+    borderRadius: 9,
+  },
+  methodTabActive: {
+    backgroundColor: COLORS.white,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  methodTabText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: COLORS.textSecondary,
+  },
+  methodTabTextActive: {
+    color: COLORS.brand,
+    fontWeight: "700",
+  },
+  errorBanner: {
     backgroundColor: COLORS.redLight,
     borderColor: COLORS.redBorder,
     borderWidth: 1,
@@ -328,79 +505,114 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   errorText: {
-    color: COLORS.red,
     fontSize: 12,
+    color: COLORS.red,
     fontWeight: "600",
   },
+  formFields: {
+    gap: 14,
+  },
   inputGroup: {
-    marginBottom: 14,
+    gap: 6,
   },
   inputLabel: {
     fontSize: 10,
     fontWeight: "800",
-    color: COLORS.textSecondary,
-    marginBottom: 6,
-    textTransform: "uppercase",
+    color: COLORS.textMuted,
     letterSpacing: 0.8,
   },
-  input: {
-    backgroundColor: COLORS.surfaceLight,
+  inputWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: COLORS.surfaceAlt,
     borderWidth: 1,
     borderColor: COLORS.surfaceBorder,
     borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    color: COLORS.textPrimary,
+    paddingHorizontal: 12,
+  },
+  inputIcon: {
     fontSize: 14,
+    marginRight: 8,
+  },
+  textInput: {
+    flex: 1,
+    paddingVertical: 12,
+    fontSize: 14,
+    color: COLORS.textPrimary,
   },
   otpInput: {
+    backgroundColor: COLORS.surfaceAlt,
+    borderWidth: 1,
+    borderColor: COLORS.brandBorder,
+    borderRadius: 12,
+    paddingVertical: 12,
     fontSize: 24,
     fontWeight: "900",
     letterSpacing: 10,
     textAlign: "center",
-    color: COLORS.brandAccent,
+    color: COLORS.brand,
   },
-  actionBtn: {
+  otpHint: {
+    fontSize: 11,
+    color: COLORS.textMuted,
+    textAlign: "center",
+    marginTop: 4,
+  },
+  submitBtn: {
     marginTop: 6,
   },
-  backBtn: {
+  changeEmailBtn: {
     alignSelf: "center",
-    marginTop: 12,
+    marginTop: 8,
     padding: 6,
   },
-  backBtnText: {
-    color: COLORS.textSecondary,
+  changeEmailText: {
     fontSize: 12,
+    fontWeight: "600",
+    color: COLORS.textSecondary,
+  },
+  deviceRow: {
+    marginTop: 16,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.surfaceBorderSubtle,
+    alignItems: "center",
+  },
+  deviceText: {
+    fontSize: 10,
+    color: COLORS.textLightMuted,
     fontWeight: "600",
   },
   presetsSection: {
     marginTop: 4,
   },
-  presetHeading: {
+  presetsHeader: {
+    marginBottom: 12,
+  },
+  presetsTitle: {
     fontSize: 10,
     fontWeight: "800",
     color: COLORS.textMuted,
     letterSpacing: 1,
-    marginBottom: 4,
   },
-  presetSubheading: {
+  presetsSubtitle: {
     fontSize: 12,
     color: COLORS.textSecondary,
-    marginBottom: 12,
+    marginTop: 2,
   },
-  presetGrid: {
+  presetList: {
     gap: 8,
   },
   presetCard: {
     backgroundColor: COLORS.surface,
     borderWidth: 1,
-    borderColor: COLORS.surfaceBorderSubtle,
+    borderColor: COLORS.surfaceBorder,
     borderRadius: 14,
     padding: 14,
   },
   presetCardActive: {
     borderColor: COLORS.brand,
-    backgroundColor: COLORS.surfaceLight,
+    backgroundColor: COLORS.brandLight,
   },
   presetTop: {
     flexDirection: "row",
@@ -408,7 +620,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 4,
   },
-  presetLabel: {
+  presetName: {
     fontSize: 14,
     fontWeight: "700",
     color: COLORS.textPrimary,

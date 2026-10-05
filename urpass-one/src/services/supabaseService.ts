@@ -1,6 +1,6 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { CONFIG } from "../constants/config";
-import type { Attendee, EventSummary, Gate, OrganizationSummary, ScanValidationResult } from "../types";
+import type { Attendee, EventSummary, Gate, OrganizationSummary, UserProfile, UserRole } from "../types";
 
 // UrPass Production Supabase Credentials
 const SUPABASE_URL = "https://kxmxxqyxkoseksfaymqm.supabase.co";
@@ -16,10 +16,146 @@ export class SupabaseOpsService {
         auth: {
           persistSession: true,
           autoRefreshToken: true,
+          detectSessionInUrl: false,
         },
       });
     }
     return this.client;
+  }
+
+  /**
+   * Real Supabase Email & Password Sign In
+   */
+  public static async signInWithPassword(email: string, password: string): Promise<{ user: UserProfile | null; error: string | null }> {
+    try {
+      const supabase = this.getClient();
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+      if (error) {
+        return { user: null, error: error.message };
+      }
+
+      if (data.user) {
+        const profile = await this.buildUserProfileFromSupabase(data.user);
+        return { user: profile, error: null };
+      }
+
+      return { user: null, error: "No user returned from Supabase authentication." };
+    } catch (err: any) {
+      return { user: null, error: err?.message || "Network error during authentication." };
+    }
+  }
+
+  /**
+   * Real Supabase OTP / Magic Link Sign In Request
+   */
+  public static async signInWithOtp(email: string): Promise<{ success: boolean; error: string | null }> {
+    try {
+      const supabase = this.getClient();
+      const { error } = await supabase.auth.signInWithOtp({ email });
+      if (error) {
+        return { success: false, error: error.message };
+      }
+      return { success: true, error: null };
+    } catch (err: any) {
+      return { success: false, error: err?.message || "Failed to send verification code." };
+    }
+  }
+
+  /**
+   * Real Supabase OTP Token Verification
+   */
+  public static async verifyOtp(email: string, token: string): Promise<{ user: UserProfile | null; error: string | null }> {
+    try {
+      const supabase = this.getClient();
+      const { data, error } = await supabase.auth.verifyOtp({
+        email,
+        token,
+        type: "email",
+      });
+
+      if (error) {
+        return { user: null, error: error.message };
+      }
+
+      if (data.user) {
+        const profile = await this.buildUserProfileFromSupabase(data.user);
+        return { user: profile, error: null };
+      }
+
+      return { user: null, error: "Verification failed." };
+    } catch (err: any) {
+      return { user: null, error: err?.message || "Verification error." };
+    }
+  }
+
+  /**
+   * Helper to build UserProfile from Supabase Auth User & Database Record
+   */
+  private static async buildUserProfileFromSupabase(authUser: any): Promise<UserProfile> {
+    const supabase = this.getClient();
+    let orgName = "UrPass Organization";
+    let orgId = "org-default";
+    let role: UserRole = "event_manager";
+
+    try {
+      // 1. Check profile in profiles table
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("user_id", authUser.id)
+        .single();
+
+      // 2. Check organization membership
+      const { data: memberships } = await supabase
+        .from("organization_members")
+        .select("role, organization:organizations(id, name, slug)")
+        .eq("user_id", authUser.id)
+        .limit(1);
+
+      if (memberships && memberships.length > 0) {
+        const m: any = memberships[0];
+        if (m.organization) {
+          orgId = m.organization.id || m.organization.slug;
+          orgName = m.organization.name || "UrPass Organization";
+        }
+        if (m.role) {
+          role = m.role as UserRole;
+        }
+      }
+
+      const fullName = profile?.full_name || authUser.user_metadata?.full_name || authUser.email?.split("@")[0] || "Staff";
+
+      return {
+        id: authUser.id,
+        name: fullName,
+        email: authUser.email || "",
+        role,
+        orgId,
+        orgName,
+      };
+    } catch {
+      return {
+        id: authUser.id,
+        name: authUser.user_metadata?.full_name || authUser.email?.split("@")[0] || "Staff",
+        email: authUser.email || "",
+        role: "event_manager",
+        orgId,
+        orgName,
+      };
+    }
+  }
+
+  /**
+   * Sign Out from Supabase Auth
+   */
+  public static async signOut(): Promise<void> {
+    try {
+      const supabase = this.getClient();
+      await supabase.auth.signOut();
+    } catch (err) {
+      console.warn("Sign out warning:", err);
+    }
   }
 
   /**

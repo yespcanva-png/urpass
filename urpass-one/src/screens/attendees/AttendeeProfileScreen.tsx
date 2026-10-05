@@ -137,7 +137,7 @@ export function AttendeeProfileScreen({ route, navigation }: AttendeeProfileScre
   if (!attendee) {
     return (
       <SafeAreaView style={styles.container}>
-        <StatusBar barStyle="light-content" />
+        <StatusBar barStyle="dark-content" />
         <Header title="Attendee Profile" showEventSwitcher={false} />
         <View style={styles.loadingBox}>
           <Text style={styles.loadingText}>Loading attendee record...</Text>
@@ -150,7 +150,7 @@ export function AttendeeProfileScreen({ route, navigation }: AttendeeProfileScre
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="dark-content" />
       <Header
         title="Attendee Operations Record"
         subtitle={attendee.name}
@@ -330,9 +330,9 @@ const styles = StyleSheet.create({
   },
   tabBar: {
     flexDirection: "row",
-    backgroundColor: COLORS.surface,
+    backgroundColor: COLORS.surfaceAlt,
     borderRadius: 12,
-    padding: 4,
+    padding: 3,
     borderWidth: 1,
     borderColor: COLORS.surfaceBorder,
     marginBottom: 16,
@@ -341,18 +341,24 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 10,
     alignItems: "center",
-    borderRadius: 8,
+    borderRadius: 9,
   },
   tabBtnActive: {
-    backgroundColor: COLORS.brand,
+    backgroundColor: COLORS.white,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    elevation: 1,
   },
   tabText: {
     fontSize: 13,
-    fontWeight: "700",
+    fontWeight: "600",
     color: COLORS.textSecondary,
   },
   tabTextActive: {
-    color: COLORS.white,
+    color: COLORS.brand,
+    fontWeight: "700",
   },
   passTabContainer: {
     marginBottom: 16,
@@ -370,10 +376,15 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surface,
     borderWidth: 1,
     borderColor: COLORS.surfaceBorder,
-    borderRadius: 12,
+    borderRadius: 14,
     paddingHorizontal: 16,
     paddingVertical: 12,
     marginTop: 14,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 4,
+    elevation: 1,
   },
   presenceLabel: {
     fontSize: 10,
@@ -387,6 +398,10 @@ const styles = StyleSheet.create({
   profileCard: {
     padding: 18,
     marginBottom: 14,
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.surfaceBorder,
+    borderRadius: 16,
   },
   profileTop: {
     flexDirection: "row",
@@ -397,14 +412,16 @@ const styles = StyleSheet.create({
     width: 54,
     height: 54,
     borderRadius: 27,
-    backgroundColor: COLORS.brand,
+    backgroundColor: COLORS.brandLight,
+    borderWidth: 1,
+    borderColor: COLORS.brandBorder,
     alignItems: "center",
     justifyContent: "center",
   },
   avatarText: {
     fontSize: 22,
     fontWeight: "900",
-    color: COLORS.white,
+    color: COLORS.brand,
   },
   nameGroup: {
     flex: 1,
@@ -441,6 +458,10 @@ const styles = StyleSheet.create({
   statsCard: {
     padding: 16,
     marginBottom: 14,
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.surfaceBorder,
+    borderRadius: 16,
   },
   sectionHeading: {
     fontSize: 10,
@@ -451,8 +472,10 @@ const styles = StyleSheet.create({
   },
   statsGrid: {
     flexDirection: "row",
-    backgroundColor: COLORS.surfaceDark,
-    borderRadius: 8,
+    backgroundColor: COLORS.surfaceAlt,
+    borderWidth: 1,
+    borderColor: COLORS.surfaceBorder,
+    borderRadius: 10,
     padding: 12,
   },
   statCell: {
@@ -477,6 +500,10 @@ const styles = StyleSheet.create({
   zonesCard: {
     padding: 16,
     marginBottom: 18,
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.surfaceBorder,
+    borderRadius: 16,
   },
   zonesPills: {
     flexDirection: "row",
@@ -504,8 +531,13 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surface,
     borderWidth: 1,
     borderColor: COLORS.surfaceBorder,
-    borderRadius: 10,
+    borderRadius: 12,
     padding: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.02,
+    shadowRadius: 3,
+    elevation: 1,
   },
   historyItemHeader: {
     flexDirection: "row",

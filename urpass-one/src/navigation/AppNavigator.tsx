@@ -46,7 +46,7 @@ export function AppNavigator() {
     navigate: (screen: ScreenName, params?: any) => {
       setNavHistory((prev) => [...prev, currentScreen]);
       setScreenParams(params || {});
-      if (screen === "MainTabs" as any) {
+      if ((screen as any) === "MainTabs") {
         setCurrentScreen("OperationsHome");
       } else {
         setCurrentScreen(screen);
@@ -170,17 +170,22 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   bottomNavWrapper: {
-    backgroundColor: COLORS.surfaceDark,
+    backgroundColor: COLORS.white,
   },
   bottomTabBar: {
     flexDirection: "row",
     height: 60,
-    backgroundColor: COLORS.surfaceDark,
+    backgroundColor: COLORS.white,
     borderTopWidth: 1,
-    borderTopColor: COLORS.surfaceBorderSubtle,
+    borderTopColor: COLORS.surfaceBorder,
     alignItems: "center",
     justifyContent: "space-around",
     paddingHorizontal: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 4,
   },
   tabItem: {
     alignItems: "center",
@@ -203,6 +208,7 @@ const styles = StyleSheet.create({
   },
   tabLabelActive: {
     color: COLORS.brand,
+    fontWeight: "800",
   },
   scannerCenterBtn: {
     width: 52,
@@ -214,11 +220,11 @@ const styles = StyleSheet.create({
     marginTop: -22,
     shadowColor: COLORS.brand,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
+    shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 8,
     borderWidth: 3,
-    borderColor: COLORS.background,
+    borderColor: COLORS.white,
   },
   scannerCenterIcon: {
     fontSize: 22,

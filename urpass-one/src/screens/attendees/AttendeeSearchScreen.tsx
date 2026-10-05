@@ -111,7 +111,7 @@ export function AttendeeSearchScreen({ navigation }: { navigation?: any }) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="dark-content" />
       <Header
         title="Attendee Search & Lookup"
         subtitle={`${filteredAttendees.length} of ${attendees.length} Attendees`}
@@ -123,7 +123,7 @@ export function AttendeeSearchScreen({ navigation }: { navigation?: any }) {
         <TextInput
           style={styles.searchInput}
           placeholder="Search by Name, Email, Ticket #, or Pass Token..."
-          placeholderTextColor={COLORS.textMuted}
+          placeholderTextColor={COLORS.textLightMuted}
           value={searchQuery}
           onChangeText={setSearchQuery}
           clearButtonMode="while-editing"
@@ -171,14 +171,14 @@ export function AttendeeSearchScreen({ navigation }: { navigation?: any }) {
                   presenceFilter === p && styles.presenceBtnTextActive,
                 ]}
               >
-                {p === "all" ? "ALL PRESENCE" : p.toUpperCase()}
+                {p.toUpperCase()}
               </Text>
             </TouchableOpacity>
           ))}
         </View>
       </View>
 
-      {/* Attendees FlatList */}
+      {/* Attendee FlatList */}
       <FlatList
         data={filteredAttendees}
         keyExtractor={(item) => item.id}
@@ -187,60 +187,54 @@ export function AttendeeSearchScreen({ navigation }: { navigation?: any }) {
           <View style={styles.emptyBox}>
             <Text style={styles.emptyTitle}>No Attendees Found</Text>
             <Text style={styles.emptySub}>
-              Try adjusting your search query or filters.
+              Try adjusting your search query or pass type filters.
             </Text>
           </View>
         }
         renderItem={({ item }) => {
           const isInside = item.presenceStatus === "inside";
-          const isLoadingThis = isActionLoading === item.id;
+          const isLoading = isActionLoading === item.id;
 
           return (
             <TouchableOpacity
               style={styles.attendeeCard}
-              activeOpacity={0.85}
-              onPress={() => navigation?.navigate("AttendeeProfile", { attendeeId: item.id })}
+              onPress={() =>
+                navigation?.navigate("AttendeeProfile", { attendeeId: item.id })
+              }
+              activeOpacity={0.8}
             >
               <View style={styles.cardMain}>
                 <View style={styles.cardHeaderRow}>
                   <Text style={styles.attendeeName}>{item.name}</Text>
+                </View>
+
+                <Text style={styles.attendeeEmail}>{item.email}</Text>
+                {item.company && <Text style={styles.companyText}>🏢 {item.company}</Text>}
+
+                <Text style={styles.attendeeTicket}>
+                  {item.ticketNumber || item.registrationId || "Pass"} • {item.ticketName}
+                </Text>
+
+                <View style={styles.tagsRow}>
+                  <Badge label={item.passType.toUpperCase()} variant="brand" size="sm" />
                   <Badge
                     label={isInside ? "INSIDE" : "OUTSIDE"}
                     variant={isInside ? "green" : "neutral"}
                     size="sm"
                   />
                 </View>
-
-                <Text style={styles.attendeeEmail}>{item.email}</Text>
-                <Text style={styles.attendeeTicket}>
-                  🎟️ {item.ticketName || "General Pass"} • #{item.ticketNumber || item.id}
-                </Text>
-
-                {item.company ? (
-                  <Text style={styles.companyText}>🏢 {item.company}</Text>
-                ) : null}
-
-                <View style={styles.tagsRow}>
-                  <Badge label={item.passType} variant="brand" size="sm" />
-                  <Badge
-                    label={`Scans: ${item.checkinCount}`}
-                    variant="neutral"
-                    size="sm"
-                  />
-                </View>
               </View>
 
-              {/* Quick Check-in / Check-out Button */}
               <TouchableOpacity
                 style={[
                   styles.quickCheckinBtn,
                   isInside ? styles.btnCheckout : styles.btnCheckin,
                 ]}
                 onPress={() => handleQuickCheckin(item)}
-                disabled={isLoadingThis}
+                disabled={isLoading}
               >
                 <Text style={styles.quickCheckinText}>
-                  {isLoadingThis ? "..." : isInside ? "Exit 🚪" : "Check In ⚡"}
+                  {isLoading ? "..." : isInside ? "Out 🚪" : "In ⚡"}
                 </Text>
               </TouchableOpacity>
             </TouchableOpacity>
@@ -258,13 +252,11 @@ const styles = StyleSheet.create({
   },
   searchContainer: {
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: COLORS.surfaceDark,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.surfaceBorderSubtle,
+    paddingTop: 12,
+    paddingBottom: 6,
   },
   searchInput: {
-    backgroundColor: COLORS.surfaceLight,
+    backgroundColor: COLORS.surfaceAlt,
     borderWidth: 1,
     borderColor: COLORS.surfaceBorder,
     borderRadius: 12,
@@ -274,19 +266,19 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   filtersWrapper: {
-    paddingVertical: 10,
+    paddingBottom: 8,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.surfaceBorderSubtle,
   },
   filterScroll: {
     paddingHorizontal: 16,
-    marginBottom: 8,
+    paddingVertical: 8,
   },
   filterChip: {
-    paddingVertical: 5,
     paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: 20,
-    backgroundColor: COLORS.surface,
+    backgroundColor: COLORS.surfaceAlt,
     borderWidth: 1,
     borderColor: COLORS.surfaceBorder,
     marginRight: 6,
@@ -296,7 +288,7 @@ const styles = StyleSheet.create({
     borderColor: COLORS.brand,
   },
   filterChipText: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: "700",
     color: COLORS.textSecondary,
   },
@@ -312,13 +304,13 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 6,
     borderRadius: 8,
-    backgroundColor: COLORS.surface,
+    backgroundColor: COLORS.surfaceAlt,
     borderWidth: 1,
     borderColor: COLORS.surfaceBorder,
     alignItems: "center",
   },
   presenceBtnActive: {
-    backgroundColor: COLORS.surfaceLight,
+    backgroundColor: COLORS.brandLight,
     borderColor: COLORS.brand,
   },
   presenceBtnText: {
@@ -352,12 +344,17 @@ const styles = StyleSheet.create({
   attendeeCard: {
     backgroundColor: COLORS.surface,
     borderWidth: 1,
-    borderColor: COLORS.surfaceBorderSubtle,
+    borderColor: COLORS.surfaceBorder,
     borderRadius: 16,
     padding: 16,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 4,
+    elevation: 1,
   },
   cardMain: {
     flex: 1,

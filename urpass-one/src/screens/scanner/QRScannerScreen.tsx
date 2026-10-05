@@ -53,7 +53,7 @@ export function QRScannerScreen({ navigation }: { navigation?: any }) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="dark-content" />
 
       {/* Top Scanner Bar */}
       <View style={styles.topBar}>
@@ -180,15 +180,17 @@ export function QRScannerScreen({ navigation }: { navigation?: any }) {
               >
                 <Text style={styles.simCardLabel}>{test.label}</Text>
                 <Text style={styles.simCardDesc}>{test.desc}</Text>
-                <Text style={styles.simCardToken}>{test.payload}</Text>
+                <Text style={styles.simCardPayload} numberOfLines={1}>
+                  {test.payload}
+                </Text>
               </TouchableOpacity>
             ))}
           </ScrollView>
         </View>
       )}
 
-      {/* Manual Override Supervisor Modal */}
-      <ManualOverrideModal navigation={navigation} />
+      {/* Supervisor Override Modal */}
+      <ManualOverrideModal />
     </SafeAreaView>
   );
 }
@@ -203,41 +205,44 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: COLORS.surfaceDark,
+    paddingVertical: 10,
+    backgroundColor: COLORS.white,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.surfaceBorderSubtle,
+    borderBottomColor: COLORS.surfaceBorder,
+    zIndex: 10,
   },
   backBtn: {
     paddingVertical: 6,
     paddingHorizontal: 10,
+    backgroundColor: COLORS.surfaceAlt,
+    borderWidth: 1,
+    borderColor: COLORS.surfaceBorder,
     borderRadius: 8,
-    backgroundColor: COLORS.surfaceLight,
   },
   backBtnText: {
-    color: COLORS.textSecondary,
+    color: COLORS.textPrimary,
     fontSize: 12,
     fontWeight: "700",
   },
   gateBadgeContainer: {
+    flex: 1,
     alignItems: "center",
-    maxWidth: 150,
+    marginHorizontal: 8,
   },
   gateBadgeLabel: {
     fontSize: 9,
     fontWeight: "800",
     color: COLORS.textMuted,
-    letterSpacing: 0.5,
+    letterSpacing: 0.8,
   },
   gateBadgeName: {
     fontSize: 13,
     fontWeight: "800",
     color: COLORS.textPrimary,
-    marginTop: 1,
   },
   directionToggle: {
     flexDirection: "row",
-    backgroundColor: COLORS.surfaceLight,
+    backgroundColor: COLORS.surfaceAlt,
     borderRadius: 8,
     padding: 2,
     borderWidth: 1,
@@ -264,79 +269,79 @@ const styles = StyleSheet.create({
   },
   viewfinderContainer: {
     flex: 1,
+    position: "relative",
   },
   bannerWrapper: {
     position: "absolute",
-    bottom: 20,
-    left: 0,
-    right: 0,
+    bottom: 24,
+    left: 16,
+    right: 16,
   },
   bottomBar: {
     flexDirection: "row",
     justifyContent: "space-around",
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    backgroundColor: COLORS.surfaceDark,
+    backgroundColor: COLORS.white,
     borderTopWidth: 1,
-    borderTopColor: COLORS.surfaceBorderSubtle,
+    borderTopColor: COLORS.surfaceBorder,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
   },
   bottomActionBtn: {
     alignItems: "center",
-    paddingVertical: 6,
-    paddingHorizontal: 16,
-    borderRadius: 10,
+    paddingVertical: 4,
+    paddingHorizontal: 12,
+    borderRadius: 8,
   },
   bottomActionBtnActive: {
-    backgroundColor: COLORS.surfaceLight,
+    backgroundColor: COLORS.brandLight,
   },
   bottomActionIcon: {
     fontSize: 18,
     marginBottom: 2,
   },
   bottomActionText: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: "700",
     color: COLORS.textSecondary,
   },
   simPanel: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: COLORS.white,
     borderTopWidth: 1,
     borderTopColor: COLORS.surfaceBorder,
     padding: 12,
   },
   simPanelHeader: {
     flexDirection: "row",
-    alignItems: "center",
     justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 8,
   },
   simPanelTitle: {
     fontSize: 10,
     fontWeight: "800",
     color: COLORS.textMuted,
-    letterSpacing: 0.6,
+    letterSpacing: 0.8,
   },
   simPanelClose: {
     fontSize: 14,
-    fontWeight: "700",
-    color: COLORS.textSecondary,
+    color: COLORS.textMuted,
     paddingHorizontal: 6,
   },
   simScroll: {
-    gap: 8,
+    flexDirection: "row",
   },
   simCard: {
-    backgroundColor: COLORS.surfaceLight,
+    backgroundColor: COLORS.surfaceAlt,
     borderWidth: 1,
     borderColor: COLORS.surfaceBorder,
     borderRadius: 10,
     padding: 10,
     marginRight: 8,
-    minWidth: 160,
+    width: 140,
   },
   simCardLabel: {
     fontSize: 12,
-    fontWeight: "800",
+    fontWeight: "700",
     color: COLORS.textPrimary,
   },
   simCardDesc: {
@@ -344,10 +349,10 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     marginTop: 2,
   },
-  simCardToken: {
-    fontSize: 9,
-    color: COLORS.brand,
+  simCardPayload: {
+    fontSize: 8,
     fontFamily: "monospace",
+    color: COLORS.textMuted,
     marginTop: 4,
   },
 });

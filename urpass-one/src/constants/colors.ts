@@ -1,58 +1,69 @@
 export const COLORS = {
-  // Brand & Accent (UrPass Signature Royal Purple & Indigo)
+  // Brand & Accent (UrPass Signature Royal Purple & Violet)
   brand: "#6D28D9",
-  brandLight: "rgba(109, 40, 217, 0.14)",
+  brandLight: "#F5F3FF",
   brandDark: "#5B21B6",
-  brandGlow: "rgba(109, 40, 217, 0.28)",
+  brandGlow: "rgba(109, 40, 217, 0.15)",
   brandAccent: "#7C3AED",
+  brandBorder: "#DDD6FE",
   brandViolet50: "#F5F3FF",
   brandViolet100: "#EDE9FE",
+  brandViolet200: "#DDD6FE",
 
-  // Sleek OLED Dark Neutral Hierarchy (urpass.space design language)
-  background: "#09090B",
-  surface: "#121215",
-  surfaceDark: "#0A0A0C",
-  surfaceLight: "#18181B",
-  surfaceHover: "#27272A",
-  surfaceBorder: "#27272A",
-  surfaceBorderSubtle: "rgba(255, 255, 255, 0.08)",
-  surfaceBorderStrong: "rgba(255, 255, 255, 0.15)",
+  // Pure White Mode Design System (urpass.space style)
+  background: "#FFFFFF",
+  backgroundAlt: "#FAFAFA",
+  backgroundGradientTop: "#EDE9FE",
+  backgroundGradientMid: "#F5F3FF",
+  backgroundGradientEnd: "#FFFFFF",
 
-  // Light Mode & Ticket Cutout Elements
+  // Surfaces & Cards
+  surface: "#FFFFFF",
+  surfaceAlt: "#F8FAFC",
+  surfaceDark: "#09090B",
+  surfaceLight: "#F4F4F5",
+  surfaceHover: "#F4F4F5",
+  surfaceBorder: "#E4E4E7",
+  surfaceBorderSubtle: "#F4F4F5",
+  surfaceBorderStrong: "#D4D4D8",
+
+  // Digital Ticket Pass Elements
   white: "#FFFFFF",
   ticketCardBg: "#FFFFFF",
   ticketHeaderBg: "#09090B",
   ticketBorder: "#E4E4E7",
-  cardBg: "#121215",
-  cardBgLight: "#18181B",
+  cardBg: "#FFFFFF",
+  cardBgLight: "#F8FAFC",
 
-  // Text Hierarchy
-  textPrimary: "#FAFAFA",
-  textSecondary: "#A1A1AA",
+  // High-Contrast Clean Typography
+  textPrimary: "#09090B",
+  textSecondary: "#52525B",
   textMuted: "#71717A",
+  textLightMuted: "#A1A1AA",
+  textWhite: "#FFFFFF",
   textDark: "#09090B",
   textDarkSecondary: "#52525B",
-  textDarkMuted: "#A1A1AA",
+  textDarkMuted: "#71717A",
 
-  // Operational Status Badges & Feedback Banners
-  green: "#10B981",
-  greenLight: "rgba(16, 185, 129, 0.12)",
-  greenBorder: "rgba(16, 185, 129, 0.35)",
+  // Operational Badges & Alerts (Clean Light Mode Fills)
+  green: "#059669",
+  greenLight: "#ECFDF5",
+  greenBorder: "#A7F3D0",
 
-  red: "#EF4444",
-  redLight: "rgba(239, 68, 68, 0.12)",
-  redBorder: "rgba(239, 68, 68, 0.35)",
+  red: "#DC2626",
+  redLight: "#FEF2F2",
+  redBorder: "#FECACA",
 
-  amber: "#F59E0B",
-  amberLight: "rgba(245, 158, 11, 0.12)",
-  amberBorder: "rgba(245, 158, 11, 0.35)",
+  amber: "#D97706",
+  amberLight: "#FFFBEB",
+  amberBorder: "#FDE68A",
 
-  blue: "#3B82F6",
-  blueLight: "rgba(59, 130, 246, 0.12)",
-  blueBorder: "rgba(59, 130, 246, 0.35)",
+  blue: "#2563EB",
+  blueLight: "#EFF6FF",
+  blueBorder: "#BFDBFE",
 
   // Status Indicators
-  active: "#10B981",
-  draft: "#F59E0B",
+  active: "#059669",
+  draft: "#D97706",
   closed: "#71717A",
 };
