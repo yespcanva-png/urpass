@@ -8,6 +8,7 @@ import {
   StatusBar,
   ScrollView,
 } from "react-native";
+import { Search, FlaskConical, ClipboardList } from "lucide-react-native";
 import { COLORS } from "../../constants/colors";
 import { useScanner } from "../../context/ScannerContext";
 import { useEvent } from "../../context/EventContext";
@@ -115,6 +116,7 @@ export function QRScannerScreen({ navigation }: { navigation?: any }) {
         <CameraViewfinder
           isTorchOn={isTorchOn}
           onToggleTorch={toggleTorch}
+          onBarcodeScanned={(code) => processQRCode(code)}
         >
           {/* Instant Scan Feedback Banner */}
           <View style={styles.bannerWrapper}>
@@ -139,24 +141,27 @@ export function QRScannerScreen({ navigation }: { navigation?: any }) {
         <TouchableOpacity
           style={styles.bottomActionBtn}
           onPress={() => navigation?.navigate("AttendeeSearch")}
+          activeOpacity={0.8}
         >
-          <Text style={styles.bottomActionIcon}>🔍</Text>
+          <Search size={18} color="#FFFFFF" />
           <Text style={styles.bottomActionText}>Lookup</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={[styles.bottomActionBtn, showSimPanel && styles.bottomActionBtnActive]}
           onPress={() => setShowSimPanel((prev) => !prev)}
+          activeOpacity={0.8}
         >
-          <Text style={styles.bottomActionIcon}>🧪</Text>
+          <FlaskConical size={18} color="#FFFFFF" />
           <Text style={styles.bottomActionText}>Test QR</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.bottomActionBtn}
           onPress={() => navigation?.navigate("ScanAuditLog")}
+          activeOpacity={0.8}
         >
-          <Text style={styles.bottomActionIcon}>📋</Text>
+          <ClipboardList size={18} color="#FFFFFF" />
           <Text style={styles.bottomActionText}>Audit</Text>
         </TouchableOpacity>
       </View>

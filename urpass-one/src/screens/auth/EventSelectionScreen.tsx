@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import {
   View,
   Text,
@@ -9,54 +9,82 @@ import {
   SafeAreaView,
   StatusBar,
 } from "react-native";
-import { ArrowLeft, CalendarDays, MapPin, Search } from "lucide-react-native";
-import { COLORS } from "../../constants/colors";
+import {
+  ArrowLeft,
+  Calendar,
+  CalendarDays,
+  MapPin,
+  Search,
+  ChevronRight,
+  Shield,
+  Layers,
+} from "lucide-react-native";
 import { useAuth } from "../../context/AuthContext";
 import { useEvent } from "../../context/EventContext";
-import { Badge } from "../../components/common/Badge";
 import type { EventSummary } from "../../types";
 
 interface EventSelectionScreenProps {
   navigation?: any;
 }
 
+function formatRole(role?: string): string {
+  if (!role) return "Gate Manager";
+  const map: Record<string, string> = {
+    super_admin: "Super Admin",
+    org_admin: "Organisation Admin",
+    event_manager: "Event Administrator",
+    gate_manager: "Gate Manager",
+    gate_staff: "Event Staff",
+    view_only_ops: "Viewer",
+  };
+  return (
+    map[role.toLowerCase()] ||
+    role.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
+  );
+}
+
 export function EventSelectionScreen({ navigation }: EventSelectionScreenProps) {
   const { user } = useAuth();
-  const { events, selectedOrg, selectedEvent, selectEvent, isLoading } = useEvent();
+  const { events, selectedOrg, selectEvent } = useEvent();
 
   const [activeTab, setActiveTab] = useState<"live" | "upcoming" | "past">("live");
   const [searchQuery, setSearchQuery] = useState("");
 
   const orgEvents = useMemo(() => {
     if (!selectedOrg) return events;
-    return events.filter((e) => !e.organizationId || e.organizationId === selectedOrg.id);
+    const list = events.filter((e) => !e.organizationId || e.organizationId === selectedOrg.id);
+    return list.length > 0 ? list : events;
   }, [events, selectedOrg]);
 
-  // Direct skip if only 1 active event is assigned
-  useEffect(() => {
-    if (orgEvents && orgEvents.length === 1 && orgEvents[0].status === "active") {
-      selectEvent(orgEvents[0].id);
-      navigation?.navigate("OperationsHome");
-    }
-  }, [orgEvents]);
+  const liveCount = useMemo(
+    () => orgEvents.filter((e) => e.status === "active").length,
+    [orgEvents]
+  );
+  const upcomingCount = useMemo(
+    () => orgEvents.filter((e) => e.status === "draft" || e.status === "published").length,
+    [orgEvents]
+  );
+  const pastCount = useMemo(
+    () => orgEvents.filter((e) => e.status === "completed" || e.status === "cancelled").length,
+    [orgEvents]
+  );
 
   const filteredEvents = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     return orgEvents.filter((ev) => {
-      // Search filter
       const matchesSearch =
         !q ||
         ev.name.toLowerCase().includes(q) ||
-        (ev.venue && ev.venue.toLowerCase().includes(q));
+        (ev.venue && ev.venue.toLowerCase().includes(q)) ||
+        ev.eventDate.toLowerCase().includes(q);
 
-      // Tab filter
       const isLive = ev.status === "active";
       const isPast = ev.status === "completed" || ev.status === "cancelled";
-      const isUpcoming = ev.status === "draft" || (!isLive && !isPast);
+      const isUpcoming = ev.status === "draft" || ev.status === "published" || (!isLive && !isPast);
 
       let matchesTab = true;
       if (activeTab === "live") matchesTab = isLive;
-      if (activeTab === "upcoming") matchesTab = isUpcoming || (isLive && ev.checkedInCount === 0);
+      if (activeTab === "upcoming") matchesTab = isUpcoming;
       if (activeTab === "past") matchesTab = isPast;
 
       return matchesSearch && matchesTab;
@@ -68,83 +96,141 @@ export function EventSelectionScreen({ navigation }: EventSelectionScreenProps) 
     navigation?.navigate("OperationsHome");
   }
 
-  return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" />
+  function handleGoBack() {
+    if (navigation?.canGoBack && navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      navigation?.navigate("OrgSelection");
+    }
+  }
 
-      {/* Top Navigation Row */}
+  function renderStatusBadge(status: string) {
+    const s = status.toLowerCase();
+    if (s === "active") {
+      return (
+        <View style={styles.statusLiveBadge}>
+          <View style={styles.liveDot} />
+          <Text style={styles.statusLiveText}>LIVE</Text>
+        </View>
+      );
+    }
+    if (s === "completed" || s === "cancelled") {
+      return (
+        <View style={styles.statusPastBadge}>
+          <Text style={styles.statusPastText}>PAST</Text>
+        </View>
+      );
+    }
+    return (
+      <View style={styles.statusUpcomingBadge}>
+        <Text style={styles.statusUpcomingText}>UPCOMING</Text>
+      </View>
+    );
+  }
+
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FAF8FC" />
+
+      {/* Top Header Bar */}
       <View style={styles.topBar}>
         <TouchableOpacity
-          onPress={() => navigation?.goBack()}
+          onPress={handleGoBack}
           style={styles.backButton}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          activeOpacity={0.7}
         >
-          <ArrowLeft size={14} color={COLORS.textSecondary} />
-          <Text style={styles.backButtonText}>Change Org</Text>
+          <ArrowLeft size={20} color="#0F172A" />
         </TouchableOpacity>
 
-        <View style={styles.orgTag}>
-          <Text style={styles.orgTagText} numberOfLines={1}>
-            {selectedOrg?.name || "Organisation"}
-          </Text>
-        </View>
+        {selectedOrg && (
+          <View style={styles.orgPill}>
+            <Text style={styles.orgPillText} numberOfLines={1}>
+              {selectedOrg.name}
+            </Text>
+          </View>
+        )}
       </View>
 
-      {/* Header Section */}
+      {/* Title Section */}
       <View style={styles.headerSection}>
+        <View style={styles.iconCircleBadge}>
+          <Calendar size={22} color="#6D28D9" strokeWidth={2.2} />
+        </View>
         <Text style={styles.headerTitle}>Select event</Text>
         <Text style={styles.headerSubtitle}>
-          Choose the event to start scanning passes and managing gates.
+          Choose the event you want to operate.
         </Text>
       </View>
 
-      {/* Search Bar */}
+      {/* Search Input Bar */}
       <View style={styles.searchContainer}>
         <View style={styles.searchWrapper}>
-          <Search size={16} color={COLORS.textMuted} style={styles.searchIcon} />
+          <Search size={16} color="#94A3B8" style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search events by name or venue..."
-            placeholderTextColor={COLORS.textLightMuted}
+            placeholder="Search events..."
+            placeholderTextColor="#94A3B8"
             value={searchQuery}
             onChangeText={setSearchQuery}
             clearButtonMode="while-editing"
             autoCapitalize="none"
+            autoCorrect={false}
           />
         </View>
       </View>
 
-      {/* Filter Tabs (Upcoming, Live, Past) */}
-      <View style={styles.tabBar}>
-        <TouchableOpacity
-          style={[styles.tabBtn, activeTab === "live" && styles.tabBtnActive]}
-          onPress={() => setActiveTab("live")}
-        >
-          <Text style={[styles.tabText, activeTab === "live" && styles.tabTextActive]}>
-            Live ({orgEvents.filter((e) => e.status === "active").length})
-          </Text>
-        </TouchableOpacity>
+      {/* Category Tabs: Live, Upcoming, Past */}
+      <View style={styles.tabsContainer}>
+        <View style={styles.tabsTrack}>
+          <TouchableOpacity
+            style={[styles.tabButton, activeTab === "live" && styles.tabButtonActive]}
+            onPress={() => setActiveTab("live")}
+            activeOpacity={0.8}
+          >
+            <Text
+              style={[
+                styles.tabButtonText,
+                activeTab === "live" && styles.tabButtonTextActive,
+              ]}
+            >
+              Live {liveCount > 0 ? `(${liveCount})` : ""}
+            </Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.tabBtn, activeTab === "upcoming" && styles.tabBtnActive]}
-          onPress={() => setActiveTab("upcoming")}
-        >
-          <Text style={[styles.tabText, activeTab === "upcoming" && styles.tabTextActive]}>
-            Upcoming
-          </Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tabButton, activeTab === "upcoming" && styles.tabButtonActive]}
+            onPress={() => setActiveTab("upcoming")}
+            activeOpacity={0.8}
+          >
+            <Text
+              style={[
+                styles.tabButtonText,
+                activeTab === "upcoming" && styles.tabButtonTextActive,
+              ]}
+            >
+              Upcoming {upcomingCount > 0 ? `(${upcomingCount})` : ""}
+            </Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.tabBtn, activeTab === "past" && styles.tabBtnActive]}
-          onPress={() => setActiveTab("past")}
-        >
-          <Text style={[styles.tabText, activeTab === "past" && styles.tabTextActive]}>
-            Past
-          </Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tabButton, activeTab === "past" && styles.tabButtonActive]}
+            onPress={() => setActiveTab("past")}
+            activeOpacity={0.8}
+          >
+            <Text
+              style={[
+                styles.tabButtonText,
+                activeTab === "past" && styles.tabButtonTextActive,
+              ]}
+            >
+              Past {pastCount > 0 ? `(${pastCount})` : ""}
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
-      {/* Event Cards FlatList */}
+      {/* Events List */}
       <FlatList
         data={filteredEvents}
         keyExtractor={(item) => item.id}
@@ -152,67 +238,69 @@ export function EventSelectionScreen({ navigation }: EventSelectionScreenProps) 
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <CalendarDays size={28} color={COLORS.textLightMuted} />
+            <View style={styles.emptyIconBadge}>
+              <CalendarDays size={24} color="#94A3B8" />
+            </View>
             <Text style={styles.emptyTitle}>No events in this view</Text>
             <Text style={styles.emptySubtitle}>
-              There are no events matching your filter. Try switching between Live, Upcoming and Past.
+              There are no {activeTab} events matching your search criteria.
             </Text>
           </View>
         }
         renderItem={({ item }) => {
-          const isSelected = selectedEvent?.id === item.id;
-          const isLive = item.status === "active";
-          const userRole = (user?.role || "Gate Manager").replace("_", " ").toUpperCase();
+          const userRole = formatRole(selectedOrg?.role || user?.role);
 
           return (
             <TouchableOpacity
-              style={[styles.eventCard, isSelected && styles.eventCardSelected]}
+              style={styles.eventCard}
               onPress={() => handleSelectEvent(item)}
-              activeOpacity={0.85}
+              activeOpacity={0.88}
             >
-              {/* Event Top Meta */}
-              <View style={styles.eventTop}>
-                <View style={styles.thumbnailBox}>
-                  <Text style={styles.thumbnailText}>{item.name.charAt(0)}</Text>
+              {/* Event Card Header Row */}
+              <View style={styles.cardHeaderRow}>
+                <View style={styles.avatarBox}>
+                  <Text style={styles.avatarText}>
+                    {item.name.charAt(0).toUpperCase()}
+                  </Text>
                 </View>
 
-                <View style={styles.titleColumn}>
-                  <Text style={styles.eventName} numberOfLines={2}>
+                <View style={styles.eventTitleGroup}>
+                  <Text style={styles.eventName} numberOfLines={1}>
                     {item.name}
                   </Text>
                   <View style={styles.metaRow}>
-                    <CalendarDays size={12} color={COLORS.textMuted} />
-                    <Text style={styles.eventDate}>{item.eventDate}</Text>
+                    <CalendarDays size={13} color="#64748B" />
+                    <Text style={styles.metaText}>{item.eventDate}</Text>
                   </View>
                 </View>
 
-                <Badge
-                  label={isLive ? "LIVE" : item.status.toUpperCase()}
-                  variant={isLive ? "green" : item.status === "draft" ? "blue" : "neutral"}
-                  size="sm"
-                />
+                {renderStatusBadge(item.status)}
               </View>
 
-              {/* Venue Row */}
-              <View style={styles.venueRow}>
-                <MapPin size={13} color={COLORS.textMuted} />
-                <Text style={styles.venueText} numberOfLines={1}>
-                  {item.venue || "Convention Center"}
-                </Text>
+              {/* Venue & Role Row */}
+              <View style={styles.cardDetailRow}>
+                <View style={styles.venueItem}>
+                  <MapPin size={13} color="#64748B" />
+                  <Text style={styles.venueText} numberOfLines={1}>
+                    {item.venue || "Main Convention Center"}
+                  </Text>
+                </View>
               </View>
 
-              {/* Footer Meta: Role & Gate Status */}
-              <View style={styles.eventFooter}>
-                <View style={styles.roleBox}>
-                  <Text style={styles.roleLabel}>ASSIGNED ROLE</Text>
-                  <Text style={styles.roleValue}>{userRole}</Text>
+              {/* Card Footer: Role & Action Chevron */}
+              <View style={styles.cardFooterRow}>
+                <View style={styles.roleChip}>
+                  <Shield size={11} color="#6D28D9" />
+                  <Text style={styles.roleChipText}>{userRole}</Text>
                 </View>
 
-                <View style={styles.liveStatBox}>
-                  <Text style={styles.statLabel}>ATTENDEES INSIDE</Text>
-                  <Text style={styles.statValue}>
-                    {item.currentlyInsideCount} / {item.approvedCount}
-                  </Text>
+                <View style={styles.arrowRow}>
+                  {item.status === "active" && (
+                    <Text style={styles.attendeesCountText}>
+                      {item.currentlyInsideCount.toLocaleString()} inside
+                    </Text>
+                  )}
+                  <ChevronRight size={18} color="#94A3B8" />
                 </View>
               </View>
             </TouchableOpacity>
@@ -224,255 +312,335 @@ export function EventSelectionScreen({ navigation }: EventSelectionScreenProps) 
 }
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: "#FAF8FC",
   },
   topBar: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 24,
-    paddingTop: 12,
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.surfaceBorderSubtle,
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    paddingBottom: 4,
   },
   backButton: {
-    flexDirection: "row",
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
     alignItems: "center",
-    gap: 4,
+    justifyContent: "center",
+  },
+  orgPill: {
+    backgroundColor: "#FAF5FF",
+    borderWidth: 1,
+    borderColor: "#EDE9FE",
+    paddingHorizontal: 12,
     paddingVertical: 5,
-    paddingHorizontal: 10,
-    backgroundColor: COLORS.surfaceAlt,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: COLORS.surfaceBorder,
-  },
-  backButtonText: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: COLORS.textSecondary,
-  },
-  orgTag: {
-    backgroundColor: COLORS.brandLight,
-    borderWidth: 1,
-    borderColor: COLORS.brandBorder,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
     borderRadius: 12,
-    maxWidth: 180,
+    maxWidth: 200,
   },
-  orgTagText: {
-    fontSize: 11,
-    fontWeight: "800",
-    color: COLORS.brand,
+  orgPillText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#6D28D9",
   },
+
+  /* Header Section */
   headerSection: {
+    alignItems: "center",
     paddingHorizontal: 24,
-    paddingTop: 20,
-    paddingBottom: 16,
+    paddingTop: 8,
+    paddingBottom: 18,
+  },
+  iconCircleBadge: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: "#FAF5FF",
+    borderWidth: 1,
+    borderColor: "#EDE9FE",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 12,
   },
   headerTitle: {
-    fontSize: 24,
-    fontWeight: "900",
-    color: COLORS.textPrimary,
-    letterSpacing: -0.5,
+    fontSize: 22,
+    fontWeight: "700",
+    color: "#0F172A",
+    letterSpacing: -0.4,
+    textAlign: "center",
   },
   headerSubtitle: {
-    fontSize: 13,
-    color: COLORS.textSecondary,
-    marginTop: 4,
+    fontSize: 14,
+    color: "#64748B",
+    marginTop: 6,
+    textAlign: "center",
+    lineHeight: 20,
   },
+
+  /* Search Bar */
   searchContainer: {
-    paddingHorizontal: 24,
+    paddingHorizontal: 20,
     paddingBottom: 12,
   },
   searchWrapper: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: COLORS.surfaceAlt,
+    backgroundColor: "#F8FAFC",
     borderWidth: 1,
-    borderColor: COLORS.surfaceBorder,
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    height: 46,
+    borderColor: "#E2E8F0",
+    borderRadius: 13,
+    paddingHorizontal: 14,
+    height: 48,
   },
   searchIcon: {
-    marginRight: 8,
+    marginRight: 10,
   },
   searchInput: {
     flex: 1,
-    fontSize: 13,
-    color: COLORS.textPrimary,
+    fontSize: 14,
+    color: "#0F172A",
     height: "100%",
   },
-  tabBar: {
+
+  /* Segmented Tabs */
+  tabsContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 16,
+  },
+  tabsTrack: {
     flexDirection: "row",
-    backgroundColor: COLORS.surfaceAlt,
+    backgroundColor: "#F1F5F9",
     borderRadius: 12,
     padding: 3,
-    marginHorizontal: 24,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: COLORS.surfaceBorder,
   },
-  tabBtn: {
+  tabButton: {
     flex: 1,
     paddingVertical: 8,
     alignItems: "center",
+    justifyContent: "center",
     borderRadius: 9,
   },
-  tabBtnActive: {
-    backgroundColor: COLORS.white,
-    shadowColor: "#000",
+  tabButtonActive: {
+    backgroundColor: "#FFFFFF",
+    shadowColor: "#0F172A",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.06,
     shadowRadius: 3,
-    elevation: 1,
+    elevation: 2,
   },
-  tabText: {
-    fontSize: 12,
+  tabButtonText: {
+    fontSize: 13,
+    fontWeight: "500",
+    color: "#64748B",
+  },
+  tabButtonTextActive: {
     fontWeight: "600",
-    color: COLORS.textSecondary,
+    color: "#6D28D9",
   },
-  tabTextActive: {
-    color: COLORS.brand,
-    fontWeight: "800",
-  },
+
+  /* List */
   listContent: {
-    paddingHorizontal: 24,
-    paddingBottom: 40,
+    paddingHorizontal: 20,
+    paddingBottom: 32,
     gap: 12,
-  },
-  emptyContainer: {
-    padding: 32,
-    alignItems: "center",
-    backgroundColor: COLORS.surfaceAlt,
-    borderWidth: 1,
-    borderColor: COLORS.surfaceBorder,
-    borderRadius: 16,
-    marginTop: 10,
-  },
-  emptyTitle: {
-    fontSize: 15,
-    fontWeight: "800",
-    color: COLORS.textPrimary,
-  },
-  emptySubtitle: {
-    fontSize: 12,
-    color: COLORS.textSecondary,
-    textAlign: "center",
-    marginTop: 4,
-    lineHeight: 17,
   },
   eventCard: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: COLORS.surfaceBorder,
+    borderColor: "#F1F5F9",
     borderRadius: 16,
     padding: 16,
-    shadowColor: "#000",
+    shadowColor: "#0F172A",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.03,
-    shadowRadius: 4,
+    shadowRadius: 6,
     elevation: 1,
   },
-  eventCardSelected: {
-    borderColor: COLORS.brand,
-    backgroundColor: COLORS.brandLight,
-  },
-  eventTop: {
+  cardHeaderRow: {
     flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 12,
+    alignItems: "center",
+    marginBottom: 10,
   },
-  thumbnailBox: {
+  avatarBox: {
     width: 44,
     height: 44,
     borderRadius: 12,
-    backgroundColor: COLORS.brandLight,
+    backgroundColor: "#FAF5FF",
     borderWidth: 1,
-    borderColor: COLORS.brandBorder,
+    borderColor: "#EDE9FE",
     alignItems: "center",
     justifyContent: "center",
+    marginRight: 12,
   },
-  thumbnailText: {
-    fontSize: 18,
-    fontWeight: "900",
-    color: COLORS.brand,
+  avatarText: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#6D28D9",
   },
-  titleColumn: {
+  eventTitleGroup: {
     flex: 1,
-    paddingRight: 6,
+    paddingRight: 8,
   },
   eventName: {
     fontSize: 15,
-    fontWeight: "800",
-    color: COLORS.textPrimary,
-    lineHeight: 20,
-  },
-  eventDate: {
-    fontSize: 11,
-    color: COLORS.textMuted,
+    fontWeight: "600",
+    color: "#0F172A",
+    letterSpacing: -0.2,
+    marginBottom: 2,
   },
   metaRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
-    marginTop: 3,
+    gap: 5,
   },
-  venueRow: {
+  metaText: {
+    fontSize: 12,
+    color: "#64748B",
+  },
+
+  /* Status Badges */
+  statusLiveBadge: {
     flexDirection: "row",
     alignItems: "center",
+    backgroundColor: "#ECFDF5",
+    borderWidth: 1,
+    borderColor: "#D1FAE5",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
     gap: 5,
-    marginTop: 10,
-    marginBottom: 12,
+  },
+  liveDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: "#059669",
+  },
+  statusLiveText: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: "#059669",
+    letterSpacing: 0.3,
+  },
+  statusUpcomingBadge: {
+    backgroundColor: "#EFF6FF",
+    borderWidth: 1,
+    borderColor: "#DBEAFE",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  statusUpcomingText: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: "#2563EB",
+    letterSpacing: 0.3,
+  },
+  statusPastBadge: {
+    backgroundColor: "#F1F5F9",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  statusPastText: {
+    fontSize: 10,
+    fontWeight: "600",
+    color: "#64748B",
+    letterSpacing: 0.3,
+  },
+
+  /* Venue Row */
+  cardDetailRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 6,
+    borderTopWidth: 1,
+    borderTopColor: "#F8FAFC",
+  },
+  venueItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    flex: 1,
   },
   venueText: {
-    flex: 1,
     fontSize: 12,
-    color: COLORS.textSecondary,
+    color: "#64748B",
   },
-  eventFooter: {
+
+  /* Card Footer */
+  cardFooterRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    backgroundColor: COLORS.surfaceAlt,
+    justifyContent: "space-between",
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: "#F1F5F9",
+  },
+  roleChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FAF5FF",
     borderWidth: 1,
-    borderColor: COLORS.surfaceBorder,
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    borderColor: "#EDE9FE",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    gap: 4,
   },
-  roleBox: {
-    flex: 1,
-  },
-  roleLabel: {
-    fontSize: 9,
-    fontWeight: "800",
-    color: COLORS.textMuted,
-    letterSpacing: 0.6,
-  },
-  roleValue: {
+  roleChipText: {
     fontSize: 11,
-    fontWeight: "700",
-    color: COLORS.brand,
-    marginTop: 1,
+    fontWeight: "600",
+    color: "#6D28D9",
   },
-  liveStatBox: {
-    alignItems: "flex-end",
+  arrowRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
   },
-  statLabel: {
-    fontSize: 9,
-    fontWeight: "800",
-    color: COLORS.textMuted,
-    letterSpacing: 0.6,
-  },
-  statValue: {
+  attendeesCountText: {
     fontSize: 11,
-    fontWeight: "800",
-    color: COLORS.textPrimary,
-    marginTop: 1,
+    fontWeight: "500",
+    color: "#059669",
+  },
+
+  /* Empty State */
+  emptyContainer: {
+    padding: 32,
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#F1F5F9",
+    borderRadius: 16,
+    marginTop: 12,
+  },
+  emptyIconBadge: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "#F8FAFC",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 12,
+  },
+  emptyTitle: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#0F172A",
+    marginBottom: 4,
+  },
+  emptySubtitle: {
+    fontSize: 13,
+    color: "#64748B",
+    textAlign: "center",
+    lineHeight: 18,
   },
 });

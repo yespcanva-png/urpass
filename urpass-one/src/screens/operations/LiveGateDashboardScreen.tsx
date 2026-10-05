@@ -9,6 +9,7 @@ import {
   StatusBar,
   Alert,
 } from "react-native";
+import { Lock, Unlock, RefreshCw } from "lucide-react-native";
 import { COLORS } from "../../constants/colors";
 import { useEvent } from "../../context/EventContext";
 import { useAuth } from "../../context/AuthContext";
@@ -126,7 +127,7 @@ export function LiveGateDashboardScreen({ navigation }: LiveGateDashboardScreenP
                 <View style={styles.gateHeader}>
                   <View style={styles.gateTitleGroup}>
                     <Text style={styles.gateName}>{gate.name}</Text>
-                    <Text style={styles.gateZone}>📍 Zone: {gate.zoneName || "General Area"}</Text>
+                    <Text style={styles.gateZone}>Zone: {gate.zoneName || "General Area"}</Text>
                   </View>
                   <Badge
                     label={gate.status.toUpperCase()}
@@ -170,18 +171,26 @@ export function LiveGateDashboardScreen({ navigation }: LiveGateDashboardScreenP
                       gate.status === "open" ? styles.btnDanger : styles.btnSuccess,
                     ]}
                     onPress={() => handleToggleStatus(gate.id, gate.status)}
+                    activeOpacity={0.8}
                   >
+                    {gate.status === "open" ? (
+                      <Lock size={12} color="#FFFFFF" />
+                    ) : (
+                      <Unlock size={12} color="#FFFFFF" />
+                    )}
                     <Text style={styles.controlBtnText}>
-                      {gate.status === "open" ? "🔒 Close Gate" : "🔓 Open Gate"}
+                      {gate.status === "open" ? "Close Gate" : "Open Gate"}
                     </Text>
                   </TouchableOpacity>
 
                   <TouchableOpacity
                     style={styles.controlBtnSecondary}
                     onPress={() => handleModeChange(gate.id, gate.mode)}
+                    activeOpacity={0.8}
                   >
+                    <RefreshCw size={11} color="#6D28D9" />
                     <Text style={styles.controlBtnSecText}>
-                      Mode: {gate.mode.toUpperCase()} 🔄
+                      Mode: {gate.mode.toUpperCase()}
                     </Text>
                   </TouchableOpacity>
 
@@ -369,6 +378,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   controlBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 8,
@@ -389,6 +401,9 @@ const styles = StyleSheet.create({
     color: COLORS.textPrimary,
   },
   controlBtnSecondary: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
     backgroundColor: COLORS.surfaceAlt,
     borderWidth: 1,
     borderColor: COLORS.surfaceBorder,

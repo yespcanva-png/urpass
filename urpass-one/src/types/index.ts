@@ -34,6 +34,7 @@ export interface OrganizationSummary {
   role: UserRole;
   logoUrl?: string;
   eventsCount: number;
+  status?: "active" | "suspended" | "pending" | "invitation_pending";
 }
 
 export interface EventSummary {

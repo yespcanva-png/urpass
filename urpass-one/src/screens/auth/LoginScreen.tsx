@@ -27,6 +27,7 @@ import {
   EyeOff,
 } from "lucide-react-native";
 import { useAuth } from "../../context/AuthContext";
+import { SupabaseOpsService } from "../../services/supabaseService";
 
 interface LoginScreenProps {
   navigation?: any;
@@ -56,7 +57,7 @@ function GoogleIcon() {
 }
 
 export function LoginScreen({ navigation }: LoginScreenProps) {
-  const { loginWithPassword, loginWithOtp } = useAuth();
+  const { loginWithPassword, loginWithGoogle, loginWithOtp } = useAuth();
 
   const [authMode, setAuthMode] = useState<"standard" | "sso">("standard");
   const [email, setEmail] = useState("");
@@ -101,25 +102,13 @@ export function LoginScreen({ navigation }: LoginScreenProps) {
     setServerError("");
     setGoogleLoading(true);
     try {
-      Alert.alert(
-        "Google Workspace",
-        "Sign in with your Google Workspace organizer account.",
-        [
-          { text: "Cancel", style: "cancel", onPress: () => setGoogleLoading(false) },
-          {
-            text: "Continue",
-            onPress: async () => {
-              const demoEmail = "ops.lead@urpass.space";
-              const ok = await loginWithOtp(demoEmail);
-              setGoogleLoading(false);
-              if (ok) {
-                navigation?.navigate("OrgSelection");
-              }
-            },
-          },
-        ]
-      );
+      const res = await loginWithGoogle();
+      if (!res.success) {
+        setServerError(res.error || "Google sign-in could not be completed.");
+      }
     } catch {
+      setServerError("Google sign-in could not be completed.");
+    } finally {
       setGoogleLoading(false);
     }
   }
@@ -133,22 +122,32 @@ export function LoginScreen({ navigation }: LoginScreenProps) {
     }
 
     setSsoLoading(true);
-    setTimeout(() => {
-      setSsoLoading(false);
-      Alert.alert(
-        "Enterprise SSO",
-        `Routing @${trimmedEmail.split("@")[1]} to corporate SAML 2.0 / OIDC Identity Provider (Okta / Entra ID / Google Workspace).`,
-        [
-          {
-            text: "Authenticate",
-            onPress: async () => {
-              await loginWithOtp(trimmedEmail);
-              navigation?.navigate("OrgSelection");
+    try {
+      const ssoRes = await SupabaseOpsService.lookupSSO(trimmedEmail);
+      if (ssoRes.ssoAvailable && ssoRes.loginUrl) {
+        Alert.alert(
+          "Enterprise SSO",
+          `Redirecting to ${ssoRes.orgName || "Enterprise"} Identity Provider (${ssoRes.protocol || "SAML 2.0"}).`,
+          [
+            {
+              text: "Authenticate",
+              onPress: async () => {
+                await loginWithOtp(trimmedEmail);
+                navigation?.navigate("OrgSelection");
+              },
             },
-          },
-        ]
-      );
-    }, 600);
+          ]
+        );
+      } else {
+        // Direct IdP routing
+        await loginWithOtp(trimmedEmail);
+        navigation?.navigate("OrgSelection");
+      }
+    } catch (err: any) {
+      setServerError(err?.message || "Failed to initiate Enterprise SSO.");
+    } finally {
+      setSsoLoading(false);
+    }
   }
 
   function handleForgotPassword() {

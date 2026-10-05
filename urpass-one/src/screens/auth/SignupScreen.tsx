@@ -27,6 +27,7 @@ import {
   EyeOff,
 } from "lucide-react-native";
 import { useAuth } from "../../context/AuthContext";
+import { SupabaseOpsService } from "../../services/supabaseService";
 
 interface SignupScreenProps {
   navigation?: any;
@@ -56,7 +57,7 @@ function GoogleIcon() {
 }
 
 export function SignupScreen({ navigation }: SignupScreenProps) {
-  const { signUp, loginWithOtp } = useAuth();
+  const { signUp, loginWithGoogle, loginWithOtp } = useAuth();
 
   const [authMode, setAuthMode] = useState<"standard" | "sso">("standard");
   const [fullName, setFullName] = useState("");
@@ -112,25 +113,13 @@ export function SignupScreen({ navigation }: SignupScreenProps) {
     setServerError("");
     setGoogleLoading(true);
     try {
-      Alert.alert(
-        "Google Workspace",
-        "Sign up with your Google account to create your organizer workspace.",
-        [
-          { text: "Cancel", style: "cancel", onPress: () => setGoogleLoading(false) },
-          {
-            text: "Continue",
-            onPress: async () => {
-              const demoEmail = "organizer.lead@urpass.space";
-              const ok = await loginWithOtp(demoEmail);
-              setGoogleLoading(false);
-              if (ok) {
-                navigation?.navigate("OrgSelection");
-              }
-            },
-          },
-        ]
-      );
+      const res = await loginWithGoogle();
+      if (!res.success) {
+        setServerError(res.error || "Google sign-up could not be completed.");
+      }
     } catch {
+      setServerError("Google sign-up could not be completed.");
+    } finally {
       setGoogleLoading(false);
     }
   }
@@ -144,22 +133,31 @@ export function SignupScreen({ navigation }: SignupScreenProps) {
     }
 
     setSsoLoading(true);
-    setTimeout(() => {
-      setSsoLoading(false);
-      Alert.alert(
-        "Enterprise SSO Registration",
-        `Routing @${trimmedEmail.split("@")[1]} to corporate SAML 2.0 / OIDC Identity Provider for auto-provisioning.`,
-        [
-          {
-            text: "Continue to IdP",
-            onPress: async () => {
-              await loginWithOtp(trimmedEmail);
-              navigation?.navigate("OrgSelection");
+    try {
+      const ssoRes = await SupabaseOpsService.lookupSSO(trimmedEmail);
+      if (ssoRes.ssoAvailable && ssoRes.loginUrl) {
+        Alert.alert(
+          "Enterprise SSO Registration",
+          `Routing @${trimmedEmail.split("@")[1]} to corporate SAML 2.0 / OIDC Identity Provider (${ssoRes.orgName || "Enterprise"}) for auto-provisioning.`,
+          [
+            {
+              text: "Continue to IdP",
+              onPress: async () => {
+                await loginWithOtp(trimmedEmail);
+                navigation?.navigate("OrgSelection");
+              },
             },
-          },
-        ]
-      );
-    }, 600);
+          ]
+        );
+      } else {
+        await loginWithOtp(trimmedEmail);
+        navigation?.navigate("OrgSelection");
+      }
+    } catch (err: any) {
+      setServerError(err?.message || "Failed to verify SSO domain.");
+    } finally {
+      setSsoLoading(false);
+    }
   }
 
   // Email Confirmation State Screen (matching web app/signup/page.tsx)

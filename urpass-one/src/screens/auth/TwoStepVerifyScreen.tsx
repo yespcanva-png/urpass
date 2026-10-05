@@ -11,16 +11,15 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import {
-  AlertTriangle,
   ArrowLeft,
   Check,
   ShieldCheck,
-  Shield,
+  AlertCircle,
   Ticket,
 } from "lucide-react-native";
-import { COLORS } from "../../constants/colors";
 import { useAuth } from "../../context/AuthContext";
 import { useEvent } from "../../context/EventContext";
 
@@ -55,7 +54,6 @@ export function TwoStepVerifyScreen({ route, navigation }: TwoStepVerifyScreenPr
   function handleDigitChange(text: string, index: number) {
     setErrorMsg("");
 
-    // Handle full paste
     if (text.length > 1) {
       const pasted = text.replace(/[^0-9]/g, "").slice(0, 6).split("");
       const newDigits = [...otpDigits];
@@ -99,28 +97,12 @@ export function TwoStepVerifyScreen({ route, navigation }: TwoStepVerifyScreenPr
       const success = await verifyOtp(targetEmail, otpCode);
 
       if (success) {
-        // Smart Enterprise Auth Routing
-        // 1. If multiple organizations, navigate to OrgSelection (Screen 4)
-        if (organizations && organizations.length > 1) {
-          navigation?.navigate("OrgSelection");
-        } else {
-          // 2. If single organization but multiple events, navigate to EventSelection (Screen 5)
-          if (events && events.length > 1) {
-            navigation?.navigate("EventSelection");
-          } else {
-            // 3. Single active event -> Direct entry to dashboard
-            navigation?.navigate("OperationsHome");
-          }
-        }
+        navigation?.navigate("OrgSelection");
       } else {
-        if (otpCode === "000000") {
-          setErrorMsg("This code has expired. Request a new one.");
-        } else {
-          setErrorMsg("That verification code is incorrect.");
-        }
+        setErrorMsg("That verification code is incorrect or expired.");
       }
     } catch {
-      setErrorMsg("That verification code is incorrect.");
+      setErrorMsg("That verification code is incorrect or expired.");
     } finally {
       setIsVerifying(false);
     }
@@ -141,13 +123,14 @@ export function TwoStepVerifyScreen({ route, navigation }: TwoStepVerifyScreenPr
   function handleAlternativeMethod() {
     Alert.alert(
       "Alternative Verification",
-      "Use the production email code sent to your account, or contact your organisation administrator if you need another verified sign-in method."
+      "Use your registered email or contact your organisation administrator for assistance."
     );
   }
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle="dark-content" backgroundColor="#FAF8FC" />
+
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={styles.keyboardView}
@@ -157,50 +140,50 @@ export function TwoStepVerifyScreen({ route, navigation }: TwoStepVerifyScreenPr
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Header Row */}
+          {/* Top Row: Back + URPASS */}
           <View style={styles.topRow}>
             <TouchableOpacity
-              onPress={() => navigation?.goBack()}
+              onPress={() => navigation?.goBack?.() || navigation?.navigate("SignIn")}
               style={styles.backButton}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
             >
-              <ArrowLeft size={14} color={COLORS.textSecondary} />
+              <ArrowLeft size={14} color="#94A3B8" />
               <Text style={styles.backButtonText}>Back</Text>
             </TouchableOpacity>
 
-            <View style={styles.logoBadge}>
-              <View style={styles.ticketIconBox}>
-                <Ticket size={15} color={COLORS.brand} />
-              </View>
-              <Text style={styles.logoWordmark}>URPASS</Text>
+            <View style={styles.brandRow}>
+              <Ticket size={16} color="#6D28D9" />
+              <Text style={styles.brandWordmark}>URPASS</Text>
             </View>
+
+            <View style={styles.headerRightSpacer} />
           </View>
 
           {/* Main Card */}
-          <View style={styles.mainCard}>
+          <View style={styles.card}>
             {/* Header Group */}
-            <View style={styles.headerGroup}>
+            <View style={styles.cardHeader}>
               <View style={styles.shieldBadge}>
-                <ShieldCheck size={13} color={COLORS.brand} />
-                <Text style={styles.shieldText}>2-STEP VERIFICATION</Text>
+                <ShieldCheck size={14} color="#6D28D9" />
+                <Text style={styles.shieldText}>TWO-STEP VERIFICATION</Text>
               </View>
-              <Text style={styles.headerTitle}>Verify your identity</Text>
-              <Text style={styles.headerSubtext}>
-                Enter the verification code sent to your registered email or mobile number.
+              <Text style={styles.cardTitle}>Verify your identity</Text>
+              <Text style={styles.cardSubtitle}>
+                Enter the verification code sent to{"\n"}
+                <Text style={styles.targetEmail}>{targetEmail}</Text>
               </Text>
-              <Text style={styles.targetEmailText}>{targetEmail}</Text>
             </View>
 
             {/* Error Banner */}
-            {errorMsg ? (
+            {!!errorMsg && (
               <View style={styles.errorBanner}>
-                <AlertTriangle size={16} color={COLORS.red} style={styles.errorIcon} />
+                <AlertCircle size={15} color="#EF4444" style={{ marginTop: 1 }} />
                 <Text style={styles.errorText}>{errorMsg}</Text>
               </View>
-            ) : null}
+            )}
 
-            {/* 6-Digit OTP Cells */}
-            <View style={styles.otpContainer}>
+            {/* 6-Digit OTP Input */}
+            <View style={styles.otpRow}>
               {otpDigits.map((digit, index) => (
                 <TextInput
                   key={index}
@@ -230,30 +213,32 @@ export function TwoStepVerifyScreen({ route, navigation }: TwoStepVerifyScreenPr
               activeOpacity={0.8}
             >
               <View style={[styles.checkbox, enableBiometrics && styles.checkboxActive]}>
-                {enableBiometrics && <Check size={13} color={COLORS.white} />}
+                {enableBiometrics && <Check size={12} color="#FFFFFF" />}
               </View>
               <View style={styles.biometricTextBox}>
                 <Text style={styles.biometricTitle}>Remember this device</Text>
                 <Text style={styles.biometricSubtitle}>
-                  Enable Face ID / Fingerprint unlock for rapid station access
+                  Enable rapid station biometric unlock
                 </Text>
               </View>
             </TouchableOpacity>
 
-            {/* Primary Action CTA */}
+            {/* Primary Action Button */}
             <TouchableOpacity
-              style={styles.verifyButton}
+              style={[styles.submitButton, (isVerifying || isLoading) && styles.submitButtonDisabled]}
               onPress={handleVerify}
               disabled={isVerifying || isLoading}
               activeOpacity={0.88}
             >
-              <Text style={styles.verifyButtonText}>
-                {isVerifying || isLoading ? "Verifying..." : "Verify & Continue"}
-              </Text>
+              {isVerifying || isLoading ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <Text style={styles.submitButtonText}>Verify &amp; Continue</Text>
+              )}
             </TouchableOpacity>
 
-            {/* Resend & Alternative Actions */}
-            <View style={styles.secondaryActionsContainer}>
+            {/* Resend & Alternative Action Links */}
+            <View style={styles.actionsFooter}>
               <TouchableOpacity
                 onPress={handleResendCode}
                 disabled={resendCooldown > 0}
@@ -275,25 +260,21 @@ export function TwoStepVerifyScreen({ route, navigation }: TwoStepVerifyScreenPr
                 onPress={handleAlternativeMethod}
                 style={styles.altMethodBtn}
               >
-                <Text style={styles.altMethodText}>
-                  Use another verification method
-                </Text>
+                <Text style={styles.altMethodText}>Use another verification method</Text>
               </TouchableOpacity>
             </View>
 
             {/* Security Guarantee Note */}
             <View style={styles.securityNoteRow}>
-              <Shield size={14} color={COLORS.textMuted} />
+              <ShieldCheck size={13} color="#94A3B8" />
               <Text style={styles.securityNoteText}>
                 Your account is protected with two-step verification.
               </Text>
             </View>
-
-            {/* Device Telemetry Identifier */}
-            <View style={styles.deviceRow}>
-              <Text style={styles.deviceText}>Hardware Station ID: {deviceId}</Text>
-            </View>
           </View>
+
+          {/* Hardware ID Footer */}
+          <Text style={styles.hardwareIdText}>Station ID: {deviceId}</Text>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -303,81 +284,80 @@ export function TwoStepVerifyScreen({ route, navigation }: TwoStepVerifyScreenPr
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: "#FAF8FC",
   },
   keyboardView: {
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: 24,
+    flexGrow: 1,
+    paddingHorizontal: 20,
     paddingTop: 16,
-    paddingBottom: 40,
+    paddingBottom: 32,
+    justifyContent: "center",
+    alignItems: "center",
   },
   topRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    width: "100%",
+    maxWidth: 440,
     marginBottom: 24,
   },
   backButton: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
+    gap: 6,
     paddingVertical: 6,
-    paddingHorizontal: 10,
-    backgroundColor: COLORS.surfaceAlt,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: COLORS.surfaceBorder,
+    paddingHorizontal: 4,
   },
   backButtonText: {
     fontSize: 12,
-    fontWeight: "700",
-    color: COLORS.textSecondary,
+    fontWeight: "500",
+    color: "#94A3B8",
   },
-  logoBadge: {
+  brandRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: 6,
   },
-  ticketIconBox: {
-    width: 28,
-    height: 28,
-    borderRadius: 7,
-    backgroundColor: COLORS.brandLight,
-    borderWidth: 1,
-    borderColor: COLORS.brandBorder,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  logoWordmark: {
-    fontSize: 15,
-    fontWeight: "900",
+  brandWordmark: {
+    fontSize: 14,
+    fontWeight: "800",
     letterSpacing: 2,
-    color: COLORS.textPrimary,
+    color: "#0F172A",
+    textTransform: "uppercase",
   },
-  mainCard: {
-    backgroundColor: COLORS.surface,
+  headerRightSpacer: {
+    width: 48,
+  },
+
+  /* Card */
+  card: {
+    width: "100%",
+    maxWidth: 440,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 28,
     borderWidth: 1,
-    borderColor: COLORS.surfaceBorder,
-    borderRadius: 20,
+    borderColor: "#F1F1F4",
     padding: 24,
-    shadowColor: COLORS.brand,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.05,
-    shadowRadius: 18,
-    elevation: 2,
+    shadowColor: "#6D28D9",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 24,
+    elevation: 4,
   },
-  headerGroup: {
+  cardHeader: {
     marginBottom: 20,
   },
   shieldBadge: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    backgroundColor: COLORS.brandLight,
+    backgroundColor: "rgba(109,40,217,0.06)",
     borderWidth: 1,
-    borderColor: COLORS.brandBorder,
+    borderColor: "rgba(109,40,217,0.18)",
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 20,
@@ -385,156 +365,164 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   shieldText: {
-    fontSize: 9,
-    fontWeight: "800",
-    color: COLORS.brand,
+    fontSize: 10,
+    fontWeight: "700",
+    color: "#6D28D9",
     letterSpacing: 0.8,
   },
-  headerTitle: {
+  cardTitle: {
     fontSize: 24,
-    fontWeight: "900",
-    color: COLORS.textPrimary,
+    fontWeight: "600",
+    color: "#0F172A",
     letterSpacing: -0.5,
   },
-  headerSubtext: {
-    fontSize: 13,
-    color: COLORS.textSecondary,
-    marginTop: 4,
-    lineHeight: 18,
-  },
-  targetEmailText: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: COLORS.brand,
+  cardSubtitle: {
+    fontSize: 14,
+    color: "#64748B",
     marginTop: 6,
+    lineHeight: 20,
   },
+  targetEmail: {
+    color: "#0F172A",
+    fontWeight: "600",
+  },
+
+  /* Error Banner */
   errorBanner: {
     flexDirection: "row",
     alignItems: "flex-start",
-    backgroundColor: COLORS.redLight,
-    borderWidth: 1,
-    borderColor: COLORS.redBorder,
+    backgroundColor: "#FEF2F2",
     borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#FEE2E2",
     padding: 12,
     marginBottom: 16,
     gap: 8,
   },
-  errorIcon: {
-    marginTop: 1,
-  },
   errorText: {
-    flex: 1,
     fontSize: 12,
-    color: COLORS.red,
-    fontWeight: "600",
-    lineHeight: 17,
+    color: "#DC2626",
+    lineHeight: 16,
   },
-  otpContainer: {
+
+  /* OTP Cells */
+  otpRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     gap: 8,
-    marginBottom: 20,
+    marginBottom: 18,
   },
   otpCell: {
     flex: 1,
-    height: 52,
-    backgroundColor: COLORS.surfaceAlt,
-    borderWidth: 1.5,
-    borderColor: COLORS.surfaceBorder,
+    height: 50,
+    backgroundColor: "#F8FAFC",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
     borderRadius: 12,
-    fontSize: 22,
-    fontWeight: "900",
-    color: COLORS.textPrimary,
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#0F172A",
     textAlign: "center",
   },
   otpCellFilled: {
-    borderColor: COLORS.brand,
-    backgroundColor: COLORS.white,
+    borderColor: "#6D28D9",
+    backgroundColor: "#FFFFFF",
   },
   otpCellFocused: {
-    borderColor: COLORS.brandAccent,
-    backgroundColor: COLORS.white,
+    borderColor: "#6D28D9",
+    backgroundColor: "#FFFFFF",
   },
+
+  /* Biometrics */
   biometricRow: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: COLORS.surfaceAlt,
+    backgroundColor: "#F8FAFC",
     borderWidth: 1,
-    borderColor: COLORS.surfaceBorder,
+    borderColor: "#E2E8F0",
     borderRadius: 12,
     padding: 12,
     marginBottom: 20,
-    gap: 12,
+    gap: 10,
   },
   checkbox: {
-    width: 20,
-    height: 20,
-    borderRadius: 6,
+    width: 18,
+    height: 18,
+    borderRadius: 5,
     borderWidth: 1.5,
-    borderColor: COLORS.surfaceBorderStrong,
-    backgroundColor: COLORS.white,
+    borderColor: "#CBD5E1",
+    backgroundColor: "#FFFFFF",
     alignItems: "center",
     justifyContent: "center",
   },
   checkboxActive: {
-    backgroundColor: COLORS.brand,
-    borderColor: COLORS.brand,
+    backgroundColor: "#6D28D9",
+    borderColor: "#6D28D9",
   },
   biometricTextBox: {
     flex: 1,
   },
   biometricTitle: {
     fontSize: 12,
-    fontWeight: "800",
-    color: COLORS.textPrimary,
+    fontWeight: "600",
+    color: "#0F172A",
   },
   biometricSubtitle: {
-    fontSize: 10,
-    color: COLORS.textMuted,
-    marginTop: 2,
+    fontSize: 11,
+    color: "#64748B",
+    marginTop: 1,
   },
-  verifyButton: {
+
+  /* Submit Button */
+  submitButton: {
+    width: "100%",
     height: 50,
-    backgroundColor: COLORS.brand,
-    borderRadius: 14,
+    backgroundColor: "#6D28D9",
+    borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: COLORS.brand,
+    shadowColor: "#6D28D9",
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.25,
     shadowRadius: 8,
     elevation: 3,
   },
-  verifyButtonText: {
-    fontSize: 15,
-    fontWeight: "800",
-    color: COLORS.white,
+  submitButtonDisabled: {
+    opacity: 0.60,
   },
-  secondaryActionsContainer: {
+  submitButtonText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+
+  /* Actions */
+  actionsFooter: {
     alignItems: "center",
-    gap: 12,
+    gap: 10,
     marginTop: 18,
   },
   resendBtn: {
     paddingVertical: 4,
   },
   resendText: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: COLORS.brand,
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#6D28D9",
   },
   resendTextDisabled: {
-    color: COLORS.textMuted,
+    color: "#94A3B8",
   },
   altMethodBtn: {
     paddingVertical: 4,
   },
   altMethodText: {
     fontSize: 12,
-    fontWeight: "600",
-    color: COLORS.textSecondary,
+    color: "#64748B",
     textDecorationLine: "underline",
   },
+
+  /* Security note */
   securityNoteRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -542,21 +530,19 @@ const styles = StyleSheet.create({
     marginTop: 20,
     paddingTop: 16,
     borderTopWidth: 1,
-    borderTopColor: COLORS.surfaceBorderSubtle,
+    borderTopColor: "#F1F5F9",
     gap: 6,
   },
   securityNoteText: {
     fontSize: 11,
-    color: COLORS.textMuted,
-    fontWeight: "600",
+    color: "#94A3B8",
   },
-  deviceRow: {
-    marginTop: 10,
-    alignItems: "center",
-  },
-  deviceText: {
-    fontSize: 10,
-    color: COLORS.textLightMuted,
-    fontWeight: "600",
+
+  /* Footer */
+  hardwareIdText: {
+    fontSize: 11,
+    color: "#94A3B8",
+    marginTop: 24,
+    textAlign: "center",
   },
 });

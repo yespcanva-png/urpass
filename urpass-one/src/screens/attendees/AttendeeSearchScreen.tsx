@@ -11,6 +11,7 @@ import {
   StatusBar,
   Alert,
 } from "react-native";
+import { Building2 } from "lucide-react-native";
 import { COLORS } from "../../constants/colors";
 import { useEvent } from "../../context/EventContext";
 import { useAuth } from "../../context/AuthContext";
@@ -209,7 +210,12 @@ export function AttendeeSearchScreen({ navigation }: { navigation?: any }) {
                 </View>
 
                 <Text style={styles.attendeeEmail}>{item.email}</Text>
-                {item.company && <Text style={styles.companyText}>🏢 {item.company}</Text>}
+                {item.company && (
+                  <View style={styles.companyRow}>
+                    <Building2 size={11} color="#64748B" />
+                    <Text style={styles.companyText}>{item.company}</Text>
+                  </View>
+                )}
 
                 <Text style={styles.attendeeTicket}>
                   {item.ticketNumber || item.registrationId || "Pass"} • {item.ticketName}
@@ -234,7 +240,7 @@ export function AttendeeSearchScreen({ navigation }: { navigation?: any }) {
                 disabled={isLoading}
               >
                 <Text style={styles.quickCheckinText}>
-                  {isLoading ? "..." : isInside ? "Out 🚪" : "In ⚡"}
+                  {isLoading ? "..." : isInside ? "Check-Out" : "Check-In"}
                 </Text>
               </TouchableOpacity>
             </TouchableOpacity>
@@ -381,10 +387,15 @@ const styles = StyleSheet.create({
     color: COLORS.textMuted,
     marginTop: 4,
   },
+  companyRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginTop: 2,
+  },
   companyText: {
     fontSize: 11,
     color: COLORS.textMuted,
-    marginTop: 2,
   },
   tagsRow: {
     flexDirection: "row",

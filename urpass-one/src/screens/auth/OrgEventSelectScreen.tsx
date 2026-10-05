@@ -133,7 +133,7 @@ export function OrgEventSelectScreen({ navigation }: OrgEventSelectScreenProps) 
                   </View>
 
                   <Text style={styles.eventVenue}>
-                    📍 {evt.venue || "Convention Center"} • {evt.eventDate}
+                    {evt.venue || "Convention Center"} • {evt.eventDate}
                   </Text>
 
                   <View style={styles.kpiRow}>
@@ -185,7 +185,7 @@ export function OrgEventSelectScreen({ navigation }: OrgEventSelectScreenProps) 
                         size="sm"
                       />
                     </View>
-                    <Text style={styles.gateZone}>📍 Zone: {gate.zoneName || "Main Entrance"}</Text>
+                    <Text style={styles.gateZone}>Zone: {gate.zoneName || "Main Entrance"}</Text>
                     <View style={styles.gateMetaRow}>
                       <Text style={styles.gateMeta}>Mode: {gate.mode.toUpperCase()}</Text>
                       <Text style={styles.gateMeta}>Live Scans: {gate.scansCount}</Text>
@@ -199,7 +199,7 @@ export function OrgEventSelectScreen({ navigation }: OrgEventSelectScreenProps) 
 
         {/* Launch Gate Console Button */}
         <Button
-          title="Launch Event Operations 🚀"
+          title="Launch Event Operations"
           onPress={handleConfirmAndEnter}
           disabled={!selectedEvent}
           loading={isLoading}

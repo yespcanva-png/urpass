@@ -9,6 +9,7 @@ import {
   ScrollView,
   Alert,
 } from "react-native";
+import { ShieldAlert, Lock, CheckCircle2, Circle } from "lucide-react-native";
 import { COLORS } from "../../constants/colors";
 import { useScanner } from "../../context/ScannerContext";
 import { useAuth } from "../../context/AuthContext";
@@ -69,7 +70,10 @@ export function ManualOverrideModal({ navigation }: ManualOverrideModalProps) {
           {/* Modal Header */}
           <View style={styles.modalHeader}>
             <View>
-              <Text style={styles.modalTitle}>⚡ Supervisor Manual Override</Text>
+              <View style={styles.titleRow}>
+                <ShieldAlert size={16} color="#D97706" />
+                <Text style={styles.modalTitle}>Supervisor Manual Override</Text>
+              </View>
               <Text style={styles.modalSub}>
                 Authorized by: {user?.name || "Operations Manager"} ({user?.role || "Manager"})
               </Text>
@@ -107,14 +111,19 @@ export function ManualOverrideModal({ navigation }: ManualOverrideModalProps) {
                     key={r}
                     style={[styles.reasonOption, isSelected && styles.reasonOptionSelected]}
                     onPress={() => setSelectedReason(r)}
+                    activeOpacity={0.75}
                   >
+                    {isSelected ? (
+                      <CheckCircle2 size={15} color="#D97706" />
+                    ) : (
+                      <Circle size={15} color="#94A3B8" />
+                    )}
                     <Text
                       style={[
                         styles.reasonOptionText,
                         isSelected && styles.reasonOptionTextSelected,
                       ]}
                     >
-                      {isSelected ? "● " : "○ "}
                       {r}
                     </Text>
                   </TouchableOpacity>
@@ -134,10 +143,13 @@ export function ManualOverrideModal({ navigation }: ManualOverrideModalProps) {
               numberOfLines={2}
             />
 
-            <Text style={styles.auditDisclaimer}>
-              🔒 This override action is permanently recorded in the event security audit log
-              with your staff credentials, timestamp, and device identifier.
-            </Text>
+            <View style={styles.disclaimerRow}>
+              <Lock size={12} color="#64748B" />
+              <Text style={styles.auditDisclaimer}>
+                This override action is permanently recorded in the event security audit log
+                with your staff credentials, timestamp, and device identifier.
+              </Text>
+            </View>
           </ScrollView>
 
           {/* Bottom Actions */}
@@ -181,6 +193,11 @@ const styles = StyleSheet.create({
     padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.surfaceBorderSubtle,
+  },
+  titleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
   },
   modalTitle: {
     fontSize: 16,
@@ -289,11 +306,17 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginBottom: 12,
   },
+  disclaimerRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 6,
+    marginBottom: 20,
+  },
   auditDisclaimer: {
     fontSize: 11,
     color: COLORS.textMuted,
     lineHeight: 15,
-    marginBottom: 20,
+    flex: 1,
   },
   footerRow: {
     flexDirection: "row",

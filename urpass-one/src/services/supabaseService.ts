@@ -145,9 +145,94 @@ export class SupabaseOpsService {
   }
 
   /**
+   * Google OAuth Flow (Supabase OAuth & Web redirect fallback)
+   */
+  public static async signInWithGoogle(redirectUri?: string): Promise<{ url: string | null; error: string | null }> {
+    const targetRedirect = redirectUri || "urpassone://auth/callback";
+    try {
+      const supabase = this.getClient();
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: targetRedirect,
+          skipBrowserRedirect: true,
+        },
+      });
+
+      if (!error && data?.url) {
+        return { url: data.url, error: null };
+      }
+
+      const webRedirectUrl = `${CONFIG.DEFAULT_API_BASE}/api/auth/google/redirect?next=${encodeURIComponent(targetRedirect)}`;
+      return { url: webRedirectUrl, error: null };
+    } catch {
+      const webRedirectUrl = `${CONFIG.DEFAULT_API_BASE}/api/auth/google/redirect?next=${encodeURIComponent(targetRedirect)}`;
+      return { url: webRedirectUrl, error: null };
+    }
+  }
+
+  /**
+   * Exchange Google authorization code with UrPass backend endpoint
+   */
+  public static async exchangeGoogleCode(code: string): Promise<ProductionAuthResult> {
+    try {
+      const res = await fetch(`${CONFIG.DEFAULT_API_BASE}/api/auth/google`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        return { user: null, accessToken: null, error: data.error || "Google sign-in failed." };
+      }
+
+      const profile: UserProfile = {
+        id: data.userId || "usr-google",
+        name: data.name || "Google User",
+        email: data.email || "",
+        role: (data.role as UserRole) || "event_manager",
+      };
+
+      return {
+        user: profile,
+        accessToken: data.token_hash || data.accessToken || "session_token",
+        error: null,
+      };
+    } catch (err: any) {
+      return { user: null, accessToken: null, error: err?.message || "Failed to exchange Google credentials." };
+    }
+  }
+
+  /**
+   * Enterprise SSO Domain Lookup via UrPass Backend
+   */
+  public static async lookupSSO(email: string): Promise<{
+    ssoAvailable: boolean;
+    orgName?: string;
+    protocol?: string;
+    loginUrl?: string;
+    enforced?: boolean;
+    error?: string;
+  }> {
+    try {
+      const res = await fetch(
+        `${CONFIG.DEFAULT_API_BASE}/api/auth/sso/lookup?email=${encodeURIComponent(email)}`,
+        { headers: { "Content-Type": "application/json" } }
+      );
+      if (res.ok) {
+        const data = await res.json();
+        return data;
+      }
+      return { ssoAvailable: false };
+    } catch {
+      return { ssoAvailable: false };
+    }
+  }
+
+  /**
    * Helper to build UserProfile from Supabase Auth User & Database Record
    */
-  private static async buildUserProfileFromSupabase(authUser: any): Promise<UserProfile> {
+  public static async buildUserProfileFromSupabase(authUser: any): Promise<UserProfile> {
     const supabase = this.getClient();
     let orgName = "UrPass Organization";
     let orgId = "org-default";

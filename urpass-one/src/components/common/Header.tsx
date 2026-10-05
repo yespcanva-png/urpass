@@ -48,7 +48,7 @@ export function Header({
             {assignedGate && (
               <View style={styles.gateRow}>
                 <Badge
-                  label={`📍 ${assignedGate.name}`}
+                  label={assignedGate.name}
                   variant={assignedGate.status === "open" ? "green" : "red"}
                   size="sm"
                 />

@@ -10,6 +10,7 @@ import {
   StatusBar,
   Alert,
 } from "react-native";
+import { Download, ShieldAlert, XCircle } from "lucide-react-native";
 import { COLORS } from "../../constants/colors";
 import { useEvent } from "../../context/EventContext";
 import { OfflineDb } from "../../services/offlineDb";
@@ -68,7 +69,8 @@ export function ScanAuditLogScreen({ navigation }: { navigation?: any }) {
         showEventSwitcher={false}
         rightAction={
           <TouchableOpacity onPress={handleExportLogs} style={styles.exportBtn}>
-            <Text style={styles.exportBtnText}>📥 Export</Text>
+            <Download size={13} color="#6D28D9" />
+            <Text style={styles.exportBtnText}>Export</Text>
           </TouchableOpacity>
         }
       />
@@ -154,16 +156,18 @@ export function ScanAuditLogScreen({ navigation }: { navigation?: any }) {
               {/* Override Note / Rejection Reason */}
               {isOverride && (
                 <View style={styles.overrideBox}>
+                  <ShieldAlert size={13} color="#D97706" />
                   <Text style={styles.overrideText}>
-                    ⚡ Override by {item.overrideBy}: "{item.overrideReason || "Supervisor Approval"}"
+                    Override by {item.overrideBy}: "{item.overrideReason || "Supervisor Approval"}"
                   </Text>
                 </View>
               )}
 
               {item.rejectionReason && !isOverride && (
                 <View style={styles.rejectionBox}>
+                  <XCircle size={13} color="#DC2626" />
                   <Text style={styles.rejectionText}>
-                    ⛔ Denied: {item.rejectionReason}
+                    Denied: {item.rejectionReason}
                   </Text>
                 </View>
               )}
@@ -295,6 +299,9 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   overrideBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
     backgroundColor: COLORS.amberLight,
     borderColor: COLORS.amberBorder,
     borderWidth: 1,
@@ -306,8 +313,12 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: COLORS.amber,
     fontWeight: "600",
+    flex: 1,
   },
   rejectionBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
     backgroundColor: COLORS.redLight,
     borderColor: COLORS.redBorder,
     borderWidth: 1,
@@ -319,6 +330,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: COLORS.red,
     fontWeight: "600",
+    flex: 1,
   },
   logFooter: {
     flexDirection: "row",

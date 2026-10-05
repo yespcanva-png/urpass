@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { Linking, Platform } from "react-native";
 import type { UserProfile, UserRole } from "../types";
 import { StorageService } from "../services/storage";
 import { SupabaseOpsService } from "../services/supabaseService";
@@ -11,6 +12,7 @@ interface AuthContextType {
   isLoading: boolean;
   loginWithPassword: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   signUp: (fullName: string, email: string, password: string) => Promise<{ success: boolean; error?: string; needsEmailConfirmation?: boolean }>;
+  loginWithGoogle: () => Promise<{ success: boolean; error?: string }>;
   loginWithOtp: (email: string) => Promise<{ success: boolean; error?: string }>;
   verifyOtp: (email: string, otp: string) => Promise<boolean>;
   logout: () => Promise<void>;
@@ -55,6 +57,69 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     loadAuth();
+
+    // Deep Link Listener for OAuth Callbacks (Google, SSO)
+    const handleDeepLink = async (event: { url: string }) => {
+      if (!event.url) return;
+      try {
+        const url = event.url;
+        if (url.includes("access_token=") || url.includes("code=")) {
+          const supabase = SupabaseOpsService.getClient();
+          let accessToken: string | null = null;
+          let refreshToken: string | null = null;
+
+          const hashPart = url.split("#")[1] || "";
+          const queryPart = url.split("?")[1] || "";
+          const params = new URLSearchParams(hashPart || queryPart);
+
+          accessToken = params.get("access_token");
+          refreshToken = params.get("refresh_token");
+
+          if (accessToken) {
+            const { data } = await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken || "",
+            });
+            if (data?.user && data.session) {
+              const profile = await SupabaseOpsService.buildUserProfileFromSupabase(data.user);
+              await StorageService.setItem(CONFIG.STORAGE_KEYS.AUTH_TOKEN, data.session.access_token);
+              await StorageService.setJSON(CONFIG.STORAGE_KEYS.USER_PROFILE, profile);
+              setAuthToken(data.session.access_token);
+              setUser(profile);
+            }
+          } else if (params.get("code")) {
+            const googleCode = params.get("code")!;
+            const googleRes = await SupabaseOpsService.exchangeGoogleCode(googleCode);
+            if (googleRes.user && googleRes.accessToken) {
+              await StorageService.setItem(CONFIG.STORAGE_KEYS.AUTH_TOKEN, googleRes.accessToken);
+              await StorageService.setJSON(CONFIG.STORAGE_KEYS.USER_PROFILE, googleRes.user);
+              setAuthToken(googleRes.accessToken);
+              setUser(googleRes.user);
+            } else {
+              const { data } = await supabase.auth.exchangeCodeForSession(googleCode);
+              if (data?.user && data.session) {
+                const profile = await SupabaseOpsService.buildUserProfileFromSupabase(data.user);
+                await StorageService.setItem(CONFIG.STORAGE_KEYS.AUTH_TOKEN, data.session.access_token);
+                await StorageService.setJSON(CONFIG.STORAGE_KEYS.USER_PROFILE, profile);
+                setAuthToken(data.session.access_token);
+                setUser(profile);
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.warn("[AuthContext] OAuth callback parse error:", err);
+      }
+    };
+
+    const sub = Linking.addEventListener("url", handleDeepLink);
+    Linking.getInitialURL().then((url) => {
+      if (url) handleDeepLink({ url });
+    });
+
+    return () => {
+      sub.remove();
+    };
   }, []);
 
   async function loginWithPassword(email: string, password: string): Promise<{ success: boolean; error?: string }> {
@@ -97,6 +162,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { success: false, error: res.error || "Registration failed" };
     } catch (err: any) {
       return { success: false, error: err?.message || "Network error during registration" };
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  async function loginWithGoogle(): Promise<{ success: boolean; error?: string }> {
+    setIsLoading(true);
+    try {
+      const res = await SupabaseOpsService.signInWithGoogle();
+      if (res.error) {
+        return { success: false, error: res.error };
+      }
+      if (res.url) {
+        if (Platform.OS === "web" && typeof window !== "undefined") {
+          window.location.href = res.url;
+        } else {
+          await Linking.openURL(res.url);
+        }
+        return { success: true };
+      }
+      return { success: false, error: "Failed to initiate Google authentication." };
+    } catch (err: any) {
+      return { success: false, error: err?.message || "Google sign in error." };
     } finally {
       setIsLoading(false);
     }
@@ -165,6 +253,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isLoading,
         loginWithPassword,
         signUp,
+        loginWithGoogle,
         loginWithOtp,
         verifyOtp,
         logout,

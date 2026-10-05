@@ -9,6 +9,7 @@ import {
   StatusBar,
   Alert,
 } from "react-native";
+import { Phone, Building2 } from "lucide-react-native";
 import { COLORS } from "../../constants/colors";
 import { useEvent } from "../../context/EventContext";
 import { useAuth } from "../../context/AuthContext";
@@ -210,8 +211,18 @@ export function AttendeeProfileScreen({ route, navigation }: AttendeeProfileScre
                 <View style={styles.nameGroup}>
                   <Text style={styles.nameText}>{attendee.name}</Text>
                   <Text style={styles.emailText}>{attendee.email}</Text>
-                  {attendee.phone && <Text style={styles.phoneText}>📞 {attendee.phone}</Text>}
-                  {attendee.company && <Text style={styles.companyText}>🏢 {attendee.company}</Text>}
+                  {attendee.phone && (
+                    <View style={styles.metaRowItem}>
+                      <Phone size={12} color="#64748B" />
+                      <Text style={styles.phoneText}>{attendee.phone}</Text>
+                    </View>
+                  )}
+                  {attendee.company && (
+                    <View style={styles.metaRowItem}>
+                      <Building2 size={12} color="#64748B" />
+                      <Text style={styles.companyText}>{attendee.company}</Text>
+                    </View>
+                  )}
                 </View>
               </View>
 
@@ -266,7 +277,7 @@ export function AttendeeProfileScreen({ route, navigation }: AttendeeProfileScre
         {/* Primary Action Buttons */}
         <View style={styles.actionsBox}>
           <Button
-            title={isInside ? "Perform Manual Check-Out 🚪" : "Perform Manual Check-In ⚡"}
+            title={isInside ? "Perform Manual Check-Out" : "Perform Manual Check-In"}
             variant={isInside ? "secondary" : "success"}
             onPress={handleTogglePresence}
             loading={isLoading}
@@ -436,15 +447,19 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     marginTop: 2,
   },
+  metaRowItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    marginTop: 2,
+  },
   phoneText: {
     fontSize: 11,
     color: COLORS.textMuted,
-    marginTop: 2,
   },
   companyText: {
     fontSize: 11,
     color: COLORS.textMuted,
-    marginTop: 1,
   },
   badgesRow: {
     flexDirection: "row",

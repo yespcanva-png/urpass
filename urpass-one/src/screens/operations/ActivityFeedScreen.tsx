@@ -8,6 +8,14 @@ import {
   SafeAreaView,
   StatusBar,
 } from "react-native";
+import {
+  CheckCircle2,
+  LogOut,
+  AlertTriangle,
+  XCircle,
+  ShieldAlert,
+  Info,
+} from "lucide-react-native";
 import { COLORS } from "../../constants/colors";
 import { useEvent } from "../../context/EventContext";
 import { OfflineDb } from "../../services/offlineDb";
@@ -156,27 +164,27 @@ export function ActivityFeedScreen({ navigation }: { navigation?: any }) {
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
         renderItem={({ item }) => {
-          const getIcon = () => {
+          const renderIcon = () => {
             switch (item.type) {
               case "check_in":
-                return "✅";
+                return <CheckCircle2 size={16} color="#059669" />;
               case "check_out":
-                return "🚪";
+                return <LogOut size={16} color="#64748B" />;
               case "duplicate_rejected":
-                return "⚠️";
+                return <AlertTriangle size={16} color="#D97706" />;
               case "invalid_rejected":
-                return "⛔";
+                return <XCircle size={16} color="#DC2626" />;
               case "override":
-                return "⚡";
+                return <ShieldAlert size={16} color="#6D28D9" />;
               default:
-                return "ℹ️";
+                return <Info size={16} color="#2563EB" />;
             }
           };
 
           return (
             <View style={styles.feedCard}>
               <View style={styles.iconColumn}>
-                <Text style={styles.actionIcon}>{getIcon()}</Text>
+                <View style={styles.iconWrapper}>{renderIcon()}</View>
                 <View style={styles.verticalLine} />
               </View>
 
@@ -258,6 +266,13 @@ const styles = StyleSheet.create({
   iconColumn: {
     alignItems: "center",
     marginRight: 12,
+  },
+  iconWrapper: {
+    width: 24,
+    height: 24,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 4,
   },
   actionIcon: {
     fontSize: 18,

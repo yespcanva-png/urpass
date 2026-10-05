@@ -10,6 +10,7 @@ import {
   StatusBar,
   Alert,
 } from "react-native";
+import { CheckSquare, Square } from "lucide-react-native";
 import { COLORS } from "../../constants/colors";
 import { useEvent } from "../../context/EventContext";
 import { Header } from "../../components/common/Header";
@@ -147,10 +148,13 @@ export function GateManagementScreen({ navigation }: GateManagementScreenProps) 
                   key={type}
                   style={[styles.passTypeItem, isChecked && styles.passTypeItemChecked]}
                   onPress={() => togglePassType(type)}
+                  activeOpacity={0.75}
                 >
-                  <Text style={[styles.checkboxIcon, isChecked && styles.checkboxIconChecked]}>
-                    {isChecked ? "☑" : "☐"}
-                  </Text>
+                  {isChecked ? (
+                    <CheckSquare size={16} color="#6D28D9" />
+                  ) : (
+                    <Square size={16} color="#94A3B8" />
+                  )}
                   <Text style={[styles.passTypeText, isChecked && styles.passTypeTextChecked]}>
                     {type.toUpperCase()}
                   </Text>

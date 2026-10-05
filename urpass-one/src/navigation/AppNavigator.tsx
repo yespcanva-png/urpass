@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView } from "react-native";
+import { LayoutGrid, Users, QrCode, DoorOpen, Activity } from "lucide-react-native";
 import { COLORS } from "../constants/colors";
 import { useAuth } from "../context/AuthContext";
 import { useEvent } from "../context/EventContext";
@@ -24,6 +25,7 @@ import { AttendeeSearchScreen } from "../screens/attendees/AttendeeSearchScreen"
 import { AttendeeProfileScreen } from "../screens/attendees/AttendeeProfileScreen";
 import { GateStaffManagementScreen } from "../screens/staff/GateStaffManagementScreen";
 import { ScanAuditLogScreen } from "../screens/audit/ScanAuditLogScreen";
+import { ProfileScreen } from "../screens/profile/ProfileScreen";
 
 export type ScreenName =
   | "Splash"
@@ -44,7 +46,8 @@ export type ScreenName =
   | "AttendeeSearch"
   | "AttendeeProfile"
   | "GateStaffManagement"
-  | "ScanAuditLog";
+  | "ScanAuditLog"
+  | "Profile";
 
 const AUTH_FLOW_SCREENS: ScreenName[] = [
   "Splash",
@@ -158,6 +161,8 @@ export function AppNavigator() {
         return <GateStaffManagementScreen navigation={navigation} />;
       case "ScanAuditLog":
         return <ScanAuditLogScreen navigation={navigation} />;
+      case "Profile":
+        return <ProfileScreen navigation={navigation} />;
       default:
         return <EventOperationsHomeScreen navigation={navigation} />;
     }
@@ -178,7 +183,10 @@ export function AppNavigator() {
               style={[styles.tabItem, currentScreen === "OperationsHome" && styles.tabItemActive]}
               onPress={() => navigation.navigate("OperationsHome")}
             >
-              <Text style={styles.tabIcon}>⚡</Text>
+              <LayoutGrid
+                size={19}
+                color={currentScreen === "OperationsHome" ? "#6D28D9" : "#94A3B8"}
+              />
               <Text style={[styles.tabLabel, currentScreen === "OperationsHome" && styles.tabLabelActive]}>
                 Ops
               </Text>
@@ -188,7 +196,10 @@ export function AppNavigator() {
               style={[styles.tabItem, currentScreen === "AttendeeSearch" && styles.tabItemActive]}
               onPress={() => navigation.navigate("AttendeeSearch")}
             >
-              <Text style={styles.tabIcon}>🔍</Text>
+              <Users
+                size={19}
+                color={currentScreen === "AttendeeSearch" ? "#6D28D9" : "#94A3B8"}
+              />
               <Text style={[styles.tabLabel, currentScreen === "AttendeeSearch" && styles.tabLabelActive]}>
                 Attendees
               </Text>
@@ -200,14 +211,17 @@ export function AppNavigator() {
               onPress={() => navigation.navigate("QRScanner")}
               activeOpacity={0.85}
             >
-              <Text style={styles.scannerCenterIcon}>📷</Text>
+              <QrCode size={22} color="#FFFFFF" strokeWidth={2.2} />
             </TouchableOpacity>
 
             <TouchableOpacity
               style={[styles.tabItem, currentScreen === "LiveGateDashboard" && styles.tabItemActive]}
               onPress={() => navigation.navigate("LiveGateDashboard")}
             >
-              <Text style={styles.tabIcon}>🚪</Text>
+              <DoorOpen
+                size={19}
+                color={currentScreen === "LiveGateDashboard" ? "#6D28D9" : "#94A3B8"}
+              />
               <Text style={[styles.tabLabel, currentScreen === "LiveGateDashboard" && styles.tabLabelActive]}>
                 Gates
               </Text>
@@ -217,7 +231,10 @@ export function AppNavigator() {
               style={[styles.tabItem, currentScreen === "ActivityFeed" && styles.tabItemActive]}
               onPress={() => navigation.navigate("ActivityFeed")}
             >
-              <Text style={styles.tabIcon}>📡</Text>
+              <Activity
+                size={19}
+                color={currentScreen === "ActivityFeed" ? "#6D28D9" : "#94A3B8"}
+              />
               <Text style={[styles.tabLabel, currentScreen === "ActivityFeed" && styles.tabLabelActive]}>
                 Stream
               </Text>

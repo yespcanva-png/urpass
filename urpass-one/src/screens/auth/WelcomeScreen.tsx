@@ -2,14 +2,13 @@ import React from "react";
 import {
   View,
   Text,
-  Image,
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
   StatusBar,
+  ScrollView,
 } from "react-native";
-import { ShieldCheck, Wifi, Zap } from "lucide-react-native";
-import { COLORS } from "../../constants/colors";
+import { Zap, ShieldCheck, Wifi, Ticket, ArrowRight } from "lucide-react-native";
 
 interface WelcomeScreenProps {
   navigation?: any;
@@ -18,20 +17,28 @@ interface WelcomeScreenProps {
 export function WelcomeScreen({ navigation }: WelcomeScreenProps) {
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle="dark-content" backgroundColor="#FAF8FC" />
 
-      <View style={styles.content}>
-        {/* Top Section — UrPass Logo & Wordmark */}
-        <View style={styles.topSection}>
-          <Image
-            source={require("../../../assets/icon.png")}
-            style={styles.brandLogoImage}
-            resizeMode="contain"
-          />
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Top Section — Brand Wordmark */}
+        <View style={styles.topRow}>
+          <View style={styles.brandRow}>
+            <Ticket size={16} color="#6D28D9" />
+            <Text style={styles.brandWordmark}>URPASS</Text>
+          </View>
         </View>
 
-        {/* Hero Copy Section */}
-        <View style={styles.heroSection}>
+        {/* Main Card */}
+        <View style={styles.card}>
+          <View style={styles.badgeRow}>
+            <View style={styles.appTag}>
+              <Text style={styles.appTagText}>MOBILE OPERATIONS</Text>
+            </View>
+          </View>
+
           <Text style={styles.appTitle}>UrPass One</Text>
 
           <Text style={styles.supportingHeadline}>
@@ -42,21 +49,21 @@ export function WelcomeScreen({ navigation }: WelcomeScreenProps) {
             Manage event access, gate operations and attendee check-ins securely from one place.
           </Text>
 
-          {/* Enterprise Capabilities Preview Cards */}
+          {/* Capabilities Highlights */}
           <View style={styles.featuresContainer}>
             <View style={styles.featureRow}>
               <View style={styles.featureIconBox}>
-                <Zap size={17} color={COLORS.brand} />
+                <Zap size={16} color="#6D28D9" />
               </View>
               <View style={styles.featureTextBox}>
                 <Text style={styles.featureTitle}>Sub-Second QR Validation</Text>
-                <Text style={styles.featureSubtitle}>Instant gate check-in & direction tracking</Text>
+                <Text style={styles.featureSubtitle}>Instant gate check-in &amp; direction tracking</Text>
               </View>
             </View>
 
             <View style={styles.featureRow}>
               <View style={styles.featureIconBox}>
-                <ShieldCheck size={17} color={COLORS.brand} />
+                <ShieldCheck size={16} color="#6D28D9" />
               </View>
               <View style={styles.featureTextBox}>
                 <Text style={styles.featureTitle}>Duplicate Re-Use Protection</Text>
@@ -66,7 +73,7 @@ export function WelcomeScreen({ navigation }: WelcomeScreenProps) {
 
             <View style={styles.featureRow}>
               <View style={styles.featureIconBox}>
-                <Wifi size={17} color={COLORS.brand} />
+                <Wifi size={16} color="#6D28D9" />
               </View>
               <View style={styles.featureTextBox}>
                 <Text style={styles.featureTitle}>Offline Resilient Ops</Text>
@@ -74,23 +81,31 @@ export function WelcomeScreen({ navigation }: WelcomeScreenProps) {
               </View>
             </View>
           </View>
-        </View>
 
-        {/* Bottom CTA & Footer Section */}
-        <View style={styles.bottomSection}>
-          <TouchableOpacity
-            style={styles.primaryButton}
-            onPress={() => navigation?.navigate("SignIn")}
-            activeOpacity={0.88}
-          >
-            <Text style={styles.primaryButtonText}>Continue</Text>
-          </TouchableOpacity>
+          {/* Action CTAs: Sign In & Sign Up */}
+          <View style={styles.ctaGroup}>
+            <TouchableOpacity
+              style={styles.primaryButton}
+              onPress={() => navigation?.navigate("SignIn")}
+              activeOpacity={0.88}
+            >
+              <Text style={styles.primaryButtonText}>Sign In</Text>
+              <ArrowRight size={16} color="#FFFFFF" />
+            </TouchableOpacity>
 
-          <View style={styles.poweredByRow}>
-            <Text style={styles.poweredByText}>Powered by UrPass</Text>
+            <TouchableOpacity
+              style={styles.secondaryButton}
+              onPress={() => navigation?.navigate("Signup")}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.secondaryButtonText}>Create an account</Text>
+            </TouchableOpacity>
           </View>
         </View>
-      </View>
+
+        {/* Footer */}
+        <Text style={styles.poweredByText}>Powered by UrPass</Text>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -98,53 +113,100 @@ export function WelcomeScreen({ navigation }: WelcomeScreenProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: "#FAF8FC",
   },
-  content: {
-    flex: 1,
-    paddingHorizontal: 24,
+  scrollContent: {
+    flexGrow: 1,
+    paddingHorizontal: 20,
     paddingTop: 16,
-    paddingBottom: 24,
-    justifyContent: "space-between",
+    paddingBottom: 32,
+    justifyContent: "center",
+    alignItems: "center",
   },
-  topSection: {
-    alignItems: "flex-start",
-    paddingTop: 8,
+  topRow: {
+    width: "100%",
+    maxWidth: 440,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 20,
   },
-  brandLogoImage: {
-    width: 130,
-    height: 48,
+  brandRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
   },
-  heroSection: {
-    paddingVertical: 12,
+  brandWordmark: {
+    fontSize: 14,
+    fontWeight: "800",
+    letterSpacing: 2,
+    color: "#0F172A",
+    textTransform: "uppercase",
+  },
+
+  /* Card */
+  card: {
+    width: "100%",
+    maxWidth: 440,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 28,
+    borderWidth: 1,
+    borderColor: "#F1F1F4",
+    padding: 24,
+    shadowColor: "#6D28D9",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 24,
+    elevation: 4,
+  },
+  badgeRow: {
+    marginBottom: 12,
+  },
+  appTag: {
+    alignSelf: "flex-start",
+    backgroundColor: "rgba(109,40,217,0.08)",
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderWidth: 1,
+    borderColor: "rgba(109,40,217,0.15)",
+  },
+  appTagText: {
+    fontSize: 10,
+    fontWeight: "800",
+    color: "#6D28D9",
+    letterSpacing: 0.8,
   },
   appTitle: {
-    fontSize: 32,
-    fontWeight: "900",
-    color: COLORS.textPrimary,
+    fontSize: 28,
+    fontWeight: "700",
+    color: "#0F172A",
     letterSpacing: -0.8,
-    marginBottom: 8,
+    marginBottom: 6,
   },
   supportingHeadline: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#27272A",
-    lineHeight: 22,
-    marginBottom: 10,
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#334155",
+    lineHeight: 21,
+    marginBottom: 8,
   },
   supportingCopy: {
     fontSize: 13,
-    color: COLORS.textSecondary,
+    color: "#64748B",
     lineHeight: 19,
-    marginBottom: 24,
+    marginBottom: 20,
   },
+
+  /* Features */
   featuresContainer: {
-    backgroundColor: COLORS.surfaceAlt,
+    backgroundColor: "#F8FAFC",
     borderWidth: 1,
-    borderColor: COLORS.surfaceBorder,
+    borderColor: "#E2E8F0",
     borderRadius: 16,
-    padding: 16,
-    gap: 14,
+    padding: 14,
+    gap: 12,
+    marginBottom: 22,
   },
   featureRow: {
     flexDirection: "row",
@@ -152,12 +214,12 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   featureIconBox: {
-    width: 36,
-    height: 36,
+    width: 34,
+    height: 34,
     borderRadius: 10,
-    backgroundColor: COLORS.white,
+    backgroundColor: "#FAF5FF",
     borderWidth: 1,
-    borderColor: COLORS.surfaceBorder,
+    borderColor: "rgba(109,40,217,0.15)",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -166,45 +228,61 @@ const styles = StyleSheet.create({
   },
   featureTitle: {
     fontSize: 13,
-    fontWeight: "700",
-    color: COLORS.textPrimary,
+    fontWeight: "600",
+    color: "#0F172A",
   },
   featureSubtitle: {
     fontSize: 11,
-    color: COLORS.textMuted,
+    color: "#64748B",
     marginTop: 1,
   },
-  bottomSection: {
-    paddingTop: 16,
-    gap: 14,
-    alignItems: "center",
+
+  /* CTA Group */
+  ctaGroup: {
+    gap: 10,
+    width: "100%",
   },
   primaryButton: {
     width: "100%",
-    height: 52,
-    backgroundColor: COLORS.brand,
-    borderRadius: 14,
+    height: 50,
+    backgroundColor: "#6D28D9",
+    borderRadius: 12,
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: COLORS.brand,
+    gap: 8,
+    shadowColor: "#6D28D9",
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    elevation: 4,
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 3,
   },
   primaryButtonText: {
     fontSize: 15,
-    fontWeight: "800",
-    color: COLORS.white,
-    letterSpacing: 0.2,
-  },
-  poweredByRow: {
-    alignItems: "center",
-  },
-  poweredByText: {
-    fontSize: 11,
     fontWeight: "600",
-    color: COLORS.textLightMuted,
-    letterSpacing: 0.5,
+    color: "#FFFFFF",
+  },
+  secondaryButton: {
+    width: "100%",
+    height: 48,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  secondaryButtonText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#0F172A",
+  },
+
+  /* Footer */
+  poweredByText: {
+    fontSize: 12,
+    color: "#94A3B8",
+    marginTop: 24,
+    textAlign: "center",
   },
 });
