@@ -24,6 +24,13 @@ type TicketTypeRow = {
   status: string;
   sales_start: string | null;
   sales_end: string | null;
+  is_group_pass?: boolean;
+  included_guests?: number;
+  min_guests?: number;
+  max_guests?: number;
+  allow_extra_guests?: boolean;
+  extra_guest_price?: number;
+  max_extra_guests?: number;
 };
 
 function adminClient() {
@@ -46,7 +53,7 @@ function badRequest(error: string, code: string) {
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
-  const { eventId, buyerName, buyerEmail } = body ?? {};
+  const { eventId, buyerName, buyerEmail, guestCount, numberOfPeople, groupMembers } = body ?? {};
   let { ticketTypeId } = body ?? {};
   const requestedTicketTypeId = typeof ticketTypeId === "string" ? ticketTypeId.trim() : "";
   ticketTypeId = requestedTicketTypeId || null;
@@ -78,11 +85,14 @@ export async function POST(req: NextRequest) {
   const eventCurrency = ((event as { currency?: string })?.currency || "INR").toUpperCase();
   let amountPaise = 0;
   let ticketName = event.name;
+  let totalAttendeeCount = 1;
+  let extraGuestsCount = 0;
+  let extraGuestsAmountRupees = 0;
 
   if (ticketTypeId && ticketTypeId !== "default") {
     const { data: ticketType } = await admin
       .from("ticket_types")
-      .select("id, event_id, name, price, capacity, status, sales_start, sales_end")
+      .select("id, event_id, name, price, capacity, status, sales_start, sales_end, is_group_pass, included_guests, min_guests, max_guests, allow_extra_guests, extra_guest_price, max_extra_guests")
       .eq("id", ticketTypeId)
       .eq("event_id", eventId)
       .maybeSingle<TicketTypeRow>();
@@ -97,12 +107,26 @@ export async function POST(req: NextRequest) {
       return badRequest("Selected ticket is not on sale right now.", "TICKET_SALES_WINDOW_CLOSED");
     }
 
-    amountPaise = Number(ticketType.price);
+    const requestedGuests = Number(guestCount || numberOfPeople || ticketType.included_guests || 1);
+    const includedGuests = Number(ticketType.included_guests || 1);
+    const minGuests = Number(ticketType.min_guests || 1);
+    const allowExtra = Boolean(ticketType.allow_extra_guests);
+    const maxGuests = Number(ticketType.max_guests || (allowExtra ? 10 : includedGuests));
+    const clampedGuests = Math.max(minGuests, Math.min(requestedGuests, maxGuests));
+
+    extraGuestsCount = allowExtra ? Math.max(0, clampedGuests - includedGuests) : 0;
+    const extraPriceRupees = Number(ticketType.extra_guest_price || 0);
+    extraGuestsAmountRupees = extraGuestsCount * extraPriceRupees;
+    const extraAmountPaise = Math.round(extraGuestsAmountRupees * 100);
+
+    const basePricePaise = Number(ticketType.price);
+    amountPaise = basePricePaise + extraAmountPaise;
+    totalAttendeeCount = clampedGuests;
     ticketName = `${event.name} — ${ticketType.name}`;
   } else {
     const { data: defaultTT } = await admin
       .from("ticket_types")
-      .select("id, event_id, name, price, capacity, status, sales_start, sales_end")
+      .select("id, event_id, name, price, capacity, status, sales_start, sales_end, is_group_pass, included_guests, min_guests, max_guests, allow_extra_guests, extra_guest_price, max_extra_guests")
       .eq("event_id", eventId)
       .eq("status", "on_sale")
       .order("position", { ascending: true })
@@ -258,9 +282,9 @@ export async function POST(req: NextRequest) {
         payment_mode: paymentMode,
         fee_bearer: feeBearer,
         base_amount: String(amountPaise),
-        platform_fee: String(Math.round(feeBreakdown.platformFee * 100)),
-        gateway_fee: String(Math.round(feeBreakdown.gatewayFee * 100)),
-        organizer_share: String(Math.round(feeBreakdown.organizerNetShare * 100)),
+        total_attendee_count: String(totalAttendeeCount),
+        extra_guests_count: String(extraGuestsCount),
+        extra_guests_amount: String(extraGuestsAmountRupees),
       },
     };
 
@@ -293,6 +317,10 @@ export async function POST(req: NextRequest) {
         buyer_name: buyerName,
         buyer_email: buyerEmail,
         status: "created",
+        total_attendee_count: totalAttendeeCount,
+        extra_guests_count: extraGuestsCount,
+        extra_guests_amount: extraGuestsAmountRupees,
+        group_members: Array.isArray(groupMembers) ? groupMembers : [],
       }),
       reservation.reservationId
         ? linkOrderToReservation(admin, reservation.reservationId, order.id)

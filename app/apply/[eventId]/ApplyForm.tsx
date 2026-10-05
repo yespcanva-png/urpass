@@ -133,6 +133,19 @@ export default function ApplyForm({
   const [selectedTicketTypeId, setSelectedTicketTypeId] = useState<string | null>(defaultTicketTypeId);
   const [customResponses, setCustomResponses] = useState<Record<string, unknown>>({});
 
+  const selectedTicket = ticketTypes.find((t) => t.id === selectedTicketTypeId) ?? null;
+  const [peopleCount, setPeopleCount] = useState<number>(() => selectedTicket?.included_guests || 1);
+  const [memberNames, setMemberNames] = useState<string[]>([]);
+
+  // Keep people count in sync when selected ticket type changes
+  const handleSelectTicket = (id: string) => {
+    setSelectedTicketTypeId(id);
+    const tt = ticketTypes.find((t) => t.id === id);
+    const inc = tt?.included_guests || 1;
+    setPeopleCount(inc);
+    setMemberNames([]);
+  };
+
   const {
     register,
     handleSubmit,
@@ -157,13 +170,20 @@ export default function ApplyForm({
     ? "Join online or attend in person"
     : "QR entry at venue";
 
-  const selectedTicket = ticketTypes.find((t) => t.id === selectedTicketTypeId) ?? null;
-  const effectiveTicketPrice = selectedTicket
+  const baseTicketPrice = selectedTicket
     ? selectedTicket.price / 100
     : event.is_paid_event
       ? event.ticket_price
       : 0;
-  const effectivelyPaid = selectedTicket ? selectedTicket.price > 0 : event.is_paid_event;
+
+  const allowExtra = Boolean(selectedTicket?.allow_extra_guests);
+  const includedGuests = Number(selectedTicket?.included_guests || 1);
+  const extraPrice = Number(selectedTicket?.extra_guest_price || 0);
+  const extraGuestsCount = allowExtra ? Math.max(0, peopleCount - includedGuests) : 0;
+  const extraGuestsTotal = extraGuestsCount * extraPrice;
+  const effectiveTicketPrice = baseTicketPrice + extraGuestsTotal;
+
+  const effectivelyPaid = selectedTicket ? selectedTicket.price > 0 || extraGuestsTotal > 0 : event.is_paid_event;
   const paymentBlocked = effectivelyPaid && !hasPaymentGateway;
 
   async function handlePaidSubmit(data: AttendeeInput) {
@@ -177,6 +197,11 @@ export default function ApplyForm({
       return;
     }
 
+    const groupMembers = [
+      { name: data.name, email: data.email, phone: data.phone, role: "primary" },
+      ...memberNames.filter((n) => n.trim().length > 0).map((n) => ({ name: n.trim(), role: "member" })),
+    ];
+
     const res = await fetch("/api/razorpay/ticket-order", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -185,6 +210,8 @@ export default function ApplyForm({
         ticketTypeId: selectedTicketTypeId,
         buyerName: data.name,
         buyerEmail: data.email,
+        guestCount: peopleCount,
+        groupMembers,
       }),
     });
     const order = (await res.json().catch(() => ({}))) as TicketOrderResponse;
@@ -536,7 +563,7 @@ export default function ApplyForm({
                       value={tt.id}
                       disabled={isDisabled}
                       checked={isSelected}
-                      onChange={() => setSelectedTicketTypeId(tt.id)}
+                      onChange={() => handleSelectTicket(tt.id)}
                       className="sr-only"
                     />
 
@@ -713,6 +740,114 @@ export default function ApplyForm({
                 />
               </div>
             </div>
+
+            {/* Group & Family Pass: Number of People Stepper */}
+            {selectedTicket && (selectedTicket.allow_extra_guests || (selectedTicket.included_guests && selectedTicket.included_guests > 1)) && (
+              <div className="pt-2 border-t border-neutral-100 flex flex-col gap-3">
+                <div className="bg-violet-50/70 border border-violet-100 rounded-2xl p-4 flex items-center justify-between">
+                  <div>
+                    <div className="font-bold text-sm text-neutral-900 flex items-center gap-1.5">
+                      <Users className="w-4 h-4 text-brand" />
+                      <span>Number of people</span>
+                    </div>
+                    <div className="text-xs text-neutral-600 mt-0.5">
+                      {selectedTicket.allow_extra_guests
+                        ? `Includes up to ${selectedTicket.included_guests} people. ₹${selectedTicket.extra_guest_price || 100} for each additional person`
+                        : `Includes exactly ${selectedTicket.included_guests} people`}
+                    </div>
+                  </div>
+
+                  {selectedTicket.allow_extra_guests ? (
+                    <div className="flex items-center gap-2 bg-white border border-neutral-200 rounded-xl p-1 shadow-2xs">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const minG = selectedTicket.min_guests || selectedTicket.included_guests || 1;
+                          if (peopleCount > minG) {
+                            const next = peopleCount - 1;
+                            setPeopleCount(next);
+                            setMemberNames((prev) => prev.slice(0, Math.max(0, next - 1)));
+                          }
+                        }}
+                        disabled={peopleCount <= (selectedTicket.min_guests || selectedTicket.included_guests || 1)}
+                        className="w-8 h-8 rounded-lg bg-neutral-100 hover:bg-neutral-200 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center font-bold text-neutral-800 transition-colors cursor-pointer text-base"
+                      >
+                        -
+                      </button>
+                      <span className="w-6 text-center font-bold text-sm text-neutral-900">{peopleCount}</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const maxG = selectedTicket.max_guests || 10;
+                          if (peopleCount < maxG) {
+                            const next = peopleCount + 1;
+                            setPeopleCount(next);
+                            if (next > 1 && memberNames.length < next - 1) {
+                              setMemberNames((prev) => [...prev, ""]);
+                            }
+                          }
+                        }}
+                        disabled={peopleCount >= (selectedTicket.max_guests || 10)}
+                        className="w-8 h-8 rounded-lg bg-brand hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center font-bold text-white transition-colors cursor-pointer text-base"
+                      >
+                        +
+                      </button>
+                    </div>
+                  ) : (
+                    <span className="px-3 py-1 rounded-lg bg-white border border-neutral-200 font-bold text-xs text-neutral-900">
+                      {selectedTicket.included_guests} Guests
+                    </span>
+                  )}
+                </div>
+
+                {/* Additional Member Names Input Roster */}
+                {peopleCount > 1 && (
+                  <div className="space-y-2.5 pt-1">
+                    <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wide">
+                      Additional Group Members ({peopleCount - 1})
+                    </p>
+                    {Array.from({ length: peopleCount - 1 }).map((_, idx) => (
+                      <div key={idx} className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-neutral-400 w-6 text-center shrink-0">#{idx + 2}</span>
+                        <input
+                          type="text"
+                          placeholder={`Member ${idx + 2} Name`}
+                          value={memberNames[idx] || ""}
+                          onChange={(e) => {
+                            const updated = [...memberNames];
+                            updated[idx] = e.target.value;
+                            setMemberNames(updated);
+                          }}
+                          className={inputCls}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Price Ledger */}
+            {extraGuestsCount > 0 && (
+              <div className="bg-neutral-50 rounded-2xl p-4 text-xs space-y-1.5 border border-neutral-200/80">
+                <div className="flex justify-between text-neutral-600">
+                  <span>Pass Price ({selectedTicket?.name})</span>
+                  <span className="font-semibold text-neutral-900">₹{baseTicketPrice.toLocaleString("en-IN")}</span>
+                </div>
+                <div className="flex justify-between text-violet-700 font-medium">
+                  <span>Extra Guests ({extraGuestsCount} × ₹{extraPrice})</span>
+                  <span className="font-semibold">+₹{extraGuestsTotal.toLocaleString("en-IN")}</span>
+                </div>
+                <div className="flex justify-between text-neutral-900 font-bold border-t border-neutral-200 pt-2 text-sm">
+                  <span>Total Amount</span>
+                  <span className="text-base text-brand">₹{effectiveTicketPrice.toLocaleString("en-IN")}</span>
+                </div>
+                <div className="text-[11px] text-neutral-400 flex justify-between pt-1">
+                  <span>Pass Capacity: <strong className="text-neutral-700">{peopleCount} Attendees</strong></span>
+                  <span>Ticket Quantity: <strong className="text-neutral-700">1 Pass</strong></span>
+                </div>
+              </div>
+            )}
 
             {/* Custom registration fields */}
             {event.custom_fields && event.custom_fields.length > 0 && (

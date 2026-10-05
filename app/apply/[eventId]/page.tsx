@@ -78,6 +78,17 @@ export interface ApplyTicketType {
   sales_end?: string | null;
   isUpcoming?: boolean;
   isEnded?: boolean;
+  duration_label?: string | null;
+  duration_days?: number | null;
+  is_group_pass?: boolean | null;
+  included_guests?: number | null;
+  min_guests?: number | null;
+  max_guests?: number | null;
+  allow_extra_guests?: boolean | null;
+  extra_guest_price?: number | null;
+  max_extra_guests?: number | null;
+  pass_validity?: string | null;
+  access_type?: string | null;
 }
 
 interface EventInfo {
@@ -276,7 +287,7 @@ export default async function ApplyPage({
   // Use admin client to fetch all non-closed ticket types.
   let { data: ticketTypeRows } = await admin
     .from("ticket_types")
-    .select("id, name, description, category, price, capacity, max_per_person, sales_start, sales_end, position, status")
+    .select("id, name, description, category, price, capacity, max_per_person, sales_start, sales_end, position, status, duration_label, duration_days, is_group_pass, included_guests, min_guests, max_guests, allow_extra_guests, extra_guest_price, max_extra_guests, pass_validity, access_type")
     .eq("event_id", event.id)
     .eq("status", "on_sale")
     .order("position", { ascending: true });
@@ -299,7 +310,7 @@ export default async function ApplyPage({
     const { data: defaultTT } = await admin
       .from("ticket_types")
       .insert(defaultData)
-      .select("id, name, description, category, price, capacity, max_per_person, sales_start, sales_end, position, status")
+      .select("id, name, description, category, price, capacity, max_per_person, sales_start, sales_end, position, status, duration_label, duration_days, is_group_pass, included_guests, min_guests, max_guests, allow_extra_guests, extra_guest_price, max_extra_guests, pass_validity, access_type")
       .single();
 
     if (defaultTT) {
@@ -358,6 +369,17 @@ export default async function ApplyPage({
       isUpcoming,
       isEnded,
       remaining: ticketType.capacity == null ? null : Math.max(0, ticketType.capacity - reserved),
+      duration_label: ticketType.duration_label,
+      duration_days: ticketType.duration_days,
+      is_group_pass: ticketType.is_group_pass,
+      included_guests: ticketType.included_guests,
+      min_guests: ticketType.min_guests,
+      max_guests: ticketType.max_guests,
+      allow_extra_guests: ticketType.allow_extra_guests,
+      extra_guest_price: ticketType.extra_guest_price,
+      max_extra_guests: ticketType.max_extra_guests,
+      pass_validity: ticketType.pass_validity,
+      access_type: ticketType.access_type,
     };
   });
 
