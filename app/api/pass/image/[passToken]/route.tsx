@@ -2,7 +2,7 @@ import { ImageResponse } from "next/og";
 import { createClient } from "@supabase/supabase-js";
 import QRCode from "qrcode";
 import { getSupabaseUrl } from "@/lib/supabase/config";
-import { resolvePassDesign } from "@/lib/pass-design";
+import { resolveTicketDesign } from "@/lib/pass-design";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -12,13 +12,6 @@ const PASS_TYPE_LABEL: Record<string, string> = {
   vip: "VIP",
   speaker: "SPEAKER",
   organizer: "ORGANIZER",
-};
-
-const PASS_TYPE_COLOR: Record<string, string> = {
-  participant: "#a78bfa",
-  vip:         "#fbbf24",
-  speaker:     "#60a5fa",
-  organizer:   "#34d399",
 };
 
 export async function GET(
@@ -42,7 +35,7 @@ export async function GET(
   if (!pass) return new Response("Not found", { status: 404 });
 
   const [{ data: attendee }, { data: event }] = await Promise.all([
-    supabase.from("attendees").select("name, email").eq("id", pass.attendee_id).single(),
+    supabase.from("attendees").select("name, email, phone").eq("id", pass.attendee_id).single(),
     supabase.from("events").select("name, event_date, start_time, venue, custom_pass_design").eq("id", pass.event_id).single(),
   ]);
 
@@ -57,8 +50,7 @@ export async function GET(
 
   const organizerId = eventOrg?.organizer_id ?? null;
   let showBranding = true;
-  let orgProfileData: { org_name: string | null; brand_color: string | null; custom_pass_design: unknown } | null = null;
-  let isPro = false;
+  let orgProfileData: { org_name: string | null; brand_color: string | null; org_logo_url: string | null; custom_pass_design: unknown } | null = null;
 
   if (organizerId) {
     const [{ data: sub }, { data: orgProfile }] = await Promise.all([
@@ -70,222 +62,414 @@ export async function GET(
         .maybeSingle(),
       supabase
         .from("profiles")
-        .select("org_name, brand_color, custom_pass_design")
+        .select("org_name, brand_color, org_logo_url, custom_pass_design, hide_urpass_branding")
         .eq("user_id", organizerId)
         .single(),
     ]);
 
     const isTrialExpired = sub?.is_trial && sub?.trial_ends_at && new Date(sub.trial_ends_at) < new Date();
     const planSlug = isTrialExpired ? "free" : ((sub?.plan as unknown as { slug: string } | null)?.slug ?? "free");
-    showBranding = planSlug === "free";
-    isPro = ["pro", "business", "campus", "enterprise"].includes(planSlug);
+    showBranding = !(planSlug !== "free" && orgProfile?.hide_urpass_branding);
     orgProfileData = orgProfile;
   }
 
-  const design = isPro
-    ? resolvePassDesign(event.custom_pass_design, orgProfileData?.custom_pass_design, orgProfileData?.brand_color)
-    : resolvePassDesign(null, null, null);
+  const design = resolveTicketDesign(
+    event.custom_pass_design,
+    orgProfileData?.custom_pass_design,
+    orgProfileData?.brand_color
+  );
 
-  const brandColor = design.primaryColor;
-  const brandColorDark = design.secondaryColor;
-  const orgName = (isPro && orgProfileData?.org_name) ? orgProfileData.org_name : null;
-  const badgeLabel = design.badgeLabel || "EVENT PASS";
-  const headerLabel = orgName ? `${orgName} · ${badgeLabel}` : showBranding ? `URPASS · ${badgeLabel}` : badgeLabel;
+  const isDark = design.template === "dark";
+  const isMinimal = design.template === "minimal";
+  const isModern = design.template === "modern";
 
-  // QR code as base64 PNG — works in ImageResponse <img src>
+  const categoryColor = pass.pass_type
+    ? design.categoryColors?.[pass.pass_type] ||
+      design.categoryColors?.[pass.pass_type.toLowerCase()] ||
+      design.categoryColors?.[pass.pass_type.toUpperCase()]
+    : null;
+  const activeColor = categoryColor || design.primaryColor || "#635BFF";
+
+  const cardBg = isDark ? "#111317" : "#ffffff";
+  const textColor = isDark ? "#ffffff" : "#111827";
+  const subtextColor = isDark ? "#9ca3af" : "#6b7280";
+  const borderColor = isDark ? "#27272a" : "#e5e7eb";
+
+  const orgName = orgProfileData?.org_name || null;
+  const logoToDisplay = design.logoUrl || orgProfileData?.org_logo_url || null;
+
+  const qrSizePx = design.qrSize === "sm" ? 130 : design.qrSize === "lg" ? 170 : 150;
+
+  // QR code as base64 PNG
   const qrDataUrl = await QRCode.toDataURL(passToken, {
-    width: 160,
+    width: qrSizePx,
     margin: 1,
     color: { dark: "#0a0a0a", light: "#ffffff" },
   });
 
-  // Load Inter font safely
-  let fontData: ArrayBuffer | undefined;
-  try {
-    const fontRes = await fetch(
-      "https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-600-normal.ttf"
-    );
-    if (fontRes.ok) {
-      const buffer = await fontRes.arrayBuffer();
-      const header = new Uint8Array(buffer.slice(0, 4));
-      // Ensure response is not an HTML error page (starts with '<' / 0x3C)
-      if (header[0] !== 0x3c) {
-        fontData = buffer;
-      }
-    }
-  } catch {
-    // proceed without custom font — Satori renders latin text fine
-  }
-
   const formattedDate = new Date(event.event_date).toLocaleDateString("en-IN", {
     day: "numeric",
-    month: "long",
+    month: "short",
     year: "numeric",
-  });
+  }).toUpperCase();
 
-  const typeLabel = PASS_TYPE_LABEL[pass.pass_type] ?? "PARTICIPANT";
-  const typeColor = PASS_TYPE_COLOR[pass.pass_type] ?? "#a78bfa";
+  const typeLabel = PASS_TYPE_LABEL[pass.pass_type] ?? (pass.pass_type ? pass.pass_type.toUpperCase() : "PARTICIPANT");
   const shortCode = (passToken.slice(0, 8).match(/.{1,4}/g) ?? []).join("-").toUpperCase();
   const isCheckedIn = pass.status === "checked_in";
+
+  const rulesList = [
+    design.showSingleEntryRule !== false ? "Valid for single entry" : null,
+    design.showGateNotice !== false ? "Keep QR ready at gate" : null,
+    design.customInstruction || null,
+  ].filter(Boolean);
+
+  const orderedFields = Array.isArray(design.fieldOrder) && design.fieldOrder.length > 0
+    ? design.fieldOrder
+    : [
+        "showAttendeeName",
+        "showOrganization",
+        "showPhone",
+        "showRegistrationNumber",
+        "showTicketId",
+      ];
 
   const img = new ImageResponse(
     (
       <div
         style={{
           width: 400,
-          height: showBranding ? 640 : 608,
+          minHeight: 620,
           display: "flex",
           flexDirection: "column",
-          backgroundColor: "#ffffff",
-          borderRadius: 28,
+          backgroundColor: cardBg,
+          borderRadius: 24,
           overflow: "hidden",
-          fontFamily: "'Inter', system-ui, sans-serif",
+          border: `1px solid ${borderColor}`,
+          fontFamily: "system-ui, -apple-system, sans-serif",
+          color: textColor,
         }}
       >
-        {/* ── Brand header ──────────────────────────────────────── */}
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            padding: "28px 28px 32px",
-            background: `linear-gradient(135deg, ${brandColor} 0%, ${brandColorDark} 100%)`,
-          }}
-        >
-          <span
-            style={{
-              fontSize: 9,
-              fontWeight: 700,
-              letterSpacing: 3,
-              color: "rgba(255,255,255,0.55)",
-              textTransform: "uppercase",
-              marginBottom: 14,
-            }}
-          >
-            {headerLabel}
-          </span>
-
+        {/* Accent Top Strip for Event & Modern */}
+        {(design.template === "event" || isModern) && (
           <div
             style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "flex-start",
-              marginBottom: 16,
+              height: 8,
+              width: "100%",
+              backgroundColor: activeColor,
             }}
-          >
-            <span
-              style={{
-                fontSize: 22,
-                fontWeight: 700,
-                color: "#ffffff",
-                lineHeight: 1.25,
-                flex: 1,
-                marginRight: 12,
-              }}
-            >
-              {event.name}
-            </span>
-            <span
-              style={{
-                fontSize: 9,
-                fontWeight: 700,
-                color: typeColor,
-                border: `1px solid ${typeColor}55`,
-                borderRadius: 99,
-                padding: "4px 10px",
-                backgroundColor: `${typeColor}20`,
-                letterSpacing: 1,
-                whiteSpace: "nowrap",
-              }}
-            >
-              {typeLabel}
-            </span>
-          </div>
+          />
+        )}
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-            <span style={{ fontSize: 12, color: "#c4b5fd" }}>
-              {formattedDate} · {event.start_time}
-            </span>
-            <span style={{ fontSize: 12, color: "#c4b5fd" }}>
-              {event.venue}
-            </span>
-          </div>
-        </div>
-
-        {/* ── Tear line ─────────────────────────────────────────── */}
-        <div
-          style={{
-            height: 1,
-            backgroundColor: "#e5e7eb",
-            display: "flex",
-          }}
-        />
-
-        {/* ── Body ──────────────────────────────────────────────── */}
+        {/* Card Interior */}
         <div
           style={{
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            padding: "28px 28px 24px",
+            textAlign: "center",
+            padding: "24px 24px 20px",
             flex: 1,
-            gap: 0,
           }}
         >
-          {/* Attendee */}
+          {/* Logo & Sponsor */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 10,
+              marginBottom: 10,
+            }}
+          >
+            {logoToDisplay ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={logoToDisplay}
+                alt="Logo"
+                style={{ height: 32, maxWidth: 130, objectFit: "contain" }}
+              />
+            ) : (
+              <span
+                style={{
+                  fontSize: 11,
+                  fontWeight: 800,
+                  letterSpacing: 3,
+                  textTransform: "uppercase",
+                  color: isDark ? "#ffffff" : "#111827",
+                }}
+              >
+                {orgName || "URPASS"}
+              </span>
+            )}
+
+            {design.sponsorLogoUrl && (
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 11, color: "#9ca3af" }}>×</span>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={design.sponsorLogoUrl}
+                  alt="Sponsor Logo"
+                  style={{ height: 24, maxWidth: 90, objectFit: "contain", opacity: 0.85 }}
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Event Title */}
+          <span
+            style={{
+              fontSize: 18,
+              fontWeight: 800,
+              letterSpacing: -0.3,
+              textTransform: "uppercase",
+              lineHeight: 1.25,
+              marginBottom: 10,
+              maxWidth: 340,
+            }}
+          >
+            {event.name}
+          </span>
+
+          {/* Ticket Type Pill */}
+          {design.showTicketType && (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 5,
+                fontSize: 10,
+                fontWeight: 700,
+                letterSpacing: 1.5,
+                textTransform: "uppercase",
+                padding: "3px 12px",
+                borderRadius: 99,
+                color: activeColor,
+                backgroundColor: `${activeColor}18`,
+                border: `1px solid ${activeColor}40`,
+                marginBottom: 12,
+              }}
+            >
+              <span>{typeLabel}</span>
+            </div>
+          )}
+
+          {/* Center QR (if not bottom) */}
+          {design.qrPosition !== "bottom" && (
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                backgroundColor: "#ffffff",
+                borderRadius: 14,
+                padding: 12,
+                border: design.showQrBorder !== false ? "1px solid #e5e7eb" : "none",
+                marginBottom: 12,
+              }}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={qrDataUrl} width={qrSizePx} height={qrSizePx} alt="QR" />
+              <span
+                style={{
+                  fontSize: 8,
+                  fontWeight: 800,
+                  letterSpacing: 2,
+                  color: "#9ca3af",
+                  textTransform: "uppercase",
+                  marginTop: 6,
+                }}
+              >
+                SCAN FOR ENTRY
+              </span>
+            </div>
+          )}
+
+          {/* Dynamic Ordered Fields */}
           <div
             style={{
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
               gap: 4,
-              marginBottom: 24,
+              width: "100%",
             }}
           >
-            <span
+            {orderedFields.map((fieldId) => {
+              if (fieldId === "showAttendeeName" && design.showAttendeeName) {
+                return (
+                  <span
+                    key="showAttendeeName"
+                    style={{
+                      fontSize: 17,
+                      fontWeight: 700,
+                      color: textColor,
+                    }}
+                  >
+                    {attendee.name}
+                  </span>
+                );
+              }
+
+              if (fieldId === "showPhone" && design.showPhone && attendee.phone) {
+                return (
+                  <span
+                    key="showPhone"
+                    style={{
+                      fontSize: 11,
+                      fontFamily: "monospace",
+                      color: subtextColor,
+                    }}
+                  >
+                    {attendee.phone}
+                  </span>
+                );
+              }
+
+              if (fieldId === "showRegistrationNumber" && design.showRegistrationNumber) {
+                return (
+                  <span
+                    key="showRegistrationNumber"
+                    style={{
+                      fontSize: 10,
+                      fontFamily: "monospace",
+                      fontWeight: 600,
+                      padding: "2px 8px",
+                      borderRadius: 4,
+                      backgroundColor: isDark ? "#27272a" : "#f4f4f5",
+                      color: isDark ? "#d4d4d8" : "#52525b",
+                    }}
+                  >
+                    REG-{shortCode}
+                  </span>
+                );
+              }
+
+              if (fieldId === "showTicketId" && design.showTicketId) {
+                return (
+                  <div
+                    key="showTicketId"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      fontSize: 11,
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontSize: 9,
+                        fontWeight: 700,
+                        letterSpacing: 1.5,
+                        color: "#9ca3af",
+                        textTransform: "uppercase",
+                      }}
+                    >
+                      TICKET ID:
+                    </span>
+                    <span style={{ fontFamily: "monospace", fontWeight: 600 }}>
+                      #{shortCode}
+                    </span>
+                  </div>
+                );
+              }
+
+              return null;
+            })}
+          </div>
+
+          {/* Bottom QR (if bottom) */}
+          {design.qrPosition === "bottom" && (
+            <div
               style={{
-                fontSize: 9,
-                fontWeight: 700,
-                letterSpacing: 2.5,
-                color: "#9ca3af",
-                textTransform: "uppercase",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                backgroundColor: "#ffffff",
+                borderRadius: 14,
+                padding: 12,
+                border: design.showQrBorder !== false ? "1px solid #e5e7eb" : "none",
+                margin: "10px 0",
               }}
             >
-              ATTENDEE
-            </span>
-            <span style={{ fontSize: 20, fontWeight: 700, color: "#111827" }}>
-              {attendee.name}
-            </span>
-            <span style={{ fontSize: 12, color: "#6b7280" }}>
-              {attendee.email}
-            </span>
-          </div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={qrDataUrl} width={qrSizePx} height={qrSizePx} alt="QR" />
+              <span
+                style={{
+                  fontSize: 8,
+                  fontWeight: 800,
+                  letterSpacing: 2,
+                  color: "#9ca3af",
+                  textTransform: "uppercase",
+                  marginTop: 6,
+                }}
+              >
+                SCAN FOR ENTRY
+              </span>
+            </div>
+          )}
 
-          {/* QR code */}
-          <div
-            style={{
-              display: "flex",
-              padding: 14,
-              backgroundColor: "#ffffff",
-              borderRadius: 18,
-              border: "1px solid #e5e7eb",
-              marginBottom: 14,
-            }}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={qrDataUrl} width={148} height={148} alt="QR" />
-          </div>
+          {/* Date & Venue Footer */}
+          {(design.showEventDate !== false || (design.showVenue && event.venue)) && (
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 4,
+                width: "100%",
+                paddingTop: 10,
+                marginTop: 10,
+                borderTop: `1px solid ${borderColor}`,
+                fontSize: 11,
+                color: subtextColor,
+              }}
+            >
+              {design.showEventDate !== false && (
+                <span>{formattedDate}{event.start_time ? ` · ${event.start_time}` : ""}</span>
+              )}
+              {design.showVenue && event.venue && <span>{event.venue}</span>}
+            </div>
+          )}
 
-          {/* Short code */}
-          <span
-            style={{
-              fontSize: 11,
-              color: "#d1d5db",
-              letterSpacing: 3,
-              marginBottom: 20,
-            }}
-          >
-            {shortCode}
-          </span>
+          {/* Custom Message */}
+          {design.customMessage && (
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                paddingTop: 8,
+                marginTop: 8,
+                borderTop: "1px dashed #d1d5db",
+                width: "100%",
+                fontSize: 11,
+                fontStyle: "italic",
+                color: subtextColor,
+              }}
+            >
+              <span>&ldquo;{design.customMessage}&rdquo;</span>
+            </div>
+          )}
+
+          {/* Admission Rules */}
+          {rulesList.length > 0 && (
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                paddingTop: 8,
+                marginTop: 8,
+                borderTop: `1px solid ${borderColor}`,
+                width: "100%",
+                fontSize: 9,
+                fontWeight: 600,
+                color: subtextColor,
+              }}
+            >
+              <span>{rulesList.join(" • ")}</span>
+            </div>
+          )}
 
           {/* Status badge */}
           <div
@@ -293,64 +477,45 @@ export async function GET(
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              gap: 8,
-              backgroundColor: isCheckedIn ? "#f0fdf4" : "#f5f3ff",
-              border: `1px solid ${isCheckedIn ? "#bbf7d0" : "#ddd6fe"}`,
-              borderRadius: 14,
-              padding: "10px 24px",
+              gap: 6,
+              backgroundColor: isCheckedIn ? "#f0fdf4" : `${activeColor}12`,
+              border: `1px solid ${isCheckedIn ? "#bbf7d0" : `${activeColor}30`}`,
+              borderRadius: 12,
+              padding: "8px 20px",
               width: "100%",
+              marginTop: 12,
             }}
           >
             <span
               style={{
-                fontSize: 12,
-                fontWeight: 600,
-                color: isCheckedIn ? "#15803d" : brandColor,
+                fontSize: 11,
+                fontWeight: 700,
+                color: isCheckedIn ? "#15803d" : activeColor,
               }}
             >
-              {isCheckedIn ? "Checked in" : "Valid · Show at entrance"}
+              {isCheckedIn ? "VERIFIED ENTRY · CHECKED IN" : "VALID · SHOW AT ENTRANCE"}
             </span>
           </div>
-
-          {design.footerNote ? (
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "center",
-                marginTop: 8,
-                padding: "0 12px",
-              }}
-            >
-              <span
-                style={{
-                  fontSize: 9,
-                  color: "#9ca3af",
-                  textAlign: "center",
-                  lineHeight: 1.3,
-                }}
-              >
-                {design.footerNote}
-              </span>
-            </div>
-          ) : null}
         </div>
 
-        {/* ── Footer ────────────────────────────────────────────── */}
+        {/* Branding footer */}
         {showBranding && (
           <div
             style={{
               display: "flex",
               justifyContent: "center",
-              padding: "12px 28px",
-              borderTop: "1px solid #f3f4f6",
+              padding: "10px 24px",
+              borderTop: `1px solid ${borderColor}`,
+              backgroundColor: isDark ? "#09090b" : "#f9fafb",
             }}
           >
             <span
               style={{
                 fontSize: 9,
-                color: "#d1d5db",
-                letterSpacing: 2.5,
+                color: "#9ca3af",
+                letterSpacing: 2,
                 textTransform: "uppercase",
+                fontWeight: 700,
               }}
             >
               Powered by URPASS
@@ -361,15 +526,12 @@ export async function GET(
     ),
     {
       width: 400,
-      height: showBranding ? 640 : 608,
       headers: {
         "Content-Disposition": `attachment; filename="urpass-${shortCode}.png"`,
       },
-      fonts: fontData
-        ? [{ name: "Inter", data: fontData, style: "normal", weight: 600 }]
-        : [],
     }
   );
 
   return img;
 }
+

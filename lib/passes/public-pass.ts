@@ -174,8 +174,8 @@ export async function getHardenedPublicPass(
     branding: {
       showBranding,
       isPro,
-      orgName: isPro && orgProfile?.org_name ? orgProfile.org_name : null,
-      orgLogoUrl: isPro && orgProfile?.org_logo_url ? orgProfile.org_logo_url : null,
+      orgName: orgProfile?.org_name || null,
+      orgLogoUrl: orgProfile?.org_logo_url || null,
       customDesign: rawCustomDesign,
     },
   };

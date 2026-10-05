@@ -74,27 +74,46 @@ export default async function PassPage({
   const { pass, attendee, event, branding } = publicPass;
 
   const showBranding = branding.showBranding;
-  const isPro = branding.isPro;
-  const rawCustomDesign = branding.customDesign;
-  const isStudio = isPro && isStudioDesign(rawCustomDesign) && rawCustomDesign.isPublished !== false;
+  const rawCustomDesign = event.custom_pass_design || branding.customDesign;
+  const isStudio = isStudioDesign(rawCustomDesign) && rawCustomDesign.isPublished !== false;
 
-  const design = isPro
-    ? resolveTicketDesign(event.custom_pass_design, branding.customDesign, null)
-    : resolveTicketDesign(null, null, null);
+  const design = resolveTicketDesign(event.custom_pass_design, branding.customDesign, null);
 
-  const categoryColor = pass.pass_type ? design.categoryColors?.[pass.pass_type] : null;
-  const brandColor = categoryColor || design.primaryColor;
+  const isDark = design.template === "dark";
+  const isMinimal = design.template === "minimal";
+  const isModern = design.template === "modern";
+
+  const categoryColor = pass.pass_type
+    ? design.categoryColors?.[pass.pass_type] ||
+      design.categoryColors?.[pass.pass_type.toLowerCase()] ||
+      design.categoryColors?.[pass.pass_type.toUpperCase()]
+    : null;
+  const activeColor = categoryColor || design.primaryColor || "#635BFF";
+
   const shapeRadius =
     design.shape === "rounded"
       ? "rounded-[28px]"
       : design.shape === "compact"
       ? "rounded-xl"
       : "rounded-2xl";
-  const isDark = design.template === "dark";
-  const isMinimal = design.template === "minimal";
+
+  const cardBg = isDark
+    ? "bg-[#111317] text-white"
+    : isMinimal
+    ? "bg-white text-neutral-900"
+    : isModern
+    ? "bg-gradient-to-b from-white to-neutral-50 text-neutral-900"
+    : "bg-white text-neutral-900";
+
+  const cardBorder = isDark ? "border-neutral-800" : "border-neutral-200";
+  const dividerCls = isDark ? "border-neutral-800" : "border-neutral-100";
+  const subtextCls = isDark ? "text-neutral-400" : "text-neutral-500";
+
   const orgName = branding.orgName;
   const orgLogoUrl = branding.orgLogoUrl;
   const logoToDisplay = design.logoUrl || orgLogoUrl;
+
+  const qrSizePx = design.qrSize === "sm" ? 140 : design.qrSize === "lg" ? 200 : 165;
 
   const isCheckedIn = pass.status === "checked_in";
   const isOnline = event.event_type === "online";
@@ -116,6 +135,22 @@ export default async function PassPage({
   const platformLabel = event.meeting_platform
     ? PLATFORM_LABEL[event.meeting_platform] ?? "Online Meeting"
     : "Online Meeting";
+
+  const rulesList = [
+    design.showSingleEntryRule !== false ? "Valid for single entry" : null,
+    design.showGateNotice !== false ? "Keep QR ready at gate" : null,
+    design.customInstruction || null,
+  ].filter(Boolean);
+
+  const orderedFields = Array.isArray(design.fieldOrder) && design.fieldOrder.length > 0
+    ? design.fieldOrder
+    : [
+        "showAttendeeName",
+        "showOrganization",
+        "showPhone",
+        "showRegistrationNumber",
+        "showTicketId",
+      ];
 
   function getStatusText() {
     if (isCheckedIn) return null;
@@ -160,18 +195,8 @@ export default async function PassPage({
         </div>
       ) : (
         <div
-          className={`relative z-10 w-full max-w-[370px] ${shapeRadius} border select-none overflow-hidden transition-all shadow-2xl backdrop-blur-2xl ${
-            isDark
-              ? "bg-[#0B0E14]/85 border-neutral-800/80 text-white"
-              : isMinimal
-              ? "bg-white/85 border-neutral-900/80 text-neutral-900"
-              : "bg-white/85 border-white/60 dark:border-white/10 text-neutral-900"
-          }`}
-          style={{
-            boxShadow: isDark
-              ? "0 25px 60px -15px rgba(0, 0, 0, 0.7), 0 0 40px -10px rgba(109, 40, 217, 0.15)"
-              : "0 20px 50px -15px rgba(0, 0, 0, 0.08), 0 0 30px -10px rgba(99, 91, 255, 0.1)",
-          }}
+          id="printable-ticket-card"
+          className={`w-full max-w-[360px] ${shapeRadius} border ${cardBorder} ${cardBg} overflow-hidden shadow-[0_12px_36px_-6px_rgba(0,0,0,0.08),0_4px_12px_-2px_rgba(0,0,0,0.04)] relative select-none transition-all duration-150 z-10`}
         >
           {/* Optional background image with contrast-preserving overlay */}
           {design.backgroundImageUrl && (
@@ -179,166 +204,94 @@ export default async function PassPage({
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={design.backgroundImageUrl}
-                alt="Ticket Background"
-                className="w-full h-full object-cover opacity-10"
+                alt="Background"
+                className="w-full h-full object-cover opacity-15"
               />
               <div
                 className={`absolute inset-0 ${
                   isDark
-                    ? "bg-gradient-to-b from-[#0B0E14]/90 via-[#0B0E14]/85 to-[#0B0E14]/95"
+                    ? "bg-gradient-to-b from-[#111317]/90 via-[#111317]/85 to-[#111317]/95"
                     : "bg-gradient-to-b from-white/90 via-white/85 to-white/95"
                 }`}
               />
             </div>
           )}
 
-          {/* Top Accent Strip */}
-          <div
-            className="h-1.5 w-full relative z-10"
-            style={{ backgroundColor: brandColor }}
-          />
+          {/* Top Accent Strip for Event & Modern */}
+          {(design.template === "event" || isModern) && (
+            <div
+              className="h-2 w-full relative z-10"
+              style={{ backgroundColor: activeColor }}
+            />
+          )}
 
-          {/* Executive Header Segment */}
-          <div className="relative z-10 px-6 pt-5 pb-4 border-b border-neutral-100 dark:border-neutral-800/80">
-            <div className="flex items-center justify-between gap-3 mb-3">
-              <div className="flex items-center gap-2">
-                {logoToDisplay ? (
-                  // eslint-disable-next-line @next/next/no-img-element
+          {/* Card Interior */}
+          <div className="relative z-10 p-6 flex flex-col items-center text-center">
+            {/* Event Logo & Sponsor */}
+            <div className="mb-3 flex items-center justify-center gap-3">
+              {logoToDisplay ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={logoToDisplay}
+                  alt="Logo"
+                  className="h-8 max-w-[130px] object-contain"
+                />
+              ) : (
+                <span
+                  className="text-[11px] font-bold tracking-widest uppercase"
+                  style={{ color: isDark ? "#ffffff" : "#111827" }}
+                >
+                  {orgName || "URPASS"}
+                </span>
+              )}
+
+              {design.sponsorLogoUrl && (
+                <>
+                  <span className="text-neutral-300 text-xs">×</span>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={logoToDisplay}
-                    alt="Logo"
-                    className="h-7 max-w-[130px] object-contain"
+                    src={design.sponsorLogoUrl}
+                    alt="Sponsor Logo"
+                    className="h-6 max-w-[100px] object-contain opacity-80"
                   />
-                ) : (
-                  <span
-                    className="text-[11px] font-black tracking-widest uppercase"
-                    style={{ color: isDark ? "#ffffff" : "#09090b" }}
-                  >
-                    {orgName || "URPASS"}
-                  </span>
-                )}
-
-                {design.sponsorLogoUrl && (
-                  <>
-                    <span className="text-neutral-300 text-xs">×</span>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={design.sponsorLogoUrl}
-                      alt="Sponsor Logo"
-                      className="h-5 max-w-[90px] object-contain opacity-80"
-                    />
-                  </>
-                )}
-              </div>
-
-              <span className="inline-flex items-center gap-1 text-[9px] font-extrabold tracking-wider uppercase px-2.5 py-1 rounded-full bg-neutral-100/90 dark:bg-neutral-800/90 text-neutral-700 dark:text-neutral-300 border border-neutral-200/80 dark:border-neutral-700 shadow-2xs backdrop-blur-xs">
-                <ShieldCheck className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
-                <span>OFFICIAL PASS</span>
-              </span>
+                </>
+              )}
             </div>
 
             {/* Event Name */}
-            <h1 className="text-lg sm:text-xl font-black tracking-tight uppercase leading-snug line-clamp-2">
+            <h1 className="text-lg font-bold tracking-tight mb-2 uppercase leading-snug max-w-xs">
               {event.name}
             </h1>
 
-            {/* Structured Event Metadata Grid */}
-            <div className="mt-3.5 grid grid-cols-2 gap-2 text-[10px]">
-              {design.showEventDate !== false && (
-                <div className="p-2.5 rounded-xl bg-white/70 dark:bg-white/5 backdrop-blur-md border border-neutral-200/70 dark:border-white/10 flex items-start gap-2 shadow-2xs">
-                  <CalendarDays className="w-3.5 h-3.5 text-neutral-400 shrink-0 mt-0.5" />
-                  <div className="min-w-0">
-                    <p className="text-[8px] font-bold uppercase tracking-wider text-neutral-400">
-                      SCHEDULE
-                    </p>
-                    <p className="font-semibold text-neutral-800 dark:text-neutral-200 truncate">
-                      {formattedDate}
-                    </p>
-                    <p className="text-neutral-500 text-[9px] truncate">
-                      {event.start_time}–{event.end_time}
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {design.showVenue && event.venue && (
-                <div className="p-2.5 rounded-xl bg-white/70 dark:bg-white/5 backdrop-blur-md border border-neutral-200/70 dark:border-white/10 flex items-start gap-2 shadow-2xs">
-                  <MapPin className="w-3.5 h-3.5 text-neutral-400 shrink-0 mt-0.5" />
-                  <div className="min-w-0">
-                    <p className="text-[8px] font-bold uppercase tracking-wider text-neutral-400">
-                      LOCATION
-                    </p>
-                    <p className="font-semibold text-neutral-800 dark:text-neutral-200 truncate">
-                      {event.venue}
-                    </p>
-                    <p className="text-neutral-500 text-[9px] truncate">
-                      Venue Access
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Micro-perforated coupon notch line */}
-          <div className="relative h-4 bg-transparent flex items-center">
-            <div className={`absolute -left-2.5 w-5 h-5 rounded-full ${isDark ? "bg-[#0a0a0d]/90 border-neutral-800" : "bg-neutral-100/90 border-neutral-200"} border backdrop-blur-xs`} />
-            <div className={`absolute -right-2.5 w-5 h-5 rounded-full ${isDark ? "bg-[#0a0a0d]/90 border-neutral-800" : "bg-neutral-100/90 border-neutral-200"} border backdrop-blur-xs`} />
-            <div className={`w-full border-t border-dashed ${isDark ? "border-neutral-800" : "border-neutral-200"} mx-4`} />
-          </div>
-
-          {/* Ticket Body */}
-          <div className="relative z-10 px-6 pb-6 flex flex-col items-center text-center">
-            {/* Attendee Details Card */}
-            <div className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-white/70 dark:bg-white/5 backdrop-blur-md border border-neutral-200/70 dark:border-white/10 mb-3.5 shadow-2xs">
-              <div className="text-left min-w-0 pr-2">
-                <p className="text-[8px] font-bold tracking-widest uppercase text-neutral-400 mb-0.5">
-                  DELEGATE
-                </p>
-                {design.showAttendeeName && (
-                  <p className="text-base font-bold text-neutral-950 dark:text-white truncate">
-                    {attendee.name}
-                  </p>
-                )}
-                {design.showPhone && attendee.phone && (
-                  <p className="text-[10px] font-mono text-neutral-500 dark:text-neutral-400">
-                    {attendee.phone}
-                  </p>
-                )}
+            {/* Ticket Type Pill */}
+            {design.showTicketType && (
+              <div className="mb-2.5">
+                <span
+                  className="inline-flex items-center gap-1 text-[11px] font-semibold tracking-wider uppercase px-3 py-0.5 rounded-full border"
+                  style={{
+                    borderColor: `${activeColor}35`,
+                    color: activeColor,
+                    backgroundColor: `${activeColor}12`,
+                  }}
+                >
+                  <Ticket className="w-3 h-3" />
+                  {PASS_TYPE_LABEL[pass.pass_type] ?? pass.pass_type}
+                </span>
               </div>
+            )}
 
-              <div className="flex flex-col items-end shrink-0 gap-1">
-                {design.showTicketType && (
-                  <span
-                    className="inline-flex items-center gap-1 text-[10px] font-black tracking-wider uppercase px-2.5 py-1 rounded-full border shadow-2xs backdrop-blur-xs"
-                    style={{
-                      borderColor: `${brandColor}40`,
-                      color: brandColor,
-                      backgroundColor: `${brandColor}15`,
-                    }}
-                  >
-                    <Ticket className="w-3 h-3" />
-                    {PASS_TYPE_LABEL[pass.pass_type] ?? pass.pass_type}
-                  </span>
-                )}
-
-                {design.showRegistrationNumber && (
-                  <span className="text-[9px] font-mono font-semibold px-2 py-0.5 rounded bg-white/90 dark:bg-neutral-800 border border-neutral-200/80 dark:border-neutral-700 text-neutral-600 dark:text-neutral-300 shadow-2xs">
-                    REG-{shortCode.toUpperCase()}
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {/* QR Code Container with High-Contrast White Card */}
-            {!isOnline && (
-              <div className="my-1 flex flex-col items-center w-full">
-                <div className="p-4 bg-white/95 dark:bg-white backdrop-blur-md rounded-2xl shadow-xs border border-neutral-200/80 flex flex-col items-center justify-center">
-                  <PassQR value={pass.pass_token} size={165} />
-                  <span className="text-[9px] font-mono font-bold tracking-widest text-neutral-400 uppercase mt-2.5">
-                    SCAN AT ENTRANCE TERMINAL
-                  </span>
-                </div>
+            {/* QR Code Matrix (Positioned center if not bottom) */}
+            {design.qrPosition !== "bottom" && !isOnline && (
+              <div
+                className={`my-2 p-3.5 bg-white rounded-xl flex flex-col items-center justify-center ${
+                  design.showQrBorder !== false ? "border border-neutral-200/90 shadow-2xs" : ""
+                }`}
+                style={{ width: qrSizePx + 28, height: qrSizePx + 44 }}
+              >
+                <PassQR value={pass.pass_token} size={qrSizePx} />
+                <span className="text-[8px] font-bold tracking-widest text-neutral-400 uppercase mt-2">
+                  SCAN FOR ENTRY
+                </span>
               </div>
             )}
 
@@ -349,8 +302,8 @@ export default async function PassPage({
                   className="px-4 py-3 text-left"
                   style={{
                     background: isDark
-                      ? `linear-gradient(135deg, ${brandColor}24 0%, rgba(255,255,255,0.03) 100%)`
-                      : `linear-gradient(135deg, ${brandColor}14 0%, #ffffff 70%)`,
+                      ? `linear-gradient(135deg, ${activeColor}24 0%, rgba(255,255,255,0.03) 100%)`
+                      : `linear-gradient(135deg, ${activeColor}14 0%, #ffffff 70%)`,
                   }}
                 >
                   <div className="flex items-center justify-between gap-3">
@@ -358,11 +311,11 @@ export default async function PassPage({
                       <div
                         className="w-11 h-11 rounded-xl flex items-center justify-center border shrink-0"
                         style={{
-                          backgroundColor: `${brandColor}12`,
-                          borderColor: `${brandColor}30`,
+                          backgroundColor: `${activeColor}12`,
+                          borderColor: `${activeColor}30`,
                         }}
                       >
-                        <Wifi className="w-5 h-5" style={{ color: brandColor }} />
+                        <Wifi className="w-5 h-5" style={{ color: activeColor }} />
                       </div>
                       <div className="min-w-0">
                         <p className="text-[8px] font-black tracking-widest uppercase text-neutral-400">
@@ -376,9 +329,9 @@ export default async function PassPage({
                     <span
                       className="inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[9px] font-black uppercase tracking-wider shrink-0"
                       style={{
-                        color: brandColor,
-                        borderColor: `${brandColor}35`,
-                        backgroundColor: `${brandColor}12`,
+                        color: activeColor,
+                        borderColor: `${activeColor}35`,
+                        backgroundColor: `${activeColor}12`,
                       }}
                     >
                       <Lock className="w-3 h-3" />
@@ -407,41 +360,112 @@ export default async function PassPage({
               </div>
             )}
 
-            {/* Ticket ID Tag */}
-            {design.showTicketId && (
-              <div className="mt-2.5 flex items-center justify-center gap-1.5">
-                <span className="text-[9px] font-bold tracking-wider uppercase text-neutral-400">
-                  PASS ID
+            {/* Dynamic Ordered Fields */}
+            <div className="w-full flex flex-col items-center text-center space-y-1 mt-1">
+              {orderedFields.map((fieldId) => {
+                if (fieldId === "showAttendeeName" && design.showAttendeeName) {
+                  return (
+                    <p key="showAttendeeName" className="text-base font-semibold tracking-tight text-inherit pt-1">
+                      {attendee.name}
+                    </p>
+                  );
+                }
+
+                if (fieldId === "showOrganization" && design.showOrganization) {
+                  const orgText = (attendee as any).company || (attendee as any).organization;
+                  if (!orgText) return null;
+                  return (
+                    <p key="showOrganization" className={`text-xs font-normal ${subtextCls}`}>
+                      {orgText}
+                    </p>
+                  );
+                }
+
+                if (fieldId === "showPhone" && design.showPhone && attendee.phone) {
+                  return (
+                    <p key="showPhone" className={`text-[11px] font-mono ${subtextCls}`}>
+                      {attendee.phone}
+                    </p>
+                  );
+                }
+
+                if (fieldId === "showRegistrationNumber" && design.showRegistrationNumber) {
+                  return (
+                    <span key="showRegistrationNumber" className="text-[10px] font-mono font-medium px-2 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300">
+                      REG-{shortCode.toUpperCase()}
+                    </span>
+                  );
+                }
+
+                if (fieldId === "showTicketId" && design.showTicketId) {
+                  return (
+                    <div key="showTicketId" className="flex items-center justify-center gap-1.5 py-0.5">
+                      <span className="text-[9px] font-semibold tracking-wider uppercase text-neutral-400">
+                        TICKET ID:
+                      </span>
+                      <span className="text-xs font-mono font-medium tracking-wide">
+                        #{shortCode.toUpperCase()}
+                      </span>
+                    </div>
+                  );
+                }
+
+                return null;
+              })}
+            </div>
+
+            {/* Bottom QR Code (If QR position is set to 'bottom') */}
+            {design.qrPosition === "bottom" && !isOnline && (
+              <div
+                className={`my-3 p-3.5 bg-white rounded-xl flex flex-col items-center justify-center ${
+                  design.showQrBorder !== false ? "border border-neutral-200/90 shadow-2xs" : ""
+                }`}
+                style={{ width: qrSizePx + 28, height: qrSizePx + 44 }}
+              >
+                <PassQR value={pass.pass_token} size={qrSizePx} />
+                <span className="text-[8px] font-bold tracking-widest text-neutral-400 uppercase mt-2">
+                  SCAN FOR ENTRY
                 </span>
-                <span className="text-xs font-mono font-bold tracking-wider">
-                  #{shortCode.toUpperCase()}
-                </span>
+              </div>
+            )}
+
+            {/* Date & Venue Footer */}
+            {(design.showEventDate !== false || (design.showVenue && event.venue)) && (
+              <div
+                className={`w-full border-t ${dividerCls} pt-2.5 mt-2.5 flex flex-col items-center gap-1`}
+              >
+                {design.showEventDate !== false && event.event_date && (
+                  <p
+                    className={`text-xs font-medium tracking-wide ${subtextCls} flex items-center gap-1.5`}
+                  >
+                    <CalendarDays className="w-3.5 h-3.5 opacity-70 shrink-0" />
+                    <span>{formattedDate}{event.start_time ? ` · ${event.start_time}` : ""}</span>
+                  </p>
+                )}
+                {design.showVenue && event.venue && (
+                  <p className={`text-xs ${subtextCls} flex items-center gap-1.5`}>
+                    <MapPin className="w-3.5 h-3.5 opacity-70 shrink-0" />
+                    <span className="truncate max-w-[240px]">{event.venue}</span>
+                  </p>
+                )}
               </div>
             )}
 
             {/* Custom Message */}
             {design.customMessage && (
-              <div className="mt-2.5 pt-2 border-t border-dashed border-neutral-200/80 dark:border-neutral-800 w-full">
+              <div className={`mt-2.5 pt-2 border-t border-dashed ${isDark ? "border-neutral-800" : "border-neutral-200"} w-full`}>
                 <p className="text-xs italic opacity-85 max-w-xs mx-auto">
                   &ldquo;{design.customMessage}&rdquo;
                 </p>
               </div>
             )}
 
-            {/* Ticket Rules */}
-            {(design.showSingleEntryRule || design.showGateNotice || design.customInstruction || design.showTermsLink || design.showOrganizerContact) && (
+            {/* Admission Rules */}
+            {rulesList.length > 0 && (
               <div
-                className={`mt-2.5 pt-2 border-t w-full text-[10px] leading-relaxed ${
-                  isDark ? "border-neutral-800 text-neutral-400" : "border-neutral-100 text-neutral-500"
-                }`}
+                className={`mt-3 pt-2.5 border-t ${dividerCls} w-full text-[10px] ${subtextCls} leading-relaxed`}
               >
-                {[
-                  design.showSingleEntryRule ? "Valid for single entry" : null,
-                  design.showGateNotice ? "Keep QR visible at entrance" : null,
-                  design.customInstruction || null,
-                ]
-                  .filter(Boolean)
-                  .join(" • ")}
+                <p className="font-medium">{rulesList.join(" • ")}</p>
                 {design.showTermsLink && (
                   <p className="mt-0.5 underline opacity-70">
                     Event Terms &amp; Conditions apply
@@ -468,14 +492,14 @@ export default async function PassPage({
                 <div
                   className="w-full flex items-center gap-2 rounded-xl px-3 py-2.5 justify-center text-xs font-bold shadow-2xs"
                   style={{
-                    backgroundColor: `${brandColor}12`,
-                    color: brandColor,
-                    border: `1px solid ${brandColor}25`,
+                    backgroundColor: `${activeColor}12`,
+                    color: activeColor,
+                    border: `1px solid ${activeColor}25`,
                   }}
                 >
                   <span
                     className="w-2 h-2 rounded-full animate-pulse shrink-0"
-                    style={{ backgroundColor: brandColor }}
+                    style={{ backgroundColor: activeColor }}
                   />
                   <span>{statusText}</span>
                 </div>
