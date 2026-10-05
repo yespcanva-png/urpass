@@ -1,15 +1,40 @@
-import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { NextRequest, NextResponse } from "next/server";
+import { createServerClient } from "@supabase/ssr";
+import { getSupabaseUrl, getSupabaseAnonKey } from "@/lib/supabase/config";
 import { resolvePostAuthRedirect } from "@/lib/auth-redirect";
 import { notifyOwnerNewUser, notifyOwnerUserLogin, sendUserWelcomeEmail } from "@/lib/email";
 
-export async function GET(request: Request) {
-  const { searchParams, origin } = new URL(request.url);
+export const dynamic = "force-dynamic";
+
+export async function GET(request: NextRequest) {
+  const proto = request.headers.get("x-forwarded-proto") ?? (request.url.startsWith("https") ? "https" : "http");
+  const host = request.headers.get("x-forwarded-host") ?? request.headers.get("host") ?? "";
+  const origin = process.env.NEXT_PUBLIC_APP_URL ?? (host ? `${proto}://${host}` : new URL(request.url).origin);
+
+  const { searchParams } = new URL(request.url);
   const code = searchParams.get("code");
   const target = resolvePostAuthRedirect(searchParams, null);
 
   if (code) {
-    const supabase = await createClient();
+    const response = NextResponse.redirect(`${origin}${target}`);
+    const supabase = createServerClient(
+      getSupabaseUrl(),
+      getSupabaseAnonKey(),
+      {
+        cookies: {
+          getAll() {
+            return request.cookies.getAll();
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              request.cookies.set(name, value);
+              response.cookies.set(name, value, options);
+            });
+          },
+        },
+      }
+    );
+
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error && data?.user) {
       const user = data.user;
@@ -47,7 +72,7 @@ export async function GET(request: Request) {
           console.error("[auth/callback] notifyOwnerUserLogin error:", e);
         }
       }
-      return NextResponse.redirect(`${origin}${target}`);
+      return response;
     }
   }
 

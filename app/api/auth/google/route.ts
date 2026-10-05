@@ -131,6 +131,9 @@ export async function POST(req: NextRequest) {
     {
       token_hash: linkData.properties.hashed_token,
       userId,
+      email: info.email,
+      name: info.name,
+      picture: info.picture,
     },
     { headers: corsHeaders }
   );

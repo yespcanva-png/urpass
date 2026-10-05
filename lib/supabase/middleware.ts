@@ -68,6 +68,12 @@ export async function updateSession(request: NextRequest) {
   }
 
   if (isAuthPage && user) {
+    const nextParam = url.searchParams.get("next");
+    if (nextParam && nextParam.startsWith("/") && !nextParam.startsWith("//")) {
+      url.pathname = nextParam;
+      url.search = "";
+      return NextResponse.redirect(url);
+    }
     url.pathname = "/dashboard";
     return NextResponse.redirect(url);
   }

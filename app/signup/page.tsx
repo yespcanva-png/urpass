@@ -101,7 +101,10 @@ function SignupContent() {
     const { data: signUpData, error } = await supabase.auth.signUp({
       email: data.email,
       password: data.password,
-      options: { data: { full_name: data.full_name } },
+      options: {
+        data: { full_name: data.full_name },
+        emailRedirectTo: `${typeof window !== "undefined" ? window.location.origin : ""}/auth/callback`,
+      },
     });
     if (error) {
       setServerError(error.message);
