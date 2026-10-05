@@ -30,7 +30,6 @@ import { getUserOrganizations } from "@/app/actions/organizations";
 import { createClient } from "@/lib/supabase/client";
 import { detectCountryClient } from "@/lib/country-config";
 import CorporateWhatsNewCard from "@/components/dashboard/CorporateWhatsNewCard";
-import PersonalConciergeBanner from "@/components/dashboard/PersonalConciergeBanner";
 
 const emptySubscribe = () => () => {};
 
@@ -271,12 +270,6 @@ export default function DashboardContent() {
       <CorporateWhatsNewCard
         firstEventId={events[0]?.id}
         isDismissedInDb={whatsNewDismissed}
-      />
-
-      {/* ── Targeted VIP Concierge Banner (Only for Isha) ──────────── */}
-      <PersonalConciergeBanner
-        userEmail={currentUser?.email}
-        userId={currentUser?.id}
       />
 
       {/* ── Dashboard Banner ─────────────────────────────────────────── */}
