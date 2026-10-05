@@ -34,15 +34,19 @@ export default async function AttendeesPage({ params }: Props) {
     if (!member) redirect("/dashboard");
   }
 
-  const [{ data: attendees }, { data: passes }, plan] = await Promise.all([
+  const [{ data: attendees }, { data: passes }, { data: ticketOrders }, plan] = await Promise.all([
     supabase
       .from("attendees")
-      .select("id, name, email, phone, pass_type, application_status, pass_status, custom_responses, created_at")
+      .select("id, name, email, phone, pass_type, application_status, pass_status, custom_responses, ticket_type_id, created_at")
       .eq("event_id", eventId)
       .order("created_at", { ascending: false }),
     supabase
       .from("passes")
       .select("attendee_id, pass_token")
+      .eq("event_id", eventId),
+    supabase
+      .from("ticket_orders")
+      .select("id, attendee_id, buyer_email, amount, currency, status, razorpay_payment_id, razorpay_order_id, created_at")
       .eq("event_id", eventId),
     getUserPlan(supabase, user.id),
   ]);
@@ -50,6 +54,32 @@ export default async function AttendeesPage({ params }: Props) {
   const initialPassTokens: Record<string, string> = Object.fromEntries(
     (passes ?? []).map((p) => [p.attendee_id, p.pass_token])
   );
+
+  const payments: Record<string, {
+    orderId: string;
+    paymentId: string | null;
+    amount: number;
+    currency: string;
+    status: string;
+    createdAt: string;
+  }> = {};
+
+  for (const order of ticketOrders ?? []) {
+    const entry = {
+      orderId: order.razorpay_order_id || order.id,
+      paymentId: order.razorpay_payment_id || null,
+      amount: Number(order.amount || 0),
+      currency: order.currency || "INR",
+      status: order.status,
+      createdAt: order.created_at,
+    };
+    if (order.attendee_id) {
+      payments[order.attendee_id] = entry;
+    }
+    if (order.buyer_email) {
+      payments[`email:${order.buyer_email.toLowerCase()}`] = entry;
+    }
+  }
 
   return (
     <div className="max-w-5xl mx-auto px-4 lg:px-0 py-6 page-in">
@@ -61,6 +91,7 @@ export default async function AttendeesPage({ params }: Props) {
         applySlug={event.apply_slug}
         applicationEnabled={event.application_enabled}
         initialPassTokens={initialPassTokens}
+        payments={payments}
         canCSV={plan.canCSV}
         canExport={plan.canExport}
         customFields={event.custom_fields ?? []}

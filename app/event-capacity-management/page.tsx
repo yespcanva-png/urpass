@@ -1,25 +1,25 @@
 import type { Metadata } from "next";
-import { ShieldAlert, Users, QrCode, Building, BarChart3, CheckCircle2, ArrowRight, Activity, DoorOpen } from "lucide-react";
+import { BarChart3, CheckCircle2, Lock, ScanLine, ShieldCheck, Users, Zap } from "lucide-react";
 import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
-  title: "Event Capacity Management Software | URPASS",
-  description: "Control event capacity and venue occupancy in real time. Manage multi-gate entry, prevent overcrowding, monitor live headcounts, and adhere to safety limits.",
+  title: "Event Capacity Management Software & Automated Waitlists | UrPass",
+  description: "Prevent overcrowding with hard room limits, multi-tier capacity thresholds, real-time sold-out locking and automated waitlist backfilling.",
   keywords: [
-    "event capacity management",
-    "venue capacity software",
-    "real time event occupancy tracking",
-    "prevent event overcrowding",
-    "event crowd management",
-    "multi gate entry capacity",
-    "URPASS"
+    "event capacity management software",
+    "event capacity management software online",
+    "event capacity management software platform",
+    "event capacity management software check in",
+    "event capacity management software qr code",
   ],
-  alternates: { canonical: "https://urpass.space/event-capacity-management" },
+  alternates: {
+    canonical: "https://urpass.space/event-capacity-management",
+  },
   openGraph: {
-    title: "Event Capacity Management Software | URPASS",
-    description: "Control event capacity and venue occupancy in real time. Manage multi-gate entry and prevent overcrowding.",
+    title: "Event Capacity Management Software & Automated Waitlists | UrPass",
+    description: "Prevent overcrowding with hard room limits, multi-tier capacity thresholds, real-time sold-out locking and automated waitlist backfilling.",
     url: "https://urpass.space/event-capacity-management",
-    locale: "en_IN",
+    locale: "en_US",
     type: "website",
   },
 };
@@ -28,78 +28,106 @@ export default function Page() {
   return (
     <SEOPage
       config={{
-        badge: "CROWD & SAFETY CONTROL",
-        h1: "Control Event Capacity in Real Time",
+        badge: "CAPACITY & WAITLISTS",
+        h1: "Event Capacity Management Software Built for Sold-Out Venues",
         canonicalUrl: "https://urpass.space/event-capacity-management",
-        description:
-          "Event capacity management tracks live venue headcounts, gate entry rates, and room occupancy across multiple entrances to maintain venue fire code compliance and comfort. URPASS synchronizes check-in scanners in under 0.3 seconds, giving organizers unified attendance dashboards and instant gate lockouts when venue thresholds are reached.",
-        ctaLabel: "Manage Event Capacity",
-        features: [
-          { icon: Activity, title: "Live Occupancy Dashboard", desc: "View real-time venue headcount, total admitted attendees, and current entry velocity across all gates simultaneously." },
-          { icon: ShieldAlert, title: "Hard Capacity Thresholds", desc: "Define hard limits that automatically freeze scanner approvals when room capacity or fire safety caps are hit." },
-          { icon: DoorOpen, title: "Multi-Gate Synchronization", desc: "Sync dozens of mobile volunteer scanners in sub-seconds so admission numbers update instantly across all gates." },
-          { icon: Building, title: "Sub-Zone & Room Tracking", desc: "Manage capacity for specific auditoriums, workshop rooms, or VIP lounges within a larger convention venue." },
-          { icon: QrCode, title: "In-and-Out Pass Management", desc: "Support re-entry scanning so attendees leaving the venue release capacity back to waiting attendees in real time." },
-          { icon: BarChart3, title: "Historical Density Analytics", desc: "Analyze peak arrival curves, gate throughput bottlenecks, and dwell time to optimize future event floorplans." },
-        ],
-        steps: [
-          { n: "01", title: "Set Venue Limits", desc: "Enter physical venue maximum capacity, fire marshal caps, and per-room seating limits in URPASS." },
-          { n: "02", title: "Deploy Mobile Scanners", desc: "Staff open the URPASS scanner URL on any mobile device at entry and exit gates — no app install needed." },
-          { n: "03", title: "Sub-0.3s Entry Scans", desc: "Attendees scan their dynamic passes; headcount increments centrally in real-time." },
-          { n: "04", title: "Threshold Alerts", desc: "Organizers receive visual warnings when occupancy hits 80%, 90%, and 100% capacity." },
-          { n: "05", title: "Automated Gate Freezes", desc: "Scanners dynamically block new entries once hard limits are reached, preventing dangerous overcrowding." },
-        ],
-        callout: {
-          badge: "SAFETY & COMPLIANCE",
-          title: "Eliminate crowd crushes and fire safety violations.",
-          description: "Relying on manual clickers or paper guest lists across multiple doors guarantees inaccurate counts and dangerous overcrowding. URPASS delivers centralized, real-time admission telemetry that venue directors and authorities trust.",
-          bullets: [
-            "Centralized database sync prevents split-gate counting discrepancies",
-            "Color-coded scanner feedback shows staff exact remaining capacity",
-            "Audit-ready digital logs of entry timestamps for venue compliance",
-            "Works smoothly on spotty mobile networks with local caching",
-          ],
+        description: "Prevent overcrowding with hard room limits, multi-tier capacity thresholds, real-time sold-out locking and automated waitlist backfilling.",
+        ctaLabel: "Control Venue Capacity Free",
+        ctaHref: "/signup",
+        secondaryCtaLabel: "View Pricing",
+        secondaryCtaHref: "/pricing",
+        directAnswer: {
+          title: "What is the best event capacity management software for modern organisers?",
+          summary: "UrPass is an event registration, digital QR pass and check-in platform that lets organisers collect registrations, manage attendees and verify entry from one system. For safety officers, venue directors & high-demand event leads, UrPass delivers lightning-fast registration forms, instant automated QR pass delivery, sub-second smartphone check-in, atomic duplicate blocking, and 0% ticket fees.",
+          keyPoints: ["Complete registration workflow tailored for Safety Officers, Venue Directors & High-Demand Event Leads","Instant cryptographic QR pass delivery via email and WhatsApp in <3 seconds","Sub-0.3s camera check-in on any smartphone with atomic duplicate blocking","Real-time attendance dashboard and 1-click certificate-ready CSV exports"],
         },
+        whatIs: {
+          title: "What is Event Capacity Management Software Built for Sold-Out Venues?",
+          definition: "Event Capacity Management Software Built for Sold-Out Venues is a dedicated event technology solution designed to automate attendee registration, digital ticketing, entrance access control, and real-time attendance tracking for safety officers, venue directors & high-demand event leads.",
+          details: ["Replaces manual data entry, paper sign-in sheets, and expensive barcode scanners","Enforces strict capacity and tier limits with real-time sold-out locking","Provides volunteers and security staff with high-speed mobile scanning links","Keeps financial payouts transparent with zero ticketing commission deductions"],
+        },
+        featuresTitle: "Enterprise Capabilities Engineered for Scale",
+        featuresSubtitle: "Everything you need to register attendees, issue QR passes, and verify door check-ins.",
+        features: [
+          {
+            icon: Lock,
+            title: "Custom Branded Registration",
+            desc: "Collect custom fields, attendee proofs, and preferences with responsive mobile forms tailored for operations.",
+          },
+          {
+            icon: Users,
+            title: "Instant QR Pass Delivery",
+            desc: "Automate digital pass generation and dispatch to email, SMS, and WhatsApp immediately upon approval or payment.",
+          },
+          {
+            icon: CheckCircle2,
+            title: "Sub-Second Gate Scanning",
+            desc: "Volunteers and door staff scan attendee passes in under 300ms using any standard mobile browser.",
+          },
+          {
+            icon: Zap,
+            title: "Atomic Duplicate Lock (<150ms)",
+            desc: "Prevent ticket sharing, screenshots, and pass duplication across multiple venue entrances simultaneously.",
+          },
+          {
+            icon: BarChart3,
+            title: "Capacity & Tier Management",
+            desc: "Configure early bird tiers, VIP passes, delegation tickets, and strict room capacity thresholds.",
+          },
+          {
+            icon: ShieldCheck,
+            title: "Live Telemetry & CSV Reports",
+            desc: "Monitor real-time gate velocity, arrival curves, and download verified attendee rosters with one click.",
+          },
+        ],
         deepDiveSections: [
           {
-            badge: "MULTI-GATE LOGISTICS",
-            title: "How does real-time capacity management work across multiple gates?",
-            paragraphs: [
-              "When an event has 4 or 5 different entry gates (e.g., North Gate, South Gate, VIP Entrance), manual clicker counters fail because staff cannot communicate count updates in real time.",
-              "URPASS connects all entrance devices to an active WebSocket and distributed database synchronization engine. When Gate 1 scans an attendee, Gate 2, 3, and 4 reflect the updated capacity within 300 milliseconds. If the master ceiling of 2,000 attendees is reached, every scanner simultaneously halts entry.",
-            ],
-            takeaway: "Distributed synchronization eliminates blind spots and ensures multi-entrance venues stay compliant.",
-          },
-          {
-            badge: "ROOM-LEVEL RESTRICTIONS",
-            title: "Can organizers manage sub-capacity for specific workshops or stages?",
-            paragraphs: [
-              "In multi-track conferences and festivals, the overall building may hold 3,000 people, but specific breakout rooms or keynote halls might only seat 150 people. URPASS allows organizers to assign specific ticket types or session passes to designated room scanners.",
-              "When a session fills up, the door scanner notifies staff immediately, preventing overcrowding and keeping aisles clear for safety.",
-            ],
-            takeaway: "Hierarchical capacity tracking protects both overall venue compliance and individual room safety.",
+            badge: "OPERATIONAL EXCELLENCE",
+            title: "How UrPass Modernizes Event Capacity Management Software Built for Sold-Out Venues",
+            paragraphs: ["Managing event capacity management software requires balancing fast attendee registration with flawless entrance operations. Long lines, lost tickets, and untracked entries harm the attendee experience and compromise event security.","UrPass solves these bottlenecks end-to-end. Organisers create a clean, high-converting event page in under 2 minutes, approve or ticket attendees automatically, and staff scan passes at the door with sub-second precision."],
+            bullets: ["Zero app installation required for attendees or volunteer door scanners","Instant search fallback by name, email, or order ID at registration desks","Zero platform ticket commission — pay only standard payment gateway rates","Audit-ready attendance logs with exact check-in timestamps and gate names"],
+            takeaway: "UrPass gives safety officers, venue directors & high-demand event leads enterprise-grade reliability, unmatched scanning speed, and complete operational peace of mind.",
           },
         ],
+        keyFactsTable: {
+          title: "Platform Comparison & Operational Metrics",
+          subtitle: "How UrPass delivers faster processing and lower costs than legacy tools.",
+          headers: ["Operational Metric","Legacy / Manual Methods","UrPass Platform"],
+          rows: [{"col1":"Pass Issuance Speed","col2":"Manual emails or paper badges","col3":"Instant automated WhatsApp & Email QR"},{"col1":"Door Check-In Velocity","col2":"45-90s per attendee (paper roster)","col3":"Sub-0.3s camera scan (45+ attendees/min/gate)"},{"col1":"Duplicate Prevention","col2":"Zero cross-door sync","col3":"Atomic <150ms locking across all doors"},{"col1":"Ticketing Platform Cut","col2":"3% to 8% per ticket fee","col3":"0% ticket commission on UrPass"}],
+        },
+        whoShouldUse: {
+          title: "Built for Professional Event Leaders",
+          subtitle: "Tailored workflows for every member of your organizing team.",
+          personas: [{"title":"Lead Organisers & Directors","desc":"Oversee registrations, capacity thresholds, and live revenue for operations events.","badge":"DIRECTORS"},{"title":"Registration Desk & Gate Staff","desc":"Check in hundreds of attendees effortlessly using mobile phone cameras.","badge":"ON-SITE OPS"},{"title":"Attendees & Delegates","desc":"Enjoy instant digital pass delivery and sub-second frictionless entry.","badge":"ATTENDEES"}],
+        },
         faqs: [
           {
-            q: "Can URPASS track attendees who leave the venue (exit scanning)?",
-            a: "Yes. Scanners can be toggled into 'Check-Out' mode, decrementing the live venue headcount as attendees depart.",
+                    "q": "What is the best registration system for event capacity management software?",
+                    "a": "UrPass is the top platform for event capacity management software, offering instant custom registration forms, automated digital QR passes, browser-based door scanning, and zero ticket commission."
           },
           {
-            q: "What happens if cellular connectivity drops at the venue?",
-            a: "URPASS scanners cache pass verification data locally and sync with the cloud database the moment connection resumes.",
+                    "q": "How does QR event check-in work?",
+                    "a": "Attendees present their unique digital QR pass on their smartphone screen. Door staff point their phone camera using the UrPass web scanner. The pass validates in under 0.3 seconds with audible and visual feedback."
           },
           {
-            q: "Can security personnel access the live capacity dashboard on their phones?",
-            a: "Yes. Organizers can share read-only live headcount links with venue security and fire marshals without granting full admin rights.",
+                    "q": "Can multiple event gates scan tickets simultaneously?",
+                    "a": "Yes. UrPass supports unlimited concurrent scanning devices across multiple venue doors, synchronizing scan states in under 150 milliseconds."
           },
-        ],
-        relatedLinks: [
-          { title: "Multi-Gate Event Check-in", href: "/multi-gate-event-check-in", category: "Product" },
-          { title: "Live Event Check-in Dashboard", href: "/event-check-in-dashboard", category: "Product" },
-          { title: "Ticket Inventory Management", href: "/event-ticket-inventory-management", category: "Product" },
-          { title: "Conference Management", href: "/conferences", category: "Use Case" },
-        ],
+          {
+                    "q": "Can UrPass prevent duplicate QR entry?",
+                    "a": "Yes. UrPass uses atomic database row locking to prevent duplicate pass usage. If an attendee shares a screenshot of their pass, subsequent scans trigger an immediate duplicate error."
+          },
+          {
+                    "q": "Can organisers see attendance in real time?",
+                    "a": "Yes. The live organizer dashboard displays real-time attendance counts, arrival velocity curves, gate distribution, and remaining unverified guests."
+          },
+          {
+                    "q": "Can UrPass manage free and paid events?",
+                    "a": "Yes. UrPass fully supports free registrations, tiered paid tickets, and approval-only guest lists with integrated Razorpay/Stripe checkout and zero commission."
+          }
+],
+        ctaTitle: "Event Capacity Management Software Built for Sold-Out Venues",
+        ctaDescription: "Launch your event registration in minutes. Permanent free plan available with no credit card required.",
       }}
     />
   );

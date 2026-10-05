@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import {
   UserPlus, Upload, Check, X, Clock, Loader2, Users,
   Search, Ticket, ExternalLink, Download, Lock, Wifi, ClipboardList, RotateCcw,
-  Send,
+  Send, CheckCircle2, CreditCard,
 } from "lucide-react";
 import { approveAttendee, rejectAttendee, exportAttendeesCSV, promoteNextWaitlistAttendee } from "@/app/actions/attendees";
 import { undoCheckIn } from "@/app/actions/manual-checkin";
@@ -20,6 +20,15 @@ import type { CustomFieldDefinition } from "@/types";
 
 type Status    = "pending" | "approved" | "rejected" | "waitlisted";
 type FilterTab = "all" | Status;
+
+export interface AttendeePaymentInfo {
+  orderId: string;
+  paymentId: string | null;
+  amount: number;
+  currency: string;
+  status: string;
+  createdAt: string;
+}
 
 interface Attendee {
   id: string;
@@ -41,6 +50,7 @@ interface Props {
   applySlug?: string | null;
   applicationEnabled?: boolean;
   initialPassTokens?: Record<string, string>;
+  payments?: Record<string, AttendeePaymentInfo>;
   canCSV?: boolean;
   canExport?: boolean;
   customFields?: CustomFieldDefinition[];
@@ -101,6 +111,7 @@ export default function AttendeeTable({
   applySlug,
   applicationEnabled,
   initialPassTokens,
+  payments = {},
   canCSV = false,
   canExport = false,
   customFields = [],
@@ -551,6 +562,7 @@ export default function AttendeeTable({
                     <th className="text-left text-xs font-medium text-neutral-400 px-4 py-3">Name</th>
                     <th className="text-left text-xs font-medium text-neutral-400 px-4 py-3 hidden sm:table-cell">Email</th>
                     <th className="text-left text-xs font-medium text-neutral-400 px-4 py-3 hidden md:table-cell">Type</th>
+                    <th className="text-left text-xs font-medium text-neutral-400 px-4 py-3 hidden lg:table-cell">Payment Proof</th>
                     <th className="text-left text-xs font-medium text-neutral-400 px-4 py-3">Status</th>
                     <th className="text-right text-xs font-medium text-neutral-400 px-4 py-3">Actions</th>
                   </tr>
@@ -560,6 +572,7 @@ export default function AttendeeTable({
                     const isLoading  = loadingId === a.id;
                     const hasToken   = !!passTokens[a.id];
                     const passExists = a.pass_status === "generated" || a.pass_status === "checked_in";
+                    const payment    = payments[a.id] || payments[`email:${a.email.toLowerCase()}`];
 
                     return (
                       <tr key={a.id} className="hover:bg-neutral-50/50 transition-colors">
@@ -579,6 +592,11 @@ export default function AttendeeTable({
                             )}
                           </div>
                           <p className="text-xs text-neutral-400 sm:hidden">{a.email}</p>
+                          {payment?.status === "paid" && (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded mt-0.5 lg:hidden">
+                              ✓ {payment.currency === "INR" ? "₹" : ""}{(payment.amount / 100).toLocaleString("en-IN")} Paid (Txn: {payment.paymentId || payment.orderId.slice(0, 8)})
+                            </span>
+                          )}
                           {actionErrors[a.id] && (
                             <p className="text-xs text-red-500 mt-0.5">{actionErrors[a.id]}</p>
                           )}
@@ -589,6 +607,39 @@ export default function AttendeeTable({
                         <td className="px-4 py-3 hidden md:table-cell">
                           <PassTypeBadge type={a.pass_type} />
                         </td>
+                        <td className="px-4 py-3 hidden lg:table-cell">
+                          {payment?.status === "paid" ? (
+                            <div className="flex flex-col gap-0.5">
+                              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md w-fit">
+                                <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                                {payment.currency === "INR" ? "₹" : `${payment.currency} `}{(payment.amount / 100).toLocaleString("en-IN")} Paid
+                              </span>
+                              {payment.paymentId ? (
+                                <span className="text-[10px] font-mono text-neutral-500 truncate max-w-[150px]" title={`Razorpay Transaction ID: ${payment.paymentId}`}>
+                                  ID: {payment.paymentId}
+                                </span>
+                              ) : (
+                                <span className="text-[10px] font-mono text-neutral-400 truncate max-w-[150px]">
+                                  Order: {payment.orderId.slice(0, 14)}...
+                                </span>
+                              )}
+                            </div>
+                          ) : payment?.status === "created" ? (
+                            <div className="flex flex-col gap-0.5">
+                              <span className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md w-fit">
+                                <Clock className="w-3 h-3 text-amber-600" />
+                                Awaiting Payment
+                              </span>
+                              <span className="text-[10px] font-mono text-neutral-400 truncate max-w-[150px]">
+                                Order: {payment.orderId.slice(0, 14)}...
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-neutral-400 italic">
+                              {a.pass_type === "vip" || a.pass_type === "speaker" || a.pass_type === "organizer" ? "Complimentary" : "Free Pass"}
+                            </span>
+                          )}
+                        </td>
                         <td className="px-4 py-3">
                           <StatusBadge status={a.application_status} />
                         </td>
@@ -596,6 +647,11 @@ export default function AttendeeTable({
                           <div className="flex items-center justify-end gap-1.5 flex-nowrap">
                             {a.application_status === "pending" && (
                               <>
+                                {payment?.status === "paid" && (
+                                  <span className="hidden xl:inline-flex items-center text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded mr-1">
+                                    Paid (Txn: {payment.paymentId?.slice(0, 10)})
+                                  </span>
+                                )}
                                 <Btn onClick={() => handleApprove(a.id, a.application_status)} pending={false} variant="primary">
                                   <Check className="w-3 h-3" /> Approve
                                 </Btn>

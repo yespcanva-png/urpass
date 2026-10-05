@@ -42,54 +42,67 @@ export async function POST(req: NextRequest) {
   if (!event) {
     return NextResponse.json({ error: "Event not found" }, { status: 400 });
   }
-  if (event.status !== "active" || !event.application_enabled) {
-    return NextResponse.json({ error: "Event is not accepting applications" }, { status: 400 });
+  const isEventOpen =
+    (event.status === "active" || event.status === "published" || event.status === "live" || !event.status) &&
+    event.application_enabled !== false;
+
+  if (!isEventOpen) {
+    return NextResponse.json({ error: "Event is not accepting applications at this time." }, { status: 400 });
   }
 
   const eventCurrency = ((event as { currency?: string })?.currency || "INR").toUpperCase();
-  let amountPaise = event.is_paid_event ? Math.round(event.ticket_price * 100) : 0;
+  let amountPaise = event.is_paid_event ? Math.round(Number(event.ticket_price || 0) * 100) : 0;
   let ticketName = event.name;
 
-  if (ticketTypeId && ticketTypeId !== "default") {
+  if (ticketTypeId && ticketTypeId !== "default" && ticketTypeId !== "") {
     const { data: ticketType } = await admin
       .from("ticket_types")
       .select("id, event_id, name, price, capacity, status, sales_start, sales_end")
       .eq("id", ticketTypeId)
       .eq("event_id", eventId)
-      .single();
+      .maybeSingle();
 
-    if (!ticketType || ticketType.status !== "on_sale") {
-      return NextResponse.json({ error: "Selected ticket is not available." }, { status: 400 });
+    if (ticketType && ticketType.status !== "closed") {
+      const now = Date.now();
+      const startsAt = ticketType.sales_start ? new Date(ticketType.sales_start).getTime() : null;
+      const endsAt = ticketType.sales_end ? new Date(ticketType.sales_end).getTime() : null;
+      if ((startsAt != null && startsAt > now) || (endsAt != null && endsAt < now)) {
+        return NextResponse.json({ error: "Selected ticket is not on sale right now." }, { status: 400 });
+      }
+
+      amountPaise = Number(ticketType.price);
+      ticketName = `${event.name} — ${ticketType.name}`;
+    } else if (!ticketType) {
+      // If ticketTypeId not found, fallback to default ticket tier or event price
+      ticketTypeId = null;
+    } else {
+      return NextResponse.json({ error: "Selected ticket is closed or unavailable." }, { status: 400 });
     }
+  }
 
-    const now = Date.now();
-    const startsAt = ticketType.sales_start ? new Date(ticketType.sales_start).getTime() : null;
-    const endsAt = ticketType.sales_end ? new Date(ticketType.sales_end).getTime() : null;
-    if ((startsAt != null && startsAt > now) || (endsAt != null && endsAt < now)) {
-      return NextResponse.json({ error: "Selected ticket is not on sale right now." }, { status: 400 });
-    }
-
-    amountPaise = ticketType.price;
-    ticketName = `${event.name} — ${ticketType.name}`;
-  } else if (ticketTypeId === "default") {
+  if (!ticketTypeId || ticketTypeId === "default" || ticketTypeId === "") {
     const { data: defaultTT } = await admin
       .from("ticket_types")
       .select("id, event_id, name, price, capacity, status, sales_start, sales_end")
       .eq("event_id", eventId)
-      .eq("status", "on_sale")
+      .neq("status", "closed")
       .order("position", { ascending: true })
       .limit(1)
       .maybeSingle();
 
-    if (defaultTT) {
-      amountPaise = defaultTT.price;
+    if (defaultTT && Number(defaultTT.price) > 0) {
+      amountPaise = Number(defaultTT.price);
       ticketName = `${event.name} — ${defaultTT.name}`;
       ticketTypeId = defaultTT.id;
+    } else if (defaultTT) {
+      ticketTypeId = defaultTT.id;
+      ticketName = `${event.name} — ${defaultTT.name}`;
+      amountPaise = Number(defaultTT.price);
     }
   }
 
   if (amountPaise <= 0) {
-    return NextResponse.json({ error: "Selected ticket does not require payment" }, { status: 400 });
+    return NextResponse.json({ error: "Selected ticket does not require online payment." }, { status: 400 });
   }
 
   // ── P0: Atomic Capacity Reservation (10-minute window) ───────────

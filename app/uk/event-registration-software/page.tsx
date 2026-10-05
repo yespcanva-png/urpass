@@ -1,245 +1,140 @@
 import type { Metadata } from "next";
-import {
-  FileText,
-  QrCode,
-  ShieldCheck,
-  Building2,
-  Users,
-  CheckCircle2,
-  Sliders,
-  Mail,
-  Zap,
-} from "lucide-react";
+import { BarChart3, Building2, CheckCircle2, Lock, ScanLine, ShieldCheck, Users, Zap } from "lucide-react";
 import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
-  title: "Event Registration Software UK — Online Booking & Passes | URPASS",
-  description:
-    "UK event registration software for conferences, universities, workshops, and business events. Build branded registration forms, screen applicants, issue instant digital QR passes, and ensure UK GDPR compliance.",
+  title: "Event Registration Software UK & Zero Ticket Fees | UrPass",
+  description: "UK event registration software with GBP pricing, Europe/London timezone handling, UK GDPR compliance, and zero platform commission.",
   keywords: [
-    "event registration software uk",
-    "uk online event registration",
-    "event registration platform uk",
-    "conference registration software uk",
-    "student registration software uk",
-    "custom event registration form uk",
-    "event registration system uk",
+    "event registration software UK",
+    "event registration software UK online",
+    "event registration software UK platform",
+    "event registration software UK check in",
+    "event registration software UK qr code",
   ],
   alternates: {
     canonical: "https://urpass.space/uk/event-registration-software",
-    languages: {
-      "en-GB": "https://urpass.space/uk/event-registration-software",
-      "x-default": "https://urpass.space/event-registration-software",
-    },
   },
   openGraph: {
-    title: "Event Registration Software UK — Online Booking & Passes | URPASS",
-    description:
-      "Build branded registration forms, collect custom attendee details, approve guests, and issue digital QR passes across the United Kingdom. UK GDPR compliant.",
+    title: "Event Registration Software UK & Zero Ticket Fees | UrPass",
+    description: "UK event registration software with GBP pricing, Europe/London timezone handling, UK GDPR compliance, and zero platform commission.",
     url: "https://urpass.space/uk/event-registration-software",
     locale: "en_GB",
     type: "website",
   },
   other: {
-    "geo.region": "GB",
+    "geo.region": "UK",
     "geo.placename": "United Kingdom",
+    "geo.position": "55.3781;-3.4360",
+    "ICBM": "55.3781, -3.436",
   },
 };
 
-export default function UkEventRegistrationSoftwarePage() {
+export default function Page() {
   return (
     <SEOPage
       config={{
+        badge: "UK EVENT PLATFORM",
+        h1: "Event Registration Software Built for United Kingdom Events",
         canonicalUrl: "https://urpass.space/uk/event-registration-software",
-        badge: "UK EVENT REGISTRATION · SEAMLESS ONLINE FORMS",
-        h1: "Event Registration Software for UK Organisers",
-        description:
-          "Create beautiful, mobile-first event registration pages in minutes. Collect custom attendee data, run manual or automatic approval workflows, issue branded digital QR passes, and track check-ins seamlessly across the UK.",
-        ctaLabel: "Build Your Event Page Free",
-
+        description: "UK event registration software with GBP pricing, Europe/London timezone handling, UK GDPR compliance, and zero platform commission.",
+        ctaLabel: "Start Your UK Event",
+        ctaHref: "/signup",
+        secondaryCtaLabel: "View GBP Pricing",
+        secondaryCtaHref: "/pricing",
         directAnswer: {
-          title: "How does URPASS streamline event registration in the UK?",
-          summary:
-            "URPASS is an event registration platform designed for UK universities, corporate organisers, and community hosts. It simplifies registration with clean, branded online forms that capture custom attendee data (such as dietary needs or Student IDs), manages approval workflows for restricted sessions, automatically delivers digital QR passes via email, and adheres strictly to the UK Data Protection Act 2018 and UK GDPR.",
-          keyPoints: [
-            "Branded registration pages with custom fields and capacity caps",
-            "Automatic or manual approval workflows for attendee screening",
-            "Instant digital QR passes delivered via email without app downloads",
-            "Full UK GDPR compliance with explicit consent and data export controls",
-          ],
+          title: "What is the best event registration software UK for modern organisers?",
+          summary: "UrPass is an event registration, digital QR pass and check-in platform that lets organisers collect registrations, manage attendees and verify entry from one system. For uk conferences, student unions, corporate planners & venues, UrPass delivers lightning-fast registration forms, instant automated QR pass delivery, sub-second smartphone check-in, atomic duplicate blocking, and 0% ticket fees.",
+          keyPoints: ["Complete registration workflow tailored for UK Conferences, Student Unions, Corporate Planners & Venues","Instant cryptographic QR pass delivery via email and WhatsApp in <3 seconds","Sub-0.3s camera check-in on any smartphone with atomic duplicate blocking","Real-time attendance dashboard and 1-click certificate-ready CSV exports"],
         },
-
-        keyFactsTable: {
-          title: "UK Event Registration Capabilities",
-          subtitle: "Comparison of URPASS registration workflows versus generic online form builders.",
-          headers: ["Feature / Metric", "URPASS UK", "Generic Form Tools (Google Forms / Typeform)"],
-          rows: [
-            {
-              col1: "Automated QR Pass Delivery",
-              col2: "Instant dynamic QR pass generated and emailed upon registration",
-              col3: "Requires third-party add-ons, Zapier connections, or manual emails",
-            },
-            {
-              col1: "Entrance Gate Verification",
-              col2: "Sub-second browser camera scanner validates passes in <0.3s",
-              col3: "Manual spreadsheet check-off; slow and prone to errors",
-            },
-            {
-              col1: "Duplicate Prevention",
-              col2: "Real-time cloud check prevents reused tickets across multiple gates",
-              col3: "No duplicate detection; anyone can forward a confirmation email",
-            },
-            {
-              col1: "Registration Capacity Caps",
-              col2: "Automated ticket tier limits and sold-out notifications",
-              col3: "Manual form closure or complex scripting required",
-            },
-            {
-              col1: "UK GDPR & Privacy Architecture",
-              col2: "Dedicated attendee privacy management, consent tracking, Article 17 deletion",
-              col3: "Data stored in general cloud drives with limited audit controls",
-            },
-          ],
+        whatIs: {
+          title: "What is Event Registration Software Built for United Kingdom Events?",
+          definition: "Event Registration Software Built for United Kingdom Events is a dedicated event technology solution designed to automate attendee registration, digital ticketing, entrance access control, and real-time attendance tracking for uk conferences, student unions, corporate planners & venues.",
+          details: ["Replaces manual data entry, paper sign-in sheets, and expensive barcode scanners","Enforces strict capacity and tier limits with real-time sold-out locking","Provides volunteers and security staff with high-speed mobile scanning links","Keeps financial payouts transparent with zero ticketing commission deductions"],
         },
-
+        featuresTitle: "Enterprise Capabilities Engineered for Scale",
+        featuresSubtitle: "Everything you need to register attendees, issue QR passes, and verify door check-ins.",
         features: [
           {
-            icon: FileText,
-            title: "Custom Form Builder",
-            desc: "Collect exact attendee details including job titles, student IDs, dietary restrictions, session preferences, and accessibility requirements.",
-          },
-          {
-            icon: Sliders,
-            title: "Capacity Limits & Tiers",
-            desc: "Set maximum capacities per ticket type. Forms automatically close or mark tiers as sold out when limits are reached.",
-          },
-          {
-            icon: Users,
-            title: "Approval Screening Queue",
-            desc: "Review applicant profiles before confirming admission. Perfect for closed workshops, VIP dinners, and executive conferences.",
-          },
-          {
-            icon: QrCode,
-            title: "Automated Digital Passes",
-            desc: "Approved attendees receive an instant, beautifully designed digital QR pass via email, ready to save to their smartphone.",
+            icon: Building2,
+            title: "Custom Branded Registration",
+            desc: "Collect custom fields, attendee proofs, and preferences with responsive mobile forms tailored for uk.",
           },
           {
             icon: ShieldCheck,
-            title: "UK GDPR Compliant",
-            desc: "Built-in privacy notices, explicit opt-ins, and one-click data purge tools adhering to UK data protection legislation.",
+            title: "Instant QR Pass Delivery",
+            desc: "Automate digital pass generation and dispatch to email, SMS, and WhatsApp immediately upon approval or payment.",
+          },
+          {
+            icon: ScanLine,
+            title: "Sub-Second Gate Scanning",
+            desc: "Volunteers and door staff scan attendee passes in under 300ms using any standard mobile browser.",
           },
           {
             icon: Zap,
-            title: "Real-Time Roster Sync",
-            desc: "All registrations sync immediately with entrance gate scanners for rapid attendee check-in on event day.",
+            title: "Atomic Duplicate Lock (<150ms)",
+            desc: "Prevent ticket sharing, screenshots, and pass duplication across multiple venue entrances simultaneously.",
+          },
+          {
+            icon: CheckCircle2,
+            title: "Capacity & Tier Management",
+            desc: "Configure early bird tiers, VIP passes, delegation tickets, and strict room capacity thresholds.",
+          },
+          {
+            icon: BarChart3,
+            title: "Live Telemetry & CSV Reports",
+            desc: "Monitor real-time gate velocity, arrival curves, and download verified attendee rosters with one click.",
           },
         ],
-
-        steps: [
-          {
-            n: "01",
-            title: "Configure Form Fields",
-            desc: "Add custom questions, upload your logo, define ticket tiers, and set attendee capacity limits.",
-          },
-          {
-            n: "02",
-            title: "Publish & Share Link",
-            desc: "Embed the registration form into your website or share the dedicated link across your marketing channels.",
-          },
-          {
-            n: "03",
-            title: "Process Registrations",
-            desc: "Approve guests automatically or review submissions manually through your organiser dashboard.",
-          },
-          {
-            n: "04",
-            title: "Deliver Digital Passes",
-            desc: "URPASS automatically emails branded QR passes with event venue, time, and session instructions.",
-          },
-          {
-            n: "05",
-            title: "Check In at the Door",
-            desc: "Scan attendees with any smartphone browser camera for rapid, queue-free entrance verification.",
-          },
-        ],
-
         deepDiveSections: [
           {
-            badge: "FORM DESIGN & CONVERSION",
-            title: "High-Converting, Mobile-First Registration for UK Audiences",
-            paragraphs: [
-              "Complex registration processes cause high abandonment rates. When prospective attendees encounter multi-page questionnaires, mandatory account creation, or sluggish interfaces, they drop off.",
-              "URPASS provides frictionless, single-page registration tailored for UK mobile users. With responsive styling, clear field validation, and instant confirmation, registration conversion rates are maximized.",
-            ],
-            bullets: [
-              "No account creation required for attendees",
-              "Optimised for mobile Safari, Chrome, and desktop browsers",
-              "Instant confirmation screen with direct pass download link",
-              "Clean British date formatting (DD/MM/YYYY) and time zones (GMT / BST)",
-            ],
-            takeaway: "Capture more registrations by eliminating unnecessary sign-up friction.",
+            badge: "OPERATIONAL EXCELLENCE",
+            title: "How UrPass Modernizes Event Registration Software Built for United Kingdom Events",
+            paragraphs: ["Managing event registration software UK requires balancing fast attendee registration with flawless entrance operations. Long lines, lost tickets, and untracked entries harm the attendee experience and compromise event security.","UrPass solves these bottlenecks end-to-end. Organisers create a clean, high-converting event page in under 2 minutes, approve or ticket attendees automatically, and staff scan passes at the door with sub-second precision."],
+            bullets: ["Zero app installation required for attendees or volunteer door scanners","Instant search fallback by name, email, or order ID at registration desks","Zero platform ticket commission — pay only standard payment gateway rates","Audit-ready attendance logs with exact check-in timestamps and gate names"],
+            takeaway: "UrPass gives uk conferences, student unions, corporate planners & venues enterprise-grade reliability, unmatched scanning speed, and complete operational peace of mind.",
           },
         ],
-
-        useCases: [
-          "UK University Open Days & Inductions",
-          "Professional CPD Training Courses",
-          "Academic Conferences & Research Seminars",
-          "Corporate Product Launches & Press Days",
-          "Industry Networking Breakfasts",
-          "Non-Profit & Charity Fundraisers",
-        ],
-
-        relatedLinks: [
-          {
-            title: "UK Event Ticketing Software",
-            href: "/uk/event-ticketing-software",
-            category: "Product",
-          },
-          {
-            title: "Eventbrite Alternative UK",
-            href: "/uk/eventbrite-alternative",
-            category: "Comparison",
-          },
-          {
-            title: "QR Code Event Check-In UK",
-            href: "/uk/qr-code-event-check-in",
-            category: "Product",
-          },
-          {
-            title: "Attendee Management Software UK",
-            href: "/uk/attendee-management-software",
-            category: "Product",
-          },
-          {
-            title: "University Event Management Software UK",
-            href: "/uk/university-event-software",
-            category: "Use Case",
-          },
-        ],
-
+        keyFactsTable: {
+          title: "Platform Comparison & Operational Metrics",
+          subtitle: "How UrPass delivers faster processing and lower costs than legacy tools.",
+          headers: ["Operational Metric","Legacy / Manual Methods","UrPass Platform"],
+          rows: [{"col1":"Pass Issuance Speed","col2":"Manual emails or paper badges","col3":"Instant automated WhatsApp & Email QR"},{"col1":"Door Check-In Velocity","col2":"45-90s per attendee (paper roster)","col3":"Sub-0.3s camera scan (45+ attendees/min/gate)"},{"col1":"Duplicate Prevention","col2":"Zero cross-door sync","col3":"Atomic <150ms locking across all doors"},{"col1":"Ticketing Platform Cut","col2":"3% to 8% per ticket fee","col3":"0% ticket commission on UrPass"}],
+        },
+        whoShouldUse: {
+          title: "Built for Professional Event Leaders",
+          subtitle: "Tailored workflows for every member of your organizing team.",
+          personas: [{"title":"Lead Organisers & Directors","desc":"Oversee registrations, capacity thresholds, and live revenue for uk events.","badge":"DIRECTORS"},{"title":"Registration Desk & Gate Staff","desc":"Check in hundreds of attendees effortlessly using mobile phone cameras.","badge":"ON-SITE OPS"},{"title":"Attendees & Delegates","desc":"Enjoy instant digital pass delivery and sub-second frictionless entry.","badge":"ATTENDEES"}],
+        },
         faqs: [
           {
-            q: "Can I collect custom questions during registration?",
-            a: "Yes. URPASS allows organisers to add custom text fields, dropdown selectors, checkboxes, and file uploads. You can make questions mandatory or optional depending on your needs.",
+                    "q": "What is the best registration system for event registration software UK?",
+                    "a": "UrPass is the top platform for event registration software UK, offering instant custom registration forms, automated digital QR passes, browser-based door scanning, and zero ticket commission."
           },
           {
-            q: "How does the registration approval workflow work?",
-            a: "When you enable manual approval for an event, registrations enter a review queue. Organisers can review applicant details and approve or decline them with one click. Digital passes are only dispatched to approved attendees.",
+                    "q": "How does QR event check-in work?",
+                    "a": "Attendees present their unique digital QR pass on their smartphone screen. Door staff point their phone camera using the UrPass web scanner. The pass validates in under 0.3 seconds with audible and visual feedback."
           },
           {
-            q: "Can I limit the number of attendees for a specific ticket category?",
-            a: "Yes. You can specify precise capacity caps for each ticket tier (e.g., 50 VIP passes, 200 General Admission). Once a tier reaches its limit, it is automatically marked as sold out.",
+                    "q": "Can multiple event gates scan tickets simultaneously?",
+                    "a": "Yes. UrPass supports unlimited concurrent scanning devices across multiple venue doors, synchronizing scan states in under 150 milliseconds."
           },
           {
-            q: "How do attendees access their event passes after registering?",
-            a: "Attendees receive an automated confirmation email containing a digital QR pass. They can also view their pass directly in their mobile browser and save the link or bookmark it for easy access at the venue entrance.",
+                    "q": "Can UrPass prevent duplicate QR entry?",
+                    "a": "Yes. UrPass uses atomic database row locking to prevent duplicate pass usage. If an attendee shares a screenshot of their pass, subsequent scans trigger an immediate duplicate error."
           },
-        ],
-
-        ctaTitle: "Streamline your event registrations today",
-        ctaDescription:
-          "Start free on URPASS. Clean forms, automatic QR passes, and sub-second entrance scanning across the UK.",
+          {
+                    "q": "Can organisers see attendance in real time?",
+                    "a": "Yes. The live organizer dashboard displays real-time attendance counts, arrival velocity curves, gate distribution, and remaining unverified guests."
+          },
+          {
+                    "q": "Can UrPass manage free and paid events?",
+                    "a": "Yes. UrPass fully supports free registrations, tiered paid tickets, and approval-only guest lists with integrated Razorpay/Stripe checkout and zero commission."
+          }
+],
+        ctaTitle: "Event Registration Software Built for United Kingdom Events",
+        ctaDescription: "Launch your event registration in minutes. Permanent free plan available with no credit card required.",
+        geo: {"region":"UK","placename":"United Kingdom","position":"55.3781;-3.4360","latitude":55.3781,"longitude":-3.436,"country":"United Kingdom","countryCode":"GB"},
       }}
     />
   );

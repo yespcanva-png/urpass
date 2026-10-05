@@ -42,6 +42,7 @@ export interface TicketTypeWithStats {
   created_at: string;
   updated_at: string;
   sold_count: number;
+  verified_revenue_paise?: number;
   effective_status: TicketStatus;
 }
 
@@ -76,36 +77,65 @@ export async function getEventTicketTypes(
 ): Promise<TicketTypeWithStats[]> {
   const supabase = await createClient();
 
-  const { data: types, error } = await supabase
-    .from("ticket_types")
-    .select("*")
-    .eq("event_id", eventId)
-    .order("position", { ascending: true });
+  const [{ data: types, error }, { data: approvedAttendees }, { data: paidOrders }] = await Promise.all([
+    supabase
+      .from("ticket_types")
+      .select("*")
+      .eq("event_id", eventId)
+      .order("position", { ascending: true }),
+    supabase
+      .from("attendees")
+      .select("id, ticket_type_id")
+      .eq("event_id", eventId)
+      .eq("application_status", "approved")
+      .not("ticket_type_id", "is", null),
+    supabase
+      .from("ticket_orders")
+      .select("id, ticket_type_id, attendee_id, amount, status")
+      .eq("event_id", eventId)
+      .eq("status", "paid"),
+  ]);
 
   if (error || !types) return [];
 
-  // Count approved attendees per ticket_type_id for this event
-  const { data: counts } = await supabase
-    .from("attendees")
-    .select("ticket_type_id")
-    .eq("event_id", eventId)
-    .eq("application_status", "approved")
-    .not("ticket_type_id", "is", null);
+  // Map verified paid orders per ticket_type_id
+  const paidOrdersByTier: Record<string, { count: number; totalPaise: number }> = {};
+  for (const order of paidOrders ?? []) {
+    if (order.ticket_type_id) {
+      if (!paidOrdersByTier[order.ticket_type_id]) {
+        paidOrdersByTier[order.ticket_type_id] = { count: 0, totalPaise: 0 };
+      }
+      paidOrdersByTier[order.ticket_type_id].count += 1;
+      paidOrdersByTier[order.ticket_type_id].totalPaise += Number(order.amount || 0);
+    }
+  }
 
-  const soldMap: Record<string, number> = {};
-  for (const row of counts ?? []) {
+  // Count approved attendees for free tiers
+  const approvedMap: Record<string, number> = {};
+  for (const row of approvedAttendees ?? []) {
     if (row.ticket_type_id) {
-      soldMap[row.ticket_type_id] = (soldMap[row.ticket_type_id] ?? 0) + 1;
+      approvedMap[row.ticket_type_id] = (approvedMap[row.ticket_type_id] ?? 0) + 1;
     }
   }
 
   return types.map((tt) => {
-    const sold_count = soldMap[tt.id] ?? 0;
+    const isPaid = Number(tt.price) > 0;
+    const paidStats = paidOrdersByTier[tt.id];
+    // For paid tiers, sold_count is verified paid tickets; for free tiers, it's approved registrations
+    const sold_count = isPaid ? (paidStats?.count ?? 0) : (approvedMap[tt.id] ?? 0);
+    const verified_revenue_paise = isPaid ? (paidStats?.totalPaise ?? 0) : 0;
+
     const effective_status: TicketStatus =
       tt.capacity != null && sold_count >= tt.capacity
         ? "sold_out"
         : tt.status;
-    return { ...tt, sold_count, effective_status } as TicketTypeWithStats;
+
+    return {
+      ...tt,
+      sold_count,
+      verified_revenue_paise,
+      effective_status,
+    } as TicketTypeWithStats;
   });
 }
 

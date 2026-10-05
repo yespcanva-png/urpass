@@ -1,248 +1,134 @@
 import type { Metadata } from "next";
-import { Banknote, BarChart3, FileText, ScanLine, Users, Zap } from "lucide-react";
+import { BarChart3, Building2, CheckCircle2, Lock, ScanLine, ShieldCheck, Ticket, Users, Zap } from "lucide-react";
 import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
-  title: "Exhibition Visitor Registration & QR Check-In | URPASS",
-  description: "Exhibition registration software with visitor badging, multi-hall entrance control, trade buyer pre-registration, and sub-second phone scanning.",
-  keywords: ["exhibition registration software", "visitor registration software", "exhibition ticketing platform", "trade exhibition check-in", "exhibition entrance management", "expo visitor qr code scanner"],
+  title: "Exhibition Registration Software & Trade Badges | UrPass",
+  description: "B2B exhibition visitor registration, exhibitor badge allocation, pavilion access scanning and lead generation passes with UrPass.",
+  keywords: [
+    "exhibition registration software",
+    "exhibition registration software online",
+    "exhibition registration software platform",
+    "exhibition registration software check in",
+    "exhibition registration software qr code",
+  ],
   alternates: {
     canonical: "https://urpass.space/exhibition-registration-software",
   },
   openGraph: {
-    title: "Exhibition Visitor Registration & QR Check-In | URPASS",
-    description: "Exhibition registration software with visitor badging, multi-hall entrance control, trade buyer pre-registration, and sub-second phone scanning.",
+    title: "Exhibition Registration Software & Trade Badges | UrPass",
+    description: "B2B exhibition visitor registration, exhibitor badge allocation, pavilion access scanning and lead generation passes with UrPass.",
     url: "https://urpass.space/exhibition-registration-software",
     locale: "en_US",
     type: "website",
   },
 };
 
-export default function ExhibitionRegistrationSoftwarePage() {
+export default function Page() {
   return (
     <SEOPage
       config={{
-  "badge": "EXHIBITIONS & TRADE EXPOS",
-  "h1": "Exhibition Visitor Registration & QR Check-In",
-  "canonicalUrl": "https://urpass.space/exhibition-registration-software",
-  "description": "Exhibition registration software with visitor badging, multi-hall entrance control, trade buyer pre-registration, and sub-second phone scanning.",
-  "ctaLabel": "Create Your Exhibition Free →",
-  "ctaTitle": "Manage High-Volume Exhibition Entrances",
-  "ctaDescription": "Pre-register trade visitors, issue digital QR entry badges, and validate thousands of visitors across multiple halls with volunteer phones.",
-  "directAnswer": {
-    "title": "What is Exhibition Registration Software?",
-    "summary": "URPASS is exhibition visitor registration and QR check-in software built for art exhibitions, trade expos, industrial showcases, and consumer fairs. It manages trade buyer pre-registration, visitor badge generation, multi-hall entrance gates, and real-time floor attendance with sub-second smartphone camera scanning and zero hardware rentals.",
-    "keyPoints": [
-      "Pre-registration and on-site visitor intake with custom trade credential fields",
-      "Instant digital QR badge delivery via email, web link, or mobile pass",
-      "Sub-second (<0.3s) camera check-in across multiple exhibition hall gates",
-      "Real-time floor occupancy tracking for venue crowd control and safety"
-    ]
-  },
-  "whatIs": {
-    "title": "What is Exhibition Registration Software?",
-    "definition": "Exhibition registration software is an event management platform built to coordinate high-volume visitor flow at trade exhibitions, art fairs, and consumer expos. It handles visitor pre-registration, ticketing, digital credential issuance, and synchronized gate scanning across large exhibition halls.",
-    "details": [
-      "Replaces slow reception badge printing desks with instant mobile QR passes",
-      "Coordinates entrance access across multiple exhibition halls and trade zones",
-      "Maintains entrance speed during peak morning trade buyer arrival windows",
-      "Provides verified visitor demographics and attendance data for exhibitors and sponsors"
-    ]
-  },
-  "howItWorksTitle": "How URPASS Powers Exhibitions",
-  "howItWorksSubtitle": "From visitor pre-registration to multi-hall entrance scanning.",
-  "steps": [
-    {
-      "n": "01",
-      "title": "Configure exhibition",
-      "desc": "Set exhibition dates, multi-day passes, trade buyer categories, and hall zones."
-    },
-    {
-      "n": "02",
-      "title": "Publish registration page",
-      "desc": "Distribute your branded registration link to trade buyers, exhibitors, and the public."
-    },
-    {
-      "n": "03",
-      "title": "Visitors register online",
-      "desc": "Attendees register with their company details, job titles, and visiting interests."
-    },
-    {
-      "n": "04",
-      "title": "Issue digital visitor badges",
-      "desc": "Visitors receive dynamic digital QR entry passes delivered straight to their phones."
-    },
-    {
-      "n": "05",
-      "title": "Scan at the entrance",
-      "desc": "Door teams scan passes with phone cameras in <0.3s across all hall entrances."
-    },
-    {
-      "n": "06",
-      "title": "Track live floor capacity",
-      "desc": "Monitor hall headcounts, entrance velocity, and peak visitor hours in real time."
-    }
-  ],
-  "featuresTitle": "Features Built for High-Volume Exhibition Venues",
-  "featuresSubtitle": "Multi-hall sync, offline resilience, and rapid visitor badging.",
-  "features": [
-    {
-      icon: ScanLine,
-      "title": "Sub-0.3s Visitor Scanning",
-      "desc": "Admit 40 to 50 visitors per minute per scanner line. Keep main exhibition concourses clear of queues."
-    },
-    {
-      icon: Users,
-      "title": "Multi-Hall Synchronization",
-      "desc": "Synchronize scanning across multiple halls and turnstiles in under 150ms to prevent duplicate badge entry."
-    },
-    {
-      icon: FileText,
-      "title": "Trade Buyer Demographics",
-      "desc": "Collect company names, job titles, procurement budgets, and product categories of interest."
-    },
-    {
-      icon: Zap,
-      "title": "Offline Scanning Resilience",
-      "desc": "Pre-cached visitor manifests ensure entrance scanning continues even when exhibition center Wi-Fi drops."
-    },
-    {
-      icon: BarChart3,
-      "title": "Live Hall Occupancy",
-      "desc": "Monitor real-time visitor counts in each hall to comply with venue fire safety and crowd management rules."
-    },
-    {
-      icon: Banknote,
-      "title": "0% Ticketing Commission",
-      "desc": "Keep 100% of visitor ticket and exhibitor pass revenues with flat transparent monthly subscriptions."
-    }
-  ],
-  "whoShouldUse": {
-    "title": "Who Uses Exhibition Registration Software?",
-    "subtitle": "From major trade expos to independent art galleries.",
-    "personas": [
-      {
-        "badge": "TRADE EXPOS",
-        "title": "Industrial & Trade Show Organizers",
-        "desc": "B2B manufacturing, construction, and technology trade shows managing thousands of verified buyers."
-      },
-      {
-        "badge": "ART & DESIGN",
-        "title": "Art Fairs & Design Showcases",
-        "desc": "Contemporary art exhibitions, gallery weekends, and design festivals requiring sleek mobile passes."
-      },
-      {
-        "badge": "CONSUMER",
-        "title": "Consumer Expos & Festivals",
-        "desc": "Food and wine expos, home and garden shows, and hobby exhibitions with timed entry slots."
-      },
-      {
-        "badge": "CAREER",
-        "title": "Job & Career Fairs",
-        "desc": "University career expos and professional recruitment fairs connecting job seekers with recruiters."
-      }
-    ]
-  },
-  "howQrCheckInWorks": {
-    "title": "How Exhibition QR Check-In Works",
-    "subtitle": "Sub-second camera scanning across all venue gates.",
-    "description": "Visitors show their digital QR badge on their smartphone screen as they approach the entrance turnstiles. Door staff scan the code in under 0.3 seconds using standard smartphone web browsers. The scanner confirms visitor status with an audible green chime and atomically updates the central cloud manifest to prevent badge pass-backs.",
-    "points": [
-      "Zero scanner hardware rentals: runs smoothly on standard smartphones.",
-      "Atomic row-locking prevents shared badge screenshots between attendees.",
-      "Offline resilience allows continued check-in during convention hall Wi-Fi outages.",
-      "Instant search bar enables rapid manual lookup by name or company."
-    ]
-  },
-  "keyFactsTable": {
-    "title": "URPASS vs Traditional Exhibition Badging",
-    "subtitle": "How URPASS eliminates badge printing queues and hardware costs.",
-    "headers": [
-      "Exhibition Metric",
-      "Traditional Onsite Badge Printers / Laser Scanners",
-      "Connected URPASS Workflow"
-    ],
-    "rows": [
-      {
-        "col1": "Morning Entrance Queue",
-        "col2": "30 to 60 minute delay queuing for thermal badge printing",
-        "col3": "<0.3s digital QR scan; visitors walk straight in"
-      },
-      {
-        "col1": "Equipment Cost",
-        "col2": "Thousands spent on rented badge printers and laser scanners",
-        "col3": "£0 equipment cost; uses staff smartphones"
-      },
-      {
-        "col1": "Multi-Hall Protection",
-        "col2": "High risk of badge sharing between hall entrances",
-        "col3": "Atomic state replication blocks reused passes"
-      },
-      {
-        "col1": "Visitor Data",
-        "col2": "Messy paper business card drops and manual lead sheets",
-        "col3": "Digital visitor database with verified entry records"
-      }
-    ]
-  },
-  "faqs": [
-    {
-      "q": "What is exhibition registration software?",
-      "a": "It is an event management platform that manages visitor pre-registration, digital badge delivery, and entrance scanning for trade exhibitions and public expos."
-    },
-    {
-      "q": "Can URPASS handle multi-hall exhibitions with different entrances?",
-      "a": "Yes. URPASS supports multi-gate synchronization across unlimited entrances with real-time replication in under 150ms."
-    },
-    {
-      "q": "Do visitors need to print their badges before arriving?",
-      "a": "No. Visitors can present their responsive digital QR badge directly on their mobile phone screen for instant scanning."
-    },
-    {
-      "q": "What happens if the exhibition hall Wi-Fi becomes overloaded?",
-      "a": "URPASS pre-caches visitor data in local browser memory, allowing gate staff to continue validating passes without interruption."
-    },
-    {
-      "q": "Can we collect company names and buyer interests during registration?",
-      "a": "Yes. The custom form builder lets you add mandatory fields for company details, job titles, and purchasing interests."
-    },
-    {
-      "q": "Can URPASS handle multi-day exhibition visitor badges?",
-      "a": "Yes. Each visitor QR pass can be configured for single-day or multi-day badge access, recording daily re-entries without resetting attendee records."
-    },
-    {
-      "q": "Can exhibitor staff scan visitor passes for lead capture?",
-      "a": "Yes. URPASS supports exhibitor pass scanning permissions, allowing booth managers to scan visitor QR passes to capture consent-based delegate contact details."
-    }
-  ],
-  "relatedLinks": [
-    {
-      "title": "Trade Show Registration & Visitor Check-In Software",
-      "href": "/trade-show-registration-software",
-      "category": "Use Case"
-    },
-    {
-      "title": "Conference Registration Software with QR Check-In",
-      "href": "/conference-registration-software",
-      "category": "Use Case"
-    },
-    {
-      "title": "Multi-Gate QR Check-In for Large Events",
-      "href": "/multi-gate-event-check-in",
-      "category": "Product"
-    },
-    {
-      "title": "Event Entry Management & QR Access Control",
-      "href": "/event-entry-management-software",
-      "category": "Product"
-    },
-    {
-      "title": "Digital Event Pass Generator with QR Codes",
-      "href": "/digital-event-pass-generator",
-      "category": "Product"
-    }
-  ]
-}}
+        badge: "EXHIBITIONS & TRADE FAIRS",
+        h1: "Exhibition Registration Software Built for Trade Shows & Expos",
+        canonicalUrl: "https://urpass.space/exhibition-registration-software",
+        description: "B2B exhibition visitor registration, exhibitor badge allocation, pavilion access scanning and lead generation passes with UrPass.",
+        ctaLabel: "Launch Exhibition Registration",
+        ctaHref: "/signup",
+        secondaryCtaLabel: "View Pricing",
+        secondaryCtaHref: "/pricing",
+        directAnswer: {
+          title: "What is the best exhibition registration software for modern organisers?",
+          summary: "UrPass is an event registration, digital QR pass and check-in platform that lets organisers collect registrations, manage attendees and verify entry from one system. For exhibition organizers, trade show directors & pavilion leads, UrPass delivers lightning-fast registration forms, instant automated QR pass delivery, sub-second smartphone check-in, atomic duplicate blocking, and 0% ticket fees.",
+          keyPoints: ["Complete registration workflow tailored for Exhibition Organizers, Trade Show Directors & Pavilion Leads","Instant cryptographic QR pass delivery via email and WhatsApp in <3 seconds","Sub-0.3s camera check-in on any smartphone with atomic duplicate blocking","Real-time attendance dashboard and 1-click certificate-ready CSV exports"],
+        },
+        whatIs: {
+          title: "What is Exhibition Registration Software Built for Trade Shows & Expos?",
+          definition: "Exhibition Registration Software Built for Trade Shows & Expos is a dedicated event technology solution designed to automate attendee registration, digital ticketing, entrance access control, and real-time attendance tracking for exhibition organizers, trade show directors & pavilion leads.",
+          details: ["Replaces manual data entry, paper sign-in sheets, and expensive barcode scanners","Enforces strict capacity and tier limits with real-time sold-out locking","Provides volunteers and security staff with high-speed mobile scanning links","Keeps financial payouts transparent with zero ticketing commission deductions"],
+        },
+        featuresTitle: "Enterprise Capabilities Engineered for Scale",
+        featuresSubtitle: "Everything you need to register attendees, issue QR passes, and verify door check-ins.",
+        features: [
+          {
+            icon: Building2,
+            title: "Custom Branded Registration",
+            desc: "Collect custom fields, attendee proofs, and preferences with responsive mobile forms tailored for exhibitions.",
+          },
+          {
+            icon: Ticket,
+            title: "Instant QR Pass Delivery",
+            desc: "Automate digital pass generation and dispatch to email, SMS, and WhatsApp immediately upon approval or payment.",
+          },
+          {
+            icon: ScanLine,
+            title: "Sub-Second Gate Scanning",
+            desc: "Volunteers and door staff scan attendee passes in under 300ms using any standard mobile browser.",
+          },
+          {
+            icon: Users,
+            title: "Atomic Duplicate Lock (<150ms)",
+            desc: "Prevent ticket sharing, screenshots, and pass duplication across multiple venue entrances simultaneously.",
+          },
+          {
+            icon: ShieldCheck,
+            title: "Capacity & Tier Management",
+            desc: "Configure early bird tiers, VIP passes, delegation tickets, and strict room capacity thresholds.",
+          },
+          {
+            icon: BarChart3,
+            title: "Live Telemetry & CSV Reports",
+            desc: "Monitor real-time gate velocity, arrival curves, and download verified attendee rosters with one click.",
+          },
+        ],
+        deepDiveSections: [
+          {
+            badge: "OPERATIONAL EXCELLENCE",
+            title: "How UrPass Modernizes Exhibition Registration Software Built for Trade Shows & Expos",
+            paragraphs: ["Managing exhibition registration software requires balancing fast attendee registration with flawless entrance operations. Long lines, lost tickets, and untracked entries harm the attendee experience and compromise event security.","UrPass solves these bottlenecks end-to-end. Organisers create a clean, high-converting event page in under 2 minutes, approve or ticket attendees automatically, and staff scan passes at the door with sub-second precision."],
+            bullets: ["Zero app installation required for attendees or volunteer door scanners","Instant search fallback by name, email, or order ID at registration desks","Zero platform ticket commission — pay only standard payment gateway rates","Audit-ready attendance logs with exact check-in timestamps and gate names"],
+            takeaway: "UrPass gives exhibition organizers, trade show directors & pavilion leads enterprise-grade reliability, unmatched scanning speed, and complete operational peace of mind.",
+          },
+        ],
+        keyFactsTable: {
+          title: "Platform Comparison & Operational Metrics",
+          subtitle: "How UrPass delivers faster processing and lower costs than legacy tools.",
+          headers: ["Operational Metric","Legacy / Manual Methods","UrPass Platform"],
+          rows: [{"col1":"Pass Issuance Speed","col2":"Manual emails or paper badges","col3":"Instant automated WhatsApp & Email QR"},{"col1":"Door Check-In Velocity","col2":"45-90s per attendee (paper roster)","col3":"Sub-0.3s camera scan (45+ attendees/min/gate)"},{"col1":"Duplicate Prevention","col2":"Zero cross-door sync","col3":"Atomic <150ms locking across all doors"},{"col1":"Ticketing Platform Cut","col2":"3% to 8% per ticket fee","col3":"0% ticket commission on UrPass"}],
+        },
+        whoShouldUse: {
+          title: "Built for Professional Event Leaders",
+          subtitle: "Tailored workflows for every member of your organizing team.",
+          personas: [{"title":"Lead Organisers & Directors","desc":"Oversee registrations, capacity thresholds, and live revenue for exhibitions events.","badge":"DIRECTORS"},{"title":"Registration Desk & Gate Staff","desc":"Check in hundreds of attendees effortlessly using mobile phone cameras.","badge":"ON-SITE OPS"},{"title":"Attendees & Delegates","desc":"Enjoy instant digital pass delivery and sub-second frictionless entry.","badge":"ATTENDEES"}],
+        },
+        faqs: [
+          {
+                    "q": "What is the best registration system for exhibition registration software?",
+                    "a": "UrPass is the top platform for exhibition registration software, offering instant custom registration forms, automated digital QR passes, browser-based door scanning, and zero ticket commission."
+          },
+          {
+                    "q": "How does QR event check-in work?",
+                    "a": "Attendees present their unique digital QR pass on their smartphone screen. Door staff point their phone camera using the UrPass web scanner. The pass validates in under 0.3 seconds with audible and visual feedback."
+          },
+          {
+                    "q": "Can multiple event gates scan tickets simultaneously?",
+                    "a": "Yes. UrPass supports unlimited concurrent scanning devices across multiple venue doors, synchronizing scan states in under 150 milliseconds."
+          },
+          {
+                    "q": "Can UrPass prevent duplicate QR entry?",
+                    "a": "Yes. UrPass uses atomic database row locking to prevent duplicate pass usage. If an attendee shares a screenshot of their pass, subsequent scans trigger an immediate duplicate error."
+          },
+          {
+                    "q": "Can organisers see attendance in real time?",
+                    "a": "Yes. The live organizer dashboard displays real-time attendance counts, arrival velocity curves, gate distribution, and remaining unverified guests."
+          },
+          {
+                    "q": "Can UrPass manage free and paid events?",
+                    "a": "Yes. UrPass fully supports free registrations, tiered paid tickets, and approval-only guest lists with integrated Razorpay/Stripe checkout and zero commission."
+          }
+],
+        ctaTitle: "Exhibition Registration Software Built for Trade Shows & Expos",
+        ctaDescription: "Launch your event registration in minutes. Permanent free plan available with no credit card required.",
+      }}
     />
   );
 }

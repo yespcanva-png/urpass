@@ -1,71 +1,133 @@
 import type { Metadata } from "next";
-import { Users, Ticket, QrCode, ShieldCheck, Palette, FileText, Globe, Smartphone } from "lucide-react";
+import { BarChart3, Building2, CheckCircle2, Lock, ScanLine, ShieldCheck, Sparkles, Users, Zap } from "lucide-react";
 import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
-  title: "Event Agency Registration Software | Client Branded Registration Pages",
-  description:
-    "Custom event registration software for event management companies. Build bespoke branded forms, collect attendee custom fields, and issue branded digital passes.",
+  title: "Event Registration Software for Event Agencies & Producers | UrPass",
+  description: "White-label event registration and QR check-in software built for experiential event agencies. Multi-client workspaces, branded passes & live gate telemetry.",
   keywords: [
     "event agency registration software",
-    "event company registration tool",
-    "custom event registration for agencies",
-    "client branded event registration",
-    "white label registration forms for events",
+    "event agency registration software online",
+    "event agency registration software platform",
+    "event agency registration software check in",
+    "event agency registration software qr code",
   ],
-  alternates: { canonical: "https://urpass.space/event-agency-registration-software" },
+  alternates: {
+    canonical: "https://urpass.space/event-agency-registration-software",
+  },
   openGraph: {
-    title: "Event Agency Registration Software | URPASS",
-    description: "Build client-branded event registration portals with custom data capture and zero marketplace lock-in.",
+    title: "Event Registration Software for Event Agencies & Producers | UrPass",
+    description: "White-label event registration and QR check-in software built for experiential event agencies. Multi-client workspaces, branded passes & live gate telemetry.",
     url: "https://urpass.space/event-agency-registration-software",
-    locale: "en_IN",
+    locale: "en_US",
     type: "website",
   },
 };
 
-export default function EventAgencyRegistrationSoftwarePage() {
+export default function Page() {
   return (
     <SEOPage
       config={{
-        badge: "BESPOKE AGENCY WORKFLOWS",
-        h1: "Event Agency Registration Software",
+        badge: "AGENCY & CLIENT WORKSPACES",
+        h1: "Event Registration Software Built for Event Agencies & Production Teams",
         canonicalUrl: "https://urpass.space/event-agency-registration-software",
-        description:
-          "Build elegant, client-branded registration journeys for conferences, galas, brand activations, and private summits. Custom forms, conditional questions, multi-tier ticketing, and zero external branding.",
-        ctaLabel: "Book Agency Demo",
-        ctaHref: "/contact?type=agency-demo",
-        secondaryCtaLabel: "Explore Agency Hub",
-        secondaryCtaHref: "/event-agency-ticketing-platform",
+        description: "White-label event registration and QR check-in software built for experiential event agencies. Multi-client workspaces, branded passes & live gate telemetry.",
+        ctaLabel: "Run Your Next Client Event on UrPass",
+        ctaHref: "/signup",
+        secondaryCtaLabel: "Book an UrPass Demo",
+        secondaryCtaHref: "/contact",
         directAnswer: {
-          title: "Why Event Agencies Choose URPASS for Client Registrations",
-          summary:
-            "Standard registration builders either lack enterprise gate check-in or slap their own logo and advertisements all over your client's page. URPASS gives event companies an agency-first registration engine featuring custom CSS styling, deep registration question logic, instant UPI/card checkout, automated GST receipts, and seamless sync with gate scanners.",
-          keyPoints: [
-            "100% Client Branding: Clean, elegant registration portals styled to client brand books",
-            "Complex Field Logic: Collect dietary preferences, company designations, workshops, and GSTIN numbers",
-            "Multi-Tier Badging: Map VIP, Speaker, Sponsor, and Delegate tickets to custom pass designs automatically",
-            "Integrated Gateway: Funds settle directly into client merchant accounts without intermediary holding",
-          ],
+          title: "What is the best event agency registration software for modern organisers?",
+          summary: "UrPass is an event registration, digital QR pass and check-in platform that lets organisers collect registrations, manage attendees and verify entry from one system. For event agencies, production houses & experiential marketers, UrPass delivers lightning-fast registration forms, instant automated QR pass delivery, sub-second smartphone check-in, atomic duplicate blocking, and 0% ticket fees.",
+          keyPoints: ["Complete registration workflow tailored for Event Agencies, Production Houses & Experiential Marketers","Instant cryptographic QR pass delivery via email and WhatsApp in <3 seconds","Sub-0.3s camera check-in on any smartphone with atomic duplicate blocking","Real-time attendance dashboard and 1-click certificate-ready CSV exports"],
         },
+        whatIs: {
+          title: "What is Event Registration Software Built for Event Agencies & Production Teams?",
+          definition: "Event Registration Software Built for Event Agencies & Production Teams is a dedicated event technology solution designed to automate attendee registration, digital ticketing, entrance access control, and real-time attendance tracking for event agencies, production houses & experiential marketers.",
+          details: ["Replaces manual data entry, paper sign-in sheets, and expensive barcode scanners","Enforces strict capacity and tier limits with real-time sold-out locking","Provides volunteers and security staff with high-speed mobile scanning links","Keeps financial payouts transparent with zero ticketing commission deductions"],
+        },
+        featuresTitle: "Enterprise Capabilities Engineered for Scale",
+        featuresSubtitle: "Everything you need to register attendees, issue QR passes, and verify door check-ins.",
         features: [
-          { icon: Palette, title: "Bespoke Styling", desc: "Customize accent colors, cover banners, hero typography, and button layouts to match client marketing assets." },
-          { icon: FileText, title: "Dynamic Custom Fields", desc: "Build multi-step forms capturing designations, dietary needs, session selections, and company tax IDs." },
-          { icon: QrCode, title: "Automated Pass Dispatch", desc: "Attendees receive personalized digital passes with QR codes via email and WhatsApp upon approval or payment." },
-          { icon: ShieldCheck, title: "Approval & Vetting Flow", desc: "Hold applications for manual review before issuing tickets for private client summits and VIP galas." },
-          { icon: Globe, title: "Custom Domain Mapping", desc: "Publish portals on client subdomains like register.clientannualmeet.com with automated SSL." },
-          { icon: Smartphone, title: "Connected Gate Check-In", desc: "Registrations sync live to on-ground scanner terminals for 0.28s guest admittance." },
+          {
+            icon: Building2,
+            title: "Custom Branded Registration",
+            desc: "Collect custom fields, attendee proofs, and preferences with responsive mobile forms tailored for agencies.",
+          },
+          {
+            icon: Sparkles,
+            title: "Instant QR Pass Delivery",
+            desc: "Automate digital pass generation and dispatch to email, SMS, and WhatsApp immediately upon approval or payment.",
+          },
+          {
+            icon: ShieldCheck,
+            title: "Sub-Second Gate Scanning",
+            desc: "Volunteers and door staff scan attendee passes in under 300ms using any standard mobile browser.",
+          },
+          {
+            icon: BarChart3,
+            title: "Atomic Duplicate Lock (<150ms)",
+            desc: "Prevent ticket sharing, screenshots, and pass duplication across multiple venue entrances simultaneously.",
+          },
+          {
+            icon: Zap,
+            title: "Capacity & Tier Management",
+            desc: "Configure early bird tiers, VIP passes, delegation tickets, and strict room capacity thresholds.",
+          },
+          {
+            icon: ScanLine,
+            title: "Live Telemetry & CSV Reports",
+            desc: "Monitor real-time gate velocity, arrival curves, and download verified attendee rosters with one click.",
+          },
         ],
+        deepDiveSections: [
+          {
+            badge: "OPERATIONAL EXCELLENCE",
+            title: "How UrPass Modernizes Event Registration Software Built for Event Agencies & Production Teams",
+            paragraphs: ["Managing event agency registration software requires balancing fast attendee registration with flawless entrance operations. Long lines, lost tickets, and untracked entries harm the attendee experience and compromise event security.","UrPass solves these bottlenecks end-to-end. Organisers create a clean, high-converting event page in under 2 minutes, approve or ticket attendees automatically, and staff scan passes at the door with sub-second precision."],
+            bullets: ["Zero app installation required for attendees or volunteer door scanners","Instant search fallback by name, email, or order ID at registration desks","Zero platform ticket commission — pay only standard payment gateway rates","Audit-ready attendance logs with exact check-in timestamps and gate names"],
+            takeaway: "UrPass gives event agencies, production houses & experiential marketers enterprise-grade reliability, unmatched scanning speed, and complete operational peace of mind.",
+          },
+        ],
+        keyFactsTable: {
+          title: "Platform Comparison & Operational Metrics",
+          subtitle: "How UrPass delivers faster processing and lower costs than legacy tools.",
+          headers: ["Operational Metric","Legacy / Manual Methods","UrPass Platform"],
+          rows: [{"col1":"Pass Issuance Speed","col2":"Manual emails or paper badges","col3":"Instant automated WhatsApp & Email QR"},{"col1":"Door Check-In Velocity","col2":"45-90s per attendee (paper roster)","col3":"Sub-0.3s camera scan (45+ attendees/min/gate)"},{"col1":"Duplicate Prevention","col2":"Zero cross-door sync","col3":"Atomic <150ms locking across all doors"},{"col1":"Ticketing Platform Cut","col2":"3% to 8% per ticket fee","col3":"0% ticket commission on UrPass"}],
+        },
+        whoShouldUse: {
+          title: "Built for Professional Event Leaders",
+          subtitle: "Tailored workflows for every member of your organizing team.",
+          personas: [{"title":"Lead Organisers & Directors","desc":"Oversee registrations, capacity thresholds, and live revenue for agencies events.","badge":"DIRECTORS"},{"title":"Registration Desk & Gate Staff","desc":"Check in hundreds of attendees effortlessly using mobile phone cameras.","badge":"ON-SITE OPS"},{"title":"Attendees & Delegates","desc":"Enjoy instant digital pass delivery and sub-second frictionless entry.","badge":"ATTENDEES"}],
+        },
         faqs: [
-          { q: "Can we collect corporate GSTIN details during checkout?", a: "Yes. B2B ticketing flows collect company legal name, GSTIN, and state code, generating automated GST tax invoices with reverse charge details." },
-          { q: "Can we embed the registration widget into our client's existing website?", a: "Yes. Use our lightweight embed code or iframe to host the registration form seamlessly on WordPress, Webflow, or custom client landing pages." },
-          { q: "Can we manage approval-only guest lists?", a: "Yes. Enable application mode so delegates submit registration requests, which your team or client can approve or decline before passes are issued." },
-        ],
-        relatedLinks: [
-          { title: "Event Agency Ticketing Platform", href: "/event-agency-ticketing-platform", category: "Product" },
-          { title: "White-Label Event Registration", href: "/event-agency-white-label-registration", category: "Product" },
-          { title: "Multi-Client Event Dashboard", href: "/multi-client-event-management-software", category: "Product" },
-          { title: "Corporate Event Check-In Software", href: "/corporate-event-check-in-software", category: "Use Case" },
-        ],
+          {
+                    "q": "What is the best registration system for event agency registration software?",
+                    "a": "UrPass is the top platform for event agency registration software, offering instant custom registration forms, automated digital QR passes, browser-based door scanning, and zero ticket commission."
+          },
+          {
+                    "q": "How does QR event check-in work?",
+                    "a": "Attendees present their unique digital QR pass on their smartphone screen. Door staff point their phone camera using the UrPass web scanner. The pass validates in under 0.3 seconds with audible and visual feedback."
+          },
+          {
+                    "q": "Can multiple event gates scan tickets simultaneously?",
+                    "a": "Yes. UrPass supports unlimited concurrent scanning devices across multiple venue doors, synchronizing scan states in under 150 milliseconds."
+          },
+          {
+                    "q": "Can UrPass prevent duplicate QR entry?",
+                    "a": "Yes. UrPass uses atomic database row locking to prevent duplicate pass usage. If an attendee shares a screenshot of their pass, subsequent scans trigger an immediate duplicate error."
+          },
+          {
+                    "q": "Can organisers see attendance in real time?",
+                    "a": "Yes. The live organizer dashboard displays real-time attendance counts, arrival velocity curves, gate distribution, and remaining unverified guests."
+          },
+          {
+                    "q": "Can UrPass manage free and paid events?",
+                    "a": "Yes. UrPass fully supports free registrations, tiered paid tickets, and approval-only guest lists with integrated Razorpay/Stripe checkout and zero commission."
+          }
+],
+        ctaTitle: "Event Registration Software Built for Event Agencies & Production Teams",
+        ctaDescription: "Launch your event registration in minutes. Permanent free plan available with no credit card required.",
       }}
     />
   );

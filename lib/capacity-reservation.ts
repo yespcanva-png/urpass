@@ -94,7 +94,12 @@ export async function reserveEventCapacity({
     .eq("id", eventId)
     .single();
 
-  if (!event || event.status !== "active" || !event.application_enabled) {
+  const isEventOpen =
+    event &&
+    (event.status === "active" || event.status === "published" || event.status === "live" || !event.status) &&
+    event.application_enabled !== false;
+
+  if (!isEventOpen) {
     return {
       success: false,
       error: "NOT_ACCEPTING",
@@ -116,23 +121,23 @@ export async function reserveEventCapacity({
   }
 
   // Check ticket tier limit if applicable
-  if (ticketTypeId) {
+  if (ticketTypeId && ticketTypeId !== "default") {
     const { data: ticketType } = await adminClient
       .from("ticket_types")
       .select("capacity, status")
       .eq("id", ticketTypeId)
       .eq("event_id", eventId)
-      .single();
+      .maybeSingle();
 
-    if (!ticketType || ticketType.status !== "on_sale") {
+    if (ticketType && ticketType.status === "closed") {
       return {
         success: false,
         error: "TICKET_NOT_AVAILABLE",
-        message: "Selected ticket is not available.",
+        message: "Selected ticket is closed.",
       };
     }
 
-    if (ticketType.capacity != null) {
+    if (ticketType && ticketType.capacity != null) {
       const tierConsumed = await calculateConsumedCapacity(adminClient, eventId, ticketTypeId);
       if (tierConsumed >= ticketType.capacity) {
         return {

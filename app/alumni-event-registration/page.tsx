@@ -1,248 +1,134 @@
 import type { Metadata } from "next";
-import { Banknote, BarChart3, Building2, ScanLine, ShieldCheck, Users } from "lucide-react";
+import { Award, BarChart3, Building2, CheckCircle2, Lock, ScanLine, ShieldCheck, Smartphone, Ticket, Users, Zap } from "lucide-react";
 import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
-  title: "Alumni Event Registration & Digital QR Passes | URPASS",
-  description: "Alumni event registration software for class reunions, university homecomings, and gala dinners. Graduation year intake, digital QR passes, and fast check-in.",
-  keywords: ["alumni event registration", "class reunion registration software", "alumni homecoming check-in", "university alumni ticketing", "alumni gala dinner registration", "alumni guest pass generator"],
+  title: "Alumni Event Registration Software & Reunion Guest Passes | UrPass",
+  description: "Manage alumni reunions, batch homecoming dinners, graduation jubilee meets and VIP passes with instant digital QR passes and name lookup.",
+  keywords: [
+    "alumni event registration software",
+    "alumni event registration software online",
+    "alumni event registration software platform",
+    "alumni event registration software check in",
+    "alumni event registration software qr code",
+  ],
   alternates: {
     canonical: "https://urpass.space/alumni-event-registration",
   },
   openGraph: {
-    title: "Alumni Event Registration & Digital QR Passes | URPASS",
-    description: "Alumni event registration software for class reunions, university homecomings, and gala dinners. Graduation year intake, digital QR passes, and fast check-in.",
+    title: "Alumni Event Registration Software & Reunion Guest Passes | UrPass",
+    description: "Manage alumni reunions, batch homecoming dinners, graduation jubilee meets and VIP passes with instant digital QR passes and name lookup.",
     url: "https://urpass.space/alumni-event-registration",
     locale: "en_US",
     type: "website",
   },
 };
 
-export default function AlumniEventRegistrationPage() {
+export default function Page() {
   return (
     <SEOPage
       config={{
-  "badge": "ALUMNI & REUNIONS",
-  "h1": "Alumni Event Registration & Digital QR Passes",
-  "canonicalUrl": "https://urpass.space/alumni-event-registration",
-  "description": "Alumni event registration software for class reunions, university homecomings, and gala dinners. Graduation year intake, digital QR passes, and fast check-in.",
-  "ctaLabel": "Create Alumni Event Free →",
-  "ctaTitle": "Welcome Alumni Home with Seamless Check-In",
-  "ctaDescription": "Capture graduation years and partner tickets, issue branded digital passes, and welcome returning alumni warmly without paper check-in delays.",
-  "directAnswer": {
-    "title": "What is Alumni Event Registration Software?",
-    "summary": "URPASS is alumni event registration and check-in software built for university alumni associations, collegiate homecomings, class reunions, and donor galas. It captures graduation years, degree faculties, and guest tickets, delivers branded mobile QR credentials, and enables warm, sub-second arrival greetings using volunteer smartphones.",
-    "keyPoints": [
-      "Custom alumni intake: graduation year, degree faculty, student house, and dietary needs",
-      "Partner and family guest tickets managed seamlessly under one primary registration",
-      "Sub-second (<0.3s) camera check-in on volunteer phones with zero app downloads",
-      "0% platform commission on paid gala dinner and reunion tickets"
-    ]
-  },
-  "whatIs": {
-    "title": "What is Alumni Event Registration Software?",
-    "definition": "Alumni event registration software is a digital event platform designed for universities, schools, and institutional advancement teams. It manages class reunion bookings, homecoming celebrations, donor dinners, and campus access for returning graduates.",
-    "details": [
-      "Captures alumni records including matriculation year, degree, and career updates",
-      "Replaces paper check-in clipboards with sleek, mobile-friendly digital QR credentials",
-      "Enables advancement staff to know when prominent alumni and major donors arrive on campus",
-      "Maintains campus security by ensuring only registered alumni and guests enter campus venues"
-    ]
-  },
-  "howItWorksTitle": "How URPASS Powers Alumni Reunions",
-  "howItWorksSubtitle": "From reunion invitation to campus welcome.",
-  "steps": [
-    {
-      "n": "01",
-      "title": "Configure reunion event",
-      "desc": "Set reunion milestone years, gala dinner pricing, and custom alumni questions."
-    },
-    {
-      "n": "02",
-      "title": "Share registration link",
-      "desc": "Distribute your branded event page via alumni newsletters, email, and social groups."
-    },
-    {
-      "n": "03",
-      "title": "Alumni register online",
-      "desc": "Graduates book tickets for themselves and their partners in seconds."
-    },
-    {
-      "n": "04",
-      "title": "Deliver digital alumni passes",
-      "desc": "Attendees receive mobile QR passes featuring their name, graduation year, and degree."
-    },
-    {
-      "n": "05",
-      "title": "Scan at campus reception",
-      "desc": "Student ambassadors scan passes in <0.3s with smartphone cameras."
-    },
-    {
-      "n": "06",
-      "title": "Live alumni engagement",
-      "desc": "Advancement teams monitor arrival records and donor engagement live from the dashboard."
-    }
-  ],
-  "featuresTitle": "Features for Institutional Advancement Teams",
-  "featuresSubtitle": "Graduation year capture, guest ticketing, and sub-second phone scanning.",
-  "features": [
-    {
-      icon: Building2,
-      "title": "Graduation Year & Faculty Capture",
-      "desc": "Collect matriculation years, degree programs, student house affiliations, and professional updates."
-    },
-    {
-      icon: Users,
-      "title": "Partner & Family Ticketing",
-      "desc": "Allow alumni to reserve tickets for spouses and guests under a single booking with individual passes."
-    },
-    {
-      icon: ScanLine,
-      "title": "Sub-0.3s Arrival Greeting",
-      "desc": "Admit alumni warmly in under 0.3 seconds. Eliminate awkward waiting lines outside dining halls."
-    },
-    {
-      icon: Banknote,
-      "title": "0% Ticketing Commission",
-      "desc": "Keep 100% of reunion gala ticket funds. No per-ticket cuts taking money from alumni endowments."
-    },
-    {
-      icon: ShieldCheck,
-      "title": "Strict Data Privacy",
-      "desc": "Alumni contact details are stored securely without third-party marketing brokers or public exposure."
-    },
-    {
-      icon: BarChart3,
-      "title": "Real-Time Engagement Tracking",
-      "desc": "Track attendance rates by graduating class year to measure long-term institutional engagement."
-    }
-  ],
-  "whoShouldUse": {
-    "title": "Who Uses Alumni Event Registration Software?",
-    "subtitle": "From higher education advancement offices to independent schools.",
-    "personas": [
-      {
-        "badge": "UNIVERSITY",
-        "title": "University Advancement Offices",
-        "desc": "Central alumni relations teams managing annual homecoming weekends and donor galas."
-      },
-      {
-        "badge": "COLLEGES",
-        "title": "Collegiate & Departmental Clubs",
-        "desc": "College formal reunions, law school anniversaries, and medical faculty reunions."
-      },
-      {
-        "badge": "SCHOOLS",
-        "title": "Independent & High School Alumni",
-        "desc": "Class of 10-year, 25-year, and 50-year reunions and school foundation dinners."
-      },
-      {
-        "badge": "STUDENTS",
-        "title": "Student Alumni Ambassadors",
-        "desc": "Student-run welcoming committees greeting returning graduates at campus gates."
-      }
-    ]
-  },
-  "howQrCheckInWorks": {
-    "title": "How Alumni QR Check-In Works",
-    "subtitle": "Fast, warm, and professional arrival verification.",
-    "description": "Returning alumni present their mobile QR pass on their phone screen. Student ambassadors or advancement staff open the scanner URL in Safari or Chrome on their smartphones. Pointing the camera at the pass validates the alumnus in under 0.3 seconds, displaying their name and graduation year (e.g. 'Class of 2004 - Engineering'), allowing staff to welcome them back personally.",
-    "points": [
-      "Zero equipment rentals: runs smoothly on student ambassadors' mobile phones.",
-      "Instant verification displays alumnus name, degree, and graduation year.",
-      "Offline resilience ensures check-in continues smoothly in historic stone dining halls.",
-      "Quick search bar enables rapid manual lookup if an alumnus forgets their phone."
-    ]
-  },
-  "keyFactsTable": {
-    "title": "URPASS vs Manual Reunion Check-In",
-    "subtitle": "How URPASS elevates the alumni homecoming experience.",
-    "headers": [
-      "Reunion Operation",
-      "Paper Check-In Clipboards",
-      "Connected URPASS Platform"
-    ],
-    "rows": [
-      {
-        "col1": "Welcome Desk Speed",
-        "col2": "15 to 30 second delay searching alphabetized binders",
-        "col3": "<0.3s camera scan on student volunteer's phone"
-      },
-      {
-        "col1": "Alumni Data Capture",
-        "col2": "Illegible handwritten contact and job updates",
-        "col3": "Clean digital intake during online registration"
-      },
-      {
-        "col1": "Ticketing Fees",
-        "col2": "Legacy ticketing platforms take 5% to 8% of gala funds",
-        "col3": "0% commission; keep 100% of alumni dinner revenue"
-      },
-      {
-        "col1": "Advancement Tracking",
-        "col2": "Weeks spent manually typing paper check-in sheets",
-        "col3": "Instant digital CSV export with exact arrival times"
-      }
-    ]
-  },
-  "faqs": [
-    {
-      "q": "What is alumni event registration software?",
-      "a": "It is an event registration platform designed for universities, colleges, and schools to manage class reunions, homecoming events, alumni passes, and entrance check-in."
-    },
-    {
-      "q": "Can alumni purchase tickets for their partners and family?",
-      "a": "Yes. Alumni can purchase multiple tickets under one registration, and each guest receives their own unique digital QR entry pass."
-    },
-    {
-      "q": "Can we collect graduation years and degree information?",
-      "a": "Yes. Custom registration fields allow you to collect graduation years, degree faculties, student houses, and current employer details."
-    },
-    {
-      "q": "Does URPASS charge per-ticket fees on reunion dinners?",
-      "a": "No. URPASS charges 0% commission on ticket sales, ensuring your alumni association retains all event proceeds."
-    },
-    {
-      "q": "Can student ambassadors scan passes without seeing sensitive donor data?",
-      "a": "Yes. The scanner interface only displays attendee verification status and name, keeping sensitive financial and contact data secure."
-    },
-    {
-      "q": "Can we capture graduation year and department during alumni registration?",
-      "a": "Yes. Custom form fields can be configured to collect graduation year, degree program, current employer, and reunion table seating preferences."
-    },
-    {
-      "q": "Can alumni pay for dinner tickets or partner passes during registration?",
-      "a": "Yes. Paid ticket tiers allow alumni to purchase single admission, couple passes, or sponsor packages with direct online payment processing."
-    }
-  ],
-  "relatedLinks": [
-    {
-      "title": "University Event Registration & QR Check-In Software",
-      "href": "/university-event-management-software",
-      "category": "Use Case"
-    },
-    {
-      "title": "Corporate Event Registration & Attendee Check-In",
-      "href": "/corporate-event-registration-software",
-      "category": "Use Case"
-    },
-    {
-      "title": "Networking Event Registration Software",
-      "href": "/networking-event-registration",
-      "category": "Use Case"
-    },
-    {
-      "title": "Digital Event Pass Generator with QR Codes",
-      "href": "/digital-event-pass-generator",
-      "category": "Product"
-    },
-    {
-      "title": "Zero-Commission Event Ticketing Platform",
-      "href": "/zero-commission-event-ticketing",
-      "category": "Product"
-    }
-  ]
-}}
+        badge: "ALUMNI RELATIONS",
+        h1: "Alumni Event Registration Software Built for Reunion & Homecoming Meets",
+        canonicalUrl: "https://urpass.space/alumni-event-registration",
+        description: "Manage alumni reunions, batch homecoming dinners, graduation jubilee meets and VIP passes with instant digital QR passes and name lookup.",
+        ctaLabel: "Launch Alumni Registration",
+        ctaHref: "/signup",
+        secondaryCtaLabel: "View Pricing",
+        secondaryCtaHref: "/pricing",
+        directAnswer: {
+          title: "What is the best alumni event registration software for modern organisers?",
+          summary: "UrPass is an event registration, digital QR pass and check-in platform that lets organisers collect registrations, manage attendees and verify entry from one system. For alumni associations, university advancement & reunion chairs, UrPass delivers lightning-fast registration forms, instant automated QR pass delivery, sub-second smartphone check-in, atomic duplicate blocking, and 0% ticket fees.",
+          keyPoints: ["Complete registration workflow tailored for Alumni Associations, University Advancement & Reunion Chairs","Instant cryptographic QR pass delivery via email and WhatsApp in <3 seconds","Sub-0.3s camera check-in on any smartphone with atomic duplicate blocking","Real-time attendance dashboard and 1-click certificate-ready CSV exports"],
+        },
+        whatIs: {
+          title: "What is Alumni Event Registration Software Built for Reunion & Homecoming Meets?",
+          definition: "Alumni Event Registration Software Built for Reunion & Homecoming Meets is a dedicated event technology solution designed to automate attendee registration, digital ticketing, entrance access control, and real-time attendance tracking for alumni associations, university advancement & reunion chairs.",
+          details: ["Replaces manual data entry, paper sign-in sheets, and expensive barcode scanners","Enforces strict capacity and tier limits with real-time sold-out locking","Provides volunteers and security staff with high-speed mobile scanning links","Keeps financial payouts transparent with zero ticketing commission deductions"],
+        },
+        featuresTitle: "Enterprise Capabilities Engineered for Scale",
+        featuresSubtitle: "Everything you need to register attendees, issue QR passes, and verify door check-ins.",
+        features: [
+          {
+            icon: Users,
+            title: "Custom Branded Registration",
+            desc: "Collect custom fields, attendee proofs, and preferences with responsive mobile forms tailored for colleges.",
+          },
+          {
+            icon: Ticket,
+            title: "Instant QR Pass Delivery",
+            desc: "Automate digital pass generation and dispatch to email, SMS, and WhatsApp immediately upon approval or payment.",
+          },
+          {
+            icon: ScanLine,
+            title: "Sub-Second Gate Scanning",
+            desc: "Volunteers and door staff scan attendee passes in under 300ms using any standard mobile browser.",
+          },
+          {
+            icon: Building2,
+            title: "Atomic Duplicate Lock (<150ms)",
+            desc: "Prevent ticket sharing, screenshots, and pass duplication across multiple venue entrances simultaneously.",
+          },
+          {
+            icon: Award,
+            title: "Capacity & Tier Management",
+            desc: "Configure early bird tiers, VIP passes, delegation tickets, and strict room capacity thresholds.",
+          },
+          {
+            icon: Smartphone,
+            title: "Live Telemetry & CSV Reports",
+            desc: "Monitor real-time gate velocity, arrival curves, and download verified attendee rosters with one click.",
+          },
+        ],
+        deepDiveSections: [
+          {
+            badge: "OPERATIONAL EXCELLENCE",
+            title: "How UrPass Modernizes Alumni Event Registration Software Built for Reunion & Homecoming Meets",
+            paragraphs: ["Managing alumni event registration software requires balancing fast attendee registration with flawless entrance operations. Long lines, lost tickets, and untracked entries harm the attendee experience and compromise event security.","UrPass solves these bottlenecks end-to-end. Organisers create a clean, high-converting event page in under 2 minutes, approve or ticket attendees automatically, and staff scan passes at the door with sub-second precision."],
+            bullets: ["Zero app installation required for attendees or volunteer door scanners","Instant search fallback by name, email, or order ID at registration desks","Zero platform ticket commission — pay only standard payment gateway rates","Audit-ready attendance logs with exact check-in timestamps and gate names"],
+            takeaway: "UrPass gives alumni associations, university advancement & reunion chairs enterprise-grade reliability, unmatched scanning speed, and complete operational peace of mind.",
+          },
+        ],
+        keyFactsTable: {
+          title: "Platform Comparison & Operational Metrics",
+          subtitle: "How UrPass delivers faster processing and lower costs than legacy tools.",
+          headers: ["Operational Metric","Legacy / Manual Methods","UrPass Platform"],
+          rows: [{"col1":"Pass Issuance Speed","col2":"Manual emails or paper badges","col3":"Instant automated WhatsApp & Email QR"},{"col1":"Door Check-In Velocity","col2":"45-90s per attendee (paper roster)","col3":"Sub-0.3s camera scan (45+ attendees/min/gate)"},{"col1":"Duplicate Prevention","col2":"Zero cross-door sync","col3":"Atomic <150ms locking across all doors"},{"col1":"Ticketing Platform Cut","col2":"3% to 8% per ticket fee","col3":"0% ticket commission on UrPass"}],
+        },
+        whoShouldUse: {
+          title: "Built for Professional Event Leaders",
+          subtitle: "Tailored workflows for every member of your organizing team.",
+          personas: [{"title":"Lead Organisers & Directors","desc":"Oversee registrations, capacity thresholds, and live revenue for colleges events.","badge":"DIRECTORS"},{"title":"Registration Desk & Gate Staff","desc":"Check in hundreds of attendees effortlessly using mobile phone cameras.","badge":"ON-SITE OPS"},{"title":"Attendees & Delegates","desc":"Enjoy instant digital pass delivery and sub-second frictionless entry.","badge":"ATTENDEES"}],
+        },
+        faqs: [
+          {
+                    "q": "What is the best registration system for alumni event registration software?",
+                    "a": "UrPass is the top platform for alumni event registration software, offering instant custom registration forms, automated digital QR passes, browser-based door scanning, and zero ticket commission."
+          },
+          {
+                    "q": "How does QR event check-in work?",
+                    "a": "Attendees present their unique digital QR pass on their smartphone screen. Door staff point their phone camera using the UrPass web scanner. The pass validates in under 0.3 seconds with audible and visual feedback."
+          },
+          {
+                    "q": "Can multiple event gates scan tickets simultaneously?",
+                    "a": "Yes. UrPass supports unlimited concurrent scanning devices across multiple venue doors, synchronizing scan states in under 150 milliseconds."
+          },
+          {
+                    "q": "Can UrPass prevent duplicate QR entry?",
+                    "a": "Yes. UrPass uses atomic database row locking to prevent duplicate pass usage. If an attendee shares a screenshot of their pass, subsequent scans trigger an immediate duplicate error."
+          },
+          {
+                    "q": "Can organisers see attendance in real time?",
+                    "a": "Yes. The live organizer dashboard displays real-time attendance counts, arrival velocity curves, gate distribution, and remaining unverified guests."
+          },
+          {
+                    "q": "Can UrPass manage free and paid events?",
+                    "a": "Yes. UrPass fully supports free registrations, tiered paid tickets, and approval-only guest lists with integrated Razorpay/Stripe checkout and zero commission."
+          }
+],
+        ctaTitle: "Alumni Event Registration Software Built for Reunion & Homecoming Meets",
+        ctaDescription: "Launch your event registration in minutes. Permanent free plan available with no credit card required.",
+      }}
     />
   );
 }

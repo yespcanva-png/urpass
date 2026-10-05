@@ -99,7 +99,7 @@ export default async function TicketsPage({
   // Summary stats
   const totalSold = ticketTypes.reduce((sum, t) => sum + t.sold_count, 0);
   const totalRevenue = ticketTypes.reduce(
-    (sum, t) => sum + (t.price > 0 ? t.price * t.sold_count : 0),
+    (sum, t) => sum + (t.verified_revenue_paise ?? (t.price > 0 ? t.price * t.sold_count : 0)),
     0
   );
   const totalRemaining = ticketTypes.some((t) => t.capacity == null)

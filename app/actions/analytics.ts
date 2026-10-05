@@ -237,6 +237,7 @@ export async function getAnalyticsData(targetEventId?: string): Promise<Analytic
     { data: checkinsData },
     { data: gatesData },
     { data: ticketTypesData },
+    { data: ticketOrdersData },
   ] = await Promise.all([
     supabase
       .from("attendees")
@@ -256,12 +257,18 @@ export async function getAnalyticsData(targetEventId?: string): Promise<Analytic
       .from("ticket_types")
       .select("id, event_id, name, price, category")
       .in("event_id", eventIdsToQuery),
+    supabase
+      .from("ticket_orders")
+      .select("id, event_id, ticket_type_id, amount, status")
+      .in("event_id", eventIdsToQuery),
   ]);
 
   const attendees = (attendeesData ?? []) as unknown as RawAttendee[];
   const checkins = (checkinsData ?? []) as unknown as RawCheckin[];
   const gates = (gatesData ?? []) as unknown as RawGate[];
   const ticketTypes = (ticketTypesData ?? []) as unknown as RawTicketType[];
+  const rawOrders = (ticketOrdersData ?? []) as Array<{ id: string; event_id: string; ticket_type_id: string | null; amount: number; status: string }>;
+  const paidOrders = rawOrders.filter((o) => o.status === "paid");
 
   // 3. Core KPI Computations
   const totalRegistrations = attendees.length;
@@ -384,27 +391,41 @@ export async function getAnalyticsData(targetEventId?: string): Promise<Analytic
   const ticketTypeMap = new Map<string, RawTicketType>();
   ticketTypes.forEach((t) => ticketTypeMap.set(t.id, t));
 
-  const passMap = new Map<string, { label: string; total: number; checkedIn: number; revenue: number }>();
+  // Map verified paid revenue from paidOrders
+  const paidOrdersByTier = new Map<string, number>();
+  let totalVerifiedRevenuePaise = 0;
+  for (const po of paidOrders) {
+    const amount = Number(po.amount || 0);
+    totalVerifiedRevenuePaise += amount;
+    if (po.ticket_type_id) {
+      paidOrdersByTier.set(
+        po.ticket_type_id,
+        (paidOrdersByTier.get(po.ticket_type_id) ?? 0) + amount
+      );
+    }
+  }
 
+  const passMap = new Map<string, { label: string; total: number; checkedIn: number; revenue: number }>();
   attendees.forEach((a) => {
     let key = a.pass_type || "participant";
     let label = PASS_LABELS[key] ?? key;
-    let pricePaise = 0;
 
     if (a.ticket_type_id && ticketTypeMap.has(a.ticket_type_id)) {
       const tt = ticketTypeMap.get(a.ticket_type_id)!;
       key = `ticket-${tt.id}`;
       label = tt.name;
-      pricePaise = tt.price;
     }
 
-    const existing = passMap.get(key) ?? { label, total: 0, checkedIn: 0, revenue: 0 };
+    const tierRevenuePaise = (a.ticket_type_id && paidOrdersByTier.get(a.ticket_type_id)) || 0;
+    const existing = passMap.get(key) ?? {
+      label,
+      total: 0,
+      checkedIn: 0,
+      revenue: Math.round(tierRevenuePaise / 100),
+    };
     existing.total += 1;
     if (checkedInAttendeeIds.has(a.id)) {
       existing.checkedIn += 1;
-    }
-    if (a.application_status === "approved" && pricePaise > 0) {
-      existing.revenue += Math.round(pricePaise / 100);
     }
     passMap.set(key, existing);
   });
@@ -420,7 +441,7 @@ export async function getAnalyticsData(targetEventId?: string): Promise<Analytic
     }))
     .sort((a, b) => b.total - a.total);
 
-  const totalRevenue = passTypeBreakdown.reduce((sum, p) => sum + p.revenue, 0);
+  const totalRevenue = Math.round(totalVerifiedRevenuePaise / 100);
 
   // 8. Recent Check-ins
   const attendeeMap = new Map<string, RawAttendee>();
