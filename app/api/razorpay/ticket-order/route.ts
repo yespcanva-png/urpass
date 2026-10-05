@@ -15,6 +15,17 @@ import {
 
 export const dynamic = "force-dynamic";
 
+type TicketTypeRow = {
+  id: string;
+  event_id: string;
+  name: string;
+  price: number;
+  capacity: number | null;
+  status: string;
+  sales_start: string | null;
+  sales_end: string | null;
+};
+
 function adminClient() {
   return createAdminClient(
     getSupabaseUrl(),
@@ -22,12 +33,26 @@ function adminClient() {
   );
 }
 
+function isSalesWindowOpen(ticketType: TicketTypeRow) {
+  const now = Date.now();
+  const startsAt = ticketType.sales_start ? new Date(ticketType.sales_start).getTime() : null;
+  const endsAt = ticketType.sales_end ? new Date(ticketType.sales_end).getTime() : null;
+  return (startsAt == null || startsAt <= now) && (endsAt == null || endsAt >= now);
+}
+
+function badRequest(error: string, code: string) {
+  return NextResponse.json({ error, code }, { status: 400 });
+}
+
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
-  let { eventId, ticketTypeId, buyerName, buyerEmail } = body ?? {};
+  const { eventId, buyerName, buyerEmail } = body ?? {};
+  let { ticketTypeId } = body ?? {};
+  const requestedTicketTypeId = typeof ticketTypeId === "string" ? ticketTypeId.trim() : "";
+  ticketTypeId = requestedTicketTypeId || null;
 
   if (!eventId || !buyerName || !buyerEmail) {
-    return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    return badRequest("Missing required fields", "MISSING_REQUIRED_FIELDS");
   }
 
   const admin = adminClient();
@@ -40,69 +65,64 @@ export async function POST(req: NextRequest) {
     .single();
 
   if (!event) {
-    return NextResponse.json({ error: "Event not found" }, { status: 400 });
+    return badRequest("Event not found", "EVENT_NOT_FOUND");
   }
   const isEventOpen =
     (event.status === "active" || event.status === "published" || event.status === "live" || !event.status) &&
     event.application_enabled !== false;
 
   if (!isEventOpen) {
-    return NextResponse.json({ error: "Event is not accepting applications at this time." }, { status: 400 });
+    return badRequest("Event is not accepting applications at this time.", "EVENT_NOT_ACCEPTING");
   }
 
   const eventCurrency = ((event as { currency?: string })?.currency || "INR").toUpperCase();
-  let amountPaise = event.is_paid_event ? Math.round(Number(event.ticket_price || 0) * 100) : 0;
+  let amountPaise = 0;
   let ticketName = event.name;
 
-  if (ticketTypeId && ticketTypeId !== "default" && ticketTypeId !== "") {
+  if (ticketTypeId && ticketTypeId !== "default") {
     const { data: ticketType } = await admin
       .from("ticket_types")
       .select("id, event_id, name, price, capacity, status, sales_start, sales_end")
       .eq("id", ticketTypeId)
       .eq("event_id", eventId)
-      .maybeSingle();
+      .maybeSingle<TicketTypeRow>();
 
-    if (ticketType && ticketType.status !== "closed") {
-      const now = Date.now();
-      const startsAt = ticketType.sales_start ? new Date(ticketType.sales_start).getTime() : null;
-      const endsAt = ticketType.sales_end ? new Date(ticketType.sales_end).getTime() : null;
-      if ((startsAt != null && startsAt > now) || (endsAt != null && endsAt < now)) {
-        return NextResponse.json({ error: "Selected ticket is not on sale right now." }, { status: 400 });
-      }
-
-      amountPaise = Number(ticketType.price);
-      ticketName = `${event.name} — ${ticketType.name}`;
-    } else if (!ticketType) {
-      // If ticketTypeId not found, fallback to default ticket tier or event price
-      ticketTypeId = null;
-    } else {
-      return NextResponse.json({ error: "Selected ticket is closed or unavailable." }, { status: 400 });
+    if (!ticketType) {
+      return badRequest("Selected ticket is no longer available. Please refresh and choose another ticket.", "TICKET_NOT_FOUND");
     }
-  }
+    if (ticketType.status !== "on_sale") {
+      return badRequest("Selected ticket is not on sale.", "TICKET_NOT_ON_SALE");
+    }
+    if (!isSalesWindowOpen(ticketType)) {
+      return badRequest("Selected ticket is not on sale right now.", "TICKET_SALES_WINDOW_CLOSED");
+    }
 
-  if (!ticketTypeId || ticketTypeId === "default" || ticketTypeId === "") {
+    amountPaise = Number(ticketType.price);
+    ticketName = `${event.name} — ${ticketType.name}`;
+  } else {
     const { data: defaultTT } = await admin
       .from("ticket_types")
       .select("id, event_id, name, price, capacity, status, sales_start, sales_end")
       .eq("event_id", eventId)
-      .neq("status", "closed")
+      .eq("status", "on_sale")
       .order("position", { ascending: true })
       .limit(1)
-      .maybeSingle();
+      .maybeSingle<TicketTypeRow>();
 
-    if (defaultTT && Number(defaultTT.price) > 0) {
+    if (defaultTT) {
+      if (!isSalesWindowOpen(defaultTT)) {
+        return badRequest("Selected ticket is not on sale right now.", "TICKET_SALES_WINDOW_CLOSED");
+      }
       amountPaise = Number(defaultTT.price);
       ticketName = `${event.name} — ${defaultTT.name}`;
       ticketTypeId = defaultTT.id;
-    } else if (defaultTT) {
-      ticketTypeId = defaultTT.id;
-      ticketName = `${event.name} — ${defaultTT.name}`;
-      amountPaise = Number(defaultTT.price);
+    } else if (event.is_paid_event) {
+      amountPaise = Math.round(Number(event.ticket_price || 0) * 100);
     }
   }
 
   if (amountPaise <= 0) {
-    return NextResponse.json({ error: "Selected ticket does not require online payment." }, { status: 400 });
+    return badRequest("Selected ticket does not require online payment.", "TICKET_IS_FREE");
   }
 
   // ── P0: Atomic Capacity Reservation (10-minute window) ───────────

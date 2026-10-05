@@ -274,11 +274,11 @@ export default async function ApplyPage({
   const admin = adminClient();
 
   // Use admin client to fetch all non-closed ticket types.
-  let { data: ticketTypeRows, error: ticketErr } = await admin
+  let { data: ticketTypeRows } = await admin
     .from("ticket_types")
     .select("id, name, description, category, price, capacity, max_per_person, sales_start, sales_end, position, status")
     .eq("event_id", event.id)
-    .neq("status", "closed")
+    .eq("status", "on_sale")
     .order("position", { ascending: true });
 
   // If this event has no ticket types in the database, auto-create a default General Admission
@@ -338,7 +338,7 @@ export default async function ApplyPage({
     );
   }
 
-  const nowTimestamp = Date.now();
+  const nowTimestamp = new Date().getTime();
   const ticketTypes: ApplyTicketType[] = (ticketTypeRows ?? []).map((ticketType) => {
     const startsAt = ticketType.sales_start ? new Date(ticketType.sales_start).getTime() : null;
     const endsAt = ticketType.sales_end ? new Date(ticketType.sales_end).getTime() : null;

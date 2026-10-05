@@ -1,0 +1,30 @@
+{
+  "name": "urpass-one",
+  "version": "1.0.0",
+  "description": "UrPass One — Mobile operations, gate management, and high-speed QR check-in for event staff and organisers",
+  "main": "src/index.ts",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "react": "18.3.1",
+    "react-native": "0.76.6",
+    "@react-navigation/native": "^7.0.14",
+    "@react-navigation/stack": "^7.1.1",
+    "@react-navigation/bottom-tabs": "^7.2.0",
+    "@react-native-async-storage/async-storage": "^2.1.0",
+    "lucide-react-native": "^0.475.0"
+  },
+  "devDependencies": {
+    "@types/react": "~18.3.12",
+    "@types/react-native": "^0.72.8",
+    "typescript": "^5.3.3",
+    "vitest": "^2.1.8"
+  },
+  "private": true
+}

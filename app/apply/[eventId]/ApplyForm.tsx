@@ -76,6 +76,17 @@ interface RazorpayResponse {
   razorpay_signature: string;
 }
 
+type TicketOrderResponse = {
+  error?: string;
+  code?: string;
+  orderId?: string;
+  amount?: number;
+  currency?: string;
+  keyId?: string;
+  eventName?: string;
+  reservationId?: string;
+};
+
 declare global {
   interface Window {
     Razorpay: new (options: Record<string, unknown>) => { open: () => void };
@@ -176,9 +187,15 @@ export default function ApplyForm({
         buyerEmail: data.email,
       }),
     });
-    const order = await res.json();
+    const order = (await res.json().catch(() => ({}))) as TicketOrderResponse;
     if (!res.ok) {
-      setServerError(order.error ?? "Failed to create payment order");
+      setServerError(order.error ?? `Failed to create payment order (${res.status}).`);
+      setPaymentPending(false);
+      return;
+    }
+
+    if (!order.orderId || !order.keyId || !order.amount || !order.currency) {
+      setServerError("Payment order response was incomplete. Please refresh and try again.");
       setPaymentPending(false);
       return;
     }
