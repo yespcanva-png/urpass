@@ -64,16 +64,24 @@ export async function POST(req: NextRequest) {
 
   const admin = adminClient();
 
-  // Fetch event + organizer_id and organization_id
-  const { data: event } = await admin
+  // Fetch event + organizer_id and organization_id (handle both UUID and apply_slug)
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(eventId);
+  const eventQuery = admin
     .from("events")
-    .select("id, name, is_paid_event, ticket_price, currency, status, application_enabled, organizer_id, organization_id")
-    .eq("id", eventId)
-    .single();
+    .select("id, name, is_paid_event, ticket_price, status, application_enabled, organizer_id, organization_id");
 
-  if (!event) {
+  const { data: event, error: eventFetchError } = await (isUuid
+    ? eventQuery.eq("id", eventId)
+    : eventQuery.eq("apply_slug", eventId)
+  ).maybeSingle();
+
+  if (eventFetchError || !event) {
+    console.error("[ticket-order] Event fetch failed:", { eventId, eventFetchError });
     return badRequest("Event not found", "EVENT_NOT_FOUND");
   }
+
+  const canonicalEventId = event.id;
+
   const isEventOpen =
     (event.status === "active" || event.status === "published" || event.status === "live" || !event.status) &&
     event.application_enabled !== false;
@@ -94,7 +102,7 @@ export async function POST(req: NextRequest) {
       .from("ticket_types")
       .select("id, event_id, name, price, capacity, status, sales_start, sales_end, is_group_pass, included_guests, min_guests, max_guests, allow_extra_guests, extra_guest_price, max_extra_guests")
       .eq("id", ticketTypeId)
-      .eq("event_id", eventId)
+      .eq("event_id", canonicalEventId)
       .maybeSingle<TicketTypeRow>();
 
     if (!ticketType) {
@@ -127,7 +135,7 @@ export async function POST(req: NextRequest) {
     const { data: defaultTT } = await admin
       .from("ticket_types")
       .select("id, event_id, name, price, capacity, status, sales_start, sales_end, is_group_pass, included_guests, min_guests, max_guests, allow_extra_guests, extra_guest_price, max_extra_guests")
-      .eq("event_id", eventId)
+      .eq("event_id", canonicalEventId)
       .eq("status", "on_sale")
       .order("position", { ascending: true })
       .limit(1)
@@ -153,7 +161,7 @@ export async function POST(req: NextRequest) {
   // Locks database rows to guarantee no two concurrent buyers claim the last seat.
   const reservation = await reserveEventCapacity({
     adminClient: admin,
-    eventId,
+    eventId: canonicalEventId,
     ticketTypeId: ticketTypeId ?? null,
     buyerEmail,
     buyerName,
@@ -166,7 +174,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const paymentConfig = await getEventPaymentConfigService(eventId, event.organizer_id);
+  const paymentConfig = await getEventPaymentConfigService(canonicalEventId, event.organizer_id);
   const paymentMode = (paymentConfig.payment_mode || paymentConfig.paymentMode || "URPASS_MANAGED") as PaymentMode;
   const feeBearer = (paymentConfig.fee_bearer || paymentConfig.feeBearer || "ATTENDEE") as FeeBearer;
   const platformFeePercent = Number(paymentConfig.platform_fee_percent ?? paymentConfig.platformFeePercent ?? 2);
@@ -233,9 +241,9 @@ export async function POST(req: NextRequest) {
     const orderPayload: Record<string, unknown> = {
       amount: chargeAmountPaise,
       currency: eventCurrency,
-      receipt: `ticket_${eventId.slice(0, 8)}_${Date.now()}`,
+      receipt: `ticket_${canonicalEventId.slice(0, 8)}_${Date.now()}`,
       notes: {
-        event_id: eventId,
+        event_id: canonicalEventId,
         ticket_type_id: ticketTypeId ?? "",
         buyer_name: buyerName,
         buyer_email: buyerEmail,
@@ -260,7 +268,7 @@ export async function POST(req: NextRequest) {
           currency: eventCurrency,
           notes: {
             purpose: "organizer_ticket_share",
-            event_id: eventId,
+            event_id: canonicalEventId,
           },
           on_hold: 0,
         },
@@ -273,7 +281,7 @@ export async function POST(req: NextRequest) {
 
     await Promise.all([
       admin.from("ticket_orders").insert({
-        event_id: eventId,
+        event_id: canonicalEventId,
         ticket_type_id: ticketTypeId ?? null,
         razorpay_order_id: order.id,
         amount: chargeAmountPaise,

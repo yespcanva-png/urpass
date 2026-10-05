@@ -566,15 +566,32 @@ export async function submitApplication(
 ): Promise<{ error?: string; passToken?: string; waitlisted?: boolean; message?: string; passPending?: boolean; attendeeId?: string } | undefined> {
   const admin = adminClient();
 
-  const { data: event } = await admin
+  // Look up event by id first (compatible with unit-test mocks), fall back to apply_slug
+  const idQuery = admin
     .from("events")
     .select("id, status, application_enabled, auto_approve, attendee_limit, waitlist_enabled, name, event_date, venue, is_paid_event, ticket_price, organizer_id, organization_id, custom_fields")
     .eq("id", eventId)
     .eq("status", "active")
-    .eq("application_enabled", true)
-    .single();
+    .eq("application_enabled", true);
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let { data: event } = await (typeof (idQuery as any).single === "function" ? (idQuery as any).single() : idQuery);
+
+  if (!event) {
+    const slugQuery = admin
+      .from("events")
+      .select("id, status, application_enabled, auto_approve, attendee_limit, waitlist_enabled, name, event_date, venue, is_paid_event, ticket_price, organizer_id, organization_id, custom_fields")
+      .eq("apply_slug", eventId)
+      .eq("status", "active")
+      .eq("application_enabled", true);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: slugEvent } = await (typeof (slugQuery as any).maybeSingle === "function" ? (slugQuery as any).maybeSingle() : typeof (slugQuery as any).single === "function" ? (slugQuery as any).single() : slugQuery);
+    event = slugEvent;
+  }
 
   if (!event) return { error: "Applications are not open for this event." };
+
+  const canonicalEventId = event.id;
 
   if (event.custom_fields && Array.isArray(event.custom_fields)) {
     for (const f of event.custom_fields as { id: string; label: string; type: string; required?: boolean }[]) {
@@ -594,7 +611,7 @@ export async function submitApplication(
     admin
       .from("event_passes")
       .select("id, registration_limit")
-      .eq("event_id", eventId)
+      .eq("event_id", canonicalEventId)
       .eq("status", "attached")
   );
 
@@ -602,7 +619,7 @@ export async function submitApplication(
     const { count: eventRegCount } = await admin
       .from("attendees")
       .select("*", { count: "exact", head: true })
-      .eq("event_id", eventId)
+      .eq("event_id", canonicalEventId)
       .neq("application_status", "rejected");
 
     if ((eventRegCount ?? 0) >= attachedPass.registration_limit) {
@@ -642,7 +659,7 @@ export async function submitApplication(
       .from("ticket_types")
       .select("id, name, price, capacity, status, sales_start, sales_end")
       .eq("id", ticketTypeId)
-      .eq("event_id", eventId)
+      .eq("event_id", canonicalEventId)
       .single();
 
     if (!ticketType || ticketType.status !== "on_sale") {
@@ -660,7 +677,7 @@ export async function submitApplication(
       const { count } = await admin
         .from("attendees")
         .select("*", { count: "exact", head: true })
-        .eq("event_id", eventId)
+        .eq("event_id", canonicalEventId)
         .eq("ticket_type_id", ticketType.id)
         .neq("application_status", "rejected");
 
@@ -676,7 +693,7 @@ export async function submitApplication(
     const query = admin
       .from("ticket_types")
       .select("id, name, price, capacity, status, sales_start, sales_end")
-      .eq("event_id", eventId)
+      .eq("event_id", canonicalEventId)
       .eq("status", "on_sale");
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -729,7 +746,7 @@ export async function submitApplication(
       .from("ticket_orders")
       .select("amount, ticket_type_id, extra_guests_amount, group_members")
       .eq("razorpay_order_id", payment.orderId)
-      .eq("event_id", eventId)
+      .eq("event_id", canonicalEventId)
       .maybeSingle();
 
     ticketOrder = fetchedOrder;
@@ -803,14 +820,14 @@ export async function submitApplication(
     const { count: approvedCount } = await admin
       .from("attendees")
       .select("*", { count: "exact", head: true })
-      .eq("event_id", eventId)
+      .eq("event_id", canonicalEventId)
       .eq("application_status", "approved");
 
     if ((approvedCount ?? 0) >= event.attendee_limit) {
       if (event.waitlist_enabled !== false) {
         // Automatically join the waitlist queue
         const attendeeInsert = admin.from("attendees").insert({
-          event_id: eventId,
+          event_id: canonicalEventId,
           ...parsed.data,
           application_status: "waitlisted",
           ticket_type_id: selectedTicketType?.id ?? null,
@@ -829,14 +846,14 @@ export async function submitApplication(
         incrementRegistrationsUsed();
         sendWebhooks(event.organizer_id, "registration.waitlisted", {
           attendee_id: waitlistedAttendee?.id,
-          event_id: eventId,
+          event_id: canonicalEventId,
           name: parsed.data.name,
           email: parsed.data.email,
           application_status: "waitlisted",
         }).catch(() => {});
 
         void notifyEventTeamOnApplication({
-          eventId,
+          eventId: canonicalEventId,
           eventName: event.name,
           eventDate: event.event_date,
           venue: event.venue,
@@ -874,7 +891,7 @@ export async function submitApplication(
     const { data: attendee, error: attendeeError } = await admin
       .from("attendees")
       .insert({
-        event_id: eventId,
+        event_id: canonicalEventId,
         ...parsed.data,
         application_status: "approved",
         ticket_type_id: selectedTicketType?.id ?? null,
@@ -902,7 +919,7 @@ export async function submitApplication(
     const { data: pass, error: passError } = await admin
       .from("passes")
       .insert({
-        event_id: eventId,
+        event_id: canonicalEventId,
         attendee_id: attendee.id,
         pass_type: attendee.pass_type,
         ticket_type_id: selectedTicketType?.id ?? null,
@@ -916,7 +933,7 @@ export async function submitApplication(
 
       communicationService
         .sendTicketCommunications({
-          eventId,
+          eventId: canonicalEventId,
           eventName: event.name,
           eventDate: event.event_date,
           venue: event.venue,
@@ -934,14 +951,14 @@ export async function submitApplication(
 
       sendWebhooks(event.organizer_id, "registration.created", {
         attendee_id: attendee.id,
-        event_id: eventId,
+        event_id: canonicalEventId,
         name: parsed.data.name,
         email: parsed.data.email,
         application_status: "approved",
       }).catch(() => {});
 
       void notifyEventTeamOnApplication({
-        eventId,
+        eventId: canonicalEventId,
         eventName: event.name,
         eventDate: event.event_date,
         venue: event.venue,
@@ -962,7 +979,7 @@ export async function submitApplication(
       if (paymentAmountPaise > 0 && payment) {
         sendWebhooks(event.organizer_id, "payment.success", {
           attendee_id: attendee.id,
-          event_id: eventId,
+          event_id: canonicalEventId,
           name: parsed.data.name,
           email: parsed.data.email,
           razorpay_payment_id: payment.paymentId,
@@ -1009,14 +1026,14 @@ export async function submitApplication(
     incrementRegistrationsUsed();
     sendWebhooks(event.organizer_id, "registration.created", {
       attendee_id: attendee.id,
-      event_id: eventId,
+      event_id: canonicalEventId,
       name: parsed.data.name,
       email: parsed.data.email,
       application_status: "approved",
     }).catch(() => {});
 
     void notifyEventTeamOnApplication({
-      eventId,
+      eventId: canonicalEventId,
       eventName: event.name,
       eventDate: event.event_date,
       venue: event.venue,
@@ -1037,7 +1054,7 @@ export async function submitApplication(
     // Schedule background self-healing retry
     void (async () => {
       try {
-        await retryPassGeneration(attendee.id, eventId);
+        await retryPassGeneration(attendee.id, canonicalEventId);
       } catch (retryErr) {
         console.error("[submitApplication] Auto-retry pass recovery failed:", retryErr);
       }
@@ -1054,7 +1071,7 @@ export async function submitApplication(
   const { count: currentApproved } = await admin
     .from("attendees")
     .select("*", { count: "exact", head: true })
-    .eq("event_id", eventId)
+    .eq("event_id", canonicalEventId)
     .eq("application_status", "approved");
 
   const atCapacity = (currentApproved ?? 0) >= event.attendee_limit;
@@ -1072,7 +1089,7 @@ export async function submitApplication(
   };
 
   const attendeeInsert = admin.from("attendees").insert({
-    event_id: eventId,
+    event_id: canonicalEventId,
     ...parsed.data,
     application_status: initialStatus,
     ticket_type_id: selectedTicketType?.id ?? null,
@@ -1093,14 +1110,14 @@ export async function submitApplication(
   if (initialStatus === "waitlisted") {
     sendWebhooks(event.organizer_id, "registration.waitlisted", {
       attendee_id: newAttendee?.id,
-      event_id: eventId,
+      event_id: canonicalEventId,
       name: parsed.data.name,
       email: parsed.data.email,
       application_status: "waitlisted",
     }).catch(() => {});
 
     void notifyEventTeamOnApplication({
-      eventId,
+      eventId: canonicalEventId,
       eventName: event.name,
       eventDate: event.event_date,
       venue: event.venue,
