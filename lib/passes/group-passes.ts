@@ -2,8 +2,15 @@
  * UrPass Group & Family Passes Engine
  * 
  * Implements Pass Types + Duration Variants + Included Guests + Extra Guest Pricing
- * Formula: Total = Base Pass Price + max(0, Number of People - Included People) × Extra Person Price
- * Capacity: Consumes `total_attendee_count` units (e.g. 1 Family Pass with 6 people = 6 capacity units)
+ * 
+ * Pricing Formula (Server-Side Authoritative):
+ * Total = Base Pass Price + max(0, Number of People - Included People) × Extra Person Price
+ * 
+ * Capacity Principle:
+ * A Family Pass for 6 people has:
+ *   - Ticket Quantity = 1
+ *   - Pass Capacity / Attendee Count = 6
+ *   - Capacity Units Consumed = 6 (decrements venue capacity by 6, NOT 1)
  */
 
 export interface GroupPassConfig {
@@ -11,7 +18,7 @@ export interface GroupPassConfig {
   name: string; // "Single Person" | "Couple" | "Family" | "VIP" | string
   duration: string; // "1 Day" | "3 Days" | string
   durationDays: number; // 1 | 3
-  basePrice: number; // in rupees (e.g. 199, 449, 1049)
+  basePrice: number; // in rupees (e.g. 199, 249, 449, 549, 599, 999, 1049)
   includedGuests: number; // e.g. 1, 2, 4
   minGuests: number; // e.g. 1, 2, 4
   maxGuests: number; // e.g. 1, 2, 10
@@ -33,10 +40,10 @@ export interface GroupPassPriceCalculation {
   extraGuestsCount: number;
   extraGuestPrice: number;
   extraGuestsTotal: number;
-  totalAmount: number; // in rupees
+  totalAmount: number; // in rupees (e.g. ₹549)
   totalAmountPaise: number; // in integer paise (₹549 = 54900 paise)
-  capacityUnitsConsumed: number; // e.g. 6 people = 6 capacity units
-  ticketQuantity: number; // Always 1 for 1 pass
+  capacityUnitsConsumed: number; // 6 people = 6 capacity units
+  ticketQuantity: number; // Always 1 for 1 pass issued
 }
 
 export interface GroupMember {
@@ -58,12 +65,12 @@ export interface GroupPassRecord {
   durationDays: number;
   basePrice: number;
   totalAmount: number;
-  totalGuests: number;
-  checkedInGuests: number;
+  totalGuests: number; // Pass capacity (e.g. 6 people)
+  checkedInGuests: number; // Count of checked-in guests (0 to totalGuests)
   primaryContact: {
     name: string;
     email: string;
-    phone: string;
+    phone?: string;
   };
   members: GroupMember[];
   status: "VALID" | "CHECKED_IN" | "PARTIALLY_CHECKED_IN" | "REFUNDED" | "CANCELLED";
@@ -72,8 +79,42 @@ export interface GroupPassRecord {
   updatedAt: string;
 }
 
+export interface GroupPassCheckInResult {
+  success: boolean;
+  passId: string;
+  passName: string;
+  holderName: string;
+  totalGuests: number;
+  previouslyCheckedIn: number;
+  newlyCheckedIn: number;
+  checkedInGuests: number;
+  remainingGuests: number;
+  status: "VALID" | "CHECKED_IN" | "PARTIALLY_CHECKED_IN";
+  message: string;
+  error?: string;
+}
+
+export interface GroupPassSalesAnalytics {
+  passesSold: number;
+  totalAttendees: number;
+  totalRevenueRupees: number;
+  totalRevenuePaise: number;
+  averageGroupSize: number;
+}
+
 /**
  * Standard UrPass Event Pass Matrix
+ * 
+ * | Pass Type     | Duration | Price  | Included People | Extra Person Rule |
+ * |---------------|---------:|-------:|----------------:|------------------:|
+ * | Single Person | 1 Day    | ₹199   | 1               | Not allowed       |
+ * | Single Person | 3 Days   | ₹449   | 1               | Not allowed       |
+ * | Couple        | 1 Day    | ₹249   | 2               | Not allowed       |
+ * | Couple        | 3 Days   | ₹549   | 2               | Not allowed       |
+ * | Family        | 1 Day    | ₹449   | 4               | ₹100/person       |
+ * | Family        | 3 Days   | ₹1,049 | 4               | ₹100/person       |
+ * | VIP           | 1 Day    | ₹599   | 1               | Not allowed       |
+ * | VIP           | 3 Days   | ₹999   | 1               | Not allowed       |
  */
 export const EVENT_PASS_MATRIX: GroupPassConfig[] = [
   {
@@ -283,7 +324,7 @@ export function sanitizeGroupMembers(
   for (let i = 0; i < additionalMembers.length; i++) {
     if (members.length >= totalExpectedGuests) break;
     const m = additionalMembers[i];
-    const name = m.name?.trim();
+    const name = m?.name?.trim();
     if (name) {
       members.push({
         name,
@@ -298,7 +339,7 @@ export function sanitizeGroupMembers(
   // If user selected e.g. 4 people but only typed 2 names, pad with guest placeholders
   while (members.length < totalExpectedGuests) {
     members.push({
-      name: `Guest ${members.length + 1}`,
+      name: `Member ${members.length + 1}`,
       role: "member",
       checkedIn: false,
     });
@@ -309,6 +350,7 @@ export function sanitizeGroupMembers(
 
 /**
  * Encodes Group Pass QR Payload
+ * Formats: Holder, People Count, Validity, Pass Type
  */
 export function createGroupPassQRPayload(pass: {
   passToken: string;
@@ -326,4 +368,213 @@ export function createGroupPassQRPayload(pass: {
     cap: pass.totalGuests,
     h: pass.holderName,
   });
+}
+
+/**
+ * Parses and validates a Group Pass QR Payload
+ */
+export function parseGroupPassQRPayload(rawPayload: string): {
+  isValid: boolean;
+  passToken?: string;
+  passName?: string;
+  duration?: string;
+  totalGuests?: number;
+  holderName?: string;
+} {
+  try {
+    const parsed = JSON.parse(rawPayload);
+    if (parsed && (parsed.type === "GROUP_PASS" || parsed.token)) {
+      return {
+        isValid: true,
+        passToken: parsed.token,
+        passName: parsed.pass,
+        duration: parsed.dur,
+        totalGuests: Number(parsed.cap || 1),
+        holderName: parsed.h,
+      };
+    }
+  } catch {
+    // Fallback: If raw QR is plain token string
+    if (rawPayload && typeof rawPayload === "string" && rawPayload.trim().length > 0) {
+      return {
+        isValid: true,
+        passToken: rawPayload.trim(),
+        totalGuests: 1,
+      };
+    }
+  }
+
+  return { isValid: false };
+}
+
+/**
+ * Group Check-In Logic:
+ * Performs atomic single-QR or partial member check-in for group passes.
+ */
+export function performGroupCheckIn(
+  record: GroupPassRecord,
+  options: {
+    checkInAll?: boolean;
+    guestCountToCheckIn?: number;
+    memberIndex?: number;
+  } = {}
+): GroupPassCheckInResult {
+  const previouslyCheckedIn = record.checkedInGuests || 0;
+  const totalGuests = record.totalGuests || 1;
+
+  if (previouslyCheckedIn >= totalGuests) {
+    return {
+      success: false,
+      passId: record.id,
+      passName: record.passName,
+      holderName: record.primaryContact.name,
+      totalGuests,
+      previouslyCheckedIn,
+      newlyCheckedIn: 0,
+      checkedInGuests: previouslyCheckedIn,
+      remainingGuests: 0,
+      status: "CHECKED_IN",
+      message: `All ${totalGuests} attendees on this pass are already checked in.`,
+      error: "ALL_GUESTS_ALREADY_CHECKED_IN",
+    };
+  }
+
+  let countToAdmit = 0;
+  const now = new Date().toISOString();
+  const updatedMembers = [...(record.members || [])];
+
+  if (options.checkInAll) {
+    // Check in all remaining members
+    countToAdmit = totalGuests - previouslyCheckedIn;
+    for (let i = 0; i < updatedMembers.length; i++) {
+      if (!updatedMembers[i].checkedIn) {
+        updatedMembers[i] = {
+          ...updatedMembers[i],
+          checkedIn: true,
+          checkedInAt: now,
+        };
+      }
+    }
+  } else if (typeof options.memberIndex === "number") {
+    // Check in single specific member by index
+    const idx = options.memberIndex;
+    if (idx >= 0 && idx < updatedMembers.length) {
+      if (updatedMembers[idx].checkedIn) {
+        return {
+          success: false,
+          passId: record.id,
+          passName: record.passName,
+          holderName: record.primaryContact.name,
+          totalGuests,
+          previouslyCheckedIn,
+          newlyCheckedIn: 0,
+          checkedInGuests: previouslyCheckedIn,
+          remainingGuests: totalGuests - previouslyCheckedIn,
+          status: previouslyCheckedIn > 0 ? "PARTIALLY_CHECKED_IN" : "VALID",
+          message: `${updatedMembers[idx].name} is already checked in.`,
+          error: "MEMBER_ALREADY_CHECKED_IN",
+        };
+      }
+      updatedMembers[idx] = {
+        ...updatedMembers[idx],
+        checkedIn: true,
+        checkedInAt: now,
+      };
+      countToAdmit = 1;
+    }
+  } else if (typeof options.guestCountToCheckIn === "number" && options.guestCountToCheckIn > 0) {
+    // Check in specified number of guests
+    countToAdmit = Math.min(options.guestCountToCheckIn, totalGuests - previouslyCheckedIn);
+    let admitted = 0;
+    for (let i = 0; i < updatedMembers.length && admitted < countToAdmit; i++) {
+      if (!updatedMembers[i].checkedIn) {
+        updatedMembers[i] = {
+          ...updatedMembers[i],
+          checkedIn: true,
+          checkedInAt: now,
+        };
+        admitted++;
+      }
+    }
+  } else {
+    // Default Stage 1 behavior: One QR checks in the entire group
+    countToAdmit = totalGuests - previouslyCheckedIn;
+    for (let i = 0; i < updatedMembers.length; i++) {
+      if (!updatedMembers[i].checkedIn) {
+        updatedMembers[i] = {
+          ...updatedMembers[i],
+          checkedIn: true,
+          checkedInAt: now,
+        };
+      }
+    }
+  }
+
+  const finalCheckedIn = previouslyCheckedIn + countToAdmit;
+  const newStatus = finalCheckedIn >= totalGuests ? "CHECKED_IN" : "PARTIALLY_CHECKED_IN";
+
+  record.checkedInGuests = finalCheckedIn;
+  record.members = updatedMembers;
+  record.status = newStatus;
+  record.updatedAt = now;
+
+  return {
+    success: true,
+    passId: record.id,
+    passName: record.passName,
+    holderName: record.primaryContact.name,
+    totalGuests,
+    previouslyCheckedIn,
+    newlyCheckedIn: countToAdmit,
+    checkedInGuests: finalCheckedIn,
+    remainingGuests: totalGuests - finalCheckedIn,
+    status: newStatus,
+    message:
+      finalCheckedIn >= totalGuests
+        ? `Successfully checked in all ${totalGuests} guests for ${record.passName}.`
+        : `Successfully checked in ${countToAdmit} guest(s). ${totalGuests - finalCheckedIn} remaining.`,
+  };
+}
+
+/**
+ * Calculates Inventory & Sales Analytics for Group Passes
+ * 
+ * Capacity Principle:
+ * `capacity_units = attendee_count`
+ * 
+ * Sales Analytics:
+ * Passes Sold = 1
+ * Attendees = 6
+ * Revenue = ₹649
+ */
+export function calculateGroupPassSalesAnalytics(
+  passes: Array<{
+    totalGuests?: number;
+    totalAmount?: number;
+    basePrice?: number;
+    status?: string;
+  }>
+): GroupPassSalesAnalytics {
+  const activePasses = passes.filter((p) => p.status !== "REFUNDED" && p.status !== "CANCELLED");
+
+  let passesSold = 0;
+  let totalAttendees = 0;
+  let totalRevenueRupees = 0;
+
+  for (const p of activePasses) {
+    passesSold += 1;
+    totalAttendees += Number(p.totalGuests || 1);
+    totalRevenueRupees += Number(p.totalAmount || p.basePrice || 0);
+  }
+
+  const totalRevenuePaise = Math.round(totalRevenueRupees * 100);
+  const averageGroupSize = passesSold > 0 ? Number((totalAttendees / passesSold).toFixed(2)) : 0;
+
+  return {
+    passesSold,
+    totalAttendees,
+    totalRevenueRupees,
+    totalRevenuePaise,
+    averageGroupSize,
+  };
 }
