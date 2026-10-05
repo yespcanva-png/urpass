@@ -10,11 +10,33 @@ export interface SyncResult {
   error?: string;
 }
 
+function isUuid(id?: string | null): boolean {
+  if (!id) return false;
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id);
+}
+
 export const SyncService = {
   async downloadEventManifest(
     eventId: string,
     authToken?: string
   ): Promise<EventManifestCache> {
+    // If not a remote UUID event, return cached/offline manifest immediately
+    if (!isUuid(eventId)) {
+      const existing = await OfflineDb.getManifest(eventId);
+      if (existing) return existing;
+      const fallback: EventManifestCache = {
+        eventId,
+        eventName: "UrPass Event",
+        manifestVersion: 1,
+        downloadedAt: new Date().toISOString(),
+        attendees: {},
+        gates: {},
+        capacity: { max: 5000, currentlyInside: 0 },
+      };
+      await OfflineDb.saveManifest(eventId, fallback);
+      return fallback;
+    }
+
     try {
       const headers: Record<string, string> = {
         "Content-Type": "application/json",

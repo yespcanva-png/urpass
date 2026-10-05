@@ -5,6 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import { useEvent } from "../context/EventContext";
 
 // Screens
+import { SplashScreen } from "../screens/splash/SplashScreen";
 import { WelcomeScreen } from "../screens/auth/WelcomeScreen";
 import { SignInScreen } from "../screens/auth/SignInScreen";
 import { TwoStepVerifyScreen } from "../screens/auth/TwoStepVerifyScreen";
@@ -24,6 +25,7 @@ import { GateStaffManagementScreen } from "../screens/staff/GateStaffManagementS
 import { ScanAuditLogScreen } from "../screens/audit/ScanAuditLogScreen";
 
 export type ScreenName =
+  | "Splash"
   | "Welcome"
   | "SignIn"
   | "TwoStepVerify"
@@ -43,7 +45,7 @@ export type ScreenName =
   | "ScanAuditLog";
 
 export function AppNavigator() {
-  const { authToken } = useAuth();
+  const { authToken, isLoading } = useAuth();
   const { selectedOrg, selectedEvent } = useEvent();
 
   const [currentScreen, setCurrentScreen] = useState<ScreenName>(
@@ -79,8 +81,14 @@ export function AppNavigator() {
     },
   };
 
+  if (isLoading) {
+    return <SplashScreen isLoading={true} />;
+  }
+
   const renderActiveScreen = () => {
     switch (currentScreen) {
+      case "Splash":
+        return <SplashScreen isLoading={false} />;
       case "Welcome":
         return <WelcomeScreen navigation={navigation} />;
       case "SignIn":
@@ -121,6 +129,7 @@ export function AppNavigator() {
   };
 
   const isAuthOrSelectionScreen = [
+    "Splash",
     "Welcome",
     "SignIn",
     "TwoStepVerify",

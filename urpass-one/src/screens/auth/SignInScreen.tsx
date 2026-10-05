@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import {
   View,
   Text,
+  Image,
   TextInput,
   TouchableOpacity,
   StyleSheet,
@@ -157,12 +158,11 @@ export function SignInScreen({ navigation }: SignInScreenProps) {
               <Text style={styles.backButtonText}>← Back</Text>
             </TouchableOpacity>
 
-            <View style={styles.logoBadge}>
-              <View style={styles.ticketIconBox}>
-                <Text style={styles.ticketIcon}>🎟️</Text>
-              </View>
-              <Text style={styles.logoWordmark}>URPASS</Text>
-            </View>
+            <Image
+              source={require("../../../assets/icon.png")}
+              style={styles.topLogoImage}
+              resizeMode="contain"
+            />
           </View>
 
           {/* Main Sign In Form Card */}
@@ -315,29 +315,9 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: COLORS.textSecondary,
   },
-  logoBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  ticketIconBox: {
-    width: 28,
-    height: 28,
-    borderRadius: 7,
-    backgroundColor: COLORS.brandLight,
-    borderWidth: 1,
-    borderColor: COLORS.brandBorder,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  ticketIcon: {
-    fontSize: 13,
-  },
-  logoWordmark: {
-    fontSize: 15,
-    fontWeight: "900",
-    letterSpacing: 2,
-    color: COLORS.textPrimary,
+  topLogoImage: {
+    width: 96,
+    height: 34,
   },
   formCard: {
     backgroundColor: COLORS.surface,

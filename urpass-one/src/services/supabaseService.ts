@@ -7,6 +7,11 @@ const SUPABASE_URL = "https://kxmxxqyxkoseksfaymqm.supabase.co";
 const SUPABASE_ANON_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt4bXh4cXl4a29zZWtzZmF5bXFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk0ODc1MjAsImV4cCI6MjEwNTA2MzUyMH0.NRLQbKKbvwJJajxcfwO0O717ttW2tJ5YhFbTGWa_5Zw";
 
+function isUuid(id?: string | null): boolean {
+  if (!id) return false;
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id);
+}
+
 export class SupabaseOpsService {
   private static client: SupabaseClient | null = null;
 
@@ -252,14 +257,21 @@ export class SupabaseOpsService {
    */
   public static async fetchEvents(orgId?: string): Promise<EventSummary[]> {
     try {
+      // If orgId is a mock/demo non-UUID (e.g. org-101, org-102), return local default events filtered by orgId
+      if (orgId && !isUuid(orgId)) {
+        const defaults = this.getDefaultEvents();
+        const filtered = defaults.filter((e) => !e.organizationId || e.organizationId === orgId);
+        return filtered.length > 0 ? filtered : defaults;
+      }
+
       const supabase = this.getClient();
       let query = supabase
         .from("events")
-        .select("id, name, date, venue, status, attendee_limit, organization_id, organizer_id")
+        .select("id, name, event_date, venue, status, attendee_limit, max_capacity, organization_id, organizer_id")
         .order("created_at", { ascending: false })
         .limit(20);
 
-      if (orgId) {
+      if (orgId && isUuid(orgId)) {
         query = query.eq("organization_id", orgId);
       }
 
@@ -272,35 +284,51 @@ export class SupabaseOpsService {
       // Fetch attendee counts per event
       const results: EventSummary[] = [];
       for (const ev of events) {
-        const { count: totalReg } = await supabase
-          .from("attendees")
-          .select("id", { count: "exact", head: true })
-          .eq("event_id", ev.id);
+        let totalReg = 120;
+        let approved = 110;
+        let checkedIn = 45;
 
-        const { count: approved } = await supabase
-          .from("attendees")
-          .select("id", { count: "exact", head: true })
-          .eq("event_id", ev.id)
-          .eq("application_status", "approved");
+        if (isUuid(ev.id)) {
+          try {
+            const { count: regCount } = await supabase
+              .from("attendees")
+              .select("id", { count: "exact", head: true })
+              .eq("event_id", ev.id);
+            if (regCount !== null) totalReg = regCount;
 
-        const { count: checkedIn } = await supabase
-          .from("passes")
-          .select("id", { count: "exact", head: true })
-          .eq("event_id", ev.id)
-          .eq("status", "checked_in");
+            const { count: appCount } = await supabase
+              .from("attendees")
+              .select("id", { count: "exact", head: true })
+              .eq("event_id", ev.id)
+              .eq("application_status", "approved");
+            if (appCount !== null) approved = appCount;
+
+            const { count: ciCount } = await supabase
+              .from("passes")
+              .select("id", { count: "exact", head: true })
+              .eq("event_id", ev.id)
+              .eq("status", "checked_in");
+            if (ciCount !== null) checkedIn = ciCount;
+          } catch {
+            // non-blocking
+          }
+        }
+
+        const dateStr = ev.event_date ? new Date(ev.event_date).toLocaleDateString() : "2026-10-15";
+        const limit = ev.attendee_limit || ev.max_capacity || 5000;
 
         results.push({
           id: ev.id,
           organizationId: ev.organization_id,
           name: ev.name || "Live Event",
-          eventDate: ev.date ? new Date(ev.date).toLocaleDateString() : "2026-10-15",
+          eventDate: dateStr,
           venue: ev.venue || "Main Convention Center",
           status: (ev.status as any) || "active",
-          attendeeLimit: ev.attendee_limit || 5000,
-          totalRegistrations: totalReg || 120,
-          approvedCount: approved || 110,
-          checkedInCount: checkedIn || 45,
-          currentlyInsideCount: Math.max(0, (checkedIn || 45) - 5),
+          attendeeLimit: limit,
+          totalRegistrations: totalReg,
+          approvedCount: approved,
+          checkedInCount: checkedIn,
+          currentlyInsideCount: Math.max(0, checkedIn - 5),
           checkedOutCount: 5,
           activeGatesCount: 3,
           currency: "INR",
@@ -317,6 +345,10 @@ export class SupabaseOpsService {
    * Fetch gates for an event
    */
   public static async fetchGates(eventId: string): Promise<Gate[]> {
+    if (!isUuid(eventId)) {
+      return this.getDefaultGates(eventId);
+    }
+
     try {
       const supabase = this.getClient();
       const { data: gates, error } = await supabase
@@ -353,6 +385,10 @@ export class SupabaseOpsService {
     attendees: Record<string, Attendee>;
     capacity: { max: number; currentlyInside: number };
   }> {
+    if (!isUuid(eventId)) {
+      return { attendees: {}, capacity: { max: 5000, currentlyInside: 0 } };
+    }
+
     try {
       const supabase = this.getClient();
       const { data: attendees, error } = await supabase

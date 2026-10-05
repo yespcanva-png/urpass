@@ -3,6 +3,19 @@ import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With, apikey",
+};
+
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 204,
+    headers: corsHeaders,
+  });
+}
+
 /**
  * GET /api/scan/manifest?eventId=[eventId]
  *
@@ -29,14 +42,14 @@ export async function GET(req: NextRequest) {
   }
 
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401, headers: corsHeaders });
   }
 
   const { searchParams } = new URL(req.url);
   const eventId = searchParams.get("eventId");
 
   if (!eventId) {
-    return NextResponse.json({ error: "Missing eventId" }, { status: 400 });
+    return NextResponse.json({ error: "Missing eventId" }, { status: 400, headers: corsHeaders });
   }
 
   // Verify access permissions for event
@@ -47,7 +60,7 @@ export async function GET(req: NextRequest) {
     .single();
 
   if (!event) {
-    return NextResponse.json({ error: "Event not found or unauthorized" }, { status: 403 });
+    return NextResponse.json({ error: "Event not found or unauthorized" }, { status: 403, headers: corsHeaders });
   }
 
   const isOrganizer = user.id === "service-role" || event.organizer_id === user.id;
@@ -65,7 +78,7 @@ export async function GET(req: NextRequest) {
   }
 
   if (!isOrganizer && !hasOrgAccess) {
-    return NextResponse.json({ error: "Event not found or unauthorized" }, { status: 403 });
+    return NextResponse.json({ error: "Event not found or unauthorized" }, { status: 403, headers: corsHeaders });
   }
 
   // 1. Fetch gates
@@ -99,14 +112,17 @@ export async function GET(req: NextRequest) {
     .eq("application_status", "approved");
 
   if (!attendees || attendees.length === 0) {
-    return NextResponse.json({
-      eventId,
-      eventName: event.name,
-      cachedAt: new Date().toISOString(),
-      totalPasses: 0,
-      passes: [],
-      gates: gates ?? [],
-    });
+    return NextResponse.json(
+      {
+        eventId,
+        eventName: event.name,
+        cachedAt: new Date().toISOString(),
+        totalPasses: 0,
+        passes: [],
+        gates: gates ?? [],
+      },
+      { headers: corsHeaders }
+    );
   }
 
   const attendeeIds = attendees.map((a) => a.id);
@@ -161,12 +177,15 @@ export async function GET(req: NextRequest) {
     })
     .filter(Boolean);
 
-  return NextResponse.json({
-    eventId,
-    eventName: event.name,
-    cachedAt: new Date().toISOString(),
-    totalPasses: manifestPasses.length,
-    passes: manifestPasses,
-    gates: gates ?? [],
-  });
+  return NextResponse.json(
+    {
+      eventId,
+      eventName: event.name,
+      cachedAt: new Date().toISOString(),
+      totalPasses: manifestPasses.length,
+      passes: manifestPasses,
+      gates: gates ?? [],
+    },
+    { headers: corsHeaders }
+  );
 }

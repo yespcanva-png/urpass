@@ -2,6 +2,7 @@ import React from "react";
 import {
   View,
   Text,
+  Image,
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
@@ -21,12 +22,11 @@ export function WelcomeScreen({ navigation }: WelcomeScreenProps) {
       <View style={styles.content}>
         {/* Top Section — UrPass Logo & Wordmark */}
         <View style={styles.topSection}>
-          <View style={styles.logoBadge}>
-            <View style={styles.ticketIconBox}>
-              <Text style={styles.ticketIcon}>🎟️</Text>
-            </View>
-            <Text style={styles.logoWordmark}>URPASS</Text>
-          </View>
+          <Image
+            source={require("../../../assets/icon.png")}
+            style={styles.brandLogoImage}
+            resizeMode="contain"
+          />
         </View>
 
         {/* Hero Copy Section */}
@@ -110,29 +110,9 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     paddingTop: 8,
   },
-  logoBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  ticketIconBox: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    backgroundColor: COLORS.brandLight,
-    borderWidth: 1,
-    borderColor: COLORS.brandBorder,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  ticketIcon: {
-    fontSize: 15,
-  },
-  logoWordmark: {
-    fontSize: 16,
-    fontWeight: "900",
-    letterSpacing: 2,
-    color: COLORS.textPrimary,
+  brandLogoImage: {
+    width: 130,
+    height: 48,
   },
   heroSection: {
     paddingVertical: 12,

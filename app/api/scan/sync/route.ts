@@ -8,6 +8,19 @@ import { recordLiveOpsEvent } from "@/lib/ops/events";
 
 export const dynamic = "force-dynamic";
 
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With, apikey",
+};
+
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 204,
+    headers: corsHeaders,
+  });
+}
+
 interface ScanSyncItem {
   scanOperationId: string;
   passToken: string;
@@ -32,7 +45,7 @@ export async function POST(req: NextRequest) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401, headers: corsHeaders });
   }
 
   const body = await req.json().catch(() => null);
@@ -42,7 +55,7 @@ export async function POST(req: NextRequest) {
   };
 
   if (!eventId || !Array.isArray(scans) || scans.length === 0) {
-    return NextResponse.json({ error: "Missing eventId or scans array" }, { status: 400 });
+    return NextResponse.json({ error: "Missing eventId or scans array" }, { status: 400, headers: corsHeaders });
   }
 
   // Verify access to event
@@ -53,7 +66,7 @@ export async function POST(req: NextRequest) {
     .single();
 
   if (!event) {
-    return NextResponse.json({ error: "Event not found or unauthorized" }, { status: 403 });
+    return NextResponse.json({ error: "Event not found or unauthorized" }, { status: 403, headers: corsHeaders });
   }
 
   const isOrganizer = event.organizer_id === user.id;
@@ -71,7 +84,7 @@ export async function POST(req: NextRequest) {
   }
 
   if (!isOrganizer && !hasOrgAccess) {
-    return NextResponse.json({ error: "Event not found or unauthorized" }, { status: 403 });
+    return NextResponse.json({ error: "Event not found or unauthorized" }, { status: 403, headers: corsHeaders });
   }
 
   // Pre-fetch gate names for friendly conflict reporting
@@ -147,14 +160,17 @@ export async function POST(req: NextRequest) {
         void recordApiUsage(event.organizer_id, "check_ins");
       }
 
-      return NextResponse.json({
-        eventId,
-        total: scans.length,
-        synced: syncedCount,
-        conflicts: conflictCount,
-        errors: errorCount,
-        results: formattedResults,
-      });
+      return NextResponse.json(
+        {
+          eventId,
+          total: scans.length,
+          synced: syncedCount,
+          conflicts: conflictCount,
+          errors: errorCount,
+          results: formattedResults,
+        },
+        { headers: corsHeaders }
+      );
     }
   } catch (err) {
     console.warn("[sync_scans] Bulk RPC fallback to batch processing:", err);
@@ -399,12 +415,15 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  return NextResponse.json({
-    eventId,
-    total: scans.length,
-    synced: syncedCount,
-    conflicts: conflictCount,
-    errors: errorCount,
-    results,
-  });
+  return NextResponse.json(
+    {
+      eventId,
+      total: scans.length,
+      synced: syncedCount,
+      conflicts: conflictCount,
+      errors: errorCount,
+      results,
+    },
+    { headers: corsHeaders }
+  );
 }
