@@ -9,7 +9,13 @@ interface PersonalConciergeBannerProps {
   userId?: string | null;
 }
 
-const TARGET_EMAILS = new Set(["isha28368@gmail.com"]);
+const TARGET_EMAILS = new Set([
+  "isha28368@gmail.com",
+  "srinithinsomasundaram@gmail.com",
+  "srinithinsomasiundaram@gmail.com",
+  "srinithinoffl@gmail.com",
+  "srinithin.260011193@jainuniversity.ac.in",
+]);
 const TARGET_USER_IDS = new Set(["5c518adc-8e2a-4045-b22a-822b69dc8a43"]);
 const WHATSAPP_NUMBER = "9001270298";
 const WHATSAPP_LINK = "https://wa.me/919001270298?text=" + encodeURIComponent("Hi, I need help setting up UrPass for Pilani Garba Night Season 2");
