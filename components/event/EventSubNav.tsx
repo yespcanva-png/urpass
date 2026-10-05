@@ -13,6 +13,7 @@ import {
   Settings,
   Radio,
   Store,
+  Mail,
 } from "lucide-react";
 
 interface SubNavTab {
@@ -109,7 +110,7 @@ export default function EventSubNav({ eventId }: { eventId: string }) {
     },
     {
       id: "commercial",
-      label: "Exhibitors & Sponsors",
+      label: "Commercial",
       href: `${base}/exhibitors-sponsors`,
       icon: Store,
       isActive: (p, b) =>
@@ -133,11 +134,24 @@ export default function EventSubNav({ eventId }: { eventId: string }) {
       ],
     },
     {
-      id: "website",
-      label: "Website",
+      id: "communications",
+      label: "Communications",
+      href: `${base}/communications`,
+      icon: Mail,
+      isActive: (p, b) => p.startsWith(`${b}/communications`),
+      subTabs: [
+        { label: "Broadcasts & Campaigns", href: `${base}/communications`, isActive: (p) => p === `${base}/communications` || p === `${base}/communications/` },
+      ],
+    },
+    {
+      id: "experience",
+      label: "Experience",
       href: `${base}/website`,
       icon: Globe,
       isActive: (p, b) => p.startsWith(`${b}/website`),
+      subTabs: [
+        { label: "Event Website", href: `${base}/website`, isActive: (p) => p === `${base}/website` || p === `${base}/website/` },
+      ],
     },
     {
       id: "analytics",

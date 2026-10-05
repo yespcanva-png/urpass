@@ -25,6 +25,7 @@ import {
   CreditCard,
   ArrowRight,
   Sparkles,
+  Globe,
 } from "lucide-react";
 import EventSubNav from "./EventSubNav";
 import { cn } from "@/lib/utils";
@@ -141,28 +142,28 @@ export default function EventHeader({ event, org }: EventHeaderProps) {
       link: `/event/${event.id}/attendees`,
     },
     {
-      icon: ScanLine,
-      title: "5. Gate Check-ins & Scanner",
-      summary: "Launch browser QR scanner, connect USB/Bluetooth barcode scanners, offline sync buffer, and prevent duplicate check-ins.",
-      link: `/event/${event.id}/checkins`,
-    },
-    {
       icon: Radio,
-      title: "6. Physical Operations & Desk",
-      summary: "Monitor zone occupancy, check in walk-in attendees at the registration desk, and dispatch badge printing jobs.",
+      title: "5. Operations & Live Ops",
+      summary: "Monitor live occupancy, scan passes, check in walk-in attendees at onsite desk, and dispatch badge printing.",
       link: `/event/${event.id}/operations`,
     },
     {
       icon: Store,
-      title: "7. Exhibitors & Sponsors Hub",
-      summary: "Allocate trade show booths, invite exhibitors to magic self-service portal, capture QR leads, and schedule B2B meetings.",
+      title: "6. Commercial (Exhibitors & Sponsors)",
+      summary: "Allocate trade show booths, self-service exhibitor portals, lead retrieval QR capture, and sponsor deliverables.",
       link: `/event/${event.id}/exhibitors-sponsors`,
     },
     {
-      icon: CreditCard,
-      title: "8. Finance & Route Payouts",
-      summary: "Configure automated T+2 bank/UPI split settlements, connect custom Razorpay gateways, and track gross/net transaction ledgers.",
-      link: `/event/${event.id}/finance`,
+      icon: Sparkles,
+      title: "7. Communications & Broadcasts",
+      summary: "Automate transactional pass delivery, 24-hour reminder broadcasts, post-event surveys, and delivery logs.",
+      link: `/event/${event.id}/communications`,
+    },
+    {
+      icon: Globe,
+      title: "8. Experience & Event Website",
+      summary: "Custom event landing page, public registration URL (/e/[slug]), SEO metadata, agenda view, and branding.",
+      link: `/event/${event.id}/website`,
     },
   ];
 

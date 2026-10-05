@@ -73,6 +73,13 @@ async function verifyEventOrganizer(
 }
 
 /**
+ * Retrieves event ticket delivery and SMS/DLT settings
+ */
+export async function getEventCommunicationSettings(eventId: string): Promise<EventCommunicationSettings> {
+  return await communicationService.getEventCommunicationSettings(eventId);
+}
+
+/**
  * Updates event ticket delivery and SMS/DLT settings
  */
 export async function updateEventCommunicationSettings(
