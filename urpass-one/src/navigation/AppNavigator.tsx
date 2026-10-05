@@ -5,6 +5,11 @@ import { useAuth } from "../context/AuthContext";
 import { useEvent } from "../context/EventContext";
 
 // Screens
+import { WelcomeScreen } from "../screens/auth/WelcomeScreen";
+import { SignInScreen } from "../screens/auth/SignInScreen";
+import { TwoStepVerifyScreen } from "../screens/auth/TwoStepVerifyScreen";
+import { OrgSelectionScreen } from "../screens/auth/OrgSelectionScreen";
+import { EventSelectionScreen } from "../screens/auth/EventSelectionScreen";
 import { LoginScreen } from "../screens/auth/LoginScreen";
 import { OrgEventSelectScreen } from "../screens/auth/OrgEventSelectScreen";
 import { EventOperationsHomeScreen } from "../screens/operations/EventOperationsHomeScreen";
@@ -19,6 +24,11 @@ import { GateStaffManagementScreen } from "../screens/staff/GateStaffManagementS
 import { ScanAuditLogScreen } from "../screens/audit/ScanAuditLogScreen";
 
 export type ScreenName =
+  | "Welcome"
+  | "SignIn"
+  | "TwoStepVerify"
+  | "OrgSelection"
+  | "EventSelection"
   | "Login"
   | "OrgEventSelect"
   | "OperationsHome"
@@ -34,10 +44,16 @@ export type ScreenName =
 
 export function AppNavigator() {
   const { authToken } = useAuth();
-  const { selectedEvent } = useEvent();
+  const { selectedOrg, selectedEvent } = useEvent();
 
   const [currentScreen, setCurrentScreen] = useState<ScreenName>(
-    authToken ? (selectedEvent ? "OperationsHome" : "OrgEventSelect") : "Login"
+    authToken
+      ? selectedEvent
+        ? "OperationsHome"
+        : selectedOrg
+        ? "EventSelection"
+        : "OrgSelection"
+      : "Welcome"
   );
   const [screenParams, setScreenParams] = useState<any>({});
   const [navHistory, setNavHistory] = useState<ScreenName[]>([]);
@@ -65,10 +81,20 @@ export function AppNavigator() {
 
   const renderActiveScreen = () => {
     switch (currentScreen) {
+      case "Welcome":
+        return <WelcomeScreen navigation={navigation} />;
+      case "SignIn":
+        return <SignInScreen navigation={navigation} />;
+      case "TwoStepVerify":
+        return <TwoStepVerifyScreen navigation={navigation} route={{ params: screenParams }} />;
+      case "OrgSelection":
+        return <OrgSelectionScreen navigation={navigation} />;
+      case "EventSelection":
+        return <EventSelectionScreen navigation={navigation} />;
       case "Login":
-        return <LoginScreen navigation={navigation} />;
+        return <SignInScreen navigation={navigation} />;
       case "OrgEventSelect":
-        return <OrgEventSelectScreen navigation={navigation} />;
+        return <OrgSelectionScreen navigation={navigation} />;
       case "OperationsHome":
         return <EventOperationsHomeScreen navigation={navigation} />;
       case "QRScanner":
@@ -94,10 +120,17 @@ export function AppNavigator() {
     }
   };
 
-  const showBottomNav =
-    currentScreen !== "Login" &&
-    currentScreen !== "OrgEventSelect" &&
-    currentScreen !== "QRScanner";
+  const isAuthOrSelectionScreen = [
+    "Welcome",
+    "SignIn",
+    "TwoStepVerify",
+    "OrgSelection",
+    "EventSelection",
+    "Login",
+    "OrgEventSelect",
+  ].includes(currentScreen);
+
+  const showBottomNav = !isAuthOrSelectionScreen && currentScreen !== "QRScanner";
 
   return (
     <View style={styles.rootContainer}>

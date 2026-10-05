@@ -555,3 +555,6 @@ export class SupabaseOpsService {
     ];
   }
 }
+
+export const SupabaseService = SupabaseOpsService;
+

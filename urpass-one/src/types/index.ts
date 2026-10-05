@@ -192,9 +192,11 @@ export interface ScanAuditLog {
   direction: ScanDirection;
   timestamp: string;
   isOffline: boolean;
+  isOfflineQueued?: boolean;
   isOverride: boolean;
   overrideReason?: string;
   overrideBy?: string;
+  rejectionReason?: string;
 }
 
 export type AlertType =

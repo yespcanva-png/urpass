@@ -1,10 +1,10 @@
 import React from "react";
-import { View, StyleSheet, type ViewStyle, TouchableOpacity } from "react-native";
+import { View, StyleSheet, type ViewStyle, type StyleProp, TouchableOpacity } from "react-native";
 import { COLORS } from "../../constants/colors";
 
 interface CardProps {
   children: React.ReactNode;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
   onPress?: () => void;
   variant?: "surface" | "bordered" | "highlight";
 }

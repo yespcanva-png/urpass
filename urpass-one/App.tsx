@@ -32,7 +32,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
-    height: Platform.OS === "web" ? "100vh" : "100%",
     width: "100%",
   },
 });

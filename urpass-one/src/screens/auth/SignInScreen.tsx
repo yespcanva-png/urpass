@@ -1,0 +1,533 @@
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  KeyboardAvoidingView,
+  Platform,
+  Alert,
+} from "react-native";
+import { COLORS } from "../../constants/colors";
+import { useAuth } from "../../context/AuthContext";
+import { Button } from "../../components/common/Button";
+
+interface SignInScreenProps {
+  navigation?: any;
+}
+
+export function SignInScreen({ navigation }: SignInScreenProps) {
+  const { loginWithPassword, loginWithOtp, isLoading } = useAuth();
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  async function handleSignIn() {
+    setErrorMsg("");
+
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail || !trimmedEmail.includes("@")) {
+      setErrorMsg("Please enter a valid email address.");
+      return;
+    }
+
+    if (!password || password.length < 6) {
+      setErrorMsg("Please enter your account password (at least 6 characters).");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      // 1. Attempt credentials authentication
+      const res = await loginWithPassword(trimmedEmail, password);
+
+      if (res.success) {
+        // Navigate to Step 3: Two-Step Verification
+        navigation?.navigate("TwoStepVerify", { email: trimmedEmail });
+      } else {
+        // Formulate clear enterprise error
+        if (res.error?.toLowerCase().includes("network") || res.error?.toLowerCase().includes("fetch")) {
+          setErrorMsg("Internet connection is required to authenticate this device.");
+        } else if (res.error?.toLowerCase().includes("suspended") || res.error?.toLowerCase().includes("disabled")) {
+          setErrorMsg("Your account access has been suspended. Contact your organisation administrator.");
+        } else {
+          setErrorMsg("We couldn't sign you in. Check your credentials and try again.");
+        }
+      }
+    } catch {
+      setErrorMsg("We couldn't sign you in. Check your credentials and try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  async function handleGoogleSignIn() {
+    setErrorMsg("");
+    Alert.alert(
+      "Google Workspace Authentication",
+      "Sign in with your enterprise Google Workspace account.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Continue",
+          onPress: () => {
+            const demoEmail = "ops.manager@enterprise.com";
+            navigation?.navigate("TwoStepVerify", { email: demoEmail });
+          },
+        },
+      ]
+    );
+  }
+
+  function handleSsoSignIn() {
+    setErrorMsg("");
+    Alert.prompt
+      ? Alert.prompt(
+          "Enterprise SSO",
+          "Enter your corporate email domain (e.g. @company.com):",
+          [
+            { text: "Cancel", style: "cancel" },
+            {
+              text: "Continue with SSO",
+              onPress: (corpEmail) => {
+                if (corpEmail && corpEmail.includes("@")) {
+                  navigation?.navigate("TwoStepVerify", { email: corpEmail });
+                } else {
+                  setErrorMsg("Please enter a valid corporate email.");
+                }
+              },
+            },
+          ]
+        )
+      : Alert.alert(
+          "Enterprise Single Sign-On (SAML / OIDC)",
+          "Redirecting to identity provider for corporate authentication.",
+          [
+            { text: "Cancel", style: "cancel" },
+            {
+              text: "Proceed",
+              onPress: () => {
+                navigation?.navigate("TwoStepVerify", { email: "sso.lead@techcorp.io" });
+              },
+            },
+          ]
+        );
+  }
+
+  function handleContactAdmin() {
+    Alert.alert(
+      "Access & Permissions",
+      "UrPass One is an operations management application for verified event personnel. Contact your event organizer or organization administrator to receive an invitation."
+    );
+  }
+
+  function handleForgotPassword() {
+    Alert.alert(
+      "Reset Password",
+      "To reset your password, please check your email for a secure reset link or visit https://urpass.space/forgot-password."
+    );
+  }
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" />
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        style={styles.keyboardView}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Header Row with Logo & Back */}
+          <View style={styles.topRow}>
+            <TouchableOpacity
+              onPress={() => navigation?.goBack()}
+              style={styles.backButton}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <Text style={styles.backButtonText}>← Back</Text>
+            </TouchableOpacity>
+
+            <View style={styles.logoBadge}>
+              <View style={styles.ticketIconBox}>
+                <Text style={styles.ticketIcon}>🎟️</Text>
+              </View>
+              <Text style={styles.logoWordmark}>URPASS</Text>
+            </View>
+          </View>
+
+          {/* Main Sign In Form Card */}
+          <View style={styles.formCard}>
+            {/* Header Title */}
+            <View style={styles.headerGroup}>
+              <Text style={styles.headerTitle}>Welcome back</Text>
+              <Text style={styles.headerSubtext}>
+                Sign in to continue to UrPass One.
+              </Text>
+            </View>
+
+            {/* Error Notification Banner */}
+            {errorMsg ? (
+              <View style={styles.errorBanner}>
+                <Text style={styles.errorIcon}>⚠️</Text>
+                <Text style={styles.errorText}>{errorMsg}</Text>
+              </View>
+            ) : null}
+
+            {/* Input: Email */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>EMAIL ADDRESS</Text>
+              <View style={styles.inputWrapper}>
+                <Text style={styles.inputIcon}>✉️</Text>
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="name@organisation.com"
+                  placeholderTextColor={COLORS.textLightMuted}
+                  value={email}
+                  onChangeText={setEmail}
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                  autoComplete="email"
+                />
+              </View>
+            </View>
+
+            {/* Input: Password */}
+            <View style={styles.inputGroup}>
+              <View style={styles.passwordLabelRow}>
+                <Text style={styles.inputLabel}>PASSWORD</Text>
+                <TouchableOpacity onPress={handleForgotPassword}>
+                  <Text style={styles.forgotPasswordText}>Forgot password?</Text>
+                </TouchableOpacity>
+              </View>
+              <View style={styles.inputWrapper}>
+                <Text style={styles.inputIcon}>🔒</Text>
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="••••••••"
+                  placeholderTextColor={COLORS.textLightMuted}
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                  autoCapitalize="none"
+                />
+                <TouchableOpacity
+                  onPress={() => setShowPassword((prev) => !prev)}
+                  style={styles.showHideToggle}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                >
+                  <Text style={styles.showHideText}>{showPassword ? "Hide" : "Show"}</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Primary Action CTA */}
+            <TouchableOpacity
+              style={styles.signInButton}
+              onPress={handleSignIn}
+              disabled={isSubmitting || isLoading}
+              activeOpacity={0.88}
+            >
+              <Text style={styles.signInButtonText}>
+                {isSubmitting || isLoading ? "Signing in..." : "Sign in"}
+              </Text>
+            </TouchableOpacity>
+
+            {/* Divider */}
+            <View style={styles.dividerRow}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>OR</Text>
+              <View style={styles.dividerLine} />
+            </View>
+
+            {/* Secondary CTA: Continue with Google */}
+            <TouchableOpacity
+              style={styles.secondaryButton}
+              onPress={handleGoogleSignIn}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.googleIconText}>G</Text>
+              <Text style={styles.secondaryButtonText}>Continue with Google</Text>
+            </TouchableOpacity>
+
+            {/* Enterprise SSO CTA */}
+            <TouchableOpacity
+              style={styles.ssoButton}
+              onPress={handleSsoSignIn}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.ssoIcon}>🏢</Text>
+              <Text style={styles.ssoButtonText}>Continue with SSO</Text>
+            </TouchableOpacity>
+
+            {/* Bottom Support Text */}
+            <View style={styles.bottomHelperRow}>
+              <Text style={styles.helperQuestion}>Don't have access? </Text>
+              <TouchableOpacity onPress={handleContactAdmin}>
+                <Text style={styles.helperAction}>Contact your organisation administrator</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+  },
+  keyboardView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: 40,
+  },
+  topRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 24,
+  },
+  backButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    backgroundColor: COLORS.surfaceAlt,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: COLORS.surfaceBorder,
+  },
+  backButtonText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: COLORS.textSecondary,
+  },
+  logoBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  ticketIconBox: {
+    width: 28,
+    height: 28,
+    borderRadius: 7,
+    backgroundColor: COLORS.brandLight,
+    borderWidth: 1,
+    borderColor: COLORS.brandBorder,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  ticketIcon: {
+    fontSize: 13,
+  },
+  logoWordmark: {
+    fontSize: 15,
+    fontWeight: "900",
+    letterSpacing: 2,
+    color: COLORS.textPrimary,
+  },
+  formCard: {
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.surfaceBorder,
+    borderRadius: 20,
+    padding: 24,
+    shadowColor: COLORS.brand,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.05,
+    shadowRadius: 18,
+    elevation: 2,
+  },
+  headerGroup: {
+    marginBottom: 20,
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: "900",
+    color: COLORS.textPrimary,
+    letterSpacing: -0.5,
+  },
+  headerSubtext: {
+    fontSize: 13,
+    color: COLORS.textSecondary,
+    marginTop: 4,
+  },
+  errorBanner: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    backgroundColor: COLORS.redLight,
+    borderWidth: 1,
+    borderColor: COLORS.redBorder,
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 16,
+    gap: 8,
+  },
+  errorIcon: {
+    fontSize: 14,
+    marginTop: 1,
+  },
+  errorText: {
+    flex: 1,
+    fontSize: 12,
+    color: COLORS.red,
+    fontWeight: "600",
+    lineHeight: 17,
+  },
+  inputGroup: {
+    marginBottom: 16,
+    gap: 6,
+  },
+  passwordLabelRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  inputLabel: {
+    fontSize: 10,
+    fontWeight: "800",
+    color: COLORS.textMuted,
+    letterSpacing: 0.8,
+  },
+  forgotPasswordText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: COLORS.brand,
+  },
+  inputWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: COLORS.surfaceAlt,
+    borderWidth: 1,
+    borderColor: COLORS.surfaceBorder,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    height: 48,
+  },
+  inputIcon: {
+    fontSize: 14,
+    marginRight: 8,
+  },
+  textInput: {
+    flex: 1,
+    fontSize: 14,
+    color: COLORS.textPrimary,
+    height: "100%",
+  },
+  showHideToggle: {
+    paddingHorizontal: 6,
+  },
+  showHideText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: COLORS.textSecondary,
+  },
+  signInButton: {
+    height: 50,
+    backgroundColor: COLORS.brand,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 6,
+    shadowColor: COLORS.brand,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  signInButtonText: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: COLORS.white,
+  },
+  dividerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 18,
+    gap: 12,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: COLORS.surfaceBorder,
+  },
+  dividerText: {
+    fontSize: 10,
+    fontWeight: "800",
+    color: COLORS.textLightMuted,
+    letterSpacing: 1,
+  },
+  secondaryButton: {
+    height: 48,
+    backgroundColor: COLORS.white,
+    borderWidth: 1,
+    borderColor: COLORS.surfaceBorder,
+    borderRadius: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    marginBottom: 10,
+  },
+  googleIconText: {
+    fontSize: 15,
+    fontWeight: "900",
+    color: "#4285F4",
+  },
+  secondaryButtonText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: COLORS.textPrimary,
+  },
+  ssoButton: {
+    height: 44,
+    backgroundColor: COLORS.brandLight,
+    borderWidth: 1,
+    borderColor: COLORS.brandBorder,
+    borderRadius: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    marginBottom: 20,
+  },
+  ssoIcon: {
+    fontSize: 14,
+  },
+  ssoButtonText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: COLORS.brand,
+  },
+  bottomHelperRow: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.surfaceBorderSubtle,
+    gap: 3,
+  },
+  helperQuestion: {
+    fontSize: 12,
+    color: COLORS.textMuted,
+  },
+  helperAction: {
+    fontSize: 12,
+    fontWeight: "800",
+    color: COLORS.brand,
+    textAlign: "center",
+  },
+});
