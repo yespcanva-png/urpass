@@ -67,7 +67,7 @@ export async function POST(
       // Lookup Ticket Order
       const { data: order, error: orderErr } = await supabase
         .from("ticket_orders")
-        .select("*, events:event_id(id, title, organizer_id, organization_id)")
+        .select("*, events:event_id(id, name, organizer_id, organization_id)")
         .or(`provider_order_id.eq.${providerOrderId},id.eq.${providerOrderId}`)
         .maybeSingle();
 
@@ -218,7 +218,7 @@ export async function POST(
         communicationService
           .sendTicketEmail({
             eventId: order.event_id,
-            eventName: order.events?.title || "Your Event",
+            eventName: order.events?.name || "Your Event",
             ticketId: order.order_number,
             passToken,
             attendeeId: attendee?.id || order.attendee_id || "",

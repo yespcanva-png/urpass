@@ -93,24 +93,50 @@ export async function saveEventPaymentConfigAction(params: {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  // Verify permissions for this event
-  const { data: event } = await supabase
-    .from("events")
-    .select("id, organizer_id, organization_id")
-    .eq("id", params.eventId)
-    .single();
+  const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  const isUuid = typeof params.eventId === "string" && UUID_REGEX.test(params.eventId);
 
-  if (!event || (event.organizer_id !== user.id && !event.organization_id)) {
+  // Verify permissions for this event (support lookup by UUID or slug)
+  const { data: event } = await (isUuid
+    ? supabase
+        .from("events")
+        .select("id, organizer_id, organization_id")
+        .eq("id", params.eventId)
+    : supabase
+        .from("events")
+        .select("id, organizer_id, organization_id")
+        .eq("apply_slug", params.eventId)
+  ).maybeSingle();
+
+  if (!event) {
+    return { error: "Event not found." };
+  }
+
+  let isAuthorized = event.organizer_id === user.id;
+  if (!isAuthorized && event.organization_id) {
+    const { data: member } = await supabase
+      .from("organization_members")
+      .select("role")
+      .eq("organization_id", event.organization_id)
+      .eq("user_id", user.id)
+      .eq("status", "active")
+      .in("role", ["owner", "admin", "event_manager"])
+      .maybeSingle();
+    isAuthorized = !!member;
+  }
+
+  if (!isAuthorized) {
     return { error: "Unauthorized to update event payment configuration." };
   }
 
   try {
     const config = await saveEventPaymentConfigService({
       ...params,
+      eventId: event.id,
       userId: user.id,
     });
-    revalidatePath(`/event/${params.eventId}`);
-    revalidatePath(`/event/${params.eventId}/finance`);
+    revalidatePath(`/event/${event.id}`);
+    revalidatePath(`/event/${event.id}/finance`);
     return { success: true, config };
   } catch (err: unknown) {
     return { error: err instanceof Error ? err.message : "Failed to save payment configuration" };
@@ -126,7 +152,18 @@ export async function getEventPaymentConfigAction(eventId: string) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  return await getEventPaymentConfigService(eventId, user?.id);
+  const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  let canonicalId = eventId;
+  if (typeof eventId === "string" && !UUID_REGEX.test(eventId)) {
+    const { data: event } = await supabase
+      .from("events")
+      .select("id")
+      .eq("apply_slug", eventId)
+      .maybeSingle();
+    if (event?.id) canonicalId = event.id;
+  }
+
+  return await getEventPaymentConfigService(canonicalId, user?.id);
 }
 
 export type InitiateOrderCheckoutActionResult =

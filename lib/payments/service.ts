@@ -215,11 +215,11 @@ export async function saveEventPaymentConfigService(params: {
   let targetUserId = userId;
   if (!targetUserId) {
     try {
-      const { data: event } = await supabase
-        .from("events")
-        .select("organizer_id")
-        .eq("id", eventId)
-        .single();
+      const isUuid = isValidUUID(eventId);
+      const { data: event } = await (isUuid
+        ? supabase.from("events").select("organizer_id").eq("id", eventId)
+        : supabase.from("events").select("organizer_id").eq("apply_slug", eventId)
+      ).maybeSingle();
       if (event?.organizer_id) {
         targetUserId = event.organizer_id;
       }
@@ -299,11 +299,11 @@ export async function getEventPaymentConfigService(
 
   // 3. Fallback: Lookup event organizer_id and check their user_metadata
   try {
-    const { data: event } = await supabase
-      .from("events")
-      .select("organizer_id")
-      .eq("id", eventId)
-      .maybeSingle();
+    const isUuid = isValidUUID(eventId);
+    const { data: event } = await (isUuid
+      ? supabase.from("events").select("organizer_id").eq("id", eventId)
+      : supabase.from("events").select("organizer_id").eq("apply_slug", eventId)
+    ).maybeSingle();
 
     if (event?.organizer_id && event.organizer_id !== userId && isValidUUID(event.organizer_id)) {
       const { data: orgUserResp } = await supabase.auth.admin.getUserById(event.organizer_id);
@@ -357,16 +357,24 @@ export async function initiateOrderCheckoutService(params: {
   } = params;
   const supabase = getAdminClient();
 
-  // 1. Fetch Event & Payment Config
-  const { data: event, error: eventErr } = await supabase
-    .from("events")
-    .select("id, title, organizer_id, organization_id, is_paid_event, attendee_limit")
-    .eq("id", eventId)
-    .single();
+  // 1. Fetch Event & Payment Config (supporting UUID or apply_slug lookup)
+  const isUuid = isValidUUID(eventId);
+  const { data: event, error: eventErr } = await (isUuid
+    ? supabase
+        .from("events")
+        .select("id, name, organizer_id, organization_id, is_paid_event, attendee_limit")
+        .eq("id", eventId)
+    : supabase
+        .from("events")
+        .select("id, name, organizer_id, organization_id, is_paid_event, attendee_limit")
+        .eq("apply_slug", eventId)
+  ).maybeSingle();
 
   if (eventErr || !event) {
     throw new Error("Event not found");
   }
+
+  const canonicalEventId = event.id;
 
   // 2. Fetch Ticket Type
   let baseTicketPrice = 0;
@@ -383,7 +391,7 @@ export async function initiateOrderCheckoutService(params: {
   }
 
   // 3. Fetch Event Payment Config with safe fallback
-  const config = await getEventPaymentConfigService(eventId, event.organizer_id);
+  const config = await getEventPaymentConfigService(canonicalEventId, event.organizer_id);
 
   const paymentMode: PaymentMode = config.payment_mode || config.paymentMode || "URPASS_MANAGED";
   const feeBearer: FeeBearer = config.fee_bearer || config.feeBearer || "ATTENDEE";
@@ -403,7 +411,7 @@ export async function initiateOrderCheckoutService(params: {
   let reservationId: string | null = null;
   const reservationResult = await reserveEventCapacity({
     adminClient: supabase,
-    eventId,
+    eventId: canonicalEventId,
     ticketTypeId,
     buyerEmail: customerEmail,
     buyerName: customerName,
@@ -445,7 +453,7 @@ export async function initiateOrderCheckoutService(params: {
       phone: customerPhone,
     },
     notes: {
-      event_id: eventId,
+      event_id: canonicalEventId,
       order_number: orderNumber,
       ticket_type_id: ticketTypeId || "",
       organizer_id: event.organizer_id,
@@ -467,7 +475,7 @@ export async function initiateOrderCheckoutService(params: {
     .insert({
       order_number: orderNumber,
       organization_id: event.organization_id || null,
-      event_id: eventId,
+      event_id: canonicalEventId,
       ticket_type_id: ticketTypeId || null,
       reservation_id: reservationId,
       quantity,
