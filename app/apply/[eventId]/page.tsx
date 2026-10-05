@@ -322,6 +322,17 @@ export default async function ApplyPage({
           ...defaultData,
           sales_start: null,
           sales_end: null,
+          duration_label: null,
+          duration_days: null,
+          is_group_pass: false,
+          included_guests: 1,
+          min_guests: 1,
+          max_guests: 1,
+          allow_extra_guests: false,
+          extra_guest_price: 0,
+          max_extra_guests: null,
+          pass_validity: null,
+          access_type: "general",
         },
       ];
     }
