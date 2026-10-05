@@ -607,7 +607,7 @@ export default function TicketStudio({
       {/* ─────────────────────────────────────────────────────────────
           1. TOP APP BAR (Restrained Enterprise SaaS Header)
       ───────────────────────────────────────────────────────────── */}
-      <header className="h-14 border-b border-neutral-200 bg-white px-4 sm:px-6 flex items-center justify-between shrink-0 z-20">
+      <header className="h-14 border-b border-neutral-200 bg-white px-4 sm:px-6 flex items-center justify-between shrink-0 z-20 no-print">
         {/* Left: Back Link & Context Title */}
         <div className="flex items-center gap-3">
           <Link
@@ -755,7 +755,7 @@ export default function TicketStudio({
           CORE WORKFLOW BAR (Always Visible & Actionable)
           Template selected → Customize branding → Configure ticket fields → Preview live → Save design → Use for event
       ───────────────────────────────────────────────────────────── */}
-      <div className="h-8 bg-neutral-50 border-b border-neutral-200/80 px-4 sm:px-6 flex items-center justify-between text-[11px] text-neutral-500 shrink-0 overflow-x-auto whitespace-nowrap">
+      <div className="h-8 bg-neutral-50 border-b border-neutral-200/80 px-4 sm:px-6 flex items-center justify-between text-[11px] text-neutral-500 shrink-0 overflow-x-auto whitespace-nowrap no-print">
         <div className="flex items-center gap-2">
           <span className="font-semibold uppercase tracking-wider text-[10px] text-neutral-400">
             Workflow:
@@ -821,7 +821,7 @@ export default function TicketStudio({
       <div className="flex flex-1 overflow-hidden relative">
         {/* ──────── LEFT CONTROL PANEL (35–40% width) ──────── */}
         <aside
-          className={`w-full md:w-[380px] lg:w-[410px] xl:w-[430px] shrink-0 border-r border-neutral-200 bg-white flex flex-col h-full overflow-hidden ${
+          className={`w-full md:w-[380px] lg:w-[410px] xl:w-[430px] shrink-0 border-r border-neutral-200 bg-white flex flex-col h-full overflow-hidden no-print ${
             mobileTab === "controls" ? "flex" : "hidden md:flex"
           }`}
         >
@@ -1841,7 +1841,7 @@ export default function TicketStudio({
           }`}
         >
           {/* Top Preview Controls Toolbar */}
-          <div className="h-14 bg-white border-b border-neutral-200 px-4 sm:px-6 flex items-center justify-between shrink-0">
+          <div className="h-14 bg-white border-b border-neutral-200 px-4 sm:px-6 flex items-center justify-between shrink-0 no-print">
             {/* Format Selector: Mobile Pass | Lanyard Badge | Printable Ticket */}
             <div className="inline-flex items-center p-0.5 bg-neutral-100 rounded-lg border border-neutral-200 text-xs font-medium">
               <button

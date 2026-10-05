@@ -297,6 +297,16 @@ export default function BadgesOpsPage() {
     }
   };
 
+  // Print Items Queue (rendered exclusively to paper during window.print)
+  const [printItems, setPrintItems] = useState<Array<{
+    attendeeName: string;
+    attendeeEmail: string;
+    attendeeCompany: string;
+    badgeType: string;
+    ticketName?: string;
+    passToken?: string;
+  }>>([]);
+
   const handleBulkQueue = async () => {
     setIsBulkQueueing(true);
     try {
@@ -316,7 +326,21 @@ export default function BadgesOpsPage() {
   };
 
   const handlePrintBadge = (item: BadgePrintQueueItem) => {
-    window.print();
+    setPrintItems([
+      {
+        attendeeName: item.attendeeName,
+        attendeeEmail: item.attendeeEmail,
+        attendeeCompany: item.attendeeCompany || "",
+        badgeType: item.badgeType,
+        ticketName: item.ticketName,
+        passToken: item.attendeeId,
+      },
+    ]);
+
+    setTimeout(() => {
+      window.print();
+    }, 60);
+
     fetch(`/api/event/${eventId}/ops/print`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -335,8 +359,79 @@ export default function BadgesOpsPage() {
       });
   };
 
+  const handlePrintAllPending = () => {
+    const pending = queue.filter((q) => q.status === "queued");
+    if (pending.length === 0) return;
+
+    setPrintItems(
+      pending.map((item) => ({
+        attendeeName: item.attendeeName,
+        attendeeEmail: item.attendeeEmail,
+        attendeeCompany: item.attendeeCompany || "",
+        badgeType: item.badgeType,
+        ticketName: item.ticketName,
+        passToken: item.attendeeId,
+      }))
+    );
+
+    setTimeout(() => {
+      window.print();
+    }, 60);
+
+    Promise.all(
+      pending.map((item) =>
+        fetch(`/api/event/${eventId}/ops/print`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "update_status",
+            queueId: item.id,
+            status: "printed",
+            staffName: "Desk Supervisor",
+          }),
+        })
+      )
+    ).then(() => {
+      setQueue((prev) =>
+        prev.map((q) => (q.status === "queued" ? { ...q, status: "printed" } : q))
+      );
+    });
+  };
+
+  const handleTestPrintSample = () => {
+    setPrintItems([
+      {
+        attendeeName: "Arunachalam Muruganantham",
+        attendeeEmail: "arunachalam@yesp.in",
+        attendeeCompany: "Yesp Corp",
+        badgeType: selectedRole,
+        ticketName: "VIP All-Access Pass",
+        passToken: "PASS-94812",
+      },
+    ]);
+
+    setTimeout(() => {
+      window.print();
+    }, 60);
+  };
+
   const handleTriggerReprint = () => {
     if (!reprintTarget) return;
+    setPrintItems([
+      {
+        attendeeName: reprintTarget.attendeeName,
+        attendeeEmail: reprintTarget.attendeeEmail,
+        attendeeCompany: reprintTarget.attendeeCompany || "",
+        badgeType: reprintTarget.badgeType,
+        ticketName: reprintTarget.ticketName,
+        passToken: reprintTarget.attendeeId,
+      },
+    ]);
+
+    setTimeout(() => {
+      window.print();
+    }, 60);
+
     fetch(`/api/event/${eventId}/ops/print`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -365,7 +460,8 @@ export default function BadgesOpsPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <>
+      <div className="space-y-6 no-print">
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-neutral-200">
         <div>
@@ -701,7 +797,7 @@ export default function BadgesOpsPage() {
             <div className="mt-6 flex items-center gap-3">
               <button
                 type="button"
-                onClick={() => window.print()}
+                onClick={handleTestPrintSample}
                 className="px-4 py-2 rounded-xl bg-white border border-neutral-200 text-xs font-semibold text-neutral-800 hover:bg-neutral-50 transition-colors shadow-2xs flex items-center gap-2"
               >
                 <Printer className="w-4 h-4 text-neutral-600" />
@@ -794,7 +890,7 @@ export default function BadgesOpsPage() {
 
               <button
                 type="button"
-                onClick={() => window.print()}
+                onClick={handlePrintAllPending}
                 className="px-3.5 py-2 rounded-xl bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800 transition-colors whitespace-nowrap shadow-xs"
               >
                 Print All Pending ({queue.filter((q) => q.status === "queued").length})
@@ -1189,6 +1285,87 @@ export default function BadgesOpsPage() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+
+      {/* ── ISOLATED PHYSICAL BADGE PRINT STAGE (Visible ONLY on print output) ── */}
+      <div id="badge-print-stage" className="hidden print:block">
+        {printItems.map((badge, idx) => {
+          const roleCfg = DEFAULT_ROLE_COLORS[badge.badgeType as BadgeRoleType] || DEFAULT_ROLE_COLORS.attendee;
+          const isPortrait = selectedOrientation === "portrait";
+          const sizePreset = BADGE_SIZE_PRESETS[selectedSizePreset] || BADGE_SIZE_PRESETS.lanyard_100x150;
+          const widthMm = selectedSizePreset === "custom" ? customWidth : sizePreset.widthMm;
+          const heightMm = selectedSizePreset === "custom" ? customHeight : sizePreset.heightMm;
+
+          return (
+            <div
+              key={idx}
+              className="badge-print-item bg-white relative overflow-hidden flex flex-col justify-between"
+              style={{
+                width: isPortrait ? `${widthMm}mm` : `${heightMm}mm`,
+                height: isPortrait ? `${heightMm}mm` : `${widthMm}mm`,
+                boxSizing: "border-box",
+              }}
+            >
+              {/* Lanyard punch slot */}
+              {showLanyardSlot && (
+                <div className="absolute top-2 left-1/2 -translate-x-1/2 w-12 h-2.5 bg-neutral-200 rounded-full border border-neutral-300 z-20" />
+              )}
+
+              {/* Role Header Banner */}
+              <div
+                className="w-full text-center py-3.5 px-4"
+                style={{ backgroundColor: headerColor || roleCfg.headerColor }}
+              >
+                <p className="text-xs font-black tracking-widest text-white uppercase">
+                  {headerTitle || roleCfg.label}
+                </p>
+              </div>
+
+              {/* Badge Main Body */}
+              <div className="p-6 flex flex-col items-center justify-center text-center flex-1">
+                <span className="text-[10px] font-bold text-neutral-400 tracking-wider uppercase mb-1">
+                  DELEGATE CREDENTIAL
+                </span>
+                <h2 className="text-2xl font-black text-neutral-900 tracking-tight leading-tight">
+                  {badge.attendeeName}
+                </h2>
+                {badge.attendeeCompany && (
+                  <p className="text-sm font-semibold text-neutral-600 mt-1">
+                    {badge.attendeeCompany}
+                  </p>
+                )}
+
+                <div className="mt-3 flex items-center gap-1.5">
+                  <span
+                    className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide text-white"
+                    style={{ backgroundColor: accentColor || roleCfg.accentColor }}
+                  >
+                    {badge.ticketName || roleCfg.label}
+                  </span>
+                </div>
+
+                {/* Scannable QR Code */}
+                {showQrCode && (
+                  <div className="mt-4 p-2 bg-white rounded-xl border border-neutral-300 flex flex-col items-center">
+                    <div className="w-24 h-24 bg-neutral-950 rounded-lg p-1.5 flex items-center justify-center">
+                      <QrCode className="w-full h-full text-white" />
+                    </div>
+                    <span className="text-[9px] font-mono font-semibold text-neutral-500 mt-1">
+                      {badge.passToken || `PASS-${idx + 1}`}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Event Footer */}
+              <div className="py-2.5 px-4 bg-neutral-50 border-t border-neutral-200 flex items-center justify-between text-[10px] text-neutral-500 font-medium">
+                <span className="font-semibold text-neutral-700">Official Pass Credential</span>
+                <span className="font-mono">VALIDATED ENTRY</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </>
   );
 }

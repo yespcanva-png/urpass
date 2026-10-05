@@ -179,3 +179,83 @@ html { scroll-behavior: smooth; }
 }
 .content-in { animation: contentIn 0.3s cubic-bezier(0.16,1,0.3,1) both; }
 
+/* ── Universal Pass & Badge Print Engine ───────────────────────────────── */
+@media print {
+  @page {
+    margin: 0;
+    size: auto;
+  }
+
+  /* 1. Universal hide for all interactive UI chrome, sidebars, headers, nav, buttons, modals */
+  html, body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  header,
+  nav,
+  aside,
+  footer,
+  button,
+  input,
+  select,
+  textarea,
+  .no-print,
+  [data-no-print="true"] {
+    display: none !important;
+  }
+
+  /* 2. Isolated Badge Print Stage (Physical Onsite Ops & Badge Printing) */
+  #badge-print-stage {
+    display: block !important;
+    visibility: visible !important;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 5mm !important;
+    background: #ffffff !important;
+    box-sizing: border-box !important;
+    z-index: 999999 !important;
+  }
+
+  .badge-print-item {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    page-break-after: always !important;
+    break-after: page !important;
+    margin: 0 auto 5mm auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    box-shadow: none !important;
+    border: 1px solid #d4d4d8 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .badge-print-item:last-child {
+    page-break-after: auto !important;
+    break-after: auto !important;
+  }
+
+  /* 3. Single Pass / Ticket Card Print Isolation */
+  #printable-ticket-card,
+  .printable-pass-container {
+    display: flex !important;
+    visibility: visible !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
+

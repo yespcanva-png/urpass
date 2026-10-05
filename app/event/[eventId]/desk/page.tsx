@@ -25,6 +25,16 @@ import { BadgeRoleType } from "@/lib/physical-ops/types";
 import { OnsiteAttendee } from "@/lib/physical-ops/desk-service";
 import { createClient } from "@/lib/supabase/client";
 
+const DEFAULT_ROLE_COLORS: Record<BadgeRoleType, { label: string; headerColor: string; accentColor: string }> = {
+  attendee: { label: "DELEGATE", headerColor: "#18181b", accentColor: "#2563eb" },
+  vip: { label: "VIP DELEGATE", headerColor: "#581c87", accentColor: "#7c3aed" },
+  speaker: { label: "KEYNOTE SPEAKER", headerColor: "#065f46", accentColor: "#059669" },
+  sponsor: { label: "OFFICIAL SPONSOR", headerColor: "#1e3a8a", accentColor: "#2563eb" },
+  exhibitor: { label: "EXHIBITOR PARTNER", headerColor: "#854d0e", accentColor: "#d97706" },
+  staff: { label: "EVENT CREW / STAFF", headerColor: "#991b1b", accentColor: "#dc2626" },
+  custom: { label: "SPECIAL GUEST", headerColor: "#374151", accentColor: "#4b5563" },
+};
+
 export default function OnsiteDeskPage() {
   const params = useParams();
   const eventId = params.eventId as string;
@@ -48,6 +58,17 @@ export default function OnsiteDeskPage() {
   const [autoQueuePrint, setAutoQueuePrint] = useState(true);
   const [walkinSuccess, setWalkinSuccess] = useState<OnsiteAttendee | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  // Isolated Badge for physical print output
+  const [printBadge, setPrintBadge] = useState<{
+    name: string;
+    email: string;
+    company?: string;
+    designation?: string;
+    badgeType: BadgeRoleType;
+    ticketName?: string;
+    passToken: string;
+  } | null>(null);
 
   const fetchAttendees = (q = "") => {
     setIsLoading(true);
@@ -122,6 +143,23 @@ export default function OnsiteDeskPage() {
       if (data.success && data.attendee) {
         setWalkinSuccess(data.attendee);
         setAttendees((prev) => [data.attendee, ...prev]);
+
+        setPrintBadge({
+          name: data.attendee.name,
+          email: data.attendee.email,
+          company: data.attendee.company || "",
+          designation: data.attendee.designation || "",
+          badgeType: data.attendee.badgeType,
+          ticketName: data.attendee.ticketName,
+          passToken: data.attendee.passToken || data.attendee.id,
+        });
+
+        if (autoQueuePrint) {
+          setTimeout(() => {
+            window.print();
+          }, 80);
+        }
+
         // Reset form fields
         setName("");
         setEmail("");
@@ -152,7 +190,20 @@ export default function OnsiteDeskPage() {
   };
 
   const handlePrintBadge = async (attendee: OnsiteAttendee) => {
-    window.print();
+    setPrintBadge({
+      name: attendee.name,
+      email: attendee.email,
+      company: attendee.company || "",
+      designation: attendee.designation || "",
+      badgeType: attendee.badgeType,
+      ticketName: attendee.ticketName,
+      passToken: attendee.passToken || attendee.id,
+    });
+
+    setTimeout(() => {
+      window.print();
+    }, 60);
+
     await fetch(`/api/event/${eventId}/ops/print`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -188,8 +239,9 @@ export default function OnsiteDeskPage() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Top Header */}
+    <>
+      <div className="space-y-6 no-print">
+        {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-neutral-200">
         <div>
           <div className="flex items-center gap-2 mb-1">
@@ -403,8 +455,21 @@ export default function OnsiteDeskPage() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => window.print()}
-                  className="px-3 py-1.5 rounded-xl bg-emerald-700 text-white text-xs font-semibold hover:bg-emerald-800"
+                  onClick={() => {
+                    if (walkinSuccess) {
+                      setPrintBadge({
+                        name: walkinSuccess.name,
+                        email: walkinSuccess.email,
+                        company: walkinSuccess.company || "",
+                        designation: walkinSuccess.designation || "",
+                        badgeType: walkinSuccess.badgeType,
+                        ticketName: walkinSuccess.ticketName,
+                        passToken: walkinSuccess.passToken || walkinSuccess.id,
+                      });
+                      setTimeout(() => window.print(), 60);
+                    }
+                  }}
+                  className="px-3 py-1.5 rounded-xl bg-emerald-700 text-white text-xs font-semibold hover:bg-emerald-800 cursor-pointer"
                 >
                   Print Badge Now
                 </button>
@@ -611,6 +676,84 @@ export default function OnsiteDeskPage() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+
+      {/* ── ISOLATED PHYSICAL BADGE PRINT STAGE (Visible ONLY on print output) ── */}
+      {printBadge && (
+        <div id="badge-print-stage" className="hidden print:block">
+          {(() => {
+            const roleCfg = DEFAULT_ROLE_COLORS[printBadge.badgeType] || DEFAULT_ROLE_COLORS.attendee;
+            return (
+              <div
+                className="badge-print-item bg-white relative overflow-hidden flex flex-col justify-between"
+                style={{
+                  width: "100mm",
+                  height: "150mm",
+                  boxSizing: "border-box",
+                }}
+              >
+                {/* Lanyard punch slot */}
+                <div className="absolute top-2 left-1/2 -translate-x-1/2 w-12 h-2.5 bg-neutral-200 rounded-full border border-neutral-300 z-20" />
+
+                {/* Role Header Banner */}
+                <div
+                  className="w-full text-center py-3.5 px-4"
+                  style={{ backgroundColor: roleCfg.headerColor }}
+                >
+                  <p className="text-xs font-black tracking-widest text-white uppercase">
+                    {roleCfg.label}
+                  </p>
+                </div>
+
+                {/* Badge Main Body */}
+                <div className="p-6 flex flex-col items-center justify-center text-center flex-1">
+                  <span className="text-[10px] font-bold text-neutral-400 tracking-wider uppercase mb-1">
+                    DELEGATE CREDENTIAL
+                  </span>
+                  <h2 className="text-2xl font-black text-neutral-900 tracking-tight leading-tight">
+                    {printBadge.name}
+                  </h2>
+                  {printBadge.company && (
+                    <p className="text-sm font-semibold text-neutral-600 mt-1">
+                      {printBadge.company}
+                    </p>
+                  )}
+                  {printBadge.designation && (
+                    <p className="text-xs text-neutral-400 mt-0.5">
+                      {printBadge.designation}
+                    </p>
+                  )}
+
+                  <div className="mt-3 flex items-center gap-1.5">
+                    <span
+                      className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide text-white"
+                      style={{ backgroundColor: roleCfg.accentColor }}
+                    >
+                      {printBadge.ticketName || roleCfg.label}
+                    </span>
+                  </div>
+
+                  {/* Scannable QR Code */}
+                  <div className="mt-4 p-2 bg-white rounded-xl border border-neutral-300 flex flex-col items-center">
+                    <div className="w-24 h-24 bg-neutral-950 rounded-lg p-1.5 flex items-center justify-center">
+                      <QrCode className="w-full h-full text-white" />
+                    </div>
+                    <span className="text-[9px] font-mono font-semibold text-neutral-500 mt-1">
+                      {printBadge.passToken}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Event Footer */}
+                <div className="py-2.5 px-4 bg-neutral-50 border-t border-neutral-200 flex items-center justify-between text-[10px] text-neutral-500 font-medium">
+                  <span className="font-semibold text-neutral-700">Official Pass Credential</span>
+                  <span className="font-mono">VALIDATED ENTRY</span>
+                </div>
+              </div>
+            );
+          })()}
+        </div>
+      )}
+    </>
   );
 }

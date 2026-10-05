@@ -184,7 +184,7 @@ export default async function PassPage({
 
       {/* Visual Ticket Pass Card: Studio Design or Standard Template */}
       {isStudio ? (
-        <div className="w-full max-w-sm flex justify-center mb-6 relative z-10">
+        <div className="w-full max-w-sm flex justify-center mb-6 relative z-10 printable-pass-container">
           <StudioPassRenderer
             design={rawCustomDesign}
             attendee={attendee}
@@ -196,7 +196,7 @@ export default async function PassPage({
       ) : (
         <div
           id="printable-ticket-card"
-          className={`w-full max-w-[360px] ${shapeRadius} border ${cardBorder} ${cardBg} overflow-hidden shadow-[0_12px_36px_-6px_rgba(0,0,0,0.08),0_4px_12px_-2px_rgba(0,0,0,0.04)] relative select-none transition-all duration-150 z-10`}
+          className={`w-full max-w-[360px] printable-pass-container ${shapeRadius} border ${cardBorder} ${cardBg} overflow-hidden shadow-[0_12px_36px_-6px_rgba(0,0,0,0.08),0_4px_12px_-2px_rgba(0,0,0,0.04)] relative select-none transition-all duration-150 z-10`}
         >
           {/* Optional background image with contrast-preserving overlay */}
           {design.backgroundImageUrl && (
@@ -510,7 +510,7 @@ export default async function PassPage({
       )}
 
       {showBranding && (
-        <div className="mt-8 flex flex-col items-center gap-2 pass-in-2 w-full max-w-sm">
+        <div className="mt-8 flex flex-col items-center gap-2 pass-in-2 w-full max-w-sm no-print">
           <a
             href="https://urpass.space/signup?ref=ticket-pass"
             target="_blank"
@@ -549,7 +549,7 @@ export default async function PassPage({
           href={`/api/join/${pass.pass_token}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center justify-center gap-2 w-full max-w-sm py-4 rounded-2xl text-base font-bold text-white hover:opacity-90 transition-opacity mt-6"
+          className="flex items-center justify-center gap-2 w-full max-w-sm py-4 rounded-2xl text-base font-bold text-white hover:opacity-90 transition-opacity mt-6 no-print"
           style={{ background: "linear-gradient(135deg, #6D28D9 0%, #4c1d95 100%)" }}
         >
           <ExternalLink className="w-5 h-5" />
@@ -557,7 +557,7 @@ export default async function PassPage({
         </a>
       )}
 
-      <div className="mt-6 flex flex-col items-center gap-3 w-full max-w-sm pass-in-3">
+      <div className="mt-6 flex flex-col items-center gap-3 w-full max-w-sm pass-in-3 no-print">
         <AddToCalendarButton
           eventName={event.name}
           description={event.description}
