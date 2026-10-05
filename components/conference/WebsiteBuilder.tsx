@@ -18,6 +18,11 @@ import {
   ArrowUp,
   ArrowDown,
   Sparkles,
+  Upload,
+  Image as ImageIcon,
+  Trash2,
+  Link2,
+  X,
 } from "lucide-react";
 import type { EventWebsite, WebsiteSectionConfig } from "@/types/conference";
 
@@ -74,6 +79,54 @@ export default function WebsiteBuilder({
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [error, setError] = useState("");
+  const [isUploadingBanner, setIsUploadingBanner] = useState(false);
+  const [bannerUploadError, setBannerUploadError] = useState("");
+  const [bannerMode, setBannerMode] = useState<"upload" | "url">("upload");
+
+  async function handleBannerFileSelected(file: File) {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setBannerUploadError("Please upload a valid image file (PNG, JPG, WebP, SVG).");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setBannerUploadError("Image file size must be under 5MB.");
+      return;
+    }
+    setBannerUploadError("");
+    setIsUploadingBanner(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/studio/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (res.ok && data.url) {
+        setHeroImage(data.url);
+      } else {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          if (e.target?.result) {
+            setHeroImage(e.target.result as string);
+          }
+        };
+        reader.readAsDataURL(file);
+      }
+    } catch {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        if (e.target?.result) {
+          setHeroImage(e.target.result as string);
+        }
+      };
+      reader.readAsDataURL(file);
+    } finally {
+      setIsUploadingBanner(false);
+    }
+  }
 
   function toggleSection(key: string) {
     setSectionsConfig((prev) => ({
@@ -437,22 +490,152 @@ export default function WebsiteBuilder({
             </div>
           </div>
 
-          <div>
-            <label className="block text-xs font-semibold text-neutral-700 mb-1.5">
-              Hero Banner Image URL
-            </label>
-            <input
-              type="url"
-              placeholder="https://images.unsplash.com/... or hosted banner"
-              value={heroImage}
-              onChange={(e) => setHeroImage(e.target.value)}
-              className="w-full text-sm px-3.5 py-2.5 rounded-xl border border-neutral-200 focus:outline-hidden focus:border-neutral-900"
-            />
+          <div className="space-y-3 pt-2">
+            <div className="flex items-center justify-between">
+              <div>
+                <label className="block text-xs font-semibold text-neutral-900">
+                  Hero Banner Graphic / Cover Image
+                </label>
+                <p className="text-[11px] text-neutral-400 mt-0.5">
+                  Upload high-resolution event cover banner (recommended 1920×1080 or 16:9 ratio, max 5MB).
+                </p>
+              </div>
+
+              <div className="flex items-center gap-1.5 bg-neutral-100 p-1 rounded-xl">
+                <button
+                  type="button"
+                  onClick={() => setBannerMode("upload")}
+                  className={`text-[11px] font-semibold px-2.5 py-1 rounded-lg transition-all ${
+                    bannerMode === "upload"
+                      ? "bg-white text-neutral-900 shadow-2xs"
+                      : "text-neutral-500 hover:text-neutral-900"
+                  }`}
+                >
+                  <Upload className="w-3 h-3 inline mr-1" />
+                  Upload File
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setBannerMode("url")}
+                  className={`text-[11px] font-semibold px-2.5 py-1 rounded-lg transition-all ${
+                    bannerMode === "url"
+                      ? "bg-white text-neutral-900 shadow-2xs"
+                      : "text-neutral-500 hover:text-neutral-900"
+                  }`}
+                >
+                  <Link2 className="w-3 h-3 inline mr-1" />
+                  Image URL
+                </button>
+              </div>
+            </div>
+
+            {bannerUploadError && (
+              <p className="text-xs text-rose-600 bg-rose-50 border border-rose-200 px-3 py-2 rounded-xl">
+                {bannerUploadError}
+              </p>
+            )}
+
+            {bannerMode === "upload" ? (
+              <div className="space-y-3">
+                {heroImage ? (
+                  <div className="relative rounded-2xl overflow-hidden border border-neutral-200 bg-neutral-900 group">
+                    <img
+                      src={heroImage}
+                      alt="Event Hero Banner Preview"
+                      className="w-full h-44 sm:h-56 object-cover opacity-90 transition-opacity group-hover:opacity-75"
+                    />
+                    <div className="absolute inset-0 bg-linear-to-t from-black/80 via-transparent to-black/20 flex flex-col justify-between p-4 pointer-events-none">
+                      <div className="flex items-center justify-between pointer-events-auto">
+                        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/90 text-white backdrop-blur-xs flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3" />
+                          Hero Banner Active
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setHeroImage("")}
+                          className="px-2.5 py-1.5 rounded-xl bg-rose-600/90 text-white text-xs font-semibold hover:bg-rose-700 transition-all flex items-center gap-1.5 shadow-xs"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          Remove
+                        </button>
+                      </div>
+
+                      <div className="pointer-events-auto flex items-center justify-between text-white text-xs">
+                        <span className="truncate max-w-[280px] font-mono text-[11px] text-neutral-300">
+                          {heroImage.startsWith("data:") ? "Uploaded Base64 Graphic" : heroImage}
+                        </span>
+                        <label className="cursor-pointer px-3 py-1.5 rounded-xl bg-white/20 hover:bg-white/30 text-white text-xs font-semibold backdrop-blur-xs transition-colors flex items-center gap-1.5">
+                          <Upload className="w-3.5 h-3.5" />
+                          Replace Image
+                          <input
+                            type="file"
+                            accept="image/png, image/jpeg, image/webp, image/svg+xml"
+                            className="hidden"
+                            onChange={(e) => {
+                              const f = e.target.files?.[0];
+                              if (f) handleBannerFileSelected(f);
+                            }}
+                          />
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <label
+                    className={`border-2 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all ${
+                      isUploadingBanner
+                        ? "border-purple-400 bg-purple-50/50"
+                        : "border-neutral-200 hover:border-purple-500 hover:bg-purple-50/20 bg-neutral-50/60"
+                    }`}
+                  >
+                    <input
+                      type="file"
+                      accept="image/png, image/jpeg, image/webp, image/svg+xml"
+                      disabled={isUploadingBanner}
+                      className="hidden"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) handleBannerFileSelected(f);
+                      }}
+                    />
+                    {isUploadingBanner ? (
+                      <div className="flex flex-col items-center gap-2 py-4">
+                        <Loader2 className="w-8 h-8 text-purple-600 animate-spin" />
+                        <span className="text-xs font-bold text-purple-900">Processing & Uploading Hero Banner...</span>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="w-12 h-12 rounded-2xl bg-purple-100 text-purple-700 flex items-center justify-center mb-3">
+                          <ImageIcon className="w-6 h-6" />
+                        </div>
+                        <p className="text-sm font-bold text-neutral-900">
+                          Click to upload or drag and drop Hero Banner
+                        </p>
+                        <p className="text-xs text-neutral-500 mt-1">
+                          PNG, JPG, WebP or SVG (Up to 5MB)
+                        </p>
+                      </>
+                    )}
+                  </label>
+                )}
+              </div>
+            ) : (
+              <div>
+                <input
+                  type="url"
+                  placeholder="https://images.unsplash.com/... or hosted banner URL"
+                  value={heroImage}
+                  onChange={(e) => setHeroImage(e.target.value)}
+                  className="w-full text-sm px-3.5 py-2.5 rounded-xl border border-neutral-200 focus:outline-hidden focus:border-neutral-900"
+                />
+              </div>
+            )}
           </div>
 
-          <div className="pt-2 border-t border-neutral-100">
-            <h3 className="text-xs font-bold text-neutral-900 uppercase tracking-wider mb-3">
-              Social Links
+          <div className="pt-4 border-t border-neutral-100">
+            <h3 className="text-xs font-bold text-neutral-900 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+              <Share2 className="w-3.5 h-3.5 text-neutral-500" />
+              Event Social Profiles & Channels
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
@@ -461,12 +644,12 @@ export default function WebsiteBuilder({
                 </label>
                 <input
                   type="text"
-                  placeholder="https://x.com/yourhandle"
+                  placeholder="https://x.com/yourhandle or @yourhandle"
                   value={socialLinks.twitter || ""}
                   onChange={(e) =>
                     setSocialLinks((prev) => ({ ...prev, twitter: e.target.value }))
                   }
-                  className="w-full text-xs px-3 py-2 rounded-xl border border-neutral-200"
+                  className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-neutral-200 focus:outline-hidden focus:border-neutral-900"
                 />
               </div>
               <div>
@@ -480,7 +663,35 @@ export default function WebsiteBuilder({
                   onChange={(e) =>
                     setSocialLinks((prev) => ({ ...prev, linkedin: e.target.value }))
                   }
-                  className="w-full text-xs px-3 py-2 rounded-xl border border-neutral-200"
+                  className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-neutral-200 focus:outline-hidden focus:border-neutral-900"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-neutral-700 mb-1">
+                  Instagram Profile
+                </label>
+                <input
+                  type="text"
+                  placeholder="https://instagram.com/yourhandle"
+                  value={socialLinks.instagram || ""}
+                  onChange={(e) =>
+                    setSocialLinks((prev) => ({ ...prev, instagram: e.target.value }))
+                  }
+                  className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-neutral-200 focus:outline-hidden focus:border-neutral-900"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-neutral-700 mb-1">
+                  Official Website / Portal
+                </label>
+                <input
+                  type="text"
+                  placeholder="https://event.yourorg.com"
+                  value={socialLinks.website || ""}
+                  onChange={(e) =>
+                    setSocialLinks((prev) => ({ ...prev, website: e.target.value }))
+                  }
+                  className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-neutral-200 focus:outline-hidden focus:border-neutral-900"
                 />
               </div>
             </div>

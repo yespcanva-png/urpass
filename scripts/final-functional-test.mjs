@@ -31,6 +31,7 @@ async function runTest() {
   console.log("\n[TEST 2] Testing Sponsorship Tiers & Deliverables Fulfillment...");
   const {
     getSponsorshipTiers,
+    seedDefaultSponsorshipTiers,
     saveSponsorshipTier,
     getEventSponsors,
     saveEventSponsor,
@@ -39,7 +40,7 @@ async function runTest() {
     return await import("../lib/exhibitor-sponsor/sponsor-service.ts");
   });
 
-  const defaultTiers = getSponsorshipTiers(eventId);
+  const defaultTiers = seedDefaultSponsorshipTiers(eventId);
   assert(defaultTiers.length >= 4, "Should seed at least 4 default sponsorship tiers");
   console.log(`  ✓ Default Tiers initialized: ${defaultTiers.map(t => t.name).join(", ")}`);
 

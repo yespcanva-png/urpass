@@ -107,25 +107,70 @@ export const DEFAULT_SPONSOR_TIERS = [
   },
 ];
 
-export function getSponsorshipTiers(eventId: string): SponsorshipTier[] {
+export function seedDefaultSponsorshipTiers(eventId: string): SponsorshipTier[] {
   const store = globalThis.__urpass_sponsorship_tiers!;
-  if (!store[eventId] || store[eventId].length === 0) {
-    const now = new Date().toISOString();
-    store[eventId] = DEFAULT_SPONSOR_TIERS.map((t, idx) => ({
-      id: `tier-${eventId}-${t.name.toLowerCase().replace(/[^a-z0-9]/g, "-")}`,
-      eventId,
+  const now = new Date().toISOString();
+  const seeded = DEFAULT_SPONSOR_TIERS.map((t, idx) => ({
+    id: `tier-${eventId}-${t.name.toLowerCase().replace(/[^a-z0-9]/g, "-")}`,
+    eventId,
+    name: t.name,
+    price: t.price,
+    currency: t.currency,
+    maxSponsors: t.maxSponsors,
+    benefits: t.benefits,
+    logoPlacementRules: t.logoPlacementRules,
+    position: idx,
+    createdAt: now,
+    updatedAt: now,
+  }));
+  store[eventId] = seeded;
+  return seeded;
+}
+
+export async function seedDefaultSponsorshipTiersDb(eventId: string): Promise<SponsorshipTier[]> {
+  const local = seedDefaultSponsorshipTiers(eventId);
+  const admin = getAdminClient();
+  if (!admin) return local;
+
+  try {
+    const presets = DEFAULT_SPONSOR_TIERS.map((t, idx) => ({
+      event_id: eventId,
       name: t.name,
       price: t.price,
       currency: t.currency,
-      maxSponsors: t.maxSponsors,
+      max_sponsors: t.maxSponsors,
       benefits: t.benefits,
-      logoPlacementRules: t.logoPlacementRules,
+      logo_placement_rules: t.logoPlacementRules,
       position: idx,
-      createdAt: now,
-      updatedAt: now,
     }));
+
+    const { data: inserted } = await admin.from("event_sponsorship_tiers").insert(presets).select();
+    if (inserted && inserted.length > 0) {
+      const seeded: SponsorshipTier[] = inserted.map((row: any) => ({
+        id: row.id,
+        eventId: row.event_id,
+        name: row.name,
+        price: Number(row.price),
+        currency: row.currency || "INR",
+        maxSponsors: row.max_sponsors,
+        benefits: row.benefits || [],
+        logoPlacementRules: row.logo_placement_rules || {},
+        position: row.position || 0,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+      }));
+      globalThis.__urpass_sponsorship_tiers![eventId] = seeded;
+      return seeded;
+    }
+  } catch (err) {
+    console.warn("[sponsor-service] Error seeding tiers to DB:", err);
   }
-  return store[eventId];
+  return local;
+}
+
+export function getSponsorshipTiers(eventId: string): SponsorshipTier[] {
+  const store = globalThis.__urpass_sponsorship_tiers!;
+  return store[eventId] || [];
 }
 
 export async function getSponsorshipTiersDb(eventId: string): Promise<SponsorshipTier[]> {
@@ -139,37 +184,7 @@ export async function getSponsorshipTiersDb(eventId: string): Promise<Sponsorshi
       .eq("event_id", eventId)
       .order("position", { ascending: true });
 
-    if (error || !data || data.length === 0) {
-      const now = new Date().toISOString();
-      const presets = DEFAULT_SPONSOR_TIERS.map((t, idx) => ({
-        event_id: eventId,
-        name: t.name,
-        price: t.price,
-        currency: t.currency,
-        max_sponsors: t.maxSponsors,
-        benefits: t.benefits,
-        logo_placement_rules: t.logoPlacementRules,
-        position: idx,
-      }));
-
-      const { data: inserted } = await admin.from("event_sponsorship_tiers").insert(presets).select();
-      if (inserted && inserted.length > 0) {
-        const seeded: SponsorshipTier[] = inserted.map((row: any) => ({
-          id: row.id,
-          eventId: row.event_id,
-          name: row.name,
-          price: Number(row.price),
-          currency: row.currency || "INR",
-          maxSponsors: row.max_sponsors,
-          benefits: row.benefits || [],
-          logoPlacementRules: row.logo_placement_rules || {},
-          position: row.position || 0,
-          createdAt: row.created_at || now,
-          updatedAt: row.updated_at || now,
-        }));
-        globalThis.__urpass_sponsorship_tiers![eventId] = seeded;
-        return seeded;
-      }
+    if (error || !data) {
       return getSponsorshipTiers(eventId);
     }
 

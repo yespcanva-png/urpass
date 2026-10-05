@@ -7,6 +7,7 @@ import {
 import {
   getSponsorshipTiers,
   saveSponsorshipTier,
+  seedDefaultSponsorshipTiers,
   getEventSponsors,
   saveEventSponsor,
   updateSponsorDeliverable,
@@ -113,7 +114,7 @@ describe("Stage 3: Exhibitor + Sponsor + Lead Retrieval Suite", () => {
 
   describe("Sprint 2 & 10: Sponsorship Tiers & Deliverables Fulfillment", () => {
     it("seeds default tier packages and handles custom tier creation", () => {
-      const defaultTiers = getSponsorshipTiers(eventId);
+      const defaultTiers = seedDefaultSponsorshipTiers(eventId);
       expect(defaultTiers.length).toBe(4);
       expect(defaultTiers.map((t) => t.name)).toContain("Platinum Title Partner");
 

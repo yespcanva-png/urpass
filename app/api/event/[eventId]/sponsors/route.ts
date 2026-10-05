@@ -3,6 +3,7 @@ import {
   getSponsorshipTiersDb,
   saveSponsorshipTierDb,
   deleteSponsorshipTierDb,
+  seedDefaultSponsorshipTiersDb,
   getEventSponsorsDb,
   saveEventSponsorDb,
   deleteEventSponsorDb,
@@ -73,6 +74,11 @@ export async function POST(
     if (action === "delete_tier" && tierId) {
       await deleteSponsorshipTierDb(eventId, tierId);
       return NextResponse.json({ success: true });
+    }
+
+    if (action === "seed_default_tiers") {
+      const seeded = await seedDefaultSponsorshipTiersDb(eventId);
+      return NextResponse.json({ success: true, tiers: seeded });
     }
 
     if (action === "update_deliverable" && sponsorId && deliverableKey) {

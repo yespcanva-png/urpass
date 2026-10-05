@@ -22,6 +22,9 @@ import {
   Building2,
   Phone,
   ArrowRight,
+  Upload,
+  Image as ImageIcon,
+  Loader2,
 } from "lucide-react";
 import { SponsorshipTier, EventSponsor } from "@/lib/exhibitor-sponsor/types";
 
@@ -74,6 +77,8 @@ export default function SponsorsAdminPage() {
   });
 
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+  const [logoUploadError, setLogoUploadError] = useState("");
 
   const loadData = () => {
     fetch(`/api/event/${eventId}/sponsors`)
@@ -84,6 +89,61 @@ export default function SponsorsAdminPage() {
           if (d.sponsors) setSponsors(d.sponsors);
         }
       });
+  };
+
+  const handleSeedDefaultTiers = async () => {
+    setIsSaving(true);
+    try {
+      const res = await fetch(`/api/event/${eventId}/sponsors`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "seed_default_tiers" }),
+      });
+      const d = await res.json();
+      if (d.success && d.tiers) {
+        setTiers(d.tiers);
+      }
+    } catch {
+      // ignore
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleLogoFileSelected = async (file: File) => {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setLogoUploadError("Please upload a valid image file (PNG, JPG, SVG, WebP).");
+      return;
+    }
+    setLogoUploadError("");
+    setIsUploadingLogo(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/studio/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (res.ok && data.url) {
+        setLogoUrl(data.url);
+      } else {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          if (e.target?.result) setLogoUrl(e.target.result as string);
+        };
+        reader.readAsDataURL(file);
+      }
+    } catch {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        if (e.target?.result) setLogoUrl(e.target.result as string);
+      };
+      reader.readAsDataURL(file);
+    } finally {
+      setIsUploadingLogo(false);
+    }
   };
 
   useEffect(() => {
@@ -373,97 +433,139 @@ export default function SponsorsAdminPage() {
             <Layers className="w-4 h-4 text-neutral-700" />
             Configured Sponsorship Packages ({tiers.length})
           </h2>
+          {tiers.length > 0 && (
+            <button
+              onClick={handleOpenAddTier}
+              className="text-xs font-semibold text-neutral-700 hover:text-neutral-900 flex items-center gap-1"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Add Package
+            </button>
+          )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3.5">
-          {tiers.map((tier) => {
-            const sponsorsInTier = sponsors.filter((s) => s.tierId === tier.id);
-            const isFull = sponsorsInTier.length >= tier.maxSponsors;
-
-            return (
-              <div
-                key={tier.id}
-                className="p-4 bg-white border border-neutral-200/80 rounded-xl hover:border-neutral-300 transition-all shadow-2xs flex flex-col justify-between"
+        {tiers.length === 0 ? (
+          <div className="text-center py-10 border border-dashed border-neutral-200 rounded-2xl bg-white p-6 space-y-3 shadow-2xs">
+            <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 border border-amber-200 flex items-center justify-center mx-auto">
+              <Layers className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-neutral-900">No Sponsorship Packages Configured</h3>
+              <p className="text-xs text-neutral-500 max-w-sm mx-auto mt-0.5">
+                Add custom sponsorship tiers with deliverables and branding rights, or load standard packages.
+              </p>
+            </div>
+            <div className="flex items-center justify-center gap-2.5 pt-1">
+              <button
+                type="button"
+                onClick={handleOpenAddTier}
+                className="px-3.5 py-1.5 text-xs font-semibold text-white bg-neutral-900 hover:bg-neutral-800 rounded-lg shadow-2xs transition-all inline-flex items-center gap-1.5"
               >
-                <div>
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <h3 className="font-semibold text-sm text-neutral-950">{tier.name}</h3>
-                      <div className="text-lg font-bold text-neutral-900 mt-1">
-                        {tier.currency} {tier.price.toLocaleString("en-IN")}
+                <Plus className="w-3.5 h-3.5" />
+                Create Package
+              </button>
+              <button
+                type="button"
+                onClick={handleSeedDefaultTiers}
+                disabled={isSaving}
+                className="px-3.5 py-1.5 text-xs font-semibold text-neutral-700 bg-neutral-100 hover:bg-neutral-200 rounded-lg transition-all inline-flex items-center gap-1.5"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                Load Standard Packages
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3.5">
+            {tiers.map((tier) => {
+              const sponsorsInTier = sponsors.filter((s) => s.tierId === tier.id);
+              const isFull = sponsorsInTier.length >= tier.maxSponsors;
+
+              return (
+                <div
+                  key={tier.id}
+                  className="p-4 bg-white border border-neutral-200/80 rounded-xl hover:border-neutral-300 transition-all shadow-2xs flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <h3 className="font-semibold text-sm text-neutral-950">{tier.name}</h3>
+                        <div className="text-lg font-bold text-neutral-900 mt-1">
+                          {tier.currency} {tier.price.toLocaleString("en-IN")}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => handleOpenEditTier(tier)}
+                          className="p-1 text-neutral-400 hover:text-neutral-700 rounded transition-colors"
+                          title="Edit Tier"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteTier(tier.id)}
+                          className="p-1 text-neutral-400 hover:text-rose-600 rounded transition-colors"
+                          title="Delete Tier"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
                       </div>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => handleOpenEditTier(tier)}
-                        className="p-1 text-neutral-400 hover:text-neutral-700 rounded transition-colors"
-                        title="Edit Tier"
+
+                    <div className="flex items-center gap-2 mt-2">
+                      <span
+                        className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                          isFull
+                            ? "bg-rose-50 text-rose-700 border border-rose-200"
+                            : "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                        }`}
                       >
-                        <Edit2 className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteTier(tier.id)}
-                        className="p-1 text-neutral-400 hover:text-rose-600 rounded transition-colors"
-                        title="Delete Tier"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                        {sponsorsInTier.length} / {tier.maxSponsors} Taken
+                      </span>
+                    </div>
+
+                    <div className="mt-3 pt-3 border-t border-neutral-100">
+                      <div className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider mb-1.5">
+                        Included Deliverables
+                      </div>
+                      <ul className="space-y-1">
+                        {(tier.benefits || []).slice(0, 3).map((b, i) => (
+                          <li key={i} className="text-xs text-neutral-600 flex items-center gap-1.5">
+                            <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" />
+                            <span className="truncate">{b}</span>
+                          </li>
+                        ))}
+                      </ul>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 mt-2">
-                    <span
-                      className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-                        isFull
-                          ? "bg-rose-50 text-rose-700 border border-rose-200"
-                          : "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                      }`}
-                    >
-                      {sponsorsInTier.length} / {tier.maxSponsors} Taken
-                    </span>
-                  </div>
-
-                  <div className="mt-3 pt-3 border-t border-neutral-100">
-                    <div className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider mb-1.5">
-                      Included Deliverables
-                    </div>
-                    <ul className="space-y-1">
-                      {(tier.benefits || []).slice(0, 3).map((b, i) => (
-                        <li key={i} className="text-xs text-neutral-600 flex items-center gap-1.5">
-                          <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" />
-                          <span className="truncate">{b}</span>
-                        </li>
-                      ))}
-                    </ul>
+                  <div className="mt-4 pt-3 border-t border-neutral-100 flex items-center gap-1.5 flex-wrap">
+                    {tier.logoPlacementRules?.homepage && (
+                      <span className="text-[9px] font-semibold px-1.5 py-0.5 bg-neutral-100 text-neutral-700 rounded">
+                        Homepage
+                      </span>
+                    )}
+                    {tier.logoPlacementRules?.badge && (
+                      <span className="text-[9px] font-semibold px-1.5 py-0.5 bg-amber-50 text-amber-800 rounded">
+                        Badge
+                      </span>
+                    )}
+                    {tier.logoPlacementRules?.agenda && (
+                      <span className="text-[9px] font-semibold px-1.5 py-0.5 bg-blue-50 text-blue-800 rounded">
+                        Agenda
+                      </span>
+                    )}
+                    {tier.logoPlacementRules?.app && (
+                      <span className="text-[9px] font-semibold px-1.5 py-0.5 bg-purple-50 text-purple-800 rounded">
+                        App
+                      </span>
+                    )}
                   </div>
                 </div>
-
-                <div className="mt-4 pt-3 border-t border-neutral-100 flex items-center gap-1.5 flex-wrap">
-                  {tier.logoPlacementRules?.homepage && (
-                    <span className="text-[9px] font-semibold px-1.5 py-0.5 bg-neutral-100 text-neutral-700 rounded">
-                      Homepage
-                    </span>
-                  )}
-                  {tier.logoPlacementRules?.badge && (
-                    <span className="text-[9px] font-semibold px-1.5 py-0.5 bg-amber-50 text-amber-800 rounded">
-                      Badge
-                    </span>
-                  )}
-                  {tier.logoPlacementRules?.agenda && (
-                    <span className="text-[9px] font-semibold px-1.5 py-0.5 bg-blue-50 text-blue-800 rounded">
-                      Agenda
-                    </span>
-                  )}
-                  {tier.logoPlacementRules?.app && (
-                    <span className="text-[9px] font-semibold px-1.5 py-0.5 bg-purple-50 text-purple-800 rounded">
-                      App
-                    </span>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Filter and Search Bar */}
@@ -709,14 +811,53 @@ export default function SponsorsAdminPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-neutral-700 mb-1">Logo URL (PNG / SVG)</label>
-                <input
-                  type="url"
-                  placeholder="https://company.com/logo.png"
-                  value={logoUrl}
-                  onChange={(e) => setLogoUrl(e.target.value)}
-                  className="w-full px-3 py-1.5 text-xs bg-white border border-neutral-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-neutral-900"
-                />
+                <label className="block text-xs font-semibold text-neutral-700 mb-1">
+                  Sponsor Brand Logo (PNG / SVG / WebP)
+                </label>
+                {logoUploadError && (
+                  <p className="text-[11px] text-rose-600 mb-1.5">{logoUploadError}</p>
+                )}
+                <div className="flex items-center gap-3">
+                  {logoUrl ? (
+                    <div className="relative w-14 h-14 rounded-xl border border-neutral-200 bg-neutral-50 p-1.5 flex items-center justify-center shrink-0">
+                      <img src={logoUrl} alt="Logo preview" className="max-w-full max-h-full object-contain" />
+                      <button
+                        type="button"
+                        onClick={() => setLogoUrl("")}
+                        className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-rose-600 text-white text-[10px] flex items-center justify-center"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ) : null}
+                  <div className="flex-1 space-y-1.5">
+                    <label className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-neutral-800 bg-neutral-100 hover:bg-neutral-200 rounded-lg cursor-pointer transition-colors border border-neutral-200">
+                      {isUploadingLogo ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin text-neutral-600" />
+                      ) : (
+                        <Upload className="w-3.5 h-3.5 text-neutral-600" />
+                      )}
+                      <span>{isUploadingLogo ? "Uploading..." : logoUrl ? "Change Logo File" : "Upload Logo File"}</span>
+                      <input
+                        type="file"
+                        accept="image/png, image/jpeg, image/webp, image/svg+xml"
+                        disabled={isUploadingLogo}
+                        className="hidden"
+                        onChange={(e) => {
+                          const f = e.target.files?.[0];
+                          if (f) handleLogoFileSelected(f);
+                        }}
+                      />
+                    </label>
+                    <input
+                      type="url"
+                      placeholder="Or paste https://company.com/logo.png"
+                      value={logoUrl}
+                      onChange={(e) => setLogoUrl(e.target.value)}
+                      className="w-full px-3 py-1 text-[11px] bg-white border border-neutral-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-neutral-900 font-mono"
+                    />
+                  </div>
+                </div>
               </div>
 
               <div className="grid grid-cols-3 gap-2">
