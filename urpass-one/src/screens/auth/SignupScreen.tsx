@@ -13,7 +13,19 @@ import {
   ActivityIndicator,
   Alert,
 } from "react-native";
-import { COLORS } from "../../constants/colors";
+import Svg, { Path } from "react-native-svg";
+import {
+  ArrowLeft,
+  Ticket,
+  Mail,
+  Lock,
+  User,
+  Building2,
+  ShieldCheck,
+  AlertCircle,
+  Eye,
+  EyeOff,
+} from "lucide-react-native";
 import { useAuth } from "../../context/AuthContext";
 
 interface SignupScreenProps {
@@ -22,14 +34,29 @@ interface SignupScreenProps {
 
 function GoogleIcon() {
   return (
-    <View style={styles.googleIconBox}>
-      <Text style={styles.googleIconText}>G</Text>
-    </View>
+    <Svg width={18} height={18} viewBox="0 0 18 18">
+      <Path
+        d="M17.64 9.20455C17.64 8.56636 17.5827 7.95273 17.4764 7.36364H9V10.845H13.8436C13.635 11.97 13.0009 12.9232 12.0477 13.5614V15.8195H14.9564C16.6582 14.2527 17.64 11.9455 17.64 9.20455Z"
+        fill="#4285F4"
+      />
+      <Path
+        d="M9 18C11.43 18 13.4673 17.1941 14.9564 15.8195L12.0477 13.5614C11.2418 14.1014 10.2109 14.4205 9 14.4205C6.65591 14.4205 4.67182 12.8373 3.96409 10.71H0.957275V13.0418C2.43818 15.9832 5.48182 18 9 18Z"
+        fill="#34A853"
+      />
+      <Path
+        d="M3.96409 10.71C3.78409 10.17 3.68182 9.59318 3.68182 9C3.68182 8.40682 3.78409 7.83 3.96409 7.29V4.95818H0.957273C0.347727 6.17318 0 7.54773 0 9C0 10.4523 0.347727 11.8268 0.957273 13.0418L3.96409 10.71Z"
+        fill="#FBBC05"
+      />
+      <Path
+        d="M9 3.57955C10.3214 3.57955 11.5077 4.03364 12.4405 4.92545L15.0218 2.34409C13.4632 0.891818 11.4259 0 9 0C5.48182 0 2.43818 2.01682 0.957275 4.95818L3.96409 7.29C4.67182 5.16273 6.65591 3.57955 9 3.57955Z"
+        fill="#EA4335"
+      />
+    </Svg>
   );
 }
 
 export function SignupScreen({ navigation }: SignupScreenProps) {
-  const { signUp, loginWithOtp, isLoading } = useAuth();
+  const { signUp, loginWithOtp } = useAuth();
 
   const [authMode, setAuthMode] = useState<"standard" | "sso">("standard");
   const [fullName, setFullName] = useState("");
@@ -49,17 +76,17 @@ export function SignupScreen({ navigation }: SignupScreenProps) {
     const trimmedEmail = email.trim();
 
     if (!trimmedName || trimmedName.length < 2) {
-      setServerError("Name must be at least 2 characters.");
+      setServerError("Name must be at least 2 characters");
       return;
     }
 
     if (!trimmedEmail || !trimmedEmail.includes("@")) {
-      setServerError("Enter a valid email address.");
+      setServerError("Enter a valid email");
       return;
     }
 
     if (!password || password.length < 8) {
-      setServerError("Password must be at least 8 characters.");
+      setServerError("Password must be at least 8 characters");
       return;
     }
 
@@ -87,7 +114,7 @@ export function SignupScreen({ navigation }: SignupScreenProps) {
     try {
       Alert.alert(
         "Google Workspace",
-        "Sign up with your Google account",
+        "Sign up with your Google account to create your organizer workspace.",
         [
           { text: "Cancel", style: "cancel", onPress: () => setGoogleLoading(false) },
           {
@@ -112,7 +139,7 @@ export function SignupScreen({ navigation }: SignupScreenProps) {
     setServerError("");
     const trimmedEmail = email.trim();
     if (!trimmedEmail || !trimmedEmail.includes("@")) {
-      setServerError("Enter your corporate or school email.");
+      setServerError("Enter your corporate or school email");
       return;
     }
 
@@ -135,36 +162,36 @@ export function SignupScreen({ navigation }: SignupScreenProps) {
     }, 600);
   }
 
-  // Email Confirmation State Screen
+  // Email Confirmation State Screen (matching web app/signup/page.tsx)
   if (needsEmailConfirmation) {
     return (
       <SafeAreaView style={styles.container}>
         <StatusBar barStyle="dark-content" backgroundColor="#FAF8FC" />
         <View style={styles.confirmContainer}>
-          <View style={styles.card}>
+          <View style={styles.confirmCard}>
             <View style={styles.confirmIconBadge}>
-              <Text style={styles.confirmEmoji}>✉️</Text>
+              <Mail size={32} color="#6D28D9" />
             </View>
 
             <Text style={styles.confirmTitle}>Check your email</Text>
             <Text style={styles.confirmSubtitle}>
               We sent a verification link to{" "}
               <Text style={styles.confirmEmailHighlight}>{submittedEmail}</Text>. Click the link in the
-              email to activate your account.
+              email to activate your account and start creating events.
             </Text>
 
             <View style={styles.confirmHelpBox}>
-              <Text style={styles.confirmHelpHeader}>Didn't see the email?</Text>
+              <Text style={styles.confirmHelpHeader}>Didn&apos;t see the email?</Text>
               <Text style={styles.confirmHelpItem}>• Check your spam or promotions folder</Text>
               <Text style={styles.confirmHelpItem}>• Make sure {submittedEmail} was typed correctly</Text>
             </View>
 
             <TouchableOpacity
-              style={styles.submitButton}
+              style={styles.confirmSignInButton}
               onPress={() => navigation?.navigate("Login")}
               activeOpacity={0.88}
             >
-              <Text style={styles.submitButtonText}>Go to Sign In</Text>
+              <Text style={styles.confirmSignInButtonText}>Go to Sign In</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -192,27 +219,26 @@ export function SignupScreen({ navigation }: SignupScreenProps) {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Top row: Back link + URPASS Wordmark */}
+          {/* Top row: Back link + URPASS Wordmark (matching web apply-in-1) */}
           <View style={styles.topRow}>
             <TouchableOpacity
               onPress={() => navigation?.goBack?.() || navigation?.navigate("Login")}
               style={styles.backButton}
               hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
             >
-              <Text style={styles.backButtonText}>← Back</Text>
+              <ArrowLeft size={14} color="#94A3B8" />
+              <Text style={styles.backButtonText}>Back</Text>
             </TouchableOpacity>
 
             <View style={styles.brandRow}>
-              <View style={styles.ticketIconBadge}>
-                <Text style={styles.ticketEmoji}>🎟️</Text>
-              </View>
+              <Ticket size={16} color="#6D28D9" />
               <Text style={styles.brandWordmark}>URPASS</Text>
             </View>
 
             <View style={styles.headerRightSpacer} />
           </View>
 
-          {/* Main Card — 100% Identical to https://urpass.space/signup */}
+          {/* Main Card — 100% Ditto to https://urpass.space/signup */}
           <View style={styles.card}>
             {/* Header section */}
             <View style={styles.cardHeader}>
@@ -254,7 +280,7 @@ export function SignupScreen({ navigation }: SignupScreenProps) {
                   }}
                   activeOpacity={0.85}
                 >
-                  <Text style={styles.ssoBuildingIcon}>🏢</Text>
+                  <Building2 size={14} color="#6D28D9" />
                   <Text style={styles.ssoSwitchButtonText}>Continue with Enterprise SSO</Text>
                 </TouchableOpacity>
 
@@ -269,7 +295,7 @@ export function SignupScreen({ navigation }: SignupScreenProps) {
                 <View style={styles.fieldGroup}>
                   <Text style={styles.fieldLabel}>FULL NAME</Text>
                   <View style={styles.inputWrapper}>
-                    <Text style={styles.inputLeftIcon}>👤</Text>
+                    <User size={16} color="#CBD5E1" style={styles.inputLeftIcon} />
                     <TextInput
                       style={styles.textInput}
                       placeholder="Srinithin S"
@@ -288,7 +314,7 @@ export function SignupScreen({ navigation }: SignupScreenProps) {
                 <View style={styles.fieldGroup}>
                   <Text style={styles.fieldLabel}>EMAIL</Text>
                   <View style={styles.inputWrapper}>
-                    <Text style={styles.inputLeftIcon}>✉️</Text>
+                    <Mail size={16} color="#CBD5E1" style={styles.inputLeftIcon} />
                     <TextInput
                       style={styles.textInput}
                       placeholder="you@example.com"
@@ -309,9 +335,9 @@ export function SignupScreen({ navigation }: SignupScreenProps) {
                 <View style={styles.fieldGroup}>
                   <Text style={styles.fieldLabel}>PASSWORD</Text>
                   <View style={styles.inputWrapper}>
-                    <Text style={styles.inputLeftIcon}>🔒</Text>
+                    <Lock size={16} color="#CBD5E1" style={styles.inputLeftIcon} />
                     <TextInput
-                      style={[styles.textInput, { paddingRight: 40 }]}
+                      style={[styles.textInput, { paddingRight: 46 }]}
                       placeholder="••••••••"
                       placeholderTextColor="#94A3B8"
                       value={password}
@@ -326,9 +352,11 @@ export function SignupScreen({ navigation }: SignupScreenProps) {
                       style={styles.passwordToggle}
                       onPress={() => setShowPassword(!showPassword)}
                     >
-                      <Text style={styles.passwordToggleText}>
-                        {showPassword ? "Hide" : "Show"}
-                      </Text>
+                      {showPassword ? (
+                        <EyeOff size={16} color="#6D28D9" />
+                      ) : (
+                        <Eye size={16} color="#6D28D9" />
+                      )}
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -336,7 +364,7 @@ export function SignupScreen({ navigation }: SignupScreenProps) {
                 {/* Error Banner */}
                 {!!serverError && (
                   <View style={styles.errorBanner}>
-                    <Text style={styles.errorIcon}>⚠️</Text>
+                    <AlertCircle size={15} color="#EF4444" style={{ marginTop: 1 }} />
                     <Text style={styles.errorText}>{serverError}</Text>
                   </View>
                 )}
@@ -355,11 +383,6 @@ export function SignupScreen({ navigation }: SignupScreenProps) {
                   )}
                 </TouchableOpacity>
 
-                {/* Terms Notice */}
-                <Text style={styles.termsText}>
-                  By continuing, you agree to our Terms of Service and Privacy Policy.
-                </Text>
-
                 {/* Bottom Login Switch */}
                 <View style={styles.bottomSwitchRow}>
                   <Text style={styles.bottomSwitchText}>Already have an account? </Text>
@@ -373,17 +396,17 @@ export function SignupScreen({ navigation }: SignupScreenProps) {
               <View style={styles.ssoContainer}>
                 <View style={styles.ssoInfoBox}>
                   <View style={styles.ssoShieldBadge}>
-                    <Text style={styles.ssoShieldIcon}>🛡️</Text>
+                    <ShieldCheck size={16} color="#6D28D9" />
                   </View>
                   <Text style={styles.ssoInfoText}>
-                    Enter your corporate or school email to join via SAML 2.0 / OIDC Single Sign-On.
+                    Organizations with Enterprise SSO automatically provision accounts (JIT). No password required.
                   </Text>
                 </View>
 
                 <View style={styles.fieldGroup}>
                   <Text style={styles.fieldLabel}>CORPORATE / STUDENT EMAIL</Text>
                   <View style={styles.inputWrapper}>
-                    <Text style={styles.inputLeftIcon}>✉️</Text>
+                    <Mail size={16} color="#CBD5E1" style={styles.inputLeftIcon} />
                     <TextInput
                       style={styles.textInput}
                       placeholder="name@company.com"
@@ -402,7 +425,7 @@ export function SignupScreen({ navigation }: SignupScreenProps) {
 
                 {!!serverError && (
                   <View style={styles.errorBanner}>
-                    <Text style={styles.errorIcon}>⚠️</Text>
+                    <AlertCircle size={15} color="#EF4444" style={{ marginTop: 1 }} />
                     <Text style={styles.errorText}>{serverError}</Text>
                   </View>
                 )}
@@ -416,9 +439,19 @@ export function SignupScreen({ navigation }: SignupScreenProps) {
                   {ssoLoading ? (
                     <ActivityIndicator size="small" color="#FFFFFF" />
                   ) : (
-                    <Text style={styles.submitButtonText}>Continue with SSO →</Text>
+                    <Text style={styles.submitButtonText}>Continue with Enterprise SSO</Text>
                   )}
                 </TouchableOpacity>
+
+                {/* IdP Badges */}
+                <View style={styles.idpBadgesRow}>
+                  <Text style={styles.idpLabel}>Supports:</Text>
+                  <View style={styles.idpChip}><Text style={styles.idpChipText}>Okta</Text></View>
+                  <View style={styles.idpChip}><Text style={styles.idpChipText}>Entra ID</Text></View>
+                  <View style={styles.idpChip}><Text style={styles.idpChipText}>Google Workspace</Text></View>
+                  <View style={styles.idpChip}><Text style={styles.idpChipText}>SAML 2.0</Text></View>
+                  <View style={styles.idpChip}><Text style={styles.idpChipText}>OIDC</Text></View>
+                </View>
 
                 <TouchableOpacity
                   style={styles.backToStandardBtn}
@@ -432,6 +465,11 @@ export function SignupScreen({ navigation }: SignupScreenProps) {
               </View>
             )}
           </View>
+
+          {/* Bottom Enterprise Compliance note */}
+          <Text style={styles.bottomComplianceText}>
+            Enterprise SSO · SAML 2.0 &amp; OpenID Connect compliant
+          </Text>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -449,6 +487,21 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingHorizontal: 20,
   },
+  confirmCard: {
+    width: "100%",
+    maxWidth: 440,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 28,
+    borderWidth: 1,
+    borderColor: "#F1F1F4",
+    padding: 32,
+    alignItems: "center",
+    shadowColor: "#6D28D9",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 24,
+    elevation: 4,
+  },
   keyboardView: {
     flex: 1,
   },
@@ -456,7 +509,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingHorizontal: 20,
     paddingTop: 16,
-    paddingBottom: 40,
+    paddingBottom: 32,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -469,27 +522,21 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   backButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
     paddingVertical: 6,
-    paddingHorizontal: 8,
+    paddingHorizontal: 4,
   },
   backButtonText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: "500",
-    color: "#64748B",
+    color: "#94A3B8",
   },
   brandRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-  },
-  ticketIconBadge: {
-    width: 22,
-    height: 22,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  ticketEmoji: {
-    fontSize: 15,
   },
   brandWordmark: {
     fontSize: 14,
@@ -499,7 +546,7 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
   },
   headerRightSpacer: {
-    width: 44,
+    width: 48,
   },
 
   /* Card */
@@ -512,25 +559,25 @@ const styles = StyleSheet.create({
     borderColor: "#F1F1F4",
     padding: 24,
     shadowColor: "#6D28D9",
-    shadowOffset: { width: 0, height: 8 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08,
-    shadowRadius: 28,
+    shadowRadius: 24,
     elevation: 4,
   },
   cardHeader: {
-    marginBottom: 22,
+    marginBottom: 24,
   },
   cardTitle: {
     fontSize: 24,
-    fontWeight: "700",
+    fontWeight: "600",
     color: "#0F172A",
     letterSpacing: -0.5,
   },
   cardSubtitle: {
-    fontSize: 13,
+    fontSize: 14,
     color: "#64748B",
     marginTop: 4,
-    lineHeight: 18,
+    lineHeight: 20,
   },
 
   /* Buttons */
@@ -547,19 +594,6 @@ const styles = StyleSheet.create({
     borderColor: "#E2E8F0",
     marginBottom: 10,
   },
-  googleIconBox: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: "#4285F4",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  googleIconText: {
-    color: "#FFFFFF",
-    fontSize: 12,
-    fontWeight: "900",
-  },
   googleButtonText: {
     fontSize: 14,
     fontWeight: "500",
@@ -569,17 +603,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 6,
+    gap: 8,
     width: "100%",
-    height: 40,
-    backgroundColor: "#FAF5FF",
+    height: 38,
+    backgroundColor: "rgba(109,40,217,0.04)",
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#E9D5FF",
-    marginBottom: 16,
-  },
-  ssoBuildingIcon: {
-    fontSize: 13,
+    borderColor: "rgba(109,40,217,0.20)",
+    marginBottom: 18,
   },
   ssoSwitchButtonText: {
     fontSize: 12,
@@ -600,21 +631,22 @@ const styles = StyleSheet.create({
     backgroundColor: "#F1F5F9",
   },
   dividerText: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: "500",
-    color: "#94A3B8",
+    color: "#CBD5E1",
   },
 
   /* Form Fields */
   fieldGroup: {
-    marginBottom: 14,
+    marginBottom: 16,
   },
   fieldLabel: {
     fontSize: 11,
-    fontWeight: "700",
+    fontWeight: "600",
     color: "#64748B",
     letterSpacing: 0.8,
     marginBottom: 6,
+    textTransform: "uppercase",
   },
   inputWrapper: {
     position: "relative",
@@ -622,32 +654,25 @@ const styles = StyleSheet.create({
   },
   inputLeftIcon: {
     position: "absolute",
-    left: 12,
+    left: 14,
     zIndex: 1,
-    fontSize: 14,
-    opacity: 0.6,
   },
   textInput: {
     width: "100%",
-    height: 46,
+    height: 48,
     backgroundColor: "#F8FAFC",
     borderRadius: 12,
     borderWidth: 1,
     borderColor: "#E2E8F0",
-    paddingLeft: 38,
+    paddingLeft: 40,
     paddingRight: 14,
     fontSize: 14,
     color: "#0F172A",
   },
   passwordToggle: {
     position: "absolute",
-    right: 12,
+    right: 14,
     padding: 4,
-  },
-  passwordToggleText: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: "#6D28D9",
   },
 
   /* Error Banner */
@@ -655,18 +680,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-start",
     backgroundColor: "#FEF2F2",
-    borderRadius: 10,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: "#FEE2E2",
-    padding: 10,
-    marginBottom: 14,
+    padding: 12,
+    marginBottom: 16,
     gap: 8,
   },
-  errorIcon: {
-    fontSize: 13,
-  },
   errorText: {
-    flex: 1,
     fontSize: 12,
     color: "#DC2626",
     lineHeight: 16,
@@ -675,7 +696,7 @@ const styles = StyleSheet.create({
   /* Submit Button */
   submitButton: {
     width: "100%",
-    height: 48,
+    height: 50,
     backgroundColor: "#6D28D9",
     borderRadius: 12,
     alignItems: "center",
@@ -688,19 +709,12 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   submitButtonDisabled: {
-    opacity: 0.65,
+    opacity: 0.60,
   },
   submitButtonText: {
     color: "#FFFFFF",
     fontSize: 14,
     fontWeight: "600",
-  },
-  termsText: {
-    fontSize: 11,
-    color: "#94A3B8",
-    textAlign: "center",
-    marginTop: 12,
-    lineHeight: 16,
   },
 
   /* Bottom Switch */
@@ -708,21 +722,22 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 18,
+    marginTop: 24,
   },
   bottomSwitchText: {
-    fontSize: 13,
+    fontSize: 14,
     color: "#64748B",
   },
   bottomSwitchLink: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: "600",
-    color: "#6D28D9",
+    color: "#0F172A",
+    textDecorationLine: "underline",
   },
 
   /* SSO Sub-view */
   ssoContainer: {
-    gap: 14,
+    gap: 16,
   },
   ssoInfoBox: {
     flexDirection: "row",
@@ -730,23 +745,20 @@ const styles = StyleSheet.create({
     backgroundColor: "#F8FAFC",
     borderWidth: 1,
     borderColor: "#E2E8F0",
-    borderRadius: 12,
+    borderRadius: 14,
     padding: 12,
     gap: 10,
-    marginBottom: 6,
+    marginBottom: 2,
   },
   ssoShieldBadge: {
-    width: 28,
-    height: 28,
-    borderRadius: 8,
+    width: 32,
+    height: 32,
+    borderRadius: 10,
     backgroundColor: "#FAF5FF",
     borderWidth: 1,
     borderColor: "#E9D5FF",
     alignItems: "center",
     justifyContent: "center",
-  },
-  ssoShieldIcon: {
-    fontSize: 13,
   },
   ssoInfoText: {
     flex: 1,
@@ -754,11 +766,33 @@ const styles = StyleSheet.create({
     color: "#475569",
     lineHeight: 16,
   },
+  idpBadgesRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    flexWrap: "wrap",
+    gap: 6,
+    paddingTop: 4,
+  },
+  idpLabel: {
+    fontSize: 11,
+    color: "#94A3B8",
+  },
+  idpChip: {
+    backgroundColor: "#F1F5F9",
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  idpChipText: {
+    fontSize: 11,
+    fontWeight: "500",
+    color: "#475569",
+  },
   backToStandardBtn: {
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: 8,
-    marginTop: 4,
   },
   backToStandardText: {
     fontSize: 12,
@@ -768,49 +802,48 @@ const styles = StyleSheet.create({
 
   /* Confirm email */
   confirmIconBadge: {
-    width: 56,
-    height: 56,
+    width: 64,
+    height: 64,
     borderRadius: 16,
     backgroundColor: "#FAF5FF",
     borderWidth: 1,
-    borderColor: "#E9D5FF",
+    borderColor: "rgba(109,40,217,0.20)",
     alignItems: "center",
     justifyContent: "center",
-    alignSelf: "center",
-    marginBottom: 16,
-  },
-  confirmEmoji: {
-    fontSize: 26,
+    marginBottom: 20,
   },
   confirmTitle: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: "700",
     color: "#0F172A",
     textAlign: "center",
+    letterSpacing: -0.5,
     marginBottom: 8,
   },
   confirmSubtitle: {
-    fontSize: 13,
+    fontSize: 14,
     color: "#475569",
     textAlign: "center",
-    lineHeight: 18,
-    marginBottom: 18,
+    lineHeight: 20,
+    marginBottom: 24,
   },
   confirmEmailHighlight: {
-    fontWeight: "700",
+    fontWeight: "600",
     color: "#0F172A",
   },
   confirmHelpBox: {
+    width: "100%",
     backgroundColor: "#F8FAFC",
     borderWidth: 1,
     borderColor: "#E2E8F0",
     borderRadius: 12,
-    padding: 14,
-    marginBottom: 20,
+    padding: 16,
+    marginBottom: 24,
+    alignItems: "flex-start",
   },
   confirmHelpHeader: {
     fontSize: 12,
-    fontWeight: "700",
+    fontWeight: "600",
     color: "#334155",
     marginBottom: 6,
   },
@@ -818,5 +851,27 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#64748B",
     lineHeight: 18,
+  },
+  confirmSignInButton: {
+    width: "100%",
+    height: 48,
+    backgroundColor: "#0F172A",
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 12,
+  },
+  confirmSignInButtonText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+
+  /* Bottom note */
+  bottomComplianceText: {
+    fontSize: 12,
+    color: "#94A3B8",
+    marginTop: 24,
+    textAlign: "center",
   },
 });
