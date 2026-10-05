@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient as createSupabaseAdmin } from "@supabase/supabase-js";
-import { createClient } from "@/lib/supabase/server";
-import { getSupabaseUrl } from "@/lib/supabase/config";
+import { createServerClient } from "@supabase/ssr";
+import { getSupabaseUrl, getSupabaseAnonKey } from "@/lib/supabase/config";
 import { notifyOwnerNewUser, notifyOwnerUserLogin, sendUserWelcomeEmail } from "@/lib/email";
 import { resolvePostAuthRedirect } from "@/lib/auth-redirect";
 
@@ -25,7 +25,9 @@ function adminClient() {
 }
 
 export async function GET(req: NextRequest) {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://urpass.space";
+  const proto = req.headers.get("x-forwarded-proto") ?? (req.url.startsWith("https") ? "https" : "http");
+  const host = req.headers.get("x-forwarded-host") ?? req.headers.get("host") ?? "";
+  const origin = process.env.NEXT_PUBLIC_APP_URL ?? (host ? `${proto}://${host}` : new URL(req.url).origin);
 
   try {
     const { searchParams } = new URL(req.url);
@@ -34,7 +36,7 @@ export async function GET(req: NextRequest) {
     const error = searchParams.get("error");
 
     if (error || !code) {
-      return NextResponse.redirect(`${appUrl}/login?error=google_auth_failed&step=init`);
+      return NextResponse.redirect(`${origin}/login?error=google_auth_failed&step=init`);
     }
 
     // Exchange authorization code for Google tokens
@@ -45,7 +47,7 @@ export async function GET(req: NextRequest) {
         code,
         client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!,
         client_secret: process.env.GOOGLE_CLIENT_SECRET!,
-        redirect_uri: `${appUrl}/auth/google/callback`,
+        redirect_uri: `${origin}/auth/google/callback`,
         grant_type: "authorization_code",
       }),
     });
@@ -53,7 +55,7 @@ export async function GET(req: NextRequest) {
     const tokens = await tokenRes.json();
     if (!tokenRes.ok || !tokens.id_token) {
       console.error("[google-callback] token exchange error:", tokens);
-      return NextResponse.redirect(`${appUrl}/login?error=google_auth_failed&step=token`);
+      return NextResponse.redirect(`${origin}/login?error=google_auth_failed&step=token`);
     }
 
     // Verify the ID token
@@ -61,18 +63,18 @@ export async function GET(req: NextRequest) {
       `https://oauth2.googleapis.com/tokeninfo?id_token=${tokens.id_token}`
     );
     if (!infoRes.ok) {
-      return NextResponse.redirect(`${appUrl}/login?error=google_auth_failed&step=verify`);
+      return NextResponse.redirect(`${origin}/login?error=google_auth_failed&step=verify`);
     }
 
     const info: GoogleTokenInfo = await infoRes.json();
 
     const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
     if (clientId && info.aud !== clientId) {
-      return NextResponse.redirect(`${appUrl}/login?error=google_auth_failed&step=aud`);
+      return NextResponse.redirect(`${origin}/login?error=google_auth_failed&step=aud`);
     }
 
     if (info.email_verified !== "true") {
-      return NextResponse.redirect(`${appUrl}/login?error=google_email_unverified`);
+      return NextResponse.redirect(`${origin}/login?error=google_email_unverified`);
     }
 
     const admin = adminClient();
@@ -116,7 +118,7 @@ export async function GET(req: NextRequest) {
       });
       if (createErr) {
         console.error("[google-callback] createUser error:", createErr);
-        return NextResponse.redirect(`${appUrl}/login?error=google_auth_failed&step=create`);
+        return NextResponse.redirect(`${origin}/login?error=google_auth_failed&step=create`);
       }
       try {
         await Promise.allSettled([
@@ -141,18 +143,7 @@ export async function GET(req: NextRequest) {
 
     if (linkErr || !linkData?.properties?.hashed_token) {
       console.error("[google-callback] generateLink error:", linkErr);
-      return NextResponse.redirect(`${appUrl}/login?error=google_auth_failed&step=link`);
-    }
-
-    const supabase = await createClient();
-    const { error: verifyErr } = await supabase.auth.verifyOtp({
-      token_hash: linkData.properties.hashed_token,
-      type: "email",
-    });
-
-    if (verifyErr) {
-      console.error("[google-callback] verifyOtp error:", verifyErr);
-      return NextResponse.redirect(`${appUrl}/login?error=google_auth_failed&step=otp`);
+      return NextResponse.redirect(`${origin}/login?error=google_auth_failed&step=link`);
     }
 
     const target = resolvePostAuthRedirect(
@@ -163,9 +154,39 @@ export async function GET(req: NextRequest) {
       ? target
       : (isNewUser ? "/onboarding" : "/dashboard");
 
-    return NextResponse.redirect(`${appUrl}${destination}`);
+    const response = NextResponse.redirect(`${origin}${destination}`);
+
+    const supabase = createServerClient(
+      getSupabaseUrl(),
+      getSupabaseAnonKey(),
+      {
+        cookies: {
+          getAll() {
+            return req.cookies.getAll();
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              req.cookies.set(name, value);
+              response.cookies.set(name, value, options);
+            });
+          },
+        },
+      }
+    );
+
+    const { error: verifyErr } = await supabase.auth.verifyOtp({
+      token_hash: linkData.properties.hashed_token,
+      type: "email",
+    });
+
+    if (verifyErr) {
+      console.error("[google-callback] verifyOtp error:", verifyErr);
+      return NextResponse.redirect(`${origin}/login?error=google_auth_failed&step=otp`);
+    }
+
+    return response;
   } catch (err) {
     console.error("[google-callback] unhandled error:", err);
-    return NextResponse.redirect(`${appUrl}/login?error=google_auth_failed&step=crash`);
+    return NextResponse.redirect(`${origin}/login?error=google_auth_failed&step=crash`);
   }
 }

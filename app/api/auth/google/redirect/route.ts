@@ -10,10 +10,10 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(`${base}/login?error=google_not_configured`);
   }
 
-  // Derive the app origin from Railway headers (x-forwarded-host) or env var
-  const proto = req.headers.get("x-forwarded-proto") ?? "https";
+  // Derive the app origin consistently
+  const proto = req.headers.get("x-forwarded-proto") ?? (req.url.startsWith("https") ? "https" : "http");
   const host = req.headers.get("x-forwarded-host") ?? req.headers.get("host") ?? "";
-  const origin = process.env.NEXT_PUBLIC_APP_URL ?? `${proto}://${host}`;
+  const origin = process.env.NEXT_PUBLIC_APP_URL ?? (host ? `${proto}://${host}` : new URL(req.url).origin);
 
   const target = resolvePostAuthRedirect(
     req.nextUrl.searchParams,
