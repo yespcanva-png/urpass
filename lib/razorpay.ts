@@ -115,3 +115,71 @@ export function verifyRazorpaySubscriptionSignature(
   }
 }
 
+export interface EventRazorpayCredentials {
+  keyId: string;
+  keySecret: string;
+  source: "ORGANIZATION" | "ORGANIZER" | "PLATFORM";
+}
+
+/**
+ * Authoritatively resolves Razorpay credentials for an event.
+ * Prioritizes organizer or organization direct connected gateway in payment_settings / org_payment_settings.
+ * Falls back to URPASS platform credentials.
+ */
+export async function resolveEventRazorpayCredentials(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  adminClient: any,
+  event: { id?: string; organizer_id?: string; organization_id?: string | null }
+): Promise<EventRazorpayCredentials> {
+  // 1. Organization Gateway Key
+  if (event.organization_id) {
+    const { data: orgSettings } = await adminClient
+      .from("org_payment_settings")
+      .select("razorpay_key_id, razorpay_key_secret")
+      .eq("organization_id", event.organization_id)
+      .maybeSingle();
+
+    if (
+      orgSettings?.razorpay_key_id &&
+      orgSettings?.razorpay_key_secret &&
+      orgSettings.razorpay_key_id.trim().startsWith("rzp_")
+    ) {
+      return {
+        keyId: orgSettings.razorpay_key_id.trim(),
+        keySecret: orgSettings.razorpay_key_secret.trim(),
+        source: "ORGANIZATION",
+      };
+    }
+  }
+
+  // 2. Organizer User Direct Gateway Key
+  if (event.organizer_id) {
+    const { data: userSettings } = await adminClient
+      .from("payment_settings")
+      .select("razorpay_key_id, razorpay_key_secret")
+      .eq("user_id", event.organizer_id)
+      .maybeSingle();
+
+    if (
+      userSettings?.razorpay_key_id &&
+      userSettings?.razorpay_key_secret &&
+      userSettings.razorpay_key_id.trim().startsWith("rzp_")
+    ) {
+      return {
+        keyId: userSettings.razorpay_key_id.trim(),
+        keySecret: userSettings.razorpay_key_secret.trim(),
+        source: "ORGANIZER",
+      };
+    }
+  }
+
+  // 3. Fallback to Platform credentials
+  const { keyId, keySecret } = getRazorpayCredentials();
+  return {
+    keyId,
+    keySecret,
+    source: "PLATFORM",
+  };
+}
+
+

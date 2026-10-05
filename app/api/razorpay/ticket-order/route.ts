@@ -3,7 +3,7 @@ import Razorpay from "razorpay";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { getSupabaseUrl } from "@/lib/supabase/config";
 import { notifyOwnerPaymentAttempt } from "@/lib/email";
-import { getRazorpayCredentials } from "@/lib/razorpay";
+import { getRazorpayCredentials, resolveEventRazorpayCredentials } from "@/lib/razorpay";
 import { getEventPaymentConfigService } from "@/lib/payments/service";
 import { calculateTicketFees } from "@/lib/payments/fees";
 import type { FeeBearer, PaymentMode } from "@/lib/payments/types";
@@ -186,65 +186,29 @@ export async function POST(req: NextRequest) {
   });
   const chargeAmountPaise = Math.round(feeBreakdown.attendeeTotalPayable * 100);
 
-  // Fetch Razorpay credentials. URPASS managed events use platform credentials;
-  // organizer-gateway events use organization/user credentials.
+  // Authoritatively resolve event payment gateway credentials (organizer direct / org gateway / platform fallback)
   let keyId: string | null = null;
   let keySecret: string | null = null;
 
-  if (paymentMode === "URPASS_MANAGED") {
-    try {
-      const creds = getRazorpayCredentials();
-      keyId = creds.keyId;
-      keySecret = creds.keySecret;
-    } catch {
-      // handled below with managed-specific error
+  try {
+    const creds = await resolveEventRazorpayCredentials(admin, {
+      id: event.id,
+      organizer_id: event.organizer_id,
+      organization_id: event.organization_id,
+    });
+    keyId = creds.keyId;
+    keySecret = creds.keySecret;
+  } catch (credErr) {
+    console.error("[ticket-order] resolveEventRazorpayCredentials error:", credErr);
+    if (reservation.reservationId) {
+      await releaseReservation(admin, { reservationId: reservation.reservationId });
     }
-  }
-
-  if (paymentMode === "ORGANIZER_GATEWAY" && event.organization_id) {
-    const { data: orgSettings } = await admin
-      .from("org_payment_settings")
-      .select("razorpay_key_id, razorpay_key_secret")
-      .eq("organization_id", event.organization_id)
-      .maybeSingle();
-
-    if (orgSettings?.razorpay_key_id && orgSettings?.razorpay_key_secret) {
-      keyId = orgSettings.razorpay_key_id;
-      keySecret = orgSettings.razorpay_key_secret;
-    }
-  }
-
-  if (paymentMode === "ORGANIZER_GATEWAY" && (!keyId || !keySecret)) {
-    const { data: userSettings } = await admin
-      .from("payment_settings")
-      .select("razorpay_key_id, razorpay_key_secret")
-      .eq("user_id", event.organizer_id)
-      .maybeSingle();
-
-    if (userSettings?.razorpay_key_id && userSettings?.razorpay_key_secret) {
-      keyId = userSettings.razorpay_key_id;
-      keySecret = userSettings.razorpay_key_secret;
-    }
-  }
-
-  // Seamless Fallback: If organizer hasn't connected their own gateway, use URPASS Platform Payment Method
-  if (!keyId || !keySecret) {
-    try {
-      const creds = getRazorpayCredentials();
-      keyId = creds.keyId;
-      keySecret = creds.keySecret;
-    } catch {
-      // Release the capacity reservation before failing
-      if (reservation.reservationId) {
-        await releaseReservation(admin, { reservationId: reservation.reservationId });
-      }
-      return NextResponse.json(
-        {
-          error: "Payment gateway is not configured on the server. Please check platform credentials.",
-        },
-        { status: 500 }
-      );
-    }
+    return NextResponse.json(
+      {
+        error: "Payment gateway is not configured for this event. Please connect a payment gateway in settings.",
+      },
+      { status: 500 }
+    );
   }
 
   try {

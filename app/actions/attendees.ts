@@ -21,7 +21,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { sendWebhooks } from "@/lib/webhooks";
 import { recordApiUsage } from "@/lib/api-usage";
 import { getSupabaseUrl } from "@/lib/supabase/config";
-import { getRazorpayCredentials } from "@/lib/razorpay";
+import { getRazorpayCredentials, resolveEventRazorpayCredentials, verifyRazorpaySignature } from "@/lib/razorpay";
 import { getEventPaymentConfigService } from "@/lib/payments/service";
 import {
   markReservationPaid,
@@ -695,70 +695,44 @@ export async function submitApplication(
   }
 
   // Verify Razorpay payment signature for paid registrations
+  let ticketOrder: { amount?: number; ticket_type_id?: string | null; extra_guests_amount?: number; group_members?: any[] } | null = null;
+
   if (paymentAmountPaise > 0) {
     if (!payment?.orderId || !payment?.paymentId || !payment?.signature) {
       return { error: "Payment verification data is missing." };
     }
 
     let secretKey: string | null = null;
-    const paymentConfig = await getEventPaymentConfigService(eventId, event.organizer_id);
-    const paymentMode = paymentConfig.payment_mode || paymentConfig.paymentMode || "URPASS_MANAGED";
-
-    if (paymentMode === "URPASS_MANAGED") {
-      try {
-        secretKey = getRazorpayCredentials().keySecret;
-      } catch {
-        return { error: "URPASS Managed Payments are not configured for this event." };
-      }
+    try {
+      const creds = await resolveEventRazorpayCredentials(admin, {
+        id: event.id,
+        organizer_id: event.organizer_id,
+        organization_id: event.organization_id,
+      });
+      secretKey = creds.keySecret;
+    } catch {
+      return { error: "Payment gateway is not configured for this event." };
     }
 
-    if (paymentMode === "ORGANIZER_GATEWAY" && event.organization_id) {
-      const { data: orgSettings } = await admin
-        .from("org_payment_settings")
-        .select("razorpay_key_secret")
-        .eq("organization_id", event.organization_id)
-        .maybeSingle();
+    const isValid = verifyRazorpaySignature(
+      payment.orderId,
+      payment.paymentId,
+      payment.signature,
+      secretKey
+    );
 
-      if (orgSettings?.razorpay_key_secret) {
-        secretKey = orgSettings.razorpay_key_secret;
-      }
-    }
-
-    if (paymentMode === "ORGANIZER_GATEWAY" && !secretKey) {
-      const { data: paymentSettings } = await admin
-        .from("payment_settings")
-        .select("razorpay_key_secret")
-        .eq("user_id", event.organizer_id)
-        .maybeSingle();
-
-      if (paymentSettings?.razorpay_key_secret) {
-        secretKey = paymentSettings.razorpay_key_secret;
-      }
-    }
-
-    if (!secretKey) {
-      try {
-        secretKey = getRazorpayCredentials().keySecret;
-      } catch {
-        return { error: "Payment gateway not configured for this event." };
-      }
-    }
-
-    const expected = crypto
-      .createHmac("sha256", secretKey)
-      .update(`${payment.orderId}|${payment.paymentId}`)
-      .digest("hex");
-
-    if (expected !== payment.signature) {
+    if (!isValid) {
       return { error: "Payment verification failed. Please try again." };
     }
 
-    const { data: ticketOrder } = await admin
+    const { data: fetchedOrder } = await admin
       .from("ticket_orders")
-      .select("amount, ticket_type_id")
+      .select("amount, ticket_type_id, extra_guests_amount, group_members")
       .eq("razorpay_order_id", payment.orderId)
       .eq("event_id", eventId)
-      .single();
+      .maybeSingle();
+
+    ticketOrder = fetchedOrder;
 
     if (!ticketOrder || Number(ticketOrder.amount) < paymentAmountPaise) {
       return { error: "Payment amount does not match the selected ticket." };
@@ -889,6 +863,13 @@ export async function submitApplication(
       return { error: "This event is at capacity." };
     }
 
+    const finalCustomResponses = {
+      ...(customResponses ?? {}),
+      ...(ticketOrder?.group_members && Array.isArray(ticketOrder.group_members) && ticketOrder.group_members.length > 0
+        ? { group_members: ticketOrder.group_members }
+        : {}),
+    };
+
     // Insert as approved immediately
     const { data: attendee, error: attendeeError } = await admin
       .from("attendees")
@@ -897,7 +878,7 @@ export async function submitApplication(
         ...parsed.data,
         application_status: "approved",
         ticket_type_id: selectedTicketType?.id ?? null,
-        custom_responses: customResponses ?? {},
+        custom_responses: finalCustomResponses,
       })
       .select("id, pass_type")
       .single();
@@ -1083,12 +1064,19 @@ export async function submitApplication(
 
   const initialStatus = atCapacity ? "waitlisted" : "pending";
 
+  const finalCustomResponses = {
+    ...(customResponses ?? {}),
+    ...(ticketOrder?.group_members && Array.isArray(ticketOrder.group_members) && ticketOrder.group_members.length > 0
+      ? { group_members: ticketOrder.group_members }
+      : {}),
+  };
+
   const attendeeInsert = admin.from("attendees").insert({
     event_id: eventId,
     ...parsed.data,
     application_status: initialStatus,
     ticket_type_id: selectedTicketType?.id ?? null,
-    custom_responses: customResponses ?? {},
+    custom_responses: finalCustomResponses,
   });
   const { data: newAttendee, error } = typeof attendeeInsert.select === "function"
     ? await attendeeInsert.select("id").single()
