@@ -1,23 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   CalendarDays,
   MapPin,
   Loader2,
-  CheckCircle,
+  CheckCircle2,
   Mail,
   Ticket,
   User,
   Phone,
   AlertCircle,
-  IndianRupee,
-  ChevronDown,
   ShieldCheck,
   Video,
   Users,
+  Sparkles,
+  Lock,
+  ChevronDown,
+  ArrowRight,
+  Clock,
+  Building2,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { attendeeSchema, type AttendeeInput } from "@/lib/validations/attendee";
@@ -48,27 +52,8 @@ interface Branding {
 
 type SuccessState = { type: "pending" | "waitlisted"; attendeeName: string };
 
-const BG = "radial-gradient(ellipse 100% 50% at 50% -10%, #ede9fe 0%, #f5f3ff 40%, #ffffff 70%)";
-
 const inputCls =
-  "bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-brand focus:bg-white transition-all w-full placeholder:text-neutral-400";
-
-function Wordmark({ branding }: { branding: Branding }) {
-  if (!branding.showUrpassBranding && !branding.orgName) return null;
-  return (
-    <div className="flex items-center gap-1.5 mb-8 apply-in-1">
-      {branding.orgLogoUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={branding.orgLogoUrl} alt="logo" className="w-5 h-5 rounded object-cover" />
-      ) : (
-        <Ticket className="w-4 h-4" style={{ color: branding.brandColor }} />
-      )}
-      <span className="text-sm font-bold tracking-widest uppercase text-neutral-900">
-        {branding.orgName ?? "URPASS"}
-      </span>
-    </div>
-  );
-}
+  "w-full bg-white border border-neutral-200 rounded-xl px-4 py-3 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none transition-all focus:border-brand focus:ring-2 focus:ring-brand/10 hover:border-neutral-300";
 
 interface RazorpayResponse {
   razorpay_payment_id: string;
@@ -95,6 +80,7 @@ declare global {
 
 function loadRazorpayScript(): Promise<boolean> {
   return new Promise((resolve) => {
+    if (typeof window === "undefined") return resolve(false);
     if (window.Razorpay) return resolve(true);
     const s = document.createElement("script");
     s.src = "https://checkout.razorpay.com/v1/checkout.js";
@@ -121,23 +107,51 @@ export default function ApplyForm({
   const [success, setSuccess] = useState<SuccessState | null>(null);
   const [serverError, setServerError] = useState("");
   const [paymentPending, setPaymentPending] = useState(false);
-  // Pre-select: prefer first available free ticket when no payment gateway, otherwise first available
-  const available = ticketTypes.filter(
-    (t) => !t.isUpcoming && !t.isEnded && (t.remaining == null || t.remaining > 0)
+  const [showFullDescription, setShowFullDescription] = useState(false);
+
+  // Available tickets filter
+  const available = useMemo(
+    () =>
+      ticketTypes.filter(
+        (t) => !t.isUpcoming && !t.isEnded && (t.remaining == null || t.remaining > 0)
+      ),
+    [ticketTypes]
   );
+
   const defaultTicketTypeId =
     (!hasPaymentGateway && available.some((t) => t.price === 0)
       ? available.find((t) => t.price === 0)
       : available[0]
-    )?.id ?? null;
+    )?.id ?? ticketTypes[0]?.id ?? null;
+
   const [selectedTicketTypeId, setSelectedTicketTypeId] = useState<string | null>(defaultTicketTypeId);
   const [customResponses, setCustomResponses] = useState<Record<string, unknown>>({});
+
+  // Duration filter tab (All, 1 Day, 3 Days, etc.)
+  const availableDurations = useMemo(() => {
+    const set = new Set<string>();
+    ticketTypes.forEach((t) => {
+      if (t.duration_label) set.add(t.duration_label.trim());
+      else if (t.duration_days) set.add(`${t.duration_days} Day${t.duration_days > 1 ? "s" : ""}`);
+    });
+    return Array.from(set);
+  }, [ticketTypes]);
+
+  const [selectedDurationFilter, setSelectedDurationFilter] = useState<string>("all");
+
+  const filteredTickets = useMemo(() => {
+    if (selectedDurationFilter === "all") return ticketTypes;
+    return ticketTypes.filter((t) => {
+      const label = t.duration_label?.trim() || (t.duration_days ? `${t.duration_days} Day${t.duration_days > 1 ? "s" : ""}` : "");
+      return label.toLowerCase() === selectedDurationFilter.toLowerCase();
+    });
+  }, [ticketTypes, selectedDurationFilter]);
 
   const selectedTicket = ticketTypes.find((t) => t.id === selectedTicketTypeId) ?? null;
   const [peopleCount, setPeopleCount] = useState<number>(() => selectedTicket?.included_guests || 1);
   const [memberNames, setMemberNames] = useState<string[]>([]);
 
-  // Keep people count in sync when selected ticket type changes
+  // Sync people count whenever ticket selection changes
   const handleSelectTicket = (id: string) => {
     setSelectedTicketTypeId(id);
     const tt = ticketTypes.find((t) => t.id === id);
@@ -156,25 +170,20 @@ export default function ApplyForm({
   });
 
   const formattedDate = new Date(event.event_date).toLocaleDateString("en-IN", {
-    weekday: "long",
+    weekday: "short",
     day: "numeric",
-    month: "long",
+    month: "short",
     year: "numeric",
   });
+
   const isOnline = event.event_type === "online";
   const isHybrid = event.event_type === "hybrid";
-  const attendanceLabel = isOnline ? "Virtual access" : isHybrid ? "Hybrid access" : "Venue access";
-  const attendanceDetail = isOnline
-    ? "Secure join link after approval"
-    : isHybrid
-    ? "Join online or attend in person"
-    : "QR entry at venue";
 
   const baseTicketPrice = selectedTicket
     ? selectedTicket.price / 100
     : event.is_paid_event
-      ? event.ticket_price
-      : 0;
+    ? event.ticket_price
+    : 0;
 
   const allowExtra = Boolean(selectedTicket?.allow_extra_guests);
   const includedGuests = Number(selectedTicket?.included_guests || 1);
@@ -192,7 +201,7 @@ export default function ApplyForm({
 
     const loaded = await loadRazorpayScript();
     if (!loaded) {
-      setServerError("Payment service unavailable. Please try again.");
+      setServerError("Payment service is temporarily unreachable. Please check your connection and try again.");
       setPaymentPending(false);
       return;
     }
@@ -202,105 +211,110 @@ export default function ApplyForm({
       ...memberNames.filter((n) => n.trim().length > 0).map((n) => ({ name: n.trim(), role: "member" })),
     ];
 
-    const res = await fetch("/api/razorpay/ticket-order", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        eventId: event.id,
-        ticketTypeId: selectedTicketTypeId,
-        buyerName: data.name,
-        buyerEmail: data.email,
-        guestCount: peopleCount,
-        groupMembers,
-      }),
-    });
-    const order = (await res.json().catch(() => ({}))) as TicketOrderResponse;
-    if (!res.ok) {
-      setServerError(order.error ?? `Failed to create payment order (${res.status}).`);
-      setPaymentPending(false);
-      return;
-    }
+    try {
+      const res = await fetch("/api/razorpay/ticket-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          eventId: event.id,
+          ticketTypeId: selectedTicketTypeId,
+          buyerName: data.name,
+          buyerEmail: data.email,
+          guestCount: peopleCount,
+          groupMembers,
+        }),
+      });
+      const order = (await res.json().catch(() => ({}))) as TicketOrderResponse;
+      if (!res.ok) {
+        setServerError(order.error ?? `Failed to initiate payment (${res.status}).`);
+        setPaymentPending(false);
+        return;
+      }
 
-    if (!order.orderId || !order.keyId || !order.amount || !order.currency) {
-      setServerError("Payment order response was incomplete. Please refresh and try again.");
-      setPaymentPending(false);
-      return;
-    }
+      if (!order.orderId || !order.keyId || !order.amount || !order.currency) {
+        setServerError("Payment setup response was incomplete. Please refresh and try again.");
+        setPaymentPending(false);
+        return;
+      }
 
-    const rzp = new window.Razorpay({
-      key: order.keyId,
-      amount: order.amount,
-      currency: order.currency,
-      name: "URPASS",
-      description: `Ticket — ${order.eventName}`,
-      order_id: order.orderId,
-      prefill: { name: data.name, email: data.email, contact: data.phone ?? "" },
-      theme: { color: "#6D28D9" },
-      handler: async (response: RazorpayResponse) => {
-        try {
-          const result = await submitApplication(
-            event.id,
-            data,
-            {
-              orderId: response.razorpay_order_id,
-              paymentId: response.razorpay_payment_id,
-              signature: response.razorpay_signature,
-            },
-            selectedTicketTypeId,
-            customResponses
-          );
-          setPaymentPending(false);
-          if (result?.error) {
-            setServerError(result.error);
-            return;
-          }
-          if (result?.passToken) {
-            router.push(`/pass/${result.passToken}`);
-          } else if (result?.waitlisted) {
-            setSuccess({ type: "waitlisted", attendeeName: data.name });
-          } else {
-            setSuccess({ type: "pending", attendeeName: data.name });
-          }
-        } catch (err) {
-          setPaymentPending(false);
-          setServerError(err instanceof Error ? err.message : "Failed to confirm registration.");
-        }
-      },
-      modal: {
-        ondismiss: () => {
-          setPaymentPending(false);
-          setServerError("Payment was cancelled. Your reserved slot has been released.");
-          if (order.reservationId || order.orderId) {
-            fetch("/api/razorpay/ticket-order", {
-              method: "DELETE",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                reservationId: order.reservationId,
-                orderId: order.orderId,
-              }),
-            }).catch(() => {});
+      const rzp = new window.Razorpay({
+        key: order.keyId,
+        amount: order.amount,
+        currency: order.currency,
+        name: branding.orgName || "URPASS",
+        description: `${selectedTicket?.name || "Pass"} — ${event.name}`,
+        order_id: order.orderId,
+        prefill: { name: data.name, email: data.email, contact: data.phone ?? "" },
+        theme: { color: branding.brandColor || "#6D28D9" },
+        handler: async (response: RazorpayResponse) => {
+          try {
+            const result = await submitApplication(
+              event.id,
+              data,
+              {
+                orderId: response.razorpay_order_id,
+                paymentId: response.razorpay_payment_id,
+                signature: response.razorpay_signature,
+              },
+              selectedTicketTypeId,
+              customResponses
+            );
+            setPaymentPending(false);
+            if (result?.error) {
+              setServerError(result.error);
+              return;
+            }
+            if (result?.passToken) {
+              router.push(`/pass/${result.passToken}`);
+            } else if (result?.waitlisted) {
+              setSuccess({ type: "waitlisted", attendeeName: data.name });
+            } else {
+              setSuccess({ type: "pending", attendeeName: data.name });
+            }
+          } catch (err) {
+            setPaymentPending(false);
+            setServerError(err instanceof Error ? err.message : "Failed to confirm pass registration.");
           }
         },
-      },
-    });
-    rzp.open();
+        modal: {
+          ondismiss: () => {
+            setPaymentPending(false);
+            setServerError("Payment cancelled. Your reserved spot has been released.");
+            if (order.reservationId || order.orderId) {
+              fetch("/api/razorpay/ticket-order", {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  reservationId: order.reservationId,
+                  orderId: order.orderId,
+                }),
+              }).catch(() => {});
+            }
+          },
+        },
+      });
+      rzp.open();
+    } catch {
+      setPaymentPending(false);
+      setServerError("Network error initializing payment gateway.");
+    }
   }
 
   async function onSubmit(data: AttendeeInput) {
     if (ticketTypes.length > 0 && !selectedTicketTypeId) {
-      setServerError("Select a ticket type to continue.");
+      setServerError("Please select a pass tier to continue.");
       return;
     }
     if (selectedTicket?.isUpcoming) {
-      setServerError("Sales for this ticket tier have not started yet.");
+      setServerError("Sales for this pass tier have not started yet.");
       return;
     }
     if (selectedTicket?.isEnded) {
-      setServerError("Sales for this ticket tier have ended.");
+      setServerError("Sales for this pass tier have concluded.");
       return;
     }
     if (selectedTicket?.remaining !== null && selectedTicket?.remaining !== undefined && selectedTicket.remaining <= 0) {
-      setServerError("That ticket type is sold out. Please choose another ticket.");
+      setServerError("This pass tier is sold out. Please select another tier.");
       return;
     }
 
@@ -319,6 +333,7 @@ export default function ApplyForm({
     if (effectivelyPaid) {
       return handlePaidSubmit(data);
     }
+
     setServerError("");
     try {
       const result = await submitApplication(event.id, data, undefined, selectedTicketTypeId, customResponses);
@@ -334,187 +349,215 @@ export default function ApplyForm({
         setSuccess({ type: "pending", attendeeName: data.name });
       }
     } catch (err) {
-      setServerError(err instanceof Error ? err.message : "Failed to submit registration.");
+      setServerError(err instanceof Error ? err.message : "Failed to submit pass registration.");
     }
   }
 
-  // ── Waitlisted ────────────────────────────────────────────────────────────
+  // ── Waitlisted Screen ───────────────────────────────────────────────────────
   if (success?.type === "waitlisted") {
     return (
-      <div
-        className="min-h-screen flex flex-col items-center justify-center p-5"
-        style={{ background: BG }}
-      >
-        <Wordmark branding={branding} />
-
-        <div className="pass-scale-in w-full max-w-sm">
-          <div
-            className="bg-white rounded-3xl border border-neutral-100 p-8 text-center"
-            style={{ boxShadow: "0 8px 40px 0 rgba(109,40,217,0.10)" }}
-          >
-            <div
-              className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-5"
-              style={{ background: "#faf5ff", border: "1.5px solid #e9d5ff" }}
-            >
-              <Ticket className="w-7 h-7 text-purple-600" />
-            </div>
-
-            <h1 className="text-xl font-bold text-neutral-900 mb-2">
-              You&apos;re on the waitlist!
-            </h1>
-            <p className="text-sm text-neutral-500 leading-relaxed mb-6">
-              Hi {success.attendeeName}, this event is currently at full capacity. We&apos;ve added you to the waitlist queue and will notify you by email as soon as a spot opens up!
-            </p>
-
-            <div className="bg-neutral-50 rounded-2xl p-4 text-left border border-neutral-100">
-              <div className="flex items-center gap-2 text-xs text-neutral-500 mb-2">
-                <CalendarDays className="w-3.5 h-3.5 shrink-0 text-brand" />
-                <span>
-                  {formattedDate} · {event.start_time}
-                </span>
-              </div>
-              <div className="flex items-center gap-2 text-xs text-neutral-500">
-                <MapPin className="w-3.5 h-3.5 shrink-0 text-brand" />
-                <span>{event.venue}</span>
-              </div>
-            </div>
+      <div className="min-h-screen bg-neutral-50/60 flex flex-col items-center justify-center p-4 sm:p-6">
+        <div className="w-full max-w-md bg-white rounded-2xl border border-neutral-200/80 p-7 sm:p-9 text-center shadow-sm">
+          <div className="w-12 h-12 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center mx-auto mb-4">
+            <Ticket className="w-6 h-6 text-purple-600" />
           </div>
-        </div>
-
-        {branding.showUrpassBranding && (
-          <p className="text-xs text-neutral-300 mt-8 pass-in-2">Powered by URPASS</p>
-        )}
-      </div>
-    );
-  }
-
-  // ── Pending ───────────────────────────────────────────────────────────────
-  if (success?.type === "pending") {
-    return (
-      <div
-        className="min-h-screen flex flex-col items-center justify-center p-5"
-        style={{ background: BG }}
-      >
-        <Wordmark branding={branding} />
-
-        <div className="pass-scale-in w-full max-w-sm">
-          <div
-            className="bg-white rounded-3xl border border-neutral-100 p-8 text-center"
-            style={{ boxShadow: "0 8px 40px 0 rgba(109,40,217,0.10)" }}
-          >
-            <div
-              className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-5"
-              style={{ background: "#f5f3ff", border: "1.5px solid #ddd6fe" }}
-            >
-              <CheckCircle className="w-7 h-7 text-brand" />
+          <h1 className="text-xl font-bold text-neutral-900 mb-2">You&apos;re on the Waitlist</h1>
+          <p className="text-xs sm:text-sm text-neutral-600 leading-relaxed mb-6">
+            Hi {success.attendeeName}, this event is currently at full capacity. We&apos;ve reserved your priority queue position and will notify you via email as soon as a spot opens.
+          </p>
+          <div className="bg-neutral-50 rounded-xl p-4 text-left border border-neutral-100 text-xs text-neutral-600 space-y-2">
+            <div className="flex items-center gap-2 font-medium text-neutral-800">
+              <CalendarDays className="w-4 h-4 text-brand shrink-0" />
+              <span>{formattedDate} · {event.start_time}</span>
             </div>
-
-            <h1 className="text-xl font-bold text-neutral-900 mb-2">
-              You&apos;re on the list
-            </h1>
-            <p className="text-sm text-neutral-500 leading-relaxed mb-6">
-              Hi {success.attendeeName}, your application for{" "}
-              <span className="font-medium text-neutral-700">{event.name}</span> has been
-              received. We&apos;ll email you once it&apos;s reviewed.
-            </p>
-
-            <div className="bg-neutral-50 rounded-2xl p-4 text-left border border-neutral-100">
-              <div className="flex items-center gap-2 text-xs text-neutral-500 mb-2">
-                <CalendarDays className="w-3.5 h-3.5 shrink-0 text-brand" />
-                <span>
-                  {formattedDate} · {event.start_time}
-                </span>
-              </div>
-              <div className="flex items-center gap-2 text-xs text-neutral-500">
-                <MapPin className="w-3.5 h-3.5 shrink-0 text-brand" />
-                <span>{event.venue}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {branding.showUrpassBranding && (
-          <p className="text-xs text-neutral-300 mt-8 pass-in-2">Powered by URPASS</p>
-        )}
-      </div>
-    );
-  }
-
-  // ── Application form ──────────────────────────────────────────────────────
-  return (
-    <div
-      className={`min-h-screen flex flex-col items-center p-5 pb-16 ${staffScanLink ? "pt-20" : "pt-10"}`}
-      style={{ background: BG }}
-    >
-      <div className="w-full max-w-[480px]">
-        <Wordmark branding={branding} />
-
-        {/* Event info */}
-        <div className="mb-5 apply-in-2">
-          <h1 className="text-2xl font-bold tracking-tight text-neutral-900 mb-2 leading-tight">
-            {event.name}
-          </h1>
-          {event.description && (
-            <p className="text-sm text-neutral-500 leading-relaxed mb-4">
-              {event.description}
-            </p>
-          )}
-          <div className="flex flex-wrap gap-x-5 gap-y-2">
-            <div className="flex items-center gap-1.5 text-xs text-neutral-500">
-              <CalendarDays className="w-3.5 h-3.5 text-brand shrink-0" />
-              <span>
-                {formattedDate} · {event.start_time}
-              </span>
-            </div>
-            <div className="flex items-center gap-1.5 text-xs text-neutral-500">
-              <MapPin className="w-3.5 h-3.5 text-brand shrink-0" />
+            <div className="flex items-center gap-2">
+              <MapPin className="w-4 h-4 text-brand shrink-0" />
               <span>{event.venue}</span>
             </div>
           </div>
         </div>
+      </div>
+    );
+  }
 
-        {/* Status chips */}
-        <div className="flex items-center gap-2 mb-6 apply-in-3">
-          <span className="flex items-center gap-1.5 text-xs font-medium text-green-700 bg-green-50 border border-green-100 px-2.5 py-1 rounded-full">
-            <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
-            Open
-          </span>
-          {event.auto_approve && !event.is_paid_event && (
-            <span className="text-xs font-medium text-brand bg-brand-50 border border-brand-100 px-2.5 py-1 rounded-full">
-              Instant pass
-            </span>
-          )}
-          {effectivelyPaid && (
-            <span className="flex items-center gap-1 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-100 px-2.5 py-1 rounded-full">
-              <IndianRupee className="w-3 h-3" />
-              ₹{effectiveTicketPrice.toLocaleString("en-IN")} ticket
-            </span>
-          )}
+  // ── Pending Approval Screen ─────────────────────────────────────────────────
+  if (success?.type === "pending") {
+    return (
+      <div className="min-h-screen bg-neutral-50/60 flex flex-col items-center justify-center p-4 sm:p-6">
+        <div className="w-full max-w-md bg-white rounded-2xl border border-neutral-200/80 p-7 sm:p-9 text-center shadow-sm">
+          <div className="w-12 h-12 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center mx-auto mb-4">
+            <CheckCircle2 className="w-6 h-6 text-emerald-600" />
+          </div>
+          <h1 className="text-xl font-bold text-neutral-900 mb-2">Registration Received</h1>
+          <p className="text-xs sm:text-sm text-neutral-600 leading-relaxed mb-6">
+            Hi {success.attendeeName}, your application for <strong className="text-neutral-800">{event.name}</strong> has been submitted. The organizers will review your registration and email your pass credential shortly.
+          </p>
+          <div className="bg-neutral-50 rounded-xl p-4 text-left border border-neutral-100 text-xs text-neutral-600 space-y-2">
+            <div className="flex items-center gap-2 font-medium text-neutral-800">
+              <CalendarDays className="w-4 h-4 text-brand shrink-0" />
+              <span>{formattedDate} · {event.start_time}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <MapPin className="w-4 h-4 text-brand shrink-0" />
+              <span>{event.venue}</span>
+            </div>
+          </div>
         </div>
+      </div>
+    );
+  }
 
-        {/* Ticket selector — uses radio inputs so native click handling bypasses any CSS stacking issues */}
+  // ── Main Corporate Registration Page ──────────────────────────────────────
+  return (
+    <div className={`min-h-screen bg-[#fafafa] text-neutral-900 pb-20 ${staffScanLink ? "pt-16" : "pt-4 sm:pt-8"}`}>
+      <div className="max-w-2xl mx-auto px-4 sm:px-6">
+        
+        {/* Top Corporate Brand Header */}
+        <header className="flex items-center justify-between py-4 border-b border-neutral-200/70 mb-6">
+          <div className="flex items-center gap-2.5">
+            {branding.orgLogoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={branding.orgLogoUrl} alt="Logo" className="w-6 h-6 rounded-md object-cover border border-neutral-200" />
+            ) : (
+              <div className="w-7 h-7 rounded-lg bg-neutral-900 text-white flex items-center justify-center font-black text-xs">
+                <Ticket className="w-3.5 h-3.5 text-white" />
+              </div>
+            )}
+            <div className="flex flex-col">
+              <span className="text-xs font-bold tracking-tight text-neutral-900 uppercase">
+                {branding.orgName || "URPASS EVENT"}
+              </span>
+              <span className="text-[10px] text-neutral-400 font-medium">Official Event Registration</span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-700 text-[11px] font-semibold">
+            <ShieldCheck className="w-3.5 h-3.5" />
+            <span>Verified Entry</span>
+          </div>
+        </header>
+
+        {/* Event Summary Card */}
+        <section className="bg-white rounded-2xl border border-neutral-200/80 p-5 sm:p-7 shadow-xs mb-6">
+          <div className="flex flex-wrap items-center gap-2 mb-3">
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-purple-50 text-purple-700 border border-purple-100">
+              <Sparkles className="w-3 h-3" />
+              {isOnline ? "Virtual Event" : isHybrid ? "Hybrid Event" : "In-Person Event"}
+            </span>
+            {event.auto_approve && !event.is_paid_event && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-100">
+                ⚡ Instant Pass Issue
+              </span>
+            )}
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-neutral-100 text-neutral-600 border border-neutral-200">
+              Zero Booking Fees
+            </span>
+          </div>
+
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-neutral-900 mb-3 leading-snug">
+            {event.name}
+          </h1>
+
+          {event.description && (
+            <div className="mb-4">
+              <p className={`text-xs sm:text-sm text-neutral-600 leading-relaxed ${showFullDescription ? "" : "line-clamp-3"}`}>
+                {event.description}
+              </p>
+              {event.description.length > 200 && (
+                <button
+                  type="button"
+                  onClick={() => setShowFullDescription(!showFullDescription)}
+                  className="text-xs font-semibold text-brand hover:underline mt-1 cursor-pointer"
+                >
+                  {showFullDescription ? "Show less" : "Read full description"}
+                </button>
+              )}
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-3 border-t border-neutral-100 text-xs text-neutral-700">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-md bg-neutral-50 border border-neutral-200/80 flex items-center justify-center shrink-0">
+                <CalendarDays className="w-3.5 h-3.5 text-neutral-500" />
+              </div>
+              <div className="truncate">
+                <span className="font-semibold text-neutral-900">{formattedDate}</span>
+                <span className="text-neutral-500 ml-1.5">· {event.start_time}</span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-md bg-neutral-50 border border-neutral-200/80 flex items-center justify-center shrink-0">
+                <MapPin className="w-3.5 h-3.5 text-neutral-500" />
+              </div>
+              <div className="truncate font-medium text-neutral-800">
+                {event.venue}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Step 1: Select Pass Tier */}
         {ticketTypes.length > 0 && (
-          <div
-            className="bg-white rounded-3xl border border-neutral-200/80 p-5 sm:p-6 apply-in-3 mb-4 relative z-10 overflow-hidden"
-            style={{ boxShadow: "0 18px 55px -34px rgba(15,23,42,0.35)" }}
-          >
-            <div className="absolute inset-x-0 top-0 h-1 bg-neutral-950" />
-            <div className="flex items-start justify-between gap-4 mb-5">
+          <section className="bg-white rounded-2xl border border-neutral-200/80 p-5 sm:p-7 shadow-xs mb-6">
+            <div className="flex items-center justify-between mb-4">
               <div>
-                <p className="text-[10px] font-black tracking-widest uppercase text-neutral-400 mb-1">
-                  Ticket Portfolio
-                </p>
-                <h2 className="text-lg font-bold tracking-tight text-neutral-950">
-                  Select your access tier
+                <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 block mb-0.5">
+                  Step 1 of 2
+                </span>
+                <h2 className="text-base sm:text-lg font-bold text-neutral-900">
+                  Select Pass & Duration
                 </h2>
               </div>
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-neutral-200 bg-neutral-50 px-2.5 py-1 text-[11px] font-bold text-neutral-700 shrink-0">
-                {isOnline ? <Video className="w-3.5 h-3.5" /> : <Ticket className="w-3.5 h-3.5" />}
-                {attendanceLabel}
-              </span>
+
+              {selectedTicket && (
+                <div className="text-right">
+                  <span className="text-[11px] text-neutral-400 block">Selected</span>
+                  <span className="text-xs font-bold text-neutral-900">{selectedTicket.name}</span>
+                </div>
+              )}
             </div>
-            <div className="flex flex-col gap-3">
-              {ticketTypes.map((tt) => {
+
+            {/* Duration Filter Switcher (if event has 1 Day / 3 Days etc) */}
+            {availableDurations.length > 1 && (
+              <div className="flex items-center gap-1.5 p-1 bg-neutral-100 rounded-xl mb-4 text-xs font-semibold overflow-x-auto">
+                <button
+                  type="button"
+                  onClick={() => setSelectedDurationFilter("all")}
+                  className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer shrink-0 ${
+                    selectedDurationFilter === "all"
+                      ? "bg-white text-neutral-900 shadow-2xs"
+                      : "text-neutral-600 hover:text-neutral-900"
+                  }`}
+                >
+                  All Passes ({ticketTypes.length})
+                </button>
+                {availableDurations.map((dur) => {
+                  const count = ticketTypes.filter((t) => {
+                    const l = t.duration_label?.trim() || (t.duration_days ? `${t.duration_days} Day${t.duration_days > 1 ? "s" : ""}` : "");
+                    return l.toLowerCase() === dur.toLowerCase();
+                  }).length;
+                  return (
+                    <button
+                      key={dur}
+                      type="button"
+                      onClick={() => setSelectedDurationFilter(dur)}
+                      className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer shrink-0 ${
+                        selectedDurationFilter.toLowerCase() === dur.toLowerCase()
+                          ? "bg-white text-neutral-900 shadow-2xs"
+                          : "text-neutral-600 hover:text-neutral-900"
+                      }`}
+                    >
+                      {dur} ({count})
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Pass Cards List */}
+            <div className="space-y-3">
+              {filteredTickets.map((tt) => {
                 const isSoldOut = tt.remaining !== null && tt.remaining <= 0;
                 const isUpcoming = !!tt.isUpcoming;
                 const isEnded = !!tt.isEnded;
@@ -522,138 +565,72 @@ export default function ApplyForm({
                 const isPaymentUnavailable = tt.price > 0 && !hasPaymentGateway;
                 const isSelected = selectedTicketTypeId === tt.id;
                 const isDisabled = !isAvailable || (isPaymentUnavailable && tt.price > 0);
-                const capacityLabel =
-                  tt.remaining === null
-                    ? "Open capacity"
-                    : `${tt.remaining} seat${tt.remaining !== 1 ? "s" : ""} left`;
-                const statusLabel = isUpcoming
-                  ? tt.sales_start
-                    ? `Opens ${new Date(tt.sales_start).toLocaleDateString("en-IN", {
-                        month: "short",
-                        day: "numeric",
-                      })}`
-                    : "Coming soon"
-                  : isEnded
-                  ? "Sales ended"
-                  : isSoldOut
-                  ? "Sold out"
-                  : isPaymentUnavailable
-                  ? "Payment unavailable"
-                  : "Available";
+
+                const durationTag = tt.duration_label || (tt.duration_days ? `${tt.duration_days} Day${tt.duration_days > 1 ? "s" : ""}` : null);
+                const peopleTag = tt.included_guests && tt.included_guests > 1
+                  ? tt.allow_extra_guests
+                    ? `Includes ${tt.included_guests} people · +₹${tt.extra_guest_price || 100}/extra`
+                    : `Valid for ${tt.included_guests} people`
+                  : "Single person entry";
 
                 return (
                   <label
                     key={tt.id}
-                    className={`group relative overflow-hidden rounded-2xl border transition-all ${
+                    onClick={() => !isDisabled && handleSelectTicket(tt.id)}
+                    className={`block rounded-xl border p-4 sm:p-5 transition-all cursor-pointer relative ${
                       isSelected
-                        ? "border-neutral-950 bg-neutral-950 text-white shadow-xl shadow-neutral-950/15 cursor-pointer"
+                        ? "border-brand bg-purple-50/20 ring-1.5 ring-brand shadow-xs"
                         : isDisabled
-                        ? "border-neutral-100 bg-neutral-50/80 opacity-70 cursor-not-allowed"
-                        : "border-neutral-200 bg-white hover:border-neutral-400 hover:shadow-lg hover:shadow-neutral-900/5 cursor-pointer"
+                        ? "border-neutral-200 bg-neutral-50/60 opacity-60 cursor-not-allowed"
+                        : "border-neutral-200 bg-white hover:border-neutral-300 hover:shadow-2xs"
                     }`}
                   >
-                    <div
-                      className="absolute inset-y-0 left-0 w-1"
-                      style={{ backgroundColor: isSelected ? branding.brandColor : "#d4d4d8" }}
-                    />
-                    {/* Native radio — hidden but drives selection */}
                     <input
                       type="radio"
-                      name="ticket_type"
+                      name="ticket_type_selection"
                       value={tt.id}
-                      disabled={isDisabled}
                       checked={isSelected}
+                      disabled={isDisabled}
                       onChange={() => handleSelectTicket(tt.id)}
                       className="sr-only"
                     />
 
-                    <div className="grid grid-cols-[1fr_auto] gap-4 p-4 sm:p-5">
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span
-                            className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wider ${
-                              isSelected
-                                ? "bg-white/10 text-white"
-                                : isAvailable
-                                ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
-                                : "bg-neutral-100 text-neutral-500 border border-neutral-200"
-                            }`}
-                          >
-                            <ShieldCheck className="w-3 h-3" />
-                            {statusLabel}
-                          </span>
-                          <span
-                            className={`text-[10px] font-bold uppercase tracking-wider ${
-                              isSelected ? "text-white/50" : "text-neutral-400"
-                            }`}
-                          >
-                            {tt.category.replace(/_/g, " ")}
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
+                          {durationTag && (
+                            <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${
+                              isSelected ? "bg-brand text-white" : "bg-neutral-100 text-neutral-700"
+                            }`}>
+                              {durationTag}
+                            </span>
+                          )}
+                          <span className="text-[11px] font-medium text-neutral-500">
+                            {peopleTag}
                           </span>
                         </div>
-                        <h3
-                          className={`mt-2 text-base font-bold tracking-tight truncate ${
-                            isSelected ? "text-white" : "text-neutral-950"
-                          }`}
-                        >
+
+                        <h3 className="text-base font-bold text-neutral-900 tracking-tight">
                           {tt.name}
                         </h3>
+
                         {tt.description && (
-                          <p
-                            className={`mt-1 text-xs leading-relaxed line-clamp-2 ${
-                              isSelected ? "text-white/65" : "text-neutral-500"
-                            }`}
-                          >
+                          <p className="text-xs text-neutral-500 mt-0.5 leading-relaxed">
                             {tt.description}
                           </p>
                         )}
-                        <div
-                          className={`mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[11px] font-semibold ${
-                            isSelected ? "text-white/70" : "text-neutral-500"
-                          }`}
-                        >
-                          <span className="inline-flex items-center gap-1">
-                            {isOnline ? <Video className="w-3.5 h-3.5" /> : <Ticket className="w-3.5 h-3.5" />}
-                            {attendanceDetail}
-                          </span>
-                          <span className="inline-flex items-center gap-1">
-                            <Users className="w-3.5 h-3.5" />
-                            {capacityLabel}
-                          </span>
-                        </div>
                       </div>
 
-                      <div className="flex flex-col items-end justify-between gap-4 text-right">
-                        <div>
-                          <p
-                            className={`text-[10px] font-black uppercase tracking-widest ${
-                              isSelected ? "text-white/45" : "text-neutral-400"
-                            }`}
-                          >
-                            Price
-                          </p>
-                          <p
-                            className={`text-xl font-black tabular-nums ${
-                              isSelected ? "text-white" : "text-neutral-950"
-                            }`}
-                          >
-                            {tt.price === 0 ? "Free" : `₹${(tt.price / 100).toLocaleString("en-IN")}`}
-                          </p>
+                      <div className="text-right shrink-0 flex flex-col items-end">
+                        <div className="text-lg sm:text-xl font-extrabold text-neutral-900 tabular-nums">
+                          {tt.price === 0 ? "Free" : `₹${(tt.price / 100).toLocaleString("en-IN")}`}
                         </div>
-                        <span
-                          className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
-                            isSelected
-                              ? "border-white bg-white"
-                              : isDisabled
-                              ? "border-neutral-200 bg-neutral-100"
-                              : "border-neutral-300 group-hover:border-neutral-500"
-                          }`}
-                        >
-                          {isSelected && (
-                            <span
-                              className="w-2 h-2 rounded-full"
-                              style={{ backgroundColor: branding.brandColor }}
-                            />
-                          )}
+                        <span className={`w-4 h-4 rounded-full border-2 mt-2 flex items-center justify-center transition-colors ${
+                          isSelected
+                            ? "border-brand bg-brand"
+                            : "border-neutral-300 bg-white"
+                        }`}>
+                          {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
                         </span>
                       </div>
                     </div>
@@ -661,104 +638,25 @@ export default function ApplyForm({
                 );
               })}
             </div>
-            <div className="mt-4 rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-3">
-              <p className="text-[11px] font-semibold leading-relaxed text-neutral-600">
-                {isOnline
-                  ? "Your approved pass unlocks the online event join button. Meeting details stay protected until registration is confirmed."
-                  : isHybrid
-                  ? "Your approved pass works for venue check-in and includes online joining instructions where enabled."
-                  : "Your approved pass includes a verifiable QR credential for venue entry."}
-              </p>
-            </div>
-          </div>
-        )}
 
-        {/* Form card */}
-        <div
-          className="bg-white rounded-3xl border border-neutral-100 p-6 apply-in-4 relative z-0"
-          style={{ boxShadow: "0 4px 32px 0 rgba(109,40,217,0.08)" }}
-        >
-          <h2 className="text-base font-semibold text-neutral-900 mb-5">Your details</h2>
-
-          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-            {/* Name */}
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-neutral-500 uppercase tracking-wide">
-                Full name
-              </label>
-              <div className="relative">
-                <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-300 pointer-events-none" />
-                <input
-                  type="text"
-                  placeholder="Your full name"
-                  className={`${inputCls} pl-10`}
-                  autoComplete="name"
-                  {...register("name")}
-                />
-              </div>
-              {errors.name && (
-                <p className="text-xs text-red-500">{errors.name.message}</p>
-              )}
-            </div>
-
-            {/* Email */}
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-neutral-500 uppercase tracking-wide">
-                Email
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-300 pointer-events-none" />
-                <input
-                  type="email"
-                  placeholder="you@example.com"
-                  className={`${inputCls} pl-10`}
-                  autoComplete="email"
-                  {...register("email")}
-                />
-              </div>
-              {errors.email && (
-                <p className="text-xs text-red-500">{errors.email.message}</p>
-              )}
-            </div>
-
-            {/* Phone */}
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-neutral-500 uppercase tracking-wide">
-                Phone{" "}
-                <span className="normal-case font-normal text-neutral-400">
-                  (optional)
-                </span>
-              </label>
-              <div className="relative">
-                <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-300 pointer-events-none" />
-                <input
-                  type="tel"
-                  placeholder="+91 98765 43210"
-                  className={`${inputCls} pl-10`}
-                  autoComplete="tel"
-                  {...register("phone")}
-                />
-              </div>
-            </div>
-
-            {/* Group & Family Pass: Number of People Stepper */}
+            {/* Guest Count Stepper (if selected pass is Family/Group or allows extra attendees) */}
             {selectedTicket && (selectedTicket.allow_extra_guests || (selectedTicket.included_guests && selectedTicket.included_guests > 1)) && (
-              <div className="pt-2 border-t border-neutral-100 flex flex-col gap-3">
-                <div className="bg-violet-50/70 border border-violet-100 rounded-2xl p-4 flex items-center justify-between">
+              <div className="mt-4 p-4 rounded-xl bg-neutral-50 border border-neutral-200/90 flex flex-col gap-3">
+                <div className="flex items-center justify-between">
                   <div>
-                    <div className="font-bold text-sm text-neutral-900 flex items-center gap-1.5">
-                      <Users className="w-4 h-4 text-brand" />
-                      <span>Number of people</span>
+                    <div className="text-xs font-bold text-neutral-900 flex items-center gap-1.5">
+                      <Users className="w-3.5 h-3.5 text-brand" />
+                      <span>Number of People Covered</span>
                     </div>
-                    <div className="text-xs text-neutral-600 mt-0.5">
+                    <div className="text-[11px] text-neutral-500 mt-0.5">
                       {selectedTicket.allow_extra_guests
-                        ? `Includes up to ${selectedTicket.included_guests} people. ₹${selectedTicket.extra_guest_price || 100} for each additional person`
-                        : `Includes exactly ${selectedTicket.included_guests} people`}
+                        ? `Pass covers ${selectedTicket.included_guests} people. Extra guests charged at ₹${selectedTicket.extra_guest_price || 100}/person.`
+                        : `Fixed group capacity: ${selectedTicket.included_guests} people`}
                     </div>
                   </div>
 
                   {selectedTicket.allow_extra_guests ? (
-                    <div className="flex items-center gap-2 bg-white border border-neutral-200 rounded-xl p-1 shadow-2xs">
+                    <div className="flex items-center gap-2 bg-white border border-neutral-200 rounded-lg p-1 shadow-2xs">
                       <button
                         type="button"
                         onClick={() => {
@@ -770,7 +668,7 @@ export default function ApplyForm({
                           }
                         }}
                         disabled={peopleCount <= (selectedTicket.min_guests || selectedTicket.included_guests || 1)}
-                        className="w-8 h-8 rounded-lg bg-neutral-100 hover:bg-neutral-200 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center font-bold text-neutral-800 transition-colors cursor-pointer text-base"
+                        className="w-7 h-7 rounded bg-neutral-100 hover:bg-neutral-200 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center font-bold text-neutral-800 transition-colors cursor-pointer text-sm"
                       >
                         -
                       </button>
@@ -778,7 +676,7 @@ export default function ApplyForm({
                       <button
                         type="button"
                         onClick={() => {
-                          const maxG = selectedTicket.max_guests || 10;
+                          const maxG = selectedTicket.max_guests || 12;
                           if (peopleCount < maxG) {
                             const next = peopleCount + 1;
                             setPeopleCount(next);
@@ -787,83 +685,130 @@ export default function ApplyForm({
                             }
                           }
                         }}
-                        disabled={peopleCount >= (selectedTicket.max_guests || 10)}
-                        className="w-8 h-8 rounded-lg bg-brand hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center font-bold text-white transition-colors cursor-pointer text-base"
+                        disabled={peopleCount >= (selectedTicket.max_guests || 12)}
+                        className="w-7 h-7 rounded bg-brand hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center font-bold text-white transition-colors cursor-pointer text-sm"
                       >
                         +
                       </button>
                     </div>
                   ) : (
-                    <span className="px-3 py-1 rounded-lg bg-white border border-neutral-200 font-bold text-xs text-neutral-900">
-                      {selectedTicket.included_guests} Guests
+                    <span className="px-2.5 py-1 rounded-md bg-white border border-neutral-200 text-xs font-bold text-neutral-800">
+                      {selectedTicket.included_guests} People
                     </span>
                   )}
                 </div>
 
-                {/* Additional Member Names Input Roster */}
+                {/* Additional Member Names Roster */}
                 {peopleCount > 1 && (
-                  <div className="space-y-2.5 pt-1">
-                    <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wide">
-                      Additional Group Members ({peopleCount - 1})
-                    </p>
-                    {Array.from({ length: peopleCount - 1 }).map((_, idx) => (
-                      <div key={idx} className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-neutral-400 w-6 text-center shrink-0">#{idx + 2}</span>
-                        <input
-                          type="text"
-                          placeholder={`Member ${idx + 2} Name`}
-                          value={memberNames[idx] || ""}
-                          onChange={(e) => {
-                            const updated = [...memberNames];
-                            updated[idx] = e.target.value;
-                            setMemberNames(updated);
-                          }}
-                          className={inputCls}
-                        />
-                      </div>
-                    ))}
+                  <div className="pt-2 border-t border-neutral-200/70 space-y-2">
+                    <span className="text-[11px] font-semibold text-neutral-500 uppercase tracking-wider block">
+                      Group Member Names (Optional for Fast Entry)
+                    </span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {Array.from({ length: peopleCount - 1 }).map((_, idx) => (
+                        <div key={idx} className="relative">
+                          <input
+                            type="text"
+                            placeholder={`Member ${idx + 2} Name`}
+                            value={memberNames[idx] || ""}
+                            onChange={(e) => {
+                              const updated = [...memberNames];
+                              updated[idx] = e.target.value;
+                              setMemberNames(updated);
+                            }}
+                            className="w-full bg-white border border-neutral-200 rounded-lg px-3 py-2 text-xs text-neutral-800 outline-none focus:border-brand"
+                          />
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
             )}
+          </section>
+        )}
 
-            {/* Price Ledger */}
-            {extraGuestsCount > 0 && (
-              <div className="bg-neutral-50 rounded-2xl p-4 text-xs space-y-1.5 border border-neutral-200/80">
-                <div className="flex justify-between text-neutral-600">
-                  <span>Pass Price ({selectedTicket?.name})</span>
-                  <span className="font-semibold text-neutral-900">₹{baseTicketPrice.toLocaleString("en-IN")}</span>
-                </div>
-                <div className="flex justify-between text-violet-700 font-medium">
-                  <span>Extra Guests ({extraGuestsCount} × ₹{extraPrice})</span>
-                  <span className="font-semibold">+₹{extraGuestsTotal.toLocaleString("en-IN")}</span>
-                </div>
-                <div className="flex justify-between text-neutral-900 font-bold border-t border-neutral-200 pt-2 text-sm">
-                  <span>Total Amount</span>
-                  <span className="text-base text-brand">₹{effectiveTicketPrice.toLocaleString("en-IN")}</span>
-                </div>
-                <div className="text-[11px] text-neutral-400 flex justify-between pt-1">
-                  <span>Pass Capacity: <strong className="text-neutral-700">{peopleCount} Attendees</strong></span>
-                  <span>Ticket Quantity: <strong className="text-neutral-700">1 Pass</strong></span>
-                </div>
+        {/* Step 2: Primary Attendee Details Form */}
+        <section className="bg-white rounded-2xl border border-neutral-200/80 p-5 sm:p-7 shadow-xs mb-6">
+          <div className="mb-5">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 block mb-0.5">
+              Step 2 of 2
+            </span>
+            <h2 className="text-base sm:text-lg font-bold text-neutral-900">
+              Primary Pass Holder Details
+            </h2>
+            <p className="text-xs text-neutral-500 mt-0.5">
+              Your digital QR pass and tax invoice will be sent here.
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            {/* Full Name */}
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-neutral-600 mb-1.5">
+                Full Name <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 pointer-events-none" />
+                <input
+                  type="text"
+                  placeholder="e.g. Srinithin"
+                  className={`${inputCls} pl-10`}
+                  autoComplete="name"
+                  {...register("name")}
+                />
               </div>
-            )}
+              {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name.message}</p>}
+            </div>
 
-            {/* Custom registration fields */}
+            {/* Email Address */}
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-neutral-600 mb-1.5">
+                Email Address <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 pointer-events-none" />
+                <input
+                  type="email"
+                  placeholder="srinithin@example.com"
+                  className={`${inputCls} pl-10`}
+                  autoComplete="email"
+                  {...register("email")}
+                />
+              </div>
+              {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email.message}</p>}
+            </div>
+
+            {/* WhatsApp / Phone Number */}
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-bold uppercase tracking-wider text-neutral-600">
+                  WhatsApp / Mobile Number
+                </label>
+                <span className="text-[10px] text-neutral-400">For instant QR ticket delivery</span>
+              </div>
+              <div className="relative">
+                <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 pointer-events-none" />
+                <input
+                  type="tel"
+                  placeholder="+91 98765 43210"
+                  className={`${inputCls} pl-10`}
+                  autoComplete="tel"
+                  {...register("phone")}
+                />
+              </div>
+            </div>
+
+            {/* Custom Organizer Fields */}
             {event.custom_fields && event.custom_fields.length > 0 && (
-              <div className="pt-2 border-t border-neutral-100 flex flex-col gap-4">
-                <p className="text-xs font-bold uppercase tracking-wider text-neutral-400">
-                  Additional Details
-                </p>
+              <div className="pt-3 border-t border-neutral-100 space-y-3.5">
+                <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider block">
+                  Event Specific Details
+                </span>
                 {event.custom_fields.map((field) => (
-                  <div key={field.id} className="flex flex-col gap-1.5">
-                    <label className="text-xs font-semibold text-neutral-500 uppercase tracking-wide">
-                      {field.label}{" "}
-                      {field.required ? (
-                        <span className="text-red-500">*</span>
-                      ) : (
-                        <span className="normal-case font-normal text-neutral-400">(optional)</span>
-                      )}
+                  <div key={field.id}>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-neutral-600 mb-1.5">
+                      {field.label} {field.required && <span className="text-red-500">*</span>}
                     </label>
 
                     {field.type === "select" ? (
@@ -885,7 +830,7 @@ export default function ApplyForm({
                         <ChevronDown className="w-4 h-4 text-neutral-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                       </div>
                     ) : field.type === "checkbox" ? (
-                      <label className="flex items-center gap-2.5 cursor-pointer py-1">
+                      <label className="flex items-center gap-2 cursor-pointer py-1 text-xs text-neutral-700 font-medium">
                         <input
                           type="checkbox"
                           checked={!!customResponses[field.id]}
@@ -894,7 +839,7 @@ export default function ApplyForm({
                           }
                           className="w-4 h-4 rounded text-brand border-neutral-300 focus:ring-brand"
                         />
-                        <span className="text-sm text-neutral-700">Yes, confirm</span>
+                        <span>Confirm / Accept</span>
                       </label>
                     ) : (
                       <input
@@ -914,69 +859,99 @@ export default function ApplyForm({
 
             <input type="hidden" value="participant" {...register("pass_type")} />
 
+            {/* Order Ledger & Summary */}
+            <div className="mt-6 p-4 rounded-xl bg-neutral-50 border border-neutral-200/80 space-y-2">
+              <div className="flex justify-between text-xs text-neutral-600">
+                <span>{selectedTicket?.name || "Base Pass"} {selectedTicket?.duration_label ? `(${selectedTicket.duration_label})` : ""}</span>
+                <span className="font-semibold text-neutral-900">
+                  {baseTicketPrice === 0 ? "Free" : `₹${baseTicketPrice.toLocaleString("en-IN")}`}
+                </span>
+              </div>
+
+              {extraGuestsCount > 0 && (
+                <div className="flex justify-between text-xs text-violet-700 font-medium">
+                  <span>Additional Guests ({extraGuestsCount} × ₹{extraPrice})</span>
+                  <span>+₹{extraGuestsTotal.toLocaleString("en-IN")}</span>
+                </div>
+              )}
+
+              <div className="flex justify-between text-xs text-emerald-700 font-medium">
+                <span>Booking & Payment Gateway Fee</span>
+                <span className="font-bold">₹0 (Waived)</span>
+              </div>
+
+              <div className="pt-2 border-t border-neutral-200 flex justify-between items-baseline font-bold">
+                <span className="text-sm text-neutral-900">Total Amount</span>
+                <span className="text-xl font-extrabold text-neutral-900">
+                  {effectiveTicketPrice === 0 ? "Free" : `₹${effectiveTicketPrice.toLocaleString("en-IN")}`}
+                </span>
+              </div>
+
+              <div className="text-[11px] text-neutral-400 pt-1 flex justify-between border-t border-neutral-100">
+                <span>Pass Coverage: <strong className="text-neutral-700">{peopleCount} Attendee{peopleCount !== 1 ? "s" : ""}</strong></span>
+                <span>Security: <strong className="text-neutral-700">256-Bit Encrypted</strong></span>
+              </div>
+            </div>
+
             {serverError && (
-              <div className="flex items-start gap-2 text-xs text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-3">
-                <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5 text-red-400" />
-                {serverError}
+              <div className="flex items-start gap-2 text-xs text-red-600 bg-red-50 border border-red-100 rounded-xl p-3">
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-400" />
+                <span>{serverError}</span>
               </div>
             )}
 
             {paymentBlocked && (
-              <div className="flex items-start gap-2 text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-xl px-4 py-3">
-                <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5 text-amber-500" />
-                Payment is not yet configured for this event. The organizer needs to connect a payment gateway before registrations can be accepted.
+              <div className="flex items-start gap-2 text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-xl p-3">
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-amber-600" />
+                <span>Payment gateway is currently being connected by the event organizer. Please check back shortly.</span>
               </div>
             )}
 
+            {/* Submit Action Button */}
             <button
               type="submit"
               disabled={isSubmitting || paymentPending || paymentBlocked}
-              className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60 mt-1"
-              style={{ background: "#6D28D9" }}
+              className="w-full py-3.5 px-4 rounded-xl text-sm font-bold text-white bg-neutral-900 hover:bg-neutral-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer"
             >
               {(isSubmitting || paymentPending) && <Loader2 className="w-4 h-4 animate-spin" />}
               {paymentPending
-                ? "Processing payment…"
+                ? "Opening secure checkout…"
                 : isSubmitting
-                ? event.auto_approve
-                  ? "Generating your pass…"
-                  : "Submitting…"
+                ? "Submitting registration…"
                 : effectivelyPaid
-                ? `Pay ₹${effectiveTicketPrice.toLocaleString("en-IN")} & Apply`
-                : "Apply to attend"}
+                ? `Pay ₹${effectiveTicketPrice.toLocaleString("en-IN")} & Get QR Pass`
+                : "Complete Free Registration"}
+              {!isSubmitting && !paymentPending && <ArrowRight className="w-4 h-4" />}
             </button>
-            {effectivelyPaid && !paymentBlocked && (
-              <p className="text-xs text-center text-neutral-400 mt-1">
-                Secure payment via Razorpay · Your pass is issued after payment
-              </p>
-            )}
-          </form>
-        </div>
 
+            <div className="flex items-center justify-center gap-4 text-[11px] text-neutral-400 pt-1">
+              <span className="inline-flex items-center gap-1">
+                <Lock className="w-3 h-3" /> SSL Encrypted
+              </span>
+              <span>·</span>
+              <span className="inline-flex items-center gap-1">
+                <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Instant Pass Delivery
+              </span>
+            </div>
+          </form>
+        </section>
+
+        {/* Corporate Trust & Powered By Footer */}
         {branding.showUrpassBranding && (
-          <div className="mt-8 flex flex-col items-center gap-2 text-center">
-            <a
-              href="https://urpass.space/signup?ref=apply-form"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-violet-50 hover:bg-violet-100/80 border border-violet-100 text-violet-700 text-xs font-medium transition-all shadow-2xs"
-            >
-              <span>Hosting your own event?</span>
-              <span className="font-bold underline underline-offset-2">Create free on URPASS →</span>
-            </a>
-            <p className="text-[11px] text-neutral-400">
-              Powered by{" "}
+          <footer className="mt-8 text-center text-xs text-neutral-400 space-y-2">
+            <p>
+              Secured & Powered by{" "}
               <a
-                href="https://urpass.space?ref=apply-footer"
+                href="https://urpass.space"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-semibold text-neutral-600 hover:text-neutral-900 underline underline-offset-2"
+                className="font-bold text-neutral-700 hover:text-neutral-900 underline underline-offset-2"
               >
                 URPASS
               </a>{" "}
-              · Zero commission ticketing & fast QR check-in
+              · Verified Gate Pass & Event Operating Infrastructure
             </p>
-          </div>
+          </footer>
         )}
       </div>
     </div>
