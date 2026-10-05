@@ -10,8 +10,8 @@ describe("UrPass One Enterprise Authentication & Organisation Access Suite", () 
     // Clear storage keys between tests
     await StorageService.removeItem(CONFIG.STORAGE_KEYS.AUTH_TOKEN);
     await StorageService.removeItem(CONFIG.STORAGE_KEYS.USER_PROFILE);
-    await StorageService.removeItem(CONFIG.STORAGE_KEYS.SELECTED_ORG_ID);
-    await StorageService.removeItem(CONFIG.STORAGE_KEYS.SELECTED_EVENT_ID);
+    await StorageService.removeItem(CONFIG.STORAGE_KEYS.LAST_ORG_ID);
+    await StorageService.removeItem(CONFIG.STORAGE_KEYS.LAST_EVENT_ID);
     await StorageService.removeItem(CONFIG.STORAGE_KEYS.DEVICE_ID);
   });
 
@@ -200,17 +200,17 @@ describe("UrPass One Enterprise Authentication & Organisation Access Suite", () 
 
     it("should handle full logout by purging session tokens while keeping device integrity", async () => {
       await StorageService.setItem(CONFIG.STORAGE_KEYS.AUTH_TOKEN, "jwt-token-sample");
-      await StorageService.setItem(CONFIG.STORAGE_KEYS.SELECTED_ORG_ID, "org-sample");
-      await StorageService.setItem(CONFIG.STORAGE_KEYS.SELECTED_EVENT_ID, "evt-sample");
+      await StorageService.setItem(CONFIG.STORAGE_KEYS.LAST_ORG_ID, "org-sample");
+      await StorageService.setItem(CONFIG.STORAGE_KEYS.LAST_EVENT_ID, "evt-sample");
 
       // Purge session
       await StorageService.removeItem(CONFIG.STORAGE_KEYS.AUTH_TOKEN);
-      await StorageService.removeItem(CONFIG.STORAGE_KEYS.SELECTED_ORG_ID);
-      await StorageService.removeItem(CONFIG.STORAGE_KEYS.SELECTED_EVENT_ID);
+      await StorageService.removeItem(CONFIG.STORAGE_KEYS.LAST_ORG_ID);
+      await StorageService.removeItem(CONFIG.STORAGE_KEYS.LAST_EVENT_ID);
 
       expect(await StorageService.getItem(CONFIG.STORAGE_KEYS.AUTH_TOKEN)).toBeNull();
-      expect(await StorageService.getItem(CONFIG.STORAGE_KEYS.SELECTED_ORG_ID)).toBeNull();
-      expect(await StorageService.getItem(CONFIG.STORAGE_KEYS.SELECTED_EVENT_ID)).toBeNull();
+      expect(await StorageService.getItem(CONFIG.STORAGE_KEYS.LAST_ORG_ID)).toBeNull();
+      expect(await StorageService.getItem(CONFIG.STORAGE_KEYS.LAST_EVENT_ID)).toBeNull();
     });
   });
 });
