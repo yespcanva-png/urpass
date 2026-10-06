@@ -28,6 +28,7 @@ import { attendeeSchema, type AttendeeInput } from "@/lib/validations/attendee";
 import { submitApplication } from "@/app/actions/attendees";
 import type { ApplyTicketType } from "./page";
 import type { CustomFieldDefinition } from "@/types";
+import EventImageCarousel from "@/components/events/EventImageCarousel";
 
 interface EventInfo {
   id: string;
@@ -41,6 +42,7 @@ interface EventInfo {
   ticket_price: number;
   event_type: string;
   custom_fields?: CustomFieldDefinition[];
+  event_images?: string[];
 }
 
 interface Branding {
@@ -96,12 +98,14 @@ export default function ApplyForm({
   staffScanLink,
   ticketTypes = [],
   hasPaymentGateway = true,
+  eventImages = [],
 }: {
   event: EventInfo;
   branding: Branding;
   staffScanLink?: string | null;
   ticketTypes?: ApplyTicketType[];
   hasPaymentGateway?: boolean;
+  eventImages?: string[];
 }) {
   const router = useRouter();
   const [success, setSuccess] = useState<SuccessState | null>(null);
@@ -458,7 +462,13 @@ export default function ApplyForm({
         </header>
 
         {/* Event Summary Card */}
-        <section className="bg-white rounded-2xl border border-neutral-200/80 p-5 sm:p-7 shadow-xs mb-6">
+        <section className="bg-white rounded-2xl border border-neutral-200/80 p-5 sm:p-7 shadow-xs mb-6 overflow-hidden">
+          {eventImages && eventImages.length > 0 && (
+            <div className="mb-5 -mx-5 -mt-5 sm:-mx-7 sm:-mt-7">
+              <EventImageCarousel images={eventImages} eventName={event.name} />
+            </div>
+          )}
+
           <div className="flex flex-wrap items-center gap-2 mb-3">
             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-purple-50 text-purple-700 border border-purple-100">
               <Sparkles className="w-3 h-3" />
@@ -480,14 +490,18 @@ export default function ApplyForm({
 
           {event.description && (
             <div className="mb-4">
-              <p className={`text-xs sm:text-sm text-neutral-600 leading-relaxed ${showFullDescription ? "" : "line-clamp-3"}`}>
+              <div
+                className={`text-xs sm:text-sm text-neutral-600 leading-relaxed whitespace-pre-wrap break-words font-normal ${
+                  showFullDescription ? "" : "line-clamp-4"
+                }`}
+              >
                 {event.description}
-              </p>
+              </div>
               {event.description.length > 200 && (
                 <button
                   type="button"
                   onClick={() => setShowFullDescription(!showFullDescription)}
-                  className="text-xs font-semibold text-brand hover:underline mt-1 cursor-pointer"
+                  className="text-xs font-semibold text-brand hover:underline mt-1.5 cursor-pointer"
                 >
                   {showFullDescription ? "Show less" : "Read full description"}
                 </button>
@@ -635,7 +649,7 @@ export default function ApplyForm({
                         </h3>
 
                         {tt.description && (
-                          <p className="text-xs text-neutral-500 mt-0.5 leading-relaxed">
+                          <p className="text-xs text-neutral-500 mt-0.5 leading-relaxed whitespace-pre-wrap break-words">
                             {tt.description}
                           </p>
                         )}
@@ -653,6 +667,48 @@ export default function ApplyForm({
                           {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
                         </span>
                       </div>
+                    </div>
+
+                    {/* Direct Buy Now / Instant Select Action inside Pass Card */}
+                    <div className="mt-3.5 pt-3 border-t border-neutral-100 flex items-center justify-between gap-2">
+                      <div className="text-[11px] text-neutral-500 font-medium truncate">
+                        {isAvailable ? (
+                          isSelected ? (
+                            <span className="text-purple-700 font-bold flex items-center gap-1">
+                              <CheckCircle2 className="w-3.5 h-3.5" /> Selected Pass
+                            </span>
+                          ) : (
+                            <span>Tap card or button to select</span>
+                          )
+                        ) : isSoldOut ? (
+                          <span className="text-red-500 font-semibold">Sold Out</span>
+                        ) : isUpcoming ? (
+                          <span className="text-amber-600 font-semibold">Coming Soon</span>
+                        ) : (
+                          <span className="text-neutral-400">Unavailable</span>
+                        )}
+                      </div>
+
+                      {isAvailable && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (!isSelected) {
+                              handleSelectTicket(tt.id);
+                            }
+                            handleFloatingBookClick();
+                          }}
+                          className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
+                            isSelected
+                              ? "bg-neutral-900 hover:bg-neutral-800 text-white shadow-xs active:scale-[0.98]"
+                              : "bg-purple-50 hover:bg-purple-100 text-purple-900 border border-purple-200"
+                          }`}
+                        >
+                          <span>{tt.price === 0 ? "Claim Pass" : isSelected ? "Buy Now" : "Select & Buy"}</span>
+                          <ArrowRight className="w-3 h-3" />
+                        </button>
+                      )}
                     </div>
                   </label>
                 );

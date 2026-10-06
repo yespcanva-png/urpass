@@ -9,6 +9,8 @@ import { ArrowLeft, Loader2, Lock, Building2, MapPin, Wifi, LayoutGrid, Link2, A
 import { eventSchema, type EventInput } from "@/lib/validations/event";
 import { createEvent } from "@/app/actions/events";
 import { detectCountryClient } from "@/lib/country-config";
+import EventImageUploader from "@/components/events/EventImageUploader";
+import EventImageCarousel from "@/components/events/EventImageCarousel";
 
 type OrgOption = { id: string; slug: string; name: string; brand_color: string; role: string };
 
@@ -94,6 +96,7 @@ export default function CreateEventForm({
   const [submitMode, setSubmitMode] = useState<"active" | "draft">("active");
   const [selectedPlatform, setSelectedPlatform] = useState<"zoom" | "google_meet" | "teams" | "custom" | null>(null);
   const [country, setCountry] = useState<"IN" | "GB">("IN");
+  const [eventImages, setEventImages] = useState<string[]>([]);
 
   const atLimit = !unlimited && activeEventCount >= maxEvents;
 
@@ -266,7 +269,7 @@ export default function CreateEventForm({
     setSuccessMessage("");
     setIsNavigating(false);
     try {
-      const payload: EventInput = { ...data, status: submitMode };
+      const payload: EventInput = { ...data, status: submitMode, event_images: eventImages };
       const result = await createEvent(payload, organizationId);
       if (result?.error) {
         setServerError(`Could not create event: ${result.error}`);
@@ -426,14 +429,41 @@ export default function CreateEventForm({
                 />
               </Field>
 
-              <Field label="Description" error={errors.description?.message}>
+              <Field
+                label="Description"
+                error={errors.description?.message}
+                hint="Paragraphs, line breaks, and formatting are preserved automatically on your registration page."
+              >
                 <textarea
-                  rows={3}
-                  placeholder="What's this event about? (optional)"
-                  className={`${inputCls} resize-none`}
+                  rows={6}
+                  placeholder="What's this event about? Share the agenda, highlights, speaker bios, and pass perks..."
+                  className={`${inputCls} min-h-[140px] sm:min-h-[180px] resize-y leading-relaxed font-normal`}
                   {...register("description")}
                 />
               </Field>
+
+              {/* Event Photos & Gallery */}
+              <div className="flex flex-col gap-2 pt-1 border-t border-neutral-100">
+                <div>
+                  <label className="text-sm font-medium text-neutral-800">Event Photos & Posters</label>
+                  <p className="text-xs text-neutral-400 mt-0.5">
+                    Add 1 to 4 photos or posters. They appear in a swipeable horizontal carousel on your event page.
+                  </p>
+                </div>
+                <EventImageUploader
+                  images={eventImages}
+                  onChange={setEventImages}
+                  maxImages={4}
+                />
+                {eventImages.length > 0 && (
+                  <div className="mt-3 p-3 bg-neutral-50 rounded-xl border border-neutral-100">
+                    <span className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider block mb-2">
+                      Live Carousel Preview
+                    </span>
+                    <EventImageCarousel images={eventImages} />
+                  </div>
+                )}
+              </div>
 
               {/* Venue — hidden for pure online events */}
               {eventType !== "online" && (

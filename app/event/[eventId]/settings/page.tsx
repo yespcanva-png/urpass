@@ -8,13 +8,15 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Loader2, Trash2, AlertTriangle, IndianRupee,
   FileText, CalendarDays, Users, CreditCard,
-  Radio, CheckCircle2, AlertCircle, Wifi, Link2, Ticket,
+  Radio, CheckCircle2, AlertCircle, Wifi, Link2, Ticket, Image as ImageIcon,
 } from "lucide-react";
 import { eventSchema, type EventInput } from "@/lib/validations/event";
-import { updateEvent, updateEventStatus, deleteEvent } from "@/app/actions/events";
+import { updateEvent, updateEventStatus, deleteEvent, updateEventImagesAction } from "@/app/actions/events";
 import { setTicketTypeStatus, createDefaultTicketType } from "@/app/actions/ticket-types";
 import { createClient } from "@/lib/supabase/client";
 import CustomFieldsBuilder from "@/components/event/CustomFieldsBuilder";
+import EventImageUploader from "@/components/events/EventImageUploader";
+import EventImageCarousel from "@/components/events/EventImageCarousel";
 import type { CustomFieldDefinition } from "@/types";
 
 const inputCls =
@@ -174,6 +176,8 @@ export default function EventSettingsPage() {
   const [ticketTypes, setTicketTypes]           = useState<{id: string; name: string; price: number; status: string}[]>([]);
   const [creatingDefault, setCreatingDefault]   = useState(false);
   const [customFieldsLimit, setCustomFieldsLimit] = useState<{ max: number; isUnlimited: boolean }>({ max: 3, isUnlimited: false });
+  const [eventImages, setEventImages]           = useState<string[]>([]);
+  const [imagesSaving, setImagesSaving]         = useState(false);
 
   const {
     register,
@@ -189,17 +193,28 @@ export default function EventSettingsPage() {
   const isPaidEvent        = watch("is_paid_event");
   const eventType          = watch("event_type");
 
+  async function handleImagesChange(newImages: string[]) {
+    setEventImages(newImages);
+    setImagesSaving(true);
+    await updateEventImagesAction(eventId, newImages);
+    setImagesSaving(false);
+  }
+
   useEffect(() => {
     async function load() {
       const supabase = createClient();
       const [{ data }, { data: { user } }] = await Promise.all([
         supabase.from("events")
-          .select("id,name,description,event_date,start_time,end_time,venue,attendee_limit,status,application_enabled,auto_approve,is_paid_event,ticket_price,event_type,meeting_url,meeting_platform,sms_enabled,whatsapp_enabled,email_enabled,sms_fallback_enabled,sms_sender_id,sms_dlt_entity_id,sms_dlt_template_id,sms_provider,custom_fields")
+          .select("id,name,description,event_date,start_time,end_time,venue,attendee_limit,status,application_enabled,auto_approve,is_paid_event,ticket_price,event_type,meeting_url,meeting_platform,sms_enabled,whatsapp_enabled,email_enabled,sms_fallback_enabled,sms_sender_id,sms_dlt_entity_id,sms_dlt_template_id,sms_provider,custom_fields,custom_pass_design")
           .eq("id", eventId).single(),
         supabase.auth.getUser(),
       ]);
       if (data) {
         setEvent(data as unknown as EventRow);
+        const design = (data.custom_pass_design as { event_images?: string[] } | null);
+        if (design?.event_images && Array.isArray(design.event_images)) {
+          setEventImages(design.event_images);
+        }
         reset({
           name: data.name, description: data.description ?? "",
           event_date: data.event_date, start_time: data.start_time, end_time: data.end_time,
@@ -325,14 +340,52 @@ export default function EventSettingsPage() {
           <Field label="Event name" error={errors.name?.message}>
             <input type="text" className={inputCls} placeholder="My Awesome Event" {...register("name")} />
           </Field>
-          <Field label="Description" error={errors.description?.message}>
-            <textarea rows={3} className={`${inputCls} resize-none`} placeholder="What's this event about?" {...register("description")} />
+          <Field
+            label="Description"
+            error={errors.description?.message}
+            hint="Spaces, bullet points, and paragraph breaks are preserved on your public registration page."
+          >
+            <textarea
+              rows={6}
+              className={`${inputCls} min-h-[140px] sm:min-h-[180px] resize-y leading-relaxed font-sans`}
+              placeholder="What's this event about? Describe key attractions, schedules, eligibility, guidelines..."
+              {...register("description")}
+            />
           </Field>
           {eventType !== "online" && (
             <Field label="Venue" error={errors.venue?.message}>
               <input type="text" className={inputCls} placeholder="Venue name or address" {...register("venue")} />
             </Field>
           )}
+        </SectionCard>
+
+        {/* ── Event Photos & Gallery ── */}
+        <SectionCard
+          icon={ImageIcon}
+          title="Event Photos & Gallery"
+          subtitle="Showcase venue photos, posters, and past highlights in a mobile swipeable carousel"
+        >
+          <div className="flex flex-col gap-4">
+            <EventImageUploader
+              images={eventImages}
+              onChange={handleImagesChange}
+              maxImages={4}
+            />
+            {imagesSaving && (
+              <p className="text-xs text-brand font-medium flex items-center gap-1.5">
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                Saving photos…
+              </p>
+            )}
+            {eventImages.length > 0 && (
+              <div className="pt-3 border-t border-neutral-100 flex flex-col gap-2">
+                <span className="text-xs font-semibold text-neutral-500 uppercase tracking-wide">
+                  Public Registration Live Preview (Horizontal Swipe Carousel)
+                </span>
+                <EventImageCarousel images={eventImages} eventName={watch("name") || "Event"} />
+              </div>
+            )}
+          </div>
         </SectionCard>
 
         {/* ── Meeting details (online / hybrid) ── */}

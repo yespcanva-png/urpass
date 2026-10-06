@@ -105,6 +105,8 @@ interface EventInfo {
   event_type: string;
   apply_slug?: string | null;
   custom_fields?: import("@/types").CustomFieldDefinition[];
+  event_images?: string[];
+  custom_pass_design?: Record<string, unknown> | null;
 }
 
 interface Branding {
@@ -135,7 +137,7 @@ export default async function ApplyPage({
 
   const query = supabase
     .from("events")
-    .select("id, name, description, event_date, start_time, venue, auto_approve, is_paid_event, ticket_price, attendee_limit, organizer_id, organization_id, event_type, apply_slug, custom_fields")
+    .select("id, name, description, event_date, start_time, venue, auto_approve, is_paid_event, ticket_price, attendee_limit, organizer_id, organization_id, event_type, apply_slug, custom_fields, custom_pass_design")
     .eq("status", "active")
     .eq("application_enabled", true);
 
@@ -467,6 +469,11 @@ export default async function ApplyPage({
     },
   };
 
+  const rawImages = (event.custom_pass_design as Record<string, unknown> | null)?.event_images;
+  const eventImages: string[] = Array.isArray(rawImages)
+    ? rawImages.filter((img): img is string => typeof img === "string" && img.length > 0)
+    : [];
+
   return (
     <>
       <script
@@ -534,6 +541,7 @@ export default async function ApplyPage({
         staffScanLink={staffScanLink}
         ticketTypes={ticketTypes}
         hasPaymentGateway={hasPaymentGateway}
+        eventImages={eventImages}
       />
     </>
   );

@@ -45,6 +45,7 @@ export const eventSchema = z
       .transform((val) => (val ? val : null)),
     currency: z.enum(["INR", "GBP", "USD"]).default("INR"),
     timezone: z.string().default("Asia/Kolkata"),
+    event_images: z.array(z.string()).optional(),
   })
   .superRefine((data, ctx) => {
     // 1. End time must be after start time

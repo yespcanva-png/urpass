@@ -104,6 +104,13 @@ export async function createEvent(data: EventInput, organizationId?: string): Pr
   if (workspace_id) eventData.workspace_id = workspace_id;
   if (location_id) eventData.location_id = location_id;
 
+  const cleanImages = (baseFields.event_images || [])
+    .filter((img) => typeof img === "string" && img.trim().length > 0)
+    .slice(0, 4);
+  if (cleanImages.length > 0) {
+    eventData.custom_pass_design = { event_images: cleanImages };
+  }
+
   let event: { id: string; attendee_limit: number } | null = null;
   const { data: insertedEvent, error } = await supabase
     .from("events")
@@ -311,6 +318,78 @@ export async function updateEvent(
   revalidatePath(`/event/${eventId}`);
   revalidatePath(`/event/${eventId}/settings`);
   revalidatePath("/dashboard/events");
+}
+
+export async function updateEventImagesAction(
+  eventId: string,
+  images: string[]
+): Promise<ActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const { data: event } = await supabase
+    .from("events")
+    .select("id, organizer_id, organization_id, custom_pass_design, apply_slug")
+    .eq("id", eventId)
+    .single();
+
+  if (!event) return { error: "Event not found." };
+
+  let isAuthorized = event.organizer_id === user.id;
+  if (!isAuthorized && event.organization_id) {
+    const { data: member } = await supabase
+      .from("organization_members")
+      .select("role")
+      .eq("organization_id", event.organization_id)
+      .eq("user_id", user.id)
+      .eq("status", "active")
+      .in("role", ["owner", "admin", "event_manager"])
+      .maybeSingle();
+    isAuthorized = !!member;
+  }
+
+  if (!isAuthorized) {
+    return { error: "You are not authorized to update this event." };
+  }
+
+  const cleanImages = (images || [])
+    .filter((img) => typeof img === "string" && img.trim().length > 0)
+    .slice(0, 4);
+
+  const currentDesign = (event.custom_pass_design as Record<string, unknown>) || {};
+  const updatedDesign = {
+    ...currentDesign,
+    event_images: cleanImages,
+  };
+
+  const { error } = await supabase
+    .from("events")
+    .update({ custom_pass_design: updatedDesign })
+    .eq("id", eventId);
+
+  if (error) {
+    if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      const admin = adminClient();
+      const { error: adminErr } = await admin
+        .from("events")
+        .update({ custom_pass_design: updatedDesign })
+        .eq("id", eventId);
+      if (adminErr) return { error: adminErr.message };
+    } else {
+      return { error: error.message };
+    }
+  }
+
+  revalidatePath(`/event/${eventId}`);
+  revalidatePath(`/event/${eventId}/settings`);
+  revalidatePath(`/apply/${eventId}`);
+  if (event.apply_slug) {
+    revalidatePath(`/apply/${event.apply_slug}`);
+  }
+  return { eventId };
 }
 
 export async function updateEventCustomFields(
