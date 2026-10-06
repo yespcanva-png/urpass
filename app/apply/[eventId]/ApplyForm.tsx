@@ -29,13 +29,16 @@ import { submitApplication } from "@/app/actions/attendees";
 import type { ApplyTicketType } from "./page";
 import type { CustomFieldDefinition } from "@/types";
 import EventImageCarousel from "@/components/events/EventImageCarousel";
+import { getEventDateRange, formatEventTimeWithOvernight, type EventDateOption } from "@/lib/utils";
 
 interface EventInfo {
   id: string;
   name: string;
   description: string | null;
   event_date: string;
+  end_date?: string | null;
   start_time: string;
+  end_time?: string | null;
   venue: string;
   auto_approve: boolean;
   is_paid_event: boolean;
@@ -55,7 +58,7 @@ interface Branding {
 type SuccessState = { type: "pending" | "waitlisted"; attendeeName: string };
 
 const inputCls =
-  "w-full bg-white border border-neutral-200 rounded-xl px-4 py-3 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none transition-all focus:border-brand focus:ring-2 focus:ring-brand/10 hover:border-neutral-300";
+  "w-full bg-white border border-neutral-200 rounded-xl px-4 py-3 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none transition-all focus:border-red-500 focus:ring-2 focus:ring-red-500/10 hover:border-neutral-300";
 
 interface RazorpayResponse {
   razorpay_payment_id: string;
@@ -155,6 +158,36 @@ export default function ApplyForm({
   const [peopleCount, setPeopleCount] = useState<number>(() => selectedTicket?.included_guests || 1);
   const [memberNames, setMemberNames] = useState<string[]>([]);
 
+  // Calculate event date range
+  const maxTicketDurationDays = useMemo(() => {
+    let maxD = 1;
+    ticketTypes.forEach((t) => {
+      if (t.duration_days && t.duration_days > maxD) {
+        maxD = t.duration_days;
+      }
+    });
+    return maxD;
+  }, [ticketTypes]);
+
+  const availableEventDates = useMemo(() => {
+    return getEventDateRange(event.event_date, event.end_date, maxTicketDurationDays);
+  }, [event.event_date, event.end_date, maxTicketDurationDays]);
+
+  const [selectedDate, setSelectedDate] = useState<string>(
+    () => availableEventDates[0]?.date || event.event_date
+  );
+
+  const isSingleDayPass = useMemo(() => {
+    if (!selectedTicket) return false;
+    const durLabel = (selectedTicket.duration_label || "").toLowerCase();
+    return (
+      selectedTicket.duration_days === 1 ||
+      durLabel.includes("1 day") ||
+      durLabel.includes("single day") ||
+      durLabel === "1d"
+    );
+  }, [selectedTicket]);
+
   // Sync people count whenever ticket selection changes
   const handleSelectTicket = (id: string) => {
     setSelectedTicketTypeId(id);
@@ -193,12 +226,27 @@ export default function ApplyForm({
     }
   };
 
-  const formattedDate = new Date(event.event_date).toLocaleDateString("en-IN", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
+  const formattedSchedule = useMemo(() => {
+    const startDateFormatted = new Date(event.event_date).toLocaleDateString("en-IN", {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+
+    let dateText = startDateFormatted;
+    if (event.end_date && event.end_date !== event.event_date) {
+      const endDateFormatted = new Date(event.end_date).toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      });
+      dateText = `${new Date(event.event_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })} – ${endDateFormatted}`;
+    }
+
+    const timeText = formatEventTimeWithOvernight(event.start_time, event.end_time || "");
+    return { dateText, timeText };
+  }, [event.event_date, event.end_date, event.start_time, event.end_time]);
 
   const isOnline = event.event_type === "online";
   const isHybrid = event.event_type === "hybrid";
@@ -235,6 +283,17 @@ export default function ApplyForm({
       ...memberNames.filter((n) => n.trim().length > 0).map((n) => ({ name: n.trim(), role: "member" })),
     ];
 
+    const finalResponses = {
+      ...customResponses,
+      ...(availableEventDates.length > 1
+        ? {
+            attendance_date: selectedDate,
+            selected_date: selectedDate,
+            attendance_day_label: availableEventDates.find((d) => d.date === selectedDate)?.label || selectedDate,
+          }
+        : {}),
+    };
+
     try {
       const res = await fetch("/api/razorpay/ticket-order", {
         method: "POST",
@@ -246,6 +305,7 @@ export default function ApplyForm({
           buyerEmail: data.email,
           guestCount: peopleCount,
           groupMembers,
+          selectedDate: availableEventDates.length > 1 ? selectedDate : undefined,
         }),
       });
       const order = (await res.json().catch(() => ({}))) as TicketOrderResponse;
@@ -269,7 +329,7 @@ export default function ApplyForm({
         description: `${selectedTicket?.name || "Pass"} — ${event.name}`,
         order_id: order.orderId,
         prefill: { name: data.name, email: data.email, contact: data.phone ?? "" },
-        theme: { color: branding.brandColor || "#6D28D9" },
+        theme: { color: branding.brandColor || "#E11D48" },
         handler: async (response: RazorpayResponse) => {
           try {
             const result = await submitApplication(
@@ -281,7 +341,7 @@ export default function ApplyForm({
                 signature: response.razorpay_signature,
               },
               selectedTicketTypeId,
-              customResponses
+              finalResponses
             );
             setPaymentPending(false);
             if (result?.error) {
@@ -354,13 +414,24 @@ export default function ApplyForm({
       }
     }
 
+    const finalResponses = {
+      ...customResponses,
+      ...(availableEventDates.length > 1
+        ? {
+            attendance_date: selectedDate,
+            selected_date: selectedDate,
+            attendance_day_label: availableEventDates.find((d) => d.date === selectedDate)?.label || selectedDate,
+          }
+        : {}),
+    };
+
     if (effectivelyPaid) {
       return handlePaidSubmit(data);
     }
 
     setServerError("");
     try {
-      const result = await submitApplication(event.id, data, undefined, selectedTicketTypeId, customResponses);
+      const result = await submitApplication(event.id, data, undefined, selectedTicketTypeId, finalResponses);
       if (result?.error) {
         setServerError(result.error);
         return;
@@ -391,8 +462,8 @@ export default function ApplyForm({
           </p>
           <div className="bg-neutral-50 rounded-xl p-4 text-left border border-neutral-100 text-xs text-neutral-600 space-y-2">
             <div className="flex items-center gap-2 font-medium text-neutral-800">
-              <CalendarDays className="w-4 h-4 text-brand shrink-0" />
-              <span>{formattedDate} · {event.start_time}</span>
+              <CalendarDays className="w-4 h-4 text-red-600 shrink-0" />
+              <span>{formattedSchedule.dateText} · {formattedSchedule.timeText}</span>
             </div>
             <div className="flex items-center gap-2">
               <MapPin className="w-4 h-4 text-brand shrink-0" />
@@ -418,8 +489,8 @@ export default function ApplyForm({
           </p>
           <div className="bg-neutral-50 rounded-xl p-4 text-left border border-neutral-100 text-xs text-neutral-600 space-y-2">
             <div className="flex items-center gap-2 font-medium text-neutral-800">
-              <CalendarDays className="w-4 h-4 text-brand shrink-0" />
-              <span>{formattedDate} · {event.start_time}</span>
+              <CalendarDays className="w-4 h-4 text-red-600 shrink-0" />
+              <span>{formattedSchedule.dateText} · {formattedSchedule.timeText}</span>
             </div>
             <div className="flex items-center gap-2">
               <MapPin className="w-4 h-4 text-brand shrink-0" />
@@ -512,11 +583,11 @@ export default function ApplyForm({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-3 border-t border-neutral-100 text-xs text-neutral-700">
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 rounded-md bg-neutral-50 border border-neutral-200/80 flex items-center justify-center shrink-0">
-                <CalendarDays className="w-3.5 h-3.5 text-neutral-500" />
+                <CalendarDays className="w-3.5 h-3.5 text-red-600" />
               </div>
               <div className="truncate">
-                <span className="font-semibold text-neutral-900">{formattedDate}</span>
-                <span className="text-neutral-500 ml-1.5">· {event.start_time}</span>
+                <span className="font-semibold text-neutral-900">{formattedSchedule.dateText}</span>
+                <span className="text-neutral-500 ml-1.5">· {formattedSchedule.timeText}</span>
               </div>
             </div>
 
@@ -613,7 +684,7 @@ export default function ApplyForm({
                     onClick={() => !isDisabled && handleSelectTicket(tt.id)}
                     className={`block rounded-xl border p-4 sm:p-5 transition-all cursor-pointer relative ${
                       isSelected
-                        ? "border-brand bg-purple-50/20 ring-1.5 ring-brand shadow-xs"
+                        ? "border-red-500 bg-red-50/20 ring-1.5 ring-red-500 shadow-xs"
                         : isDisabled
                         ? "border-neutral-200 bg-neutral-50/60 opacity-60 cursor-not-allowed"
                         : "border-neutral-200 bg-white hover:border-neutral-300 hover:shadow-2xs"
@@ -634,7 +705,7 @@ export default function ApplyForm({
                         <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
                           {durationTag && (
                             <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${
-                              isSelected ? "bg-brand text-white" : "bg-neutral-100 text-neutral-700"
+                              isSelected ? "bg-red-600 text-white" : "bg-neutral-100 text-neutral-700"
                             }`}>
                               {durationTag}
                             </span>
@@ -661,7 +732,7 @@ export default function ApplyForm({
                         </div>
                         <span className={`w-4 h-4 rounded-full border-2 mt-2 flex items-center justify-center transition-colors ${
                           isSelected
-                            ? "border-brand bg-brand"
+                            ? "border-red-600 bg-red-600"
                             : "border-neutral-300 bg-white"
                         }`}>
                           {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
@@ -674,7 +745,7 @@ export default function ApplyForm({
                       <div className="text-[11px] text-neutral-500 font-medium truncate">
                         {isAvailable ? (
                           isSelected ? (
-                            <span className="text-purple-700 font-bold flex items-center gap-1">
+                            <span className="text-red-600 font-bold flex items-center gap-1">
                               <CheckCircle2 className="w-3.5 h-3.5" /> Selected Pass
                             </span>
                           ) : (
@@ -701,8 +772,8 @@ export default function ApplyForm({
                           }}
                           className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
                             isSelected
-                              ? "bg-neutral-900 hover:bg-neutral-800 text-white shadow-xs active:scale-[0.98]"
-                              : "bg-purple-50 hover:bg-purple-100 text-purple-900 border border-purple-200"
+                              ? "bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white shadow-xs shadow-red-500/25 active:scale-[0.98]"
+                              : "bg-red-50 hover:bg-red-100 text-red-700 border border-red-200"
                           }`}
                         >
                           <span>{tt.price === 0 ? "Claim Pass" : isSelected ? "Buy Now" : "Select & Buy"}</span>
@@ -714,6 +785,70 @@ export default function ApplyForm({
                 );
               })}
             </div>
+
+            {/* Single-Day Pass Date Selection (For Multi-Day Events) */}
+            {availableEventDates.length > 1 && (
+              <div className="mt-4 p-4 rounded-xl bg-neutral-50 border border-neutral-200/90 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-neutral-900">
+                    <CalendarDays className="w-4 h-4 text-red-600" />
+                    <span>
+                      {isSingleDayPass
+                        ? "Select Your Attendance Day"
+                        : "Event Dates & Validity"}
+                    </span>
+                  </div>
+                  {isSingleDayPass ? (
+                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-red-100 text-red-700 border border-red-200">
+                      1-Day Selection
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                      All Days Included
+                    </span>
+                  )}
+                </div>
+
+                {isSingleDayPass ? (
+                  <>
+                    <p className="text-xs text-neutral-500">
+                      Choose which day you plan to attend ({availableEventDates.length} days available):
+                    </p>
+                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 pt-1">
+                      {availableEventDates.map((opt) => {
+                        const isDaySelected = selectedDate === opt.date;
+                        return (
+                          <button
+                            key={opt.date}
+                            type="button"
+                            onClick={() => setSelectedDate(opt.date)}
+                            className={`py-2 px-2.5 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center ${
+                              isDaySelected
+                                ? "bg-gradient-to-r from-red-600 to-rose-600 text-white border-transparent shadow-md shadow-red-500/25 ring-2 ring-red-500/40 font-bold"
+                                : "bg-white text-neutral-800 border-neutral-200 hover:border-red-300 hover:bg-red-50/20 font-medium"
+                            }`}
+                          >
+                            <span className={`text-[10px] font-bold uppercase tracking-wider ${isDaySelected ? "text-white/90" : "text-neutral-400"}`}>
+                              {opt.dayName}
+                            </span>
+                            <span className="text-xs sm:text-sm font-extrabold mt-0.5">
+                              {opt.label}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-xs text-neutral-600">
+                    This pass grants you access to all {availableEventDates.length} event days:{" "}
+                    <strong className="text-neutral-900">
+                      {availableEventDates.map((d) => d.label).join(" · ")}
+                    </strong>
+                  </p>
+                )}
+              </div>
+            )}
 
             {/* Guest Count Stepper (if selected pass is Family/Group or allows extra attendees) */}
             {selectedTicket && (selectedTicket.allow_extra_guests || (selectedTicket.included_guests && selectedTicket.included_guests > 1)) && (
@@ -762,7 +897,7 @@ export default function ApplyForm({
                           }
                         }}
                         disabled={peopleCount >= (selectedTicket.max_guests || 12)}
-                        className="w-7 h-7 rounded bg-brand hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center font-bold text-white transition-colors cursor-pointer text-sm"
+                        className="w-7 h-7 rounded bg-red-600 hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center font-bold text-white transition-colors cursor-pointer text-sm"
                       >
                         +
                       </button>
@@ -792,7 +927,7 @@ export default function ApplyForm({
                               updated[idx] = e.target.value;
                               setMemberNames(updated);
                             }}
-                            className="w-full bg-white border border-neutral-200 rounded-lg px-3 py-2 text-xs text-neutral-800 outline-none focus:border-brand"
+                            className="w-full bg-white border border-neutral-200 rounded-lg px-3 py-2 text-xs text-neutral-800 outline-none focus:border-red-500"
                           />
                         </div>
                       ))}
@@ -916,7 +1051,7 @@ export default function ApplyForm({
                           onChange={(e) =>
                             setCustomResponses({ ...customResponses, [field.id]: e.target.checked })
                           }
-                          className="w-4 h-4 rounded text-brand border-neutral-300 focus:ring-brand"
+                          className="w-4 h-4 rounded text-red-600 border-neutral-300 focus:ring-red-500"
                         />
                         <span>Confirm / Accept</span>
                       </label>
@@ -947,8 +1082,19 @@ export default function ApplyForm({
                 </span>
               </div>
 
+              {availableEventDates.length > 1 && (
+                <div className="flex justify-between text-xs text-neutral-700">
+                  <span>Selected Attendance Date</span>
+                  <span className="font-bold text-red-600">
+                    {isSingleDayPass
+                      ? availableEventDates.find((d) => d.date === selectedDate)?.fullLabel || selectedDate
+                      : `All Days (${availableEventDates[0]?.label} – ${availableEventDates[availableEventDates.length - 1]?.label})`}
+                  </span>
+                </div>
+              )}
+
               {extraGuestsCount > 0 && (
-                <div className="flex justify-between text-xs text-violet-700 font-medium">
+                <div className="flex justify-between text-xs text-red-700 font-medium">
                   <span>Additional Guests ({extraGuestsCount} × ₹{extraPrice})</span>
                   <span>+₹{extraGuestsTotal.toLocaleString("en-IN")}</span>
                 </div>
@@ -990,7 +1136,7 @@ export default function ApplyForm({
             <button
               type="submit"
               disabled={isSubmitting || paymentPending || paymentBlocked}
-              className="w-full py-3.5 px-4 rounded-xl text-sm font-bold text-white bg-neutral-900 hover:bg-neutral-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full py-3.5 px-4 rounded-xl text-sm font-extrabold text-white bg-gradient-to-r from-red-600 via-rose-600 to-red-600 hover:from-red-500 hover:to-rose-500 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-red-500/25 hover:shadow-xl hover:shadow-red-500/35 flex items-center justify-center gap-2 cursor-pointer"
             >
               {(isSubmitting || paymentPending) && <Loader2 className="w-4 h-4 animate-spin" />}
               {paymentPending
@@ -998,8 +1144,8 @@ export default function ApplyForm({
                 : isSubmitting
                 ? "Submitting registration…"
                 : effectivelyPaid
-                ? `Pay ₹${effectiveTicketPrice.toLocaleString("en-IN")} & Get QR Pass`
-                : "Complete Free Registration"}
+                ? `Register & Pay ₹${effectiveTicketPrice.toLocaleString("en-IN")}`
+                : "Register Now — Free"}
               {!isSubmitting && !paymentPending && <ArrowRight className="w-4 h-4" />}
             </button>
 
@@ -1067,7 +1213,7 @@ export default function ApplyForm({
               type="button"
               onClick={handleFloatingBookClick}
               disabled={isSubmitting || paymentPending || paymentBlocked}
-              className="inline-flex items-center justify-center gap-1.5 sm:gap-2 bg-neutral-900 hover:bg-neutral-800 active:scale-[0.98] text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold text-xs sm:text-sm shadow-md transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+              className="inline-flex items-center justify-center gap-1.5 sm:gap-2 bg-gradient-to-r from-red-600 via-rose-600 to-red-600 hover:from-red-500 hover:to-rose-500 active:scale-[0.98] text-white px-5 sm:px-7 py-2.5 sm:py-3 rounded-xl font-extrabold text-xs sm:text-sm shadow-lg shadow-red-500/30 hover:shadow-xl hover:shadow-red-500/40 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
             >
               {isSubmitting || paymentPending ? (
                 <>
@@ -1080,8 +1226,8 @@ export default function ApplyForm({
                 <>
                   <span>
                     {effectivelyPaid
-                      ? `Book Now · ₹${effectiveTicketPrice.toLocaleString("en-IN")}`
-                      : "Book Free Pass"}
+                      ? `Register Now · ₹${effectiveTicketPrice.toLocaleString("en-IN")}`
+                      : "Register Now — Free"}
                   </span>
                   <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </>

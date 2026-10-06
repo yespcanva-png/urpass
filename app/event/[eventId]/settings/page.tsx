@@ -202,6 +202,22 @@ export default function EventSettingsPage() {
   const autoApprove        = watch("auto_approve");
   const isPaidEvent        = watch("is_paid_event");
   const eventType          = watch("event_type");
+  const eventDate          = watch("event_date");
+  const endDate            = watch("end_date");
+  const startTime          = watch("start_time");
+  const endTime            = watch("end_time");
+
+  const isOvernight = (() => {
+    if (!startTime || !endTime) return false;
+    const startParts = startTime.split(":");
+    const endParts = endTime.split(":");
+    if (startParts.length >= 2 && endParts.length >= 2) {
+      const s = parseInt(startParts[0], 10) * 60 + (parseInt(startParts[1], 10) || 0);
+      const e = parseInt(endParts[0], 10) * 60 + (parseInt(endParts[1], 10) || 0);
+      return e < s;
+    }
+    return false;
+  })();
 
   async function handleImagesChange(newImages: string[]) {
     setEventImages(newImages);
@@ -269,13 +285,15 @@ export default function EventSettingsPage() {
       if (data) {
         setEvent(data as unknown as EventRow);
         setSlugValue(data.apply_slug || "");
-        const design = (data.custom_pass_design as { event_images?: string[] } | null);
+        const design = (data.custom_pass_design as { event_images?: string[]; end_date?: string | null } | null);
         if (design?.event_images && Array.isArray(design.event_images)) {
           setEventImages(design.event_images);
         }
         reset({
           name: data.name, description: data.description ?? "",
-          event_date: data.event_date, start_time: data.start_time, end_time: data.end_time,
+          event_date: data.event_date,
+          end_date: design?.end_date ?? null,
+          start_time: data.start_time, end_time: data.end_time,
           venue: data.venue ?? "", attendee_limit: data.attendee_limit,
           status: data.status as "draft" | "active",
           application_enabled: data.application_enabled, auto_approve: data.auto_approve,
@@ -616,16 +634,43 @@ export default function EventSettingsPage() {
         )}
 
         {/* ── Date & time ── */}
-        <SectionCard icon={CalendarDays} title="Date & time">
-          <Field label="Event date" error={errors.event_date?.message}>
-            <input type="date" className={inputCls} {...register("event_date")} />
-          </Field>
+        <SectionCard icon={CalendarDays} title="Date & time" subtitle="Schedule and event duration">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Field label="Start date" error={errors.event_date?.message}>
+              <input type="date" className={inputCls} {...register("event_date")} />
+            </Field>
+
+            <Field
+              label="End date (Optional for multi-day)"
+              error={errors.end_date?.message}
+              hint="Leave blank if single-day or overnight event"
+            >
+              <input
+                type="date"
+                min={eventDate || undefined}
+                className={inputCls}
+                {...register("end_date")}
+              />
+            </Field>
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <Field label="Start time" error={errors.start_time?.message}>
               <input type="time" className={inputCls} {...register("start_time")} />
             </Field>
-            <Field label="End time" error={errors.end_time?.message}>
-              <input type="time" className={inputCls} {...register("end_time")} />
+            <Field
+              label={isOvernight ? "End time (Next day)" : "End time"}
+              error={errors.end_time?.message}
+              hint={isOvernight ? "✨ Event continues past midnight into the next day" : undefined}
+            >
+              <div className="relative">
+                <input type="time" className={inputCls} {...register("end_time")} />
+                {isOvernight && (
+                  <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-bold uppercase tracking-wider bg-purple-100 text-purple-800 px-2 py-0.5 rounded pointer-events-none">
+                    Next Day
+                  </span>
+                )}
+              </div>
             </Field>
           </div>
         </SectionCard>

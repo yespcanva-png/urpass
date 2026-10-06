@@ -138,8 +138,11 @@ export async function createEvent(data: EventInput, organizationId?: string): Pr
   const cleanImages = (baseFields.event_images || [])
     .filter((img) => typeof img === "string" && img.trim().length > 0)
     .slice(0, 4);
-  if (cleanImages.length > 0) {
-    eventData.custom_pass_design = { event_images: cleanImages };
+  const passDesign: Record<string, unknown> = {};
+  if (cleanImages.length > 0) passDesign.event_images = cleanImages;
+  if (baseFields.end_date) passDesign.end_date = baseFields.end_date;
+  if (Object.keys(passDesign).length > 0) {
+    eventData.custom_pass_design = passDesign;
   }
 
   let event: { id: string; attendee_limit: number } | null = null;
@@ -259,14 +262,14 @@ export async function updateEvent(
   // Verify access: user is creator or an owner/admin/event_manager in the org
   let { data: event } = await supabase
     .from("events")
-    .select("id, organizer_id, organization_id, apply_slug")
+    .select("id, organizer_id, organization_id, apply_slug, custom_pass_design")
     .eq("id", eventId)
     .maybeSingle();
 
   if (!event && process.env.SUPABASE_SERVICE_ROLE_KEY) {
     const { data: adminEv } = await db
       .from("events")
-      .select("id, organizer_id, organization_id, apply_slug")
+      .select("id, organizer_id, organization_id, apply_slug, custom_pass_design")
       .eq("id", eventId)
       .maybeSingle();
     event = adminEv;
@@ -338,6 +341,18 @@ export async function updateEvent(
   if (baseUpdateFields.meeting_platform !== undefined) updatePayload.meeting_platform = baseUpdateFields.meeting_platform;
   if (workspace_id) updatePayload.workspace_id = workspace_id;
   if (location_id) updatePayload.location_id = location_id;
+
+  if (baseUpdateFields.end_date !== undefined || baseUpdateFields.event_images !== undefined) {
+    const currentDesign = (event.custom_pass_design as Record<string, unknown>) || {};
+    const updatedDesign: Record<string, unknown> = { ...currentDesign };
+    if (baseUpdateFields.end_date !== undefined) {
+      updatedDesign.end_date = baseUpdateFields.end_date || null;
+    }
+    if (baseUpdateFields.event_images !== undefined) {
+      updatedDesign.event_images = baseUpdateFields.event_images;
+    }
+    updatePayload.custom_pass_design = updatedDesign;
+  }
 
   let newSlugApplied: string | null = null;
   if (baseUpdateFields.custom_slug) {

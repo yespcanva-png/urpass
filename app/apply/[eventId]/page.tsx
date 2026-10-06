@@ -96,7 +96,9 @@ interface EventInfo {
   name: string;
   description: string | null;
   event_date: string;
+  end_date?: string | null;
   start_time: string;
+  end_time?: string | null;
   venue: string;
   auto_approve: boolean;
   is_paid_event: boolean;
@@ -137,7 +139,7 @@ export default async function ApplyPage({
 
   const query = supabase
     .from("events")
-    .select("id, name, description, event_date, start_time, venue, auto_approve, is_paid_event, ticket_price, attendee_limit, organizer_id, organization_id, event_type, apply_slug, custom_fields, custom_pass_design")
+    .select("id, name, description, event_date, start_time, end_time, venue, auto_approve, is_paid_event, ticket_price, attendee_limit, organizer_id, organization_id, event_type, apply_slug, custom_fields, custom_pass_design")
     .eq("status", "active")
     .eq("application_enabled", true);
 
@@ -536,7 +538,10 @@ export default async function ApplyPage({
         </div>
       )}
       <ApplyForm
-        event={event as EventInfo}
+        event={{
+          ...event,
+          end_date: ((event.custom_pass_design as Record<string, unknown> | null)?.end_date as string | undefined) || null,
+        } as EventInfo}
         branding={branding}
         staffScanLink={staffScanLink}
         ticketTypes={ticketTypes}

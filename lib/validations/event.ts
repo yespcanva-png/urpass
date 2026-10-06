@@ -5,6 +5,7 @@ export const eventSchema = z
     name: z.string().min(2, "Name must be at least 2 characters"),
     description: z.string().optional().nullable().transform((val) => val || null),
     event_date: z.string().min(1, "Event date is required"),
+    end_date: z.string().optional().nullable(),
     start_time: z.string().min(1, "Start time is required"),
     end_time: z.string().min(1, "End time is required"),
     venue: z.string().max(500),
@@ -49,17 +50,32 @@ export const eventSchema = z
     custom_slug: z.string().max(100, "URL slug cannot exceed 100 characters").optional().nullable(),
   })
   .superRefine((data, ctx) => {
-    // 1. End time must be after start time
+    // 1. Date & Time validation (supports multi-day and overnight / past-midnight schedules)
+    if (data.event_date && data.end_date) {
+      if (data.end_date < data.event_date) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "End date cannot be earlier than start date",
+          path: ["end_date"],
+        });
+      }
+    }
+
     if (data.start_time && data.end_time) {
       const startMinutes = parseTimeToMinutes(data.start_time);
       const endMinutes = parseTimeToMinutes(data.end_time);
-      if (startMinutes !== null && endMinutes !== null && endMinutes <= startMinutes) {
+      const isSameDate = !data.end_date || data.end_date === data.event_date;
+
+      // When on the exact same date and start time equals end time
+      if (isSameDate && startMinutes !== null && endMinutes !== null && startMinutes === endMinutes) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: "End time must be after start time",
+          message: "End time cannot be the same as start time",
           path: ["end_time"],
         });
       }
+      // Note: When endMinutes < startMinutes on single-day events (e.g., 19:00 -> 01:00),
+      // it is a valid overnight schedule continuing past midnight into the next day.
     }
 
     // 2. Physical and Hybrid events must have a non-empty venue

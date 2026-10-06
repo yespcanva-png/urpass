@@ -238,6 +238,22 @@ export default function CreateEventForm({
   const currency = watch("currency");
   const eventName = watch("name");
   const customSlug = watch("custom_slug");
+  const eventDate = watch("event_date");
+  const endDate = watch("end_date");
+  const startTime = watch("start_time");
+  const endTime = watch("end_time");
+
+  const isOvernight = (() => {
+    if (!startTime || !endTime) return false;
+    const startParts = startTime.split(":");
+    const endParts = endTime.split(":");
+    if (startParts.length >= 2 && endParts.length >= 2) {
+      const s = parseInt(startParts[0], 10) * 60 + (parseInt(startParts[1], 10) || 0);
+      const e = parseInt(endParts[0], 10) * 60 + (parseInt(endParts[1], 10) || 0);
+      return e < s;
+    }
+    return false;
+  })();
 
   const previewSlug = (customSlug?.trim() ? slugify(customSlug) : slugify(eventName || "")) || "your-event-name";
 
@@ -601,18 +617,49 @@ export default function CreateEventForm({
 
             {/* Date & time */}
             <div className="bg-white border border-neutral-100 rounded-2xl p-6 flex flex-col gap-5">
-              <h2 className="text-sm font-semibold text-neutral-800">Date &amp; time</h2>
+              <div>
+                <h2 className="text-sm font-semibold text-neutral-800">Date &amp; time</h2>
+                <p className="text-xs text-neutral-400 mt-0.5">
+                  Set event schedule. Overnight events continuing past midnight (e.g. 7:00 PM → 1:00 AM) are fully supported.
+                </p>
+              </div>
 
-              <Field label="Event date" error={errors.event_date?.message}>
-                <input type="date" className={inputCls} {...register("event_date")} />
-              </Field>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Field label="Start date" error={errors.event_date?.message}>
+                  <input type="date" className={inputCls} {...register("event_date")} />
+                </Field>
+
+                <Field
+                  label="End date (Optional for multi-day)"
+                  error={errors.end_date?.message}
+                  hint="Leave blank if single-day or overnight event"
+                >
+                  <input
+                    type="date"
+                    min={eventDate || undefined}
+                    className={inputCls}
+                    {...register("end_date")}
+                  />
+                </Field>
+              </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <Field label="Start time" error={errors.start_time?.message}>
                   <input type="time" className={inputCls} {...register("start_time")} />
                 </Field>
-                <Field label="End time" error={errors.end_time?.message}>
-                  <input type="time" className={inputCls} {...register("end_time")} />
+                <Field
+                  label={isOvernight ? "End time (Next day)" : "End time"}
+                  error={errors.end_time?.message}
+                  hint={isOvernight ? "✨ Continues past midnight into the next day" : undefined}
+                >
+                  <div className="relative">
+                    <input type="time" className={inputCls} {...register("end_time")} />
+                    {isOvernight && (
+                      <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-bold uppercase tracking-wider bg-purple-100 text-purple-800 px-2 py-0.5 rounded pointer-events-none">
+                        Next Day
+                      </span>
+                    )}
+                  </div>
                 </Field>
               </div>
 

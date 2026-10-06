@@ -67,6 +67,55 @@ describe("eventSchema", () => {
     const result = eventSchema.safeParse({ ...valid, status: "active" });
     expect(result.success).toBe(true);
   });
+
+  it("accepts overnight events starting in evening and ending past midnight (e.g. 7:00 PM to 1:00 AM)", () => {
+    const overnight = {
+      ...valid,
+      event_date: "2026-10-13",
+      start_time: "19:00",
+      end_time: "01:00",
+    };
+    const result = eventSchema.safeParse(overnight);
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts multi-day event with end_date", () => {
+    const multiDay = {
+      ...valid,
+      event_date: "2026-10-13",
+      end_date: "2026-10-15",
+      start_time: "19:00",
+      end_time: "01:00",
+    };
+    const result = eventSchema.safeParse(multiDay);
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects end_date earlier than event_date", () => {
+    const invalidDates = {
+      ...valid,
+      event_date: "2026-10-15",
+      end_date: "2026-10-13",
+    };
+    const result = eventSchema.safeParse(invalidDates);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0].path).toContain("end_date");
+    }
+  });
+
+  it("rejects identical start_time and end_time on single day event", () => {
+    const identicalTime = {
+      ...valid,
+      start_time: "19:00",
+      end_time: "19:00",
+    };
+    const result = eventSchema.safeParse(identicalTime);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0].path).toContain("end_time");
+    }
+  });
 });
 
 // ── attendeeSchema ────────────────────────────────────────────────────────────

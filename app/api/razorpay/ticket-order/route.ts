@@ -53,7 +53,7 @@ function badRequest(error: string, code: string) {
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
-  const { eventId, buyerName, buyerEmail, guestCount, numberOfPeople, groupMembers } = body ?? {};
+  const { eventId, buyerName, buyerEmail, guestCount, numberOfPeople, groupMembers, selectedDate } = body ?? {};
   let { ticketTypeId } = body ?? {};
   const requestedTicketTypeId = typeof ticketTypeId === "string" ? ticketTypeId.trim() : "";
   ticketTypeId = requestedTicketTypeId || null;
@@ -257,6 +257,7 @@ export async function POST(req: NextRequest) {
         total_attendee_count: String(totalAttendeeCount),
         extra_guests_count: String(extraGuestsCount),
         extra_guests_amount: String(extraGuestsAmountRupees),
+        ...(selectedDate ? { attendance_date: String(selectedDate) } : {}),
       },
     };
 
