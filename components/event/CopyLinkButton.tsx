@@ -10,7 +10,7 @@ interface Props {
 export default function CopyLinkButton({ applySlug }: Props) {
   const [copied, setCopied] = useState(false);
 
-  const url = `${typeof window !== "undefined" ? window.location.origin : "https://urpass.space"}/apply/${applySlug}`;
+  const url = `${typeof window !== "undefined" ? window.location.origin : "https://urpass.space"}/events/${applySlug}`;
 
   async function handleCopy() {
     try {
@@ -31,11 +31,11 @@ export default function CopyLinkButton({ applySlug }: Props) {
   }
 
   return (
-    <div className="flex items-center gap-1 border border-neutral-200 rounded-xl overflow-hidden">
+    <div className="flex items-center gap-1 border border-neutral-200 rounded-xl overflow-hidden bg-white shadow-2xs">
       {/* Slug display */}
-      <div className="flex items-center gap-2 px-3 py-2">
-        <span className="text-xs text-neutral-400 font-mono">/apply/</span>
-        <span className="text-xs font-mono font-semibold tracking-wide">{applySlug}</span>
+      <div className="flex items-center gap-1.5 px-3 py-2 max-w-[260px] truncate">
+        <span className="text-xs text-neutral-400 font-mono">/events/</span>
+        <span className="text-xs font-mono font-semibold tracking-wide text-neutral-900 truncate">{applySlug}</span>
       </div>
 
       {/* Divider */}

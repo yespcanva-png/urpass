@@ -5,7 +5,7 @@ import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { eventSchema, type EventInput } from "@/lib/validations/event";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { generateApplySlug } from "@/lib/utils";
+import { generateApplySlug, slugify } from "@/lib/utils";
 import { getUserPlan } from "@/lib/plan";
 import { recordApiUsage } from "@/lib/api-usage";
 import { getSupabaseUrl } from "@/lib/supabase/config";
@@ -18,6 +18,40 @@ function adminClient() {
     getSupabaseUrl(),
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
+}
+
+export async function findAvailableEventSlug(
+  supabaseClient: ReturnType<typeof adminClient> | Awaited<ReturnType<typeof createClient>>,
+  desiredSlugOrName: string,
+  excludeEventId?: string
+): Promise<string> {
+  const cleanBase = slugify(desiredSlugOrName) || "event";
+  let candidate = cleanBase;
+  let counter = 1;
+
+  while (true) {
+    let query = supabaseClient
+      .from("events")
+      .select("id", { count: "exact", head: true })
+      .eq("apply_slug", candidate);
+
+    if (excludeEventId) {
+      query = query.neq("id", excludeEventId);
+    }
+
+    const { count } = await query;
+    if (!count || count === 0) {
+      return candidate;
+    }
+
+    counter++;
+    if (counter <= 5) {
+      candidate = `${cleanBase}-${counter}`;
+    } else {
+      const randomCode = Math.random().toString(36).slice(2, 6);
+      candidate = `${cleanBase}-${randomCode}`;
+    }
+  }
 }
 
 type ActionResult = { error?: string; eventId?: string } | undefined;
@@ -67,16 +101,13 @@ export async function createEvent(data: EventInput, organizationId?: string): Pr
     }
   }
 
-  // Generate a unique slug — retry once on collision (vanishingly rare)
-  let apply_slug = generateApplySlug();
-  const { count: slugExists } = await supabase
-    .from("events")
-    .select("*", { count: "exact", head: true })
-    .eq("apply_slug", apply_slug);
-  if ((slugExists ?? 0) > 0) apply_slug = generateApplySlug();
+  const { workspace_id, location_id, ...baseFields } = parsed.data;
+
+  // Auto-generate clean, SEO-friendly event URL slug (or use custom requested slug)
+  const desiredSlug = baseFields.custom_slug?.trim() || baseFields.name;
+  const apply_slug = await findAvailableEventSlug(supabase, desiredSlug);
 
   // If not a paid event, ensure ticket_price is 0
-  const { workspace_id, location_id, ...baseFields } = parsed.data;
 
   const eventData: Record<string, unknown> = {
     name: baseFields.name.trim(),
@@ -392,6 +423,111 @@ export async function updateEventImagesAction(
   return { eventId };
 }
 
+export async function updateEventSlugAction(
+  eventId: string,
+  newSlug: string
+): Promise<{ error?: string; slug?: string; success?: boolean }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const { data: event } = await supabase
+    .from("events")
+    .select("id, name, organizer_id, organization_id, apply_slug")
+    .eq("id", eventId)
+    .single();
+
+  if (!event) return { error: "Event not found." };
+
+  let isAuthorized = event.organizer_id === user.id;
+  if (!isAuthorized && event.organization_id) {
+    const { data: member } = await supabase
+      .from("organization_members")
+      .select("role")
+      .eq("organization_id", event.organization_id)
+      .eq("user_id", user.id)
+      .eq("status", "active")
+      .in("role", ["owner", "admin", "event_manager"])
+      .maybeSingle();
+    isAuthorized = !!member;
+  }
+
+  if (!isAuthorized) {
+    return { error: "You are not authorized to update this event URL." };
+  }
+
+  const cleanSlug = slugify(newSlug);
+  if (!cleanSlug || cleanSlug.length < 2) {
+    return { error: "Event URL slug must be at least 2 characters long." };
+  }
+  if (cleanSlug.length > 80) {
+    return { error: "Event URL slug cannot exceed 80 characters." };
+  }
+
+  // Check format: letters, numbers, and hyphens only
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(cleanSlug)) {
+    return { error: "Event URL slug can only contain lowercase letters, numbers, and hyphens." };
+  }
+
+  // Check if taken by another event
+  const { data: existing } = await supabase
+    .from("events")
+    .select("id")
+    .eq("apply_slug", cleanSlug)
+    .neq("id", eventId)
+    .maybeSingle();
+
+  if (existing) {
+    return { error: `The URL "/events/${cleanSlug}" is already taken by another event. Please choose a different URL.` };
+  }
+
+  const oldSlug = event.apply_slug;
+  const { error } = await supabase
+    .from("events")
+    .update({ apply_slug: cleanSlug, updated_at: new Date().toISOString() })
+    .eq("id", eventId);
+
+  if (error) {
+    if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      const admin = adminClient();
+      const { error: adminErr } = await admin
+        .from("events")
+        .update({ apply_slug: cleanSlug, updated_at: new Date().toISOString() })
+        .eq("id", eventId);
+      if (adminErr) return { error: adminErr.message };
+    } else {
+      return { error: error.message };
+    }
+  }
+
+  try {
+    recordLiveOpsEvent({
+      level: "INFO",
+      category: "EVENT",
+      message: `Event URL updated: "${event.name}" -> /events/${cleanSlug}`,
+      details: { eventId, oldSlug, newSlug: cleanSlug },
+    });
+  } catch {
+    // Ops log non-blocking
+  }
+
+  revalidatePath(`/event/${eventId}`);
+  revalidatePath(`/event/${eventId}/settings`);
+  revalidatePath(`/apply/${cleanSlug}`);
+  revalidatePath(`/events/${cleanSlug}`);
+  revalidatePath(`/e/${cleanSlug}`);
+  if (oldSlug) {
+    revalidatePath(`/apply/${oldSlug}`);
+    revalidatePath(`/events/${oldSlug}`);
+    revalidatePath(`/e/${oldSlug}`);
+  }
+  revalidatePath("/dashboard/events");
+
+  return { success: true, slug: cleanSlug };
+}
+
 export async function updateEventCustomFields(
   eventId: string,
   customFields: CustomFieldDefinition[]
@@ -683,7 +819,7 @@ export async function duplicateEvent(
   }
 
   const newName = `${source.name} (Copy)`;
-  const apply_slug = generateApplySlug();
+  const apply_slug = await findAvailableEventSlug(supabase, newName);
   const tomorrow = new Date(Date.now() + 86400000).toISOString().split("T")[0];
 
   const insertPayload: Record<string, unknown> = {

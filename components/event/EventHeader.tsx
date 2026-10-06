@@ -103,7 +103,7 @@ export default function EventHeader({ event, org }: EventHeaderProps) {
     year: "numeric",
   });
 
-  const publicUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/e/${event.apply_slug || event.id}`;
+  const publicUrl = `${typeof window !== "undefined" ? window.location.origin : "https://urpass.space"}/events/${event.apply_slug || event.id}`;
 
   async function handleCopyLink() {
     try {
@@ -320,7 +320,7 @@ export default function EventHeader({ event, org }: EventHeaderProps) {
 
               {/* Public Event Page */}
               <a
-                href={`/e/${event.apply_slug || event.id}`}
+                href={`/events/${event.apply_slug || event.id}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-neutral-900 hover:bg-neutral-800 text-white transition-colors shadow-2xs"

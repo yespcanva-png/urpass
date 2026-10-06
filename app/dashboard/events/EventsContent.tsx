@@ -488,7 +488,7 @@ export default function EventsContent() {
                 <div className="flex items-center gap-2 self-end sm:self-center shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-neutral-100 w-full sm:w-auto justify-end">
                   {/* Public Page Shortcut */}
                   <a
-                    href={`/e/${event.apply_slug || event.id}`}
+                    href={`/events/${event.apply_slug || event.id}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     title="View Public Event Page"

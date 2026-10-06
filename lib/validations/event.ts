@@ -46,6 +46,7 @@ export const eventSchema = z
     currency: z.enum(["INR", "GBP", "USD"]).default("INR"),
     timezone: z.string().default("Asia/Kolkata"),
     event_images: z.array(z.string()).optional(),
+    custom_slug: z.string().max(100, "URL slug cannot exceed 100 characters").optional().nullable(),
   })
   .superRefine((data, ctx) => {
     // 1. End time must be after start time

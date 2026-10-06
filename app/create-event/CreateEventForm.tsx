@@ -9,6 +9,7 @@ import { ArrowLeft, Loader2, Lock, Building2, MapPin, Wifi, LayoutGrid, Link2, A
 import { eventSchema, type EventInput } from "@/lib/validations/event";
 import { createEvent } from "@/app/actions/events";
 import { detectCountryClient } from "@/lib/country-config";
+import { slugify } from "@/lib/utils";
 import EventImageUploader from "@/components/events/EventImageUploader";
 import EventImageCarousel from "@/components/events/EventImageCarousel";
 
@@ -97,6 +98,7 @@ export default function CreateEventForm({
   const [selectedPlatform, setSelectedPlatform] = useState<"zoom" | "google_meet" | "teams" | "custom" | null>(null);
   const [country, setCountry] = useState<"IN" | "GB">("IN");
   const [eventImages, setEventImages] = useState<string[]>([]);
+  const [showCustomSlug, setShowCustomSlug] = useState(false);
 
   const atLimit = !unlimited && activeEventCount >= maxEvents;
 
@@ -234,6 +236,10 @@ export default function CreateEventForm({
   const isPaidEvent = watch("is_paid_event");
   const eventType = watch("event_type");
   const currency = watch("currency");
+  const eventName = watch("name");
+  const customSlug = watch("custom_slug");
+
+  const previewSlug = (customSlug?.trim() ? slugify(customSlug) : slugify(eventName || "")) || "your-event-name";
 
   function handleEventTypeChange(type: "physical" | "online" | "hybrid") {
     setValue("event_type", type);
@@ -420,14 +426,63 @@ export default function CreateEventForm({
                 </Field>
               )}
 
-              <Field label="Event name" error={errors.name?.message}>
-                <input
-                  type="text"
-                  placeholder="AI Workshop 2026"
-                  className={inputCls}
-                  {...register("name")}
-                />
-              </Field>
+              <div>
+                <Field label="Event name" error={errors.name?.message}>
+                  <input
+                    type="text"
+                    placeholder="Pilani Grand Garba Night 2026"
+                    className={inputCls}
+                    {...register("name")}
+                  />
+                </Field>
+
+                {/* Live SEO URL Preview & Optional Customization */}
+                <div className="mt-2.5 bg-neutral-50/80 border border-neutral-200/80 rounded-xl p-3 flex flex-col gap-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5 text-xs text-neutral-600 truncate min-w-0">
+                      <Globe className="w-3.5 h-3.5 text-brand shrink-0" />
+                      <span className="font-mono text-neutral-400 shrink-0">urpass.space/events/</span>
+                      <span className="font-mono font-bold text-neutral-900 truncate">{previewSlug}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (showCustomSlug) {
+                          setValue("custom_slug", null);
+                        }
+                        setShowCustomSlug(!showCustomSlug);
+                      }}
+                      className="text-[11px] font-semibold text-brand hover:underline shrink-0 cursor-pointer"
+                    >
+                      {showCustomSlug ? "Use Auto URL" : "Customize URL"}
+                    </button>
+                  </div>
+
+                  {showCustomSlug && (
+                    <div className="pt-2 border-t border-neutral-200/70 flex flex-col gap-1.5 animate-fadeIn">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-mono text-neutral-400 bg-white border border-neutral-200 px-2.5 py-2 rounded-lg shrink-0">
+                          /events/
+                        </span>
+                        <input
+                          type="text"
+                          placeholder="custom-event-slug"
+                          className={`${inputCls} font-mono text-xs py-2`}
+                          {...register("custom_slug", {
+                            onChange: (e) => {
+                              const val = slugify(e.target.value);
+                              setValue("custom_slug", val);
+                            },
+                          })}
+                        />
+                      </div>
+                      <p className="text-[11px] text-neutral-400">
+                        Letters, numbers, and hyphens only. Automatically optimized for SEO.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
 
               <Field
                 label="Description"

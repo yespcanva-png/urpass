@@ -9,11 +9,13 @@ import {
   Loader2, Trash2, AlertTriangle, IndianRupee,
   FileText, CalendarDays, Users, CreditCard,
   Radio, CheckCircle2, AlertCircle, Wifi, Link2, Ticket, Image as ImageIcon,
+  Globe, Copy, Check, ExternalLink, Sparkles,
 } from "lucide-react";
 import { eventSchema, type EventInput } from "@/lib/validations/event";
-import { updateEvent, updateEventStatus, deleteEvent, updateEventImagesAction } from "@/app/actions/events";
+import { updateEvent, updateEventStatus, deleteEvent, updateEventImagesAction, updateEventSlugAction } from "@/app/actions/events";
 import { setTicketTypeStatus, createDefaultTicketType } from "@/app/actions/ticket-types";
 import { createClient } from "@/lib/supabase/client";
+import { slugify } from "@/lib/utils";
 import CustomFieldsBuilder from "@/components/event/CustomFieldsBuilder";
 import EventImageUploader from "@/components/events/EventImageUploader";
 import EventImageCarousel from "@/components/events/EventImageCarousel";
@@ -158,6 +160,7 @@ type EventRow = {
   sms_dlt_entity_id?: string | null; sms_dlt_template_id?: string | null;
   sms_provider?: string | null;
   custom_fields?: CustomFieldDefinition[];
+  apply_slug?: string | null;
 };
 
 export default function EventSettingsPage() {
@@ -178,6 +181,13 @@ export default function EventSettingsPage() {
   const [customFieldsLimit, setCustomFieldsLimit] = useState<{ max: number; isUnlimited: boolean }>({ max: 3, isUnlimited: false });
   const [eventImages, setEventImages]           = useState<string[]>([]);
   const [imagesSaving, setImagesSaving]         = useState(false);
+
+  // SEO URL & Custom Slug state
+  const [slugValue, setSlugValue]               = useState("");
+  const [slugSaving, setSlugSaving]             = useState(false);
+  const [slugError, setSlugError]               = useState("");
+  const [slugSuccess, setSlugSuccess]           = useState(false);
+  const [copiedUrl, setCopiedUrl]               = useState(false);
 
   const {
     register,
@@ -200,17 +210,64 @@ export default function EventSettingsPage() {
     setImagesSaving(false);
   }
 
+  async function handleSaveSlug() {
+    setSlugSaving(true);
+    setSlugError("");
+    setSlugSuccess(false);
+
+    const clean = slugify(slugValue);
+    if (!clean || clean.length < 2) {
+      setSlugError("Event URL slug must be at least 2 characters long.");
+      setSlugSaving(false);
+      return;
+    }
+
+    const res = await updateEventSlugAction(eventId, clean);
+    setSlugSaving(false);
+
+    if (res?.error) {
+      setSlugError(res.error);
+    } else if (res?.slug) {
+      setSlugValue(res.slug);
+      setEvent((prev) => (prev ? { ...prev, apply_slug: res.slug! } : null));
+      setSlugSuccess(true);
+      setTimeout(() => setSlugSuccess(false), 3000);
+    }
+  }
+
+  function handleRegenerateSlug() {
+    const currentName = watch("name") || event?.name || "";
+    if (currentName) {
+      const generated = slugify(currentName);
+      setSlugValue(generated);
+      setSlugError("");
+    }
+  }
+
+  async function handleCopySlugUrl() {
+    const origin = typeof window !== "undefined" ? window.location.origin : "https://urpass.space";
+    const fullUrl = `${origin}/events/${slugValue || event?.apply_slug || eventId}`;
+    try {
+      await navigator.clipboard.writeText(fullUrl);
+      setCopiedUrl(true);
+      setTimeout(() => setCopiedUrl(false), 2000);
+    } catch {
+      // Fallback
+    }
+  }
+
   useEffect(() => {
     async function load() {
       const supabase = createClient();
       const [{ data }, { data: { user } }] = await Promise.all([
         supabase.from("events")
-          .select("id,name,description,event_date,start_time,end_time,venue,attendee_limit,status,application_enabled,auto_approve,is_paid_event,ticket_price,event_type,meeting_url,meeting_platform,sms_enabled,whatsapp_enabled,email_enabled,sms_fallback_enabled,sms_sender_id,sms_dlt_entity_id,sms_dlt_template_id,sms_provider,custom_fields,custom_pass_design")
+          .select("id,name,description,event_date,start_time,end_time,venue,attendee_limit,status,application_enabled,auto_approve,is_paid_event,ticket_price,event_type,meeting_url,meeting_platform,sms_enabled,whatsapp_enabled,email_enabled,sms_fallback_enabled,sms_sender_id,sms_dlt_entity_id,sms_dlt_template_id,sms_provider,custom_fields,custom_pass_design,apply_slug")
           .eq("id", eventId).single(),
         supabase.auth.getUser(),
       ]);
       if (data) {
         setEvent(data as unknown as EventRow);
+        setSlugValue(data.apply_slug || "");
         const design = (data.custom_pass_design as { event_images?: string[] } | null);
         if (design?.event_images && Array.isArray(design.event_images)) {
           setEventImages(design.event_images);
@@ -357,6 +414,124 @@ export default function EventSettingsPage() {
               <input type="text" className={inputCls} placeholder="Venue name or address" {...register("venue")} />
             </Field>
           )}
+        </SectionCard>
+
+        {/* ── Event URL & SEO Slug ── */}
+        <SectionCard
+          icon={Globe}
+          title="Event URL & SEO Slug"
+          subtitle="Clean, professional URL for search engine optimization and sharing"
+        >
+          <div className="flex flex-col gap-4">
+            {/* Live URL Link Banner */}
+            <div className="p-4 bg-neutral-50 rounded-xl border border-neutral-200/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block mb-1">
+                  Public Event Link
+                </span>
+                <div className="flex items-center gap-1.5 text-xs text-neutral-900 font-mono font-semibold truncate">
+                  <span className="text-neutral-400">https://urpass.space/events/</span>
+                  <span className="text-brand font-bold truncate">{slugValue || event.apply_slug || eventId}</span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={handleCopySlugUrl}
+                  className="px-3 py-1.5 rounded-lg border border-neutral-200 bg-white hover:bg-neutral-50 text-xs font-semibold text-neutral-700 flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+                >
+                  {copiedUrl ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-emerald-600" />
+                      <span className="text-emerald-600 font-bold">Copied</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5 text-neutral-500" />
+                      <span>Copy Link</span>
+                    </>
+                  )}
+                </button>
+
+                <a
+                  href={`/events/${slugValue || event.apply_slug || eventId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-1.5 rounded-lg border border-neutral-200 bg-white hover:bg-neutral-50 text-xs font-semibold text-neutral-700 flex items-center gap-1.5 transition-colors shadow-2xs"
+                  title="Open live public event page"
+                >
+                  <ExternalLink className="w-3.5 h-3.5 text-neutral-500" />
+                  <span>Preview</span>
+                </a>
+              </div>
+            </div>
+
+            {/* Editable Slug Input */}
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-semibold text-neutral-500 uppercase tracking-wide">
+                Customize URL Slug
+              </label>
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                <div className="relative flex-1 flex items-center">
+                  <span className="absolute left-3.5 text-xs font-mono text-neutral-400 pointer-events-none select-none">
+                    /events/
+                  </span>
+                  <input
+                    type="text"
+                    value={slugValue}
+                    onChange={(e) => {
+                      setSlugValue(slugify(e.target.value));
+                      setSlugError("");
+                      setSlugSuccess(false);
+                    }}
+                    placeholder="pilani-grand-garba-night-2026"
+                    className={`${inputCls} pl-[68px] font-mono text-xs`}
+                  />
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={handleRegenerateSlug}
+                    className="px-3 py-2.5 rounded-xl border border-neutral-200 bg-white hover:bg-neutral-50 text-xs font-semibold text-neutral-700 flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+                    title="Auto-generate clean slug from current event name"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-brand" />
+                    <span>From Name</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleSaveSlug}
+                    disabled={slugSaving || slugValue === event.apply_slug}
+                    className="px-4 py-2.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 disabled:opacity-40 disabled:cursor-not-allowed text-xs font-bold text-white flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+                  >
+                    {slugSaving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                    <span>Save URL</span>
+                  </button>
+                </div>
+              </div>
+
+              {slugError && (
+                <div className="flex items-start gap-1.5 text-xs text-red-600 mt-1">
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                  <span>{slugError}</span>
+                </div>
+              )}
+
+              {slugSuccess && (
+                <div className="flex items-start gap-1.5 text-xs text-emerald-600 mt-1">
+                  <CheckCircle2 className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                  <span>Event URL updated successfully! Public link is live.</span>
+                </div>
+              )}
+
+              <p className="text-[11px] text-neutral-400 mt-0.5 leading-relaxed">
+                By default, URPASS automatically generates this SEO-friendly URL from your event name. You can customize it anytime.
+              </p>
+            </div>
+          </div>
         </SectionCard>
 
         {/* ── Event Photos & Gallery ── */}
