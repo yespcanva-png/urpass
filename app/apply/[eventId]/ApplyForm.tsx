@@ -559,11 +559,7 @@ export default function ApplyForm({
             )}
             <div className="min-w-0">
               <span className="text-xs sm:text-sm font-bold tracking-tight text-neutral-900 uppercase truncate block">
-                {branding.orgName || "URPASS OFFICIAL"}
-              </span>
-              <span className="text-[10px] text-neutral-500 font-medium flex items-center gap-1">
-                <ShieldCheck className="w-3 h-3 text-emerald-600" />
-                Verified Official Box Office
+                {branding.orgName || "URPASS"}
               </span>
             </div>
           </div>
@@ -904,7 +900,7 @@ export default function ApplyForm({
               <div className="space-y-4 animate-in fade-in duration-200">
                 <div className="bg-white border border-neutral-200/90 rounded-2xl p-6 sm:p-7 space-y-4 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.03)]">
                   <h2 className="text-base sm:text-lg font-bold tracking-tight text-neutral-900 mb-2">
-                    Entry Guidelines & Box Office Terms
+                    Entry Guidelines & Terms
                   </h2>
                   <ul className="space-y-2.5 text-xs text-neutral-600 leading-relaxed list-disc list-inside font-normal">
                     <li>Entry is permitted strictly with a verified digital QR pass issued by the official portal.</li>
