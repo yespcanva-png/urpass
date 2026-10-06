@@ -24,6 +24,9 @@ import {
   Check,
   ChevronRight,
   Zap,
+  Clock,
+  Building2,
+  BadgeCheck,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { attendeeSchema, type AttendeeInput } from "@/lib/validations/attendee";
@@ -60,7 +63,7 @@ interface Branding {
 type SuccessState = { type: "pending" | "waitlisted"; attendeeName: string };
 
 const inputCls =
-  "w-full bg-neutral-50/70 border border-neutral-200 rounded-xl px-4 py-3 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none transition-all focus:border-brand focus:bg-white focus:ring-2 focus:ring-brand/10 hover:border-neutral-300";
+  "w-full bg-neutral-50/80 border border-neutral-200/90 rounded-xl px-3.5 py-2.5 text-sm text-neutral-900 font-medium placeholder:text-neutral-400 placeholder:font-normal outline-none transition-all duration-150 focus:border-brand focus:bg-white focus:ring-2 focus:ring-brand/10 hover:border-neutral-300";
 
 interface RazorpayResponse {
   razorpay_payment_id: string;
@@ -149,7 +152,7 @@ export default function ApplyForm({
     return Array.from(set);
   }, [ticketTypes]);
 
-  const [selectedDurationFilter, setSelectedDurationFilter] = useState<string>("all");
+  const [selectedDurationFilter] = useState<string>("all");
 
   const filteredTickets = useMemo(() => {
     if (selectedDurationFilter === "all") return ticketTypes;
@@ -476,50 +479,51 @@ export default function ApplyForm({
     }
   }
 
-  // Success Confirmation Screen
+  // ── Success Confirmation Screen (Sleek Corporate Digital Pass Style) ──
   if (success) {
     return (
       <div
-        className="min-h-screen flex flex-col items-center justify-center p-5"
+        className="min-h-screen flex flex-col items-center justify-center p-5 font-[family-name:var(--font-geist)]"
         style={{
           background: "radial-gradient(ellipse 100% 50% at 50% -10%, #ede9fe 0%, #f5f3ff 40%, #ffffff 70%)",
         }}
       >
-        <div className="max-w-md w-full bg-white border border-neutral-100 rounded-3xl p-8 text-center shadow-xl animate-in zoom-in-95 duration-300">
-          <div className="w-16 h-16 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center mx-auto mb-5 text-emerald-600">
-            <CheckCircle2 className="w-8 h-8" />
+        <div className="max-w-md w-full bg-white border border-neutral-200/90 rounded-3xl p-8 text-center shadow-[0_20px_50px_rgba(0,0,0,0.06)] animate-in zoom-in-95 duration-300">
+          <div className="w-14 h-14 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center mx-auto mb-4 text-emerald-600 shadow-xs">
+            <CheckCircle2 className="w-7 h-7" />
           </div>
 
-          <span className="inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200 mb-3">
+          <span className="inline-block px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-[0.08em] bg-emerald-50 text-emerald-700 border border-emerald-200/80 mb-3">
             {success.type === "waitlisted" ? "Waitlist Confirmed" : "Registration Received"}
           </span>
 
-          <h1 className="text-2xl font-bold tracking-tight text-neutral-900 mb-2">
-            {success.type === "waitlisted" ? "You're on the waitlist!" : "Application Submitted!"}
+          <h1 className="text-2xl font-extrabold tracking-[-0.02em] text-neutral-900 mb-2">
+            {success.type === "waitlisted" ? "You're on the waitlist!" : "Pass Confirmed!"}
           </h1>
 
-          <p className="text-sm text-neutral-600 leading-relaxed mb-6">
-            Thank you, <strong className="text-neutral-900">{success.attendeeName}</strong>. We have sent the pass confirmation and booking details to your email address.
+          <p className="text-sm text-neutral-600 leading-relaxed mb-6 font-normal">
+            Thank you, <strong className="text-neutral-900 font-semibold">{success.attendeeName}</strong>. Your verified digital pass and barcode entry credentials have been issued and emailed.
           </p>
 
-          <div className="p-4 rounded-xl bg-neutral-50 border border-neutral-200/80 text-xs text-left text-neutral-700 space-y-2 mb-6">
-            <div className="flex justify-between">
-              <span className="text-neutral-500">Event</span>
+          <div className="p-4 rounded-2xl bg-neutral-50/80 border border-neutral-200/80 text-xs text-left text-neutral-700 space-y-2.5 mb-6">
+            <div className="flex justify-between items-center">
+              <span className="text-neutral-500 font-medium">Event</span>
               <span className="font-semibold text-neutral-900">{event.name}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-neutral-500">Date</span>
+            <div className="flex justify-between items-center">
+              <span className="text-neutral-500 font-medium">Schedule</span>
               <span className="font-semibold text-neutral-900">{formattedSchedule.dateText}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-neutral-500">Venue</span>
-              <span className="font-semibold text-neutral-900">{event.venue}</span>
+            <div className="flex justify-between items-center">
+              <span className="text-neutral-500 font-medium">Venue</span>
+              <span className="font-semibold text-neutral-900 truncate max-w-[200px]">{event.venue}</span>
             </div>
           </div>
 
-          <p className="text-xs text-neutral-400">
-            Pass verification will be conducted at the venue via digital QR scanner.
-          </p>
+          <div className="flex items-center justify-center gap-2 text-xs text-neutral-500">
+            <BadgeCheck className="w-4 h-4 text-emerald-600" />
+            <span>Digital QR Check-In Enabled at Gate</span>
+          </div>
         </div>
       </div>
     );
@@ -527,29 +531,35 @@ export default function ApplyForm({
 
   return (
     <div
-      className={`min-h-screen bg-[#fafafa] text-neutral-900 ${selectedTicket ? "pb-32" : "pb-20"} ${staffScanLink ? "pt-14" : ""}`}
+      className={`min-h-screen bg-[#fafafa] text-neutral-900 font-[family-name:var(--font-geist)] antialiased ${
+        selectedTicket ? "pb-32" : "pb-20"
+      } ${staffScanLink ? "pt-14" : ""}`}
       style={{
-        backgroundImage: "radial-gradient(ellipse 100% 40% at 50% -5%, #ede9fe 0%, #f5f3ff 35%, #fafafa 70%)",
+        backgroundImage: "radial-gradient(ellipse 100% 45% at 50% -5%, #ede9fe 0%, #f5f3ff 35%, #fafafa 70%)",
       }}
     >
-      {/* ── Top Corporate Navigation Bar ── */}
-      <nav className="sticky top-0 z-40 bg-white/90 backdrop-blur-xl border-b border-neutral-200/80 shadow-2xs">
+      {/* ── Top Corporate Navigation Bar (Sleek Frosted Glass) ── */}
+      <nav className="sticky top-0 z-40 bg-white/85 backdrop-blur-xl border-b border-neutral-200/80 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
             {branding.orgLogoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={branding.orgLogoUrl} alt="Logo" className="w-8 h-8 rounded-lg object-cover border border-neutral-200 shrink-0" />
+              <img
+                src={branding.orgLogoUrl}
+                alt="Logo"
+                className="w-8 h-8 rounded-lg object-cover border border-neutral-200/80 shrink-0 shadow-2xs"
+              />
             ) : (
               <div
-                className="w-8 h-8 rounded-lg text-white flex items-center justify-center font-black text-xs shrink-0 shadow-sm"
+                className="w-8 h-8 rounded-lg text-white flex items-center justify-center font-black text-xs shrink-0 shadow-xs"
                 style={{ background: brandColor }}
               >
                 <Ticket className="w-4 h-4" />
               </div>
             )}
             <div className="min-w-0">
-              <span className="text-xs sm:text-sm font-extrabold tracking-tight text-neutral-900 uppercase truncate block">
-                {branding.orgName || "URPASS EVENT"}
+              <span className="text-xs sm:text-sm font-bold tracking-tight text-neutral-900 uppercase truncate block">
+                {branding.orgName || "URPASS OFFICIAL"}
               </span>
               <span className="text-[10px] text-neutral-500 font-medium flex items-center gap-1">
                 <ShieldCheck className="w-3 h-3 text-emerald-600" />
@@ -562,37 +572,37 @@ export default function ApplyForm({
             <button
               type="button"
               onClick={scrollToTickets}
-              className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white shadow-sm transition-all active:scale-[0.98] cursor-pointer hover:opacity-95"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white shadow-xs transition-all active:scale-[0.98] cursor-pointer hover:opacity-95"
               style={{ background: brandColor }}
             >
-              <span>Select Passes</span>
+              <span>Select Pass</span>
               <ChevronRight className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
       </nav>
 
-      {/* ── Corporate Hero Showcase Section (Clean White & Soft Violet Glow) ── */}
-      <section className="relative overflow-hidden border-b border-neutral-200/80 bg-white/70 backdrop-blur-md">
+      {/* ── Corporate Hero Showcase Section ── */}
+      <section className="relative overflow-hidden border-b border-neutral-200/80 bg-white/60 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
             
-            {/* Left: Event Image Showcase */}
+            {/* Left: Event Visual Showcase */}
             <div className="lg:col-span-5">
               {eventImages && eventImages.length > 0 ? (
-                <div className="rounded-2xl overflow-hidden shadow-md ring-1 ring-neutral-200 bg-neutral-100">
+                <div className="rounded-2xl overflow-hidden shadow-[0_12px_36px_-12px_rgba(0,0,0,0.1)] ring-1 ring-neutral-200/80 bg-neutral-100">
                   <EventImageCarousel images={eventImages} eventName={event.name} />
                 </div>
               ) : (
                 <div className="relative aspect-[4/3] sm:aspect-[16/10] rounded-2xl overflow-hidden bg-gradient-to-br from-violet-50 via-purple-50 to-neutral-50 border border-violet-100 flex flex-col items-center justify-center p-6 text-center shadow-xs">
                   <div
-                    className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4 border border-violet-200 shadow-2xs"
+                    className="w-14 h-14 rounded-2xl flex items-center justify-center mb-3.5 border border-violet-200 shadow-2xs"
                     style={{ background: "#f5f3ff", color: brandColor }}
                   >
-                    <Sparkles className="w-8 h-8" />
+                    <Sparkles className="w-7 h-7" />
                   </div>
-                  <span className="text-xs font-bold uppercase tracking-widest text-brand mb-1">Official Event Pass</span>
-                  <h3 className="text-xl font-bold text-neutral-900 max-w-xs">{event.name}</h3>
+                  <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-brand mb-1">Official Event Pass</span>
+                  <h3 className="text-xl font-bold tracking-tight text-neutral-900 max-w-xs">{event.name}</h3>
                 </div>
               )}
             </div>
@@ -601,60 +611,60 @@ export default function ApplyForm({
             <div className="lg:col-span-7 flex flex-col items-start">
               
               {/* Badges Row */}
-              <div className="flex flex-wrap items-center gap-2 mb-4">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-violet-50 text-violet-700 border border-violet-200">
+              <div className="flex flex-wrap items-center gap-2 mb-3.5">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-violet-50 text-violet-700 border border-violet-200/80">
                   <Sparkles className="w-3.5 h-3.5 text-violet-600" />
                   {isOnline ? "Online Live Event" : isHybrid ? "Hybrid Experience" : "In-Person Event"}
                 </span>
                 
                 {availableDurations.length > 1 && (
-                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200/80">
                     <CalendarDays className="w-3.5 h-3.5 text-blue-600" />
                     Multi-Day Schedule
                   </span>
                 )}
 
-                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/80">
                   <Zap className="w-3.5 h-3.5 text-emerald-600" />
-                  Zero Booking Fees
+                  Zero Platform Fees
                 </span>
               </div>
 
               {/* Event Title */}
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-neutral-900 mb-4 leading-tight">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-[-0.03em] text-neutral-900 mb-4 leading-tight">
                 {event.name}
               </h1>
 
               {/* Date & Venue Metadata Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 w-full mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full mb-6">
                 
-                {/* Date & Time */}
-                <div className="flex items-start gap-3 p-3.5 rounded-xl bg-neutral-50/80 border border-neutral-200/80">
-                  <div className="w-10 h-10 rounded-lg bg-violet-50 border border-violet-100 flex items-center justify-center shrink-0 text-violet-600 mt-0.5">
+                {/* Date & Time Card */}
+                <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-white border border-neutral-200/80 shadow-2xs">
+                  <div className="w-10 h-10 rounded-xl bg-violet-50 border border-violet-100/80 flex items-center justify-center shrink-0 text-violet-600 mt-0.5 shadow-2xs">
                     <CalendarDays className="w-5 h-5" />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-xs font-medium text-neutral-500">Date & Show Timings</div>
-                    <div className="text-sm font-bold text-neutral-900 truncate">{formattedSchedule.dateText}</div>
-                    <div className="text-xs text-neutral-500 mt-0.5">{formattedSchedule.timeText}</div>
+                    <div className="text-[11px] font-semibold uppercase tracking-wider text-neutral-400">Date & Schedule</div>
+                    <div className="text-sm font-bold text-neutral-900 truncate tracking-tight">{formattedSchedule.dateText}</div>
+                    <div className="text-xs text-neutral-500 mt-0.5 font-medium">{formattedSchedule.timeText}</div>
                   </div>
                 </div>
 
-                {/* Venue & Location */}
-                <div className="flex items-start gap-3 p-3.5 rounded-xl bg-neutral-50/80 border border-neutral-200/80">
-                  <div className="w-10 h-10 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center shrink-0 text-emerald-600 mt-0.5">
+                {/* Venue & Location Card */}
+                <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-white border border-neutral-200/80 shadow-2xs">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100/80 flex items-center justify-center shrink-0 text-emerald-600 mt-0.5 shadow-2xs">
                     <MapPin className="w-5 h-5" />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-xs font-medium text-neutral-500">Venue & City</div>
-                    <div className="text-sm font-bold text-neutral-900 truncate">{event.venue}</div>
+                    <div className="text-[11px] font-semibold uppercase tracking-wider text-neutral-400">Venue & Gate</div>
+                    <div className="text-sm font-bold text-neutral-900 truncate tracking-tight">{event.venue}</div>
                     <a
                       href={`https://maps.google.com/?q=${encodeURIComponent(event.venue)}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1 text-xs text-brand hover:underline font-medium mt-0.5"
                     >
-                      <span>Open in Google Maps</span>
+                      <span>Google Maps Directions</span>
                       <ExternalLink className="w-3 h-3" />
                     </a>
                   </div>
@@ -662,19 +672,19 @@ export default function ApplyForm({
               </div>
 
               {/* Action Banner */}
-              <div className="flex flex-wrap items-center gap-4 w-full pt-4 border-t border-neutral-200">
+              <div className="flex flex-wrap items-center justify-between gap-4 w-full pt-4 border-t border-neutral-200/80">
                 <div>
-                  <span className="text-xs text-neutral-500 uppercase tracking-wider block font-semibold">Passes From</span>
-                  <div className="text-2xl sm:text-3xl font-black text-neutral-900 tabular-nums">
+                  <span className="text-[11px] text-neutral-400 uppercase tracking-[0.08em] block font-bold">Passes From</span>
+                  <div className="text-2xl sm:text-3xl font-extrabold text-neutral-900 tabular-nums tracking-tight">
                     {minStartingPrice === 0 ? "Free Entry" : `₹${minStartingPrice.toLocaleString("en-IN")}`}
-                    {minStartingPrice > 0 && <span className="text-xs font-normal text-neutral-500 ml-1.5">onwards</span>}
+                    {minStartingPrice > 0 && <span className="text-xs font-medium text-neutral-500 ml-1.5">onwards</span>}
                   </div>
                 </div>
 
                 <button
                   type="button"
                   onClick={scrollToTickets}
-                  className="ml-auto px-7 py-3.5 rounded-xl font-bold text-sm text-white shadow-sm transition-all flex items-center gap-2 cursor-pointer hover:opacity-95 active:scale-[0.98]"
+                  className="px-6 py-3.5 rounded-xl font-bold text-sm text-white shadow-xs transition-all flex items-center gap-2 cursor-pointer hover:opacity-95 active:scale-[0.98]"
                   style={{ background: brandColor }}
                 >
                   <span>Select Passes & Register</span>
@@ -688,21 +698,21 @@ export default function ApplyForm({
         </div>
       </section>
 
-      {/* ── Main Two-Column Layout (Clean White Cards) ── */}
+      {/* ── Main Two-Column Layout (Corporate Sleek Cards) ── */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
           
-          {/* Left Column (7 cols on Desktop): Tabs & Information */}
-          <div className="lg:col-span-7 space-y-8">
+          {/* Left Column (7 cols on Desktop): Tabs & Content */}
+          <div className="lg:col-span-7 space-y-6">
             
-            {/* Section Tab Bar */}
-            <div className="flex items-center gap-2 border-b border-neutral-200 pb-2 overflow-x-auto scrollbar-none">
+            {/* Sleek Segmented Tab Bar */}
+            <div className="inline-flex p-1 bg-neutral-100/90 rounded-2xl border border-neutral-200/80 gap-1 overflow-x-auto max-w-full">
               <button
                 type="button"
                 onClick={() => setActiveTab("about")}
-                className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer shrink-0 ${
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer shrink-0 ${
                   activeTab === "about"
-                    ? "bg-neutral-900 text-white shadow-xs"
+                    ? "bg-white text-neutral-900 shadow-xs font-bold"
                     : "text-neutral-600 hover:text-neutral-900"
                 }`}
               >
@@ -711,9 +721,9 @@ export default function ApplyForm({
               <button
                 type="button"
                 onClick={() => setActiveTab("tickets")}
-                className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer shrink-0 ${
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer shrink-0 ${
                   activeTab === "tickets"
-                    ? "bg-neutral-900 text-white shadow-xs"
+                    ? "bg-white text-neutral-900 shadow-xs font-bold"
                     : "text-neutral-600 hover:text-neutral-900"
                 }`}
               >
@@ -722,9 +732,9 @@ export default function ApplyForm({
               <button
                 type="button"
                 onClick={() => setActiveTab("venue")}
-                className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer shrink-0 ${
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer shrink-0 ${
                   activeTab === "venue"
-                    ? "bg-neutral-900 text-white shadow-xs"
+                    ? "bg-white text-neutral-900 shadow-xs font-bold"
                     : "text-neutral-600 hover:text-neutral-900"
                 }`}
               >
@@ -733,9 +743,9 @@ export default function ApplyForm({
               <button
                 type="button"
                 onClick={() => setActiveTab("terms")}
-                className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer shrink-0 ${
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer shrink-0 ${
                   activeTab === "terms"
-                    ? "bg-neutral-900 text-white shadow-xs"
+                    ? "bg-white text-neutral-900 shadow-xs font-bold"
                     : "text-neutral-600 hover:text-neutral-900"
                 }`}
               >
@@ -745,17 +755,17 @@ export default function ApplyForm({
 
             {/* Tab: About The Event */}
             {activeTab === "about" && (
-              <div className="space-y-6 animate-in fade-in duration-200">
-                <div className="bg-white border border-neutral-200/90 rounded-2xl p-6 sm:p-7 shadow-xs">
-                  <h2 className="text-lg sm:text-xl font-bold text-neutral-900 mb-4 flex items-center gap-2">
-                    <Info className="w-5 h-5 text-brand" />
+              <div className="space-y-4 animate-in fade-in duration-200">
+                <div className="bg-white border border-neutral-200/90 rounded-2xl p-6 sm:p-7 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.03)]">
+                  <h2 className="text-base sm:text-lg font-bold tracking-tight text-neutral-900 mb-3.5 flex items-center gap-2">
+                    <Info className="w-4 h-4 text-brand" />
                     About The Experience
                   </h2>
 
                   {event.description ? (
                     <div className="space-y-3">
                       <div
-                        className={`text-sm text-neutral-700 leading-relaxed whitespace-pre-wrap break-words ${
+                        className={`text-sm text-neutral-700 leading-relaxed font-normal whitespace-pre-wrap break-words ${
                           showFullDescription ? "" : "line-clamp-6"
                         }`}
                       >
@@ -773,7 +783,7 @@ export default function ApplyForm({
                       )}
                     </div>
                   ) : (
-                    <p className="text-sm text-neutral-600">
+                    <p className="text-sm text-neutral-600 font-normal leading-relaxed">
                       Join us for {event.name}. Secure your verified digital pass for seamless check-in at the gate.
                     </p>
                   )}
@@ -781,28 +791,28 @@ export default function ApplyForm({
 
                 {/* Highlights Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div className="p-4 rounded-xl bg-white border border-neutral-200/80 text-center shadow-2xs">
-                    <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-2 border border-emerald-100">
+                  <div className="p-4 rounded-2xl bg-white border border-neutral-200/80 text-center shadow-2xs">
+                    <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-2 border border-emerald-100/80">
                       <ShieldCheck className="w-4 h-4" />
                     </div>
                     <h4 className="text-xs font-bold text-neutral-900">Instant QR Entry</h4>
-                    <p className="text-[11px] text-neutral-500 mt-1">Direct gate scanning without paper tickets</p>
+                    <p className="text-[11px] text-neutral-500 mt-1 font-normal">Express gate scanning in under 0.3s</p>
                   </div>
 
-                  <div className="p-4 rounded-xl bg-white border border-neutral-200/80 text-center shadow-2xs">
-                    <div className="w-8 h-8 rounded-lg bg-violet-50 text-violet-600 flex items-center justify-center mx-auto mb-2 border border-violet-100">
+                  <div className="p-4 rounded-2xl bg-white border border-neutral-200/80 text-center shadow-2xs">
+                    <div className="w-8 h-8 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center mx-auto mb-2 border border-violet-100/80">
                       <Zap className="w-4 h-4" />
                     </div>
-                    <h4 className="text-xs font-bold text-neutral-900">Zero Convenience Fee</h4>
-                    <p className="text-[11px] text-neutral-500 mt-1">100% direct pricing with zero hidden markups</p>
+                    <h4 className="text-xs font-bold text-neutral-900">Zero Added Fees</h4>
+                    <p className="text-[11px] text-neutral-500 mt-1 font-normal">Direct official organizer pricing</p>
                   </div>
 
-                  <div className="p-4 rounded-xl bg-white border border-neutral-200/80 text-center shadow-2xs">
-                    <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center mx-auto mb-2 border border-blue-100">
+                  <div className="p-4 rounded-2xl bg-white border border-neutral-200/80 text-center shadow-2xs">
+                    <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto mb-2 border border-blue-100/80">
                       <Mail className="w-4 h-4" />
                     </div>
-                    <h4 className="text-xs font-bold text-neutral-900">Instant Delivery</h4>
-                    <p className="text-[11px] text-neutral-500 mt-1">Immediate delivery via Email & WhatsApp</p>
+                    <h4 className="text-xs font-bold text-neutral-900">Direct Pass Delivery</h4>
+                    <p className="text-[11px] text-neutral-500 mt-1 font-normal">Delivered instantly to your email & phone</p>
                   </div>
                 </div>
               </div>
@@ -811,31 +821,31 @@ export default function ApplyForm({
             {/* Tab: Passes Summary */}
             {activeTab === "tickets" && (
               <div className="space-y-4 animate-in fade-in duration-200">
-                <div className="bg-white border border-neutral-200/90 rounded-2xl p-6 sm:p-7 shadow-xs">
-                  <h2 className="text-lg sm:text-xl font-bold text-neutral-900 mb-2">
+                <div className="bg-white border border-neutral-200/90 rounded-2xl p-6 sm:p-7 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.03)]">
+                  <h2 className="text-base sm:text-lg font-bold tracking-tight text-neutral-900 mb-1">
                     Available Pass Categories
                   </h2>
-                  <p className="text-xs text-neutral-500 mb-6">
-                    Select a tier on the booking panel on the right to reserve your spot.
+                  <p className="text-xs text-neutral-500 mb-5 font-normal">
+                    Select a tier on the right booking panel to reserve your spot.
                   </p>
 
                   <div className="space-y-3">
                     {ticketTypes.map((tt) => (
                       <div
                         key={tt.id}
-                        className="p-4 rounded-xl bg-neutral-50 border border-neutral-200 flex items-center justify-between gap-4"
+                        className="p-4 rounded-xl bg-neutral-50/70 border border-neutral-200/80 flex items-center justify-between gap-4"
                       >
                         <div>
                           <div className="flex items-center gap-2">
-                            <h4 className="text-sm font-bold text-neutral-900">{tt.name}</h4>
+                            <h4 className="text-sm font-bold text-neutral-900 tracking-tight">{tt.name}</h4>
                             {tt.duration_label && (
-                              <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-neutral-200 text-neutral-700">
+                              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-neutral-200 text-neutral-700">
                                 {tt.duration_label}
                               </span>
                             )}
                           </div>
                           {tt.description && (
-                            <p className="text-xs text-neutral-500 mt-1">{tt.description}</p>
+                            <p className="text-xs text-neutral-500 mt-1 font-normal">{tt.description}</p>
                           )}
                         </div>
 
@@ -864,24 +874,24 @@ export default function ApplyForm({
             {/* Tab: Venue Details */}
             {activeTab === "venue" && (
               <div className="space-y-4 animate-in fade-in duration-200">
-                <div className="bg-white border border-neutral-200/90 rounded-2xl p-6 sm:p-7 shadow-xs">
-                  <h2 className="text-lg sm:text-xl font-bold text-neutral-900 mb-2 flex items-center gap-2">
-                    <MapPin className="w-5 h-5 text-brand" />
+                <div className="bg-white border border-neutral-200/90 rounded-2xl p-6 sm:p-7 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.03)]">
+                  <h2 className="text-base sm:text-lg font-bold tracking-tight text-neutral-900 mb-2 flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-brand" />
                     Venue & Location
                   </h2>
-                  <p className="text-sm text-neutral-700 font-medium mb-4">{event.venue}</p>
+                  <p className="text-sm text-neutral-800 font-semibold mb-4">{event.venue}</p>
 
-                  <div className="p-4 rounded-xl bg-neutral-50 border border-neutral-200 space-y-3">
-                    <div className="text-xs text-neutral-600">
-                      Show your QR pass on your mobile phone at the gate scanners for express validation.
+                  <div className="p-4 rounded-2xl bg-neutral-50/80 border border-neutral-200/80 space-y-3">
+                    <div className="text-xs text-neutral-600 font-normal leading-relaxed">
+                      Present your digital QR pass on any smartphone at the check-in gates for instant scanning and validation.
                     </div>
                     <a
                       href={`https://maps.google.com/?q=${encodeURIComponent(event.venue)}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white bg-neutral-900 hover:bg-neutral-800 transition-colors"
+                      className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-neutral-900 hover:bg-neutral-800 transition-colors shadow-2xs"
                     >
-                      <span>Get Directions on Google Maps</span>
+                      <span>Open Directions on Google Maps</span>
                       <ExternalLink className="w-3.5 h-3.5" />
                     </a>
                   </div>
@@ -892,16 +902,16 @@ export default function ApplyForm({
             {/* Tab: Entry Guidelines */}
             {activeTab === "terms" && (
               <div className="space-y-4 animate-in fade-in duration-200">
-                <div className="bg-white border border-neutral-200/90 rounded-2xl p-6 sm:p-7 space-y-4 shadow-xs">
-                  <h2 className="text-lg sm:text-xl font-bold text-neutral-900 mb-2">
-                    Terms & Entry Guidelines
+                <div className="bg-white border border-neutral-200/90 rounded-2xl p-6 sm:p-7 space-y-4 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.03)]">
+                  <h2 className="text-base sm:text-lg font-bold tracking-tight text-neutral-900 mb-2">
+                    Entry Guidelines & Box Office Terms
                   </h2>
-                  <ul className="space-y-2.5 text-xs text-neutral-600 leading-relaxed list-disc list-inside">
-                    <li>Entry is permitted only with a valid digital QR pass generated through the official portal.</li>
-                    <li>Each pass contains a cryptographically signed one-time QR code. Duplicated or forwarded scans will be flagged at the gate.</li>
-                    <li>Please carry a valid government photo ID matching the primary pass holder name.</li>
-                    <li>Organizers reserve the right of admission in accordance with local safety and venue capacity regulations.</li>
-                    <li>Passes once booked are non-transferable unless permitted by the event organizer.</li>
+                  <ul className="space-y-2.5 text-xs text-neutral-600 leading-relaxed list-disc list-inside font-normal">
+                    <li>Entry is permitted strictly with a verified digital QR pass issued by the official portal.</li>
+                    <li>Each pass includes a cryptographically signed QR token. Duplicate scans will be flagged at the gates.</li>
+                    <li>Please carry a valid government ID or student identification matching the primary pass holder name.</li>
+                    <li>Admission is subject to organizer terms, event policies, and venue capacity guidelines.</li>
+                    <li>Passes once issued are non-transferable unless permitted in advance by event administrators.</li>
                   </ul>
                 </div>
               </div>
@@ -909,29 +919,29 @@ export default function ApplyForm({
 
           </div>
 
-          {/* Right Column (5 cols on Desktop): Clean Corporate Pass Selector & Checkout Box */}
+          {/* Right Column (5 cols on Desktop): Sleek Corporate Pass Selector & Checkout Terminal */}
           <div id="tickets-booking-section" className="lg:col-span-5 scroll-mt-20">
-            <div className="bg-white border border-neutral-200 rounded-3xl p-5 sm:p-7 shadow-sm sticky top-20">
+            <div className="bg-white border border-neutral-200/90 rounded-3xl p-5 sm:p-7 shadow-[0_10px_35px_-8px_rgba(0,0,0,0.05)] sticky top-20">
               
               {/* Step 1 Header */}
               <div className="flex items-center justify-between mb-5">
                 <div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-brand block mb-0.5">
+                  <span className="text-[10px] font-bold uppercase tracking-[0.08em] text-brand block mb-0.5">
                     Step 1 of 2
                   </span>
-                  <h2 className="text-lg font-bold text-neutral-900">Select Your Pass</h2>
+                  <h2 className="text-base font-extrabold tracking-tight text-neutral-900">Select Your Pass</h2>
                 </div>
 
                 {selectedTicket && (
-                  <span className="text-xs font-bold text-neutral-500">
+                  <span className="text-xs font-bold text-neutral-400">
                     {ticketTypes.length} Available
                   </span>
                 )}
               </div>
 
-              {/* Multi-Day Date Selector (Horizontal Date Chips) */}
+              {/* Multi-Day Date Selector (Horizontal Sleek Date Chips) */}
               {availableEventDates.length > 1 && (
-                <div className="mb-5 p-3.5 rounded-2xl bg-neutral-50 border border-neutral-200 space-y-2.5">
+                <div className="mb-5 p-3.5 rounded-2xl bg-neutral-50/80 border border-neutral-200/80 space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-neutral-900 flex items-center gap-1.5">
                       <CalendarDays className="w-3.5 h-3.5 text-brand" />
@@ -939,11 +949,11 @@ export default function ApplyForm({
                     </span>
 
                     {isSingleDayPass ? (
-                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-violet-100 text-violet-800 border border-violet-200">
+                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-violet-100 text-violet-800 border border-violet-200/80">
                         1 Day Access
                       </span>
                     ) : (
-                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 border border-emerald-200/80">
                         All Days Pass
                       </span>
                     )}
@@ -958,16 +968,16 @@ export default function ApplyForm({
                             key={opt.date}
                             type="button"
                             onClick={() => setSelectedDate(opt.date)}
-                            className={`py-2 px-2 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center ${
+                            className={`py-2 px-1.5 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center ${
                               isDaySelected
-                                ? "bg-neutral-900 text-white border-transparent shadow-sm ring-2 ring-neutral-900 font-bold"
-                                : "bg-white text-neutral-800 border-neutral-200 hover:border-neutral-300 hover:bg-neutral-50 font-medium"
+                                ? "bg-neutral-900 text-white border-neutral-900 shadow-xs font-bold ring-1 ring-neutral-900"
+                                : "bg-white text-neutral-800 border-neutral-200/80 hover:border-neutral-300 hover:bg-neutral-50 font-medium"
                             }`}
                           >
-                            <span className={`text-[10px] font-bold uppercase tracking-wider ${isDaySelected ? "text-neutral-300" : "text-neutral-400"}`}>
+                            <span className={`text-[9px] font-bold uppercase tracking-wider ${isDaySelected ? "text-neutral-300" : "text-neutral-400"}`}>
                               {opt.dayName}
                             </span>
-                            <span className="text-xs font-extrabold mt-0.5">
+                            <span className="text-xs font-extrabold mt-0.5 tabular-nums">
                               {opt.label}
                             </span>
                           </button>
@@ -975,9 +985,9 @@ export default function ApplyForm({
                       })}
                     </div>
                   ) : (
-                    <p className="text-xs text-neutral-600">
+                    <p className="text-xs text-neutral-600 font-normal">
                       Pass covers all {availableEventDates.length} days:{" "}
-                      <strong className="text-neutral-900">
+                      <strong className="text-neutral-900 font-semibold">
                         {availableEventDates.map((d) => d.label).join(" · ")}
                       </strong>
                     </p>
@@ -997,8 +1007,8 @@ export default function ApplyForm({
 
                   const durationTag = tt.duration_label || (tt.duration_days ? `${tt.duration_days} Day${tt.duration_days > 1 ? "s" : ""}` : null);
                   const peopleTag = tt.included_guests && tt.included_guests > 1
-                    ? `Valid for ${tt.included_guests} people`
-                    : "Single pass";
+                    ? `Valid for ${tt.included_guests} guests`
+                    : "Single entry";
 
                   return (
                     <div
@@ -1009,14 +1019,14 @@ export default function ApplyForm({
                           ? "border-brand bg-brand-50/20 ring-1.5 ring-brand shadow-xs"
                           : isDisabled
                           ? "border-neutral-200 bg-neutral-50/60 opacity-50 cursor-not-allowed"
-                          : "border-neutral-200 bg-white hover:border-neutral-300 hover:shadow-2xs"
+                          : "border-neutral-200/90 bg-white hover:border-neutral-300 hover:shadow-2xs"
                       }`}
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
                             {durationTag && (
-                              <span className={`px-2 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wider ${
+                              <span className={`px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase tracking-wider ${
                                 isSelected ? "bg-neutral-900 text-white" : "bg-neutral-100 text-neutral-700"
                               }`}>
                                 {durationTag}
@@ -1027,19 +1037,19 @@ export default function ApplyForm({
                             </span>
                           </div>
 
-                          <h3 className="text-base font-bold text-neutral-900 tracking-tight">
+                          <h3 className="text-sm font-bold text-neutral-900 tracking-tight">
                             {tt.name}
                           </h3>
 
                           {tt.description && (
-                            <p className="text-xs text-neutral-500 mt-1 leading-relaxed">
+                            <p className="text-xs text-neutral-500 mt-1 leading-relaxed font-normal">
                               {tt.description}
                             </p>
                           )}
                         </div>
 
                         <div className="text-right shrink-0 flex flex-col items-end">
-                          <div className="text-lg font-black text-neutral-900 tabular-nums">
+                          <div className="text-base font-extrabold text-neutral-900 tabular-nums">
                             {tt.price === 0 ? "Free" : `₹${(tt.price / 100).toLocaleString("en-IN")}`}
                           </div>
                           <span
@@ -1079,24 +1089,24 @@ export default function ApplyForm({
                 })}
               </div>
 
-              {/* Group Pass Stepper */}
+              {/* Group Pass Capacity Stepper */}
               {selectedTicket && (selectedTicket.allow_extra_guests || (selectedTicket.included_guests && selectedTicket.included_guests > 1)) && (
-                <div className="mb-6 p-4 rounded-2xl bg-neutral-50 border border-neutral-200 space-y-3">
+                <div className="mb-6 p-4 rounded-2xl bg-neutral-50/80 border border-neutral-200/80 space-y-3">
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="text-xs font-bold text-neutral-900 flex items-center gap-1.5">
                         <Users className="w-3.5 h-3.5 text-brand" />
-                        <span>People Covered</span>
+                        <span>Pass Capacity</span>
                       </div>
-                      <div className="text-[11px] text-neutral-500 mt-0.5">
+                      <div className="text-[11px] text-neutral-500 mt-0.5 font-normal">
                         {selectedTicket.allow_extra_guests
-                          ? `Pass covers ${selectedTicket.included_guests} guests. +₹${selectedTicket.extra_guest_price || 100}/extra.`
-                          : `Fixed capacity: ${selectedTicket.included_guests} guests.`}
+                          ? `Includes ${selectedTicket.included_guests} guests. +₹${selectedTicket.extra_guest_price || 100}/extra.`
+                          : `Fixed capacity: ${selectedTicket.included_guests} attendees.`}
                       </div>
                     </div>
 
                     {selectedTicket.allow_extra_guests ? (
-                      <div className="flex items-center gap-2 bg-white border border-neutral-200 rounded-lg p-1 shadow-2xs">
+                      <div className="flex items-center gap-2 bg-white border border-neutral-200 rounded-xl p-1 shadow-2xs">
                         <button
                           type="button"
                           onClick={() => {
@@ -1108,11 +1118,11 @@ export default function ApplyForm({
                             }
                           }}
                           disabled={peopleCount <= (selectedTicket.min_guests || selectedTicket.included_guests || 1)}
-                          className="w-7 h-7 rounded bg-neutral-100 hover:bg-neutral-200 disabled:opacity-30 flex items-center justify-center font-bold text-neutral-800 text-sm cursor-pointer"
+                          className="w-7 h-7 rounded-lg bg-neutral-100 hover:bg-neutral-200 disabled:opacity-30 flex items-center justify-center font-bold text-neutral-800 text-sm cursor-pointer"
                         >
                           -
                         </button>
-                        <span className="w-6 text-center font-bold text-sm text-neutral-900">{peopleCount}</span>
+                        <span className="w-6 text-center font-bold text-sm text-neutral-900 tabular-nums">{peopleCount}</span>
                         <button
                           type="button"
                           onClick={() => {
@@ -1126,13 +1136,13 @@ export default function ApplyForm({
                             }
                           }}
                           disabled={peopleCount >= (selectedTicket.max_guests || 12)}
-                          className="w-7 h-7 rounded bg-brand text-white hover:opacity-90 disabled:opacity-30 flex items-center justify-center font-bold text-sm cursor-pointer"
+                          className="w-7 h-7 rounded-lg bg-brand text-white hover:opacity-90 disabled:opacity-30 flex items-center justify-center font-bold text-sm cursor-pointer"
                         >
                           +
                         </button>
                       </div>
                     ) : (
-                      <span className="px-2.5 py-1 rounded-md bg-white border border-neutral-200 text-xs font-bold text-neutral-800">
+                      <span className="px-2.5 py-1 rounded-lg bg-white border border-neutral-200 text-xs font-bold text-neutral-800">
                         {selectedTicket.included_guests} Guests
                       </span>
                     )}
@@ -1141,19 +1151,19 @@ export default function ApplyForm({
               )}
 
               {/* Step 2: Attendee Details Form */}
-              <div id="attendee-details-section" className="pt-5 border-t border-neutral-200 space-y-4">
+              <div id="attendee-details-section" className="pt-5 border-t border-neutral-200/80 space-y-4">
                 <div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-brand block mb-0.5">
+                  <span className="text-[10px] font-bold uppercase tracking-[0.08em] text-brand block mb-0.5">
                     Step 2 of 2
                   </span>
-                  <h3 className="text-base font-bold text-neutral-900">Primary Pass Holder</h3>
-                  <p className="text-xs text-neutral-500">Digital pass and QR verification code will be sent here.</p>
+                  <h3 className="text-base font-extrabold tracking-tight text-neutral-900">Primary Pass Holder</h3>
+                  <p className="text-xs text-neutral-500 font-normal">Your verified QR pass will be issued to this email.</p>
                 </div>
 
                 <form id="apply-attendee-form" onSubmit={handleSubmit(onSubmit)} className="space-y-3.5">
                   {/* Name */}
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-neutral-600 mb-1">
+                    <label className="block text-[11px] font-bold uppercase tracking-[0.06em] text-neutral-600 mb-1">
                       Full Name <span className="text-red-500">*</span>
                     </label>
                     <div className="relative">
@@ -1166,12 +1176,12 @@ export default function ApplyForm({
                         {...register("name")}
                       />
                     </div>
-                    {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name.message}</p>}
+                    {errors.name && <p className="text-xs text-red-500 mt-1 font-medium">{errors.name.message}</p>}
                   </div>
 
                   {/* Email */}
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-neutral-600 mb-1">
+                    <label className="block text-[11px] font-bold uppercase tracking-[0.06em] text-neutral-600 mb-1">
                       Email Address <span className="text-red-500">*</span>
                     </label>
                     <div className="relative">
@@ -1184,12 +1194,12 @@ export default function ApplyForm({
                         {...register("email")}
                       />
                     </div>
-                    {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email.message}</p>}
+                    {errors.email && <p className="text-xs text-red-500 mt-1 font-medium">{errors.email.message}</p>}
                   </div>
 
                   {/* WhatsApp / Phone */}
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-neutral-600 mb-1">
+                    <label className="block text-[11px] font-bold uppercase tracking-[0.06em] text-neutral-600 mb-1">
                       WhatsApp / Mobile Number
                     </label>
                     <div className="relative">
@@ -1204,7 +1214,32 @@ export default function ApplyForm({
                     </div>
                   </div>
 
-                  {/* Custom Organizer Fields */}
+                  {/* Additional Group Members (if capacity > 1) */}
+                  {peopleCount > 1 && (
+                    <div className="pt-3 border-t border-neutral-100 space-y-2.5">
+                      <span className="text-[11px] font-bold text-neutral-500 uppercase tracking-wider block">
+                        Additional Guests ({peopleCount - 1})
+                      </span>
+                      {Array.from({ length: peopleCount - 1 }).map((_, idx) => (
+                        <div key={idx} className="relative">
+                          <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-neutral-400 pointer-events-none" />
+                          <input
+                            type="text"
+                            placeholder={`Guest #${idx + 2} Full Name`}
+                            value={memberNames[idx] || ""}
+                            onChange={(e) => {
+                              const updated = [...memberNames];
+                              updated[idx] = e.target.value;
+                              setMemberNames(updated);
+                            }}
+                            className={`${inputCls} pl-9 text-xs`}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Custom Organizer Questions */}
                   {event.custom_fields && event.custom_fields.length > 0 && (
                     <div className="pt-3 border-t border-neutral-100 space-y-3">
                       <span className="text-[11px] font-bold text-neutral-500 uppercase tracking-wider block">
@@ -1212,7 +1247,7 @@ export default function ApplyForm({
                       </span>
                       {event.custom_fields.map((field) => (
                         <div key={field.id}>
-                          <label className="block text-xs font-bold uppercase tracking-wider text-neutral-600 mb-1">
+                          <label className="block text-[11px] font-bold uppercase tracking-[0.06em] text-neutral-600 mb-1">
                             {field.label} {field.required && <span className="text-red-500">*</span>}
                           </label>
 
@@ -1265,7 +1300,7 @@ export default function ApplyForm({
                   <input type="hidden" value="participant" {...register("pass_type")} />
 
                   {/* Payment Summary Ledger */}
-                  <div className="mt-5 p-4 rounded-2xl bg-neutral-50 border border-neutral-200 space-y-2 text-xs">
+                  <div className="mt-5 p-4 rounded-2xl bg-neutral-50/90 border border-neutral-200/90 space-y-2 text-xs">
                     <div className="flex justify-between text-neutral-700">
                       <span>{selectedTicket?.name || "Standard Pass"} {selectedTicket?.duration_label ? `(${selectedTicket.duration_label})` : ""}</span>
                       <span className="font-bold text-neutral-900 tabular-nums">
@@ -1287,7 +1322,7 @@ export default function ApplyForm({
                     {extraGuestsCount > 0 && (
                       <div className="flex justify-between text-brand font-medium">
                         <span>Extra Attendees ({extraGuestsCount} × ₹{extraPrice})</span>
-                        <span>+₹{extraGuestsTotal.toLocaleString("en-IN")}</span>
+                        <span className="tabular-nums">+₹{extraGuestsTotal.toLocaleString("en-IN")}</span>
                       </div>
                     )}
 
@@ -1297,7 +1332,7 @@ export default function ApplyForm({
                     </div>
 
                     <div className="pt-2 border-t border-neutral-200 flex justify-between items-baseline font-bold">
-                      <span className="text-sm text-neutral-900">Total Amount</span>
+                      <span className="text-sm text-neutral-900 font-bold">Total Amount</span>
                       <span className="text-xl font-black text-neutral-900 tabular-nums">
                         {effectiveTicketPrice === 0 ? "Free" : `₹${effectiveTicketPrice.toLocaleString("en-IN")}`}
                       </span>
@@ -1305,14 +1340,14 @@ export default function ApplyForm({
                   </div>
 
                   {serverError && (
-                    <div className="flex items-start gap-2 text-xs text-red-600 bg-red-50 border border-red-200 rounded-xl p-3">
+                    <div className="flex items-start gap-2 text-xs text-red-600 bg-red-50 border border-red-200 rounded-xl p-3 font-medium">
                       <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-500" />
                       <span>{serverError}</span>
                     </div>
                   )}
 
                   {paymentBlocked && (
-                    <div className="flex items-start gap-2 text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-xl p-3">
+                    <div className="flex items-start gap-2 text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-xl p-3 font-medium">
                       <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-amber-600" />
                       <span>Payment gateway is currently being initialized by the organizer.</span>
                     </div>
@@ -1322,7 +1357,7 @@ export default function ApplyForm({
                   <button
                     type="submit"
                     disabled={isSubmitting || paymentPending || paymentBlocked}
-                    className="w-full py-4 px-4 rounded-2xl text-sm font-bold text-white shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer mt-2 hover:opacity-95 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full py-3.5 px-4 rounded-xl text-sm font-bold text-white shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer mt-2 hover:opacity-95 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
                     style={{ background: brandColor }}
                   >
                     {(isSubmitting || paymentPending) && <Loader2 className="w-4 h-4 animate-spin" />}
@@ -1337,11 +1372,11 @@ export default function ApplyForm({
                   </button>
 
                   <div className="flex items-center justify-center gap-3 text-[11px] text-neutral-500 pt-1">
-                    <span className="inline-flex items-center gap-1">
+                    <span className="inline-flex items-center gap-1 font-medium">
                       <Lock className="w-3 h-3 text-emerald-600" /> 256-Bit SSL Secured
                     </span>
                     <span>·</span>
-                    <span className="inline-flex items-center gap-1">
+                    <span className="inline-flex items-center gap-1 font-medium">
                       <ShieldCheck className="w-3 h-3 text-brand" /> Instant QR Pass
                     </span>
                   </div>
@@ -1354,11 +1389,11 @@ export default function ApplyForm({
         </div>
       </main>
 
-      {/* ── Mobile Sticky Floating Action Bar (Corporate Clean White) ── */}
+      {/* ── Mobile Sticky Floating Action Bar (Clean White) ── */}
       {selectedTicket && (
         <aside
           aria-label="Booking bar"
-          className="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-white/95 backdrop-blur-xl border-t border-neutral-200 shadow-lg py-3 px-4 transition-all"
+          className="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-white/95 backdrop-blur-xl border-t border-neutral-200/90 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] py-3 px-4 transition-all"
           style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
         >
           <div className="max-w-md mx-auto flex items-center justify-between gap-3">
@@ -1377,7 +1412,7 @@ export default function ApplyForm({
                 <span className="text-sm font-black text-neutral-900 tabular-nums">
                   {effectiveTicketPrice === 0 ? "Free" : `₹${effectiveTicketPrice.toLocaleString("en-IN")}`}
                 </span>
-                <span className="text-[11px] text-neutral-500">
+                <span className="text-[11px] text-neutral-500 font-medium">
                   · {peopleCount} {peopleCount === 1 ? "guest" : "guests"}
                 </span>
               </div>
@@ -1387,7 +1422,7 @@ export default function ApplyForm({
               type="button"
               onClick={handleFloatingBookClick}
               disabled={isSubmitting || paymentPending || paymentBlocked}
-              className="inline-flex items-center justify-center gap-1.5 text-white px-5 py-2.5 rounded-xl font-bold text-xs shadow-sm transition-all cursor-pointer disabled:opacity-50 shrink-0 hover:opacity-95 active:scale-[0.98]"
+              className="inline-flex items-center justify-center gap-1.5 text-white px-5 py-2.5 rounded-xl font-bold text-xs shadow-xs transition-all cursor-pointer disabled:opacity-50 shrink-0 hover:opacity-95 active:scale-[0.98]"
               style={{ background: brandColor }}
             >
               {isSubmitting || paymentPending ? (
