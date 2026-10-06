@@ -3,17 +3,29 @@ import { resolvePostAuthRedirect } from "@/lib/auth-redirect";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(req: NextRequest) {
-  const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-  if (!clientId) {
-    const base = process.env.NEXT_PUBLIC_APP_URL ?? new URL(req.url).origin;
-    return NextResponse.redirect(`${base}/login?error=google_not_configured`);
+function getAppOrigin(req: NextRequest): string {
+  const forwardedProto = req.headers.get("x-forwarded-proto");
+  const forwardedHost = req.headers.get("x-forwarded-host");
+  if (forwardedHost) {
+    const proto = forwardedProto || "https";
+    return `${proto}://${forwardedHost}`.replace(/\/$/, "");
   }
+  const host = req.headers.get("host");
+  if (host) {
+    const isLocal = host.includes("localhost") || host.includes("127.0.0.1");
+    const proto = forwardedProto || (isLocal ? "http" : "https");
+    return `${proto}://${host}`.replace(/\/$/, "");
+  }
+  return (process.env.NEXT_PUBLIC_APP_URL || "https://urpass.space").replace(/\/$/, "");
+}
 
-  // Derive the app origin from Railway headers (x-forwarded-host) or env var
-  const proto = req.headers.get("x-forwarded-proto") ?? "https";
-  const host = req.headers.get("x-forwarded-host") ?? req.headers.get("host") ?? "";
-  const origin = process.env.NEXT_PUBLIC_APP_URL ?? `${proto}://${host}`;
+export async function GET(req: NextRequest) {
+  const origin = getAppOrigin(req);
+  const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+
+  if (!clientId) {
+    return NextResponse.redirect(`${origin}/login?error=google_not_configured`);
+  }
 
   const target = resolvePostAuthRedirect(
     req.nextUrl.searchParams,

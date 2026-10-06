@@ -58,15 +58,22 @@ function LoginContent() {
   const [serverError, setServerError] = useState<string>(() => {
     const errorParam = searchParams.get("error");
     const msgParam = searchParams.get("msg");
+    const stepParam = searchParams.get("step");
     if (!errorParam) return "";
     if (errorParam === "sso_not_active") {
       return "Enterprise SSO is not yet active for this organization.";
     } else if (errorParam === "sso_jit_disabled") {
       return "Auto-provisioning is disabled for this organization. Contact your IT administrator for an invite.";
+    } else if (errorParam === "google_code_expired") {
+      return "Google sign-in session expired or was already used. Please click 'Continue with Google' to try again.";
+    } else if (errorParam === "google_email_unverified") {
+      return "Your Google email address has not been verified by Google.";
+    } else if (errorParam === "google_not_configured") {
+      return "Google sign-in is not configured on this environment.";
     } else if (msgParam) {
       return decodeURIComponent(msgParam);
     } else {
-      return `Authentication failed (${errorParam}). Please try again.`;
+      return `Authentication failed (${errorParam}${stepParam ? ` - ${stepParam}` : ""}). Please try again.`;
     }
   });
   const [googleLoading, setGoogleLoading] = useState(false);

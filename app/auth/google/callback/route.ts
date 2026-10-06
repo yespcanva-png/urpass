@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient as createSupabaseAdmin } from "@supabase/supabase-js";
-import { createClient } from "@/lib/supabase/server";
-import { getSupabaseUrl } from "@/lib/supabase/config";
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
+import { getSupabaseUrl, getSupabaseAnonKey } from "@/lib/supabase/config";
 import { notifyOwnerNewUser, notifyOwnerUserLogin, sendUserWelcomeEmail } from "@/lib/email";
 import { resolvePostAuthRedirect } from "@/lib/auth-redirect";
 
@@ -10,9 +11,9 @@ export const dynamic = "force-dynamic";
 interface GoogleTokenInfo {
   sub: string;
   email: string;
-  email_verified: string;
-  name: string;
-  picture: string;
+  email_verified: string | boolean;
+  name?: string;
+  picture?: string;
   aud: string;
 }
 
@@ -24,18 +25,50 @@ function adminClient() {
   );
 }
 
+function getAppOrigin(req: NextRequest): string {
+  const forwardedProto = req.headers.get("x-forwarded-proto");
+  const forwardedHost = req.headers.get("x-forwarded-host");
+  if (forwardedHost) {
+    const proto = forwardedProto || "https";
+    return `${proto}://${forwardedHost}`.replace(/\/$/, "");
+  }
+  const host = req.headers.get("host");
+  if (host) {
+    const isLocal = host.includes("localhost") || host.includes("127.0.0.1");
+    const proto = forwardedProto || (isLocal ? "http" : "https");
+    return `${proto}://${host}`.replace(/\/$/, "");
+  }
+  return (process.env.NEXT_PUBLIC_APP_URL || "https://urpass.space").replace(/\/$/, "");
+}
+
 export async function GET(req: NextRequest) {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://urpass.space";
+  const origin = getAppOrigin(req);
 
   try {
     const { searchParams } = new URL(req.url);
     const code = searchParams.get("code");
     const state = searchParams.get("state");
     const error = searchParams.get("error");
+    const errorDescription = searchParams.get("error_description");
 
-    if (error || !code) {
-      return NextResponse.redirect(`${appUrl}/login?error=google_auth_failed&step=init`);
+    if (error) {
+      console.warn("[google-callback] Google returned error:", error, errorDescription);
+      return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent(error)}`);
     }
+
+    if (!code) {
+      return NextResponse.redirect(`${origin}/login?error=google_auth_failed&step=init`);
+    }
+
+    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+    const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+
+    if (!clientId || !clientSecret) {
+      console.error("[google-callback] Google client credentials missing");
+      return NextResponse.redirect(`${origin}/login?error=google_not_configured`);
+    }
+
+    const redirectUri = `${origin}/auth/google/callback`;
 
     // Exchange authorization code for Google tokens
     const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
@@ -43,17 +76,20 @@ export async function GET(req: NextRequest) {
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({
         code,
-        client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!,
-        client_secret: process.env.GOOGLE_CLIENT_SECRET!,
-        redirect_uri: `${appUrl}/auth/google/callback`,
+        client_id: clientId,
+        client_secret: clientSecret,
+        redirect_uri: redirectUri,
         grant_type: "authorization_code",
       }),
     });
 
     const tokens = await tokenRes.json();
     if (!tokenRes.ok || !tokens.id_token) {
-      console.error("[google-callback] token exchange error:", tokens);
-      return NextResponse.redirect(`${appUrl}/login?error=google_auth_failed&step=token`);
+      console.error("[google-callback] token exchange error:", tokenRes.status, tokens);
+      if (tokens.error === "invalid_grant") {
+        return NextResponse.redirect(`${origin}/login?error=google_code_expired`);
+      }
+      return NextResponse.redirect(`${origin}/login?error=google_auth_failed&step=token`);
     }
 
     // Verify the ID token
@@ -61,22 +97,35 @@ export async function GET(req: NextRequest) {
       `https://oauth2.googleapis.com/tokeninfo?id_token=${tokens.id_token}`
     );
     if (!infoRes.ok) {
-      return NextResponse.redirect(`${appUrl}/login?error=google_auth_failed&step=verify`);
+      console.error("[google-callback] tokeninfo verification error:", infoRes.status);
+      return NextResponse.redirect(`${origin}/login?error=google_auth_failed&step=verify`);
     }
 
     const info: GoogleTokenInfo = await infoRes.json();
 
-    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
     if (clientId && info.aud !== clientId) {
-      return NextResponse.redirect(`${appUrl}/login?error=google_auth_failed&step=aud`);
+      console.error("[google-callback] aud mismatch. Token aud:", info.aud, "Expected:", clientId);
+      return NextResponse.redirect(`${origin}/login?error=google_auth_failed&step=aud`);
     }
 
-    if (info.email_verified !== "true") {
-      return NextResponse.redirect(`${appUrl}/login?error=google_email_unverified`);
+    const isVerified =
+      String(info.email_verified).toLowerCase() === "true" ||
+      info.email_verified === true;
+
+    if (!isVerified) {
+      return NextResponse.redirect(`${origin}/login?error=google_email_unverified`);
     }
 
     const admin = adminClient();
-    const normalizedEmail = info.email.toLowerCase().trim();
+    const normalizedEmail = String(info.email || "").toLowerCase().trim();
+
+    if (!normalizedEmail) {
+      return NextResponse.redirect(`${origin}/login?error=google_no_email`);
+    }
+
+    const fullName = info.name || normalizedEmail.split("@")[0];
+    const avatarUrl = info.picture || "";
+    const googleId = info.sub || "";
 
     // Find user across profiles table (case-insensitive)
     const { data: profileRow } = await admin
@@ -92,13 +141,13 @@ export async function GET(req: NextRequest) {
       await admin.auth.admin.updateUserById(userId, {
         email_confirm: true,
         user_metadata: {
-          full_name: info.name,
-          avatar_url: info.picture,
-          google_id: info.sub,
+          full_name: fullName,
+          avatar_url: avatarUrl,
+          google_id: googleId,
         },
       });
       notifyOwnerUserLogin({
-        name: info.name,
+        name: fullName,
         email: normalizedEmail,
         provider: "google",
         userId,
@@ -109,9 +158,9 @@ export async function GET(req: NextRequest) {
         email: normalizedEmail,
         email_confirm: true,
         user_metadata: {
-          full_name: info.name,
-          avatar_url: info.picture,
-          google_id: info.sub,
+          full_name: fullName,
+          avatar_url: avatarUrl,
+          google_id: googleId,
         },
       });
 
@@ -120,12 +169,12 @@ export async function GET(req: NextRequest) {
         isNewUser = true;
         Promise.allSettled([
           notifyOwnerNewUser({
-            name: info.name,
+            name: fullName,
             email: normalizedEmail,
             provider: "google",
             userId,
           }),
-          sendUserWelcomeEmail({ to: normalizedEmail, name: info.name }),
+          sendUserWelcomeEmail({ to: normalizedEmail, name: fullName }),
         ]).catch((e) => console.error("[google-callback] notification error:", e));
       } else {
         // If createUser returned already registered / email_exists, user is existing.
@@ -141,7 +190,7 @@ export async function GET(req: NextRequest) {
 
     if (linkErr || !linkData?.properties?.hashed_token) {
       console.error("[google-callback] generateLink error:", linkErr);
-      return NextResponse.redirect(`${appUrl}/login?error=google_auth_failed&step=link`);
+      return NextResponse.redirect(`${origin}/login?error=google_auth_failed&step=link`);
     }
 
     if (!userId && linkData.user?.id) {
@@ -149,13 +198,13 @@ export async function GET(req: NextRequest) {
       await admin.auth.admin.updateUserById(userId, {
         email_confirm: true,
         user_metadata: {
-          full_name: info.name,
-          avatar_url: info.picture,
-          google_id: info.sub,
+          full_name: fullName,
+          avatar_url: avatarUrl,
+          google_id: googleId,
         },
       });
       notifyOwnerUserLogin({
-        name: info.name,
+        name: fullName,
         email: normalizedEmail,
         provider: "google",
         userId,
@@ -169,8 +218,8 @@ export async function GET(req: NextRequest) {
           {
             user_id: userId,
             email: normalizedEmail,
-            full_name: info.name,
-            avatar_url: info.picture,
+            full_name: fullName,
+            avatar_url: avatarUrl,
             updated_at: new Date().toISOString(),
           },
           { onConflict: "user_id" }
@@ -180,10 +229,43 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // Verify OTP to set the Supabase session cookie on the server client
-    const supabase = await createClient();
+    // Determine post-login redirect destination
+    const target = resolvePostAuthRedirect(
+      { get: (k: string) => (k === "next" ? state : null) },
+      null
+    );
+    const destination = target !== "/dashboard"
+      ? target
+      : (isNewUser ? "/onboarding" : "/dashboard");
+
+    const response = NextResponse.redirect(`${origin}${destination}`);
+    const cookieStore = await cookies();
+
+    // Verify OTP on server client configured to write cookies directly to response
+    const supabase = createServerClient(
+      getSupabaseUrl(),
+      getSupabaseAnonKey(),
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll();
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              try {
+                cookieStore.set(name, value, options);
+              } catch {
+                // Ignore if in context where cookieStore cannot mutate
+              }
+              response.cookies.set(name, value, options);
+            });
+          },
+        },
+      }
+    );
+
     const tokenHash = linkData.properties.hashed_token;
-    const verificationType = (linkData.properties.verification_type as "magiclink" | "email") || "magiclink";
+    const verificationType = (linkData.properties.verification_type as "magiclink" | "signup" | "email") || "magiclink";
 
     let { error: verifyErr } = await supabase.auth.verifyOtp({
       token_hash: tokenHash,
@@ -198,6 +280,13 @@ export async function GET(req: NextRequest) {
       });
       if (!fb.error) verifyErr = null;
     }
+    if (verifyErr && verificationType !== "signup") {
+      const fb = await supabase.auth.verifyOtp({
+        token_hash: tokenHash,
+        type: "signup",
+      });
+      if (!fb.error) verifyErr = null;
+    }
     if (verifyErr && verificationType !== "email") {
       const fb = await supabase.auth.verifyOtp({
         token_hash: tokenHash,
@@ -208,20 +297,12 @@ export async function GET(req: NextRequest) {
 
     if (verifyErr) {
       console.error("[google-callback] verifyOtp error:", verifyErr);
-      return NextResponse.redirect(`${appUrl}/login?error=google_auth_failed&step=otp`);
+      return NextResponse.redirect(`${origin}/login?error=google_auth_failed&step=otp`);
     }
 
-    const target = resolvePostAuthRedirect(
-      { get: (k: string) => (k === "next" ? state : null) },
-      null
-    );
-    const destination = target !== "/dashboard"
-      ? target
-      : (isNewUser ? "/onboarding" : "/dashboard");
-
-    return NextResponse.redirect(`${appUrl}${destination}`);
+    return response;
   } catch (err) {
     console.error("[google-callback] unhandled error:", err);
-    return NextResponse.redirect(`${appUrl}/login?error=google_auth_failed&step=crash`);
+    return NextResponse.redirect(`${origin}/login?error=google_auth_failed&step=crash`);
   }
 }

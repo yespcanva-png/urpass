@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
+import { getSupabaseUrl, getSupabaseAnonKey } from "@/lib/supabase/config";
 import { resolvePostAuthRedirect } from "@/lib/auth-redirect";
 import { notifyOwnerNewUser, notifyOwnerUserLogin, sendUserWelcomeEmail } from "@/lib/email";
+
+export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
@@ -9,7 +13,31 @@ export async function GET(request: Request) {
   const target = resolvePostAuthRedirect(searchParams, null);
 
   if (code) {
-    const supabase = await createClient();
+    const cookieStore = await cookies();
+    const response = NextResponse.redirect(`${origin}${target}`);
+
+    const supabase = createServerClient(
+      getSupabaseUrl(),
+      getSupabaseAnonKey(),
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll();
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              try {
+                cookieStore.set(name, value, options);
+              } catch {
+                // Ignore
+              }
+              response.cookies.set(name, value, options);
+            });
+          },
+        },
+      }
+    );
+
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error && data?.user) {
       const user = data.user;
@@ -47,7 +75,7 @@ export async function GET(request: Request) {
           console.error("[auth/callback] notifyOwnerUserLogin error:", e);
         }
       }
-      return NextResponse.redirect(`${origin}${target}`);
+      return response;
     }
   }
 
