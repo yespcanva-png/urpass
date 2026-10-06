@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import {
   TrendingUp,
   RotateCcw,
@@ -25,12 +25,16 @@ import {
   Plus,
   X,
   ExternalLink,
+  RefreshCw,
 } from "lucide-react";
 import { formatINR } from "@/lib/payments/fees";
 import {
   saveOrganizerPayoutAccountAction,
   requestOrganizerPayoutAction,
   processRealOrderRefundAction,
+  syncOrderPaymentStatusAction,
+  syncAllEventOrdersStatusAction,
+  getEventFinanceDataAction,
   type FinanceTransaction,
   type FinanceMetrics,
   type SettlementBatch,
@@ -72,6 +76,99 @@ export default function OrganizerFinanceDashboard({
   // Filters & Search for transactions
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+
+  // Gateway Sync States
+  const [syncingOrderId, setSyncingOrderId] = useState<string | null>(null);
+  const [isSyncingAll, setIsSyncingAll] = useState(false);
+  const [syncBannerMsg, setSyncBannerMsg] = useState<{ text: string; isError?: boolean } | null>(null);
+
+  // Status Counts
+  const statusCounts = useMemo(() => {
+    let paid = 0;
+    let incomplete = 0;
+    let failed = 0;
+    let refunded = 0;
+    for (const t of transactions) {
+      if (t.status === "paid") paid++;
+      else if (t.status === "refunded") refunded++;
+      else if (t.status === "failed") failed++;
+      else incomplete++;
+    }
+    return {
+      all: transactions.length,
+      paid,
+      incomplete,
+      failed,
+      refunded,
+    };
+  }, [transactions]);
+
+  // Sync a single order against Razorpay
+  async function handleSyncOrder(tx: FinanceTransaction) {
+    setSyncingOrderId(tx.id);
+    setSyncBannerMsg(null);
+    try {
+      const res = await syncOrderPaymentStatusAction({
+        orderId: tx.id,
+        eventId,
+      });
+
+      if (res.error) {
+        setSyncBannerMsg({ text: res.error, isError: true });
+        return;
+      }
+
+      if (res.status && res.status !== tx.status) {
+        setTransactions((prev) =>
+          prev.map((t) =>
+            t.id === tx.id
+              ? {
+                  ...t,
+                  status: res.status as FinanceTransaction["status"],
+                  razorpay_payment_id: res.paymentId || t.razorpay_payment_id,
+                }
+              : t
+          )
+        );
+      }
+
+      setSyncBannerMsg({
+        text: `${tx.order_number}: ${res.message || "Status verified with Razorpay."}`,
+        isError: res.status === "failed",
+      });
+    } catch (err: any) {
+      setSyncBannerMsg({ text: err.message || "Failed to verify payment status.", isError: true });
+    } finally {
+      setSyncingOrderId(null);
+    }
+  }
+
+  // Sync all orders against Razorpay
+  async function handleSyncAll() {
+    setIsSyncingAll(true);
+    setSyncBannerMsg(null);
+    try {
+      const res = await syncAllEventOrdersStatusAction(eventId);
+      if (res.error) {
+        setSyncBannerMsg({ text: res.error, isError: true });
+        return;
+      }
+
+      // Reload fresh data
+      const freshData = await getEventFinanceDataAction(eventId, organizationId);
+      setTransactions(freshData.transactions);
+      setMetrics(freshData.metrics);
+      setSettlements(freshData.settlements);
+      setSyncBannerMsg({
+        text: res.message || "All orders synced with Razorpay gateway.",
+        isError: false,
+      });
+    } catch (err: any) {
+      setSyncBannerMsg({ text: err.message || "Failed to sync all orders.", isError: true });
+    } finally {
+      setIsSyncingAll(false);
+    }
+  }
 
   // Refund Modal State
   const [refundModalOrder, setRefundModalOrder] = useState<FinanceTransaction | null>(null);
@@ -314,7 +411,8 @@ export default function OrganizerFinanceDashboard({
             {formatINR(metrics.grossSales)}
           </p>
           <span className="text-[11px] text-neutral-500 mt-1 block font-medium">
-            {metrics.paidCount} paid {metrics.paidCount === 1 ? "order" : "orders"}
+            {metrics.paidCount} successful {metrics.paidCount === 1 ? "order" : "orders"}
+            {statusCounts.incomplete > 0 ? ` • ${statusCounts.incomplete} unpaid` : ""}
           </span>
         </div>
 
@@ -456,9 +554,37 @@ export default function OrganizerFinanceDashboard({
       {/* TAB 1: TRANSACTIONS LEDGER */}
       {activeTab === "transactions" && (
         <div className="bg-white border border-neutral-200 rounded-2xl overflow-hidden shadow-xs">
-          <div className="p-4 border-b border-neutral-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="flex items-center gap-3 flex-1 max-w-md">
-              <div className="relative flex-1">
+          {/* Sync Feedback Banner */}
+          {syncBannerMsg && (
+            <div
+              className={`p-3.5 border-b text-xs font-medium flex items-center justify-between transition-all ${
+                syncBannerMsg.isError
+                  ? "bg-red-50 text-red-800 border-red-200"
+                  : "bg-emerald-50 text-emerald-900 border-emerald-200"
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                {syncBannerMsg.isError ? (
+                  <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
+                ) : (
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                )}
+                <span>{syncBannerMsg.text}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSyncBannerMsg(null)}
+                className="text-neutral-500 hover:text-neutral-800 text-xs px-2 py-0.5 rounded cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+          )}
+
+          {/* Table Header Controls */}
+          <div className="p-4 border-b border-neutral-100 flex flex-col gap-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="relative flex-1 max-w-md">
                 <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
                 <input
                   type="text"
@@ -469,27 +595,100 @@ export default function OrganizerFinanceDashboard({
                 />
               </div>
 
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-2.5 py-1.5 text-xs bg-neutral-50 border border-neutral-200 rounded-lg focus:outline-hidden text-neutral-700 font-medium"
-              >
-                <option value="all">All Statuses</option>
-                <option value="paid">Paid</option>
-                <option value="created">Created</option>
-                <option value="refunded">Refunded</option>
-              </select>
+              <div className="flex items-center gap-2 self-start sm:self-auto">
+                <button
+                  type="button"
+                  onClick={handleSyncAll}
+                  disabled={isSyncingAll || transactions.length === 0}
+                  className="px-3 py-1.5 rounded-lg border border-neutral-200 text-xs font-semibold text-neutral-700 hover:bg-neutral-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors inline-flex items-center gap-1.5 cursor-pointer"
+                  title="Query Razorpay for live payment updates across all orders"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 text-neutral-500 ${isSyncingAll ? "animate-spin text-neutral-900" : ""}`} />
+                  <span>{isSyncingAll ? "Syncing..." : "Sync with Gateway"}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleExportCSV}
+                  disabled={transactions.length === 0}
+                  className="px-3 py-1.5 rounded-lg border border-neutral-200 text-xs font-semibold text-neutral-700 hover:bg-neutral-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors inline-flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Export CSV</span>
+                </button>
+              </div>
             </div>
 
-            <button
-              type="button"
-              onClick={handleExportCSV}
-              disabled={transactions.length === 0}
-              className="px-3 py-1.5 rounded-lg border border-neutral-200 text-xs font-semibold text-neutral-700 hover:bg-neutral-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors inline-flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
-            >
-              <Download className="w-3.5 h-3.5" />
-              <span>Export CSV</span>
-            </button>
+            {/* Quick Status Filter Tabs */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+              <button
+                type="button"
+                onClick={() => setStatusFilter("all")}
+                className={`px-3 py-1 rounded-lg font-semibold transition-all cursor-pointer whitespace-nowrap ${
+                  statusFilter === "all"
+                    ? "bg-neutral-900 text-white shadow-2xs"
+                    : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
+                }`}
+              >
+                All Orders ({statusCounts.all})
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setStatusFilter("paid")}
+                className={`px-3 py-1 rounded-lg font-semibold transition-all cursor-pointer whitespace-nowrap inline-flex items-center gap-1 ${
+                  statusFilter === "paid"
+                    ? "bg-emerald-700 text-white shadow-2xs"
+                    : "bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100"
+                }`}
+              >
+                <CheckCircle2 className="w-3 h-3" />
+                Successful ({statusCounts.paid})
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setStatusFilter("created")}
+                className={`px-3 py-1 rounded-lg font-semibold transition-all cursor-pointer whitespace-nowrap inline-flex items-center gap-1 ${
+                  statusFilter === "created"
+                    ? "bg-amber-600 text-white shadow-2xs"
+                    : "bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100"
+                }`}
+              >
+                <Clock className="w-3 h-3" />
+                Incomplete / Unpaid ({statusCounts.incomplete})
+              </button>
+
+              {statusCounts.failed > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setStatusFilter("failed")}
+                  className={`px-3 py-1 rounded-lg font-semibold transition-all cursor-pointer whitespace-nowrap inline-flex items-center gap-1 ${
+                    statusFilter === "failed"
+                      ? "bg-red-600 text-white shadow-2xs"
+                      : "bg-red-50 text-red-800 border border-red-200 hover:bg-red-100"
+                  }`}
+                >
+                  <AlertCircle className="w-3 h-3" />
+                  Failed ({statusCounts.failed})
+                </button>
+              )}
+
+              {statusCounts.refunded > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setStatusFilter("refunded")}
+                  className={`px-3 py-1 rounded-lg font-semibold transition-all cursor-pointer whitespace-nowrap inline-flex items-center gap-1 ${
+                    statusFilter === "refunded"
+                      ? "bg-purple-700 text-white shadow-2xs"
+                      : "bg-purple-50 text-purple-800 border border-purple-200 hover:bg-purple-100"
+                  }`}
+                >
+                  <RotateCcw className="w-3 h-3" />
+                  Refunded ({statusCounts.refunded})
+                </button>
+              )}
+            </div>
           </div>
 
           {filteredTransactions.length === 0 ? (
@@ -511,7 +710,7 @@ export default function OrganizerFinanceDashboard({
                     <th className="py-3 px-4">Gross</th>
                     <th className="py-3 px-4">Fees</th>
                     <th className="py-3 px-4">Net Share</th>
-                    <th className="py-3 px-4">Status</th>
+                    <th className="py-3 px-4">Payment Status</th>
                     <th className="py-3 px-4">Date</th>
                     <th className="py-3 px-4 text-right">Actions</th>
                   </tr>
@@ -532,20 +731,45 @@ export default function OrganizerFinanceDashboard({
                         {formatINR(tx.platform_fee + tx.gateway_fee)}
                       </td>
                       <td className="py-3 px-4 font-bold text-emerald-800 font-mono">
-                        {formatINR(tx.organizer_share)}
+                        {tx.status === "paid" ? formatINR(tx.organizer_share) : "—"}
                       </td>
                       <td className="py-3 px-4">
-                        <span
-                          className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase ${
-                            tx.status === "paid"
-                              ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                              : tx.status === "refunded"
-                              ? "bg-red-50 text-red-700 border border-red-200"
-                              : "bg-neutral-100 text-neutral-600 border border-neutral-200"
-                          }`}
-                        >
-                          {tx.status}
-                        </span>
+                        {tx.status === "paid" ? (
+                          <div className="flex flex-col gap-0.5">
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 w-fit">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                              Successful (Paid)
+                            </span>
+                            {tx.razorpay_payment_id && (
+                              <span className="text-[10px] font-mono text-neutral-400">
+                                ID: {tx.razorpay_payment_id}
+                              </span>
+                            )}
+                          </div>
+                        ) : tx.status === "failed" ? (
+                          <div className="flex flex-col gap-0.5">
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-red-50 text-red-700 border border-red-200 w-fit">
+                              <AlertCircle className="w-3.5 h-3.5 text-red-600 shrink-0" />
+                              Payment Failed
+                            </span>
+                            <span className="text-[10px] text-red-500">Declined on Gateway</span>
+                          </div>
+                        ) : tx.status === "refunded" ? (
+                          <div className="flex flex-col gap-0.5">
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-purple-50 text-purple-700 border border-purple-200 w-fit">
+                              <RotateCcw className="w-3.5 h-3.5 text-purple-600 shrink-0" />
+                              Refunded
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="flex flex-col gap-0.5">
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 w-fit">
+                              <Clock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                              Incomplete (Unpaid)
+                            </span>
+                            <span className="text-[10px] text-neutral-400">Checkout Abandoned</span>
+                          </div>
+                        )}
                       </td>
                       <td className="py-3 px-4 text-neutral-500 text-[11px]">
                         {new Date(tx.created_at).toLocaleDateString("en-IN", {
@@ -555,7 +779,7 @@ export default function OrganizerFinanceDashboard({
                         })}
                       </td>
                       <td className="py-3 px-4 text-right">
-                        {tx.status === "paid" && (
+                        {tx.status === "paid" ? (
                           <button
                             type="button"
                             onClick={() => {
@@ -565,6 +789,21 @@ export default function OrganizerFinanceDashboard({
                             className="text-[11px] font-semibold text-neutral-600 hover:text-red-600 underline cursor-pointer"
                           >
                             Refund
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleSyncOrder(tx)}
+                            disabled={syncingOrderId === tx.id}
+                            className="inline-flex items-center gap-1 text-[11px] font-semibold text-neutral-700 hover:text-neutral-900 bg-neutral-100 hover:bg-neutral-200 px-2.5 py-1 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+                            title="Query Razorpay to verify if payment was completed"
+                          >
+                            {syncingOrderId === tx.id ? (
+                              <Loader2 className="w-3 h-3 animate-spin text-neutral-600" />
+                            ) : (
+                              <RefreshCw className="w-3 h-3 text-neutral-500" />
+                            )}
+                            <span>Check Status</span>
                           </button>
                         )}
                       </td>

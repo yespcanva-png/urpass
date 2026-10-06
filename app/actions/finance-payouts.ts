@@ -55,6 +55,8 @@ export interface FinanceMetrics {
   ordersCount: number;
   paidCount: number;
   refundedCount: number;
+  incompleteCount?: number;
+  failedCount?: number;
 }
 
 export interface EventFinanceData {
@@ -190,6 +192,8 @@ export async function getEventFinanceDataAction(
   let netEarnings = 0;
   let paidCount = 0;
   let refundedCount = 0;
+  let incompleteCount = 0;
+  let failedCount = 0;
 
   for (const tx of transactions) {
     if (tx.status === "paid") {
@@ -201,6 +205,10 @@ export async function getEventFinanceDataAction(
     } else if (tx.status === "refunded") {
       totalRefunds += tx.subtotal;
       refundedCount++;
+    } else if (tx.status === "failed") {
+      failedCount++;
+    } else {
+      incompleteCount++;
     }
   }
 
@@ -223,6 +231,8 @@ export async function getEventFinanceDataAction(
       ordersCount: transactions.length,
       paidCount,
       refundedCount,
+      incompleteCount,
+      failedCount,
     },
     transactions,
     settlements,
@@ -456,3 +466,245 @@ export async function processRealOrderRefundAction(params: {
   revalidatePath(`/event/${eventId}/finance`);
   return { success: true, refund: newRefund };
 }
+
+/**
+ * Sync / verify live payment status from Razorpay Gateway for a specific order.
+ */
+export async function syncOrderPaymentStatusAction(params: {
+  orderId: string;
+  eventId: string;
+}): Promise<{
+  success?: boolean;
+  error?: string;
+  status?: "paid" | "failed" | "created" | "refunded";
+  paymentId?: string | null;
+  message?: string;
+  attempts?: number;
+}> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const { createClient: createAdminClient } = await import("@supabase/supabase-js");
+  const { getSupabaseUrl } = await import("@/lib/supabase/config");
+  const admin = createAdminClient(
+    getSupabaseUrl(),
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+
+  const { orderId, eventId } = params;
+
+  // 1. Fetch order
+  const { data: order } = await admin
+    .from("ticket_orders")
+    .select("*, event:events(id, organizer_id, organization_id, name, event_date, venue, auto_approve, attendee_limit, custom_fields)")
+    .or(`id.eq.${orderId},razorpay_order_id.eq.${orderId}`)
+    .maybeSingle();
+
+  if (!order) {
+    return { error: "Order not found." };
+  }
+
+  if (!order.razorpay_order_id) {
+    return { error: "No Razorpay Order ID found for this record." };
+  }
+
+  // 2. Authoritatively resolve Razorpay credentials
+  const { resolveEventRazorpayCredentials } = await import("@/lib/razorpay");
+  const Razorpay = (await import("razorpay")).default;
+
+  let creds;
+  try {
+    creds = await resolveEventRazorpayCredentials(admin, {
+      id: order.event_id,
+      organizer_id: order.event?.organizer_id,
+      organization_id: order.event?.organization_id,
+    });
+  } catch (credErr) {
+    return { error: "Razorpay credentials not configured for this event." };
+  }
+
+  const razorpay = new Razorpay({
+    key_id: creds.keyId,
+    key_secret: creds.keySecret,
+  });
+
+  try {
+    // 3. Fetch Razorpay Order and Payments from Razorpay API
+    const [rzpOrder, rzpPayments] = await Promise.all([
+      razorpay.orders.fetch(order.razorpay_order_id).catch(() => null),
+      razorpay.orders.fetchPayments(order.razorpay_order_id).catch(() => ({ items: [] })),
+    ]);
+
+    const payments = rzpPayments?.items || [];
+    const capturedPayment = payments.find(
+      (p: any) => p.status === "captured" || p.status === "authorized"
+    );
+    const failedPayments = payments.filter((p: any) => p.status === "failed");
+
+    let newStatus: "paid" | "failed" | "created" | "refunded" = order.status;
+    let paymentId = order.razorpay_payment_id;
+    let statusMessage = "";
+
+    if (capturedPayment) {
+      newStatus = "paid";
+      paymentId = capturedPayment.id;
+      const amtRupees = Number(capturedPayment.amount || 0) / 100;
+      statusMessage = `Payment of ₹${amtRupees} captured successfully via ${capturedPayment.method?.toUpperCase() || "Online"}.`;
+
+      // Update order
+      await admin
+        .from("ticket_orders")
+        .update({
+          status: "paid",
+          razorpay_payment_id: capturedPayment.id,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", order.id);
+
+      // If attendee doesn't exist yet, create attendee and generate pass
+      if (!order.attendee_id && order.buyer_email && order.buyer_name) {
+        const groupMembers = Array.isArray(order.group_members) ? order.group_members : [];
+        const customResponses = groupMembers.length > 0 ? { group_members: groupMembers } : {};
+
+        const { data: newAttendee } = await admin
+          .from("attendees")
+          .insert({
+            event_id: order.event_id,
+            name: order.buyer_name,
+            email: order.buyer_email,
+            pass_type: "participant",
+            application_status: "approved",
+            ticket_type_id: order.ticket_type_id,
+            custom_responses: customResponses,
+          })
+          .select("id, pass_type")
+          .single();
+
+        if (newAttendee) {
+          await admin
+            .from("ticket_orders")
+            .update({ attendee_id: newAttendee.id })
+            .eq("id", order.id);
+
+          const crypto = (await import("crypto")).default;
+          const passToken = "pass_" + crypto.randomBytes(16).toString("hex");
+          const { data: pass } = await admin
+            .from("passes")
+            .insert({
+              event_id: order.event_id,
+              attendee_id: newAttendee.id,
+              pass_type: newAttendee.pass_type,
+              ticket_type_id: order.ticket_type_id,
+              pass_token: passToken,
+            })
+            .select("pass_token")
+            .single();
+
+          if (pass) {
+            await admin
+              .from("attendees")
+              .update({ pass_status: "generated" })
+              .eq("id", newAttendee.id);
+          }
+        }
+      }
+    } else if (failedPayments.length > 0 && rzpOrder?.attempts && rzpOrder.attempts > 0) {
+      newStatus = "failed";
+      const lastFailure = failedPayments[0];
+      const failureReason =
+        lastFailure?.error_description ||
+        lastFailure?.error_reason ||
+        "Payment declined or cancelled by buyer";
+      statusMessage = `Payment failed on gateway (${failureReason}).`;
+
+      await admin
+        .from("ticket_orders")
+        .update({
+          status: "failed",
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", order.id);
+    } else {
+      newStatus = "created";
+      statusMessage = "Checkout was initiated by buyer, but no payment was completed (0 attempts).";
+    }
+
+    revalidatePath(`/event/${eventId}/finance`);
+    revalidatePath(`/event/${eventId}/attendees`);
+
+    return {
+      success: true,
+      status: newStatus,
+      paymentId,
+      message: statusMessage,
+      attempts: rzpOrder?.attempts || 0,
+    };
+  } catch (err: any) {
+    return { error: err.message || "Failed to sync order with Razorpay." };
+  }
+}
+
+/**
+ * Reconcile & sync all incomplete / pending orders for an event against Razorpay.
+ */
+export async function syncAllEventOrdersStatusAction(eventId: string): Promise<{
+  success?: boolean;
+  error?: string;
+  syncedCount?: number;
+  updatedPaidCount?: number;
+  updatedFailedCount?: number;
+  message?: string;
+}> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const { createClient: createAdminClient } = await import("@supabase/supabase-js");
+  const { getSupabaseUrl } = await import("@/lib/supabase/config");
+  const admin = createAdminClient(
+    getSupabaseUrl(),
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+
+  // Fetch all orders not yet marked paid or refunded
+  const { data: orders } = await admin
+    .from("ticket_orders")
+    .select("id, razorpay_order_id, status")
+    .eq("event_id", eventId)
+    .neq("status", "paid")
+    .neq("status", "refunded");
+
+  if (!orders || orders.length === 0) {
+    return { success: true, syncedCount: 0, message: "All transactions are already verified and up to date." };
+  }
+
+  let updatedPaid = 0;
+  let updatedFailed = 0;
+
+  for (const order of orders) {
+    if (!order.razorpay_order_id) continue;
+    const res = await syncOrderPaymentStatusAction({
+      orderId: order.id,
+      eventId,
+    });
+    if (res.status === "paid" && order.status !== "paid") updatedPaid++;
+    if (res.status === "failed" && order.status !== "failed") updatedFailed++;
+  }
+
+  revalidatePath(`/event/${eventId}/finance`);
+  revalidatePath(`/event/${eventId}/attendees`);
+
+  return {
+    success: true,
+    syncedCount: orders.length,
+    updatedPaidCount: updatedPaid,
+    updatedFailedCount: updatedFailed,
+    message: `Synced ${orders.length} orders with Razorpay (${updatedPaid} newly paid, ${updatedFailed} failed).`,
+  };
+}
+
