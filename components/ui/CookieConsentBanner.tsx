@@ -2,16 +2,49 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Cookie, ShieldCheck, X } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { Cookie, ShieldCheck } from "lucide-react";
 import { detectCountryClient } from "@/lib/country-config";
 
 type RegionMode = "uk" | "in" | "common";
 
+/**
+ * Returns true if the given pathname is a public event / registration / attendee pass page.
+ * For public event visitors, the cookie banner popup is suppressed to eliminate friction
+ * and deliver an instant, seamless event details and ticket booking experience.
+ */
+export function isPublicEventRoute(pathname?: string | null): boolean {
+  if (!pathname) return false;
+  const path = pathname.toLowerCase();
+  return (
+    path.startsWith("/events/") ||
+    path === "/events" ||
+    path.startsWith("/apply/") ||
+    path === "/apply" ||
+    path.startsWith("/e/") ||
+    path === "/e" ||
+    path.startsWith("/p/") ||
+    path === "/p" ||
+    path.startsWith("/verify") ||
+    path.startsWith("/feedback/") ||
+    path === "/feedback"
+  );
+}
+
 export function CookieConsentBanner() {
+  const pathname = usePathname();
   const [visible, setVisible] = useState(false);
   const [region, setRegion] = useState<RegionMode>("common");
 
+  // If on a public event, registration, or pass page, never show the cookie consent popup
+  const isPublicEvent = isPublicEventRoute(pathname);
+
   useEffect(() => {
+    if (isPublicEvent) {
+      setVisible(false);
+      return;
+    }
+
     // 1. Check if consent has already been recorded
     try {
       const stored = localStorage.getItem("urpass_cookie_consent");
@@ -24,10 +57,10 @@ export function CookieConsentBanner() {
 
     // 2. Determine initial region from URL & client environment
     try {
-      const pathname = window.location.pathname.toLowerCase();
-      if (pathname === "/uk" || pathname.startsWith("/uk/") || pathname.includes("-uk")) {
+      const currentPath = (pathname || window.location.pathname).toLowerCase();
+      if (currentPath === "/uk" || currentPath.startsWith("/uk/") || currentPath.includes("-uk")) {
         setRegion("uk");
-      } else if (pathname === "/in" || pathname.startsWith("/in/") || pathname.includes("-india")) {
+      } else if (currentPath === "/in" || currentPath.startsWith("/in/") || currentPath.includes("-india")) {
         setRegion("in");
       } else {
         const clientCountry = detectCountryClient();
@@ -52,7 +85,7 @@ export function CookieConsentBanner() {
           .catch(() => {});
       }
     } catch {}
-  }, []);
+  }, [isPublicEvent, pathname]);
 
   const handleAcceptAll = () => {
     try {
@@ -70,7 +103,7 @@ export function CookieConsentBanner() {
     setVisible(false);
   };
 
-  if (!visible) return null;
+  if (isPublicEvent || !visible) return null;
 
   const content = {
     uk: {
