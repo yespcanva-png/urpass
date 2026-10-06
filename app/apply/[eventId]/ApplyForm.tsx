@@ -163,11 +163,31 @@ export default function ApplyForm({
   const {
     register,
     handleSubmit,
+    getValues,
+    setFocus,
     formState: { errors, isSubmitting },
   } = useForm<AttendeeInput>({
     resolver: zodResolver(attendeeSchema),
     defaultValues: { pass_type: "participant" },
   });
+
+  const handleFloatingBookClick = () => {
+    const values = getValues();
+    if (!values.name || !values.email) {
+      const detailsSection = document.getElementById("attendee-details-section");
+      if (detailsSection) {
+        detailsSection.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+      if (!values.name) {
+        setFocus("name");
+      } else if (!values.email) {
+        setFocus("email");
+      }
+      handleSubmit(onSubmit)();
+    } else {
+      handleSubmit(onSubmit)();
+    }
+  };
 
   const formattedDate = new Date(event.event_date).toLocaleDateString("en-IN", {
     weekday: "short",
@@ -409,7 +429,7 @@ export default function ApplyForm({
 
   // ── Main Corporate Registration Page ──────────────────────────────────────
   return (
-    <div className={`min-h-screen bg-[#fafafa] text-neutral-900 pb-20 ${staffScanLink ? "pt-16" : "pt-4 sm:pt-8"}`}>
+    <div className={`min-h-screen bg-[#fafafa] text-neutral-900 ${selectedTicket ? "pb-28 sm:pb-32" : "pb-20"} ${staffScanLink ? "pt-16" : "pt-4 sm:pt-8"}`}>
       <div className="max-w-2xl mx-auto px-4 sm:px-6">
         
         {/* Top Corporate Brand Header */}
@@ -729,7 +749,10 @@ export default function ApplyForm({
         )}
 
         {/* Step 2: Primary Attendee Details Form */}
-        <section className="bg-white rounded-2xl border border-neutral-200/80 p-5 sm:p-7 shadow-xs mb-6">
+        <section
+          id="attendee-details-section"
+          className="bg-white rounded-2xl border border-neutral-200/80 p-5 sm:p-7 shadow-xs mb-6 scroll-mt-6"
+        >
           <div className="mb-5">
             <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 block mb-0.5">
               Step 2 of 2
@@ -742,7 +765,7 @@ export default function ApplyForm({
             </p>
           </div>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <form id="apply-attendee-form" onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             {/* Full Name */}
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-neutral-600 mb-1.5">
@@ -954,6 +977,63 @@ export default function ApplyForm({
           </footer>
         )}
       </div>
+
+      {/* Floating Sticky Bottom Bar for Instant Booking */}
+      {selectedTicket && (
+        <aside
+          aria-label="Checkout action bar"
+          className="fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-neutral-200/90 shadow-[0_-4px_25px_rgba(0,0,0,0.08)] py-3 px-4 sm:px-6 transition-all"
+          style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
+        >
+          <div className="max-w-2xl mx-auto flex items-center justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5 truncate">
+                <span className="text-xs sm:text-sm font-bold text-neutral-900 truncate">
+                  {selectedTicket.name}
+                </span>
+                {selectedTicket.duration_label && (
+                  <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase bg-neutral-100 text-neutral-700 shrink-0">
+                    {selectedTicket.duration_label}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-1.5 sm:gap-2 mt-0.5">
+                <span className="text-sm sm:text-base font-extrabold text-neutral-900 tabular-nums">
+                  {effectiveTicketPrice === 0 ? "Free" : `₹${effectiveTicketPrice.toLocaleString("en-IN")}`}
+                </span>
+                <span className="text-[11px] text-neutral-500 truncate">
+                  · {peopleCount} {peopleCount === 1 ? "person" : "people"} covered
+                </span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleFloatingBookClick}
+              disabled={isSubmitting || paymentPending || paymentBlocked}
+              className="inline-flex items-center justify-center gap-1.5 sm:gap-2 bg-neutral-900 hover:bg-neutral-800 active:scale-[0.98] text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold text-xs sm:text-sm shadow-md transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+            >
+              {isSubmitting || paymentPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Processing…</span>
+                </>
+              ) : paymentBlocked ? (
+                <span>Setup Required</span>
+              ) : (
+                <>
+                  <span>
+                    {effectivelyPaid
+                      ? `Book Now · ₹${effectiveTicketPrice.toLocaleString("en-IN")}`
+                      : "Book Free Pass"}
+                  </span>
+                  <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                </>
+              )}
+            </button>
+          </div>
+        </aside>
+      )}
     </div>
   );
 }
