@@ -25,6 +25,13 @@ interface FileAttachment {
 
 export default function SupportWidget() {
   const pathname = usePathname();
+
+  // Hide support widget on attendee-facing routes: registration/apply, pass viewing, and gate scanner
+  const isHiddenRoute =
+    pathname?.startsWith("/apply") ||
+    pathname?.startsWith("/pass") ||
+    pathname?.startsWith("/scan");
+
   const [isOpen, setIsOpen] = useState(false);
   const [tooltipVisible, setTooltipVisible] = useState(false);
 
@@ -240,6 +247,10 @@ export default function SupportWidget() {
     pathname?.startsWith("/dashboard") ||
     pathname?.startsWith("/billing") ||
     pathname?.startsWith("/event/");
+
+  if (isHiddenRoute) {
+    return null;
+  }
 
   return (
     <>
