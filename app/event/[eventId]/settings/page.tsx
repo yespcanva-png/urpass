@@ -229,6 +229,7 @@ export default function EventSettingsPage() {
       setSlugError(res.error);
     } else if (res?.slug) {
       setSlugValue(res.slug);
+      setValue("custom_slug", res.slug);
       setEvent((prev) => (prev ? { ...prev, apply_slug: res.slug! } : null));
       setSlugSuccess(true);
       setTimeout(() => setSlugSuccess(false), 3000);
@@ -313,9 +314,19 @@ export default function EventSettingsPage() {
 
   async function onSubmit(data: EventInput) {
     setSaveError(""); setSaveSuccess(false);
-    const result = await updateEvent(eventId, data);
-    if (result?.error) { setSaveError(result.error); }
-    else {
+    const payload: EventInput = {
+      ...data,
+      custom_slug: slugValue ? slugify(slugValue) : undefined,
+    };
+    const result = await updateEvent(eventId, payload);
+    if (result?.error) {
+      setSaveError(result.error);
+    } else {
+      if (slugValue) {
+        const clean = slugify(slugValue);
+        setSlugValue(clean);
+        setEvent((prev) => (prev ? { ...prev, apply_slug: clean } : null));
+      }
       reset(data);
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
@@ -485,6 +496,12 @@ export default function EventSettingsPage() {
                       setSlugError("");
                       setSlugSuccess(false);
                     }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleSaveSlug();
+                      }
+                    }}
                     placeholder="pilani-grand-garba-night-2026"
                     className={`${inputCls} pl-[68px] font-mono text-xs`}
                   />
@@ -504,7 +521,7 @@ export default function EventSettingsPage() {
                   <button
                     type="button"
                     onClick={handleSaveSlug}
-                    disabled={slugSaving || slugValue === event.apply_slug}
+                    disabled={slugSaving || !slugValue.trim() || slugValue === event.apply_slug}
                     className="px-4 py-2.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 disabled:opacity-40 disabled:cursor-not-allowed text-xs font-bold text-white flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
                   >
                     {slugSaving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}

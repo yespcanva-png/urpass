@@ -254,12 +254,23 @@ export async function updateEvent(
     return { error: parsed.error.issues[0].message };
   }
 
+  const db = process.env.SUPABASE_SERVICE_ROLE_KEY ? adminClient() : supabase;
+
   // Verify access: user is creator or an owner/admin/event_manager in the org
-  const { data: event } = await supabase
+  let { data: event } = await supabase
     .from("events")
-    .select("id, organizer_id, organization_id")
+    .select("id, organizer_id, organization_id, apply_slug")
     .eq("id", eventId)
-    .single();
+    .maybeSingle();
+
+  if (!event && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    const { data: adminEv } = await db
+      .from("events")
+      .select("id, organizer_id, organization_id, apply_slug")
+      .eq("id", eventId)
+      .maybeSingle();
+    event = adminEv;
+  }
 
   if (!event) return { error: "Event not found." };
 
@@ -272,8 +283,20 @@ export async function updateEvent(
       .eq("user_id", user.id)
       .eq("status", "active")
       .in("role", ["owner", "admin", "event_manager"])
-      .single();
-    isAuthorized = !!member;
+      .maybeSingle();
+    if (member) {
+      isAuthorized = true;
+    } else if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      const { data: adminMember } = await db
+        .from("organization_members")
+        .select("role")
+        .eq("organization_id", event.organization_id)
+        .eq("user_id", user.id)
+        .eq("status", "active")
+        .in("role", ["owner", "admin", "event_manager"])
+        .maybeSingle();
+      isAuthorized = !!adminMember;
+    }
   }
 
   if (!isAuthorized) {
@@ -316,7 +339,25 @@ export async function updateEvent(
   if (workspace_id) updatePayload.workspace_id = workspace_id;
   if (location_id) updatePayload.location_id = location_id;
 
-  const { error } = await supabase
+  let newSlugApplied: string | null = null;
+  if (baseUpdateFields.custom_slug) {
+    const cleanSlug = slugify(baseUpdateFields.custom_slug);
+    if (cleanSlug && cleanSlug.length >= 2) {
+      const { data: existing } = await db
+        .from("events")
+        .select("id")
+        .eq("apply_slug", cleanSlug)
+        .neq("id", eventId)
+        .maybeSingle();
+      if (existing) {
+        return { error: `The URL "/events/${cleanSlug}" is already taken by another event.` };
+      }
+      updatePayload.apply_slug = cleanSlug;
+      newSlugApplied = cleanSlug;
+    }
+  }
+
+  let { error } = await supabase
     .from("events")
     .update(updatePayload)
     .eq("id", eventId);
@@ -329,10 +370,19 @@ export async function updateEvent(
         .from("events")
         .update(updatePayload)
         .eq("id", eventId);
-      if (retryError) return { error: retryError.message };
-    } else {
-      return { error: error.message };
+      error = retryError;
     }
+    if (error && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      const { error: adminErr } = await db
+        .from("events")
+        .update(updatePayload)
+        .eq("id", eventId);
+      error = adminErr;
+    }
+  }
+
+  if (error) {
+    return { error: error.message };
   }
 
   try {
@@ -349,6 +399,16 @@ export async function updateEvent(
   revalidatePath(`/event/${eventId}`);
   revalidatePath(`/event/${eventId}/settings`);
   revalidatePath("/dashboard/events");
+  if (newSlugApplied) {
+    revalidatePath(`/events/${newSlugApplied}`);
+    revalidatePath(`/apply/${newSlugApplied}`);
+    revalidatePath(`/e/${newSlugApplied}`);
+  }
+  if (event.apply_slug && event.apply_slug !== newSlugApplied) {
+    revalidatePath(`/events/${event.apply_slug}`);
+    revalidatePath(`/apply/${event.apply_slug}`);
+    revalidatePath(`/e/${event.apply_slug}`);
+  }
 }
 
 export async function updateEventImagesAction(
@@ -433,11 +493,22 @@ export async function updateEventSlugAction(
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: event } = await supabase
+  const db = process.env.SUPABASE_SERVICE_ROLE_KEY ? adminClient() : supabase;
+
+  let { data: event } = await supabase
     .from("events")
     .select("id, name, organizer_id, organization_id, apply_slug")
     .eq("id", eventId)
-    .single();
+    .maybeSingle();
+
+  if (!event && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    const { data: adminEv } = await db
+      .from("events")
+      .select("id, name, organizer_id, organization_id, apply_slug")
+      .eq("id", eventId)
+      .maybeSingle();
+    event = adminEv;
+  }
 
   if (!event) return { error: "Event not found." };
 
@@ -451,7 +522,19 @@ export async function updateEventSlugAction(
       .eq("status", "active")
       .in("role", ["owner", "admin", "event_manager"])
       .maybeSingle();
-    isAuthorized = !!member;
+    if (member) {
+      isAuthorized = true;
+    } else if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      const { data: adminMember } = await db
+        .from("organization_members")
+        .select("role")
+        .eq("organization_id", event.organization_id)
+        .eq("user_id", user.id)
+        .eq("status", "active")
+        .in("role", ["owner", "admin", "event_manager"])
+        .maybeSingle();
+      isAuthorized = !!adminMember;
+    }
   }
 
   if (!isAuthorized) {
@@ -471,8 +554,8 @@ export async function updateEventSlugAction(
     return { error: "Event URL slug can only contain lowercase letters, numbers, and hyphens." };
   }
 
-  // Check if taken by another event
-  const { data: existing } = await supabase
+  // Check if taken by another event using db (adminClient) to avoid RLS false-negatives
+  const { data: existing } = await db
     .from("events")
     .select("id")
     .eq("apply_slug", cleanSlug)
@@ -484,22 +567,21 @@ export async function updateEventSlugAction(
   }
 
   const oldSlug = event.apply_slug;
-  const { error } = await supabase
+  let { error } = await supabase
     .from("events")
     .update({ apply_slug: cleanSlug, updated_at: new Date().toISOString() })
     .eq("id", eventId);
 
+  if (error && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    const { error: adminErr } = await db
+      .from("events")
+      .update({ apply_slug: cleanSlug, updated_at: new Date().toISOString() })
+      .eq("id", eventId);
+    error = adminErr;
+  }
+
   if (error) {
-    if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
-      const admin = adminClient();
-      const { error: adminErr } = await admin
-        .from("events")
-        .update({ apply_slug: cleanSlug, updated_at: new Date().toISOString() })
-        .eq("id", eventId);
-      if (adminErr) return { error: adminErr.message };
-    } else {
-      return { error: error.message };
-    }
+    return { error: error.message };
   }
 
   try {
