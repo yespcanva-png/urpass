@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -19,12 +19,10 @@ import {
   Lock,
   ChevronDown,
   ArrowRight,
-  Clock,
   ExternalLink,
   Info,
   Check,
   ChevronRight,
-  Flame,
   Zap,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -62,7 +60,7 @@ interface Branding {
 type SuccessState = { type: "pending" | "waitlisted"; attendeeName: string };
 
 const inputCls =
-  "w-full bg-neutral-900/60 border border-neutral-700/80 rounded-xl px-4 py-3 text-sm text-white placeholder:text-neutral-500 outline-none transition-all focus:border-red-500 focus:ring-2 focus:ring-red-500/20 hover:border-neutral-600";
+  "w-full bg-neutral-50/70 border border-neutral-200 rounded-xl px-4 py-3 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none transition-all focus:border-brand focus:bg-white focus:ring-2 focus:ring-brand/10 hover:border-neutral-300";
 
 interface RazorpayResponse {
   razorpay_payment_id: string;
@@ -120,6 +118,8 @@ export default function ApplyForm({
   const [paymentPending, setPaymentPending] = useState(false);
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [activeTab, setActiveTab] = useState<"about" | "tickets" | "venue" | "terms">("about");
+
+  const brandColor = branding.brandColor || "#6D28D9";
 
   // Available tickets filter
   const available = useMemo(
@@ -347,7 +347,7 @@ export default function ApplyForm({
         description: `${selectedTicket?.name || "Pass"} — ${event.name}`,
         order_id: order.orderId,
         prefill: { name: data.name, email: data.email, contact: data.phone ?? "" },
-        theme: { color: branding.brandColor || "#E11D48" },
+        theme: { color: brandColor },
         handler: async (response: RazorpayResponse) => {
           try {
             const result = await submitApplication(
@@ -359,7 +359,11 @@ export default function ApplyForm({
                 signature: response.razorpay_signature,
               },
               selectedTicketTypeId,
-              finalResponses
+              {
+                ...finalResponses,
+                guest_count: peopleCount,
+                group_members: groupMembers,
+              }
             );
             setPaymentPending(false);
             if (result?.error) {
@@ -475,40 +479,45 @@ export default function ApplyForm({
   // Success Confirmation Screen
   if (success) {
     return (
-      <div className="min-h-screen bg-[#0d0e15] text-white flex flex-col items-center justify-center p-5">
-        <div className="max-w-md w-full bg-neutral-900 border border-neutral-800 rounded-3xl p-8 text-center shadow-2xl animate-in zoom-in-95 duration-300">
-          <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center mx-auto mb-5 text-emerald-400">
+      <div
+        className="min-h-screen flex flex-col items-center justify-center p-5"
+        style={{
+          background: "radial-gradient(ellipse 100% 50% at 50% -10%, #ede9fe 0%, #f5f3ff 40%, #ffffff 70%)",
+        }}
+      >
+        <div className="max-w-md w-full bg-white border border-neutral-100 rounded-3xl p-8 text-center shadow-xl animate-in zoom-in-95 duration-300">
+          <div className="w-16 h-16 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center mx-auto mb-5 text-emerald-600">
             <CheckCircle2 className="w-8 h-8" />
           </div>
 
-          <span className="inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 mb-3">
+          <span className="inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200 mb-3">
             {success.type === "waitlisted" ? "Waitlist Confirmed" : "Registration Received"}
           </span>
 
-          <h1 className="text-2xl font-bold tracking-tight text-white mb-2">
+          <h1 className="text-2xl font-bold tracking-tight text-neutral-900 mb-2">
             {success.type === "waitlisted" ? "You're on the waitlist!" : "Application Submitted!"}
           </h1>
 
-          <p className="text-sm text-neutral-400 leading-relaxed mb-6">
-            Thank you, <strong className="text-white">{success.attendeeName}</strong>. We have sent the pass confirmation and booking details to your email address.
+          <p className="text-sm text-neutral-600 leading-relaxed mb-6">
+            Thank you, <strong className="text-neutral-900">{success.attendeeName}</strong>. We have sent the pass confirmation and booking details to your email address.
           </p>
 
-          <div className="p-4 rounded-xl bg-neutral-950/80 border border-neutral-800 text-xs text-left text-neutral-300 space-y-2 mb-6">
+          <div className="p-4 rounded-xl bg-neutral-50 border border-neutral-200/80 text-xs text-left text-neutral-700 space-y-2 mb-6">
             <div className="flex justify-between">
               <span className="text-neutral-500">Event</span>
-              <span className="font-semibold text-white">{event.name}</span>
+              <span className="font-semibold text-neutral-900">{event.name}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-neutral-500">Date</span>
-              <span className="font-semibold text-white">{formattedSchedule.dateText}</span>
+              <span className="font-semibold text-neutral-900">{formattedSchedule.dateText}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-neutral-500">Venue</span>
-              <span className="font-semibold text-white">{event.venue}</span>
+              <span className="font-semibold text-neutral-900">{event.venue}</span>
             </div>
           </div>
 
-          <p className="text-xs text-neutral-500">
+          <p className="text-xs text-neutral-400">
             Pass verification will be conducted at the venue via digital QR scanner.
           </p>
         </div>
@@ -517,26 +526,33 @@ export default function ApplyForm({
   }
 
   return (
-    <div className={`min-h-screen bg-[#0c0d14] text-neutral-100 selection:bg-red-500 selection:text-white ${selectedTicket ? "pb-32" : "pb-20"} ${staffScanLink ? "pt-14" : ""}`}>
-      
-      {/* ── Top Navigation Bar (BookMyShow Dark Style) ── */}
-      <nav className="sticky top-0 z-40 bg-[#0c0d14]/90 backdrop-blur-xl border-b border-neutral-800/80">
+    <div
+      className={`min-h-screen bg-[#fafafa] text-neutral-900 ${selectedTicket ? "pb-32" : "pb-20"} ${staffScanLink ? "pt-14" : ""}`}
+      style={{
+        backgroundImage: "radial-gradient(ellipse 100% 40% at 50% -5%, #ede9fe 0%, #f5f3ff 35%, #fafafa 70%)",
+      }}
+    >
+      {/* ── Top Corporate Navigation Bar ── */}
+      <nav className="sticky top-0 z-40 bg-white/90 backdrop-blur-xl border-b border-neutral-200/80 shadow-2xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
             {branding.orgLogoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={branding.orgLogoUrl} alt="Logo" className="w-8 h-8 rounded-lg object-cover border border-neutral-700 shrink-0" />
+              <img src={branding.orgLogoUrl} alt="Logo" className="w-8 h-8 rounded-lg object-cover border border-neutral-200 shrink-0" />
             ) : (
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-red-600 to-rose-500 text-white flex items-center justify-center font-black text-xs shrink-0 shadow-md shadow-red-600/30">
+              <div
+                className="w-8 h-8 rounded-lg text-white flex items-center justify-center font-black text-xs shrink-0 shadow-sm"
+                style={{ background: brandColor }}
+              >
                 <Ticket className="w-4 h-4" />
               </div>
             )}
             <div className="min-w-0">
-              <span className="text-xs sm:text-sm font-extrabold tracking-tight text-white uppercase truncate block">
-                {branding.orgName || "URPASS EVENTS"}
+              <span className="text-xs sm:text-sm font-extrabold tracking-tight text-neutral-900 uppercase truncate block">
+                {branding.orgName || "URPASS EVENT"}
               </span>
-              <span className="text-[10px] text-neutral-400 font-medium flex items-center gap-1">
-                <ShieldCheck className="w-3 h-3 text-emerald-400" />
+              <span className="text-[10px] text-neutral-500 font-medium flex items-center gap-1">
+                <ShieldCheck className="w-3 h-3 text-emerald-600" />
                 Verified Official Box Office
               </span>
             </div>
@@ -546,37 +562,37 @@ export default function ApplyForm({
             <button
               type="button"
               onClick={scrollToTickets}
-              className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 shadow-md shadow-red-600/30 transition-all active:scale-[0.98] cursor-pointer"
+              className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white shadow-sm transition-all active:scale-[0.98] cursor-pointer hover:opacity-95"
+              style={{ background: brandColor }}
             >
-              <span>Book Passes</span>
+              <span>Select Passes</span>
               <ChevronRight className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
       </nav>
 
-      {/* ── Hero Showcase Section (Cinematic BMS Backdrop) ── */}
-      <section className="relative overflow-hidden border-b border-neutral-800/80 bg-gradient-to-b from-[#161726] via-[#0f101a] to-[#0c0d14]">
-        {/* Ambient Glows */}
-        <div className="absolute top-0 right-1/4 w-96 h-96 bg-red-600/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute top-1/2 left-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl pointer-events-none" />
-
+      {/* ── Corporate Hero Showcase Section (Clean White & Soft Violet Glow) ── */}
+      <section className="relative overflow-hidden border-b border-neutral-200/80 bg-white/70 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
             
-            {/* Left: Event Poster / Image Showcase */}
+            {/* Left: Event Image Showcase */}
             <div className="lg:col-span-5">
               {eventImages && eventImages.length > 0 ? (
-                <div className="rounded-2xl overflow-hidden shadow-2xl ring-1 ring-white/10 bg-neutral-900">
+                <div className="rounded-2xl overflow-hidden shadow-md ring-1 ring-neutral-200 bg-neutral-100">
                   <EventImageCarousel images={eventImages} eventName={event.name} />
                 </div>
               ) : (
-                <div className="relative aspect-[4/3] sm:aspect-[16/10] rounded-2xl overflow-hidden bg-gradient-to-br from-neutral-800 via-neutral-900 to-neutral-950 border border-neutral-800 flex flex-col items-center justify-center p-6 text-center shadow-2xl">
-                  <div className="w-16 h-16 rounded-2xl bg-red-600/20 border border-red-500/30 flex items-center justify-center text-red-400 mb-4">
+                <div className="relative aspect-[4/3] sm:aspect-[16/10] rounded-2xl overflow-hidden bg-gradient-to-br from-violet-50 via-purple-50 to-neutral-50 border border-violet-100 flex flex-col items-center justify-center p-6 text-center shadow-xs">
+                  <div
+                    className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4 border border-violet-200 shadow-2xs"
+                    style={{ background: "#f5f3ff", color: brandColor }}
+                  >
                     <Sparkles className="w-8 h-8" />
                   </div>
-                  <span className="text-xs font-bold uppercase tracking-widest text-red-400 mb-1">Official Event Pass</span>
-                  <h3 className="text-xl font-bold text-white max-w-xs">{event.name}</h3>
+                  <span className="text-xs font-bold uppercase tracking-widest text-brand mb-1">Official Event Pass</span>
+                  <h3 className="text-xl font-bold text-neutral-900 max-w-xs">{event.name}</h3>
                 </div>
               )}
             </div>
@@ -586,59 +602,59 @@ export default function ApplyForm({
               
               {/* Badges Row */}
               <div className="flex flex-wrap items-center gap-2 mb-4">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-red-500/15 text-red-400 border border-red-500/30">
-                  <Flame className="w-3.5 h-3.5 text-red-400" />
-                  {isOnline ? "Online Live Event" : isHybrid ? "Hybrid Experience" : "Live Event & Fest"}
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-violet-50 text-violet-700 border border-violet-200">
+                  <Sparkles className="w-3.5 h-3.5 text-violet-600" />
+                  {isOnline ? "Online Live Event" : isHybrid ? "Hybrid Experience" : "In-Person Event"}
                 </span>
                 
                 {availableDurations.length > 1 && (
-                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-purple-500/15 text-purple-300 border border-purple-500/30">
-                    <CalendarDays className="w-3.5 h-3.5" />
+                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                    <CalendarDays className="w-3.5 h-3.5 text-blue-600" />
                     Multi-Day Schedule
                   </span>
                 )}
 
-                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-                  <Zap className="w-3.5 h-3.5" />
-                  Zero Platform Fees
+                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  <Zap className="w-3.5 h-3.5 text-emerald-600" />
+                  Zero Booking Fees
                 </span>
               </div>
 
               {/* Event Title */}
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white mb-4 leading-tight">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-neutral-900 mb-4 leading-tight">
                 {event.name}
               </h1>
 
-              {/* Price & Venue Callout Row */}
+              {/* Date & Venue Metadata Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 w-full mb-6">
                 
-                {/* Date & Time Pill */}
-                <div className="flex items-start gap-3 p-3.5 rounded-xl bg-white/[0.04] border border-white/[0.08] backdrop-blur-md">
-                  <div className="w-10 h-10 rounded-lg bg-red-500/15 border border-red-500/30 flex items-center justify-center shrink-0 text-red-400 mt-0.5">
+                {/* Date & Time */}
+                <div className="flex items-start gap-3 p-3.5 rounded-xl bg-neutral-50/80 border border-neutral-200/80">
+                  <div className="w-10 h-10 rounded-lg bg-violet-50 border border-violet-100 flex items-center justify-center shrink-0 text-violet-600 mt-0.5">
                     <CalendarDays className="w-5 h-5" />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-xs font-medium text-neutral-400">Date & Show Timings</div>
-                    <div className="text-sm font-bold text-white truncate">{formattedSchedule.dateText}</div>
-                    <div className="text-xs text-neutral-400 mt-0.5">{formattedSchedule.timeText}</div>
+                    <div className="text-xs font-medium text-neutral-500">Date & Show Timings</div>
+                    <div className="text-sm font-bold text-neutral-900 truncate">{formattedSchedule.dateText}</div>
+                    <div className="text-xs text-neutral-500 mt-0.5">{formattedSchedule.timeText}</div>
                   </div>
                 </div>
 
-                {/* Venue & Location Pill */}
-                <div className="flex items-start gap-3 p-3.5 rounded-xl bg-white/[0.04] border border-white/[0.08] backdrop-blur-md">
-                  <div className="w-10 h-10 rounded-lg bg-blue-500/15 border border-blue-500/30 flex items-center justify-center shrink-0 text-blue-400 mt-0.5">
+                {/* Venue & Location */}
+                <div className="flex items-start gap-3 p-3.5 rounded-xl bg-neutral-50/80 border border-neutral-200/80">
+                  <div className="w-10 h-10 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center shrink-0 text-emerald-600 mt-0.5">
                     <MapPin className="w-5 h-5" />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-xs font-medium text-neutral-400">Venue & City</div>
-                    <div className="text-sm font-bold text-white truncate">{event.venue}</div>
+                    <div className="text-xs font-medium text-neutral-500">Venue & City</div>
+                    <div className="text-sm font-bold text-neutral-900 truncate">{event.venue}</div>
                     <a
                       href={`https://maps.google.com/?q=${encodeURIComponent(event.venue)}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-xs text-red-400 hover:text-red-300 font-medium mt-0.5"
+                      className="inline-flex items-center gap-1 text-xs text-brand hover:underline font-medium mt-0.5"
                     >
-                      <span>Open in Maps</span>
+                      <span>Open in Google Maps</span>
                       <ExternalLink className="w-3 h-3" />
                     </a>
                   </div>
@@ -646,19 +662,20 @@ export default function ApplyForm({
               </div>
 
               {/* Action Banner */}
-              <div className="flex flex-wrap items-center gap-4 w-full pt-4 border-t border-white/[0.08]">
+              <div className="flex flex-wrap items-center gap-4 w-full pt-4 border-t border-neutral-200">
                 <div>
-                  <span className="text-xs text-neutral-400 uppercase tracking-wider block font-semibold">Passes From</span>
-                  <div className="text-2xl sm:text-3xl font-black text-white tabular-nums">
+                  <span className="text-xs text-neutral-500 uppercase tracking-wider block font-semibold">Passes From</span>
+                  <div className="text-2xl sm:text-3xl font-black text-neutral-900 tabular-nums">
                     {minStartingPrice === 0 ? "Free Entry" : `₹${minStartingPrice.toLocaleString("en-IN")}`}
-                    {minStartingPrice > 0 && <span className="text-xs font-normal text-neutral-400 ml-1.5">onwards</span>}
+                    {minStartingPrice > 0 && <span className="text-xs font-normal text-neutral-500 ml-1.5">onwards</span>}
                   </div>
                 </div>
 
                 <button
                   type="button"
                   onClick={scrollToTickets}
-                  className="ml-auto px-7 py-3.5 rounded-xl font-extrabold text-sm text-white bg-gradient-to-r from-red-600 via-rose-600 to-red-600 hover:from-red-500 hover:to-rose-500 active:scale-[0.98] shadow-lg shadow-red-600/30 hover:shadow-xl hover:shadow-red-600/40 transition-all flex items-center gap-2 cursor-pointer"
+                  className="ml-auto px-7 py-3.5 rounded-xl font-bold text-sm text-white shadow-sm transition-all flex items-center gap-2 cursor-pointer hover:opacity-95 active:scale-[0.98]"
+                  style={{ background: brandColor }}
                 >
                   <span>Select Passes & Register</span>
                   <ArrowRight className="w-4 h-4" />
@@ -671,7 +688,7 @@ export default function ApplyForm({
         </div>
       </section>
 
-      {/* ── Main Two-Column Layout (Content on Left, Booking Box on Right) ── */}
+      {/* ── Main Two-Column Layout (Clean White Cards) ── */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
           
@@ -679,14 +696,14 @@ export default function ApplyForm({
           <div className="lg:col-span-7 space-y-8">
             
             {/* Section Tab Bar */}
-            <div className="flex items-center gap-2 border-b border-neutral-800 pb-2 overflow-x-auto scrollbar-none">
+            <div className="flex items-center gap-2 border-b border-neutral-200 pb-2 overflow-x-auto scrollbar-none">
               <button
                 type="button"
                 onClick={() => setActiveTab("about")}
                 className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer shrink-0 ${
                   activeTab === "about"
-                    ? "bg-white text-neutral-950 shadow-md"
-                    : "text-neutral-400 hover:text-white"
+                    ? "bg-neutral-900 text-white shadow-xs"
+                    : "text-neutral-600 hover:text-neutral-900"
                 }`}
               >
                 About The Event
@@ -696,8 +713,8 @@ export default function ApplyForm({
                 onClick={() => setActiveTab("tickets")}
                 className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer shrink-0 ${
                   activeTab === "tickets"
-                    ? "bg-white text-neutral-950 shadow-md"
-                    : "text-neutral-400 hover:text-white"
+                    ? "bg-neutral-900 text-white shadow-xs"
+                    : "text-neutral-600 hover:text-neutral-900"
                 }`}
               >
                 Pass Categories ({ticketTypes.length})
@@ -707,8 +724,8 @@ export default function ApplyForm({
                 onClick={() => setActiveTab("venue")}
                 className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer shrink-0 ${
                   activeTab === "venue"
-                    ? "bg-white text-neutral-950 shadow-md"
-                    : "text-neutral-400 hover:text-white"
+                    ? "bg-neutral-900 text-white shadow-xs"
+                    : "text-neutral-600 hover:text-neutral-900"
                 }`}
               >
                 Venue Details
@@ -718,8 +735,8 @@ export default function ApplyForm({
                 onClick={() => setActiveTab("terms")}
                 className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer shrink-0 ${
                   activeTab === "terms"
-                    ? "bg-white text-neutral-950 shadow-md"
-                    : "text-neutral-400 hover:text-white"
+                    ? "bg-neutral-900 text-white shadow-xs"
+                    : "text-neutral-600 hover:text-neutral-900"
                 }`}
               >
                 Entry Guidelines
@@ -729,16 +746,16 @@ export default function ApplyForm({
             {/* Tab: About The Event */}
             {activeTab === "about" && (
               <div className="space-y-6 animate-in fade-in duration-200">
-                <div className="bg-neutral-900/70 border border-neutral-800/80 rounded-2xl p-6 sm:p-7">
-                  <h2 className="text-lg sm:text-xl font-bold text-white mb-4 flex items-center gap-2">
-                    <Info className="w-5 h-5 text-red-500" />
+                <div className="bg-white border border-neutral-200/90 rounded-2xl p-6 sm:p-7 shadow-xs">
+                  <h2 className="text-lg sm:text-xl font-bold text-neutral-900 mb-4 flex items-center gap-2">
+                    <Info className="w-5 h-5 text-brand" />
                     About The Experience
                   </h2>
 
                   {event.description ? (
                     <div className="space-y-3">
                       <div
-                        className={`text-sm text-neutral-300 leading-relaxed whitespace-pre-wrap break-words ${
+                        className={`text-sm text-neutral-700 leading-relaxed whitespace-pre-wrap break-words ${
                           showFullDescription ? "" : "line-clamp-6"
                         }`}
                       >
@@ -749,14 +766,14 @@ export default function ApplyForm({
                         <button
                           type="button"
                           onClick={() => setShowFullDescription(!showFullDescription)}
-                          className="text-xs font-bold text-red-400 hover:text-red-300 transition-colors pt-1 cursor-pointer"
+                          className="text-xs font-bold text-brand hover:underline transition-colors pt-1 cursor-pointer"
                         >
                           {showFullDescription ? "Show less" : "Read full overview →"}
                         </button>
                       )}
                     </div>
                   ) : (
-                    <p className="text-sm text-neutral-400">
+                    <p className="text-sm text-neutral-600">
                       Join us for {event.name}. Secure your verified digital pass for seamless check-in at the gate.
                     </p>
                   )}
@@ -764,28 +781,28 @@ export default function ApplyForm({
 
                 {/* Highlights Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div className="p-4 rounded-xl bg-neutral-900/50 border border-neutral-800 text-center">
-                    <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center mx-auto mb-2">
+                  <div className="p-4 rounded-xl bg-white border border-neutral-200/80 text-center shadow-2xs">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-2 border border-emerald-100">
                       <ShieldCheck className="w-4 h-4" />
                     </div>
-                    <h4 className="text-xs font-bold text-white">Instant QR Entry</h4>
-                    <p className="text-[11px] text-neutral-400 mt-1">Direct scan at gates without ticket queues</p>
+                    <h4 className="text-xs font-bold text-neutral-900">Instant QR Entry</h4>
+                    <p className="text-[11px] text-neutral-500 mt-1">Direct gate scanning without paper tickets</p>
                   </div>
 
-                  <div className="p-4 rounded-xl bg-neutral-900/50 border border-neutral-800 text-center">
-                    <div className="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-400 flex items-center justify-center mx-auto mb-2">
+                  <div className="p-4 rounded-xl bg-white border border-neutral-200/80 text-center shadow-2xs">
+                    <div className="w-8 h-8 rounded-lg bg-violet-50 text-violet-600 flex items-center justify-center mx-auto mb-2 border border-violet-100">
                       <Zap className="w-4 h-4" />
                     </div>
-                    <h4 className="text-xs font-bold text-white">Zero Convenience Fee</h4>
-                    <p className="text-[11px] text-neutral-400 mt-1">100% transparent pricing directly from organizer</p>
+                    <h4 className="text-xs font-bold text-neutral-900">Zero Convenience Fee</h4>
+                    <p className="text-[11px] text-neutral-500 mt-1">100% direct pricing with zero hidden markups</p>
                   </div>
 
-                  <div className="p-4 rounded-xl bg-neutral-900/50 border border-neutral-800 text-center">
-                    <div className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center mx-auto mb-2">
+                  <div className="p-4 rounded-xl bg-white border border-neutral-200/80 text-center shadow-2xs">
+                    <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center mx-auto mb-2 border border-blue-100">
                       <Mail className="w-4 h-4" />
                     </div>
-                    <h4 className="text-xs font-bold text-white">Digital Pass Delivery</h4>
-                    <p className="text-[11px] text-neutral-400 mt-1">Instant delivery via Email, SMS & WhatsApp</p>
+                    <h4 className="text-xs font-bold text-neutral-900">Instant Delivery</h4>
+                    <p className="text-[11px] text-neutral-500 mt-1">Immediate delivery via Email & WhatsApp</p>
                   </div>
                 </div>
               </div>
@@ -794,11 +811,11 @@ export default function ApplyForm({
             {/* Tab: Passes Summary */}
             {activeTab === "tickets" && (
               <div className="space-y-4 animate-in fade-in duration-200">
-                <div className="bg-neutral-900/70 border border-neutral-800/80 rounded-2xl p-6 sm:p-7">
-                  <h2 className="text-lg sm:text-xl font-bold text-white mb-2">
+                <div className="bg-white border border-neutral-200/90 rounded-2xl p-6 sm:p-7 shadow-xs">
+                  <h2 className="text-lg sm:text-xl font-bold text-neutral-900 mb-2">
                     Available Pass Categories
                   </h2>
-                  <p className="text-xs text-neutral-400 mb-6">
+                  <p className="text-xs text-neutral-500 mb-6">
                     Select a tier on the booking panel on the right to reserve your spot.
                   </p>
 
@@ -806,24 +823,24 @@ export default function ApplyForm({
                     {ticketTypes.map((tt) => (
                       <div
                         key={tt.id}
-                        className="p-4 rounded-xl bg-neutral-950/70 border border-neutral-800 flex items-center justify-between gap-4"
+                        className="p-4 rounded-xl bg-neutral-50 border border-neutral-200 flex items-center justify-between gap-4"
                       >
                         <div>
                           <div className="flex items-center gap-2">
-                            <h4 className="text-sm font-bold text-white">{tt.name}</h4>
+                            <h4 className="text-sm font-bold text-neutral-900">{tt.name}</h4>
                             {tt.duration_label && (
-                              <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-neutral-800 text-neutral-300">
+                              <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-neutral-200 text-neutral-700">
                                 {tt.duration_label}
                               </span>
                             )}
                           </div>
                           {tt.description && (
-                            <p className="text-xs text-neutral-400 mt-1">{tt.description}</p>
+                            <p className="text-xs text-neutral-500 mt-1">{tt.description}</p>
                           )}
                         </div>
 
                         <div className="text-right shrink-0">
-                          <div className="text-base font-extrabold text-white tabular-nums">
+                          <div className="text-base font-extrabold text-neutral-900 tabular-nums">
                             {tt.price === 0 ? "Free" : `₹${(tt.price / 100).toLocaleString("en-IN")}`}
                           </div>
                           <button
@@ -832,7 +849,7 @@ export default function ApplyForm({
                               handleSelectTicket(tt.id);
                               scrollToTickets();
                             }}
-                            className="text-xs font-bold text-red-400 hover:underline mt-1 cursor-pointer"
+                            className="text-xs font-bold text-brand hover:underline mt-1 cursor-pointer"
                           >
                             Select →
                           </button>
@@ -847,22 +864,22 @@ export default function ApplyForm({
             {/* Tab: Venue Details */}
             {activeTab === "venue" && (
               <div className="space-y-4 animate-in fade-in duration-200">
-                <div className="bg-neutral-900/70 border border-neutral-800/80 rounded-2xl p-6 sm:p-7">
-                  <h2 className="text-lg sm:text-xl font-bold text-white mb-2 flex items-center gap-2">
-                    <MapPin className="w-5 h-5 text-red-500" />
+                <div className="bg-white border border-neutral-200/90 rounded-2xl p-6 sm:p-7 shadow-xs">
+                  <h2 className="text-lg sm:text-xl font-bold text-neutral-900 mb-2 flex items-center gap-2">
+                    <MapPin className="w-5 h-5 text-brand" />
                     Venue & Location
                   </h2>
-                  <p className="text-sm text-neutral-300 font-medium mb-4">{event.venue}</p>
+                  <p className="text-sm text-neutral-700 font-medium mb-4">{event.venue}</p>
 
-                  <div className="p-4 rounded-xl bg-neutral-950 border border-neutral-800 space-y-3">
-                    <div className="text-xs text-neutral-400">
+                  <div className="p-4 rounded-xl bg-neutral-50 border border-neutral-200 space-y-3">
+                    <div className="text-xs text-neutral-600">
                       Show your QR pass on your mobile phone at the gate scanners for express validation.
                     </div>
                     <a
                       href={`https://maps.google.com/?q=${encodeURIComponent(event.venue)}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white bg-neutral-800 hover:bg-neutral-700 transition-colors"
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white bg-neutral-900 hover:bg-neutral-800 transition-colors"
                     >
                       <span>Get Directions on Google Maps</span>
                       <ExternalLink className="w-3.5 h-3.5" />
@@ -875,11 +892,11 @@ export default function ApplyForm({
             {/* Tab: Entry Guidelines */}
             {activeTab === "terms" && (
               <div className="space-y-4 animate-in fade-in duration-200">
-                <div className="bg-neutral-900/70 border border-neutral-800/80 rounded-2xl p-6 sm:p-7 space-y-4">
-                  <h2 className="text-lg sm:text-xl font-bold text-white mb-2">
+                <div className="bg-white border border-neutral-200/90 rounded-2xl p-6 sm:p-7 space-y-4 shadow-xs">
+                  <h2 className="text-lg sm:text-xl font-bold text-neutral-900 mb-2">
                     Terms & Entry Guidelines
                   </h2>
-                  <ul className="space-y-2.5 text-xs text-neutral-300 leading-relaxed list-disc list-inside">
+                  <ul className="space-y-2.5 text-xs text-neutral-600 leading-relaxed list-disc list-inside">
                     <li>Entry is permitted only with a valid digital QR pass generated through the official portal.</li>
                     <li>Each pass contains a cryptographically signed one-time QR code. Duplicated or forwarded scans will be flagged at the gate.</li>
                     <li>Please carry a valid government photo ID matching the primary pass holder name.</li>
@@ -892,41 +909,41 @@ export default function ApplyForm({
 
           </div>
 
-          {/* Right Column (5 cols on Desktop): BookMyShow Interactive Pass Selector & Checkout Card */}
+          {/* Right Column (5 cols on Desktop): Clean Corporate Pass Selector & Checkout Box */}
           <div id="tickets-booking-section" className="lg:col-span-5 scroll-mt-20">
-            <div className="bg-neutral-900/90 border border-neutral-800 rounded-3xl p-5 sm:p-7 shadow-2xl backdrop-blur-xl sticky top-20">
+            <div className="bg-white border border-neutral-200 rounded-3xl p-5 sm:p-7 shadow-sm sticky top-20">
               
               {/* Step 1 Header */}
               <div className="flex items-center justify-between mb-5">
                 <div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-red-400 block mb-0.5">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-brand block mb-0.5">
                     Step 1 of 2
                   </span>
-                  <h2 className="text-lg font-bold text-white">Select Your Pass</h2>
+                  <h2 className="text-lg font-bold text-neutral-900">Select Your Pass</h2>
                 </div>
 
                 {selectedTicket && (
-                  <span className="text-xs font-bold text-neutral-400">
+                  <span className="text-xs font-bold text-neutral-500">
                     {ticketTypes.length} Available
                   </span>
                 )}
               </div>
 
-              {/* Multi-Day Date Selector (BookMyShow Horizontal Date Chips) */}
+              {/* Multi-Day Date Selector (Horizontal Date Chips) */}
               {availableEventDates.length > 1 && (
-                <div className="mb-5 p-3.5 rounded-2xl bg-neutral-950/80 border border-neutral-800/90 space-y-2.5">
+                <div className="mb-5 p-3.5 rounded-2xl bg-neutral-50 border border-neutral-200 space-y-2.5">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-white flex items-center gap-1.5">
-                      <CalendarDays className="w-3.5 h-3.5 text-red-500" />
+                    <span className="text-xs font-bold text-neutral-900 flex items-center gap-1.5">
+                      <CalendarDays className="w-3.5 h-3.5 text-brand" />
                       {isSingleDayPass ? "Select Show Date" : "Festival Dates Included"}
                     </span>
 
                     {isSingleDayPass ? (
-                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-red-500/20 text-red-300 border border-red-500/30">
+                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-violet-100 text-violet-800 border border-violet-200">
                         1 Day Access
                       </span>
                     ) : (
-                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
                         All Days Pass
                       </span>
                     )}
@@ -943,11 +960,11 @@ export default function ApplyForm({
                             onClick={() => setSelectedDate(opt.date)}
                             className={`py-2 px-2 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center ${
                               isDaySelected
-                                ? "bg-gradient-to-br from-red-600 to-rose-600 text-white border-transparent shadow-md shadow-red-600/30 ring-2 ring-red-500/50 font-bold"
-                                : "bg-neutral-900 text-neutral-300 border-neutral-800 hover:border-neutral-700 hover:bg-neutral-800 font-medium"
+                                ? "bg-neutral-900 text-white border-transparent shadow-sm ring-2 ring-neutral-900 font-bold"
+                                : "bg-white text-neutral-800 border-neutral-200 hover:border-neutral-300 hover:bg-neutral-50 font-medium"
                             }`}
                           >
-                            <span className={`text-[10px] font-bold uppercase tracking-wider ${isDaySelected ? "text-white/90" : "text-neutral-500"}`}>
+                            <span className={`text-[10px] font-bold uppercase tracking-wider ${isDaySelected ? "text-neutral-300" : "text-neutral-400"}`}>
                               {opt.dayName}
                             </span>
                             <span className="text-xs font-extrabold mt-0.5">
@@ -958,9 +975,9 @@ export default function ApplyForm({
                       })}
                     </div>
                   ) : (
-                    <p className="text-xs text-neutral-400">
+                    <p className="text-xs text-neutral-600">
                       Pass covers all {availableEventDates.length} days:{" "}
-                      <strong className="text-white">
+                      <strong className="text-neutral-900">
                         {availableEventDates.map((d) => d.label).join(" · ")}
                       </strong>
                     </p>
@@ -989,10 +1006,10 @@ export default function ApplyForm({
                       onClick={() => !isDisabled && handleSelectTicket(tt.id)}
                       className={`p-4 rounded-2xl border transition-all cursor-pointer relative ${
                         isSelected
-                          ? "border-red-500 bg-red-950/20 ring-1.5 ring-red-500/60 shadow-lg shadow-red-500/10"
+                          ? "border-brand bg-brand-50/20 ring-1.5 ring-brand shadow-xs"
                           : isDisabled
-                          ? "border-neutral-800 bg-neutral-950/40 opacity-50 cursor-not-allowed"
-                          : "border-neutral-800 bg-neutral-950/70 hover:border-neutral-700 hover:bg-neutral-900"
+                          ? "border-neutral-200 bg-neutral-50/60 opacity-50 cursor-not-allowed"
+                          : "border-neutral-200 bg-white hover:border-neutral-300 hover:shadow-2xs"
                       }`}
                     >
                       <div className="flex items-start justify-between gap-3">
@@ -1000,58 +1017,60 @@ export default function ApplyForm({
                           <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
                             {durationTag && (
                               <span className={`px-2 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wider ${
-                                isSelected ? "bg-red-600 text-white" : "bg-neutral-800 text-neutral-300"
+                                isSelected ? "bg-neutral-900 text-white" : "bg-neutral-100 text-neutral-700"
                               }`}>
                                 {durationTag}
                               </span>
                             )}
-                            <span className="text-[11px] text-neutral-400 font-medium">
+                            <span className="text-[11px] text-neutral-500 font-medium">
                               {peopleTag}
                             </span>
                           </div>
 
-                          <h3 className="text-base font-bold text-white tracking-tight">
+                          <h3 className="text-base font-bold text-neutral-900 tracking-tight">
                             {tt.name}
                           </h3>
 
                           {tt.description && (
-                            <p className="text-xs text-neutral-400 mt-1 leading-relaxed">
+                            <p className="text-xs text-neutral-500 mt-1 leading-relaxed">
                               {tt.description}
                             </p>
                           )}
                         </div>
 
                         <div className="text-right shrink-0 flex flex-col items-end">
-                          <div className="text-lg font-black text-white tabular-nums">
+                          <div className="text-lg font-black text-neutral-900 tabular-nums">
                             {tt.price === 0 ? "Free" : `₹${(tt.price / 100).toLocaleString("en-IN")}`}
                           </div>
-                          <span className={`w-4 h-4 rounded-full border-2 mt-2 flex items-center justify-center transition-colors ${
-                            isSelected ? "border-red-500 bg-red-500" : "border-neutral-700 bg-neutral-900"
-                          }`}>
+                          <span
+                            className={`w-4 h-4 rounded-full border-2 mt-2 flex items-center justify-center transition-colors ${
+                              isSelected ? "border-brand bg-brand" : "border-neutral-300 bg-white"
+                            }`}
+                          >
                             {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
                           </span>
                         </div>
                       </div>
 
                       {/* Remaining / Status Tag */}
-                      <div className="mt-3 pt-2.5 border-t border-neutral-800/80 flex items-center justify-between text-[11px]">
+                      <div className="mt-3 pt-2.5 border-t border-neutral-100 flex items-center justify-between text-[11px]">
                         {isAvailable ? (
                           tt.remaining && tt.remaining <= 15 ? (
-                            <span className="text-amber-400 font-semibold flex items-center gap-1">
-                              <Flame className="w-3 h-3" /> Only {tt.remaining} passes left
+                            <span className="text-amber-600 font-semibold flex items-center gap-1">
+                              <Sparkles className="w-3 h-3" /> Only {tt.remaining} passes left
                             </span>
                           ) : (
-                            <span className="text-emerald-400 font-semibold flex items-center gap-1">
+                            <span className="text-emerald-600 font-semibold flex items-center gap-1">
                               <Check className="w-3 h-3" /> Available
                             </span>
                           )
                         ) : isSoldOut ? (
-                          <span className="text-red-400 font-semibold">Sold Out</span>
+                          <span className="text-red-500 font-semibold">Sold Out</span>
                         ) : (
-                          <span className="text-neutral-500">Unavailable</span>
+                          <span className="text-neutral-400">Unavailable</span>
                         )}
 
-                        <span className={`font-bold ${isSelected ? "text-red-400" : "text-neutral-500"}`}>
+                        <span className={`font-bold ${isSelected ? "text-brand" : "text-neutral-400"}`}>
                           {isSelected ? "Selected" : "Tap to Select"}
                         </span>
                       </div>
@@ -1060,16 +1079,16 @@ export default function ApplyForm({
                 })}
               </div>
 
-              {/* Group Pass Stepper (if selected pass is group or allows extra people) */}
+              {/* Group Pass Stepper */}
               {selectedTicket && (selectedTicket.allow_extra_guests || (selectedTicket.included_guests && selectedTicket.included_guests > 1)) && (
-                <div className="mb-6 p-4 rounded-2xl bg-neutral-950/80 border border-neutral-800 space-y-3">
+                <div className="mb-6 p-4 rounded-2xl bg-neutral-50 border border-neutral-200 space-y-3">
                   <div className="flex items-center justify-between">
                     <div>
-                      <div className="text-xs font-bold text-white flex items-center gap-1.5">
-                        <Users className="w-3.5 h-3.5 text-red-400" />
+                      <div className="text-xs font-bold text-neutral-900 flex items-center gap-1.5">
+                        <Users className="w-3.5 h-3.5 text-brand" />
                         <span>People Covered</span>
                       </div>
-                      <div className="text-[11px] text-neutral-400 mt-0.5">
+                      <div className="text-[11px] text-neutral-500 mt-0.5">
                         {selectedTicket.allow_extra_guests
                           ? `Pass covers ${selectedTicket.included_guests} guests. +₹${selectedTicket.extra_guest_price || 100}/extra.`
                           : `Fixed capacity: ${selectedTicket.included_guests} guests.`}
@@ -1077,7 +1096,7 @@ export default function ApplyForm({
                     </div>
 
                     {selectedTicket.allow_extra_guests ? (
-                      <div className="flex items-center gap-2 bg-neutral-900 border border-neutral-700 rounded-lg p-1">
+                      <div className="flex items-center gap-2 bg-white border border-neutral-200 rounded-lg p-1 shadow-2xs">
                         <button
                           type="button"
                           onClick={() => {
@@ -1089,11 +1108,11 @@ export default function ApplyForm({
                             }
                           }}
                           disabled={peopleCount <= (selectedTicket.min_guests || selectedTicket.included_guests || 1)}
-                          className="w-7 h-7 rounded bg-neutral-800 hover:bg-neutral-700 disabled:opacity-30 flex items-center justify-center font-bold text-white text-sm cursor-pointer"
+                          className="w-7 h-7 rounded bg-neutral-100 hover:bg-neutral-200 disabled:opacity-30 flex items-center justify-center font-bold text-neutral-800 text-sm cursor-pointer"
                         >
                           -
                         </button>
-                        <span className="w-6 text-center font-bold text-sm text-white">{peopleCount}</span>
+                        <span className="w-6 text-center font-bold text-sm text-neutral-900">{peopleCount}</span>
                         <button
                           type="button"
                           onClick={() => {
@@ -1107,13 +1126,13 @@ export default function ApplyForm({
                             }
                           }}
                           disabled={peopleCount >= (selectedTicket.max_guests || 12)}
-                          className="w-7 h-7 rounded bg-red-600 hover:bg-red-500 disabled:opacity-30 flex items-center justify-center font-bold text-white text-sm cursor-pointer"
+                          className="w-7 h-7 rounded bg-brand text-white hover:opacity-90 disabled:opacity-30 flex items-center justify-center font-bold text-sm cursor-pointer"
                         >
                           +
                         </button>
                       </div>
                     ) : (
-                      <span className="px-2.5 py-1 rounded-md bg-neutral-900 border border-neutral-700 text-xs font-bold text-white">
+                      <span className="px-2.5 py-1 rounded-md bg-white border border-neutral-200 text-xs font-bold text-neutral-800">
                         {selectedTicket.included_guests} Guests
                       </span>
                     )}
@@ -1122,23 +1141,23 @@ export default function ApplyForm({
               )}
 
               {/* Step 2: Attendee Details Form */}
-              <div id="attendee-details-section" className="pt-5 border-t border-neutral-800 space-y-4">
+              <div id="attendee-details-section" className="pt-5 border-t border-neutral-200 space-y-4">
                 <div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-red-400 block mb-0.5">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-brand block mb-0.5">
                     Step 2 of 2
                   </span>
-                  <h3 className="text-base font-bold text-white">Primary Pass Holder</h3>
-                  <p className="text-xs text-neutral-400">Digital pass and QR verification code will be sent here.</p>
+                  <h3 className="text-base font-bold text-neutral-900">Primary Pass Holder</h3>
+                  <p className="text-xs text-neutral-500">Digital pass and QR verification code will be sent here.</p>
                 </div>
 
                 <form id="apply-attendee-form" onSubmit={handleSubmit(onSubmit)} className="space-y-3.5">
                   {/* Name */}
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-neutral-300 mb-1">
-                      Full Name <span className="text-red-400">*</span>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-neutral-600 mb-1">
+                      Full Name <span className="text-red-500">*</span>
                     </label>
                     <div className="relative">
-                      <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500 pointer-events-none" />
+                      <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 pointer-events-none" />
                       <input
                         type="text"
                         placeholder="e.g. Srinithin S"
@@ -1147,16 +1166,16 @@ export default function ApplyForm({
                         {...register("name")}
                       />
                     </div>
-                    {errors.name && <p className="text-xs text-red-400 mt-1">{errors.name.message}</p>}
+                    {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name.message}</p>}
                   </div>
 
                   {/* Email */}
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-neutral-300 mb-1">
-                      Email Address <span className="text-red-400">*</span>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-neutral-600 mb-1">
+                      Email Address <span className="text-red-500">*</span>
                     </label>
                     <div className="relative">
-                      <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500 pointer-events-none" />
+                      <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 pointer-events-none" />
                       <input
                         type="email"
                         placeholder="srinithin@example.com"
@@ -1165,16 +1184,16 @@ export default function ApplyForm({
                         {...register("email")}
                       />
                     </div>
-                    {errors.email && <p className="text-xs text-red-400 mt-1">{errors.email.message}</p>}
+                    {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email.message}</p>}
                   </div>
 
                   {/* WhatsApp / Phone */}
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-neutral-300 mb-1">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-neutral-600 mb-1">
                       WhatsApp / Mobile Number
                     </label>
                     <div className="relative">
-                      <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500 pointer-events-none" />
+                      <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 pointer-events-none" />
                       <input
                         type="tel"
                         placeholder="+91 98765 43210"
@@ -1187,14 +1206,14 @@ export default function ApplyForm({
 
                   {/* Custom Organizer Fields */}
                   {event.custom_fields && event.custom_fields.length > 0 && (
-                    <div className="pt-3 border-t border-neutral-800 space-y-3">
-                      <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider block">
+                    <div className="pt-3 border-t border-neutral-100 space-y-3">
+                      <span className="text-[11px] font-bold text-neutral-500 uppercase tracking-wider block">
                         Registration Details
                       </span>
                       {event.custom_fields.map((field) => (
                         <div key={field.id}>
-                          <label className="block text-xs font-bold uppercase tracking-wider text-neutral-300 mb-1">
-                            {field.label} {field.required && <span className="text-red-400">*</span>}
+                          <label className="block text-xs font-bold uppercase tracking-wider text-neutral-600 mb-1">
+                            {field.label} {field.required && <span className="text-red-500">*</span>}
                           </label>
 
                           {field.type === "select" ? (
@@ -1208,7 +1227,7 @@ export default function ApplyForm({
                               >
                                 <option value="">Select option...</option>
                                 {field.options?.map((opt) => (
-                                  <option key={opt} value={opt} className="bg-neutral-900 text-white">
+                                  <option key={opt} value={opt}>
                                     {opt}
                                   </option>
                                 ))}
@@ -1216,14 +1235,14 @@ export default function ApplyForm({
                               <ChevronDown className="w-4 h-4 text-neutral-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                             </div>
                           ) : field.type === "checkbox" ? (
-                            <label className="flex items-center gap-2 cursor-pointer py-1 text-xs text-neutral-300 font-medium">
+                            <label className="flex items-center gap-2 cursor-pointer py-1 text-xs text-neutral-700 font-medium">
                               <input
                                 type="checkbox"
                                 checked={!!customResponses[field.id]}
                                 onChange={(e) =>
                                   setCustomResponses({ ...customResponses, [field.id]: e.target.checked })
                                 }
-                                className="w-4 h-4 rounded bg-neutral-800 border-neutral-700 text-red-600 focus:ring-red-500"
+                                className="w-4 h-4 rounded bg-white border-neutral-300 text-brand focus:ring-brand"
                               />
                               <span>Confirm and Agree</span>
                             </label>
@@ -1245,19 +1264,19 @@ export default function ApplyForm({
 
                   <input type="hidden" value="participant" {...register("pass_type")} />
 
-                  {/* Payment Summary Ledger (BMS Style) */}
-                  <div className="mt-5 p-4 rounded-2xl bg-neutral-950/80 border border-neutral-800 space-y-2 text-xs">
-                    <div className="flex justify-between text-neutral-300">
+                  {/* Payment Summary Ledger */}
+                  <div className="mt-5 p-4 rounded-2xl bg-neutral-50 border border-neutral-200 space-y-2 text-xs">
+                    <div className="flex justify-between text-neutral-700">
                       <span>{selectedTicket?.name || "Standard Pass"} {selectedTicket?.duration_label ? `(${selectedTicket.duration_label})` : ""}</span>
-                      <span className="font-bold text-white tabular-nums">
+                      <span className="font-bold text-neutral-900 tabular-nums">
                         {baseTicketPrice === 0 ? "Free" : `₹${baseTicketPrice.toLocaleString("en-IN")}`}
                       </span>
                     </div>
 
                     {availableEventDates.length > 1 && (
-                      <div className="flex justify-between text-neutral-400">
+                      <div className="flex justify-between text-neutral-600">
                         <span>Show Date</span>
-                        <span className="font-semibold text-red-400">
+                        <span className="font-semibold text-brand">
                           {isSingleDayPass
                             ? availableEventDates.find((d) => d.date === selectedDate)?.label || selectedDate
                             : "All Days"}
@@ -1266,44 +1285,45 @@ export default function ApplyForm({
                     )}
 
                     {extraGuestsCount > 0 && (
-                      <div className="flex justify-between text-red-400 font-medium">
+                      <div className="flex justify-between text-brand font-medium">
                         <span>Extra Attendees ({extraGuestsCount} × ₹{extraPrice})</span>
                         <span>+₹{extraGuestsTotal.toLocaleString("en-IN")}</span>
                       </div>
                     )}
 
-                    <div className="flex justify-between text-emerald-400 font-medium">
+                    <div className="flex justify-between text-emerald-700 font-medium">
                       <span>Convenience & Booking Fee</span>
                       <span>₹0 (Waived)</span>
                     </div>
 
-                    <div className="pt-2 border-t border-neutral-800 flex justify-between items-baseline font-bold">
-                      <span className="text-sm text-white">Total Amount</span>
-                      <span className="text-xl font-black text-white tabular-nums">
+                    <div className="pt-2 border-t border-neutral-200 flex justify-between items-baseline font-bold">
+                      <span className="text-sm text-neutral-900">Total Amount</span>
+                      <span className="text-xl font-black text-neutral-900 tabular-nums">
                         {effectiveTicketPrice === 0 ? "Free" : `₹${effectiveTicketPrice.toLocaleString("en-IN")}`}
                       </span>
                     </div>
                   </div>
 
                   {serverError && (
-                    <div className="flex items-start gap-2 text-xs text-red-300 bg-red-500/10 border border-red-500/20 rounded-xl p-3">
-                      <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-400" />
+                    <div className="flex items-start gap-2 text-xs text-red-600 bg-red-50 border border-red-200 rounded-xl p-3">
+                      <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-500" />
                       <span>{serverError}</span>
                     </div>
                   )}
 
                   {paymentBlocked && (
-                    <div className="flex items-start gap-2 text-xs text-amber-300 bg-amber-500/10 border border-amber-500/20 rounded-xl p-3">
-                      <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-amber-400" />
+                    <div className="flex items-start gap-2 text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-xl p-3">
+                      <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-amber-600" />
                       <span>Payment gateway is currently being initialized by the organizer.</span>
                     </div>
                   )}
 
-                  {/* Big BookMyShow CTA Button */}
+                  {/* Corporate UrPass CTA Button */}
                   <button
                     type="submit"
                     disabled={isSubmitting || paymentPending || paymentBlocked}
-                    className="w-full py-4 px-4 rounded-2xl text-sm font-black text-white bg-gradient-to-r from-red-600 via-rose-600 to-red-600 hover:from-red-500 hover:to-rose-500 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-xl shadow-red-600/30 hover:shadow-2xl hover:shadow-red-600/40 flex items-center justify-center gap-2 cursor-pointer mt-2"
+                    className="w-full py-4 px-4 rounded-2xl text-sm font-bold text-white shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer mt-2 hover:opacity-95 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{ background: brandColor }}
                   >
                     {(isSubmitting || paymentPending) && <Loader2 className="w-4 h-4 animate-spin" />}
                     {paymentPending
@@ -1316,13 +1336,13 @@ export default function ApplyForm({
                     {!isSubmitting && !paymentPending && <ArrowRight className="w-4 h-4" />}
                   </button>
 
-                  <div className="flex items-center justify-center gap-3 text-[11px] text-neutral-400 pt-1">
+                  <div className="flex items-center justify-center gap-3 text-[11px] text-neutral-500 pt-1">
                     <span className="inline-flex items-center gap-1">
-                      <Lock className="w-3 h-3 text-emerald-400" /> 256-Bit SSL Secured
+                      <Lock className="w-3 h-3 text-emerald-600" /> 256-Bit SSL Secured
                     </span>
                     <span>·</span>
                     <span className="inline-flex items-center gap-1">
-                      <ShieldCheck className="w-3 h-3 text-red-400" /> Instant QR Pass
+                      <ShieldCheck className="w-3 h-3 text-brand" /> Instant QR Pass
                     </span>
                   </div>
                 </form>
@@ -1334,30 +1354,30 @@ export default function ApplyForm({
         </div>
       </main>
 
-      {/* ── Mobile Sticky Floating Action Bar (BMS Style) ── */}
+      {/* ── Mobile Sticky Floating Action Bar (Corporate Clean White) ── */}
       {selectedTicket && (
         <aside
           aria-label="Booking bar"
-          className="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-[#0c0d14]/95 backdrop-blur-xl border-t border-neutral-800 shadow-2xl py-3 px-4 transition-all"
+          className="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-white/95 backdrop-blur-xl border-t border-neutral-200 shadow-lg py-3 px-4 transition-all"
           style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
         >
           <div className="max-w-md mx-auto flex items-center justify-between gap-3">
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5 truncate">
-                <span className="text-xs font-bold text-white truncate">
+                <span className="text-xs font-bold text-neutral-900 truncate">
                   {selectedTicket.name}
                 </span>
                 {selectedTicket.duration_label && (
-                  <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase bg-neutral-800 text-neutral-300 shrink-0">
+                  <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase bg-neutral-100 text-neutral-700 shrink-0">
                     {selectedTicket.duration_label}
                   </span>
                 )}
               </div>
               <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="text-sm font-black text-white tabular-nums">
+                <span className="text-sm font-black text-neutral-900 tabular-nums">
                   {effectiveTicketPrice === 0 ? "Free" : `₹${effectiveTicketPrice.toLocaleString("en-IN")}`}
                 </span>
-                <span className="text-[11px] text-neutral-400">
+                <span className="text-[11px] text-neutral-500">
                   · {peopleCount} {peopleCount === 1 ? "guest" : "guests"}
                 </span>
               </div>
@@ -1367,7 +1387,8 @@ export default function ApplyForm({
               type="button"
               onClick={handleFloatingBookClick}
               disabled={isSubmitting || paymentPending || paymentBlocked}
-              className="inline-flex items-center justify-center gap-1.5 bg-gradient-to-r from-red-600 via-rose-600 to-red-600 hover:from-red-500 hover:to-rose-500 active:scale-[0.98] text-white px-5 py-2.5 rounded-xl font-extrabold text-xs shadow-lg shadow-red-600/30 transition-all cursor-pointer disabled:opacity-50 shrink-0"
+              className="inline-flex items-center justify-center gap-1.5 text-white px-5 py-2.5 rounded-xl font-bold text-xs shadow-sm transition-all cursor-pointer disabled:opacity-50 shrink-0 hover:opacity-95 active:scale-[0.98]"
+              style={{ background: brandColor }}
             >
               {isSubmitting || paymentPending ? (
                 <>
