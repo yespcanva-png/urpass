@@ -76,37 +76,20 @@ export async function GET(req: NextRequest) {
     }
 
     const admin = adminClient();
+    const normalizedEmail = info.email.toLowerCase().trim();
 
-    // Find or create user
+    // Find user across profiles table (case-insensitive)
     const { data: profileRow } = await admin
       .from("profiles")
       .select("user_id")
-      .eq("email", info.email)
+      .ilike("email", normalizedEmail)
       .maybeSingle();
 
-    const isNewUser = !profileRow?.user_id;
+    let userId = profileRow?.user_id;
+    let isNewUser = false;
 
-    if (profileRow?.user_id) {
-      await admin.auth.admin.updateUserById(profileRow.user_id, {
-        user_metadata: {
-          full_name: info.name,
-          avatar_url: info.picture,
-          google_id: info.sub,
-        },
-      });
-      try {
-        await notifyOwnerUserLogin({
-          name: info.name,
-          email: info.email,
-          provider: "google",
-          userId: profileRow.user_id,
-        });
-      } catch (e) {
-        console.error("[google-callback] notifyOwnerUserLogin error:", e);
-      }
-    } else {
-      const { data: createdUser, error: createErr } = await admin.auth.admin.createUser({
-        email: info.email,
+    if (userId) {
+      await admin.auth.admin.updateUserById(userId, {
         email_confirm: true,
         user_metadata: {
           full_name: info.name,
@@ -114,29 +97,46 @@ export async function GET(req: NextRequest) {
           google_id: info.sub,
         },
       });
-      if (createErr) {
-        console.error("[google-callback] createUser error:", createErr);
-        return NextResponse.redirect(`${appUrl}/login?error=google_auth_failed&step=create`);
-      }
-      try {
-        await Promise.allSettled([
+      notifyOwnerUserLogin({
+        name: info.name,
+        email: normalizedEmail,
+        provider: "google",
+        userId,
+      }).catch((e) => console.error("[google-callback] notifyOwnerUserLogin error:", e));
+    } else {
+      // User might be new or already registered in auth.users without a profiles entry
+      const { data: createdUser, error: createErr } = await admin.auth.admin.createUser({
+        email: normalizedEmail,
+        email_confirm: true,
+        user_metadata: {
+          full_name: info.name,
+          avatar_url: info.picture,
+          google_id: info.sub,
+        },
+      });
+
+      if (!createErr && createdUser?.user) {
+        userId = createdUser.user.id;
+        isNewUser = true;
+        Promise.allSettled([
           notifyOwnerNewUser({
             name: info.name,
-            email: info.email,
+            email: normalizedEmail,
             provider: "google",
-            userId: createdUser.user?.id,
+            userId,
           }),
-          sendUserWelcomeEmail({ to: info.email, name: info.name }),
-        ]);
-      } catch (e) {
-        console.error("[google-callback] notification error:", e);
+          sendUserWelcomeEmail({ to: normalizedEmail, name: info.name }),
+        ]).catch((e) => console.error("[google-callback] notification error:", e));
+      } else {
+        // If createUser returned already registered / email_exists, user is existing.
+        // We will retrieve user.id via generateLink below.
       }
     }
 
-    // Generate a one-time token and verify it via the server client (sets session cookies)
+    // Generate a magiclink token to log the user in
     const { data: linkData, error: linkErr } = await admin.auth.admin.generateLink({
       type: "magiclink",
-      email: info.email,
+      email: normalizedEmail,
     });
 
     if (linkErr || !linkData?.properties?.hashed_token) {
@@ -144,11 +144,67 @@ export async function GET(req: NextRequest) {
       return NextResponse.redirect(`${appUrl}/login?error=google_auth_failed&step=link`);
     }
 
+    if (!userId && linkData.user?.id) {
+      userId = linkData.user.id;
+      await admin.auth.admin.updateUserById(userId, {
+        email_confirm: true,
+        user_metadata: {
+          full_name: info.name,
+          avatar_url: info.picture,
+          google_id: info.sub,
+        },
+      });
+      notifyOwnerUserLogin({
+        name: info.name,
+        email: normalizedEmail,
+        provider: "google",
+        userId,
+      }).catch((e) => console.error("[google-callback] notifyOwnerUserLogin error:", e));
+    }
+
+    // Ensure profiles table record is upserted and linked to user_id
+    if (userId) {
+      try {
+        await admin.from("profiles").upsert(
+          {
+            user_id: userId,
+            email: normalizedEmail,
+            full_name: info.name,
+            avatar_url: info.picture,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "user_id" }
+        );
+      } catch (e) {
+        console.error("[google-callback] profiles upsert error:", e);
+      }
+    }
+
+    // Verify OTP to set the Supabase session cookie on the server client
     const supabase = await createClient();
-    const { error: verifyErr } = await supabase.auth.verifyOtp({
-      token_hash: linkData.properties.hashed_token,
-      type: "email",
+    const tokenHash = linkData.properties.hashed_token;
+    const verificationType = (linkData.properties.verification_type as "magiclink" | "email") || "magiclink";
+
+    let { error: verifyErr } = await supabase.auth.verifyOtp({
+      token_hash: tokenHash,
+      type: verificationType,
     });
+
+    // Fallback across OTP types if needed (handles password-set users and magiclink configs)
+    if (verifyErr && verificationType !== "magiclink") {
+      const fb = await supabase.auth.verifyOtp({
+        token_hash: tokenHash,
+        type: "magiclink",
+      });
+      if (!fb.error) verifyErr = null;
+    }
+    if (verifyErr && verificationType !== "email") {
+      const fb = await supabase.auth.verifyOtp({
+        token_hash: tokenHash,
+        type: "email",
+      });
+      if (!fb.error) verifyErr = null;
+    }
 
     if (verifyErr) {
       console.error("[google-callback] verifyOtp error:", verifyErr);

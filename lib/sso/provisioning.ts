@@ -205,10 +205,28 @@ export async function jitProvisionAndSignIn(opts: ProvisioningOptions): Promise<
     }
 
     const serverClient = await createClient();
-    const { error: otpErr } = await serverClient.auth.verifyOtp({
-      token_hash: linkData.properties.hashed_token,
-      type: "email",
+    const tokenHash = linkData.properties.hashed_token;
+    const verificationType = (linkData.properties?.verification_type as "magiclink" | "email") || "magiclink";
+
+    let { error: otpErr } = await serverClient.auth.verifyOtp({
+      token_hash: tokenHash,
+      type: verificationType,
     });
+
+    if (otpErr && verificationType !== "magiclink") {
+      const fb = await serverClient.auth.verifyOtp({
+        token_hash: tokenHash,
+        type: "magiclink",
+      });
+      if (!fb.error) otpErr = null;
+    }
+    if (otpErr && verificationType !== "email") {
+      const fb = await serverClient.auth.verifyOtp({
+        token_hash: tokenHash,
+        type: "email",
+      });
+      if (!fb.error) otpErr = null;
+    }
 
     if (otpErr) {
       return {

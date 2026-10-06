@@ -67,18 +67,19 @@ export async function POST(req: NextRequest) {
   }
 
   const admin = adminClient();
+  const normalizedEmail = info.email.toLowerCase().trim();
 
   const { data: profileRow } = await admin
     .from("profiles")
     .select("user_id")
-    .eq("email", info.email)
+    .ilike("email", normalizedEmail)
     .maybeSingle();
 
-  let userId: string;
+  let userId = profileRow?.user_id;
 
-  if (profileRow?.user_id) {
-    userId = profileRow.user_id;
+  if (userId) {
     await admin.auth.admin.updateUserById(userId, {
+      email_confirm: true,
       user_metadata: {
         full_name: info.name,
         avatar_url: info.picture,
@@ -87,7 +88,7 @@ export async function POST(req: NextRequest) {
     });
   } else {
     const { data: created, error: createErr } = await admin.auth.admin.createUser({
-      email: info.email,
+      email: normalizedEmail,
       email_confirm: true,
       user_metadata: {
         full_name: info.name,
@@ -95,21 +96,48 @@ export async function POST(req: NextRequest) {
         google_id: info.sub,
       },
     });
-    if (createErr || !created?.user) {
-      console.error("[google-auth] createUser error:", createErr);
-      return NextResponse.json({ error: "Failed to create account" }, { status: 500 });
+    if (!createErr && created?.user) {
+      userId = created.user.id;
     }
-    userId = created.user.id;
   }
 
   const { data: linkData, error: linkErr } = await admin.auth.admin.generateLink({
     type: "magiclink",
-    email: info.email,
+    email: normalizedEmail,
   });
 
   if (linkErr || !linkData?.properties?.hashed_token) {
     console.error("[google-auth] generateLink error:", linkErr);
     return NextResponse.json({ error: "Failed to generate session" }, { status: 500 });
+  }
+
+  if (!userId && linkData.user?.id) {
+    userId = linkData.user.id;
+    await admin.auth.admin.updateUserById(userId, {
+      email_confirm: true,
+      user_metadata: {
+        full_name: info.name,
+        avatar_url: info.picture,
+        google_id: info.sub,
+      },
+    });
+  }
+
+  if (userId) {
+    try {
+      await admin.from("profiles").upsert(
+        {
+          user_id: userId,
+          email: normalizedEmail,
+          full_name: info.name,
+          avatar_url: info.picture,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "user_id" }
+      );
+    } catch (e) {
+      console.error("[google-auth] profiles upsert error:", e);
+    }
   }
 
   return NextResponse.json({
