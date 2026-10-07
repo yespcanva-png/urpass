@@ -38,23 +38,6 @@ export default function EventSubNav({ eventId }: { eventId: string }) {
       isActive: (p, b) => p === b || p === `${b}/`,
     },
     {
-      id: "program",
-      label: "Program",
-      href: `${base}/agenda`,
-      icon: CalendarDays,
-      isActive: (p, b) =>
-        p.startsWith(`${b}/agenda`) ||
-        p.startsWith(`${b}/sessions`) ||
-        p.startsWith(`${b}/speakers`) ||
-        p.startsWith(`${b}/rooms`),
-      subTabs: [
-        { label: "Agenda", href: `${base}/agenda`, isActive: (p) => p.startsWith(`${base}/agenda`) },
-        { label: "Sessions", href: `${base}/sessions`, isActive: (p) => p.startsWith(`${base}/sessions`) },
-        { label: "Speakers", href: `${base}/speakers`, isActive: (p) => p.startsWith(`${base}/speakers`) },
-        { label: "Rooms & Halls", href: `${base}/rooms`, isActive: (p) => p.startsWith(`${base}/rooms`) },
-      ],
-    },
-    {
       id: "registration",
       label: "Registration",
       href: `${base}/tickets`,
@@ -86,54 +69,6 @@ export default function EventSubNav({ eventId }: { eventId: string }) {
       ],
     },
     {
-      id: "operations",
-      label: "Operations",
-      href: `${base}/operations`,
-      icon: Radio,
-      isActive: (p, b) =>
-        p.startsWith(`${b}/operations`) ||
-        p.startsWith(`${b}/badges`) ||
-        p.startsWith(`${b}/desk`) ||
-        p.startsWith(`${b}/zones`) ||
-        p.startsWith(`${b}/access-rules`) ||
-        p.startsWith(`${b}/staff-devices`) ||
-        p.startsWith(`${b}/operations-analytics`),
-      subTabs: [
-        { label: "Live Ops", href: `${base}/operations`, isActive: (p) => p === `${base}/operations` || p === `${base}/operations/` },
-        { label: "Badge Studio & Print", href: `${base}/badges`, isActive: (p) => p.startsWith(`${base}/badges`) },
-        { label: "Onsite Desk", href: `${base}/desk`, isActive: (p) => p.startsWith(`${base}/desk`) },
-        { label: "Zones & Floor Plan", href: `${base}/zones`, isActive: (p) => p.startsWith(`${base}/zones`) },
-        { label: "Access Rules", href: `${base}/access-rules`, isActive: (p) => p.startsWith(`${base}/access-rules`) },
-        { label: "Staff & Devices", href: `${base}/staff-devices`, isActive: (p) => p.startsWith(`${base}/staff-devices`) },
-        { label: "Audit & Analytics", href: `${base}/operations-analytics`, isActive: (p) => p.startsWith(`${base}/operations-analytics`) },
-      ],
-    },
-    {
-      id: "commercial",
-      label: "Commercial",
-      href: `${base}/exhibitors-sponsors`,
-      icon: Store,
-      isActive: (p, b) =>
-        p.startsWith(`${b}/exhibitors-sponsors`) ||
-        p.startsWith(`${b}/exhibitors-admin`) ||
-        p.startsWith(`${b}/sponsors-admin`) ||
-        p.startsWith(`${b}/booths`) ||
-        p.startsWith(`${b}/lead-retrieval`) ||
-        p.startsWith(`${b}/deliverables`) ||
-        p.startsWith(`${b}/meetings`) ||
-        p.startsWith(`${b}/directory`),
-      subTabs: [
-        { label: "Overview", href: `${base}/exhibitors-sponsors`, isActive: (p) => p === `${base}/exhibitors-sponsors` || p === `${base}/exhibitors-sponsors/` },
-        { label: "Exhibitors", href: `${base}/exhibitors-admin`, isActive: (p) => p.startsWith(`${base}/exhibitors-admin`) },
-        { label: "Sponsors & Tiers", href: `${base}/sponsors-admin`, isActive: (p) => p.startsWith(`${base}/sponsors-admin`) },
-        { label: "Booth Allocation", href: `${base}/booths`, isActive: (p) => p.startsWith(`${base}/booths`) },
-        { label: "Deliverables Tracker", href: `${base}/deliverables`, isActive: (p) => p.startsWith(`${base}/deliverables`) },
-        { label: "Lead Retrieval", href: `${base}/lead-retrieval`, isActive: (p) => p.startsWith(`${base}/lead-retrieval`) },
-        { label: "B2B Meetings", href: `${base}/meetings`, isActive: (p) => p.startsWith(`${base}/meetings`) },
-        { label: "Public Directory", href: `${base}/directory`, isActive: (p) => p.startsWith(`${base}/directory`) },
-      ],
-    },
-    {
       id: "communications",
       label: "Communications",
       href: `${base}/communications`,
@@ -141,6 +76,19 @@ export default function EventSubNav({ eventId }: { eventId: string }) {
       isActive: (p, b) => p.startsWith(`${b}/communications`),
       subTabs: [
         { label: "Broadcasts & Campaigns", href: `${base}/communications`, isActive: (p) => p === `${base}/communications` || p === `${base}/communications/` },
+      ],
+    },
+    {
+      id: "program",
+      label: "Program",
+      href: `${base}/agenda`,
+      icon: CalendarDays,
+      isActive: (p, b) =>
+        p.startsWith(`${b}/agenda`) ||
+        p.startsWith(`${b}/speakers`),
+      subTabs: [
+        { label: "Agenda Schedule", href: `${base}/agenda`, isActive: (p) => p.startsWith(`${base}/agenda`) },
+        { label: "Speakers Directory", href: `${base}/speakers`, isActive: (p) => p.startsWith(`${base}/speakers`) },
       ],
     },
     {

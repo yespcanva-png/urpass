@@ -152,47 +152,47 @@ export default function CorporateWhatsNewCard({
 
         {/* ── Feature Rows ──────────────────────── */}
         <div className="space-y-3.5 my-6">
-          {/* Row 1: Exhibitor Portal & Lead Capture */}
+          {/* Row 1: Automated Email Notifications */}
           <div className="flex items-start gap-3.5">
             <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center shrink-0 border border-purple-100 mt-0.5">
-              <Store className="w-5 h-5" />
+              <Sparkles className="w-5 h-5" />
             </div>
             <div className="space-y-0.5 min-w-0">
               <h3 className="text-sm font-semibold text-neutral-900">
-                Exhibitor Portal &amp; Booth Check-In
+                Automated Transactional &amp; Organizer Emails
               </h3>
               <p className="text-xs text-neutral-500 leading-relaxed">
-                Dedicated token portal for exhibitors to configure booths, manage staff passes, and manage onsite operations.
+                Instant digital QR passes to attendees and real-time application summaries with custom answers to organizers.
               </p>
             </div>
           </div>
 
-          {/* Row 2: QR Lead Capture & Qualification */}
+          {/* Row 2: Ticket Studio */}
           <div className="flex items-start gap-3.5">
             <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0 border border-emerald-100 mt-0.5">
-              <Target className="w-5 h-5" />
+              <Layers className="w-5 h-5" />
             </div>
             <div className="space-y-0.5 min-w-0">
               <h3 className="text-sm font-semibold text-neutral-900">
-                Instant QR Lead Qualification
+                Visual Ticket Studio &amp; Pass Badges
               </h3>
               <p className="text-xs text-neutral-500 leading-relaxed">
-                Scan attendee badges to capture verified contacts, tag Hot/Warm/Cold ratings, record product interest, and export 1-click CSVs.
+                Design custom digital pass badges with your event branding, live preview, and Apple/Google Wallet integration.
               </p>
             </div>
           </div>
 
-          {/* Row 3: Sponsorship Tiers & Deliverables */}
+          {/* Row 3: Sub-0.3s Camera Check-in */}
           <div className="flex items-start gap-3.5">
             <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center shrink-0 border border-blue-100 mt-0.5">
-              <Briefcase className="w-5 h-5" />
+              <Printer className="w-5 h-5" />
             </div>
             <div className="space-y-0.5 min-w-0">
               <h3 className="text-sm font-semibold text-neutral-900">
-                Sponsorship Tiers &amp; Deliverables Matrix
+                Sub-0.3s Mobile Camera Check-in
               </h3>
               <p className="text-xs text-neutral-500 leading-relaxed">
-                Configure Platinum, Gold, Silver tiers with logo visibility placements, B2B meetings, and real-time deliverables tracking.
+                Multi-device browser scanners with offline caching so volunteers scan tickets seamlessly without downloading an app.
               </p>
             </div>
           </div>
@@ -201,11 +201,11 @@ export default function CorporateWhatsNewCard({
         {/* ── Actions: Full-Width Primary CTA + Dismiss ────────────────── */}
         <div className="pt-4 border-t border-neutral-100 space-y-2">
           <Link
-            href={firstEventId ? `/event/${firstEventId}/exhibitors-sponsors` : "/whats-new"}
+            href={firstEventId ? `/event/${firstEventId}/tickets` : "/whats-new"}
             onClick={handleDismiss}
             className="w-full py-2.5 px-4 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-white font-semibold text-xs sm:text-sm transition-all duration-150 flex items-center justify-center gap-2 shadow-xs cursor-pointer"
           >
-            <span>{firstEventId ? "Explore Exhibitor & Sponsor Suite" : "Explore What's New"}</span>
+            <span>{firstEventId ? "Manage Tickets & Passes" : "Explore What's New"}</span>
             <ArrowRight className="w-4 h-4" />
           </Link>
 
