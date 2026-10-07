@@ -90,17 +90,6 @@ export const eventSchema = z
       });
     }
 
-    // 3. Online and Hybrid events require meeting URL when published / active
-    if ((data.event_type === "online" || data.event_type === "hybrid") && data.status === "active") {
-      if (!data.meeting_url || !data.meeting_url.trim()) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "Meeting URL is required when publishing an online or hybrid event",
-          path: ["meeting_url"],
-        });
-      }
-    }
-
     // 4. Brand color and logo URL validation
     if (data.event_brand_color && data.event_brand_color.trim()) {
       if (!/^#[0-9a-fA-F]{6}$/.test(data.event_brand_color.trim())) {

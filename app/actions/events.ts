@@ -262,14 +262,14 @@ export async function updateEvent(
   // Verify access: user is creator or an owner/admin/event_manager in the org
   let { data: event } = await supabase
     .from("events")
-    .select("id, organizer_id, organization_id, apply_slug, custom_pass_design")
+    .select("id, organizer_id, organization_id, apply_slug, custom_pass_design, venue")
     .eq("id", eventId)
     .maybeSingle();
 
   if (!event && process.env.SUPABASE_SERVICE_ROLE_KEY) {
     const { data: adminEv } = await db
       .from("events")
-      .select("id, organizer_id, organization_id, apply_slug, custom_pass_design")
+      .select("id, organizer_id, organization_id, apply_slug, custom_pass_design, venue")
       .eq("id", eventId)
       .maybeSingle();
     event = adminEv;
@@ -322,14 +322,20 @@ export async function updateEvent(
   }
 
   const { workspace_id, location_id, ...baseUpdateFields } = parsed.data;
+  const resolvedEventType = baseUpdateFields.event_type || "physical";
+  const resolvedVenue =
+    resolvedEventType === "online"
+      ? "Online"
+      : baseUpdateFields.venue?.trim() || (event.venue && event.venue !== "Online" ? event.venue : "Main Venue");
+
   const updatePayload: Record<string, unknown> = {
     name: baseUpdateFields.name,
     description: baseUpdateFields.description || null,
     event_date: baseUpdateFields.event_date,
     start_time: baseUpdateFields.start_time,
     end_time: baseUpdateFields.end_time,
-    venue: baseUpdateFields.venue,
-    event_type: baseUpdateFields.event_type,
+    venue: resolvedVenue,
+    event_type: resolvedEventType,
     attendee_limit: baseUpdateFields.attendee_limit,
     status: baseUpdateFields.status,
     application_enabled: baseUpdateFields.application_enabled,
@@ -337,8 +343,19 @@ export async function updateEvent(
     is_paid_event: baseUpdateFields.is_paid_event,
     ticket_price: baseUpdateFields.is_paid_event ? baseUpdateFields.ticket_price : 0,
   };
-  if (baseUpdateFields.meeting_url !== undefined) updatePayload.meeting_url = baseUpdateFields.meeting_url;
-  if (baseUpdateFields.meeting_platform !== undefined) updatePayload.meeting_platform = baseUpdateFields.meeting_platform;
+
+  if (resolvedEventType === "physical") {
+    updatePayload.meeting_url = null;
+    updatePayload.meeting_platform = null;
+  } else {
+    if (baseUpdateFields.meeting_url !== undefined) {
+      updatePayload.meeting_url = baseUpdateFields.meeting_url || null;
+    }
+    if (baseUpdateFields.meeting_platform !== undefined) {
+      updatePayload.meeting_platform = baseUpdateFields.meeting_platform || null;
+    }
+  }
+
   if (workspace_id) updatePayload.workspace_id = workspace_id;
   if (location_id) updatePayload.location_id = location_id;
 

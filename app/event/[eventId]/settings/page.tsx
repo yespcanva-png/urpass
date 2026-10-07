@@ -242,6 +242,40 @@ export default function EventSettingsPage() {
     return false;
   })();
 
+  function handleEventTypeChange(type: "physical" | "online" | "hybrid") {
+    setValue("event_type", type, { shouldDirty: true, shouldValidate: true });
+    if (type === "online") {
+      setValue("venue", "Online", { shouldDirty: true, shouldValidate: true });
+      if (!watch("meeting_platform")) {
+        setValue("meeting_platform", "google_meet", { shouldDirty: true });
+      }
+    } else if (type === "physical") {
+      if (watch("venue") === "Online") {
+        setValue("venue", "", { shouldDirty: true });
+      }
+      setValue("meeting_url", null, { shouldDirty: true });
+      setValue("meeting_platform", null, { shouldDirty: true });
+    } else if (type === "hybrid") {
+      if (watch("venue") === "Online") {
+        setValue("venue", "", { shouldDirty: true });
+      }
+      if (!watch("meeting_platform")) {
+        setValue("meeting_platform", "google_meet", { shouldDirty: true });
+      }
+    }
+  }
+
+  const onInvalid = (formErrors: typeof errors) => {
+    const errorEntries = Object.entries(formErrors);
+    if (errorEntries.length > 0) {
+      const [field, err] = errorEntries[0];
+      setSaveError(`${field.replace(/_/g, " ")}: ${err?.message || "Please check this field"}`);
+    } else {
+      setSaveError("Please check all required fields and try again.");
+    }
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   async function handleImagesChange(newImages: string[]) {
     setEventImages(newImages);
     setImagesSaving(true);
@@ -513,11 +547,10 @@ export default function EventSettingsPage() {
   }
 
   const statusCfg = STATUS_CONFIG[event.status as keyof typeof STATUS_CONFIG] ?? STATUS_CONFIG.draft;
-  const showMeetingDetails = eventType === "online" || eventType === "hybrid";
 
   return (
     <div className="max-w-2xl mx-auto px-4 lg:px-0 py-6 pb-28">
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
+      <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="flex flex-col gap-5">
 
         {/* ── Event details ── */}
         <SectionCard icon={FileText} title="Event details" subtitle="Basic information about your event">
@@ -527,10 +560,10 @@ export default function EventSettingsPage() {
                 <button
                   key={value}
                   type="button"
-                  onClick={() => setValue("event_type", value, { shouldDirty: true })}
-                  className={`flex-1 py-2 rounded-lg border text-xs font-semibold transition-all ${
+                  onClick={() => handleEventTypeChange(value)}
+                  className={`flex-1 py-2.5 rounded-lg border text-xs font-semibold transition-all ${
                     eventType === value
-                      ? "border-brand bg-brand-50 text-brand"
+                      ? "border-brand bg-brand-50 text-brand shadow-xs"
                       : "border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300"
                   }`}
                 >
@@ -558,6 +591,46 @@ export default function EventSettingsPage() {
             <Field label="Venue" error={errors.venue?.message}>
               <input type="text" className={inputCls} placeholder="Venue name or address" {...register("venue")} />
             </Field>
+          )}
+
+          {/* Meeting details for online / hybrid right inside Event details */}
+          {(eventType === "online" || eventType === "hybrid") && (
+            <div className="pt-3 border-t border-neutral-100 flex flex-col gap-4">
+              <Field label="Meeting platform" error={errors.meeting_platform?.message}>
+                <div className="flex gap-2 flex-wrap">
+                  {PLATFORM_OPTIONS.map(({ value, label }) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => setValue("meeting_platform", value, { shouldDirty: true, shouldValidate: true })}
+                      className={`px-3 py-2 rounded-lg border text-xs font-semibold transition-all ${
+                        watch("meeting_platform") === value
+                          ? "border-brand bg-brand-50 text-brand shadow-xs"
+                          : "border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </Field>
+
+              <Field
+                label="Meeting URL"
+                error={errors.meeting_url?.message}
+                hint="Attendees will be redirected here when they click 'Join Event' on their pass."
+              >
+                <div className="relative">
+                  <Link2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 pointer-events-none" />
+                  <input
+                    type="url"
+                    placeholder="https://meet.google.com/xyz-abcd-efg or https://zoom.us/j/..."
+                    className={`${inputCls} pl-9`}
+                    {...register("meeting_url")}
+                  />
+                </div>
+              </Field>
+            </div>
           )}
         </SectionCard>
 
@@ -956,40 +1029,6 @@ export default function EventSettingsPage() {
           </div>
         </SectionCard>
 
-        {/* ── Meeting details (online / hybrid) ── */}
-        {showMeetingDetails && (
-          <SectionCard icon={Wifi} title="Meeting details" subtitle="Online meeting link and platform">
-            <Field label="Meeting platform" error={errors.meeting_platform?.message}>
-              <div className="flex gap-2 flex-wrap">
-                {PLATFORM_OPTIONS.map(({ value, label }) => (
-                  <button
-                    key={value}
-                    type="button"
-                    onClick={() => setValue("meeting_platform", value, { shouldDirty: true })}
-                    className={`px-3 py-2 rounded-lg border text-xs font-semibold transition-all ${
-                      watch("meeting_platform") === value
-                        ? "border-brand bg-brand-50 text-brand"
-                        : "border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300"
-                    }`}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </Field>
-            <Field label="Meeting URL" error={errors.meeting_url?.message} hint="Attendees will be redirected here when they click 'Join Event' on their pass.">
-              <div className="relative">
-                <Link2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 pointer-events-none" />
-                <input
-                  type="url"
-                  placeholder="https://zoom.us/j/123456789"
-                  className={`${inputCls} pl-9`}
-                  {...register("meeting_url")}
-                />
-              </div>
-            </Field>
-          </SectionCard>
-        )}
 
         {/* ── Date & time ── */}
         <SectionCard icon={CalendarDays} title="Date & time" subtitle="Schedule and event duration">
