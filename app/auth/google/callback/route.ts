@@ -8,6 +8,7 @@ import { notifyOwnerNewUser, notifyOwnerUserLogin, sendUserWelcomeEmail } from "
 import { resolvePostAuthRedirect } from "@/lib/auth-redirect";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 interface GoogleTokenInfo {
   sub: string;
@@ -64,7 +65,7 @@ export async function GET(req: NextRequest) {
 
     const redirectUri = `${origin}/auth/google/callback`;
 
-    // Exchange authorization code for Google tokens
+    // Exchange authorization code for Google tokens with strict 8s timeout
     const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -75,20 +76,22 @@ export async function GET(req: NextRequest) {
         redirect_uri: redirectUri,
         grant_type: "authorization_code",
       }),
+      signal: AbortSignal.timeout(8000),
     });
 
     const tokens = await tokenRes.json();
     if (!tokenRes.ok || !tokens.id_token) {
-      console.error("[google-callback] token exchange error:", tokenRes.status, tokens);
+      console.error("[google-callback] token exchange error:", tokenRes.status, tokens?.error);
       if (tokens.error === "invalid_grant") {
         return NextResponse.redirect(`${origin}/login?error=google_code_expired`);
       }
       return NextResponse.redirect(`${origin}/login?error=google_auth_failed&step=token`);
     }
 
-    // Verify the ID token
+    // Verify the ID token with strict 8s timeout
     const infoRes = await fetch(
-      `https://oauth2.googleapis.com/tokeninfo?id_token=${tokens.id_token}`
+      `https://oauth2.googleapis.com/tokeninfo?id_token=${tokens.id_token}`,
+      { signal: AbortSignal.timeout(8000) }
     );
     if (!infoRes.ok) {
       console.error("[google-callback] tokeninfo verification error:", infoRes.status);
@@ -146,12 +149,18 @@ export async function GET(req: NextRequest) {
           email_verified: true,
         },
       });
-      notifyOwnerUserLogin({
-        name: fullName,
-        email: normalizedEmail,
-        provider: "google",
-        userId,
-      }).catch((e) => console.error("[google-callback] notifyOwnerUserLogin error:", e));
+
+      // Asynchronous non-blocking owner notification
+      try {
+        notifyOwnerUserLogin({
+          name: fullName,
+          email: normalizedEmail,
+          provider: "google",
+          userId,
+        }).catch(() => {});
+      } catch {
+        // Ignore notification errors
+      }
     } else {
       // Try to create user in auth.users
       const { data: createdUser, error: createErr } = await admin.auth.admin.createUser({
@@ -169,15 +178,21 @@ export async function GET(req: NextRequest) {
       if (!createErr && createdUser?.user) {
         userId = createdUser.user.id;
         isNewUser = true;
-        Promise.allSettled([
-          notifyOwnerNewUser({
-            name: fullName,
-            email: normalizedEmail,
-            provider: "google",
-            userId,
-          }),
-          sendUserWelcomeEmail({ to: normalizedEmail, name: fullName }),
-        ]).catch((e) => console.error("[google-callback] notification error:", e));
+
+        // Asynchronous non-blocking notifications
+        try {
+          Promise.allSettled([
+            notifyOwnerNewUser({
+              name: fullName,
+              email: normalizedEmail,
+              provider: "google",
+              userId,
+            }),
+            sendUserWelcomeEmail({ to: normalizedEmail, name: fullName }),
+          ]).catch(() => {});
+        } catch {
+          // Ignore notification errors
+        }
       } else {
         // Fallback: If user already exists in auth.users without a profile record
         const { data: linkData } = await admin.auth.admin.generateLink({
@@ -196,12 +211,6 @@ export async function GET(req: NextRequest) {
               email_verified: true,
             },
           });
-          notifyOwnerUserLogin({
-            name: fullName,
-            email: normalizedEmail,
-            provider: "google",
-            userId,
-          }).catch((e) => console.error("[google-callback] notifyOwnerUserLogin error:", e));
         }
       }
     }
@@ -220,7 +229,7 @@ export async function GET(req: NextRequest) {
           { onConflict: "user_id" }
         );
       } catch (e) {
-        console.error("[google-callback] profiles upsert error:", e);
+        console.error("[google-callback] profiles upsert error:", e instanceof Error ? e.message : String(e));
       }
     }
 
@@ -251,8 +260,14 @@ export async function GET(req: NextRequest) {
       : (isNewUser ? "/onboarding" : "/dashboard");
 
     const response = NextResponse.redirect(`${origin}${destination}`);
-    // Clear the ephemeral OAuth state nonce cookie
-    response.cookies.delete("oauth_state_nonce");
+    // Clear ephemeral OAuth state nonce cookie safely
+    response.cookies.set("oauth_state_nonce", "", {
+      path: "/",
+      maxAge: 0,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production" || origin.startsWith("https://"),
+      sameSite: "lax",
+    });
 
     const cookieStore = await cookies();
 
@@ -273,10 +288,12 @@ export async function GET(req: NextRequest) {
                 // Ignore if in context where cookieStore cannot mutate
               }
               response.cookies.set(name, value, {
-                ...options,
                 path: options?.path || "/",
+                maxAge: typeof options?.maxAge === "number" ? options.maxAge : undefined,
+                domain: options?.domain || undefined,
                 sameSite: "lax",
                 secure: process.env.NODE_ENV === "production" || origin.startsWith("https://"),
+                httpOnly: options?.httpOnly ?? true,
               });
             });
           },
@@ -330,4 +347,5 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(`${origin}/login?error=google_auth_failed&step=crash`);
   }
 }
+
 
