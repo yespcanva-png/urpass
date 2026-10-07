@@ -26,16 +26,9 @@ function adminClient() {
 }
 
 function getAppOrigin(req: NextRequest): string {
-  const forwardedProto = req.headers.get("x-forwarded-proto");
-  const forwardedHost = req.headers.get("x-forwarded-host");
-  if (forwardedHost) {
-    const proto = forwardedProto || "https";
-    return `${proto}://${forwardedHost}`.replace(/\/$/, "");
-  }
-  const host = req.headers.get("host");
-  if (host) {
-    const isLocal = host.includes("localhost") || host.includes("127.0.0.1");
-    const proto = forwardedProto || (isLocal ? "http" : "https");
+  const host = req.headers.get("x-forwarded-host") || req.headers.get("host") || "";
+  if (host.includes("localhost") || host.includes("127.0.0.1")) {
+    const proto = req.headers.get("x-forwarded-proto") || "http";
     return `${proto}://${host}`.replace(/\/$/, "");
   }
   return (process.env.NEXT_PUBLIC_APP_URL || "https://urpass.space").replace(/\/$/, "");
@@ -127,7 +120,7 @@ export async function GET(req: NextRequest) {
     const avatarUrl = info.picture || "";
     const googleId = info.sub || "";
 
-    // Find user across profiles table (case-insensitive)
+    // 1. Find user in profiles or auth.users
     const { data: profileRow } = await admin
       .from("profiles")
       .select("user_id")
@@ -138,12 +131,14 @@ export async function GET(req: NextRequest) {
     let isNewUser = false;
 
     if (userId) {
+      // Existing user: mark email confirmed and update metadata
       await admin.auth.admin.updateUserById(userId, {
         email_confirm: true,
         user_metadata: {
           full_name: fullName,
           avatar_url: avatarUrl,
           google_id: googleId,
+          email_verified: true,
         },
       });
       notifyOwnerUserLogin({
@@ -153,7 +148,7 @@ export async function GET(req: NextRequest) {
         userId,
       }).catch((e) => console.error("[google-callback] notifyOwnerUserLogin error:", e));
     } else {
-      // User might be new or already registered in auth.users without a profiles entry
+      // Try to create user in auth.users
       const { data: createdUser, error: createErr } = await admin.auth.admin.createUser({
         email: normalizedEmail,
         email_confirm: true,
@@ -161,6 +156,7 @@ export async function GET(req: NextRequest) {
           full_name: fullName,
           avatar_url: avatarUrl,
           google_id: googleId,
+          email_verified: true,
         },
       });
 
@@ -176,13 +172,10 @@ export async function GET(req: NextRequest) {
           }),
           sendUserWelcomeEmail({ to: normalizedEmail, name: fullName }),
         ]).catch((e) => console.error("[google-callback] notification error:", e));
-      } else {
-        // If createUser returned already registered / email_exists, user is existing.
-        // We will retrieve user.id via generateLink below.
       }
     }
 
-    // Generate a magiclink token to log the user in
+    // Generate magiclink token to log the user in
     const { data: linkData, error: linkErr } = await admin.auth.admin.generateLink({
       type: "magiclink",
       email: normalizedEmail,
@@ -201,6 +194,7 @@ export async function GET(req: NextRequest) {
           full_name: fullName,
           avatar_url: avatarUrl,
           google_id: googleId,
+          email_verified: true,
         },
       });
       notifyOwnerUserLogin({
@@ -211,7 +205,7 @@ export async function GET(req: NextRequest) {
       }).catch((e) => console.error("[google-callback] notifyOwnerUserLogin error:", e));
     }
 
-    // Ensure profiles table record is upserted and linked to user_id
+    // Ensure profiles table record is upserted
     if (userId) {
       try {
         await admin.from("profiles").upsert(
@@ -257,7 +251,12 @@ export async function GET(req: NextRequest) {
               } catch {
                 // Ignore if in context where cookieStore cannot mutate
               }
-              response.cookies.set(name, value, options);
+              response.cookies.set(name, value, {
+                ...options,
+                path: options?.path || "/",
+                sameSite: "lax",
+                secure: process.env.NODE_ENV === "production",
+              });
             });
           },
         },
@@ -271,29 +270,6 @@ export async function GET(req: NextRequest) {
       token_hash: tokenHash,
       type: verificationType,
     });
-
-    // Fallback across OTP types if needed (handles password-set users and magiclink configs)
-    if (verifyErr && verificationType !== "magiclink") {
-      const fb = await supabase.auth.verifyOtp({
-        token_hash: tokenHash,
-        type: "magiclink",
-      });
-      if (!fb.error) verifyErr = null;
-    }
-    if (verifyErr && verificationType !== "signup") {
-      const fb = await supabase.auth.verifyOtp({
-        token_hash: tokenHash,
-        type: "signup",
-      });
-      if (!fb.error) verifyErr = null;
-    }
-    if (verifyErr && verificationType !== "email") {
-      const fb = await supabase.auth.verifyOtp({
-        token_hash: tokenHash,
-        type: "email",
-      });
-      if (!fb.error) verifyErr = null;
-    }
 
     if (verifyErr) {
       console.error("[google-callback] verifyOtp error:", verifyErr);

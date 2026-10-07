@@ -23,7 +23,7 @@ export default async function DashboardLayout({
     { data: ownedInstitution },
     { data: campusMember },
   ] = await Promise.all([
-    supabase.from("profiles").select("full_name, email").eq("user_id", user.id).single(),
+    supabase.from("profiles").select("full_name, email").eq("user_id", user.id).maybeSingle(),
     getUserPlan(supabase, user.id),
     supabase
       .from("organization_members")
