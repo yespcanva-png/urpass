@@ -1,6 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import { InstagramIcon, YoutubeIcon, SOCIAL_LINKS } from "./SocialIcons";
+import NewsletterForm from "./NewsletterForm";
 
 export default function Footer() {
   return (
@@ -20,7 +21,7 @@ export default function Footer() {
               <p className="text-xs text-neutral-400 leading-relaxed max-w-sm mb-3">
                 URPASS by Yesp Corporation is an event registration, digital ticketing and QR check-in platform built for colleges, conferences, hackathons, businesses and event organizers worldwide.
               </p>
-              <div className="mb-6">
+              <div className="mb-5">
                 <a
                   href="https://yespstudio.com"
                   target="_blank"
@@ -33,7 +34,7 @@ export default function Footer() {
               </div>
 
               {/* Social Channels */}
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 mb-6">
                 <a
                   href={SOCIAL_LINKS.instagram}
                   target="_blank"
@@ -55,6 +56,12 @@ export default function Footer() {
                   <YoutubeIcon className="w-4 h-4 text-red-500 group-hover:scale-110 transition-transform" />
                   <span>YouTube</span>
                 </a>
+              </div>
+
+              {/* Newsletter Subscription */}
+              <div className="max-w-sm">
+                <p className="text-xs font-semibold text-white tracking-wider uppercase mb-2">Stay in the Loop</p>
+                <NewsletterForm />
               </div>
             </div>
 

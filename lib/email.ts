@@ -244,6 +244,80 @@ export async function sendUserWelcomeEmail({
   });
 }
 
+export async function sendUserSubscriptionActivatedEmail({
+  to,
+  name,
+  planName,
+  amountFormatted,
+  billingCycle,
+  renewalDate,
+  isTrial,
+  trialDays,
+}: {
+  to: string;
+  name?: string | null;
+  planName: string;
+  amountFormatted?: string | null;
+  billingCycle?: "monthly" | "annual" | "lifetime" | string | null;
+  renewalDate?: string | null;
+  isTrial?: boolean;
+  trialDays?: number;
+}) {
+  const { buildSubscriptionEmail } = await import("@/lib/email-engine");
+  const { subject, html } = buildSubscriptionEmail({
+    name,
+    planName,
+    amountFormatted,
+    billingCycle,
+    renewalDate,
+    isTrial,
+    trialDays,
+  });
+  await sendEmail({
+    from: getFromEmail(),
+    to,
+    subject,
+    html,
+  });
+}
+
+export async function sendNewsletterWelcomeEmail({
+  to,
+  name,
+}: {
+  to: string;
+  name?: string | null;
+}) {
+  const { buildNewsletterWelcomeEmail } = await import("@/lib/email-engine");
+  const { subject, html } = buildNewsletterWelcomeEmail({ name, email: to });
+  await sendEmail({
+    from: getFromEmail(),
+    to,
+    subject,
+    html,
+  });
+}
+
+export async function notifyOwnerNewsletterSubscriber({
+  email,
+  name,
+}: {
+  email: string;
+  name?: string | null;
+}) {
+  await sendOwnerNotification({
+    subject: `📰 [URPASS] New Newsletter Subscriber: ${email}`,
+    title: "New Newsletter Subscriber",
+    rows: [
+      ["Email", email],
+      ["Name", name || "Not provided"],
+      ["Source", "Landing / Footer Newsletter Form"],
+      ["Time", new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })],
+    ],
+  });
+}
+
+
 export async function sendAccountDeletedEmail({
   to,
   name,

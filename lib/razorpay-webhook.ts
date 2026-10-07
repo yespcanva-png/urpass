@@ -9,6 +9,7 @@ import {
   notifyOwnerPaidSubscription,
   notifyOwnerOneTimePayment,
   sendUserPaymentSuccessEmail,
+  sendUserSubscriptionActivatedEmail,
 } from "@/lib/email";
 import { communicationService, formatTicketId, buildTicketUrl } from "@/lib/communications";
 import { recordLiveOpsEvent } from "@/lib/ops/events";
@@ -761,10 +762,19 @@ export async function handleRazorpayWebhook(req: NextRequest): Promise<NextRespo
         ? "Founder Lifetime Plan"
         : `${rawSlug.toUpperCase()} Plan`;
 
+      const formattedAmount = payment.amount ? `₹${(payment.amount / 100).toLocaleString("en-IN")}` : null;
+      const formattedRenewal = periodEnd.toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      });
+
+      const recipientEmail = notes.customer_email || payment.email;
+
       void Promise.allSettled([
         notifyOwnerPaidSubscription({
           buyerName: notes.customer_name,
-          buyerEmail: notes.customer_email || payment.email,
+          buyerEmail: recipientEmail,
           planName: planDisplayName,
           billingCycle,
           amountPaise: payment.amount,
@@ -772,16 +782,18 @@ export async function handleRazorpayWebhook(req: NextRequest): Promise<NextRespo
           orderId: payment.order_id,
           subscriptionId: payment.subscription_id,
         }),
-        notes.customer_email || payment.email
-          ? sendUserPaymentSuccessEmail({
-              to: notes.customer_email || payment.email,
+        recipientEmail
+          ? sendUserSubscriptionActivatedEmail({
+              to: recipientEmail,
               name: notes.customer_name,
-              itemName,
-              amountPaise: payment.amount,
-              kind: "subscription",
+              planName: planDisplayName,
+              amountFormatted: formattedAmount,
+              billingCycle: isFounder ? "lifetime" : billingCycle,
+              renewalDate: isFounder ? "Lifetime Access (No Renewal)" : formattedRenewal,
+              isTrial: false,
             })
           : Promise.resolve(),
-      ]).catch((err) => console.error("[email] Error notifying owner of subscription payment:", err));
+      ]).catch((err) => console.error("[email] Error notifying owner or user of subscription payment:", err));
     }
 
     return respondSuccess({ received: true });

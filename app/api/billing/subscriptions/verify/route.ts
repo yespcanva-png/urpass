@@ -4,7 +4,7 @@ import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { verifyRazorpaySubscriptionSignature } from "@/lib/razorpay";
 import { getBillingPlan, resolveBillingPlanKey } from "@/lib/billing-plans";
 import { getSupabaseUrl } from "@/lib/supabase/config";
-import { sendTrialStartedEmail, notifyOwnerTrialActivated } from "@/lib/email";
+import { sendUserSubscriptionActivatedEmail, notifyOwnerTrialActivated } from "@/lib/email";
 import { revalidatePath } from "next/cache";
 
 export const dynamic = "force-dynamic";
@@ -131,12 +131,15 @@ export async function POST(req: NextRequest) {
     try {
       await Promise.allSettled([
         user.email
-          ? sendTrialStartedEmail({
+          ? sendUserSubscriptionActivatedEmail({
               to: user.email,
-              userName: user.user_metadata?.full_name,
+              name: user.user_metadata?.full_name,
               planName: plan.displayName,
-              monthlyPricePaise: plan.pricePaise,
-              trialEndsAt: formattedEndDate,
+              amountFormatted: plan.pricePaise ? `₹${(plan.pricePaise / 100).toLocaleString("en-IN")}` : null,
+              billingCycle: plan.interval,
+              renewalDate: formattedEndDate,
+              isTrial: true,
+              trialDays: 30,
             })
           : Promise.resolve(),
         notifyOwnerTrialActivated({

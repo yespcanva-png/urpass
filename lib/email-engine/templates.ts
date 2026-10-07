@@ -9,10 +9,16 @@ export type EmailTemplateSlug =
   | "subscription"
   | "payment_failed"
   | "whats_new"
-  | "offer";
+  | "offer"
+  | "newsletter";
 
 export interface WelcomeEmailData {
   name?: string | null;
+}
+
+export interface NewsletterWelcomeEmailData {
+  name?: string | null;
+  email?: string | null;
 }
 
 export interface ActivationEmailData {
@@ -30,9 +36,11 @@ export interface IncompleteEventEmailData {
 export interface SubscriptionEmailData {
   name?: string | null;
   planName: string;
-  amountFormatted: string;
-  billingCycle: "monthly" | "annual";
-  renewalDate: string;
+  amountFormatted?: string | null;
+  billingCycle?: "monthly" | "annual" | "lifetime" | string | null;
+  renewalDate?: string | null;
+  isTrial?: boolean;
+  trialDays?: number;
 }
 
 export interface PaymentFailedEmailData {
@@ -204,11 +212,12 @@ export function buildIncompleteEventEmail(data: IncompleteEventEmailData): { sub
 }
 
 /**
- * 4. Subscription Activated Email (Lifecycle: Billing upgrade / Renewal)
+ * 4. Subscription Activated Email (Lifecycle: Billing upgrade / Trial / Renewal)
  * Goal: Confirm subscription, provide receipt details, list unlocked capabilities.
  */
 export function buildSubscriptionEmail(data: SubscriptionEmailData): { subject: string; html: string } {
   const greeting = data.name ? `Hi ${data.name},` : "Hello,";
+  const isTrial = Boolean(data.isTrial);
 
   const contextContentHtml = `
     <table border="0" cellpadding="0" cellspacing="0" width="100%" role="presentation" style="font-size: 13px; line-height: 22px; color: #334155;">
@@ -217,34 +226,100 @@ export function buildSubscriptionEmail(data: SubscriptionEmailData): { subject: 
         <td style="font-weight: 700; color: #0f172a;">${data.planName}</td>
       </tr>
       <tr>
+        <td style="color: #64748b;">Status:</td>
+        <td style="font-weight: 600; color: #16a34a;">${isTrial ? `${data.trialDays || 30}-Day Free Trial Active` : "Active Subscription"}</td>
+      </tr>
+      ${data.billingCycle ? `
+      <tr>
         <td style="color: #64748b;">Billing Cycle:</td>
         <td style="text-transform: capitalize; color: #0f172a;">${data.billingCycle}</td>
-      </tr>
+      </tr>` : ""}
+      ${data.amountFormatted ? `
       <tr>
-        <td style="color: #64748b;">Amount:</td>
+        <td style="color: #64748b;">${isTrial ? "Price After Trial:" : "Amount:"}</td>
         <td style="font-weight: 600; color: #0f172a;">${data.amountFormatted}</td>
+      </tr>` : ""}
+      ${data.renewalDate ? `
+      <tr>
+        <td style="color: #64748b;">${isTrial ? "Trial Ends On:" : "Next Renewal:"}</td>
+        <td style="color: #0f172a;">${data.renewalDate}</td>
+      </tr>` : ""}
+    </table>
+  `;
+
+  const heading = isTrial
+    ? `Your ${data.planName} 30-Day Free Trial is Active`
+    : `Your ${data.planName} Subscription is Active`;
+
+  const message = isTrial
+    ? `<p style="margin: 0 0 12px 0;">${greeting}</p><p style="margin: 0;">Welcome to your <strong>30-Day Free Trial</strong> of UrPass ${data.planName}. You now have full access to high-capacity registration limits, custom branding, and multi-device gate scanner synchronization.</p>`
+    : `<p style="margin: 0 0 12px 0;">${greeting}</p><p style="margin: 0;">Thank you for partnering with UrPass. Your account now has full access to enterprise pass limits, custom badge studio, and multi-scanner offline synchronization.</p>`;
+
+  const html = renderCorporateEmailHtml({
+    preheader: isTrial
+      ? `Your 30-Day Free Trial for ${data.planName} is active.`
+      : `Your ${data.planName} subscription is active on UrPass.`,
+    heading,
+    message,
+    cta: {
+      label: "Open Dashboard",
+      url: `${APP_URL}/dashboard`,
+    },
+    contextContentHtml,
+    secondaryInfo: isTrial
+      ? "You can cancel or change your plan at any time before the trial ends under Settings &rarr; Plan & Billing."
+      : "You can view your tax invoices and update payment methods at any time under Settings &rarr; Plan & Billing.",
+  });
+
+  return {
+    subject: isTrial
+      ? `🚀 URPASS Free Trial Activated: ${data.planName}`
+      : `Your UrPass ${data.planName} subscription is active`,
+    html,
+  };
+}
+
+/**
+ * 4B. Newsletter Welcome Email
+ * Goal: Welcome new newsletter subscribers and confirm subscription.
+ */
+export function buildNewsletterWelcomeEmail(data: NewsletterWelcomeEmailData): { subject: string; html: string } {
+  const greeting = data.name ? `Hi ${data.name},` : "Hello,";
+
+  const contextContentHtml = `
+    <p style="margin: 0 0 10px 0; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #0f172a;">
+      What You'll Receive
+    </p>
+    <table border="0" cellpadding="0" cellspacing="0" width="100%" role="presentation" style="font-size: 13px; line-height: 20px; color: #334155;">
+      <tr>
+        <td style="padding: 6px 0; vertical-align: top; width: 20px; color: #6D28D9; font-weight: 700;">&bull;</td>
+        <td style="padding: 6px 0;"><strong>Product Innovations & Feature Releases</strong> &mdash; Early access to new gate scanning, pass badge studio, and AI check-in features.</td>
       </tr>
       <tr>
-        <td style="color: #64748b;">Next Renewal:</td>
-        <td style="color: #0f172a;">${data.renewalDate}</td>
+        <td style="padding: 6px 0; vertical-align: top; width: 20px; color: #6D28D9; font-weight: 700;">&bull;</td>
+        <td style="padding: 6px 0;"><strong>Event Operations Playbooks</strong> &mdash; Practical guides on crowd management, high-volume entrance gates, and 0% commission ticketing.</td>
+      </tr>
+      <tr>
+        <td style="padding: 6px 0; vertical-align: top; width: 20px; color: #6D28D9; font-weight: 700;">&bull;</td>
+        <td style="padding: 6px 0;"><strong>Exclusive Community Discounts & Templates</strong> &mdash; Curated pass design templates and founder community deals.</td>
       </tr>
     </table>
   `;
 
   const html = renderCorporateEmailHtml({
-    preheader: `Your ${data.planName} subscription is active on UrPass.`,
-    heading: `Your ${data.planName} subscription is active`,
-    message: `<p style="margin: 0 0 12px 0;">${greeting}</p><p style="margin: 0;">Thank you for partnering with UrPass. Your account now has full access to enterprise pass limits, custom branding, and multi-scanner synchronization.</p>`,
+    preheader: "You are subscribed to UrPass updates and event operations insights.",
+    heading: "You're on the list",
+    message: `<p style="margin: 0 0 12px 0;">${greeting}</p><p style="margin: 0;">Thanks for subscribing to the UrPass newsletter. We share concise, high-signal updates on modern event ticketing, offline-first entry scanning, and organizer playbooks.</p>`,
     cta: {
-      label: "Manage Workspace",
-      url: `${APP_URL}/dashboard`,
+      label: "Explore UrPass Platform",
+      url: `${APP_URL}`,
     },
     contextContentHtml,
-    secondaryInfo: "You can view your tax invoices and update payment methods at any time under Settings &rarr; Plan & Billing.",
+    secondaryInfo: "We respect your inbox. You will only receive curated, high-value updates. You can unsubscribe at any time.",
   });
 
   return {
-    subject: `Your UrPass ${data.planName} subscription is active`,
+    subject: "Welcome to the UrPass Newsletter",
     html,
   };
 }
@@ -493,5 +568,17 @@ export const EMAIL_TEMPLATES_CATALOG: Record<
       ],
     },
     render: buildOfferEmail,
+  },
+  newsletter: {
+    slug: "newsletter",
+    name: "Newsletter Welcome",
+    description: "Confirms newsletter subscription and outlines feature & operational insights.",
+    lifecycleStage: "Sign Up",
+    category: "product",
+    sampleData: {
+      name: "Alex",
+      email: "alex@example.com",
+    },
+    render: buildNewsletterWelcomeEmail,
   },
 };
