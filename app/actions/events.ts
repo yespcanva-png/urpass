@@ -342,7 +342,13 @@ export async function updateEvent(
   if (workspace_id) updatePayload.workspace_id = workspace_id;
   if (location_id) updatePayload.location_id = location_id;
 
-  if (baseUpdateFields.end_date !== undefined || baseUpdateFields.event_images !== undefined) {
+  if (
+    baseUpdateFields.end_date !== undefined ||
+    baseUpdateFields.event_images !== undefined ||
+    baseUpdateFields.event_brand_color !== undefined ||
+    baseUpdateFields.event_logo_url !== undefined ||
+    baseUpdateFields.hide_branding !== undefined
+  ) {
     const currentDesign = (event.custom_pass_design as Record<string, unknown>) || {};
     const updatedDesign: Record<string, unknown> = { ...currentDesign };
     if (baseUpdateFields.end_date !== undefined) {
@@ -350,6 +356,17 @@ export async function updateEvent(
     }
     if (baseUpdateFields.event_images !== undefined) {
       updatedDesign.event_images = baseUpdateFields.event_images;
+    }
+    if (baseUpdateFields.event_brand_color !== undefined) {
+      updatedDesign.primaryColor = baseUpdateFields.event_brand_color;
+      updatedDesign.brand_color = baseUpdateFields.event_brand_color;
+    }
+    if (baseUpdateFields.event_logo_url !== undefined) {
+      updatedDesign.logoUrl = baseUpdateFields.event_logo_url;
+      updatedDesign.org_logo_url = baseUpdateFields.event_logo_url;
+    }
+    if (baseUpdateFields.hide_branding !== undefined) {
+      updatedDesign.hide_branding = baseUpdateFields.hide_branding;
     }
     updatePayload.custom_pass_design = updatedDesign;
   }

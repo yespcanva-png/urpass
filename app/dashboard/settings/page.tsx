@@ -27,10 +27,10 @@ export default async function SettingsPage() {
     getUserPlan(supabase, user.id),
     supabase
       .from("subscriptions")
-      .select("billing_cycle, current_period_start, current_period_end, cancel_at_period_end, registrations_used, plan:plans(name, price_monthly, slug)")
+      .select("billing_cycle, current_period_start, current_period_end, cancel_at_period_end, registrations_used, is_trial, trial_plan, trial_ends_at, status, plan:plans(name, price_monthly, slug)")
       .eq("user_id", user.id)
-      .eq("status", "active")
-      .single(),
+      .in("status", ["active", "trialing"])
+      .maybeSingle(),
     supabase
       .from("events")
       .select("*", { count: "exact", head: true })
@@ -40,7 +40,7 @@ export default async function SettingsPage() {
       .from("payment_settings")
       .select("razorpay_key_id")
       .eq("user_id", user.id)
-      .single(),
+      .maybeSingle(),
   ]);
 
   const defaultApiUsage = { api_requests: 0, registrations: 0, check_ins: 0, events: 0, year_month: "" };
@@ -78,11 +78,22 @@ export default async function SettingsPage() {
     canUseDeveloperTools,
     canUsePayments: plan.canUse("paid_events"),
   };
-  const renewalDate = subData?.current_period_end
-    ? new Date(subData.current_period_end).toLocaleDateString("en-IN", {
+  const isTrial = Boolean(subData?.is_trial || subData?.status === "trialing");
+  const renewalDateTarget = isTrial && subData?.trial_ends_at
+    ? subData.trial_ends_at
+    : subData?.current_period_end;
+  const renewalDate = renewalDateTarget
+    ? new Date(renewalDateTarget).toLocaleDateString("en-IN", {
         day: "numeric", month: "long", year: "numeric",
       })
     : null;
+
+  const branding = {
+    orgName: profile?.org_name || null,
+    brandColor: profile?.brand_color || "#6D28D9",
+    orgLogoUrl: profile?.org_logo_url || null,
+    hideBranding: profile?.hide_urpass_branding ?? false,
+  };
 
   return (
     <SettingsShell
@@ -95,6 +106,8 @@ export default async function SettingsPage() {
       billingAddress={(profile?.billing_address as string | null) ?? null}
       plan={settingsPlan}
       currentPlan={currentPlan}
+      isTrial={isTrial}
+      branding={branding}
       renewalDate={renewalDate}
       cancelAtPeriodEnd={subData?.cancel_at_period_end ?? false}
       activeEventCount={activeEventCount ?? 0}

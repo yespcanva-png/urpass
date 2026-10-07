@@ -3,8 +3,9 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getUserPlan } from "@/lib/plan";
 import BrandingForm from "./BrandingForm";
+import BrandingUpgradeGate from "./BrandingUpgradeGate";
 import Link from "next/link";
-import { ArrowLeft, Lock, Ticket, ArrowRight, Sparkles } from "lucide-react";
+import { ArrowLeft, Ticket, ArrowRight, Sparkles, Clock } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Branding",
@@ -21,31 +22,31 @@ export default async function BrandingPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const plan = await getUserPlan(supabase, user.id);
+  const [plan, { data: sub }] = await Promise.all([
+    getUserPlan(supabase, user.id),
+    supabase
+      .from("subscriptions")
+      .select("status, is_trial, trial_plan, trial_ends_at")
+      .eq("user_id", user.id)
+      .in("status", ["active", "trialing"])
+      .maybeSingle(),
+  ]);
 
   if (!plan.canRemoveBranding) {
     return (
-      <div className="min-h-screen bg-neutral-50 flex flex-col items-center justify-center p-6">
-        <div className="max-w-sm w-full text-center">
-          <div className="w-14 h-14 bg-amber-50 border border-amber-100 rounded-2xl flex items-center justify-center mx-auto mb-5">
-            <Lock className="w-7 h-7 text-amber-500" />
-          </div>
-          <h1 className="text-xl font-bold text-neutral-900 mb-2">Starter+ feature</h1>
-          <p className="text-sm text-neutral-500 mb-6">
-            Remove URPASS branding on Starter. Add your own logo and brand colour on Pro.
-          </p>
+      <div className="min-h-screen bg-neutral-50 pb-16">
+        <div className="max-w-2xl mx-auto px-4 py-8">
           <Link
-            href="/billing"
-            className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold text-white hover:opacity-90 transition-opacity"
-            style={{ background: "#6D28D9" }}
+            href="/dashboard"
+            className="inline-flex items-center gap-1.5 text-sm text-neutral-500 hover:text-neutral-900 transition-colors mb-4"
           >
-            Upgrade plan
+            <ArrowLeft className="w-4 h-4" />
+            Dashboard
           </Link>
-          <div className="mt-4">
-            <Link href="/dashboard" className="text-sm text-neutral-400 hover:text-neutral-900 transition-colors">
-              ← Dashboard
-            </Link>
-          </div>
+          <BrandingUpgradeGate
+            userEmail={user.email}
+            userName={user.user_metadata?.full_name}
+          />
         </div>
       </div>
     );
@@ -58,6 +59,14 @@ export default async function BrandingPage() {
     .single();
 
   const isPro = plan.canUse("custom_pass_design");
+  const isTrialActive = Boolean(sub?.is_trial || sub?.status === "trialing");
+  const trialEndsFormatted = sub?.trial_ends_at
+    ? new Date(sub.trial_ends_at).toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      })
+    : null;
 
   return (
     <div className="min-h-screen bg-neutral-50 pb-16">
@@ -72,7 +81,15 @@ export default async function BrandingPage() {
 
         {/* Page Header */}
         <div className="mb-8">
-          <p className="text-xs font-semibold tracking-widest uppercase text-brand mb-1">Branding</p>
+          <div className="flex items-center gap-2 mb-1">
+            <p className="text-xs font-semibold tracking-widest uppercase text-brand">Branding</p>
+            {isTrialActive && (
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
+                <Sparkles className="w-3 h-3 text-emerald-600" />
+                30-Day Pro Free Trial Active
+              </span>
+            )}
+          </div>
           <h1 className="text-2xl font-semibold tracking-tight text-neutral-900 mb-1">
             Organization Branding
           </h1>
@@ -80,6 +97,24 @@ export default async function BrandingPage() {
             Control whether URPASS branding appears on passes and attendee pages, and set your organisation identity.
           </p>
         </div>
+
+        {/* Pro Trial Info Banner */}
+        {isTrialActive && (
+          <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-emerald-50 via-teal-50 to-purple-50 border border-emerald-200/80 flex items-start gap-3 text-xs text-neutral-800 shadow-2xs">
+            <div className="w-7 h-7 rounded-lg bg-emerald-600 text-white flex items-center justify-center shrink-0 mt-0.5">
+              <Sparkles className="w-4 h-4" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-bold text-neutral-900">
+                You have full access to all Pro Custom Branding features!
+              </p>
+              <p className="text-neutral-600 mt-0.5 leading-relaxed">
+                Remove the URPASS watermark, set your custom brand color & logo, and customize passes in Ticket Studio.
+                {trialEndsFormatted ? ` Your 30-day free trial is active until ${trialEndsFormatted}.` : ""}
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Dedicated Connection Card to Ticket Design Studio */}
         <div className="mb-6 bg-gradient-to-br from-violet-900 via-purple-900 to-neutral-900 text-white rounded-2xl p-5 shadow-sm border border-purple-500/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">

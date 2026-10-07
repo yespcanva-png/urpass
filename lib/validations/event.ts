@@ -48,6 +48,9 @@ export const eventSchema = z
     timezone: z.string().default("Asia/Kolkata"),
     event_images: z.array(z.string()).optional(),
     custom_slug: z.string().max(100, "URL slug cannot exceed 100 characters").optional().nullable(),
+    event_brand_color: z.string().max(16).optional().nullable(),
+    event_logo_url: z.string().max(500).optional().nullable(),
+    hide_branding: z.boolean().optional(),
   })
   .superRefine((data, ctx) => {
     // 1. Date & Time validation (supports multi-day and overnight / past-midnight schedules)
@@ -94,6 +97,27 @@ export const eventSchema = z
           code: z.ZodIssueCode.custom,
           message: "Meeting URL is required when publishing an online or hybrid event",
           path: ["meeting_url"],
+        });
+      }
+    }
+
+    // 4. Brand color and logo URL validation
+    if (data.event_brand_color && data.event_brand_color.trim()) {
+      if (!/^#[0-9a-fA-F]{6}$/.test(data.event_brand_color.trim())) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Event brand color must be a valid hex color (e.g. #6D28D9)",
+          path: ["event_brand_color"],
+        });
+      }
+    }
+
+    if (data.event_logo_url && data.event_logo_url.trim()) {
+      if (!data.event_logo_url.trim().startsWith("https://")) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Event logo URL must be a valid https URL",
+          path: ["event_logo_url"],
         });
       }
     }

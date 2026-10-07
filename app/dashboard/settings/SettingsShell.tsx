@@ -4,7 +4,7 @@ import { useState } from "react";
 import {
   User, ShieldCheck, CreditCard, Puzzle, AlertTriangle,
   Check, Sparkles, Zap, Crown, Building2, ArrowUpRight,
-  ChevronRight, Mail, KeyRound, LogOut, Code2,
+  ChevronRight, Mail, KeyRound, LogOut, Code2, Palette, Ticket,
 } from "lucide-react";
 import Link from "next/link";
 import ProfileForm from "./ProfileForm";
@@ -15,7 +15,7 @@ import DeveloperDashboard, { type ApiKeyRow } from "@/app/dashboard/developer/De
 import type { ApiUsage } from "@/app/actions/api-usage";
 import type { WebhookEndpoint, WebhookDelivery } from "@/app/actions/webhooks";
 
-type Section = "profile" | "security" | "billing" | "integrations" | "developer" | "danger";
+type Section = "profile" | "security" | "billing" | "branding" | "integrations" | "developer" | "danger";
 
 export interface SettingsPlan {
   slug: string;
@@ -24,6 +24,13 @@ export interface SettingsPlan {
   registrationsPerMonth: number;
   canUseDeveloperTools: boolean;
   canUsePayments: boolean;
+}
+
+export interface BrandingInfo {
+  orgName?: string | null;
+  brandColor?: string | null;
+  orgLogoUrl?: string | null;
+  hideBranding?: boolean;
 }
 
 interface Props {
@@ -36,6 +43,8 @@ interface Props {
   billingAddress?: string | null;
   plan: SettingsPlan;
   currentPlan: { name: string; price_monthly: number; slug: string } | null;
+  isTrial?: boolean;
+  branding?: BrandingInfo | null;
   renewalDate: string | null;
   cancelAtPeriodEnd: boolean;
   activeEventCount: number;
@@ -52,6 +61,7 @@ const NAV: { id: Section; label: string; icon: React.ComponentType<{ className?:
   { id: "profile",      label: "Profile",       icon: User },
   { id: "security",     label: "Security",       icon: ShieldCheck },
   { id: "billing",      label: "Plan & Billing", icon: CreditCard },
+  { id: "branding",     label: "Branding",       icon: Palette },
   { id: "integrations", label: "Integrations",   icon: Puzzle },
   { id: "developer",    label: "Developer",      icon: Code2 },
   { id: "danger",       label: "Danger zone",    icon: AlertTriangle, danger: true },
@@ -93,6 +103,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 function PlanCard({
   plan,
   currentPlan,
+  isTrial,
   renewalDate,
   cancelAtPeriodEnd,
   activeEventCount,
@@ -101,6 +112,7 @@ function PlanCard({
 }: {
   plan: SettingsPlan;
   currentPlan: Props["currentPlan"];
+  isTrial?: boolean;
   renewalDate: string | null;
   cancelAtPeriodEnd: boolean;
   activeEventCount: number;
@@ -140,16 +152,26 @@ function PlanCard({
               <PlanIcon className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-[10px] font-bold tracking-widest uppercase text-white/30">Current plan</p>
-              <p className="text-lg font-bold text-white">{currentPlan?.name ?? "Free"}</p>
+              <div className="flex items-center gap-1.5">
+                <p className="text-[10px] font-bold tracking-widest uppercase text-white/30">Current plan</p>
+                {isTrial && (
+                  <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 flex items-center gap-0.5">
+                    <Sparkles className="w-2.5 h-2.5" />
+                    Trial Active
+                  </span>
+                )}
+              </div>
+              <p className="text-lg font-bold text-white">{currentPlan?.name ?? (plan.slug !== "free" ? plan.slug.toUpperCase() : "Free")}</p>
             </div>
           </div>
           <div className="text-right">
             <p className="text-2xl font-bold text-white">
-              {displayPrice === 0 ? "₹0" : `₹${(displayPrice / 100).toFixed(0)}`}
+              {isTrial ? "₹0 / £0" : displayPrice === 0 ? "₹0" : `₹${(displayPrice / 100).toFixed(0)}`}
             </p>
             <p className="text-[10px] text-white/30">
-              {currentPlan && currentPlan.price_monthly > 0
+              {isTrial
+                ? "30-day trial"
+                : currentPlan && currentPlan.price_monthly > 0
                 ? billingCycle === "annual" ? "/year" : "/month"
                 : "forever"}
             </p>
@@ -246,7 +268,7 @@ function DeveloperLocked() {
 }
 
 export default function SettingsShell({
-  fullName, email, initials, phone, companyName, gstin, billingAddress, plan, currentPlan,
+  fullName, email, initials, phone, companyName, gstin, billingAddress, plan, currentPlan, isTrial, branding,
   renewalDate, cancelAtPeriodEnd, activeEventCount, billingCycle, registrationsUsed, existingPaymentKeyId,
   apiUsage, apiKeys, webhookEndpoints, recentDeliveries,
 }: Props) {
@@ -305,10 +327,84 @@ export default function SettingsShell({
               <p className="text-sm text-neutral-400 mt-0.5">Your current plan, usage, and upgrade options.</p>
             </div>
             <PlanCard
-              plan={plan} currentPlan={currentPlan} renewalDate={renewalDate}
+              plan={plan} currentPlan={currentPlan} isTrial={isTrial} renewalDate={renewalDate}
               cancelAtPeriodEnd={cancelAtPeriodEnd} activeEventCount={activeEventCount}
               billingCycle={billingCycle} registrationsUsed={registrationsUsed}
             />
+          </div>
+        );
+
+      case "branding":
+        return (
+          <div className="max-w-xl">
+            <div className="mb-6">
+              <h2 className="text-lg font-bold tracking-tight text-neutral-900">Branding & White-Label</h2>
+              <p className="text-sm text-neutral-400 mt-0.5">Manage your organization identity, brand palette, and white-label pass settings.</p>
+            </div>
+            
+            <div className="bg-white rounded-2xl shadow-sm p-6 space-y-5 border border-neutral-100">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-center gap-3.5">
+                  <div
+                    className="w-12 h-12 rounded-xl flex items-center justify-center text-white shrink-0 shadow-2xs font-bold text-sm"
+                    style={{ background: branding?.brandColor || "#6D28D9" }}
+                  >
+                    {branding?.orgLogoUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={branding.orgLogoUrl} alt="Logo" className="w-8 h-8 rounded-lg object-contain bg-white/20 p-0.5" />
+                    ) : (
+                      (branding?.orgName || "ORG").slice(0, 2).toUpperCase()
+                    )}
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-bold text-neutral-900">{branding?.orgName || "Default Organization"}</p>
+                      {plan.slug !== "free" ? (
+                        <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
+                          {plan.slug.toUpperCase()}
+                        </span>
+                      ) : (
+                        <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-500">
+                          Free
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-neutral-400 mt-0.5">
+                      Brand Color: <span className="font-mono font-semibold uppercase">{branding?.brandColor || "#6D28D9"}</span>
+                    </p>
+                  </div>
+                </div>
+
+                <div className="text-right">
+                  <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                    branding?.hideBranding
+                      ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                      : "bg-neutral-100 text-neutral-500"
+                  }`}>
+                    {branding?.hideBranding ? "White-Label Active" : "Standard Branding"}
+                  </span>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-neutral-100 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                <Link
+                  href="/dashboard/branding"
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-white shadow-2xs hover:opacity-90 transition-all"
+                  style={{ background: "#6D28D9" }}
+                >
+                  <Palette className="w-3.5 h-3.5" />
+                  <span>Configure Organization Branding</span>
+                </Link>
+
+                <Link
+                  href="/studio"
+                  className="px-4 py-2.5 rounded-xl text-xs font-semibold text-neutral-700 hover:text-neutral-900 bg-neutral-100 hover:bg-neutral-200 transition-colors flex items-center justify-center gap-1.5"
+                >
+                  <Ticket className="w-3.5 h-3.5" />
+                  <span>Open Ticket Studio</span>
+                </Link>
+              </div>
+            </div>
           </div>
         );
 
@@ -419,10 +515,61 @@ export default function SettingsShell({
         {/* ── Plan & Billing ──────────────────────────────── */}
         <SectionLabel>Plan & Billing</SectionLabel>
         <PlanCard
-          plan={plan} currentPlan={currentPlan} renewalDate={renewalDate}
+          plan={plan} currentPlan={currentPlan} isTrial={isTrial} renewalDate={renewalDate}
           cancelAtPeriodEnd={cancelAtPeriodEnd} activeEventCount={activeEventCount}
           billingCycle={billingCycle} registrationsUsed={registrationsUsed}
         />
+
+        {/* ── Branding & White-Label ──────────────────────── */}
+        <SectionLabel>Branding & White-Label</SectionLabel>
+        <div className="bg-white rounded-2xl shadow-sm p-5 space-y-4 border border-neutral-100">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center text-white shrink-0 font-bold text-xs shadow-2xs"
+                style={{ background: branding?.brandColor || "#6D28D9" }}
+              >
+                {branding?.orgLogoUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={branding.orgLogoUrl} alt="Logo" className="w-6 h-6 rounded object-contain bg-white/20 p-0.5" />
+                ) : (
+                  (branding?.orgName || "ORG").slice(0, 2).toUpperCase()
+                )}
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-bold text-neutral-900 truncate">{branding?.orgName || "Default Organization"}</p>
+                <p className="text-xs text-neutral-400">
+                  Brand Color: <span className="font-mono font-semibold uppercase">{branding?.brandColor || "#6D28D9"}</span>
+                </p>
+              </div>
+            </div>
+            <span className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+              branding?.hideBranding
+                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                : "bg-neutral-100 text-neutral-500"
+            }`}>
+              {branding?.hideBranding ? "White-Label" : "Standard"}
+            </span>
+          </div>
+
+          <div className="pt-3 border-t border-neutral-100 flex items-center gap-2">
+            <Link
+              href="/dashboard/branding"
+              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs font-bold text-white text-center shadow-2xs"
+              style={{ background: "#6D28D9" }}
+            >
+              <Palette className="w-3.5 h-3.5" />
+              <span>Branding</span>
+            </Link>
+            <Link
+              href="/studio"
+              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs font-semibold text-neutral-700 bg-neutral-100 hover:bg-neutral-200 text-center"
+            >
+              <Ticket className="w-3.5 h-3.5" />
+              <span>Ticket Studio</span>
+            </Link>
+          </div>
+        </div>
 
         {/* ── Integrations ────────────────────────────────── */}
         <SectionLabel>Integrations</SectionLabel>
@@ -492,7 +639,7 @@ export default function SettingsShell({
 
           <div className="mb-1">
             <p className="text-[10px] font-bold tracking-widest uppercase text-neutral-400 px-3 mb-1 mt-3">Workspace</p>
-            {(["billing", "integrations", "developer"] as Section[]).map((id) => {
+            {(["billing", "branding", "integrations", "developer"] as Section[]).map((id) => {
               const item = NAV.find((n) => n.id === id)!;
               const active = section === id;
               return (

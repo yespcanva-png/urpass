@@ -104,6 +104,11 @@ const GUIDE_SECTIONS = [
     description: "Branding digital tickets, generating QR tokens, and multi-channel delivery.",
     guides: [
       {
+        title: "How to Start Pro Free Trial & Customize Ticket Branding",
+        href: "/guides/how-to-start-pro-trial-and-customize-branding",
+        summary: "Step-by-step walkthrough to activate your 30-day Pro trial, upload logos, set brand colors, and remove watermarks.",
+      },
+      {
         title: "How to Create Digital Event Passes",
         href: "/guides/how-to-create-digital-event-passes",
         summary: "Configure brand colors, logos, attendee badge tiers, and responsive web passes.",

@@ -9,7 +9,7 @@ import {
   Loader2, Trash2, AlertTriangle, IndianRupee,
   FileText, CalendarDays, Users, CreditCard,
   Radio, CheckCircle2, AlertCircle, Wifi, Link2, Ticket, Image as ImageIcon,
-  Globe, Copy, Check, ExternalLink, Sparkles,
+  Globe, Copy, Check, ExternalLink, Sparkles, Palette, Upload, ArrowRight, Lock,
 } from "lucide-react";
 import { eventSchema, type EventInput } from "@/lib/validations/event";
 import { updateEvent, updateEventStatus, deleteEvent, updateEventImagesAction, updateEventSlugAction } from "@/app/actions/events";
@@ -19,7 +19,17 @@ import { slugify } from "@/lib/utils";
 import CustomFieldsBuilder from "@/components/event/CustomFieldsBuilder";
 import EventImageUploader from "@/components/events/EventImageUploader";
 import EventImageCarousel from "@/components/events/EventImageCarousel";
+import TrialConfirmationModal from "@/components/billing/TrialConfirmationModal";
 import type { CustomFieldDefinition } from "@/types";
+
+const PRESET_COLORS = [
+  { label: "Imperial Purple", hex: "#6D28D9" },
+  { label: "Royal Blue", hex: "#2563EB" },
+  { label: "Emerald Green", hex: "#059669" },
+  { label: "Crimson Red", hex: "#DC2626" },
+  { label: "Amber Gold", hex: "#D97706" },
+  { label: "Obsidian", hex: "#0F172A" },
+];
 
 const inputCls =
   "border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/10 transition-all bg-white placeholder:text-neutral-300 w-full";
@@ -182,6 +192,19 @@ export default function EventSettingsPage() {
   const [eventImages, setEventImages]           = useState<string[]>([]);
   const [imagesSaving, setImagesSaving]         = useState(false);
 
+  // Event & Pass Branding State
+  const [brandColor, setBrandColor]             = useState("#6D28D9");
+  const [logoUrl, setLogoUrl]                   = useState("");
+  const [hideBranding, setHideBranding]         = useState(false);
+  const [canRemoveBranding, setCanRemoveBranding] = useState(false);
+  const [isPro, setIsPro]                       = useState(false);
+  const [isTrialActive, setIsTrialActive]       = useState(false);
+  const [uploadingLogo, setUploadingLogo]       = useState(false);
+  const [logoUploadError, setLogoUploadError]   = useState("");
+  const [trialModalOpen, setTrialModalOpen]     = useState(false);
+  const [userEmail, setUserEmail]               = useState("");
+  const [userName, setUserName]                 = useState("");
+
   // SEO URL & Custom Slug state
   const [slugValue, setSlugValue]               = useState("");
   const [slugSaving, setSlugSaving]             = useState(false);
@@ -224,6 +247,55 @@ export default function EventSettingsPage() {
     setImagesSaving(true);
     await updateEventImagesAction(eventId, newImages);
     setImagesSaving(false);
+  }
+
+  async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setLogoUploadError("Please select a valid image file (PNG, JPG, SVG, WebP).");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setLogoUploadError("Image size must be under 5MB.");
+      return;
+    }
+
+    setLogoUploadError("");
+    setUploadingLogo(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/studio/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (res.ok && data.url) {
+        setLogoUrl(data.url);
+        setValue("event_logo_url", data.url, { shouldDirty: true });
+      } else {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          if (ev.target?.result) {
+            setLogoUrl(ev.target.result as string);
+            setValue("event_logo_url", ev.target.result as string, { shouldDirty: true });
+          }
+        };
+        reader.readAsDataURL(file);
+      }
+    } catch {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        if (ev.target?.result) {
+          setLogoUrl(ev.target.result as string);
+          setValue("event_logo_url", ev.target.result as string, { shouldDirty: true });
+        }
+      };
+      reader.readAsDataURL(file);
+    } finally {
+      setUploadingLogo(false);
+    }
   }
 
   async function handleSaveSlug() {
@@ -285,14 +357,14 @@ export default function EventSettingsPage() {
       if (data) {
         setEvent(data as unknown as EventRow);
         setSlugValue(data.apply_slug || "");
-        const design = (data.custom_pass_design as { event_images?: string[]; end_date?: string | null } | null);
-        if (design?.event_images && Array.isArray(design.event_images)) {
-          setEventImages(design.event_images);
+        const design = (data.custom_pass_design as Record<string, unknown> | null) ?? {};
+        if (design.event_images && Array.isArray(design.event_images)) {
+          setEventImages(design.event_images as string[]);
         }
         reset({
           name: data.name, description: data.description ?? "",
           event_date: data.event_date,
-          end_date: design?.end_date ?? null,
+          end_date: (design.end_date as string | null) ?? null,
           start_time: data.start_time, end_time: data.end_time,
           venue: data.venue ?? "", attendee_limit: data.attendee_limit,
           status: data.status as "draft" | "active",
@@ -304,16 +376,57 @@ export default function EventSettingsPage() {
         });
       }
       if (user) {
-        const [{ data: ps }, { data: sub }] = await Promise.all([
+        setUserEmail(user.email || "");
+        setUserName(user.user_metadata?.full_name || "");
+        const [{ data: ps }, { data: sub }, { data: profile }] = await Promise.all([
           supabase.from("payment_settings").select("razorpay_key_id").eq("user_id", user.id).single(),
-          supabase.from("subscriptions").select("plan:plans(slug)").eq("user_id", user.id).eq("status", "active").maybeSingle(),
+          supabase
+            .from("subscriptions")
+            .select("plan:plans(slug), status, is_trial, trial_plan, trial_ends_at")
+            .eq("user_id", user.id)
+            .in("status", ["active", "trialing"])
+            .maybeSingle(),
+          supabase
+            .from("profiles")
+            .select("org_name, brand_color, org_logo_url, hide_urpass_branding")
+            .eq("user_id", user.id)
+            .maybeSingle(),
         ]);
         setHasPaymentGateway(!!(ps?.razorpay_key_id));
         const planRaw = sub?.plan as unknown as { slug?: string } | { slug?: string }[] | undefined;
-        const slug = Array.isArray(planRaw) ? planRaw[0]?.slug : planRaw?.slug;
-        if (slug === "starter") {
+        const rawSlug = Array.isArray(planRaw) ? planRaw[0]?.slug : planRaw?.slug;
+        const isTrial = Boolean(sub?.is_trial || sub?.status === "trialing");
+        const effectiveSlug = (rawSlug || (isTrial ? (sub?.trial_plan as string) : undefined) || "free").toLowerCase();
+
+        const isProTier = ["pro", "business", "campus", "founder", "lifetime", "enterprise"].includes(effectiveSlug);
+        setIsPro(isProTier);
+        const canHide = effectiveSlug !== "free";
+        setCanRemoveBranding(canHide);
+        setIsTrialActive(isTrial);
+
+        const design = data ? ((data.custom_pass_design as Record<string, unknown> | null) ?? {}) : {};
+        const resolvedBrandColor =
+          (design.primaryColor as string) ||
+          (design.brand_color as string) ||
+          profile?.brand_color ||
+          "#6D28D9";
+        const resolvedLogoUrl =
+          (design.logoUrl as string) ||
+          (design.org_logo_url as string) ||
+          profile?.org_logo_url ||
+          "";
+        const resolvedHideBranding =
+          typeof design.hide_branding === "boolean"
+            ? (design.hide_branding as boolean)
+            : (profile?.hide_urpass_branding ?? false);
+
+        setBrandColor(resolvedBrandColor);
+        setLogoUrl(resolvedLogoUrl);
+        setHideBranding(resolvedHideBranding);
+
+        if (effectiveSlug === "starter") {
           setCustomFieldsLimit({ max: 10, isUnlimited: false });
-        } else if (slug && slug !== "free") {
+        } else if (effectiveSlug && effectiveSlug !== "free") {
           setCustomFieldsLimit({ max: 999999, isUnlimited: true });
         } else {
           setCustomFieldsLimit({ max: 3, isUnlimited: false });
@@ -335,6 +448,9 @@ export default function EventSettingsPage() {
     const payload: EventInput = {
       ...data,
       custom_slug: slugValue ? slugify(slugValue) : undefined,
+      event_brand_color: brandColor,
+      event_logo_url: logoUrl || null,
+      hide_branding: hideBranding,
     };
     const result = await updateEvent(eventId, payload);
     if (result?.error) {
@@ -565,6 +681,248 @@ export default function EventSettingsPage() {
               <p className="text-[11px] text-neutral-400 mt-0.5 leading-relaxed">
                 By default, URPASS automatically generates this SEO-friendly URL from your event name. You can customize it anytime.
               </p>
+            </div>
+          </div>
+        </SectionCard>
+
+        {/* ── Event & Pass Branding ── */}
+        <SectionCard
+          icon={Palette}
+          title="Event & Pass Branding"
+          subtitle="Customize event brand palette, logo, and white-label pass appearance"
+        >
+          <div className="flex flex-col gap-5">
+            {/* White-Label / Hide URPASS Branding Toggle */}
+            <div className="p-4 rounded-xl bg-neutral-50/80 border border-neutral-200/80 flex items-start justify-between gap-4">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-semibold text-neutral-900">White-Label Passes (Remove URPASS Watermark)</p>
+                  {canRemoveBranding ? (
+                    <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
+                      Pro Unlocked
+                    </span>
+                  ) : (
+                    <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                      Pro Feature
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-neutral-500 mt-1 leading-relaxed">
+                  When enabled, &ldquo;Powered by URPASS&rdquo; watermarks, logos, and badges are completely hidden from all attendee passes and public registration pages.
+                </p>
+                {hideBranding && canRemoveBranding && (
+                  <p className="text-xs font-semibold text-emerald-600 mt-2 flex items-center gap-1.5">
+                    <Check className="w-3.5 h-3.5" />
+                    White-label active — attendees see 100% clean event branding
+                  </p>
+                )}
+              </div>
+              <Toggle
+                checked={hideBranding}
+                onChange={() => {
+                  setHideBranding(!hideBranding);
+                  setValue("hide_branding", !hideBranding, { shouldDirty: true });
+                }}
+                disabled={!canRemoveBranding}
+              />
+            </div>
+
+            {/* If Free tier: Pro Trial Upgrade Callout */}
+            {!canRemoveBranding && (
+              <div className="p-4 rounded-xl bg-gradient-to-br from-violet-900 via-purple-900 to-neutral-900 text-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm">
+                <div className="flex items-start gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-white/15 border border-white/20 flex items-center justify-center shrink-0">
+                    <Sparkles className="w-4 h-4 text-purple-200" />
+                  </div>
+                  <div>
+                    <h3 className="text-xs font-bold text-white">Start 30-Day Pro Free Trial (£0 / ₹0)</h3>
+                    <p className="text-[11px] text-purple-200/80 mt-0.5">
+                      Unlock custom brand colors, logo upload, watermark removal, and full Ticket Studio.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setTrialModalOpen(true)}
+                  className="px-4 py-2 rounded-lg bg-white text-neutral-900 hover:bg-neutral-100 text-xs font-bold transition-all shrink-0 cursor-pointer shadow-xs"
+                >
+                  Start Pro Trial
+                </button>
+              </div>
+            )}
+
+            {/* Event Brand Color */}
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-semibold text-neutral-500 uppercase tracking-wide flex items-center gap-1.5">
+                <Palette className="w-3.5 h-3.5 text-neutral-400" />
+                Event Brand Color
+              </label>
+              <div className="flex items-center gap-3">
+                <input
+                  type="color"
+                  className="w-11 h-10 rounded-xl border border-neutral-200 cursor-pointer p-1 bg-white disabled:opacity-50"
+                  value={brandColor}
+                  onChange={(e) => {
+                    setBrandColor(e.target.value);
+                    setValue("event_brand_color", e.target.value, { shouldDirty: true });
+                  }}
+                  disabled={!isPro}
+                />
+                <input
+                  type="text"
+                  className={`${inputCls} font-mono uppercase w-36`}
+                  value={brandColor}
+                  onChange={(e) => {
+                    const val = e.target.value.trim();
+                    if (/^#[0-9a-fA-F]{0,6}$/.test(val)) {
+                      setBrandColor(val);
+                      setValue("event_brand_color", val, { shouldDirty: true });
+                    }
+                  }}
+                  maxLength={7}
+                  disabled={!isPro}
+                />
+              </div>
+
+              {/* Preset Swatches */}
+              {isPro && (
+                <div className="flex items-center gap-1.5 flex-wrap pt-1">
+                  <span className="text-[11px] text-neutral-400 font-medium mr-1">Presets:</span>
+                  {PRESET_COLORS.map((preset) => (
+                    <button
+                      key={preset.hex}
+                      type="button"
+                      onClick={() => {
+                        setBrandColor(preset.hex);
+                        setValue("event_brand_color", preset.hex, { shouldDirty: true });
+                      }}
+                      className={`px-2 py-1 rounded-lg text-xs font-medium border flex items-center gap-1.5 transition-all ${
+                        brandColor.toLowerCase() === preset.hex.toLowerCase()
+                          ? "border-neutral-900 bg-neutral-100 font-bold text-neutral-900"
+                          : "border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300"
+                      }`}
+                    >
+                      <span
+                        className="w-2.5 h-2.5 rounded-full shrink-0 shadow-2xs"
+                        style={{ background: preset.hex }}
+                      />
+                      <span>{preset.label}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+              <p className="text-[11px] text-neutral-400">
+                Applied to registration headers, pass badges, buttons, and QR pass backgrounds.
+              </p>
+            </div>
+
+            {/* Event Logo */}
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-semibold text-neutral-500 uppercase tracking-wide flex items-center gap-1.5">
+                <ImageIcon className="w-3.5 h-3.5 text-neutral-400" />
+                Event Logo / Header Badge
+                <span className="text-neutral-400 font-normal lowercase">(optional)</span>
+              </label>
+
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                <input
+                  type="url"
+                  placeholder="https://example.com/logo.png"
+                  className={inputCls}
+                  value={logoUrl}
+                  onChange={(e) => {
+                    setLogoUrl(e.target.value);
+                    setValue("event_logo_url", e.target.value, { shouldDirty: true });
+                  }}
+                  disabled={!isPro || uploadingLogo}
+                />
+
+                {isPro && (
+                  <label className="shrink-0 px-4 py-2.5 rounded-xl border border-neutral-200 hover:bg-neutral-50 text-xs font-semibold text-neutral-700 flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-2xs">
+                    {uploadingLogo ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Upload className="w-3.5 h-3.5 text-neutral-500" />
+                    )}
+                    <span>{uploadingLogo ? "Uploading..." : "Upload Logo"}</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleLogoUpload}
+                      disabled={uploadingLogo}
+                      className="hidden"
+                    />
+                  </label>
+                )}
+              </div>
+
+              {logoUploadError && (
+                <p className="text-xs text-red-500">{logoUploadError}</p>
+              )}
+
+              {logoUrl && (
+                <div className="flex items-center gap-3 p-3 bg-neutral-50 rounded-xl border border-neutral-100">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={logoUrl}
+                    alt="Logo preview"
+                    className="w-8 h-8 rounded-lg object-contain bg-white border border-neutral-200 p-0.5"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-bold text-neutral-800 truncate">Logo active</p>
+                    <p className="text-[10px] text-neutral-400 truncate">{logoUrl}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLogoUrl("");
+                      setValue("event_logo_url", "", { shouldDirty: true });
+                    }}
+                    className="text-xs text-neutral-400 hover:text-red-500 transition-colors"
+                  >
+                    Remove
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Quick Links to Ticket Studio & Org Branding */}
+            <div className="pt-3 border-t border-neutral-100 grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Link
+                href={`/studio/${eventId}`}
+                className="p-3.5 rounded-xl border border-neutral-200 hover:border-neutral-300 hover:bg-neutral-50 flex items-center justify-between gap-3 transition-colors group"
+              >
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-purple-50 text-purple-700 flex items-center justify-center shrink-0">
+                    <Ticket className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-neutral-900 group-hover:text-purple-700 transition-colors">
+                      Ticket Studio
+                    </p>
+                    <p className="text-[11px] text-neutral-400">Design 3D glassmorphic passes</p>
+                  </div>
+                </div>
+                <ArrowRight className="w-3.5 h-3.5 text-neutral-400 group-hover:text-neutral-900 transition-colors" />
+              </Link>
+
+              <Link
+                href="/dashboard/branding"
+                className="p-3.5 rounded-xl border border-neutral-200 hover:border-neutral-300 hover:bg-neutral-50 flex items-center justify-between gap-3 transition-colors group"
+              >
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-neutral-100 text-neutral-700 flex items-center justify-center shrink-0">
+                    <Palette className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-neutral-900 group-hover:text-neutral-950 transition-colors">
+                      Organization Branding
+                    </p>
+                    <p className="text-[11px] text-neutral-400">Set account-wide brand defaults</p>
+                  </div>
+                </div>
+                <ArrowRight className="w-3.5 h-3.5 text-neutral-400 group-hover:text-neutral-900 transition-colors" />
+              </Link>
             </div>
           </div>
         </SectionCard>
@@ -966,6 +1324,16 @@ export default function EventSettingsPage() {
           )}
         </div>
       </div>
+
+      {/* 30-Day Free Trial Modal */}
+      <TrialConfirmationModal
+        isOpen={trialModalOpen}
+        onClose={() => setTrialModalOpen(false)}
+        planSlug="pro"
+        planName="Pro"
+        userEmail={userEmail}
+        userName={userName}
+      />
     </div>
   );
 }
