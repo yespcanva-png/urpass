@@ -93,7 +93,7 @@ describe("Google OAuth Routes", () => {
   });
 
   describe("GET /api/auth/google/redirect", () => {
-    it("redirects to accounts.google.com with correct redirect_uri and params", async () => {
+    it("redirects to accounts.google.com with correct redirect_uri, encoded state, and sets nonce cookie", async () => {
       const req = new NextRequest("https://urpass.space/api/auth/google/redirect?next=/dashboard");
       const res = await googleRedirectGet(req);
 
@@ -102,7 +102,19 @@ describe("Google OAuth Routes", () => {
       expect(location).toContain("https://accounts.google.com/o/oauth2/v2/auth");
       expect(location).toContain("client_id=mock-google-client-id.apps.googleusercontent.com");
       expect(location).toContain("redirect_uri=https%3A%2F%2Furpass.space%2Fauth%2Fgoogle%2Fcallback");
-      expect(location).toContain("state=%2Fdashboard");
+
+      // Verify state is encoded with { next: '/dashboard', nonce: ... }
+      const url = new URL(location!);
+      const stateParam = url.searchParams.get("state")!;
+      expect(stateParam).toBeDefined();
+      const decoded = JSON.parse(Buffer.from(stateParam, "base64url").toString("utf8"));
+      expect(decoded.next).toBe("/dashboard");
+      expect(decoded.nonce).toBeDefined();
+
+      // Verify oauth_state_nonce cookie is set
+      const nonceCookie = res.cookies.get("oauth_state_nonce");
+      expect(nonceCookie).toBeDefined();
+      expect(nonceCookie?.value).toBe(decoded.nonce);
     });
   });
 
@@ -134,7 +146,7 @@ describe("Google OAuth Routes", () => {
       expect(res.headers.get("location")).toBe("https://urpass.space/login?error=google_code_expired");
     });
 
-    it("authenticates valid Google OAuth callback and sets session cookies on redirect response", async () => {
+    it("authenticates valid Google OAuth callback with structured base64 state and sets session cookies", async () => {
       global.fetch = vi.fn().mockImplementation((url: string) => {
         if (url === "https://oauth2.googleapis.com/token") {
           return Promise.resolve({
@@ -161,13 +173,53 @@ describe("Google OAuth Routes", () => {
         return Promise.reject(new Error("Unknown URL"));
       });
 
-      const req = new NextRequest("https://urpass.space/auth/google/callback?code=valid_code&state=/dashboard");
+      const statePayload = Buffer.from(
+        JSON.stringify({ next: "/dashboard", nonce: "test-nonce-123", ts: Date.now() })
+      ).toString("base64url");
+
+      const req = new NextRequest(`https://urpass.space/auth/google/callback?code=valid_code&state=${statePayload}`);
       const res = await googleCallbackGet(req);
 
       expect(res.status).toBe(307);
       expect(res.headers.get("location")).toBe("https://urpass.space/dashboard");
       expect(mockSignInWithPassword).toHaveBeenCalled();
       // Verifies cookie is set on the response headers
+      expect(res.cookies.get("sb-auth-token")?.value).toBe("token-abc");
+    });
+
+    it("handles legacy plain string state seamlessly", async () => {
+      global.fetch = vi.fn().mockImplementation((url: string) => {
+        if (url === "https://oauth2.googleapis.com/token") {
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            json: () => Promise.resolve({ id_token: "mock-valid-id-token" }),
+          });
+        }
+        if (url.includes("oauth2.googleapis.com/tokeninfo")) {
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            json: () =>
+              Promise.resolve({
+                sub: "google-user-123",
+                email: "organizer@example.com",
+                email_verified: "true",
+                name: "Alex Organizer",
+                picture: "https://example.com/avatar.jpg",
+                aud: "mock-google-client-id.apps.googleusercontent.com",
+              }),
+          });
+        }
+        return Promise.reject(new Error("Unknown URL"));
+      });
+
+      const req = new NextRequest("https://urpass.space/auth/google/callback?code=valid_code&state=/billing");
+      const res = await googleCallbackGet(req);
+
+      expect(res.status).toBe(307);
+      expect(res.headers.get("location")).toBe("https://urpass.space/billing");
+      expect(mockSignInWithPassword).toHaveBeenCalled();
       expect(res.cookies.get("sb-auth-token")?.value).toBe("token-abc");
     });
 

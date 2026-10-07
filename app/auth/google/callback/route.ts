@@ -225,8 +225,25 @@ export async function GET(req: NextRequest) {
     }
 
     // Determine post-login redirect destination
+    let targetPath = "/dashboard";
+    if (state) {
+      try {
+        const decodedStr = Buffer.from(state, "base64url").toString("utf8");
+        if (decodedStr.startsWith("{") && decodedStr.endsWith("}")) {
+          const parsed = JSON.parse(decodedStr);
+          if (parsed && typeof parsed === "object" && parsed.next) {
+            targetPath = String(parsed.next);
+          }
+        } else {
+          targetPath = state;
+        }
+      } catch {
+        targetPath = state;
+      }
+    }
+
     const target = resolvePostAuthRedirect(
-      { get: (k: string) => (k === "next" ? state : null) },
+      { get: (k: string) => (k === "next" ? targetPath : null) },
       null
     );
     const destination = target !== "/dashboard"
@@ -234,6 +251,9 @@ export async function GET(req: NextRequest) {
       : (isNewUser ? "/onboarding" : "/dashboard");
 
     const response = NextResponse.redirect(`${origin}${destination}`);
+    // Clear the ephemeral OAuth state nonce cookie
+    response.cookies.delete("oauth_state_nonce");
+
     const cookieStore = await cookies();
 
     // Create SSR client configured to write session cookies directly to response
@@ -256,7 +276,7 @@ export async function GET(req: NextRequest) {
                 ...options,
                 path: options?.path || "/",
                 sameSite: "lax",
-                secure: process.env.NODE_ENV === "production",
+                secure: process.env.NODE_ENV === "production" || origin.startsWith("https://"),
               });
             });
           },
@@ -286,7 +306,7 @@ export async function GET(req: NextRequest) {
       });
 
       if (linkErr || !linkData?.properties?.hashed_token) {
-        console.error("[google-callback] generateLink error:", linkErr);
+        console.error("[google-callback] generateLink error:", linkErr?.message || linkErr);
         return NextResponse.redirect(`${origin}/login?error=google_auth_failed&step=link`);
       }
 
@@ -299,14 +319,14 @@ export async function GET(req: NextRequest) {
       });
 
       if (verifyErr) {
-        console.error("[google-callback] verifyOtp error:", verifyErr);
+        console.error("[google-callback] verifyOtp error:", verifyErr?.message || verifyErr);
         return NextResponse.redirect(`${origin}/login?error=google_auth_failed&step=otp`);
       }
     }
 
     return response;
   } catch (err) {
-    console.error("[google-callback] unhandled error:", err);
+    console.error("[google-callback] unhandled error:", err instanceof Error ? err.message : String(err));
     return NextResponse.redirect(`${origin}/login?error=google_auth_failed&step=crash`);
   }
 }

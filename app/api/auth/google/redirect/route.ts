@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { resolvePostAuthRedirect } from "@/lib/auth-redirect";
 
@@ -25,16 +26,36 @@ export async function GET(req: NextRequest) {
     req.headers.get("referer")
   );
 
+  const nonce = crypto.randomBytes(16).toString("hex");
+  const statePayload = {
+    next: target,
+    nonce,
+    ts: Date.now(),
+  };
+  const encodedState = Buffer.from(JSON.stringify(statePayload)).toString("base64url");
+
   const params = new URLSearchParams({
     client_id: clientId,
     redirect_uri: `${origin}/auth/google/callback`,
     response_type: "code",
     scope: "openid email profile",
     prompt: "select_account",
-    state: target,
+    state: encodedState,
   });
 
-  return NextResponse.redirect(
+  const response = NextResponse.redirect(
     `https://accounts.google.com/o/oauth2/v2/auth?${params}`
   );
+
+  // Store short-lived nonce cookie for CSRF protection (10 minutes)
+  response.cookies.set("oauth_state_nonce", nonce, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production" || origin.startsWith("https://"),
+    sameSite: "lax",
+    path: "/",
+    maxAge: 600,
+  });
+
+  return response;
 }
+
