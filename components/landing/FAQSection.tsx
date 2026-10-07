@@ -43,8 +43,8 @@ export default function FAQSection({ initialCountry = "IN" }: Props) {
     {
       q: "Can I start for free or try a paid plan?",
       a: isUk
-        ? "Yes. The permanent free tier lets you host 2 events/month with up to 100 registrations/month at £0 forever with no credit card required. You can also try any paid plan (Starter, Pro, or Business) free for 30 days."
-        : "Yes. The permanent free tier lets you host 2 events/month with up to 100 registrations/month at ₹0 forever with no credit card required. You can also try any paid plan (Starter, Pro, or Business) free for 30 days.",
+        ? "Yes. The permanent Free tier lets you host 2 events/month with up to 100 registrations/month at £0 forever with no card required. You can also evaluate any paid plan (Starter, Pro, Business) with a 30-day free trial (payment method required, cancel anytime)."
+        : "Yes. The permanent Free tier lets you host 2 events/month with up to 100 registrations/month at ₹0 forever with no card required. You can also evaluate any paid plan (Starter, Pro, Business) with a 30-day free trial (AutoPay mandate required, ₹0 due today, cancel anytime).",
     },
     {
       q: "Does URPASS charge per-ticket commission fees?",

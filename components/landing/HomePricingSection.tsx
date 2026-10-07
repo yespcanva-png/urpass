@@ -61,7 +61,7 @@ export default function HomePricingSection({ initialCountry = "IN" }: Props) {
           recommended: false,
           cta: "Try Starter Free",
           href: "/signup?plan=starter&trial=true&country=GB",
-          subtext: "30 days £0 · No credit card required",
+          subtext: "30 days £0 · Payment method required",
           features: [
             "10 events/month",
             "500 registrations/month",
@@ -77,7 +77,7 @@ export default function HomePricingSection({ initialCountry = "IN" }: Props) {
           recommended: true,
           cta: "Try Pro Free",
           href: "/signup?plan=pro&trial=true&country=GB",
-          subtext: "30 days £0 · No credit card required",
+          subtext: "30 days £0 · Payment method required",
           features: [
             "Unlimited events",
             "2,500 registrations/month",
@@ -94,7 +94,7 @@ export default function HomePricingSection({ initialCountry = "IN" }: Props) {
           recommended: false,
           cta: "Try Business Free",
           href: "/signup?plan=business&trial=true&country=GB",
-          subtext: "30 days £0 · No credit card required",
+          subtext: "30 days £0 · Payment method required",
           features: [
             "Unlimited events",
             "10,000 registrations/month",
@@ -112,7 +112,7 @@ export default function HomePricingSection({ initialCountry = "IN" }: Props) {
           recommended: false,
           cta: "Start free",
           href: "/signup",
-          subtext: "Free forever",
+          subtext: "Free forever · No card required",
           features: [
             "2 events/month",
             "100 registrations/month",
@@ -128,7 +128,7 @@ export default function HomePricingSection({ initialCountry = "IN" }: Props) {
           recommended: false,
           cta: "Try Starter Free",
           href: "/signup?plan=starter&trial=true",
-          subtext: "30 days ₹0 · AutoPay required",
+          subtext: "30 days ₹0 · AutoPay mandate required",
           features: [
             "10 events/month",
             "500 registrations/month",
@@ -144,7 +144,7 @@ export default function HomePricingSection({ initialCountry = "IN" }: Props) {
           recommended: true,
           cta: "Try Pro Free",
           href: "/signup?plan=pro&trial=true",
-          subtext: "30 days ₹0 · AutoPay required",
+          subtext: "30 days ₹0 · AutoPay mandate required",
           features: [
             "Unlimited events",
             "2,500 registrations/month",
@@ -161,7 +161,7 @@ export default function HomePricingSection({ initialCountry = "IN" }: Props) {
           recommended: false,
           cta: "Try Business Free",
           href: "/signup?plan=business&trial=true",
-          subtext: "30 days ₹0 · AutoPay required",
+          subtext: "30 days ₹0 · AutoPay mandate required",
           features: [
             "Unlimited events",
             "10,000 registrations/month",
@@ -179,8 +179,8 @@ export default function HomePricingSection({ initialCountry = "IN" }: Props) {
   const founderDealHref = isUk ? "/founder-lifetime-deal?country=GB" : "/founder-lifetime-deal";
 
   const subheaderText = isUk
-    ? "Direct UK activation · No credit card required · Instant access · One free trial per account"
-    : "30 days ₹0 · AutoPay required · Cancel anytime · Instant access";
+    ? "Free plan: no card required · Paid trials: 30 days £0 (payment method required) · Cancel anytime"
+    : "Free plan: no card required · Paid trials: 30 days ₹0 (AutoPay mandate required) · Cancel anytime";
 
   return (
     <section id="pricing" className="py-14 sm:py-28 px-4 sm:px-8 bg-neutral-50">

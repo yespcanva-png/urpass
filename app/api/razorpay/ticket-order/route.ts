@@ -6,6 +6,7 @@ import { notifyOwnerPaymentAttempt } from "@/lib/email";
 import { getRazorpayCredentials, resolveEventRazorpayCredentials } from "@/lib/razorpay";
 import { getEventPaymentConfigService } from "@/lib/payments/service";
 import { calculateTicketFees } from "@/lib/payments/fees";
+import { findMatchingAgeTier } from "@/lib/validations/ticket-type";
 import type { FeeBearer, PaymentMode } from "@/lib/payments/types";
 import {
   reserveEventCapacity,
@@ -31,6 +32,17 @@ type TicketTypeRow = {
   allow_extra_guests?: boolean;
   extra_guest_price?: number;
   max_extra_guests?: number;
+  age_pricing_enabled?: boolean;
+  age_tiers?: Array<{
+    id: string;
+    label: string;
+    min_age?: number | null;
+    max_age?: number | null;
+    price: number; // in paise
+    is_free?: boolean;
+    badge_label?: string;
+  }>;
+  extra_member_pricing_mode?: "flat" | "age_based";
 };
 
 function adminClient() {
@@ -53,7 +65,7 @@ function badRequest(error: string, code: string) {
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
-  const { eventId, buyerName, buyerEmail, guestCount, numberOfPeople, groupMembers, selectedDate } = body ?? {};
+  const { eventId, buyerName, buyerEmail, buyerAge, guestCount, numberOfPeople, groupMembers, selectedDate, ageTierId } = body ?? {};
   let { ticketTypeId } = body ?? {};
   const requestedTicketTypeId = typeof ticketTypeId === "string" ? ticketTypeId.trim() : "";
   ticketTypeId = requestedTicketTypeId || null;
@@ -96,11 +108,13 @@ export async function POST(req: NextRequest) {
   let totalAttendeeCount = 1;
   let extraGuestsCount = 0;
   let extraGuestsAmountRupees = 0;
+  let resolvedAgeTierId: string | null = null;
+  let resolvedAgeTierLabel: string | null = null;
 
   if (ticketTypeId && ticketTypeId !== "default") {
     const { data: ticketType } = await admin
       .from("ticket_types")
-      .select("id, event_id, name, price, capacity, status, sales_start, sales_end, is_group_pass, included_guests, min_guests, max_guests, allow_extra_guests, extra_guest_price, max_extra_guests")
+      .select("id, event_id, name, price, capacity, status, sales_start, sales_end, is_group_pass, included_guests, min_guests, max_guests, allow_extra_guests, extra_guest_price, max_extra_guests, age_pricing_enabled, age_tiers, extra_member_pricing_mode")
       .eq("id", ticketTypeId)
       .eq("event_id", canonicalEventId)
       .maybeSingle<TicketTypeRow>();
@@ -119,22 +133,60 @@ export async function POST(req: NextRequest) {
     const includedGuests = Number(ticketType.included_guests || 1);
     const minGuests = Number(ticketType.min_guests || 1);
     const allowExtra = Boolean(ticketType.allow_extra_guests);
-    const maxGuests = Number(ticketType.max_guests || (allowExtra ? 10 : includedGuests));
+    const maxGuests = Number(ticketType.max_guests || (allowExtra ? 20 : includedGuests));
     const clampedGuests = Math.max(minGuests, Math.min(requestedGuests, maxGuests));
 
-    extraGuestsCount = allowExtra ? Math.max(0, clampedGuests - includedGuests) : 0;
-    const extraPriceRupees = Number(ticketType.extra_guest_price || 0);
-    extraGuestsAmountRupees = extraGuestsCount * extraPriceRupees;
-    const extraAmountPaise = Math.round(extraGuestsAmountRupees * 100);
+    // Calculate Primary Attendee Base Price (handling automatic age matching from organizer rules)
+    let basePricePaise = Number(ticketType.price);
+    if (ticketType.age_pricing_enabled && Array.isArray(ticketType.age_tiers) && ticketType.age_tiers.length > 0) {
+      const matchedTier =
+        buyerAge !== undefined && buyerAge !== null && buyerAge !== ""
+          ? findMatchingAgeTier(Number(buyerAge), ticketType.age_tiers)
+          : (ageTierId && ticketType.age_tiers.find((t) => t.id === ageTierId)) || ticketType.age_tiers[0];
 
-    const basePricePaise = Number(ticketType.price);
+      if (matchedTier) {
+        basePricePaise = matchedTier.is_free ? 0 : Number(matchedTier.price || 0);
+        resolvedAgeTierId = matchedTier.id;
+        resolvedAgeTierLabel = matchedTier.label;
+      }
+    }
+
+    // Calculate Extra Members Price
+    extraGuestsCount = allowExtra ? Math.max(0, clampedGuests - includedGuests) : 0;
+    let extraAmountPaise = 0;
+
+    if (extraGuestsCount > 0) {
+      if (ticketType.extra_member_pricing_mode === "age_based" && Array.isArray(groupMembers) && groupMembers.length > 1) {
+        // Compute price per extra member based on their automatically matched age bracket
+        for (let i = 1; i < groupMembers.length && i <= clampedGuests; i++) {
+          const member = groupMembers[i];
+          const memberTier =
+            member.age !== undefined && member.age !== null && member.age !== ""
+              ? findMatchingAgeTier(Number(member.age), ticketType.age_tiers)
+              : member.ageTierId
+              ? ticketType.age_tiers?.find((t) => t.id === member.ageTierId)
+              : null;
+
+          if (memberTier) {
+            extraAmountPaise += memberTier.is_free ? 0 : Number(memberTier.price || 0);
+          } else {
+            extraAmountPaise += Math.round(Number(ticketType.extra_guest_price || 0) * 100);
+          }
+        }
+      } else {
+        const extraPriceRupees = Number(ticketType.extra_guest_price || 0);
+        extraGuestsAmountRupees = extraGuestsCount * extraPriceRupees;
+        extraAmountPaise = Math.round(extraGuestsAmountRupees * 100);
+      }
+    }
+
     amountPaise = basePricePaise + extraAmountPaise;
     totalAttendeeCount = clampedGuests;
     ticketName = `${event.name} — ${ticketType.name}`;
   } else {
     const { data: defaultTT } = await admin
       .from("ticket_types")
-      .select("id, event_id, name, price, capacity, status, sales_start, sales_end, is_group_pass, included_guests, min_guests, max_guests, allow_extra_guests, extra_guest_price, max_extra_guests")
+      .select("id, event_id, name, price, capacity, status, sales_start, sales_end, is_group_pass, included_guests, min_guests, max_guests, allow_extra_guests, extra_guest_price, max_extra_guests, age_pricing_enabled, age_tiers, extra_member_pricing_mode")
       .eq("event_id", canonicalEventId)
       .eq("status", "on_sale")
       .order("position", { ascending: true })
@@ -294,6 +346,8 @@ export async function POST(req: NextRequest) {
         extra_guests_count: extraGuestsCount,
         extra_guests_amount: extraGuestsAmountRupees,
         group_members: Array.isArray(groupMembers) ? groupMembers : [],
+        age_tier_id: resolvedAgeTierId,
+        age_tier_label: resolvedAgeTierLabel,
       }),
       reservation.reservationId
         ? linkOrderToReservation(admin, reservation.reservationId, order.id)

@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { attendeeSchema, type AttendeeInput } from "@/lib/validations/attendee";
+import { findMatchingAgeTier } from "@/lib/validations/ticket-type";
 import { submitApplication } from "@/app/actions/attendees";
 import type { ApplyTicketType } from "./page";
 import type { CustomFieldDefinition } from "@/types";
@@ -162,7 +163,9 @@ export default function ApplyForm({
 
   const selectedTicket = ticketTypes.find((t) => t.id === selectedTicketTypeId) ?? null;
   const [peopleCount, setPeopleCount] = useState<number>(() => selectedTicket?.included_guests || 1);
-  const [memberNames, setMemberNames] = useState<string[]>([]);
+  const [extraMembers, setExtraMembers] = useState<
+    Array<{ name: string; age?: number | string; phone?: string }>
+  >([]);
 
   // Calculate event date range for multi-day events
   const maxTicketDurationDays = useMemo(() => {
@@ -200,19 +203,22 @@ export default function ApplyForm({
     const tt = ticketTypes.find((t) => t.id === id);
     const inc = tt?.included_guests || 1;
     setPeopleCount(inc);
-    setMemberNames([]);
+    setExtraMembers([]);
   };
 
   const {
     register,
     handleSubmit,
     getValues,
+    watch,
     setFocus,
     formState: { errors, isSubmitting },
   } = useForm<AttendeeInput>({
     resolver: zodResolver(attendeeSchema),
     defaultValues: { pass_type: "participant" },
   });
+
+  const watchAge = watch("age");
 
   const scrollToTickets = () => {
     const el = document.getElementById("tickets-booking-section");
@@ -264,26 +270,61 @@ export default function ApplyForm({
   const isOnline = event.event_type === "online";
   const isHybrid = event.event_type === "hybrid";
 
-  const minStartingPrice = useMemo(() => {
-    if (ticketTypes.length === 0) return event.ticket_price || 0;
-    const prices = ticketTypes.map((t) => t.price / 100);
-    return Math.min(...prices);
-  }, [ticketTypes, event.ticket_price]);
+  // Authoritatively match age tier based on organizer's configured brackets & attendee's age input
+  const selectedAgeTier = useMemo(() => {
+    if (!selectedTicket?.age_pricing_enabled || !selectedTicket.age_tiers?.length) return null;
+    return findMatchingAgeTier(watchAge, selectedTicket.age_tiers);
+  }, [selectedTicket, watchAge]);
 
-  const baseTicketPrice = selectedTicket
-    ? selectedTicket.price / 100
-    : event.is_paid_event
-    ? event.ticket_price
-    : 0;
+  const baseTicketPrice = useMemo(() => {
+    if (selectedAgeTier) {
+      return selectedAgeTier.is_free ? 0 : Number(selectedAgeTier.price) / 100;
+    }
+    return selectedTicket
+      ? selectedTicket.price / 100
+      : event.is_paid_event
+      ? event.ticket_price
+      : 0;
+  }, [selectedAgeTier, selectedTicket, event]);
+
+  const minStartingPrice = useMemo(() => {
+    if (!ticketTypes || ticketTypes.length === 0) {
+      return event.is_paid_event ? event.ticket_price : 0;
+    }
+    const prices = ticketTypes.map((t) => {
+      if (t.age_pricing_enabled && Array.isArray(t.age_tiers) && t.age_tiers.length > 0) {
+        return Math.min(...t.age_tiers.map((a) => (a.is_free ? 0 : Number(a.price) / 100)));
+      }
+      return t.price / 100;
+    });
+    return Math.min(...prices);
+  }, [ticketTypes, event]);
 
   const allowExtra = Boolean(selectedTicket?.allow_extra_guests);
   const includedGuests = Number(selectedTicket?.included_guests || 1);
   const extraPrice = Number(selectedTicket?.extra_guest_price || 0);
   const extraGuestsCount = allowExtra ? Math.max(0, peopleCount - includedGuests) : 0;
-  const extraGuestsTotal = extraGuestsCount * extraPrice;
+
+  const extraGuestsTotal = useMemo(() => {
+    if (!allowExtra || extraGuestsCount <= 0) return 0;
+    if (selectedTicket?.extra_member_pricing_mode === "age_based" && selectedTicket.age_tiers?.length) {
+      let sum = 0;
+      for (let i = 0; i < extraGuestsCount; i++) {
+        const memAge = extraMembers[i]?.age;
+        const memTier = findMatchingAgeTier(
+          memAge !== undefined && memAge !== null && memAge !== "" ? Number(memAge) : null,
+          selectedTicket.age_tiers
+        );
+        sum += memTier?.is_free ? 0 : Number(memTier?.price || 0) / 100;
+      }
+      return sum;
+    }
+    return extraGuestsCount * extraPrice;
+  }, [allowExtra, extraGuestsCount, selectedTicket, extraMembers, extraPrice]);
+
   const effectiveTicketPrice = baseTicketPrice + extraGuestsTotal;
 
-  const effectivelyPaid = selectedTicket ? selectedTicket.price > 0 || extraGuestsTotal > 0 : event.is_paid_event;
+  const effectivelyPaid = selectedTicket ? baseTicketPrice > 0 || extraGuestsTotal > 0 : event.is_paid_event;
   const paymentBlocked = effectivelyPaid && !hasPaymentGateway;
 
   async function handlePaidSubmit(data: AttendeeInput) {
@@ -298,12 +339,51 @@ export default function ApplyForm({
     }
 
     const groupMembers = [
-      { name: data.name, email: data.email, phone: data.phone, role: "primary" },
-      ...memberNames.filter((n) => n.trim().length > 0).map((n) => ({ name: n.trim(), role: "member" })),
+      {
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        age: data.age,
+        role: "primary",
+        ageTierId: selectedAgeTier?.id,
+        ageTierLabel: selectedAgeTier?.label,
+        price: baseTicketPrice,
+      },
+      ...extraMembers.slice(0, Math.max(0, peopleCount - 1)).map((m, idx) => {
+        const memTier =
+          selectedTicket?.extra_member_pricing_mode === "age_based"
+            ? findMatchingAgeTier(
+                m.age !== undefined && m.age !== null && m.age !== "" ? Number(m.age) : null,
+                selectedTicket?.age_tiers
+              )
+            : null;
+        const memPrice =
+          selectedTicket?.extra_member_pricing_mode === "age_based" && memTier
+            ? memTier.is_free
+              ? 0
+              : Number(memTier.price) / 100
+            : extraPrice;
+        return {
+          name: (m.name || `Guest #${idx + 2}`).trim(),
+          phone: m.phone,
+          age: m.age ? Number(m.age) : undefined,
+          role: "member",
+          ageTierId: memTier?.id,
+          ageTierLabel: memTier?.label,
+          price: memPrice,
+        };
+      }),
     ];
 
     const finalResponses = {
       ...customResponses,
+      ...(data.age ? { age: data.age, attendee_age: data.age } : {}),
+      ...(selectedAgeTier
+        ? {
+            age_tier_id: selectedAgeTier.id,
+            age_tier_label: selectedAgeTier.label,
+          }
+        : {}),
       ...(availableEventDates.length > 1
         ? {
             attendance_date: selectedDate,
@@ -322,8 +402,10 @@ export default function ApplyForm({
           ticketTypeId: selectedTicketTypeId,
           buyerName: data.name,
           buyerEmail: data.email,
+          buyerAge: data.age,
           guestCount: peopleCount,
           groupMembers,
+          ageTierId: selectedAgeTier?.id,
           selectedDate: availableEventDates.length > 1 ? selectedDate : undefined,
         }),
       });
@@ -433,12 +515,51 @@ export default function ApplyForm({
 
     setServerError("");
     const groupMembers = [
-      { name: data.name, email: data.email, phone: data.phone, role: "primary" },
-      ...memberNames.filter((n) => n.trim().length > 0).map((n) => ({ name: n.trim(), role: "member" })),
+      {
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        age: data.age,
+        role: "primary",
+        ageTierId: selectedAgeTier?.id,
+        ageTierLabel: selectedAgeTier?.label,
+        price: baseTicketPrice,
+      },
+      ...extraMembers.slice(0, Math.max(0, peopleCount - 1)).map((m, idx) => {
+        const memTier =
+          selectedTicket?.extra_member_pricing_mode === "age_based"
+            ? findMatchingAgeTier(
+                m.age !== undefined && m.age !== null && m.age !== "" ? Number(m.age) : null,
+                selectedTicket?.age_tiers
+              )
+            : null;
+        const memPrice =
+          selectedTicket?.extra_member_pricing_mode === "age_based" && memTier
+            ? memTier.is_free
+              ? 0
+              : Number(memTier.price) / 100
+            : extraPrice;
+        return {
+          name: (m.name || `Guest #${idx + 2}`).trim(),
+          phone: m.phone,
+          age: m.age ? Number(m.age) : undefined,
+          role: "member",
+          ageTierId: memTier?.id,
+          ageTierLabel: memTier?.label,
+          price: memPrice,
+        };
+      }),
     ];
 
     const finalResponses = {
       ...customResponses,
+      ...(data.age ? { age: data.age, attendee_age: data.age } : {}),
+      ...(selectedAgeTier
+        ? {
+            age_tier_id: selectedAgeTier.id,
+            age_tier_label: selectedAgeTier.label,
+          }
+        : {}),
       ...(availableEventDates.length > 1
         ? {
             attendance_date: selectedDate,
@@ -1043,7 +1164,11 @@ export default function ApplyForm({
 
                         <div className="text-right shrink-0 flex flex-col items-end">
                           <div className="text-sm sm:text-base font-extrabold text-neutral-900 tabular-nums">
-                            {tt.price === 0 ? "Free" : `₹${(tt.price / 100).toLocaleString("en-IN")}`}
+                            {tt.age_pricing_enabled && tt.age_tiers && tt.age_tiers.length > 0
+                              ? `From ₹${Math.min(...tt.age_tiers.map((a) => a.price / 100)).toLocaleString("en-IN")}`
+                              : tt.price === 0
+                              ? "Free"
+                              : `₹${(tt.price / 100).toLocaleString("en-IN")}`}
                           </div>
                           <span
                             className={`w-4 h-4 rounded-full border-2 mt-1.5 sm:mt-2 flex items-center justify-center transition-colors ${
@@ -1054,6 +1179,23 @@ export default function ApplyForm({
                           </span>
                         </div>
                       </div>
+
+                      {/* Age-Wise Pricing Summary (configured by organizer) */}
+                      {tt.age_pricing_enabled && tt.age_tiers && tt.age_tiers.length > 0 && (
+                        <div className="mt-2.5 pt-2 border-t border-neutral-100 flex flex-wrap items-center gap-1.5">
+                          <span className="text-[9px] font-bold uppercase tracking-wider text-neutral-400">
+                            Age Rates:
+                          </span>
+                          {tt.age_tiers.map((at) => (
+                            <span
+                              key={at.id}
+                              className="px-2 py-0.5 rounded-md bg-neutral-100/90 text-neutral-700 text-[10px] font-medium"
+                            >
+                              {at.badge_label || at.label.split(" ")[0]}: {at.is_free || at.price === 0 ? "Free" : `₹${(at.price / 100).toLocaleString("en-IN")}`}
+                            </span>
+                          ))}
+                        </div>
+                      )}
 
                       {/* Remaining / Status Tag */}
                       <div className="mt-2.5 pt-2 border-t border-neutral-100 flex items-center justify-between text-[10px] sm:text-[11px]">
@@ -1089,12 +1231,16 @@ export default function ApplyForm({
                     <div>
                       <div className="text-xs font-bold text-neutral-900 flex items-center gap-1.5">
                         <Users className="w-3.5 h-3.5 text-brand" />
-                        <span>Pass Capacity</span>
+                        <span>Pass Capacity & Attendees</span>
                       </div>
                       <div className="text-[10px] sm:text-[11px] text-neutral-500 mt-0.5 font-normal">
                         {selectedTicket.allow_extra_guests
-                          ? `Covers ${selectedTicket.included_guests} guests. +₹${selectedTicket.extra_guest_price || 100}/extra.`
-                          : `Fixed capacity: ${selectedTicket.included_guests} attendees.`}
+                          ? `Includes ${selectedTicket.included_guests ?? 1} member${(selectedTicket.included_guests ?? 1) > 1 ? "s" : ""}. ${
+                              selectedTicket.extra_member_pricing_mode === "age_based"
+                                ? "Age-based rate per extra guest."
+                                : `+₹${selectedTicket.extra_guest_price || 0}/extra member.`
+                            }`
+                          : `Fixed capacity: ${selectedTicket.included_guests ?? 1} attendees.`}
                       </div>
                     </div>
 
@@ -1107,7 +1253,7 @@ export default function ApplyForm({
                             if (peopleCount > minG) {
                               const next = peopleCount - 1;
                               setPeopleCount(next);
-                              setMemberNames((prev) => prev.slice(0, Math.max(0, next - 1)));
+                              setExtraMembers((prev) => prev.slice(0, Math.max(0, next - 1)));
                             }
                           }}
                           disabled={peopleCount <= (selectedTicket.min_guests || selectedTicket.included_guests || 1)}
@@ -1119,16 +1265,22 @@ export default function ApplyForm({
                         <button
                           type="button"
                           onClick={() => {
-                            const maxG = selectedTicket.max_guests || 12;
+                            const maxG = selectedTicket.max_guests || 20;
                             if (peopleCount < maxG) {
                               const next = peopleCount + 1;
                               setPeopleCount(next);
-                              if (next > 1 && memberNames.length < next - 1) {
-                                setMemberNames((prev) => [...prev, ""]);
+                              if (next > 1 && extraMembers.length < next - 1) {
+                                setExtraMembers((prev) => [
+                                  ...prev,
+                                  {
+                                    name: "",
+                                    ageTierId: selectedTicket.age_tiers?.[0]?.id,
+                                  },
+                                ]);
                               }
                             }
                           }}
-                          disabled={peopleCount >= (selectedTicket.max_guests || 12)}
+                          disabled={peopleCount >= (selectedTicket.max_guests || 20)}
                           className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-brand text-white hover:opacity-90 disabled:opacity-30 flex items-center justify-center font-bold text-sm cursor-pointer active:scale-95"
                         >
                           +
@@ -1145,12 +1297,19 @@ export default function ApplyForm({
 
               {/* Step 2: Attendee Details Form */}
               <div id="attendee-details-section" className="pt-4 sm:pt-5 border-t border-neutral-200/80 space-y-3.5 sm:space-y-4">
-                <div>
-                  <span className="text-[10px] font-bold uppercase tracking-[0.08em] text-brand block mb-0.5">
-                    Step 2 of 2
-                  </span>
-                  <h3 className="text-sm sm:text-base font-extrabold tracking-tight text-neutral-900">Primary Pass Holder</h3>
-                  <p className="text-xs text-neutral-500 font-normal">Your verified QR pass will be issued to this email.</p>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-[0.08em] text-brand block mb-0.5">
+                      Step 2 of 2
+                    </span>
+                    <h3 className="text-sm sm:text-base font-extrabold tracking-tight text-neutral-900">Primary Pass Holder</h3>
+                    <p className="text-xs text-neutral-500 font-normal">Your verified QR pass will be issued to this email.</p>
+                  </div>
+                  {selectedAgeTier && (
+                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-lg bg-purple-50 text-purple-800 border border-purple-200">
+                      {selectedAgeTier.label}
+                    </span>
+                  )}
                 </div>
 
                 <form id="apply-attendee-form" onSubmit={handleSubmit(onSubmit)} className="space-y-3">
@@ -1209,28 +1368,125 @@ export default function ApplyForm({
                     </div>
                   </div>
 
+                  {/* Primary Attendee Age (Auto-matches organizer bracket) */}
+                  {selectedTicket?.age_pricing_enabled && (
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.06em] text-neutral-600">
+                          Age (Years) <span className="text-red-500">*</span>
+                        </label>
+                        {selectedAgeTier && (
+                          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
+                            <Check className="w-3 h-3 text-emerald-600" />
+                            {selectedAgeTier.label} • {selectedAgeTier.is_free || selectedAgeTier.price === 0 ? "Free Entry" : `₹${(selectedAgeTier.price / 100).toLocaleString("en-IN")}`}
+                          </span>
+                        )}
+                      </div>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          min={0}
+                          max={120}
+                          placeholder="Enter your age (e.g. 25)"
+                          className={inputCls}
+                          {...register("age", { valueAsNumber: true })}
+                        />
+                      </div>
+                    </div>
+                  )}
+
                   {/* Additional Group Members (if capacity > 1) */}
                   {peopleCount > 1 && (
-                    <div className="pt-2.5 border-t border-neutral-100 space-y-2">
-                      <span className="text-[10px] sm:text-[11px] font-bold text-neutral-500 uppercase tracking-wider block">
-                        Additional Guests ({peopleCount - 1})
-                      </span>
-                      {Array.from({ length: peopleCount - 1 }).map((_, idx) => (
-                        <div key={idx} className="relative">
-                          <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-neutral-400 pointer-events-none" />
-                          <input
-                            type="text"
-                            placeholder={`Guest #${idx + 2} Full Name`}
-                            value={memberNames[idx] || ""}
-                            onChange={(e) => {
-                              const updated = [...memberNames];
-                              updated[idx] = e.target.value;
-                              setMemberNames(updated);
-                            }}
-                            className={`${inputCls} pl-9 text-xs`}
-                          />
-                        </div>
-                      ))}
+                    <div className="pt-3 border-t border-neutral-100 space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] sm:text-[11px] font-bold text-neutral-600 uppercase tracking-wider block">
+                          Additional Guests ({peopleCount - 1})
+                        </span>
+                        {selectedTicket?.extra_member_pricing_mode === "age_based" ? (
+                          <span className="text-[10px] font-semibold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-md border border-purple-200">
+                            Age-Bracket Rates
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-semibold text-neutral-500">
+                            +₹{extraPrice}/guest
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="space-y-2.5">
+                        {Array.from({ length: peopleCount - 1 }).map((_, idx) => {
+                          const member = extraMembers[idx] || { name: "" };
+                          const memTier =
+                            selectedTicket?.extra_member_pricing_mode === "age_based"
+                              ? findMatchingAgeTier(
+                                  member.age !== undefined && member.age !== null && member.age !== "" ? Number(member.age) : null,
+                                  selectedTicket?.age_tiers
+                                )
+                              : null;
+                          return (
+                            <div
+                              key={idx}
+                              className="p-3 rounded-xl bg-neutral-50/90 border border-neutral-200/90 space-y-2"
+                            >
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs font-bold text-neutral-800">
+                                  Guest #{idx + 2}
+                                </span>
+                                {selectedTicket?.extra_member_pricing_mode === "age_based" && selectedTicket.age_tiers && selectedTicket.age_tiers.length > 0 ? (
+                                  <span className="text-xs font-extrabold text-brand tabular-nums">
+                                    {memTier ? (memTier.is_free || memTier.price === 0 ? "Free Entry" : `+₹${(memTier.price || 0) / 100}`) : `+₹${extraPrice}`}
+                                  </span>
+                                ) : (
+                                  <span className="text-xs font-extrabold text-neutral-700 tabular-nums">
+                                    +₹{extraPrice}
+                                  </span>
+                                )}
+                              </div>
+
+                              <div className="grid grid-cols-1 sm:grid-cols-12 gap-2">
+                                <div className={selectedTicket?.extra_member_pricing_mode === "age_based" && selectedTicket.age_tiers?.length ? "sm:col-span-8" : "sm:col-span-12"}>
+                                  <input
+                                    type="text"
+                                    placeholder={`Guest #${idx + 2} Full Name`}
+                                    value={member.name || ""}
+                                    onChange={(e) => {
+                                      const updated = [...extraMembers];
+                                      updated[idx] = { ...updated[idx], name: e.target.value };
+                                      setExtraMembers(updated);
+                                    }}
+                                    className={`${inputCls} text-xs py-2 bg-white`}
+                                  />
+                                </div>
+
+                                {selectedTicket?.extra_member_pricing_mode === "age_based" && (
+                                  <div className="sm:col-span-4">
+                                    <input
+                                      type="number"
+                                      min={0}
+                                      max={120}
+                                      placeholder="Age (yrs)"
+                                      value={member.age ?? ""}
+                                      onChange={(e) => {
+                                        const updated = [...extraMembers];
+                                        updated[idx] = { ...updated[idx], age: e.target.value };
+                                        setExtraMembers(updated);
+                                      }}
+                                      className={`${inputCls} text-xs py-2 bg-white`}
+                                    />
+                                  </div>
+                                )}
+                              </div>
+
+                              {selectedTicket?.extra_member_pricing_mode === "age_based" && memTier && (
+                                <div className="text-[10px] text-neutral-500 font-medium flex items-center gap-1">
+                                  <span>Matched Tier:</span>
+                                  <strong className="text-neutral-800 font-semibold">{memTier.label}</strong>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
                   )}
 
@@ -1297,7 +1553,12 @@ export default function ApplyForm({
                   {/* Payment Summary Ledger */}
                   <div className="mt-4 sm:mt-5 p-3.5 sm:p-4 rounded-2xl bg-neutral-50/90 border border-neutral-200/90 space-y-2 text-xs">
                     <div className="flex justify-between text-neutral-700">
-                      <span className="truncate max-w-[180px] sm:max-w-none">{selectedTicket?.name || "Standard Pass"} {selectedTicket?.duration_label ? `(${selectedTicket.duration_label})` : ""}</span>
+                      <span className="truncate max-w-[200px] sm:max-w-none font-medium">
+                        {selectedAgeTier
+                          ? `${selectedTicket?.name || "Pass"} (${selectedAgeTier.label})`
+                          : selectedTicket?.name || "Standard Pass"}{" "}
+                        {selectedTicket?.duration_label ? `— ${selectedTicket.duration_label}` : ""}
+                      </span>
                       <span className="font-bold text-neutral-900 tabular-nums shrink-0">
                         {baseTicketPrice === 0 ? "Free" : `₹${baseTicketPrice.toLocaleString("en-IN")}`}
                       </span>
@@ -1316,7 +1577,10 @@ export default function ApplyForm({
 
                     {extraGuestsCount > 0 && (
                       <div className="flex justify-between text-brand font-medium">
-                        <span>Extra Attendees ({extraGuestsCount} × ₹{extraPrice})</span>
+                        <span>
+                          Extra Members ({extraGuestsCount}{" "}
+                          {selectedTicket?.extra_member_pricing_mode === "age_based" ? "at age rates" : `× ₹${extraPrice}`})
+                        </span>
                         <span className="tabular-nums">+₹{extraGuestsTotal.toLocaleString("en-IN")}</span>
                       </div>
                     )}

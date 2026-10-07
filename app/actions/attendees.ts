@@ -923,6 +923,9 @@ export async function submitApplication(
         attendee_id: attendee.id,
         pass_type: attendee.pass_type,
         ticket_type_id: selectedTicketType?.id ?? null,
+        attendee_age: parsed.data.age ?? (customResponses?.age as number) ?? null,
+        age_tier_label: (customResponses?.age_tier_label as string) ?? null,
+        age_tier_id: (customResponses?.age_tier_id as string) ?? null,
       })
       .select("pass_token")
       .single();

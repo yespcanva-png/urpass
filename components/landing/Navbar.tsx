@@ -24,9 +24,10 @@ export default function Navbar() {
     ? "/signup?from=pricing&next=/billing"
     : "/signup";
 
+  const isUkRoute = Boolean(pathname?.startsWith("/uk") || pathname?.endsWith("-uk"));
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [isUk, setIsUk] = useState(false);
+  const [isUk, setIsUk] = useState(isUkRoute);
   const [bannerVisible, setBannerVisible] = useState(() => {
     if (typeof window === "undefined") return true;
     try {
@@ -37,12 +38,13 @@ export default function Navbar() {
   });
 
   useEffect(() => {
-    setIsUk(detectCountryClient() === "GB");
+    const isUkCurrent = Boolean(pathname?.startsWith("/uk") || pathname?.endsWith("-uk"));
+    setIsUk(isUkCurrent || detectCountryClient() === "GB");
 
     const onCountryChanged = (e: Event) => {
       const custom = e as CustomEvent<{ country: "IN" | "GB" }>;
       if (custom.detail?.country) {
-        setIsUk(custom.detail.country === "GB");
+        setIsUk(isUkCurrent || custom.detail.country === "GB");
       }
     };
     window.addEventListener("urpass_country_changed", onCountryChanged);

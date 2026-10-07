@@ -44,6 +44,33 @@ export interface TicketTypeWithStats {
   sold_count: number;
   verified_revenue_paise?: number;
   effective_status: TicketStatus;
+
+  // Age-Wise Pricing
+  age_pricing_enabled?: boolean;
+  age_tiers?: Array<{
+    id: string;
+    label: string;
+    min_age?: number | null;
+    max_age?: number | null;
+    price: number;
+    description?: string | null;
+    is_free?: boolean;
+    badge_label?: string | null;
+  }>;
+
+  // Extra Members & Group Support
+  is_group_pass?: boolean;
+  included_guests?: number;
+  min_guests?: number;
+  max_guests?: number;
+  allow_extra_guests?: boolean;
+  extra_guest_price?: number;
+  max_extra_guests?: number;
+  extra_member_pricing_mode?: "flat" | "age_based";
+  duration_label?: string | null;
+  duration_days?: number;
+  pass_validity?: string | null;
+  access_type?: string | null;
 }
 
 async function canManageTicketTypes(
@@ -191,6 +218,11 @@ export async function createTicketType(
     }
   }
 
+  const ageTiersPaise = (parsed.data.age_tiers || []).map((t) => ({
+    ...t,
+    price: Math.round(Number(t.price || 0) * 100),
+  }));
+
   const insertData = {
     event_id: eventId,
     name,
@@ -203,6 +235,26 @@ export async function createTicketType(
     max_per_person,
     status,
     position,
+
+    // Age-Wise Pricing
+    age_pricing_enabled: Boolean(parsed.data.age_pricing_enabled),
+    age_tiers: ageTiersPaise,
+
+    // Extra Members & Group Configuration
+    is_group_pass: Boolean(parsed.data.is_group_pass),
+    included_guests: Number(parsed.data.included_guests || 1),
+    min_guests: Number(parsed.data.min_guests || 1),
+    max_guests: Number(parsed.data.max_guests || 1),
+    allow_extra_guests: Boolean(parsed.data.allow_extra_guests),
+    extra_guest_price: parsed.data.extra_guest_price ?? 0,
+    max_extra_guests: Number(parsed.data.max_extra_guests || 0),
+    extra_member_pricing_mode: parsed.data.extra_member_pricing_mode || "flat",
+
+    // Duration & Validity
+    duration_label: parsed.data.duration_label ?? null,
+    duration_days: parsed.data.duration_days ?? 1,
+    pass_validity: parsed.data.pass_validity ?? null,
+    access_type: parsed.data.access_type ?? null,
   };
 
   let createdId: string | null = null;
@@ -299,6 +351,11 @@ export async function updateTicketType(
     }
   }
 
+  const ageTiersPaise = (parsed.data.age_tiers || []).map((t) => ({
+    ...t,
+    price: Math.round(Number(t.price || 0) * 100),
+  }));
+
   const updateData = {
     name,
     description: description ?? null,
@@ -309,6 +366,26 @@ export async function updateTicketType(
     sales_end: sanitizedSalesEnd,
     max_per_person,
     status,
+
+    // Age-Wise Pricing
+    age_pricing_enabled: Boolean(parsed.data.age_pricing_enabled),
+    age_tiers: ageTiersPaise,
+
+    // Extra Members & Group Configuration
+    is_group_pass: Boolean(parsed.data.is_group_pass),
+    included_guests: Number(parsed.data.included_guests || 1),
+    min_guests: Number(parsed.data.min_guests || 1),
+    max_guests: Number(parsed.data.max_guests || 1),
+    allow_extra_guests: Boolean(parsed.data.allow_extra_guests),
+    extra_guest_price: parsed.data.extra_guest_price ?? 0,
+    max_extra_guests: Number(parsed.data.max_extra_guests || 0),
+    extra_member_pricing_mode: parsed.data.extra_member_pricing_mode || "flat",
+
+    // Duration & Validity
+    duration_label: parsed.data.duration_label ?? null,
+    duration_days: parsed.data.duration_days ?? 1,
+    pass_validity: parsed.data.pass_validity ?? null,
+    access_type: parsed.data.access_type ?? null,
   };
 
   const { error } = await supabase

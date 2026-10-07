@@ -86,9 +86,20 @@ export interface ApplyTicketType {
   max_guests?: number | null;
   allow_extra_guests?: boolean | null;
   extra_guest_price?: number | null;
-  max_extra_guests?: number | null;
   pass_validity?: string | null;
   access_type?: string | null;
+  age_pricing_enabled?: boolean | null;
+  age_tiers?: Array<{
+    id: string;
+    label: string;
+    min_age?: number | null;
+    max_age?: number | null;
+    price: number;
+    description?: string | null;
+    is_free?: boolean;
+    badge_label?: string | null;
+  }> | null;
+  extra_member_pricing_mode?: "flat" | "age_based" | null;
 }
 
 interface EventInfo {
@@ -291,7 +302,7 @@ export default async function ApplyPage({
   // Use admin client to fetch all non-closed ticket types.
   let { data: ticketTypeRows } = await admin
     .from("ticket_types")
-    .select("id, name, description, category, price, capacity, max_per_person, sales_start, sales_end, position, status, duration_label, duration_days, is_group_pass, included_guests, min_guests, max_guests, allow_extra_guests, extra_guest_price, max_extra_guests, pass_validity, access_type")
+    .select("id, name, description, category, price, capacity, max_per_person, sales_start, sales_end, position, status, duration_label, duration_days, is_group_pass, included_guests, min_guests, max_guests, allow_extra_guests, extra_guest_price, max_extra_guests, pass_validity, access_type, age_pricing_enabled, age_tiers, extra_member_pricing_mode")
     .eq("event_id", event.id)
     .eq("status", "on_sale")
     .order("position", { ascending: true });
@@ -314,7 +325,7 @@ export default async function ApplyPage({
     const { data: defaultTT } = await admin
       .from("ticket_types")
       .insert(defaultData)
-      .select("id, name, description, category, price, capacity, max_per_person, sales_start, sales_end, position, status, duration_label, duration_days, is_group_pass, included_guests, min_guests, max_guests, allow_extra_guests, extra_guest_price, max_extra_guests, pass_validity, access_type")
+      .select("id, name, description, category, price, capacity, max_per_person, sales_start, sales_end, position, status, duration_label, duration_days, is_group_pass, included_guests, min_guests, max_guests, allow_extra_guests, extra_guest_price, max_extra_guests, pass_validity, access_type, age_pricing_enabled, age_tiers, extra_member_pricing_mode")
       .single();
 
     if (defaultTT) {
@@ -337,6 +348,9 @@ export default async function ApplyPage({
           max_extra_guests: null,
           pass_validity: null,
           access_type: "general",
+          age_pricing_enabled: false,
+          age_tiers: [],
+          extra_member_pricing_mode: "flat",
         },
       ];
     }
@@ -395,6 +409,9 @@ export default async function ApplyPage({
       max_extra_guests: ticketType.max_extra_guests,
       pass_validity: ticketType.pass_validity,
       access_type: ticketType.access_type,
+      age_pricing_enabled: ticketType.age_pricing_enabled,
+      age_tiers: ticketType.age_tiers,
+      extra_member_pricing_mode: ticketType.extra_member_pricing_mode,
     };
   });
 

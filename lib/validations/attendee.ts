@@ -9,6 +9,7 @@ export const attendeeSchema = z.object({
     .email("Enter a valid email")
     .transform((val) => val.trim().toLowerCase()),
   phone: z.string().optional(),
+  age: z.coerce.number().int().min(0).max(120).optional(),
   pass_type: z.enum(PASS_TYPES, {
     errorMap: () => ({ message: "Select a valid pass type" }),
   }),

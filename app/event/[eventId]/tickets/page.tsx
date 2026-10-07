@@ -222,7 +222,9 @@ export default async function TicketsPage({
                     <div className="flex flex-wrap items-center gap-3 mt-2">
                       {/* Price */}
                       <span className="text-sm font-bold text-neutral-900">
-                        {formatPrice(tt.price)}
+                        {tt.age_pricing_enabled && tt.age_tiers && tt.age_tiers.length > 0
+                          ? `From ₹${Math.min(...tt.age_tiers.map((a) => a.price / 100))}`
+                          : formatPrice(tt.price)}
                       </span>
 
                       {/* Status */}
@@ -232,6 +234,20 @@ export default async function TicketsPage({
                         {statusCfg.label}
                       </span>
 
+                      {/* Age Pricing Pill */}
+                      {tt.age_pricing_enabled && (
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
+                          Age-Wise Pricing
+                        </span>
+                      )}
+
+                      {/* Extra Members Pill */}
+                      {tt.allow_extra_guests && (
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          +{tt.extra_guest_price ? `₹${tt.extra_guest_price}` : "Free"}/extra member
+                        </span>
+                      )}
+
                       {/* Revenue */}
                       {tt.price > 0 && (
                         <span className="text-xs text-neutral-400">
@@ -239,6 +255,25 @@ export default async function TicketsPage({
                         </span>
                       )}
                     </div>
+
+                    {/* Age Pricing Tier Previews */}
+                    {tt.age_pricing_enabled && tt.age_tiers && tt.age_tiers.length > 0 && (
+                      <div className="flex flex-wrap items-center gap-1.5 mt-2.5 pt-2 border-t border-neutral-100">
+                        <span className="text-[10px] uppercase font-bold text-neutral-400 mr-1">Brackets:</span>
+                        {tt.age_tiers.map((at, aIdx) => (
+                          <span
+                            key={aIdx}
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-neutral-50 text-neutral-700 text-[11px] font-medium border border-neutral-200/80"
+                          >
+                            <span className="font-semibold">{at.label}</span>
+                            <span className="text-neutral-400">•</span>
+                            <span className={at.is_free || at.price === 0 ? "text-emerald-600 font-bold" : "text-neutral-900 font-bold"}>
+                              {at.is_free || at.price === 0 ? "Free" : `₹${at.price / 100}`}
+                            </span>
+                          </span>
+                        ))}
+                      </div>
+                    )}
 
                     {/* Capacity progress */}
                     <div className="mt-3">
