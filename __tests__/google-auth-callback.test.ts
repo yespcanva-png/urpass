@@ -43,6 +43,11 @@ vi.mock("@supabase/supabase-js", () => ({
 
 // Mock @supabase/ssr createServerClient
 const mockVerifyOtp = vi.fn().mockResolvedValue({ error: null, data: { session: {} } });
+const mockSignInWithPassword = vi.fn().mockResolvedValue({
+  data: { session: { user: { id: "test-user-id" } } },
+  error: null,
+});
+
 vi.mock("@supabase/ssr", () => ({
   createServerClient: (_url: string, _key: string, options: { cookies: { setAll: (cookies: unknown[]) => void } }) => {
     // Simulate setting cookies
@@ -51,6 +56,7 @@ vi.mock("@supabase/ssr", () => ({
     ]);
     return {
       auth: {
+        signInWithPassword: mockSignInWithPassword,
         verifyOtp: mockVerifyOtp,
       },
     };
@@ -160,8 +166,50 @@ describe("Google OAuth Routes", () => {
 
       expect(res.status).toBe(307);
       expect(res.headers.get("location")).toBe("https://urpass.space/dashboard");
-      expect(mockVerifyOtp).toHaveBeenCalled();
+      expect(mockSignInWithPassword).toHaveBeenCalled();
       // Verifies cookie is set on the response headers
+      expect(res.cookies.get("sb-auth-token")?.value).toBe("token-abc");
+    });
+
+    it("falls back to magiclink verifyOtp if direct signInWithPassword fails", async () => {
+      mockSignInWithPassword.mockResolvedValueOnce({
+        data: null,
+        error: new Error("Invalid credentials"),
+      });
+
+      global.fetch = vi.fn().mockImplementation((url: string) => {
+        if (url === "https://oauth2.googleapis.com/token") {
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            json: () => Promise.resolve({ id_token: "mock-valid-id-token" }),
+          });
+        }
+        if (url.includes("oauth2.googleapis.com/tokeninfo")) {
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            json: () =>
+              Promise.resolve({
+                sub: "google-user-123",
+                email: "organizer@example.com",
+                email_verified: "true",
+                name: "Alex Organizer",
+                picture: "https://example.com/avatar.jpg",
+                aud: "mock-google-client-id.apps.googleusercontent.com",
+              }),
+          });
+        }
+        return Promise.reject(new Error("Unknown URL"));
+      });
+
+      const req = new NextRequest("https://urpass.space/auth/google/callback?code=valid_code&state=/dashboard");
+      const res = await googleCallbackGet(req);
+
+      expect(res.status).toBe(307);
+      expect(res.headers.get("location")).toBe("https://urpass.space/dashboard");
+      expect(mockAdminGenerateLink).toHaveBeenCalled();
+      expect(mockVerifyOtp).toHaveBeenCalled();
       expect(res.cookies.get("sb-auth-token")?.value).toBe("token-abc");
     });
   });

@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient as createSupabaseAdmin } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
@@ -120,7 +121,10 @@ export async function GET(req: NextRequest) {
     const avatarUrl = info.picture || "";
     const googleId = info.sub || "";
 
-    // 1. Find user in profiles or auth.users
+    // Generate secure 32-character ephemeral credential (within Supabase 72-char limit)
+    const ephemeralPassword = crypto.randomBytes(16).toString("hex");
+
+    // 1. Find user in profiles table or auth.users
     const { data: profileRow } = await admin
       .from("profiles")
       .select("user_id")
@@ -131,8 +135,9 @@ export async function GET(req: NextRequest) {
     let isNewUser = false;
 
     if (userId) {
-      // Existing user: mark email confirmed and update metadata
+      // Existing user: mark email confirmed, set password & update metadata
       await admin.auth.admin.updateUserById(userId, {
+        password: ephemeralPassword,
         email_confirm: true,
         user_metadata: {
           full_name: fullName,
@@ -151,6 +156,7 @@ export async function GET(req: NextRequest) {
       // Try to create user in auth.users
       const { data: createdUser, error: createErr } = await admin.auth.admin.createUser({
         email: normalizedEmail,
+        password: ephemeralPassword,
         email_confirm: true,
         user_metadata: {
           full_name: fullName,
@@ -172,37 +178,32 @@ export async function GET(req: NextRequest) {
           }),
           sendUserWelcomeEmail({ to: normalizedEmail, name: fullName }),
         ]).catch((e) => console.error("[google-callback] notification error:", e));
+      } else {
+        // Fallback: If user already exists in auth.users without a profile record
+        const { data: linkData } = await admin.auth.admin.generateLink({
+          type: "magiclink",
+          email: normalizedEmail,
+        });
+        if (linkData?.user?.id) {
+          userId = linkData.user.id;
+          await admin.auth.admin.updateUserById(userId, {
+            password: ephemeralPassword,
+            email_confirm: true,
+            user_metadata: {
+              full_name: fullName,
+              avatar_url: avatarUrl,
+              google_id: googleId,
+              email_verified: true,
+            },
+          });
+          notifyOwnerUserLogin({
+            name: fullName,
+            email: normalizedEmail,
+            provider: "google",
+            userId,
+          }).catch((e) => console.error("[google-callback] notifyOwnerUserLogin error:", e));
+        }
       }
-    }
-
-    // Generate magiclink token to log the user in
-    const { data: linkData, error: linkErr } = await admin.auth.admin.generateLink({
-      type: "magiclink",
-      email: normalizedEmail,
-    });
-
-    if (linkErr || !linkData?.properties?.hashed_token) {
-      console.error("[google-callback] generateLink error:", linkErr);
-      return NextResponse.redirect(`${origin}/login?error=google_auth_failed&step=link`);
-    }
-
-    if (!userId && linkData.user?.id) {
-      userId = linkData.user.id;
-      await admin.auth.admin.updateUserById(userId, {
-        email_confirm: true,
-        user_metadata: {
-          full_name: fullName,
-          avatar_url: avatarUrl,
-          google_id: googleId,
-          email_verified: true,
-        },
-      });
-      notifyOwnerUserLogin({
-        name: fullName,
-        email: normalizedEmail,
-        provider: "google",
-        userId,
-      }).catch((e) => console.error("[google-callback] notifyOwnerUserLogin error:", e));
     }
 
     // Ensure profiles table record is upserted
@@ -235,7 +236,7 @@ export async function GET(req: NextRequest) {
     const response = NextResponse.redirect(`${origin}${destination}`);
     const cookieStore = await cookies();
 
-    // Verify OTP on server client configured to write cookies directly to response
+    // Create SSR client configured to write session cookies directly to response
     const supabase = createServerClient(
       getSupabaseUrl(),
       getSupabaseAnonKey(),
@@ -263,17 +264,44 @@ export async function GET(req: NextRequest) {
       }
     );
 
-    const tokenHash = linkData.properties.hashed_token;
-    const verificationType = (linkData.properties.verification_type as "magiclink" | "signup" | "email") || "magiclink";
+    // Primary: Direct session sign-in using ephemeral credential
+    let sessionEstablished = false;
+    if (ephemeralPassword) {
+      const { data: signInData, error: signInErr } = await supabase.auth.signInWithPassword({
+        email: normalizedEmail,
+        password: ephemeralPassword,
+      });
+      if (!signInErr && signInData?.session) {
+        sessionEstablished = true;
+      } else {
+        console.warn("[google-callback] Direct signInWithPassword fallback needed:", signInErr?.message);
+      }
+    }
 
-    let { error: verifyErr } = await supabase.auth.verifyOtp({
-      token_hash: tokenHash,
-      type: verificationType,
-    });
+    // Fallback: Magic link OTP verification if direct sign-in encountered an issue
+    if (!sessionEstablished) {
+      const { data: linkData, error: linkErr } = await admin.auth.admin.generateLink({
+        type: "magiclink",
+        email: normalizedEmail,
+      });
 
-    if (verifyErr) {
-      console.error("[google-callback] verifyOtp error:", verifyErr);
-      return NextResponse.redirect(`${origin}/login?error=google_auth_failed&step=otp`);
+      if (linkErr || !linkData?.properties?.hashed_token) {
+        console.error("[google-callback] generateLink error:", linkErr);
+        return NextResponse.redirect(`${origin}/login?error=google_auth_failed&step=link`);
+      }
+
+      const tokenHash = linkData.properties.hashed_token;
+      const verificationType = (linkData.properties.verification_type as "magiclink" | "signup" | "email") || "magiclink";
+
+      const { error: verifyErr } = await supabase.auth.verifyOtp({
+        token_hash: tokenHash,
+        type: verificationType,
+      });
+
+      if (verifyErr) {
+        console.error("[google-callback] verifyOtp error:", verifyErr);
+        return NextResponse.redirect(`${origin}/login?error=google_auth_failed&step=otp`);
+      }
     }
 
     return response;
@@ -282,3 +310,4 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(`${origin}/login?error=google_auth_failed&step=crash`);
   }
 }
+
