@@ -2,6 +2,8 @@ import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { resolvePostAuthRedirect } from "@/lib/auth-redirect";
 
+import { logAuth, logAuthError } from "@/lib/auth/logger";
+
 export const dynamic = "force-dynamic";
 
 function getAppOrigin(req: NextRequest): string {
@@ -34,9 +36,10 @@ function getAppOrigin(req: NextRequest): string {
 export async function GET(req: NextRequest) {
   const origin = getAppOrigin(req);
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID?.trim();
+  const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || req.headers.get("x-real-ip") || "unknown";
 
   if (!clientId) {
-    console.error("[google-redirect] NEXT_PUBLIC_GOOGLE_CLIENT_ID not configured");
+    logAuthError("google_redirect", "NEXT_PUBLIC_GOOGLE_CLIENT_ID not configured", null, { origin, clientIp });
     return NextResponse.redirect(`${origin}/login?error=google_not_configured`);
   }
 
@@ -44,6 +47,12 @@ export async function GET(req: NextRequest) {
     req.nextUrl.searchParams,
     req.headers.get("referer")
   );
+
+  logAuth("google_redirect", "Initiating Google OAuth flow", {
+    target,
+    origin,
+    clientIp,
+  });
 
   const nonce = crypto.randomBytes(16).toString("hex");
   const redirectUri = `${origin}/auth/google/callback`;

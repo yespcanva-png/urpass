@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { notifyOwnerNewUser, notifyOwnerUserLogin, sendUserWelcomeEmail } from "@/lib/email";
 import { createClient } from "@/lib/supabase/server";
 import { recordLiveOpsEvent } from "@/lib/ops/events";
+import { logAuth, logAuthError } from "@/lib/auth/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -43,6 +44,14 @@ export async function POST(req: NextRequest) {
     const userAgent = req.headers.get("user-agent") || null;
 
     if (body.type === "signup") {
+      logAuth("signup", "Live user signup registered", {
+        email,
+        name,
+        provider,
+        userId: targetUserId,
+        ipAddress: ipAddress || undefined,
+      });
+
       // Record in live ops buffer
       try {
         recordLiveOpsEvent({
@@ -68,6 +77,14 @@ export async function POST(req: NextRequest) {
         }),
       ]);
     } else {
+      logAuth("login", "Live user login session started", {
+        email,
+        name,
+        provider,
+        userId: targetUserId,
+        ipAddress: ipAddress || undefined,
+      });
+
       // Record in live ops buffer
       try {
         recordLiveOpsEvent({
@@ -93,7 +110,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ ok: true });
   } catch (err) {
-    console.error("[api/auth/notify] error:", err);
+    logAuthError("notify", "Auth notification dispatch failed", err);
     return NextResponse.json(
       { ok: false, error: err instanceof Error ? err.message : "Unknown error" },
       { status: 500 }

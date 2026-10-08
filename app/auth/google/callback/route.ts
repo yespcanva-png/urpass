@@ -5,6 +5,7 @@ import { createServerClient } from "@supabase/ssr";
 import { getSupabaseUrl, getSupabaseAnonKey } from "@/lib/supabase/config";
 import { notifyOwnerNewUser, notifyOwnerUserLogin, sendUserWelcomeEmail } from "@/lib/email";
 import { resolvePostAuthRedirect } from "@/lib/auth-redirect";
+import { logAuth, logAuthWarn, logAuthError } from "@/lib/auth/logger";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -127,8 +128,15 @@ export async function GET(req: NextRequest) {
     const error = searchParams.get("error");
     const errorDescription = searchParams.get("error_description");
 
+    logAuth("google_callback", "Received Google OAuth callback", {
+      origin,
+      code: code ? "present" : "missing",
+      state: state ? "present" : "missing",
+      error: error || undefined,
+    });
+
     if (error) {
-      console.warn("[google-callback] Google returned error:", error, errorDescription);
+      logAuthWarn("google_callback", "Google returned error in callback", { error, errorDescription });
       return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent(error)}`);
     }
 
@@ -172,6 +180,10 @@ export async function GET(req: NextRequest) {
     if (!code) {
       const existingUser = await getExistingSessionUser(req);
       if (existingUser) {
+        logAuth("google_callback", "No code but user already authenticated, redirecting", {
+          userId: existingUser.id,
+          targetPath,
+        });
         const target = resolvePostAuthRedirect(
           { get: (k: string) => (k === "next" ? targetPath : null) },
           null
@@ -180,6 +192,7 @@ export async function GET(req: NextRequest) {
         res.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, private, max-age=0");
         return res;
       }
+      logAuthWarn("google_callback", "Missing authorization code and no active session");
       return NextResponse.redirect(`${origin}/login?error=google_auth_failed&step=init`);
     }
 
@@ -187,6 +200,9 @@ export async function GET(req: NextRequest) {
     cleanupExchangedCodes();
     const cachedExchange = recentExchangedCodes.get(code);
     if (cachedExchange) {
+      logAuth("google_callback", "Duplicate code detected in cache, reusing destination", {
+        destination: cachedExchange.destination,
+      });
       const res = NextResponse.redirect(`${origin}${cachedExchange.destination}`);
       res.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, private, max-age=0");
       res.headers.set("Pragma", "no-cache");
@@ -197,11 +213,18 @@ export async function GET(req: NextRequest) {
     const clientSecret = process.env.GOOGLE_CLIENT_SECRET?.trim();
 
     if (!clientId || !clientSecret) {
-      console.error("[google-callback] Google client credentials missing");
+      logAuthError("google_callback", "Google client credentials missing in environment", null, {
+        clientIdPresent: !!clientId,
+        clientSecretPresent: !!clientSecret,
+      });
       return NextResponse.redirect(`${origin}/login?error=google_not_configured`);
     }
 
     // 2. Exchange authorization code for Google tokens with strict 8s timeout
+    logAuth("token_exchange", "Exchanging authorization code with Google token endpoint", {
+      redirectUri,
+    });
+    const tokenStartTime = Date.now();
     const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -216,13 +239,21 @@ export async function GET(req: NextRequest) {
     });
 
     const tokens = await tokenRes.json().catch(() => null);
+    const tokenDuration = Date.now() - tokenStartTime;
 
     if (!tokenRes.ok || !tokens) {
-      console.error("[google-callback] token exchange error:", tokenRes.status, tokens);
+      logAuthError("token_exchange", "Google token exchange failed", tokens, {
+        status: tokenRes.status,
+        durationMs: tokenDuration,
+      });
 
       // Graceful fallback for duplicate requests where the session was already established
       const existingUser = await getExistingSessionUser(req);
       if (existingUser) {
+        logAuth("google_callback", "Token exchange failed but active session found, redirecting", {
+          userId: existingUser.id,
+          targetPath,
+        });
         const target = resolvePostAuthRedirect(
           { get: (k: string) => (k === "next" ? targetPath : null) },
           null
@@ -246,6 +277,8 @@ export async function GET(req: NextRequest) {
         `${origin}/login?error=google_auth_failed&step=exchange`
       );
     }
+
+    logAuth("token_exchange", "Google token exchange succeeded", { durationMs: tokenDuration });
 
     // 3. Extract verified user profile from ID token or userinfo endpoint
     let info: GoogleTokenInfo | null = null;
@@ -282,6 +315,7 @@ export async function GET(req: NextRequest) {
       String(info.email_verified) === "1";
 
     if (!isVerified) {
+      logAuthWarn("google_callback", "Google user email is not verified");
       return NextResponse.redirect(`${origin}/login?error=google_email_unverified`);
     }
 
@@ -289,12 +323,20 @@ export async function GET(req: NextRequest) {
     const normalizedEmail = String(info.email || "").toLowerCase().trim();
 
     if (!normalizedEmail) {
+      logAuthWarn("google_callback", "No email found in Google profile payload");
       return NextResponse.redirect(`${origin}/login?error=google_no_email`);
     }
 
     // Sanitize user profile fields
     const fullName = (info.name?.trim() || normalizedEmail.split("@")[0]).slice(0, 32);
     const avatarUrl = (info.picture || "").slice(0, 255);
+
+    logAuth("google_identity", "Google identity verified", {
+      email: normalizedEmail,
+      name: fullName,
+      sub: info.sub,
+      aud: info.aud,
+    });
 
     // Generate secure ephemeral password satisfying all complexity rules
     const ephemeralPassword = crypto.randomBytes(16).toString("hex") + "A1!";
@@ -311,6 +353,7 @@ export async function GET(req: NextRequest) {
 
     if (profileRow?.user_id) {
       userId = profileRow.user_id;
+      logAuth("user_sync", "Found existing user in Supabase profiles", { userId, email: normalizedEmail });
       await admin.auth.admin.updateUserById(profileRow.user_id, {
         password: ephemeralPassword,
         email_confirm: true,
@@ -331,6 +374,7 @@ export async function GET(req: NextRequest) {
       if (!createErr && createdUser?.user) {
         userId = createdUser.user.id;
         isNewUser = true;
+        logAuth("user_sync", "Created new user in Supabase auth", { userId, email: normalizedEmail });
       } else {
         const { data: linkLookup } = await admin.auth.admin.generateLink({
           type: "magiclink",
@@ -339,6 +383,7 @@ export async function GET(req: NextRequest) {
 
         if (linkLookup?.user?.id) {
           userId = linkLookup.user.id;
+          logAuth("user_sync", "Resolved user via Supabase generateLink lookup", { userId, email: normalizedEmail });
           await admin.auth.admin.updateUserById(linkLookup.user.id, {
             password: ephemeralPassword,
             email_confirm: true,
@@ -413,7 +458,9 @@ export async function GET(req: NextRequest) {
       if (!signInErr && signInData?.session) {
         sessionEstablished = true;
       } else {
-        console.warn("[google-callback] Direct signInWithPassword fallback needed:", signInErr?.message);
+        logAuthWarn("session", "Direct signInWithPassword failed, attempting OTP fallback", {
+          error: signInErr?.message,
+        });
       }
     }
 
@@ -434,14 +481,21 @@ export async function GET(req: NextRequest) {
         });
 
         if (verifyErr) {
-          console.error("[google-callback] verifyOtp fallback error:", verifyErr.message);
+          logAuthError("session", "verifyOtp fallback failed", verifyErr, { email: normalizedEmail });
           return NextResponse.redirect(`${origin}/login?error=google_auth_failed&step=otp`);
         }
       } else {
-        console.error("[google-callback] generateLink error:", linkErr?.message || linkErr);
+        logAuthError("session", "generateLink error", linkErr, { email: normalizedEmail });
         return NextResponse.redirect(`${origin}/login?error=google_auth_failed&step=link`);
       }
     }
+
+    logAuth("session", "Session established successfully -> Redirecting user", {
+      email: normalizedEmail,
+      userId,
+      destination,
+      isNewUser,
+    });
 
     // 7. Non-blocking background sync for Profile Upsert & Notifications
     if (userId) {
@@ -472,14 +526,19 @@ export async function GET(req: NextRequest) {
               provider: "google",
               userId,
             }),
-      ]).catch((e) => {
-        console.warn("[google-callback] Non-blocking background sync warning:", e);
+      ]).then(() => {
+        logAuth("notifications", "Dispatched login/welcome notifications", {
+          email: normalizedEmail,
+          isNewUser,
+        });
+      }).catch((e) => {
+        logAuthWarn("notifications", "Background sync warning", { error: String(e) });
       });
     }
 
     return response;
   } catch (err) {
-    console.error("[google-callback] unhandled error:", err instanceof Error ? err.message : String(err));
+    logAuthError("google_callback", "Unhandled error during callback processing", err);
     return NextResponse.redirect(`${origin}/login?error=google_auth_failed&step=crash`);
   }
 }

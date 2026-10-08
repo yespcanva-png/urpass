@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { getSupabaseConfig } from "@/lib/supabase/config";
 import { clearAuthCookies, isRefreshTokenMissingError } from "@/lib/supabase/auth-cookies";
+import { logAuth, logAuthWarn } from "@/lib/auth/logger";
 
 const PROTECTED = ["/dashboard", "/event", "/create-event", "/scan", "/billing", "/org"];
 const AUTH_PAGES = ["/login", "/signup"];
@@ -69,6 +70,10 @@ export async function updateSession(request: NextRequest) {
   const hasInvalidRefreshToken = isRefreshTokenMissingError(authError);
 
   if (isProtected && !user) {
+    logAuthWarn("middleware", "Unauthenticated request on protected route -> Redirecting to login", {
+      path: pathname,
+      invalidRefreshToken: hasInvalidRefreshToken ? true : undefined,
+    });
     const feedbackMatch = pathname.match(/^\/event\/([^/]+)\/feedback$/);
     if (feedbackMatch) {
       url.pathname = `/feedback/${feedbackMatch[1]}`;
@@ -96,6 +101,10 @@ export async function updateSession(request: NextRequest) {
   }
 
   if (isAuthPage && user) {
+    logAuth("middleware", "Authenticated user accessed login/signup -> Redirecting to dashboard", {
+      userId: user.id,
+      email: user.email,
+    });
     url.pathname = "/dashboard";
     const res = NextResponse.redirect(url);
     supabaseResponse.cookies.getAll().forEach((cookie) => {
