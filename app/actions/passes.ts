@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { sendPassEmail } from "@/lib/email";
 import { communicationService, formatTicketId, buildTicketUrl } from "@/lib/communications";
+import { resolveNextTicketSequence, formatCustomTicketId } from "@/lib/tickets/custom-id";
 
 type GenerateResult = { passToken?: string; error?: string };
 
@@ -11,7 +12,7 @@ type GenerateResult = { passToken?: string; error?: string };
 async function verifyPassOrganizer(supabase: any, user: { id: string }, eventId: string) {
   let { data: event } = await supabase
     .from("events")
-    .select("id, name, event_date, venue, organizer_id, organization_id")
+    .select("id, name, event_date, venue, organizer_id, organization_id, custom_pass_design")
     .eq("id", eventId)
     .eq("organizer_id", user.id)
     .single();
@@ -21,7 +22,7 @@ async function verifyPassOrganizer(supabase: any, user: { id: string }, eventId:
   try {
     const { data: orgEvent } = await supabase
       .from("events")
-      .select("id, name, event_date, venue, organizer_id, organization_id")
+      .select("id, name, event_date, venue, organizer_id, organization_id, custom_pass_design")
       .eq("id", eventId)
       .single();
 
@@ -114,9 +115,40 @@ export async function generatePass(
 
   // Send pass communications (Email, WhatsApp, SMS with DLT and fallback) — fire-and-forget
   const [{ data: attendeeInfo }, { data: eventInfo }] = await Promise.all([
-    supabase.from("attendees").select("name, email, phone, pass_type").eq("id", attendeeId).single(),
-    supabase.from("events").select("name, event_date, venue").eq("id", eventId).single(),
+    supabase.from("attendees").select("name, email, phone, pass_type, custom_responses").eq("id", attendeeId).single(),
+    supabase.from("events").select("name, event_date, venue, custom_pass_design").eq("id", eventId).single(),
   ]);
+
+  let resolvedTicketId = formatTicketId(pass.pass_token);
+  const ticketIdConfig = (eventInfo?.custom_pass_design || event?.custom_pass_design)?.ticketIdConfig;
+  if (ticketIdConfig?.enabled) {
+    const existingCustomId = attendeeInfo?.custom_responses?.custom_ticket_id;
+    if (existingCustomId) {
+      resolvedTicketId = existingCustomId;
+    } else {
+      const { customTicketId } = await resolveNextTicketSequence(
+        supabase,
+        eventId,
+        ticketIdConfig,
+        { passType: attendee.pass_type }
+      );
+      resolvedTicketId = customTicketId;
+      // Persist custom_ticket_id to attendee record
+      try {
+        await supabase
+          .from("attendees")
+          .update({
+            custom_responses: {
+              ...(attendeeInfo?.custom_responses || {}),
+              custom_ticket_id: customTicketId,
+            },
+          })
+          .eq("id", attendeeId);
+      } catch {
+        // Non-blocking
+      }
+    }
+  }
 
   if (attendeeInfo && eventInfo) {
     communicationService
@@ -125,7 +157,7 @@ export async function generatePass(
         eventName: eventInfo.name,
         eventDate: eventInfo.event_date,
         venue: eventInfo.venue,
-        ticketId: formatTicketId(pass.pass_token),
+        ticketId: resolvedTicketId,
         passToken: pass.pass_token,
         attendeeId,
         attendeeName: attendeeInfo.name,
@@ -157,7 +189,7 @@ export async function bulkGeneratePasses(
 
   const { data: attendees, error: fetchErr } = await supabase
     .from("attendees")
-    .select("id, name, email, phone, pass_type")
+    .select("id, name, email, phone, pass_type, custom_responses")
     .eq("event_id", eventId)
     .eq("application_status", "approved")
     .eq("pass_status", "not_generated");
@@ -168,6 +200,13 @@ export async function bulkGeneratePasses(
 
   if (!attendees || attendees.length === 0) {
     return { success: true, generated: 0, tokens: {} };
+  }
+
+  const ticketIdConfig = event.custom_pass_design?.ticketIdConfig;
+  let currentSeq = (ticketIdConfig?.startNumber || 1) + (ticketIdConfig?.continuationOffset || 0);
+  if (ticketIdConfig?.enabled) {
+    const { nextSequence } = await resolveNextTicketSequence(supabase, eventId, ticketIdConfig);
+    currentSeq = nextSequence;
   }
 
   let generated = 0;
@@ -200,10 +239,32 @@ export async function bulkGeneratePasses(
     }
 
     if (passToken) {
-      await supabase
-        .from("attendees")
-        .update({ pass_status: "generated" })
-        .eq("id", att.id);
+      let resolvedTicketId = formatTicketId(passToken);
+      if (ticketIdConfig?.enabled) {
+        resolvedTicketId = formatCustomTicketId(ticketIdConfig, currentSeq++, { passType: att.pass_type });
+        try {
+          await supabase
+            .from("attendees")
+            .update({
+              pass_status: "generated",
+              custom_responses: {
+                ...(att.custom_responses || {}),
+                custom_ticket_id: resolvedTicketId,
+              },
+            })
+            .eq("id", att.id);
+        } catch {
+          await supabase
+            .from("attendees")
+            .update({ pass_status: "generated" })
+            .eq("id", att.id);
+        }
+      } else {
+        await supabase
+          .from("attendees")
+          .update({ pass_status: "generated" })
+          .eq("id", att.id);
+      }
 
       tokens[att.id] = passToken;
       generated++;
@@ -214,7 +275,7 @@ export async function bulkGeneratePasses(
           eventName: event.name,
           eventDate: event.event_date,
           venue: event.venue,
-          ticketId: formatTicketId(passToken),
+          ticketId: resolvedTicketId,
           passToken,
           attendeeId: att.id,
           attendeeName: att.name,

@@ -31,6 +31,7 @@ interface PassPreviewCardProps {
   attendeeName?: string;
   attendeeEmail?: string;
   shortCode?: string;
+  customTicketId?: string;
   showBranding?: boolean;
 }
 
@@ -44,8 +45,10 @@ export default function PassPreviewCard({
   attendeeName = "Arun Kumar",
   attendeeEmail = "arun.kumar@example.com",
   shortCode = "8F42-99B1",
+  customTicketId,
   showBranding = true,
 }: PassPreviewCardProps) {
+  const displayTicketCode = customTicketId || `#${shortCode}`;
   const fontCls = getFontFamilyCls(design.fontFamily || "sans");
   const patternStyle = getPatternStyle(
     design.pattern || "radial",
@@ -154,7 +157,7 @@ export default function PassPreviewCard({
             </div>
             <div className="text-right shrink-0">
               <span className="text-[9px] font-mono font-bold px-2 py-0.5 rounded-lg bg-white/90 dark:bg-neutral-800 border border-neutral-200/80 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 shadow-2xs">
-                #{shortCode}
+                {displayTicketCode}
               </span>
             </div>
           </div>
@@ -308,7 +311,7 @@ export default function PassPreviewCard({
           </div>
 
           <p className="text-[9px] font-mono text-neutral-400 tracking-wider mb-3">
-            TOKEN: #{shortCode}
+            TOKEN: {displayTicketCode}
           </p>
 
           <div
@@ -374,7 +377,7 @@ export default function PassPreviewCard({
             <p className="text-[10px] text-neutral-500 dark:text-neutral-400 truncate">{attendeeEmail}</p>
           </div>
           <span className="text-xs font-mono font-bold text-neutral-900 dark:text-neutral-100 bg-white dark:bg-neutral-800 px-2 py-1 border border-neutral-200 dark:border-neutral-700 rounded shadow-2xs">
-            #{shortCode}
+            {displayTicketCode}
           </span>
         </div>
 
@@ -473,7 +476,7 @@ export default function PassPreviewCard({
               <div className="text-left text-[10px] text-neutral-500 dark:text-neutral-400 flex flex-col gap-0.5">
                 <span className="font-bold text-neutral-800 dark:text-neutral-200">{eventDate}</span>
                 <span className="truncate max-w-[130px]">{venue}</span>
-                <span className="font-mono text-[9px] text-neutral-400">#{shortCode}</span>
+                <span className="font-mono text-[9px] text-neutral-400">{displayTicketCode}</span>
               </div>
 
               <div
@@ -599,7 +602,7 @@ export default function PassPreviewCard({
         </div>
 
         <p className="text-[9px] font-mono text-amber-300/80 tracking-widest mb-3">
-          SECURITY TOKEN: #{shortCode}
+          SECURITY TOKEN: {displayTicketCode}
         </p>
 
         <div className="w-full py-2.5 px-3 rounded-xl flex items-center justify-center gap-2 text-xs font-bold bg-gradient-to-r from-amber-400 to-amber-500 text-neutral-950 shadow-md">

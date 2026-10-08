@@ -3,6 +3,8 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getUserPlan } from "@/lib/plan";
 import { getEventTicketTypes } from "@/app/actions/ticket-types";
+import { getEventTicketIdConfig } from "@/app/actions/custom-ticket-ids";
+import CustomTicketIdCard from "@/components/tickets/CustomTicketIdCard";
 import {
   Plus,
   Pencil,
@@ -68,7 +70,7 @@ export default async function TicketsPage({
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const [{ data: event }, plan, ticketTypes] = await Promise.all([
+  const [{ data: event }, plan, ticketTypes, ticketIdConfigData] = await Promise.all([
     supabase
       .from("events")
       .select("id, name, organizer_id, organization_id")
@@ -76,6 +78,7 @@ export default async function TicketsPage({
       .single(),
     getUserPlan(supabase, user.id),
     getEventTicketTypes(eventId),
+    getEventTicketIdConfig(eventId),
   ]);
 
   if (!event) notFound();
@@ -345,6 +348,15 @@ export default async function TicketsPage({
           )}
         </div>
       )}
+
+      {/* Custom Ticket IDs & Continuation System */}
+      <div className="mt-8">
+        <CustomTicketIdCard
+          eventId={eventId}
+          initialConfig={ticketIdConfigData.config}
+          initialStats={ticketIdConfigData.stats}
+        />
+      </div>
     </div>
   );
 }

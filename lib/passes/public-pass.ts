@@ -55,12 +55,14 @@ export interface HardenedPublicPass {
     pass_type: string;
     status: string;
     generated_at?: string;
+    custom_ticket_id?: string | null;
   };
   attendee: {
     name: string;
     email: string;
     phone: string;
     application_status: string;
+    custom_ticket_id?: string | null;
   };
   event: {
     id: string;
@@ -108,7 +110,7 @@ export async function getHardenedPublicPass(
   const [{ data: attendee }, { data: event }] = await Promise.all([
     admin
       .from("attendees")
-      .select("name, email, phone, application_status")
+      .select("name, email, phone, application_status, custom_responses")
       .eq("id", pass.attendee_id)
       .single(),
     admin
@@ -144,18 +146,21 @@ export async function getHardenedPublicPass(
   // Protect online meeting URL: only disclose if approved and pass is generated/active
   const isApproved = attendee.application_status === "approved";
   const safeMeetingUrl = isApproved ? event.meeting_url : null;
+  const customTicketId = (attendee.custom_responses as Record<string, any>)?.custom_ticket_id || null;
 
   return {
     pass: {
       pass_token: pass.pass_token,
       pass_type: pass.pass_type || "participant",
       status: pass.status || "generated",
+      custom_ticket_id: customTicketId,
     },
     attendee: {
       name: attendee.name,
       email: maskEmail(attendee.email),
       phone: maskPhone(attendee.phone),
       application_status: attendee.application_status,
+      custom_ticket_id: customTicketId,
     },
     event: {
       id: event.id,

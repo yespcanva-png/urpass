@@ -437,4 +437,5 @@ export interface CustomDomain {
 }
 
 export * from "./conference";
+export * from "./custom-ticket-id";
 

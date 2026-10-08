@@ -263,12 +263,41 @@ export async function POST(req: NextRequest) {
   }
 
   // Fetch pass by token, scoped to this event
-  const { data: pass } = await supabase
+  let pass: any = null;
+  const { data: directPass } = await supabase
     .from("passes")
     .select("id, pass_token, pass_type, status, attendee_id, event_id, ticket_type_id")
     .eq("pass_token", cleanPassToken)
     .eq("event_id", eventId)
     .single();
+
+  pass = directPass;
+
+  // Fallback: Check if cleanPassToken is a custom ticket ID (e.g. TECH26-0001 or URP-12345)
+  if (!pass) {
+    try {
+      const { data: attendeesWithCustomId } = await safeMaybeSingle(
+        supabase
+          .from("attendees")
+          .select("id")
+          .eq("event_id", eventId)
+          .contains("custom_responses", { custom_ticket_id: cleanPassToken })
+      );
+
+      if (attendeesWithCustomId?.id) {
+        const { data: customPass } = await safeMaybeSingle(
+          supabase
+            .from("passes")
+            .select("id, pass_token, pass_type, status, attendee_id, event_id, ticket_type_id")
+            .eq("attendee_id", attendeesWithCustomId.id)
+            .eq("event_id", eventId)
+        );
+        if (customPass) pass = customPass;
+      }
+    } catch {
+      // Continue to wrong event / invalid check
+    }
+  }
 
   if (!pass) {
     // Check if pass belongs to a different event

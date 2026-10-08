@@ -398,13 +398,14 @@ export default async function PassPage({
                 }
 
                 if (fieldId === "showTicketId" && design.showTicketId) {
+                  const displayId = pass.custom_ticket_id || `#${shortCode.toUpperCase()}`;
                   return (
                     <div key="showTicketId" className="flex items-center justify-center gap-1.5 py-0.5">
                       <span className="text-[9px] font-semibold tracking-wider uppercase text-neutral-400">
                         TICKET ID:
                       </span>
-                      <span className="text-xs font-mono font-medium tracking-wide">
-                        #{shortCode.toUpperCase()}
+                      <span className="text-xs font-mono font-bold tracking-wide">
+                        {displayId}
                       </span>
                     </div>
                   );

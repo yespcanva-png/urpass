@@ -28,6 +28,7 @@ import {
   markReservationApproved,
 } from "@/lib/capacity-reservation";
 import { communicationService, formatTicketId, buildTicketUrl } from "@/lib/communications";
+import { resolveNextTicketSequence, formatCustomTicketId } from "@/lib/tickets/custom-id";
 import { notifyEventTeamOnApplication } from "@/lib/notifications/event-team-notification";
 import { generatePass } from "./passes";
 import crypto from "crypto";
@@ -569,7 +570,7 @@ export async function submitApplication(
   // Look up event by id first (compatible with unit-test mocks), fall back to apply_slug
   const idQuery = admin
     .from("events")
-    .select("id, status, application_enabled, auto_approve, attendee_limit, waitlist_enabled, name, event_date, venue, is_paid_event, ticket_price, organizer_id, organization_id, custom_fields")
+    .select("id, status, application_enabled, auto_approve, attendee_limit, waitlist_enabled, name, event_date, venue, is_paid_event, ticket_price, organizer_id, organization_id, custom_fields, custom_pass_design")
     .eq("id", eventId)
     .eq("status", "active")
     .eq("application_enabled", true);
@@ -580,7 +581,7 @@ export async function submitApplication(
   if (!event) {
     const slugQuery = admin
       .from("events")
-      .select("id, status, application_enabled, auto_approve, attendee_limit, waitlist_enabled, name, event_date, venue, is_paid_event, ticket_price, organizer_id, organization_id, custom_fields")
+      .select("id, status, application_enabled, auto_approve, attendee_limit, waitlist_enabled, name, event_date, venue, is_paid_event, ticket_price, organizer_id, organization_id, custom_fields, custom_pass_design")
       .eq("apply_slug", eventId)
       .eq("status", "active")
       .eq("application_enabled", true);
@@ -934,13 +935,38 @@ export async function submitApplication(
       await admin.from("attendees").update({ pass_status: "generated" }).eq("id", attendee.id);
       incrementRegistrationsUsed();
 
+      let resolvedTicketId = formatTicketId(pass.pass_token);
+      const ticketIdConfig = event.custom_pass_design?.ticketIdConfig;
+      if (ticketIdConfig?.enabled) {
+        const { customTicketId } = await resolveNextTicketSequence(
+          admin,
+          canonicalEventId,
+          ticketIdConfig,
+          { passType: attendee.pass_type }
+        );
+        resolvedTicketId = customTicketId;
+        try {
+          await admin
+            .from("attendees")
+            .update({
+              custom_responses: {
+                ...(finalCustomResponses || {}),
+                custom_ticket_id: customTicketId,
+              },
+            })
+            .eq("id", attendee.id);
+        } catch {
+          // Non-blocking
+        }
+      }
+
       communicationService
         .sendTicketCommunications({
           eventId: canonicalEventId,
           eventName: event.name,
           eventDate: event.event_date,
           venue: event.venue,
-          ticketId: formatTicketId(pass.pass_token),
+          ticketId: resolvedTicketId,
           passToken: pass.pass_token,
           attendeeId: attendee.id,
           attendeeName: parsed.data.name,
