@@ -1,3 +1,5 @@
+import nodemailer from "nodemailer";
+import type { Transporter } from "nodemailer";
 import { Resend } from "resend";
 
 function cleanString(val?: string | null): string {
@@ -55,24 +57,47 @@ function getResend() {
   return new Resend(apiKey);
 }
 
-function getZohoZeptoMailApiKey(): string {
-  const raw = cleanString(process.env.ZOHO_ZEPTOMAIL_API_KEY || process.env.ZEPTOMAIL_API_KEY);
-  if (raw && !raw.includes("********")) {
-    return raw.startsWith("Zoho-enczapikey ") ? raw : `Zoho-enczapikey ${raw}`;
-  }
-  if (process.env.NODE_ENV === "test") {
-    return "";
-  }
-  // Production fallback for container environments
-  return "Zoho-enczapikey PHtE6r1YQbzv2m959RhSsP+6FpGkY44p+rhuLQRH4tpKA6ICG00D/Y99mjW+qBsqVKIUEqTNnIs8su+e4bmMdG7vNT1NCWqyqK3sx/VYSPOZsbq6x00auF0ac0zUXYfpddJp1iLVud/fNA==";
-}
+let cachedSmtpTransporter: Transporter | null = null;
 
-function getZohoZeptoMailEndpoint(): string {
-  return cleanString(process.env.ZOHO_ZEPTOMAIL_ENDPOINT) || "https://api.zeptomail.in/v1.1/email";
+export function getSmtpTransporter(): Transporter | null {
+  const host = cleanString(process.env.SMTP_HOST) || "smtp.zeptomail.in";
+  const port = parseInt(cleanString(process.env.SMTP_PORT) || "465", 10);
+  const user = cleanString(process.env.SMTP_USER) || "emailapikey";
+  const pass =
+    cleanString(process.env.SMTP_PASS || process.env.ZOHO_ZEPTOMAIL_API_KEY) ||
+    (process.env.NODE_ENV === "test"
+      ? ""
+      : "PHtE6r1YQbzv2m959RhSsP+6FpGkY44p+rhuLQRH4tpKA6ICG00D/Y99mjW+qBsqVKIUEqTNnIs8su+e4bmMdG7vNT1NCWqyqK3sx/VYSPOZsbq6x00auF0ac0zUXYfpddJp1iLVud/fNA==");
+
+  if (!pass || pass.includes("********")) {
+    return null;
+  }
+
+  if (cachedSmtpTransporter) {
+    return cachedSmtpTransporter;
+  }
+
+  cachedSmtpTransporter = nodemailer.createTransport({
+    host,
+    port,
+    secure: port === 465,
+    auth: {
+      user,
+      pass,
+    },
+    pool: true,
+    maxConnections: 5,
+    maxMessages: 100,
+    connectionTimeout: 10000,
+    greetingTimeout: 5000,
+    socketTimeout: 15000,
+  });
+
+  return cachedSmtpTransporter;
 }
 
 export function isEmailProviderConfigured() {
-  return Boolean(getZohoZeptoMailApiKey()) || Boolean(getResend());
+  return Boolean(getSmtpTransporter() || getResend());
 }
 
 // Verified sending domain
@@ -143,8 +168,8 @@ function normalizeRecipients(to: MailPayload["to"]) {
 }
 
 async function sendViaZeptoMail(payload: MailPayload): Promise<MailSendResult | null> {
-  const authorization = getZohoZeptoMailApiKey();
-  if (!authorization) return null;
+  const transporter = getSmtpTransporter();
+  if (!transporter) return null;
 
   const from = parseEmailAddress(payload.from || getFromEmail());
   const recipients = normalizeRecipients(payload.to);
@@ -153,81 +178,34 @@ async function sendViaZeptoMail(payload: MailPayload): Promise<MailSendResult | 
     throw new Error("Missing email sender or recipient");
   }
 
+  const toFormatted = recipients
+    .map((r) => (r.name ? `"${r.name}" <${r.address}>` : r.address))
+    .join(", ");
+  const fromFormatted = from.name ? `"${from.name}" <${from.address}>` : from.address;
+
   const replyTo = Array.isArray(payload.replyTo)
-    ? payload.replyTo[0]
+    ? payload.replyTo.join(", ")
     : payload.replyTo;
-  const replyToAddress = replyTo ? parseEmailAddress(replyTo) : null;
 
-  const formattedAttachments = payload.attachments
-    ?.map((att) => {
-      let base64 = "";
-      if (typeof att.content === "string") {
-        base64 = att.content;
-      } else if (Buffer.isBuffer(att.content)) {
-        base64 = att.content.toString("base64");
-      }
-      return {
-        content: base64,
-        mime_type: att.contentType || "application/octet-stream",
-        name: att.filename,
-      };
-    })
-    .filter((a) => a.content);
+  const attachments = payload.attachments?.map((att) => ({
+    filename: att.filename,
+    content: att.content,
+    contentType: att.contentType,
+    path: att.path,
+  }));
 
-  const response = await fetch(getZohoZeptoMailEndpoint(), {
-    method: "POST",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-      Authorization: authorization,
-    },
-    body: JSON.stringify({
-      from: {
-        address: from.address,
-        ...(from.name ? { name: from.name } : {}),
-      },
-      to: recipients.map((recipient) => ({
-        email_address: {
-          address: recipient.address,
-          ...(recipient.name ? { name: recipient.name } : {}),
-        },
-      })),
-      ...(replyToAddress?.address
-        ? {
-            reply_to: [
-              {
-                address: replyToAddress.address,
-                ...(replyToAddress.name ? { name: replyToAddress.name } : {}),
-              },
-            ],
-          }
-        : {}),
-      subject: payload.subject,
-      ...(payload.html ? { htmlbody: payload.html } : {}),
-      ...(payload.text ? { textbody: payload.text } : {}),
-      ...(formattedAttachments?.length ? { attachments: formattedAttachments } : {}),
-    }),
+  const info = await transporter.sendMail({
+    from: fromFormatted,
+    to: toFormatted,
+    subject: payload.subject,
+    html: payload.html,
+    text: payload.text,
+    replyTo: replyTo || undefined,
+    attachments,
   });
 
-  const json = await response.json().catch(() => null);
-  if (!response.ok) {
-    const message =
-      typeof json === "object" && json && "message" in json
-        ? String(json.message)
-        : `ZeptoMail API error (${response.status})`;
-    throw new Error(message);
-  }
-
-  const id =
-    typeof json === "object" && json
-      ? "request_id" in json
-        ? String(json.request_id)
-        : "data" in json
-          ? JSON.stringify(json.data)
-          : undefined
-      : undefined;
-
-  return { id, provider: "zeptomail", raw: json };
+  const id = info.messageId || `smtp_${Date.now()}`;
+  return { id, provider: "zeptomail", raw: info };
 }
 
 export async function sendEmail(payload: MailPayload): Promise<MailSendResult | undefined> {
