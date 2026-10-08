@@ -42,7 +42,12 @@ export function clearAuthCookies(
   response: CookieTarget,
   request: Pick<NextRequest, "cookies" | "nextUrl">,
 ) {
-  const secure = request.nextUrl.protocol === "https:";
+  const isLocal =
+    request.nextUrl.hostname.includes("localhost") ||
+    request.nextUrl.hostname.includes("127.0.0.1") ||
+    request.nextUrl.hostname.startsWith("192.168.") ||
+    request.nextUrl.hostname.startsWith("10.");
+  const secure = !isLocal || request.nextUrl.protocol === "https:" || process.env.NODE_ENV === "production";
   const cookieNames = new Set(
     request.cookies
       .getAll()

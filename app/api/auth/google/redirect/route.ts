@@ -1,45 +1,18 @@
 import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { resolvePostAuthRedirect } from "@/lib/auth-redirect";
-
+import { getAppOrigin, getGoogleOAuthCredentials } from "@/lib/supabase/config";
 import { logAuth, logAuthError } from "@/lib/auth/logger";
 
 export const dynamic = "force-dynamic";
 
-function getAppOrigin(req: NextRequest): string {
-  const forwardedHost = req.headers.get("x-forwarded-host");
-  const host = forwardedHost || req.headers.get("host") || "";
-  const forwardedProto = req.headers.get("x-forwarded-proto");
-
-  if (host) {
-    const isLocal =
-      host.includes("localhost") ||
-      host.includes("127.0.0.1") ||
-      host.startsWith("192.168.") ||
-      host.startsWith("10.");
-    const proto = forwardedProto || (isLocal ? "http" : "https");
-    return `${proto}://${host}`.replace(/\/$/, "");
-  }
-
-  if (req.nextUrl?.origin && req.nextUrl.origin !== "null") {
-    return req.nextUrl.origin.replace(/\/$/, "");
-  }
-
-  const envUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL;
-  if (envUrl) {
-    return envUrl.replace(/\/$/, "");
-  }
-
-  return "https://urpass.space";
-}
-
 export async function GET(req: NextRequest) {
   const origin = getAppOrigin(req);
-  const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID?.trim();
+  const { clientId } = getGoogleOAuthCredentials();
   const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || req.headers.get("x-real-ip") || "unknown";
 
   if (!clientId) {
-    logAuthError("google_redirect", "NEXT_PUBLIC_GOOGLE_CLIENT_ID not configured", null, { origin, clientIp });
+    logAuthError("google_redirect", "Google Client ID not configured", null, { origin, clientIp });
     return NextResponse.redirect(`${origin}/login?error=google_not_configured`);
   }
 
@@ -76,6 +49,9 @@ export async function GET(req: NextRequest) {
   const response = NextResponse.redirect(
     `https://accounts.google.com/o/oauth2/v2/auth?${params}`
   );
+
+  response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, private, max-age=0");
+  response.headers.set("Pragma", "no-cache");
 
   // Store short-lived nonce cookie for CSRF protection (10 minutes)
   response.cookies.set("oauth_state_nonce", nonce, {

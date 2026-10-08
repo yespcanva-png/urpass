@@ -21,6 +21,17 @@ export function isAuthPagePath(pathname: string) {
 
 export async function updateSession(request: NextRequest) {
   const url = request.nextUrl.clone();
+  const host = request.headers.get("x-forwarded-host") || request.headers.get("host") || "";
+  const isLocal =
+    host.includes("localhost") ||
+    host.includes("127.0.0.1") ||
+    host.startsWith("192.168.") ||
+    host.startsWith("10.");
+
+  if (!isLocal && url.protocol === "http:") {
+    url.protocol = "https:";
+  }
+
   const pathname = url.pathname;
 
   const isProtected = isProtectedPath(pathname);

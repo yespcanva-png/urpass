@@ -2,7 +2,7 @@ import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient as createSupabaseAdmin } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
-import { getSupabaseUrl, getSupabaseAnonKey } from "@/lib/supabase/config";
+import { getSupabaseUrl, getSupabaseAnonKey, getSupabaseServiceRoleKey, getAppOrigin, getGoogleOAuthCredentials } from "@/lib/supabase/config";
 import { notifyOwnerNewUser, notifyOwnerUserLogin, sendUserWelcomeEmail } from "@/lib/email";
 import { resolvePostAuthRedirect } from "@/lib/auth-redirect";
 import { logAuth, logAuthWarn, logAuthError } from "@/lib/auth/logger";
@@ -38,7 +38,7 @@ interface GoogleTokenInfo {
 function adminClient() {
   return createSupabaseAdmin(
     getSupabaseUrl(),
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    getSupabaseServiceRoleKey(),
     {
       auth: { autoRefreshToken: false, persistSession: false },
       global: {
@@ -51,33 +51,6 @@ function adminClient() {
       },
     }
   );
-}
-
-function getAppOrigin(req: NextRequest): string {
-  const forwardedHost = req.headers.get("x-forwarded-host");
-  const host = forwardedHost || req.headers.get("host") || "";
-  const forwardedProto = req.headers.get("x-forwarded-proto");
-
-  if (host) {
-    const isLocal =
-      host.includes("localhost") ||
-      host.includes("127.0.0.1") ||
-      host.startsWith("192.168.") ||
-      host.startsWith("10.");
-    const proto = forwardedProto || (isLocal ? "http" : "https");
-    return `${proto}://${host}`.replace(/\/$/, "");
-  }
-
-  if (req.nextUrl?.origin && req.nextUrl.origin !== "null") {
-    return req.nextUrl.origin.replace(/\/$/, "");
-  }
-
-  const envUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL;
-  if (envUrl) {
-    return envUrl.replace(/\/$/, "");
-  }
-
-  return "https://urpass.space";
 }
 
 async function getExistingSessionUser(req: NextRequest) {
@@ -177,6 +150,11 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    // Ensure redirectUri strictly uses https in production / non-local domains
+    if (redirectUri.startsWith("http://") && !redirectUri.includes("localhost") && !redirectUri.includes("127.0.0.1")) {
+      redirectUri = redirectUri.replace(/^http:\/\//, "https://");
+    }
+
     if (!code) {
       const existingUser = await getExistingSessionUser(req);
       if (existingUser) {
@@ -209,8 +187,7 @@ export async function GET(req: NextRequest) {
       return res;
     }
 
-    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID?.trim();
-    const clientSecret = process.env.GOOGLE_CLIENT_SECRET?.trim();
+    const { clientId, clientSecret } = getGoogleOAuthCredentials();
 
     if (!clientId || !clientSecret) {
       logAuthError("google_callback", "Google client credentials missing in environment", null, {
