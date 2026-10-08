@@ -2,7 +2,6 @@ import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient as createSupabaseAdmin } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
 import { getSupabaseUrl, getSupabaseAnonKey } from "@/lib/supabase/config";
 import { notifyOwnerNewUser, notifyOwnerUserLogin, sendUserWelcomeEmail } from "@/lib/email";
 import { resolvePostAuthRedirect } from "@/lib/auth-redirect";
@@ -80,16 +79,15 @@ function getAppOrigin(req: NextRequest): string {
   return "https://urpass.space";
 }
 
-async function getExistingSessionUser() {
+async function getExistingSessionUser(req: NextRequest) {
   try {
-    const cookieStore = await cookies();
     const supabase = createServerClient(
       getSupabaseUrl(),
       getSupabaseAnonKey(),
       {
         cookies: {
           getAll() {
-            return cookieStore.getAll();
+            return req.cookies.getAll();
           },
           setAll() {},
         },
@@ -172,7 +170,7 @@ export async function GET(req: NextRequest) {
     }
 
     if (!code) {
-      const existingUser = await getExistingSessionUser();
+      const existingUser = await getExistingSessionUser(req);
       if (existingUser) {
         const target = resolvePostAuthRedirect(
           { get: (k: string) => (k === "next" ? targetPath : null) },
@@ -223,7 +221,7 @@ export async function GET(req: NextRequest) {
       console.error("[google-callback] token exchange error:", tokenRes.status, tokens);
 
       // Graceful fallback for duplicate requests where the session was already established
-      const existingUser = await getExistingSessionUser();
+      const existingUser = await getExistingSessionUser(req);
       if (existingUser) {
         const target = resolvePostAuthRedirect(
           { get: (k: string) => (k === "next" ? targetPath : null) },
@@ -295,13 +293,13 @@ export async function GET(req: NextRequest) {
     }
 
     // Sanitize user profile fields
-    const fullName = (info.name?.trim() || normalizedEmail.split("@")[0]).slice(0, 64);
+    const fullName = (info.name?.trim() || normalizedEmail.split("@")[0]).slice(0, 32);
     const avatarUrl = (info.picture || "").slice(0, 255);
 
     // Generate secure ephemeral password satisfying all complexity rules
     const ephemeralPassword = crypto.randomBytes(16).toString("hex") + "A1!";
 
-    // 4. User Resolution: Fast lookup existing user or create with compact metadata to keep JWT size under 800 bytes
+    // 4. User Resolution: Fast lookup existing user or create with compact metadata to keep JWT size minimal
     let userId: string | undefined;
     let isNewUser = false;
 
@@ -372,30 +370,34 @@ export async function GET(req: NextRequest) {
     response.headers.set("Expires", "0");
 
     // Clear ephemeral OAuth state nonce cookie safely
+    const isSecure = process.env.NODE_ENV === "production" || origin.startsWith("https://");
     response.cookies.set("oauth_state_nonce", "", {
       path: "/",
       maxAge: 0,
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production" || origin.startsWith("https://"),
+      secure: isSecure,
       sameSite: "lax",
     });
 
-    const cookieStore = await cookies();
-
-    // 6. Deduplicated Session Cookie Collector: ensures each cookie is written strictly once to prevent header size exceeding 4k
-    const sessionCookieMap = new Map<string, { value: string; options?: any }>();
-
+    // 6. Direct single-pass session cookie writer (avoids Next.js duplicate Set-Cookie headers)
     const supabase = createServerClient(
       getSupabaseUrl(),
       getSupabaseAnonKey(),
       {
         cookies: {
           getAll() {
-            return cookieStore.getAll();
+            return req.cookies.getAll();
           },
           setAll(cookiesToSet) {
             cookiesToSet.forEach(({ name, value, options }) => {
-              sessionCookieMap.set(name, { value, options });
+              response.cookies.set(name, value, {
+                path: options?.path || "/",
+                maxAge: typeof options?.maxAge === "number" ? options.maxAge : undefined,
+                domain: options?.domain || undefined,
+                sameSite: "lax",
+                secure: isSecure,
+                httpOnly: options?.httpOnly ?? true,
+              });
             });
           },
         },
@@ -439,18 +441,6 @@ export async function GET(req: NextRequest) {
         console.error("[google-callback] generateLink error:", linkErr?.message || linkErr);
         return NextResponse.redirect(`${origin}/login?error=google_auth_failed&step=link`);
       }
-    }
-
-    // Write final deduplicated session cookies onto response
-    for (const [name, { value, options }] of sessionCookieMap.entries()) {
-      response.cookies.set(name, value, {
-        path: options?.path || "/",
-        maxAge: typeof options?.maxAge === "number" ? options.maxAge : undefined,
-        domain: options?.domain || undefined,
-        sameSite: "lax",
-        secure: process.env.NODE_ENV === "production" || origin.startsWith("https://"),
-        httpOnly: options?.httpOnly ?? true,
-      });
     }
 
     // 7. Non-blocking background sync for Profile Upsert & Notifications

@@ -195,7 +195,7 @@ function LoginContent() {
       searchParams,
       typeof document !== "undefined" ? document.referrer : null
     );
-    router.push(`/api/auth/google/redirect?next=${encodeURIComponent(target)}`);
+    window.location.href = `/api/auth/google/redirect?next=${encodeURIComponent(target)}`;
   }
 
   return (
