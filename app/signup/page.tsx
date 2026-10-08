@@ -58,7 +58,23 @@ function SignupContent() {
   const [authMode, setAuthMode] = useState<"standard" | "sso">(
     searchParams.get("mode") === "sso" ? "sso" : "standard"
   );
-  const [serverError, setServerError] = useState("");
+  const [serverError, setServerError] = useState<string>(() => {
+    const errorParam = searchParams.get("error");
+    const msgParam = searchParams.get("msg");
+    const stepParam = searchParams.get("step");
+    if (!errorParam) return "";
+    if (errorParam === "google_code_expired") {
+      return "Google sign-in session expired or was already used. Please click 'Continue with Google' to try again.";
+    } else if (errorParam === "google_email_unverified") {
+      return "Your Google email address has not been verified by Google.";
+    } else if (errorParam === "google_not_configured") {
+      return "Google sign-in is not configured on this environment.";
+    } else if (msgParam) {
+      return decodeURIComponent(msgParam);
+    } else {
+      return `Authentication failed (${errorParam}${stepParam ? ` - ${stepParam}` : ""}). Please try again.`;
+    }
+  });
   const [enforcedSSORedirect, setEnforcedSSORedirect] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [needsEmailConfirmation, setNeedsEmailConfirmation] = useState(false);

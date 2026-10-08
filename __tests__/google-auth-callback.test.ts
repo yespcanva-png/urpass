@@ -47,6 +47,7 @@ const mockSignInWithPassword = vi.fn().mockResolvedValue({
   data: { session: { user: { id: "test-user-id" } } },
   error: null,
 });
+const mockGetUser = vi.fn().mockResolvedValue({ data: { user: null }, error: null });
 
 vi.mock("@supabase/ssr", () => ({
   createServerClient: (_url: string, _key: string, options: { cookies: { setAll: (cookies: unknown[]) => void } }) => {
@@ -58,6 +59,7 @@ vi.mock("@supabase/ssr", () => ({
       auth: {
         signInWithPassword: mockSignInWithPassword,
         verifyOtp: mockVerifyOtp,
+        getUser: mockGetUser,
       },
     };
   },
@@ -144,6 +146,30 @@ describe("Google OAuth Routes", () => {
 
       expect(res.status).toBe(307);
       expect(res.headers.get("location")).toBe("https://urpass.space/login?error=google_code_expired");
+    });
+
+    it("redirects already authenticated user seamlessly if code was already exchanged on page reload or back button", async () => {
+      mockGetUser.mockResolvedValueOnce({
+        data: { user: { id: "existing-auth-user", email: "organizer@example.com" } },
+        error: null,
+      });
+
+      global.fetch = vi.fn().mockImplementation((url: string) => {
+        if (url === "https://oauth2.googleapis.com/token") {
+          return Promise.resolve({
+            ok: false,
+            status: 400,
+            json: () => Promise.resolve({ error: "invalid_grant", error_description: "Bad Request" }),
+          });
+        }
+        return Promise.reject(new Error("Unknown URL"));
+      });
+
+      const req = new NextRequest("https://urpass.space/auth/google/callback?code=replayed_code&state=/dashboard");
+      const res = await googleCallbackGet(req);
+
+      expect(res.status).toBe(307);
+      expect(res.headers.get("location")).toBe("https://urpass.space/dashboard");
     });
 
     it("authenticates valid Google OAuth callback with structured base64 state and sets session cookies", async () => {

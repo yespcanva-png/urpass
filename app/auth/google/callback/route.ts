@@ -28,12 +28,54 @@ function adminClient() {
 }
 
 function getAppOrigin(req: NextRequest): string {
-  const host = req.headers.get("x-forwarded-host") || req.headers.get("host") || "";
-  if (host.includes("localhost") || host.includes("127.0.0.1")) {
-    const proto = req.headers.get("x-forwarded-proto") || "http";
+  const forwardedHost = req.headers.get("x-forwarded-host");
+  const host = forwardedHost || req.headers.get("host") || "";
+  const forwardedProto = req.headers.get("x-forwarded-proto");
+
+  if (host) {
+    const isLocal =
+      host.includes("localhost") ||
+      host.includes("127.0.0.1") ||
+      host.startsWith("192.168.") ||
+      host.startsWith("10.");
+    const proto = forwardedProto || (isLocal ? "http" : "https");
     return `${proto}://${host}`.replace(/\/$/, "");
   }
-  return (process.env.NEXT_PUBLIC_APP_URL || "https://urpass.space").replace(/\/$/, "");
+
+  if (req.nextUrl?.origin && req.nextUrl.origin !== "null") {
+    return req.nextUrl.origin.replace(/\/$/, "");
+  }
+
+  const envUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL;
+  if (envUrl) {
+    return envUrl.replace(/\/$/, "");
+  }
+
+  return "https://urpass.space";
+}
+
+async function getExistingSessionUser() {
+  try {
+    const cookieStore = await cookies();
+    const supabase = createServerClient(
+      getSupabaseUrl(),
+      getSupabaseAnonKey(),
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll();
+          },
+          setAll() {},
+        },
+      }
+    );
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    return user || null;
+  } catch {
+    return null;
+  }
 }
 
 export async function GET(req: NextRequest) {
@@ -52,6 +94,10 @@ export async function GET(req: NextRequest) {
     }
 
     if (!code) {
+      const existingUser = await getExistingSessionUser();
+      if (existingUser) {
+        return NextResponse.redirect(`${origin}/dashboard`);
+      }
       return NextResponse.redirect(`${origin}/login?error=google_auth_failed&step=init`);
     }
 
@@ -81,7 +127,22 @@ export async function GET(req: NextRequest) {
           targetPath = state;
         }
       } catch {
-        targetPath = state;
+        try {
+          const decodedStr = Buffer.from(state, "base64").toString("utf8");
+          if (decodedStr.startsWith("{") && decodedStr.endsWith("}")) {
+            const parsed = JSON.parse(decodedStr);
+            if (parsed && typeof parsed === "object") {
+              if (parsed.next) targetPath = String(parsed.next);
+              if (parsed.redirect_uri && typeof parsed.redirect_uri === "string") {
+                redirectUri = parsed.redirect_uri;
+              }
+            }
+          } else {
+            targetPath = state;
+          }
+        } catch {
+          targetPath = state;
+        }
       }
     }
 
@@ -103,6 +164,15 @@ export async function GET(req: NextRequest) {
     if (!tokenRes.ok || !tokens?.id_token) {
       console.error("[google-callback] token exchange error:", tokenRes.status, tokens);
       if (tokens?.error === "invalid_grant") {
+        const existingUser = await getExistingSessionUser();
+        if (existingUser) {
+          console.log("[google-callback] Existing active session detected on invalid_grant code replay:", existingUser.id);
+          const target = resolvePostAuthRedirect(
+            { get: (k: string) => (k === "next" ? targetPath : null) },
+            null
+          );
+          return NextResponse.redirect(`${origin}${target}`);
+        }
         return NextResponse.redirect(`${origin}/login?error=google_code_expired`);
       }
       return NextResponse.redirect(`${origin}/login?error=google_auth_failed&step=token`);

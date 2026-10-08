@@ -5,12 +5,30 @@ import { resolvePostAuthRedirect } from "@/lib/auth-redirect";
 export const dynamic = "force-dynamic";
 
 function getAppOrigin(req: NextRequest): string {
-  const host = req.headers.get("x-forwarded-host") || req.headers.get("host") || "";
-  if (host.includes("localhost") || host.includes("127.0.0.1")) {
-    const proto = req.headers.get("x-forwarded-proto") || "http";
+  const forwardedHost = req.headers.get("x-forwarded-host");
+  const host = forwardedHost || req.headers.get("host") || "";
+  const forwardedProto = req.headers.get("x-forwarded-proto");
+
+  if (host) {
+    const isLocal =
+      host.includes("localhost") ||
+      host.includes("127.0.0.1") ||
+      host.startsWith("192.168.") ||
+      host.startsWith("10.");
+    const proto = forwardedProto || (isLocal ? "http" : "https");
     return `${proto}://${host}`.replace(/\/$/, "");
   }
-  return (process.env.NEXT_PUBLIC_APP_URL || "https://urpass.space").replace(/\/$/, "");
+
+  if (req.nextUrl?.origin && req.nextUrl.origin !== "null") {
+    return req.nextUrl.origin.replace(/\/$/, "");
+  }
+
+  const envUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL;
+  if (envUrl) {
+    return envUrl.replace(/\/$/, "");
+  }
+
+  return "https://urpass.space";
 }
 
 export async function GET(req: NextRequest) {
