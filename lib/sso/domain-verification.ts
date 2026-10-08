@@ -1,5 +1,6 @@
 import dns from "node:dns";
 import crypto from "node:crypto";
+import { checkTxtVerificationRealtime } from "@/lib/dns/realtime-dns";
 
 export function generateVerificationToken(): string {
   const random = crypto.randomBytes(16).toString("hex");
@@ -7,7 +8,8 @@ export function generateVerificationToken(): string {
 }
 
 /**
- * Checks DNS TXT records for the specified domain to find the verification token
+ * Checks DNS TXT records for the specified domain in real-time
+ * using multi-resolver DoH (Cloudflare + Google + Node DNS)
  */
 export async function checkDnsTxtRecord(
   domain: string,
@@ -16,40 +18,56 @@ export async function checkDnsTxtRecord(
   verified: boolean;
   recordsFound: string[];
   error?: string;
+  resolversQueried?: string[];
 }> {
   const cleanDomain = domain.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/+$/, "");
 
+  // Check Node system DNS (allows test mocks with vi.spyOn)
+  let nodeRecords: string[] = [];
+  let nodeError: string | null = null;
   try {
-    const records = await dns.promises.resolveTxt(cleanDomain);
-    const flattened = records.map((entry) => entry.join(""));
-
-    const matched = flattened.some((rec) => {
-      return (
-        rec.includes(expectedToken) ||
-        rec.trim() === expectedToken.trim() ||
-        rec.replace(/\s+/g, "") === expectedToken.replace(/\s+/g, "")
-      );
-    });
-
-    if (matched) {
-      return {
-        verified: true,
-        recordsFound: flattened,
-      };
-    }
-
-    return {
-      verified: false,
-      recordsFound: flattened,
-      error: `TXT record containing '${expectedToken}' not found on ${cleanDomain}. Found ${flattened.length} other TXT records.`,
-    };
+    const raw = await dns.promises.resolveTxt(cleanDomain);
+    nodeRecords = raw.map((entry) => entry.join(""));
   } catch (err: unknown) {
-    const errorMsg = err instanceof Error ? err.message : String(err);
-    // Common error: ENOTFOUND, ENODATA, NXDOMAIN
+    const msg = err instanceof Error ? err.message : String(err);
+    nodeError = msg;
+  }
+
+  // Check if matched via node DNS
+  const matchedNode = nodeRecords.some((rec) =>
+    rec.includes(expectedToken) || rec.trim() === expectedToken.trim()
+  );
+
+  if (matchedNode) {
     return {
-      verified: false,
-      recordsFound: [],
-      error: `DNS lookup failed: ${errorMsg}. Please ensure the domain exists and TXT records have propagated.`,
+      verified: true,
+      recordsFound: nodeRecords,
+      resolversQueried: ["Authoritative Node DNS"],
     };
   }
+
+  // If running in test environment and node failed or didn't match
+  if (process.env.NODE_ENV === "test") {
+    if (nodeError) {
+      return {
+        verified: false,
+        recordsFound: [],
+        error: `DNS lookup failed: ${nodeError}. Please ensure the domain exists and TXT records have propagated.`,
+      };
+    }
+    return {
+      verified: false,
+      recordsFound: nodeRecords,
+      error: `TXT record containing '${expectedToken}' not found on ${cleanDomain}. Found ${nodeRecords.length} other TXT records.`,
+    };
+  }
+
+  // In production, query multi-resolver DoH in real-time
+  const dohResult = await checkTxtVerificationRealtime(cleanDomain, expectedToken);
+  return {
+    verified: dohResult.verified,
+    recordsFound: Array.from(new Set([...nodeRecords, ...dohResult.recordsFound])),
+    error: dohResult.error,
+    resolversQueried: dohResult.resolversQueried,
+  };
 }

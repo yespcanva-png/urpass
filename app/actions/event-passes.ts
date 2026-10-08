@@ -170,3 +170,63 @@ export async function activateUkEventPass(passType: string): Promise<ActionResul
   return undefined;
 }
 
+export async function activatePayUEventPass(
+  passType: string,
+  payment: {
+    txnid: string;
+    mihpayid?: string;
+    amount?: string | number;
+  }
+): Promise<ActionResult> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const registrationLimit = PASS_REG_LIMITS[passType];
+  const priceRupees       = PASS_PRICES[passType];
+  if (!registrationLimit || !priceRupees) {
+    return { error: "Invalid pass type." };
+  }
+
+  const paymentId = payment.mihpayid || payment.txnid;
+  if (!paymentId) {
+    return { error: "Payment transaction ID is required." };
+  }
+
+  // Idempotency check: guard against replay
+  const { data: existingPass } = await supabase
+    .from("event_passes")
+    .select("id")
+    .eq("payment_id", paymentId)
+    .maybeSingle();
+
+  if (existingPass) {
+    return undefined;
+  }
+
+  const { error } = await supabase.from("event_passes").insert({
+    user_id:            user.id,
+    pass_type:          passType,
+    registration_limit: registrationLimit,
+    price_rupees:       priceRupees,
+    payment_id:         paymentId,
+    status:             "available",
+  });
+
+  if (error) return { error: error.message };
+
+  // Issue invoice for event pass
+  void createInvoiceForPayment({
+    userId: user.id,
+    paymentId,
+    description: `Event Pass (${passType.replace("_", " ").toUpperCase()}) [PayU]`,
+    baseAmountRupees: priceRupees,
+    discountRupees: 0,
+    docType: "TKT",
+    customerEmail: user.email,
+    customerName: user.user_metadata?.full_name,
+  });
+
+  return undefined;
+}
+

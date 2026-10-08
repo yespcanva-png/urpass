@@ -5,9 +5,14 @@ import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { getSupabaseUrl } from "@/lib/supabase/config";
 import { recordAuditLog } from "@/lib/sso/audit";
 import { revalidatePath } from "next/cache";
-import dns from "node:dns";
 import { randomBytes } from "crypto";
 import type { CustomDomain } from "@/types";
+import {
+  checkCustomDomainRealtime,
+  PRIMARY_CNAME_TARGET,
+  parseDomainParts,
+  type DnsDiagnosticResult,
+} from "@/lib/dns/realtime-dns";
 
 function adminClient() {
   return createAdminClient(
@@ -16,8 +21,6 @@ function adminClient() {
     { auth: { autoRefreshToken: false, persistSession: false } }
   );
 }
-
-const CNAME_TARGET = "cname.urpass.in";
 
 export async function getCustomDomains(orgId: string): Promise<CustomDomain[]> {
   const supabase = await createClient();
@@ -38,7 +41,12 @@ export async function getCustomDomains(orgId: string): Promise<CustomDomain[]> {
 export async function addCustomDomain(
   orgId: string,
   domain: string
-): Promise<{ success: boolean; domain?: CustomDomain; error?: string }> {
+): Promise<{
+  success: boolean;
+  domain?: CustomDomain;
+  diagnostics?: DnsDiagnosticResult;
+  error?: string;
+}> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { success: false, error: "Authentication required." };
@@ -55,7 +63,7 @@ export async function addCustomDomain(
     return { success: false, error: "Only owners and admins can configure custom domains." };
   }
 
-  const cleanDomain = domain.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/.*$/, "");
+  const { cleanDomain } = parseDomainParts(domain);
   const domainRegex = /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$/;
 
   if (!domainRegex.test(cleanDomain)) {
@@ -65,15 +73,21 @@ export async function addCustomDomain(
   const admin = adminClient();
   const verificationToken = `urpass-cname-${randomBytes(12).toString("hex")}`;
 
+  // Check live DNS status immediately to give real-time feedback
+  const initialDnsCheck = await checkCustomDomainRealtime(cleanDomain);
+  const initialStatus = initialDnsCheck.verified ? "active" : "pending";
+  const initialSslStatus = initialDnsCheck.verified ? "issued" : "pending";
+
   const { data, error } = await admin
     .from("custom_domains")
     .insert({
       organization_id: orgId,
       domain: cleanDomain,
-      cname_target: CNAME_TARGET,
-      status: "pending",
-      ssl_status: "pending",
+      cname_target: PRIMARY_CNAME_TARGET,
+      status: initialStatus,
+      ssl_status: initialSslStatus,
       verification_token: verificationToken,
+      verified_at: initialDnsCheck.verified ? new Date().toISOString() : null,
     })
     .select()
     .single();
@@ -92,17 +106,31 @@ export async function addCustomDomain(
     action: "custom_domain.added",
     resourceType: "custom_domain",
     resourceId: data.id,
-    details: { domain: cleanDomain, cnameTarget: CNAME_TARGET },
+    details: {
+      domain: cleanDomain,
+      cnameTarget: PRIMARY_CNAME_TARGET,
+      initialVerified: initialDnsCheck.verified,
+    },
   });
 
   revalidatePath("/org/[orgSlug]/settings/security", "page");
-  return { success: true, domain: data as CustomDomain };
+  return {
+    success: true,
+    domain: data as CustomDomain,
+    diagnostics: initialDnsCheck,
+  };
 }
 
 export async function verifyCustomDomain(
   orgId: string,
   domainId: string
-): Promise<{ success: boolean; verified: boolean; message?: string; error?: string }> {
+): Promise<{
+  success: boolean;
+  verified: boolean;
+  message?: string;
+  diagnostics?: DnsDiagnosticResult;
+  error?: string;
+}> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { success: false, verified: false, error: "Authentication required." };
@@ -119,32 +147,10 @@ export async function verifyCustomDomain(
     return { success: false, verified: false, error: "Custom domain not found." };
   }
 
-  // Resolve DNS CNAME record
-  let cnameTargets: string[] = [];
-  try {
-    cnameTargets = await dns.promises.resolveCname(domainRec.domain);
-  } catch (err: unknown) {
-    // Check if localhost or test environment
-    const isMock = process.env.NODE_ENV === "test" || domainRec.domain.endsWith(".test") || domainRec.domain.endsWith(".example");
-    if (isMock) {
-      cnameTargets = [CNAME_TARGET];
-    } else {
-      const code = (err as { code?: string })?.code;
-      return {
-        success: true,
-        verified: false,
-        message: code === "ENODATA" || code === "ENOTFOUND"
-          ? `No CNAME record found for "${domainRec.domain}". Please point it to "${CNAME_TARGET}".`
-          : `DNS lookup failed (${code || "unknown error"}). DNS propagation may take up to 24 hours.`,
-      };
-    }
-  }
+  // Perform Real-Time Multi-Resolver DNS Check (Cloudflare DoH + Google DoH + Node DNS)
+  const dnsResult = await checkCustomDomainRealtime(domainRec.domain);
 
-  const isMatched = cnameTargets.some(
-    (t) => t.toLowerCase().replace(/\.$/, "") === CNAME_TARGET.toLowerCase()
-  );
-
-  if (isMatched) {
+  if (dnsResult.verified) {
     await admin
       .from("custom_domains")
       .update({
@@ -162,22 +168,62 @@ export async function verifyCustomDomain(
       action: "custom_domain.verified",
       resourceType: "custom_domain",
       resourceId: domainId,
-      details: { domain: domainRec.domain, cnameTarget: CNAME_TARGET },
+      details: {
+        domain: domainRec.domain,
+        cnameTarget: PRIMARY_CNAME_TARGET,
+        resolvers: dnsResult.resolversQueried,
+      },
     });
 
     revalidatePath("/org/[orgSlug]/settings/security", "page");
     return {
       success: true,
       verified: true,
-      message: `Domain "${domainRec.domain}" is verified and active! TLS certificate is issued.`,
+      message: dnsResult.message,
+      diagnostics: dnsResult,
     };
   }
+
+  // Not yet verified - update updated_at timestamp
+  await admin
+    .from("custom_domains")
+    .update({
+      status: "pending",
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", domainId);
 
   return {
     success: true,
     verified: false,
-    message: `CNAME record points to "${cnameTargets.join(", ")}" instead of "${CNAME_TARGET}".`,
+    message: dnsResult.message,
+    diagnostics: dnsResult,
   };
+}
+
+/**
+ * Real-time on-the-fly DNS check for any domain before adding or while configuring
+ */
+export async function checkDomainDnsLive(
+  domain: string
+): Promise<{
+  success: boolean;
+  diagnostics?: DnsDiagnosticResult;
+  error?: string;
+}> {
+  if (!domain || typeof domain !== "string" || !domain.trim()) {
+    return { success: false, error: "Domain name is required." };
+  }
+
+  try {
+    const diagnostics = await checkCustomDomainRealtime(domain);
+    return { success: true, diagnostics };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Failed to query real-time DNS.",
+    };
+  }
 }
 
 export async function deleteCustomDomain(

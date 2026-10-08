@@ -11,6 +11,7 @@ import ProfileForm from "./ProfileForm";
 import PasswordResetButton from "./PasswordResetButton";
 import SignOutButton from "./SignOutButton";
 import RazorpayCard from "./RazorpayCard";
+import PayUCard from "@/components/payments/PayUCard";
 import DeveloperDashboard, { type ApiKeyRow } from "@/app/dashboard/developer/DeveloperDashboard";
 import type { ApiUsage } from "@/app/actions/api-usage";
 import type { WebhookEndpoint, WebhookDelivery } from "@/app/actions/webhooks";
@@ -51,6 +52,8 @@ interface Props {
   billingCycle: "monthly" | "annual";
   registrationsUsed: number;
   existingPaymentKeyId: string | null;
+  existingPayUMerchantKey?: string | null;
+  existingPayUEnvironment?: "production" | "sandbox";
   apiUsage: ApiUsage;
   apiKeys: ApiKeyRow[];
   webhookEndpoints: WebhookEndpoint[];
@@ -270,6 +273,7 @@ function DeveloperLocked() {
 export default function SettingsShell({
   fullName, email, initials, phone, companyName, gstin, billingAddress, plan, currentPlan, isTrial, branding,
   renewalDate, cancelAtPeriodEnd, activeEventCount, billingCycle, registrationsUsed, existingPaymentKeyId,
+  existingPayUMerchantKey, existingPayUEnvironment,
   apiUsage, apiKeys, webhookEndpoints, recentDeliveries,
 }: Props) {
   const [section, setSection] = useState<Section>("profile");
@@ -410,13 +414,27 @@ export default function SettingsShell({
 
       case "integrations":
         return (
-          <div className="max-w-xl">
-            <div className="mb-6">
+          <div className="max-w-2xl space-y-6">
+            <div>
               <h2 className="text-lg font-bold tracking-tight text-neutral-900">Integrations</h2>
-              <p className="text-sm text-neutral-400 mt-0.5">Connect payment gateways and third-party tools.</p>
+              <p className="text-sm text-neutral-400 mt-0.5">
+                Connect payment gateways to accept ticket sales directly into your merchant accounts.
+              </p>
             </div>
-            <p className="text-[10px] font-bold tracking-widest uppercase text-neutral-400 mb-3">Payment gateways</p>
-            <RazorpayCard canUsePayments={canUsePayments} existingKeyId={existingPaymentKeyId} />
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <p className="text-[10px] font-bold tracking-widest uppercase text-neutral-400">Payment gateways</p>
+                <span className="text-[11px] text-neutral-500 font-medium">Direct settlement into your bank account</span>
+              </div>
+              <div className="grid grid-cols-1 gap-4">
+                <RazorpayCard canUsePayments={canUsePayments} existingKeyId={existingPaymentKeyId} />
+                <PayUCard
+                  canUsePayments={canUsePayments}
+                  existingMerchantKey={existingPayUMerchantKey ?? null}
+                  existingEnvironment={existingPayUEnvironment ?? "production"}
+                />
+              </div>
+            </div>
           </div>
         );
 
@@ -573,7 +591,14 @@ export default function SettingsShell({
 
         {/* ── Integrations ────────────────────────────────── */}
         <SectionLabel>Integrations</SectionLabel>
-        <RazorpayCard canUsePayments={canUsePayments} existingKeyId={existingPaymentKeyId} />
+        <div className="space-y-4">
+          <RazorpayCard canUsePayments={canUsePayments} existingKeyId={existingPaymentKeyId} />
+          <PayUCard
+            canUsePayments={canUsePayments}
+            existingMerchantKey={existingPayUMerchantKey ?? null}
+            existingEnvironment={existingPayUEnvironment ?? "production"}
+          />
+        </div>
 
         {/* ── Developer ───────────────────────────────────── */}
         <SectionLabel>Developer</SectionLabel>

@@ -52,6 +52,7 @@ import {
   verifyCustomDomain,
   deleteCustomDomain,
 } from "@/app/actions/custom-domains";
+import CustomDomainSetupCard from "@/components/domain/CustomDomainSetupCard";
 import { discoverOidcEndpoints } from "@/lib/sso/oidc";
 import type {
   Organization,
@@ -1477,94 +1478,24 @@ export default function EnterpriseSecurityClient({
                 <Globe2 className="w-8 h-8 text-neutral-300 mx-auto" />
                 <p className="text-sm font-bold text-neutral-800">No custom domains configured yet</p>
                 <p className="text-xs text-neutral-400 max-w-sm mx-auto">
-                  Add your branded subdomain above to generate DNS CNAME routing instructions.
+                  Add your branded subdomain above to generate DNS CNAME routing instructions and real-time verification.
                 </p>
               </div>
             ) : (
               customDomains.map((dom) => (
-                <div
+                <CustomDomainSetupCard
                   key={dom.id}
-                  className="bg-white rounded-2xl p-5 border border-neutral-200/80 shadow-xs space-y-4"
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-neutral-100">
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm font-bold text-neutral-900 font-mono">{dom.domain}</span>
-                      {dom.status === "active" ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-green-50 text-green-700 border border-green-200">
-                          <CheckCircle2 className="w-3 h-3" />
-                          Active &amp; Live
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
-                          Pending DNS Propagation
-                        </span>
-                      )}
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-neutral-100 text-neutral-700 border border-neutral-200">
-                        SSL: {dom.ssl_status}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      {dom.status !== "active" && (
-                        <button
-                          type="button"
-                          onClick={() => handleVerifyCustomDomain(dom.id)}
-                          disabled={verifyingCustomDomainId === dom.id}
-                          className="px-3 py-1.5 rounded-lg text-xs font-semibold text-brand bg-brand-50 hover:bg-brand-100 transition-colors flex items-center gap-1"
-                        >
-                          {verifyingCustomDomainId === dom.id ? (
-                            <Loader2 className="w-3 h-3 animate-spin" />
-                          ) : (
-                            <RefreshCw className="w-3 h-3" />
-                          )}
-                          Verify CNAME
-                        </button>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteCustomDomain(dom.id)}
-                        className="p-1.5 rounded-lg text-neutral-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="bg-neutral-50 rounded-xl p-4 text-xs space-y-2.5 border border-neutral-200/80">
-                    <p className="font-semibold text-neutral-800">DNS Configuration Instructions:</p>
-                    <p className="text-neutral-500">
-                      Add a <strong>CNAME</strong> record in your DNS provider pointing your subdomain to URPASS edge routers:
-                    </p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                      <div>
-                        <span className="text-[10px] uppercase font-bold text-neutral-400 block mb-0.5">
-                          Record Type / Subdomain Host
-                        </span>
-                        <code className="p-2 bg-white rounded-lg border border-neutral-200 block font-mono text-neutral-800">
-                          CNAME / {dom.domain.split(".")[0] || "@"}
-                        </code>
-                      </div>
-                      <div>
-                        <div className="flex items-center justify-between mb-0.5">
-                          <span className="text-[10px] uppercase font-bold text-neutral-400 block">
-                            Target / Value
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => copyToClipboard(dom.cname_target, dom.id)}
-                            className="text-[11px] text-brand hover:underline font-semibold flex items-center gap-0.5"
-                          >
-                            {copiedKey === dom.id ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-                            Copy Target
-                          </button>
-                        </div>
-                        <code className="p-2 bg-white rounded-lg border border-neutral-200 block font-mono text-neutral-800 break-all select-all font-semibold">
-                          {dom.cname_target}
-                        </code>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                  orgId={org.id}
+                  domain={dom}
+                  onDeleted={(deletedId) =>
+                    setCustomDomains(customDomains.filter((d) => d.id !== deletedId))
+                  }
+                  onVerified={(updatedDom) =>
+                    setCustomDomains(
+                      customDomains.map((d) => (d.id === updatedDom.id ? updatedDom : d))
+                    )
+                  }
+                />
               ))
             )}
           </div>

@@ -4,9 +4,15 @@
  */
 
 export type PaymentMode = "URPASS_MANAGED" | "ORGANIZER_GATEWAY";
-export type PaymentProvider = "RAZORPAY" | "CASHFREE";
+export type PaymentProvider = "RAZORPAY" | "CASHFREE" | "PAYU";
 export type FeeBearer = "ATTENDEE" | "ORGANIZER" | "SPLIT";
 export type RefundPolicy = "NON_REFUNDABLE" | "FLEXIBLE_24H" | "ORGANIZER_DISCRETION";
+
+export interface PayUCredentials {
+  merchantKey: string;
+  merchantSalt: string;
+  environment: "production" | "sandbox";
+}
 
 export type KycStatus = "PENDING" | "UNDER_REVIEW" | "APPROVED" | "REJECTED";
 export type SettlementStatus = "PENDING" | "ACTIVE" | "PROCESSING" | "SETTLED" | "FAILED" | "SUSPENDED" | "ON_HOLD";

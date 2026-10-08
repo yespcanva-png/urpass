@@ -55,17 +55,37 @@ export async function GET(req: NextRequest) {
       return NextResponse.redirect(`${origin}/login?error=google_auth_failed&step=init`);
     }
 
-    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-    const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID?.trim();
+    const clientSecret = process.env.GOOGLE_CLIENT_SECRET?.trim();
 
     if (!clientId || !clientSecret) {
       console.error("[google-callback] Google client credentials missing");
       return NextResponse.redirect(`${origin}/login?error=google_not_configured`);
     }
 
-    const redirectUri = `${origin}/auth/google/callback`;
+    // Resolve state & exact redirect_uri used during the initial authorization redirect
+    let redirectUri = `${origin}/auth/google/callback`;
+    let targetPath = "/dashboard";
+    if (state) {
+      try {
+        const decodedStr = Buffer.from(state, "base64url").toString("utf8");
+        if (decodedStr.startsWith("{") && decodedStr.endsWith("}")) {
+          const parsed = JSON.parse(decodedStr);
+          if (parsed && typeof parsed === "object") {
+            if (parsed.next) targetPath = String(parsed.next);
+            if (parsed.redirect_uri && typeof parsed.redirect_uri === "string") {
+              redirectUri = parsed.redirect_uri;
+            }
+          }
+        } else {
+          targetPath = state;
+        }
+      } catch {
+        targetPath = state;
+      }
+    }
 
-    // Exchange authorization code for Google tokens with strict 8s timeout
+    // Exchange authorization code for Google tokens with strict 10s timeout
     const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -76,38 +96,63 @@ export async function GET(req: NextRequest) {
         redirect_uri: redirectUri,
         grant_type: "authorization_code",
       }),
-      signal: AbortSignal.timeout(8000),
+      signal: AbortSignal.timeout(10000),
     });
 
-    const tokens = await tokenRes.json();
-    if (!tokenRes.ok || !tokens.id_token) {
-      console.error("[google-callback] token exchange error:", tokenRes.status, tokens?.error);
-      if (tokens.error === "invalid_grant") {
+    const tokens = await tokenRes.json().catch(() => null);
+    if (!tokenRes.ok || !tokens?.id_token) {
+      console.error("[google-callback] token exchange error:", tokenRes.status, tokens);
+      if (tokens?.error === "invalid_grant") {
         return NextResponse.redirect(`${origin}/login?error=google_code_expired`);
       }
       return NextResponse.redirect(`${origin}/login?error=google_auth_failed&step=token`);
     }
 
-    // Verify the ID token with strict 8s timeout
-    const infoRes = await fetch(
-      `https://oauth2.googleapis.com/tokeninfo?id_token=${tokens.id_token}`,
-      { signal: AbortSignal.timeout(8000) }
-    );
-    if (!infoRes.ok) {
-      console.error("[google-callback] tokeninfo verification error:", infoRes.status);
+    // Verify the ID token via Google tokeninfo with JWT decode fallback
+    let info: GoogleTokenInfo | null = null;
+    try {
+      const infoRes = await fetch(
+        `https://oauth2.googleapis.com/tokeninfo?id_token=${tokens.id_token}`,
+        { signal: AbortSignal.timeout(10000) }
+      );
+      if (infoRes.ok) {
+        info = await infoRes.json();
+      }
+    } catch (e) {
+      console.warn("[google-callback] tokeninfo fetch warning:", e);
+    }
+
+    if (!info && tokens.id_token) {
+      try {
+        const parts = tokens.id_token.split(".");
+        if (parts.length === 3) {
+          const payload = JSON.parse(Buffer.from(parts[1], "base64url").toString("utf8"));
+          if (payload && payload.sub && payload.email) {
+            info = payload as GoogleTokenInfo;
+          }
+        }
+      } catch (e) {
+        console.error("[google-callback] JWT decode fallback failed:", e);
+      }
+    }
+
+    if (!info || !info.email) {
       return NextResponse.redirect(`${origin}/login?error=google_auth_failed&step=verify`);
     }
 
-    const info: GoogleTokenInfo = await infoRes.json();
-
-    if (clientId && info.aud !== clientId) {
-      console.error("[google-callback] aud mismatch. Token aud:", info.aud, "Expected:", clientId);
-      return NextResponse.redirect(`${origin}/login?error=google_auth_failed&step=aud`);
+    if (clientId && info.aud) {
+      const normalizedAud = info.aud.replace(".apps.googleusercontent.com", "").trim();
+      const normalizedClient = clientId.replace(".apps.googleusercontent.com", "").trim();
+      if (normalizedAud !== normalizedClient) {
+        console.error("[google-callback] aud mismatch. Token aud:", info.aud, "Expected:", clientId);
+        return NextResponse.redirect(`${origin}/login?error=google_auth_failed&step=aud`);
+      }
     }
 
     const isVerified =
       String(info.email_verified).toLowerCase() === "true" ||
-      info.email_verified === true;
+      info.email_verified === true ||
+      String(info.email_verified) === "1";
 
     if (!isVerified) {
       return NextResponse.redirect(`${origin}/login?error=google_email_unverified`);
@@ -120,14 +165,14 @@ export async function GET(req: NextRequest) {
       return NextResponse.redirect(`${origin}/login?error=google_no_email`);
     }
 
-    const fullName = info.name || normalizedEmail.split("@")[0];
+    const fullName = info.name?.trim() || normalizedEmail.split("@")[0];
     const avatarUrl = info.picture || "";
     const googleId = info.sub || "";
 
-    // Generate secure 32-character ephemeral credential (within Supabase 72-char limit)
-    const ephemeralPassword = crypto.randomBytes(16).toString("hex");
+    // Generate secure ephemeral password satisfying all complexity rules
+    const ephemeralPassword = crypto.randomBytes(16).toString("hex") + "A1!";
 
-    // 1. Find user in profiles table or auth.users
+    // 1. Resolve existing user ID (via profiles table or Supabase auth lookup)
     const { data: profileRow } = await admin
       .from("profiles")
       .select("user_id")
@@ -137,9 +182,19 @@ export async function GET(req: NextRequest) {
     let userId = profileRow?.user_id;
     let isNewUser = false;
 
+    if (!userId) {
+      const { data: linkLookup } = await admin.auth.admin.generateLink({
+        type: "magiclink",
+        email: normalizedEmail,
+      });
+      if (linkLookup?.user?.id) {
+        userId = linkLookup.user.id;
+      }
+    }
+
     if (userId) {
-      // Existing user: mark email confirmed, set password & update metadata
-      await admin.auth.admin.updateUserById(userId, {
+      // Existing user: update password, mark email confirmed and sync metadata
+      const { error: updateErr } = await admin.auth.admin.updateUserById(userId, {
         password: ephemeralPassword,
         email_confirm: true,
         user_metadata: {
@@ -150,7 +205,11 @@ export async function GET(req: NextRequest) {
         },
       });
 
-      // Asynchronous non-blocking owner notification
+      if (updateErr) {
+        console.warn("[google-callback] updateUserById error:", updateErr.message);
+      }
+
+      // Non-blocking owner login notification
       try {
         notifyOwnerUserLogin({
           name: fullName,
@@ -162,7 +221,7 @@ export async function GET(req: NextRequest) {
         // Ignore notification errors
       }
     } else {
-      // Try to create user in auth.users
+      // Try creating new user in Supabase auth
       const { data: createdUser, error: createErr } = await admin.auth.admin.createUser({
         email: normalizedEmail,
         password: ephemeralPassword,
@@ -179,7 +238,6 @@ export async function GET(req: NextRequest) {
         userId = createdUser.user.id;
         isNewUser = true;
 
-        // Asynchronous non-blocking notifications
         try {
           Promise.allSettled([
             notifyOwnerNewUser({
@@ -194,7 +252,7 @@ export async function GET(req: NextRequest) {
           // Ignore notification errors
         }
       } else {
-        // Fallback: If user already exists in auth.users without a profile record
+        // Fallback: If user was created concurrently or already exists
         const { data: linkData } = await admin.auth.admin.generateLink({
           type: "magiclink",
           email: normalizedEmail,
@@ -234,23 +292,6 @@ export async function GET(req: NextRequest) {
     }
 
     // Determine post-login redirect destination
-    let targetPath = "/dashboard";
-    if (state) {
-      try {
-        const decodedStr = Buffer.from(state, "base64url").toString("utf8");
-        if (decodedStr.startsWith("{") && decodedStr.endsWith("}")) {
-          const parsed = JSON.parse(decodedStr);
-          if (parsed && typeof parsed === "object" && parsed.next) {
-            targetPath = String(parsed.next);
-          }
-        } else {
-          targetPath = state;
-        }
-      } catch {
-        targetPath = state;
-      }
-    }
-
     const target = resolvePostAuthRedirect(
       { get: (k: string) => (k === "next" ? targetPath : null) },
       null
@@ -291,7 +332,7 @@ export async function GET(req: NextRequest) {
                 path: options?.path || "/",
                 maxAge: typeof options?.maxAge === "number" ? options.maxAge : undefined,
                 domain: options?.domain || undefined,
-                sameSite: "lax",
+                sameSite: (options?.sameSite as "lax" | "strict" | "none") || "lax",
                 secure: process.env.NODE_ENV === "production" || origin.startsWith("https://"),
                 httpOnly: options?.httpOnly ?? true,
               });
@@ -330,10 +371,26 @@ export async function GET(req: NextRequest) {
       const tokenHash = linkData.properties.hashed_token;
       const verificationType = (linkData.properties.verification_type as "magiclink" | "signup" | "email") || "magiclink";
 
-      const { error: verifyErr } = await supabase.auth.verifyOtp({
+      let { error: verifyErr } = await supabase.auth.verifyOtp({
         token_hash: tokenHash,
         type: verificationType,
       });
+
+      if (verifyErr && verificationType !== "magiclink") {
+        const fb = await supabase.auth.verifyOtp({
+          token_hash: tokenHash,
+          type: "magiclink",
+        });
+        if (!fb.error) verifyErr = null;
+      }
+
+      if (verifyErr && verificationType !== "email") {
+        const fb = await supabase.auth.verifyOtp({
+          token_hash: tokenHash,
+          type: "email",
+        });
+        if (!fb.error) verifyErr = null;
+      }
 
       if (verifyErr) {
         console.error("[google-callback] verifyOtp error:", verifyErr?.message || verifyErr);

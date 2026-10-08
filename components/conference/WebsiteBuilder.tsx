@@ -25,6 +25,7 @@ import {
   X,
 } from "lucide-react";
 import type { EventWebsite, WebsiteSectionConfig } from "@/types/conference";
+import EventDomainHelper from "@/components/domain/EventDomainHelper";
 
 interface WebsiteBuilderProps {
   eventId: string;
@@ -739,6 +740,7 @@ export default function WebsiteBuilder({
                 onChange={(e) => setCustomDomain(e.target.value)}
                 className="w-full text-sm px-3.5 py-2.5 rounded-xl border border-neutral-200 focus:outline-hidden focus:border-neutral-900 font-mono"
               />
+              <EventDomainHelper customDomain={customDomain} />
             </div>
           </div>
 

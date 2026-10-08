@@ -264,5 +264,47 @@ describe("Google OAuth Routes", () => {
       expect(mockVerifyOtp).toHaveBeenCalled();
       expect(res.cookies.get("sb-auth-token")?.value).toBe("token-abc");
     });
+
+    it("falls back to JWT payload decode if tokeninfo endpoint fails", async () => {
+      // Create a valid base64url JWT id_token
+      const header = Buffer.from(JSON.stringify({ alg: "RS256", typ: "JWT" })).toString("base64url");
+      const payload = Buffer.from(
+        JSON.stringify({
+          sub: "google-jwt-user-456",
+          email: "jwt-user@example.com",
+          email_verified: true,
+          name: "JWT User",
+          aud: "mock-google-client-id.apps.googleusercontent.com",
+        })
+      ).toString("base64url");
+      const signature = Buffer.from("mock_signature").toString("base64url");
+      const mockJwtToken = `${header}.${payload}.${signature}`;
+
+      global.fetch = vi.fn().mockImplementation((url: string) => {
+        if (url === "https://oauth2.googleapis.com/token") {
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            json: () => Promise.resolve({ id_token: mockJwtToken }),
+          });
+        }
+        if (url.includes("oauth2.googleapis.com/tokeninfo")) {
+          // Tokeninfo returns 500 error
+          return Promise.resolve({
+            ok: false,
+            status: 500,
+            json: () => Promise.resolve({ error: "server_error" }),
+          });
+        }
+        return Promise.reject(new Error("Unknown URL"));
+      });
+
+      const req = new NextRequest("https://urpass.space/auth/google/callback?code=valid_code&state=/dashboard");
+      const res = await googleCallbackGet(req);
+
+      expect(res.status).toBe(307);
+      expect(res.headers.get("location")).toBe("https://urpass.space/dashboard");
+      expect(mockSignInWithPassword).toHaveBeenCalled();
+    });
   });
 });

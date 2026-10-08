@@ -19,6 +19,7 @@ import { orgSchema, type OrgInput } from "@/lib/validations/organization";
 import { updateOrganization, deleteOrganization } from "@/app/actions/organizations";
 import { updateOrganizationSettings } from "@/app/actions/organization-settings";
 import OrgRazorpayCard from "@/components/org/OrgRazorpayCard";
+import OrgPayUCard from "@/components/org/OrgPayUCard";
 import OrganizationPaymentSettings from "@/components/payments/OrganizationPaymentSettings";
 import type { OrganizationPaymentAccount } from "@/lib/payments/types";
 import type { Organization, OrgRole, OrganizationSettings } from "@/types";
@@ -74,6 +75,8 @@ interface Props {
   orgSlug: string;
   userRole: OrgRole;
   existingPaymentKeyId: string | null;
+  existingPayUMerchantKey?: string | null;
+  existingPayUEnvironment?: "production" | "sandbox";
   initialSettings: OrganizationSettings | null;
   initialManagedAccount?: OrganizationPaymentAccount | null;
 }
@@ -83,6 +86,8 @@ export default function OrgSettingsClient({
   orgSlug,
   userRole,
   existingPaymentKeyId,
+  existingPayUMerchantKey,
+  existingPayUEnvironment,
   initialSettings,
   initialManagedAccount,
 }: Props) {
@@ -395,16 +400,24 @@ export default function OrgSettingsClient({
           initialAccount={initialManagedAccount}
         />
 
-        <div className="bg-white rounded-2xl shadow-xs p-6 space-y-4 border border-neutral-200/80">
+        <div className="bg-white rounded-2xl shadow-xs p-6 space-y-5 border border-neutral-200/80">
           <SectionHeader
             icon={CreditCard}
-            title="Direct Merchant Gateway (BYO Keys)"
-            subtitle="Alternatively connect your own Razorpay keys for direct merchant collections"
+            title="Direct Merchant Gateways (BYO Keys)"
+            subtitle="Connect your own Razorpay or PayU merchant credentials for direct collections"
           />
           <p className="text-xs text-neutral-500 leading-relaxed">
-            If you prefer direct merchant collections instead of URPASS Managed Marketplace Split, configure your Razorpay Key ID and Secret below.
+            If you prefer direct merchant collections instead of URPASS Managed Marketplace Split, configure your merchant gateway credentials below.
           </p>
-          <OrgRazorpayCard orgId={org.id} orgSlug={orgSlug} existingKeyId={existingPaymentKeyId} />
+          <div className="grid grid-cols-1 gap-4 pt-1">
+            <OrgRazorpayCard orgId={org.id} orgSlug={orgSlug} existingKeyId={existingPaymentKeyId} />
+            <OrgPayUCard
+              orgId={org.id}
+              orgSlug={orgSlug}
+              existingMerchantKey={existingPayUMerchantKey ?? null}
+              existingEnvironment={existingPayUEnvironment ?? "production"}
+            />
+          </div>
         </div>
       </div>
 

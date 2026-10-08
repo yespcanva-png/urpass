@@ -27,16 +27,18 @@ export async function GET(req: NextRequest) {
   );
 
   const nonce = crypto.randomBytes(16).toString("hex");
+  const redirectUri = `${origin}/auth/google/callback`;
   const statePayload = {
     next: target,
     nonce,
+    redirect_uri: redirectUri,
     ts: Date.now(),
   };
   const encodedState = Buffer.from(JSON.stringify(statePayload)).toString("base64url");
 
   const params = new URLSearchParams({
     client_id: clientId,
-    redirect_uri: `${origin}/auth/google/callback`,
+    redirect_uri: redirectUri,
     response_type: "code",
     scope: "openid email profile",
     prompt: "select_account",

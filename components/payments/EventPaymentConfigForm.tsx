@@ -13,11 +13,12 @@ import {
 } from "lucide-react";
 import { saveEventPaymentConfigAction } from "@/app/actions/managed-payments";
 import { calculateTicketFees, formatINR } from "@/lib/payments/fees";
-import type { EventPaymentConfig, FeeBearer, PaymentMode, RefundPolicy } from "@/lib/payments/types";
+import type { EventPaymentConfig, FeeBearer, PaymentMode, PaymentProvider, RefundPolicy } from "@/lib/payments/types";
+import PayUWordmark from "@/components/payments/PayUWordmark";
 
 interface EventPaymentConfigFormProps {
   eventId: string;
-  initialConfig?: (EventPaymentConfig & { payment_mode?: PaymentMode; fee_bearer?: FeeBearer; refund_policy?: RefundPolicy }) | null;
+  initialConfig?: (EventPaymentConfig & { payment_mode?: PaymentMode; fee_bearer?: FeeBearer; refund_policy?: RefundPolicy; provider?: PaymentProvider }) | null;
   sampleTicketPrice?: number;
   linkedAccountDisplay?: string;
 }
@@ -30,6 +31,9 @@ export default function EventPaymentConfigForm({
 }: EventPaymentConfigFormProps) {
   const [paymentMode, setPaymentMode] = useState<PaymentMode>(
     initialConfig?.paymentMode || initialConfig?.payment_mode || "URPASS_MANAGED"
+  );
+  const [provider, setProvider] = useState<PaymentProvider>(
+    initialConfig?.provider || "PAYU"
   );
   const [feeBearer, setFeeBearer] = useState<FeeBearer>(
     initialConfig?.feeBearer || initialConfig?.fee_bearer || "ATTENDEE"
@@ -58,6 +62,7 @@ export default function EventPaymentConfigForm({
       const res = await saveEventPaymentConfigAction({
         eventId,
         paymentMode,
+        provider,
         feeBearer,
         refundPolicy,
         platformFeePercent: 2.0,
@@ -134,13 +139,91 @@ export default function EventPaymentConfigForm({
               onChange={() => setPaymentMode("ORGANIZER_GATEWAY")}
               className="mt-0.5"
             />
-            <div>
+            <div className="flex-1">
               <span className="text-xs font-semibold text-neutral-900 block">
                 My Payment Gateway (Direct Merchant)
               </span>
               <span className="text-[11px] text-neutral-500 block leading-relaxed">
-                Collect directly through your connected Razorpay/Cashfree merchant credentials.
+                Collect ticket revenue directly through your own connected merchant credentials (PayU, Razorpay, or Cashfree).
               </span>
+
+              {paymentMode === "ORGANIZER_GATEWAY" && (
+                <div className="mt-3 pt-3 border-t border-neutral-200/80 space-y-2">
+                  <span className="text-[11px] font-semibold text-neutral-700 block">
+                    Select Gateway Provider for this Event:
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setProvider("PAYU");
+                      }}
+                      className={`p-2.5 rounded-xl border text-left flex flex-col gap-1 transition-all cursor-pointer ${
+                        provider === "PAYU"
+                          ? "border-emerald-600 bg-emerald-50/50 shadow-2xs font-semibold"
+                          : "border-neutral-200 bg-white hover:border-neutral-300"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <PayUWordmark className="h-3.5 w-auto" />
+                        {provider === "PAYU" && (
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
+                        )}
+                      </div>
+                      <span className="text-[10px] text-neutral-500 font-normal">
+                        Direct Settlement
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setProvider("RAZORPAY");
+                      }}
+                      className={`p-2.5 rounded-xl border text-left flex flex-col gap-1 transition-all cursor-pointer ${
+                        provider === "RAZORPAY"
+                          ? "border-neutral-900 bg-neutral-50 shadow-2xs font-semibold"
+                          : "border-neutral-200 bg-white hover:border-neutral-300"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-neutral-950">Razorpay</span>
+                        {provider === "RAZORPAY" && (
+                          <span className="w-1.5 h-1.5 rounded-full bg-neutral-900" />
+                        )}
+                      </div>
+                      <span className="text-[10px] text-neutral-500 font-normal">
+                        Direct Merchant
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setProvider("CASHFREE");
+                      }}
+                      className={`p-2.5 rounded-xl border text-left flex flex-col gap-1 transition-all cursor-pointer ${
+                        provider === "CASHFREE"
+                          ? "border-neutral-900 bg-neutral-50 shadow-2xs font-semibold"
+                          : "border-neutral-200 bg-white hover:border-neutral-300"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-neutral-950">Cashfree</span>
+                        {provider === "CASHFREE" && (
+                          <span className="w-1.5 h-1.5 rounded-full bg-neutral-900" />
+                        )}
+                      </div>
+                      <span className="text-[10px] text-neutral-500 font-normal">
+                        Payment Gateway
+                      </span>
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </label>
         </div>

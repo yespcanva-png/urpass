@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getUserPlan } from "@/lib/plan";
 import { getApiUsage } from "@/app/actions/api-usage";
 import { listWebhookEndpoints, getWebhookDeliveries } from "@/app/actions/webhooks";
+import { getPayUSettings } from "@/app/actions/payu-settings";
 import SettingsShell, { type SettingsPlan } from "./SettingsShell";
 
 export const metadata: Metadata = {
@@ -22,6 +23,7 @@ export default async function SettingsPage() {
     { data: subData },
     { count: activeEventCount },
     { data: paymentSettings },
+    payuSettings,
   ] = await Promise.all([
     supabase.from("profiles").select("*").eq("user_id", user.id).single(),
     getUserPlan(supabase, user.id),
@@ -41,6 +43,7 @@ export default async function SettingsPage() {
       .select("razorpay_key_id")
       .eq("user_id", user.id)
       .maybeSingle(),
+    getPayUSettings(),
   ]);
 
   const defaultApiUsage = { api_requests: 0, registrations: 0, check_ins: 0, events: 0, year_month: "" };
@@ -114,6 +117,8 @@ export default async function SettingsPage() {
       billingCycle={(subData?.billing_cycle ?? "monthly") as "monthly" | "annual"}
       registrationsUsed={subData?.registrations_used ?? 0}
       existingPaymentKeyId={paymentSettings?.razorpay_key_id ?? null}
+      existingPayUMerchantKey={payuSettings.merchantKey}
+      existingPayUEnvironment={payuSettings.environment}
       apiUsage={apiUsage}
       apiKeys={(apiKeys ?? []) as Parameters<typeof SettingsShell>[0]["apiKeys"]}
       webhookEndpoints={webhookEndpoints}
