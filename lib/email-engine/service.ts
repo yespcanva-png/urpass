@@ -1,7 +1,6 @@
-import { Resend } from "resend";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { getSupabaseUrl } from "@/lib/supabase/config";
-import { getResendApiKey, getFromEmail } from "@/lib/email";
+import { getFromEmail, isEmailProviderConfigured, sendEmail } from "@/lib/email";
 import {
   EMAIL_TEMPLATES_CATALOG,
   EmailTemplateSlug,
@@ -33,15 +32,6 @@ export interface DispatchEmailResult {
  * Core Communication Engine Service
  */
 export class CommunicationEngineService {
-  private resend: Resend | null = null;
-
-  constructor() {
-    const key = getResendApiKey();
-    if (key && !key.startsWith("re_your")) {
-      this.resend = new Resend(key);
-    }
-  }
-
   /**
    * Check if a recipient has opted out of a category
    */
@@ -98,7 +88,7 @@ export class CommunicationEngineService {
         template_slug: templateSlug,
         subject,
         status,
-        provider: "resend",
+        provider: "zeptomail",
         provider_message_id: providerMessageId || null,
         error_message: errorMessage || null,
         metadata,
@@ -128,9 +118,9 @@ export class CommunicationEngineService {
   }): Promise<DispatchEmailResult> {
     const from = getFromEmail();
 
-    if (!this.resend) {
+    if (!isEmailProviderConfigured()) {
       console.log(
-        `[CommunicationEngine] RESEND_API_KEY missing/mock. Simulated dispatch:`,
+        `[CommunicationEngine] email provider missing/mock. Simulated dispatch:`,
         { to, subject, templateSlug }
       );
       await this.logDelivery({
@@ -146,27 +136,14 @@ export class CommunicationEngineService {
     }
 
     try {
-      const response = await this.resend.emails.send({
+      const response = await sendEmail({
         from,
         to,
         subject,
         html,
       });
 
-      if (response.error) {
-        await this.logDelivery({
-          recipientEmail: to,
-          templateSlug,
-          subject,
-          status: "failed",
-          errorMessage: response.error.message,
-          userId,
-          metadata,
-        });
-        return { success: false, error: response.error.message };
-      }
-
-      const messageId = response.data?.id;
+      const messageId = response?.id;
       await this.logDelivery({
         recipientEmail: to,
         templateSlug,

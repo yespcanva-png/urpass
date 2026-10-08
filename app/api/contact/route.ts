@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Resend } from "resend";
 
-import { getResendApiKey } from "@/lib/email";
+import { isEmailProviderConfigured, sendEmail } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 
@@ -19,18 +18,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Message must be between 10 and 5000 characters" }, { status: 400 });
   }
 
-  const apiKey = getResendApiKey();
-  if (!apiKey || apiKey.startsWith("re_your")) {
-    console.warn("[email] RESEND_API_KEY not configured — contact email skipped");
+  if (!isEmailProviderConfigured()) {
+    console.warn("[email] email provider not configured — contact email skipped");
     return NextResponse.json({ ok: true });
   }
 
-  const resend = new Resend(apiKey);
   const emailSubject = subject
     ? `[URPASS Inquiry: ${subject}] from ${name}`
     : `Contact form: ${name}`;
 
-  const { error } = await resend.emails.send({
+  try {
+    await sendEmail({
     from: "URPASS Contact <noreply@urpass.space>",
     to: ["srinithin@yespstudio.com"],
     replyTo: email,
@@ -42,9 +40,8 @@ export async function POST(req: NextRequest) {
       <p><strong>Message:</strong></p>
       <p style="white-space:pre-wrap">${escapeHtml(message)}</p>
     `,
-  });
-
-  if (error) {
+    });
+  } catch (error) {
     console.error("contact email error:", error);
     return NextResponse.json({ error: "Failed to send message" }, { status: 500 });
   }

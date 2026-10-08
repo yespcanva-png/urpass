@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { getSupabaseConfig } from "@/lib/supabase/config";
+import { clearAuthCookies, isRefreshTokenMissingError } from "@/lib/supabase/auth-cookies";
 
 const PROTECTED = ["/dashboard", "/event", "/create-event", "/scan", "/billing", "/org"];
 const AUTH_PAGES = ["/login", "/signup"];
@@ -51,15 +52,21 @@ export async function updateSession(request: NextRequest) {
   });
 
   let user = null;
+  let authError: unknown = null;
   try {
     const { data, error } = await supabase.auth.getUser();
     if (!error && data?.user) {
       user = data.user;
+    } else if (error) {
+      authError = error;
     }
-  } catch {
+  } catch (error) {
     // Gracefully handle stale or revoked refresh tokens (e.g. refresh_token_not_found)
+    authError = error;
     user = null;
   }
+
+  const hasInvalidRefreshToken = isRefreshTokenMissingError(authError);
 
   if (isProtected && !user) {
     const feedbackMatch = pathname.match(/^\/event\/([^/]+)\/feedback$/);
@@ -69,6 +76,9 @@ export async function updateSession(request: NextRequest) {
       supabaseResponse.cookies.getAll().forEach((cookie) => {
         res.cookies.set(cookie);
       });
+      if (hasInvalidRefreshToken) {
+        clearAuthCookies(res, request);
+      }
       return res;
     }
     const destination = `${pathname}${url.search}`;
@@ -79,6 +89,9 @@ export async function updateSession(request: NextRequest) {
     supabaseResponse.cookies.getAll().forEach((cookie) => {
       res.cookies.set(cookie);
     });
+    if (hasInvalidRefreshToken) {
+      clearAuthCookies(res, request);
+    }
     return res;
   }
 
@@ -89,6 +102,10 @@ export async function updateSession(request: NextRequest) {
       res.cookies.set(cookie);
     });
     return res;
+  }
+
+  if (isAuthPage && hasInvalidRefreshToken) {
+    clearAuthCookies(supabaseResponse, request);
   }
 
   return supabaseResponse;

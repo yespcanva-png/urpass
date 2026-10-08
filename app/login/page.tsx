@@ -70,6 +70,12 @@ function LoginContent() {
       return "Your Google email address has not been verified by Google.";
     } else if (errorParam === "google_not_configured") {
       return "Google sign-in is not configured on this environment.";
+    } else if (errorParam === "oauth_state_invalid") {
+      return "Google sign-in session expired. Please click 'Continue with Google' to try again.";
+    } else if (errorParam === "oauth_session_failed") {
+      return "We could not establish your session after Google sign-in. Please try again.";
+    } else if (errorParam === "refresh_token_not_found") {
+      return "Your previous session expired. Please sign in again.";
     } else if (msgParam) {
       return decodeURIComponent(msgParam);
     } else {
@@ -189,7 +195,7 @@ function LoginContent() {
       searchParams,
       typeof document !== "undefined" ? document.referrer : null
     );
-    window.location.assign(`/api/auth/google/redirect?next=${encodeURIComponent(target)}`);
+    router.push(`/api/auth/google/redirect?next=${encodeURIComponent(target)}`);
   }
 
   return (

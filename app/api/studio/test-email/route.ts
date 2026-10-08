@@ -5,6 +5,7 @@ import {
   sanitizeTicketDesign,
   DEFAULT_TICKET_DESIGN,
 } from "@/lib/pass-design";
+import { getFromEmail, isEmailProviderConfigured, sendEmail } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 
@@ -38,15 +39,12 @@ export async function POST(req: NextRequest) {
       ? sanitizeTicketDesign(config)
       : DEFAULT_TICKET_DESIGN;
 
-    const apiKey = process.env.RESEND_API_KEY;
-    if (!apiKey || apiKey.startsWith("re_your")) {
-      console.log(`[test-ticket-email] RESEND_API_KEY not configured. Simulated test ticket to: ${toEmail}`);
+    if (!isEmailProviderConfigured()) {
+      console.log(`[test-ticket-email] email provider not configured. Simulated test ticket to: ${toEmail}`);
       return NextResponse.json({ success: true, simulated: true });
     }
 
-    const { Resend } = await import("resend");
-    const resend = new Resend(apiKey);
-    const from = process.env.EMAIL_FROM || "URPASS <noreply@urpass.space>";
+    const from = getFromEmail();
 
     const isDark = safeConfig.template === "dark";
     const radius =
@@ -58,7 +56,7 @@ export async function POST(req: NextRequest) {
       ? `<div style="margin-top: 14px; padding-top: 10px; border-top: 1px dashed #e5e7eb; font-size: 11px; font-style: italic; color: #6b7280;">&ldquo;${safeConfig.customMessage}&rdquo;</div>`
       : "";
 
-    await resend.emails.send({
+    await sendEmail({
       from,
       to: toEmail,
       subject: `[TEST TICKET] Your entry pass for ${eventName || "Your Event"}`,

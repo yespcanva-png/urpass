@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Resend } from "resend";
 import { createClient } from "@/lib/supabase/server";
-import { getResendApiKey } from "@/lib/email";
+import { isEmailProviderConfigured, sendEmail } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 
@@ -64,19 +63,18 @@ export async function POST(req: NextRequest) {
     console.warn("Could not insert organizer notification:", err);
   }
 
-  const apiKey = getResendApiKey();
-  if (!apiKey || apiKey.startsWith("re_your")) {
-    console.warn("[email] RESEND_API_KEY not configured — feedback email skipped in development");
+  if (!isEmailProviderConfigured()) {
+    console.warn("[email] email provider not configured — feedback email skipped in development");
     return NextResponse.json({ ok: true, devMode: true });
   }
 
-  const resend = new Resend(apiKey);
-  const { error } = await resend.emails.send({
-    from: "URPASS Support <noreply@urpass.space>",
-    to: ["srinithin@yespstudio.com"],
-    ...(replyToHeader ? { replyTo: replyToHeader } : {}),
-    subject,
-    html: `
+  try {
+    await sendEmail({
+      from: "URPASS Support <noreply@urpass.space>",
+      to: ["srinithin@yespstudio.com"],
+      ...(replyToHeader ? { replyTo: replyToHeader } : {}),
+      subject,
+      html: `
       <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,sans-serif;font-size:14px;color:#1e293b;max-width:580px;line-height:1.6">
         <div style="background:#6D28D9;color:#ffffff;padding:16px 20px;border-radius:12px 12px 0 0">
           <h2 style="margin:0;font-size:18px;font-weight:700">Event Creator Support & Feedback</h2>
@@ -120,9 +118,8 @@ export async function POST(req: NextRequest) {
         </div>
       </div>
     `,
-  });
-
-  if (error) {
+    });
+  } catch (error) {
     console.error("feedback email error:", error);
     return NextResponse.json({ error: "Failed to submit feedback" }, { status: 500 });
   }

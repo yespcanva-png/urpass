@@ -8,6 +8,7 @@ import {
   type TicketDesignConfig,
   sanitizeTicketDesign,
 } from "@/lib/pass-design";
+import { getFromEmail, isEmailProviderConfigured, sendEmail } from "@/lib/email";
 
 type ActionResult = { error?: string; success?: boolean; config?: TicketDesignConfig };
 
@@ -129,15 +130,12 @@ export async function sendTestTicketEmail(
   if (!user) redirect("/login");
 
   try {
-    const { Resend } = await import("resend");
-    const apiKey = process.env.RESEND_API_KEY;
-    if (!apiKey || apiKey.startsWith("re_your")) {
-      console.log(`[test-ticket-email] RESEND_API_KEY not configured. Simulated test ticket to: ${toEmail}`);
+    if (!isEmailProviderConfigured()) {
+      console.log(`[test-ticket-email] email provider not configured. Simulated test ticket to: ${toEmail}`);
       return { success: true };
     }
 
-    const resend = new Resend(apiKey);
-    const from = process.env.EMAIL_FROM || "URPASS <noreply@urpass.space>";
+    const from = getFromEmail();
 
     const isDark = config.template === "dark";
     const radius = config.shape === "rounded" ? "28px" : config.shape === "compact" ? "12px" : "18px";
@@ -148,7 +146,7 @@ export async function sendTestTicketEmail(
       ? `<div style="margin-top: 14px; padding-top: 10px; border-top: 1px dashed #e5e7eb; font-size: 11px; font-style: italic; color: #6b7280;">&ldquo;${config.customMessage}&rdquo;</div>`
       : "";
 
-    await resend.emails.send({
+    await sendEmail({
       from,
       to: toEmail,
       subject: `[TEST TICKET] Your entry pass for ${eventName}`,

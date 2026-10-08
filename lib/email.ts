@@ -5,6 +5,35 @@ function cleanString(val?: string | null): string {
   return String(val).replace(/^["']|["']$/g, "").trim();
 }
 
+type EmailAddressInput =
+  | string
+  | {
+      email?: string;
+      address?: string;
+      name?: string;
+    };
+
+type MailPayload = {
+  from?: string;
+  to: EmailAddressInput | EmailAddressInput[];
+  subject: string;
+  html?: string;
+  text?: string;
+  replyTo?: string | string[];
+  attachments?: Array<{
+    filename: string;
+    content?: Buffer | string;
+    contentType?: string;
+    path?: string;
+  }>;
+};
+
+type MailSendResult = {
+  id?: string;
+  provider: "zeptomail" | "resend";
+  raw?: unknown;
+};
+
 export function getResendApiKey(): string {
   const envKey = cleanString(process.env.RESEND_API_KEY);
   if (envKey && !envKey.startsWith("re_your")) {
@@ -24,6 +53,20 @@ function getResend() {
     return null;
   }
   return new Resend(apiKey);
+}
+
+function getZohoZeptoMailApiKey() {
+  const raw = cleanString(process.env.ZOHO_ZEPTOMAIL_API_KEY || process.env.ZEPTOMAIL_API_KEY);
+  if (!raw || raw.includes("********")) return "";
+  return raw.startsWith("Zoho-enczapikey ") ? raw : `Zoho-enczapikey ${raw}`;
+}
+
+function getZohoZeptoMailEndpoint() {
+  return cleanString(process.env.ZOHO_ZEPTOMAIL_ENDPOINT) || "https://cpaas.zoho.in/v1.1/email";
+}
+
+export function isEmailProviderConfigured() {
+  return Boolean(getZohoZeptoMailApiKey()) || Boolean(getResend());
 }
 
 // Verified sending domain in Resend
@@ -67,7 +110,105 @@ function formatInrFromPaise(amountPaise?: number | null, currency = "INR") {
   return formatAmount(amountPaise, currency);
 }
 
-async function sendEmail(payload: Parameters<Resend["emails"]["send"]>[0]) {
+function parseEmailAddress(input: EmailAddressInput) {
+  if (typeof input !== "string") {
+    return {
+      address: cleanString(input.address || input.email),
+      name: input.name ? cleanString(input.name) : undefined,
+    };
+  }
+
+  const cleaned = cleanString(input);
+  const match = cleaned.match(/^(.*?)<([^>]+)>$/);
+  if (!match) {
+    return { address: cleaned };
+  }
+
+  return {
+    name: cleanString(match[1]),
+    address: cleanString(match[2]),
+  };
+}
+
+function normalizeRecipients(to: MailPayload["to"]) {
+  return (Array.isArray(to) ? to : [to])
+    .map(parseEmailAddress)
+    .filter((recipient) => recipient.address);
+}
+
+async function sendViaZeptoMail(payload: MailPayload): Promise<MailSendResult | null> {
+  const authorization = getZohoZeptoMailApiKey();
+  if (!authorization) return null;
+  if (payload.attachments?.length) return null;
+
+  const from = parseEmailAddress(payload.from || getFromEmail());
+  const recipients = normalizeRecipients(payload.to);
+
+  if (!from.address || recipients.length === 0) {
+    throw new Error("Missing email sender or recipient");
+  }
+
+  const replyTo = Array.isArray(payload.replyTo)
+    ? payload.replyTo[0]
+    : payload.replyTo;
+  const replyToAddress = replyTo ? parseEmailAddress(replyTo) : null;
+
+  const response = await fetch(getZohoZeptoMailEndpoint(), {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      Authorization: authorization,
+    },
+    body: JSON.stringify({
+      from: {
+        address: from.address,
+        ...(from.name ? { name: from.name } : {}),
+      },
+      to: recipients.map((recipient) => ({
+        email_address: {
+          address: recipient.address,
+          ...(recipient.name ? { name: recipient.name } : {}),
+        },
+      })),
+      ...(replyToAddress?.address
+        ? {
+            reply_to: [
+              {
+                address: replyToAddress.address,
+                ...(replyToAddress.name ? { name: replyToAddress.name } : {}),
+              },
+            ],
+          }
+        : {}),
+      subject: payload.subject,
+      ...(payload.html ? { htmlbody: payload.html } : {}),
+      ...(payload.text ? { textbody: payload.text } : {}),
+    }),
+  });
+
+  const json = await response.json().catch(() => null);
+  if (!response.ok) {
+    const message =
+      typeof json === "object" && json && "message" in json
+        ? String(json.message)
+        : `ZeptoMail API error (${response.status})`;
+    throw new Error(message);
+  }
+
+  const id =
+    typeof json === "object" && json
+      ? "request_id" in json
+        ? String(json.request_id)
+        : "data" in json
+          ? JSON.stringify(json.data)
+          : undefined
+      : undefined;
+
+  return { id, provider: "zeptomail", raw: json };
+}
+
+export async function sendEmail(payload: MailPayload) {
   if (
     process.env.STRESS_TEST === "true" ||
     (typeof payload.to === "string" && payload.to.includes("@test.urpass.space")) ||
@@ -76,10 +217,22 @@ async function sendEmail(payload: Parameters<Resend["emails"]["send"]>[0]) {
   ) {
     return;
   }
+  try {
+    const zeptoResult = await sendViaZeptoMail(payload);
+    if (zeptoResult) {
+      const recipient = normalizeRecipients(payload.to).map((r) => r.address).join(", ");
+      console.log(`[email] Sent via ZeptoMail to ${recipient} | "${payload.subject}" (id: ${zeptoResult.id || "n/a"})`);
+      return zeptoResult;
+    }
+  } catch (err) {
+    console.error("[email] ZeptoMail send failure:", err);
+    throw err;
+  }
+
   const resend = getResend();
   if (!resend) {
     console.warn(
-      "[email] RESEND_API_KEY not set or invalid — email skipped.\n",
+      "[email] Email provider not configured — email skipped.\n",
       "  To:", payload.to,
       "\n  Subject:", payload.subject
     );
@@ -88,24 +241,25 @@ async function sendEmail(payload: Parameters<Resend["emails"]["send"]>[0]) {
   try {
     const rawFrom = cleanString(payload.from);
     const cleanedFrom = rawFrom || getFromEmail();
-    const cleanedTo = typeof payload.to === "string"
-      ? cleanString(payload.to)
-      : Array.isArray(payload.to)
-      ? payload.to.map((t) => (typeof t === "string" ? cleanString(t) : t))
-      : payload.to;
+    const cleanedTo = normalizeRecipients(payload.to).map((recipient) =>
+      recipient.name ? `${recipient.name} <${recipient.address}>` : recipient.address
+    );
 
-    const { data, error } = await resend.emails.send({
+    const emailPayload = {
       ...payload,
       from: cleanedFrom,
-      to: cleanedTo,
-    });
+      to: cleanedTo.length === 1 ? cleanedTo[0] : cleanedTo,
+      ...(payload.html ? { html: payload.html } : { text: payload.text || "" }),
+    } as Parameters<Resend["emails"]["send"]>[0];
+
+    const { data, error } = await resend.emails.send(emailPayload);
     if (error) {
       console.error("[email] Resend API error:", error);
       throw error;
     }
     const recipient = Array.isArray(cleanedTo) ? cleanedTo.join(", ") : cleanedTo;
     console.log(`[email] Sent to ${recipient} | "${payload.subject}" (id: ${data?.id})`);
-    return data;
+    return { id: data?.id, provider: "resend" as const, raw: data };
   } catch (err) {
     console.error("[email] Resend send failure:", err);
     throw err;
@@ -1735,19 +1889,17 @@ export async function sendSponsorshipApprovalEmail({
   collegeName: string;
   voucherCode: string;
 }) {
-  const resend = getResend();
-  if (!resend) return { success: false, error: "Email provider not configured" };
-
   const safeStudent = escapeHtml(studentName);
   const safeEvent = escapeHtml(eventName);
   const safeCollege = escapeHtml(collegeName);
   const safeCode = escapeHtml(voucherCode);
 
-  return resend.emails.send({
-    from: getFromEmail(),
-    to: email,
-    subject: `🎉 Sponsorship Approved for ${eventName} (${collegeName})! Your Free Pro Voucher`,
-    html: `<!DOCTYPE html>
+  try {
+    const result = await sendEmail({
+      from: getFromEmail(),
+      to: email,
+      subject: `🎉 Sponsorship Approved for ${eventName} (${collegeName})! Your Free Pro Voucher`,
+      html: `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"/></head>
 <body style="margin:0;padding:24px;background:#0d091b;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
@@ -1793,7 +1945,11 @@ export async function sendSponsorshipApprovalEmail({
   </div>
 </body>
 </html>`.trim(),
-  });
+    });
+    return { data: { id: result?.id }, error: null };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : "Email provider failed" };
+  }
 }
 
 /**
@@ -2141,6 +2297,3 @@ export async function notifyEventTeamNewApplication({
     return false;
   }
 }
-
-
-

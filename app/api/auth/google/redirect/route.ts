@@ -1,6 +1,11 @@
 import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { resolvePostAuthRedirect } from "@/lib/auth-redirect";
+import { createClient } from "@/lib/supabase/server";
+import {
+  GOOGLE_OAUTH_NEXT_COOKIE,
+  GOOGLE_OAUTH_NONCE_COOKIE,
+} from "@/lib/supabase/auth-cookies";
 
 export const dynamic = "force-dynamic";
 
@@ -33,11 +38,8 @@ function getAppOrigin(req: NextRequest): string {
 
 export async function GET(req: NextRequest) {
   const origin = getAppOrigin(req);
-  const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
-  if (!clientId) {
-    return NextResponse.redirect(`${origin}/login?error=google_not_configured`);
-  }
+  const supabase = await createClient();
 
   const target = resolvePostAuthRedirect(
     req.nextUrl.searchParams,
@@ -52,30 +54,43 @@ export async function GET(req: NextRequest) {
     redirect_uri: redirectUri,
     ts: Date.now(),
   };
-  const encodedState = Buffer.from(JSON.stringify(statePayload)).toString("base64url");
 
-  const params = new URLSearchParams({
-    client_id: clientId,
-    redirect_uri: redirectUri,
-    response_type: "code",
-    scope: "openid email profile",
-    prompt: "select_account",
-    state: encodedState,
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: redirectUri,
+      scopes: "openid email profile",
+      queryParams: {
+        prompt: "select_account",
+      },
+    },
   });
 
-  const response = NextResponse.redirect(
-    `https://accounts.google.com/o/oauth2/v2/auth?${params}`
-  );
+  if (error || !data.url) {
+    console.error("[google-redirect] Supabase OAuth URL error:", error?.message);
+    return NextResponse.redirect(`${origin}/login?error=google_not_configured`);
+  }
 
-  // Store short-lived nonce cookie for CSRF protection (10 minutes)
-  response.cookies.set("oauth_state_nonce", nonce, {
+  const response = NextResponse.redirect(data.url);
+
+  response.cookies.set(GOOGLE_OAUTH_NONCE_COOKIE, nonce, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production" || origin.startsWith("https://"),
     sameSite: "lax",
     path: "/",
     maxAge: 600,
   });
+  response.cookies.set(
+    GOOGLE_OAUTH_NEXT_COOKIE,
+    Buffer.from(JSON.stringify(statePayload)).toString("base64url"),
+    {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production" || origin.startsWith("https://"),
+      sameSite: "lax",
+      path: "/",
+      maxAge: 600,
+    }
+  );
 
   return response;
 }
-
