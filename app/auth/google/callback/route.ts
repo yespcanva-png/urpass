@@ -283,14 +283,14 @@ export async function GET(req: NextRequest) {
       return NextResponse.redirect(`${origin}/login?error=google_no_email`);
     }
 
+    // Sanitize user profile fields
     const fullName = (info.name?.trim() || normalizedEmail.split("@")[0]).slice(0, 64);
     const avatarUrl = (info.picture || "").slice(0, 255);
-    const googleId = String(info.sub || "").slice(0, 64);
 
     // Generate secure ephemeral password satisfying all complexity rules
     const ephemeralPassword = crypto.randomBytes(16).toString("hex") + "A1!";
 
-    // 4. User Resolution: Fast lookup existing user or create
+    // 4. User Resolution: Fast lookup existing user or create with compact metadata to keep JWT size under 800 bytes
     let userId: string | undefined;
     let isNewUser = false;
 
@@ -307,9 +307,6 @@ export async function GET(req: NextRequest) {
         email_confirm: true,
         user_metadata: {
           full_name: fullName,
-          avatar_url: avatarUrl,
-          google_id: googleId,
-          email_verified: true,
         },
       });
     } else {
@@ -319,9 +316,6 @@ export async function GET(req: NextRequest) {
         email_confirm: true,
         user_metadata: {
           full_name: fullName,
-          avatar_url: avatarUrl,
-          google_id: googleId,
-          email_verified: true,
         },
       });
 
@@ -341,9 +335,6 @@ export async function GET(req: NextRequest) {
             email_confirm: true,
             user_metadata: {
               full_name: fullName,
-              avatar_url: avatarUrl,
-              google_id: googleId,
-              email_verified: true,
             },
           });
         }
@@ -380,7 +371,9 @@ export async function GET(req: NextRequest) {
 
     const cookieStore = await cookies();
 
-    // 6. Establish Session Cookies directly onto response
+    // 6. Deduplicated Session Cookie Collector: ensures each cookie is written strictly once to prevent header size exceeding 4k
+    const sessionCookieMap = new Map<string, { value: string; options?: any }>();
+
     const supabase = createServerClient(
       getSupabaseUrl(),
       getSupabaseAnonKey(),
@@ -391,14 +384,7 @@ export async function GET(req: NextRequest) {
           },
           setAll(cookiesToSet) {
             cookiesToSet.forEach(({ name, value, options }) => {
-              response.cookies.set(name, value, {
-                path: options?.path || "/",
-                maxAge: typeof options?.maxAge === "number" ? options.maxAge : undefined,
-                domain: options?.domain || undefined,
-                sameSite: "lax",
-                secure: process.env.NODE_ENV === "production" || origin.startsWith("https://"),
-                httpOnly: options?.httpOnly ?? true,
-              });
+              sessionCookieMap.set(name, { value, options });
             });
           },
         },
@@ -442,6 +428,18 @@ export async function GET(req: NextRequest) {
         console.error("[google-callback] generateLink error:", linkErr?.message || linkErr);
         return NextResponse.redirect(`${origin}/login?error=google_auth_failed&step=link`);
       }
+    }
+
+    // Write final deduplicated session cookies onto response
+    for (const [name, { value, options }] of sessionCookieMap.entries()) {
+      response.cookies.set(name, value, {
+        path: options?.path || "/",
+        maxAge: typeof options?.maxAge === "number" ? options.maxAge : undefined,
+        domain: options?.domain || undefined,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production" || origin.startsWith("https://"),
+        httpOnly: options?.httpOnly ?? true,
+      });
     }
 
     // 7. Non-blocking background sync for Profile Upsert & Notifications
