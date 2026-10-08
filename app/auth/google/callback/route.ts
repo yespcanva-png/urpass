@@ -78,6 +78,21 @@ async function getExistingSessionUser() {
   }
 }
 
+function decodeGoogleIdToken(idToken: string): GoogleTokenInfo | null {
+  try {
+    const parts = idToken.split(".");
+    if (parts.length !== 3) return null;
+    const payloadJson = Buffer.from(parts[1], "base64url").toString("utf8");
+    const payload = JSON.parse(payloadJson);
+    if (payload && typeof payload === "object" && payload.sub && payload.email) {
+      return payload as GoogleTokenInfo;
+    }
+  } catch {
+    // Ignore decode errors and fall back to tokeninfo fetch
+  }
+  return null;
+}
+
 export async function GET(req: NextRequest) {
   const origin = getAppOrigin(req);
 
@@ -91,22 +106,6 @@ export async function GET(req: NextRequest) {
     if (error) {
       console.warn("[google-callback] Google returned error:", error, errorDescription);
       return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent(error)}`);
-    }
-
-    if (!code) {
-      const existingUser = await getExistingSessionUser();
-      if (existingUser) {
-        return NextResponse.redirect(`${origin}/dashboard`);
-      }
-      return NextResponse.redirect(`${origin}/login?error=google_auth_failed&step=init`);
-    }
-
-    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID?.trim();
-    const clientSecret = process.env.GOOGLE_CLIENT_SECRET?.trim();
-
-    if (!clientId || !clientSecret) {
-      console.error("[google-callback] Google client credentials missing");
-      return NextResponse.redirect(`${origin}/login?error=google_not_configured`);
     }
 
     // Resolve state & exact redirect_uri used during the initial authorization redirect
@@ -146,7 +145,27 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // Exchange authorization code for Google tokens with strict 10s timeout
+    if (!code) {
+      const existingUser = await getExistingSessionUser();
+      if (existingUser) {
+        const target = resolvePostAuthRedirect(
+          { get: (k: string) => (k === "next" ? targetPath : null) },
+          null
+        );
+        return NextResponse.redirect(`${origin}${target}`);
+      }
+      return NextResponse.redirect(`${origin}/login?error=google_auth_failed&step=init`);
+    }
+
+    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID?.trim();
+    const clientSecret = process.env.GOOGLE_CLIENT_SECRET?.trim();
+
+    if (!clientId || !clientSecret) {
+      console.error("[google-callback] Google client credentials missing");
+      return NextResponse.redirect(`${origin}/login?error=google_not_configured`);
+    }
+
+    // 1. Exchange authorization code for Google tokens with strict 8s timeout
     const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -157,7 +176,7 @@ export async function GET(req: NextRequest) {
         redirect_uri: redirectUri,
         grant_type: "authorization_code",
       }),
-      signal: AbortSignal.timeout(10000),
+      signal: AbortSignal.timeout(8000),
     });
 
     const tokens = await tokenRes.json().catch(() => null);
@@ -178,31 +197,20 @@ export async function GET(req: NextRequest) {
       return NextResponse.redirect(`${origin}/login?error=google_auth_failed&step=token`);
     }
 
-    // Verify the ID token via Google tokeninfo with JWT decode fallback
-    let info: GoogleTokenInfo | null = null;
-    try {
-      const infoRes = await fetch(
-        `https://oauth2.googleapis.com/tokeninfo?id_token=${tokens.id_token}`,
-        { signal: AbortSignal.timeout(10000) }
-      );
-      if (infoRes.ok) {
-        info = await infoRes.json();
-      }
-    } catch (e) {
-      console.warn("[google-callback] tokeninfo fetch warning:", e);
-    }
+    // 2. Fast decode ID token from JWT payload (0ms, no network hop) with tokeninfo fallback
+    let info: GoogleTokenInfo | null = decodeGoogleIdToken(tokens.id_token);
 
-    if (!info && tokens.id_token) {
+    if (!info) {
       try {
-        const parts = tokens.id_token.split(".");
-        if (parts.length === 3) {
-          const payload = JSON.parse(Buffer.from(parts[1], "base64url").toString("utf8"));
-          if (payload && payload.sub && payload.email) {
-            info = payload as GoogleTokenInfo;
-          }
+        const infoRes = await fetch(
+          `https://oauth2.googleapis.com/tokeninfo?id_token=${tokens.id_token}`,
+          { signal: AbortSignal.timeout(6000) }
+        );
+        if (infoRes.ok) {
+          info = await infoRes.json();
         }
       } catch (e) {
-        console.error("[google-callback] JWT decode fallback failed:", e);
+        console.warn("[google-callback] tokeninfo fetch warning:", e);
       }
     }
 
@@ -242,29 +250,19 @@ export async function GET(req: NextRequest) {
     // Generate secure ephemeral password satisfying all complexity rules
     const ephemeralPassword = crypto.randomBytes(16).toString("hex") + "A1!";
 
-    // 1. Resolve existing user ID (via profiles table or Supabase auth lookup)
+    // 3. User Resolution: Fast lookup existing user or create
+    let userId: string | undefined;
+    let isNewUser = false;
+
     const { data: profileRow } = await admin
       .from("profiles")
       .select("user_id")
       .ilike("email", normalizedEmail)
       .maybeSingle();
 
-    let userId = profileRow?.user_id;
-    let isNewUser = false;
-
-    if (!userId) {
-      const { data: linkLookup } = await admin.auth.admin.generateLink({
-        type: "magiclink",
-        email: normalizedEmail,
-      });
-      if (linkLookup?.user?.id) {
-        userId = linkLookup.user.id;
-      }
-    }
-
-    if (userId) {
-      // Existing user: update password, mark email confirmed and sync metadata
-      const { error: updateErr } = await admin.auth.admin.updateUserById(userId, {
+    if (profileRow?.user_id) {
+      userId = profileRow.user_id;
+      await admin.auth.admin.updateUserById(profileRow.user_id, {
         password: ephemeralPassword,
         email_confirm: true,
         user_metadata: {
@@ -274,24 +272,7 @@ export async function GET(req: NextRequest) {
           email_verified: true,
         },
       });
-
-      if (updateErr) {
-        console.warn("[google-callback] updateUserById error:", updateErr.message);
-      }
-
-      // Non-blocking owner login notification
-      try {
-        notifyOwnerUserLogin({
-          name: fullName,
-          email: normalizedEmail,
-          provider: "google",
-          userId,
-        }).catch(() => {});
-      } catch {
-        // Ignore notification errors
-      }
     } else {
-      // Try creating new user in Supabase auth
       const { data: createdUser, error: createErr } = await admin.auth.admin.createUser({
         email: normalizedEmail,
         password: ephemeralPassword,
@@ -307,29 +288,15 @@ export async function GET(req: NextRequest) {
       if (!createErr && createdUser?.user) {
         userId = createdUser.user.id;
         isNewUser = true;
-
-        try {
-          Promise.allSettled([
-            notifyOwnerNewUser({
-              name: fullName,
-              email: normalizedEmail,
-              provider: "google",
-              userId,
-            }),
-            sendUserWelcomeEmail({ to: normalizedEmail, name: fullName }),
-          ]).catch(() => {});
-        } catch {
-          // Ignore notification errors
-        }
       } else {
-        // Fallback: If user was created concurrently or already exists
-        const { data: linkData } = await admin.auth.admin.generateLink({
+        const { data: linkLookup } = await admin.auth.admin.generateLink({
           type: "magiclink",
           email: normalizedEmail,
         });
-        if (linkData?.user?.id) {
-          userId = linkData.user.id;
-          await admin.auth.admin.updateUserById(userId, {
+
+        if (linkLookup?.user?.id) {
+          userId = linkLookup.user.id;
+          await admin.auth.admin.updateUserById(linkLookup.user.id, {
             password: ephemeralPassword,
             email_confirm: true,
             user_metadata: {
@@ -343,25 +310,7 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // Ensure profiles table record is upserted
-    if (userId) {
-      try {
-        await admin.from("profiles").upsert(
-          {
-            user_id: userId,
-            email: normalizedEmail,
-            full_name: fullName,
-            avatar_url: avatarUrl,
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: "user_id" }
-        );
-      } catch (e) {
-        console.error("[google-callback] profiles upsert error:", e instanceof Error ? e.message : String(e));
-      }
-    }
-
-    // Determine post-login redirect destination
+    // 4. Determine post-login redirect destination
     const target = resolvePostAuthRedirect(
       { get: (k: string) => (k === "next" ? targetPath : null) },
       null
@@ -371,6 +320,7 @@ export async function GET(req: NextRequest) {
       : (isNewUser ? "/onboarding" : "/dashboard");
 
     const response = NextResponse.redirect(`${origin}${destination}`);
+
     // Clear ephemeral OAuth state nonce cookie safely
     response.cookies.set("oauth_state_nonce", "", {
       path: "/",
@@ -382,7 +332,7 @@ export async function GET(req: NextRequest) {
 
     const cookieStore = await cookies();
 
-    // Create SSR client configured to write session cookies directly to response
+    // 5. Establish Session Cookies directly onto response
     const supabase = createServerClient(
       getSupabaseUrl(),
       getSupabaseAnonKey(),
@@ -393,16 +343,11 @@ export async function GET(req: NextRequest) {
           },
           setAll(cookiesToSet) {
             cookiesToSet.forEach(({ name, value, options }) => {
-              try {
-                cookieStore.set(name, value, options);
-              } catch {
-                // Ignore if in context where cookieStore cannot mutate
-              }
               response.cookies.set(name, value, {
                 path: options?.path || "/",
                 maxAge: typeof options?.maxAge === "number" ? options.maxAge : undefined,
                 domain: options?.domain || undefined,
-                sameSite: (options?.sameSite as "lax" | "strict" | "none") || "lax",
+                sameSite: "lax",
                 secure: process.env.NODE_ENV === "production" || origin.startsWith("https://"),
                 httpOnly: options?.httpOnly ?? true,
               });
@@ -412,7 +357,6 @@ export async function GET(req: NextRequest) {
       }
     );
 
-    // Primary: Direct session sign-in using ephemeral credential
     let sessionEstablished = false;
     if (ephemeralPassword) {
       const { data: signInData, error: signInErr } = await supabase.auth.signInWithPassword({
@@ -426,46 +370,64 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // Fallback: Magic link OTP verification if direct sign-in encountered an issue
+    // Fallback: Magic link OTP verification if needed
     if (!sessionEstablished) {
       const { data: linkData, error: linkErr } = await admin.auth.admin.generateLink({
         type: "magiclink",
         email: normalizedEmail,
       });
 
-      if (linkErr || !linkData?.properties?.hashed_token) {
+      if (!linkErr && linkData?.properties?.hashed_token) {
+        const tokenHash = linkData.properties.hashed_token;
+        const verificationType = (linkData.properties.verification_type as "magiclink" | "signup" | "email") || "magiclink";
+
+        const { error: verifyErr } = await supabase.auth.verifyOtp({
+          token_hash: tokenHash,
+          type: verificationType,
+        });
+
+        if (verifyErr) {
+          console.error("[google-callback] verifyOtp fallback error:", verifyErr.message);
+          return NextResponse.redirect(`${origin}/login?error=google_auth_failed&step=otp`);
+        }
+      } else {
         console.error("[google-callback] generateLink error:", linkErr?.message || linkErr);
         return NextResponse.redirect(`${origin}/login?error=google_auth_failed&step=link`);
       }
+    }
 
-      const tokenHash = linkData.properties.hashed_token;
-      const verificationType = (linkData.properties.verification_type as "magiclink" | "signup" | "email") || "magiclink";
-
-      let { error: verifyErr } = await supabase.auth.verifyOtp({
-        token_hash: tokenHash,
-        type: verificationType,
+    // 6. Non-blocking background sync for Profile Upsert & Notifications
+    if (userId) {
+      Promise.allSettled([
+        admin.from("profiles").upsert(
+          {
+            user_id: userId,
+            email: normalizedEmail,
+            full_name: fullName,
+            avatar_url: avatarUrl,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "user_id" }
+        ),
+        isNewUser
+          ? Promise.allSettled([
+              notifyOwnerNewUser({
+                name: fullName,
+                email: normalizedEmail,
+                provider: "google",
+                userId,
+              }),
+              sendUserWelcomeEmail({ to: normalizedEmail, name: fullName }),
+            ])
+          : notifyOwnerUserLogin({
+              name: fullName,
+              email: normalizedEmail,
+              provider: "google",
+              userId,
+            }),
+      ]).catch((e) => {
+        console.warn("[google-callback] Non-blocking background sync warning:", e);
       });
-
-      if (verifyErr && verificationType !== "magiclink") {
-        const fb = await supabase.auth.verifyOtp({
-          token_hash: tokenHash,
-          type: "magiclink",
-        });
-        if (!fb.error) verifyErr = null;
-      }
-
-      if (verifyErr && verificationType !== "email") {
-        const fb = await supabase.auth.verifyOtp({
-          token_hash: tokenHash,
-          type: "email",
-        });
-        if (!fb.error) verifyErr = null;
-      }
-
-      if (verifyErr) {
-        console.error("[google-callback] verifyOtp error:", verifyErr?.message || verifyErr);
-        return NextResponse.redirect(`${origin}/login?error=google_auth_failed&step=otp`);
-      }
     }
 
     return response;
@@ -474,5 +436,3 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(`${origin}/login?error=google_auth_failed&step=crash`);
   }
 }
-
-
