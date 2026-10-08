@@ -39,7 +39,17 @@ function adminClient() {
   return createSupabaseAdmin(
     getSupabaseUrl(),
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
+    {
+      auth: { autoRefreshToken: false, persistSession: false },
+      global: {
+        fetch: (url, options) => {
+          return fetch(url, {
+            ...options,
+            signal: AbortSignal.timeout(8000),
+          });
+        },
+      },
+    }
   );
 }
 
@@ -273,9 +283,9 @@ export async function GET(req: NextRequest) {
       return NextResponse.redirect(`${origin}/login?error=google_no_email`);
     }
 
-    const fullName = info.name?.trim() || normalizedEmail.split("@")[0];
-    const avatarUrl = info.picture || "";
-    const googleId = info.sub || "";
+    const fullName = (info.name?.trim() || normalizedEmail.split("@")[0]).slice(0, 64);
+    const avatarUrl = (info.picture || "").slice(0, 255);
+    const googleId = String(info.sub || "").slice(0, 64);
 
     // Generate secure ephemeral password satisfying all complexity rules
     const ephemeralPassword = crypto.randomBytes(16).toString("hex") + "A1!";
