@@ -88,7 +88,7 @@ export class CommunicationEngineService {
         template_slug: templateSlug,
         subject,
         status,
-        provider: "zeptomail",
+        provider: metadata?.provider ? String(metadata.provider) : "zeptomail",
         provider_message_id: providerMessageId || null,
         error_message: errorMessage || null,
         metadata,
@@ -130,7 +130,7 @@ export class CommunicationEngineService {
         status: "sent",
         providerMessageId: `sim_${Date.now()}`,
         userId,
-        metadata: { ...metadata, simulated: true },
+        metadata: { ...metadata, simulated: true, provider: "simulated" },
       });
       return { success: true, simulated: true, messageId: `sim_${Date.now()}` };
     }
@@ -144,6 +144,7 @@ export class CommunicationEngineService {
       });
 
       const messageId = response?.id;
+      const provider = response?.provider || "zeptomail";
       await this.logDelivery({
         recipientEmail: to,
         templateSlug,
@@ -151,7 +152,7 @@ export class CommunicationEngineService {
         status: "sent",
         providerMessageId: messageId,
         userId,
-        metadata,
+        metadata: { ...metadata, provider },
       });
 
       return { success: true, messageId };

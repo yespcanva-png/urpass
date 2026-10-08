@@ -69,10 +69,10 @@ export function isEmailProviderConfigured() {
   return Boolean(getZohoZeptoMailApiKey()) || Boolean(getResend());
 }
 
-// Verified sending domain in Resend
+// Verified sending domain
 export function getFromEmail(): string {
   const raw = cleanString(process.env.EMAIL_FROM);
-  return raw || "URPASS <noreply@urpass.space>";
+  return raw || "URPASS <urpass.space@yespstudio.com>";
 }
 
 const FROM = getFromEmail();
@@ -208,7 +208,7 @@ async function sendViaZeptoMail(payload: MailPayload): Promise<MailSendResult | 
   return { id, provider: "zeptomail", raw: json };
 }
 
-export async function sendEmail(payload: MailPayload) {
+export async function sendEmail(payload: MailPayload): Promise<MailSendResult | undefined> {
   if (
     process.env.STRESS_TEST === "true" ||
     (typeof payload.to === "string" && payload.to.includes("@test.urpass.space")) ||
@@ -217,6 +217,9 @@ export async function sendEmail(payload: MailPayload) {
   ) {
     return;
   }
+
+  // 1. Primary Provider: Zoho ZeptoMail
+  let zeptoError: unknown = null;
   try {
     const zeptoResult = await sendViaZeptoMail(payload);
     if (zeptoResult) {
@@ -225,12 +228,20 @@ export async function sendEmail(payload: MailPayload) {
       return zeptoResult;
     }
   } catch (err) {
-    console.error("[email] ZeptoMail send failure:", err);
-    throw err;
+    zeptoError = err;
+    console.warn(
+      "[email] ZeptoMail dispatch failed, falling back to Resend as secondary provider:",
+      err instanceof Error ? err.message : String(err)
+    );
   }
 
+  // 2. Secondary Provider: Resend (fallback)
   const resend = getResend();
   if (!resend) {
+    if (zeptoError) {
+      console.error("[email] ZeptoMail failed and secondary provider Resend is not configured:", zeptoError);
+      throw zeptoError;
+    }
     console.warn(
       "[email] Email provider not configured — email skipped.\n",
       "  To:", payload.to,
@@ -238,6 +249,7 @@ export async function sendEmail(payload: MailPayload) {
     );
     return;
   }
+
   try {
     const rawFrom = cleanString(payload.from);
     const cleanedFrom = rawFrom || getFromEmail();
@@ -245,23 +257,34 @@ export async function sendEmail(payload: MailPayload) {
       recipient.name ? `${recipient.name} <${recipient.address}>` : recipient.address
     );
 
-    const emailPayload = {
+    const emailPayload: any = {
       ...payload,
       from: cleanedFrom,
       to: cleanedTo.length === 1 ? cleanedTo[0] : cleanedTo,
-      ...(payload.html ? { html: payload.html } : { text: payload.text || "" }),
-    } as Parameters<Resend["emails"]["send"]>[0];
+    };
+    if (payload.html) {
+      emailPayload.html = payload.html;
+    } else {
+      emailPayload.text = payload.text || "";
+    }
 
     const { data, error } = await resend.emails.send(emailPayload);
     if (error) {
-      console.error("[email] Resend API error:", error);
+      console.error("[email] Resend secondary API error:", error);
       throw error;
     }
     const recipient = Array.isArray(cleanedTo) ? cleanedTo.join(", ") : cleanedTo;
-    console.log(`[email] Sent to ${recipient} | "${payload.subject}" (id: ${data?.id})`);
+    console.log(`[email] Sent via Resend fallback to ${recipient} | "${payload.subject}" (id: ${data?.id})`);
     return { id: data?.id, provider: "resend" as const, raw: data };
   } catch (err) {
-    console.error("[email] Resend send failure:", err);
+    console.error("[email] Resend secondary send failure:", err);
+    if (zeptoError) {
+      throw new Error(
+        `Both primary (ZeptoMail) and secondary (Resend) email providers failed.\nZeptoMail: ${
+          zeptoError instanceof Error ? zeptoError.message : String(zeptoError)
+        }\nResend: ${err instanceof Error ? err.message : String(err)}`
+      );
+    }
     throw err;
   }
 }
