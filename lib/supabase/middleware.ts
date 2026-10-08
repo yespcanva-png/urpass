@@ -50,26 +50,45 @@ export async function updateSession(request: NextRequest) {
     },
   });
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  let user = null;
+  try {
+    const { data, error } = await supabase.auth.getUser();
+    if (!error && data?.user) {
+      user = data.user;
+    }
+  } catch {
+    // Gracefully handle stale or revoked refresh tokens (e.g. refresh_token_not_found)
+    user = null;
+  }
 
   if (isProtected && !user) {
     const feedbackMatch = pathname.match(/^\/event\/([^/]+)\/feedback$/);
     if (feedbackMatch) {
       url.pathname = `/feedback/${feedbackMatch[1]}`;
-      return NextResponse.redirect(url);
+      const res = NextResponse.redirect(url);
+      supabaseResponse.cookies.getAll().forEach((cookie) => {
+        res.cookies.set(cookie);
+      });
+      return res;
     }
     const destination = `${pathname}${url.search}`;
     url.pathname = "/login";
     url.search = "";
     url.searchParams.set("next", destination);
-    return NextResponse.redirect(url);
+    const res = NextResponse.redirect(url);
+    supabaseResponse.cookies.getAll().forEach((cookie) => {
+      res.cookies.set(cookie);
+    });
+    return res;
   }
 
   if (isAuthPage && user) {
     url.pathname = "/dashboard";
-    return NextResponse.redirect(url);
+    const res = NextResponse.redirect(url);
+    supabaseResponse.cookies.getAll().forEach((cookie) => {
+      res.cookies.set(cookie);
+    });
+    return res;
   }
 
   return supabaseResponse;
