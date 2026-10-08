@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { NextRequest } from "next/server";
-import { GET as googleCallbackGet } from "@/app/auth/google/callback/route";
+import { GET as googleCallbackGet, clearRecentExchangedCodes } from "@/app/auth/google/callback/route";
 import { GET as googleRedirectGet } from "@/app/api/auth/google/redirect/route";
 
 // Mock Supabase admin client
@@ -85,6 +85,7 @@ describe("Google OAuth Routes", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    clearRecentExchangedCodes();
     process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID = "mock-google-client-id.apps.googleusercontent.com";
     process.env.GOOGLE_CLIENT_SECRET = "mock-google-client-secret";
     process.env.NEXT_PUBLIC_APP_URL = "https://urpass.space";

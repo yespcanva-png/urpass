@@ -10,6 +10,22 @@ import { resolvePostAuthRedirect } from "@/lib/auth-redirect";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
+// Short-lived in-memory cache of recently exchanged authorization codes (prevents duplicate token exchange errors on double-click/prefetch)
+const recentExchangedCodes = new Map<string, { destination: string; ts: number }>();
+
+function cleanupExchangedCodes() {
+  const now = Date.now();
+  for (const [key, value] of recentExchangedCodes.entries()) {
+    if (now - value.ts > 120_000) {
+      recentExchangedCodes.delete(key);
+    }
+  }
+}
+
+export function clearRecentExchangedCodes() {
+  recentExchangedCodes.clear();
+}
+
 interface GoogleTokenInfo {
   sub: string;
   email: string;
@@ -152,9 +168,21 @@ export async function GET(req: NextRequest) {
           { get: (k: string) => (k === "next" ? targetPath : null) },
           null
         );
-        return NextResponse.redirect(`${origin}${target}`);
+        const res = NextResponse.redirect(`${origin}${target}`);
+        res.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, private, max-age=0");
+        return res;
       }
       return NextResponse.redirect(`${origin}/login?error=google_auth_failed&step=init`);
+    }
+
+    // 1. Check in-memory recent exchange cache (prevents duplicate code replay from double-click or browser prefetching)
+    cleanupExchangedCodes();
+    const cachedExchange = recentExchangedCodes.get(code);
+    if (cachedExchange) {
+      const res = NextResponse.redirect(`${origin}${cachedExchange.destination}`);
+      res.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, private, max-age=0");
+      res.headers.set("Pragma", "no-cache");
+      return res;
     }
 
     const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID?.trim();
@@ -165,7 +193,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.redirect(`${origin}/login?error=google_not_configured`);
     }
 
-    // 1. Exchange authorization code for Google tokens with strict 8s timeout
+    // 2. Exchange authorization code for Google tokens with strict 8s timeout
     const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -181,23 +209,25 @@ export async function GET(req: NextRequest) {
 
     const tokens = await tokenRes.json().catch(() => null);
     if (!tokenRes.ok || !tokens?.id_token) {
-      console.error("[google-callback] token exchange error:", tokenRes.status, tokens);
       if (tokens?.error === "invalid_grant") {
+        console.warn("[google-callback] Authorization code expired or was already redeemed:", code.slice(0, 10) + "...");
         const existingUser = await getExistingSessionUser();
         if (existingUser) {
-          console.log("[google-callback] Existing active session detected on invalid_grant code replay:", existingUser.id);
           const target = resolvePostAuthRedirect(
             { get: (k: string) => (k === "next" ? targetPath : null) },
             null
           );
-          return NextResponse.redirect(`${origin}${target}`);
+          const res = NextResponse.redirect(`${origin}${target}`);
+          res.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, private, max-age=0");
+          return res;
         }
         return NextResponse.redirect(`${origin}/login?error=google_code_expired`);
       }
+      console.error("[google-callback] token exchange error:", tokenRes.status, tokens);
       return NextResponse.redirect(`${origin}/login?error=google_auth_failed&step=token`);
     }
 
-    // 2. Fast decode ID token from JWT payload (0ms, no network hop) with tokeninfo fallback
+    // 3. Fast decode ID token from JWT payload (0ms, no network hop) with tokeninfo fallback
     let info: GoogleTokenInfo | null = decodeGoogleIdToken(tokens.id_token);
 
     if (!info) {
@@ -250,7 +280,7 @@ export async function GET(req: NextRequest) {
     // Generate secure ephemeral password satisfying all complexity rules
     const ephemeralPassword = crypto.randomBytes(16).toString("hex") + "A1!";
 
-    // 3. User Resolution: Fast lookup existing user or create
+    // 4. User Resolution: Fast lookup existing user or create
     let userId: string | undefined;
     let isNewUser = false;
 
@@ -310,7 +340,7 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // 4. Determine post-login redirect destination
+    // 5. Determine post-login redirect destination
     const target = resolvePostAuthRedirect(
       { get: (k: string) => (k === "next" ? targetPath : null) },
       null
@@ -319,7 +349,15 @@ export async function GET(req: NextRequest) {
       ? target
       : (isNewUser ? "/onboarding" : "/dashboard");
 
+    // Cache the code -> destination mapping to immediately satisfy any repeat browser/prefetch requests
+    recentExchangedCodes.set(code, { destination, ts: Date.now() });
+
     const response = NextResponse.redirect(`${origin}${destination}`);
+
+    // Set cache control headers to prevent browser bfcache replay
+    response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, private, max-age=0");
+    response.headers.set("Pragma", "no-cache");
+    response.headers.set("Expires", "0");
 
     // Clear ephemeral OAuth state nonce cookie safely
     response.cookies.set("oauth_state_nonce", "", {
@@ -332,7 +370,7 @@ export async function GET(req: NextRequest) {
 
     const cookieStore = await cookies();
 
-    // 5. Establish Session Cookies directly onto response
+    // 6. Establish Session Cookies directly onto response
     const supabase = createServerClient(
       getSupabaseUrl(),
       getSupabaseAnonKey(),
@@ -396,7 +434,7 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // 6. Non-blocking background sync for Profile Upsert & Notifications
+    // 7. Non-blocking background sync for Profile Upsert & Notifications
     if (userId) {
       Promise.allSettled([
         admin.from("profiles").upsert(
