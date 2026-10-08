@@ -1,5 +1,3 @@
-import dns from "node:dns";
-
 export const PRIMARY_CNAME_TARGET = "cname.urpass.in";
 export const SECONDARY_CNAME_TARGET = "cname.urpass.space";
 export const ACCEPTED_CNAME_TARGETS = [
@@ -313,7 +311,12 @@ async function queryNodeDns(
   domain: string,
   type: "CNAME" | "A" | "TXT" | "NS"
 ): Promise<{ success: boolean; answers: string[]; error?: string }> {
+  if (typeof window !== "undefined") {
+    return { success: false, answers: [], error: "Node DNS is only available on server" };
+  }
+
   try {
+    const dns = await import("node:dns");
     if (type === "CNAME") {
       const records = await dns.promises.resolveCname(domain);
       return {

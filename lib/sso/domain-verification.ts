@@ -1,4 +1,3 @@
-import dns from "node:dns";
 import crypto from "node:crypto";
 import { checkTxtVerificationRealtime } from "@/lib/dns/realtime-dns";
 
@@ -26,6 +25,7 @@ export async function checkDnsTxtRecord(
   let nodeRecords: string[] = [];
   let nodeError: string | null = null;
   try {
+    const dns = await import("node:dns");
     const raw = await dns.promises.resolveTxt(cleanDomain);
     nodeRecords = raw.map((entry) => entry.join(""));
   } catch (err: unknown) {
