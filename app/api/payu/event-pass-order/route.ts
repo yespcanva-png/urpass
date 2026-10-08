@@ -51,15 +51,25 @@ export async function POST(req: NextRequest) {
   const surl = `${appUrl}/api/payu/verify`;
   const furl = `${appUrl}/api/payu/verify`;
 
+  const cleanFirstName =
+    (user.user_metadata?.full_name?.split(" ")[0] || user.email?.split("@")[0] || "Organizer").replace(
+      /[^a-zA-Z0-9]/g,
+      ""
+    ) || "Organizer";
+  const cleanProductInfo = `URPASS_${passName.replace(/[^a-zA-Z0-9]/g, "_")}`;
+  const userPhone =
+    user.phone || (user.user_metadata?.phone as string) || "9999999999";
+
   const payuParams = buildPayUPaymentParams({
     merchantKey,
     merchantSalt,
     environment,
     txnid,
     amount: totalAmount,
-    productinfo: `URPASS ${passName}`,
-    firstname: user.user_metadata?.full_name?.split(" ")[0] || user.email?.split("@")[0] || "Organizer",
+    productinfo: cleanProductInfo,
+    firstname: cleanFirstName,
     email: user.email || "organizer@example.com",
+    phone: userPhone,
     surl,
     furl,
     udf1: user.id,
