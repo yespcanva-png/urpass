@@ -20,6 +20,7 @@ import CustomFieldsBuilder from "@/components/event/CustomFieldsBuilder";
 import EventImageUploader from "@/components/events/EventImageUploader";
 import EventImageCarousel from "@/components/events/EventImageCarousel";
 import TrialConfirmationModal from "@/components/billing/TrialConfirmationModal";
+import AdvancedFeaturesSettings from "@/components/event/AdvancedFeaturesSettings";
 import type { CustomFieldDefinition } from "@/types";
 
 const PRESET_COLORS = [
@@ -1272,6 +1273,11 @@ export default function EventSettingsPage() {
           </button>
         </div>
       </form>
+
+      {/* ── Advanced Features Modular Configuration ── */}
+      <div className="mt-5">
+        <AdvancedFeaturesSettings eventId={eventId} />
+      </div>
 
       {/* ── Event status ── */}
       <div className="bg-white rounded-2xl border border-neutral-100 overflow-hidden mt-5"

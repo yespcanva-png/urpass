@@ -1,4 +1,4 @@
-import { canUseFeature, type EntitlementFeature, type PlanSlug } from "@/lib/plan";
+import { canUseFeature, type EntitlementFeature } from "@/lib/plan";
 
 export type FeatureFlagKey =
   | "ai_agenda"
@@ -19,7 +19,10 @@ export type FeatureFlagKey =
   | "serial_number_validation"
   | "advanced_entry_tracking"
   | "session_attendance"
-  | "csv_management";
+  | "csv_management"
+  | "google_sheets"
+  | "ticket_reassignment"
+  | "offline_scanning";
 
 export type CoreFeatureKey =
   | "public_registration"
@@ -30,18 +33,38 @@ export type CoreFeatureKey =
 
 export interface FeatureFlagDefinition {
   key: FeatureFlagKey;
+  moduleCode?: string;
   name: string;
   description: string;
   defaultEnabled: boolean;
   requiredEntitlement?: EntitlementFeature | null;
+  requiredFeatureKeys?: FeatureFlagKey[];
   migrationPolicy?: (event: EventLike) => boolean;
 }
 
 export interface EventFeaturesConfig {
   features: Partial<Record<FeatureFlagKey, boolean>>;
+  platformAvailable?: Partial<Record<FeatureFlagKey, boolean>>;
+  configValid?: Partial<Record<FeatureFlagKey, boolean>>;
+  validationErrors?: Partial<Record<FeatureFlagKey, string[]>>;
   version: number;
   updatedAt: string;
   updatedBy?: string;
+}
+
+export interface EventFeatureSettingRow {
+  feature_key: string;
+  enabled: boolean;
+  required_config_valid?: boolean | null;
+  validation_errors?: unknown;
+  version?: number | null;
+  updated_at?: string | null;
+  updated_by?: string | null;
+}
+
+export interface PlatformFeatureFlagRow {
+  feature_key: string;
+  platform_available?: boolean | null;
 }
 
 export interface EventLike {
@@ -163,6 +186,7 @@ export const FEATURE_FLAG_DEFINITIONS: Record<FeatureFlagKey, FeatureFlagDefinit
   },
   bulk_ticket_booking: {
     key: "bulk_ticket_booking",
+    moduleCode: "M01",
     name: "Bulk Ticket Booking",
     description: "Purchase multiple tickets in a single order with atomic capacity reservations.",
     defaultEnabled: false,
@@ -170,6 +194,7 @@ export const FEATURE_FLAG_DEFINITIONS: Record<FeatureFlagKey, FeatureFlagDefinit
   },
   ticket_distribution: {
     key: "ticket_distribution",
+    moduleCode: "M02",
     name: "Bulk Ticket Distribution & Claiming",
     description: "Distribute bulk purchased tickets to individual members with secure claim links.",
     defaultEnabled: false,
@@ -177,6 +202,7 @@ export const FEATURE_FLAG_DEFINITIONS: Record<FeatureFlagKey, FeatureFlagDefinit
   },
   member_registration_forms: {
     key: "member_registration_forms",
+    moduleCode: "M03",
     name: "Member Registration Forms",
     description: "Collect detailed attendee profile fields with ticket category targeting and server-side validation.",
     defaultEnabled: false,
@@ -184,6 +210,7 @@ export const FEATURE_FLAG_DEFINITIONS: Record<FeatureFlagKey, FeatureFlagDefinit
   },
   serial_number_validation: {
     key: "serial_number_validation",
+    moduleCode: "M04",
     name: "Serial Number Validation",
     description: "Support manual, auto-generated sequence, or verified whitelist serial number assignment with uniqueness enforcement.",
     defaultEnabled: false,
@@ -191,6 +218,7 @@ export const FEATURE_FLAG_DEFINITIONS: Record<FeatureFlagKey, FeatureFlagDefinit
   },
   advanced_entry_tracking: {
     key: "advanced_entry_tracking",
+    moduleCode: "M06",
     name: "Advanced Entry, Exit & Multi-Gate Tracking",
     description: "Multi-gate zone routing, entry/exit state tracking, staff gate assignment, and anti-passback controls.",
     defaultEnabled: false,
@@ -198,6 +226,7 @@ export const FEATURE_FLAG_DEFINITIONS: Record<FeatureFlagKey, FeatureFlagDefinit
   },
   session_attendance: {
     key: "session_attendance",
+    moduleCode: "M07",
     name: "Session-Wise Attendance & Scanning",
     description: "Track session-level attendance, multi-track capacities, check-in/checkout duration, and eligibility.",
     defaultEnabled: false,
@@ -205,8 +234,33 @@ export const FEATURE_FLAG_DEFINITIONS: Record<FeatureFlagKey, FeatureFlagDefinit
   },
   csv_management: {
     key: "csv_management",
+    moduleCode: "M08",
     name: "CSV Import & Export Management",
     description: "Downloadable CSV templates, staged validation import pipelines, and formula-sanitized exports.",
+    defaultEnabled: false,
+    requiredEntitlement: null,
+  },
+  ticket_reassignment: {
+    key: "ticket_reassignment",
+    moduleCode: "M05",
+    name: "Ticket Reassignment & Revocation",
+    description: "Allow ticket purchasers or organizers to revoke and reassign unused tickets to new attendees.",
+    defaultEnabled: false,
+    requiredEntitlement: null,
+  },
+  offline_scanning: {
+    key: "offline_scanning",
+    moduleCode: "M10",
+    name: "Offline Scanning & Synchronization",
+    description: "Capture, encrypt, queue, and reconcile offline check-in scans when internet connectivity is intermittent.",
+    defaultEnabled: false,
+    requiredEntitlement: null,
+  },
+  google_sheets: {
+    key: "google_sheets",
+    moduleCode: "M09",
+    name: "Google Sheets Integration",
+    description: "Optional one-way sync of registration, distribution, scan, and attendance data to organizer-owned Google Sheets.",
     defaultEnabled: false,
     requiredEntitlement: null,
   },
@@ -220,6 +274,9 @@ export function getEventFeaturesConfig(event?: EventLike | null): EventFeaturesC
   if (!event || !event.custom_pass_design) {
     return {
       features: {},
+      platformAvailable: {},
+      configValid: {},
+      validationErrors: {},
       version: 1,
       updatedAt: new Date(0).toISOString(),
     };
@@ -230,6 +287,9 @@ export function getEventFeaturesConfig(event?: EventLike | null): EventFeaturesC
     const cfg = rawConfig as Partial<EventFeaturesConfig>;
     return {
       features: (cfg.features && typeof cfg.features === "object") ? cfg.features : {},
+      platformAvailable: (cfg.platformAvailable && typeof cfg.platformAvailable === "object") ? cfg.platformAvailable : {},
+      configValid: (cfg.configValid && typeof cfg.configValid === "object") ? cfg.configValid : {},
+      validationErrors: (cfg.validationErrors && typeof cfg.validationErrors === "object") ? cfg.validationErrors : {},
       version: typeof cfg.version === "number" ? cfg.version : 1,
       updatedAt: typeof cfg.updatedAt === "string" ? cfg.updatedAt : new Date().toISOString(),
       updatedBy: typeof cfg.updatedBy === "string" ? cfg.updatedBy : undefined,
@@ -238,9 +298,93 @@ export function getEventFeaturesConfig(event?: EventLike | null): EventFeaturesC
 
   return {
     features: {},
+    platformAvailable: {},
+    configValid: {},
+    validationErrors: {},
     version: 1,
     updatedAt: new Date(0).toISOString(),
   };
+}
+
+export function isAdvancedModuleFeature(featureKey: FeatureFlagKey): boolean {
+  return Boolean(FEATURE_FLAG_DEFINITIONS[featureKey]?.moduleCode);
+}
+
+function coerceValidationErrors(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((item): item is string => typeof item === "string");
+}
+
+export function mergePersistedFeatureRows({
+  event,
+  settings,
+  platformFlags,
+}: {
+  event?: EventLike | null;
+  settings?: EventFeatureSettingRow[] | null;
+  platformFlags?: PlatformFeatureFlagRow[] | null;
+}): EventFeaturesConfig {
+  const legacy = getEventFeaturesConfig(event);
+  const features = { ...legacy.features };
+  const platformAvailable = { ...(legacy.platformAvailable ?? {}) };
+  const configValid = { ...(legacy.configValid ?? {}) };
+  const validationErrors = { ...(legacy.validationErrors ?? {}) };
+  let version = legacy.version;
+  let updatedAt = legacy.updatedAt;
+  let updatedBy = legacy.updatedBy;
+
+  for (const flag of platformFlags ?? []) {
+    if (flag.feature_key in FEATURE_FLAG_DEFINITIONS) {
+      platformAvailable[flag.feature_key as FeatureFlagKey] = flag.platform_available !== false;
+    }
+  }
+
+  for (const row of settings ?? []) {
+    if (!(row.feature_key in FEATURE_FLAG_DEFINITIONS)) continue;
+    const key = row.feature_key as FeatureFlagKey;
+    features[key] = Boolean(row.enabled);
+    configValid[key] = row.required_config_valid !== false;
+    validationErrors[key] = coerceValidationErrors(row.validation_errors);
+    version = Math.max(version, row.version ?? 1);
+    if (row.updated_at && row.updated_at > updatedAt) updatedAt = row.updated_at;
+    if (row.updated_by) updatedBy = row.updated_by;
+  }
+
+  return {
+    features,
+    platformAvailable,
+    configValid,
+    validationErrors,
+    version,
+    updatedAt,
+    updatedBy,
+  };
+}
+
+export function isFeatureUsableFromConfig(
+  config: EventFeaturesConfig,
+  featureKey: FeatureFlagKey,
+  planOrSlug?: string | { slug?: string; tier?: string } | null
+): { usable: boolean; reason?: string } {
+  const def = FEATURE_FLAG_DEFINITIONS[featureKey];
+  if (!def) return { usable: false, reason: `Unknown feature: ${featureKey}` };
+
+  if (config.platformAvailable?.[featureKey] === false) {
+    return { usable: false, reason: `${def.name} is not available on the platform yet.` };
+  }
+
+  const entitlement = validateFeatureEntitlement(planOrSlug ?? "free", featureKey);
+  if (!entitlement.valid) return { usable: false, reason: entitlement.error };
+
+  if (config.features[featureKey] !== true) {
+    return { usable: false, reason: `${def.name} is disabled for this event.` };
+  }
+
+  if (config.configValid?.[featureKey] === false) {
+    return { usable: false, reason: `${def.name} has incomplete required configuration.` };
+  }
+
+  return { usable: true };
 }
 
 /**
@@ -264,6 +408,12 @@ export function isFeatureEnabled(
 
   const config = getEventFeaturesConfig(event);
   const explicitSetting = config.features[def.key];
+  const platformAvailable = config.platformAvailable?.[def.key];
+  const configValid = config.configValid?.[def.key];
+
+  if (platformAvailable === false || configValid === false) {
+    return false;
+  }
 
   // 2. Explicit configuration overrides defaults
   if (typeof explicitSetting === "boolean") {

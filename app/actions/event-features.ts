@@ -8,10 +8,13 @@ import {
   type FeatureFlagKey,
   type EventFeaturesConfig,
   FEATURE_FLAG_DEFINITIONS,
-  getEventFeaturesConfig,
-  isFeatureEnabled,
   validateFeatureEntitlement,
   assertFeatureEnabled,
+  mergePersistedFeatureRows,
+  isFeatureUsableFromConfig,
+  type EventLike,
+  type EventFeatureSettingRow,
+  type PlatformFeatureFlagRow,
 } from "@/lib/feature-flags";
 import { revalidatePath } from "next/cache";
 
@@ -27,8 +30,104 @@ export interface UpdateFeatureResult {
   error?: string;
   conflict?: boolean;
   config?: EventFeaturesConfig;
+  usable?: boolean;
   featureKey?: FeatureFlagKey;
   enabled?: boolean;
+}
+
+type EventFeatureEventRow = EventLike & {
+  id: string;
+  organizer_id: string;
+  organization_id?: string | null;
+  custom_pass_design?: Record<string, unknown> | null;
+};
+
+function isFeatureKey(value: string): value is FeatureFlagKey {
+  return value in FEATURE_FLAG_DEFINITIONS;
+}
+
+function canManageEventFeatures(event: EventFeatureEventRow, userId: string, memberRole?: string | null) {
+  return (
+    event.organizer_id === userId ||
+    memberRole === "owner" ||
+    memberRole === "admin" ||
+    memberRole === "event_manager"
+  );
+}
+
+function canReadEventFeatures(event: EventFeatureEventRow, userId: string, memberRole?: string | null) {
+  return event.organizer_id === userId || Boolean(memberRole);
+}
+
+async function getEventAndMembership(db: ReturnType<typeof adminClient>, eventId: string, userId: string) {
+  const { data: event, error: eventErr } = await db
+    .from("events")
+    .select("id, organizer_id, organization_id, custom_pass_design")
+    .eq("id", eventId)
+    .maybeSingle();
+
+  if (eventErr || !event) {
+    return { error: "Event not found." as const };
+  }
+
+  let memberRole: string | null = null;
+  if (event.organization_id) {
+    const { data: member } = await db
+      .from("organization_members")
+      .select("role")
+      .eq("organization_id", event.organization_id)
+      .eq("user_id", userId)
+      .eq("status", "active")
+      .maybeSingle();
+
+    memberRole = member?.role ?? null;
+  }
+
+  return {
+    event: event as EventFeatureEventRow,
+    memberRole,
+  };
+}
+
+async function loadPersistedFeatureConfig(
+  db: ReturnType<typeof adminClient>,
+  event: EventFeatureEventRow
+): Promise<EventFeaturesConfig> {
+  let settings: EventFeatureSettingRow[] = [];
+  let platformFlags: PlatformFeatureFlagRow[] = [];
+
+  try {
+    const [{ data: settingsRows }, { data: platformRows }] = await Promise.all([
+      db
+        .from("event_feature_settings")
+        .select("feature_key, enabled, required_config_valid, validation_errors, version, updated_at, updated_by")
+        .eq("event_id", event.id),
+      db
+        .from("platform_feature_flags")
+        .select("feature_key, platform_available"),
+    ]);
+
+    settings = (settingsRows ?? []) as EventFeatureSettingRow[];
+    platformFlags = (platformRows ?? []) as PlatformFeatureFlagRow[];
+  } catch {
+    // Fresh local environments may not have run migration 087 yet. Legacy JSON remains readable.
+  }
+
+  return mergePersistedFeatureRows({ event, settings, platformFlags });
+}
+
+function toLegacyFeatureDesign(
+  event: EventFeatureEventRow,
+  config: EventFeaturesConfig
+): Record<string, unknown> {
+  const existingDesign = event.custom_pass_design && typeof event.custom_pass_design === "object"
+    ? event.custom_pass_design
+    : {};
+
+  return {
+    ...existingDesign,
+    _featureFlags: config,
+  };
 }
 
 /**
@@ -41,6 +140,10 @@ export async function updateEventFeatureFlag(
   enabled: boolean,
   expectedVersion?: number
 ): Promise<UpdateFeatureResult> {
+  if (!isFeatureKey(featureKey)) {
+    return { error: `Unknown feature: ${featureKey}` };
+  }
+
   const supabase = await createClient();
   const {
     data: { user },
@@ -50,36 +153,12 @@ export async function updateEventFeatureFlag(
     return { error: "Authentication required." };
   }
 
-  // 1. Fetch Event with Admin Client to verify permissions safely
   const db = adminClient();
-  const { data: event, error: eventErr } = await db
-    .from("events")
-    .select("id, organizer_id, organization_id, custom_pass_design")
-    .eq("id", eventId)
-    .maybeSingle();
+  const eventResult = await getEventAndMembership(db, eventId, user.id);
+  if ("error" in eventResult) return { error: eventResult.error };
 
-  if (eventErr || !event) {
-    return { error: "Event not found." };
-  }
-
-  // 2. Multi-Tenant Authorization Check (Organizer A cannot alter Organizer B's features)
-  let isAuthorized = event.organizer_id === user.id;
-
-  if (!isAuthorized && event.organization_id) {
-    const { data: member } = await db
-      .from("organization_members")
-      .select("role")
-      .eq("organization_id", event.organization_id)
-      .eq("user_id", user.id)
-      .eq("status", "active")
-      .maybeSingle();
-
-    if (member && (member.role === "owner" || member.role === "admin" || member.role === "event_manager")) {
-      isAuthorized = true;
-    }
-  }
-
-  if (!isAuthorized) {
+  const { event, memberRole } = eventResult;
+  if (!canManageEventFeatures(event, user.id, memberRole)) {
     return { error: "Unauthorized: You do not have permission to modify this event's feature flags." };
   }
 
@@ -93,7 +172,7 @@ export async function updateEventFeatureFlag(
   }
 
   // 4. Current Feature Configuration & Concurrency Control
-  const currentConfig = getEventFeaturesConfig(event);
+  const currentConfig = await loadPersistedFeatureConfig(db, event);
 
   if (expectedVersion !== undefined && currentConfig.version !== expectedVersion) {
     return {
@@ -108,25 +187,75 @@ export async function updateEventFeatureFlag(
     ...currentConfig.features,
     [featureKey]: enabled,
   };
+  const updatedConfigValid = {
+    ...(currentConfig.configValid ?? {}),
+    [featureKey]: currentConfig.configValid?.[featureKey] !== false,
+  };
 
   const nextVersion = currentConfig.version + 1;
   const now = new Date().toISOString();
 
   const nextConfig: EventFeaturesConfig = {
     features: updatedFeatures,
+    platformAvailable: currentConfig.platformAvailable ?? {},
+    configValid: updatedConfigValid,
+    validationErrors: currentConfig.validationErrors ?? {},
     version: nextVersion,
     updatedAt: now,
     updatedBy: user.id,
   };
 
-  const existingDesign = (event.custom_pass_design && typeof event.custom_pass_design === "object")
-    ? event.custom_pass_design
-    : {};
+  const usability = isFeatureUsableFromConfig(nextConfig, featureKey, enabled ? await getUserPlan(supabase, user.id) : "free");
+  if (enabled && !usability.usable) {
+    return { error: usability.reason ?? "Feature cannot be enabled until requirements are met." };
+  }
 
-  const updatedDesign = {
-    ...existingDesign,
-    _featureFlags: nextConfig,
+  const previousRow = {
+    enabled: currentConfig.features[featureKey] === true,
+    required_config_valid: currentConfig.configValid?.[featureKey] !== false,
+    validation_errors: currentConfig.validationErrors?.[featureKey] ?? [],
+    version: currentConfig.version,
   };
+
+  try {
+    const { error: upsertErr } = await db
+      .from("event_feature_settings")
+      .upsert(
+        {
+          event_id: eventId,
+          feature_key: featureKey,
+          enabled,
+          required_config_valid: updatedConfigValid[featureKey],
+          validation_errors: nextConfig.validationErrors?.[featureKey] ?? [],
+          version: nextVersion,
+          updated_by: user.id,
+          updated_at: now,
+        },
+        { onConflict: "event_id,feature_key" }
+      );
+
+    if (upsertErr) {
+      return { error: `Failed to persist feature settings: ${upsertErr.message}` };
+    }
+
+    await db.from("event_feature_audit_logs").insert({
+      event_id: eventId,
+      feature_key: featureKey,
+      actor_id: user.id,
+      action: enabled ? "enabled" : "disabled",
+      old_value: previousRow,
+      new_value: {
+        enabled,
+        required_config_valid: updatedConfigValid[featureKey],
+        validation_errors: nextConfig.validationErrors?.[featureKey] ?? [],
+        version: nextVersion,
+      },
+    });
+  } catch {
+    // Keep the legacy mirror as a compatibility fallback in local/test environments.
+  }
+
+  const updatedDesign = toLegacyFeatureDesign(event, nextConfig);
 
   // 6. Non-Destructive Update (Updates flags in place without deleting any historical attendees/passes/checkins)
   const { error: updateErr } = await db
@@ -148,6 +277,7 @@ export async function updateEventFeatureFlag(
     success: true,
     featureKey,
     enabled,
+    usable: !enabled || usability.usable,
     config: nextConfig,
   };
 }
@@ -159,23 +289,54 @@ export async function getEventFeatureFlagsState(eventId: string): Promise<{
   error?: string;
   config?: EventFeaturesConfig;
   features?: Record<FeatureFlagKey, boolean>;
+  usable?: Record<FeatureFlagKey, boolean>;
+  platformAvailable?: Record<FeatureFlagKey, boolean>;
 }> {
-  const db = adminClient();
-  const { data: event, error } = await db
-    .from("events")
-    .select("id, organizer_id, custom_pass_design")
-    .eq("id", eventId)
-    .maybeSingle();
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  if (error || !event) {
-    return { error: "Event not found." };
+  if (!user) {
+    return { error: "Authentication required." };
   }
 
-  const config = getEventFeaturesConfig(event);
+  const db = adminClient();
+  const eventResult = await getEventAndMembership(db, eventId, user.id);
+  if ("error" in eventResult) return { error: eventResult.error };
+
+  const { event, memberRole } = eventResult;
+  if (!canReadEventFeatures(event, user.id, memberRole)) {
+    return { error: "Unauthorized: You do not have access to this event's feature flags." };
+  }
+
+  const [config, userPlan] = await Promise.all([
+    loadPersistedFeatureConfig(db, event),
+    getUserPlan(supabase, user.id),
+  ]);
   const resolvedFeatures = Object.keys(FEATURE_FLAG_DEFINITIONS).reduce<Record<FeatureFlagKey, boolean>>(
     (acc, key) => {
       const flagKey = key as FeatureFlagKey;
-      acc[flagKey] = isFeatureEnabled(event, flagKey);
+      acc[flagKey] =
+        config.platformAvailable?.[flagKey] !== false &&
+        config.configValid?.[flagKey] !== false &&
+        config.features[flagKey] === true;
+      return acc;
+    },
+    {} as Record<FeatureFlagKey, boolean>
+  );
+  const usable = Object.keys(FEATURE_FLAG_DEFINITIONS).reduce<Record<FeatureFlagKey, boolean>>(
+    (acc, key) => {
+      const flagKey = key as FeatureFlagKey;
+      acc[flagKey] = isFeatureUsableFromConfig(config, flagKey, userPlan).usable;
+      return acc;
+    },
+    {} as Record<FeatureFlagKey, boolean>
+  );
+  const platformAvailable = Object.keys(FEATURE_FLAG_DEFINITIONS).reduce<Record<FeatureFlagKey, boolean>>(
+    (acc, key) => {
+      const flagKey = key as FeatureFlagKey;
+      acc[flagKey] = config.platformAvailable?.[flagKey] !== false;
       return acc;
     },
     {} as Record<FeatureFlagKey, boolean>
@@ -184,6 +345,8 @@ export async function getEventFeatureFlagsState(eventId: string): Promise<{
   return {
     config,
     features: resolvedFeatures,
+    usable,
+    platformAvailable,
   };
 }
 

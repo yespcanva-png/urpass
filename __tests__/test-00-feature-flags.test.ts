@@ -28,6 +28,7 @@ import {
   getEventFeaturesConfig,
   validateFeatureEntitlement,
   assertFeatureEnabled,
+  mergePersistedFeatureRows,
   FEATURE_FLAG_DEFINITIONS,
   CORE_FEATURES,
   type EventLike,
@@ -78,6 +79,48 @@ describe("Test 00: Event Feature-Flag Foundation & Multi-Tenant Governance", () 
 
       expect(isFeatureEnabled(eventWithDesign, "public_registration")).toBe(true);
       expect(isFeatureEnabled(eventWithDesign, "standard_checkin")).toBe(true);
+    });
+
+    it("prefers first-class event feature rows over legacy custom_pass_design mirror", () => {
+      const eventWithLegacyMirror: EventLike = {
+        id: "event-table-backed-001",
+        organizer_id: "org-1",
+        custom_pass_design: {
+          _featureFlags: {
+            features: {
+              bulk_ticket_booking: false,
+              ticket_distribution: true,
+            },
+            version: 2,
+            updatedAt: "2026-10-09T10:00:00Z",
+          },
+        },
+      };
+
+      const merged = mergePersistedFeatureRows({
+        event: eventWithLegacyMirror,
+        settings: [
+          {
+            feature_key: "bulk_ticket_booking",
+            enabled: true,
+            required_config_valid: true,
+            validation_errors: [],
+            version: 5,
+            updated_at: "2026-10-09T12:00:00Z",
+          },
+        ],
+        platformFlags: [
+          { feature_key: "bulk_ticket_booking", platform_available: true },
+          { feature_key: "ticket_distribution", platform_available: false },
+        ],
+      });
+
+      expect(merged.features.bulk_ticket_booking).toBe(true);
+      expect(merged.features.ticket_distribution).toBe(true);
+      expect(merged.platformAvailable?.bulk_ticket_booking).toBe(true);
+      expect(merged.platformAvailable?.ticket_distribution).toBe(false);
+      expect(merged.version).toBe(5);
+      expect(merged.updatedAt).toBe("2026-10-09T12:00:00Z");
     });
   });
 
