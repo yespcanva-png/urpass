@@ -5,11 +5,17 @@ import { X, Loader2, Mail } from "lucide-react";
 import { inviteMember } from "@/app/actions/org-members";
 
 const ROLES = [
-  { value: "admin",         label: "Admin",          desc: "Manage org + all events" },
-  { value: "event_manager", label: "Event Manager",  desc: "Manage assigned events" },
-  { value: "checkin_staff", label: "Check-in Staff", desc: "Scan QR codes only" },
-  { value: "viewer",        label: "Viewer",         desc: "View dashboard" },
-  { value: "member",        label: "Member",         desc: "General member access" },
+  { value: "admin",                label: "Admin",                 desc: "Manage org, team & all events" },
+  { value: "event_manager",        label: "Event Manager",         desc: "Manage assigned events & operations" },
+  { value: "registration_manager", label: "Registration Manager",  desc: "Manage registrations, bulk tickets & distribution" },
+  { value: "gate_supervisor",      label: "Gate Supervisor",       desc: "Manage gates, scanners & gate overrides" },
+  { value: "gate_staff",           label: "Gate Staff",            desc: "Scan QR passes at assigned gates" },
+  { value: "session_manager",      label: "Session Manager",       desc: "Manage multi-track conference sessions" },
+  { value: "session_scanner",      label: "Session Scanner",       desc: "Scan passes for assigned session tracks" },
+  { value: "finance",              label: "Finance",               desc: "Manage billing, invoices & payments" },
+  { value: "analytics_viewer",     label: "Analytics Viewer",      desc: "View reports & analytics read-only" },
+  { value: "viewer",               label: "Viewer",                desc: "View organization overview" },
+  { value: "member",               label: "Member",                desc: "General member access" },
 ] as const;
 
 const inputCls =

@@ -6,24 +6,34 @@ import { updateMemberRole, removeMember } from "@/app/actions/org-members";
 import type { OrgRole } from "@/types";
 
 const ROLE_BADGE: Record<OrgRole, { label: string; cls: string }> = {
-  owner:         { label: "Owner",          cls: "bg-brand-50 text-brand border-brand-100" },
-  admin:         { label: "Admin",          cls: "bg-blue-50 text-blue-700 border-blue-100" },
-  event_manager: { label: "Event Manager",  cls: "bg-amber-50 text-amber-700 border-amber-100" },
-  finance:       { label: "Finance",        cls: "bg-indigo-50 text-indigo-700 border-indigo-100" },
-  gate_manager:  { label: "Gate Manager",   cls: "bg-teal-50 text-teal-700 border-teal-100" },
-  checkin_staff: { label: "Check-in Staff", cls: "bg-green-50 text-green-700 border-green-100" },
-  viewer:        { label: "Viewer",         cls: "bg-neutral-100 text-neutral-500 border-neutral-200" },
-  member:        { label: "Member",         cls: "bg-neutral-100 text-neutral-600 border-neutral-200" },
+  owner:                { label: "Owner",                 cls: "bg-brand-50 text-brand border-brand-100" },
+  admin:                { label: "Admin",                 cls: "bg-blue-50 text-blue-700 border-blue-100" },
+  event_manager:        { label: "Event Manager",         cls: "bg-amber-50 text-amber-700 border-amber-100" },
+  registration_manager: { label: "Registration Manager",  cls: "bg-purple-50 text-purple-700 border-purple-100" },
+  gate_supervisor:      { label: "Gate Supervisor",       cls: "bg-teal-50 text-teal-700 border-teal-100" },
+  gate_manager:         { label: "Gate Manager",          cls: "bg-teal-50 text-teal-700 border-teal-100" },
+  gate_staff:           { label: "Gate Staff",            cls: "bg-green-50 text-green-700 border-green-100" },
+  checkin_staff:        { label: "Check-in Staff",        cls: "bg-green-50 text-green-700 border-green-100" },
+  session_manager:      { label: "Session Manager",       cls: "bg-cyan-50 text-cyan-700 border-cyan-100" },
+  session_scanner:      { label: "Session Scanner",       cls: "bg-emerald-50 text-emerald-700 border-emerald-100" },
+  finance:              { label: "Finance",               cls: "bg-indigo-50 text-indigo-700 border-indigo-100" },
+  analytics_viewer:     { label: "Analytics Viewer",      cls: "bg-neutral-100 text-neutral-600 border-neutral-200" },
+  viewer:               { label: "Viewer",                cls: "bg-neutral-100 text-neutral-500 border-neutral-200" },
+  member:               { label: "Member",                cls: "bg-neutral-100 text-neutral-600 border-neutral-200" },
 };
 
 const ASSIGNABLE_ROLES: { value: OrgRole; label: string }[] = [
-  { value: "admin",         label: "Admin" },
-  { value: "event_manager", label: "Event Manager" },
-  { value: "finance",       label: "Finance" },
-  { value: "gate_manager",  label: "Gate Manager" },
-  { value: "checkin_staff", label: "Check-in Staff" },
-  { value: "viewer",        label: "Viewer" },
-  { value: "member",        label: "Member" },
+  { value: "admin",                label: "Admin" },
+  { value: "event_manager",        label: "Event Manager" },
+  { value: "registration_manager", label: "Registration Manager" },
+  { value: "gate_supervisor",      label: "Gate Supervisor" },
+  { value: "gate_staff",           label: "Gate Staff" },
+  { value: "session_manager",      label: "Session Manager" },
+  { value: "session_scanner",      label: "Session Scanner" },
+  { value: "finance",              label: "Finance" },
+  { value: "analytics_viewer",     label: "Analytics Viewer" },
+  { value: "viewer",               label: "Viewer" },
+  { value: "member",               label: "Member" },
 ];
 
 interface MemberRow {

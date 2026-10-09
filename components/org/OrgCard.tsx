@@ -3,14 +3,20 @@ import { Building2, Users, ChevronRight, ShieldCheck, BadgeCheck } from "lucide-
 import type { Organization, OrgRole } from "@/types";
 
 const ROLE_BADGE: Record<OrgRole, { label: string; cls: string }> = {
-  owner:         { label: "Executive Owner", cls: "bg-purple-50 text-purple-700 border-purple-200" },
-  admin:         { label: "Admin",           cls: "bg-blue-50 text-blue-700 border-blue-200" },
-  event_manager: { label: "Event Manager",   cls: "bg-amber-50 text-amber-700 border-amber-200" },
-  finance:       { label: "Finance",         cls: "bg-indigo-50 text-indigo-700 border-indigo-200" },
-  gate_manager:  { label: "Gate Manager",    cls: "bg-teal-50 text-teal-700 border-teal-200" },
-  checkin_staff: { label: "Check-in Staff",  cls: "bg-emerald-50 text-emerald-700 border-emerald-200" },
-  viewer:        { label: "Auditor / Viewer",cls: "bg-neutral-100 text-neutral-600 border-neutral-200" },
-  member:        { label: "Member",          cls: "bg-neutral-100 text-neutral-600 border-neutral-200" },
+  owner:                { label: "Executive Owner",     cls: "bg-purple-50 text-purple-700 border-purple-200" },
+  admin:                { label: "Admin",               cls: "bg-blue-50 text-blue-700 border-blue-200" },
+  event_manager:        { label: "Event Manager",       cls: "bg-amber-50 text-amber-700 border-amber-200" },
+  registration_manager: { label: "Registration Manager",cls: "bg-purple-50 text-purple-700 border-purple-200" },
+  gate_supervisor:      { label: "Gate Supervisor",     cls: "bg-teal-50 text-teal-700 border-teal-200" },
+  gate_manager:         { label: "Gate Manager",        cls: "bg-teal-50 text-teal-700 border-teal-200" },
+  gate_staff:           { label: "Gate Staff",          cls: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+  checkin_staff:        { label: "Check-in Staff",      cls: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+  session_manager:      { label: "Session Manager",     cls: "bg-cyan-50 text-cyan-700 border-cyan-200" },
+  session_scanner:      { label: "Session Scanner",     cls: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+  finance:              { label: "Finance",             cls: "bg-indigo-50 text-indigo-700 border-indigo-200" },
+  analytics_viewer:     { label: "Auditor / Viewer",    cls: "bg-neutral-100 text-neutral-600 border-neutral-200" },
+  viewer:               { label: "Auditor / Viewer",    cls: "bg-neutral-100 text-neutral-600 border-neutral-200" },
+  member:               { label: "Member",              cls: "bg-neutral-100 text-neutral-600 border-neutral-200" },
 };
 
 export default function OrgCard({

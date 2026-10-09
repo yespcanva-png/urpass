@@ -175,9 +175,15 @@ export type OrgRole =
   | "owner"
   | "admin"
   | "event_manager"
-  | "finance"
+  | "registration_manager"
+  | "gate_supervisor"
   | "gate_manager"
+  | "gate_staff"
   | "checkin_staff"
+  | "session_manager"
+  | "session_scanner"
+  | "finance"
+  | "analytics_viewer"
   | "viewer"
   | "member";
 export type MemberStatus = "active" | "pending";
