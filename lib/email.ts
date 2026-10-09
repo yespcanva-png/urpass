@@ -257,16 +257,12 @@ export async function sendEmail(payload: MailPayload): Promise<MailSendResult | 
       recipient.name ? `${recipient.name} <${recipient.address}>` : recipient.address
     );
 
-    const emailPayload: any = {
+    const emailPayload = {
       ...payload,
       from: cleanedFrom,
       to: cleanedTo.length === 1 ? cleanedTo[0] : cleanedTo,
-    };
-    if (payload.html) {
-      emailPayload.html = payload.html;
-    } else {
-      emailPayload.text = payload.text || "";
-    }
+      ...(payload.html ? { html: payload.html } : { text: payload.text || "" }),
+    } as Parameters<Resend["emails"]["send"]>[0];
 
     const { data, error } = await resend.emails.send(emailPayload);
     if (error) {
