@@ -11,7 +11,6 @@ import {
   DoorOpen,
   Calendar,
   FileSpreadsheet,
-  TableProperties,
   WifiOff,
   BarChart3,
   CheckCircle2,
@@ -102,14 +101,6 @@ const MODULAR_FEATURES: ModuleMeta[] = [
     icon: FileSpreadsheet,
     tag: "DATA OPS",
     configUrl: (eventId) => `/event/${eventId}/attendees`,
-  },
-  {
-    key: "google_sheets",
-    name: "Google Sheets Integration",
-    description: "Connect an organizer Google account and sync selected event records to a spreadsheet.",
-    icon: TableProperties,
-    tag: "INTEGRATION",
-    configUrl: (eventId) => `/event/${eventId}/settings`,
   },
   {
     key: "offline_scanning",
