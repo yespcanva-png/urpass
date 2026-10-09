@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS public.attendee_member_submissions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     event_id UUID NOT NULL REFERENCES public.events(id) ON DELETE CASCADE,
     attendee_id UUID NOT NULL REFERENCES public.attendees(id) ON DELETE CASCADE,
-    ticket_id UUID REFERENCES public.tickets(id) ON DELETE SET NULL,
+    pass_id UUID REFERENCES public.passes(id) ON DELETE SET NULL,
     ticket_type_id UUID REFERENCES public.ticket_types(id) ON DELETE SET NULL,
     name TEXT NOT NULL,
     email TEXT NOT NULL,
