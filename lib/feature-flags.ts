@@ -17,7 +17,8 @@ export type FeatureFlagKey =
   | "ticket_distribution"
   | "member_registration_forms"
   | "serial_number_validation"
-  | "advanced_entry_tracking";
+  | "advanced_entry_tracking"
+  | "session_attendance";
 
 export type CoreFeatureKey =
   | "public_registration"
@@ -191,6 +192,13 @@ export const FEATURE_FLAG_DEFINITIONS: Record<FeatureFlagKey, FeatureFlagDefinit
     key: "advanced_entry_tracking",
     name: "Advanced Entry, Exit & Multi-Gate Tracking",
     description: "Multi-gate zone routing, entry/exit state tracking, staff gate assignment, and anti-passback controls.",
+    defaultEnabled: false,
+    requiredEntitlement: null,
+  },
+  session_attendance: {
+    key: "session_attendance",
+    name: "Session-Wise Attendance & Scanning",
+    description: "Track session-level attendance, multi-track capacities, check-in/checkout duration, and eligibility.",
     defaultEnabled: false,
     requiredEntitlement: null,
   },
