@@ -20,6 +20,10 @@ export const DEFAULT_DISTRIBUTION_SETTINGS: DistributionSettings = {
   claimTokenTtlHours: 72, // 3 days
 };
 
+function newHistoryId() {
+  return `hist_${crypto.randomUUID()}`;
+}
+
 /**
  * Extracts distribution settings from event metadata or returns defaults.
  */
@@ -270,7 +274,7 @@ export function assignTicketToRecipient({
     : [];
 
   currentHistory.push({
-    id: `hist_${crypto.randomUUID()}`,
+    id: newHistoryId(),
     timestamp: nowIso,
     actorEmail: normalizedActor,
     action: isRetained ? "RETAINED" : isManualMode ? "CLAIMED" : "INVITED",
@@ -333,6 +337,14 @@ export async function claimTicketWithToken({
 }): Promise<ClaimTicketResult> {
   const settings = getDistributionSettings(event);
   const now = new Date();
+
+  if (!settings.enabled) {
+    return {
+      success: false,
+      error: "DISTRIBUTION_DISABLED",
+      message: "Ticket distribution is currently disabled for this event.",
+    };
+  }
 
   // 1. Deadline Check
   if (settings.assignmentDeadline && new Date(settings.assignmentDeadline) < now) {
@@ -421,7 +433,7 @@ export async function claimTicketWithToken({
     : [];
 
   history.push({
-    id: `hist_${crypto.randomUUID()}`,
+    id: newHistoryId(),
     timestamp: nowIso,
     actorEmail: normalizedEmail,
     action: "CLAIMED",
@@ -482,6 +494,12 @@ export async function claimTicketWithToken({
     success: true,
     ticket,
     passToken,
+    updatedOrder: {
+      ...order,
+      group_members: groupMembers,
+      _distributionHistory: history,
+      updated_at: nowIso,
+    },
   };
 }
 
@@ -551,7 +569,7 @@ export function revokeTicketAssignment({
     : [];
 
   history.push({
-    id: `hist_${crypto.randomUUID()}`,
+    id: newHistoryId(),
     timestamp: nowIso,
     actorEmail: normalizedActor,
     action: "REVOKED",

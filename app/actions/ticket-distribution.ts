@@ -26,12 +26,91 @@ function adminClient() {
   );
 }
 
+type DistributionEventRow = {
+  id: string;
+  name?: string;
+  organizer_id: string;
+  organization_id?: string | null;
+  custom_pass_design?: Record<string, unknown> | null;
+  custom_fields?: Array<{ id: string; label: string; required?: boolean }> | null;
+};
+
+function canManageDistribution(event: DistributionEventRow, userId: string, memberRole?: string | null) {
+  return (
+    event.organizer_id === userId ||
+    memberRole === "owner" ||
+    memberRole === "admin" ||
+    memberRole === "event_manager"
+  );
+}
+
+function canReadDistribution(
+  event: DistributionEventRow,
+  order: Record<string, unknown>,
+  user: { id: string; email?: string | null },
+  memberRole?: string | null
+) {
+  const buyerEmail = String(order.buyer_email || "").toLowerCase().trim();
+  const userEmail = (user.email || "").toLowerCase().trim();
+  return buyerEmail === userEmail || canManageDistribution(event, user.id, memberRole);
+}
+
+async function getActiveOrgRole(
+  db: ReturnType<typeof adminClient>,
+  organizationId: string | null | undefined,
+  userId: string
+) {
+  if (!organizationId) return null;
+  const { data: member } = await db
+    .from("organization_members")
+    .select("role")
+    .eq("organization_id", organizationId)
+    .eq("user_id", userId)
+    .eq("status", "active")
+    .maybeSingle();
+
+  return member?.role ?? null;
+}
+
+async function persistAssignmentHistory(
+  db: ReturnType<typeof adminClient>,
+  orderId: string,
+  eventId: string,
+  history: unknown
+) {
+  if (!Array.isArray(history) || history.length === 0) return;
+  const last = history[history.length - 1] as Record<string, unknown>;
+
+  try {
+    await db.from("ticket_assignment_history").insert({
+      order_id: orderId,
+      event_id: eventId,
+      attendee_id: last.attendeeId || null,
+      actor_email: last.actorEmail || null,
+      action: last.action,
+      details: last.details || {},
+      created_at: last.timestamp || new Date().toISOString(),
+    });
+  } catch {
+    // Table may be absent in isolated tests before migration 089.
+  }
+}
+
 /**
  * Retrieves the distribution summary for an order.
  */
 export async function getDistributionSummaryAction(
   orderId: string
 ): Promise<{ success: boolean; summary?: OrderDistributionSummary; error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { success: false, error: "AUTHENTICATION_REQUIRED" };
+  }
+
   const db = adminClient();
   const { data: order, error: orderErr } = await db
     .from("ticket_orders")
@@ -48,7 +127,7 @@ export async function getDistributionSummaryAction(
 
   const { data: event, error: eventErr } = await db
     .from("events")
-    .select("id, name, organizer_id, custom_pass_design, custom_fields")
+    .select("id, name, organizer_id, organization_id, custom_pass_design, custom_fields")
     .eq("id", order.event_id)
     .maybeSingle();
 
@@ -57,6 +136,11 @@ export async function getDistributionSummaryAction(
       success: false,
       error: "EVENT_NOT_FOUND",
     };
+  }
+
+  const memberRole = await getActiveOrgRole(db, event.organization_id, user.id);
+  if (!canReadDistribution(event as DistributionEventRow, order, user, memberRole)) {
+    return { success: false, error: "UNAUTHORIZED" };
   }
 
   const summary = getOrderDistributionSummary({ order, event });
@@ -101,7 +185,7 @@ export async function assignTicketAction(
 
   const { data: event, error: eventErr } = await db
     .from("events")
-    .select("id, name, organizer_id, custom_pass_design, custom_fields")
+    .select("id, name, organizer_id, organization_id, custom_pass_design, custom_fields")
     .eq("id", order.event_id)
     .maybeSingle();
 
@@ -113,11 +197,18 @@ export async function assignTicketAction(
     };
   }
 
+  const memberRole = user
+    ? await getActiveOrgRole(db, event.organization_id, user.id)
+    : null;
+  const effectiveActorEmail = canManageDistribution(event as DistributionEventRow, user?.id || "", memberRole)
+    ? String(event.organizer_id)
+    : actorEmail || "";
+
   const result = assignTicketToRecipient({
     order,
     event,
     input,
-    actorEmail: actorEmail || "",
+    actorEmail: effectiveActorEmail,
   });
 
   if (!result.success) {
@@ -138,6 +229,13 @@ export async function assignTicketAction(
         updated_at: result.updatedOrder.updated_at,
       })
       .eq("id", input.orderId);
+
+    await persistAssignmentHistory(
+      db,
+      input.orderId,
+      String(order.event_id),
+      result.updatedOrder._distributionHistory
+    );
   }
 
   return {
@@ -154,10 +252,13 @@ export async function claimTicketAction(
 ): Promise<ClaimTicketResult> {
   const db = adminClient();
 
-  // Find the order that contains this claim token in group_members
-  const { data: orders, error: ordersErr } = await db
-    .from("ticket_orders")
-    .select("*");
+  // Find the order that contains this claim token in group_members.
+  // The JSON containment query is backed by migration 089's GIN index in production.
+  const orderQuery = db.from("ticket_orders").select("*");
+  const { data: orders, error: ordersErr } =
+    typeof orderQuery.contains === "function"
+      ? await orderQuery.contains("group_members", [{ claimToken: input.claimToken }])
+      : await orderQuery;
 
   if (ordersErr || !orders) {
     return {
@@ -183,7 +284,7 @@ export async function claimTicketAction(
 
   const { data: event, error: eventErr } = await db
     .from("events")
-    .select("id, name, organizer_id, custom_pass_design, custom_fields")
+    .select("id, name, organizer_id, organization_id, custom_pass_design, custom_fields")
     .eq("id", targetOrder.event_id)
     .maybeSingle();
 
@@ -195,12 +296,23 @@ export async function claimTicketAction(
     };
   }
 
-  return claimTicketWithToken({
+  const result = await claimTicketWithToken({
     order: targetOrder,
     event,
     input,
     adminClient: db,
   });
+
+  if (result.success) {
+    await persistAssignmentHistory(
+      db,
+      String(targetOrder.id),
+      String(targetOrder.event_id),
+      result.updatedOrder?._distributionHistory
+    );
+  }
+
+  return result;
 }
 
 /**
@@ -235,7 +347,7 @@ export async function revokeAssignmentAction({
 
   const { data: event, error: eventErr } = await db
     .from("events")
-    .select("id, name, organizer_id, custom_pass_design")
+    .select("id, name, organizer_id, organization_id, custom_pass_design")
     .eq("id", order.event_id)
     .maybeSingle();
 
@@ -248,12 +360,18 @@ export async function revokeAssignmentAction({
   }
 
   const actorEmail = user?.email || String(order.buyer_email || "");
+  const memberRole = user
+    ? await getActiveOrgRole(db, event.organization_id, user.id)
+    : null;
+  const effectiveActorEmail = canManageDistribution(event as DistributionEventRow, user?.id || "", memberRole)
+    ? String(event.organizer_id)
+    : actorEmail;
 
   const result = revokeTicketAssignment({
     order,
     event,
     attendeeId,
-    actorEmail,
+    actorEmail: effectiveActorEmail,
   });
 
   if (!result.success) {
@@ -273,6 +391,13 @@ export async function revokeAssignmentAction({
         updated_at: result.updatedOrder.updated_at,
       })
       .eq("id", orderId);
+
+    await persistAssignmentHistory(
+      db,
+      orderId,
+      String(order.event_id),
+      result.updatedOrder._distributionHistory
+    );
   }
 
   return {
@@ -302,16 +427,31 @@ export async function updateEventDistributionSettingsAction({
   const db = adminClient();
   const { data: event } = await db
     .from("events")
-    .select("id, organizer_id, custom_pass_design")
+    .select("id, organizer_id, organization_id, custom_pass_design")
     .eq("id", eventId)
     .maybeSingle();
 
-  if (!event || event.organizer_id !== user.id) {
+  if (!event) {
+    return { error: "Event not found." };
+  }
+
+  const memberRole = await getActiveOrgRole(db, event.organization_id, user.id);
+  if (!canManageDistribution(event as DistributionEventRow, user.id, memberRole)) {
     return { error: "Unauthorized to update event settings." };
   }
 
+  if (
+    settings.claimTokenTtlHours !== undefined &&
+    (!Number.isFinite(settings.claimTokenTtlHours) || settings.claimTokenTtlHours < 1)
+  ) {
+    return { error: "Claim token expiry must be at least 1 hour." };
+  }
+
   if (typeof settings.enabled === "boolean") {
-    await updateEventFeatureFlag(eventId, "ticket_distribution", settings.enabled);
+    const flagResult = await updateEventFeatureFlag(eventId, "ticket_distribution", settings.enabled);
+    if (flagResult.error) {
+      return { error: flagResult.error };
+    }
   }
 
   const existingDesign =

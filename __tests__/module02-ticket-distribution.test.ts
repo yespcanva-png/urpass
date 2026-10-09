@@ -435,6 +435,35 @@ describe("Module 02 — Bulk Ticket Distribution (Test 02 Suite)", () => {
     expect(summary.tickets[0].recipientEmail).toBe("pooja@example.com");
   });
 
+  it("Scenario 8B: When distribution is OFF, pending invitation claims are blocked without deleting the invite", async () => {
+    const order = create10TicketOrder();
+    (order.group_members as any[])[1] = {
+      ...(order.group_members as any[])[1],
+      assignmentState: "INVITED",
+      recipientName: "Pending Invite",
+      recipientEmail: "pending@example.com",
+      claimToken: "pending_token_123",
+      claimExpiresAt: new Date(Date.now() + 3600 * 1000).toISOString(),
+    };
+
+    const claimRes = await claimTicketWithToken({
+      order,
+      event: distDisabledEvent,
+      input: {
+        claimToken: "pending_token_123",
+        recipientName: "Pending Invite",
+        recipientEmail: "pending@example.com",
+      },
+    });
+
+    expect(claimRes.success).toBe(false);
+    expect(claimRes.error).toBe("DISTRIBUTION_DISABLED");
+
+    const summary = getOrderDistributionSummary({ order, event: distDisabledEvent });
+    expect(summary.tickets[1].state).toBe("INVITED");
+    expect(summary.tickets[1].claimToken).toBe("pending_token_123");
+  });
+
   // ── Scenario 9: Claims respect member form requirements if enabled ───────────
   it("Scenario 9: Claiming fails when required member form fields are missing, and succeeds when provided", async () => {
     let order = create10TicketOrder();

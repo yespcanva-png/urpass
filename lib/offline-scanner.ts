@@ -347,6 +347,12 @@ export async function verifyPassOffline(params: {
     pass.checkedInAt = scannedAt;
     memoryManifestStore.set(tokenKey, pass);
 
+    const metaToUpdate = memoryMetaStore.get(eventId);
+    if (metaToUpdate) {
+      metaToUpdate.checkedInCount = (metaToUpdate.checkedInCount || 0) + 1;
+      memoryMetaStore.set(eventId, metaToUpdate);
+    }
+
     // Queue for sync
     const queueEntry: OfflineQueueEntry = {
       scanOperationId,
@@ -687,3 +693,21 @@ export async function syncOfflineQueue(eventId: string): Promise<SyncReport> {
     return report;
   }
 }
+
+/**
+ * Clears cached manifest, meta, and offline queue for a specific event.
+ */
+export async function clearOfflineDataForEvent(eventId: string): Promise<void> {
+  memoryMetaStore.delete(eventId);
+  for (const [key, val] of Array.from(memoryManifestStore.entries())) {
+    if (val.eventId === eventId) {
+      memoryManifestStore.delete(key);
+    }
+  }
+  for (const [key, val] of Array.from(memoryQueueStore.entries())) {
+    if (val.eventId === eventId) {
+      memoryQueueStore.delete(key);
+    }
+  }
+}
+

@@ -87,6 +87,7 @@ export interface ClaimTicketResult {
   success: boolean;
   ticket?: TicketDistributionItem;
   passToken?: string;
+  updatedOrder?: Record<string, unknown>;
   error?: string;
   message?: string;
 }
