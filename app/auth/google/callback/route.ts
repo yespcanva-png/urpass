@@ -1,4 +1,3 @@
-import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient as createSupabaseAdmin } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
@@ -8,7 +7,10 @@ import { resolvePostAuthRedirect } from "@/lib/auth-redirect";
 import { logAuth, logAuthWarn, logAuthError } from "@/lib/auth/logger";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 export const maxDuration = 60;
+
+const EXTERNAL_TIMEOUT_MS = 6_000;
 
 // Short-lived in-memory cache of recently exchanged authorization codes (prevents duplicate token exchange errors on double-click/prefetch)
 const recentExchangedCodes = new Map<string, { destination: string; ts: number }>();
@@ -45,7 +47,7 @@ function adminClient() {
         fetch: (url, options) => {
           return fetch(url, {
             ...options,
-            signal: AbortSignal.timeout(8000),
+            signal: AbortSignal.timeout(EXTERNAL_TIMEOUT_MS),
           });
         },
       },
@@ -212,7 +214,7 @@ export async function GET(req: NextRequest) {
         redirect_uri: redirectUri,
         grant_type: "authorization_code",
       }),
-      signal: AbortSignal.timeout(8000),
+      signal: AbortSignal.timeout(EXTERNAL_TIMEOUT_MS),
     });
 
     const tokens = await tokenRes.json().catch(() => null);
@@ -266,7 +268,7 @@ export async function GET(req: NextRequest) {
     if (!info || !info.email) {
       const userRes = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
         headers: { Authorization: `Bearer ${tokens.access_token}` },
-        signal: AbortSignal.timeout(8000),
+        signal: AbortSignal.timeout(EXTERNAL_TIMEOUT_MS),
       });
 
       if (!userRes.ok) {
