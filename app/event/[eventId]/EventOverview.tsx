@@ -70,16 +70,21 @@ interface Props {
   initialAttendees?: Attendee[];
 }
 
-const APP_STATUS_CONFIG: Record<AppStatus, { label: string; cls: string }> = {
-  approved: { label: "Approved", cls: "bg-green-50 text-green-700 border border-green-100" },
-  rejected: { label: "Rejected", cls: "bg-red-50 text-red-600 border border-red-100" },
-  pending:  { label: "Pending",  cls: "bg-amber-50 text-amber-700 border border-amber-100" },
+const APP_STATUS_CONFIG: Record<string, { label: string; cls: string }> = {
+  approved:   { label: "Approved",   cls: "bg-green-50 text-green-700 border border-green-100" },
+  rejected:   { label: "Rejected",   cls: "bg-red-50 text-red-600 border border-red-100" },
+  pending:    { label: "Pending",    cls: "bg-amber-50 text-amber-700 border border-amber-100" },
+  waitlisted: { label: "Waitlisted", cls: "bg-purple-50 text-purple-700 border border-purple-100" },
+  cancelled:  { label: "Cancelled",  cls: "bg-neutral-100 text-neutral-500 border border-neutral-100" },
 };
 
-const PASS_STATUS_CONFIG: Record<PassStatus, { label: string; cls: string }> = {
-  checked_in:    { label: "Checked in",    cls: "bg-emerald-50 text-emerald-700 border border-emerald-100" },
-  generated:     { label: "Pass issued",   cls: "bg-blue-50 text-blue-600 border border-blue-100" },
-  not_generated: { label: "No pass",       cls: "bg-neutral-100 text-neutral-500 border border-neutral-100" },
+const PASS_STATUS_CONFIG: Record<string, { label: string; cls: string }> = {
+  checked_in:    { label: "Checked in",  cls: "bg-emerald-50 text-emerald-700 border border-emerald-100" },
+  generated:     { label: "Pass issued", cls: "bg-blue-50 text-blue-600 border border-blue-100" },
+  not_generated: { label: "No pass",     cls: "bg-neutral-100 text-neutral-500 border border-neutral-100" },
+  revoked:       { label: "Revoked",     cls: "bg-red-50 text-red-600 border border-red-100" },
+  expired:       { label: "Expired",     cls: "bg-neutral-100 text-neutral-600 border border-neutral-200" },
+  cancelled:     { label: "Cancelled",   cls: "bg-neutral-100 text-neutral-500 border border-neutral-100" },
 };
 
 function initials(name: string) {
@@ -976,10 +981,18 @@ export default function EventOverview({ event, initialAttendees = [] }: Props) {
         ) : (
           <ul className="divide-y divide-neutral-50">
             {previewAttendees.map((a) => {
-              const appCfg  = APP_STATUS_CONFIG[a.application_status];
-              const passCfg = PASS_STATUS_CONFIG[a.pass_status];
-              const ini     = initials(a.name);
-              const avCls   = avatarColor(a.name);
+              const appKey  = a.application_status || "pending";
+              const appCfg  = APP_STATUS_CONFIG[appKey] ?? {
+                label: appKey.charAt(0).toUpperCase() + appKey.slice(1),
+                cls: "bg-neutral-100 text-neutral-600 border border-neutral-200",
+              };
+              const passKey = a.pass_status || "not_generated";
+              const passCfg = PASS_STATUS_CONFIG[passKey] ?? {
+                label: passKey.charAt(0).toUpperCase() + passKey.slice(1),
+                cls: "bg-neutral-100 text-neutral-500 border border-neutral-100",
+              };
+              const ini     = initials(a.name || "Attendee");
+              const avCls   = avatarColor(a.name || "Attendee");
               return (
                 <li
                   key={a.id}

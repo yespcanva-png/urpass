@@ -126,7 +126,7 @@ export default function MemberTable({ members, orgSlug, userRole, currentUserId 
       ) : (
         <div className="divide-y divide-neutral-100">
           {members.map((m) => {
-            const badge = ROLE_BADGE[m.role];
+            const badge = ROLE_BADGE[m.role] || ROLE_BADGE.member;
             const name = m.profile?.full_name ?? m.invited_email;
             const isPending = m.status === "pending";
 

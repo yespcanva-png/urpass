@@ -64,7 +64,12 @@ const statusConfig: Record<Status, { label: string; cls: string; icon: React.Com
 };
 
 function StatusBadge({ status }: { status: Status }) {
-  const { label, cls, icon: Icon } = statusConfig[status];
+  const cfg = statusConfig[status] ?? {
+    label: (status || "Pending").charAt(0).toUpperCase() + (status || "Pending").slice(1),
+    cls: "bg-neutral-50 text-neutral-600 border-neutral-200",
+    icon: Clock,
+  };
+  const { label, cls, icon: Icon } = cfg;
   return (
     <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full border ${cls}`}>
       <Icon className="w-3 h-3" />
