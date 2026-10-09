@@ -179,7 +179,7 @@ describe("Google Standalone OAuth Routes", () => {
       expect(res.headers.get("location")).toBe("https://urpass.space/dashboard");
       expect(mockAdminGenerateLink).toHaveBeenCalled();
       expect(mockVerifyOtp).toHaveBeenCalled();
-      expect(res.cookies.get("sb-auth-token")?.value).toBe("token-abc");
+      expect(res.cookies.getAll().some((c) => c.name.startsWith("sb-") && c.value.startsWith("base64-"))).toBe(true);
     });
 
     it("redirects to target path encoded in state after successful exchange", async () => {
@@ -223,7 +223,7 @@ describe("Google Standalone OAuth Routes", () => {
       expect(res.status).toBe(307);
       expect(res.headers.get("location")).toBe("https://urpass.space/billing");
       expect(mockVerifyOtp).toHaveBeenCalled();
-      expect(res.cookies.get("sb-auth-token")?.value).toBe("token-abc");
+      expect(res.cookies.getAll().some((c) => c.name.startsWith("sb-") && c.value.startsWith("base64-"))).toBe(true);
     });
 
     it("falls back to magiclink verifyOtp if direct signInWithPassword fails", async () => {
@@ -273,7 +273,7 @@ describe("Google Standalone OAuth Routes", () => {
       expect(res.headers.get("location")).toBe("https://urpass.space/dashboard");
       expect(mockAdminGenerateLink).toHaveBeenCalled();
       expect(mockVerifyOtp).toHaveBeenCalled();
-      expect(res.cookies.get("sb-auth-token")?.value).toBe("token-abc");
+      expect(res.cookies.getAll().some((c) => c.name.startsWith("sb-") && c.value.startsWith("base64-"))).toBe(true);
     });
 
     it("falls back to JWT payload decode if userinfo endpoint fails", async () => {

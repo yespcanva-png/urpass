@@ -322,128 +322,11 @@ export async function GET(req: NextRequest) {
     );
     const isSecure = process.env.NODE_ENV === "production" || origin.startsWith("https://");
 
-    if (tokens.id_token) {
-      const idTokenDestination = target;
-      const idTokenResponse = NextResponse.redirect(`${origin}${idTokenDestination}`);
-      idTokenResponse.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, private, max-age=0");
-      idTokenResponse.headers.set("Pragma", "no-cache");
-      idTokenResponse.headers.set("Expires", "0");
-      idTokenResponse.cookies.set("oauth_state_nonce", "", {
-        path: "/",
-        maxAge: 0,
-        httpOnly: true,
-        secure: isSecure,
-        sameSite: "lax",
-      });
-
-      const idTokenSupabase = createServerClient(
-        getSupabaseUrl(),
-        getSupabaseAnonKey(),
-        {
-          cookies: {
-            getAll() {
-              return req.cookies.getAll();
-            },
-            setAll(cookiesToSet) {
-              cookiesToSet.forEach(({ name, value, options }) => {
-                idTokenResponse.cookies.set(name, value, {
-                  path: options?.path || "/",
-                  maxAge: typeof options?.maxAge === "number" ? options.maxAge : undefined,
-                  domain: options?.domain || undefined,
-                  sameSite: "lax",
-                  secure: isSecure,
-                  httpOnly: options?.httpOnly ?? true,
-                });
-              });
-            },
-          },
-        }
-      );
-
-      const { data: idTokenData, error: idTokenErr } = await idTokenSupabase.auth.signInWithIdToken({
-        provider: "google",
-        token: tokens.id_token,
-        access_token: tokens.access_token,
-      });
-
-      if (!idTokenErr && idTokenData?.session) {
-        const idTokenUserId = idTokenData.user?.id;
-        const idTokenIsNew = idTokenData.user?.created_at
-          ? Date.now() - new Date(idTokenData.user.created_at).getTime() < 15 * 60 * 1000
-          : false;
-        const finalDestination = target !== "/dashboard"
-          ? target
-          : (idTokenIsNew ? "/onboarding" : "/dashboard");
-
-        recentExchangedCodes.set(code, { destination: finalDestination, ts: Date.now() });
-
-        logAuth("session", "Supabase accepted Google ID token", {
-          email: normalizedEmail,
-          userId: idTokenUserId,
-          destination: finalDestination,
-        });
-
-        const finalResponse = finalDestination === idTokenDestination
-          ? idTokenResponse
-          : NextResponse.redirect(`${origin}${finalDestination}`);
-
-        if (finalResponse !== idTokenResponse) {
-          idTokenResponse.cookies.getAll().forEach((cookie) => {
-            finalResponse.cookies.set(cookie);
-          });
-          finalResponse.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, private, max-age=0");
-          finalResponse.headers.set("Pragma", "no-cache");
-          finalResponse.headers.set("Expires", "0");
-        }
-
-        const serviceRoleKey = getSupabaseServiceRoleKey();
-        Promise.allSettled([
-          idTokenUserId && serviceRoleKey
-            ? createSupabaseAdmin(getSupabaseUrl(), serviceRoleKey, {
-                auth: { autoRefreshToken: false, persistSession: false },
-              }).from("profiles").upsert(
-                {
-                  user_id: idTokenUserId,
-                  email: normalizedEmail,
-                  full_name: fullName,
-                  avatar_url: avatarUrl,
-                  updated_at: new Date().toISOString(),
-                },
-                { onConflict: "user_id" }
-              )
-            : Promise.resolve(),
-          idTokenIsNew
-            ? Promise.allSettled([
-                notifyOwnerNewUser({
-                  name: fullName,
-                  email: normalizedEmail,
-                  provider: "google",
-                  userId: idTokenUserId,
-                }),
-                sendUserWelcomeEmail({ to: normalizedEmail, name: fullName }),
-              ])
-            : notifyOwnerUserLogin({
-                name: fullName,
-                email: normalizedEmail,
-                provider: "google",
-                userId: idTokenUserId,
-              }),
-        ]).catch((e) => {
-          logAuthWarn("notifications", "Background sync warning after Google ID token session", { error: String(e) });
-        });
-
-        return finalResponse;
-      }
-
-      logAuthWarn("session", "Supabase rejected Google ID token before service-role fallback", {
-        email: normalizedEmail,
-        error: idTokenErr?.message,
-        status: idTokenErr?.status,
-        code: idTokenErr?.code,
-      });
-    }
-
-    // 4. User Resolution & Supabase Auth Link Generation
+    // 4. User Resolution & Supabase Auth Link Generation.
+    // The Google authorization code is exchanged with Google above. Supabase
+    // cannot exchange that raw Google code unless Supabase initiated the OAuth
+    // flow, so this direct-Google flow creates the Supabase session with a
+    // server-generated magic-link token instead.
     const admin = adminClient();
     let userId: string | undefined;
     let isNewUser = false;
@@ -514,9 +397,7 @@ export async function GET(req: NextRequest) {
       sameSite: "lax",
     });
 
-    // 6. Direct single-pass session cookie writer. Prefer Supabase accepting
-    // Google's ID token; fall back to the existing magic-link token path if the
-    // Supabase Google provider is not ready or rejects the token.
+    // 6. Compact single-pass session cookie writer (prevents Nginx 4KB proxy buffer 502 error)
     const supabase = createServerClient(
       getSupabaseUrl(),
       getSupabaseAnonKey(),
@@ -525,36 +406,71 @@ export async function GET(req: NextRequest) {
           getAll() {
             return req.cookies.getAll();
           },
-          setAll(cookiesToSet) {
-            cookiesToSet.forEach(({ name, value, options }) => {
-              response.cookies.set(name, value, {
-                path: options?.path || "/",
-                maxAge: typeof options?.maxAge === "number" ? options.maxAge : undefined,
-                domain: options?.domain || undefined,
-                sameSite: "lax",
-                secure: isSecure,
-                httpOnly: options?.httpOnly ?? true,
-              });
-            });
-          },
+          setAll() {},
         },
       }
     );
 
-    const sessionEstablishedBy = "magiclink";
-    logAuth("session", "Attempting magic-link fallback session via verifyOtp", {
-      email: normalizedEmail,
-      userId,
-      verificationType,
-    });
-    const { error: verifyErr } = await supabase.auth.verifyOtp({
+    const { data: verifyData, error: verifyErr } = await supabase.auth.verifyOtp({
       token_hash: tokenHash,
       type: verificationType,
     });
 
-    if (verifyErr) {
+    if (verifyErr || !verifyData?.session) {
       logAuthError("session", "verifyOtp failed to establish session", verifyErr, { email: normalizedEmail });
       return NextResponse.redirect(`${origin}/login?error=google_auth_failed&step=verify_otp`);
+    }
+
+    const session = verifyData.session;
+    const sessionUser = verifyData.user || session.user;
+
+    // Compact session JSON (keeps cookie under 2.1KB, preventing 8.7KB chunked header overflows in reverse proxies)
+    const compactSession = {
+      access_token: session.access_token,
+      refresh_token: session.refresh_token,
+      token_type: session.token_type,
+      expires_in: session.expires_in,
+      expires_at: session.expires_at,
+      user: {
+        id: sessionUser.id,
+        aud: sessionUser.aud,
+        email: sessionUser.email,
+        role: sessionUser.role,
+        app_metadata: sessionUser.app_metadata,
+        user_metadata: {
+          full_name: fullName,
+          avatar_url: avatarUrl,
+        },
+      },
+    };
+
+    const compactCookieValue = "base64-" + Buffer.from(JSON.stringify(compactSession)).toString("base64");
+    let supabaseProjectRef = "kxmxxqyxkoseksfaymqm";
+    try {
+      supabaseProjectRef = new URL(getSupabaseUrl()).hostname.split(".")[0];
+    } catch {
+      // fallback to project ref
+    }
+    const baseCookieName = `sb-${supabaseProjectRef}-auth-token`;
+
+    // Set single compact cookie (2.0 KB)
+    response.cookies.set(baseCookieName, compactCookieValue, {
+      path: "/",
+      maxAge: typeof session.expires_in === "number" ? session.expires_in : 60 * 60 * 24 * 7,
+      sameSite: "lax",
+      secure: isSecure,
+      httpOnly: true,
+    });
+
+    // Clear any legacy bloated chunked cookies (.0, .1, .2, .3, .4, .5)
+    for (let i = 0; i <= 5; i++) {
+      response.cookies.set(`${baseCookieName}.${i}`, "", {
+        path: "/",
+        maxAge: 0,
+        sameSite: "lax",
+        secure: isSecure,
+        httpOnly: true,
+      });
     }
 
     logAuth("session", "Session established successfully -> Redirecting user", {
@@ -562,7 +478,7 @@ export async function GET(req: NextRequest) {
       userId,
       destination,
       isNewUser,
-      sessionEstablishedBy,
+      cookieSize: compactCookieValue.length,
     });
 
     // 7. Non-blocking background sync for Profile Upsert & Notifications
