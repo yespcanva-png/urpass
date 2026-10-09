@@ -469,7 +469,7 @@ export async function GET(req: NextRequest) {
       maxAge: typeof session.expires_in === "number" ? session.expires_in : 60 * 60 * 24 * 7,
       sameSite: "lax",
       secure: isSecure,
-      httpOnly: true,
+      httpOnly: false,
     });
 
     // Clear any legacy bloated chunked cookies (.0, .1, .2, .3, .4, .5)
@@ -479,7 +479,7 @@ export async function GET(req: NextRequest) {
         maxAge: 0,
         sameSite: "lax",
         secure: isSecure,
-        httpOnly: true,
+        httpOnly: false,
       });
     }
 

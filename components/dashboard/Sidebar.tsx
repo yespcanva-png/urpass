@@ -105,10 +105,30 @@ export default function Sidebar({ email, fullName, planSlug, campusContext }: Pr
   }
 
   async function handleLogout() {
-    const supabase = createClient();
-    await supabase.auth.signOut({ scope: "local" });
-    router.push("/login");
-    router.refresh();
+    try {
+      const supabase = createClient();
+      await supabase.auth.signOut({ scope: "local" });
+    } catch {
+      // ignore
+    }
+
+    try {
+      const { signOutAction } = await import("@/app/actions/auth");
+      await signOutAction();
+    } catch {
+      // ignore
+    }
+
+    if (typeof document !== "undefined") {
+      document.cookie.split(";").forEach((c) => {
+        const name = c.split("=")[0].trim();
+        if (name.startsWith("sb-") || name.includes("auth") || name.startsWith("urpass_")) {
+          document.cookie = `${name}=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT;`;
+        }
+      });
+    }
+
+    window.location.href = "/login";
   }
 
   const initials = fullName

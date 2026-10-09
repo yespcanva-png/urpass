@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { getAuthResetRedirectUrl } from "@/lib/auth-redirect";
+import { requestPasswordReset } from "@/app/actions/auth";
 
 const inputCls =
   "bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-brand focus:bg-white transition-all w-full placeholder:text-neutral-400";
@@ -88,20 +89,33 @@ export default function ResetPasswordClient() {
         }
       }
 
-      // 2. Check for PKCE authorization code
-      const code = searchParams.get("code");
-      if (code) {
-        const { error: exchangeErr } = await supabase.auth.exchangeCodeForSession(code);
-        if (!exchangeErr) {
-          if (isMounted) {
-            setSessionReady(true);
-            setCheckingSession(false);
-          }
+      // 2. Check for token_hash in query parameters (direct OTP / token verification)
+      const tokenHash = searchParams.get("token_hash");
+      const verificationType = (searchParams.get("type") as "recovery" | "signup" | "magiclink" | "email") || "recovery";
+      if (tokenHash) {
+        const { error: otpErr } = await supabase.auth.verifyOtp({
+          token_hash: tokenHash,
+          type: verificationType,
+        });
+        if (!otpErr && isMounted) {
+          setSessionReady(true);
+          setCheckingSession(false);
           return;
         }
       }
 
-      // 3. Check existing active session
+      // 3. Check for PKCE authorization code
+      const code = searchParams.get("code");
+      if (code) {
+        const { error: exchangeErr } = await supabase.auth.exchangeCodeForSession(code);
+        if (!exchangeErr && isMounted) {
+          setSessionReady(true);
+          setCheckingSession(false);
+          return;
+        }
+      }
+
+      // 4. Check existing active session
       const { data: { session } } = await supabase.auth.getSession();
       if (session && isMounted) {
         setSessionReady(true);
@@ -109,17 +123,17 @@ export default function ResetPasswordClient() {
         return;
       }
 
-      // 4. If neither code, hash, nor session is valid and we had a code/error attempt
-      if (code && isMounted) {
+      // 5. If neither token_hash, code, hash, nor session is valid and we had an attempt
+      if ((code || tokenHash) && isMounted) {
         setInitError("This reset link has expired or is invalid. Please request a new one below.");
       } else if (isMounted) {
-        // Allow user to enter new password if browser holds recovery state or prompt
+        // Allow user to enter new password if browser holds recovery state
         setSessionReady(true);
       }
       if (isMounted) setCheckingSession(false);
     }
 
-    // 5. Auth State Change listener for PASSWORD_RECOVERY events
+    // 6. Auth State Change listener for PASSWORD_RECOVERY events
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (
         event === "PASSWORD_RECOVERY" ||
@@ -161,7 +175,9 @@ export default function ResetPasswordClient() {
       setError(err.message);
     } else {
       setSuccess(true);
-      setTimeout(() => router.push("/dashboard"), 2500);
+      setTimeout(() => {
+        window.location.href = "/dashboard";
+      }, 1800);
     }
   }
 
@@ -173,15 +189,9 @@ export default function ResetPasswordClient() {
     setResendSuccess(false);
 
     try {
-      const supabase = createClient();
-      const origin = typeof window !== "undefined" ? window.location.origin : null;
-      const redirectTo = getAuthResetRedirectUrl(origin);
-      const { error: err } = await supabase.auth.resetPasswordForEmail(resendEmail.trim(), {
-        redirectTo,
-      });
-
-      if (err) {
-        setResendError(err.message);
+      const res = await requestPasswordReset(resendEmail.trim());
+      if (res.error) {
+        setResendError(res.error);
       } else {
         setResendSuccess(true);
       }

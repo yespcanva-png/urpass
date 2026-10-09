@@ -120,35 +120,25 @@ function LoginContent() {
 
     const supabase = createClient();
     const { data: signInData, error } = await supabase.auth.signInWithPassword({
-      email: data.email,
+      email: data.email.trim(),
       password: data.password,
     });
+
     if (error) {
-      setServerError(error.message);
+      if (error.message.toLowerCase().includes("invalid login credentials")) {
+        setServerError("Invalid email or password. Please check your credentials or reset your password.");
+      } else if (error.message.toLowerCase().includes("email not confirmed")) {
+        setServerError("Your email address is not confirmed yet. Please check your inbox for the verification email.");
+      } else {
+        setServerError(error.message);
+      }
       return;
     }
 
     const user = signInData.user;
     try {
-      fetch("/api/auth/notify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: "login",
-          email: data.email,
-          name: user?.user_metadata?.full_name || null,
-          provider: "email",
-          userId: user?.id,
-        }),
-        keepalive: true,
-      }).catch((err) => console.error("[login] notify API error:", err));
-    } catch (err) {
-      console.error("[login] notify dispatch error:", err);
-    }
-
-    try {
       await sendLoginNotifications({
-        email: data.email,
+        email: data.email.trim(),
         name: user?.user_metadata?.full_name || null,
         provider: "email",
         userId: user?.id,
@@ -161,8 +151,7 @@ function LoginContent() {
       searchParams,
       typeof document !== "undefined" ? document.referrer : null
     );
-    router.push(target);
-    router.refresh();
+    window.location.href = target;
   }
 
   async function onSsoSubmit(data: SsoFormData) {

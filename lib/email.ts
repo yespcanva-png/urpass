@@ -417,6 +417,74 @@ export async function sendUserWelcomeEmail({
   });
 }
 
+export async function sendPasswordResetEmail({
+  to,
+  resetUrl,
+  name,
+}: {
+  to: string;
+  resetUrl: string;
+  name?: string | null;
+}) {
+  const safeName = escapeHtml(name || "Organizer");
+  const safeEmail = escapeHtml(to);
+  const safeUrl = escapeHtml(resetUrl);
+
+  await sendEmail({
+    from: getFromEmail(),
+    to,
+    subject: "Reset your URPASS password",
+    html: `
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /></head>
+<body style="margin:0;padding:0;background:#f6f4ff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f6f4ff;padding:36px 16px;">
+  <tr><td align="center">
+    <table width="100%" cellpadding="0" cellspacing="0" style="max-width:540px;background:#ffffff;border:1px solid #ede9fe;border-radius:20px;overflow:hidden;box-shadow:0 8px 32px rgba(109,40,217,0.08);">
+      <tr>
+        <td style="background:linear-gradient(135deg, #4c1d95 0%, #6D28D9 100%);padding:28px 32px;text-align:center;">
+          <p style="margin:0 0 6px;font-size:10px;font-weight:800;letter-spacing:2.5px;color:rgba(255,255,255,0.7);text-transform:uppercase;">URPASS SECURITY</p>
+          <h1 style="margin:0;font-size:22px;line-height:1.3;color:#ffffff;font-weight:800;">Password Reset Request</h1>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:32px;">
+          <p style="margin:0 0 14px;font-size:15px;color:#1e293b;line-height:1.6;">
+            Hi <strong>${safeName}</strong>,
+          </p>
+          <p style="margin:0 0 20px;font-size:14px;color:#475569;line-height:1.6;">
+            We received a request to reset the password for your URPASS account associated with <strong>${safeEmail}</strong>. Click the button below to choose a new password:
+          </p>
+          <div style="text-align:center;margin:28px 0;">
+            <a href="${safeUrl}" style="display:inline-block;background:#6D28D9;color:#ffffff;font-weight:700;font-size:14px;padding:14px 32px;border-radius:12px;text-decoration:none;box-shadow:0 4px 14px rgba(109,40,217,0.3);">
+              Reset My Password &rarr;
+            </a>
+          </div>
+          <p style="margin:0 0 12px;font-size:12px;color:#64748b;line-height:1.5;">
+            This link will expire in 24 hours. If you did not make this request, you can safely ignore this email &mdash; your password will remain unchanged.
+          </p>
+          <div style="margin-top:20px;padding-top:16px;border-top:1px solid #f1f5f9;font-size:11px;color:#94a3b8;word-break:break-all;">
+            If the button above doesn't work, copy and paste this link into your browser:<br />
+            <a href="${safeUrl}" style="color:#6D28D9;text-decoration:none;">${safeUrl}</a>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <td style="border-top:1px solid #f3f4f6;padding:16px 32px;background:#fafafa;text-align:center;">
+          <p style="margin:0;font-size:11px;color:#94a3b8;">
+            URPASS &middot; <a href="https://urpass.space" style="color:#6D28D9;text-decoration:none;">urpass.space</a>
+          </p>
+        </td>
+      </tr>
+    </table>
+  </td></tr>
+</table>
+</body>
+</html>`.trim(),
+  });
+}
+
 export async function sendUserSubscriptionActivatedEmail({
   to,
   name,
