@@ -85,6 +85,17 @@ export interface HardenedPublicPass {
     orgLogoUrl: string | null;
     customDesign: any;
   };
+  groupInfo?: {
+    totalCount: number;
+    isPrimary: boolean;
+    primaryName: string;
+    members: Array<{
+      name: string;
+      role: string;
+      passToken?: string;
+      status?: string;
+    }>;
+  } | null;
 }
 
 export async function getHardenedPublicPass(
@@ -148,6 +159,48 @@ export async function getHardenedPublicPass(
   const safeMeetingUrl = isApproved ? event.meeting_url : null;
   const customTicketId = (attendee.custom_responses as Record<string, any>)?.custom_ticket_id || null;
 
+  let groupInfo: HardenedPublicPass["groupInfo"] = null;
+  const customResp = (attendee.custom_responses as Record<string, any>) || {};
+
+  if (Array.isArray(customResp.group_members) && customResp.group_members.length > 1) {
+    groupInfo = {
+      totalCount: customResp.group_members.length,
+      isPrimary: true,
+      primaryName: attendee.name,
+      members: customResp.group_members.map((m: any, idx: number) => ({
+        name: m.name || `Guest #${idx + 1}`,
+        role: m.role || (idx === 0 ? "primary" : "member"),
+        passToken: m.passToken,
+        status: m.status || "active",
+      })),
+    };
+  } else if (customResp.parent_attendee_id) {
+    const { data: parentAttendee } = await admin
+      .from("attendees")
+      .select("name, custom_responses")
+      .eq("id", customResp.parent_attendee_id)
+      .single();
+
+    if (
+      parentAttendee &&
+      Array.isArray((parentAttendee.custom_responses as Record<string, any>)?.group_members) &&
+      (parentAttendee.custom_responses as Record<string, any>).group_members.length > 1
+    ) {
+      const gMembers = (parentAttendee.custom_responses as Record<string, any>).group_members;
+      groupInfo = {
+        totalCount: gMembers.length,
+        isPrimary: false,
+        primaryName: parentAttendee.name,
+        members: gMembers.map((m: any, idx: number) => ({
+          name: m.name || `Guest #${idx + 1}`,
+          role: m.role || (idx === 0 ? "primary" : "member"),
+          passToken: m.passToken,
+          status: m.status || "active",
+        })),
+      };
+    }
+  }
+
   return {
     pass: {
       pass_token: pass.pass_token,
@@ -183,5 +236,6 @@ export async function getHardenedPublicPass(
       orgLogoUrl: orgProfile?.org_logo_url || null,
       customDesign: rawCustomDesign,
     },
+    groupInfo,
   };
 }

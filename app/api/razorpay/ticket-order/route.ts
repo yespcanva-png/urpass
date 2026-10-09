@@ -134,7 +134,7 @@ export async function POST(req: NextRequest) {
     const minGuests = Number(ticketType.min_guests || 1);
     const allowExtra = Boolean(ticketType.allow_extra_guests);
     const maxGuests = Number(ticketType.max_guests || (allowExtra ? 20 : includedGuests));
-    const clampedGuests = Math.max(minGuests, Math.min(requestedGuests, maxGuests));
+    const isGroupPass = Boolean(ticketType.is_group_pass);
 
     // Calculate Primary Attendee Base Price (handling automatic age matching from organizer rules)
     let basePricePaise = Number(ticketType.price);
@@ -151,37 +151,46 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Calculate Extra Members Price
-    extraGuestsCount = allowExtra ? Math.max(0, clampedGuests - includedGuests) : 0;
-    let extraAmountPaise = 0;
+    if (isGroupPass) {
+      const clampedGuests = Math.max(minGuests, Math.min(requestedGuests, maxGuests));
+      // Calculate Extra Members Price
+      extraGuestsCount = allowExtra ? Math.max(0, clampedGuests - includedGuests) : 0;
+      let extraAmountPaise = 0;
 
-    if (extraGuestsCount > 0) {
-      if (ticketType.extra_member_pricing_mode === "age_based" && Array.isArray(groupMembers) && groupMembers.length > 1) {
-        // Compute price per extra member based on their automatically matched age bracket
-        for (let i = 1; i < groupMembers.length && i <= clampedGuests; i++) {
-          const member = groupMembers[i];
-          const memberTier =
-            member.age !== undefined && member.age !== null && member.age !== ""
-              ? findMatchingAgeTier(Number(member.age), ticketType.age_tiers)
-              : member.ageTierId
-              ? ticketType.age_tiers?.find((t) => t.id === member.ageTierId)
-              : null;
+      if (extraGuestsCount > 0) {
+        if (ticketType.extra_member_pricing_mode === "age_based" && Array.isArray(groupMembers) && groupMembers.length > 1) {
+          for (let i = 1; i < groupMembers.length && i <= clampedGuests; i++) {
+            const member = groupMembers[i];
+            const memberTier =
+              member.age !== undefined && member.age !== null && member.age !== ""
+                ? findMatchingAgeTier(Number(member.age), ticketType.age_tiers)
+                : member.ageTierId
+                ? ticketType.age_tiers?.find((t) => t.id === member.ageTierId)
+                : null;
 
-          if (memberTier) {
-            extraAmountPaise += memberTier.is_free ? 0 : Number(memberTier.price || 0);
-          } else {
-            extraAmountPaise += Math.round(Number(ticketType.extra_guest_price || 0) * 100);
+            if (memberTier) {
+              extraAmountPaise += memberTier.is_free ? 0 : Number(memberTier.price || 0);
+            } else {
+              extraAmountPaise += Math.round(Number(ticketType.extra_guest_price || 0) * 100);
+            }
           }
+        } else {
+          const extraPriceRupees = Number(ticketType.extra_guest_price || 0);
+          extraGuestsAmountRupees = extraGuestsCount * extraPriceRupees;
+          extraAmountPaise = Math.round(extraGuestsAmountRupees * 100);
         }
-      } else {
-        const extraPriceRupees = Number(ticketType.extra_guest_price || 0);
-        extraGuestsAmountRupees = extraGuestsCount * extraPriceRupees;
-        extraAmountPaise = Math.round(extraGuestsAmountRupees * 100);
       }
+
+      amountPaise = basePricePaise + extraAmountPaise;
+      totalAttendeeCount = clampedGuests;
+    } else {
+      // Standard ticket with bulk booking capability (1 to 20 tickets)
+      const bulkQuantity = Math.max(1, Math.min(requestedGuests, 20));
+      amountPaise = basePricePaise * bulkQuantity;
+      totalAttendeeCount = bulkQuantity;
+      extraGuestsCount = 0;
     }
 
-    amountPaise = basePricePaise + extraAmountPaise;
-    totalAttendeeCount = clampedGuests;
     ticketName = `${event.name} — ${ticketType.name}`;
   } else {
     const { data: defaultTT } = await admin
@@ -332,6 +341,20 @@ export async function POST(req: NextRequest) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const order = await (razorpay.orders as any).create(orderPayload);
 
+    let finalGroupMembers = Array.isArray(groupMembers) && groupMembers.length > 0 ? [...groupMembers] : [];
+    if (totalAttendeeCount > 1 && finalGroupMembers.length < totalAttendeeCount) {
+      if (finalGroupMembers.length === 0) {
+        finalGroupMembers.push({ name: buyerName, email: buyerEmail, role: "primary", status: "active" });
+      }
+      while (finalGroupMembers.length < totalAttendeeCount) {
+        finalGroupMembers.push({
+          name: `Guest #${finalGroupMembers.length + 1}`,
+          role: "member",
+          status: "active",
+        });
+      }
+    }
+
     await Promise.all([
       admin.from("ticket_orders").insert({
         event_id: canonicalEventId,
@@ -345,7 +368,7 @@ export async function POST(req: NextRequest) {
         total_attendee_count: totalAttendeeCount,
         extra_guests_count: extraGuestsCount,
         extra_guests_amount: extraGuestsAmountRupees,
-        group_members: Array.isArray(groupMembers) ? groupMembers : [],
+        group_members: finalGroupMembers,
         age_tier_id: resolvedAgeTierId,
         age_tier_label: resolvedAgeTierLabel,
       }),

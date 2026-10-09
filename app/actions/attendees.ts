@@ -881,7 +881,7 @@ export async function submitApplication(
       return { error: "This event is at capacity." };
     }
 
-    const finalCustomResponses = {
+    const finalCustomResponses: Record<string, any> = {
       ...(customResponses ?? {}),
       ...(ticketOrder?.group_members && Array.isArray(ticketOrder.group_members) && ticketOrder.group_members.length > 0
         ? { group_members: ticketOrder.group_members }
@@ -957,6 +957,132 @@ export async function submitApplication(
             .eq("id", attendee.id);
         } catch {
           // Non-blocking
+        }
+      }
+
+      // ── Process Group Passes & Bulk Booking Member Sub-Passes ──
+      const rawGroupMembers = Array.isArray(finalCustomResponses.group_members)
+        ? [...(finalCustomResponses.group_members as any[])]
+        : [];
+
+      const bulkQty = Number(finalCustomResponses.bulk_quantity || 1);
+      if (bulkQty > 1 && rawGroupMembers.length < bulkQty) {
+        if (rawGroupMembers.length === 0) {
+          rawGroupMembers.push({ name: parsed.data.name, email: parsed.data.email, phone: parsed.data.phone, role: "primary" });
+        }
+        while (rawGroupMembers.length < bulkQty) {
+          rawGroupMembers.push({
+            name: `Guest #${rawGroupMembers.length + 1}`,
+            role: "member",
+            status: "active",
+          });
+        }
+      }
+
+      if (rawGroupMembers.length > 0) {
+        rawGroupMembers[0] = {
+          ...rawGroupMembers[0],
+          name: parsed.data.name,
+          email: parsed.data.email,
+          phone: parsed.data.phone,
+          role: "primary",
+          attendeeId: attendee.id,
+          passToken: pass.pass_token,
+          status: "active",
+        };
+      }
+
+      for (let i = 1; i < rawGroupMembers.length; i++) {
+        const member = rawGroupMembers[i];
+        const memName = (member.name || `Guest #${i + 1}`).trim();
+        const memEmail = member.email && member.email.includes("@") ? member.email.trim() : null;
+        const memPhone = member.phone || null;
+
+        try {
+          const { data: memberAttendee } = await admin
+            .from("attendees")
+            .insert({
+              event_id: canonicalEventId,
+              name: memName,
+              email: memEmail || `${attendee.id}-guest-${i + 1}@urpass.placeholder`,
+              phone: memPhone,
+              pass_type: attendee.pass_type,
+              application_status: "approved",
+              ticket_type_id: selectedTicketType?.id ?? null,
+              custom_responses: {
+                parent_attendee_id: attendee.id,
+                guest_index: i + 1,
+                primary_buyer_name: parsed.data.name,
+                primary_buyer_email: parsed.data.email,
+              },
+            })
+            .select("id, pass_type")
+            .single();
+
+          if (memberAttendee) {
+            const { data: memberPass } = await admin
+              .from("passes")
+              .insert({
+                event_id: canonicalEventId,
+                attendee_id: memberAttendee.id,
+                pass_type: memberAttendee.pass_type,
+                ticket_type_id: selectedTicketType?.id ?? null,
+                attendee_age: member.age ? Number(member.age) : null,
+                age_tier_label: member.ageTierLabel || null,
+                age_tier_id: member.ageTierId || null,
+              })
+              .select("pass_token")
+              .single();
+
+            if (memberPass) {
+              await admin.from("attendees").update({ pass_status: "generated" }).eq("id", memberAttendee.id);
+              rawGroupMembers[i] = {
+                ...member,
+                attendeeId: memberAttendee.id,
+                passToken: memberPass.pass_token,
+                status: "active",
+              };
+
+              if (memEmail) {
+                communicationService.sendTicketCommunications({
+                  eventId: canonicalEventId,
+                  eventName: event.name,
+                  eventDate: event.event_date,
+                  venue: event.venue,
+                  ticketId: formatTicketId(memberPass.pass_token),
+                  passToken: memberPass.pass_token,
+                  attendeeId: memberAttendee.id,
+                  attendeeName: memName,
+                  email: memEmail,
+                  phone: memPhone,
+                  passType: memberAttendee.pass_type,
+                  ticketUrl: buildTicketUrl(memberPass.pass_token),
+                  version: `attendee_${memberAttendee.id}`,
+                }).catch(() => {});
+              }
+            }
+          }
+        } catch (err) {
+          console.error("[submitApplication] Sub-pass generation error for member", i, err);
+        }
+      }
+
+      if (rawGroupMembers.length > 1) {
+        finalCustomResponses.group_members = rawGroupMembers;
+        await admin
+          .from("attendees")
+          .update({
+            custom_responses: finalCustomResponses,
+          })
+          .eq("id", attendee.id);
+
+        if (payment?.orderId) {
+          await admin
+            .from("ticket_orders")
+            .update({
+              group_members: rawGroupMembers,
+            })
+            .eq("razorpay_order_id", payment.orderId);
         }
       }
 
