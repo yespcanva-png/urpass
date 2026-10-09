@@ -298,7 +298,6 @@ export async function GET(req: NextRequest) {
       return NextResponse.redirect(`${origin}/login?error=google_email_unverified`);
     }
 
-    const admin = adminClient();
     const normalizedEmail = String(info.email || "").toLowerCase().trim();
 
     if (!normalizedEmail) {
@@ -317,7 +316,135 @@ export async function GET(req: NextRequest) {
       aud: info.aud,
     });
 
+    const target = resolvePostAuthRedirect(
+      { get: (k: string) => (k === "next" ? targetPath : null) },
+      null
+    );
+    const isSecure = process.env.NODE_ENV === "production" || origin.startsWith("https://");
+
+    if (tokens.id_token) {
+      const idTokenDestination = target;
+      const idTokenResponse = NextResponse.redirect(`${origin}${idTokenDestination}`);
+      idTokenResponse.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, private, max-age=0");
+      idTokenResponse.headers.set("Pragma", "no-cache");
+      idTokenResponse.headers.set("Expires", "0");
+      idTokenResponse.cookies.set("oauth_state_nonce", "", {
+        path: "/",
+        maxAge: 0,
+        httpOnly: true,
+        secure: isSecure,
+        sameSite: "lax",
+      });
+
+      const idTokenSupabase = createServerClient(
+        getSupabaseUrl(),
+        getSupabaseAnonKey(),
+        {
+          cookies: {
+            getAll() {
+              return req.cookies.getAll();
+            },
+            setAll(cookiesToSet) {
+              cookiesToSet.forEach(({ name, value, options }) => {
+                idTokenResponse.cookies.set(name, value, {
+                  path: options?.path || "/",
+                  maxAge: typeof options?.maxAge === "number" ? options.maxAge : undefined,
+                  domain: options?.domain || undefined,
+                  sameSite: "lax",
+                  secure: isSecure,
+                  httpOnly: options?.httpOnly ?? true,
+                });
+              });
+            },
+          },
+        }
+      );
+
+      const { data: idTokenData, error: idTokenErr } = await idTokenSupabase.auth.signInWithIdToken({
+        provider: "google",
+        token: tokens.id_token,
+        access_token: tokens.access_token,
+      });
+
+      if (!idTokenErr && idTokenData?.session) {
+        const idTokenUserId = idTokenData.user?.id;
+        const idTokenIsNew = idTokenData.user?.created_at
+          ? Date.now() - new Date(idTokenData.user.created_at).getTime() < 15 * 60 * 1000
+          : false;
+        const finalDestination = target !== "/dashboard"
+          ? target
+          : (idTokenIsNew ? "/onboarding" : "/dashboard");
+
+        recentExchangedCodes.set(code, { destination: finalDestination, ts: Date.now() });
+
+        logAuth("session", "Supabase accepted Google ID token", {
+          email: normalizedEmail,
+          userId: idTokenUserId,
+          destination: finalDestination,
+        });
+
+        const finalResponse = finalDestination === idTokenDestination
+          ? idTokenResponse
+          : NextResponse.redirect(`${origin}${finalDestination}`);
+
+        if (finalResponse !== idTokenResponse) {
+          idTokenResponse.cookies.getAll().forEach((cookie) => {
+            finalResponse.cookies.set(cookie);
+          });
+          finalResponse.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, private, max-age=0");
+          finalResponse.headers.set("Pragma", "no-cache");
+          finalResponse.headers.set("Expires", "0");
+        }
+
+        const serviceRoleKey = getSupabaseServiceRoleKey();
+        Promise.allSettled([
+          idTokenUserId && serviceRoleKey
+            ? createSupabaseAdmin(getSupabaseUrl(), serviceRoleKey, {
+                auth: { autoRefreshToken: false, persistSession: false },
+              }).from("profiles").upsert(
+                {
+                  user_id: idTokenUserId,
+                  email: normalizedEmail,
+                  full_name: fullName,
+                  avatar_url: avatarUrl,
+                  updated_at: new Date().toISOString(),
+                },
+                { onConflict: "user_id" }
+              )
+            : Promise.resolve(),
+          idTokenIsNew
+            ? Promise.allSettled([
+                notifyOwnerNewUser({
+                  name: fullName,
+                  email: normalizedEmail,
+                  provider: "google",
+                  userId: idTokenUserId,
+                }),
+                sendUserWelcomeEmail({ to: normalizedEmail, name: fullName }),
+              ])
+            : notifyOwnerUserLogin({
+                name: fullName,
+                email: normalizedEmail,
+                provider: "google",
+                userId: idTokenUserId,
+              }),
+        ]).catch((e) => {
+          logAuthWarn("notifications", "Background sync warning after Google ID token session", { error: String(e) });
+        });
+
+        return finalResponse;
+      }
+
+      logAuthWarn("session", "Supabase rejected Google ID token before service-role fallback", {
+        email: normalizedEmail,
+        error: idTokenErr?.message,
+        status: idTokenErr?.status,
+        code: idTokenErr?.code,
+      });
+    }
+
     // 4. User Resolution & Supabase Auth Link Generation
+    const admin = adminClient();
     let userId: string | undefined;
     let isNewUser = false;
 
@@ -364,10 +491,6 @@ export async function GET(req: NextRequest) {
     const verificationType = (linkRes.data.properties.verification_type as "magiclink" | "signup" | "email") || "magiclink";
 
     // 5. Determine post-login redirect destination
-    const target = resolvePostAuthRedirect(
-      { get: (k: string) => (k === "next" ? targetPath : null) },
-      null
-    );
     const destination = target !== "/dashboard"
       ? target
       : (isNewUser ? "/onboarding" : "/dashboard");
@@ -383,7 +506,6 @@ export async function GET(req: NextRequest) {
     response.headers.set("Expires", "0");
 
     // Clear ephemeral OAuth state nonce cookie safely
-    const isSecure = process.env.NODE_ENV === "production" || origin.startsWith("https://");
     response.cookies.set("oauth_state_nonce", "", {
       path: "/",
       maxAge: 0,
@@ -419,42 +541,11 @@ export async function GET(req: NextRequest) {
       }
     );
 
-    let sessionEstablishedBy = "magiclink";
-    let verifyErr: unknown = null;
-
-    if (tokens.id_token) {
-      const { data: idTokenData, error: idTokenErr } = await supabase.auth.signInWithIdToken({
-        provider: "google",
-        token: tokens.id_token,
-        access_token: tokens.access_token,
-      });
-
-      if (!idTokenErr && idTokenData?.session) {
-        sessionEstablishedBy = "google_id_token";
-        if (idTokenData.user?.id) {
-          userId = idTokenData.user.id;
-        }
-        logAuth("session", "Supabase accepted Google ID token", {
-          email: normalizedEmail,
-          userId,
-        });
-      } else {
-        logAuthWarn("session", "Supabase rejected Google ID token, falling back to magic-link session", {
-          email: normalizedEmail,
-          error: idTokenErr?.message,
-          status: idTokenErr?.status,
-          code: idTokenErr?.code,
-        });
-      }
-    }
-
-    if (sessionEstablishedBy !== "google_id_token") {
-      const otpResult = await supabase.auth.verifyOtp({
-        token_hash: tokenHash,
-        type: verificationType,
-      });
-      verifyErr = otpResult.error;
-    }
+    const sessionEstablishedBy = "magiclink";
+    const { error: verifyErr } = await supabase.auth.verifyOtp({
+      token_hash: tokenHash,
+      type: verificationType,
+    });
 
     if (verifyErr) {
       logAuthError("session", "verifyOtp failed to establish session", verifyErr, { email: normalizedEmail });
