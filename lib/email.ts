@@ -103,7 +103,10 @@ export function isEmailProviderConfigured() {
 // Verified sending domain
 export function getFromEmail(): string {
   const raw = cleanString(process.env.EMAIL_FROM);
-  return raw || "URPASS <urpass.space@yespstudio.com>";
+  if (raw && !raw.includes("yespstudio.com")) {
+    return raw;
+  }
+  return "URPASS <noreply@urpass.space>";
 }
 
 const FROM = getFromEmail();
@@ -252,7 +255,10 @@ export async function sendEmail(payload: MailPayload): Promise<MailSendResult | 
 
   try {
     const rawFrom = cleanString(payload.from);
-    const cleanedFrom = rawFrom || getFromEmail();
+    let cleanedFrom = rawFrom || getFromEmail();
+    if (cleanedFrom.includes("yespstudio.com")) {
+      cleanedFrom = "URPASS <noreply@urpass.space>";
+    }
     const cleanedTo = normalizeRecipients(payload.to).map((recipient) =>
       recipient.name ? `${recipient.name} <${recipient.address}>` : recipient.address
     );
