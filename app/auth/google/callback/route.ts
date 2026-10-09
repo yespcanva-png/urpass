@@ -315,62 +315,51 @@ export async function GET(req: NextRequest) {
       aud: info.aud,
     });
 
-    // Generate secure ephemeral password satisfying all complexity rules
-    const ephemeralPassword = crypto.randomBytes(16).toString("hex") + "A1!";
-
-    // 4. User Resolution: Fast lookup existing user or create with compact metadata to keep JWT size minimal
+    // 4. User Resolution & Supabase Auth Link Generation
     let userId: string | undefined;
     let isNewUser = false;
 
-    const { data: profileRow } = await admin
-      .from("profiles")
-      .select("user_id")
-      .ilike("email", normalizedEmail)
-      .maybeSingle();
+    let linkRes = await admin.auth.admin.generateLink({
+      type: "magiclink",
+      email: normalizedEmail,
+    });
 
-    if (profileRow?.user_id) {
-      userId = profileRow.user_id;
-      logAuth("user_sync", "Found existing user in Supabase profiles", { userId, email: normalizedEmail });
-      await admin.auth.admin.updateUserById(profileRow.user_id, {
-        password: ephemeralPassword,
-        email_confirm: true,
-        user_metadata: {
-          full_name: fullName,
-        },
-      });
-    } else {
+    if (linkRes.error || !linkRes.data?.user) {
+      logAuth("user_sync", "User not found in Supabase Auth, creating user", { email: normalizedEmail });
       const { data: createdUser, error: createErr } = await admin.auth.admin.createUser({
         email: normalizedEmail,
-        password: ephemeralPassword,
         email_confirm: true,
         user_metadata: {
           full_name: fullName,
+          avatar_url: avatarUrl,
         },
       });
 
-      if (!createErr && createdUser?.user) {
-        userId = createdUser.user.id;
-        isNewUser = true;
-        logAuth("user_sync", "Created new user in Supabase auth", { userId, email: normalizedEmail });
-      } else {
-        const { data: linkLookup } = await admin.auth.admin.generateLink({
-          type: "magiclink",
-          email: normalizedEmail,
-        });
-
-        if (linkLookup?.user?.id) {
-          userId = linkLookup.user.id;
-          logAuth("user_sync", "Resolved user via Supabase generateLink lookup", { userId, email: normalizedEmail });
-          await admin.auth.admin.updateUserById(linkLookup.user.id, {
-            password: ephemeralPassword,
-            email_confirm: true,
-            user_metadata: {
-              full_name: fullName,
-            },
-          });
-        }
+      if (createErr || !createdUser?.user) {
+        logAuthError("user_sync", "Failed to create Supabase user", createErr, { email: normalizedEmail });
+        return NextResponse.redirect(`${origin}/login?error=google_auth_failed&step=create_user`);
       }
+
+      userId = createdUser.user.id;
+      isNewUser = true;
+      logAuth("user_sync", "Created new user in Supabase auth", { userId, email: normalizedEmail });
+
+      linkRes = await admin.auth.admin.generateLink({
+        type: "magiclink",
+        email: normalizedEmail,
+      });
+    } else {
+      userId = linkRes.data.user.id;
+      logAuth("user_sync", "Resolved user in Supabase Auth", { userId, email: normalizedEmail });
     }
+
+    if (!linkRes.data?.properties?.hashed_token) {
+      logAuthError("session", "Failed generating authentication token link", linkRes.error, { email: normalizedEmail });
+      return NextResponse.redirect(`${origin}/login?error=google_auth_failed&step=token_gen`);
+    }
+
+    const tokenHash = linkRes.data.properties.hashed_token;
+    const verificationType = (linkRes.data.properties.verification_type as "magiclink" | "signup" | "email") || "magiclink";
 
     // 5. Determine post-login redirect destination
     const target = resolvePostAuthRedirect(
@@ -401,7 +390,7 @@ export async function GET(req: NextRequest) {
       sameSite: "lax",
     });
 
-    // 6. Direct single-pass session cookie writer (avoids Next.js duplicate Set-Cookie headers)
+    // 6. Direct single-pass session cookie writer via Supabase verifyOtp
     const supabase = createServerClient(
       getSupabaseUrl(),
       getSupabaseAnonKey(),
@@ -426,45 +415,14 @@ export async function GET(req: NextRequest) {
       }
     );
 
-    let sessionEstablished = false;
-    if (ephemeralPassword) {
-      const { data: signInData, error: signInErr } = await supabase.auth.signInWithPassword({
-        email: normalizedEmail,
-        password: ephemeralPassword,
-      });
-      if (!signInErr && signInData?.session) {
-        sessionEstablished = true;
-      } else {
-        logAuthWarn("session", "Direct signInWithPassword failed, attempting OTP fallback", {
-          error: signInErr?.message,
-        });
-      }
-    }
+    const { error: verifyErr } = await supabase.auth.verifyOtp({
+      token_hash: tokenHash,
+      type: verificationType,
+    });
 
-    // Fallback: Magic link OTP verification if needed
-    if (!sessionEstablished) {
-      const { data: linkData, error: linkErr } = await admin.auth.admin.generateLink({
-        type: "magiclink",
-        email: normalizedEmail,
-      });
-
-      if (!linkErr && linkData?.properties?.hashed_token) {
-        const tokenHash = linkData.properties.hashed_token;
-        const verificationType = (linkData.properties.verification_type as "magiclink" | "signup" | "email") || "magiclink";
-
-        const { error: verifyErr } = await supabase.auth.verifyOtp({
-          token_hash: tokenHash,
-          type: verificationType,
-        });
-
-        if (verifyErr) {
-          logAuthError("session", "verifyOtp fallback failed", verifyErr, { email: normalizedEmail });
-          return NextResponse.redirect(`${origin}/login?error=google_auth_failed&step=otp`);
-        }
-      } else {
-        logAuthError("session", "generateLink error", linkErr, { email: normalizedEmail });
-        return NextResponse.redirect(`${origin}/login?error=google_auth_failed&step=link`);
-      }
+    if (verifyErr) {
+      logAuthError("session", "verifyOtp failed to establish session", verifyErr, { email: normalizedEmail });
+      return NextResponse.redirect(`${origin}/login?error=google_auth_failed&step=verify_otp`);
     }
 
     logAuth("session", "Session established successfully -> Redirecting user", {

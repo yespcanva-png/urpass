@@ -177,7 +177,8 @@ describe("Google Standalone OAuth Routes", () => {
 
       expect(res.status).toBe(307);
       expect(res.headers.get("location")).toBe("https://urpass.space/dashboard");
-      expect(mockSignInWithPassword).toHaveBeenCalled();
+      expect(mockAdminGenerateLink).toHaveBeenCalled();
+      expect(mockVerifyOtp).toHaveBeenCalled();
       expect(res.cookies.get("sb-auth-token")?.value).toBe("token-abc");
     });
 
@@ -221,7 +222,7 @@ describe("Google Standalone OAuth Routes", () => {
 
       expect(res.status).toBe(307);
       expect(res.headers.get("location")).toBe("https://urpass.space/billing");
-      expect(mockSignInWithPassword).toHaveBeenCalled();
+      expect(mockVerifyOtp).toHaveBeenCalled();
       expect(res.cookies.get("sb-auth-token")?.value).toBe("token-abc");
     });
 
@@ -306,7 +307,7 @@ describe("Google Standalone OAuth Routes", () => {
 
       expect(res.status).toBe(307);
       expect(res.headers.get("location")).toBe("https://urpass.space/dashboard");
-      expect(mockSignInWithPassword).toHaveBeenCalled();
+      expect(mockVerifyOtp).toHaveBeenCalled();
     });
   });
 });
