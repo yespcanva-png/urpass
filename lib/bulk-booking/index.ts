@@ -10,7 +10,6 @@ import {
   type SettledBulkOrderResult,
   type IssuedTicketRecord,
   type RefundResult,
-  type BulkOrderItemInput,
 } from "./types";
 
 export const DEFAULT_BULK_BOOKING_SETTINGS: BulkBookingSettings = {
@@ -23,6 +22,14 @@ export const DEFAULT_BULK_BOOKING_SETTINGS: BulkBookingSettings = {
   assignAttendeesLater: true,
   reservationTtlSeconds: 600, // 10 minutes
 };
+
+function newUuid() {
+  return crypto.randomUUID();
+}
+
+function nullableTicketTypeId(ticketTypeId: string | null | undefined) {
+  return ticketTypeId && ticketTypeId !== "default" ? ticketTypeId : null;
+}
 
 /**
  * Extracts bulk booking settings from event metadata or returns defaults.
@@ -333,11 +340,12 @@ export async function reserveBulkEventCapacity({
   }
 
   // 4. Create Atomic Reservation Record
-  const reservationId = `res_${crypto.randomUUID()}`;
+  const reservationId = newUuid();
   try {
     await adminClient.from("ticket_reservations").insert({
       id: reservationId,
       event_id: event.id,
+      ticket_type_id: request.items.length === 1 ? nullableTicketTypeId(request.items[0].ticketTypeId) : null,
       buyer_email: request.buyerEmail.toLowerCase().trim(),
       buyer_name: request.buyerName.trim(),
       quantity: totalQuantity,
@@ -429,7 +437,8 @@ export async function settleBulkOrderAndIssueTickets({
     // Proceed to create
   }
 
-  const orderId = explicitOrderId || `order_${crypto.randomUUID()}`;
+  const orderId = newUuid();
+  const gatewayOrderId = explicitOrderId || orderId;
   const nowIso = new Date().toISOString();
   const issuedTickets: IssuedTicketRecord[] = [];
   const groupMembersPayload: Array<Record<string, unknown>> = [];
@@ -439,9 +448,10 @@ export async function settleBulkOrderAndIssueTickets({
   // 2. Iterate through ordered items and generate individual ticket records
   for (const item of request.items) {
     for (let i = 0; i < item.quantity; i++) {
-      const attendeeId = `att_${crypto.randomUUID()}`;
-      const passId = `pass_${crypto.randomUUID()}`;
+      const attendeeId = newUuid();
+      const passId = newUuid();
       const passToken = crypto.randomBytes(32).toString("hex");
+      const persistedTicketTypeId = nullableTicketTypeId(item.ticketTypeId);
 
       const specificAttendee = item.attendees?.[i];
       const isNamed = Boolean(specificAttendee?.name);
@@ -463,7 +473,7 @@ export async function settleBulkOrderAndIssueTickets({
         email: ticketEmail,
         phone: ticketPhone,
         pass_type: item.ticketTypeName || "General Admission",
-        ticket_type_id: item.ticketTypeId,
+        ticket_type_id: persistedTicketTypeId,
         application_status: "approved" as const,
         pass_status: "generated" as const,
         created_at: nowIso,
@@ -474,7 +484,7 @@ export async function settleBulkOrderAndIssueTickets({
         id: passId,
         event_id: event.id,
         attendee_id: attendeeId,
-        ticket_type_id: item.ticketTypeId,
+        ticket_type_id: persistedTicketTypeId,
         pass_type: item.ticketTypeName || "General Admission",
         pass_token: passToken,
         status: "generated" as const,
@@ -525,6 +535,7 @@ export async function settleBulkOrderAndIssueTickets({
       event_id: event.id,
       buyer_name: request.buyerName,
       buyer_email: normalizedEmail,
+      razorpay_order_id: gatewayOrderId,
       amount: pricing.totalAmountPaise,
       currency: pricing.currency,
       status: "paid",
@@ -536,6 +547,23 @@ export async function settleBulkOrderAndIssueTickets({
     });
   } catch {
     // Mock / test fallback
+  }
+
+  try {
+    await adminClient.from("ticket_order_items").insert(
+      pricing.items.map((item) => ({
+        order_id: orderId,
+        event_id: event.id,
+        ticket_type_id: nullableTicketTypeId(item.ticketTypeId),
+        ticket_type_name: item.ticketTypeName,
+        unit_amount_paise: item.pricePaise,
+        quantity: item.quantity,
+        subtotal_paise: item.subtotalPaise,
+        created_at: nowIso,
+      }))
+    );
+  } catch {
+    // Order item table may be absent in isolated test databases.
   }
 
   // 4. Mark Reservation as PAID

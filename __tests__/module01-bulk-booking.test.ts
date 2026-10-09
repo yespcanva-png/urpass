@@ -129,7 +129,9 @@ describe("Module 01 — Bulk Ticket Booking (Test 01 Suite)", () => {
 
     const insertedAttendees: any[] = [];
     const insertedPasses: any[] = [];
+    let insertedOrderItems: any[] = [];
     let insertedOrder: any = null;
+    const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
     const mockAdminDb = {
       from: vi.fn().mockImplementation((table: string) => {
@@ -140,6 +142,14 @@ describe("Module 01 — Bulk Ticket Booking (Test 01 Suite)", () => {
             maybeSingle: vi.fn().mockResolvedValue({ data: null }), // No prior settled order
             insert: vi.fn().mockImplementation((payload) => {
               insertedOrder = payload;
+              return Promise.resolve({ error: null });
+            }),
+          };
+        }
+        if (table === "ticket_order_items") {
+          return {
+            insert: vi.fn().mockImplementation((payload) => {
+              insertedOrderItems = payload;
               return Promise.resolve({ error: null });
             }),
           };
@@ -179,16 +189,31 @@ describe("Module 01 — Bulk Ticket Booking (Test 01 Suite)", () => {
 
     // Verify 1 consolidated order was created
     expect(insertedOrder).not.toBeNull();
+    expect(insertedOrder.id).toMatch(uuidPattern);
     expect(insertedOrder.total_attendee_count).toBe(10);
     expect(insertedOrder.razorpay_payment_id).toBe("pay_rzp_123456789");
+    expect(insertedOrder.razorpay_order_id).toMatch(uuidPattern);
+
+    // Verify durable order-line relationship was created
+    expect(insertedOrderItems.length).toBe(1);
+    expect(insertedOrderItems[0]).toMatchObject({
+      order_id: insertedOrder.id,
+      event_id: activeBulkEvent.id,
+      ticket_type_name: "General Admission",
+      unit_amount_paise: 50000,
+      quantity: 10,
+      subtotal_paise: 500000,
+    });
 
     // Verify 10 individual attendee records created
     expect(insertedAttendees.length).toBe(10);
+    expect(insertedAttendees[0].id).toMatch(uuidPattern);
     expect(insertedAttendees[0].name).toContain("Arun Kumar");
     expect(insertedAttendees[9].name).toContain("Guest 10");
 
     // Verify 10 unique pass tokens
     expect(insertedPasses.length).toBe(10);
+    expect(insertedPasses[0].id).toMatch(uuidPattern);
     const uniqueTokens = new Set(insertedPasses.map((p) => p.pass_token));
     expect(uniqueTokens.size).toBe(10);
   });

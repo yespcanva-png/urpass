@@ -190,13 +190,55 @@ export async function updateEventBulkSettings({
     .eq("id", eventId)
     .maybeSingle();
 
-  if (!event || event.organizer_id !== user.id) {
+  if (!event) {
+    return { error: "Event not found." };
+  }
+
+  let canManage = event.organizer_id === user.id;
+  if (!canManage && event.organization_id) {
+    const { data: member } = await db
+      .from("organization_members")
+      .select("role")
+      .eq("organization_id", event.organization_id)
+      .eq("user_id", user.id)
+      .eq("status", "active")
+      .maybeSingle();
+
+    canManage = ["owner", "admin", "event_manager"].includes(member?.role ?? "");
+  }
+
+  if (!canManage) {
     return { error: "Unauthorized to update event settings." };
   }
 
+  if (
+    settings.minQuantity !== undefined &&
+    (!Number.isInteger(settings.minQuantity) || settings.minQuantity < 1)
+  ) {
+    return { error: "Minimum quantity must be at least 1." };
+  }
+
+  if (
+    settings.maxQuantityPerOrder !== undefined &&
+    (!Number.isInteger(settings.maxQuantityPerOrder) || settings.maxQuantityPerOrder < 1)
+  ) {
+    return { error: "Maximum order quantity must be at least 1." };
+  }
+
+  const requestedMin = settings.minQuantity ?? getBulkBookingSettings(event).minQuantity;
+  const requestedMax = settings.maxQuantityPerOrder ?? getBulkBookingSettings(event).maxQuantityPerOrder;
+  if (requestedMin > requestedMax) {
+    return { error: "Minimum quantity cannot be greater than maximum order quantity." };
+  }
+
   // Update feature flag state
+  let updatedFeatureConfig = null;
   if (typeof settings.enabled === "boolean") {
-    await updateEventFeatureFlag(eventId, "bulk_ticket_booking", settings.enabled);
+    const flagResult = await updateEventFeatureFlag(eventId, "bulk_ticket_booking", settings.enabled);
+    if (flagResult.error) {
+      return { error: flagResult.error };
+    }
+    updatedFeatureConfig = flagResult.config ?? null;
   }
 
   const existingDesign = (event.custom_pass_design && typeof event.custom_pass_design === "object")
@@ -211,6 +253,7 @@ export async function updateEventBulkSettings({
 
   const updatedDesign = {
     ...existingDesign,
+    ...(updatedFeatureConfig ? { _featureFlags: updatedFeatureConfig } : {}),
     _bulkBookingSettings: updatedBulk,
   };
 
