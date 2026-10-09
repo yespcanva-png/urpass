@@ -4,6 +4,7 @@ import { Geist } from "next/font/google";
 import "./globals.css";
 import SupportWidget from "@/components/support/SupportWidget";
 import VersionSkewHandler from "@/components/common/VersionSkewHandler";
+import AuthRecoveryHandler from "@/components/common/AuthRecoveryHandler";
 import { CookieConsentBanner } from "@/components/ui/CookieConsentBanner";
 
 const geist = Geist({
@@ -363,6 +364,7 @@ export default function RootLayout({
       </head>
       <body className="h-full font-[family-name:var(--font-geist)] antialiased bg-white text-neutral-900">
         <VersionSkewHandler />
+        <AuthRecoveryHandler />
         {children}
         <SupportWidget />
         <CookieConsentBanner />
