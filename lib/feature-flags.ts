@@ -16,7 +16,8 @@ export type FeatureFlagKey =
   | "bulk_ticket_booking"
   | "ticket_distribution"
   | "member_registration_forms"
-  | "serial_number_validation";
+  | "serial_number_validation"
+  | "advanced_entry_tracking";
 
 export type CoreFeatureKey =
   | "public_registration"
@@ -183,6 +184,13 @@ export const FEATURE_FLAG_DEFINITIONS: Record<FeatureFlagKey, FeatureFlagDefinit
     key: "serial_number_validation",
     name: "Serial Number Validation",
     description: "Support manual, auto-generated sequence, or verified whitelist serial number assignment with uniqueness enforcement.",
+    defaultEnabled: false,
+    requiredEntitlement: null,
+  },
+  advanced_entry_tracking: {
+    key: "advanced_entry_tracking",
+    name: "Advanced Entry, Exit & Multi-Gate Tracking",
+    description: "Multi-gate zone routing, entry/exit state tracking, staff gate assignment, and anti-passback controls.",
     defaultEnabled: false,
     requiredEntitlement: null,
   },
