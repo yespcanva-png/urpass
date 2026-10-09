@@ -18,7 +18,8 @@ export type FeatureFlagKey =
   | "member_registration_forms"
   | "serial_number_validation"
   | "advanced_entry_tracking"
-  | "session_attendance";
+  | "session_attendance"
+  | "csv_management";
 
 export type CoreFeatureKey =
   | "public_registration"
@@ -199,6 +200,13 @@ export const FEATURE_FLAG_DEFINITIONS: Record<FeatureFlagKey, FeatureFlagDefinit
     key: "session_attendance",
     name: "Session-Wise Attendance & Scanning",
     description: "Track session-level attendance, multi-track capacities, check-in/checkout duration, and eligibility.",
+    defaultEnabled: false,
+    requiredEntitlement: null,
+  },
+  csv_management: {
+    key: "csv_management",
+    name: "CSV Import & Export Management",
+    description: "Downloadable CSV templates, staged validation import pipelines, and formula-sanitized exports.",
     defaultEnabled: false,
     requiredEntitlement: null,
   },
