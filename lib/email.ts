@@ -103,10 +103,10 @@ export function isEmailProviderConfigured() {
 // Verified sending domain
 export function getFromEmail(): string {
   const raw = cleanString(process.env.EMAIL_FROM);
-  if (raw && !raw.includes("yespstudio.com")) {
+  if (raw) {
     return raw;
   }
-  return "URPASS <noreply@urpass.space>";
+  return "URPASS <urpass.space@yespstudio.com>";
 }
 
 const FROM = getFromEmail();
@@ -172,8 +172,12 @@ function normalizeRecipients(to: MailPayload["to"]) {
 
 async function sendViaZeptoMail(payload: MailPayload): Promise<MailSendResult | null> {
   const apiKey = cleanString(process.env.ZOHO_ZEPTOMAIL_API_KEY || process.env.SMTP_PASS);
+  const defaultZeptoFrom = "URPASS <urpass.space@yespstudio.com>";
   const rawFrom = cleanString(payload.from);
-  const from = parseEmailAddress(rawFrom || process.env.EMAIL_FROM || "URPASS <urpass.space@yespstudio.com>");
+  let from = parseEmailAddress(rawFrom || process.env.EMAIL_FROM || defaultZeptoFrom);
+  if (!from.address || !from.address.endsWith("@yespstudio.com")) {
+    from = parseEmailAddress(defaultZeptoFrom);
+  }
   const recipients = normalizeRecipients(payload.to);
 
   if (!from.address || recipients.length === 0) {
@@ -421,16 +425,17 @@ export async function notifyOwnerNewUser({
 }: {
   name?: string | null;
   email?: string | null;
-  provider: "email" | "google" | "sso";
+  provider?: "email" | "google" | "sso" | string | null;
   userId?: string | null;
 }) {
+  const method = String(provider || "email").toUpperCase();
   await sendOwnerNotification({
     subject: `[URPASS] New User Signup: ${email ?? "unknown email"}`,
     title: "New User Signup",
     rows: [
       ["Name", name],
       ["Email", email],
-      ["Signup method", provider.toUpperCase()],
+      ["Signup method", method],
       ["User ID", userId],
       ["Time", new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })],
     ],
@@ -447,15 +452,16 @@ export async function notifyOwnerUserLogin({
 }: {
   name?: string | null;
   email?: string | null;
-  provider: "email" | "google" | "sso" | "magiclink";
+  provider?: "email" | "google" | "sso" | "magiclink" | string | null;
   userId?: string | null;
   ipAddress?: string | null;
   userAgent?: string | null;
 }) {
+  const method = String(provider || "email").toUpperCase();
   const rows: Array<[string, unknown]> = [
     ["Email", email],
     ["Name", name],
-    ["Login method", provider.toUpperCase()],
+    ["Login method", method],
     ["User ID", userId],
     ["Time", new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })],
   ];
