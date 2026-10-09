@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { isEmailProviderConfigured, sendEmail } from "@/lib/email";
+import { getFromEmail, isEmailProviderConfigured, sendEmail } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 
@@ -29,11 +29,11 @@ export async function POST(req: NextRequest) {
 
   try {
     await sendEmail({
-    from: "URPASS Contact <noreply@urpass.space>",
-    to: ["srinithin@yespstudio.com"],
-    replyTo: email,
-    subject: emailSubject,
-    html: `
+      from: getFromEmail(),
+      to: ["srinithin@yespstudio.com"],
+      replyTo: email,
+      subject: emailSubject,
+      html: `
       <p><strong>Name:</strong> ${escapeHtml(name)}</p>
       <p><strong>Email:</strong> ${escapeHtml(email)}</p>
       ${subject ? `<p><strong>Inquiry Topic:</strong> ${escapeHtml(subject)}</p>` : ""}

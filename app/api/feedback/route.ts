@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { isEmailProviderConfigured, sendEmail } from "@/lib/email";
+import { getFromEmail, isEmailProviderConfigured, sendEmail } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 
@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
 
   try {
     await sendEmail({
-      from: "URPASS Support <noreply@urpass.space>",
+      from: getFromEmail(),
       to: ["srinithin@yespstudio.com"],
       ...(replyToHeader ? { replyTo: replyToHeader } : {}),
       subject,
