@@ -13,7 +13,8 @@ export type FeatureFlagKey =
   | "white_label_portal"
   | "offline_mesh_sync"
   | "waitlist_priority_queue"
-  | "bulk_ticket_booking";
+  | "bulk_ticket_booking"
+  | "ticket_distribution";
 
 export type CoreFeatureKey =
   | "public_registration"
@@ -159,6 +160,13 @@ export const FEATURE_FLAG_DEFINITIONS: Record<FeatureFlagKey, FeatureFlagDefinit
     key: "bulk_ticket_booking",
     name: "Bulk Ticket Booking",
     description: "Purchase multiple tickets in a single order with atomic capacity reservations.",
+    defaultEnabled: false,
+    requiredEntitlement: null,
+  },
+  ticket_distribution: {
+    key: "ticket_distribution",
+    name: "Bulk Ticket Distribution & Claiming",
+    description: "Distribute bulk purchased tickets to individual members with secure claim links.",
     defaultEnabled: false,
     requiredEntitlement: null,
   },
