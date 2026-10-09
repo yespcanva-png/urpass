@@ -22,7 +22,6 @@ import {
   Cpu,
   RefreshCw,
 } from "lucide-react";
-import AdvancedFeaturesLiveSimulator from "@/components/event/AdvancedFeaturesLiveSimulator";
 
 export const metadata: Metadata = {
   title: "How to Use Advanced Event Features — Real-Time Modular Guide | URPASS",
@@ -241,22 +240,8 @@ export default function AdvancedFeaturesHowToPage() {
           </h1>
           <p className="text-base sm:text-lg text-neutral-400 leading-relaxed">
             Every advanced capability in URPASS is modular, independent, and controllable per event.
-            Follow this guide to configure each module, and test the full lifecycle in our live real-time simulator below.
+            Follow this guide to configure and operate each module for your events.
           </p>
-        </div>
-
-        {/* ── Real-Time Interactive Simulator Section ── */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Zap className="w-5 h-5 text-violet-400" />
-              <h2 className="text-xl font-bold text-white">Live Real-Time Sandbox & Simulator</h2>
-            </div>
-            <span className="text-xs text-neutral-400">Interactive Demonstration</span>
-          </div>
-
-          {/* Embedded Real-Time Simulator */}
-          <AdvancedFeaturesLiveSimulator />
         </div>
 
         {/* ── Modular How-To Documentation Cards ── */}

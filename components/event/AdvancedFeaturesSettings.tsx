@@ -30,7 +30,6 @@ import {
   Zap,
   BookOpen,
 } from "lucide-react";
-import AdvancedFeaturesLiveSimulator from "@/components/event/AdvancedFeaturesLiveSimulator";
 import {
   updateEventFeatureFlag,
   getEventFeatureFlagsState,
@@ -446,9 +445,6 @@ export default function AdvancedFeaturesSettings({ eventId }: AdvancedFeaturesSe
   const [successMsg, setSuccessMsg] = useState("");
   const [confirmDisableKey, setConfirmDisableKey] = useState<FeatureFlagKey | null>(null);
 
-  // View mode tab switcher: "settings" vs "simulator"
-  const [viewMode, setViewMode] = useState<"settings" | "simulator">("settings");
-
   // Filter & Search state
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<"all" | "ticketing" | "venue" | "data">("all");
@@ -687,76 +683,26 @@ export default function AdvancedFeaturesSettings({ eventId }: AdvancedFeaturesSe
         )}
       </div>
 
-      {/* ── Sub-Navigation Tabs ── */}
-      <div className="flex items-center justify-between px-6 border-b border-neutral-100 bg-neutral-50/30">
-        <div className="flex items-center gap-1">
-          <button
-            type="button"
-            onClick={() => setViewMode("settings")}
-            className={`flex items-center gap-2 py-3 px-3 text-xs font-bold border-b-2 transition-colors cursor-pointer ${
-              viewMode === "settings"
-                ? "border-violet-600 text-violet-700 bg-violet-50/30"
-                : "border-transparent text-neutral-500 hover:text-neutral-800"
-            }`}
-          >
-            <Sliders className="w-3.5 h-3.5" />
-            <span>Feature Switches & Rules</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setViewMode("simulator")}
-            className={`flex items-center gap-2 py-3 px-3 text-xs font-bold border-b-2 transition-colors cursor-pointer ${
-              viewMode === "simulator"
-                ? "border-violet-600 text-violet-700 bg-violet-50/30"
-                : "border-transparent text-neutral-500 hover:text-neutral-800"
-            }`}
-          >
-            <Zap className="w-3.5 h-3.5 text-amber-500" />
-            <span>Real-Time Sandbox & Simulator</span>
-            <span className="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
-              Live
-            </span>
-          </button>
+      {/* ── Search & Category Filter Bar ── */}
+      <div className="px-6 py-3 border-b border-neutral-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 pointer-events-none" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search features (e.g., Gates, Sessions, Serial numbers)…"
+            className="w-full pl-9 pr-3 py-1.5 text-xs bg-neutral-50 border border-neutral-200 rounded-xl outline-none focus:border-brand focus:ring-1 focus:ring-brand"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery("")}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
-
-        <Link
-          href="/advanced-features"
-          target="_blank"
-          className="inline-flex items-center gap-1 text-xs font-semibold text-neutral-500 hover:text-violet-700 transition-colors py-2"
-        >
-          <BookOpen className="w-3.5 h-3.5" />
-          <span>How-To Guide</span>
-          <ExternalLink className="w-3 h-3" />
-        </Link>
-      </div>
-
-      {viewMode === "simulator" ? (
-        <div className="p-6">
-          <AdvancedFeaturesLiveSimulator />
-        </div>
-      ) : (
-        <>
-          {/* ── Search & Category Filter Bar ── */}
-          <div className="px-6 py-3 border-b border-neutral-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white">
-            <div className="relative flex-1 max-w-sm">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 pointer-events-none" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search features (e.g., Gates, Sessions, Serial numbers)…"
-                className="w-full pl-9 pr-3 py-1.5 text-xs bg-neutral-50 border border-neutral-200 rounded-xl outline-none focus:border-brand focus:ring-1 focus:ring-brand"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
 
             <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
               {(
@@ -906,8 +852,6 @@ export default function AdvancedFeaturesSettings({ eventId }: AdvancedFeaturesSe
           );
         })}
       </div>
-    </>
-  )}
 
       {/* ── Interactive Module Setup Drawer / Modal ── */}
       {configuringModule && (
