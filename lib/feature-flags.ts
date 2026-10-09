@@ -12,7 +12,8 @@ export type FeatureFlagKey =
   | "custom_pass_design"
   | "white_label_portal"
   | "offline_mesh_sync"
-  | "waitlist_priority_queue";
+  | "waitlist_priority_queue"
+  | "bulk_ticket_booking";
 
 export type CoreFeatureKey =
   | "public_registration"
@@ -151,6 +152,13 @@ export const FEATURE_FLAG_DEFINITIONS: Record<FeatureFlagKey, FeatureFlagDefinit
     key: "waitlist_priority_queue",
     name: "Automated Waitlist Priority Queue",
     description: "Auto-promotes waitlisted attendees when capacity opens up.",
+    defaultEnabled: false,
+    requiredEntitlement: null,
+  },
+  bulk_ticket_booking: {
+    key: "bulk_ticket_booking",
+    name: "Bulk Ticket Booking",
+    description: "Purchase multiple tickets in a single order with atomic capacity reservations.",
     defaultEnabled: false,
     requiredEntitlement: null,
   },
