@@ -39,6 +39,7 @@ interface Attendee {
   pass_type: string;
   application_status: AppStatus;
   pass_status: PassStatus;
+  venue_presence_state?: string;
   created_at: string;
 }
 
@@ -167,7 +168,7 @@ export default function EventOverview({ event, initialAttendees = [] }: Props) {
     const supabase = createClient();
     supabase
       .from("attendees")
-      .select("id, name, email, pass_type, application_status, pass_status, created_at")
+      .select("id, name, email, pass_type, application_status, pass_status, created_at, venue_presence_state")
       .eq("event_id", event.id)
       .order("created_at", { ascending: false })
       .then(({ data }) => { if (data) setAttendees(data); });
@@ -243,6 +244,9 @@ export default function EventOverview({ event, initialAttendees = [] }: Props) {
     (a) => a.pass_status === "generated" || a.pass_status === "checked_in"
   ).length;
   const checkedIn = Math.max(attendees.filter((a) => a.pass_status === "checked_in").length, checkins.length);
+  const insideVenueCount = attendees.filter(
+    (a) => a.venue_presence_state === "inside" || a.pass_status === "checked_in"
+  ).length;
 
   const capacityPct = event.attendee_limit > 0
     ? Math.min(100, Math.round((approved / event.attendee_limit) * 100))
@@ -527,17 +531,28 @@ export default function EventOverview({ event, initialAttendees = [] }: Props) {
           </button>
         </div>
 
-        <div className="flex items-center gap-1.5 text-xs">
+        <div className="flex items-center gap-2.5 text-xs">
+          {insideVenueCount > 0 && (
+            <Link
+              href={`/event/${event.id}/analytics`}
+              className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-300/80 hover:bg-emerald-100 transition-colors shadow-2xs"
+              title="Real-time inside venue presence"
+            >
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+              <span>{insideVenueCount.toLocaleString("en-IN")} Inside Venue</span>
+            </Link>
+          )}
+
           {live ? (
-            <>
+            <div className="flex items-center gap-1.5">
               <Wifi className="w-3.5 h-3.5 text-green-500" />
               <span className="text-green-600 font-medium">Live</span>
-            </>
+            </div>
           ) : (
-            <>
+            <div className="flex items-center gap-1.5">
               <Wifi className="w-3.5 h-3.5 text-neutral-300" />
               <span className="text-neutral-400">Connecting…</span>
-            </>
+            </div>
           )}
         </div>
       </div>

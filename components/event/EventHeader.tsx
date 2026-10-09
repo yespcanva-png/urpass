@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
 import {
   Calendar,
   Clock,
@@ -88,6 +89,48 @@ function formatTime(t: string) {
 export default function EventHeader({ event, org }: EventHeaderProps) {
   const [copied, setCopied] = useState(false);
   const [howToUseOpen, setHowToUseOpen] = useState(false);
+  const [liveHeadcount, setLiveHeadcount] = useState<number | null>(null);
+
+  useEffect(() => {
+    const supabase = createClient();
+    
+    // Initial headcount fetch: count attendees inside venue or checked in
+    supabase
+      .from("attendees")
+      .select("id", { count: "exact", head: true })
+      .eq("event_id", event.id)
+      .or("venue_presence_state.eq.inside,pass_status.eq.checked_in")
+      .then(({ count }) => {
+        if (count !== null && count !== undefined) {
+          setLiveHeadcount(count);
+        }
+      });
+
+    // Realtime listener on attendees table
+    const channel = supabase
+      .channel(`event-header-presence-${event.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "attendees", filter: `event_id=eq.${event.id}` },
+        () => {
+          supabase
+            .from("attendees")
+            .select("id", { count: "exact", head: true })
+            .eq("event_id", event.id)
+            .or("venue_presence_state.eq.inside,pass_status.eq.checked_in")
+            .then(({ count }) => {
+              if (count !== null && count !== undefined) {
+                setLiveHeadcount(count);
+              }
+            });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [event.id]);
 
   const statusKey = (
     event.status in STATUS_CONFIG ? event.status : "draft"
@@ -357,6 +400,17 @@ export default function EventHeader({ event, org }: EventHeaderProps) {
                   />
                   {statusCfg.label}
                 </span>
+
+                {liveHeadcount !== null && liveHeadcount > 0 && (
+                  <Link
+                    href={`/event/${event.id}/analytics`}
+                    className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-300 hover:bg-emerald-100 transition-colors shadow-2xs group"
+                    title="Real-time inside venue presence"
+                  >
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                    <span>{liveHeadcount.toLocaleString("en-IN")} Inside Venue</span>
+                  </Link>
+                )}
               </div>
 
               {/* Clean Corporate Metadata Strip */}

@@ -25,6 +25,13 @@ import {
   ChevronRight,
   Zap,
   BadgeCheck,
+  Layers,
+  Send,
+  Hash,
+  UserCheck,
+  Building,
+  GraduationCap,
+  Calendar,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { attendeeSchema, type AttendeeInput } from "@/lib/validations/attendee";
@@ -34,6 +41,23 @@ import type { ApplyTicketType } from "./page";
 import type { CustomFieldDefinition } from "@/types";
 import EventImageCarousel from "@/components/events/EventImageCarousel";
 import { getEventDateRange, formatEventTimeWithOvernight } from "@/lib/utils";
+
+export interface ActiveEventFeatures {
+  bulkBooking?: boolean;
+  memberForms?: boolean;
+  serialValidation?: boolean;
+  sessionAttendance?: boolean;
+  ticketReassignment?: boolean;
+}
+
+export interface AvailableSession {
+  id: string;
+  title: string;
+  session_date: string;
+  start_time: string;
+  end_time: string;
+  room_name?: string;
+}
 
 interface EventInfo {
   id: string;
@@ -106,6 +130,8 @@ export default function ApplyForm({
   ticketTypes = [],
   hasPaymentGateway = true,
   eventImages = [],
+  activeFeatures = {},
+  availableSessions = [],
 }: {
   event: EventInfo;
   branding: Branding;
@@ -113,13 +139,17 @@ export default function ApplyForm({
   ticketTypes?: ApplyTicketType[];
   hasPaymentGateway?: boolean;
   eventImages?: string[];
+  activeFeatures?: ActiveEventFeatures;
+  availableSessions?: AvailableSession[];
 }) {
   const router = useRouter();
   const [success, setSuccess] = useState<SuccessState | null>(null);
   const [serverError, setServerError] = useState("");
   const [paymentPending, setPaymentPending] = useState(false);
   const [showFullDescription, setShowFullDescription] = useState(false);
-  const [activeTab, setActiveTab] = useState<"about" | "tickets" | "venue" | "terms">("about");
+  const [activeTab, setActiveTab] = useState<"about" | "tickets" | "sessions" | "venue" | "terms">("about");
+  const [bulkQuantity, setBulkQuantity] = useState<number>(1);
+  const [bulkDistributionMode, setBulkDistributionMode] = useState<"delayed_claim" | "enter_now">("delayed_claim");
 
   const brandColor = branding.brandColor || "#6D28D9";
 
@@ -322,7 +352,8 @@ export default function ApplyForm({
     return extraGuestsCount * extraPrice;
   }, [allowExtra, extraGuestsCount, selectedTicket, extraMembers, extraPrice]);
 
-  const effectiveTicketPrice = baseTicketPrice + extraGuestsTotal;
+  const bulkMultiplier = (activeFeatures?.bulkBooking && selectedTicket && !selectedTicket.is_group_pass && bulkQuantity > 1) ? bulkQuantity : 1;
+  const effectiveTicketPrice = (baseTicketPrice * bulkMultiplier) + extraGuestsTotal;
 
   const effectivelyPaid = selectedTicket ? baseTicketPrice > 0 || extraGuestsTotal > 0 : event.is_paid_event;
   const paymentBlocked = effectivelyPaid && !hasPaymentGateway;
@@ -377,6 +408,13 @@ export default function ApplyForm({
 
     const finalResponses = {
       ...customResponses,
+      ...(activeFeatures?.bulkBooking && !selectedTicket?.is_group_pass && bulkQuantity > 1
+        ? {
+            bulk_order: true,
+            bulk_quantity: bulkQuantity,
+            bulk_distribution_mode: bulkDistributionMode,
+          }
+        : {}),
       ...(data.age ? { age: data.age, attendee_age: data.age } : {}),
       ...(selectedAgeTier
         ? {
@@ -403,7 +441,7 @@ export default function ApplyForm({
           buyerName: data.name,
           buyerEmail: data.email,
           buyerAge: data.age,
-          guestCount: peopleCount,
+          guestCount: (activeFeatures?.bulkBooking && !selectedTicket?.is_group_pass && bulkQuantity > 1) ? bulkQuantity : peopleCount,
           groupMembers,
           ageTierId: selectedAgeTier?.id,
           selectedDate: availableEventDates.length > 1 ? selectedDate : undefined,
@@ -553,6 +591,13 @@ export default function ApplyForm({
 
     const finalResponses = {
       ...customResponses,
+      ...(activeFeatures?.bulkBooking && !selectedTicket?.is_group_pass && bulkQuantity > 1
+        ? {
+            bulk_order: true,
+            bulk_quantity: bulkQuantity,
+            bulk_distribution_mode: bulkDistributionMode,
+          }
+        : {}),
       ...(data.age ? { age: data.age, attendee_age: data.age } : {}),
       ...(selectedAgeTier
         ? {
@@ -844,6 +889,19 @@ export default function ApplyForm({
               >
                 Passes ({ticketTypes.length})
               </button>
+              {activeFeatures?.sessionAttendance && availableSessions && availableSessions.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("sessions")}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer shrink-0 ${
+                    activeTab === "sessions"
+                      ? "bg-white text-neutral-900 shadow-xs font-bold"
+                      : "text-neutral-600 hover:text-neutral-900"
+                  }`}
+                >
+                  Agenda ({availableSessions.length})
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => setActiveTab("venue")}
@@ -979,6 +1037,56 @@ export default function ApplyForm({
                             Select →
                           </button>
                         </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Tab: Sessions & Breakout Agenda */}
+            {activeTab === "sessions" && (
+              <div className="space-y-4 animate-in fade-in duration-200">
+                <div className="bg-white border border-neutral-200/90 rounded-2xl p-5 sm:p-7 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.03)] space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h2 className="text-sm sm:text-lg font-bold tracking-tight text-neutral-900 flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-brand" />
+                        Sessions & Breakout Tracks
+                      </h2>
+                      <p className="text-xs text-neutral-500 font-normal mt-0.5">
+                        Your verified pass includes access to the following scheduled keynotes and sessions.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2.5">
+                    {availableSessions.map((session) => (
+                      <div
+                        key={session.id}
+                        className="p-3.5 rounded-xl bg-neutral-50/80 border border-neutral-200/80 flex items-start justify-between gap-3"
+                      >
+                        <div>
+                          <h4 className="text-xs sm:text-sm font-bold text-neutral-900 leading-tight">
+                            {session.title}
+                          </h4>
+                          <div className="flex flex-wrap items-center gap-2 mt-1 text-[11px] text-neutral-500">
+                            <span className="font-semibold text-neutral-700">
+                              {session.start_time.slice(0, 5)} – {session.end_time.slice(0, 5)}
+                            </span>
+                            {session.room_name && (
+                              <>
+                                <span>&bull;</span>
+                                <span className="bg-white px-2 py-0.5 rounded border border-neutral-200 text-neutral-600 font-medium">
+                                  {session.room_name}
+                                </span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-violet-50 text-violet-700 border border-violet-200 shrink-0">
+                          Included Pass
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -1295,6 +1403,62 @@ export default function ApplyForm({
                 </div>
               )}
 
+              {/* Bulk Booking Quantity Stepper */}
+              {activeFeatures?.bulkBooking && selectedTicket && !selectedTicket.is_group_pass && (
+                <div className="mb-4 sm:mb-5 p-3.5 sm:p-4 rounded-2xl bg-violet-50/50 border border-violet-200/80 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-xs font-bold text-neutral-900 flex items-center gap-1.5">
+                        <Layers className="w-3.5 h-3.5 text-violet-700" />
+                        <span>Bulk Tickets / Group Order</span>
+                      </div>
+                      <p className="text-[10px] sm:text-[11px] text-neutral-500 mt-0.5">
+                        Purchase up to 10 passes in a single transaction
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 bg-white border border-violet-200 rounded-xl p-1 shadow-2xs">
+                      <button
+                        type="button"
+                        onClick={() => setBulkQuantity((prev) => Math.max(1, prev - 1))}
+                        disabled={bulkQuantity <= 1}
+                        className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-neutral-100 hover:bg-neutral-200 disabled:opacity-30 flex items-center justify-center font-bold text-neutral-800 text-sm cursor-pointer active:scale-95"
+                      >
+                        -
+                      </button>
+                      <span className="w-6 text-center font-bold text-xs sm:text-sm text-neutral-900 tabular-nums">
+                        {bulkQuantity}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setBulkQuantity((prev) => Math.min(10, prev + 1))}
+                        disabled={bulkQuantity >= 10}
+                        className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-neutral-100 hover:bg-neutral-200 disabled:opacity-30 flex items-center justify-center font-bold text-neutral-800 text-sm cursor-pointer active:scale-95"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+
+                  {bulkQuantity > 1 && (
+                    <div className="pt-2 border-t border-violet-200/60 flex items-center gap-1.5 text-[11px] text-violet-900">
+                      <Send className="w-3.5 h-3.5 shrink-0 text-violet-700" />
+                      <span>
+                        Ordering <strong>{bulkQuantity} passes</strong>. You will receive <strong>{bulkQuantity} claim links</strong> to invite team members via WhatsApp or email.
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Transferable Reassignment Badge */}
+              {activeFeatures?.ticketReassignment && (
+                <div className="mb-4 flex items-center gap-1.5 text-[11px] text-emerald-800 bg-emerald-50 border border-emerald-200/70 px-3 py-1.5 rounded-xl">
+                  <UserCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                  <span><strong>100% Transferable:</strong> Reassign unused passes to colleagues anytime with instant QR rotation.</span>
+                </div>
+              )}
+
               {/* Step 2: Attendee Details Form */}
               <div id="attendee-details-section" className="pt-4 sm:pt-5 border-t border-neutral-200/80 space-y-3.5 sm:space-y-4">
                 <div className="flex items-center justify-between">
@@ -1490,6 +1654,99 @@ export default function ApplyForm({
                     </div>
                   )}
 
+                  {/* Member Registration & Institutional Details */}
+                  {(activeFeatures?.memberForms || activeFeatures?.serialValidation) && (
+                    <div className="pt-3 border-t border-neutral-100 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] sm:text-[11px] font-bold text-neutral-600 uppercase tracking-wider flex items-center gap-1.5">
+                          <Building className="w-3.5 h-3.5 text-violet-600" />
+                          <span>Institutional & Member Profile</span>
+                        </span>
+                        <span className="text-[10px] font-semibold text-violet-700 bg-violet-50 px-2 py-0.5 rounded-md border border-violet-200">
+                          Verified Pass
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        <div>
+                          <label className="block text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.06em] text-neutral-600 mb-1">
+                            College / Company / Org
+                          </label>
+                          <div className="relative">
+                            <Building className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 pointer-events-none" />
+                            <input
+                              type="text"
+                              placeholder="e.g. BITS Pilani / Google"
+                              value={(customResponses.college_org as string) ?? ""}
+                              onChange={(e) =>
+                                setCustomResponses({ ...customResponses, college_org: e.target.value })
+                              }
+                              className={`${inputCls} pl-10 text-xs`}
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.06em] text-neutral-600 mb-1">
+                            Department / Branch / Stream
+                          </label>
+                          <div className="relative">
+                            <GraduationCap className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 pointer-events-none" />
+                            <input
+                              type="text"
+                              placeholder="e.g. Computer Science"
+                              value={(customResponses.department as string) ?? ""}
+                              onChange={(e) =>
+                                setCustomResponses({ ...customResponses, department: e.target.value })
+                              }
+                              className={`${inputCls} pl-10 text-xs`}
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        <div>
+                          <label className="block text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.06em] text-neutral-600 mb-1">
+                            Designation / Year of Study
+                          </label>
+                          <div className="relative">
+                            <UserCheck className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 pointer-events-none" />
+                            <input
+                              type="text"
+                              placeholder="e.g. 3rd Year / Staff"
+                              value={(customResponses.designation_or_year as string) ?? ""}
+                              onChange={(e) =>
+                                setCustomResponses({ ...customResponses, designation_or_year: e.target.value })
+                              }
+                              className={`${inputCls} pl-10 text-xs`}
+                            />
+                          </div>
+                        </div>
+
+                        {(activeFeatures?.serialValidation || activeFeatures?.memberForms) && (
+                          <div>
+                            <label className="block text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.06em] text-neutral-600 mb-1">
+                              Roll No / Student ID / Serial No
+                            </label>
+                            <div className="relative">
+                              <Hash className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 pointer-events-none" />
+                              <input
+                                type="text"
+                                placeholder="e.g. 2024A7PS001P / EMP-990"
+                                value={(customResponses.roll_or_employee_id as string) ?? ""}
+                                onChange={(e) =>
+                                  setCustomResponses({ ...customResponses, roll_or_employee_id: e.target.value })
+                                }
+                                className={`${inputCls} pl-10 text-xs font-mono`}
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Custom Organizer Questions */}
                   {event.custom_fields && event.custom_fields.length > 0 && (
                     <div className="pt-2.5 border-t border-neutral-100 space-y-2.5">
@@ -1563,6 +1820,13 @@ export default function ApplyForm({
                         {baseTicketPrice === 0 ? "Free" : `₹${baseTicketPrice.toLocaleString("en-IN")}`}
                       </span>
                     </div>
+
+                    {activeFeatures?.bulkBooking && selectedTicket && !selectedTicket.is_group_pass && bulkQuantity > 1 && (
+                      <div className="flex justify-between text-violet-700 font-medium">
+                        <span>Pass Quantity</span>
+                        <span className="tabular-nums font-bold">{bulkQuantity} × Passes</span>
+                      </div>
+                    )}
 
                     {availableEventDates.length > 1 && (
                       <div className="flex justify-between text-neutral-600">

@@ -6,6 +6,7 @@ import { CalendarDays, Ticket, ScanLine, Wifi, LayoutGrid } from "lucide-react";
 import ApplyForm from "./ApplyForm";
 import { getSupabaseUrl } from "@/lib/supabase/config";
 import { TICKET_OG_IMAGE, TICKET_OG_IMAGE_META } from "@/lib/seo/og-images";
+import { isFeatureEnabled } from "@/lib/feature-flags";
 
 export const dynamic = "force-dynamic";
 
@@ -493,6 +494,48 @@ export default async function ApplyPage({
     ? rawImages.filter((img): img is string => typeof img === "string" && img.length > 0)
     : [];
 
+  const activeFeatures = {
+    bulkBooking: isFeatureEnabled(event, "bulk_ticket_booking"),
+    memberForms: isFeatureEnabled(event, "member_registration_forms"),
+    serialValidation: isFeatureEnabled(event, "serial_number_validation"),
+    sessionAttendance: isFeatureEnabled(event, "session_attendance"),
+    ticketReassignment: isFeatureEnabled(event, "ticket_reassignment"),
+  };
+
+  let availableSessions: Array<{
+    id: string;
+    title: string;
+    session_date: string;
+    start_time: string;
+    end_time: string;
+    room_name?: string;
+  }> = [];
+
+  if (activeFeatures.sessionAttendance) {
+    try {
+      const { data: sessionRows } = await admin
+        .from("event_sessions")
+        .select("id, title, session_date, start_time, end_time, room:event_rooms(name)")
+        .eq("event_id", event.id)
+        .eq("status", "published")
+        .order("session_date", { ascending: true })
+        .order("start_time", { ascending: true });
+
+      if (sessionRows) {
+        availableSessions = sessionRows.map((s) => ({
+          id: s.id,
+          title: s.title,
+          session_date: s.session_date,
+          start_time: s.start_time,
+          end_time: s.end_time,
+          room_name: (s.room as { name?: string } | null)?.name || undefined,
+        }));
+      }
+    } catch {
+      // Graceful fallback
+    }
+  }
+
   return (
     <>
       <script
@@ -564,6 +607,8 @@ export default async function ApplyPage({
         ticketTypes={ticketTypes}
         hasPaymentGateway={hasPaymentGateway}
         eventImages={eventImages}
+        activeFeatures={activeFeatures}
+        availableSessions={availableSessions}
       />
     </>
   );
