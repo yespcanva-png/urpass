@@ -392,7 +392,9 @@ export async function GET(req: NextRequest) {
       sameSite: "lax",
     });
 
-    // 6. Direct single-pass session cookie writer via Supabase verifyOtp
+    // 6. Direct single-pass session cookie writer. Prefer Supabase accepting
+    // Google's ID token; fall back to the existing magic-link token path if the
+    // Supabase Google provider is not ready or rejects the token.
     const supabase = createServerClient(
       getSupabaseUrl(),
       getSupabaseAnonKey(),
@@ -417,10 +419,42 @@ export async function GET(req: NextRequest) {
       }
     );
 
-    const { error: verifyErr } = await supabase.auth.verifyOtp({
-      token_hash: tokenHash,
-      type: verificationType,
-    });
+    let sessionEstablishedBy = "magiclink";
+    let verifyErr: unknown = null;
+
+    if (tokens.id_token) {
+      const { data: idTokenData, error: idTokenErr } = await supabase.auth.signInWithIdToken({
+        provider: "google",
+        token: tokens.id_token,
+        access_token: tokens.access_token,
+      });
+
+      if (!idTokenErr && idTokenData?.session) {
+        sessionEstablishedBy = "google_id_token";
+        if (idTokenData.user?.id) {
+          userId = idTokenData.user.id;
+        }
+        logAuth("session", "Supabase accepted Google ID token", {
+          email: normalizedEmail,
+          userId,
+        });
+      } else {
+        logAuthWarn("session", "Supabase rejected Google ID token, falling back to magic-link session", {
+          email: normalizedEmail,
+          error: idTokenErr?.message,
+          status: idTokenErr?.status,
+          code: idTokenErr?.code,
+        });
+      }
+    }
+
+    if (sessionEstablishedBy !== "google_id_token") {
+      const otpResult = await supabase.auth.verifyOtp({
+        token_hash: tokenHash,
+        type: verificationType,
+      });
+      verifyErr = otpResult.error;
+    }
 
     if (verifyErr) {
       logAuthError("session", "verifyOtp failed to establish session", verifyErr, { email: normalizedEmail });
@@ -432,6 +466,7 @@ export async function GET(req: NextRequest) {
       userId,
       destination,
       isNewUser,
+      sessionEstablishedBy,
     });
 
     // 7. Non-blocking background sync for Profile Upsert & Notifications
