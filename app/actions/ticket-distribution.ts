@@ -316,6 +316,86 @@ export async function claimTicketAction(
 }
 
 /**
+ * Retrieves public invitation details for a claim token without requiring purchaser auth.
+ */
+export async function getClaimTicketDetailsAction(claimToken: string): Promise<{
+  success: boolean;
+  error?: string;
+  message?: string;
+  details?: {
+    eventName: string;
+    eventVenue?: string | null;
+    eventDate?: string | null;
+    ticketTypeName: string;
+    purchaserName: string;
+    recipientName?: string | null;
+    recipientEmail?: string | null;
+    recipientPhone?: string | null;
+    state: string;
+    isExpired: boolean;
+    expiresAt?: string | null;
+    customFields?: Array<{ id: string; label: string; type?: string; required?: boolean }>;
+  };
+}> {
+  if (!claimToken || typeof claimToken !== "string") {
+    return { success: false, error: "INVALID_TOKEN", message: "Invalid claim link." };
+  }
+
+  const db = adminClient();
+  const orderQuery = db.from("ticket_orders").select("*");
+  const { data: orders, error: ordersErr } =
+    typeof orderQuery.contains === "function"
+      ? await orderQuery.contains("group_members", [{ claimToken }])
+      : await orderQuery;
+
+  if (ordersErr || !orders) {
+    return { success: false, error: "DATABASE_ERROR", message: "Failed to locate ticket invitation." };
+  }
+
+  const targetOrder = orders.find(
+    (o) =>
+      Array.isArray(o.group_members) &&
+      o.group_members.some((m: Record<string, unknown>) => m.claimToken === claimToken)
+  );
+
+  if (!targetOrder) {
+    return { success: false, error: "INVALID_CLAIM_TOKEN", message: "Ticket invitation was not found or has been revoked." };
+  }
+
+  const targetMember = targetOrder.group_members.find(
+    (m: Record<string, unknown>) => m.claimToken === claimToken
+  );
+
+  const { data: event } = await db
+    .from("events")
+    .select("id, name, venue, event_date, organizer_id, custom_fields")
+    .eq("id", targetOrder.event_id)
+    .maybeSingle();
+
+  const now = new Date();
+  const claimExpiresAt = targetMember?.claimExpiresAt ? String(targetMember.claimExpiresAt) : null;
+  const isExpired = Boolean(claimExpiresAt && new Date(claimExpiresAt) < now);
+
+  return {
+    success: true,
+    details: {
+      eventName: event?.name || "Event Ticket",
+      eventVenue: event?.venue || null,
+      eventDate: event?.event_date || null,
+      ticketTypeName: String(targetMember?.ticketTypeName || "General Admission"),
+      purchaserName: String(targetOrder.buyer_name || "The organizer"),
+      recipientName: targetMember?.recipientName ? String(targetMember.recipientName) : null,
+      recipientEmail: targetMember?.recipientEmail ? String(targetMember.recipientEmail) : null,
+      recipientPhone: targetMember?.recipientPhone ? String(targetMember.recipientPhone) : null,
+      state: isExpired ? "EXPIRED" : String(targetMember?.assignmentState || "INVITED"),
+      isExpired,
+      expiresAt: claimExpiresAt,
+      customFields: Array.isArray(event?.custom_fields) ? event.custom_fields : [],
+    },
+  };
+}
+
+/**
  * Revokes a ticket assignment and returns it to the pool of available tickets.
  */
 export async function revokeAssignmentAction({
