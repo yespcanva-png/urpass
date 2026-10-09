@@ -16,7 +16,7 @@ export async function generateMetadata({
     .from("events")
     .select("name, venue")
     .eq("id", eventId)
-    .single();
+    .maybeSingle();
 
   if (!event) return { title: "Event" };
   return {
@@ -39,7 +39,7 @@ export default async function EventLayout({
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  if (!user) redirect(`/login?next=/event/${eventId}`);
 
   const [{ data: event }, { data: profile }, plan, { data: memberships }] = await Promise.all([
     supabase
@@ -51,7 +51,7 @@ export default async function EventLayout({
       .from("profiles")
       .select("full_name, email")
       .eq("user_id", user.id)
-      .single(),
+      .maybeSingle(),
     getUserPlan(supabase, user.id),
     supabase
       .from("organization_members")
@@ -60,13 +60,18 @@ export default async function EventLayout({
       .eq("status", "active"),
   ]);
 
-  if (!event) notFound();
+  if (!event) {
+    redirect("/dashboard");
+  }
+
   if (event.organizer_id !== user.id) {
     const isMember = Boolean(
       event.organization_id &&
       memberships?.some((m) => m.organization_id === event.organization_id)
     );
-    if (!isMember) notFound();
+    if (!isMember) {
+      redirect(`/events/${event.apply_slug || event.id}`);
+    }
   }
 
   const fullName = profile?.full_name ?? user.email?.split("@")[0] ?? "Organizer";

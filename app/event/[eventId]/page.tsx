@@ -1,4 +1,4 @@
-import { redirect, notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import EventOverview from "./EventOverview";
 
@@ -13,7 +13,7 @@ export default async function EventPage({
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  if (!user) redirect(`/login?next=/event/${eventId}`);
 
   const { data: event } = await supabase
     .from("events")
@@ -21,9 +21,11 @@ export default async function EventPage({
     .eq("id", eventId)
     .maybeSingle();
 
-  if (!event) notFound();
+  if (!event) redirect("/dashboard");
   if (event.organizer_id !== user.id) {
-    if (!event.organization_id) notFound();
+    if (!event.organization_id) {
+      redirect(`/events/${event.apply_slug || event.id}`);
+    }
     const { data: member } = await supabase
       .from("organization_members")
       .select("role")
@@ -31,7 +33,9 @@ export default async function EventPage({
       .eq("user_id", user.id)
       .eq("status", "active")
       .maybeSingle();
-    if (!member) notFound();
+    if (!member) {
+      redirect(`/events/${event.apply_slug || event.id}`);
+    }
   }
 
   // Attendees are fetched client-side inside EventOverview (instant render)
