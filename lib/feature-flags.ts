@@ -14,7 +14,9 @@ export type FeatureFlagKey =
   | "offline_mesh_sync"
   | "waitlist_priority_queue"
   | "bulk_ticket_booking"
-  | "ticket_distribution";
+  | "ticket_distribution"
+  | "member_registration_forms"
+  | "serial_number_validation";
 
 export type CoreFeatureKey =
   | "public_registration"
@@ -167,6 +169,20 @@ export const FEATURE_FLAG_DEFINITIONS: Record<FeatureFlagKey, FeatureFlagDefinit
     key: "ticket_distribution",
     name: "Bulk Ticket Distribution & Claiming",
     description: "Distribute bulk purchased tickets to individual members with secure claim links.",
+    defaultEnabled: false,
+    requiredEntitlement: null,
+  },
+  member_registration_forms: {
+    key: "member_registration_forms",
+    name: "Member Registration Forms",
+    description: "Collect detailed attendee profile fields with ticket category targeting and server-side validation.",
+    defaultEnabled: false,
+    requiredEntitlement: null,
+  },
+  serial_number_validation: {
+    key: "serial_number_validation",
+    name: "Serial Number Validation",
+    description: "Support manual, auto-generated sequence, or verified whitelist serial number assignment with uniqueness enforcement.",
     defaultEnabled: false,
     requiredEntitlement: null,
   },
