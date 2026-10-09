@@ -174,7 +174,8 @@ async function sendViaZeptoMail(payload: MailPayload): Promise<MailSendResult | 
   const transporter = getSmtpTransporter();
   if (!transporter) return null;
 
-  const from = parseEmailAddress(payload.from || getFromEmail());
+  const rawFrom = cleanString(payload.from);
+  const from = parseEmailAddress(rawFrom || process.env.EMAIL_FROM || "URPASS <urpass.space@yespstudio.com>");
   const recipients = normalizeRecipients(payload.to);
 
   if (!from.address || recipients.length === 0) {
