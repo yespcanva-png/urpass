@@ -542,6 +542,11 @@ export async function GET(req: NextRequest) {
     );
 
     const sessionEstablishedBy = "magiclink";
+    logAuth("session", "Attempting magic-link fallback session via verifyOtp", {
+      email: normalizedEmail,
+      userId,
+      verificationType,
+    });
     const { error: verifyErr } = await supabase.auth.verifyOtp({
       token_hash: tokenHash,
       type: verificationType,
