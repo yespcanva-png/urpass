@@ -151,7 +151,7 @@ export async function validateAndSubmitMemberFormAction({
         validation.serialNumber
       );
 
-      await db
+        await db
         .from("attendees")
         .update({
           name: boundData.name,
@@ -162,6 +162,34 @@ export async function validateAndSubmitMemberFormAction({
           updated_at: new Date().toISOString(),
         })
         .eq("id", attendeeId);
+
+      // Persist detailed submission record for organizer audit and review
+      try {
+        await db.from("attendee_member_submissions").upsert(
+          {
+            event_id: eventId,
+            attendee_id: attendeeId,
+            ticket_type_id: ticketTypeId || null,
+            name: boundData.name,
+            email: boundData.email,
+            phone: boundData.phone || null,
+            college_org: submission.college_org || null,
+            department: submission.department || null,
+            course: submission.course || null,
+            year_or_designation: submission.year_or_designation || null,
+            roll_or_employee_id: submission.roll_or_employee_id || null,
+            serial_number: validation.serialNumber || null,
+            custom_responses: submission.customResponses || {},
+            declarations: submission.declarations || {},
+            document_url: submission.documentUrl || null,
+            status: "submitted",
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "event_id,attendee_id" }
+        );
+      } catch {
+        // Safe fallback if migration 090 is still running
+      }
     }
   }
 

@@ -53,6 +53,7 @@ export interface MemberFormSubmission {
   college_org?: string | null;
   department?: string | null;
   course?: string | null;
+  year_or_designation?: string | null;
   roll_or_employee_id?: string | null;
   serialNumber?: string | null;
   customResponses?: Record<string, unknown>;
