@@ -171,9 +171,7 @@ function normalizeRecipients(to: MailPayload["to"]) {
 }
 
 async function sendViaZeptoMail(payload: MailPayload): Promise<MailSendResult | null> {
-  const transporter = getSmtpTransporter();
-  if (!transporter) return null;
-
+  const apiKey = cleanString(process.env.ZOHO_ZEPTOMAIL_API_KEY || process.env.SMTP_PASS);
   const rawFrom = cleanString(payload.from);
   const from = parseEmailAddress(rawFrom || process.env.EMAIL_FROM || "URPASS <urpass.space@yespstudio.com>");
   const recipients = normalizeRecipients(payload.to);
@@ -181,6 +179,74 @@ async function sendViaZeptoMail(payload: MailPayload): Promise<MailSendResult | 
   if (!from.address || recipients.length === 0) {
     throw new Error("Missing email sender or recipient");
   }
+
+  // 1. Try ZeptoMail REST API
+  if (apiKey && process.env.NODE_ENV !== "test") {
+    try {
+      const authHeader = apiKey.startsWith("Zoho-") ? apiKey : `Zoho-enczapikey ${apiKey}`;
+      const toFormatted = recipients.map((r) => ({
+        email_address: { address: r.address, name: r.name },
+      }));
+
+      const bodyPayload: Record<string, unknown> = {
+        from: { address: from.address, name: from.name || "URPASS" },
+        to: toFormatted,
+        subject: payload.subject,
+      };
+
+      if (payload.html) {
+        bodyPayload.htmlbody = payload.html;
+      }
+      if (payload.text) {
+        bodyPayload.textbody = payload.text;
+      }
+
+      if (payload.replyTo) {
+        const replyToArray = Array.isArray(payload.replyTo) ? payload.replyTo : [payload.replyTo];
+        bodyPayload.reply_to = replyToArray.map((rt) => {
+          const parsed = parseEmailAddress(rt);
+          return { address: parsed.address, name: parsed.name };
+        });
+      }
+
+      if (payload.attachments && payload.attachments.length > 0) {
+        bodyPayload.attachments = payload.attachments.map((att) => ({
+          name: att.filename,
+          content: typeof att.content === "string" ? att.content : att.content ? Buffer.from(att.content).toString("base64") : "",
+          mime_type: att.contentType || "application/octet-stream",
+        }));
+      }
+
+      const res = await fetch("https://api.zeptomail.in/v1.1/email", {
+        method: "POST",
+        headers: {
+          "Accept": "application/json",
+          "Content-Type": "application/json",
+          "Authorization": authHeader,
+        },
+        body: JSON.stringify(bodyPayload),
+        signal: AbortSignal.timeout(10000),
+      });
+
+      const resJson = await res.json().catch(() => null);
+      if (res.ok && resJson) {
+        const id = resJson.data?.[0]?.message_id || `zepto_${Date.now()}`;
+        return { id, provider: "zeptomail", raw: resJson };
+      }
+
+      if (resJson?.error?.details?.[0]?.message) {
+        const detailMsg = resJson.error.details[0].message;
+        throw new Error(`ZeptoMail: ${resJson.error.message} - ${detailMsg}`);
+      }
+    } catch (apiErr) {
+      console.warn("[email] ZeptoMail REST API attempt notice:", apiErr instanceof Error ? apiErr.message : String(apiErr));
+      // Fall through to SMTP transporter attempt
+    }
+  }
+
+  // 2. Try ZeptoMail SMTP Transporter
+  const transporter = getSmtpTransporter();
+  if (!transporter) return null;
 
   const toFormatted = recipients
     .map((r) => (r.name ? `"${r.name}" <${r.address}>` : r.address))
