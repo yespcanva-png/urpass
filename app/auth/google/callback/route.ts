@@ -331,6 +331,13 @@ export async function GET(req: NextRequest) {
     let userId: string | undefined;
     let isNewUser = false;
 
+    // Check if user already has an existing profile
+    const { data: existingProfile } = await admin
+      .from("profiles")
+      .select("user_id")
+      .ilike("email", normalizedEmail)
+      .maybeSingle();
+
     let linkRes = await admin.auth.admin.generateLink({
       type: "magiclink",
       email: normalizedEmail,
@@ -362,7 +369,10 @@ export async function GET(req: NextRequest) {
       });
     } else {
       userId = linkRes.data.user.id;
-      logAuth("user_sync", "Resolved user in Supabase Auth", { userId, email: normalizedEmail });
+      if (!existingProfile?.user_id) {
+        isNewUser = true;
+      }
+      logAuth("user_sync", "Resolved user in Supabase Auth", { userId, email: normalizedEmail, isNewUser });
     }
 
     if (!linkRes.data?.properties?.hashed_token) {
@@ -481,43 +491,44 @@ export async function GET(req: NextRequest) {
       cookieSize: compactCookieValue.length,
     });
 
-    // 7. Non-blocking background sync for Profile Upsert & Notifications
+    // 7. Profile Upsert & Notifications
     if (userId) {
-      Promise.allSettled([
-        admin.from("profiles").upsert(
-          {
-            user_id: userId,
-            email: normalizedEmail,
-            full_name: fullName,
-            avatar_url: avatarUrl,
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: "user_id" }
-        ),
-        isNewUser
-          ? Promise.allSettled([
-              notifyOwnerNewUser({
+      try {
+        await Promise.allSettled([
+          admin.from("profiles").upsert(
+            {
+              user_id: userId,
+              email: normalizedEmail,
+              full_name: fullName,
+              avatar_url: avatarUrl,
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: "user_id" }
+          ),
+          isNewUser
+            ? Promise.allSettled([
+                notifyOwnerNewUser({
+                  name: fullName,
+                  email: normalizedEmail,
+                  provider: "google",
+                  userId,
+                }),
+                sendUserWelcomeEmail({ to: normalizedEmail, name: fullName }),
+              ])
+            : notifyOwnerUserLogin({
                 name: fullName,
                 email: normalizedEmail,
                 provider: "google",
                 userId,
               }),
-              sendUserWelcomeEmail({ to: normalizedEmail, name: fullName }),
-            ])
-          : notifyOwnerUserLogin({
-              name: fullName,
-              email: normalizedEmail,
-              provider: "google",
-              userId,
-            }),
-      ]).then(() => {
+        ]);
         logAuth("notifications", "Dispatched login/welcome notifications", {
           email: normalizedEmail,
           isNewUser,
         });
-      }).catch((e) => {
+      } catch (e) {
         logAuthWarn("notifications", "Background sync warning", { error: String(e) });
-      });
+      }
     }
 
     return response;

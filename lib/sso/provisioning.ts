@@ -2,7 +2,7 @@ import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { getSupabaseUrl } from "@/lib/supabase/config";
 import { recordAuditLog } from "./audit";
-import { notifyOwnerNewUser, notifyOwnerUserLogin } from "@/lib/email";
+import { notifyOwnerNewUser, notifyOwnerUserLogin, sendUserWelcomeEmail } from "@/lib/email";
 import type { OrgRole } from "@/types";
 
 function adminClient() {
@@ -96,12 +96,18 @@ export async function jitProvisionAndSignIn(opts: ProvisioningOptions): Promise<
         };
       }
       userId = created.user.id;
-      notifyOwnerNewUser({
-        name: displayName,
-        email: normalizedEmail,
-        provider: "sso",
-        userId,
-      }).catch((e) => console.error("[sso] notifyOwnerNewUser error:", e));
+      Promise.allSettled([
+        notifyOwnerNewUser({
+          name: displayName,
+          email: normalizedEmail,
+          provider: "sso",
+          userId,
+        }),
+        sendUserWelcomeEmail({
+          to: normalizedEmail,
+          name: displayName,
+        }),
+      ]).catch((e) => console.error("[sso] notifyOwnerNewUser error:", e));
     }
 
     // 3. Check / Provision Organization Membership

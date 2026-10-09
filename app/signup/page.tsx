@@ -124,23 +124,6 @@ function SignupContent() {
       return;
     }
     try {
-      fetch("/api/auth/notify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: "signup",
-          email: data.email,
-          name: data.full_name,
-          provider: "email",
-          userId: signUpData.user?.id,
-        }),
-        keepalive: true,
-      }).catch((err) => console.error("[signup] notify API error:", err));
-    } catch (err) {
-      console.error("[signup] notify dispatch error:", err);
-    }
-
-    try {
       await sendSignupNotifications({
         name: data.full_name,
         email: data.email,
