@@ -27,6 +27,11 @@ export type UrPassPermission =
   | "attendance.correct"
   | "attendance.override"
   | "sessions.manage"
+  | "group_entry.configure"
+  | "group_entry.scan"
+  | "group_entry.view"
+  | "group_entry.override"
+  | "group_entry.audit"
 
   // ── Data & Integrations ──
   | "analytics.view"
@@ -164,6 +169,38 @@ export const ALL_PERMISSIONS: PermissionDefinition[] = [
     description: "Configure multi-track sessions, room capacities, and attendance eligibility",
     category: "event_operations",
     requiredFeature: "session_tracking",
+  },
+  {
+    id: "group_entry.configure",
+    label: "Configure group QR booking rules",
+    description: "Configure group QR partial entry rules, entitlement counts, and mode selection",
+    category: "event_operations",
+    requiredFeature: "group_entry",
+  },
+  {
+    id: "group_entry.scan",
+    label: "Admit members with group QR",
+    description: "Admit attendees and deduct entry entitlements using group QR at assigned gates",
+    category: "event_operations",
+    requiredFeature: "group_entry",
+  },
+  {
+    id: "group_entry.view",
+    label: "View booking entry balance",
+    description: "View total, admitted, and remaining entry entitlement balances for group bookings",
+    category: "event_operations",
+  },
+  {
+    id: "group_entry.override",
+    label: "Perform supervisory group corrections",
+    description: "Perform audited supervisory corrections to group entry admission counts",
+    category: "event_operations",
+  },
+  {
+    id: "group_entry.audit",
+    label: "View full admission history",
+    description: "View complete audit trail of group QR admissions, gates, operators, and timestamps",
+    category: "event_operations",
   },
 
   // Data & Integrations

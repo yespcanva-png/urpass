@@ -22,7 +22,8 @@ export type FeatureFlagKey =
   | "csv_management"
   | "google_sheets"
   | "ticket_reassignment"
-  | "offline_scanning";
+  | "offline_scanning"
+  | "group_entry";
 
 export type CoreFeatureKey =
   | "public_registration"
@@ -261,6 +262,14 @@ export const FEATURE_FLAG_DEFINITIONS: Record<FeatureFlagKey, FeatureFlagDefinit
     moduleCode: "M09",
     name: "Google Sheets Integration",
     description: "Optional one-way sync of registration, distribution, scan, and attendance data to organizer-owned Google Sheets.",
+    defaultEnabled: false,
+    requiredEntitlement: null,
+  },
+  group_entry: {
+    key: "group_entry",
+    moduleCode: "M14",
+    name: "Group QR Partial Entry",
+    description: "One QR code representing multiple tickets with partial admission and real-time remaining balance tracking.",
     defaultEnabled: false,
     requiredEntitlement: null,
   },

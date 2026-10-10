@@ -49,6 +49,8 @@ import {
   type OfflineVerificationResult,
 } from "@/lib/offline-scanner";
 import { undoCheckIn, undoCheckInByToken } from "@/app/actions/manual-checkin";
+import GroupEntryModal from "@/components/scan/GroupEntryModal";
+import { parseScannedGroupQR } from "@/lib/group-entry";
 
 const QRScanner = dynamic(() => import("@/components/scan/QRScanner"), { ssr: false });
 
@@ -142,6 +144,17 @@ export default function ScanEventPage() {
   const [selectedZoneId, setSelectedZoneId] = useState<string | null>(null);
   const [scanDirection, setScanDirection] = useState<"in" | "out">("in");
   const [lastScannedAttendee, setLastScannedAttendee] = useState<any | null>(null);
+
+  // Group Entry Modal state
+  const [groupModalState, setGroupModalState] = useState<{
+    isOpen: boolean;
+    bookingReference: string;
+    buyerName: string;
+    totalEntitlements: number;
+    previouslyAdmitted: number;
+    remainingEntries: number;
+    loading: boolean;
+  } | null>(null);
 
   // Manual search mode
   const [manualMode, setManualMode] = useState(false);
@@ -665,6 +678,44 @@ export default function ScanEventPage() {
         }
       }
 
+      // ── M14: Bulk Group QR Entry Flow ──
+      const parsedGroup = parseScannedGroupQR(rawToken);
+      if (parsedGroup.isGroupQR && !selectedSessionId) {
+        try {
+          const res = await fetch(`/api/events/${eventId}/group-entry`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "lookup",
+              bookingReference: rawToken,
+              gateId: selectedGateId,
+              gateName: selectedGate?.name,
+            }),
+          });
+          const data = await res.json();
+          if (res.ok && data.success) {
+            setGroupModalState({
+              isOpen: true,
+              bookingReference: data.bookingReference || rawToken,
+              buyerName: data.buyerName || "Group Pass Holder",
+              totalEntitlements: data.totalEntitlements || 1,
+              previouslyAdmitted: data.previouslyAdmitted || 0,
+              remainingEntries: data.remainingEntries || 0,
+              loading: false,
+            });
+            setScanState("idle");
+            return;
+          } else if (data.status === "EXHAUSTED") {
+            playScannerFeedback("ALREADY_CHECKED_IN", { sound: soundEnabled });
+            setErrorMsg("All group pass entry entitlements have been used.");
+            setScanState("duplicate");
+            return;
+          }
+        } catch {
+          // If network fails or lookup errors, fallback to standard verify
+        }
+      }
+
       // ── Offline Verification Flow ──
       if (!isOnline) {
         const offRes = await verifyPassOffline({
@@ -1075,6 +1126,62 @@ export default function ScanEventPage() {
     if (searchFilter === "pending") return a.pass_status !== "checked_in";
     return true;
   });
+
+  const handleConfirmGroupAdmission = useCallback(
+    async (quantity: number) => {
+      if (!groupModalState) return;
+      setGroupModalState((prev) => (prev ? { ...prev, loading: true } : null));
+
+      try {
+        const res = await fetch(`/api/events/${eventId}/group-entry`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "admit",
+            bookingReference: groupModalState.bookingReference,
+            quantity,
+            gateId: selectedGateId,
+            gateName: selectedGate?.name,
+          }),
+        });
+
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+          playScannerFeedback("CHECKED_IN", { sound: soundEnabled });
+          setScanCount((c) => c + quantity);
+          setFeed((f) => [
+            {
+              id: `group-${Date.now()}`,
+              name: `${groupModalState.buyerName} (+${quantity} entries)`,
+              pass_type: "group",
+              ts: new Date().toISOString(),
+            },
+            ...f.slice(0, 49),
+          ]);
+          setResult({
+            attendee: {
+              name: `${groupModalState.buyerName} (Group of ${quantity})`,
+              email: `${data.remainingEntries ?? (groupModalState.remainingEntries - quantity)} entries remain`,
+              pass_type: "group",
+            },
+            passType: "group",
+            checkedInAt: new Date().toISOString(),
+            gateName: selectedGate?.name,
+          });
+          setGroupModalState(null);
+          setScanState("success");
+        } else {
+          playScannerFeedback("NOT_APPROVED", { sound: soundEnabled });
+          throw new Error(data.error || "Admission failed");
+        }
+      } catch (err: any) {
+        setGroupModalState((prev) => (prev ? { ...prev, loading: false } : null));
+        throw err;
+      }
+    },
+    [groupModalState, eventId, selectedGateId, selectedGate, soundEnabled]
+  );
 
   return (
     <div className="min-h-screen bg-[#090A0F] text-white flex flex-col page-in select-none touch-manipulation">
@@ -1848,6 +1955,21 @@ export default function ScanEventPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* ── M14: Bulk Group QR Entry Modal ────────────────────────────── */}
+      {groupModalState?.isOpen && (
+        <GroupEntryModal
+          isOpen={groupModalState.isOpen}
+          onClose={() => setGroupModalState(null)}
+          bookingReference={groupModalState.bookingReference}
+          buyerName={groupModalState.buyerName}
+          totalEntitlements={groupModalState.totalEntitlements}
+          previouslyAdmitted={groupModalState.previouslyAdmitted}
+          remainingEntries={groupModalState.remainingEntries}
+          loading={groupModalState.loading}
+          onConfirmAdmission={handleConfirmGroupAdmission}
+        />
       )}
 
     </div>
