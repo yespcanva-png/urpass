@@ -56,6 +56,9 @@ export interface HardenedPublicPass {
     status: string;
     generated_at?: string;
     custom_ticket_id?: string | null;
+    is_group_master?: boolean;
+    total_guests?: number;
+    checked_in_guests?: number;
   };
   attendee: {
     name: string;
@@ -107,7 +110,7 @@ export async function getHardenedPublicPass(
   // 1. Fetch pass by pass_token with strictly bounded columns
   const { data: pass, error: passErr } = await admin
     .from("passes")
-    .select("pass_token, pass_type, status, attendee_id, event_id")
+    .select("pass_token, pass_type, status, attendee_id, event_id, is_group_master, total_guests, checked_in_guests")
     .eq("pass_token", passToken)
     .single();
 
@@ -213,6 +216,9 @@ export async function getHardenedPublicPass(
       pass_type: pass.pass_type || "participant",
       status: pass.status || "generated",
       custom_ticket_id: customTicketId,
+      is_group_master: Boolean((pass as any).is_group_master),
+      total_guests: Number((pass as any).total_guests || 1),
+      checked_in_guests: Number((pass as any).checked_in_guests || 0),
     },
     attendee: {
       name: attendee.name,

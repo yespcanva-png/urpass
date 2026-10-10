@@ -689,6 +689,7 @@ export async function POST(
           .eq("id", passData.id);
       }
       // Insert admission history record
+      const admissionTime = new Date().toISOString();
       await db.from("group_entry_admissions").insert({
         event_id: eventId,
         order_id: orderData?.id || null,
@@ -703,8 +704,33 @@ export async function POST(
         operator_email: user.email || "staff@urpass.space",
         device_id: deviceId,
         scan_operation_id: scanOperationId,
-        admitted_at: new Date().toISOString(),
+        admitted_at: admissionTime,
       });
+
+      // Update attendee pass_status and presence state
+      const targetAttendeeId = passData?.attendee_id || orderData?.attendee_id;
+      if (targetAttendeeId) {
+        await db
+          .from("attendees")
+          .update({
+            pass_status: outcome.updatedBooking.remainingEntitlements === 0 ? "checked_in" : "checked_in",
+            venue_presence_state: "inside",
+            last_scanned_at: admissionTime,
+          })
+          .eq("id", targetAttendeeId);
+
+        // Also record in check_ins table so check-ins dashboard, analytics & live feeds update in real-time
+        await db.from("check_ins").insert({
+          pass_id: passData?.id || null,
+          event_id: eventId,
+          attendee_id: targetAttendeeId,
+          checked_in_by: user.id,
+          gate_id: gateId || null,
+          check_in_method: "group_qr",
+          scan_operation_id: scanOperationId,
+          checked_in_at: admissionTime,
+        });
+      }
     } catch {
       // Non-blocking
     }

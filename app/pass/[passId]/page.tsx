@@ -493,7 +493,32 @@ export default async function PassPage({
 
             {/* Real-time Status Strip */}
             <div className="w-full mt-4">
-              {isCheckedIn ? (
+              {pass.is_group_master ? (
+                <div className="w-full flex flex-col gap-1.5 p-3 rounded-xl bg-indigo-50/80 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/60 shadow-2xs">
+                  <div className="flex items-center justify-between text-xs font-bold text-indigo-950 dark:text-indigo-200">
+                    <span className="flex items-center gap-1.5">
+                      <Users className="w-3.5 h-3.5 text-indigo-600" />
+                      Single Group QR Pass
+                    </span>
+                    <span className="text-[11px] font-mono">
+                      {pass.checked_in_guests || 0} / {pass.total_guests || 1} Admitted
+                    </span>
+                  </div>
+                  <div className="w-full h-1.5 bg-indigo-200/60 dark:bg-indigo-900/60 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-indigo-600 rounded-full transition-all duration-300"
+                      style={{
+                        width: `${Math.min(100, Math.round(((pass.checked_in_guests || 0) / (pass.total_guests || 1)) * 100))}%`,
+                      }}
+                    />
+                  </div>
+                  <p className="text-[10px] text-indigo-700 dark:text-indigo-300 font-medium text-center">
+                    {Math.max(0, (pass.total_guests || 1) - (pass.checked_in_guests || 0)) === 0
+                      ? "All members checked in"
+                      : `${Math.max(0, (pass.total_guests || 1) - (pass.checked_in_guests || 0))} entries remaining for partial check-in at the gate`}
+                  </p>
+                </div>
+              ) : isCheckedIn ? (
                 <div className="w-full flex items-center gap-2 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 rounded-xl px-3 py-2.5 justify-center shadow-2xs">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
                   <span className="text-xs font-bold text-emerald-800 dark:text-emerald-300">

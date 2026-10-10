@@ -266,6 +266,35 @@ BEGIN
     v_now
   ) RETURNING id INTO v_admission_id;
 
+  -- 7. Record check_in for attendee presence analytics
+  IF v_pass.attendee_id IS NOT NULL THEN
+    UPDATE public.attendees
+    SET pass_status = CASE WHEN v_new_remaining = 0 THEN 'checked_in' ELSE 'checked_in' END,
+        venue_presence_state = 'inside',
+        updated_at = v_now
+    WHERE id = v_pass.attendee_id;
+
+    INSERT INTO public.check_ins (
+      pass_id,
+      event_id,
+      attendee_id,
+      checked_in_by,
+      gate_id,
+      check_in_method,
+      scan_operation_id,
+      checked_in_at
+    ) VALUES (
+      v_pass.id,
+      p_event_id,
+      v_pass.attendee_id,
+      p_checked_in_by,
+      p_gate_id,
+      'group_qr',
+      p_scan_operation_id,
+      v_now
+    ) ON CONFLICT DO NOTHING;
+  END IF;
+
   RETURN jsonb_build_object(
     'success', true,
     'status', 'GROUP_ADMITTED',

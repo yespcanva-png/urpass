@@ -595,6 +595,15 @@ export default function AttendeeTable({
                                 Answers
                               </button>
                             )}
+                            {(a.custom_responses as any)?.is_single_group_qr && (
+                              <span
+                                className="inline-flex items-center gap-1 text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-md"
+                                title="Single Group QR with partial check-in"
+                              >
+                                <Users className="w-3 h-3 text-indigo-600" />
+                                Group Pass ({(a.custom_responses as any)?.group_attendee_count || (a.custom_responses as any)?.guest_count || 1} people)
+                              </span>
+                            )}
                           </div>
                           <p className="text-xs text-neutral-400 sm:hidden">{a.email}</p>
                           {payment?.status === "paid" && (

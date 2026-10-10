@@ -916,6 +916,20 @@ export async function submitApplication(
       await markReservationApproved(admin, payment.orderId);
     }
 
+    const isSingleGroupQr = Boolean(
+      finalCustomResponses.is_single_group_qr ||
+      ((selectedTicketType as any)?.is_group_pass && finalCustomResponses.is_single_group_qr !== false)
+    );
+    const groupAttendeeCount = Math.max(
+      1,
+      Number(
+        finalCustomResponses.group_attendee_count ||
+        finalCustomResponses.guest_count ||
+        finalCustomResponses.bulk_quantity ||
+        (Array.isArray(finalCustomResponses.group_members) ? finalCustomResponses.group_members.length : 1)
+      )
+    );
+
     // Generate pass immediately
     const { data: pass, error: passError } = await admin
       .from("passes")
@@ -927,6 +941,13 @@ export async function submitApplication(
         attendee_age: parsed.data.age ?? (customResponses?.age as number) ?? null,
         age_tier_label: (customResponses?.age_tier_label as string) ?? null,
         age_tier_id: (customResponses?.age_tier_id as string) ?? null,
+        ...(isSingleGroupQr
+          ? {
+              is_group_master: true,
+              total_guests: groupAttendeeCount,
+              checked_in_guests: 0,
+            }
+          : {}),
       })
       .select("pass_token")
       .single();
@@ -934,6 +955,19 @@ export async function submitApplication(
     if (!passError && pass) {
       await admin.from("attendees").update({ pass_status: "generated" }).eq("id", attendee.id);
       incrementRegistrationsUsed();
+
+      // If single group QR mode, assign group QR reference to ticket_orders
+      if (isSingleGroupQr && payment?.orderId) {
+        await admin
+          .from("ticket_orders")
+          .update({
+            group_qr_code: pass.pass_token,
+            total_entitlements: groupAttendeeCount,
+            admitted_entitlements: 0,
+            group_entry_enabled: true,
+          })
+          .eq("razorpay_order_id", payment.orderId);
+      }
 
       let resolvedTicketId = formatTicketId(pass.pass_token);
       const ticketIdConfig = event.custom_pass_design?.ticketIdConfig;
@@ -961,6 +995,8 @@ export async function submitApplication(
       }
 
       // ── Process Group Passes & Bulk Booking Member Sub-Passes ──
+      // When the registrant selected a Single Group QR pass, DO NOT generate multiple sub-passes!
+      // Only one master QR credential is used at the gate with partial entry counter.
       const rawGroupMembers = Array.isArray(finalCustomResponses.group_members)
         ? [...(finalCustomResponses.group_members as any[])]
         : [];
@@ -992,7 +1028,7 @@ export async function submitApplication(
         };
       }
 
-      for (let i = 1; i < rawGroupMembers.length; i++) {
+      for (let i = 1; !isSingleGroupQr && i < rawGroupMembers.length; i++) {
         const member = rawGroupMembers[i];
         const memName = (member.name || `Guest #${i + 1}`).trim();
         const memEmail = member.email && member.email.includes("@") ? member.email.trim() : null;
