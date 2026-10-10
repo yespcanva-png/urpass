@@ -25,6 +25,40 @@ function adminClient() {
   );
 }
 
+type MemberFormsEventRow = {
+  id: string;
+  organizer_id: string;
+  organization_id?: string | null;
+  custom_pass_design?: Record<string, unknown> | null;
+};
+
+async function getActiveOrgRole(
+  db: ReturnType<typeof adminClient>,
+  organizationId: string | null | undefined,
+  userId: string
+) {
+  if (!organizationId) return null;
+  const { data: member } = await db
+    .from("organization_members")
+    .select("role")
+    .eq("organization_id", organizationId)
+    .eq("user_id", userId)
+    .eq("status", "active")
+    .maybeSingle();
+
+  return member?.role ?? null;
+}
+
+async function canManageEventForms(
+  db: ReturnType<typeof adminClient>,
+  event: MemberFormsEventRow,
+  userId: string
+) {
+  if (event.organizer_id === userId) return true;
+  const role = await getActiveOrgRole(db, event.organization_id, userId);
+  return ["owner", "admin", "event_manager"].includes(role ?? "");
+}
+
 /**
  * Retrieves the active member form schema and serial number rules for an event and ticket tier.
  */
@@ -221,16 +255,25 @@ export async function updateEventMemberFormConfigAction({
   const db = adminClient();
   const { data: event } = await db
     .from("events")
-    .select("id, organizer_id, custom_pass_design")
+    .select("id, organizer_id, organization_id, custom_pass_design")
     .eq("id", eventId)
     .maybeSingle();
 
-  if (!event || event.organizer_id !== user.id) {
+  if (!event) {
+    return { success: false, error: "Event not found." };
+  }
+
+  if (!(await canManageEventForms(db, event as MemberFormsEventRow, user.id))) {
     return { success: false, error: "Unauthorized to update event form configuration." };
   }
 
+  let updatedFeatureConfig = null;
   if (typeof config.enabled === "boolean") {
-    await updateEventFeatureFlag(eventId, "member_registration_forms", config.enabled);
+    const flagResult = await updateEventFeatureFlag(eventId, "member_registration_forms", config.enabled);
+    if (flagResult.error) {
+      return { success: false, error: flagResult.error };
+    }
+    updatedFeatureConfig = flagResult.config ?? null;
   }
 
   const existingDesign =
@@ -246,6 +289,7 @@ export async function updateEventMemberFormConfigAction({
 
   const updatedDesign = {
     ...existingDesign,
+    ...(updatedFeatureConfig ? { _featureFlags: updatedFeatureConfig } : {}),
     _memberFormConfig: updatedConfig,
   };
 
@@ -287,16 +331,25 @@ export async function updateEventSerialNumberConfigAction({
   const db = adminClient();
   const { data: event } = await db
     .from("events")
-    .select("id, organizer_id, custom_pass_design")
+    .select("id, organizer_id, organization_id, custom_pass_design")
     .eq("id", eventId)
     .maybeSingle();
 
-  if (!event || event.organizer_id !== user.id) {
+  if (!event) {
+    return { success: false, error: "Event not found." };
+  }
+
+  if (!(await canManageEventForms(db, event as MemberFormsEventRow, user.id))) {
     return { success: false, error: "Unauthorized to update event serial configuration." };
   }
 
+  let updatedFeatureConfig = null;
   if (typeof config.enabled === "boolean") {
-    await updateEventFeatureFlag(eventId, "serial_number_validation", config.enabled);
+    const flagResult = await updateEventFeatureFlag(eventId, "serial_number_validation", config.enabled);
+    if (flagResult.error) {
+      return { success: false, error: flagResult.error };
+    }
+    updatedFeatureConfig = flagResult.config ?? null;
   }
 
   const existingDesign =
@@ -312,6 +365,7 @@ export async function updateEventSerialNumberConfigAction({
 
   const updatedDesign = {
     ...existingDesign,
+    ...(updatedFeatureConfig ? { _featureFlags: updatedFeatureConfig } : {}),
     _serialNumberConfig: updatedConfig,
   };
 

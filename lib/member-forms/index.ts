@@ -185,6 +185,8 @@ export function validateSerialNumber({
   message?: string;
   formattedSerial?: string | null;
 } {
+  void eventId;
+
   if (!config.enabled) {
     return { valid: true, formattedSerial: serial || null };
   }
