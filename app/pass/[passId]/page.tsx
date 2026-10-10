@@ -18,6 +18,7 @@ import DownloadPassButton from "@/components/pass/DownloadPassButton";
 import AutoDownload from "@/components/pass/AutoDownload";
 import WhatsAppShareButton from "@/components/pass/WhatsAppShareButton";
 import AddToCalendarButton from "@/components/pass/AddToCalendarButton";
+import AddToAppleWalletButton from "@/components/pass/AddToAppleWalletButton";
 import { Suspense } from "react";
 import { resolveTicketDesign } from "@/lib/pass-design";
 import StudioPassRenderer from "@/components/studio/StudioPassRenderer";
@@ -654,6 +655,7 @@ export default async function PassPage({
       )}
 
       <div className="mt-6 flex flex-col items-center gap-3 w-full max-w-sm pass-in-3 no-print">
+        <AddToAppleWalletButton passToken={pass.pass_token} />
         <AddToCalendarButton
           eventName={event.name}
           description={event.description}

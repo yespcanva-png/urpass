@@ -29,6 +29,7 @@
     "lucide-react": "^1.35.0",
     "next": "16.3.3",
     "nodemailer": "^10.0.16",
+    "passkit-generator": "^3.6.1",
     "pdf-lib": "^1.17.1",
     "qrcode": "^1.5.4",
     "qrcode.react": "^4.2.0",
