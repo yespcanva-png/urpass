@@ -7,14 +7,14 @@ import {
   type ReassignmentRequest,
   type ReassignmentResult,
   type CredentialVerificationResult,
-  type TicketAuditHistory,
-  type DigitalCredential,
-  type ScanEvent,
-  verifyDigitalCredential,
-  reassignTicketToNewHolder,
-  getTicketAuditHistory,
   extractOpaquePassToken,
 } from "@/lib/ticket-credentials";
+import {
+  assertFeatureEnabled,
+  mergePersistedFeatureRows,
+  type EventFeatureSettingRow,
+  type PlatformFeatureFlagRow,
+} from "@/lib/feature-flags";
 import { revalidatePath } from "next/cache";
 
 function adminClient() {
@@ -22,6 +22,80 @@ function adminClient() {
     getSupabaseUrl(),
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
+}
+
+type EventRow = {
+  id: string;
+  organizer_id: string;
+  organization_id?: string | null;
+  custom_pass_design?: Record<string, unknown> | null;
+};
+
+type RpcReassignmentResult = {
+  success: boolean;
+  booking_id?: string;
+  ticket_id?: string;
+  previous_attendee_id?: string;
+  new_attendee_id?: string;
+  revoked_credential_id?: string;
+  new_credential_id?: string;
+  new_pass_token?: string;
+  error?: string;
+  message?: string;
+};
+
+async function getMemberRole(
+  db: ReturnType<typeof adminClient>,
+  organizationId: string | null | undefined,
+  userId: string | undefined
+) {
+  if (!organizationId || !userId) return null;
+
+  const { data: member } = await db
+    .from("organization_members")
+    .select("role")
+    .eq("organization_id", organizationId)
+    .eq("user_id", userId)
+    .eq("status", "active")
+    .maybeSingle();
+
+  return typeof member?.role === "string" ? member.role : null;
+}
+
+function canManageEvent(event: EventRow, userId: string | undefined, memberRole: string | null) {
+  return (
+    Boolean(userId) &&
+    (event.organizer_id === userId ||
+      memberRole === "owner" ||
+      memberRole === "admin" ||
+      memberRole === "event_manager")
+  );
+}
+
+async function assertTicketReassignmentEnabled(
+  db: ReturnType<typeof adminClient>,
+  event: EventRow
+) {
+  let settings: EventFeatureSettingRow[] = [];
+  let platformFlags: PlatformFeatureFlagRow[] = [];
+
+  try {
+    const [{ data: settingsRows }, { data: platformRows }] = await Promise.all([
+      db
+        .from("event_feature_settings")
+        .select("feature_key, enabled, required_config_valid, validation_errors, version, updated_at, updated_by")
+        .eq("event_id", event.id),
+      db.from("platform_feature_flags").select("feature_key, platform_available"),
+    ]);
+
+    settings = (settingsRows ?? []) as EventFeatureSettingRow[];
+    platformFlags = (platformRows ?? []) as PlatformFeatureFlagRow[];
+  } catch {
+    // Legacy/fresh local databases may not have M00 tables yet; JSON fallback still applies.
+  }
+
+  const config = mergePersistedFeatureRows({ event, settings, platformFlags });
+  return assertFeatureEnabled({ ...event, custom_pass_design: { _featureFlags: config } }, "ticket_reassignment");
 }
 
 /**
@@ -38,15 +112,62 @@ export async function verifyCredentialAction({
   gateId?: string;
   sessionId?: string;
 }): Promise<CredentialVerificationResult> {
+  void gateId;
+  void sessionId;
+
   const cleanToken = extractOpaquePassToken(credentialToken);
   const db = adminClient();
 
-  // Find pass by pass_token in passes table
-  const { data: pass, error: passErr } = await db
-    .from("passes")
-    .select("id, pass_token, status, attendee_id, event_id, pass_type, created_at, checked_in_at")
-    .eq("pass_token", cleanToken)
+  const { data: credential } = await db
+    .from("digital_qr_credentials")
+    .select("event_id, pass_id, booking_id, attendee_id, credential_token, status, revoked_at, revocation_reason")
+    .eq("credential_token", cleanToken)
     .maybeSingle();
+
+  if (credential && eventId && credential.event_id !== eventId) {
+    return {
+      valid: false,
+      status: "INVALID",
+      credential_id: cleanToken,
+      error: "EVENT_MISMATCH",
+      message: "This QR credential does not belong to the requested event.",
+    };
+  }
+
+  if (credential && ["revoked", "superseded"].includes(String(credential.status))) {
+    return {
+      valid: false,
+      status: "REVOKED",
+      credential_id: cleanToken,
+      ticket_id: credential.pass_id,
+      booking_id: credential.booking_id ?? undefined,
+      event_id: credential.event_id,
+      error: "CREDENTIAL_REVOKED",
+      message: "This digital QR pass has been revoked.",
+    };
+  }
+
+  if (credential && credential.status === "expired") {
+    return {
+      valid: false,
+      status: "EXPIRED",
+      credential_id: cleanToken,
+      ticket_id: credential.pass_id,
+      booking_id: credential.booking_id ?? undefined,
+      event_id: credential.event_id,
+      error: "CREDENTIAL_EXPIRED",
+      message: "This digital credential has expired.",
+    };
+  }
+
+  const passQuery = db
+    .from("passes")
+    .select("id, pass_token, status, attendee_id, event_id, pass_type, created_at, expires_at")
+    .eq(credential ? "id" : "pass_token", credential ? credential.pass_id : cleanToken)
+    .limit(1);
+
+  const { data: passRows, error: passErr } = await passQuery;
+  const pass = passRows?.[0];
 
   if (passErr || !pass) {
     return {
@@ -57,14 +178,41 @@ export async function verifyCredentialAction({
     };
   }
 
-  // Fetch attendee information
+  if (eventId && pass.event_id !== eventId) {
+    return {
+      valid: false,
+      status: "INVALID",
+      credential_id: cleanToken,
+      ticket_id: pass.id,
+      error: "EVENT_MISMATCH",
+      message: "This QR credential does not belong to the requested event.",
+    };
+  }
+
+  const isExpiredByTime = pass.expires_at && new Date(pass.expires_at).getTime() < Date.now();
+  if (isExpiredByTime || pass.status === "expired") {
+    return {
+      valid: false,
+      status: "EXPIRED",
+      credential_id: cleanToken,
+      ticket_id: pass.id,
+      event_id: pass.event_id,
+      error: "CREDENTIAL_EXPIRED",
+      message: "This digital credential has expired.",
+    };
+  }
+
   const { data: attendee } = await db
     .from("attendees")
     .select("id, name, email, phone, event_id, pass_status")
     .eq("id", pass.attendee_id)
     .maybeSingle();
 
-  const isRevoked = pass.status === "revoked" || attendee?.pass_status === "reassigned_revoked";
+  const isRevoked =
+    pass.status === "revoked" ||
+    pass.status === "cancelled" ||
+    attendee?.pass_status === "revoked" ||
+    attendee?.pass_status === "cancelled";
   if (isRevoked) {
     return {
       valid: false,
@@ -78,7 +226,15 @@ export async function verifyCredentialAction({
     };
   }
 
-  const isAlreadyCheckedIn = pass.status === "checked_in";
+  const { data: existingCheckIn } = await db
+    .from("check_ins")
+    .select("checked_in_at")
+    .eq("pass_id", pass.id)
+    .order("checked_in_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  const isAlreadyCheckedIn = pass.status === "checked_in" || Boolean(existingCheckIn);
 
   return {
     valid: true,
@@ -94,7 +250,7 @@ export async function verifyCredentialAction({
           phone: attendee.phone,
         }
       : undefined,
-    checked_in_at: pass.checked_in_at,
+    checked_in_at: existingCheckIn?.checked_in_at ?? null,
     message: isAlreadyCheckedIn ? "Attendee already checked in." : "Valid credential.",
   };
 }
@@ -112,10 +268,9 @@ export async function reassignTicketAction(
 
   const db = adminClient();
 
-  // 1. Fetch order
   const { data: order, error: orderErr } = await db
     .from("ticket_orders")
-    .select("*")
+    .select("id, event_id, buyer_email")
     .eq("id", request.booking_id)
     .maybeSingle();
 
@@ -127,128 +282,68 @@ export async function reassignTicketAction(
     };
   }
 
-  // 2. Fetch event
   const { data: event } = await db
     .from("events")
-    .select("id, organizer_id")
+    .select("id, organizer_id, organization_id, custom_pass_design")
     .eq("id", order.event_id)
     .maybeSingle();
 
-  const actorEmail = user?.email || request.actor_email;
-  const isOrganizer = event && user?.id === event.organizer_id;
-
-  // 3. Fetch existing pass
-  const { data: currentPass } = await db
-    .from("passes")
-    .select("*")
-    .eq("attendee_id", request.current_attendee_id)
-    .maybeSingle();
-
-  if (!currentPass) {
+  if (!event) {
     return {
       success: false,
-      error: "PASS_NOT_FOUND",
-      message: "No pass found for current attendee.",
+      error: "EVENT_NOT_FOUND",
+      message: "Event not found.",
     };
   }
 
-  const credentialsStore: DigitalCredential[] = [
-    {
-      credential_id: currentPass.pass_token,
-      booking_id: request.booking_id,
-      ticket_id: request.ticket_id,
-      attendee_id: request.current_attendee_id,
-      status: currentPass.status === "revoked" ? "revoked" : "active",
-      issued_at: currentPass.created_at,
-      version: 1,
-    },
-  ];
+  const actorEmail = user?.email || request.actor_email;
+  const memberRole = await getMemberRole(db, event.organization_id, user?.id);
+  const isOrganizer = canManageEvent(event as EventRow, user?.id, memberRole);
+  const isBuyer = String(order.buyer_email || "").toLowerCase().trim() === actorEmail.toLowerCase().trim();
 
-  const attendeesStore = [
-    {
-      id: request.current_attendee_id,
-      name: "Current Attendee",
-      email: "current@example.com",
-    },
-  ];
+  if (!isOrganizer && !isBuyer) {
+    return {
+      success: false,
+      error: "UNAUTHORIZED",
+      message: "Only the original ticket purchaser or event organizer can reassign this ticket.",
+    };
+  }
 
-  const scanEventsStore: ScanEvent[] = currentPass.status === "checked_in"
-    ? [
-        {
-          scan_event_id: "scan_prev_1",
-          credential_id: currentPass.pass_token,
-          ticket_id: request.ticket_id,
-          attendee_id: request.current_attendee_id,
-          event_id: order.event_id,
-          scanned_at: currentPass.checked_in_at || new Date().toISOString(),
-          scan_result: "VALID",
-        },
-      ]
-    : [];
+  const feature = await assertTicketReassignmentEnabled(db, event as EventRow);
+  if (!feature.enabled) {
+    return {
+      success: false,
+      error: "FEATURE_DISABLED",
+      message: feature.error,
+    };
+  }
 
-  const reassignResult = reassignTicketToNewHolder({
-    request: {
-      ...request,
-      actor_email: actorEmail,
-      is_organizer: Boolean(isOrganizer),
-    },
-    bookingOrder: {
-      ...order,
-      organizer_email: event ? "organizer@urpass.space" : undefined,
-    },
-    credentialsStore,
-    attendeesStore,
-    scanEventsStore,
-    reassignmentsAudit: (order._reassignmentsAudit as Array<Record<string, unknown>>) || [],
+  const { data, error } = await db.rpc("reassign_ticket_credential_atomic", {
+    p_booking_id: request.booking_id,
+    p_pass_id: request.ticket_id,
+    p_current_attendee_id: request.current_attendee_id,
+    p_new_name: request.new_attendee.name,
+    p_new_email: request.new_attendee.email,
+    p_new_phone: request.new_attendee.phone ?? null,
+    p_custom_responses: request.new_attendee.customResponses ?? {},
+    p_actor_email: actorEmail,
+    p_actor_user_id: user?.id ?? null,
+    p_organizer_override: Boolean(request.organizer_override),
+    p_reason: request.reason ?? null,
+    p_expected_version: request.expectedVersion ?? null,
   });
 
-  if (!reassignResult.result.success) {
-    return reassignResult.result;
+  if (error) {
+    return {
+      success: false,
+      error: "REASSIGNMENT_FAILED",
+      message: error.message,
+    };
   }
 
-  // 4. Update Database: Revoke old pass, generate new attendee & pass
-  try {
-    await db
-      .from("passes")
-      .update({ status: "revoked" })
-      .eq("id", currentPass.id);
-
-    const { data: newAttendee } = await db
-      .from("attendees")
-      .insert({
-        event_id: order.event_id,
-        name: request.new_attendee.name.trim(),
-        email: request.new_attendee.email.toLowerCase().trim(),
-        phone: request.new_attendee.phone?.trim() || null,
-        application_status: "approved",
-        pass_status: "generated",
-        custom_responses: request.new_attendee.customResponses || {},
-      })
-      .select("id")
-      .single();
-
-    if (newAttendee) {
-      await db.from("passes").insert({
-        event_id: order.event_id,
-        attendee_id: newAttendee.id,
-        pass_token: reassignResult.result.new_pass_token,
-        status: "active",
-      });
-    }
-
-    if (reassignResult.updatedAudit) {
-      await db
-        .from("ticket_orders")
-        .update({
-          _reassignmentsAudit: reassignResult.updatedAudit,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", request.booking_id);
-    }
-  } catch {
-    // Graceful fallback for mock environments
-  }
+  const result = data as RpcReassignmentResult;
+  if (!result?.success) return result;
 
   revalidatePath(`/event/${order.event_id}/attendees`);
-  return reassignResult.result;
+  return result;
 }

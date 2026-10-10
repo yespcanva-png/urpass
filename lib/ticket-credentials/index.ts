@@ -1,8 +1,6 @@
 export * from "./types";
 import crypto from "crypto";
-import { SupabaseClient } from "@supabase/supabase-js";
 import {
-  type CredentialStatus,
   type ScanResultStatus,
   type DigitalCredential,
   type ScanEvent,
@@ -379,7 +377,7 @@ export function reassignTicketToNewHolder({
   const updatedAttendees = [
     ...attendeesStore.map((a) =>
       a.id === request.current_attendee_id
-        ? { ...a, pass_status: "reassigned_revoked", updated_at: nowIso }
+        ? { ...a, pass_status: "revoked", updated_at: nowIso }
         : a
     ),
     newAttendeeRecord,
