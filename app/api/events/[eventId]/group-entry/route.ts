@@ -548,20 +548,26 @@ export async function POST(
   const remaining = Math.max(0, totalEntitlements - admittedEntitlements);
   const rawStatus = (orderData?.status || passData?.status || "VALID").toUpperCase();
 
-  // If this pass/order only represents a single person and is not a group master pass, it is not a group pass
-  const isActualGroup =
+  // Authoritative credential type resolution:
+  // A credential is ONLY a Group QR if:
+  // 1. Explicitly designated as a group master pass (passData.is_group_master)
+  // 2. Or order has group QR enabled and cleanRef matches the group_qr_code / direct group order
+  // 3. Or explicit group QR payload/token prefix (URP-GRP-, GRP-, GROUP-)
+  // Individual passes with total_guests > 1 (e.g. family booking with individual passes) MUST NOT be hijacked as Group QRs.
+  const isAuthoritativeGroupCredential =
     Boolean(passData?.is_group_master) ||
-    Boolean(orderData?.group_entry_enabled) ||
-    totalEntitlements > 1 ||
+    Boolean(orderData && orderData.group_entry_enabled && (orderData.group_qr_code === cleanRef || orderData.id === cleanRef)) ||
     cleanRef.startsWith("URP-GRP-") ||
     cleanRef.startsWith("GRP-") ||
+    cleanRef.startsWith("GROUP-") ||
     parsedQR.isGroupQR;
 
-  if (!isActualGroup && action === "lookup") {
+  if (!isAuthoritativeGroupCredential && action === "lookup") {
     return NextResponse.json(
       {
         success: false,
         isGroupQR: false,
+        credentialType: "INDIVIDUAL_QR",
         status: "NOT_GROUP_PASS",
         message: "Scanned pass is an individual pass, not a group booking.",
       },
@@ -694,6 +700,7 @@ export async function POST(
     return NextResponse.json({
       success: true,
       status: "VALID",
+      credentialType: "GROUP_QR",
       bookingReference: cleanRef,
       buyerName,
       buyerEmail,

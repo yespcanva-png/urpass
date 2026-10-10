@@ -210,7 +210,8 @@ export async function POST(req: NextRequest) {
         .eq("event_id", eventId)
         .maybeSingle();
 
-      if (groupCheck && (groupCheck.is_group_master || (groupCheck.total_guests && groupCheck.total_guests > 1))) {
+      // Authoritative Group Master Pass check:
+      if (groupCheck && (groupCheck.is_group_master || (groupCheck.is_group_master !== false && groupCheck.total_guests && groupCheck.total_guests > 1 && cleanPassToken.startsWith("URP-GRP-")))) {
         const total = Number(groupCheck.total_guests || 1);
         const admitted = Number(groupCheck.checked_in_guests || 0);
         const remaining = Math.max(0, total - admitted);
@@ -388,8 +389,8 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Single Group QR Check
-  if (pass && (pass.is_group_master || (pass.total_guests && pass.total_guests > 1))) {
+  // Authoritative Single Group QR Check
+  if (pass && (pass.is_group_master || (pass.total_guests && pass.total_guests > 1 && cleanPassToken.startsWith("URP-GRP-")))) {
     const total = Number(pass.total_guests || 1);
     const admitted = Number(pass.checked_in_guests || 0);
     const remaining = Math.max(0, total - admitted);

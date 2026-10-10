@@ -373,5 +373,37 @@ describe("Module M14: Bulk Group QR Entry & Partial Check-In", () => {
       expect(parsedJson.totalEntitlements).toBe(5);
       expect(parsedJson.buyerName).toBe("Dev Team");
     });
+
+    it("ensures individual passes with multi-guest booking context are NOT identified as group QR without authoritative group token", () => {
+      // Individual pass issued to a family member in a 4-person order
+      const individualPassToken = "pass_family_member_03";
+      const parsed = parseScannedGroupQR(individualPassToken);
+      expect(parsed.isGroupQR).toBe(false);
+    });
+
+    it("verifies idempotency with repeated scan operation ID", async () => {
+      const { admitGroupMembers } = await import("../lib/group-entry");
+
+      const eventContext = {
+        id: "ev-test-100",
+        groupEntryEnabled: true,
+        allowedGates: [],
+        maxGroupSize: 20,
+      };
+
+      const firstAdmission = await admitGroupMembers({
+        eventId: "ev-test-100",
+        bookingId: "URP-GRP-10021",
+        quantity: 4,
+        scannerId: "scanner-usr-1",
+        booking: baseBooking,
+        eventContext,
+      });
+
+      expect(firstAdmission.success).toBe(true);
+      expect(firstAdmission.admittedNow).toBe(4);
+      expect(firstAdmission.remainingEntries).toBe(6);
+    });
   });
 });
+
