@@ -1,23 +1,32 @@
 import { TicketDeliveryPayload } from "../../types";
 import { isValidE164 } from "../../utils";
+import { aiSensyProvider } from "./aisensy";
 
 export interface WhatsAppResult {
   success: boolean;
   messageId?: string;
   unavailable?: boolean;
   error?: string;
+  provider?: string;
 }
 
 export class WhatsAppProvider {
-  readonly name = "whatsapp_cloud";
   private simulateUnavailable = false;
   private simulateFailure = false;
+
+  get name(): string {
+    if (process.env.AISENSY_API_KEY) {
+      return "aisensy";
+    }
+    return "whatsapp_cloud";
+  }
 
   async sendTicketWhatsApp(payload: TicketDeliveryPayload): Promise<WhatsAppResult> {
     if (!payload.phone || !isValidE164(payload.phone)) {
       return {
         success: false,
         error: "Valid phone number in E.164 format is required for WhatsApp",
+        provider: this.name,
       };
     }
 
@@ -25,7 +34,8 @@ export class WhatsAppProvider {
       return {
         success: false,
         unavailable: true,
-        error: "WhatsApp Cloud API is currently unavailable (maintenance/rate limited)",
+        error: "WhatsApp provider is currently unavailable (maintenance/rate limited)",
+        provider: this.name,
       };
     }
 
@@ -33,20 +43,35 @@ export class WhatsAppProvider {
       return {
         success: false,
         error: "User is not registered on WhatsApp or message rejected",
+        provider: this.name,
       };
     }
 
+    // 1. Priority 1: AiSensy if AISENSY_API_KEY is configured
+    if (aiSensyProvider.isConfigured()) {
+      const aisResult = await aiSensyProvider.sendTicketWhatsApp(payload);
+      return {
+        success: aisResult.success,
+        messageId: aisResult.messageId,
+        error: aisResult.error,
+        unavailable: !aisResult.success && aisResult.error?.includes("timeout"),
+        provider: "aisensy",
+      };
+    }
+
+    // 2. Priority 2: Meta WhatsApp Cloud API if credentials present
     const token = process.env.WHATSAPP_API_TOKEN;
     const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID;
 
     // In local dev/testing without WhatsApp API credentials, simulate delivery
     if (!token || !phoneId) {
       if (process.env.NODE_ENV !== "test") {
-        console.warn(`[WhatsApp] WHATSAPP_API_TOKEN not configured. Simulated WhatsApp pass delivery to: ${payload.phone}`);
+        console.warn(`[WhatsApp] AISENSY_API_KEY or WHATSAPP_API_TOKEN not configured. Simulated WhatsApp pass delivery to: ${payload.phone}`);
       }
       return {
         success: true,
         messageId: `wamid_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+        provider: "whatsapp_cloud",
       };
     }
 
@@ -81,12 +106,14 @@ export class WhatsAppProvider {
         return {
           success: false,
           error: data?.error?.message || `WhatsApp HTTP ${res.status}`,
+          provider: "whatsapp_cloud",
         };
       }
 
       return {
         success: true,
         messageId: data?.messages?.[0]?.id || `wamid_${Date.now()}`,
+        provider: "whatsapp_cloud",
       };
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -94,6 +121,7 @@ export class WhatsAppProvider {
         success: false,
         unavailable: true,
         error: msg,
+        provider: "whatsapp_cloud",
       };
     }
   }
@@ -108,3 +136,4 @@ export class WhatsAppProvider {
 }
 
 export const whatsAppProvider = new WhatsAppProvider();
+

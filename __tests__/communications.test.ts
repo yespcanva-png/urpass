@@ -193,4 +193,76 @@ describe("CommunicationService Orchestration", () => {
 
     whatsAppProvider.setSimulateFailure(false);
   });
+
+  it("handles AiSensy dispatching when AISENSY_API_KEY is configured", async () => {
+    const { AiSensyProvider } = await import("@/lib/communications/providers/whatsapp/aisensy");
+    const testAiSensy = new AiSensyProvider("mock-key-123", "ticket_confirmation");
+
+    const originalFetch = global.fetch;
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        success: true,
+        data: { messageId: "ais_msg_98765" },
+        aisTraceId: "ais_trace_123",
+      }),
+    } as unknown as Response);
+
+    const result = await testAiSensy.sendTicketWhatsApp({
+      eventId: "evt-100",
+      eventName: "Hackathon",
+      ticketId: "URP-HACK01",
+      passToken: "tok_hack",
+      attendeeId: "att-3",
+      attendeeName: "David",
+      email: "david@example.com",
+      phone: "+919876543210",
+      ticketUrl: "https://urpass.space/pass/tok_hack",
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.messageId).toBe("ais_msg_98765");
+    expect(global.fetch).toHaveBeenCalledWith(
+      "https://backend.aisensy.com/campaign/t1/api/v2",
+      expect.objectContaining({
+        method: "POST",
+      })
+    );
+
+    global.fetch = originalFetch;
+  });
+
+  it("handles AiSensy API errors gracefully", async () => {
+    const { AiSensyProvider } = await import("@/lib/communications/providers/whatsapp/aisensy");
+    const testAiSensy = new AiSensyProvider("mock-key-123", "ticket_confirmation");
+
+    const originalFetch = global.fetch;
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 400,
+      json: async () => ({
+        message: "WABA is not verified",
+        name: "ERR400",
+        errorCode: 400,
+      }),
+    } as unknown as Response);
+
+    const result = await testAiSensy.sendTicketWhatsApp({
+      eventId: "evt-100",
+      eventName: "Hackathon",
+      ticketId: "URP-HACK01",
+      passToken: "tok_hack",
+      attendeeId: "att-3",
+      attendeeName: "David",
+      email: "david@example.com",
+      phone: "+919876543210",
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toBe("WABA is not verified");
+
+    global.fetch = originalFetch;
+  });
 });
+

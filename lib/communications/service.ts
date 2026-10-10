@@ -314,7 +314,7 @@ export class CommunicationService {
             channel: "WHATSAPP",
             destination: normalizedPhone,
             template_name: "ticket_confirmation",
-            provider: "whatsapp_cloud",
+            provider: res.provider || this.whatsapp.name,
             provider_message_id: res.messageId || null,
             status: res.success ? "SENT" : "FAILED",
             failure_reason: res.error || null,

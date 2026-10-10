@@ -373,8 +373,8 @@ export default function CommunicationsClient({
                     <MessageSquare className="w-4 h-4" />
                   </div>
                   <div>
-                    <p className="text-xs font-semibold text-neutral-900">WhatsApp</p>
-                    <p className="text-[10px] text-neutral-500">Direct mobile QR ticket delivery</p>
+                    <p className="text-xs font-semibold text-neutral-900">WhatsApp (AiSensy)</p>
+                    <p className="text-[10px] text-neutral-500">Direct mobile QR ticket delivery via AiSensy campaign</p>
                   </div>
                 </div>
 

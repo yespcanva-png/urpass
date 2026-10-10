@@ -8,3 +8,6 @@ export {
   GenericDLTSMSProvider,
   TwilioSMSProvider,
 } from "./providers/sms";
+export { aiSensyProvider, AiSensyProvider } from "./providers/whatsapp/aisensy";
+export { whatsAppProvider, WhatsAppProvider } from "./providers/whatsapp/provider";
+
