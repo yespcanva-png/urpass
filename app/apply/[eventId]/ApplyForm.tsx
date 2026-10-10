@@ -48,6 +48,7 @@ export interface ActiveEventFeatures {
   serialValidation?: boolean;
   sessionAttendance?: boolean;
   ticketReassignment?: boolean;
+  groupEntry?: boolean;
 }
 
 export interface AvailableSession {
@@ -150,6 +151,7 @@ export default function ApplyForm({
   const [activeTab, setActiveTab] = useState<"about" | "tickets" | "sessions" | "venue" | "terms">("about");
   const [bulkQuantity, setBulkQuantity] = useState<number>(1);
   const [bulkDistributionMode, setBulkDistributionMode] = useState<"delayed_claim" | "enter_now">("delayed_claim");
+  const [groupPassMode, setGroupPassMode] = useState<"individual" | "group_qr">("individual");
 
   const brandColor = branding.brandColor || "#6D28D9";
 
@@ -422,6 +424,13 @@ export default function ApplyForm({
             age_tier_label: selectedAgeTier.label,
           }
         : {}),
+      ...(groupPassMode === "group_qr" || selectedTicket?.is_group_pass
+        ? {
+            is_single_group_qr: groupPassMode === "group_qr",
+            group_entry_mode: "count_only",
+            group_attendee_count: (activeFeatures?.bulkBooking && !selectedTicket?.is_group_pass && bulkQuantity > 1) ? bulkQuantity : peopleCount,
+          }
+        : {}),
       ...(availableEventDates.length > 1
         ? {
             attendance_date: selectedDate,
@@ -603,6 +612,13 @@ export default function ApplyForm({
         ? {
             age_tier_id: selectedAgeTier.id,
             age_tier_label: selectedAgeTier.label,
+          }
+        : {}),
+      ...(groupPassMode === "group_qr" || selectedTicket?.is_group_pass
+        ? {
+            is_single_group_qr: groupPassMode === "group_qr",
+            group_entry_mode: "count_only",
+            group_attendee_count: (activeFeatures?.bulkBooking && !selectedTicket?.is_group_pass && bulkQuantity > 1) ? bulkQuantity : peopleCount,
           }
         : {}),
       ...(availableEventDates.length > 1
@@ -1445,6 +1461,77 @@ export default function ApplyForm({
                       <Send className="w-3.5 h-3.5 shrink-0 text-violet-700" />
                       <span>
                         Ordering <strong>{bulkQuantity} passes</strong>. You will receive <strong>{bulkQuantity} claim links</strong> to invite team members via WhatsApp or email.
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Group Pass Entry Mode Selector (Individual QRs vs Single Group QR with Partial Entry) */}
+              {(activeFeatures?.groupEntry || selectedTicket?.is_group_pass || (activeFeatures?.bulkBooking && bulkQuantity > 1)) && (peopleCount > 1 || bulkQuantity > 1 || selectedTicket?.is_group_pass) && (
+                <div className="mb-4 sm:mb-5 p-3.5 sm:p-4 rounded-2xl bg-indigo-50/60 border border-indigo-200/80 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-xs font-bold text-neutral-900 flex items-center gap-1.5">
+                        <Users className="w-3.5 h-3.5 text-indigo-700" />
+                        <span>Pass Issuance & Check-In Mode</span>
+                      </div>
+                      <p className="text-[10px] sm:text-[11px] text-neutral-500 mt-0.5">
+                        Choose how your group accesses the venue at the gate
+                      </p>
+                    </div>
+                    <span className="text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded-md bg-indigo-100/70 text-indigo-800">
+                      M14 Group QR
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setGroupPassMode("individual")}
+                      className={`text-left p-3 rounded-xl border text-xs transition-all cursor-pointer ${
+                        groupPassMode === "individual"
+                          ? "bg-white border-indigo-600 ring-2 ring-indigo-500/20 shadow-xs"
+                          : "bg-white/70 border-neutral-200/80 hover:bg-white text-neutral-700"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${groupPassMode === "individual" ? "border-indigo-600 bg-indigo-600" : "border-neutral-300"}`}>
+                          {groupPassMode === "individual" && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
+                        </div>
+                        <span className="font-bold text-neutral-900">Individual Passes</span>
+                      </div>
+                      <p className="text-[11px] text-neutral-500 leading-normal pl-5.5">
+                        Each member gets an independent QR code sent to their email.
+                      </p>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setGroupPassMode("group_qr")}
+                      className={`text-left p-3 rounded-xl border text-xs transition-all cursor-pointer ${
+                        groupPassMode === "group_qr"
+                          ? "bg-white border-indigo-600 ring-2 ring-indigo-500/20 shadow-xs"
+                          : "bg-white/70 border-neutral-200/80 hover:bg-white text-neutral-700"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${groupPassMode === "group_qr" ? "border-indigo-600 bg-indigo-600" : "border-neutral-300"}`}>
+                          {groupPassMode === "group_qr" && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
+                        </div>
+                        <span className="font-bold text-neutral-900">Single Group QR</span>
+                      </div>
+                      <p className="text-[11px] text-neutral-500 leading-normal pl-5.5">
+                        One shared QR code for all {bulkQuantity > 1 ? bulkQuantity : peopleCount} people with partial entry support at the gate.
+                      </p>
+                    </button>
+                  </div>
+
+                  {groupPassMode === "group_qr" && (
+                    <div className="p-2.5 rounded-xl bg-indigo-100/50 border border-indigo-200/60 text-[11px] text-indigo-950 flex items-start gap-2">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-indigo-700 mt-0.5 shrink-0" />
+                      <span>
+                        <strong>Partial Check-In Enabled:</strong> Group members don&apos;t have to arrive together. Staff can admit 6 now and remaining {Math.max(0, (bulkQuantity > 1 ? bulkQuantity : peopleCount) - 6)} later using the exact same QR code.
                       </span>
                     </div>
                   )}

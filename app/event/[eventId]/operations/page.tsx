@@ -363,6 +363,20 @@ export default function LiveOperationsDashboardPage() {
 
             <div className="space-y-2">
               <Link
+                href={`/event/${eventId}/operations/group-entry`}
+                className="flex items-center justify-between p-3 rounded-2xl border border-purple-200 bg-purple-50/40 hover:border-purple-300 hover:bg-purple-50/70 transition-all text-xs font-semibold text-neutral-800"
+              >
+                <div className="flex items-center gap-2.5">
+                  <Users className="w-4 h-4 text-purple-600" />
+                  <div>
+                    <span className="font-bold text-neutral-900">Group QR Entry</span>
+                    <span className="block text-[10px] text-neutral-500 font-normal">Partial entry balances &amp; audit history</span>
+                  </div>
+                </div>
+                <ArrowRight className="w-3.5 h-3.5 text-neutral-400" />
+              </Link>
+
+              <Link
                 href={`/event/${eventId}/desk`}
                 className="flex items-center justify-between p-3 rounded-2xl border border-neutral-100 hover:border-neutral-300 hover:bg-neutral-50 transition-all text-xs font-semibold text-neutral-800"
               >

@@ -237,4 +237,122 @@ describe("Module M14: Bulk Group QR Entry & Partial Check-In", () => {
     expect(outcome.result.status).toBe("FEATURE_DISABLED");
     expect(outcome.result.error).toBe("FEATURE_DISABLED");
   });
+
+  describe("Backend Service: admitGroupMembers", () => {
+    const mockUserContext = {
+      id: "scanner-usr-1",
+      email: "staff@urpass.space",
+      role: "checkin_staff",
+      assignedGateIds: ["gate-north"],
+    };
+
+    const mockEventContext = {
+      groupEntryEnabled: true,
+      allowedGates: ["gate-north", "gate-south"],
+      maxGroupSize: 20,
+    };
+
+    it("admitGroupMembers successfully admits partial quantity and returns authoritative balance", async () => {
+      const { admitGroupMembers } = await import("../lib/group-entry");
+
+      const response = await admitGroupMembers({
+        eventId: "ev-test-100",
+        bookingId: "URP-GRP-10021",
+        gateId: "gate-north",
+        quantity: 6,
+        scannerId: "scanner-usr-1",
+        scannerEmail: "staff@urpass.space",
+        operationId: "op-101",
+        booking: {
+          ...baseBooking,
+          admittedEntitlements: 0,
+          remainingEntitlements: 10,
+        },
+        userContext: mockUserContext,
+        eventContext: mockEventContext,
+      });
+
+      expect(response.success).toBe(true);
+      expect(response.status).toBe("GROUP_ADMITTED");
+      expect(response.admittedNow).toBe(6);
+      expect(response.remainingEntries).toBe(4);
+      expect(response.totalEntitlements).toBe(10);
+    });
+
+    it("admitGroupMembers enforces event gate restrictions", async () => {
+      const { admitGroupMembers } = await import("../lib/group-entry");
+
+      const response = await admitGroupMembers({
+        eventId: "ev-test-100",
+        bookingId: "URP-GRP-10021",
+        gateId: "gate-vip", // Not in allowedGates: ['gate-north', 'gate-south']
+        quantity: 2,
+        scannerId: "scanner-usr-1",
+        booking: baseBooking,
+        userContext: mockUserContext,
+        eventContext: mockEventContext,
+      });
+
+      expect(response.success).toBe(false);
+      expect(response.status).toBe("GATE_NOT_ALLOWED");
+    });
+
+    it("admitGroupMembers blocks scanner operator not assigned to gate", async () => {
+      const { admitGroupMembers } = await import("../lib/group-entry");
+
+      const response = await admitGroupMembers({
+        eventId: "ev-test-100",
+        bookingId: "URP-GRP-10021",
+        gateId: "gate-south", // allowed for event, but user is only assigned to 'gate-north'
+        quantity: 2,
+        scannerId: "scanner-usr-1",
+        booking: baseBooking,
+        userContext: mockUserContext,
+        eventContext: mockEventContext,
+      });
+
+      expect(response.success).toBe(false);
+      expect(response.status).toBe("UNAUTHORIZED_GATE");
+    });
+
+    it("supervisor bypasses assigned gate restriction", async () => {
+      const { admitGroupMembers } = await import("../lib/group-entry");
+
+      const response = await admitGroupMembers({
+        eventId: "ev-test-100",
+        bookingId: "URP-GRP-10021",
+        gateId: "gate-south",
+        quantity: 2,
+        scannerId: "sup-usr-1",
+        booking: baseBooking,
+        userContext: {
+          id: "sup-usr-1",
+          email: "supervisor@urpass.space",
+          role: "gate_supervisor",
+          assignedGateIds: ["gate-north"],
+        },
+        eventContext: mockEventContext,
+      });
+
+      expect(response.success).toBe(true);
+      expect(response.admittedNow).toBe(2);
+      expect(response.remainingEntries).toBe(8);
+    });
+  });
+
+  describe("Regression: Standard Individual QR Scanning Unchanged", () => {
+    it("parseScannedGroupQR identifies standard individual pass tokens as non-group", () => {
+      const standardPassTokens = [
+        "pass_live_tok_99882233",
+        "https://urpass.space/pass/tok_12345678",
+        "URP-ATT-00129",
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9",
+      ];
+
+      for (const token of standardPassTokens) {
+        const parsed = parseScannedGroupQR(token);
+        expect(parsed.isGroupQR).toBe(false);
+      }
+    });
+  });
 });

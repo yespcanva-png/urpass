@@ -150,9 +150,17 @@ export default function ScanEventPage() {
     isOpen: boolean;
     bookingReference: string;
     buyerName: string;
+    ticketCategory?: string;
     totalEntitlements: number;
     previouslyAdmitted: number;
     remainingEntries: number;
+    history?: Array<{
+      id: string;
+      admittedCount: number;
+      remainingAfter: number;
+      gateName?: string;
+      admittedAt: string;
+    }>;
     loading: boolean;
   } | null>(null);
 
@@ -698,9 +706,11 @@ export default function ScanEventPage() {
               isOpen: true,
               bookingReference: data.bookingReference || rawToken,
               buyerName: data.buyerName || "Group Pass Holder",
+              ticketCategory: data.ticketCategory || "General Admission · Group Booking",
               totalEntitlements: data.totalEntitlements || 1,
               previouslyAdmitted: data.previouslyAdmitted || 0,
               remainingEntries: data.remainingEntries || 0,
+              history: data.history || [],
               loading: false,
             });
             setScanState("idle");
@@ -709,6 +719,16 @@ export default function ScanEventPage() {
             playScannerFeedback("ALREADY_CHECKED_IN", { sound: soundEnabled });
             setErrorMsg("All group pass entry entitlements have been used.");
             setScanState("duplicate");
+            return;
+          } else if (data.status === "FEATURE_DISABLED") {
+            playScannerFeedback("NOT_APPROVED", { sound: soundEnabled });
+            setErrorMsg("Group QR Partial Entry is disabled for this event.");
+            setScanState("access_denied");
+            return;
+          } else if (data.status === "BOOKING_INVALID") {
+            playScannerFeedback("INVALID_PASS", { sound: soundEnabled });
+            setErrorMsg(data.error || "Group pass is invalid, revoked or refunded.");
+            setScanState("error");
             return;
           }
         } catch {
@@ -1964,9 +1984,12 @@ export default function ScanEventPage() {
           onClose={() => setGroupModalState(null)}
           bookingReference={groupModalState.bookingReference}
           buyerName={groupModalState.buyerName}
+          ticketCategory={groupModalState.ticketCategory}
           totalEntitlements={groupModalState.totalEntitlements}
           previouslyAdmitted={groupModalState.previouslyAdmitted}
           remainingEntries={groupModalState.remainingEntries}
+          gateName={selectedGate?.name || "Gate A"}
+          history={groupModalState.history || []}
           loading={groupModalState.loading}
           onConfirmAdmission={handleConfirmGroupAdmission}
         />

@@ -176,7 +176,7 @@ export function evaluateAccess({
   }
 
   // 9. Resource Scoping: Gate Level (Gate Staff vs Gate Supervisor)
-  if (target.gateId && permission === "attendance.scan_gate") {
+  if (target.gateId && (permission === "attendance.scan_gate" || permission === "group_entry.scan")) {
     // If user has gates.manage (e.g. Gate Supervisor, Event Manager, Admin, Owner), they can scan any gate
     const canManageGates = isOwner || userPermissions.includes("gates.manage");
     if (!canManageGates && user.assignedGateIds && user.assignedGateIds.length > 0) {

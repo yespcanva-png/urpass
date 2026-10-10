@@ -232,6 +232,8 @@ export const BUILT_IN_ROLES: Record<string, RoleTemplate> = {
     permissions: [
       "events.view",
       "attendance.scan_gate",
+      "group_entry.scan",
+      "group_entry.view",
       "tickets.validate_serial",
     ],
   },

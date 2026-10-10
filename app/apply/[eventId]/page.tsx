@@ -500,6 +500,7 @@ export default async function ApplyPage({
     serialValidation: isFeatureEnabled(event, "serial_number_validation"),
     sessionAttendance: isFeatureEnabled(event, "session_attendance"),
     ticketReassignment: isFeatureEnabled(event, "ticket_reassignment"),
+    groupEntry: isFeatureEnabled(event, "group_entry"),
   };
 
   let availableSessions: Array<{
