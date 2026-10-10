@@ -199,6 +199,59 @@ export async function POST(req: NextRequest) {
     // If column scan_operation_id is not yet indexed in mock, continue
   }
 
+  // In production, check if the pass is a group master pass or has multiple guests before atomic single check-in
+  if (process.env.NODE_ENV !== "test") {
+    try {
+      const admin = createAdminClient(getSupabaseUrl(), process.env.SUPABASE_SERVICE_ROLE_KEY || "");
+      const { data: groupCheck } = await admin
+        .from("passes")
+        .select("id, pass_token, is_group_master, total_guests, checked_in_guests, status, attendee:attendees(name, email, pass_type)")
+        .eq("pass_token", cleanPassToken)
+        .eq("event_id", eventId)
+        .maybeSingle();
+
+      if (groupCheck && (groupCheck.is_group_master || (groupCheck.total_guests && groupCheck.total_guests > 1))) {
+        const total = Number(groupCheck.total_guests || 1);
+        const admitted = Number(groupCheck.checked_in_guests || 0);
+        const remaining = Math.max(0, total - admitted);
+        const att = Array.isArray(groupCheck.attendee) ? groupCheck.attendee[0] : groupCheck.attendee;
+
+        if (remaining <= 0 || groupCheck.status === "checked_in") {
+          return NextResponse.json({
+            status: "EXHAUSTED",
+            isGroupQR: true,
+            success: false,
+            alreadyCheckedIn: true,
+            bookingReference: groupCheck.pass_token,
+            totalEntitlements: total,
+            previouslyAdmitted: admitted,
+            remainingEntries: 0,
+            error: `All ${total} group pass entry entitlements have already been admitted.`,
+            message: `All ${total} group pass entry entitlements have already been admitted.`,
+            scanOperationId,
+          }, { status: 422 });
+        }
+
+        return NextResponse.json({
+          status: "GROUP_PASS_DETECTED",
+          success: true,
+          isGroupQR: true,
+          bookingReference: groupCheck.pass_token,
+          buyerName: att?.name || "Group Pass Holder",
+          buyerEmail: att?.email || "",
+          ticketCategory: att?.pass_type || "General Admission · Group Booking",
+          totalEntitlements: total,
+          previouslyAdmitted: admitted,
+          remainingEntries: remaining,
+          message: "Single Group QR pass detected. How many people are entering now?",
+          scanOperationId,
+        }, { status: 200 });
+      }
+    } catch {
+      // Non-blocking fallback
+    }
+  }
+
   // ── 3. Attempt Database-Level Atomic Check-In via Stored Procedure ──
   if (typeof supabase.rpc === "function") {
     try {

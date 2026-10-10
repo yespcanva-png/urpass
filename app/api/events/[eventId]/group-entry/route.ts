@@ -389,8 +389,9 @@ export async function POST(
   // 4. Lookup Booking state (Support order, group master pass, or individual pass)
   let orderData: any = null;
   let passData: any = null;
+  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanRef);
 
-  const { data: directOrder } = await db
+  let orderQuery = db
     .from("ticket_orders")
     .select(`
       id,
@@ -405,14 +406,55 @@ export async function POST(
       group_entry_mode,
       group_members
     `)
-    .or(`id.eq.${cleanRef},group_qr_code.eq.${cleanRef}`)
-    .eq("event_id", eventId)
-    .maybeSingle();
+    .eq("event_id", eventId);
 
+  if (isUUID) {
+    orderQuery = orderQuery.or(`id.eq.${cleanRef},group_qr_code.eq.${cleanRef}`);
+  } else {
+    orderQuery = orderQuery.or(`group_qr_code.eq.${cleanRef},razorpay_order_id.eq.${cleanRef}`);
+  }
+
+  const { data: directOrder } = await orderQuery.maybeSingle();
   orderData = directOrder;
 
-  if (!orderData) {
-    const { data: directPass } = await db
+  let passQuery = db
+    .from("passes")
+    .select(`
+      id,
+      event_id,
+      pass_token,
+      status,
+      total_guests,
+      checked_in_guests,
+      group_members,
+      order_id,
+      is_group_master,
+      attendee:attendees (id, name, email)
+    `)
+    .eq("event_id", eventId);
+
+  if (isUUID) {
+    passQuery = passQuery.or(`pass_token.eq.${cleanRef},id.eq.${cleanRef}`);
+  } else {
+    passQuery = passQuery.eq("pass_token", cleanRef);
+  }
+
+  const { data: directPass } = await passQuery.maybeSingle();
+
+  if (directPass) {
+    passData = directPass;
+    if (directPass.order_id && !orderData) {
+      const { data: parentOrder } = await db
+        .from("ticket_orders")
+        .select("*")
+        .eq("id", directPass.order_id)
+        .maybeSingle();
+      orderData = parentOrder;
+    }
+  }
+
+  if (orderData && !passData) {
+    const { data: linkedPass } = await db
       .from("passes")
       .select(`
         id,
@@ -426,21 +468,10 @@ export async function POST(
         is_group_master,
         attendee:attendees (id, name, email)
       `)
-      .or(`pass_token.eq.${cleanRef},id.eq.${cleanRef}`)
+      .eq("order_id", orderData.id)
       .eq("event_id", eventId)
       .maybeSingle();
-
-    if (directPass) {
-      passData = directPass;
-      if (directPass.order_id) {
-        const { data: parentOrder } = await db
-          .from("ticket_orders")
-          .select("*")
-          .eq("id", directPass.order_id)
-          .maybeSingle();
-        orderData = parentOrder;
-      }
-    }
+    if (linkedPass) passData = linkedPass;
   }
 
   // Fallback: Check if cleanRef matches a custom ticket ID

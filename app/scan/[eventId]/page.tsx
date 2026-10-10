@@ -730,7 +730,7 @@ export default function ScanEventPage() {
       // ── M14: Bulk Group QR Entry Flow ──
       const cleanToken = normalizeScannedToken(rawToken);
       const parsedGroup = parseScannedGroupQR(rawToken);
-      if (parsedGroup.isGroupQR && !selectedSessionId) {
+      if (!selectedSessionId) {
         try {
           const res = await fetch(`/api/events/${eventId}/group-entry`, {
             method: "POST",
@@ -762,12 +762,12 @@ export default function ScanEventPage() {
             setErrorMsg("All group pass entry entitlements have been used.");
             setScanState("duplicate");
             return;
-          } else if (data.status === "FEATURE_DISABLED") {
+          } else if (parsedGroup.isGroupQR && data.status === "FEATURE_DISABLED") {
             playScannerFeedback("NOT_APPROVED", { sound: soundEnabled });
             setErrorMsg("Group QR Partial Entry is disabled for this event.");
             setScanState("access_denied");
             return;
-          } else if (data.status === "BOOKING_INVALID") {
+          } else if (parsedGroup.isGroupQR && data.status === "BOOKING_INVALID") {
             playScannerFeedback("INVALID_PASS", { sound: soundEnabled });
             setErrorMsg(data.error || "Group pass is invalid, revoked or refunded.");
             setScanState("error");
@@ -1063,48 +1063,14 @@ export default function ScanEventPage() {
           return;
         }
 
-        const scanOperationId = typeof crypto !== "undefined" && crypto.randomUUID
-          ? crypto.randomUUID()
-          : `scan_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-
-        const res = await fetch("/api/verify", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            passToken: passData.pass_token,
-            eventId,
-            gateId: selectedGateId,
-            scanOperationId,
-          }),
-        });
-        const data = await res.json();
-
-        // Update local search results to reflect new status
+        setManualMode(false);
+        await verify(passData.pass_token);
         setSearchResults((prev) =>
           prev.map((a) =>
             a.id === attendee.id ? { ...a, pass_status: "checked_in" } : a
           )
         );
-
-        if (data.status === "CHECKED_IN" || data.success) {
-          playScannerFeedback("CHECKED_IN", { sound: soundEnabled });
-        } else if (data.status === "ALREADY_CHECKED_IN" || data.alreadyCheckedIn) {
-          playScannerFeedback("ALREADY_CHECKED_IN", { sound: soundEnabled });
-        } else if (data.status === "WRONG_EVENT") {
-          playScannerFeedback("WRONG_EVENT", { sound: soundEnabled });
-        } else if (data.status === "NOT_APPROVED") {
-          playScannerFeedback("NOT_APPROVED", { sound: soundEnabled });
-        } else if (data.status === "INVALID_PASS" || res.status === 404) {
-          playScannerFeedback("INVALID_PASS", { sound: soundEnabled });
-        } else if (res.status === 403 && (data.accessDenied || data.status === "ACCESS_DENIED")) {
-          playScannerFeedback("NOT_APPROVED", { sound: soundEnabled });
-          setAccessDeniedMsg(data.error || "Access denied for this gate");
-          setScanState("access_denied");
-          setManualMode(false);
-          lastTokenRef.current = passData.pass_token;
-        } else {
-          playScannerFeedback("NETWORK_ERROR", { sound: soundEnabled });
-        }
+        return;
       } catch {
         setIsOnline(false);
         const offRes = await verifyPassOffline({
