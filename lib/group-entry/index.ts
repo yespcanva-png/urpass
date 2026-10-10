@@ -304,17 +304,19 @@ export interface AdmitGroupMembersInput {
   entryMode?: GroupEntryMode;
   userContext?: {
     id: string;
+    email?: string;
     role?: string;
     organizationId?: string;
     assignedEventIds?: string[];
     assignedGateIds?: string[];
   };
   eventContext?: {
-    id: string;
+    id?: string;
     organization_id?: string | null;
     status?: string;
     groupEntryEnabled?: boolean;
     allowedGates?: string[];
+    maxGroupSize?: number;
   };
   booking?: GroupBookingState;
   dbClient?: any;

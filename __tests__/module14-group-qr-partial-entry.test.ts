@@ -247,6 +247,7 @@ describe("Module M14: Bulk Group QR Entry & Partial Check-In", () => {
     };
 
     const mockEventContext = {
+      id: "ev-test-100",
       groupEntryEnabled: true,
       allowedGates: ["gate-north", "gate-south"],
       maxGroupSize: 20,
