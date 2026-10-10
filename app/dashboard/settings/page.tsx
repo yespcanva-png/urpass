@@ -47,7 +47,7 @@ export default async function SettingsPage() {
     getPayUSettings(),
     supabase
       .from("organization_members")
-      .select("role, organization_id")
+      .select("role, organization_id, organization:organizations(id, slug, name)")
       .eq("user_id", user.id)
       .eq("status", "active")
       .order("created_at", { ascending: false })
@@ -56,7 +56,10 @@ export default async function SettingsPage() {
   ]);
 
   const userRole = (membershipData?.role as string) || "owner";
-  const orgId = (membershipData?.organization_id as string) || undefined;
+  const orgObj = membershipData?.organization as unknown as { id: string; slug: string; name: string } | null;
+  const orgId = orgObj?.id || (membershipData?.organization_id as string) || undefined;
+  const orgSlug = orgObj?.slug || undefined;
+  const orgName = orgObj?.name || profile?.company_name || profile?.org_name || "My Organization";
 
   const defaultApiUsage = { api_requests: 0, registrations: 0, check_ins: 0, events: 0, year_month: "" };
   const canUseDeveloperTools = plan.canUse("api_access") || plan.canUse("webhooks");
@@ -136,6 +139,8 @@ export default async function SettingsPage() {
       webhookEndpoints={webhookEndpoints}
       recentDeliveries={recentDeliveries}
       orgId={orgId}
+      orgSlug={orgSlug}
+      orgName={orgName}
       userRole={userRole}
     />
   );

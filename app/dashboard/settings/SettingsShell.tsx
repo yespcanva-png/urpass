@@ -60,6 +60,8 @@ interface Props {
   webhookEndpoints: WebhookEndpoint[];
   recentDeliveries: WebhookDelivery[];
   orgId?: string;
+  orgSlug?: string;
+  orgName?: string;
   userRole?: string;
 }
 
@@ -279,7 +281,7 @@ export default function SettingsShell({
   renewalDate, cancelAtPeriodEnd, activeEventCount, billingCycle, registrationsUsed, existingPaymentKeyId,
   existingPayUMerchantKey, existingPayUEnvironment,
   apiUsage, apiKeys, webhookEndpoints, recentDeliveries,
-  orgId, userRole,
+  orgId, orgSlug, orgName, userRole,
 }: Props) {
   const [section, setSection] = useState<Section>("profile");
   const canUseDeveloperTools = plan.canUseDeveloperTools;
@@ -334,10 +336,10 @@ export default function SettingsShell({
             <div>
               <h2 className="text-lg font-bold tracking-tight text-neutral-900">Roles & Access Control (RBAC)</h2>
               <p className="text-sm text-neutral-400 mt-0.5">
-                Configure granular permissions across Organizer, Admin, Gate Staff, and Scanner roles.
+                Configure granular permissions and invite team members with least-privilege roles across Event Management, Checkpoints, Scanners, and Finance.
               </p>
             </div>
-            <RbacPermissionEditor orgId={orgId} userRole={userRole} />
+            <RbacPermissionEditor orgId={orgId} orgSlug={orgSlug} orgName={orgName} userRole={userRole} />
           </div>
         );
 
@@ -550,7 +552,7 @@ export default function SettingsShell({
 
         {/* ── Roles & RBAC ────────────────────────────────── */}
         <SectionLabel>Roles & Access Control (RBAC)</SectionLabel>
-        <RbacPermissionEditor orgId={orgId} userRole={userRole} />
+        <RbacPermissionEditor orgId={orgId} orgSlug={orgSlug} orgName={orgName} userRole={userRole} />
 
         {/* ── Plan & Billing ──────────────────────────────── */}
         <SectionLabel>Plan & Billing</SectionLabel>

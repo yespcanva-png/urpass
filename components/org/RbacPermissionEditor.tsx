@@ -25,17 +25,24 @@ import {
   getRolePermissions,
   cloneRoleTemplate,
 } from "@/lib/rbac/roles";
+import InviteMemberModal from "@/components/org/InviteMemberModal";
 
 export default function RbacPermissionEditor({
   orgId,
+  orgSlug,
+  orgName,
   userRole,
 }: {
   orgId?: string;
+  orgSlug?: string;
+  orgName?: string;
   userRole?: string;
 }) {
   const [selectedRoleId, setSelectedRoleId] = useState<string>("gate_staff");
   const [customPermissions, setCustomPermissions] = useState<Record<string, UrPassPermission[]>>({});
   const [copied, setCopied] = useState(false);
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [inviteSuccessMsg, setInviteSuccessMsg] = useState("");
 
   const isOwnerOrAdmin = userRole === "owner" || userRole === "admin";
   const activeRole = BUILT_IN_ROLES[selectedRoleId] || BUILT_IN_ROLES.gate_staff;
@@ -107,9 +114,16 @@ export default function RbacPermissionEditor({
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-neutral-100 text-neutral-600 uppercase tracking-wider">
-            Configuration preview
-          </span>
+          {orgId && (
+            <button
+              onClick={() => setShowInviteModal(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-white text-xs font-bold hover:opacity-90 active:scale-95 transition-all shadow-xs"
+              style={{ background: "linear-gradient(135deg, #6D28D9 0%, #4c1d95 100%)" }}
+            >
+              <Users className="w-3.5 h-3.5" />
+              <span>Invite with Role</span>
+            </button>
+          )}
           <button
             onClick={handleCopyConfig}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-neutral-900 text-white text-xs font-bold hover:bg-neutral-800 active:scale-95 transition-all shadow-xs"
@@ -119,6 +133,18 @@ export default function RbacPermissionEditor({
           </button>
         </div>
       </div>
+
+      {inviteSuccessMsg && (
+        <div className="flex items-center justify-between p-3.5 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl text-xs font-medium animate-in fade-in">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            <span>{inviteSuccessMsg}</span>
+          </div>
+          <button onClick={() => setInviteSuccessMsg("")} className="text-emerald-600 hover:text-emerald-900 font-bold">
+            ×
+          </button>
+        </div>
+      )}
 
       {/* Role Selection Dropdown & Meta */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-neutral-50 border border-neutral-200/80">
@@ -153,6 +179,15 @@ export default function RbacPermissionEditor({
               className="text-xs font-bold px-3 py-1 rounded-xl bg-white border border-neutral-200 text-neutral-700 hover:bg-neutral-100 transition-colors shadow-2xs"
             >
               + Clone Role
+            </button>
+          )}
+          {orgId && (
+            <button
+              onClick={() => setShowInviteModal(true)}
+              className="text-xs font-bold px-3 py-1 rounded-xl bg-violet-50 border border-violet-200 text-violet-700 hover:bg-violet-100 transition-colors shadow-2xs flex items-center gap-1"
+            >
+              <Plus className="w-3 h-3" />
+              <span>Assign {activeRole.name}</span>
             </button>
           )}
         </div>
@@ -234,6 +269,20 @@ export default function RbacPermissionEditor({
         <span>Illustrative permission editor; custom role modifications apply to authorized tenant scopes.</span>
         <span className="font-mono text-[10px]">UrPass M13 · RBAC Ready</span>
       </div>
+
+      {showInviteModal && orgId && (
+        <InviteMemberModal
+          orgId={orgId}
+          orgSlug={orgSlug || "org"}
+          orgName={orgName || "Organization"}
+          initialRole={selectedRoleId}
+          onClose={() => setShowInviteModal(false)}
+          onSuccess={() => {
+            setShowInviteModal(false);
+            setInviteSuccessMsg(`Invitation sent successfully with ${activeRole.name} permissions.`);
+          }}
+        />
+      )}
     </div>
   );
 }
