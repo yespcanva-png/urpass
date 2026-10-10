@@ -63,6 +63,7 @@ export interface HardenedPublicPass {
     phone: string;
     application_status: string;
     custom_ticket_id?: string | null;
+    isPlaceholder?: boolean;
   };
   event: {
     id: string;
@@ -201,6 +202,11 @@ export async function getHardenedPublicPass(
     }
   }
 
+  const isPlaceholder = Boolean(
+    attendee.email?.includes("@urpass.placeholder") ||
+    attendee.name?.startsWith("Guest #")
+  );
+
   return {
     pass: {
       pass_token: pass.pass_token,
@@ -214,6 +220,7 @@ export async function getHardenedPublicPass(
       phone: maskPhone(attendee.phone),
       application_status: attendee.application_status,
       custom_ticket_id: customTicketId,
+      isPlaceholder,
     },
     event: {
       id: event.id,

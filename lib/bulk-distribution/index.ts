@@ -445,7 +445,7 @@ export async function claimTicketWithToken({
     },
   });
 
-  // 7. Update Database Attendee Record if client provided
+  // 7. Update Database Attendee Record & Ensure passes entry exists
   if (adminClient && targetMember.attendeeId) {
     try {
       await adminClient
@@ -460,6 +460,35 @@ export async function claimTicketWithToken({
           updated_at: nowIso,
         })
         .eq("id", targetMember.attendeeId);
+
+      // Check if pass already exists in `passes` table for this attendee
+      const { data: existingPass } = await adminClient
+        .from("passes")
+        .select("id, pass_token")
+        .eq("attendee_id", targetMember.attendeeId)
+        .maybeSingle();
+
+      if (existingPass) {
+        // Update status to generated if needed
+        await adminClient
+          .from("passes")
+          .update({
+            status: "generated",
+            pass_token: passToken,
+          })
+          .eq("id", existingPass.id);
+      } else {
+        // Insert new pass row
+        await adminClient
+          .from("passes")
+          .insert({
+            event_id: order.event_id,
+            attendee_id: targetMember.attendeeId,
+            pass_token: passToken,
+            pass_type: "participant",
+            status: "generated",
+          });
+      }
 
       await adminClient
         .from("ticket_orders")

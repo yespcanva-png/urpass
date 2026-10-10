@@ -166,7 +166,13 @@ export async function assignTicketAction(
     data: { user },
   } = await supabase.auth.getUser();
 
-  const actorEmail = user?.email || input.recipientEmail;
+  if (!user) {
+    return {
+      success: false,
+      error: "AUTHENTICATION_REQUIRED",
+      message: "Please sign in to assign or distribute tickets.",
+    };
+  }
 
   const db = adminClient();
   const { data: order, error: orderErr } = await db
@@ -197,12 +203,21 @@ export async function assignTicketAction(
     };
   }
 
-  const memberRole = user
-    ? await getActiveOrgRole(db, event.organization_id, user.id)
-    : null;
-  const effectiveActorEmail = canManageDistribution(event as DistributionEventRow, user?.id || "", memberRole)
-    ? String(event.organizer_id)
-    : actorEmail || "";
+  const memberRole = await getActiveOrgRole(db, event.organization_id, user.id);
+  const isOrganizer = canManageDistribution(event as DistributionEventRow, user.id, memberRole);
+  const buyerEmail = String(order.buyer_email || "").toLowerCase().trim();
+  const userEmail = (user.email || "").toLowerCase().trim();
+  const isBuyer = buyerEmail === userEmail;
+
+  if (!isOrganizer && !isBuyer) {
+    return {
+      success: false,
+      error: "UNAUTHORIZED",
+      message: "Only the original ticket purchaser or event organizer can distribute these tickets.",
+    };
+  }
+
+  const effectiveActorEmail = isOrganizer ? String(event.organizer_id) : userEmail;
 
   const result = assignTicketToRecipient({
     order,
@@ -310,6 +325,30 @@ export async function claimTicketAction(
       String(targetOrder.event_id),
       result.updatedOrder?._distributionHistory
     );
+
+    // Fire-and-forget ticket delivery to recipient's email & WhatsApp
+    if (result.passToken) {
+      try {
+        const { communicationService } = await import("@/lib/communications");
+        const ticketUrl = `https://urpass.space/pass/${result.passToken}`;
+        communicationService
+          .sendTicketCommunications({
+            eventId: String(targetOrder.event_id),
+            eventName: event.name || "Event Pass",
+            ticketId: `PASS-${result.passToken.slice(0, 6).toUpperCase()}`,
+            passToken: result.passToken,
+            attendeeId: result.ticket?.attendeeId || `att_${Date.now()}`,
+            attendeeName: input.recipientName,
+            email: input.recipientEmail,
+            phone: input.recipientPhone || null,
+            ticketUrl,
+            version: `claim_${Date.now()}`,
+          })
+          .catch(() => {});
+      } catch {
+        // Non-blocking
+      }
+    }
   }
 
   return result;
@@ -410,6 +449,14 @@ export async function revokeAssignmentAction({
     data: { user },
   } = await supabase.auth.getUser();
 
+  if (!user) {
+    return {
+      success: false,
+      error: "AUTHENTICATION_REQUIRED",
+      message: "Please sign in to revoke ticket assignments.",
+    };
+  }
+
   const db = adminClient();
   const { data: order, error: orderErr } = await db
     .from("ticket_orders")
@@ -439,13 +486,21 @@ export async function revokeAssignmentAction({
     };
   }
 
-  const actorEmail = user?.email || String(order.buyer_email || "");
-  const memberRole = user
-    ? await getActiveOrgRole(db, event.organization_id, user.id)
-    : null;
-  const effectiveActorEmail = canManageDistribution(event as DistributionEventRow, user?.id || "", memberRole)
-    ? String(event.organizer_id)
-    : actorEmail;
+  const memberRole = await getActiveOrgRole(db, event.organization_id, user.id);
+  const isOrganizer = canManageDistribution(event as DistributionEventRow, user.id, memberRole);
+  const buyerEmail = String(order.buyer_email || "").toLowerCase().trim();
+  const userEmail = (user.email || "").toLowerCase().trim();
+  const isBuyer = buyerEmail === userEmail;
+
+  if (!isOrganizer && !isBuyer) {
+    return {
+      success: false,
+      error: "UNAUTHORIZED",
+      message: "Only the original ticket purchaser or event organizer can revoke ticket assignments.",
+    };
+  }
+
+  const effectiveActorEmail = isOrganizer ? String(event.organizer_id) : userEmail;
 
   const result = revokeTicketAssignment({
     order,

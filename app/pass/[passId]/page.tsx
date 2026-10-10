@@ -19,6 +19,7 @@ import AutoDownload from "@/components/pass/AutoDownload";
 import WhatsAppShareButton from "@/components/pass/WhatsAppShareButton";
 import AddToCalendarButton from "@/components/pass/AddToCalendarButton";
 import AddToAppleWalletButton from "@/components/pass/AddToAppleWalletButton";
+import PersonalizePassModal from "@/components/pass/PersonalizePassModal";
 import { Suspense } from "react";
 import { resolveTicketDesign } from "@/lib/pass-design";
 import StudioPassRenderer from "@/components/studio/StudioPassRenderer";
@@ -183,6 +184,14 @@ export default async function PassPage({
             URPASS
           </span>
         </div>
+      )}
+
+      {/* If this ticket was shared from bulk booking and is still a placeholder, ask for details */}
+      {attendee.isPlaceholder && (
+        <PersonalizePassModal
+          passToken={pass.pass_token}
+          eventName={event.name}
+        />
       )}
 
       {/* Visual Ticket Pass Card: Studio Design or Standard Template */}
@@ -513,8 +522,8 @@ export default async function PassPage({
         </div>
       )}
 
-      {/* Group & Bulk Passes Member Hub */}
-      {groupInfo && groupInfo.members.length > 1 && (
+      {/* Group & Bulk Passes Member Hub — Only accessible to Primary Purchaser */}
+      {groupInfo && groupInfo.isPrimary && groupInfo.members.length > 1 && (
         <div className="mt-6 w-full max-w-sm rounded-2xl bg-white dark:bg-[#111317] border border-neutral-200/90 dark:border-neutral-800 p-4 shadow-xs no-print pass-in-2">
           <div className="flex items-center justify-between pb-3 border-b border-neutral-100 dark:border-neutral-800/80">
             <div className="flex items-center gap-2.5">
