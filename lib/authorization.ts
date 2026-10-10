@@ -34,6 +34,20 @@ export const ASSIGNABLE_ORG_ROLES = [
   "member",
 ] as const satisfies readonly OrgRole[];
 
+const LEGACY_ROLE_ALIASES: Partial<Record<OrgRole, OrgRole>> = {
+  registration_manager: "event_manager",
+  gate_supervisor: "gate_manager",
+  gate_staff: "checkin_staff",
+  session_manager: "event_manager",
+  session_scanner: "checkin_staff",
+  analytics_viewer: "viewer",
+};
+
+function normalizePermissionRole(role: string | null | undefined) {
+  if (!isOrgRole(role)) return role;
+  return LEGACY_ROLE_ALIASES[role] ?? role;
+}
+
 export const ORG_PERMISSIONS = {
   manageMembers: ["owner", "admin"],
   inviteMembers: ["owner", "admin"],
@@ -41,24 +55,24 @@ export const ORG_PERMISSIONS = {
   manageOrgSettings: ["owner", "admin"],
   deleteOrganization: ["owner"],
   manageEvents: ["owner", "admin", "event_manager"],
-  manageTicketing: ["owner", "admin", "event_manager", "registration_manager", "finance"],
-  distributeTickets: ["owner", "admin", "event_manager", "registration_manager"],
-  reassignTickets: ["owner", "admin", "event_manager", "registration_manager"],
-  manageGates: ["owner", "admin", "event_manager", "gate_supervisor", "gate_manager"],
-  manageSessions: ["owner", "admin", "event_manager", "session_manager"],
-  manageCheckIn: ["owner", "admin", "event_manager", "gate_supervisor", "gate_manager", "gate_staff", "checkin_staff", "session_manager", "session_scanner"],
-  viewCheckIn: ["owner", "admin", "event_manager", "registration_manager", "gate_supervisor", "gate_manager", "gate_staff", "checkin_staff", "session_manager", "session_scanner", "analytics_viewer", "viewer"],
+  manageTicketing: ["owner", "admin", "event_manager", "finance"],
+  distributeTickets: ["owner", "admin", "event_manager"],
+  reassignTickets: ["owner", "admin", "event_manager"],
+  manageGates: ["owner", "admin", "event_manager", "gate_manager"],
+  manageSessions: ["owner", "admin", "event_manager"],
+  manageCheckIn: ["owner", "admin", "event_manager", "gate_manager", "checkin_staff"],
+  viewCheckIn: ["owner", "admin", "event_manager", "gate_manager", "checkin_staff", "viewer"],
   manageBilling: ["owner", "admin", "finance"],
-  viewBilling: ["owner", "admin", "finance", "analytics_viewer", "viewer"],
+  viewBilling: ["owner", "admin", "finance", "viewer"],
   manageInvoices: ["owner", "admin", "finance"],
   manageRefunds: ["owner", "admin", "finance"],
-  viewAnalytics: ["owner", "admin", "event_manager", "registration_manager", "gate_supervisor", "gate_manager", "session_manager", "finance", "analytics_viewer", "viewer"],
-  viewAuditLogs: ["owner", "admin", "finance", "gate_supervisor", "gate_manager"],
+  viewAnalytics: ["owner", "admin", "event_manager", "gate_manager", "finance", "viewer"],
+  viewAuditLogs: ["owner", "admin", "finance", "gate_manager"],
   manageSecurity: ["owner", "admin"],
   manageGoogleSheets: ["owner", "admin", "event_manager"],
-  exportCsv: ["owner", "admin", "event_manager", "registration_manager"],
-  importCsv: ["owner", "admin", "event_manager", "registration_manager"],
-  viewOrg: ["owner", "admin", "event_manager", "registration_manager", "gate_supervisor", "gate_manager", "gate_staff", "checkin_staff", "session_manager", "session_scanner", "finance", "analytics_viewer", "viewer", "member"],
+  exportCsv: ["owner", "admin", "event_manager"],
+  importCsv: ["owner", "admin", "event_manager"],
+  viewOrg: ["owner", "admin", "event_manager", "gate_manager", "checkin_staff", "finance", "viewer", "member"],
 } as const satisfies Record<string, readonly OrgRole[]>;
 
 export type OrgPermission = keyof typeof ORG_PERMISSIONS;
@@ -75,7 +89,8 @@ export function hasOrgPermission(
   role: string | null | undefined,
   permission: OrgPermission
 ): role is OrgRole {
-  return isOrgRole(role) && (ORG_PERMISSIONS[permission] as readonly string[]).includes(role);
+  const normalizedRole = normalizePermissionRole(role);
+  return isOrgRole(role) && (ORG_PERMISSIONS[permission] as readonly string[]).includes(normalizedRole ?? "");
 }
 
 export function canChangeOrgMemberRole(actorRole: string | null | undefined, targetRole: string | null | undefined) {

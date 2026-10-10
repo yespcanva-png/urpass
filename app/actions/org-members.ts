@@ -3,7 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { getSupabaseUrl } from "@/lib/supabase/config";
-import { inviteMemberSchema } from "@/lib/validations/organization";
+import { inviteMemberSchema, normalizeOrgRoleForStorage } from "@/lib/validations/organization";
 import { sendOrgInviteEmail } from "@/lib/email";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -190,6 +190,7 @@ export async function updateMemberRole(
   newRole: OrgRole
 ): Promise<ActionResult> {
   if (!isAssignableOrgRole(newRole)) return { error: "Invalid member role." };
+  const storageRole = normalizeOrgRoleForStorage(newRole) as OrgRole;
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -211,7 +212,7 @@ export async function updateMemberRole(
 
   const { error } = await supabase
     .from("organization_members")
-    .update({ role: newRole })
+    .update({ role: storageRole })
     .eq("id", memberId);
 
   if (error) return { error: error.message };

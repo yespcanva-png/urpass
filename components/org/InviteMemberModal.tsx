@@ -1,20 +1,16 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { X, Loader2, Mail, ShieldCheck, KeyRound, Check, Users, Sparkles } from "lucide-react";
+import { X, Loader2, Mail, ShieldCheck, KeyRound } from "lucide-react";
 import { inviteMember } from "@/app/actions/org-members";
 import { BUILT_IN_ROLES } from "@/lib/rbac/roles";
 
 const ROLES = [
   { value: "admin",                label: "Admin",                 badge: "All Features", desc: "Full organization operations, team roster & event control" },
   { value: "event_manager",        label: "Event Manager",         badge: "Core Ops",      desc: "Manage assigned events, schedule, venues, branding & tickets" },
-  { value: "registration_manager", label: "Registration Manager",  badge: "Attendees",     desc: "Approve registrations, manage guest lists, bulk ticketing & distributions" },
-  { value: "gate_supervisor",      label: "Gate Supervisor",       badge: "Gate Control",  desc: "Manage physical checkpoints, monitor device telemetry & supervisor overrides" },
-  { value: "gate_staff",           label: "Gate Staff",            badge: "Scanner",       desc: "Scan QR passes, group passes and verify badge entry at assigned gates" },
-  { value: "session_manager",      label: "Session Manager",       badge: "Sessions",      desc: "Configure tracks, room capacities, eligibility tiers & attendance" },
-  { value: "session_scanner",      label: "Session Scanner",       badge: "Room Scanner",  desc: "Verify pass eligibility and scan attendees in/out of specific rooms" },
+  { value: "gate_manager",         label: "Gate Manager",          badge: "Gate Control",  desc: "Manage physical checkpoints, monitor scanner teams & supervisor overrides" },
+  { value: "checkin_staff",        label: "Check-in Staff",        badge: "Scanner",       desc: "Scan QR passes, verify badge entry and record room attendance" },
   { value: "finance",              label: "Finance",               badge: "Billing",       desc: "Direct Razorpay/PayU configurations, invoices, payouts & fee audits" },
-  { value: "analytics_viewer",     label: "Analytics Viewer",      badge: "Reporting",     desc: "Read-only access to dwell-time metrics, attendance and revenue KPIs" },
   { value: "viewer",               label: "Viewer",                badge: "Read-Only",     desc: "Read-only access to high-level organization status" },
   { value: "member",               label: "General Member",        badge: "Basic",         desc: "Basic member collaborator workspace access" },
 ] as const;

@@ -76,6 +76,16 @@ type SecurityTab =
   | "audit-logs"
   | "api";
 
+type CanonicalSsoRole =
+  | "owner"
+  | "admin"
+  | "event_manager"
+  | "finance"
+  | "gate_manager"
+  | "checkin_staff"
+  | "viewer"
+  | "member";
+
 const inputCls =
   "border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-brand transition-colors bg-white placeholder:text-neutral-300 w-full";
 
@@ -112,7 +122,9 @@ export default function EnterpriseSecurityClient({
   const [domainsInput, setDomainsInput] = useState((initialSso?.domains || []).join(", "));
   const [enforceSso, setEnforceSso] = useState(initialSso?.enforce_sso || false);
   const [jitProvisioning, setJitProvisioning] = useState(initialSso?.jit_provisioning ?? true);
-  const [defaultRole, setDefaultRole] = useState<OrgRole>(initialSso?.default_role || "member");
+  const [defaultRole, setDefaultRole] = useState<CanonicalSsoRole>(
+    (initialSso?.default_role as CanonicalSsoRole | undefined) || "member"
+  );
 
   // SAML fields
   const [idpEntityId, setIdpEntityId] = useState(initialSso?.idp_entity_id || "");
@@ -984,7 +996,7 @@ export default function EnterpriseSecurityClient({
                 </label>
                 <select
                   value={defaultRole}
-                  onChange={(e) => setDefaultRole(e.target.value as OrgRole)}
+                  onChange={(e) => setDefaultRole(e.target.value as CanonicalSsoRole)}
                   className={inputCls}
                 >
                   <option value="checkin_staff">Staff (checkin_staff) — Gate check-in</option>

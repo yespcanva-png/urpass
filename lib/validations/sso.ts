@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { canonicalOrgRoles, normalizeOrgRoleForStorage } from "@/lib/validations/organization";
 
 export const ssoConnectionSchema = z.object({
   name: z.string().trim().min(2, "Connection name must be at least 2 characters").max(100),
@@ -7,22 +8,10 @@ export const ssoConnectionSchema = z.object({
   domains: z.array(z.string().trim().toLowerCase()).default([]),
   enforce_sso: z.boolean().default(false),
   jit_provisioning: z.boolean().default(true),
-  default_role: z.enum([
-    "owner",
-    "admin",
-    "event_manager",
-    "registration_manager",
-    "gate_supervisor",
-    "gate_manager",
-    "gate_staff",
-    "checkin_staff",
-    "session_manager",
-    "session_scanner",
-    "finance",
-    "analytics_viewer",
-    "viewer",
-    "member",
-  ]).default("member"),
+  default_role: z.preprocess(
+    normalizeOrgRoleForStorage,
+    z.enum(["owner", ...canonicalOrgRoles])
+  ).default("member"),
 
   // SAML fields
   idp_entity_id: z.string().trim().optional().nullable(),
