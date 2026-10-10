@@ -51,6 +51,8 @@ export const eventSchema = z
     event_brand_color: z.string().max(16).optional().nullable(),
     event_logo_url: z.string().max(500).optional().nullable(),
     hide_branding: z.boolean().optional(),
+    allow_reentry: z.boolean().optional(),
+    allow_reset: z.boolean().optional(),
   })
   .superRefine((data, ctx) => {
     // 1. Date & Time validation (supports multi-day and overnight / past-midnight schedules)

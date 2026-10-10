@@ -34,6 +34,7 @@ import {
   getEventFeatureFlagsState,
 } from "@/app/actions/event-features";
 import { updateEventDistributionSettingsAction } from "@/app/actions/ticket-distribution";
+import { updateEventGateTrackingConfigAction } from "@/app/actions/gate-tracking";
 import type { FeatureFlagKey, EventFeaturesConfig } from "@/lib/feature-flags";
 
 interface ModuleMeta {
@@ -670,6 +671,24 @@ export default function AdvancedFeaturesSettings({ eventId }: AdvancedFeaturesSe
           settings: {
             enabled: true,
             ...localModuleSettings,
+          },
+        });
+
+        if (res.error) {
+          setErrorMsg(res.error);
+          return;
+        }
+      } else if (configuringModule.key === "advanced_entry_tracking") {
+        const reEntryPolicy = (localModuleSettings.re_entry_policy as string) || "allowed";
+        const duplicatePolicy = (localModuleSettings.duplicate_policy as any) || "reject";
+        const antiPassback = Number(localModuleSettings.anti_passback_seconds) || 60;
+        const res = await updateEventGateTrackingConfigAction({
+          eventId,
+          config: {
+            enabled: true,
+            allowReEntry: reEntryPolicy === "allowed" || reEntryPolicy === "staff_override",
+            duplicateEntryPolicy: duplicatePolicy,
+            duplicateWindowSeconds: antiPassback,
           },
         });
 

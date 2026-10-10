@@ -197,6 +197,8 @@ export default function EventSettingsPage() {
   const [brandColor, setBrandColor]             = useState("#6D28D9");
   const [logoUrl, setLogoUrl]                   = useState("");
   const [hideBranding, setHideBranding]         = useState(false);
+  const [allowReentry, setAllowReentry]         = useState(false);
+  const [initialAllowReentry, setInitialAllowReentry] = useState(false);
   const [canRemoveBranding, setCanRemoveBranding] = useState(false);
   const [isPro, setIsPro]                       = useState(false);
   const [isTrialActive, setIsTrialActive]       = useState(false);
@@ -458,6 +460,14 @@ export default function EventSettingsPage() {
         setBrandColor(resolvedBrandColor);
         setLogoUrl(resolvedLogoUrl);
         setHideBranding(resolvedHideBranding);
+        const resolvedAllowReentry = Boolean(
+          design.allow_reentry ||
+          design.allow_reset ||
+          (design._gateTrackingConfig as Record<string, unknown> | undefined)?.allowReEntry ||
+          (design._gateTrackingConfig as Record<string, unknown> | undefined)?.re_entry_policy === "allowed"
+        );
+        setAllowReentry(resolvedAllowReentry);
+        setInitialAllowReentry(resolvedAllowReentry);
 
         if (effectiveSlug === "starter") {
           setCustomFieldsLimit({ max: 10, isUnlimited: false });
@@ -486,6 +496,8 @@ export default function EventSettingsPage() {
       event_brand_color: brandColor,
       event_logo_url: logoUrl || null,
       hide_branding: hideBranding,
+      allow_reentry: allowReentry,
+      allow_reset: allowReentry,
     };
     const result = await updateEvent(eventId, payload);
     if (result?.error) {
@@ -497,6 +509,7 @@ export default function EventSettingsPage() {
         setEvent((prev) => (prev ? { ...prev, apply_slug: clean } : null));
       }
       reset(data);
+      setInitialAllowReentry(allowReentry);
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
     }
@@ -1094,6 +1107,13 @@ export default function EventSettingsPage() {
               indent
             />
           )}
+          <div className="h-px bg-neutral-50" />
+          <ToggleRow
+            label="Allow Re-entry & Check-in Reset in Scanner"
+            description="Permit gate staff to undo check-in or allow re-entry from duplicate/checked-in screens"
+            checked={allowReentry}
+            onChange={() => setAllowReentry(!allowReentry)}
+          />
         </SectionCard>
 
         {/* ── Custom registration questions ── */}
@@ -1264,7 +1284,7 @@ export default function EventSettingsPage() {
         <div className="flex justify-end">
           <button
             type="submit"
-            disabled={isSubmitting || !isDirty}
+            disabled={isSubmitting || (!isDirty && allowReentry === initialAllowReentry)}
             className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
             style={{ background: "#6D28D9" }}
           >

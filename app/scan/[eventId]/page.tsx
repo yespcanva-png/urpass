@@ -268,12 +268,15 @@ export default function ScanEventPage() {
     });
   }, []);
 
+  // Event settings
+  const [allowReentry, setAllowReentry] = useState<boolean>(false);
+
   // Fetch event name + gates on mount
   useEffect(() => {
     async function fetchData() {
       const supabase = createClient();
       const [{ data: eventData }, { data: gateData }, { data: sessionData }] = await Promise.all([
-        supabase.from("events").select("name").eq("id", eventId).single(),
+        supabase.from("events").select("name, custom_pass_design").eq("id", eventId).single(),
         supabase
           .from("scanner_gates")
           .select("id, name, zone_id, zone:event_zones(name)")
@@ -298,7 +301,22 @@ export default function ScanEventPage() {
           .order("start_time"),
       ]);
 
-      if (eventData) setEventName(eventData.name);
+      if (eventData) {
+        setEventName(eventData.name);
+        const design = (eventData.custom_pass_design as Record<string, unknown> | null) ?? {};
+        const gateCfg = design._gateTrackingConfig as Record<string, unknown> | undefined;
+        const groupCfg = design._groupEntryConfig as Record<string, unknown> | undefined;
+        const isReentryAllowed = Boolean(
+          design.allow_reentry ||
+          design.allow_reset ||
+          gateCfg?.allowReEntry === true ||
+          gateCfg?.re_entry_policy === "allowed" ||
+          gateCfg?.re_entry_policy === "staff_override" ||
+          groupCfg?.re_entry === "identity_verified" ||
+          groupCfg?.allow_reset === true
+        );
+        setAllowReentry(isReentryAllowed);
+      }
 
       if (gateData && gateData.length > 0) {
         const parsedGates = gateData as unknown as Gate[];
@@ -1519,18 +1537,20 @@ export default function ScanEventPage() {
                           <span className="text-[10px] font-bold px-2 py-1 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
                             Admitted
                           </span>
-                          <button
-                            onClick={() => handleUndoCheckIn(a.id)}
-                            disabled={undoingCheckIn}
-                            title="Reset check-in"
-                            className="p-2 rounded-xl bg-white/[0.08] text-white/70 hover:text-white hover:bg-white/15 border border-white/10 active:scale-95 transition-all disabled:opacity-50"
-                          >
-                            {undoingCheckIn ? (
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : (
-                              <RotateCcw className="w-4 h-4" />
-                            )}
-                          </button>
+                          {allowReentry && (
+                            <button
+                              onClick={() => handleUndoCheckIn(a.id)}
+                              disabled={undoingCheckIn}
+                              title="Reset check-in"
+                              className="p-2 rounded-xl bg-white/[0.08] text-white/70 hover:text-white hover:bg-white/15 border border-white/10 active:scale-95 transition-all disabled:opacity-50"
+                            >
+                              {undoingCheckIn ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <RotateCcw className="w-4 h-4" />
+                              )}
+                            </button>
+                          )}
                         </div>
                       ) : (
                         <button
@@ -1671,7 +1691,7 @@ export default function ScanEventPage() {
                   offline={result.offline}
                   onReset={reset}
                   progress={resetProgress}
-                  onAllowReentry={handleDuplicateOverride}
+                  onAllowReentry={allowReentry ? handleDuplicateOverride : undefined}
                   isUndoing={undoingCheckIn}
                 />
               </div>
