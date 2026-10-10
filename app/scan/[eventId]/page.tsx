@@ -50,7 +50,7 @@ import {
 } from "@/lib/offline-scanner";
 import { undoCheckIn, undoCheckInByToken } from "@/app/actions/manual-checkin";
 import GroupEntryModal from "@/components/scan/GroupEntryModal";
-import { parseScannedGroupQR } from "@/lib/group-entry";
+import { parseScannedGroupQR, normalizeScannedToken } from "@/lib/group-entry";
 
 const QRScanner = dynamic(() => import("@/components/scan/QRScanner"), { ssr: false });
 
@@ -526,6 +526,29 @@ export default function ScanEventPage() {
         return;
       }
 
+      if (offRes.status === "GROUP_PASS_DETECTED") {
+        setGroupModalState({
+          isOpen: true,
+          bookingReference: offRes.bookingReference || passToken || "group-pass",
+          buyerName: offRes.attendee?.name || "Group Pass Holder",
+          ticketCategory: offRes.passType || "General Admission · Group Booking",
+          totalEntitlements: offRes.totalEntitlements || 1,
+          previouslyAdmitted: offRes.previouslyAdmitted || 0,
+          remainingEntries: offRes.remainingEntries || 0,
+          history: [],
+          loading: false,
+        });
+        setScanState("idle");
+        return;
+      }
+
+      if (offRes.status === "EXHAUSTED") {
+        playScannerFeedback("ALREADY_CHECKED_IN", { sound: soundEnabled });
+        setErrorMsg(offRes.error || "All group pass entry entitlements have been used.");
+        setScanState("duplicate");
+        return;
+      }
+
       if (offRes.status === "ALREADY_CHECKED_IN") {
         playScannerFeedback("ALREADY_CHECKED_IN", { sound: soundEnabled });
         setResult({
@@ -705,6 +728,7 @@ export default function ScanEventPage() {
       }
 
       // ── M14: Bulk Group QR Entry Flow ──
+      const cleanToken = normalizeScannedToken(rawToken);
       const parsedGroup = parseScannedGroupQR(rawToken);
       if (parsedGroup.isGroupQR && !selectedSessionId) {
         try {
@@ -713,7 +737,7 @@ export default function ScanEventPage() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               action: "lookup",
-              bookingReference: rawToken,
+              bookingReference: parsedGroup.bookingReference || cleanToken,
               gateId: selectedGateId,
               gateName: selectedGate?.name,
             }),
@@ -722,7 +746,7 @@ export default function ScanEventPage() {
           if (res.ok && data.success) {
             setGroupModalState({
               isOpen: true,
-              bookingReference: data.bookingReference || rawToken,
+              bookingReference: data.bookingReference || parsedGroup.bookingReference || cleanToken,
               buyerName: data.buyerName || "Group Pass Holder",
               ticketCategory: data.ticketCategory || "General Admission · Group Booking",
               totalEntitlements: data.totalEntitlements || 1,
@@ -788,6 +812,51 @@ export default function ScanEventPage() {
         });
         clearTimeout(timeoutId);
         const data = await res.json();
+
+        // 0. Single Group QR Entry Flow (Prompt scanner: "How many people are entering now?")
+        if (data.status === "GROUP_PASS_DETECTED" || (data.isGroupQR && data.status !== "EXHAUSTED")) {
+          let batchHistory = [];
+          try {
+            const histRes = await fetch(`/api/events/${eventId}/group-entry`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                action: "lookup",
+                bookingReference: data.bookingReference || cleanToken,
+                gateId: selectedGateId,
+                gateName: selectedGate?.name,
+              }),
+            });
+            if (histRes.ok) {
+              const histData = await histRes.json();
+              if (histData.history) batchHistory = histData.history;
+            }
+          } catch {
+            // Non-blocking
+          }
+
+          setGroupModalState({
+            isOpen: true,
+            bookingReference: data.bookingReference || cleanToken,
+            buyerName: data.buyerName || data.attendee?.name || "Group Pass Holder",
+            ticketCategory: data.ticketCategory || data.passType || "General Admission · Group Booking",
+            totalEntitlements: data.totalEntitlements || 1,
+            previouslyAdmitted: data.previouslyAdmitted || 0,
+            remainingEntries: data.remainingEntries || 0,
+            history: batchHistory,
+            loading: false,
+          });
+          setScanState("idle");
+          return;
+        }
+
+        // Exhausted group pass check
+        if (data.status === "EXHAUSTED") {
+          playScannerFeedback("ALREADY_CHECKED_IN", { sound: soundEnabled });
+          setErrorMsg(data.error || "All group pass entry entitlements have been used.");
+          setScanState("duplicate");
+          return;
+        }
 
         // 1. Success check-in (Green ✓, short high chime, 80ms)
         if (data.status === "CHECKED_IN" || data.success) {

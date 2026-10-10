@@ -37,12 +37,12 @@ export default async function AttendeesPage({ params }: Props) {
   const [{ data: attendees }, { data: passes }, { data: ticketOrders }, plan] = await Promise.all([
     supabase
       .from("attendees")
-      .select("id, name, email, phone, pass_type, application_status, pass_status, custom_responses, ticket_type_id, created_at")
+      .select("id, name, email, phone, pass_type, application_status, pass_status, custom_responses, ticket_type_id, created_at, last_scanned_at, venue_presence_state")
       .eq("event_id", eventId)
       .order("created_at", { ascending: false }),
     supabase
       .from("passes")
-      .select("attendee_id, pass_token")
+      .select("attendee_id, pass_token, total_guests, checked_in_guests, is_group_master, status, updated_at")
       .eq("event_id", eventId),
     supabase
       .from("ticket_orders")
@@ -54,6 +54,24 @@ export default async function AttendeesPage({ params }: Props) {
   const initialPassTokens: Record<string, string> = Object.fromEntries(
     (passes ?? []).map((p) => [p.attendee_id, p.pass_token])
   );
+
+  const groupPassMap: Record<string, {
+    totalGuests: number;
+    checkedInGuests: number;
+    isGroupMaster: boolean;
+    lastAdmittedAt?: string;
+  }> = {};
+
+  for (const p of passes ?? []) {
+    if (p.attendee_id && (p.is_group_master || (p.total_guests && p.total_guests > 1))) {
+      groupPassMap[p.attendee_id] = {
+        totalGuests: Number(p.total_guests || 1),
+        checkedInGuests: Number(p.checked_in_guests || 0),
+        isGroupMaster: Boolean(p.is_group_master),
+        lastAdmittedAt: p.updated_at,
+      };
+    }
+  }
 
   const payments: Record<string, {
     orderId: string;
@@ -92,6 +110,7 @@ export default async function AttendeesPage({ params }: Props) {
         applicationEnabled={event.application_enabled}
         initialPassTokens={initialPassTokens}
         payments={payments}
+        groupPassMap={groupPassMap}
         canCSV={plan.canCSV}
         canExport={plan.canExport}
         customFields={event.custom_fields ?? []}

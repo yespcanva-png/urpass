@@ -257,7 +257,29 @@ export function generateGroupQRPayload(booking: {
 }
 
 /**
- * Detects whether a scanned QR token represents a group booking.
+ * Normalizes any scanned QR string, extracting raw pass token or reference from URLs or query strings.
+ */
+export function normalizeScannedToken(rawToken: string): string {
+  if (typeof rawToken !== "string") return "";
+  let trimmed = rawToken.trim();
+  if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+    try {
+      const url = new URL(trimmed);
+      const match = url.pathname.match(/\/pass\/([^\/]+)/);
+      if (match && match[1]) {
+        trimmed = decodeURIComponent(match[1]);
+      } else {
+        trimmed = trimmed.replace(/^https?:\/\/[^\/]+\/pass\//, "").split("?")[0].split("#")[0];
+      }
+    } catch {
+      trimmed = trimmed.replace(/^https?:\/\/[^\/]+\/pass\//, "").split("?")[0].split("#")[0];
+    }
+  }
+  return trimmed.trim();
+}
+
+/**
+ * Detects whether a scanned QR token represents an explicit group booking or payload.
  */
 export function parseScannedGroupQR(rawToken: string): {
   isGroupQR: boolean;
@@ -266,26 +288,40 @@ export function parseScannedGroupQR(rawToken: string): {
   buyerName?: string;
   mode?: "count_only" | "identified";
 } {
-  const trimmed = rawToken.trim();
+  if (!rawToken || typeof rawToken !== "string") {
+    return { isGroupQR: false };
+  }
+  const cleanToken = normalizeScannedToken(rawToken);
+
   try {
-    const parsed = JSON.parse(trimmed);
-    if (parsed && (parsed.type === "GROUP_BOOKING_QR" || parsed.type === "GROUP_PASS")) {
+    const parsed = JSON.parse(rawToken.trim());
+    if (
+      parsed &&
+      (parsed.type === "GROUP_BOOKING_QR" ||
+        parsed.type === "GROUP_PASS" ||
+        parsed.type === "SINGLE_GROUP_QR" ||
+        parsed.is_single_group_qr === true ||
+        (typeof parsed.total === "number" && parsed.total > 1) ||
+        (typeof parsed.total_guests === "number" && parsed.total_guests > 1))
+    ) {
       return {
         isGroupQR: true,
-        bookingReference: parsed.ref || parsed.token || parsed.bookingReference,
-        totalEntitlements: parsed.total || parsed.cap,
-        buyerName: parsed.name || parsed.h,
+        bookingReference: parsed.ref || parsed.token || parsed.bookingReference || parsed.pass_token,
+        totalEntitlements: parsed.total || parsed.cap || parsed.total_guests || parsed.quantity,
+        buyerName: parsed.name || parsed.h || parsed.buyerName,
         mode: parsed.mode || "count_only",
       };
     }
   } catch {
-    // If string token follows group prefix conventions (e.g. URP-GRP-... or GRP-...)
-    if (/^(URP-GRP-|GRP-|GROUP-)/i.test(trimmed)) {
-      return {
-        isGroupQR: true,
-        bookingReference: trimmed,
-      };
-    }
+    // String prefix pattern check
+  }
+
+  // If string token follows group prefix conventions (e.g. URP-GRP-... or GRP-... or GROUP-...)
+  if (/^(URP-GRP-|GRP-|GROUP-)/i.test(cleanToken)) {
+    return {
+      isGroupQR: true,
+      bookingReference: cleanToken,
+    };
   }
 
   return { isGroupQR: false };

@@ -21,6 +21,9 @@ export interface ManifestPass {
   allowedZoneIds?: string[];
   checkedIn: boolean;
   checkedInAt?: string | null;
+  isGroupMaster?: boolean;
+  totalGuests?: number;
+  checkedInGuests?: number;
 }
 
 export interface CachedGate {
@@ -59,7 +62,14 @@ export interface OfflineQueueEntry {
 }
 
 export interface OfflineVerificationResult {
-  status: "CHECKED_IN" | "ALREADY_CHECKED_IN" | "INVALID_PASS" | "ACCESS_DENIED" | "NOT_APPROVED";
+  status:
+    | "CHECKED_IN"
+    | "ALREADY_CHECKED_IN"
+    | "INVALID_PASS"
+    | "ACCESS_DENIED"
+    | "NOT_APPROVED"
+    | "GROUP_PASS_DETECTED"
+    | "EXHAUSTED";
   success: boolean;
   offline: boolean;
   attendee?: {
@@ -73,6 +83,11 @@ export interface OfflineVerificationResult {
   error?: string;
   alreadyCheckedIn?: boolean;
   accessDenied?: boolean;
+  isGroupQR?: boolean;
+  bookingReference?: string;
+  totalEntitlements?: number;
+  previouslyAdmitted?: number;
+  remainingEntries?: number;
 }
 
 export interface SyncReport {
@@ -312,6 +327,42 @@ export async function verifyPassOffline(params: {
       };
     }
 
+    if (pass.isGroupMaster || (pass.totalGuests && pass.totalGuests > 1)) {
+      const total = Number(pass.totalGuests || 1);
+      const admitted = Number(pass.checkedInGuests || 0);
+      const remaining = Math.max(0, total - admitted);
+
+      if (remaining <= 0 || pass.checkedIn) {
+        return {
+          status: "EXHAUSTED",
+          success: false,
+          offline: true,
+          alreadyCheckedIn: true,
+          isGroupQR: true,
+          bookingReference: pass.passToken,
+          totalEntitlements: total,
+          previouslyAdmitted: admitted,
+          remainingEntries: 0,
+          error: `All ${total} group pass entry entitlements have already been admitted.`,
+          scanOperationId,
+        };
+      }
+
+      return {
+        status: "GROUP_PASS_DETECTED",
+        success: true,
+        offline: true,
+        isGroupQR: true,
+        bookingReference: pass.passToken,
+        attendee: { name: pass.name, email: pass.email, pass_type: pass.passType },
+        passType: pass.passType,
+        totalEntitlements: total,
+        previouslyAdmitted: admitted,
+        remainingEntries: remaining,
+        scanOperationId,
+      };
+    }
+
     if (pass.checkedIn) {
       return {
         status: "ALREADY_CHECKED_IN",
@@ -400,6 +451,42 @@ export async function verifyPassOffline(params: {
           offline: true,
           scanOperationId,
           error: "Pass not found in offline database. Reconnect to download the latest event list.",
+        });
+      }
+
+      if (pass.isGroupMaster || (pass.totalGuests && pass.totalGuests > 1)) {
+        const total = Number(pass.totalGuests || 1);
+        const admitted = Number(pass.checkedInGuests || 0);
+        const remaining = Math.max(0, total - admitted);
+
+        if (remaining <= 0 || pass.checkedIn) {
+          return resolve({
+            status: "EXHAUSTED",
+            success: false,
+            offline: true,
+            alreadyCheckedIn: true,
+            isGroupQR: true,
+            bookingReference: pass.passToken,
+            totalEntitlements: total,
+            previouslyAdmitted: admitted,
+            remainingEntries: 0,
+            error: `All ${total} group pass entry entitlements have already been admitted.`,
+            scanOperationId,
+          });
+        }
+
+        return resolve({
+          status: "GROUP_PASS_DETECTED",
+          success: true,
+          offline: true,
+          isGroupQR: true,
+          bookingReference: pass.passToken,
+          attendee: { name: pass.name, email: pass.email, pass_type: pass.passType },
+          passType: pass.passType,
+          totalEntitlements: total,
+          previouslyAdmitted: admitted,
+          remainingEntries: remaining,
+          scanOperationId,
         });
       }
 

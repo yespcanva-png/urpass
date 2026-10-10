@@ -40,6 +40,8 @@ interface Attendee {
   pass_status: "not_generated" | "generated" | "checked_in";
   custom_responses?: Record<string, unknown> | null;
   created_at: string;
+  last_scanned_at?: string | null;
+  venue_presence_state?: string | null;
 }
 
 interface Props {
@@ -51,6 +53,12 @@ interface Props {
   applicationEnabled?: boolean;
   initialPassTokens?: Record<string, string>;
   payments?: Record<string, AttendeePaymentInfo>;
+  groupPassMap?: Record<string, {
+    totalGuests: number;
+    checkedInGuests: number;
+    isGroupMaster: boolean;
+    lastAdmittedAt?: string;
+  }>;
   canCSV?: boolean;
   canExport?: boolean;
   customFields?: CustomFieldDefinition[];
@@ -117,6 +125,7 @@ export default function AttendeeTable({
   applicationEnabled,
   initialPassTokens,
   payments = {},
+  groupPassMap = {},
   canCSV = false,
   canExport = false,
   customFields = [],
@@ -595,14 +604,42 @@ export default function AttendeeTable({
                                 Answers
                               </button>
                             )}
-                            {(a.custom_responses as any)?.is_single_group_qr && (
-                              <span
-                                className="inline-flex items-center gap-1 text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-md"
-                                title="Single Group QR with partial check-in"
-                              >
-                                <Users className="w-3 h-3 text-indigo-600" />
-                                Group Pass ({(a.custom_responses as any)?.group_attendee_count || (a.custom_responses as any)?.guest_count || 1} people)
-                              </span>
+                            {((a.custom_responses as any)?.is_single_group_qr || groupPassMap[a.id]) && (
+                              <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                                <span
+                                  className="inline-flex items-center gap-1 text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-md"
+                                  title="Single Group QR with partial check-in"
+                                >
+                                  <Users className="w-3 h-3 text-indigo-600" />
+                                  Group Pass ({groupPassMap[a.id]?.totalGuests || (a.custom_responses as any)?.group_attendee_count || (a.custom_responses as any)?.guest_count || 1} people)
+                                </span>
+                                {groupPassMap[a.id] ? (
+                                  <span
+                                    className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md border ${
+                                      groupPassMap[a.id].checkedInGuests >= groupPassMap[a.id].totalGuests
+                                        ? "text-emerald-700 bg-emerald-50 border-emerald-200"
+                                        : groupPassMap[a.id].checkedInGuests > 0
+                                        ? "text-purple-700 bg-purple-50 border-purple-200"
+                                        : "text-neutral-600 bg-neutral-50 border-neutral-200"
+                                    }`}
+                                  >
+                                    <CheckCircle2 className="w-2.5 h-2.5" />
+                                    {groupPassMap[a.id].checkedInGuests}/{groupPassMap[a.id].totalGuests} Admitted
+                                  </span>
+                                ) : null}
+                                {a.last_scanned_at && (
+                                  <span className="text-[10px] font-medium text-neutral-400 flex items-center gap-1">
+                                    <Clock className="w-2.5 h-2.5" />
+                                    {new Date(a.last_scanned_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                            {!((a.custom_responses as any)?.is_single_group_qr || groupPassMap[a.id]) && a.pass_status === "checked_in" && a.last_scanned_at && (
+                              <div className="flex items-center gap-1 mt-0.5 text-[10px] text-emerald-600 font-medium">
+                                <CheckCircle2 className="w-2.5 h-2.5" />
+                                <span>Checked in at {new Date(a.last_scanned_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+                              </div>
                             )}
                           </div>
                           <p className="text-xs text-neutral-400 sm:hidden">{a.email}</p>

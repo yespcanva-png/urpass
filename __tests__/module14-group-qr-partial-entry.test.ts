@@ -355,5 +355,23 @@ describe("Module M14: Bulk Group QR Entry & Partial Check-In", () => {
         expect(parsed.isGroupQR).toBe(false);
       }
     });
+
+    it("identifies Single Group QR when wrapped in pass URL or group JSON", () => {
+      const urlGroupToken = "https://urpass.space/pass/URP-GRP-10021";
+      const parsedUrl = parseScannedGroupQR(urlGroupToken);
+      expect(parsedUrl.isGroupQR).toBe(true);
+      expect(parsedUrl.bookingReference).toBe("URP-GRP-10021");
+
+      const jsonGroupToken = JSON.stringify({
+        is_single_group_qr: true,
+        ref: "URP-GRP-9999",
+        total: 5,
+        name: "Dev Team",
+      });
+      const parsedJson = parseScannedGroupQR(jsonGroupToken);
+      expect(parsedJson.isGroupQR).toBe(true);
+      expect(parsedJson.totalEntitlements).toBe(5);
+      expect(parsedJson.buyerName).toBe("Dev Team");
+    });
   });
 });

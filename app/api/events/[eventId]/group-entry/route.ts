@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { getSupabaseUrl } from "@/lib/supabase/config";
 import { isFeatureEnabled } from "@/lib/feature-flags";
-import { calculateGroupAdmission, parseScannedGroupQR, admitGroupMembers } from "@/lib/group-entry";
+import { calculateGroupAdmission, parseScannedGroupQR, normalizeScannedToken, admitGroupMembers } from "@/lib/group-entry";
 import crypto from "crypto";
 
 export const dynamic = "force-dynamic";
@@ -384,7 +384,7 @@ export async function POST(
 
   // 3. Extract clean booking reference
   const parsedQR = parseScannedGroupQR(bookingReference);
-  const cleanRef = parsedQR.bookingReference || bookingReference.trim();
+  const cleanRef = parsedQR.bookingReference || normalizeScannedToken(bookingReference);
 
   // 4. Lookup Booking state (Support order, group master pass, or individual pass)
   let orderData: any = null;
@@ -423,6 +423,7 @@ export async function POST(
         checked_in_guests,
         group_members,
         order_id,
+        is_group_master,
         attendee:attendees (id, name, email)
       `)
       .or(`pass_token.eq.${cleanRef},id.eq.${cleanRef}`)
@@ -442,6 +443,52 @@ export async function POST(
     }
   }
 
+  // Fallback: Check if cleanRef matches a custom ticket ID
+  if (!orderData && !passData) {
+    try {
+      const { data: attendeeWithCustomId } = await db
+        .from("attendees")
+        .select("id, name, email")
+        .eq("event_id", eventId)
+        .contains("custom_responses", { custom_ticket_id: cleanRef })
+        .maybeSingle();
+
+      if (attendeeWithCustomId?.id) {
+        const { data: passForAttendee } = await db
+          .from("passes")
+          .select(`
+            id,
+            event_id,
+            pass_token,
+            status,
+            total_guests,
+            checked_in_guests,
+            group_members,
+            order_id,
+            is_group_master,
+            attendee:attendees (id, name, email)
+          `)
+          .eq("attendee_id", attendeeWithCustomId.id)
+          .eq("event_id", eventId)
+          .maybeSingle();
+
+        if (passForAttendee) {
+          passData = passForAttendee;
+          if (passForAttendee.order_id) {
+            const { data: parentOrder } = await db
+              .from("ticket_orders")
+              .select("*")
+              .eq("id", passForAttendee.order_id)
+              .maybeSingle();
+            orderData = parentOrder;
+          }
+        }
+      }
+    } catch {
+      // Non-blocking
+    }
+  }
+
   // Fallback demo mock if database table has no row matching demo ref
   if (!orderData && !passData && cleanRef.startsWith("URP-GRP-")) {
     orderData = {
@@ -457,7 +504,7 @@ export async function POST(
 
   if (!orderData && !passData) {
     return NextResponse.json(
-      { error: "Group booking or pass reference not found.", status: "BOOKING_NOT_FOUND" },
+      { error: "Group booking or pass reference not found.", status: "BOOKING_NOT_FOUND", isGroupQR: false },
       { status: 404 }
     );
   }
@@ -469,6 +516,27 @@ export async function POST(
   const admittedEntitlements = Number(orderData?.admitted_entitlements || passData?.checked_in_guests || 0);
   const remaining = Math.max(0, totalEntitlements - admittedEntitlements);
   const rawStatus = (orderData?.status || passData?.status || "VALID").toUpperCase();
+
+  // If this pass/order only represents a single person and is not a group master pass, it is not a group pass
+  const isActualGroup =
+    Boolean(passData?.is_group_master) ||
+    Boolean(orderData?.group_entry_enabled) ||
+    totalEntitlements > 1 ||
+    cleanRef.startsWith("URP-GRP-") ||
+    cleanRef.startsWith("GRP-") ||
+    parsedQR.isGroupQR;
+
+  if (!isActualGroup && action === "lookup") {
+    return NextResponse.json(
+      {
+        success: false,
+        isGroupQR: false,
+        status: "NOT_GROUP_PASS",
+        message: "Scanned pass is an individual pass, not a group booking.",
+      },
+      { status: 200 }
+    );
+  }
 
   // If action is Supervisor-only correction of erroneous admissions
   if (action === "supervisor_correction") {
