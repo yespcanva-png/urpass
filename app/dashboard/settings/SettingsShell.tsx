@@ -15,8 +15,9 @@ import PayUCard from "@/components/payments/PayUCard";
 import DeveloperDashboard, { type ApiKeyRow } from "@/app/dashboard/developer/DeveloperDashboard";
 import type { ApiUsage } from "@/app/actions/api-usage";
 import type { WebhookEndpoint, WebhookDelivery } from "@/app/actions/webhooks";
+import RbacPermissionEditor from "@/components/org/RbacPermissionEditor";
 
-type Section = "profile" | "security" | "billing" | "branding" | "integrations" | "developer" | "danger";
+type Section = "profile" | "security" | "rbac" | "billing" | "branding" | "integrations" | "developer" | "danger";
 
 export interface SettingsPlan {
   slug: string;
@@ -58,11 +59,14 @@ interface Props {
   apiKeys: ApiKeyRow[];
   webhookEndpoints: WebhookEndpoint[];
   recentDeliveries: WebhookDelivery[];
+  orgId?: string;
+  userRole?: string;
 }
 
 const NAV: { id: Section; label: string; icon: React.ComponentType<{ className?: string }>; danger?: boolean }[] = [
   { id: "profile",      label: "Profile",       icon: User },
   { id: "security",     label: "Security",       icon: ShieldCheck },
+  { id: "rbac",         label: "Roles & RBAC",  icon: KeyRound },
   { id: "billing",      label: "Plan & Billing", icon: CreditCard },
   { id: "branding",     label: "Branding",       icon: Palette },
   { id: "integrations", label: "Integrations",   icon: Puzzle },
@@ -275,6 +279,7 @@ export default function SettingsShell({
   renewalDate, cancelAtPeriodEnd, activeEventCount, billingCycle, registrationsUsed, existingPaymentKeyId,
   existingPayUMerchantKey, existingPayUEnvironment,
   apiUsage, apiKeys, webhookEndpoints, recentDeliveries,
+  orgId, userRole,
 }: Props) {
   const [section, setSection] = useState<Section>("profile");
   const canUseDeveloperTools = plan.canUseDeveloperTools;
@@ -320,6 +325,19 @@ export default function SettingsShell({
               </div>
               <PasswordResetButton />
             </div>
+          </div>
+        );
+
+      case "rbac":
+        return (
+          <div className="max-w-4xl space-y-6">
+            <div>
+              <h2 className="text-lg font-bold tracking-tight text-neutral-900">Roles & Access Control (RBAC)</h2>
+              <p className="text-sm text-neutral-400 mt-0.5">
+                Configure granular permissions across Organizer, Admin, Gate Staff, and Scanner roles.
+              </p>
+            </div>
+            <RbacPermissionEditor orgId={orgId} userRole={userRole} />
           </div>
         );
 
@@ -530,6 +548,10 @@ export default function SettingsShell({
           </div>
         </div>
 
+        {/* ── Roles & RBAC ────────────────────────────────── */}
+        <SectionLabel>Roles & Access Control (RBAC)</SectionLabel>
+        <RbacPermissionEditor orgId={orgId} userRole={userRole} />
+
         {/* ── Plan & Billing ──────────────────────────────── */}
         <SectionLabel>Plan & Billing</SectionLabel>
         <PlanCard
@@ -663,8 +685,8 @@ export default function SettingsShell({
           </div>
 
           <div className="mb-1">
-            <p className="text-[10px] font-bold tracking-widest uppercase text-neutral-400 px-3 mb-1 mt-3">Workspace</p>
-            {(["billing", "branding", "integrations", "developer"] as Section[]).map((id) => {
+            <p className="text-[10px] font-bold tracking-widest uppercase text-neutral-400 px-3 mb-1 mt-3">Workspace & Access</p>
+            {(["rbac", "billing", "branding", "integrations", "developer"] as Section[]).map((id) => {
               const item = NAV.find((n) => n.id === id)!;
               const active = section === id;
               return (

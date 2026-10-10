@@ -24,6 +24,7 @@ export default async function SettingsPage() {
     { count: activeEventCount },
     { data: paymentSettings },
     payuSettings,
+    { data: membershipData },
   ] = await Promise.all([
     supabase.from("profiles").select("*").eq("user_id", user.id).single(),
     getUserPlan(supabase, user.id),
@@ -44,7 +45,18 @@ export default async function SettingsPage() {
       .eq("user_id", user.id)
       .maybeSingle(),
     getPayUSettings(),
+    supabase
+      .from("organization_members")
+      .select("role, organization_id")
+      .eq("user_id", user.id)
+      .eq("status", "active")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ]);
+
+  const userRole = (membershipData?.role as string) || "owner";
+  const orgId = (membershipData?.organization_id as string) || undefined;
 
   const defaultApiUsage = { api_requests: 0, registrations: 0, check_ins: 0, events: 0, year_month: "" };
   const canUseDeveloperTools = plan.canUse("api_access") || plan.canUse("webhooks");
@@ -123,6 +135,8 @@ export default async function SettingsPage() {
       apiKeys={(apiKeys ?? []) as Parameters<typeof SettingsShell>[0]["apiKeys"]}
       webhookEndpoints={webhookEndpoints}
       recentDeliveries={recentDeliveries}
+      orgId={orgId}
+      userRole={userRole}
     />
   );
 }

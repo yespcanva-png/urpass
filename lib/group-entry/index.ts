@@ -27,7 +27,7 @@ export interface GroupBookingState {
   totalEntitlements: number; // e.g. 10
   admittedEntitlements: number; // e.g. 6
   remainingEntitlements: number; // total - admitted (e.g. 4)
-  entryMode: GroupEntryMode;
+  entryMode?: GroupEntryMode;
   status: "VALID" | "EXHAUSTED" | "REFUNDED" | "CANCELLED" | "EXPIRED";
   members?: Array<{
     id?: string;
@@ -42,7 +42,7 @@ export interface GroupAdmissionRequest {
   bookingReference: string;
   eventId: string;
   quantity: number; // e.g. 6 on first scan, 4 on second scan
-  operatorId: string;
+  operatorId?: string;
   operatorEmail?: string;
   gateId?: string;
   gateName?: string;
