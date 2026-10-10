@@ -67,6 +67,7 @@ export async function POST(
       status,
       start_time,
       end_time,
+      eligible_ticket_type_ids,
       room:event_rooms (id, name, capacity)
     `)
     .eq("id", sessionId)
@@ -94,6 +95,7 @@ export async function POST(
       id,
       pass_token,
       pass_type,
+      ticket_type_id,
       status,
       event_id,
       attendee_id,
@@ -103,6 +105,7 @@ export async function POST(
         email,
         phone,
         pass_type,
+        ticket_type_id,
         application_status
       )
     `);
@@ -135,6 +138,35 @@ export async function POST(
       { error: "Attendee application rejected or invalid.", status: "NOT_APPROVED" },
       { status: 422 }
     );
+  }
+
+  // 2.5 Ticket Tier Eligibility Verification
+  const eligibleTierIds = Array.isArray(session.eligible_ticket_type_ids)
+    ? session.eligible_ticket_type_ids.filter(Boolean)
+    : [];
+
+  if (eligibleTierIds.length > 0 && !override) {
+    const attendeeTicketTypeId = (attendee as any)?.ticket_type_id || (pass as any)?.ticket_type_id;
+    const attendeePassType = (attendee as any)?.pass_type || (pass as any)?.pass_type;
+
+    const isEligible =
+      (attendeeTicketTypeId && eligibleTierIds.includes(attendeeTicketTypeId)) ||
+      (attendeePassType && eligibleTierIds.includes(attendeePassType));
+
+    if (!isEligible) {
+      return NextResponse.json(
+        {
+          status: "ACCESS_NOT_ALLOWED",
+          error: `ACCESS DENIED: Session "${session.title}" is restricted to specific ticket tiers. Attendee holds "${attendeePassType || "standard"}" pass.`,
+          attendee: {
+            name: attendee.name,
+            email: attendee.email,
+            pass_type: attendee.pass_type,
+          },
+        },
+        { status: 403 }
+      );
+    }
   }
 
   // 3. Existing Check-In record lookup

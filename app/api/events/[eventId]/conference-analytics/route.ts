@@ -54,7 +54,7 @@ export async function GET(
 
     auth.supabase
       .from("session_checkins")
-      .select("session_id, checkin_time")
+      .select("session_id, checkin_time, checkout_time, duration_minutes, attendee:attendees(pass_type)")
       .eq("event_id", eventId),
   ]);
 

@@ -299,9 +299,26 @@ export default function ScanEventPage() {
       if (sessionData && sessionData.length > 0) {
         setSessions(sessionData);
         const urlSession = searchParams.get("session");
-        if (urlSession && sessionData.find((s) => s.id === urlSession)) {
-          setSelectedSessionId(urlSession);
+        const foundSession = urlSession ? sessionData.find((s) => s.id === urlSession) : null;
+        if (foundSession) {
+          setSelectedSessionId(foundSession.id);
           setSelectedGateId(null);
+
+          // Fetch initial session headcount & capacity
+          supabase
+            .from("session_checkins")
+            .select("id", { count: "exact", head: true })
+            .eq("session_id", foundSession.id)
+            .then(({ count }) => {
+              const roomObj = Array.isArray(foundSession.room) ? foundSession.room[0] : (foundSession.room as any);
+              const cap = foundSession.capacity || roomObj?.capacity || null;
+              const checked = count || 0;
+              setSessionStats({
+                checkedIn: checked,
+                capacity: cap,
+                remaining: cap ? Math.max(0, cap - checked) : null,
+              });
+            });
         }
       }
 
@@ -589,7 +606,10 @@ export default function ScanEventPage() {
           const res = await fetch(`/api/sessions/${selectedSessionId}/checkin`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ passToken: rawToken }),
+            body: JSON.stringify({
+              passToken: rawToken,
+              action: scanDirection === "out" ? "checkout" : "checkin",
+            }),
           });
           const data = await res.json();
           if (data.status === "CHECKED_IN" || data.status === "CHECKED_OUT") {
@@ -1203,6 +1223,62 @@ export default function ScanEventPage() {
           <span>{scanDirection === "in" ? "Entry" : "Exit"}</span>
         </button>
       </div>
+
+      {/* ── Dedicated Session Doorway HUD ───────────────────────────── */}
+      {selectedSession && (() => {
+        const roomObj = Array.isArray(selectedSession.room) ? selectedSession.room[0] : (selectedSession.room as any);
+        const roomName = roomObj?.name || "Main Venue";
+        const effectiveCapacity = sessionStats?.capacity ?? selectedSession.capacity ?? roomObj?.capacity ?? null;
+        const currentChecked = sessionStats?.checkedIn ?? 0;
+        const occupancyPct = effectiveCapacity
+          ? Math.min(100, Math.round((currentChecked / effectiveCapacity) * 100))
+          : null;
+
+        return (
+          <div className="shrink-0 px-4 py-2.5 mx-4 mb-2 bg-gradient-to-r from-purple-950/70 via-neutral-900/90 to-purple-950/70 border border-purple-500/30 rounded-2xl backdrop-blur-md shadow-xl flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top-2 duration-200">
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-purple-400 animate-ping" />
+                <p className="text-xs font-bold text-white truncate">{selectedSession.title}</p>
+              </div>
+              <p className="text-[10px] text-purple-300/80 truncate mt-0.5">
+                {roomName} • {selectedSession.start_time?.slice(0, 5)} - {selectedSession.end_time?.slice(0, 5)}
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3 shrink-0">
+              <div className="text-right">
+                <p className="text-[10px] font-semibold text-white/50 uppercase tracking-wider">Seats</p>
+                <div className="flex items-center gap-1">
+                  <span className="text-sm font-black text-emerald-400 tabular-nums">
+                    {currentChecked}
+                  </span>
+                  <span className="text-xs font-medium text-white/40">
+                    / {effectiveCapacity ?? "∞"}
+                  </span>
+                </div>
+              </div>
+
+              {effectiveCapacity !== null && (
+                <div className="hidden sm:flex flex-col items-end">
+                  <p className="text-[10px] font-semibold text-white/50 uppercase tracking-wider">Occupancy</p>
+                  <span
+                    className={`text-xs font-black tabular-nums ${
+                      (occupancyPct ?? 0) >= 100
+                        ? "text-red-400"
+                        : (occupancyPct ?? 0) >= 80
+                        ? "text-amber-400"
+                        : "text-purple-300"
+                    }`}
+                  >
+                    {occupancyPct}%
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* ── Main Viewport Area ──────────────────────────────────────── */}
       <main className="flex-1 flex flex-col items-center justify-center px-4 py-3 relative">

@@ -102,6 +102,7 @@ export async function POST(
     resources,
     speakers = [], // Array<{ speakerId: string; role?: string; sortOrder?: number }>
     override_conflicts = false,
+    eligible_ticket_type_ids = [],
   } = body;
 
   // Validation: end_time must be after start_time
@@ -217,6 +218,7 @@ export async function POST(
       external_streaming_url: external_streaming_url?.trim() || null,
       meeting_url: meeting_url?.trim() || null,
       resources: Array.isArray(resources) ? resources : [],
+      eligible_ticket_type_ids: Array.isArray(eligible_ticket_type_ids) ? eligible_ticket_type_ids : [],
     })
     .select(`
       *,

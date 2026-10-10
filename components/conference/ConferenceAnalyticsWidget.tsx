@@ -85,7 +85,7 @@ export default function ConferenceAnalyticsWidget({ eventId }: ConferenceAnalyti
       </div>
 
       {/* ── Top Metric Cards ──────────────────────────────────── */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         <div className="p-4 rounded-xl bg-neutral-50/70 border border-neutral-100">
           <p className="text-xs font-semibold text-neutral-500">Total Sessions</p>
           <p className="text-xl font-bold text-neutral-900 mt-1">{stats.totalSessions}</p>
@@ -104,6 +104,14 @@ export default function ConferenceAnalyticsWidget({ eventId }: ConferenceAnalyti
           <p className="text-[11px] text-green-600 mt-0.5">
             Avg {stats.averageSessionAttendance} / session
           </p>
+        </div>
+
+        <div className="p-4 rounded-xl bg-indigo-50/50 border border-indigo-100/80">
+          <p className="text-xs font-semibold text-indigo-700">Avg Dwell Time</p>
+          <p className="text-xl font-bold text-indigo-900 mt-1">
+            {stats.averageDwellMinutes ? `${stats.averageDwellMinutes}m` : "—"}
+          </p>
+          <p className="text-[11px] text-indigo-600 mt-0.5">Dwell & CEU tracking</p>
         </div>
 
         <div className="p-4 rounded-xl bg-amber-50/50 border border-amber-100/80">
@@ -147,6 +155,30 @@ export default function ConferenceAnalyticsWidget({ eventId }: ConferenceAnalyti
           </div>
         )}
       </div>
+
+      {/* ── Ticket Tier Breakdown ─────────────────────────────── */}
+      {stats.tierBreakdown && stats.tierBreakdown.length > 0 && (
+        <div className="space-y-3 pt-2">
+          <h4 className="text-xs font-bold text-neutral-800 uppercase tracking-wider flex items-center gap-1.5">
+            <Users className="w-3.5 h-3.5 text-neutral-500" />
+            Session Attendance by Badge / Ticket Tier
+          </h4>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {stats.tierBreakdown.map((tier, idx) => (
+              <div key={idx} className="p-3.5 rounded-xl border border-neutral-100 bg-white space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-neutral-800 capitalize truncate">{tier.ticketType}</span>
+                  <span className="text-xs font-semibold text-purple-600">{tier.percentage}%</span>
+                </div>
+                <p className="text-lg font-bold text-neutral-900">{tier.checkInCount}</p>
+                <div className="w-full h-1 rounded-full bg-neutral-100 overflow-hidden">
+                  <div className="h-full bg-purple-500 rounded-full" style={{ width: `${tier.percentage}%` }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ── Room Utilisation Table ────────────────────────────── */}
       {stats.roomUtilisation && stats.roomUtilisation.length > 0 && (

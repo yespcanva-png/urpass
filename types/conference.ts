@@ -70,6 +70,7 @@ export interface EventSession {
   external_streaming_url: string | null;
   meeting_url: string | null;
   resources: SessionResource[];
+  eligible_ticket_type_ids?: string[];
   created_at: string;
   updated_at: string;
 
@@ -269,6 +270,12 @@ export interface ConferenceAnalytics {
     capacity: number;
     sessionsCount: number;
     averageOccupancyPercent: number;
+  }>;
+  averageDwellMinutes?: number;
+  tierBreakdown?: Array<{
+    ticketType: string;
+    checkInCount: number;
+    percentage: number;
   }>;
   peakEntryTimes: Array<{
     timeSlot: string;

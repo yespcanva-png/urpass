@@ -233,6 +233,33 @@ export function computeConferenceAnalytics(
     }))
     .sort((a, b) => a.timeSlot.localeCompare(b.timeSlot));
 
+  // Dwell time calculation
+  let totalDwellMinutes = 0;
+  let dwellCount = 0;
+  const tierCountMap = new Map<string, number>();
+
+  for (const c of checkIns as any[]) {
+    if (typeof c.duration_minutes === "number" && c.duration_minutes > 0) {
+      totalDwellMinutes += c.duration_minutes;
+      dwellCount++;
+    } else if (c.checkin_time && c.checkout_time) {
+      const mins = Math.max(1, Math.round((new Date(c.checkout_time).getTime() - new Date(c.checkin_time).getTime()) / 60000));
+      totalDwellMinutes += mins;
+      dwellCount++;
+    }
+
+    const tier = c.attendee?.pass_type || "General";
+    tierCountMap.set(tier, (tierCountMap.get(tier) || 0) + 1);
+  }
+
+  const averageDwellMinutes = dwellCount > 0 ? Math.round(totalDwellMinutes / dwellCount) : 0;
+
+  const tierBreakdown = Array.from(tierCountMap.entries()).map(([ticketType, count]) => ({
+    ticketType,
+    checkInCount: count,
+    percentage: totalCheckIns > 0 ? Math.round((count / totalCheckIns) * 100) : 0,
+  })).sort((a, b) => b.checkInCount - a.checkInCount);
+
   return {
     totalSessions,
     totalSpeakers,
@@ -245,6 +272,8 @@ export function computeConferenceAnalytics(
     mostPopularSession,
     leastAttendedSession,
     roomUtilisation,
+    averageDwellMinutes,
+    tierBreakdown,
     peakEntryTimes,
   };
 }

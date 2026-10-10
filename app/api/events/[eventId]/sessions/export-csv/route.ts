@@ -67,6 +67,7 @@ export async function GET(
     "Reservation Status",
     "Check-In Time",
     "Check-Out Time",
+    "Duration (Mins)",
     "Scanner",
   ];
 
@@ -83,6 +84,15 @@ export async function GET(
       ? new Date(c.checkout_time).toLocaleString("en-IN")
       : "";
 
+    let durationMins = "";
+    if (typeof c.duration_minutes === "number") {
+      durationMins = String(c.duration_minutes);
+    } else if (c.checkin_time && c.checkout_time) {
+      durationMins = String(
+        Math.max(1, Math.round((new Date(c.checkout_time).getTime() - new Date(c.checkin_time).getTime()) / 60000))
+      );
+    }
+
     return [
       escapeCsv(attendee?.name || "Anonymous"),
       escapeCsv(attendee?.email || ""),
@@ -93,6 +103,7 @@ export async function GET(
       escapeCsv(reservation?.status || "walk-in"),
       escapeCsv(checkInLocal),
       escapeCsv(checkOutLocal),
+      escapeCsv(durationMins),
       escapeCsv(c.scanner_user_id ? `Staff (${c.scanner_user_id.slice(0, 8)})` : c.device_id || "UrPass Scanner"),
     ].join(",");
   });

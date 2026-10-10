@@ -33,6 +33,7 @@ interface SessionsManagerProps {
   tracks: EventTrack[];
   rooms: EventRoom[];
   speakers: EventSpeaker[];
+  ticketTypes?: Array<{ id: string; name: string; price?: number }>;
 }
 
 export default function SessionsManager({
@@ -42,6 +43,7 @@ export default function SessionsManager({
   tracks,
   rooms,
   speakers,
+  ticketTypes = [],
 }: SessionsManagerProps) {
   const [sessions, setSessions] = useState<EventSession[]>(initialSessions);
   const [search, setSearch] = useState("");
@@ -381,6 +383,14 @@ export default function SessionsManager({
 
                       <td className="py-3.5 px-4 text-right whitespace-nowrap">
                         <div className="flex items-center justify-end gap-1">
+                          <Link
+                            href={`/scan/${eventId}?session=${session.id}`}
+                            className="p-1.5 text-neutral-400 hover:text-purple-600 rounded-lg hover:bg-purple-50"
+                            title="Open doorway scanner for this session"
+                            target="_blank"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                          </Link>
                           <button
                             onClick={() => handleEdit(session)}
                             className="p-1.5 text-neutral-400 hover:text-neutral-900 rounded-lg hover:bg-neutral-100"
@@ -417,6 +427,7 @@ export default function SessionsManager({
         rooms={rooms}
         speakers={speakers}
         allSessions={sessions}
+        ticketTypes={ticketTypes}
       />
     </div>
   );

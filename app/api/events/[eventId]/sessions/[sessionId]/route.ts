@@ -192,6 +192,7 @@ export async function PATCH(
   if (body.external_streaming_url !== undefined) updates.external_streaming_url = body.external_streaming_url?.trim() || null;
   if (body.meeting_url !== undefined) updates.meeting_url = body.meeting_url?.trim() || null;
   if (body.resources !== undefined) updates.resources = Array.isArray(body.resources) ? body.resources : [];
+  if (body.eligible_ticket_type_ids !== undefined) updates.eligible_ticket_type_ids = Array.isArray(body.eligible_ticket_type_ids) ? body.eligible_ticket_type_ids : [];
 
   const { data: updatedSession, error: updateErr } = await auth.supabase
     .from("event_sessions")

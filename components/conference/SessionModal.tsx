@@ -41,6 +41,7 @@ interface SessionModalProps {
   rooms: EventRoom[];
   speakers: EventSpeaker[];
   allSessions: EventSession[];
+  ticketTypes?: Array<{ id: string; name: string; price?: number }>;
 }
 
 export default function SessionModal({
@@ -54,6 +55,7 @@ export default function SessionModal({
   rooms,
   speakers,
   allSessions,
+  ticketTypes = [],
 }: SessionModalProps) {
   const [title, setTitle] = useState(sessionToEdit?.title || "");
   const [description, setDescription] = useState(sessionToEdit?.description || "");
@@ -80,6 +82,9 @@ export default function SessionModal({
   const [tagsStr, setTagsStr] = useState(sessionToEdit?.tags?.join(", ") || "");
   const [streamingUrl, setStreamingUrl] = useState(sessionToEdit?.external_streaming_url || "");
   const [meetingUrl, setMeetingUrl] = useState(sessionToEdit?.meeting_url || "");
+  const [eligibleTicketTypeIds, setEligibleTicketTypeIds] = useState<string[]>(
+    sessionToEdit?.eligible_ticket_type_ids || []
+  );
 
   // Speaker assignments: array of { speakerId, role, sortOrder }
   const [assignedSpeakers, setAssignedSpeakers] = useState<
@@ -225,6 +230,7 @@ export default function SessionModal({
           meeting_url: meetingUrl.trim() || null,
           speakers: assignedSpeakers,
           override_conflicts: overrideConflicts,
+          eligible_ticket_type_ids: eligibleTicketTypeIds,
         }),
       });
 
@@ -606,6 +612,55 @@ export default function SessionModal({
                   </span>
                 </div>
               </label>
+            </div>
+
+            {/* Granular Ticket Tier Eligibility */}
+            <div className="pt-3 border-t border-neutral-100">
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-xs font-semibold text-neutral-800 block">
+                  Eligible Ticket Tiers
+                </label>
+                <span className="text-[11px] text-neutral-400">
+                  {eligibleTicketTypeIds.length === 0
+                    ? "All badge tiers allowed"
+                    : `${eligibleTicketTypeIds.length} tier(s) restricted`}
+                </span>
+              </div>
+              <p className="text-[11px] text-neutral-500 mb-2">
+                Restrict entry to specific ticket categories (e.g. VIP, Speakers, Workshops). Leave all unchecked to allow all valid ticket holders.
+              </p>
+
+              {ticketTypes.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-neutral-50 p-2.5 rounded-xl border border-neutral-200/60 max-h-36 overflow-y-auto">
+                  {ticketTypes.map((tt) => {
+                    const checked = eligibleTicketTypeIds.includes(tt.id);
+                    return (
+                      <label
+                        key={tt.id}
+                        className="flex items-center gap-2 text-xs text-neutral-700 cursor-pointer hover:text-neutral-900 select-none py-1 px-1.5 rounded-lg hover:bg-neutral-100/70"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setEligibleTicketTypeIds((prev) => [...prev, tt.id]);
+                            } else {
+                              setEligibleTicketTypeIds((prev) => prev.filter((id) => id !== tt.id));
+                            }
+                          }}
+                          className="w-3.5 h-3.5 rounded text-purple-600 focus:ring-purple-600 border-neutral-300"
+                        />
+                        <span className="truncate font-medium">{tt.name}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 p-2 bg-neutral-50 rounded-xl border border-neutral-200/60 text-xs text-neutral-500">
+                  <span>No custom ticket types created for this event yet. Standard badge rules apply.</span>
+                </div>
+              )}
             </div>
           </div>
 

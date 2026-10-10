@@ -27,6 +27,7 @@ export default async function EventSessionsPage({
     { data: rooms },
     { data: sessionsRaw },
     { data: speakers },
+    { data: ticketTypesRaw },
   ] = await Promise.all([
     supabase.from("events").select("id, name").eq("id", eventId).single(),
     supabase.from("event_tracks").select("*").eq("event_id", eventId).order("sort_order", { ascending: true }),
@@ -50,6 +51,7 @@ export default async function EventSessionsPage({
       .order("session_date", { ascending: true })
       .order("start_time", { ascending: true }),
     supabase.from("event_speakers").select("*").eq("event_id", eventId).order("display_order", { ascending: true }),
+    supabase.from("ticket_types").select("id, name, price").eq("event_id", eventId).order("created_at", { ascending: true }),
   ]);
 
   if (!event) notFound();
@@ -71,6 +73,7 @@ export default async function EventSessionsPage({
       tracks={(tracks || []) as EventTrack[]}
       rooms={(rooms || []) as EventRoom[]}
       speakers={(speakers || []) as EventSpeaker[]}
+      ticketTypes={(ticketTypesRaw || []) as Array<{ id: string; name: string; price?: number }>}
     />
   );
 }
