@@ -17,7 +17,9 @@ export const DEFAULT_DISTRIBUTION_SETTINGS: DistributionSettings = {
   assignmentDeadline: null,
   requireFormValidation: false,
   allowReassignment: true,
-  claimTokenTtlHours: 72, // 3 days
+  allowBuyerRevocation: true,
+  autoClaimReminders: true,
+  claimTokenTtlHours: 48,
 };
 
 function newHistoryId() {
@@ -40,13 +42,36 @@ export function getDistributionSettings(event?: EventLike | null): DistributionS
   const raw = (event.custom_pass_design as Record<string, unknown>)?._distributionSettings;
 
   if (raw && typeof raw === "object") {
-    const s = raw as Partial<DistributionSettings>;
+    const s = raw as Partial<DistributionSettings> & {
+      claim_expiry_hours?: string | number;
+      allow_buyer_revoke?: boolean;
+      auto_reminders?: boolean;
+    };
+    const claimTokenTtlHours =
+      typeof s.claimTokenTtlHours === "number"
+        ? s.claimTokenTtlHours
+        : s.claim_expiry_hours !== undefined && Number.isFinite(Number(s.claim_expiry_hours))
+        ? Number(s.claim_expiry_hours)
+        : 48;
+
     return {
       enabled: typeof s.enabled === "boolean" ? s.enabled && isFlagActive : isFlagActive,
       assignmentDeadline: typeof s.assignmentDeadline === "string" ? s.assignmentDeadline : null,
       requireFormValidation: typeof s.requireFormValidation === "boolean" ? s.requireFormValidation : false,
       allowReassignment: typeof s.allowReassignment === "boolean" ? s.allowReassignment : true,
-      claimTokenTtlHours: typeof s.claimTokenTtlHours === "number" ? s.claimTokenTtlHours : 72,
+      allowBuyerRevocation:
+        typeof s.allowBuyerRevocation === "boolean"
+          ? s.allowBuyerRevocation
+          : typeof s.allow_buyer_revoke === "boolean"
+          ? s.allow_buyer_revoke
+          : true,
+      autoClaimReminders:
+        typeof s.autoClaimReminders === "boolean"
+          ? s.autoClaimReminders
+          : typeof s.auto_reminders === "boolean"
+          ? s.auto_reminders
+          : true,
+      claimTokenTtlHours,
     };
   }
 
@@ -239,8 +264,10 @@ export function assignTicketToRecipient({
 
   const nowIso = new Date().toISOString();
   const claimToken = crypto.randomBytes(32).toString("hex");
-  const ttlMs = settings.claimTokenTtlHours * 3600 * 1000;
-  const claimExpiresAt = new Date(Date.now() + ttlMs).toISOString();
+  const ttlMs = Math.max(0, settings.claimTokenTtlHours) * 3600 * 1000;
+  const claimExpiresAt = settings.claimTokenTtlHours === 0
+    ? null
+    : new Date(Date.now() + ttlMs).toISOString();
 
   const isManualMode = input.mode === "manual";
   const isRetained = input.recipientEmail.toLowerCase().trim() === buyerEmail && isManualMode;
@@ -284,6 +311,7 @@ export function assignTicketToRecipient({
       recipientName: targetMember.recipientName,
       recipientEmail: targetMember.recipientEmail,
       mode: input.mode || "claim_link",
+      claimExpiresAt,
     },
   });
 
@@ -556,12 +584,21 @@ export function revokeTicketAssignment({
 
   const isPurchaser = buyerEmail === normalizedActor;
   const isOrganizer = String(event.organizer_id).toLowerCase() === normalizedActor;
+  const settings = getDistributionSettings(event);
 
   if (!isPurchaser && !isOrganizer) {
     return {
       success: false,
       error: "UNAUTHORIZED",
       message: "Only the ticket purchaser or event organizer can revoke assignments.",
+    };
+  }
+
+  if (isPurchaser && !isOrganizer && !settings.allowBuyerRevocation) {
+    return {
+      success: false,
+      error: "BUYER_REVOCATION_DISABLED",
+      message: "Buyer ticket revocation is disabled for this event.",
     };
   }
 
@@ -580,7 +617,16 @@ export function revokeTicketAssignment({
 
   const targetMember = { ...groupMembers[targetIndex] };
   const prevRecipient = targetMember.recipientEmail || targetMember.recipientName;
+  const currentState = String(targetMember.assignmentState || "UNASSIGNED");
   const nowIso = new Date().toISOString();
+
+  if (currentState === "CLAIMED") {
+    return {
+      success: false,
+      error: "CLAIMED_TICKET_CANNOT_BE_REVOKED",
+      message: "Claimed tickets cannot be revoked from the buyer distribution pool.",
+    };
+  }
 
   targetMember.assignmentState = "UNASSIGNED";
   targetMember.recipientName = null;

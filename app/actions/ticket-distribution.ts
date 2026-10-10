@@ -26,6 +26,27 @@ function adminClient() {
   );
 }
 
+function normalizeDistributionSettingsInput(
+  settings: Partial<DistributionSettings> & Record<string, unknown>
+): Partial<DistributionSettings> {
+  const normalized: Partial<DistributionSettings> = { ...settings };
+
+  if (settings.claim_expiry_hours !== undefined) {
+    const hours = Number(settings.claim_expiry_hours);
+    if (Number.isFinite(hours)) normalized.claimTokenTtlHours = hours;
+  }
+
+  if (settings.allow_buyer_revoke !== undefined) {
+    normalized.allowBuyerRevocation = Boolean(settings.allow_buyer_revoke);
+  }
+
+  if (settings.auto_reminders !== undefined) {
+    normalized.autoClaimReminders = Boolean(settings.auto_reminders);
+  }
+
+  return normalized;
+}
+
 type DistributionEventRow = {
   id: string;
   name?: string;
@@ -548,7 +569,7 @@ export async function updateEventDistributionSettingsAction({
   settings,
 }: {
   eventId: string;
-  settings: Partial<DistributionSettings>;
+  settings: Partial<DistributionSettings> & Record<string, unknown>;
 }): Promise<{ success?: boolean; error?: string }> {
   const supabase = await createClient();
   const {
@@ -575,15 +596,17 @@ export async function updateEventDistributionSettingsAction({
     return { error: "Unauthorized to update event settings." };
   }
 
+  const normalizedSettings = normalizeDistributionSettingsInput(settings);
+
   if (
-    settings.claimTokenTtlHours !== undefined &&
-    (!Number.isFinite(settings.claimTokenTtlHours) || settings.claimTokenTtlHours < 1)
+    normalizedSettings.claimTokenTtlHours !== undefined &&
+    (!Number.isFinite(normalizedSettings.claimTokenTtlHours) || normalizedSettings.claimTokenTtlHours < 0)
   ) {
-    return { error: "Claim token expiry must be at least 1 hour." };
+    return { error: "Claim token expiry must be 0 hours or greater." };
   }
 
-  if (typeof settings.enabled === "boolean") {
-    const flagResult = await updateEventFeatureFlag(eventId, "ticket_distribution", settings.enabled);
+  if (typeof normalizedSettings.enabled === "boolean") {
+    const flagResult = await updateEventFeatureFlag(eventId, "ticket_distribution", normalizedSettings.enabled);
     if (flagResult.error) {
       return { error: flagResult.error };
     }
@@ -597,7 +620,7 @@ export async function updateEventDistributionSettingsAction({
   const currentSettings = getDistributionSettings(event);
   const updatedSettings: DistributionSettings = {
     ...currentSettings,
-    ...settings,
+    ...normalizedSettings,
   };
 
   const updatedDesign = {

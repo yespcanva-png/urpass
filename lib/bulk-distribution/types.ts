@@ -13,6 +13,8 @@ export interface DistributionSettings {
   assignmentDeadline?: string | null; // ISO timestamp
   requireFormValidation: boolean;
   allowReassignment: boolean;
+  allowBuyerRevocation: boolean;
+  autoClaimReminders: boolean;
   claimTokenTtlHours: number;
 }
 

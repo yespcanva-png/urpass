@@ -56,6 +56,8 @@ describe("Module 02 — Bulk Ticket Distribution (Test 02 Suite)", () => {
         assignmentDeadline: null,
         requireFormValidation: true,
         allowReassignment: true,
+        allowBuyerRevocation: true,
+        autoClaimReminders: true,
         claimTokenTtlHours: 72,
       },
     },
@@ -479,7 +481,8 @@ describe("Module 02 — Bulk Ticket Distribution (Test 02 Suite)", () => {
         recipientEmail: "sameer@example.com",
       },
     });
-    const token = assignRes.ticket?.claimToken!;
+    expect(assignRes.ticket?.claimToken).toBeTruthy();
+    const token = assignRes.ticket?.claimToken as string;
     order = assignRes.updatedOrder!;
 
     // 1. Attempt claim without required custom field "cf_col"
@@ -597,6 +600,118 @@ describe("Module 02 — Bulk Ticket Distribution (Test 02 Suite)", () => {
       expect(assignRes.success).toBe(false);
       expect(assignRes.error).toBe("DEADLINE_EXPIRED");
       expect(assignRes.message).toContain("assignment deadline has passed");
+    });
+
+    it("uses configured claim-link expiry including no-expiration links", () => {
+      const fortyEightHourEvent: EventLike = {
+        ...activeEvent,
+        custom_pass_design: {
+          ...activeEvent.custom_pass_design,
+          _distributionSettings: {
+            enabled: true,
+            assignmentDeadline: null,
+            requireFormValidation: false,
+            allowReassignment: true,
+            allowBuyerRevocation: true,
+            autoClaimReminders: true,
+            claimTokenTtlHours: 48,
+          },
+        },
+      };
+
+      const assignRes = assignTicketToRecipient({
+        order: create10TicketOrder(),
+        event: fortyEightHourEvent,
+        actorEmail: "arun@example.com",
+        input: {
+          orderId: "order_arun_10",
+          ticketIndex: 1,
+          recipientName: "Friend One",
+          recipientEmail: "friend1@example.com",
+          mode: "claim_link",
+        },
+      });
+
+      expect(assignRes.success).toBe(true);
+      expect(assignRes.ticket?.claimExpiresAt).toBeTruthy();
+      const expiresAt = new Date(assignRes.ticket!.claimExpiresAt!).getTime();
+      const hoursFromNow = (expiresAt - Date.now()) / 3600000;
+      expect(hoursFromNow).toBeGreaterThan(47);
+      expect(hoursFromNow).toBeLessThanOrEqual(48.1);
+
+      const noExpiryEvent: EventLike = {
+        ...fortyEightHourEvent,
+        custom_pass_design: {
+          ...fortyEightHourEvent.custom_pass_design,
+          _distributionSettings: {
+            enabled: true,
+            assignmentDeadline: null,
+            requireFormValidation: false,
+            allowReassignment: true,
+            allowBuyerRevocation: true,
+            autoClaimReminders: true,
+            claimTokenTtlHours: 0,
+          },
+        },
+      };
+
+      const noExpiryRes = assignTicketToRecipient({
+        order: create10TicketOrder(),
+        event: noExpiryEvent,
+        actorEmail: "arun@example.com",
+        input: {
+          orderId: "order_arun_10",
+          ticketIndex: 2,
+          recipientName: "Friend Two",
+          recipientEmail: "friend2@example.com",
+          mode: "claim_link",
+        },
+      });
+
+      expect(noExpiryRes.success).toBe(true);
+      expect(noExpiryRes.ticket?.claimExpiresAt).toBeNull();
+    });
+
+    it("blocks purchaser revocation when buyer revocation is disabled", () => {
+      const revocationDisabledEvent: EventLike = {
+        ...activeEvent,
+        custom_pass_design: {
+          ...activeEvent.custom_pass_design,
+          _distributionSettings: {
+            enabled: true,
+            assignmentDeadline: null,
+            requireFormValidation: false,
+            allowReassignment: true,
+            allowBuyerRevocation: false,
+            autoClaimReminders: false,
+            claimTokenTtlHours: 48,
+          },
+        },
+      };
+
+      const assignRes = assignTicketToRecipient({
+        order: create10TicketOrder(),
+        event: revocationDisabledEvent,
+        actorEmail: "arun@example.com",
+        input: {
+          orderId: "order_arun_10",
+          ticketIndex: 1,
+          recipientName: "Friend One",
+          recipientEmail: "friend1@example.com",
+          mode: "claim_link",
+        },
+      });
+      expect(assignRes.success).toBe(true);
+
+      const buyerRevoke = revokeTicketAssignment({
+        order: assignRes.updatedOrder!,
+        event: revocationDisabledEvent,
+        attendeeId: "att_1",
+        actorEmail: "arun@example.com",
+      });
+
+      expect(buyerRevoke.success).toBe(false);
+      expect(buyerRevoke.error).toBe("BUYER_REVOCATION_DISABLED");
     });
   });
 });

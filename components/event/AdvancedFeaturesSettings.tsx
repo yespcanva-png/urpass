@@ -27,13 +27,12 @@ import {
   X,
   Check,
   ExternalLink,
-  Zap,
-  BookOpen,
 } from "lucide-react";
 import {
   updateEventFeatureFlag,
   getEventFeatureFlagsState,
 } from "@/app/actions/event-features";
+import { updateEventDistributionSettingsAction } from "@/app/actions/ticket-distribution";
 import type { FeatureFlagKey, EventFeaturesConfig } from "@/lib/feature-flags";
 
 interface ModuleMeta {
@@ -553,10 +552,27 @@ export default function AdvancedFeaturesSettings({ eventId }: AdvancedFeaturesSe
     if (!configuringModule) return;
     setSavingSettings(true);
     try {
+      setErrorMsg("");
       // If module is currently disabled, also auto-enable it when saving setup
       if (!flags[configuringModule.key]) {
         await executeToggle(configuringModule.key, true);
       }
+
+      if (configuringModule.key === "ticket_distribution") {
+        const res = await updateEventDistributionSettingsAction({
+          eventId,
+          settings: {
+            enabled: true,
+            ...localModuleSettings,
+          },
+        });
+
+        if (res.error) {
+          setErrorMsg(res.error);
+          return;
+        }
+      }
+
       setSuccessMsg(`Rules configured for ${configuringModule.name}.`);
       setTimeout(() => setSuccessMsg(""), 3500);
       setConfiguringModule(null);
