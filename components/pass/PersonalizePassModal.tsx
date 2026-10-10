@@ -101,7 +101,7 @@ export default function PersonalizePassModal({ passToken, eventName }: Personali
               Personalize Your Entry Ticket
             </h3>
             <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
-              Your name and contact details will appear directly on your digital ticket and Apple Wallet card.
+              Your name and contact details will appear directly on your digital ticket.
             </p>
 
             {errorMsg && (
