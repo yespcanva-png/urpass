@@ -28,6 +28,11 @@ export default function MembersClient({ org, orgSlug, userRole, members, current
             <Users className="w-4 h-4 text-neutral-400" />
             <p className="text-[10px] font-bold tracking-widest uppercase text-neutral-400">
               Team members · {members.filter((m) => m.status === "active").length} active
+              {members.filter((m) => m.status === "pending").length > 0 && (
+                <span className="text-amber-600 font-semibold ml-2">
+                  · {members.filter((m) => m.status === "pending").length} pending invite{members.filter((m) => m.status === "pending").length > 1 ? "s" : ""}
+                </span>
+              )}
             </p>
           </div>
           {canInvite && (
@@ -45,6 +50,7 @@ export default function MembersClient({ org, orgSlug, userRole, members, current
         <MemberTable
           members={members as Parameters<typeof MemberTable>[0]["members"]}
           orgSlug={orgSlug}
+          orgName={org.name}
           userRole={userRole}
           currentUserId={currentUserId}
         />

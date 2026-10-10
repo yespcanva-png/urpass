@@ -31,6 +31,7 @@ export default function InviteMemberModal({ orgId, orgSlug, orgName, initialRole
   const [selectedRole, setSelectedRole] = useState<string>(initialRole);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
   const emailRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -168,9 +169,45 @@ export default function InviteMemberModal({ orgId, orgSlug, orgName, initialRole
             </div>
           )}
 
-          {error && (
-            <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-3 font-medium">{error}</p>
-          )}
+          {error && (() => {
+            const linkMatch = error.match(/(https?:\/\/[^\s]+)/);
+            const fallbackLink = linkMatch ? linkMatch[1] : null;
+            const cleanError = fallbackLink ? error.replace(fallbackLink, "").replace(/Direct invite link:\s*/i, "").trim() : error;
+
+            return (
+              <div className="space-y-2">
+                <p className={`text-xs rounded-xl px-4 py-3 font-medium border ${
+                  fallbackLink ? "text-amber-800 bg-amber-50 border-amber-200" : "text-red-600 bg-red-50 border-red-200"
+                }`}>
+                  {cleanError}
+                </p>
+                {fallbackLink && (
+                  <div className="p-3 bg-neutral-50 rounded-2xl border border-neutral-200 space-y-1.5">
+                    <p className="text-[11px] font-bold text-neutral-700">One-Click Join Link:</p>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        readOnly
+                        value={fallbackLink}
+                        className="flex-1 px-3 py-1.5 text-xs font-mono bg-white border border-neutral-200 rounded-xl text-neutral-700 select-all"
+                      />
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          await navigator.clipboard.writeText(fallbackLink);
+                          setCopied(true);
+                          setTimeout(() => setCopied(false), 2000);
+                        }}
+                        className="px-3.5 py-1.5 bg-violet-600 text-white rounded-xl text-xs font-bold hover:bg-violet-700 transition-colors shadow-xs"
+                      >
+                        {copied ? "Copied!" : "Copy"}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
 
           <div className="flex gap-2.5 pt-2">
             <button

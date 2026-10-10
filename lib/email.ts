@@ -1241,7 +1241,7 @@ export async function sendOrgInviteEmail({
   inviteUrl: string;
 }) {
   const roleLabel = ROLE_LABEL[role] ?? role;
-  await sendEmail({
+  return await sendEmail({
     from: FROM,
     to,
     subject: `You've been invited to join ${orgName} on URPASS`,

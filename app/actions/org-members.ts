@@ -15,7 +15,7 @@ import {
   isAssignableOrgRole,
 } from "@/lib/authorization";
 
-type ActionResult = { error: string } | undefined;
+export type ActionResult = { error?: string; success?: boolean; inviteUrl?: string } | undefined;
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://urpass.space";
 
@@ -24,6 +24,15 @@ function adminClient() {
     getSupabaseUrl(),
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
+}
+
+function getEffectiveAdminClient(fallbackClient: any) {
+  try {
+    const admin = adminClient();
+    return (admin as unknown) ? admin : fallbackClient;
+  } catch {
+    return fallbackClient;
+  }
 }
 
 function generateToken(): string {
@@ -86,16 +95,66 @@ export async function inviteMember(
   const resolvedOrgSlug = (org?.slug as string | undefined) ?? orgSlug;
   const resolvedOrgName = (org?.name as string | undefined) ?? orgName;
 
-  // Check if already a member
-  const { count: existing } = await supabase
+  // Check if already a member or pending invite
+  const { data: existingMember } = await supabase
     .from("organization_members")
-    .select("*", { count: "exact", head: true })
+    .select("id, status, role")
     .eq("organization_id", orgId)
     .eq("invited_email", email)
-    .neq("status", "rejected");
+    .maybeSingle();
 
-  if ((existing ?? 0) > 0) {
-    return { error: "This email has already been invited to this organization." };
+  if (existingMember) {
+    if (existingMember.status === "active") {
+      return { error: "This email belongs to an active member of this organization." };
+    }
+    if (existingMember.status === "pending") {
+      // Re-issue a fresh token and resend invite email instead of blocking
+      const token = generateToken();
+      const admin = getEffectiveAdminClient(supabase);
+      const { error: updateError } = await admin
+        .from("organization_members")
+        .update({
+          role,
+          invite_token: token,
+          invited_by: user.id,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", existingMember.id);
+
+      if (updateError) return { error: updateError.message };
+
+      const inviteUrl = `${APP_URL}/org/${resolvedOrgSlug}/join?token=${token}`;
+
+      const { data: inviterProfile } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      let emailError: string | null = null;
+      try {
+        await sendOrgInviteEmail({
+          to: email,
+          inviterName: inviterProfile?.full_name ?? "Someone",
+          orgName: resolvedOrgName,
+          role,
+          inviteUrl,
+        });
+      } catch (err) {
+        console.error("[org-members] Failed to send invite email (renew):", err);
+        emailError = err instanceof Error ? err.message : String(err);
+      }
+
+      revalidatePath(`/org/${resolvedOrgSlug}/members`);
+
+      if (emailError) {
+        return {
+          error: `Invitation renewed, but email delivery failed (${emailError}). Direct invite link: ${inviteUrl}`,
+        };
+      }
+
+      return undefined;
+    }
   }
 
   const token = generateToken();
@@ -107,7 +166,8 @@ export async function inviteMember(
     .eq("email", email)
     .maybeSingle();
 
-  const { error: insertError } = await supabase
+  const admin = getEffectiveAdminClient(supabase);
+  const { error: insertError } = await admin
     .from("organization_members")
     .insert({
       organization_id: orgId,
@@ -127,17 +187,31 @@ export async function inviteMember(
     .from("profiles")
     .select("full_name")
     .eq("user_id", user.id)
-    .single();
+    .maybeSingle();
 
-  await sendOrgInviteEmail({
-    to: email,
-    inviterName: inviterProfile?.full_name ?? "Someone",
-    orgName: resolvedOrgName,
-    role,
-    inviteUrl,
-  });
+  let emailError: string | null = null;
+  try {
+    await sendOrgInviteEmail({
+      to: email,
+      inviterName: inviterProfile?.full_name ?? "Someone",
+      orgName: resolvedOrgName,
+      role,
+      inviteUrl,
+    });
+  } catch (err) {
+    console.error("[org-members] Failed to send invite email:", err);
+    emailError = err instanceof Error ? err.message : String(err);
+  }
 
   revalidatePath(`/org/${resolvedOrgSlug}/members`);
+
+  if (emailError) {
+    return {
+      error: `Member invited, but email delivery failed (${emailError}). Direct invite link: ${inviteUrl}`,
+    };
+  }
+
+  return undefined;
 }
 
 export async function acceptInvite(token: string): Promise<{ orgSlug: string } | { error: string }> {
@@ -268,11 +342,12 @@ export async function cancelInvite(
   if (target.status !== "pending") return { error: "Only pending invitations can be cancelled." };
 
   const callerRole = await getCallerOrgRole(supabase, target.organization_id, user.id);
-  if (!hasOrgPermission(callerRole, "manageMembers")) {
+  if (!hasOrgPermission(callerRole, "manageMembers") && !hasOrgPermission(callerRole, "inviteMembers")) {
     return { error: "Only organization owners and admins can cancel invitations." };
   }
 
-  const { error } = await supabase
+  const client = getEffectiveAdminClient(supabase);
+  const { error } = await client
     .from("organization_members")
     .delete()
     .eq("id", memberId)
@@ -281,12 +356,13 @@ export async function cancelInvite(
   if (error) return { error: error.message };
 
   revalidatePath(`/org/${orgSlug}/members`);
+  return undefined;
 }
 
 export async function resendInvite(
   memberId: string,
   orgSlug: string,
-  orgName: string
+  orgName?: string
 ): Promise<ActionResult> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -294,7 +370,7 @@ export async function resendInvite(
 
   const { data: target } = await supabase
     .from("organization_members")
-    .select("organization_id, invited_email, role, status")
+    .select("id, organization_id, invited_email, role, status")
     .eq("id", memberId)
     .maybeSingle();
 
@@ -302,34 +378,63 @@ export async function resendInvite(
   if (target.status !== "pending") return { error: "Can only resend pending invitations." };
 
   const callerRole = await getCallerOrgRole(supabase, target.organization_id, user.id);
-  if (!hasOrgPermission(callerRole, "manageMembers")) {
+  if (!hasOrgPermission(callerRole, "manageMembers") && !hasOrgPermission(callerRole, "inviteMembers")) {
     return { error: "Only organization owners and admins can resend invitations." };
   }
 
+  const { data: org } = await supabase
+    .from("organizations")
+    .select("name, slug")
+    .eq("id", target.organization_id)
+    .maybeSingle();
+  const resolvedOrgName = (org?.name as string | undefined) ?? orgName ?? "the organization";
+  const resolvedOrgSlug = (org?.slug as string | undefined) ?? orgSlug;
+
   const freshToken = generateToken();
-  const { error: updateError } = await supabase
+  const admin = getEffectiveAdminClient(supabase);
+  const now = new Date().toISOString();
+  const { error: updateError } = await admin
     .from("organization_members")
-    .update({ invite_token: freshToken })
+    .update({ 
+      invite_token: freshToken,
+      invited_by: user.id,
+      updated_at: now,
+    })
     .eq("id", memberId);
 
   if (updateError) return { error: updateError.message };
 
-  const inviteUrl = `${APP_URL}/org/${orgSlug}/join?token=${freshToken}`;
+  const inviteUrl = `${APP_URL}/org/${resolvedOrgSlug}/join?token=${freshToken}`;
   const { data: inviterProfile } = await supabase
     .from("profiles")
     .select("full_name")
     .eq("user_id", user.id)
-    .single();
+    .maybeSingle();
 
-  await sendOrgInviteEmail({
-    to: target.invited_email,
-    inviterName: inviterProfile?.full_name ?? "Someone",
-    orgName,
-    role: target.role,
-    inviteUrl,
-  });
+  let emailError: string | null = null;
+  try {
+    await sendOrgInviteEmail({
+      to: target.invited_email,
+      inviterName: inviterProfile?.full_name ?? "Someone",
+      orgName: resolvedOrgName,
+      role: target.role,
+      inviteUrl,
+    });
+  } catch (err) {
+    console.error("[org-members] Failed to send invite email in resendInvite:", err);
+    emailError = err instanceof Error ? err.message : String(err);
+  }
 
-  revalidatePath(`/org/${orgSlug}/members`);
+  revalidatePath(`/org/${resolvedOrgSlug}/members`);
+
+  if (emailError) {
+    return {
+      error: `Failed to deliver email (${emailError}). Fresh invite link: ${inviteUrl}`,
+      inviteUrl,
+    };
+  }
+
+  return { success: true, inviteUrl };
 }
 
 export async function getOrgMembers(orgId: string) {
@@ -339,17 +444,20 @@ export async function getOrgMembers(orgId: string) {
     .from("organization_members")
     .select("*")
     .eq("organization_id", orgId)
-    .order("created_at", { ascending: true });
+    .order("created_at", { ascending: false });
 
   if (!members || members.length === 0) return [];
 
-  // Fetch profiles for members who have accepted (user_id is set)
+  // Fetch profiles for members who have accepted (user_id is set) AND inviters (invited_by is set)
   const userIds = members.map((m) => m.user_id).filter(Boolean) as string[];
-  const { data: profiles } = userIds.length > 0
+  const inviterIds = members.map((m) => m.invited_by).filter(Boolean) as string[];
+  const allUserIds = Array.from(new Set([...userIds, ...inviterIds]));
+
+  const { data: profiles } = allUserIds.length > 0
     ? await supabase
         .from("profiles")
-        .select("user_id, full_name, avatar_url")
-        .in("user_id", userIds)
+        .select("user_id, full_name, avatar_url, email")
+        .in("user_id", allUserIds)
     : { data: [] };
 
   const profileMap = new Map((profiles ?? []).map((p) => [p.user_id, p]));
@@ -357,6 +465,7 @@ export async function getOrgMembers(orgId: string) {
   return members.map((m) => ({
     ...m,
     profile: m.user_id ? profileMap.get(m.user_id) ?? null : null,
+    inviter: m.invited_by ? profileMap.get(m.invited_by) ?? null : null,
   }));
 }
 

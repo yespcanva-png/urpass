@@ -300,6 +300,7 @@ export type OrganizationMember = {
   created_at: string;
   updated_at: string;
   profile?: { full_name: string; avatar_url: string | null };
+  inviter?: { full_name: string; avatar_url: string | null; email?: string } | null;
 };
 
 export type EventAssignment = {
