@@ -383,8 +383,7 @@ export function validateMemberFormSubmission({
 
   if (serialConfig.enabled) {
     if (serialConfig.type === "auto_generated") {
-      // Generate serial atomically
-      resolvedSerial = generateNextAtomicSerial({
+      resolvedSerial = submission.serialNumber?.trim() || generateNextAtomicSerial({
         config: serialConfig,
         existingHighestSequence,
       });

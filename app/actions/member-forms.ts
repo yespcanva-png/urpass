@@ -158,9 +158,43 @@ export async function validateAndSubmitMemberFormAction({
     }
   }
 
+  let submissionForValidation = submission;
+  if (serialConfig.enabled && serialConfig.type === "auto_generated") {
+    const scope = serialConfig.scope || "event";
+    const scopeId =
+      scope === "organization"
+        ? event.organization_id || eventId
+        : scope === "global"
+        ? "global"
+        : eventId;
+
+    try {
+      const { data: generatedSerial, error: serialError } = await db.rpc(
+        "get_next_atomic_serial_sequence",
+        {
+          p_scope: scope,
+          p_scope_id: scopeId,
+          p_prefix: serialConfig.prefix || "URP-REG-",
+          p_padding: serialConfig.digitPadding || 6,
+          p_start_number: (serialConfig.startNumber || 1) + (serialConfig.continuationOffset || 0),
+          p_suffix: serialConfig.suffix || "",
+        }
+      );
+
+      if (!serialError && generatedSerial) {
+        submissionForValidation = {
+          ...submission,
+          serialNumber: String(generatedSerial),
+        };
+      }
+    } catch {
+      // Local test environments may not have the RPC; pure validation has a deterministic fallback.
+    }
+  }
+
   const validation = validateMemberFormSubmission({
     event,
-    submission,
+    submission: submissionForValidation,
     ticketTypeId,
     existingSerials,
     currentAttendeeId: attendeeId,
@@ -181,7 +215,7 @@ export async function validateAndSubmitMemberFormAction({
     if (existingAttendee) {
       const boundData = bindMemberDataToAttendee(
         existingAttendee,
-        submission,
+        submissionForValidation,
         validation.serialNumber
       );
 
@@ -207,15 +241,15 @@ export async function validateAndSubmitMemberFormAction({
             name: boundData.name,
             email: boundData.email,
             phone: boundData.phone || null,
-            college_org: submission.college_org || null,
-            department: submission.department || null,
-            course: submission.course || null,
-            year_or_designation: submission.year_or_designation || null,
-            roll_or_employee_id: submission.roll_or_employee_id || null,
+            college_org: submissionForValidation.college_org || null,
+            department: submissionForValidation.department || null,
+            course: submissionForValidation.course || null,
+            year_or_designation: submissionForValidation.year_or_designation || null,
+            roll_or_employee_id: submissionForValidation.roll_or_employee_id || null,
             serial_number: validation.serialNumber || null,
-            custom_responses: submission.customResponses || {},
-            declarations: submission.declarations || {},
-            document_url: submission.documentUrl || null,
+            custom_responses: submissionForValidation.customResponses || {},
+            declarations: submissionForValidation.declarations || {},
+            document_url: submissionForValidation.documentUrl || null,
             status: "submitted",
             updated_at: new Date().toISOString(),
           },

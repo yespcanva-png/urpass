@@ -413,6 +413,41 @@ describe("Module 03 — Member Forms & Serial Number Validation (Test 03 Suite)"
     expect(serial2).toBe("URP-REG-000124");
   });
 
+  it("Auto-Generated Serial: Uses server-provided atomic serial including suffix when present", () => {
+    const autoGenEvent: EventLike = {
+      ...baseEvent,
+      custom_pass_design: {
+        ...baseEvent.custom_pass_design,
+        _serialNumberConfig: {
+          enabled: true,
+          type: "auto_generated",
+          required: true,
+          prefix: "CONF-2026-",
+          suffix: "-VIP",
+          digitPadding: 4,
+          startNumber: 1,
+          scope: "event",
+        },
+      },
+    };
+
+    const result = validateMemberFormSubmission({
+      event: autoGenEvent,
+      ticketTypeId: "tt_vip",
+      submission: {
+        name: "VIP Delegate",
+        email: "vip@example.com",
+        college_org: "Yesp Studio",
+        declarations: { declaration_consent: true },
+        customResponses: { job_title: "Director" },
+        serialNumber: "CONF-2026-0042-VIP",
+      },
+    });
+
+    expect(result.valid).toBe(true);
+    expect(result.serialNumber).toBe("CONF-2026-0042-VIP");
+  });
+
   // ── Pass Condition: Field Binding to Individual Member Record ─────────────────
   it("Pass Condition: All collected member form fields and serial number are correctly bound to the attendee record", () => {
     const validStudentSubmission: MemberFormSubmission = {
