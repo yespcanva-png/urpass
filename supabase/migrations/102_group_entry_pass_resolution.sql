@@ -13,10 +13,10 @@ SET
   is_group_master = true,
   total_guests = GREATEST(
     COALESCE(
-      NULLIF((a.custom_responses->>'group_attendee_count')::int, 0),
-      NULLIF((a.custom_responses->>'bulk_quantity')::int, 0),
-      NULLIF((a.custom_responses->>'guest_count')::int, 0),
-      jsonb_array_length(NULLIF(a.custom_responses->'group_members', 'null'::jsonb)),
+      NULLIF(regexp_replace(COALESCE(a.custom_responses->>'group_attendee_count', '0'), '[^0-9]', '', 'g'), '')::int,
+      NULLIF(regexp_replace(COALESCE(a.custom_responses->>'bulk_quantity', '0'), '[^0-9]', '', 'g'), '')::int,
+      NULLIF(regexp_replace(COALESCE(a.custom_responses->>'guest_count', '0'), '[^0-9]', '', 'g'), '')::int,
+      CASE WHEN jsonb_typeof(a.custom_responses->'group_members') = 'array' THEN jsonb_array_length(a.custom_responses->'group_members') ELSE NULL END,
       tt.included_guests,
       o.total_attendee_count,
       p.total_guests,
@@ -29,12 +29,12 @@ LEFT JOIN public.ticket_types tt ON tt.id = a.ticket_type_id
 LEFT JOIN public.ticket_orders o ON o.attendee_id = a.id
 WHERE p.attendee_id = a.id
   AND (
-    (a.custom_responses->>'is_single_group_qr')::boolean = true
-    OR COALESCE((a.custom_responses->>'group_attendee_count')::int, 0) > 1
-    OR COALESCE((a.custom_responses->>'bulk_quantity')::int, 0) > 1
-    OR tt.is_group_pass = true
+    COALESCE(a.custom_responses->>'is_single_group_qr', 'false') IN ('true', 't', '1')
+    OR COALESCE(NULLIF(regexp_replace(COALESCE(a.custom_responses->>'group_attendee_count', '0'), '[^0-9]', '', 'g'), '')::int, 0) > 1
+    OR COALESCE(NULLIF(regexp_replace(COALESCE(a.custom_responses->>'bulk_quantity', '0'), '[^0-9]', '', 'g'), '')::int, 0) > 1
+    OR COALESCE(tt.is_group_pass, false) = true
     OR (tt.included_guests IS NOT NULL AND tt.included_guests > 1)
-    OR (o.group_entry_enabled = true AND COALESCE(o.total_attendee_count, 0) > 1)
+    OR (COALESCE(o.group_entry_enabled, false) = true AND COALESCE(o.total_attendee_count, 0) > 1)
   );
 
 -- ── 2. Upgrade atomic_check_in_pass to automatically detect Single Group QRs ──
@@ -147,21 +147,21 @@ BEGIN
   END IF;
 
   -- 4. Authoritative Single Group QR Detection
-  v_is_single_group_qr := Boolean(
-    v_is_group_master = true
+  v_is_single_group_qr := (
+    COALESCE(v_is_group_master, false) = true
     OR v_total_guests > 1
-    OR (v_custom_responses->>'is_single_group_qr')::boolean = true
-    OR COALESCE((v_custom_responses->>'group_attendee_count')::int, 0) > 1
-    OR COALESCE((v_custom_responses->>'bulk_quantity')::int, 0) > 1
-    OR v_is_group_pass_type = true
+    OR COALESCE(v_custom_responses->>'is_single_group_qr', 'false') IN ('true', 't', '1')
+    OR COALESCE(NULLIF(regexp_replace(COALESCE(v_custom_responses->>'group_attendee_count', '0'), '[^0-9]', '', 'g'), '')::int, 0) > 1
+    OR COALESCE(NULLIF(regexp_replace(COALESCE(v_custom_responses->>'bulk_quantity', '0'), '[^0-9]', '', 'g'), '')::int, 0) > 1
+    OR COALESCE(v_is_group_pass_type, false) = true
   );
 
   IF v_is_single_group_qr THEN
     v_group_total := GREATEST(
       v_total_guests,
-      COALESCE((v_custom_responses->>'group_attendee_count')::int, 0),
-      COALESCE((v_custom_responses->>'bulk_quantity')::int, 0),
-      COALESCE((v_custom_responses->>'guest_count')::int, 0),
+      COALESCE(NULLIF(regexp_replace(COALESCE(v_custom_responses->>'group_attendee_count', '0'), '[^0-9]', '', 'g'), '')::int, 0),
+      COALESCE(NULLIF(regexp_replace(COALESCE(v_custom_responses->>'bulk_quantity', '0'), '[^0-9]', '', 'g'), '')::int, 0),
+      COALESCE(NULLIF(regexp_replace(COALESCE(v_custom_responses->>'guest_count', '0'), '[^0-9]', '', 'g'), '')::int, 0),
       1
     );
     v_group_remaining := GREATEST(0, v_group_total - v_checked_in_guests);
@@ -352,9 +352,9 @@ BEGIN
     SELECT p.id, p.event_id, p.attendee_id, p.status,
            GREATEST(
              COALESCE(p.total_guests, 1),
-             COALESCE((a.custom_responses->>'group_attendee_count')::int, 0),
-             COALESCE((a.custom_responses->>'bulk_quantity')::int, 0),
-             COALESCE((a.custom_responses->>'guest_count')::int, 0),
+             COALESCE(NULLIF(regexp_replace(COALESCE(a.custom_responses->>'group_attendee_count', '0'), '[^0-9]', '', 'g'), '')::int, 0),
+             COALESCE(NULLIF(regexp_replace(COALESCE(a.custom_responses->>'bulk_quantity', '0'), '[^0-9]', '', 'g'), '')::int, 0),
+             COALESCE(NULLIF(regexp_replace(COALESCE(a.custom_responses->>'guest_count', '0'), '[^0-9]', '', 'g'), '')::int, 0),
              1
            ) as total_units,
            COALESCE(p.checked_in_guests, 0) as used_units,
