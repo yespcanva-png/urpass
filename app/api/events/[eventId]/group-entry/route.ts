@@ -641,6 +641,11 @@ export async function POST(
   const admittedEntitlements = Number(orderData?.admitted_entitlements || passData?.checked_in_guests || 0);
   const remaining = Math.max(0, totalEntitlements - admittedEntitlements);
   const rawStatus = (orderData?.status || passData?.status || "VALID").toUpperCase();
+  const resolvedBookingReference =
+    passData?.pass_token ||
+    orderData?.group_qr_code ||
+    orderData?.id ||
+    cleanRef;
 
   // Authoritative credential type resolution.
   const isSingleGroupQr = Boolean(
@@ -734,7 +739,7 @@ export async function POST(
         event_id: canonicalEventId,
         order_id: orderData?.id || null,
         pass_id: passData?.id || null,
-        group_booking_reference: cleanRef,
+        group_booking_reference: resolvedBookingReference,
         admitted_count: targetAdmitted - admittedEntitlements,
         total_entitlements: totalEntitlements,
         previously_admitted: admittedEntitlements,
@@ -751,7 +756,7 @@ export async function POST(
     return NextResponse.json({
       success: true,
       status: "CORRECTION_APPLIED",
-      bookingReference: cleanRef,
+      bookingReference: resolvedBookingReference,
       buyerName,
       totalEntitlements,
       admittedEntitlements: targetAdmitted,
@@ -767,7 +772,7 @@ export async function POST(
         success: false,
         status: "BOOKING_INVALID",
         error: `Booking is ${rawStatus.toLowerCase()}. Access denied.`,
-        bookingReference: cleanRef,
+        bookingReference: resolvedBookingReference,
         buyerName,
         totalEntitlements,
         previouslyAdmitted: admittedEntitlements,
@@ -780,7 +785,7 @@ export async function POST(
         success: false,
         status: "EXHAUSTED",
         error: "All group entitlements have already been admitted.",
-        bookingReference: cleanRef,
+        bookingReference: resolvedBookingReference,
         buyerName,
         totalEntitlements,
         previouslyAdmitted: admittedEntitlements,
@@ -793,7 +798,7 @@ export async function POST(
       const { data: hist } = await db
         .from("group_entry_admissions")
         .select("id, admitted_count, remaining_after, admitted_at, gate_id")
-        .eq("group_booking_reference", cleanRef)
+        .in("group_booking_reference", [cleanRef, resolvedBookingReference])
         .order("admitted_at", { ascending: false })
         .limit(5);
       if (hist) {
@@ -813,7 +818,7 @@ export async function POST(
       success: true,
       status: "VALID",
       credentialType: "GROUP_QR",
-      bookingReference: cleanRef,
+      bookingReference: resolvedBookingReference,
       buyerName,
       buyerEmail,
       ticketCategory: "General Admission · Group Booking",
@@ -831,7 +836,7 @@ export async function POST(
   // concurrent gate scans.
   try {
     const { data: rpcResult, error: rpcErr } = await db.rpc("atomic_group_entry_checkin", {
-      p_group_booking_ref: cleanRef,
+      p_group_booking_ref: resolvedBookingReference,
       p_event_id: canonicalEventId,
       p_quantity: Number(quantity),
       p_checked_in_by: user.id,
