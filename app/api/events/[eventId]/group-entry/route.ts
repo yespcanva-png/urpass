@@ -616,7 +616,7 @@ export async function POST(
 
     return NextResponse.json(
       notFoundBody,
-      { status: action === "lookup" ? 200 : 404 }
+      { status: 200 }
     );
   }
 

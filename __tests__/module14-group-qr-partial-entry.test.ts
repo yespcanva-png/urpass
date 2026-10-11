@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { calculateGroupAdmission, parseScannedGroupQR, generateGroupQRPayload } from "../lib/group-entry";
+import { calculateGroupAdmission, parseScannedGroupQR, generateGroupQRPayload, normalizeScannedToken } from "../lib/group-entry";
 
 describe("Module M14: Bulk Group QR Entry & Partial Check-In", () => {
   const baseBooking = {
@@ -374,6 +374,19 @@ describe("Module M14: Bulk Group QR Entry & Partial Check-In", () => {
       expect(parsedJson.buyerName).toBe("Dev Team");
     });
 
+    it("extracts group booking references from web pass query links", () => {
+      expect(normalizeScannedToken("https://urpass.space/pass?token=URP-GRP-10021")).toBe("URP-GRP-10021");
+      expect(normalizeScannedToken("https://urpass.space/scan?bookingReference=GRP-BOOK-42")).toBe("GRP-BOOK-42");
+
+      const parsedTokenParam = parseScannedGroupQR("https://urpass.space/pass?token=URP-GRP-10021");
+      expect(parsedTokenParam.isGroupQR).toBe(true);
+      expect(parsedTokenParam.bookingReference).toBe("URP-GRP-10021");
+
+      const parsedBookingParam = parseScannedGroupQR("https://urpass.space/scan?bookingReference=GROUP-BOOK-42");
+      expect(parsedBookingParam.isGroupQR).toBe(true);
+      expect(parsedBookingParam.bookingReference).toBe("GROUP-BOOK-42");
+    });
+
     it("ensures individual passes with multi-guest booking context are NOT identified as group QR without authoritative group token", () => {
       // Individual pass issued to a family member in a 4-person order
       const individualPassToken = "pass_family_member_03";
@@ -406,4 +419,3 @@ describe("Module M14: Bulk Group QR Entry & Partial Check-In", () => {
     });
   });
 });
-

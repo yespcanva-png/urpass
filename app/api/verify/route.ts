@@ -148,11 +148,25 @@ export async function POST(req: NextRequest) {
   if (cleanPassToken.startsWith("http://") || cleanPassToken.startsWith("https://")) {
     try {
       const url = new URL(cleanPassToken);
-      const match = url.pathname.match(/\/pass\/([^\/]+)/);
-      if (match) {
-        cleanPassToken = match[1];
+      const queryToken =
+        url.searchParams.get("token") ||
+        url.searchParams.get("passToken") ||
+        url.searchParams.get("pass_token") ||
+        url.searchParams.get("ref") ||
+        url.searchParams.get("reference") ||
+        url.searchParams.get("bookingReference") ||
+        url.searchParams.get("booking_reference") ||
+        url.searchParams.get("qr") ||
+        url.searchParams.get("code");
+      if (queryToken) {
+        cleanPassToken = decodeURIComponent(queryToken).trim();
       } else {
-        cleanPassToken = cleanPassToken.replace(/^https?:\/\/[^\/]+\/pass\//, "").split("?")[0];
+        const match = url.pathname.match(/\/pass\/([^\/]+)/);
+        if (match) {
+          cleanPassToken = match[1];
+        } else {
+          cleanPassToken = cleanPassToken.replace(/^https?:\/\/[^\/]+\/pass\//, "").split("?")[0];
+        }
       }
     } catch {
       cleanPassToken = cleanPassToken.replace(/^https?:\/\/[^\/]+\/pass\//, "").split("?")[0];

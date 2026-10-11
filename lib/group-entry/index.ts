@@ -265,6 +265,18 @@ export function normalizeScannedToken(rawToken: string): string {
   if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
     try {
       const url = new URL(trimmed);
+      const queryToken =
+        url.searchParams.get("token") ||
+        url.searchParams.get("passToken") ||
+        url.searchParams.get("pass_token") ||
+        url.searchParams.get("ref") ||
+        url.searchParams.get("reference") ||
+        url.searchParams.get("bookingReference") ||
+        url.searchParams.get("booking_reference") ||
+        url.searchParams.get("qr") ||
+        url.searchParams.get("code");
+      if (queryToken) return decodeURIComponent(queryToken).trim();
+
       const match = url.pathname.match(/\/pass\/([^\/]+)/);
       if (match && match[1]) {
         trimmed = decodeURIComponent(match[1]);
