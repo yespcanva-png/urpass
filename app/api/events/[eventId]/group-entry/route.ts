@@ -590,15 +590,19 @@ export async function POST(
   const remaining = Math.max(0, totalEntitlements - admittedEntitlements);
   const rawStatus = (orderData?.status || passData?.status || "VALID").toUpperCase();
 
-  // Authoritative credential type resolution. Capacity fields are not proof that
-  // the scanned credential is a group credential; they only size an already
-  // verified group credential.
+  // Authoritative credential type resolution.
   const isSingleGroupQr = Boolean(
     passData?.is_group_master ||
     passData?.is_group_pass ||
+    Number(passData?.total_guests) > 1 ||
     ticketTypeObj?.is_group_pass ||
+    Number(ticketTypeObj?.included_guests) > 1 ||
     customResponses.is_single_group_qr === true ||
     customResponses.is_single_group_qr === "true" ||
+    Number(customResponses.group_attendee_count) > 1 ||
+    Number(customResponses.bulk_quantity) > 1 ||
+    Number(customResponses.guest_count) > 1 ||
+    (Array.isArray(customResponses.group_members) && customResponses.group_members.length > 1) ||
     customResponses.credential_type === "GROUP_QR" ||
     customResponses.credentialType === "GROUP_QR"
   );

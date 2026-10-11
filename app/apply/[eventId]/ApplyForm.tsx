@@ -426,7 +426,7 @@ export default function ApplyForm({
         : {}),
       ...(groupPassMode === "group_qr" || selectedTicket?.is_group_pass
         ? {
-            is_single_group_qr: groupPassMode === "group_qr",
+            is_single_group_qr: selectedTicket?.is_group_pass ? groupPassMode !== "individual" : groupPassMode === "group_qr",
             group_entry_mode: "count_only",
             group_attendee_count: (activeFeatures?.bulkBooking && !selectedTicket?.is_group_pass && bulkQuantity > 1) ? bulkQuantity : peopleCount,
           }
@@ -616,7 +616,7 @@ export default function ApplyForm({
         : {}),
       ...(groupPassMode === "group_qr" || selectedTicket?.is_group_pass
         ? {
-            is_single_group_qr: groupPassMode === "group_qr",
+            is_single_group_qr: selectedTicket?.is_group_pass ? groupPassMode !== "individual" : groupPassMode === "group_qr",
             group_entry_mode: "count_only",
             group_attendee_count: (activeFeatures?.bulkBooking && !selectedTicket?.is_group_pass && bulkQuantity > 1) ? bulkQuantity : peopleCount,
           }

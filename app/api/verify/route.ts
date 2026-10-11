@@ -199,9 +199,15 @@ export async function POST(req: NextRequest) {
       const isGroup = Boolean(
         groupCheck?.is_group_master ||
         groupCheck?.is_group_pass ||
+        Number(groupCheck?.total_guests) > 1 ||
         ticketType?.is_group_pass ||
+        Number(ticketType?.included_guests) > 1 ||
         cr.is_single_group_qr === true ||
         cr.is_single_group_qr === "true" ||
+        Number(cr.group_attendee_count) > 1 ||
+        Number(cr.bulk_quantity) > 1 ||
+        Number(cr.guest_count) > 1 ||
+        (Array.isArray(cr.group_members) && cr.group_members.length > 1) ||
         cr.credential_type === "GROUP_QR" ||
         cr.credentialType === "GROUP_QR"
       );
@@ -407,9 +413,15 @@ export async function POST(req: NextRequest) {
     pass && (
       pass.is_group_master ||
       pass.is_group_pass ||
+      Number(pass.total_guests) > 1 ||
       passTicketType?.is_group_pass ||
+      Number(passTicketType?.included_guests) > 1 ||
       passCr.is_single_group_qr === true ||
       passCr.is_single_group_qr === "true" ||
+      Number(passCr.group_attendee_count) > 1 ||
+      Number(passCr.bulk_quantity) > 1 ||
+      Number(passCr.guest_count) > 1 ||
+      (Array.isArray(passCr.group_members) && passCr.group_members.length > 1) ||
       passCr.credential_type === "GROUP_QR" ||
       passCr.credentialType === "GROUP_QR"
     )
