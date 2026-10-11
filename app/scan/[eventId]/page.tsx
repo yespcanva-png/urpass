@@ -732,7 +732,7 @@ export default function ScanEventPage() {
       // ── M14: Bulk Group QR Entry Flow ──
       const cleanToken = normalizeScannedToken(rawToken);
       const parsedGroup = parseScannedGroupQR(rawToken);
-      if (!selectedSessionId) {
+      if (!selectedSessionId && parsedGroup.isGroupQR) {
         try {
           const res = await fetch(`/api/events/${eventId}/group-entry`, {
             method: "POST",
