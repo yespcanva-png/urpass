@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { getSupabaseUrl } from "@/lib/supabase/config";
-import { isFeatureEnabled } from "@/lib/feature-flags";
+import { isFeatureEnabled, getEventFeaturesConfig } from "@/lib/feature-flags";
 import { calculateGroupAdmission, parseScannedGroupQR, normalizeScannedToken, admitGroupMembers } from "@/lib/group-entry";
 import crypto from "crypto";
 
@@ -423,13 +423,14 @@ export async function POST(
       id,
       event_id,
       pass_token,
+      pass_type,
       status,
       total_guests,
       checked_in_guests,
       group_members,
       order_id,
       is_group_master,
-      attendee:attendees (id, name, email)
+      attendee:attendees (id, name, email, pass_type, custom_responses)
     `)
     .eq("event_id", eventId);
 
@@ -460,13 +461,14 @@ export async function POST(
         id,
         event_id,
         pass_token,
+        pass_type,
         status,
         total_guests,
         checked_in_guests,
         group_members,
         order_id,
         is_group_master,
-        attendee:attendees (id, name, email)
+        attendee:attendees (id, name, email, pass_type, custom_responses)
       `)
       .eq("order_id", orderData.id)
       .eq("event_id", eventId)
@@ -491,13 +493,14 @@ export async function POST(
             id,
             event_id,
             pass_token,
+            pass_type,
             status,
             total_guests,
             checked_in_guests,
             group_members,
             order_id,
             is_group_master,
-            attendee:attendees (id, name, email)
+            attendee:attendees (id, name, email, pass_type, custom_responses)
           `)
           .eq("attendee_id", attendeeWithCustomId.id)
           .eq("event_id", eventId)
@@ -543,24 +546,46 @@ export async function POST(
   const attendeeObj = passData ? (Array.isArray(passData.attendee) ? passData.attendee[0] : passData.attendee) : null;
   const buyerName = orderData?.buyer_name || attendeeObj?.name || "Group Pass Holder";
   const buyerEmail = orderData?.buyer_email || attendeeObj?.email || "";
-  const totalEntitlements = Number(orderData?.total_attendee_count || orderData?.total_entitlements || passData?.total_guests || 1);
+  const customResponses = (attendeeObj?.custom_responses as Record<string, any>) || {};
+
+  const totalEntitlements = Number(
+    orderData?.total_attendee_count ||
+    orderData?.total_entitlements ||
+    (passData?.total_guests && Number(passData.total_guests) > 1 ? passData.total_guests : null) ||
+    customResponses.group_attendee_count ||
+    customResponses.bulk_quantity ||
+    customResponses.guest_count ||
+    (Array.isArray(customResponses.group_members) ? customResponses.group_members.length : null) ||
+    passData?.total_guests ||
+    1
+  );
   const admittedEntitlements = Number(orderData?.admitted_entitlements || passData?.checked_in_guests || 0);
   const remaining = Math.max(0, totalEntitlements - admittedEntitlements);
   const rawStatus = (orderData?.status || passData?.status || "VALID").toUpperCase();
 
   // Authoritative credential type resolution:
-  // A credential is ONLY a Group QR if:
-  // 1. Explicitly designated as a group master pass (passData.is_group_master)
-  // 2. Or order has group QR enabled and cleanRef matches the group_qr_code / direct group order
-  // 3. Or explicit group QR payload/token prefix (URP-GRP-, GRP-, GROUP-)
-  // Individual passes with total_guests > 1 (e.g. family booking with individual passes) MUST NOT be hijacked as Group QRs.
+  const isSingleGroupQr = Boolean(
+    passData?.is_group_master ||
+    customResponses.is_single_group_qr ||
+    (passData?.total_guests && Number(passData.total_guests) > 1) ||
+    (customResponses.group_attendee_count && Number(customResponses.group_attendee_count) > 1) ||
+    (customResponses.bulk_quantity && Number(customResponses.bulk_quantity) > 1)
+  );
+
   const isAuthoritativeGroupCredential =
-    Boolean(passData?.is_group_master) ||
+    isSingleGroupQr ||
     Boolean(orderData && orderData.group_entry_enabled && (orderData.group_qr_code === cleanRef || orderData.id === cleanRef)) ||
     cleanRef.startsWith("URP-GRP-") ||
     cleanRef.startsWith("GRP-") ||
     cleanRef.startsWith("GROUP-") ||
     parsedQR.isGroupQR;
+
+  // Background synchronize pass master state and total guests if missing
+  if (passData?.id && isSingleGroupQr && (!passData.is_group_master || passData.total_guests !== totalEntitlements)) {
+    void Promise.resolve(
+      db.from("passes").update({ is_group_master: true, total_guests: totalEntitlements }).eq("id", passData.id)
+    ).catch(() => {});
+  }
 
   if (!isAuthoritativeGroupCredential && action === "lookup") {
     return NextResponse.json(

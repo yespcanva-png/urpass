@@ -1482,7 +1482,7 @@ export async function retryPassGeneration(
 
   const { data: attendee, error: attError } = await admin
     .from("attendees")
-    .select("id, name, email, phone, pass_type, application_status, pass_status, ticket_type_id, pass_retry_count")
+    .select("id, name, email, phone, pass_type, application_status, pass_status, ticket_type_id, pass_retry_count, custom_responses")
     .eq("id", attendeeId)
     .eq("event_id", eventId)
     .single();
@@ -1518,6 +1518,17 @@ export async function retryPassGeneration(
     .eq("id", eventId)
     .single();
 
+  const cr = (attendee.custom_responses as Record<string, any>) || {};
+  const isSingleGroupQr = Boolean(
+    cr.is_single_group_qr ||
+    (cr.group_attendee_count && Number(cr.group_attendee_count) > 1) ||
+    (cr.bulk_quantity && Number(cr.bulk_quantity) > 1)
+  );
+  const groupAttendeeCount = Math.max(
+    1,
+    Number(cr.group_attendee_count || cr.bulk_quantity || cr.guest_count || (Array.isArray(cr.group_members) ? cr.group_members.length : 1))
+  );
+
   // 3. Attempt insert
   const { data: newPass, error: passErr } = await admin
     .from("passes")
@@ -1526,6 +1537,11 @@ export async function retryPassGeneration(
       attendee_id: attendee.id,
       pass_type: attendee.pass_type,
       ticket_type_id: attendee.ticket_type_id ?? null,
+      ...(isSingleGroupQr ? {
+        is_group_master: true,
+        total_guests: groupAttendeeCount,
+        checked_in_guests: 0,
+      } : {}),
     })
     .select("pass_token")
     .single();

@@ -1,0 +1,533 @@
+-- ============================================================
+-- Migration 102: Enhanced Group QR Pass Resolution & SQL Stored Procedures
+-- Solves:
+-- 1. Automatic Group QR identification at the scan gate
+-- 2. Backfill of is_group_master and total_guests for all existing group passes
+-- 3. Updating atomic_check_in_pass to detect Group QRs and trigger quantity prompt
+-- 4. Updating atomic_group_entry_checkin to allocate durable check_ins for all admitted members
+-- ============================================================
+
+-- ── 1. Backfill existing passes from attendees / ticket_types / orders ──
+UPDATE public.passes p
+SET 
+  is_group_master = true,
+  total_guests = GREATEST(
+    COALESCE(
+      NULLIF((a.custom_responses->>'group_attendee_count')::int, 0),
+      NULLIF((a.custom_responses->>'bulk_quantity')::int, 0),
+      NULLIF((a.custom_responses->>'guest_count')::int, 0),
+      jsonb_array_length(NULLIF(a.custom_responses->'group_members', 'null'::jsonb)),
+      tt.included_guests,
+      o.total_attendee_count,
+      p.total_guests,
+      1
+    ),
+    2
+  )
+FROM public.attendees a
+LEFT JOIN public.ticket_types tt ON tt.id = a.ticket_type_id
+LEFT JOIN public.ticket_orders o ON o.attendee_id = a.id
+WHERE p.attendee_id = a.id
+  AND (
+    (a.custom_responses->>'is_single_group_qr')::boolean = true
+    OR COALESCE((a.custom_responses->>'group_attendee_count')::int, 0) > 1
+    OR COALESCE((a.custom_responses->>'bulk_quantity')::int, 0) > 1
+    OR tt.is_group_pass = true
+    OR (tt.included_guests IS NOT NULL AND tt.included_guests > 1)
+    OR (o.group_entry_enabled = true AND COALESCE(o.total_attendee_count, 0) > 1)
+  );
+
+-- ── 2. Upgrade atomic_check_in_pass to automatically detect Single Group QRs ──
+CREATE OR REPLACE FUNCTION public.atomic_check_in_pass(
+  p_pass_token TEXT,
+  p_event_id UUID,
+  p_checked_in_by UUID,
+  p_gate_id UUID DEFAULT NULL,
+  p_check_in_method TEXT DEFAULT 'qr',
+  p_scan_operation_id TEXT DEFAULT NULL
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  v_pass_id UUID;
+  v_attendee_id UUID;
+  v_ticket_type_id UUID;
+  v_pass_type TEXT;
+  v_pass_status TEXT;
+  v_att_name TEXT;
+  v_att_email TEXT;
+  v_att_app_status TEXT;
+  v_att_pass_status TEXT;
+  v_gate_zone_id UUID;
+  v_has_zone_access BOOLEAN;
+  v_existing_ci_at TIMESTAMPTZ;
+  v_new_ci_id UUID;
+  v_new_ci_at TIMESTAMPTZ;
+  
+  -- Group pass detection variables
+  v_is_group_master BOOLEAN;
+  v_total_guests INT;
+  v_checked_in_guests INT;
+  v_custom_responses JSONB;
+  v_is_group_pass_type BOOLEAN;
+  v_is_single_group_qr BOOLEAN;
+  v_group_total INT;
+  v_group_remaining INT;
+BEGIN
+  -- 1. Idempotency check: if scan_operation_id was already executed, return original result
+  IF p_scan_operation_id IS NOT NULL THEN
+    SELECT c.checked_in_at, a.name, a.email, p.pass_type
+    INTO v_existing_ci_at, v_att_name, v_att_email, v_pass_type
+    FROM public.check_ins c
+    JOIN public.passes p ON p.id = c.pass_id
+    JOIN public.attendees a ON a.id = c.attendee_id
+    WHERE c.scan_operation_id = p_scan_operation_id;
+
+    IF FOUND THEN
+      RETURN jsonb_build_object(
+        'status', 'CHECKED_IN',
+        'success', true,
+        'idempotent', true,
+        'checkedInAt', v_existing_ci_at,
+        'attendee', jsonb_build_object('name', v_att_name, 'email', v_att_email, 'pass_type', v_pass_type),
+        'passType', v_pass_type,
+        'scanOperationId', p_scan_operation_id
+      );
+    END IF;
+  END IF;
+
+  -- 2. Lock pass row to serialize concurrent gate scans of the exact same pass
+  SELECT p.id, p.attendee_id, p.ticket_type_id, p.pass_type, p.status,
+         p.is_group_master, COALESCE(p.total_guests, 1), COALESCE(p.checked_in_guests, 0),
+         a.name, a.email, a.application_status, a.pass_status, a.custom_responses,
+         COALESCE(tt.is_group_pass, false)
+  INTO v_pass_id, v_attendee_id, v_ticket_type_id, v_pass_type, v_pass_status,
+       v_is_group_master, v_total_guests, v_checked_in_guests,
+       v_att_name, v_att_email, v_att_app_status, v_att_pass_status, v_custom_responses,
+       v_is_group_pass_type
+  FROM public.passes p
+  JOIN public.attendees a ON a.id = p.attendee_id
+  LEFT JOIN public.ticket_types tt ON tt.id = p.ticket_type_id
+  WHERE (p.pass_token = p_pass_token OR p.id::text = p_pass_token) AND p.event_id = p_event_id
+  FOR UPDATE OF p;
+
+  IF NOT FOUND THEN
+    RETURN jsonb_build_object(
+      'status', 'INVALID',
+      'error', 'Invalid pass — not found for this event',
+      'scanOperationId', p_scan_operation_id
+    );
+  END IF;
+
+  -- 3. Gate Zone Access Verification
+  IF p_gate_id IS NOT NULL THEN
+    SELECT zone_id INTO v_gate_zone_id
+    FROM public.scanner_gates
+    WHERE id = p_gate_id AND event_id = p_event_id;
+
+    IF v_gate_zone_id IS NOT NULL AND v_ticket_type_id IS NOT NULL THEN
+      SELECT EXISTS (
+        SELECT 1 FROM public.ticket_zone_access
+        WHERE ticket_type_id = v_ticket_type_id AND zone_id = v_gate_zone_id
+      ) INTO v_has_zone_access;
+
+      IF NOT v_has_zone_access THEN
+        RETURN jsonb_build_object(
+          'status', 'ACCESS_DENIED',
+          'accessDenied', true,
+          'error', 'This pass is not authorized for this gate / zone.',
+          'passType', v_pass_type,
+          'scanOperationId', p_scan_operation_id
+        );
+      END IF;
+    END IF;
+  END IF;
+
+  -- 4. Authoritative Single Group QR Detection
+  v_is_single_group_qr := Boolean(
+    v_is_group_master = true
+    OR v_total_guests > 1
+    OR (v_custom_responses->>'is_single_group_qr')::boolean = true
+    OR COALESCE((v_custom_responses->>'group_attendee_count')::int, 0) > 1
+    OR COALESCE((v_custom_responses->>'bulk_quantity')::int, 0) > 1
+    OR v_is_group_pass_type = true
+  );
+
+  IF v_is_single_group_qr THEN
+    v_group_total := GREATEST(
+      v_total_guests,
+      COALESCE((v_custom_responses->>'group_attendee_count')::int, 0),
+      COALESCE((v_custom_responses->>'bulk_quantity')::int, 0),
+      COALESCE((v_custom_responses->>'guest_count')::int, 0),
+      1
+    );
+    v_group_remaining := GREATEST(0, v_group_total - v_checked_in_guests);
+
+    -- Ensure pass record is synchronized with group master status
+    IF v_is_group_master IS NOT TRUE OR v_total_guests <> v_group_total THEN
+      UPDATE public.passes
+      SET is_group_master = true, total_guests = v_group_total
+      WHERE id = v_pass_id;
+    END IF;
+
+    -- If all entitlements exhausted
+    IF v_group_remaining <= 0 OR v_pass_status = 'checked_in' THEN
+      RETURN jsonb_build_object(
+        'status', 'EXHAUSTED',
+        'isGroupQR', true,
+        'alreadyCheckedIn', true,
+        'bookingReference', p_pass_token,
+        'totalEntitlements', v_group_total,
+        'previouslyAdmitted', v_checked_in_guests,
+        'remainingEntries', 0,
+        'error', format('All %s group pass entry entitlements have already been admitted.', v_group_total),
+        'message', format('All %s group pass entry entitlements have already been admitted.', v_group_total),
+        'scanOperationId', p_scan_operation_id
+      );
+    END IF;
+
+    -- Return Group QR Detection without consuming entitlement -> Prompt Scanner Modal!
+    RETURN jsonb_build_object(
+      'status', 'GROUP_PASS_DETECTED',
+      'success', true,
+      'isGroupQR', true,
+      'bookingReference', p_pass_token,
+      'buyerName', v_att_name,
+      'buyerEmail', v_att_email,
+      'ticketCategory', v_pass_type,
+      'totalEntitlements', v_group_total,
+      'previouslyAdmitted', v_checked_in_guests,
+      'remainingEntries', v_group_remaining,
+      'message', 'Single Group QR pass detected. How many people are entering now?',
+      'scanOperationId', p_scan_operation_id
+    );
+  END IF;
+
+  -- 5. Individual Pass Flow: Check already checked in
+  IF v_pass_status = 'checked_in' OR v_att_pass_status = 'checked_in' THEN
+    SELECT checked_in_at INTO v_existing_ci_at
+    FROM public.check_ins
+    WHERE pass_id = v_pass_id
+    ORDER BY checked_in_at DESC
+    LIMIT 1;
+
+    RETURN jsonb_build_object(
+      'status', 'ALREADY_CHECKED_IN',
+      'alreadyCheckedIn', true,
+      'checkedInAt', COALESCE(v_existing_ci_at, NOW()),
+      'attendee', jsonb_build_object('name', v_att_name, 'email', v_att_email, 'pass_type', v_pass_type),
+      'passType', v_pass_type,
+      'scanOperationId', p_scan_operation_id
+    );
+  END IF;
+
+  -- 6. Atomically update pass and attendee status
+  v_new_ci_at := NOW();
+
+  UPDATE public.passes
+  SET status = 'checked_in', updated_at = v_new_ci_at
+  WHERE id = v_pass_id;
+
+  UPDATE public.attendees
+  SET pass_status = 'checked_in', venue_presence_state = 'inside', last_scanned_at = v_new_ci_at, updated_at = v_new_ci_at
+  WHERE id = v_attendee_id;
+
+  -- 7. Insert durable check_in record
+  INSERT INTO public.check_ins (
+    pass_id,
+    event_id,
+    attendee_id,
+    checked_in_by,
+    gate_id,
+    check_in_method,
+    scan_operation_id,
+    checked_in_at
+  ) VALUES (
+    v_pass_id,
+    p_event_id,
+    v_attendee_id,
+    p_checked_in_by,
+    p_gate_id,
+    p_check_in_method,
+    p_scan_operation_id,
+    v_new_ci_at
+  ) RETURNING id INTO v_new_ci_id;
+
+  RETURN jsonb_build_object(
+    'status', 'CHECKED_IN',
+    'success', true,
+    'checkedInAt', v_new_ci_at,
+    'attendee', jsonb_build_object('name', v_att_name, 'email', v_att_email, 'pass_type', v_pass_type),
+    'passType', v_pass_type,
+    'checkInId', v_new_ci_id,
+    'scanOperationId', p_scan_operation_id
+  );
+END;
+$$;
+
+-- ── 3. Upgrade atomic_group_entry_checkin ──────────────────────
+CREATE OR REPLACE FUNCTION public.atomic_group_entry_checkin(
+  p_group_booking_ref TEXT,
+  p_event_id UUID,
+  p_quantity INT,
+  p_checked_in_by UUID,
+  p_operator_email TEXT DEFAULT NULL,
+  p_gate_id UUID DEFAULT NULL,
+  p_device_id TEXT DEFAULT 'web-scanner',
+  p_scan_operation_id TEXT DEFAULT NULL,
+  p_entry_mode TEXT DEFAULT 'count_only',
+  p_admitted_members JSONB DEFAULT '[]'::jsonb
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  v_order RECORD;
+  v_pass RECORD;
+  v_total_entitlements INT;
+  v_previously_admitted INT;
+  v_remaining INT;
+  v_new_remaining INT;
+  v_admission_id UUID;
+  v_now TIMESTAMPTZ := now();
+  v_existing_admission RECORD;
+  i INT;
+BEGIN
+  -- 1. Idempotency Check
+  IF p_scan_operation_id IS NOT NULL THEN
+    SELECT * INTO v_existing_admission
+    FROM public.group_entry_admissions
+    WHERE scan_operation_id = p_scan_operation_id;
+
+    IF FOUND THEN
+      RETURN jsonb_build_object(
+        'success', true,
+        'idempotent', true,
+        'status', 'GROUP_ADMITTED',
+        'groupBookingReference', v_existing_admission.group_booking_reference,
+        'admittedCount', v_existing_admission.admitted_count,
+        'totalEntitlements', v_existing_admission.total_entitlements,
+        'previouslyAdmitted', v_existing_admission.previously_admitted,
+        'remainingEntries', v_existing_admission.remaining_after,
+        'admittedAt', v_existing_admission.admitted_at,
+        'message', format('Already admitted %s attendee(s). %s remaining.', v_existing_admission.admitted_count, v_existing_admission.remaining_after)
+      );
+    END IF;
+  END IF;
+
+  -- 2. Validate quantity requested
+  IF p_quantity IS NULL OR p_quantity <= 0 THEN
+    RETURN jsonb_build_object(
+      'success', false,
+      'status', 'INVALID_QUANTITY',
+      'error', 'Quantity to admit must be at least 1.'
+    );
+  END IF;
+
+  -- 3. Row-level Lock on ticket_orders or passes
+  SELECT id, event_id, buyer_name, buyer_email, status,
+         COALESCE(total_attendee_count, total_entitlements, 1) as total_units,
+         COALESCE(admitted_entitlements, 0) as used_units,
+         group_entry_enabled, group_entry_mode
+  INTO v_order
+  FROM public.ticket_orders
+  WHERE (
+    id::text = p_group_booking_ref
+    OR group_qr_code = p_group_booking_ref
+    OR id IN (
+      SELECT order_id FROM public.passes
+      WHERE (pass_token = p_group_booking_ref OR id::text = p_group_booking_ref)
+        AND order_id IS NOT NULL
+    )
+  ) AND event_id = p_event_id
+  FOR UPDATE;
+
+  -- If not found directly in orders, check passes table with FOR UPDATE
+  IF NOT FOUND THEN
+    SELECT p.id, p.event_id, p.attendee_id, p.status,
+           GREATEST(
+             COALESCE(p.total_guests, 1),
+             COALESCE((a.custom_responses->>'group_attendee_count')::int, 0),
+             COALESCE((a.custom_responses->>'bulk_quantity')::int, 0),
+             COALESCE((a.custom_responses->>'guest_count')::int, 0),
+             1
+           ) as total_units,
+           COALESCE(p.checked_in_guests, 0) as used_units,
+           a.name as buyer_name, a.email as buyer_email
+    INTO v_pass
+    FROM public.passes p
+    LEFT JOIN public.attendees a ON a.id = p.attendee_id
+    WHERE (p.pass_token = p_group_booking_ref OR p.id::text = p_group_booking_ref)
+      AND p.event_id = p_event_id
+    FOR UPDATE OF p;
+
+    IF NOT FOUND THEN
+      RETURN jsonb_build_object(
+        'success', false,
+        'status', 'BOOKING_NOT_FOUND',
+        'error', 'Group booking or pass reference not found for this event.'
+      );
+    END IF;
+
+    -- Verify active status
+    IF v_pass.status IN ('revoked', 'cancelled', 'refunded', 'expired') THEN
+      RETURN jsonb_build_object(
+        'success', false,
+        'status', 'BOOKING_INVALID',
+        'error', format('Group pass is %s. Admission denied.', upper(v_pass.status))
+      );
+    END IF;
+
+    v_total_entitlements := v_pass.total_units;
+    v_previously_admitted := v_pass.used_units;
+  ELSE
+    -- Order found
+    IF v_order.status IN ('refunded', 'cancelled', 'failed') THEN
+      RETURN jsonb_build_object(
+        'success', false,
+        'status', 'BOOKING_INVALID',
+        'error', format('Booking is %s. Admission denied.', upper(v_order.status))
+      );
+    END IF;
+
+    v_total_entitlements := v_order.total_units;
+    v_previously_admitted := v_order.used_units;
+  END IF;
+
+  -- 4. Calculate Remaining Entitlements
+  v_remaining := v_total_entitlements - v_previously_admitted;
+
+  IF v_remaining <= 0 THEN
+    RETURN jsonb_build_object(
+      'success', false,
+      'status', 'EXHAUSTED',
+      'error', 'All group entitlements have already been admitted.',
+      'totalEntitlements', v_total_entitlements,
+      'previouslyAdmitted', v_previously_admitted,
+      'remainingEntries', 0
+    );
+  END IF;
+
+  IF p_quantity > v_remaining THEN
+    RETURN jsonb_build_object(
+      'success', false,
+      'status', 'EXCEEDS_REMAINING',
+      'error', format('Requested %s admissions, but only %s entitlement(s) remain.', p_quantity, v_remaining),
+      'totalEntitlements', v_total_entitlements,
+      'previouslyAdmitted', v_previously_admitted,
+      'remainingEntries', v_remaining
+    );
+  END IF;
+
+  -- 5. Commit Admission atomically
+  v_new_remaining := v_remaining - p_quantity;
+
+  -- Update order record if present
+  IF v_order.id IS NOT NULL THEN
+    UPDATE public.ticket_orders
+    SET admitted_entitlements = v_previously_admitted + p_quantity,
+        updated_at = v_now
+    WHERE id = v_order.id;
+  END IF;
+
+  -- Update pass record if present
+  IF v_pass.id IS NOT NULL THEN
+    UPDATE public.passes
+    SET checked_in_guests = v_previously_admitted + p_quantity,
+        total_guests = v_total_entitlements,
+        is_group_master = true,
+        status = CASE WHEN v_new_remaining = 0 THEN 'checked_in' ELSE 'partially_checked_in' END,
+        updated_at = v_now
+    WHERE id = v_pass.id;
+  END IF;
+
+  -- 6. Insert durable audit log entry
+  INSERT INTO public.group_entry_admissions (
+    event_id,
+    order_id,
+    pass_id,
+    group_booking_reference,
+    gate_id,
+    admitted_count,
+    total_entitlements,
+    previously_admitted,
+    remaining_after,
+    entry_mode,
+    admitted_members,
+    scanner_operator_id,
+    operator_email,
+    device_id,
+    scan_operation_id,
+    admitted_at
+  ) VALUES (
+    p_event_id,
+    v_order.id,
+    v_pass.id,
+    p_group_booking_ref,
+    p_gate_id,
+    p_quantity,
+    v_total_entitlements,
+    v_previously_admitted,
+    v_new_remaining,
+    p_entry_mode,
+    p_admitted_members,
+    p_checked_in_by,
+    p_operator_email,
+    p_device_id,
+    p_scan_operation_id,
+    v_now
+  ) RETURNING id INTO v_admission_id;
+
+  -- 7. Update Attendee & Insert check_ins for all admitted members
+  IF v_pass.attendee_id IS NOT NULL THEN
+    UPDATE public.attendees
+    SET pass_status = CASE WHEN v_new_remaining = 0 THEN 'checked_in' ELSE 'partially_checked_in' END,
+        venue_presence_state = 'inside',
+        last_scanned_at = v_now,
+        updated_at = v_now
+    WHERE id = v_pass.attendee_id;
+
+    -- Allocate durable check_ins for each admitted member in the batch
+    FOR i IN 1..p_quantity LOOP
+      INSERT INTO public.check_ins (
+        pass_id,
+        event_id,
+        attendee_id,
+        checked_in_by,
+        gate_id,
+        check_in_method,
+        scan_operation_id,
+        checked_in_at
+      ) VALUES (
+        v_pass.id,
+        p_event_id,
+        v_pass.attendee_id,
+        p_checked_in_by,
+        p_gate_id,
+        'group_qr',
+        CASE WHEN p_scan_operation_id IS NOT NULL THEN format('%s_unit_%s', p_scan_operation_id, i) ELSE NULL END,
+        v_now
+      ) ON CONFLICT DO NOTHING;
+    END LOOP;
+  END IF;
+
+  RETURN jsonb_build_object(
+    'success', true,
+    'status', 'GROUP_ADMITTED',
+    'admissionId', v_admission_id,
+    'groupBookingReference', p_group_booking_ref,
+    'admittedCount', p_quantity,
+    'totalEntitlements', v_total_entitlements,
+    'previouslyAdmitted', v_previously_admitted,
+    'remainingEntries', v_new_remaining,
+    'admittedAt', v_now,
+    'buyerName', COALESCE(v_order.buyer_name, v_pass.buyer_name, 'Group Holder'),
+    'message', format('Successfully admitted %s attendee(s). %s entitlement(s) remaining.', p_quantity, v_new_remaining)
+  );
+END;
+$$;

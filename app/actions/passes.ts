@@ -61,7 +61,7 @@ export async function generatePass(
   // Verify attendee belongs to event and is approved
   const { data: attendee } = await supabase
     .from("attendees")
-    .select("id, pass_type, pass_status, application_status")
+    .select("id, pass_type, pass_status, application_status, ticket_type_id, custom_responses")
     .eq("id", attendeeId)
     .eq("event_id", eventId)
     .single();
@@ -80,6 +80,31 @@ export async function generatePass(
     if (existing) return { passToken: existing.pass_token };
   }
 
+  const cr = (attendee.custom_responses as Record<string, any>) || {};
+  let isSingleGroupQr = Boolean(
+    cr.is_single_group_qr ||
+    (cr.group_attendee_count && Number(cr.group_attendee_count) > 1) ||
+    (cr.bulk_quantity && Number(cr.bulk_quantity) > 1)
+  );
+  let groupAttendeeCount = Math.max(
+    1,
+    Number(cr.group_attendee_count || cr.bulk_quantity || cr.guest_count || (Array.isArray(cr.group_members) ? cr.group_members.length : 1))
+  );
+
+  if (attendee.ticket_type_id) {
+    const { data: tt } = await supabase
+      .from("ticket_types")
+      .select("is_group_pass, included_guests")
+      .eq("id", attendee.ticket_type_id)
+      .maybeSingle();
+    if (tt?.is_group_pass) {
+      isSingleGroupQr = true;
+      if (tt.included_guests && Number(tt.included_guests) > 1 && !cr.group_attendee_count) {
+        groupAttendeeCount = Number(tt.included_guests);
+      }
+    }
+  }
+
   // Insert — DB generates pass_token via gen_random_bytes default
   const { data: pass, error } = await supabase
     .from("passes")
@@ -87,6 +112,12 @@ export async function generatePass(
       event_id: eventId,
       attendee_id: attendeeId,
       pass_type: attendee.pass_type,
+      ticket_type_id: attendee.ticket_type_id ?? null,
+      ...(isSingleGroupQr ? {
+        is_group_master: true,
+        total_guests: groupAttendeeCount,
+        checked_in_guests: 0,
+      } : {}),
     })
     .select("pass_token")
     .single();
@@ -189,7 +220,7 @@ export async function bulkGeneratePasses(
 
   const { data: attendees, error: fetchErr } = await supabase
     .from("attendees")
-    .select("id, name, email, phone, pass_type, custom_responses")
+    .select("id, name, email, phone, pass_type, custom_responses, ticket_type_id")
     .eq("event_id", eventId)
     .eq("application_status", "approved")
     .eq("pass_status", "not_generated");
@@ -213,12 +244,29 @@ export async function bulkGeneratePasses(
   const tokens: Record<string, string> = {};
 
   for (const att of attendees) {
+    const cr = (att.custom_responses as Record<string, any>) || {};
+    const isSingleGroupQr = Boolean(
+      cr.is_single_group_qr ||
+      (cr.group_attendee_count && Number(cr.group_attendee_count) > 1) ||
+      (cr.bulk_quantity && Number(cr.bulk_quantity) > 1)
+    );
+    const groupAttendeeCount = Math.max(
+      1,
+      Number(cr.group_attendee_count || cr.bulk_quantity || cr.guest_count || (Array.isArray(cr.group_members) ? cr.group_members.length : 1))
+    );
+
     const { data: pass, error: insertError } = await supabase
       .from("passes")
       .insert({
         event_id: eventId,
         attendee_id: att.id,
         pass_type: att.pass_type,
+        ticket_type_id: att.ticket_type_id ?? null,
+        ...(isSingleGroupQr ? {
+          is_group_master: true,
+          total_guests: groupAttendeeCount,
+          checked_in_guests: 0,
+        } : {}),
       })
       .select("pass_token")
       .single();

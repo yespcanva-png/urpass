@@ -205,17 +205,41 @@ export async function POST(req: NextRequest) {
       const admin = createAdminClient(getSupabaseUrl(), process.env.SUPABASE_SERVICE_ROLE_KEY || "");
       const { data: groupCheck } = await admin
         .from("passes")
-        .select("id, pass_token, is_group_master, total_guests, checked_in_guests, status, attendee:attendees(name, email, pass_type)")
+        .select("id, pass_token, is_group_master, total_guests, checked_in_guests, status, pass_type, attendee:attendees(name, email, pass_type, custom_responses)")
         .eq("pass_token", cleanPassToken)
         .eq("event_id", eventId)
         .maybeSingle();
 
+      const att = Array.isArray(groupCheck?.attendee) ? groupCheck.attendee[0] : groupCheck?.attendee;
+      const cr = (att?.custom_responses as Record<string, any>) || {};
+      const isGroup = Boolean(
+        groupCheck?.is_group_master ||
+        cr.is_single_group_qr ||
+        (groupCheck?.total_guests && Number(groupCheck.total_guests) > 1) ||
+        (cr.group_attendee_count && Number(cr.group_attendee_count) > 1) ||
+        (cr.bulk_quantity && Number(cr.bulk_quantity) > 1) ||
+        cleanPassToken.startsWith("URP-GRP-")
+      );
+
       // Authoritative Group Master Pass check:
-      if (groupCheck && (groupCheck.is_group_master || (groupCheck.is_group_master !== false && groupCheck.total_guests && groupCheck.total_guests > 1 && cleanPassToken.startsWith("URP-GRP-")))) {
-        const total = Number(groupCheck.total_guests || 1);
+      if (groupCheck && isGroup) {
+        const total = Number(
+          (groupCheck.total_guests && Number(groupCheck.total_guests) > 1 ? groupCheck.total_guests : null) ||
+          cr.group_attendee_count ||
+          cr.bulk_quantity ||
+          cr.guest_count ||
+          groupCheck.total_guests ||
+          1
+        );
         const admitted = Number(groupCheck.checked_in_guests || 0);
         const remaining = Math.max(0, total - admitted);
-        const att = Array.isArray(groupCheck.attendee) ? groupCheck.attendee[0] : groupCheck.attendee;
+
+        // Self-heal pass record in DB if total_guests or is_group_master wasn't populated
+        if (!groupCheck.is_group_master || groupCheck.total_guests !== total) {
+          void Promise.resolve(
+            admin.from("passes").update({ is_group_master: true, total_guests: total }).eq("id", groupCheck.id)
+          ).catch(() => {});
+        }
 
         if (remaining <= 0 || groupCheck.status === "checked_in") {
           return NextResponse.json({
@@ -240,7 +264,7 @@ export async function POST(req: NextRequest) {
           bookingReference: groupCheck.pass_token,
           buyerName: att?.name || "Group Pass Holder",
           buyerEmail: att?.email || "",
-          ticketCategory: att?.pass_type || "General Admission · Group Booking",
+          ticketCategory: groupCheck.pass_type || att?.pass_type || "General Admission · Group Booking",
           totalEntitlements: total,
           previouslyAdmitted: admitted,
           remainingEntries: remaining,
@@ -337,7 +361,7 @@ export async function POST(req: NextRequest) {
   let pass: any = null;
   const { data: directPass } = await supabase
     .from("passes")
-    .select("id, pass_token, pass_type, status, attendee_id, event_id, ticket_type_id, total_guests, checked_in_guests, is_group_master")
+    .select("id, pass_token, pass_type, status, attendee_id, event_id, ticket_type_id, total_guests, checked_in_guests, is_group_master, attendee:attendees(id, name, email, pass_type, custom_responses)")
     .eq("pass_token", cleanPassToken)
     .eq("event_id", eventId)
     .single();
@@ -359,7 +383,7 @@ export async function POST(req: NextRequest) {
         const { data: customPass } = await safeMaybeSingle(
           supabase
             .from("passes")
-            .select("id, pass_token, pass_type, status, attendee_id, event_id, ticket_type_id, total_guests, checked_in_guests, is_group_master")
+            .select("id, pass_token, pass_type, status, attendee_id, event_id, ticket_type_id, total_guests, checked_in_guests, is_group_master, attendee:attendees(id, name, email, pass_type, custom_responses)")
             .eq("attendee_id", attendeesWithCustomId.id)
             .eq("event_id", eventId)
         );
@@ -390,8 +414,28 @@ export async function POST(req: NextRequest) {
   }
 
   // Authoritative Single Group QR Check
-  if (pass && (pass.is_group_master || (pass.total_guests && pass.total_guests > 1 && cleanPassToken.startsWith("URP-GRP-")))) {
-    const total = Number(pass.total_guests || 1);
+  const passAttendee = Array.isArray(pass.attendee) ? pass.attendee[0] : pass.attendee;
+  const passCr = (passAttendee?.custom_responses as Record<string, any>) || {};
+  const isGroupPass = Boolean(
+    pass && (
+      pass.is_group_master ||
+      passCr.is_single_group_qr ||
+      (pass.total_guests && Number(pass.total_guests) > 1) ||
+      (passCr.group_attendee_count && Number(passCr.group_attendee_count) > 1) ||
+      (passCr.bulk_quantity && Number(passCr.bulk_quantity) > 1) ||
+      cleanPassToken.startsWith("URP-GRP-")
+    )
+  );
+
+  if (isGroupPass && pass) {
+    const total = Number(
+      (pass.total_guests && Number(pass.total_guests) > 1 ? pass.total_guests : null) ||
+      passCr.group_attendee_count ||
+      passCr.bulk_quantity ||
+      passCr.guest_count ||
+      pass.total_guests ||
+      1
+    );
     const admitted = Number(pass.checked_in_guests || 0);
     const remaining = Math.max(0, total - admitted);
 
@@ -416,8 +460,9 @@ export async function POST(req: NextRequest) {
       success: true,
       isGroupQR: true,
       bookingReference: pass.pass_token,
-      buyerName: "Group Pass Holder",
-      ticketCategory: pass.pass_type || "General Admission · Group Booking",
+      buyerName: passAttendee?.name || "Group Pass Holder",
+      buyerEmail: passAttendee?.email || "",
+      ticketCategory: pass.pass_type || passAttendee?.pass_type || "General Admission · Group Booking",
       totalEntitlements: total,
       previouslyAdmitted: admitted,
       remainingEntries: remaining,

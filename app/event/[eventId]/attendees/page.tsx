@@ -73,6 +73,25 @@ export default async function AttendeesPage({ params }: Props) {
     }
   }
 
+  for (const a of attendees ?? []) {
+    const cr = (a.custom_responses as Record<string, any>) || {};
+    const isGroup = Boolean(
+      cr.is_single_group_qr ||
+      (cr.group_attendee_count && Number(cr.group_attendee_count) > 1) ||
+      (cr.bulk_quantity && Number(cr.bulk_quantity) > 1)
+    );
+    if (isGroup) {
+      const count = Number(cr.group_attendee_count || cr.bulk_quantity || cr.guest_count || 1);
+      const existing = groupPassMap[a.id];
+      groupPassMap[a.id] = {
+        totalGuests: Math.max(existing?.totalGuests || 1, count),
+        checkedInGuests: Number(existing?.checkedInGuests ?? (a.pass_status === "checked_in" ? count : 0)),
+        isGroupMaster: true,
+        lastAdmittedAt: existing?.lastAdmittedAt || a.last_scanned_at || undefined,
+      };
+    }
+  }
+
   const payments: Record<string, {
     orderId: string;
     paymentId: string | null;

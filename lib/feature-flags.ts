@@ -270,8 +270,9 @@ export const FEATURE_FLAG_DEFINITIONS: Record<FeatureFlagKey, FeatureFlagDefinit
     moduleCode: "M14",
     name: "Group QR Partial Entry",
     description: "One QR code representing multiple tickets with partial admission and real-time remaining balance tracking.",
-    defaultEnabled: false,
+    defaultEnabled: true,
     requiredEntitlement: null,
+    migrationPolicy: () => true,
   },
 };
 
