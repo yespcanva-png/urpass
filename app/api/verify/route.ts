@@ -67,16 +67,20 @@ export async function POST(req: NextRequest) {
   }
 
   let organizerId = "";
+  let canonicalEventId = eventId;
+  const isEventUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(eventId);
+
   if (user.id === "service-role") {
-    const { data: event } = await supabase
+    let eventQuery = supabase
       .from("events")
-      .select("id, name, organizer_id, organization_id")
-      .eq("id", eventId)
-      .single();
+      .select("id, name, organizer_id, organization_id");
+    eventQuery = isEventUuid ? eventQuery.eq("id", eventId) : eventQuery.eq("apply_slug", eventId);
+    const { data: event } = await eventQuery.maybeSingle();
 
     if (!event) {
       return NextResponse.json({ error: "Event not found" }, { status: 404 });
     }
+    canonicalEventId = event.id;
     organizerId = event.organizer_id;
     user = { id: event.organizer_id, email: "admin@urpass.space" };
   } else {
@@ -91,17 +95,19 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "Event not found or unauthorized" }, { status: 403 });
       }
       organizerId = cachedAuth.organizerId;
+      canonicalEventId = (cachedAuth as any).canonicalEventId || eventId;
     } else {
-      const { data: event } = await supabase
+      let eventQuery = supabase
         .from("events")
-        .select("id, name, organizer_id, organization_id")
-        .eq("id", eventId)
-        .single();
+        .select("id, name, organizer_id, organization_id");
+      eventQuery = isEventUuid ? eventQuery.eq("id", eventId) : eventQuery.eq("apply_slug", eventId);
+      const { data: event } = await eventQuery.maybeSingle();
 
       if (!event) {
         return NextResponse.json({ error: "Event not found or unauthorized" }, { status: 403 });
       }
 
+      canonicalEventId = event.id;
       const isOrganizer = event.organizer_id === user.id;
       let hasOrgAccess = false;
       if (!isOrganizer && event.organization_id) {
@@ -130,8 +136,9 @@ export async function POST(req: NextRequest) {
           hasOrgAccess,
           organizerId: event.organizer_id,
           organizationId: event.organization_id,
+          canonicalEventId: event.id,
           expiresAt: now + 60000,
-        });
+        } as any);
       }
     }
   }
@@ -186,12 +193,47 @@ export async function POST(req: NextRequest) {
   if (process.env.NODE_ENV !== "test") {
     try {
       const admin = createAdminClient(getSupabaseUrl(), process.env.SUPABASE_SERVICE_ROLE_KEY || "");
-      const { data: groupCheck } = await admin
+      let { data: groupCheck } = await admin
         .from("passes")
         .select("id, pass_token, is_group_master, is_group_pass, total_guests, checked_in_guests, status, pass_type, ticket_type:ticket_types(name, is_group_pass, included_guests), attendee:attendees(name, email, pass_type, custom_responses)")
         .eq("pass_token", cleanPassToken)
-        .eq("event_id", eventId)
+        .eq("event_id", canonicalEventId)
         .maybeSingle();
+
+      if (!groupCheck) {
+        const rawCode = cleanPassToken.replace(/^#?URP-/i, "").trim();
+        if (rawCode.length >= 4) {
+          const { data: passByPrefix } = await admin
+            .from("passes")
+            .select("id, pass_token, is_group_master, is_group_pass, total_guests, checked_in_guests, status, pass_type, ticket_type:ticket_types(name, is_group_pass, included_guests), attendee:attendees(name, email, pass_type, custom_responses)")
+            .eq("event_id", canonicalEventId)
+            .ilike("pass_token", `${rawCode}%`)
+            .maybeSingle();
+          if (passByPrefix) groupCheck = passByPrefix;
+        }
+      }
+
+      if (!groupCheck) {
+        try {
+          const { data: attWithCustomId } = await admin
+            .from("attendees")
+            .select("id")
+            .eq("event_id", canonicalEventId)
+            .contains("custom_responses", { custom_ticket_id: cleanPassToken })
+            .maybeSingle();
+          if (attWithCustomId?.id) {
+            const { data: passByCustom } = await admin
+              .from("passes")
+              .select("id, pass_token, is_group_master, is_group_pass, total_guests, checked_in_guests, status, pass_type, ticket_type:ticket_types(name, is_group_pass, included_guests), attendee:attendees(name, email, pass_type, custom_responses)")
+              .eq("attendee_id", attWithCustomId.id)
+              .eq("event_id", canonicalEventId)
+              .maybeSingle();
+            if (passByCustom) groupCheck = passByCustom;
+          }
+        } catch {
+          // ignore
+        }
+      }
 
       const att = Array.isArray(groupCheck?.attendee) ? groupCheck.attendee[0] : groupCheck?.attendee;
       const ticketType = Array.isArray(groupCheck?.ticket_type) ? groupCheck?.ticket_type[0] : groupCheck?.ticket_type;
@@ -274,7 +316,7 @@ export async function POST(req: NextRequest) {
     try {
       const { data: rpcResult, error: rpcError } = await supabase.rpc("atomic_check_in_pass", {
         p_pass_token: cleanPassToken,
-        p_event_id: eventId,
+        p_event_id: canonicalEventId,
         p_checked_in_by: user.id,
         p_gate_id: gateId || null,
         p_check_in_method: checkInMethod || "qr",
@@ -285,7 +327,7 @@ export async function POST(req: NextRequest) {
         const res = typeof rpcResult === "string" ? JSON.parse(rpcResult) : rpcResult;
         if (res.status === "CHECKED_IN") {
           sendWebhooks(organizerId, "checkin.completed", {
-            event_id: eventId,
+            event_id: canonicalEventId,
             name: res.attendee?.name,
             email: res.attendee?.email,
             pass_type: res.passType,
@@ -295,7 +337,7 @@ export async function POST(req: NextRequest) {
             level: "SUCCESS",
             category: "SCAN",
             message: `Gate scan verified: ${res.attendee?.name || "Attendee"} (${res.attendee?.email || "Pass"}) admitted`,
-            details: { eventId, passType: res.passType, attendee: res.attendee?.email },
+            details: { eventId: canonicalEventId, passType: res.passType, attendee: res.attendee?.email },
           });
           void recordApiUsage(organizerId, "check_ins");
           return NextResponse.json(res, { status: 200 });
@@ -333,7 +375,7 @@ export async function POST(req: NextRequest) {
   // ── 3. Fallback: Conditional Atomic Check-In ──
   // First, verify that the event itself is active
   const { data: currentEvent } = await safeMaybeSingle(
-    supabase.from("events").select("status").eq("id", eventId)
+    supabase.from("events").select("status").eq("id", canonicalEventId)
   );
 
   if (currentEvent?.status && currentEvent.status !== "active") {
@@ -355,19 +397,34 @@ export async function POST(req: NextRequest) {
     .from("passes")
     .select("id, pass_token, pass_type, status, attendee_id, event_id, ticket_type_id, total_guests, checked_in_guests, is_group_master, is_group_pass, ticket_type:ticket_types(name, is_group_pass, included_guests), attendee:attendees(id, name, email, pass_type, custom_responses)")
     .eq("pass_token", cleanPassToken)
-    .eq("event_id", eventId)
+    .eq("event_id", canonicalEventId)
     .single();
 
   pass = directPass;
 
-  // Fallback: Check if cleanPassToken is a custom ticket ID (e.g. TECH26-0001 or URP-12345)
+  // Fallback 1: Check if cleanPassToken starts with URP- or #URP- (human-readable ticket code)
+  if (!pass) {
+    const rawCode = cleanPassToken.replace(/^#?URP-/i, "").trim();
+    if (rawCode.length >= 4) {
+      const { data: passByPrefix } = await safeMaybeSingle(
+        supabase
+          .from("passes")
+          .select("id, pass_token, pass_type, status, attendee_id, event_id, ticket_type_id, total_guests, checked_in_guests, is_group_master, is_group_pass, ticket_type:ticket_types(name, is_group_pass, included_guests), attendee:attendees(id, name, email, pass_type, custom_responses)")
+          .eq("event_id", canonicalEventId)
+          .ilike("pass_token", `${rawCode}%`)
+      );
+      if (passByPrefix) pass = passByPrefix;
+    }
+  }
+
+  // Fallback 2: Check if cleanPassToken is a custom ticket ID (e.g. TECH26-0001 or URP-12345)
   if (!pass) {
     try {
       const { data: attendeesWithCustomId } = await safeMaybeSingle(
         supabase
           .from("attendees")
           .select("id")
-          .eq("event_id", eventId)
+          .eq("event_id", canonicalEventId)
           .contains("custom_responses", { custom_ticket_id: cleanPassToken })
       );
 
@@ -377,7 +434,7 @@ export async function POST(req: NextRequest) {
             .from("passes")
             .select("id, pass_token, pass_type, status, attendee_id, event_id, ticket_type_id, total_guests, checked_in_guests, is_group_master, is_group_pass, ticket_type:ticket_types(name, is_group_pass, included_guests), attendee:attendees(id, name, email, pass_type, custom_responses)")
             .eq("attendee_id", attendeesWithCustomId.id)
-            .eq("event_id", eventId)
+            .eq("event_id", canonicalEventId)
         );
         if (customPass) pass = customPass;
       }

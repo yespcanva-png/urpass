@@ -86,16 +86,18 @@ export async function GET(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Verify access to event
-  const { data: event } = await db
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(eventId);
+  let eventQuery = db
     .from("events")
-    .select("id, name, organizer_id, organization_id, status, custom_pass_design")
-    .eq("id", eventId)
-    .single();
+    .select("id, name, organizer_id, organization_id, status, custom_pass_design");
+  eventQuery = isUuid ? eventQuery.eq("id", eventId) : eventQuery.eq("apply_slug", eventId);
+  const { data: event } = await eventQuery.maybeSingle();
 
   if (!event) {
     return NextResponse.json({ error: "Event not found." }, { status: 404 });
   }
+
+  const canonicalEventId = event.id;
 
   const access = await authorizeEventAccess({
     db,
@@ -125,7 +127,7 @@ export async function GET(
       created_at,
       updated_at
     `)
-    .eq("event_id", eventId)
+    .eq("event_id", canonicalEventId)
     .order("created_at", { ascending: false });
 
   // 2. Fetch explicitly marked group passes from passes table
@@ -143,7 +145,7 @@ export async function GET(
       created_at,
       attendee:attendees(id, name, email, venue_presence_state, pass_status)
     `)
-    .eq("event_id", eventId)
+    .eq("event_id", canonicalEventId)
     .or("is_group_master.eq.true,is_group_pass.eq.true")
     .order("created_at", { ascending: false });
 
@@ -164,7 +166,7 @@ export async function GET(
       admitted_at,
       gate:scanner_gates(name)
     `)
-    .eq("event_id", eventId)
+    .eq("event_id", canonicalEventId)
     .order("admitted_at", { ascending: false })
     .limit(100);
 
@@ -354,16 +356,18 @@ export async function POST(
 
   const db = adminClient();
 
-  // 2. Fetch Event and Feature Activation
-  const { data: event, error: eventErr } = await db
+  const isEventUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(eventId);
+  let eventLookup = db
     .from("events")
-    .select("id, name, organizer_id, organization_id, status, custom_pass_design")
-    .eq("id", eventId)
-    .single();
+    .select("id, name, organizer_id, organization_id, status, custom_pass_design");
+  eventLookup = isEventUuid ? eventLookup.eq("id", eventId) : eventLookup.eq("apply_slug", eventId);
+  const { data: event, error: eventErr } = await eventLookup.maybeSingle();
 
   if (eventErr || !event) {
     return NextResponse.json({ error: "Event not found." }, { status: 404 });
   }
+
+  const canonicalEventId = event.id;
 
   if (user.id === "service-role") {
     user = { id: event.organizer_id, email: user.email };
@@ -389,7 +393,7 @@ export async function POST(
     );
   }
 
-  const gateAccess = await assertGateBelongsToEvent({ db, eventId, gateId });
+  const gateAccess = await assertGateBelongsToEvent({ db, eventId: canonicalEventId, gateId });
   if (!gateAccess.allowed) {
     return NextResponse.json({ error: gateAccess.error, status: "GATE_NOT_ALLOWED" }, { status: 403 });
   }
@@ -435,7 +439,7 @@ export async function POST(
       attendee_id,
       group_members
     `)
-    .eq("event_id", eventId);
+    .eq("event_id", canonicalEventId);
 
   if (isUUID) {
     orderQuery = orderQuery.or(`id.eq.${cleanRef},group_qr_code.eq.${cleanRef}`);
@@ -464,7 +468,7 @@ export async function POST(
       ticket_type:ticket_types (id, name, is_group_pass, included_guests),
       attendee:attendees (id, name, email, pass_type, custom_responses)
     `)
-    .eq("event_id", eventId);
+    .eq("event_id", canonicalEventId);
 
   if (isUUID) {
     passQuery = passQuery.or(`pass_token.eq.${cleanRef},id.eq.${cleanRef}`);
@@ -506,18 +510,58 @@ export async function POST(
         attendee:attendees (id, name, email, pass_type, custom_responses)
       `)
       .eq("order_id", orderData.id)
-      .eq("event_id", eventId)
+      .eq("event_id", canonicalEventId)
       .maybeSingle();
     if (linkedPass) passData = linkedPass;
   }
 
-  // Fallback: Check if cleanRef matches a custom ticket ID
+  // Fallback 1: Check if cleanRef starts with URP- or #URP- (human-readable ticket code)
+  if (!orderData && !passData) {
+    const rawCode = cleanRef.replace(/^#?URP-/i, "").trim();
+    if (rawCode.length >= 4) {
+      const { data: passByPrefix } = await db
+        .from("passes")
+        .select(`
+          id,
+          event_id,
+          pass_token,
+          pass_type,
+          status,
+          total_guests,
+          checked_in_guests,
+          group_members,
+          order_id,
+          is_group_master,
+          is_group_pass,
+          attendee_id,
+          ticket_type:ticket_types (id, name, is_group_pass, included_guests),
+          attendee:attendees (id, name, email, pass_type, custom_responses)
+        `)
+        .eq("event_id", canonicalEventId)
+        .ilike("pass_token", `${rawCode}%`)
+        .maybeSingle();
+
+      if (passByPrefix) {
+        passData = passByPrefix;
+        if (passByPrefix.order_id) {
+          const { data: parentOrder } = await db
+            .from("ticket_orders")
+            .select("*")
+            .eq("id", passByPrefix.order_id)
+            .maybeSingle();
+          orderData = parentOrder;
+        }
+      }
+    }
+  }
+
+  // Fallback 2: Check if cleanRef matches a custom ticket ID
   if (!orderData && !passData) {
     try {
       const { data: attendeeWithCustomId } = await db
         .from("attendees")
         .select("id, name, email")
-        .eq("event_id", eventId)
+        .eq("event_id", canonicalEventId)
         .contains("custom_responses", { custom_ticket_id: cleanRef })
         .maybeSingle();
 
@@ -541,7 +585,7 @@ export async function POST(
               attendee:attendees (id, name, email, pass_type, custom_responses)
           `)
           .eq("attendee_id", attendeeWithCustomId.id)
-          .eq("event_id", eventId)
+          .eq("event_id", canonicalEventId)
           .maybeSingle();
 
         if (passForAttendee) {
@@ -679,7 +723,7 @@ export async function POST(
     // Insert durable correction audit record
     try {
       await db.from("group_entry_admissions").insert({
-        event_id: eventId,
+        event_id: canonicalEventId,
         order_id: orderData?.id || null,
         pass_id: passData?.id || null,
         group_booking_reference: cleanRef,
@@ -780,7 +824,7 @@ export async function POST(
   try {
     const { data: rpcResult, error: rpcErr } = await db.rpc("atomic_group_entry_checkin", {
       p_group_booking_ref: cleanRef,
-      p_event_id: eventId,
+      p_event_id: canonicalEventId,
       p_quantity: Number(quantity),
       p_checked_in_by: user.id,
       p_operator_email: user.email || "staff@urpass.space",
