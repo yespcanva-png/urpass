@@ -119,6 +119,16 @@ interface RawCheckin {
   gate?: { name: string } | { name: string }[] | null;
 }
 
+interface RawPass {
+  id: string;
+  attendee_id: string;
+  event_id: string;
+  total_guests?: number | null;
+  checked_in_guests?: number | null;
+  is_group_master?: boolean | null;
+  is_group_pass?: boolean | null;
+}
+
 function resolveGateName(gate: RawCheckin["gate"]): string | undefined {
   if (!gate) return undefined;
   if (Array.isArray(gate)) return gate[0]?.name;
@@ -238,6 +248,7 @@ export async function getAnalyticsData(targetEventId?: string): Promise<Analytic
     { data: gatesData },
     { data: ticketTypesData },
     { data: ticketOrdersData },
+    { data: passesData },
   ] = await Promise.all([
     supabase
       .from("attendees")
@@ -261,23 +272,45 @@ export async function getAnalyticsData(targetEventId?: string): Promise<Analytic
       .from("ticket_orders")
       .select("id, event_id, ticket_type_id, amount, status")
       .in("event_id", eventIdsToQuery),
+    supabase
+      .from("passes")
+      .select("id, attendee_id, event_id, total_guests, checked_in_guests, is_group_master, is_group_pass")
+      .in("event_id", eventIdsToQuery),
   ]);
 
   const attendees = (attendeesData ?? []) as unknown as RawAttendee[];
   const checkins = (checkinsData ?? []) as unknown as RawCheckin[];
   const gates = (gatesData ?? []) as unknown as RawGate[];
   const ticketTypes = (ticketTypesData ?? []) as unknown as RawTicketType[];
+  const passes = (passesData ?? []) as unknown as RawPass[];
   const rawOrders = (ticketOrdersData ?? []) as Array<{ id: string; event_id: string; ticket_type_id: string | null; amount: number; status: string }>;
   const paidOrders = rawOrders.filter((o) => o.status === "paid");
 
+  const entitlementUnitsByAttendee = new Map<string, number>();
+  for (const pass of passes) {
+    const isExplicitGroupCredential = Boolean(pass.is_group_master || pass.is_group_pass);
+    const units = isExplicitGroupCredential ? Math.max(1, Number(pass.total_guests || 1)) : 1;
+    entitlementUnitsByAttendee.set(pass.attendee_id, Math.max(entitlementUnitsByAttendee.get(pass.attendee_id) ?? 1, units));
+  }
+
+  const checkinsByAttendee = new Map<string, number>();
+  for (const checkin of checkins) {
+    checkinsByAttendee.set(checkin.attendee_id, (checkinsByAttendee.get(checkin.attendee_id) ?? 0) + 1);
+  }
+
   // 3. Core KPI Computations
   const totalRegistrations = attendees.length;
-  const approvedCount = attendees.filter((a) => a.application_status === "approved").length;
+  const approvedAttendees = attendees.filter((a) => a.application_status === "approved");
+  const approvedCount = approvedAttendees.reduce((sum, a) => sum + (entitlementUnitsByAttendee.get(a.id) ?? 1), 0);
   const pendingCount = attendees.filter((a) => a.application_status === "pending").length;
   const rejectedCount = attendees.filter((a) => a.application_status === "rejected").length;
-  const passesGeneratedCount = attendees.filter(
-    (a) => a.pass_status === "generated" || a.pass_status === "checked_in"
-  ).length;
+  const passesGeneratedCount = attendees.reduce(
+    (sum, a) =>
+      a.pass_status === "generated" || a.pass_status === "checked_in"
+        ? sum + (entitlementUnitsByAttendee.get(a.id) ?? 1)
+        : sum,
+    0
+  );
   const checkedInCount = checkins.length;
   const notArrivedCount = Math.max(0, approvedCount - checkedInCount);
 
@@ -387,7 +420,6 @@ export async function getAnalyticsData(targetEventId?: string): Promise<Analytic
   });
 
   // 7. Pass Types & Ticket Tiers Breakdown
-  const checkedInAttendeeIds = new Set(checkins.map((c) => c.attendee_id));
   const ticketTypeMap = new Map<string, RawTicketType>();
   ticketTypes.forEach((t) => ticketTypeMap.set(t.id, t));
 
@@ -423,10 +455,9 @@ export async function getAnalyticsData(targetEventId?: string): Promise<Analytic
       checkedIn: 0,
       revenue: Math.round(tierRevenuePaise / 100),
     };
-    existing.total += 1;
-    if (checkedInAttendeeIds.has(a.id)) {
-      existing.checkedIn += 1;
-    }
+    const entitlementUnits = entitlementUnitsByAttendee.get(a.id) ?? 1;
+    existing.total += entitlementUnits;
+    existing.checkedIn += Math.min(checkinsByAttendee.get(a.id) ?? 0, entitlementUnits);
     passMap.set(key, existing);
   });
 
@@ -470,10 +501,16 @@ export async function getAnalyticsData(targetEventId?: string): Promise<Analytic
     const evtCheckins = checkins.filter((c) => c.event_id === evt.id);
 
     const regCount = evtAttendees.length;
-    const appCount = evtAttendees.filter((a) => a.application_status === "approved").length;
-    const passCount = evtAttendees.filter(
-      (a) => a.pass_status === "generated" || a.pass_status === "checked_in"
-    ).length;
+    const appCount = evtAttendees
+      .filter((a) => a.application_status === "approved")
+      .reduce((sum, a) => sum + (entitlementUnitsByAttendee.get(a.id) ?? 1), 0);
+    const passCount = evtAttendees.reduce(
+      (sum, a) =>
+        a.pass_status === "generated" || a.pass_status === "checked_in"
+          ? sum + (entitlementUnitsByAttendee.get(a.id) ?? 1)
+          : sum,
+      0
+    );
     const checkCount = evtCheckins.length;
     const rate = appCount > 0 ? Math.round((checkCount / appCount) * 1000) / 10 : 0;
 

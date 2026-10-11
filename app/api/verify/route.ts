@@ -152,23 +152,6 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Fast prefix check for human-readable group references without DB query
-  if (cleanPassToken.startsWith("URP-GRP-") || cleanPassToken.startsWith("GRP-")) {
-    return NextResponse.json({
-      status: "GROUP_PASS_DETECTED",
-      success: true,
-      isGroupQR: true,
-      bookingReference: cleanPassToken,
-      buyerName: cleanPassToken === "URP-GRP-10021" ? "Arun Kumar" : "Group Pass Holder",
-      ticketCategory: "General Admission · Group Booking",
-      totalEntitlements: 10,
-      previouslyAdmitted: 0,
-      remainingEntries: 10,
-      message: "Single Group QR pass detected. How many people are entering now?",
-      scanOperationId,
-    }, { status: 200 });
-  }
-
   // ── 1. Idempotency Check: if this exact scan operation was already processed ──
   try {
     const { data: existingOperation } = await safeMaybeSingle(
@@ -205,20 +188,22 @@ export async function POST(req: NextRequest) {
       const admin = createAdminClient(getSupabaseUrl(), process.env.SUPABASE_SERVICE_ROLE_KEY || "");
       const { data: groupCheck } = await admin
         .from("passes")
-        .select("id, pass_token, is_group_master, total_guests, checked_in_guests, status, pass_type, attendee:attendees(name, email, pass_type, custom_responses)")
+        .select("id, pass_token, is_group_master, is_group_pass, total_guests, checked_in_guests, status, pass_type, ticket_type:ticket_types(name, is_group_pass, included_guests), attendee:attendees(name, email, pass_type, custom_responses)")
         .eq("pass_token", cleanPassToken)
         .eq("event_id", eventId)
         .maybeSingle();
 
       const att = Array.isArray(groupCheck?.attendee) ? groupCheck.attendee[0] : groupCheck?.attendee;
+      const ticketType = Array.isArray(groupCheck?.ticket_type) ? groupCheck?.ticket_type[0] : groupCheck?.ticket_type;
       const cr = (att?.custom_responses as Record<string, any>) || {};
       const isGroup = Boolean(
         groupCheck?.is_group_master ||
-        cr.is_single_group_qr ||
-        (groupCheck?.total_guests && Number(groupCheck.total_guests) > 1) ||
-        (cr.group_attendee_count && Number(cr.group_attendee_count) > 1) ||
-        (cr.bulk_quantity && Number(cr.bulk_quantity) > 1) ||
-        cleanPassToken.startsWith("URP-GRP-")
+        groupCheck?.is_group_pass ||
+        ticketType?.is_group_pass ||
+        cr.is_single_group_qr === true ||
+        cr.is_single_group_qr === "true" ||
+        cr.credential_type === "GROUP_QR" ||
+        cr.credentialType === "GROUP_QR"
       );
 
       // Authoritative Group Master Pass check:
@@ -228,6 +213,7 @@ export async function POST(req: NextRequest) {
           cr.group_attendee_count ||
           cr.bulk_quantity ||
           cr.guest_count ||
+          ticketType?.included_guests ||
           groupCheck.total_guests ||
           1
         );
@@ -361,7 +347,7 @@ export async function POST(req: NextRequest) {
   let pass: any = null;
   const { data: directPass } = await supabase
     .from("passes")
-    .select("id, pass_token, pass_type, status, attendee_id, event_id, ticket_type_id, total_guests, checked_in_guests, is_group_master, attendee:attendees(id, name, email, pass_type, custom_responses)")
+    .select("id, pass_token, pass_type, status, attendee_id, event_id, ticket_type_id, total_guests, checked_in_guests, is_group_master, is_group_pass, ticket_type:ticket_types(name, is_group_pass, included_guests), attendee:attendees(id, name, email, pass_type, custom_responses)")
     .eq("pass_token", cleanPassToken)
     .eq("event_id", eventId)
     .single();
@@ -383,7 +369,7 @@ export async function POST(req: NextRequest) {
         const { data: customPass } = await safeMaybeSingle(
           supabase
             .from("passes")
-            .select("id, pass_token, pass_type, status, attendee_id, event_id, ticket_type_id, total_guests, checked_in_guests, is_group_master, attendee:attendees(id, name, email, pass_type, custom_responses)")
+            .select("id, pass_token, pass_type, status, attendee_id, event_id, ticket_type_id, total_guests, checked_in_guests, is_group_master, is_group_pass, ticket_type:ticket_types(name, is_group_pass, included_guests), attendee:attendees(id, name, email, pass_type, custom_responses)")
             .eq("attendee_id", attendeesWithCustomId.id)
             .eq("event_id", eventId)
         );
@@ -415,15 +401,17 @@ export async function POST(req: NextRequest) {
 
   // Authoritative Single Group QR Check
   const passAttendee = Array.isArray(pass.attendee) ? pass.attendee[0] : pass.attendee;
+  const passTicketType = Array.isArray(pass.ticket_type) ? pass.ticket_type[0] : pass.ticket_type;
   const passCr = (passAttendee?.custom_responses as Record<string, any>) || {};
   const isGroupPass = Boolean(
     pass && (
       pass.is_group_master ||
-      passCr.is_single_group_qr ||
-      (pass.total_guests && Number(pass.total_guests) > 1) ||
-      (passCr.group_attendee_count && Number(passCr.group_attendee_count) > 1) ||
-      (passCr.bulk_quantity && Number(passCr.bulk_quantity) > 1) ||
-      cleanPassToken.startsWith("URP-GRP-")
+      pass.is_group_pass ||
+      passTicketType?.is_group_pass ||
+      passCr.is_single_group_qr === true ||
+      passCr.is_single_group_qr === "true" ||
+      passCr.credential_type === "GROUP_QR" ||
+      passCr.credentialType === "GROUP_QR"
     )
   );
 
@@ -433,6 +421,7 @@ export async function POST(req: NextRequest) {
       passCr.group_attendee_count ||
       passCr.bulk_quantity ||
       passCr.guest_count ||
+      passTicketType?.included_guests ||
       pass.total_guests ||
       1
     );
@@ -693,4 +682,3 @@ export async function POST(req: NextRequest) {
     scanOperationId,
   });
 }
-

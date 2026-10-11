@@ -2,14 +2,65 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { getSupabaseUrl } from "@/lib/supabase/config";
-import { isFeatureEnabled, getEventFeaturesConfig } from "@/lib/feature-flags";
-import { calculateGroupAdmission, parseScannedGroupQR, normalizeScannedToken, admitGroupMembers } from "@/lib/group-entry";
+import { isFeatureEnabled } from "@/lib/feature-flags";
+import { parseScannedGroupQR, normalizeScannedToken } from "@/lib/group-entry";
+import { hasOrgPermission, type OrgPermission } from "@/lib/authorization";
 import crypto from "crypto";
 
 export const dynamic = "force-dynamic";
 
 function adminClient() {
   return createAdminClient(getSupabaseUrl(), process.env.SUPABASE_SERVICE_ROLE_KEY!);
+}
+
+async function authorizeEventAccess({
+  db,
+  event,
+  userId,
+  permission,
+}: {
+  db: ReturnType<typeof adminClient>;
+  event: { organizer_id: string; organization_id?: string | null };
+  userId: string;
+  permission: OrgPermission;
+}) {
+  if (userId === "service-role" || event.organizer_id === userId) {
+    return { allowed: true, role: "owner" };
+  }
+
+  if (!event.organization_id) {
+    return { allowed: false, role: null };
+  }
+
+  const { data: member } = await db
+    .from("organization_members")
+    .select("role")
+    .eq("organization_id", event.organization_id)
+    .eq("user_id", userId)
+    .eq("status", "active")
+    .maybeSingle();
+
+  const role = member?.role ?? null;
+  return { allowed: hasOrgPermission(role, permission), role };
+}
+
+async function assertGateBelongsToEvent({
+  db,
+  eventId,
+  gateId,
+}: {
+  db: ReturnType<typeof adminClient>;
+  eventId: string;
+  gateId?: string | null;
+}) {
+  if (!gateId) return { allowed: true };
+  const { data: gate } = await db
+    .from("scanner_gates")
+    .select("id")
+    .eq("id", gateId)
+    .eq("event_id", eventId)
+    .maybeSingle();
+  return gate ? { allowed: true } : { allowed: false, error: "Gate is not assigned to this event." };
 }
 
 /**
@@ -46,6 +97,16 @@ export async function GET(
     return NextResponse.json({ error: "Event not found." }, { status: 404 });
   }
 
+  const access = await authorizeEventAccess({
+    db,
+    event,
+    userId: user.id,
+    permission: "viewCheckIn",
+  });
+  if (!access.allowed) {
+    return NextResponse.json({ error: "Event not found or unauthorized." }, { status: 403 });
+  }
+
   // 1. Fetch group orders from ticket_orders
   const { data: orders } = await db
     .from("ticket_orders")
@@ -67,7 +128,7 @@ export async function GET(
     .eq("event_id", eventId)
     .order("created_at", { ascending: false });
 
-  // 2. Fetch group passes from passes table
+  // 2. Fetch explicitly marked group passes from passes table
   const { data: passes } = await db
     .from("passes")
     .select(`
@@ -77,12 +138,13 @@ export async function GET(
       status,
       total_guests,
       checked_in_guests,
+      is_group_master,
+      is_group_pass,
       created_at,
       attendee:attendees(id, name, email, venue_presence_state, pass_status)
     `)
     .eq("event_id", eventId)
-    .not("total_guests", "is", null)
-    .gt("total_guests", 1)
+    .or("is_group_master.eq.true,is_group_pass.eq.true")
     .order("created_at", { ascending: false });
 
   // 3. Fetch admission logs
@@ -127,6 +189,7 @@ export async function GET(
   // Process ticket orders with multiple entitlements
   for (const o of orders || []) {
     const total = Number(o.total_attendee_count || o.total_entitlements || 1);
+    if (!o.group_entry_enabled && !o.group_qr_code) continue;
     if (total <= 1 && !o.group_qr_code) continue;
 
     const admitted = Number(o.admitted_entitlements || 0);
@@ -155,7 +218,7 @@ export async function GET(
     });
   }
 
-  // Process passes with total_guests > 1
+  // Process passes explicitly marked as group credentials
   for (const p of passes || []) {
     const ref = p.pass_token || p.id;
     if (bookingMap.has(ref)) continue;
@@ -187,71 +250,6 @@ export async function GET(
       status,
       rawStatus: p.status,
     });
-  }
-
-  // If no live bookings exist yet, populate with dashboard illustrative bookings
-  if (bookingMap.size === 0) {
-    const illustrative: FormattedBooking[] = [
-      {
-        id: "demo-1",
-        bookingReference: "URP-GRP-10021",
-        buyerName: "Arun Kumar",
-        buyerEmail: "arun.kumar@example.com",
-        ticketType: "General Admission · Group Booking",
-        totalEntitlements: 10,
-        admittedEntitlements: 6,
-        remainingEntitlements: 4,
-        currentlyInside: 6,
-        status: "PARTIALLY_USED",
-        rawStatus: "paid",
-        lastAdmittedAt: new Date(Date.now() - 1000 * 60 * 18).toISOString(),
-      },
-      {
-        id: "demo-2",
-        bookingReference: "URP-GRP-10022",
-        buyerName: "Priya S",
-        buyerEmail: "priya.s@example.com",
-        ticketType: "VIP Pass · Group Booking",
-        totalEntitlements: 5,
-        admittedEntitlements: 5,
-        remainingEntitlements: 0,
-        currentlyInside: 5,
-        status: "FULLY_USED",
-        rawStatus: "paid",
-        lastAdmittedAt: new Date(Date.now() - 1000 * 60 * 42).toISOString(),
-      },
-      {
-        id: "demo-3",
-        bookingReference: "URP-GRP-10023",
-        buyerName: "Vikram R",
-        buyerEmail: "vikram.r@example.com",
-        ticketType: "General Admission · Group Booking",
-        totalEntitlements: 8,
-        admittedEntitlements: 3,
-        remainingEntitlements: 5,
-        currentlyInside: 3,
-        status: "PARTIALLY_USED",
-        rawStatus: "paid",
-        lastAdmittedAt: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
-      },
-      {
-        id: "demo-4",
-        bookingReference: "URP-GRP-10024",
-        buyerName: "Rahul M",
-        buyerEmail: "rahul.m@example.com",
-        ticketType: "General Admission · Group Booking",
-        totalEntitlements: 4,
-        admittedEntitlements: 0,
-        remainingEntitlements: 4,
-        currentlyInside: 0,
-        status: "UNUSED",
-        rawStatus: "paid",
-      },
-    ];
-
-    for (const b of illustrative) {
-      bookingMap.set(b.bookingReference, b);
-    }
   }
 
   const bookingsList = Array.from(bookingMap.values());
@@ -367,6 +365,35 @@ export async function POST(
     return NextResponse.json({ error: "Event not found." }, { status: 404 });
   }
 
+  if (user.id === "service-role") {
+    user = { id: event.organizer_id, email: user.email };
+  }
+
+  const access = await authorizeEventAccess({
+    db,
+    event,
+    userId: user.id,
+    permission: action === "lookup" ? "viewCheckIn" : "manageCheckIn",
+  });
+  if (!access.allowed) {
+    return NextResponse.json({ error: "Event not found or unauthorized.", status: "UNAUTHORIZED_OPERATOR" }, { status: 403 });
+  }
+
+  if (
+    action === "supervisor_correction" &&
+    !["owner", "admin", "event_manager", "gate_manager"].includes(access.role ?? "")
+  ) {
+    return NextResponse.json(
+      { error: "Supervisor correction requires event manager or gate manager permission.", status: "UNAUTHORIZED_OPERATOR" },
+      { status: 403 }
+    );
+  }
+
+  const gateAccess = await assertGateBelongsToEvent({ db, eventId, gateId });
+  if (!gateAccess.allowed) {
+    return NextResponse.json({ error: gateAccess.error, status: "GATE_NOT_ALLOWED" }, { status: 403 });
+  }
+
   if (event.status && event.status !== "active") {
     return NextResponse.json(
       { error: `Event is ${event.status}. Group check-in disabled.`, status: "EVENT_INACTIVE" },
@@ -402,8 +429,10 @@ export async function POST(
       total_attendee_count,
       total_entitlements,
       admitted_entitlements,
+      group_qr_code,
       group_entry_enabled,
       group_entry_mode,
+      attendee_id,
       group_members
     `)
     .eq("event_id", eventId);
@@ -430,6 +459,9 @@ export async function POST(
       group_members,
       order_id,
       is_group_master,
+      is_group_pass,
+      attendee_id,
+      ticket_type:ticket_types (id, name, is_group_pass, included_guests),
       attendee:attendees (id, name, email, pass_type, custom_responses)
     `)
     .eq("event_id", eventId);
@@ -468,6 +500,9 @@ export async function POST(
         group_members,
         order_id,
         is_group_master,
+        is_group_pass,
+        attendee_id,
+        ticket_type:ticket_types (id, name, is_group_pass, included_guests),
         attendee:attendees (id, name, email, pass_type, custom_responses)
       `)
       .eq("order_id", orderData.id)
@@ -496,11 +531,14 @@ export async function POST(
             pass_type,
             status,
             total_guests,
-            checked_in_guests,
-            group_members,
-            order_id,
-            is_group_master,
-            attendee:attendees (id, name, email, pass_type, custom_responses)
+              checked_in_guests,
+              group_members,
+              order_id,
+              is_group_master,
+              is_group_pass,
+              attendee_id,
+              ticket_type:ticket_types (id, name, is_group_pass, included_guests),
+              attendee:attendees (id, name, email, pass_type, custom_responses)
           `)
           .eq("attendee_id", attendeeWithCustomId.id)
           .eq("event_id", eventId)
@@ -523,19 +561,6 @@ export async function POST(
     }
   }
 
-  // Fallback demo mock if database table has no row matching demo ref
-  if (!orderData && !passData && cleanRef.startsWith("URP-GRP-")) {
-    orderData = {
-      id: cleanRef,
-      buyer_name: cleanRef === "URP-GRP-10021" ? "Arun Kumar" : cleanRef === "URP-GRP-10022" ? "Priya S" : "Group Booker",
-      buyer_email: "group@example.com",
-      status: "paid",
-      total_entitlements: 10,
-      admitted_entitlements: 0,
-      group_entry_mode: "count_only",
-    };
-  }
-
   if (!orderData && !passData) {
     return NextResponse.json(
       { error: "Group booking or pass reference not found.", status: "BOOKING_NOT_FOUND", isGroupQR: false },
@@ -547,6 +572,8 @@ export async function POST(
   const buyerName = orderData?.buyer_name || attendeeObj?.name || "Group Pass Holder";
   const buyerEmail = orderData?.buyer_email || attendeeObj?.email || "";
   const customResponses = (attendeeObj?.custom_responses as Record<string, any>) || {};
+
+  const ticketTypeObj = passData ? (Array.isArray(passData.ticket_type) ? passData.ticket_type[0] : passData.ticket_type) : null;
 
   const totalEntitlements = Number(
     orderData?.total_attendee_count ||
@@ -563,31 +590,35 @@ export async function POST(
   const remaining = Math.max(0, totalEntitlements - admittedEntitlements);
   const rawStatus = (orderData?.status || passData?.status || "VALID").toUpperCase();
 
-  // Authoritative credential type resolution:
+  // Authoritative credential type resolution. Capacity fields are not proof that
+  // the scanned credential is a group credential; they only size an already
+  // verified group credential.
   const isSingleGroupQr = Boolean(
     passData?.is_group_master ||
-    customResponses.is_single_group_qr ||
-    (passData?.total_guests && Number(passData.total_guests) > 1) ||
-    (customResponses.group_attendee_count && Number(customResponses.group_attendee_count) > 1) ||
-    (customResponses.bulk_quantity && Number(customResponses.bulk_quantity) > 1)
+    passData?.is_group_pass ||
+    ticketTypeObj?.is_group_pass ||
+    customResponses.is_single_group_qr === true ||
+    customResponses.is_single_group_qr === "true" ||
+    customResponses.credential_type === "GROUP_QR" ||
+    customResponses.credentialType === "GROUP_QR"
   );
 
   const isAuthoritativeGroupCredential =
     isSingleGroupQr ||
-    Boolean(orderData && orderData.group_entry_enabled && (orderData.group_qr_code === cleanRef || orderData.id === cleanRef)) ||
+    Boolean(orderData && orderData.group_entry_enabled && orderData.group_qr_code && orderData.group_qr_code === cleanRef) ||
     cleanRef.startsWith("URP-GRP-") ||
     cleanRef.startsWith("GRP-") ||
     cleanRef.startsWith("GROUP-") ||
     parsedQR.isGroupQR;
 
-  // Background synchronize pass master state and total guests if missing
+  // Background synchronize pass master state only after credential type is explicit.
   if (passData?.id && isSingleGroupQr && (!passData.is_group_master || passData.total_guests !== totalEntitlements)) {
     void Promise.resolve(
       db.from("passes").update({ is_group_master: true, total_guests: totalEntitlements }).eq("id", passData.id)
     ).catch(() => {});
   }
 
-  if (!isAuthoritativeGroupCredential && action === "lookup") {
+  if (!isAuthoritativeGroupCredential) {
     return NextResponse.json(
       {
         success: false,
@@ -596,7 +627,7 @@ export async function POST(
         status: "NOT_GROUP_PASS",
         message: "Scanned pass is an individual pass, not a group booking.",
       },
-      { status: 200 }
+      { status: action === "lookup" ? 200 : 422 }
     );
   }
 
@@ -739,7 +770,9 @@ export async function POST(
     });
   }
 
-  // 5. Attempt Database Atomic Stored Procedure Execution
+  // 5. Execute the database atomic stored procedure. Group admissions must not
+  // fall back to non-transactional updates because that can over-admit under
+  // concurrent gate scans.
   try {
     const { data: rpcResult, error: rpcErr } = await db.rpc("atomic_group_entry_checkin", {
       p_group_booking_ref: cleanRef,
@@ -759,113 +792,22 @@ export async function POST(
       const httpStatus = parsed.success ? 200 : parsed.status === "EXHAUSTED" || parsed.status === "EXCEEDS_REMAINING" ? 422 : 400;
       return NextResponse.json(parsed, { status: httpStatus });
     }
-  } catch {
-    // Fallback to in-process atomic calculation below
+    return NextResponse.json(
+      {
+        success: false,
+        status: "GROUP_ENTRY_RPC_FAILED",
+        error: rpcErr?.message || "Atomic group admission function did not return a result.",
+      },
+      { status: 503 }
+    );
+  } catch (error) {
+    return NextResponse.json(
+      {
+        success: false,
+        status: "GROUP_ENTRY_RPC_FAILED",
+        error: error instanceof Error ? error.message : "Atomic group admission failed.",
+      },
+      { status: 503 }
+    );
   }
-
-  // 6. Fallback: JavaScript Deterministic Engine Execution
-  const outcome = calculateGroupAdmission({
-    booking: {
-      bookingReference: cleanRef,
-      eventId,
-      buyerName,
-      buyerEmail,
-      totalEntitlements,
-      admittedEntitlements,
-      remainingEntitlements: remaining,
-      entryMode: (orderData?.group_entry_mode || entryMode) as any,
-      status: rawStatus === "REFUNDED" || rawStatus === "CANCELLED" ? rawStatus : remaining === 0 ? "EXHAUSTED" : "VALID",
-    },
-    request: {
-      bookingReference: cleanRef,
-      eventId,
-      quantity: Number(quantity),
-      operatorId: user.id,
-      operatorEmail: user.email,
-      gateId,
-      gateName,
-      deviceId,
-      scanOperationId,
-      entryMode,
-      selectedMemberIds,
-    },
-    isFeatureActive: true,
-  });
-
-  if (!outcome.result.success) {
-    const httpStatus = outcome.result.status === "EXHAUSTED" || outcome.result.status === "EXCEEDS_REMAINING" ? 422 : 400;
-    return NextResponse.json(outcome.result, { status: httpStatus });
-  }
-
-  // Persist fallback update to DB
-  if (outcome.updatedBooking) {
-    try {
-      if (orderData?.id) {
-        await db
-          .from("ticket_orders")
-          .update({
-            admitted_entitlements: outcome.updatedBooking.admittedEntitlements,
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", orderData.id);
-      }
-      if (passData?.id) {
-        await db
-          .from("passes")
-          .update({
-            checked_in_guests: outcome.updatedBooking.admittedEntitlements,
-            status: outcome.updatedBooking.remainingEntitlements === 0 ? "checked_in" : "partially_checked_in",
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", passData.id);
-      }
-      // Insert admission history record
-      const admissionTime = new Date().toISOString();
-      await db.from("group_entry_admissions").insert({
-        event_id: eventId,
-        order_id: orderData?.id || null,
-        pass_id: passData?.id || null,
-        group_booking_reference: cleanRef,
-        gate_id: gateId || null,
-        admitted_count: Number(quantity),
-        total_entitlements: totalEntitlements,
-        previously_admitted: admittedEntitlements,
-        remaining_after: outcome.updatedBooking.remainingEntitlements,
-        entry_mode: entryMode,
-        operator_email: user.email || "staff@urpass.space",
-        device_id: deviceId,
-        scan_operation_id: scanOperationId,
-        admitted_at: admissionTime,
-      });
-
-      // Update attendee pass_status and presence state
-      const targetAttendeeId = passData?.attendee_id || orderData?.attendee_id;
-      if (targetAttendeeId) {
-        await db
-          .from("attendees")
-          .update({
-            pass_status: outcome.updatedBooking.remainingEntitlements === 0 ? "checked_in" : "checked_in",
-            venue_presence_state: "inside",
-            last_scanned_at: admissionTime,
-          })
-          .eq("id", targetAttendeeId);
-
-        // Also record in check_ins table so check-ins dashboard, analytics & live feeds update in real-time
-        await db.from("check_ins").insert({
-          pass_id: passData?.id || null,
-          event_id: eventId,
-          attendee_id: targetAttendeeId,
-          checked_in_by: user.id,
-          gate_id: gateId || null,
-          check_in_method: "group_qr",
-          scan_operation_id: scanOperationId,
-          checked_in_at: admissionTime,
-        });
-      }
-    } catch {
-      // Non-blocking
-    }
-  }
-
-  return NextResponse.json(outcome.result, { status: 200 });
 }

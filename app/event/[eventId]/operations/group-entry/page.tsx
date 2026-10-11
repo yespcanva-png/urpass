@@ -59,70 +59,17 @@ export default function GroupEntryOperationsPage() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [stats, setStats] = useState({
-    totalBookings: 4,
-    totalEntitlements: 27,
-    totalAdmitted: 14,
-    totalRemaining: 13,
-    totalCurrentlyInside: 14,
-    fullyUsedCount: 1,
-    partiallyUsedCount: 2,
-    unusedCount: 1,
+    totalBookings: 0,
+    totalEntitlements: 0,
+    totalAdmitted: 0,
+    totalRemaining: 0,
+    totalCurrentlyInside: 0,
+    fullyUsedCount: 0,
+    partiallyUsedCount: 0,
+    unusedCount: 0,
   });
 
-  const [bookings, setBookings] = useState<GroupBookingItem[]>([
-    {
-      id: "demo-1",
-      bookingReference: "URP-GRP-10021",
-      buyerName: "Arun Kumar",
-      buyerEmail: "arun.kumar@example.com",
-      ticketType: "General Admission · Group Booking",
-      totalEntitlements: 10,
-      admittedEntitlements: 6,
-      remainingEntitlements: 4,
-      currentlyInside: 6,
-      status: "PARTIALLY_USED",
-      rawStatus: "paid",
-    },
-    {
-      id: "demo-2",
-      bookingReference: "URP-GRP-10022",
-      buyerName: "Priya S",
-      buyerEmail: "priya.s@example.com",
-      ticketType: "VIP Pass · Group Booking",
-      totalEntitlements: 5,
-      admittedEntitlements: 5,
-      remainingEntitlements: 0,
-      currentlyInside: 5,
-      status: "FULLY_USED",
-      rawStatus: "paid",
-    },
-    {
-      id: "demo-3",
-      bookingReference: "URP-GRP-10023",
-      buyerName: "Vikram R",
-      buyerEmail: "vikram.r@example.com",
-      ticketType: "General Admission · Group Booking",
-      totalEntitlements: 8,
-      admittedEntitlements: 3,
-      remainingEntitlements: 5,
-      currentlyInside: 3,
-      status: "PARTIALLY_USED",
-      rawStatus: "paid",
-    },
-    {
-      id: "demo-4",
-      bookingReference: "URP-GRP-10024",
-      buyerName: "Rahul M",
-      buyerEmail: "rahul.m@example.com",
-      ticketType: "General Admission · Group Booking",
-      totalEntitlements: 4,
-      admittedEntitlements: 0,
-      remainingEntitlements: 4,
-      currentlyInside: 0,
-      status: "UNUSED",
-      rawStatus: "paid",
-    },
-  ]);
+  const [bookings, setBookings] = useState<GroupBookingItem[]>([]);
 
   const [admissionHistory, setAdmissionHistory] = useState<GroupAdmissionHistoryItem[]>([]);
   const [search, setSearch] = useState("");
@@ -144,11 +91,12 @@ export default function GroupEntryOperationsPage() {
       const data = await res.json();
       if (data.success) {
         if (data.stats) setStats(data.stats);
-        if (data.bookings && data.bookings.length > 0) setBookings(data.bookings);
+        if (Array.isArray(data.bookings)) setBookings(data.bookings);
         if (data.admissionHistory) setAdmissionHistory(data.admissionHistory);
       }
     } catch {
-      // Keep illustrative defaults
+      setBookings([]);
+      setAdmissionHistory([]);
     } finally {
       setLoading(false);
       setRefreshing(false);

@@ -42,7 +42,7 @@ export default async function AttendeesPage({ params }: Props) {
       .order("created_at", { ascending: false }),
     supabase
       .from("passes")
-      .select("attendee_id, pass_token, total_guests, checked_in_guests, is_group_master, status, updated_at")
+      .select("attendee_id, pass_token, total_guests, checked_in_guests, is_group_master, is_group_pass, status, updated_at")
       .eq("event_id", eventId),
     supabase
       .from("ticket_orders")
@@ -63,7 +63,7 @@ export default async function AttendeesPage({ params }: Props) {
   }> = {};
 
   for (const p of passes ?? []) {
-    if (p.attendee_id && (p.is_group_master || (p.total_guests && p.total_guests > 1))) {
+    if (p.attendee_id && (p.is_group_master || p.is_group_pass)) {
       groupPassMap[p.attendee_id] = {
         totalGuests: Number(p.total_guests || 1),
         checkedInGuests: Number(p.checked_in_guests || 0),
@@ -76,9 +76,10 @@ export default async function AttendeesPage({ params }: Props) {
   for (const a of attendees ?? []) {
     const cr = (a.custom_responses as Record<string, any>) || {};
     const isGroup = Boolean(
-      cr.is_single_group_qr ||
-      (cr.group_attendee_count && Number(cr.group_attendee_count) > 1) ||
-      (cr.bulk_quantity && Number(cr.bulk_quantity) > 1)
+      cr.is_single_group_qr === true ||
+      cr.is_single_group_qr === "true" ||
+      cr.credential_type === "GROUP_QR" ||
+      cr.credentialType === "GROUP_QR"
     );
     if (isGroup) {
       const count = Number(cr.group_attendee_count || cr.bulk_quantity || cr.guest_count || 1);

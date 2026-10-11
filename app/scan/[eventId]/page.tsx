@@ -154,15 +154,16 @@ export default function ScanEventPage() {
     totalEntitlements: number;
     previouslyAdmitted: number;
     remainingEntries: number;
-    history?: Array<{
-      id: string;
-      admittedCount: number;
-      remainingAfter: number;
-      gateName?: string;
-      admittedAt: string;
-    }>;
-    loading: boolean;
-  } | null>(null);
+	    history?: Array<{
+	      id: string;
+	      admittedCount: number;
+	      remainingAfter: number;
+	      gateName?: string;
+	      admittedAt: string;
+	    }>;
+	    operationId: string;
+	    loading: boolean;
+	  } | null>(null);
 
   // Manual search mode
   const [manualMode, setManualMode] = useState(false);
@@ -536,6 +537,7 @@ export default function ScanEventPage() {
           previouslyAdmitted: offRes.previouslyAdmitted || 0,
           remainingEntries: offRes.remainingEntries || 0,
           history: [],
+          operationId: crypto.randomUUID(),
           loading: false,
         });
         setScanState("idle");
@@ -744,17 +746,18 @@ export default function ScanEventPage() {
           });
           const data = await res.json();
           if (res.ok && data.success) {
-            setGroupModalState({
-              isOpen: true,
-              bookingReference: data.bookingReference || parsedGroup.bookingReference || cleanToken,
-              buyerName: data.buyerName || "Group Pass Holder",
-              ticketCategory: data.ticketCategory || "General Admission · Group Booking",
-              totalEntitlements: data.totalEntitlements || 1,
-              previouslyAdmitted: data.previouslyAdmitted || 0,
-              remainingEntries: data.remainingEntries || 0,
-              history: data.history || [],
-              loading: false,
-            });
+	            setGroupModalState({
+	              isOpen: true,
+	              bookingReference: data.bookingReference || parsedGroup.bookingReference || cleanToken,
+	              buyerName: data.buyerName || "Group Pass Holder",
+	              ticketCategory: data.ticketCategory || "General Admission · Group Booking",
+	              totalEntitlements: data.totalEntitlements || 1,
+	              previouslyAdmitted: data.previouslyAdmitted || 0,
+	              remainingEntries: data.remainingEntries || 0,
+	              history: data.history || [],
+	              operationId: crypto.randomUUID(),
+	              loading: false,
+	            });
             setScanState("idle");
             return;
           } else if (data.status === "EXHAUSTED") {
@@ -835,17 +838,18 @@ export default function ScanEventPage() {
             // Non-blocking
           }
 
-          setGroupModalState({
-            isOpen: true,
-            bookingReference: data.bookingReference || cleanToken,
-            buyerName: data.buyerName || data.attendee?.name || "Group Pass Holder",
-            ticketCategory: data.ticketCategory || data.passType || "General Admission · Group Booking",
-            totalEntitlements: data.totalEntitlements || 1,
-            previouslyAdmitted: data.previouslyAdmitted || 0,
-            remainingEntries: data.remainingEntries || 0,
-            history: batchHistory,
-            loading: false,
-          });
+	          setGroupModalState({
+	            isOpen: true,
+	            bookingReference: data.bookingReference || cleanToken,
+	            buyerName: data.buyerName || data.attendee?.name || "Group Pass Holder",
+	            ticketCategory: data.ticketCategory || data.passType || "General Admission · Group Booking",
+	            totalEntitlements: data.totalEntitlements || 1,
+	            previouslyAdmitted: data.previouslyAdmitted || 0,
+	            remainingEntries: data.remainingEntries || 0,
+	            history: batchHistory,
+	            operationId: crypto.randomUUID(),
+	            loading: false,
+	          });
           setScanState("idle");
           return;
         }
@@ -1212,11 +1216,12 @@ export default function ScanEventPage() {
           body: JSON.stringify({
             action: "admit",
             bookingReference: groupModalState.bookingReference,
-            quantity,
-            gateId: selectedGateId,
-            gateName: selectedGate?.name,
-          }),
-        });
+	            quantity,
+	            gateId: selectedGateId,
+	            gateName: selectedGate?.name,
+	            scanOperationId: groupModalState.operationId,
+	          }),
+	        });
 
         const data = await res.json();
 

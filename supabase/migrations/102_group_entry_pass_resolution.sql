@@ -28,14 +28,13 @@ FROM public.attendees a
 LEFT JOIN public.ticket_types tt ON tt.id = a.ticket_type_id
 LEFT JOIN public.ticket_orders o ON o.attendee_id = a.id
 WHERE p.attendee_id = a.id
-  AND (
-    COALESCE(a.custom_responses->>'is_single_group_qr', 'false') IN ('true', 't', '1')
-    OR COALESCE(NULLIF(regexp_replace(COALESCE(a.custom_responses->>'group_attendee_count', '0'), '[^0-9]', '', 'g'), '')::int, 0) > 1
-    OR COALESCE(NULLIF(regexp_replace(COALESCE(a.custom_responses->>'bulk_quantity', '0'), '[^0-9]', '', 'g'), '')::int, 0) > 1
-    OR COALESCE(tt.is_group_pass, false) = true
-    OR (tt.included_guests IS NOT NULL AND tt.included_guests > 1)
-    OR (COALESCE(o.group_entry_enabled, false) = true AND COALESCE(o.total_attendee_count, 0) > 1)
-  );
+	  AND (
+	    COALESCE(a.custom_responses->>'is_single_group_qr', 'false') IN ('true', 't', '1')
+	    OR COALESCE(a.custom_responses->>'credential_type', '') = 'GROUP_QR'
+	    OR COALESCE(a.custom_responses->>'credentialType', '') = 'GROUP_QR'
+	    OR COALESCE(tt.is_group_pass, false) = true
+	    OR (COALESCE(o.group_entry_enabled, false) = true AND o.group_qr_code IS NOT NULL)
+	  );
 
 -- ── 2. Upgrade atomic_check_in_pass to automatically detect Single Group QRs ──
 CREATE OR REPLACE FUNCTION public.atomic_check_in_pass(
@@ -147,14 +146,13 @@ BEGIN
   END IF;
 
   -- 4. Authoritative Single Group QR Detection
-  v_is_single_group_qr := (
-    COALESCE(v_is_group_master, false) = true
-    OR v_total_guests > 1
-    OR COALESCE(v_custom_responses->>'is_single_group_qr', 'false') IN ('true', 't', '1')
-    OR COALESCE(NULLIF(regexp_replace(COALESCE(v_custom_responses->>'group_attendee_count', '0'), '[^0-9]', '', 'g'), '')::int, 0) > 1
-    OR COALESCE(NULLIF(regexp_replace(COALESCE(v_custom_responses->>'bulk_quantity', '0'), '[^0-9]', '', 'g'), '')::int, 0) > 1
-    OR COALESCE(v_is_group_pass_type, false) = true
-  );
+	  v_is_single_group_qr := (
+	    COALESCE(v_is_group_master, false) = true
+	    OR COALESCE(v_custom_responses->>'is_single_group_qr', 'false') IN ('true', 't', '1')
+	    OR COALESCE(v_custom_responses->>'credential_type', '') = 'GROUP_QR'
+	    OR COALESCE(v_custom_responses->>'credentialType', '') = 'GROUP_QR'
+	    OR COALESCE(v_is_group_pass_type, false) = true
+	  );
 
   IF v_is_single_group_qr THEN
     v_group_total := GREATEST(

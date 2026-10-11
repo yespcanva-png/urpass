@@ -300,9 +300,9 @@ export function parseScannedGroupQR(rawToken: string): {
       (parsed.type === "GROUP_BOOKING_QR" ||
         parsed.type === "GROUP_PASS" ||
         parsed.type === "SINGLE_GROUP_QR" ||
-        parsed.is_single_group_qr === true ||
-        (typeof parsed.total === "number" && parsed.total > 1) ||
-        (typeof parsed.total_guests === "number" && parsed.total_guests > 1))
+        parsed.credentialType === "GROUP_QR" ||
+        parsed.credential_type === "GROUP_QR" ||
+        parsed.is_single_group_qr === true)
     ) {
       return {
         isGroupQR: true,

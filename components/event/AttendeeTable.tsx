@@ -132,6 +132,7 @@ export default function AttendeeTable({
 }: Props) {
   const [attendees, setAttendees]   = useState<Attendee[]>(initial);
   const [passTokens, setPassTokens] = useState<Record<string, string>>(initialPassTokens ?? {});
+  const [groupPasses, setGroupPasses] = useState(groupPassMap);
   const [activeTab, setActiveTab]   = useState<FilterTab>("all");
   const [search, setSearch]         = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
@@ -158,6 +159,10 @@ export default function AttendeeTable({
     }
   }, [initial]);
 
+  useEffect(() => {
+    setGroupPasses(groupPassMap);
+  }, [groupPassMap]);
+
   // Reset page when filter or search changes
   useEffect(() => {
     setCurrentPage(1);
@@ -183,6 +188,40 @@ export default function AttendeeTable({
           );
         } else if (payload.eventType === "DELETE") {
           setAttendees((prev) => prev.filter((a) => a.id !== payload.old.id));
+        }
+      })
+      .on("postgres_changes", {
+        event: "*", schema: "public", table: "passes",
+        filter: `event_id=eq.${eventId}`,
+      }, (payload) => {
+        if (payload.eventType === "UPDATE" || payload.eventType === "INSERT") {
+          const next = payload.new as {
+            attendee_id?: string;
+            total_guests?: number;
+            checked_in_guests?: number;
+            is_group_master?: boolean;
+            is_group_pass?: boolean;
+            updated_at?: string;
+          };
+          const attendeeId = next.attendee_id;
+          if (!attendeeId) return;
+          setGroupPasses((prev) => {
+            const isGroup = Boolean(next.is_group_master || next.is_group_pass);
+            if (!isGroup) {
+              const copy = { ...prev };
+              delete copy[attendeeId];
+              return copy;
+            }
+            return {
+              ...prev,
+              [attendeeId]: {
+                totalGuests: Number(next.total_guests || 1),
+                checkedInGuests: Number(next.checked_in_guests || 0),
+                isGroupMaster: Boolean(next.is_group_master),
+                lastAdmittedAt: next.updated_at,
+              },
+            };
+          });
         }
       })
       .subscribe((status) => setLiveConnected(status === "SUBSCRIBED"));
@@ -584,9 +623,15 @@ export default function AttendeeTable({
                 <tbody className="divide-y divide-neutral-50">
                   {paginatedList.map((a) => {
                     const isLoading  = loadingId === a.id;
-                    const hasToken   = !!passTokens[a.id];
-                    const passExists = a.pass_status === "generated" || a.pass_status === "checked_in";
-                    const payment    = payments[a.id] || payments[`email:${a.email.toLowerCase()}`];
+	                    const hasToken   = !!passTokens[a.id];
+	                    const passExists = a.pass_status === "generated" || a.pass_status === "checked_in";
+	                    const payment    = payments[a.id] || payments[`email:${a.email.toLowerCase()}`];
+	                    const customResponses = (a.custom_responses as any) || {};
+	                    const isExplicitGroupQr =
+	                      customResponses.is_single_group_qr === true ||
+	                      customResponses.is_single_group_qr === "true" ||
+	                      customResponses.credential_type === "GROUP_QR" ||
+	                      customResponses.credentialType === "GROUP_QR";
 
                     return (
                       <tr key={a.id} className="hover:bg-neutral-50/50 transition-colors">
@@ -604,27 +649,27 @@ export default function AttendeeTable({
                                 Answers
                               </button>
                             )}
-                            {((a.custom_responses as any)?.is_single_group_qr || groupPassMap[a.id]) && (
+	                            {(isExplicitGroupQr || groupPasses[a.id]) && (
                               <div className="flex flex-wrap items-center gap-1.5 mt-1">
                                 <span
                                   className="inline-flex items-center gap-1 text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-md"
                                   title="Single Group QR with partial check-in"
                                 >
                                   <Users className="w-3 h-3 text-indigo-600" />
-                                  Group Pass ({groupPassMap[a.id]?.totalGuests || (a.custom_responses as any)?.group_attendee_count || (a.custom_responses as any)?.guest_count || 1} people)
+	                                  Group Pass ({groupPasses[a.id]?.totalGuests || customResponses.group_attendee_count || customResponses.guest_count || 1} people)
                                 </span>
-                                {groupPassMap[a.id] ? (
+                                {groupPasses[a.id] ? (
                                   <span
                                     className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md border ${
-                                      groupPassMap[a.id].checkedInGuests >= groupPassMap[a.id].totalGuests
+                                      groupPasses[a.id].checkedInGuests >= groupPasses[a.id].totalGuests
                                         ? "text-emerald-700 bg-emerald-50 border-emerald-200"
-                                        : groupPassMap[a.id].checkedInGuests > 0
+                                        : groupPasses[a.id].checkedInGuests > 0
                                         ? "text-purple-700 bg-purple-50 border-purple-200"
                                         : "text-neutral-600 bg-neutral-50 border-neutral-200"
                                     }`}
                                   >
                                     <CheckCircle2 className="w-2.5 h-2.5" />
-                                    {groupPassMap[a.id].checkedInGuests}/{groupPassMap[a.id].totalGuests} Admitted
+                                    {groupPasses[a.id].checkedInGuests}/{groupPasses[a.id].totalGuests} Admitted
                                   </span>
                                 ) : null}
                                 {a.last_scanned_at && (
@@ -635,7 +680,7 @@ export default function AttendeeTable({
                                 )}
                               </div>
                             )}
-                            {!((a.custom_responses as any)?.is_single_group_qr || groupPassMap[a.id]) && a.pass_status === "checked_in" && a.last_scanned_at && (
+	                            {!(isExplicitGroupQr || groupPasses[a.id]) && a.pass_status === "checked_in" && a.last_scanned_at && (
                               <div className="flex items-center gap-1 mt-0.5 text-[10px] text-emerald-600 font-medium">
                                 <CheckCircle2 className="w-2.5 h-2.5" />
                                 <span>Checked in at {new Date(a.last_scanned_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>

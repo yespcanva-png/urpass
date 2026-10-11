@@ -917,7 +917,10 @@ export async function submitApplication(
     }
 
     const isSingleGroupQr = Boolean(
-      finalCustomResponses.is_single_group_qr ||
+      finalCustomResponses.is_single_group_qr === true ||
+      finalCustomResponses.is_single_group_qr === "true" ||
+      finalCustomResponses.credential_type === "GROUP_QR" ||
+      finalCustomResponses.credentialType === "GROUP_QR" ||
       ((selectedTicketType as any)?.is_group_pass && finalCustomResponses.is_single_group_qr !== false)
     );
     const groupAttendeeCount = Math.max(
@@ -1520,9 +1523,10 @@ export async function retryPassGeneration(
 
   const cr = (attendee.custom_responses as Record<string, any>) || {};
   const isSingleGroupQr = Boolean(
-    cr.is_single_group_qr ||
-    (cr.group_attendee_count && Number(cr.group_attendee_count) > 1) ||
-    (cr.bulk_quantity && Number(cr.bulk_quantity) > 1)
+    cr.is_single_group_qr === true ||
+    cr.is_single_group_qr === "true" ||
+    cr.credential_type === "GROUP_QR" ||
+    cr.credentialType === "GROUP_QR"
   );
   const groupAttendeeCount = Math.max(
     1,

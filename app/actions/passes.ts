@@ -82,9 +82,10 @@ export async function generatePass(
 
   const cr = (attendee.custom_responses as Record<string, any>) || {};
   let isSingleGroupQr = Boolean(
-    cr.is_single_group_qr ||
-    (cr.group_attendee_count && Number(cr.group_attendee_count) > 1) ||
-    (cr.bulk_quantity && Number(cr.bulk_quantity) > 1)
+    cr.is_single_group_qr === true ||
+    cr.is_single_group_qr === "true" ||
+    cr.credential_type === "GROUP_QR" ||
+    cr.credentialType === "GROUP_QR"
   );
   let groupAttendeeCount = Math.max(
     1,
@@ -245,15 +246,30 @@ export async function bulkGeneratePasses(
 
   for (const att of attendees) {
     const cr = (att.custom_responses as Record<string, any>) || {};
-    const isSingleGroupQr = Boolean(
-      cr.is_single_group_qr ||
-      (cr.group_attendee_count && Number(cr.group_attendee_count) > 1) ||
-      (cr.bulk_quantity && Number(cr.bulk_quantity) > 1)
+    let isSingleGroupQr = Boolean(
+      cr.is_single_group_qr === true ||
+      cr.is_single_group_qr === "true" ||
+      cr.credential_type === "GROUP_QR" ||
+      cr.credentialType === "GROUP_QR"
     );
-    const groupAttendeeCount = Math.max(
+    let groupAttendeeCount = Math.max(
       1,
       Number(cr.group_attendee_count || cr.bulk_quantity || cr.guest_count || (Array.isArray(cr.group_members) ? cr.group_members.length : 1))
     );
+
+    if (att.ticket_type_id) {
+      const { data: tt } = await supabase
+        .from("ticket_types")
+        .select("is_group_pass, included_guests")
+        .eq("id", att.ticket_type_id)
+        .maybeSingle();
+      if (tt?.is_group_pass) {
+        isSingleGroupQr = true;
+        if (tt.included_guests && Number(tt.included_guests) > 1 && !cr.group_attendee_count) {
+          groupAttendeeCount = Number(tt.included_guests);
+        }
+      }
+    }
 
     const { data: pass, error: insertError } = await supabase
       .from("passes")
