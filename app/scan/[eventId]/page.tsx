@@ -1306,7 +1306,10 @@ export default function ScanEventPage() {
             {selectedSession ? (
               <>📚 {selectedSession.title}</>
             ) : selectedGate ? (
-              <>🚪 {selectedGate.name}</>
+              <>
+                <DoorOpen className="w-3 h-3 shrink-0" />
+                <span className="truncate">{selectedGate.name}</span>
+              </>
             ) : gates.length > 0 ? (
               <span className="text-amber-400 font-bold animate-pulse">Select Gate ⚠️</span>
             ) : (
@@ -2126,8 +2129,9 @@ function ResultCard({
             {PASS_TYPE_LABEL[passType] ?? passType}
           </span>
           {gateName && (
-            <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-white/[0.06] text-white/70">
-              🚪 {gateName}
+            <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full bg-white/[0.06] text-white/70">
+              <DoorOpen className="w-3 h-3 shrink-0" />
+              <span>{gateName}</span>
             </span>
           )}
         </div>

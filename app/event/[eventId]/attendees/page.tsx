@@ -34,12 +34,30 @@ export default async function AttendeesPage({ params }: Props) {
     if (!member) redirect("/dashboard");
   }
 
-  const [{ data: attendees }, { data: passes }, { data: ticketOrders }, plan] = await Promise.all([
+  const [attendeesResult, plan] = await Promise.all([
     supabase
       .from("attendees")
       .select("id, name, email, phone, pass_type, application_status, pass_status, custom_responses, ticket_type_id, created_at, last_scanned_at, venue_presence_state")
       .eq("event_id", eventId)
       .order("created_at", { ascending: false }),
+    getUserPlan(supabase, user.id),
+  ]);
+
+  let attendees = attendeesResult.data;
+  if (attendeesResult.error) {
+    const { data: fallbackAttendees } = await supabase
+      .from("attendees")
+      .select("id, name, email, phone, pass_type, application_status, pass_status, custom_responses, ticket_type_id, created_at")
+      .eq("event_id", eventId)
+      .order("created_at", { ascending: false });
+    attendees = fallbackAttendees?.map((a) => ({
+      ...a,
+      last_scanned_at: null,
+      venue_presence_state: null,
+    })) ?? null;
+  }
+
+  const [{ data: passesWithGroupColumns, error: passesError }, { data: ticketOrders }] = await Promise.all([
     supabase
       .from("passes")
       .select("attendee_id, pass_token, total_guests, checked_in_guests, is_group_master, is_group_pass, status, updated_at")
@@ -48,8 +66,16 @@ export default async function AttendeesPage({ params }: Props) {
       .from("ticket_orders")
       .select("id, attendee_id, buyer_email, amount, currency, status, razorpay_payment_id, razorpay_order_id, created_at")
       .eq("event_id", eventId),
-    getUserPlan(supabase, user.id),
   ]);
+
+  let passes = passesWithGroupColumns;
+  if (passesError) {
+    const { data: fallbackPasses } = await supabase
+      .from("passes")
+      .select("attendee_id, pass_token, total_guests, checked_in_guests, is_group_master, status, updated_at")
+      .eq("event_id", eventId);
+    passes = fallbackPasses?.map((p) => ({ ...p, is_group_pass: false })) ?? null;
+  }
 
   const initialPassTokens: Record<string, string> = Object.fromEntries(
     (passes ?? []).map((p) => [p.attendee_id, p.pass_token])

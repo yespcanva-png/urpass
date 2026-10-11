@@ -27,6 +27,25 @@ ALTER TABLE public.passes
     'refunded'
   ));
 
+ALTER TABLE public.attendees
+  DROP CONSTRAINT IF EXISTS attendees_pass_status_check;
+
+ALTER TABLE public.attendees
+  ADD CONSTRAINT attendees_pass_status_check
+  CHECK (pass_status IN (
+    'not_generated',
+    'pending_retry',
+    'failed',
+    'generated',
+    'active',
+    'checked_in',
+    'checked_out',
+    'partially_checked_in',
+    'revoked',
+    'expired',
+    'cancelled'
+  ));
+
 CREATE INDEX IF NOT EXISTS idx_check_ins_group_qr_units
   ON public.check_ins(event_id, pass_id, check_in_method, checked_in_at);
 
