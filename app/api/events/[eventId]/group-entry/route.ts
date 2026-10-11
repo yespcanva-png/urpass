@@ -606,9 +606,17 @@ export async function POST(
   }
 
   if (!orderData && !passData) {
+    const notFoundBody = {
+      success: false,
+      error: "Group booking or pass reference not found.",
+      status: "BOOKING_NOT_FOUND",
+      isGroupQR: false,
+      credentialType: "UNKNOWN",
+    };
+
     return NextResponse.json(
-      { error: "Group booking or pass reference not found.", status: "BOOKING_NOT_FOUND", isGroupQR: false },
-      { status: 404 }
+      notFoundBody,
+      { status: action === "lookup" ? 200 : 404 }
     );
   }
 
