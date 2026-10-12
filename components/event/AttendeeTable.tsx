@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import {
   UserPlus, Upload, Check, X, Clock, Loader2, Users,
   Search, Ticket, ExternalLink, Download, Lock, Wifi, ClipboardList, RotateCcw,
-  Send, CheckCircle2, CreditCard, DoorOpen, ChevronRight, History,
+  Send, CheckCircle2, CreditCard, DoorOpen, History, Eye, Mail, Phone,
 } from "lucide-react";
 import { approveAttendee, rejectAttendee, exportAttendeesCSV, promoteNextWaitlistAttendee } from "@/app/actions/attendees";
 import { undoCheckIn } from "@/app/actions/manual-checkin";
@@ -166,7 +166,7 @@ export default function AttendeeTable({
   const [promotingWaitlist, setPromotingWaitlist] = useState(false);
   const [exporting, setExporting]   = useState(false);
   const [liveConnected, setLiveConnected] = useState(false);
-  const [selectedAnswersAttendee, setSelectedAnswersAttendee] = useState<Attendee | null>(null);
+  const [selectedAttendee, setSelectedAttendee] = useState<Attendee | null>(null);
   const [selectedGroupHistory, setSelectedGroupHistory] = useState<{
     name: string;
     email: string;
@@ -506,6 +506,34 @@ export default function AttendeeTable({
     return { customResponses, isGroup: Boolean(isExplicitGroupQr || groupPasses[a.id]) };
   }
 
+  function getCustomAnswerRows(a: Attendee) {
+    if (customFields && customFields.length > 0) {
+      return customFields.map((field) => {
+        const rawVal = a.custom_responses?.[field.id];
+        const displayVal = rawVal === true ? "Yes" : rawVal === false ? "No" : rawVal ? String(rawVal) : "-";
+        return { id: field.id, label: field.label, value: displayVal };
+      });
+    }
+
+    return Object.entries(a.custom_responses || {}).map(([key, val]) => ({
+      id: key,
+      label: key,
+      value: val === true ? "Yes" : val === false ? "No" : String(val ?? "-"),
+    }));
+  }
+
+  function openGroupHistory(a: Attendee) {
+    const group = groupPasses[a.id];
+    if (!group?.admissions || group.admissions.length === 0) return;
+    setSelectedGroupHistory({
+      name: a.name,
+      email: a.email,
+      totalGuests: group.totalGuests,
+      checkedInGuests: group.checkedInGuests,
+      admissions: group.admissions || [],
+    });
+  }
+
   function renderActions(a: Attendee, payment?: AttendeePaymentInfo) {
     const isLoading = loadingId === a.id;
     const hasToken = !!passTokens[a.id];
@@ -513,6 +541,15 @@ export default function AttendeeTable({
 
     return (
       <div className="flex flex-wrap items-center justify-end gap-1.5">
+        <button
+          type="button"
+          onClick={() => setSelectedAttendee(a)}
+          className="inline-flex min-h-8 items-center gap-1.5 rounded-md border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700 transition-colors hover:bg-blue-100"
+        >
+          <Eye className="h-3 w-3" />
+          View
+        </button>
+
         {a.application_status === "pending" && (
           <>
             {payment?.status === "paid" && (
@@ -863,20 +900,12 @@ export default function AttendeeTable({
                                 {groupPasses[a.id].checkedInGuests}/{groupPasses[a.id].totalGuests} admitted
                               </span>
                             )}
-                            {groupPasses[a.id]?.admissions && groupPasses[a.id].admissions!.length > 0 && (
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setSelectedGroupHistory({
-                                    name: a.name,
-                                    email: a.email,
-                                    totalGuests: groupPasses[a.id].totalGuests,
-                                    checkedInGuests: groupPasses[a.id].checkedInGuests,
-                                    admissions: groupPasses[a.id].admissions || [],
-                                  })
-                                }
-                                className="rounded-md border border-slate-200 bg-white px-2 py-1 text-[10px] font-bold text-slate-700"
-                              >
+	                            {groupPasses[a.id]?.admissions && groupPasses[a.id].admissions!.length > 0 && (
+	                              <button
+	                                type="button"
+	                                onClick={() => openGroupHistory(a)}
+	                                className="rounded-md border border-slate-200 bg-white px-2 py-1 text-[10px] font-bold text-slate-700"
+	                              >
                                 {groupPasses[a.id].admissions!.length} batches
                               </button>
                             )}
@@ -898,11 +927,11 @@ export default function AttendeeTable({
                       {a.custom_responses && Object.keys(a.custom_responses).length > 0 && (
                         <button
                           type="button"
-                          onClick={() => setSelectedAnswersAttendee(a)}
+	                          onClick={() => setSelectedAttendee(a)}
                           className="mt-2 inline-flex items-center gap-1 rounded-md border border-blue-200 bg-blue-50 px-2 py-1 text-[10px] font-semibold text-blue-700"
                         >
                           <ClipboardList className="h-3 w-3" />
-                          View answers
+	                          View details
                         </button>
                       )}
                       {actionErrors[a.id] && <p className="mt-2 text-xs text-red-600">{actionErrors[a.id]}</p>}
@@ -941,12 +970,12 @@ export default function AttendeeTable({
 	                            {a.custom_responses && Object.keys(a.custom_responses).length > 0 && (
 	                              <button
                                 type="button"
-                                onClick={() => setSelectedAnswersAttendee(a)}
+	                                onClick={() => setSelectedAttendee(a)}
 	                                className="inline-flex items-center gap-1 rounded-md border border-blue-200 bg-blue-50 px-1.5 py-0.5 text-[10px] font-semibold text-blue-700 transition-colors hover:bg-blue-100"
-                                title="View registration questions answers"
+	                                title="View attendee details"
                               >
                                 <ClipboardList className="w-3 h-3" />
-                                Answers
+	                                Details
                               </button>
                             )}
 	                            </div>
@@ -980,15 +1009,7 @@ export default function AttendeeTable({
                                 {groupPasses[a.id]?.admissions && groupPasses[a.id].admissions!.length > 0 && (
                                   <button
                                     type="button"
-                                    onClick={() =>
-                                      setSelectedGroupHistory({
-                                        name: a.name,
-                                        email: a.email,
-                                        totalGuests: groupPasses[a.id].totalGuests,
-                                        checkedInGuests: groupPasses[a.id].checkedInGuests,
-                                        admissions: groupPasses[a.id].admissions || [],
-                                      })
-                                    }
+	                                    onClick={() => openGroupHistory(a)}
 	                                    className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-1.5 py-1 text-[10px] font-semibold text-slate-700 transition-colors hover:bg-slate-50"
                                     title="View partial entry admissions breakdown"
                                   >
@@ -1230,162 +1251,283 @@ export default function AttendeeTable({
           onSuccess={() => setShowCSVModal(false)} />
       )}
 
-      {selectedAnswersAttendee && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4">
-            <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
-              <div>
-                <h3 className="text-sm font-bold text-neutral-900">{selectedAnswersAttendee.name}</h3>
-                <p className="text-xs text-neutral-400">{selectedAnswersAttendee.email}</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setSelectedAnswersAttendee(null)}
-                className="p-1.5 rounded-lg text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
+      {selectedAttendee && (() => {
+        const payment = getPayment(selectedAttendee);
+        const group = groupPasses[selectedAttendee.id];
+        const { isGroup } = getGroupMeta(selectedAttendee);
+        const checkIn = checkInInfoMap[selectedAttendee.id];
+        const answerRows = getCustomAnswerRows(selectedAttendee);
+        const passToken = passTokens[selectedAttendee.id];
 
-            <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
-              {customFields && customFields.length > 0 ? (
-                customFields.map((field) => {
-                  const rawVal = selectedAnswersAttendee.custom_responses?.[field.id];
-                  const displayVal =
-                    rawVal === true ? "Yes" : rawVal === false ? "No" : rawVal ? String(rawVal) : "—";
-                  return (
-                    <div key={field.id} className="bg-neutral-50 rounded-xl p-3 border border-neutral-100">
-                      <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">
-                        {field.label}
-                      </p>
-                      <p className="text-sm font-medium text-neutral-900 mt-1">{displayVal}</p>
+        return (
+          <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/50 p-0 backdrop-blur-sm sm:items-center sm:p-4">
+            <div className="absolute inset-0" onClick={() => setSelectedAttendee(null)} />
+            <div className="relative flex max-h-[92svh] w-full flex-col overflow-hidden rounded-t-lg border border-slate-200 bg-white shadow-2xl sm:max-w-2xl sm:rounded-lg">
+              <div className="border-b border-slate-200 bg-white px-4 py-4 sm:px-5">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="truncate text-base font-bold text-slate-950">{selectedAttendee.name}</h3>
+                      <StatusBadge status={selectedAttendee.application_status} />
                     </div>
-                  );
-                })
-              ) : (
-                Object.entries(selectedAnswersAttendee.custom_responses || {}).map(([key, val]) => (
-                  <div key={key} className="bg-neutral-50 rounded-xl p-3 border border-neutral-100">
-                    <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">
-                      {key}
-                    </p>
-                    <p className="text-sm font-medium text-neutral-900 mt-1">
-                      {val === true ? "Yes" : val === false ? "No" : String(val ?? "—")}
-                    </p>
+                    <div className="mt-2 flex flex-wrap gap-2 text-xs text-slate-500">
+                      <span className="inline-flex items-center gap-1">
+                        <Mail className="h-3 w-3" />
+                        {selectedAttendee.email}
+                      </span>
+                      {selectedAttendee.phone && (
+                        <span className="inline-flex items-center gap-1">
+                          <Phone className="h-3 w-3" />
+                          {selectedAttendee.phone}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                ))
-              )}
-            </div>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedAttendee(null)}
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-950"
+                    aria-label="Close attendee details"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
 
-            <div className="pt-2 flex justify-end">
-              <button
-                type="button"
-                onClick={() => setSelectedAnswersAttendee(null)}
-                className="px-4 py-2 rounded-xl text-xs font-semibold text-neutral-700 bg-neutral-100 hover:bg-neutral-200 transition-colors"
-              >
-                Close
-              </button>
+              <div className="overflow-y-auto px-4 py-4 sm:px-5">
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
+                    <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Ticket</p>
+                    <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                      <PassTypeBadge type={selectedAttendee.pass_type} />
+                      <span className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-semibold capitalize text-slate-600">
+                        {selectedAttendee.pass_status.replace(/_/g, " ")}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
+                    <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Payment</p>
+                    {payment?.status === "paid" ? (
+                      <p className="mt-2 text-sm font-bold text-emerald-700">
+                        {payment.currency === "INR" ? "₹" : `${payment.currency} `}{(payment.amount / 100).toLocaleString("en-IN")} Paid
+                      </p>
+                    ) : payment?.status === "created" ? (
+                      <p className="mt-2 text-sm font-semibold text-amber-700">Awaiting payment</p>
+                    ) : (
+                      <p className="mt-2 text-sm font-semibold text-slate-600">
+                        {selectedAttendee.pass_type === "vip" || selectedAttendee.pass_type === "speaker" || selectedAttendee.pass_type === "organizer" ? "Complimentary" : "Free Pass"}
+                      </p>
+                    )}
+                    {payment && (
+                      <p className="mt-1 truncate font-mono text-[10px] text-slate-500">
+                        {payment.paymentId || payment.orderId}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
+                    <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Entry</p>
+                    {checkIn ? (
+                      <div className="mt-2 text-sm text-slate-700">
+                        <p className="font-bold">{checkIn.gateName}</p>
+                        <p className="mt-0.5 text-xs text-slate-500">
+                          {new Date(checkIn.checkedInAt).toLocaleString([], {
+                            day: "2-digit",
+                            month: "short",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </p>
+                      </div>
+                    ) : selectedAttendee.last_scanned_at ? (
+                      <p className="mt-2 text-sm font-semibold text-slate-600">
+                        {new Date(selectedAttendee.last_scanned_at).toLocaleString([], {
+                          day: "2-digit",
+                          month: "short",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </p>
+                    ) : (
+                      <p className="mt-2 text-sm font-semibold text-slate-500">Not checked in</p>
+                    )}
+                  </div>
+                </div>
+
+                {isGroup && (
+                  <div className="mt-3 rounded-md border border-blue-200 bg-blue-50 p-3">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <p className="text-xs font-bold text-blue-900">Group Pass</p>
+                        <p className="mt-1 text-xs text-blue-700">
+                          {group ? `${group.checkedInGuests}/${group.totalGuests} admitted` : "Group credential detected"}
+                        </p>
+                      </div>
+                      {group?.admissions && group.admissions.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => openGroupHistory(selectedAttendee)}
+                          className="inline-flex items-center justify-center gap-1.5 rounded-md border border-blue-200 bg-white px-3 py-2 text-xs font-bold text-blue-700 transition-colors hover:bg-blue-50"
+                        >
+                          <History className="h-3.5 w-3.5" />
+                          View admission batches
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                <div className="mt-4">
+                  <div className="mb-2 flex items-center justify-between">
+                    <h4 className="text-xs font-bold uppercase tracking-wide text-slate-600">Registration details</h4>
+                    <span className="text-[10px] font-semibold text-slate-400">{answerRows.length} fields</span>
+                  </div>
+                  {answerRows.length === 0 ? (
+                    <div className="rounded-md border border-dashed border-slate-200 bg-slate-50 px-3 py-4 text-center text-xs font-medium text-slate-500">
+                      No custom registration answers recorded.
+                    </div>
+                  ) : (
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {answerRows.map((row) => (
+                        <div key={row.id} className="rounded-md border border-slate-200 bg-white p-3">
+                          <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">{row.label}</p>
+                          <p className="mt-1 break-words text-sm font-medium text-slate-950">{row.value}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2 border-t border-slate-200 bg-slate-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+                <div className="flex flex-wrap gap-2">
+                  {passToken && (
+                    <a
+                      href={`/pass/${passToken}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-md border border-blue-700 bg-blue-700 px-3 py-2 text-xs font-bold text-white transition-colors hover:bg-blue-800"
+                    >
+                      <ExternalLink className="h-3.5 w-3.5" />
+                      Open pass
+                    </a>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setSelectedAttendee(null)}
+                    className="inline-flex min-h-9 items-center justify-center rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-100"
+                  >
+                    Close
+                  </button>
+                </div>
+                <p className="text-[10px] font-medium text-slate-400">
+                  Added {new Date(selectedAttendee.created_at).toLocaleDateString([], { day: "2-digit", month: "short", year: "numeric" })}
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {selectedGroupHistory && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl space-y-4">
-            <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
-              <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-bold text-neutral-900">{selectedGroupHistory.name}</h3>
-                  <span className="text-[11px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-md">
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/50 p-0 backdrop-blur-sm sm:items-center sm:p-4">
+          <div className="absolute inset-0" onClick={() => setSelectedGroupHistory(null)} />
+          <div className="relative flex max-h-[92svh] w-full flex-col overflow-hidden rounded-t-lg border border-slate-200 bg-white shadow-2xl sm:max-w-lg sm:rounded-lg">
+            <div className="flex items-start justify-between gap-3 border-b border-slate-200 px-4 py-4 sm:px-5">
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3 className="truncate text-base font-bold text-slate-950">{selectedGroupHistory.name}</h3>
+                  <span className="rounded-md border border-blue-200 bg-blue-50 px-2 py-1 text-[11px] font-bold text-blue-700">
                     Group Pass
                   </span>
                 </div>
-                <p className="text-xs text-neutral-400 mt-0.5">{selectedGroupHistory.email}</p>
+                <p className="mt-1 truncate text-xs text-slate-500">{selectedGroupHistory.email}</p>
               </div>
               <button
                 type="button"
                 onClick={() => setSelectedGroupHistory(null)}
-                className="p-1.5 rounded-lg text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 transition-colors"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-950"
               >
-                <X className="w-4 h-4" />
+                <X className="h-4 w-4" />
               </button>
             </div>
 
-            {/* Admission Summary */}
-            <div className="grid grid-cols-3 gap-2 py-2">
-              <div className="bg-neutral-50 rounded-xl p-3 border border-neutral-100 text-center">
-                <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block">Total</span>
-                <span className="text-base font-bold text-neutral-800">{selectedGroupHistory.totalGuests}</span>
-              </div>
-              <div className="bg-purple-50/70 rounded-xl p-3 border border-purple-100 text-center">
-                <span className="text-[10px] font-bold text-purple-600 uppercase tracking-wider block">Admitted</span>
-                <span className="text-base font-bold text-purple-700">{selectedGroupHistory.checkedInGuests}</span>
-              </div>
-              <div className="bg-emerald-50/70 rounded-xl p-3 border border-emerald-100 text-center">
-                <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider block">Remaining</span>
-                <span className="text-base font-bold text-emerald-700">
-                  {Math.max(0, selectedGroupHistory.totalGuests - selectedGroupHistory.checkedInGuests)}
-                </span>
-              </div>
-            </div>
-
-            {/* Admissions Log List */}
-            <div>
-              <h4 className="text-xs font-bold text-neutral-700 mb-2 flex items-center gap-1.5">
-                <History className="w-3.5 h-3.5 text-neutral-400" />
-                <span>Partial Entry History ({selectedGroupHistory.admissions.length})</span>
-              </h4>
-
-              {selectedGroupHistory.admissions.length === 0 ? (
-                <div className="py-6 text-center bg-neutral-50 rounded-xl border border-dashed border-neutral-200">
-                  <p className="text-xs text-neutral-400">No partial entry batch logs recorded yet.</p>
+            <div className="overflow-y-auto px-4 py-4 sm:px-5">
+              <div className="grid grid-cols-3 gap-2">
+                <div className="rounded-md border border-slate-200 bg-slate-50 p-3 text-center">
+                  <span className="block text-[10px] font-bold uppercase tracking-wide text-slate-500">Total</span>
+                  <span className="text-lg font-bold text-slate-950">{selectedGroupHistory.totalGuests}</span>
                 </div>
-              ) : (
-                <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
-                  {selectedGroupHistory.admissions.map((entry, idx) => (
-                    <div
-                      key={entry.id || idx}
-                      className="p-3 bg-neutral-50 hover:bg-neutral-100/60 transition-colors rounded-xl border border-neutral-100 flex items-center justify-between"
-                    >
-                      <div className="space-y-0.5">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-xs font-bold text-neutral-800">
-                            +{entry.admittedCount} {entry.admittedCount === 1 ? "person" : "people"} entered
-                          </span>
-                          <span className="text-[10px] font-medium text-neutral-400">
-                            ({entry.remainingAfter} left after)
-                          </span>
+                <div className="rounded-md border border-blue-200 bg-blue-50 p-3 text-center">
+                  <span className="block text-[10px] font-bold uppercase tracking-wide text-blue-700">Admitted</span>
+                  <span className="text-lg font-bold text-blue-800">{selectedGroupHistory.checkedInGuests}</span>
+                </div>
+                <div className="rounded-md border border-emerald-200 bg-emerald-50 p-3 text-center">
+                  <span className="block text-[10px] font-bold uppercase tracking-wide text-emerald-700">Remaining</span>
+                  <span className="text-lg font-bold text-emerald-800">
+                    {Math.max(0, selectedGroupHistory.totalGuests - selectedGroupHistory.checkedInGuests)}
+                  </span>
+                </div>
+              </div>
+
+              <div className="mt-4">
+                <h4 className="mb-2 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-slate-600">
+                  <History className="h-3.5 w-3.5 text-slate-500" />
+                  Admission batches ({selectedGroupHistory.admissions.length})
+                </h4>
+
+                {selectedGroupHistory.admissions.length === 0 ? (
+                  <div className="rounded-md border border-dashed border-slate-200 bg-slate-50 py-6 text-center">
+                    <p className="text-xs text-slate-500">No partial entry batch logs recorded yet.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {selectedGroupHistory.admissions.map((entry, idx) => (
+                      <div
+                        key={entry.id || idx}
+                        className="flex items-center justify-between gap-3 rounded-md border border-slate-200 bg-white p-3"
+                      >
+                        <div className="min-w-0 space-y-1">
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <span className="text-xs font-bold text-slate-950">
+                              +{entry.admittedCount} {entry.admittedCount === 1 ? "person" : "people"} entered
+                            </span>
+                            <span className="text-[10px] font-medium text-slate-500">
+                              {entry.remainingAfter} remaining after
+                            </span>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-2 text-[10px] text-slate-500">
+                            <span className="flex items-center gap-1 font-medium">
+                              <DoorOpen className="h-2.5 w-2.5 text-slate-400" />
+                              {entry.gateName}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Clock className="h-2.5 w-2.5 text-slate-400" />
+                              {new Date(entry.admittedAt).toLocaleString([], {
+                                day: "2-digit",
+                                month: "short",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </span>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2 text-[10px] text-neutral-500">
-                          <span className="flex items-center gap-1 font-medium">
-                            <DoorOpen className="w-2.5 h-2.5 text-neutral-400" />
-                            {entry.gateName}
-                          </span>
-                          <span>·</span>
-                          <span className="flex items-center gap-1">
-                            <Clock className="w-2.5 h-2.5 text-neutral-400" />
-                            {new Date(entry.admittedAt).toLocaleTimeString([], {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                              second: "2-digit",
-                            })}
-                          </span>
-                        </div>
+                        <span className="shrink-0 rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 font-mono text-[10px] text-slate-500">
+                          #{selectedGroupHistory.admissions.length - idx}
+                        </span>
                       </div>
-                      <span className="text-[10px] font-mono text-neutral-400 bg-white border border-neutral-200 px-1.5 py-0.5 rounded">
-                        #{selectedGroupHistory.admissions.length - idx}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
-            <div className="pt-2 flex justify-end">
+            <div className="flex justify-end border-t border-slate-200 bg-slate-50 px-4 py-3 sm:px-5">
               <button
                 type="button"
                 onClick={() => setSelectedGroupHistory(null)}
-                className="px-4 py-2 rounded-xl text-xs font-semibold text-neutral-700 bg-neutral-100 hover:bg-neutral-200 transition-colors"
+                className="rounded-md border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-100"
               >
                 Close
               </button>
