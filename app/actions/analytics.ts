@@ -12,6 +12,7 @@ export interface AnalyticsEventSummary {
   end_time: string;
   attendee_limit: number;
   status: string;
+  apply_slug?: string | null;
 }
 
 export interface HourlyBucket {
@@ -173,7 +174,7 @@ export async function getAnalyticsData(targetEventId?: string): Promise<Analytic
   const [{ data: ownedEvents }, { data: orgMemberships }] = await Promise.all([
     supabase
       .from("events")
-      .select("id, name, venue, event_date, start_time, end_time, attendee_limit, status, organization_id, created_at")
+      .select("id, name, venue, event_date, start_time, end_time, attendee_limit, status, organization_id, created_at, apply_slug")
       .eq("organizer_id", user.id)
       .order("created_at", { ascending: false }),
     supabase
@@ -189,24 +190,57 @@ export async function getAnalyticsData(targetEventId?: string): Promise<Analytic
   if (orgIds.length > 0) {
     const { data } = await supabase
       .from("events")
-      .select("id, name, venue, event_date, start_time, end_time, attendee_limit, status, organization_id, created_at")
+      .select("id, name, venue, event_date, start_time, end_time, attendee_limit, status, organization_id, created_at, apply_slug")
       .in("organization_id", orgIds)
       .order("created_at", { ascending: false });
     orgEvents = (data ?? []) as unknown as AnalyticsEventSummary[];
   }
 
-  // Combine and deduplicate events
+  // Combine and deduplicate events by UUID id
   const eventMap = new Map<string, AnalyticsEventSummary>();
   (ownedEvents ?? []).forEach((e) => eventMap.set(e.id, e as unknown as AnalyticsEventSummary));
   orgEvents.forEach((e) => eventMap.set(e.id, e));
+
+  // If a specific targetEventId was provided, resolve by UUID or apply_slug
+  let resolvedEvent: AnalyticsEventSummary | null = null;
+  if (targetEventId && targetEventId !== "all") {
+    // 1. Direct match on id
+    if (eventMap.has(targetEventId)) {
+      resolvedEvent = eventMap.get(targetEventId)!;
+    } else {
+      // 2. Match on apply_slug
+      for (const evt of eventMap.values()) {
+        if (evt.apply_slug === targetEventId) {
+          resolvedEvent = evt;
+          break;
+        }
+      }
+    }
+
+    // 3. Fallback: If not in owned or org-joined lists, fetch directly in case user has gate manager/staff role or scoped access
+    if (!resolvedEvent) {
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(targetEventId);
+      const query = supabase
+        .from("events")
+        .select("id, name, venue, event_date, start_time, end_time, attendee_limit, status, organization_id, created_at, apply_slug");
+      const { data: directEvent } = isUUID
+        ? await query.eq("id", targetEventId).maybeSingle()
+        : await query.eq("apply_slug", targetEventId).maybeSingle();
+
+      if (directEvent) {
+        resolvedEvent = directEvent as unknown as AnalyticsEventSummary;
+        eventMap.set(resolvedEvent.id, resolvedEvent);
+      }
+    }
+  }
 
   const allEvents = Array.from(eventMap.values()).sort(
     (a, b) => new Date(b.event_date).getTime() - new Date(a.event_date).getTime()
   );
 
-  const isSpecificEvent = targetEventId && targetEventId !== "all" && eventMap.has(targetEventId);
-  const activeEventId = isSpecificEvent ? targetEventId! : "all";
-  const selectedEvent = isSpecificEvent ? eventMap.get(activeEventId) : null;
+  const isSpecificEvent = Boolean(resolvedEvent);
+  const activeEventId = resolvedEvent ? resolvedEvent.id : "all";
+  const selectedEvent = resolvedEvent;
 
   const eventIdsToQuery = isSpecificEvent
     ? [activeEventId]

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Users, CheckCircle2, AlertCircle, X, Clock, DoorOpen, ShieldAlert } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Users, CheckCircle2, AlertCircle, X, Clock, Minus, Plus, Loader2 } from "lucide-react";
 
 export interface GroupAdmissionBatchHistory {
   id: string;
@@ -42,8 +42,15 @@ export default function GroupEntryModal({
   onConfirmAdmission,
   loading = false,
 }: GroupEntryModalProps) {
-  const [quantity, setQuantity] = useState<number>(() => Math.max(1, Math.min(6, remainingEntries)));
+  const [quantity, setQuantity] = useState<number>(() => (remainingEntries > 0 ? Math.max(1, Math.min(6, remainingEntries)) : 0));
   const [errorMsg, setErrorMsg] = useState("");
+
+  useEffect(() => {
+    setQuantity((current) => {
+      if (remainingEntries <= 0) return 0;
+      return Math.max(1, Math.min(current || 1, remainingEntries));
+    });
+  }, [remainingEntries]);
 
   if (!isOpen) return null;
 
@@ -69,115 +76,118 @@ export default function GroupEntryModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-150 overflow-y-auto">
-      <div className="w-full max-w-md bg-[#0D0F17] border border-white/10 rounded-3xl p-5 sm:p-6 shadow-2xl relative text-left text-white animate-in zoom-in-95 duration-150 my-auto">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/45 p-0 backdrop-blur-[2px] animate-in fade-in duration-150 sm:items-center sm:p-4">
+      <div className="relative w-full max-h-[92svh] overflow-y-auto rounded-t-lg bg-white text-slate-950 shadow-2xl animate-in slide-in-from-bottom-3 duration-150 sm:max-w-md sm:rounded-lg sm:border sm:border-slate-200 sm:slide-in-from-bottom-0 sm:zoom-in-95">
+        <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-slate-300 sm:hidden" />
         <button
           onClick={onClose}
           disabled={loading}
-          className="absolute top-4 right-4 p-2 rounded-full bg-white/[0.06] text-white/60 hover:text-white hover:bg-white/15 transition-all cursor-pointer"
+          className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-950 disabled:opacity-50"
           aria-label="Close"
         >
-          <X className="w-4 h-4" />
+          <X className="h-4 w-4" />
         </button>
 
-        {/* Top Header / Scanner Location */}
-        <div className="flex items-center gap-2 mb-3">
-          <div className="w-7 h-7 rounded-xl bg-purple-500/20 border border-purple-500/40 text-purple-300 flex items-center justify-center font-bold">
-            <Users className="w-3.5 h-3.5" />
-          </div>
-          <div className="flex-1">
-            <div className="flex items-center gap-1.5 text-[11px] font-semibold text-purple-300">
-              <span>UrPass One</span>
-              <span>·</span>
-              <span>{gateName} · Group QR Scan</span>
+        <div className="border-b border-slate-200 px-4 py-4 pr-14 sm:px-5">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-blue-200 bg-blue-50 text-blue-700">
+              <Users className="h-5 w-5" />
             </div>
-            <div className="flex items-center gap-1.5 mt-0.5">
-              <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                <CheckCircle2 className="w-2.5 h-2.5" /> Valid Pass
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Booking Card & Entitlement Summary */}
-        <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/[0.08] space-y-3">
-          <div>
-            <div className="flex items-baseline justify-between">
-              <span className="text-[10px] uppercase font-bold tracking-wider text-white/40">Booking ID</span>
-              <span className="text-xs font-mono font-bold text-purple-300">{bookingReference}</span>
-            </div>
-            <h4 className="text-base font-extrabold text-white mt-1">{buyerName}</h4>
-            <p className="text-xs text-white/50">{ticketCategory}</p>
-          </div>
-
-          {/* KPI Triad: Purchased / Admitted / Remaining */}
-          <div className="grid grid-cols-3 gap-2 text-center pt-2 border-t border-white/[0.08]">
-            <div className="p-2.5 rounded-xl bg-neutral-900/80 border border-white/[0.05]">
-              <p className="text-xl font-black text-white">{totalEntitlements}</p>
-              <p className="text-[10px] text-white/40 uppercase font-semibold mt-0.5">Purchased</p>
-            </div>
-            <div className="p-2.5 rounded-xl bg-purple-950/40 border border-purple-500/20">
-              <p className="text-xl font-black text-purple-400">{previouslyAdmitted}</p>
-              <p className="text-[10px] text-purple-300/60 uppercase font-semibold mt-0.5">Admitted</p>
-            </div>
-            <div className="p-2.5 rounded-xl bg-emerald-950/40 border border-emerald-500/20">
-              <p className="text-xl font-black text-emerald-400">{remainingEntries}</p>
-              <p className="text-[10px] text-emerald-300/60 uppercase font-semibold mt-0.5">Remaining</p>
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className="text-base font-bold leading-tight text-slate-950">Group Entry Check-in</h3>
+                <span className="inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700">
+                  <CheckCircle2 className="h-3 w-3" /> Valid
+                </span>
+              </div>
+              <p className="mt-1 truncate text-xs font-medium text-slate-500">
+                {gateName}{scannerStaffName ? ` · ${scannerStaffName}` : ""}
+              </p>
             </div>
           </div>
         </div>
 
-        {errorMsg && (
-          <div className="mt-3 p-3 rounded-xl bg-red-950/70 border border-red-500/30 text-red-200 text-xs flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
-            <span>{errorMsg}</span>
-          </div>
-        )}
+        <div className="space-y-4 px-4 py-4 sm:px-5">
+          <div className="space-y-3 rounded-md border border-slate-200 bg-slate-50 p-3">
+            <div className="min-w-0">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <span className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Booking reference</span>
+                  <h4 className="mt-0.5 truncate text-sm font-bold text-slate-950">{buyerName}</h4>
+                </div>
+                <span className="max-w-[46%] shrink-0 truncate rounded border border-slate-200 bg-white px-2 py-1 font-mono text-[10px] font-semibold text-slate-600">
+                  {bookingReference}
+                </span>
+              </div>
+              <p className="mt-1 truncate text-xs text-slate-500">{ticketCategory}</p>
+            </div>
 
-        {/* Quantity Form */}
-        <form onSubmit={handleSubmit} className="mt-4 space-y-4">
-          <div>
-            <label className="block text-xs font-bold text-white/80 mb-2">
-              How many people are entering now?
-            </label>
-            <div className="flex items-center gap-2">
+            <div className="grid grid-cols-3 gap-2">
+              <div className="rounded-md border border-slate-200 bg-white p-2.5 text-center">
+                <p className="text-xl font-bold tabular-nums text-slate-950">{totalEntitlements}</p>
+                <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500">Total</p>
+              </div>
+              <div className="rounded-md border border-blue-200 bg-blue-50 p-2.5 text-center">
+                <p className="text-xl font-bold tabular-nums text-blue-800">{previouslyAdmitted}</p>
+                <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-blue-700">Admitted</p>
+              </div>
+              <div className="rounded-md border border-emerald-200 bg-emerald-50 p-2.5 text-center">
+                <p className="text-xl font-bold tabular-nums text-emerald-800">{remainingEntries}</p>
+                <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700">Remaining</p>
+              </div>
+            </div>
+          </div>
+
+          {errorMsg && (
+            <div className="flex items-start gap-2 rounded-md border border-red-200 bg-red-50 p-3 text-xs font-medium text-red-700">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-600" />
+              <span>{errorMsg}</span>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-600">
+                Admit now
+              </label>
+              <div className="grid grid-cols-[44px_1fr_44px] gap-2">
               <button
                 type="button"
                 onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                disabled={quantity <= 1 || loading}
-                className="w-12 h-12 rounded-2xl bg-white/[0.08] hover:bg-white/[0.15] disabled:opacity-30 text-xl font-bold flex items-center justify-center border border-white/10 active:scale-95 transition-all cursor-pointer"
+                disabled={quantity <= 1 || loading || remainingEntries <= 0}
+                className="flex h-12 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                aria-label="Decrease admission quantity"
               >
-                -
+                <Minus className="h-4 w-4" />
               </button>
-              <div className="flex-1 relative flex items-center justify-center bg-white/[0.06] border border-white/20 rounded-2xl focus-within:border-purple-400 h-12">
+              <div className="relative flex h-12 items-center justify-center rounded-md border border-slate-300 bg-white focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100">
                 <input
                   type="number"
-                  min={1}
+                  min={remainingEntries > 0 ? 1 : 0}
                   max={remainingEntries}
                   value={quantity}
-                  disabled={loading}
+                  disabled={loading || remainingEntries <= 0}
                   onChange={(e) => {
                     const val = parseInt(e.target.value, 10);
-                    if (!isNaN(val)) setQuantity(Math.max(1, Math.min(remainingEntries, val)));
+                    if (!isNaN(val)) setQuantity(remainingEntries > 0 ? Math.max(1, Math.min(remainingEntries, val)) : 0);
                   }}
-                  className="w-16 text-center text-2xl font-black bg-transparent outline-none tabular-nums text-white"
+                  className="w-16 bg-transparent text-center text-2xl font-bold tabular-nums text-slate-950 outline-none disabled:text-slate-400"
                 />
-                <span className="text-xs font-semibold text-white/40 ml-1">People</span>
+                <span className="ml-1 text-xs font-semibold text-slate-500">People</span>
               </div>
               <button
                 type="button"
                 onClick={() => setQuantity((q) => Math.min(remainingEntries, q + 1))}
-                disabled={quantity >= remainingEntries || loading}
-                className="w-12 h-12 rounded-2xl bg-white/[0.08] hover:bg-white/[0.15] disabled:opacity-30 text-xl font-bold flex items-center justify-center border border-white/10 active:scale-95 transition-all cursor-pointer"
+                disabled={quantity >= remainingEntries || loading || remainingEntries <= 0}
+                className="flex h-12 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                aria-label="Increase admission quantity"
               >
-                +
+                <Plus className="h-4 w-4" />
               </button>
             </div>
 
-            {/* Quick-Pick Selection Pills */}
             {remainingEntries > 1 && (
-              <div className="flex items-center gap-1.5 mt-2.5 overflow-x-auto py-0.5 scrollbar-none">
-                <span className="text-[10px] text-white/40 uppercase font-semibold tracking-wider">Quick:</span>
+              <div className="mt-3 grid grid-cols-5 gap-1.5">
                 {[1, 2, Math.min(remainingEntries, 4), Math.min(remainingEntries, 6), remainingEntries]
                   .filter((v, i, a) => a.indexOf(v) === i && v <= remainingEntries)
                   .map((n) => (
@@ -186,10 +196,10 @@ export default function GroupEntryModal({
                       type="button"
                       disabled={loading}
                       onClick={() => setQuantity(n)}
-                      className={`px-2.5 py-1 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                      className={`min-h-9 rounded-md border px-2 text-xs font-bold transition-colors disabled:opacity-50 ${
                         quantity === n
-                          ? "bg-purple-600 text-white border-purple-400 shadow-sm"
-                          : "bg-white/[0.04] text-white/60 border-white/10 hover:text-white hover:bg-white/[0.08]"
+                          ? "border-blue-700 bg-blue-700 text-white"
+                          : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-950"
                       }`}
                     >
                       {n === remainingEntries ? `All ${n}` : `${n}`}
@@ -197,53 +207,63 @@ export default function GroupEntryModal({
                   ))}
               </div>
             )}
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading || remainingEntries <= 0}
-            className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-sm font-extrabold shadow-lg shadow-purple-900/40 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
-          >
-            <CheckCircle2 className="w-4 h-4" />
-            <span>{loading ? "Confirming Entry..." : `Confirm Entry for ${quantity} ${quantity === 1 ? "Person" : "People"}`}</span>
-          </button>
-        </form>
-
-        {/* Recent Entry History (batches) */}
-        <div className="mt-4 pt-4 border-t border-white/[0.08]">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-bold text-white/80 flex items-center gap-1.5">
-              <Clock className="w-3.5 h-3.5 text-purple-400" />
-              Recent entry history
-            </span>
-            <span className="text-[10px] text-white/40 font-mono">
-              {history.length} {history.length === 1 ? "confirmation" : "confirmations"}
-            </span>
-          </div>
-
-          {history.length === 0 ? (
-            <p className="text-[11px] text-white/40 italic py-1">
-              No previous entry batches recorded for this booking.
-            </p>
-          ) : (
-            <div className="space-y-1.5 max-h-28 overflow-y-auto pr-1">
-              {history.map((h) => (
-                <div
-                  key={h.id}
-                  className="flex items-center justify-between p-2 rounded-xl bg-white/[0.03] border border-white/[0.06] text-[11px]"
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                    <span className="font-bold text-white">+{h.admittedCount} admitted</span>
-                    {h.gateName && <span className="text-white/40">at {h.gateName}</span>}
-                  </div>
-                  <span className="font-mono text-white/40 text-[10px]">
-                    {new Date(h.admittedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                  </span>
-                </div>
-              ))}
             </div>
-          )}
+
+            <div className="grid grid-cols-2 gap-2 pt-1">
+              <button
+                type="button"
+                onClick={onClose}
+                disabled={loading}
+                className="h-11 rounded-md border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={loading || remainingEntries <= 0}
+                className="flex h-11 items-center justify-center gap-2 rounded-md bg-blue-700 px-4 text-sm font-bold text-white transition-colors hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
+              >
+                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+                <span>{remainingEntries <= 0 ? "No Entries" : `Admit ${quantity}`}</span>
+              </button>
+            </div>
+          </form>
+
+          <div className="border-t border-slate-200 pt-4">
+            <div className="mb-2 flex items-center justify-between gap-3">
+              <span className="flex items-center gap-1.5 text-xs font-bold text-slate-700">
+                <Clock className="h-3.5 w-3.5 text-slate-500" />
+                Recent batches
+            </span>
+              <span className="font-mono text-[10px] text-slate-500">
+                {history.length} {history.length === 1 ? "batch" : "batches"}
+            </span>
+            </div>
+
+            {history.length === 0 ? (
+              <p className="rounded-md border border-dashed border-slate-200 bg-slate-50 px-3 py-2 text-[11px] font-medium text-slate-500">
+                No previous entry batches recorded.
+              </p>
+            ) : (
+              <div className="max-h-28 space-y-1.5 overflow-y-auto pr-1">
+                {history.map((h) => (
+                  <div
+                    key={h.id}
+                    className="flex items-center justify-between gap-3 rounded-md border border-slate-200 bg-white p-2 text-[11px]"
+                  >
+                    <div className="flex min-w-0 items-center gap-2">
+                      <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-600" />
+                      <span className="shrink-0 font-bold text-slate-950">+{h.admittedCount}</span>
+                      {h.gateName && <span className="truncate text-slate-500">at {h.gateName}</span>}
+                  </div>
+                    <span className="shrink-0 font-mono text-[10px] text-slate-500">
+                      {new Date(h.admittedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                  </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

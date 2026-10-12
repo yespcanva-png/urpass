@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import {
   UserPlus, Upload, Check, X, Clock, Loader2, Users,
   Search, Ticket, ExternalLink, Download, Lock, Wifi, ClipboardList, RotateCcw,
-  Send, CheckCircle2, CreditCard,
+  Send, CheckCircle2, CreditCard, DoorOpen, ChevronRight, History,
 } from "lucide-react";
 import { approveAttendee, rejectAttendee, exportAttendeesCSV, promoteNextWaitlistAttendee } from "@/app/actions/attendees";
 import { undoCheckIn } from "@/app/actions/manual-checkin";
@@ -44,6 +44,29 @@ interface Attendee {
   venue_presence_state?: string | null;
 }
 
+export interface CheckInInfo {
+  gateName: string;
+  checkedInAt: string;
+  checkInMethod?: string;
+}
+
+export interface GroupAdmissionEntry {
+  id: string;
+  admittedCount: number;
+  totalEntitlements: number;
+  remainingAfter: number;
+  admittedAt: string;
+  gateName: string;
+}
+
+export interface GroupPassDetails {
+  totalGuests: number;
+  checkedInGuests: number;
+  isGroupMaster: boolean;
+  lastAdmittedAt?: string;
+  admissions?: GroupAdmissionEntry[];
+}
+
 interface Props {
   attendees: Attendee[];
   eventId: string;
@@ -53,12 +76,8 @@ interface Props {
   applicationEnabled?: boolean;
   initialPassTokens?: Record<string, string>;
   payments?: Record<string, AttendeePaymentInfo>;
-  groupPassMap?: Record<string, {
-    totalGuests: number;
-    checkedInGuests: number;
-    isGroupMaster: boolean;
-    lastAdmittedAt?: string;
-  }>;
+  groupPassMap?: Record<string, GroupPassDetails>;
+  checkInInfoMap?: Record<string, CheckInInfo>;
   canCSV?: boolean;
   canExport?: boolean;
   customFields?: CustomFieldDefinition[];
@@ -126,6 +145,7 @@ export default function AttendeeTable({
   initialPassTokens,
   payments = {},
   groupPassMap = {},
+  checkInInfoMap = {},
   canCSV = false,
   canExport = false,
   customFields = [],
@@ -147,6 +167,13 @@ export default function AttendeeTable({
   const [exporting, setExporting]   = useState(false);
   const [liveConnected, setLiveConnected] = useState(false);
   const [selectedAnswersAttendee, setSelectedAnswersAttendee] = useState<Attendee | null>(null);
+  const [selectedGroupHistory, setSelectedGroupHistory] = useState<{
+    name: string;
+    email: string;
+    totalGuests: number;
+    checkedInGuests: number;
+    admissions: GroupAdmissionEntry[];
+  } | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(50);
   const initialRef = useRef(initial);
@@ -171,12 +198,17 @@ export default function AttendeeTable({
   // Supabase realtime — new applications appear instantly
   useEffect(() => {
     const supabase = createClient();
-    const channel  = supabase
-      .channel(`attendees-${eventId}`)
-      .on("postgres_changes", {
-        event: "*", schema: "public", table: "attendees",
+    const channel = supabase.channel(`attendees-${eventId}`);
+
+    channel.on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "attendees",
         filter: `event_id=eq.${eventId}`,
-      }, (payload) => {
+      },
+      (payload) => {
         if (payload.eventType === "INSERT") {
           setAttendees((prev) => {
             if (prev.some((a) => a.id === (payload.new as Attendee).id)) return prev;
@@ -184,16 +216,24 @@ export default function AttendeeTable({
           });
         } else if (payload.eventType === "UPDATE") {
           setAttendees((prev) =>
-            prev.map((a) => a.id === payload.new.id ? { ...a, ...(payload.new as Attendee) } : a)
+            prev.map((a) => (a.id === payload.new.id ? { ...a, ...(payload.new as Attendee) } : a))
           );
         } else if (payload.eventType === "DELETE") {
           setAttendees((prev) => prev.filter((a) => a.id !== payload.old.id));
         }
-      })
-      .on("postgres_changes", {
-        event: "*", schema: "public", table: "passes",
+      }
+    );
+
+    const passesChannel = supabase.channel(`attendees-passes-${eventId}`);
+    passesChannel.on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "passes",
         filter: `event_id=eq.${eventId}`,
-      }, (payload) => {
+      },
+      (payload) => {
         if (payload.eventType === "UPDATE" || payload.eventType === "INSERT") {
           const next = payload.new as {
             attendee_id?: string;
@@ -219,14 +259,21 @@ export default function AttendeeTable({
                 checkedInGuests: Number(next.checked_in_guests || 0),
                 isGroupMaster: Boolean(next.is_group_master),
                 lastAdmittedAt: next.updated_at,
+                admissions: prev[attendeeId]?.admissions,
               },
             };
           });
         }
-      })
-      .subscribe((status) => setLiveConnected(status === "SUBSCRIBED"));
+      }
+    );
 
-    return () => { supabase.removeChannel(channel); };
+    channel.subscribe?.((status) => setLiveConnected(status === "SUBSCRIBED"));
+    passesChannel.subscribe?.();
+
+    return () => {
+      supabase.removeChannel(channel);
+      supabase.removeChannel(passesChannel);
+    };
   }, [eventId]);
 
   // ── Derived stats (all from live attendees state) ───────────
@@ -672,18 +719,75 @@ export default function AttendeeTable({
                                     {groupPasses[a.id].checkedInGuests}/{groupPasses[a.id].totalGuests} Admitted
                                   </span>
                                 ) : null}
-                                {a.last_scanned_at && (
+
+                                {/* Partial Entry Admissions Breakdown Trigger */}
+                                {groupPasses[a.id]?.admissions && groupPasses[a.id].admissions!.length > 0 && (
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setSelectedGroupHistory({
+                                        name: a.name,
+                                        email: a.email,
+                                        totalGuests: groupPasses[a.id].totalGuests,
+                                        checkedInGuests: groupPasses[a.id].checkedInGuests,
+                                        admissions: groupPasses[a.id].admissions || [],
+                                      })
+                                    }
+                                    className="inline-flex items-center gap-1 text-[10px] font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 px-1.5 py-0.5 rounded-md transition-colors"
+                                    title="View partial entry admissions breakdown"
+                                  >
+                                    <History className="w-3 h-3 text-purple-600" />
+                                    {groupPasses[a.id].admissions!.length} {groupPasses[a.id].admissions!.length === 1 ? "entry" : "entries"}
+                                  </button>
+                                )}
+
+                                {/* Gate name and time info */}
+                                {checkInInfoMap[a.id] ? (
+                                  <span className="text-[10px] font-medium text-neutral-500 bg-neutral-100/80 px-1.5 py-0.5 rounded flex items-center gap-1">
+                                    <DoorOpen className="w-2.5 h-2.5 text-neutral-600" />
+                                    <span>{checkInInfoMap[a.id].gateName}</span>
+                                    <span>·</span>
+                                    <Clock className="w-2.5 h-2.5 text-neutral-400" />
+                                    <span>
+                                      {new Date(checkInInfoMap[a.id].checkedInAt).toLocaleTimeString([], {
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                      })}
+                                    </span>
+                                  </span>
+                                ) : a.last_scanned_at ? (
                                   <span className="text-[10px] font-medium text-neutral-400 flex items-center gap-1">
                                     <Clock className="w-2.5 h-2.5" />
                                     {new Date(a.last_scanned_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                                   </span>
-                                )}
+                                ) : null}
                               </div>
                             )}
-	                            {!(isExplicitGroupQr || groupPasses[a.id]) && a.pass_status === "checked_in" && a.last_scanned_at && (
-                              <div className="flex items-center gap-1 mt-0.5 text-[10px] text-emerald-600 font-medium">
-                                <CheckCircle2 className="w-2.5 h-2.5" />
-                                <span>Checked in at {new Date(a.last_scanned_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+
+	                            {!(isExplicitGroupQr || groupPasses[a.id]) && a.pass_status === "checked_in" && (
+                              <div className="flex items-center gap-1.5 mt-0.5 text-[10px] text-emerald-600 font-medium flex-wrap">
+                                <span className="inline-flex items-center gap-1">
+                                  <CheckCircle2 className="w-2.5 h-2.5" />
+                                  <span>Checked in</span>
+                                </span>
+                                {checkInInfoMap[a.id] ? (
+                                  <span className="inline-flex items-center gap-1 text-neutral-600 bg-neutral-100 px-1.5 py-0.2 rounded">
+                                    <DoorOpen className="w-2.5 h-2.5 text-neutral-500" />
+                                    <span>{checkInInfoMap[a.id].gateName}</span>
+                                    <span>·</span>
+                                    <Clock className="w-2.5 h-2.5 text-neutral-400" />
+                                    <span>
+                                      {new Date(checkInInfoMap[a.id].checkedInAt).toLocaleTimeString([], {
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                      })}
+                                    </span>
+                                  </span>
+                                ) : a.last_scanned_at ? (
+                                  <span className="text-neutral-500">
+                                    at {new Date(a.last_scanned_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                                  </span>
+                                ) : null}
                               </div>
                             )}
                           </div>
@@ -951,6 +1055,111 @@ export default function AttendeeTable({
               <button
                 type="button"
                 onClick={() => setSelectedAnswersAttendee(null)}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-neutral-700 bg-neutral-100 hover:bg-neutral-200 transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {selectedGroupHistory && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl space-y-4">
+            <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-bold text-neutral-900">{selectedGroupHistory.name}</h3>
+                  <span className="text-[11px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-md">
+                    Group Pass
+                  </span>
+                </div>
+                <p className="text-xs text-neutral-400 mt-0.5">{selectedGroupHistory.email}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedGroupHistory(null)}
+                className="p-1.5 rounded-lg text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Admission Summary */}
+            <div className="grid grid-cols-3 gap-2 py-2">
+              <div className="bg-neutral-50 rounded-xl p-3 border border-neutral-100 text-center">
+                <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block">Total</span>
+                <span className="text-base font-bold text-neutral-800">{selectedGroupHistory.totalGuests}</span>
+              </div>
+              <div className="bg-purple-50/70 rounded-xl p-3 border border-purple-100 text-center">
+                <span className="text-[10px] font-bold text-purple-600 uppercase tracking-wider block">Admitted</span>
+                <span className="text-base font-bold text-purple-700">{selectedGroupHistory.checkedInGuests}</span>
+              </div>
+              <div className="bg-emerald-50/70 rounded-xl p-3 border border-emerald-100 text-center">
+                <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider block">Remaining</span>
+                <span className="text-base font-bold text-emerald-700">
+                  {Math.max(0, selectedGroupHistory.totalGuests - selectedGroupHistory.checkedInGuests)}
+                </span>
+              </div>
+            </div>
+
+            {/* Admissions Log List */}
+            <div>
+              <h4 className="text-xs font-bold text-neutral-700 mb-2 flex items-center gap-1.5">
+                <History className="w-3.5 h-3.5 text-neutral-400" />
+                <span>Partial Entry History ({selectedGroupHistory.admissions.length})</span>
+              </h4>
+
+              {selectedGroupHistory.admissions.length === 0 ? (
+                <div className="py-6 text-center bg-neutral-50 rounded-xl border border-dashed border-neutral-200">
+                  <p className="text-xs text-neutral-400">No partial entry batch logs recorded yet.</p>
+                </div>
+              ) : (
+                <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                  {selectedGroupHistory.admissions.map((entry, idx) => (
+                    <div
+                      key={entry.id || idx}
+                      className="p-3 bg-neutral-50 hover:bg-neutral-100/60 transition-colors rounded-xl border border-neutral-100 flex items-center justify-between"
+                    >
+                      <div className="space-y-0.5">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs font-bold text-neutral-800">
+                            +{entry.admittedCount} {entry.admittedCount === 1 ? "person" : "people"} entered
+                          </span>
+                          <span className="text-[10px] font-medium text-neutral-400">
+                            ({entry.remainingAfter} left after)
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 text-[10px] text-neutral-500">
+                          <span className="flex items-center gap-1 font-medium">
+                            <DoorOpen className="w-2.5 h-2.5 text-neutral-400" />
+                            {entry.gateName}
+                          </span>
+                          <span>·</span>
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-2.5 h-2.5 text-neutral-400" />
+                            {new Date(entry.admittedAt).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                              second: "2-digit",
+                            })}
+                          </span>
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-mono text-neutral-400 bg-white border border-neutral-200 px-1.5 py-0.5 rounded">
+                        #{selectedGroupHistory.admissions.length - idx}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="pt-2 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setSelectedGroupHistory(null)}
                 className="px-4 py-2 rounded-xl text-xs font-semibold text-neutral-700 bg-neutral-100 hover:bg-neutral-200 transition-colors"
               >
                 Close
