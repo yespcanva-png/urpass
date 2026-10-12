@@ -1262,16 +1262,16 @@ export default function ScanEventPage() {
   );
 
   return (
-    <div className="min-h-screen bg-[#090A0F] text-white flex flex-col page-in select-none touch-manipulation">
+    <div className="min-h-screen bg-slate-100 text-slate-950 flex flex-col page-in select-none touch-manipulation">
 
       {/* ── Mobile-Optimized Top HUD Bar ────────────────────────────── */}
-      <header className="shrink-0 flex items-center justify-between px-3 sm:px-5 h-14 bg-neutral-950/90 backdrop-blur-md border-b border-white/[0.08] z-30 sticky top-0">
+      <header className="shrink-0 flex items-center justify-between px-3 sm:px-5 h-14 bg-white border-b border-slate-200 z-30 sticky top-0">
         
         {/* Left: Back & Network Health Indicator */}
         <div className="flex items-center gap-2">
           <button
             onClick={() => router.push("/scan")}
-            className="p-1.5 -ml-1 rounded-xl text-white/50 hover:text-white hover:bg-white/10 active:scale-95 transition-all"
+            className="p-1.5 -ml-1 rounded-md text-slate-500 hover:text-slate-950 hover:bg-slate-100 active:scale-95 transition-all"
             aria-label="Back to events"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -1279,18 +1279,18 @@ export default function ScanEventPage() {
 
           <button
             onClick={() => setSettingsDrawerOpen(true)}
-            className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-[11px] font-semibold border transition-all active:scale-95 ${
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold border transition-all active:scale-95 ${
               isOnline
-                ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
-                : "bg-amber-500/15 border-amber-500/30 text-amber-300 animate-pulse"
+                ? "bg-emerald-50 border-emerald-200 text-emerald-700"
+                : "bg-amber-50 border-amber-200 text-amber-700"
             }`}
           >
-            <span className={`w-2 h-2 rounded-full ${isOnline ? "bg-emerald-400 shadow-[0_0_8px_#34d399]" : "bg-amber-400 animate-ping"}`} />
+            <span className={`w-2 h-2 rounded-full ${isOnline ? "bg-emerald-500" : "bg-amber-500"}`} />
             <span className="text-[10px] uppercase tracking-wider font-bold">
               {isOnline ? "Live" : "Offline"}
             </span>
             {queuePending > 0 && (
-              <span className="px-1.5 py-0.2 rounded-full bg-brand text-[9px] text-white font-bold">
+              <span className="px-1.5 py-0.2 rounded bg-slate-900 text-[9px] text-white font-bold">
                 {queuePending}
               </span>
             )}
@@ -1299,21 +1299,21 @@ export default function ScanEventPage() {
 
         {/* Center: Title & Gate Context */}
         <div className="flex flex-col items-center justify-center min-w-0 px-2 flex-1 text-center">
-          <span className="text-xs font-bold text-white max-w-[130px] sm:max-w-[200px] truncate leading-tight">
+          <span className="text-xs font-bold text-slate-950 max-w-[130px] sm:max-w-[200px] truncate leading-tight">
             {eventName || "QR Scanner"}
           </span>
-          <span className="text-[10px] text-violet-400 font-medium truncate max-w-[140px] flex items-center gap-1">
+          <span className="text-[10px] text-slate-500 font-medium truncate max-w-[140px] flex items-center gap-1">
             {selectedSession ? (
-              <>📚 {selectedSession.title}</>
+              <>{selectedSession.title}</>
             ) : selectedGate ? (
               <>
                 <DoorOpen className="w-3 h-3 shrink-0" />
                 <span className="truncate">{selectedGate.name}</span>
               </>
             ) : gates.length > 0 ? (
-              <span className="text-amber-400 font-bold animate-pulse">Select Gate ⚠️</span>
+              <span className="text-amber-700 font-bold">Select Gate</span>
             ) : (
-              <>⚡ Main Gate</>
+              <>Main Gate</>
             )}
           </span>
         </div>
@@ -1322,7 +1322,7 @@ export default function ScanEventPage() {
         <div className="flex items-center gap-1.5">
           <div
             onClick={() => setFeedDrawerOpen(true)}
-            className="cursor-pointer flex items-center gap-1 bg-white/[0.07] border border-white/10 hover:bg-white/10 px-2.5 py-1 rounded-full text-xs font-bold text-emerald-400 active:scale-95 transition-all shadow-2xs"
+	            className="cursor-pointer flex items-center gap-1 bg-slate-50 border border-slate-200 hover:bg-slate-100 px-2.5 py-1 rounded-md text-xs font-bold text-emerald-700 active:scale-95 transition-all"
             title="View recent scans"
           >
             <Zap className="w-3 h-3 fill-current text-emerald-400" />
@@ -1331,7 +1331,7 @@ export default function ScanEventPage() {
 
           <button
             onClick={() => setSettingsDrawerOpen(true)}
-            className="p-2 rounded-full bg-white/[0.06] border border-white/[0.08] hover:bg-white/[0.12] text-white/80 active:scale-95 transition-all"
+	            className="p-2 rounded-md bg-slate-50 border border-slate-200 hover:bg-slate-100 text-slate-700 active:scale-95 transition-all"
             aria-label="Scanner controls & settings"
           >
             <SlidersHorizontal className="w-4 h-4" />
@@ -1364,7 +1364,7 @@ export default function ScanEventPage() {
       {/* ── Mode & Direction Switcher Bar (Mobile Segmented Control) ─── */}
       <div className="shrink-0 px-4 pt-3 pb-1 flex items-center justify-between gap-2 max-w-sm mx-auto w-full">
         {/* Segmented Mode Controller */}
-        <div className="flex items-center p-1 rounded-2xl bg-white/[0.06] border border-white/[0.08] flex-1">
+	        <div className="flex items-center p-1 rounded-md bg-white border border-slate-200 flex-1">
           <button
             onClick={() => {
               setManualMode(false);
@@ -1372,8 +1372,8 @@ export default function ScanEventPage() {
             }}
             className={`flex-1 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
               !manualMode
-                ? "bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-md"
-                : "text-white/50 hover:text-white/80"
+	                ? "bg-slate-900 text-white"
+	                : "text-slate-500 hover:text-slate-900"
             }`}
           >
             <ScanLine className="w-3.5 h-3.5" />
@@ -1388,8 +1388,8 @@ export default function ScanEventPage() {
             }}
             className={`flex-1 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
               manualMode
-                ? "bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-md"
-                : "text-white/50 hover:text-white/80"
+	                ? "bg-slate-900 text-white"
+	                : "text-slate-500 hover:text-slate-900"
             }`}
           >
             <Search className="w-3.5 h-3.5" />
@@ -1400,11 +1400,11 @@ export default function ScanEventPage() {
         {/* Direction Indicator / Toggle */}
         <button
           onClick={() => setScanDirection((d) => (d === "in" ? "out" : "in"))}
-          className={`px-3 py-2 rounded-2xl text-[11px] font-extrabold uppercase tracking-wider border transition-all active:scale-95 flex items-center gap-1 ${
-            scanDirection === "in"
-              ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-[0_0_12px_rgba(16,185,129,0.2)]"
-              : "bg-blue-500/20 text-blue-300 border-blue-500/40 shadow-[0_0_12px_rgba(59,130,246,0.2)]"
-          }`}
+	          className={`px-3 py-2 rounded-md text-[11px] font-extrabold uppercase tracking-wider border transition-all active:scale-95 flex items-center gap-1 ${
+	            scanDirection === "in"
+	              ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+	              : "bg-blue-50 text-blue-700 border-blue-200"
+	          }`}
           title="Toggle Entry / Exit"
         >
           <span className={`w-2 h-2 rounded-full ${scanDirection === "in" ? "bg-emerald-400" : "bg-blue-400"}`} />
@@ -1423,25 +1423,25 @@ export default function ScanEventPage() {
           : null;
 
         return (
-          <div className="shrink-0 px-4 py-2.5 mx-4 mb-2 bg-gradient-to-r from-purple-950/70 via-neutral-900/90 to-purple-950/70 border border-purple-500/30 rounded-2xl backdrop-blur-md shadow-xl flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top-2 duration-200">
+	          <div className="shrink-0 px-4 py-2.5 mx-4 mb-2 bg-white border border-slate-200 rounded-md flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top-2 duration-200">
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-purple-400 animate-ping" />
-                <p className="text-xs font-bold text-white truncate">{selectedSession.title}</p>
+	                <span className="w-2 h-2 rounded-full bg-blue-500" />
+	                <p className="text-xs font-bold text-slate-950 truncate">{selectedSession.title}</p>
               </div>
-              <p className="text-[10px] text-purple-300/80 truncate mt-0.5">
+	              <p className="text-[10px] text-slate-500 truncate mt-0.5">
                 {roomName} • {selectedSession.start_time?.slice(0, 5)} - {selectedSession.end_time?.slice(0, 5)}
               </p>
             </div>
 
             <div className="flex items-center gap-3 shrink-0">
               <div className="text-right">
-                <p className="text-[10px] font-semibold text-white/50 uppercase tracking-wider">Seats</p>
+	                <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Seats</p>
                 <div className="flex items-center gap-1">
-                  <span className="text-sm font-black text-emerald-400 tabular-nums">
+	                  <span className="text-sm font-black text-emerald-700 tabular-nums">
                     {currentChecked}
                   </span>
-                  <span className="text-xs font-medium text-white/40">
+	                  <span className="text-xs font-medium text-slate-400">
                     / {effectiveCapacity ?? "∞"}
                   </span>
                 </div>
@@ -1449,14 +1449,14 @@ export default function ScanEventPage() {
 
               {effectiveCapacity !== null && (
                 <div className="hidden sm:flex flex-col items-end">
-                  <p className="text-[10px] font-semibold text-white/50 uppercase tracking-wider">Occupancy</p>
+	                  <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Occupancy</p>
                   <span
                     className={`text-xs font-black tabular-nums ${
                       (occupancyPct ?? 0) >= 100
                         ? "text-red-400"
                         : (occupancyPct ?? 0) >= 80
                         ? "text-amber-400"
-                        : "text-purple-300"
+	                        : "text-blue-700"
                     }`}
                   >
                     {occupancyPct}%
@@ -1469,7 +1469,7 @@ export default function ScanEventPage() {
       })()}
 
       {/* ── Main Viewport Area ──────────────────────────────────────── */}
-      <main className="flex-1 flex flex-col items-center justify-center px-4 py-3 relative">
+	      <main className="flex-1 flex flex-col items-center justify-center px-4 py-4 relative">
 
         {/* ── Manual Search Mode View ── */}
         {manualMode ? (
@@ -1617,19 +1617,19 @@ export default function ScanEventPage() {
           </div>
         ) : (
           /* ── Camera QR Mode View ── */
-          <div className="w-full max-w-xs sm:max-w-sm flex flex-col items-center justify-center">
+	          <div className="w-full max-w-md flex flex-col items-center justify-center">
 
             {/* Gate Required Shield (If gates configured but none chosen) */}
             {isGateRequired ? (
-              <div className="w-full bg-neutral-900/95 border border-purple-500/30 rounded-3xl p-6 text-center shadow-2xl space-y-4 animate-in fade-in">
-                <div className="w-14 h-14 rounded-2xl bg-purple-950 border border-purple-800 flex items-center justify-center text-purple-400 mx-auto">
-                  <DoorOpen className="w-7 h-7" />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-white">Select Scanner Entry Gate</h3>
-                  <p className="text-xs text-white/50 mt-1 leading-relaxed">
-                    Select your assigned gate to start scanning tickets and enforce zone access.
-                  </p>
+	              <div className="w-full bg-white border border-slate-200 rounded-md p-6 text-center space-y-4 animate-in fade-in">
+	                <div className="w-12 h-12 rounded-md bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700 mx-auto">
+	                  <DoorOpen className="w-7 h-7" />
+	                </div>
+	                <div>
+	                  <h3 className="text-base font-bold text-slate-950">Select Scanner Entry Gate</h3>
+	                  <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+	                    Select your assigned gate to start scanning tickets and enforce zone access.
+	                  </p>
                 </div>
                 <div className="space-y-2 pt-2">
                   {gates.map((g) => (
@@ -1641,11 +1641,11 @@ export default function ScanEventPage() {
                           localStorage.setItem(`urpass_gate_${eventId}`, g.id);
                         } catch {}
                       }}
-                      className="w-full py-3.5 px-4 rounded-xl text-xs font-bold bg-neutral-800 hover:bg-purple-600 hover:text-white text-neutral-100 border border-white/10 active:scale-95 transition-all flex items-center justify-between"
+	                      className="w-full py-3.5 px-4 rounded-md text-xs font-bold bg-white hover:bg-slate-50 text-slate-900 border border-slate-200 active:scale-95 transition-all flex items-center justify-between"
                     >
                       <span>{g.name}</span>
                       {g.zone && (
-                        <span className="text-[10px] text-purple-300 bg-purple-950 px-2 py-0.5 rounded-full border border-purple-800">
+	                        <span className="text-[10px] text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
                           {g.zone.name}
                         </span>
                       )}
@@ -1662,21 +1662,21 @@ export default function ScanEventPage() {
                 <div className="absolute top-3 right-3 z-20 flex items-center gap-2">
                   <button
                     onClick={toggleWakeLock}
-                    className={`p-2 rounded-xl backdrop-blur-md border transition-all ${
-                      wakeLockActive
-                        ? "bg-amber-400/20 text-amber-300 border-amber-400/40"
-                        : "bg-black/50 text-white/60 border-white/20 hover:text-white"
-                    }`}
+	                    className={`p-2 rounded-md border transition-all ${
+	                      wakeLockActive
+	                        ? "bg-amber-50 text-amber-700 border-amber-200"
+	                        : "bg-white text-slate-500 border-slate-200 hover:text-slate-950"
+	                    }`}
                     title={wakeLockActive ? "Screen lock active" : "Enable screen stay-awake"}
                   >
-                    <Sun className={`w-4 h-4 ${wakeLockActive ? "text-amber-400 animate-pulse" : ""}`} />
+	                    <Sun className={`w-4 h-4 ${wakeLockActive ? "text-amber-700" : ""}`} />
                   </button>
                   <button
                     onClick={toggleSound}
-                    className={`p-2 rounded-xl backdrop-blur-md border transition-all ${
-                      soundEnabled
-                        ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/40"
-                        : "bg-black/50 text-white/40 border-white/20"
+	                    className={`p-2 rounded-md border transition-all ${
+	                      soundEnabled
+	                        ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+	                        : "bg-white text-slate-400 border-slate-200"
                     }`}
                     title={soundEnabled ? "Audio chime on" : "Audio muted"}
                   >
@@ -1688,16 +1688,15 @@ export default function ScanEventPage() {
 
             {/* Verifying Spinner */}
             {scanState === "verifying" && (
-              <div className="flex flex-col items-center gap-5 py-8 animate-in fade-in">
-                <div className="relative w-20 h-20">
-                  <div className="absolute inset-0 rounded-full border-2 border-violet-500/30 animate-ping" />
-                  <div className="relative w-full h-full rounded-full bg-violet-600/15 border border-violet-500/40 flex items-center justify-center">
-                    <Loader2 className="w-8 h-8 text-violet-400 animate-spin" />
-                  </div>
-                </div>
-                <div className="text-center space-y-1">
-                  <p className="text-sm font-bold text-white">Verifying pass…</p>
-                  <p className="text-xs text-white/40 font-mono">Checking against guest manifest</p>
+	              <div className="flex flex-col items-center gap-5 py-8 animate-in fade-in">
+	                <div className="relative w-20 h-20">
+	                  <div className="relative w-full h-full rounded-md bg-white border border-slate-200 flex items-center justify-center">
+	                    <Loader2 className="w-8 h-8 text-slate-700 animate-spin" />
+	                  </div>
+	                </div>
+	                <div className="text-center space-y-1">
+	                  <p className="text-sm font-bold text-slate-950">Verifying pass...</p>
+	                  <p className="text-xs text-slate-500 font-mono">Checking against guest manifest</p>
                 </div>
               </div>
             )}
@@ -1766,30 +1765,30 @@ export default function ScanEventPage() {
       </main>
 
       {/* ── Floating Bottom Bar (Recent Check-ins Drawer Trigger) ────── */}
-      <footer className="shrink-0 px-4 py-3 bg-neutral-950/90 backdrop-blur-md border-t border-white/[0.08] z-20">
-        <div className="max-w-sm mx-auto flex items-center justify-between gap-3">
+	      <footer className="shrink-0 px-4 py-3 bg-white border-t border-slate-200 z-20">
+	        <div className="max-w-md mx-auto flex items-center justify-between gap-3">
           <button
             onClick={() => setFeedDrawerOpen(true)}
-            className="flex-1 flex items-center justify-between px-4 py-2.5 rounded-2xl bg-white/[0.06] border border-white/[0.08] hover:bg-white/[0.1] active:scale-98 transition-all text-left"
+	            className="flex-1 flex items-center justify-between px-4 py-2.5 rounded-md bg-slate-50 border border-slate-200 hover:bg-slate-100 active:scale-98 transition-all text-left"
           >
             <div className="flex items-center gap-2">
-              <Users className="w-4 h-4 text-violet-400" />
-              <span className="text-xs font-bold text-white">
+	              <Users className="w-4 h-4 text-slate-600" />
+	              <span className="text-xs font-bold text-slate-950">
                 {scanCount} Admitted
               </span>
             </div>
-            <span className="text-[11px] font-semibold text-violet-400 flex items-center gap-1">
+	            <span className="text-[11px] font-semibold text-slate-600 flex items-center gap-1">
               Live Feed <ChevronUp className="w-3.5 h-3.5" />
             </span>
           </button>
 
           <button
             onClick={toggleTorch}
-            className={`p-2.5 rounded-2xl border transition-all active:scale-95 ${
-              torchOn
-                ? "bg-amber-400 text-neutral-950 border-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.6)]"
-                : "bg-white/[0.06] border-white/[0.08] text-white/70 hover:text-white"
-            }`}
+	            className={`p-2.5 rounded-md border transition-all active:scale-95 ${
+	              torchOn
+	                ? "bg-amber-100 text-amber-800 border-amber-200"
+	                : "bg-slate-50 border-slate-200 text-slate-600 hover:text-slate-950"
+	            }`}
             title={torchOn ? "Turn torch off" : "Turn flashlight torch on"}
             aria-label="Flashlight"
           >
@@ -2087,26 +2086,26 @@ function ResultCard({
   onAllowReentry?: () => void;
   isUndoing?: boolean;
 }) {
-  const ok = variant === "success";
-  const color = ok ? "#10b981" : "#f59e0b";
-  const borderCls = ok
-    ? "bg-emerald-950/40 border-emerald-500/40 shadow-[0_0_30px_rgba(16,185,129,0.25)]"
-    : "bg-amber-950/40 border-amber-500/40 shadow-[0_0_30px_rgba(245,158,11,0.25)]";
+	  const ok = variant === "success";
+	  const color = ok ? "#10b981" : "#f59e0b";
+	  const borderCls = ok
+	    ? "bg-white border-emerald-200"
+	    : "bg-white border-amber-200";
 
   return (
     <div className="w-full flex flex-col gap-3">
       {/* Main Status Header Box */}
-      <div className={`rounded-3xl border overflow-hidden ${borderCls} relative p-5 flex flex-col items-center text-center gap-3`}>
-        <div
-          className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg"
-          style={{ background: `${color}25` }}
-        >
-          {ok ? (
-            <CheckCircle2 className="w-8 h-8 text-emerald-400 animate-in zoom-in-50" />
-          ) : (
-            <AlertTriangle className="w-8 h-8 text-amber-400 animate-in zoom-in-50" />
-          )}
-        </div>
+	      <div className={`rounded-md border overflow-hidden ${borderCls} relative p-5 flex flex-col items-center text-center gap-3`}>
+	        <div
+	          className="w-14 h-14 rounded-md flex items-center justify-center"
+	          style={{ background: `${color}25` }}
+	        >
+	          {ok ? (
+	            <CheckCircle2 className="w-8 h-8 text-emerald-700 animate-in zoom-in-50" />
+	          ) : (
+	            <AlertTriangle className="w-8 h-8 text-amber-700 animate-in zoom-in-50" />
+	          )}
+	        </div>
 
         <div>
           <span
@@ -2115,21 +2114,21 @@ function ResultCard({
           >
             {ok ? "ENTRY GRANTED" : "ALREADY CHECKED IN"}
           </span>
-          <h2 className="text-xl font-extrabold text-white mt-2 leading-tight">
-            {attendee.name}
-          </h2>
-          <p className="text-xs text-white/50 truncate max-w-[240px] mx-auto mt-0.5">
-            {attendee.email}
-          </p>
+	          <h2 className="text-xl font-extrabold text-slate-950 mt-2 leading-tight">
+	            {attendee.name}
+	          </h2>
+	          <p className="text-xs text-slate-500 truncate max-w-[240px] mx-auto mt-0.5">
+	            {attendee.email}
+	          </p>
         </div>
 
         {/* Pass Tier & Info Pill */}
         <div className="flex items-center gap-1.5 flex-wrap justify-center mt-1">
-          <span className="text-[11px] font-bold px-3 py-1 rounded-full bg-white/10 text-white border border-white/15 uppercase">
+	          <span className="text-[11px] font-bold px-3 py-1 rounded bg-slate-100 text-slate-700 border border-slate-200 uppercase">
             {PASS_TYPE_LABEL[passType] ?? passType}
           </span>
           {gateName && (
-            <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full bg-white/[0.06] text-white/70">
+	            <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded bg-slate-50 text-slate-600 border border-slate-200">
               <DoorOpen className="w-3 h-3 shrink-0" />
               <span>{gateName}</span>
             </span>
@@ -2137,14 +2136,14 @@ function ResultCard({
         </div>
 
         {checkedInAt && (
-          <p className="text-[11px] font-mono text-white/40 mt-0.5">
+	          <p className="text-[11px] font-mono text-slate-500 mt-0.5">
             {ok ? "Admitted at " : "First scanned at "}
             {new Date(checkedInAt).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true })}
           </p>
         )}
 
         {offline && (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+	          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
             <WifiOff className="w-2.5 h-2.5" /> Offline Queued
           </span>
         )}
@@ -2158,7 +2157,7 @@ function ResultCard({
             onAllowReentry();
           }}
           disabled={isUndoing}
-          className="w-full py-3.5 px-4 rounded-2xl bg-amber-500 text-neutral-950 font-extrabold text-xs hover:bg-amber-400 active:scale-95 transition-all flex items-center justify-center gap-2 shadow-lg disabled:opacity-50"
+	          className="w-full py-3.5 px-4 rounded-md bg-amber-100 text-amber-900 border border-amber-200 font-extrabold text-xs hover:bg-amber-200 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
         >
           {isUndoing ? (
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -2171,15 +2170,15 @@ function ResultCard({
 
       {/* Auto-reset Progress Bar */}
       <div className="flex flex-col gap-2 pt-1">
-        <div className="h-1 bg-white/10 rounded-full overflow-hidden">
+	        <div className="h-1 bg-slate-200 rounded overflow-hidden">
           <div
-            className="h-full rounded-full transition-none"
+	            className="h-full rounded transition-none"
             style={{ width: `${progress}%`, background: color }}
           />
         </div>
         <button
           onClick={onReset}
-          className="text-center text-xs text-white/50 hover:text-white font-medium py-1"
+	          className="text-center text-xs text-slate-500 hover:text-slate-950 font-medium py-1"
         >
           Tap anywhere to scan next
         </button>
@@ -2203,19 +2202,19 @@ function AccessDeniedCard({
 }) {
   return (
     <div className="w-full flex flex-col gap-3">
-      <div className="bg-red-950/40 border border-red-500/40 shadow-[0_0_30px_rgba(239,68,68,0.25)] rounded-3xl p-5 flex flex-col items-center text-center gap-3">
-        <div className="w-14 h-14 rounded-2xl bg-red-500/20 flex items-center justify-center shadow-lg">
-          <ShieldX className="w-8 h-8 text-red-400" />
+	      <div className="bg-white border border-red-200 rounded-md p-5 flex flex-col items-center text-center gap-3">
+	        <div className="w-14 h-14 rounded-md bg-red-50 flex items-center justify-center">
+	          <ShieldX className="w-8 h-8 text-red-700" />
         </div>
 
         <div>
-          <span className="text-[10px] font-extrabold tracking-widest uppercase px-2.5 py-0.5 rounded-full bg-red-500/20 text-red-400">
+	          <span className="text-[10px] font-extrabold tracking-widest uppercase px-2.5 py-0.5 rounded bg-red-50 text-red-700 border border-red-200">
             ACCESS DENIED
           </span>
-          <h2 className="text-xl font-extrabold text-white mt-2 leading-tight">
+	          <h2 className="text-xl font-extrabold text-slate-950 mt-2 leading-tight">
             Not Admitted
           </h2>
-          <p className="text-xs text-red-300/80 mt-1 max-w-[240px] mx-auto leading-relaxed">
+	          <p className="text-xs text-red-700 mt-1 max-w-[240px] mx-auto leading-relaxed">
             {message}
           </p>
         </div>
@@ -2227,24 +2226,24 @@ function AccessDeniedCard({
               e.stopPropagation();
               onOverride();
             }}
-            className="w-full mt-2 py-3 px-4 rounded-2xl bg-amber-500 text-neutral-950 font-extrabold text-xs hover:bg-amber-400 active:scale-95 transition-all flex items-center justify-center gap-2 shadow-lg"
+	            className="w-full mt-2 py-3 px-4 rounded-md bg-amber-100 text-amber-900 border border-amber-200 font-extrabold text-xs hover:bg-amber-200 active:scale-95 transition-all flex items-center justify-center gap-2"
           >
-            <ShieldAlert className="w-4 h-4 text-neutral-950" />
+	            <ShieldAlert className="w-4 h-4 text-amber-900" />
             <span>Authorize Supervisor Override</span>
           </button>
         )}
       </div>
 
       <div className="flex flex-col gap-2 pt-1">
-        <div className="h-1 bg-white/10 rounded-full overflow-hidden">
+	        <div className="h-1 bg-slate-200 rounded overflow-hidden">
           <div
-            className="h-full rounded-full bg-red-500 transition-none"
+	            className="h-full rounded bg-red-600 transition-none"
             style={{ width: `${progress}%` }}
           />
         </div>
         <button
           onClick={onReset}
-          className="text-center text-xs text-white/50 hover:text-white font-medium py-1"
+	          className="text-center text-xs text-slate-500 hover:text-slate-950 font-medium py-1"
         >
           Tap to try again
         </button>
@@ -2266,34 +2265,34 @@ function ErrorCard({
 }) {
   return (
     <div className="w-full flex flex-col gap-3">
-      <div className="bg-red-950/40 border border-red-500/40 shadow-[0_0_30px_rgba(239,68,68,0.25)] rounded-3xl p-5 flex flex-col items-center text-center gap-3">
-        <div className="w-14 h-14 rounded-2xl bg-red-500/20 flex items-center justify-center shadow-lg">
-          <XCircle className="w-8 h-8 text-red-400" />
+	      <div className="bg-white border border-red-200 rounded-md p-5 flex flex-col items-center text-center gap-3">
+	        <div className="w-14 h-14 rounded-md bg-red-50 flex items-center justify-center">
+	          <XCircle className="w-8 h-8 text-red-700" />
         </div>
 
         <div>
-          <span className="text-[10px] font-extrabold tracking-widest uppercase px-2.5 py-0.5 rounded-full bg-red-500/20 text-red-400">
+	          <span className="text-[10px] font-extrabold tracking-widest uppercase px-2.5 py-0.5 rounded bg-red-50 text-red-700 border border-red-200">
             INVALID PASS
           </span>
-          <h2 className="text-xl font-extrabold text-white mt-2 leading-tight">
+	          <h2 className="text-xl font-extrabold text-slate-950 mt-2 leading-tight">
             Verification Failed
           </h2>
-          <p className="text-xs text-red-300/80 mt-1 max-w-[240px] mx-auto leading-relaxed">
+	          <p className="text-xs text-red-700 mt-1 max-w-[240px] mx-auto leading-relaxed">
             {message}
           </p>
         </div>
       </div>
 
       <div className="flex flex-col gap-2 pt-1">
-        <div className="h-1 bg-white/10 rounded-full overflow-hidden">
+	        <div className="h-1 bg-slate-200 rounded overflow-hidden">
           <div
-            className="h-full rounded-full bg-red-500 transition-none"
+	            className="h-full rounded bg-red-600 transition-none"
             style={{ width: `${progress}%` }}
           />
         </div>
         <button
           onClick={onReset}
-          className="text-center text-xs text-white/50 hover:text-white font-medium py-1"
+	          className="text-center text-xs text-slate-500 hover:text-slate-950 font-medium py-1"
         >
           Tap anywhere to retry
         </button>
