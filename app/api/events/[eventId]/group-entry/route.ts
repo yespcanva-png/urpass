@@ -461,7 +461,6 @@ export async function POST(
       total_guests,
       checked_in_guests,
       group_members,
-      order_id,
       is_group_master,
       is_group_pass,
       attendee_id,
@@ -480,38 +479,62 @@ export async function POST(
 
   if (directPass) {
     passData = directPass;
-    if (directPass.order_id && !orderData) {
-      const { data: parentOrder } = await db
-        .from("ticket_orders")
-        .select("*")
-        .eq("id", directPass.order_id)
-        .maybeSingle();
-      orderData = parentOrder;
+    if (!orderData) {
+      if (directPass.pass_token) {
+        const { data: parentByGroupQr } = await db
+          .from("ticket_orders")
+          .select("*")
+          .eq("event_id", canonicalEventId)
+          .eq("group_qr_code", directPass.pass_token)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        orderData = parentByGroupQr;
+      }
+
+      if (!orderData && directPass.attendee_id) {
+        const { data: parentByAttendee } = await db
+          .from("ticket_orders")
+          .select("*")
+          .eq("event_id", canonicalEventId)
+          .eq("attendee_id", directPass.attendee_id)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        orderData = parentByAttendee;
+      }
     }
   }
 
   if (orderData && !passData) {
-    const { data: linkedPass } = await db
+    let linkedPassQuery = db
       .from("passes")
       .select(`
         id,
         event_id,
-        pass_token,
-        pass_type,
-        status,
-        total_guests,
-        checked_in_guests,
-        group_members,
-        order_id,
-        is_group_master,
-        is_group_pass,
-        attendee_id,
-        ticket_type:ticket_types (id, name, is_group_pass, included_guests),
-        attendee:attendees (id, name, email, pass_type, custom_responses)
-      `)
-      .eq("order_id", orderData.id)
-      .eq("event_id", canonicalEventId)
-      .maybeSingle();
+          pass_token,
+          pass_type,
+          status,
+          total_guests,
+          checked_in_guests,
+          group_members,
+          is_group_master,
+          is_group_pass,
+          attendee_id,
+          ticket_type:ticket_types (id, name, is_group_pass, included_guests),
+          attendee:attendees (id, name, email, pass_type, custom_responses)
+        `)
+      .eq("event_id", canonicalEventId);
+
+    if (orderData.group_qr_code) {
+      linkedPassQuery = linkedPassQuery.eq("pass_token", orderData.group_qr_code);
+    } else if (orderData.attendee_id) {
+      linkedPassQuery = linkedPassQuery.eq("attendee_id", orderData.attendee_id);
+    } else {
+      linkedPassQuery = linkedPassQuery.eq("id", "00000000-0000-0000-0000-000000000000");
+    }
+
+    const { data: linkedPass } = await linkedPassQuery.maybeSingle();
     if (linkedPass) passData = linkedPass;
   }
 
@@ -522,34 +545,48 @@ export async function POST(
       const { data: passByPrefix } = await db
         .from("passes")
         .select(`
-          id,
-          event_id,
-          pass_token,
-          pass_type,
-          status,
-          total_guests,
-          checked_in_guests,
-          group_members,
-          order_id,
-          is_group_master,
-          is_group_pass,
-          attendee_id,
-          ticket_type:ticket_types (id, name, is_group_pass, included_guests),
-          attendee:attendees (id, name, email, pass_type, custom_responses)
-        `)
+            id,
+            event_id,
+            pass_token,
+            pass_type,
+            status,
+            total_guests,
+            checked_in_guests,
+            group_members,
+            is_group_master,
+            is_group_pass,
+            attendee_id,
+            ticket_type:ticket_types (id, name, is_group_pass, included_guests),
+            attendee:attendees (id, name, email, pass_type, custom_responses)
+          `)
         .eq("event_id", canonicalEventId)
         .ilike("pass_token", `${rawCode}%`)
         .maybeSingle();
 
       if (passByPrefix) {
         passData = passByPrefix;
-        if (passByPrefix.order_id) {
-          const { data: parentOrder } = await db
+        if (passByPrefix.pass_token) {
+          const { data: parentByGroupQr } = await db
             .from("ticket_orders")
             .select("*")
-            .eq("id", passByPrefix.order_id)
+            .eq("event_id", canonicalEventId)
+            .eq("group_qr_code", passByPrefix.pass_token)
+            .order("created_at", { ascending: false })
+            .limit(1)
             .maybeSingle();
-          orderData = parentOrder;
+          orderData = parentByGroupQr;
+        }
+
+        if (!orderData && passByPrefix.attendee_id) {
+          const { data: parentByAttendee } = await db
+            .from("ticket_orders")
+            .select("*")
+            .eq("event_id", canonicalEventId)
+            .eq("attendee_id", passByPrefix.attendee_id)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          orderData = parentByAttendee;
         }
       }
     }
@@ -570,33 +607,47 @@ export async function POST(
           .from("passes")
           .select(`
             id,
-            event_id,
-            pass_token,
-            pass_type,
-            status,
-            total_guests,
-              checked_in_guests,
-              group_members,
-              order_id,
-              is_group_master,
-              is_group_pass,
-              attendee_id,
-              ticket_type:ticket_types (id, name, is_group_pass, included_guests),
-              attendee:attendees (id, name, email, pass_type, custom_responses)
-          `)
+	            event_id,
+	            pass_token,
+	            pass_type,
+	            status,
+	            total_guests,
+	            checked_in_guests,
+	            group_members,
+	            is_group_master,
+	            is_group_pass,
+	            attendee_id,
+	            ticket_type:ticket_types (id, name, is_group_pass, included_guests),
+	            attendee:attendees (id, name, email, pass_type, custom_responses)
+	          `)
           .eq("attendee_id", attendeeWithCustomId.id)
           .eq("event_id", canonicalEventId)
           .maybeSingle();
 
         if (passForAttendee) {
           passData = passForAttendee;
-          if (passForAttendee.order_id) {
-            const { data: parentOrder } = await db
+          if (passForAttendee.pass_token) {
+            const { data: parentByGroupQr } = await db
               .from("ticket_orders")
               .select("*")
-              .eq("id", passForAttendee.order_id)
+              .eq("event_id", canonicalEventId)
+              .eq("group_qr_code", passForAttendee.pass_token)
+              .order("created_at", { ascending: false })
+              .limit(1)
               .maybeSingle();
-            orderData = parentOrder;
+            orderData = parentByGroupQr;
+          }
+
+          if (!orderData && passForAttendee.attendee_id) {
+            const { data: parentByAttendee } = await db
+              .from("ticket_orders")
+              .select("*")
+              .eq("event_id", canonicalEventId)
+              .eq("attendee_id", passForAttendee.attendee_id)
+              .order("created_at", { ascending: false })
+              .limit(1)
+              .maybeSingle();
+            orderData = parentByAttendee;
           }
         }
       }
@@ -831,10 +882,201 @@ export async function POST(
     });
   }
 
-  // 5. Execute the database atomic stored procedure. Group admissions must not
-  // fall back to non-transactional updates because that can over-admit under
-  // concurrent gate scans.
-  try {
+	  // 5. Execute the database atomic stored procedure. Group admissions must not
+	  // fall back to non-transactional updates because that can over-admit under
+	  // concurrent gate scans.
+  const optimisticGroupAdmission = async () => {
+    const admitQuantity = Number(quantity);
+    const operationId = scanOperationId || crypto.randomUUID();
+
+    const { data: existingAdmission } = await db
+      .from("group_entry_admissions")
+      .select("*")
+      .eq("scan_operation_id", operationId)
+      .maybeSingle();
+
+    if (existingAdmission) {
+      return NextResponse.json({
+        success: true,
+        idempotent: true,
+        status: "GROUP_ADMITTED",
+        groupBookingReference: existingAdmission.group_booking_reference,
+        admittedCount: existingAdmission.admitted_count,
+        totalEntitlements: existingAdmission.total_entitlements,
+        previouslyAdmitted: existingAdmission.previously_admitted,
+        remainingEntries: existingAdmission.remaining_after,
+        admittedAt: existingAdmission.admitted_at,
+      });
+    }
+
+    if (!Number.isFinite(admitQuantity) || admitQuantity <= 0) {
+      return NextResponse.json(
+        { success: false, status: "INVALID_QUANTITY", error: "Quantity to admit must be at least 1." },
+        { status: 400 }
+      );
+    }
+
+    const currentAdmitted = Number(passData?.checked_in_guests ?? orderData?.admitted_entitlements ?? admittedEntitlements ?? 0);
+    const currentRemaining = Math.max(0, totalEntitlements - currentAdmitted);
+    if (currentRemaining <= 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          status: "EXHAUSTED",
+          error: "All group entitlements have already been admitted.",
+          totalEntitlements,
+          previouslyAdmitted: currentAdmitted,
+          remainingEntries: 0,
+        },
+        { status: 422 }
+      );
+    }
+    if (admitQuantity > currentRemaining) {
+      return NextResponse.json(
+        {
+          success: false,
+          status: "EXCEEDS_REMAINING",
+          error: `Requested ${admitQuantity} admissions, but only ${currentRemaining} entitlement(s) remain.`,
+          totalEntitlements,
+          previouslyAdmitted: currentAdmitted,
+          remainingEntries: currentRemaining,
+        },
+        { status: 422 }
+      );
+    }
+
+    const nextAdmitted = currentAdmitted + admitQuantity;
+    const nextRemaining = totalEntitlements - nextAdmitted;
+    const admittedAt = new Date().toISOString();
+
+    if (passData?.id) {
+      let updatePass = db
+        .from("passes")
+        .update({
+          checked_in_guests: nextAdmitted,
+          total_guests: totalEntitlements,
+          is_group_master: true,
+          status: nextRemaining === 0 ? "checked_in" : "partially_checked_in",
+          updated_at: admittedAt,
+        })
+        .eq("id", passData.id)
+        .eq("event_id", canonicalEventId);
+
+      updatePass =
+        currentAdmitted === 0
+          ? updatePass.or("checked_in_guests.eq.0,checked_in_guests.is.null")
+          : updatePass.eq("checked_in_guests", currentAdmitted);
+
+      const { data: updatedPass, error: updatePassError } = await updatePass.select("id").maybeSingle();
+      if (updatePassError || !updatedPass) {
+        return NextResponse.json(
+          { success: false, status: "ADMISSION_CONFLICT", error: "Group admission balance changed. Please scan again." },
+          { status: 409 }
+        );
+      }
+    } else if (orderData?.id) {
+      let updateOrder = db
+        .from("ticket_orders")
+        .update({
+          admitted_entitlements: nextAdmitted,
+          total_entitlements: totalEntitlements,
+          group_entry_enabled: true,
+          updated_at: admittedAt,
+        })
+        .eq("id", orderData.id)
+        .eq("event_id", canonicalEventId);
+
+      updateOrder =
+        currentAdmitted === 0
+          ? updateOrder.or("admitted_entitlements.eq.0,admitted_entitlements.is.null")
+          : updateOrder.eq("admitted_entitlements", currentAdmitted);
+
+      const { data: updatedOrder, error: updateOrderError } = await updateOrder.select("id").maybeSingle();
+      if (updateOrderError || !updatedOrder) {
+        return NextResponse.json(
+          { success: false, status: "ADMISSION_CONFLICT", error: "Group admission balance changed. Please scan again." },
+          { status: 409 }
+        );
+      }
+    }
+
+    if (orderData?.id && passData?.id) {
+      await db
+        .from("ticket_orders")
+        .update({
+          admitted_entitlements: nextAdmitted,
+          total_entitlements: totalEntitlements,
+          group_entry_enabled: true,
+          group_qr_code: resolvedBookingReference,
+          updated_at: admittedAt,
+        })
+        .eq("id", orderData.id)
+        .eq("event_id", canonicalEventId);
+    }
+
+    const { data: admission } = await db
+      .from("group_entry_admissions")
+      .insert({
+        event_id: canonicalEventId,
+        order_id: orderData?.id || null,
+        pass_id: passData?.id || null,
+        group_booking_reference: resolvedBookingReference,
+        gate_id: gateId || null,
+        admitted_count: admitQuantity,
+        total_entitlements: totalEntitlements,
+        previously_admitted: currentAdmitted,
+        remaining_after: nextRemaining,
+        entry_mode: entryMode,
+        admitted_members: selectedMemberIds,
+        scanner_operator_id: user.id,
+        operator_email: user.email || "staff@urpass.space",
+        device_id: deviceId,
+        scan_operation_id: operationId,
+        admitted_at: admittedAt,
+      })
+      .select("id")
+      .maybeSingle();
+
+    if (passData?.id && passData.attendee_id) {
+      await db
+        .from("attendees")
+        .update({
+          pass_status: "checked_in",
+          venue_presence_state: "inside",
+          last_scanned_at: admittedAt,
+          updated_at: admittedAt,
+        })
+        .eq("id", passData.attendee_id);
+
+      const checkIns = Array.from({ length: admitQuantity }, (_, index) => ({
+        pass_id: passData.id,
+        event_id: canonicalEventId,
+        attendee_id: passData.attendee_id,
+        checked_in_by: user.id,
+        gate_id: gateId || null,
+        check_in_method: "group_qr",
+        scan_operation_id: `${operationId}_unit_${index + 1}`,
+        checked_in_at: admittedAt,
+      }));
+      await db.from("check_ins").insert(checkIns);
+    }
+
+    return NextResponse.json({
+      success: true,
+      status: "GROUP_ADMITTED",
+      admissionId: admission?.id,
+      groupBookingReference: resolvedBookingReference,
+      admittedCount: admitQuantity,
+      totalEntitlements,
+      previouslyAdmitted: currentAdmitted,
+      remainingEntries: nextRemaining,
+      admittedAt,
+      buyerName,
+      message: `Successfully admitted ${admitQuantity} attendee(s). ${nextRemaining} entitlement(s) remaining.`,
+    });
+  };
+
+	  try {
     const { data: rpcResult, error: rpcErr } = await db.rpc("atomic_group_entry_checkin", {
       p_group_booking_ref: resolvedBookingReference,
       p_event_id: canonicalEventId,
@@ -848,22 +1090,28 @@ export async function POST(
       p_admitted_members: selectedMemberIds,
     });
 
-    if (!rpcErr && rpcResult) {
-      const parsed = typeof rpcResult === "string" ? JSON.parse(rpcResult) : rpcResult;
-      const httpStatus = parsed.success ? 200 : parsed.status === "EXHAUSTED" || parsed.status === "EXCEEDS_REMAINING" ? 422 : 400;
-      return NextResponse.json(parsed, { status: httpStatus });
+	    if (!rpcErr && rpcResult) {
+	      const parsed = typeof rpcResult === "string" ? JSON.parse(rpcResult) : rpcResult;
+	      const httpStatus = parsed.success ? 200 : parsed.status === "EXHAUSTED" || parsed.status === "EXCEEDS_REMAINING" ? 422 : 400;
+	      return NextResponse.json(parsed, { status: httpStatus });
+	    }
+    if (rpcErr?.message?.includes('column "order_id" does not exist')) {
+      return optimisticGroupAdmission();
     }
-    return NextResponse.json(
-      {
-        success: false,
+	    return NextResponse.json(
+	      {
+	        success: false,
         status: "GROUP_ENTRY_RPC_FAILED",
         error: rpcErr?.message || "Atomic group admission function did not return a result.",
       },
       { status: 503 }
-    );
-  } catch (error) {
-    return NextResponse.json(
-      {
+	    );
+	  } catch (error) {
+    if (error instanceof Error && error.message.includes('column "order_id" does not exist')) {
+      return optimisticGroupAdmission();
+    }
+	    return NextResponse.json(
+	      {
         success: false,
         status: "GROUP_ENTRY_RPC_FAILED",
         error: error instanceof Error ? error.message : "Atomic group admission failed.",

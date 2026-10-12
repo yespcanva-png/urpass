@@ -45,7 +45,7 @@ export default function LiveOperationsDashboardPage() {
   const [alerts, setAlerts] = useState<OpsAlert[]>([]);
   const [recentAudits, setRecentAudits] = useState<any[]>([]);
   const [analytics, setAnalytics] = useState<Stage2OpsAnalytics | null>(null);
-  const [lastRefreshed, setLastRefreshed] = useState<Date>(new Date());
+  const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isLiveConnected, setIsLiveConnected] = useState(false);
 
@@ -111,7 +111,7 @@ export default function LiveOperationsDashboardPage() {
             </span>
             <span className="text-xs text-neutral-400">·</span>
             <span className="text-xs text-neutral-500 font-mono">
-              Last synced: {lastRefreshed.toLocaleTimeString()}
+              Last synced: {lastRefreshed ? lastRefreshed.toLocaleTimeString() : "Pending"}
             </span>
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-neutral-900">

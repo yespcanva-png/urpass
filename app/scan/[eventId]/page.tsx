@@ -175,9 +175,7 @@ export default function ScanEventPage() {
   const [undoingCheckIn, setUndoingCheckIn] = useState(false);
 
   // Offline state & synchronization
-  const [isOnline, setIsOnline] = useState<boolean>(
-    typeof navigator !== "undefined" ? navigator.onLine : true
-  );
+  const [isOnline, setIsOnline] = useState<boolean>(true);
   const [cachedPassCount, setCachedPassCount] = useState<number>(0);
   const [queuePending, setQueuePending] = useState<number>(0);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
@@ -466,6 +464,8 @@ export default function ScanEventPage() {
   // Listen for online/offline events & initialize cache/queue counters
   useEffect(() => {
     if (typeof window === "undefined") return;
+
+    setIsOnline(navigator.onLine);
 
     getManifestMeta(eventId).then((meta) => {
       if (meta) setCachedPassCount(meta.totalPasses);
