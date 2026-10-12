@@ -1290,16 +1290,16 @@ export default function ScanEventPage() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-950 flex flex-col page-in select-none touch-manipulation">
+    <div className="min-h-dvh bg-slate-100 text-slate-900 flex flex-col page-in select-none touch-manipulation pb-safe">
 
       {/* ── Mobile-Optimized Top HUD Bar ────────────────────────────── */}
-      <header className="shrink-0 flex items-center justify-between px-3 sm:px-5 h-14 bg-white border-b border-slate-200 z-30 sticky top-0">
+      <header className="shrink-0 flex items-center justify-between px-3 sm:px-5 h-14 bg-white/95 backdrop-blur-md border-b border-slate-200 z-30 sticky top-0 shadow-2xs">
         
         {/* Left: Back & Network Health Indicator */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           <button
             onClick={() => router.push("/scan")}
-            className="p-1.5 -ml-1 rounded-md text-slate-500 hover:text-slate-950 hover:bg-slate-100 active:scale-95 transition-all"
+            className="p-2 -ml-1 rounded-xl text-slate-500 hover:text-slate-950 hover:bg-slate-100 active:scale-95 transition-all"
             aria-label="Back to events"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -1307,18 +1307,18 @@ export default function ScanEventPage() {
 
           <button
             onClick={() => setSettingsDrawerOpen(true)}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold border transition-all active:scale-95 ${
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[11px] font-semibold border transition-all active:scale-95 ${
               isOnline
-                ? "bg-emerald-50 border-emerald-200 text-emerald-700"
-                : "bg-amber-50 border-amber-200 text-amber-700"
+                ? "bg-emerald-50 border-emerald-200 text-emerald-800"
+                : "bg-amber-50 border-amber-300 text-amber-900"
             }`}
           >
-            <span className={`w-2 h-2 rounded-full ${isOnline ? "bg-emerald-500" : "bg-amber-500"}`} />
+            <span className={`w-2 h-2 rounded-full ${isOnline ? "bg-emerald-500 animate-pulse" : "bg-amber-500"}`} />
             <span className="text-[10px] uppercase tracking-wider font-bold">
               {isOnline ? "Live" : "Offline"}
             </span>
             {queuePending > 0 && (
-              <span className="px-1.5 py-0.2 rounded bg-slate-900 text-[9px] text-white font-bold">
+              <span className="px-1.5 py-0.2 rounded-full bg-slate-900 text-[9px] text-white font-bold">
                 {queuePending}
               </span>
             )}
@@ -1327,7 +1327,7 @@ export default function ScanEventPage() {
 
         {/* Center: Title & Gate Context */}
         <div className="flex flex-col items-center justify-center min-w-0 px-2 flex-1 text-center">
-          <span className="text-xs font-bold text-slate-950 max-w-[130px] sm:max-w-[200px] truncate leading-tight">
+          <span className="text-xs sm:text-sm font-bold text-slate-900 max-w-[120px] sm:max-w-[220px] truncate leading-tight">
             {eventName || "QR Scanner"}
           </span>
           <span className="text-[10px] text-slate-500 font-medium truncate max-w-[140px] flex items-center gap-1">
@@ -1335,7 +1335,7 @@ export default function ScanEventPage() {
               <>{selectedSession.title}</>
             ) : selectedGate ? (
               <>
-                <DoorOpen className="w-3 h-3 shrink-0" />
+                <DoorOpen className="w-3 h-3 shrink-0 text-slate-400" />
                 <span className="truncate">{selectedGate.name}</span>
               </>
             ) : gates.length > 0 ? (
@@ -1348,18 +1348,18 @@ export default function ScanEventPage() {
 
         {/* Right: Live Counter & Settings Trigger */}
         <div className="flex items-center gap-1.5">
-          <div
+          <button
             onClick={() => setFeedDrawerOpen(true)}
-	            className="cursor-pointer flex items-center gap-1 bg-slate-50 border border-slate-200 hover:bg-slate-100 px-2.5 py-1 rounded-md text-xs font-bold text-emerald-700 active:scale-95 transition-all"
+            className="cursor-pointer flex items-center gap-1.5 bg-emerald-50/80 border border-emerald-200/90 hover:bg-emerald-100 px-2.5 py-1.5 rounded-xl text-xs font-bold text-emerald-800 active:scale-95 transition-all shadow-2xs"
             title="View recent scans"
           >
-            <Zap className="w-3 h-3 fill-current text-emerald-400" />
-            <span className="tabular-nums">{scanCount}</span>
-          </div>
+            <Zap className="w-3.5 h-3.5 fill-current text-emerald-600" />
+            <span className="tabular-nums font-black">{scanCount}</span>
+          </button>
 
           <button
             onClick={() => setSettingsDrawerOpen(true)}
-	            className="p-2 rounded-md bg-slate-50 border border-slate-200 hover:bg-slate-100 text-slate-700 active:scale-95 transition-all"
+            className="p-2 rounded-xl bg-slate-50 border border-slate-200 hover:bg-slate-100 text-slate-700 active:scale-95 transition-all"
             aria-label="Scanner controls & settings"
           >
             <SlidersHorizontal className="w-4 h-4" />
@@ -1372,17 +1372,17 @@ export default function ScanEventPage() {
         <div
           className={`shrink-0 px-4 py-2 text-xs flex items-center justify-between border-b transition-all animate-in slide-in-from-top duration-200 ${
             syncBanner.type === "success"
-              ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-200"
-              : "bg-amber-500/15 border-amber-500/30 text-amber-200"
+              ? "bg-emerald-50 border-emerald-200 text-emerald-900"
+              : "bg-amber-50 border-amber-300 text-amber-950"
           }`}
         >
-          <div className="flex items-center gap-2 min-w-0 pr-2">
-            <AlertTriangle className="w-4 h-4 shrink-0 text-amber-400" />
+          <div className="flex items-center gap-2 min-w-0 pr-2 font-medium">
+            <AlertTriangle className="w-4 h-4 shrink-0 text-amber-600" />
             <span className="truncate">{syncBanner.message}</span>
           </div>
           <button
             onClick={() => setSyncBanner(null)}
-            className="text-white/60 hover:text-white text-xs p-1"
+            className="text-slate-500 hover:text-slate-900 text-xs p-1"
           >
             ✕
           </button>
@@ -1390,22 +1390,22 @@ export default function ScanEventPage() {
       )}
 
       {/* ── Mode & Direction Switcher Bar (Mobile Segmented Control) ─── */}
-      <div className="shrink-0 px-4 pt-3 pb-1 flex items-center justify-between gap-2 max-w-sm mx-auto w-full">
+      <div className="shrink-0 px-3.5 pt-3 pb-1 flex items-center justify-between gap-2 max-w-md mx-auto w-full">
         {/* Segmented Mode Controller */}
-	        <div className="flex items-center p-1 rounded-md bg-white border border-slate-200 flex-1">
+        <div className="flex items-center p-1 rounded-xl bg-white border border-slate-200 shadow-2xs flex-1">
           <button
             onClick={() => {
               setManualMode(false);
               if (scanState !== "idle") reset();
             }}
-            className={`flex-1 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+            className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 active:scale-98 ${
               !manualMode
-	                ? "bg-slate-900 text-white"
-	                : "text-slate-500 hover:text-slate-900"
+                ? "bg-slate-900 text-white shadow-xs"
+                : "text-slate-600 hover:text-slate-900"
             }`}
           >
             <ScanLine className="w-3.5 h-3.5" />
-            <span>Scan QR</span>
+            <span>Camera</span>
           </button>
           <button
             onClick={() => {
@@ -1414,28 +1414,28 @@ export default function ScanEventPage() {
               setSearchResults([]);
               if (scanState !== "idle") reset();
             }}
-            className={`flex-1 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+            className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 active:scale-98 ${
               manualMode
-	                ? "bg-slate-900 text-white"
-	                : "text-slate-500 hover:text-slate-900"
+                ? "bg-slate-900 text-white shadow-xs"
+                : "text-slate-600 hover:text-slate-900"
             }`}
           >
             <Search className="w-3.5 h-3.5" />
-            <span>Search</span>
+            <span>Manual List</span>
           </button>
         </div>
 
         {/* Direction Indicator / Toggle */}
         <button
           onClick={() => setScanDirection((d) => (d === "in" ? "out" : "in"))}
-	          className={`px-3 py-2 rounded-md text-[11px] font-extrabold uppercase tracking-wider border transition-all active:scale-95 flex items-center gap-1 ${
-	            scanDirection === "in"
-	              ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-	              : "bg-blue-50 text-blue-700 border-blue-200"
-	          }`}
+          className={`px-3 py-2 rounded-xl text-[11px] font-bold uppercase tracking-wider border transition-all active:scale-95 flex items-center gap-1.5 shadow-2xs ${
+            scanDirection === "in"
+              ? "bg-emerald-50 text-emerald-800 border-emerald-300"
+              : "bg-blue-50 text-blue-800 border-blue-300"
+          }`}
           title="Toggle Entry / Exit"
         >
-          <span className={`w-2 h-2 rounded-full ${scanDirection === "in" ? "bg-emerald-400" : "bg-blue-400"}`} />
+          <span className={`w-2 h-2 rounded-full ${scanDirection === "in" ? "bg-emerald-500" : "bg-blue-500"}`} />
           <span>{scanDirection === "in" ? "Entry" : "Exit"}</span>
         </button>
       </div>
@@ -1451,25 +1451,25 @@ export default function ScanEventPage() {
           : null;
 
         return (
-	          <div className="shrink-0 px-4 py-2.5 mx-4 mb-2 bg-white border border-slate-200 rounded-md flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="shrink-0 px-4 py-2.5 mx-3.5 mb-2 bg-white border border-slate-200 rounded-xl shadow-2xs flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top-2 duration-200">
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
-	                <span className="w-2 h-2 rounded-full bg-blue-500" />
-	                <p className="text-xs font-bold text-slate-950 truncate">{selectedSession.title}</p>
+                <span className="w-2 h-2 rounded-full bg-blue-500" />
+                <p className="text-xs font-bold text-slate-900 truncate">{selectedSession.title}</p>
               </div>
-	              <p className="text-[10px] text-slate-500 truncate mt-0.5">
+              <p className="text-[10px] text-slate-500 truncate mt-0.5">
                 {roomName} • {selectedSession.start_time?.slice(0, 5)} - {selectedSession.end_time?.slice(0, 5)}
               </p>
             </div>
 
             <div className="flex items-center gap-3 shrink-0">
               <div className="text-right">
-	                <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Seats</p>
+                <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Seats</p>
                 <div className="flex items-center gap-1">
-	                  <span className="text-sm font-black text-emerald-700 tabular-nums">
+                  <span className="text-sm font-black text-emerald-700 tabular-nums">
                     {currentChecked}
                   </span>
-	                  <span className="text-xs font-medium text-slate-400">
+                  <span className="text-xs font-medium text-slate-400">
                     / {effectiveCapacity ?? "∞"}
                   </span>
                 </div>
@@ -1477,14 +1477,14 @@ export default function ScanEventPage() {
 
               {effectiveCapacity !== null && (
                 <div className="hidden sm:flex flex-col items-end">
-	                  <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Occupancy</p>
+                  <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Occupancy</p>
                   <span
                     className={`text-xs font-black tabular-nums ${
                       (occupancyPct ?? 0) >= 100
-                        ? "text-red-400"
+                        ? "text-red-500"
                         : (occupancyPct ?? 0) >= 80
-                        ? "text-amber-400"
-	                        : "text-blue-700"
+                        ? "text-amber-500"
+                        : "text-blue-700"
                     }`}
                   >
                     {occupancyPct}%
@@ -1497,86 +1497,86 @@ export default function ScanEventPage() {
       })()}
 
       {/* ── Main Viewport Area ──────────────────────────────────────── */}
-	      <main className="flex-1 flex flex-col items-center justify-center px-4 py-4 relative">
+      <main className="flex-1 flex flex-col items-center justify-center px-3.5 sm:px-4 py-3 relative w-full max-w-md mx-auto">
 
         {/* ── Manual Search Mode View ── */}
         {manualMode ? (
-          <div className="w-full max-w-md flex-1 flex flex-col gap-3">
+          <div className="w-full flex-1 flex flex-col gap-3">
             {/* Search Input */}
             <div className="relative">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 pointer-events-none" />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search attendee by name or email…"
                 autoFocus
-                className="w-full pl-10 pr-9 py-3.5 bg-white/[0.06] border border-white/[0.12] rounded-2xl text-sm text-white placeholder-white/30 outline-none focus:border-violet-500 focus:bg-white/[0.09] transition-all"
+                className="w-full pl-10 pr-9 py-3 bg-white border border-slate-300 rounded-xl text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-slate-800 focus:ring-2 focus:ring-slate-100 shadow-2xs transition-all"
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-white/40 hover:text-white"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-800"
                 >
                   <X className="w-4 h-4" />
                 </button>
               )}
               {searchLoading && (
-                <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-violet-400 animate-spin" />
+                <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 animate-spin" />
               )}
             </div>
 
             {/* Quick Filter Chips */}
             {searchResults.length > 0 && (
-              <div className="flex items-center gap-1.5 px-0.5">
+              <div className="flex items-center gap-1.5 px-0.5 overflow-x-auto no-scrollbar py-0.5">
                 <button
                   onClick={() => setSearchFilter("all")}
-                  className={`px-3 py-1 rounded-full text-[11px] font-bold transition-all ${
+                  className={`px-3 py-1.5 rounded-full text-[11px] font-bold transition-all shrink-0 active:scale-95 ${
                     searchFilter === "all"
-                      ? "bg-white text-neutral-900"
-                      : "bg-white/[0.06] text-white/60 hover:bg-white/10"
+                      ? "bg-slate-900 text-white shadow-2xs"
+                      : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
                   }`}
                 >
                   All ({searchResults.length})
                 </button>
                 <button
                   onClick={() => setSearchFilter("pending")}
-                  className={`px-3 py-1 rounded-full text-[11px] font-bold transition-all ${
+                  className={`px-3 py-1.5 rounded-full text-[11px] font-bold transition-all shrink-0 active:scale-95 ${
                     searchFilter === "pending"
-                      ? "bg-amber-400 text-neutral-950"
-                      : "bg-white/[0.06] text-white/60 hover:bg-white/10"
+                      ? "bg-amber-100 text-amber-900 border border-amber-300 shadow-2xs"
+                      : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
                   }`}
                 >
                   Not In ({searchResults.filter((a) => a.pass_status !== "checked_in").length})
                 </button>
                 <button
                   onClick={() => setSearchFilter("checked_in")}
-                  className={`px-3 py-1 rounded-full text-[11px] font-bold transition-all ${
+                  className={`px-3 py-1.5 rounded-full text-[11px] font-bold transition-all shrink-0 active:scale-95 ${
                     searchFilter === "checked_in"
-                      ? "bg-emerald-400 text-neutral-950"
-                      : "bg-white/[0.06] text-white/60 hover:bg-white/10"
+                      ? "bg-emerald-100 text-emerald-900 border border-emerald-300 shadow-2xs"
+                      : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
                   }`}
                 >
-                  Checked In ({searchResults.filter((a) => a.pass_status === "checked_in").length})
+                  Admitted ({searchResults.filter((a) => a.pass_status === "checked_in").length})
                 </button>
               </div>
             )}
 
             {/* Search Results List */}
-            <div className="flex-1 flex flex-col gap-2 overflow-y-auto max-h-[60vh] pr-0.5">
+            <div className="flex-1 flex flex-col gap-2 overflow-y-auto max-h-[62vh] pr-0.5">
               {searchQuery.length >= 2 && !searchLoading && filteredSearchResults.length === 0 && (
-                <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <Users className="w-10 h-10 text-white/15 mb-3" />
-                  <p className="text-sm font-medium text-white/50">No matching attendees found</p>
-                  <p className="text-xs text-white/30 mt-1">Try another search or verify spelling</p>
+                <div className="flex flex-col items-center justify-center py-12 text-center bg-white rounded-2xl border border-slate-200 p-6">
+                  <Users className="w-10 h-10 text-slate-300 mb-2" />
+                  <p className="text-sm font-semibold text-slate-800">No matching attendees found</p>
+                  <p className="text-xs text-slate-400 mt-1">Verify name or email spelling</p>
                 </div>
               )}
 
               {searchQuery.length < 2 && (
-                <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <Search className="w-10 h-10 text-white/15 mb-3" />
-                  <p className="text-sm font-medium text-white/50">Type at least 2 characters</p>
-                  <p className="text-xs text-white/30 mt-1">Find attendees for fast manual check-in</p>
+                <div className="flex flex-col items-center justify-center py-12 text-center bg-white rounded-2xl border border-slate-200 p-6">
+                  <Search className="w-10 h-10 text-slate-300 mb-2" />
+                  <p className="text-sm font-semibold text-slate-800">Type at least 2 characters</p>
+                  <p className="text-xs text-slate-400 mt-1">Search attendees for fast manual verification</p>
                 </div>
               )}
 
@@ -1586,26 +1586,26 @@ export default function ScanEventPage() {
                 return (
                   <div
                     key={a.id}
-                    className={`flex items-center justify-between p-3.5 rounded-2xl border transition-all ${
+                    className={`flex items-center justify-between p-3.5 rounded-xl border transition-all ${
                       isIn
-                        ? "bg-emerald-950/20 border-emerald-800/40"
-                        : "bg-white/[0.05] border-white/[0.08] hover:border-white/20"
+                        ? "bg-emerald-50/70 border-emerald-200/90"
+                        : "bg-white border-slate-200 hover:border-slate-300 shadow-2xs"
                     }`}
                   >
                     <div className="min-w-0 pr-2">
                       <div className="flex items-center gap-1.5">
-                        <span className="text-sm font-bold text-white truncate">{a.name}</span>
-                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-violet-500/20 text-violet-300 uppercase">
+                        <span className="text-sm font-bold text-slate-900 truncate">{a.name}</span>
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 uppercase">
                           {PASS_TYPE_LABEL[a.pass_type] ?? a.pass_type}
                         </span>
                       </div>
-                      <p className="text-xs text-white/40 truncate mt-0.5">{a.email}</p>
+                      <p className="text-xs text-slate-500 truncate mt-0.5">{a.email}</p>
                     </div>
 
                     <div className="flex items-center gap-1.5 shrink-0">
                       {isIn ? (
                         <div className="flex items-center gap-1.5">
-                          <span className="text-[10px] font-bold px-2 py-1 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                          <span className="text-[10px] font-bold px-2 py-1 rounded-lg bg-emerald-100 text-emerald-800 border border-emerald-300">
                             Admitted
                           </span>
                           {allowReentry && (
@@ -1613,7 +1613,7 @@ export default function ScanEventPage() {
                               onClick={() => handleUndoCheckIn(a.id)}
                               disabled={undoingCheckIn}
                               title="Reset check-in"
-                              className="p-2 rounded-xl bg-white/[0.08] text-white/70 hover:text-white hover:bg-white/15 border border-white/10 active:scale-95 transition-all disabled:opacity-50"
+                              className="p-2 rounded-lg bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-50 border border-slate-200 active:scale-95 transition-all disabled:opacity-50"
                             >
                               {undoingCheckIn ? (
                                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -1627,7 +1627,7 @@ export default function ScanEventPage() {
                         <button
                           onClick={() => manualCheckIn(a)}
                           disabled={isChecking}
-                          className="flex items-center gap-1 px-3 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold text-xs shadow-md active:scale-95 transition-all disabled:opacity-50"
+                          className="flex items-center gap-1 px-3.5 py-2.5 rounded-xl bg-slate-900 text-white font-bold text-xs shadow-xs active:scale-95 transition-all disabled:opacity-50 hover:bg-slate-800"
                         >
                           {isChecking ? (
                             <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -1645,19 +1645,19 @@ export default function ScanEventPage() {
           </div>
         ) : (
           /* ── Camera QR Mode View ── */
-	          <div className="w-full max-w-md flex flex-col items-center justify-center">
+          <div className="w-full flex flex-col items-center justify-center">
 
             {/* Gate Required Shield (If gates configured but none chosen) */}
             {isGateRequired ? (
-	              <div className="w-full bg-white border border-slate-200 rounded-md p-6 text-center space-y-4 animate-in fade-in">
-	                <div className="w-12 h-12 rounded-md bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700 mx-auto">
-	                  <DoorOpen className="w-7 h-7" />
-	                </div>
-	                <div>
-	                  <h3 className="text-base font-bold text-slate-950">Select Scanner Entry Gate</h3>
-	                  <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-	                    Select your assigned gate to start scanning tickets and enforce zone access.
-	                  </p>
+              <div className="w-full bg-white border border-slate-200 rounded-2xl p-6 text-center space-y-4 shadow-sm animate-in fade-in">
+                <div className="w-14 h-14 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700 mx-auto">
+                  <DoorOpen className="w-7 h-7" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">Select Scanner Entry Gate</h3>
+                  <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                    Select your assigned gate to start scanning tickets and enforce zone access.
+                  </p>
                 </div>
                 <div className="space-y-2 pt-2">
                   {gates.map((g) => (
@@ -1669,11 +1669,11 @@ export default function ScanEventPage() {
                           localStorage.setItem(`urpass_gate_${eventId}`, g.id);
                         } catch {}
                       }}
-	                      className="w-full py-3.5 px-4 rounded-md text-xs font-bold bg-white hover:bg-slate-50 text-slate-900 border border-slate-200 active:scale-95 transition-all flex items-center justify-between"
+                      className="w-full py-3.5 px-4 rounded-xl text-xs font-bold bg-white hover:bg-slate-50 text-slate-900 border border-slate-200 active:scale-95 transition-all flex items-center justify-between shadow-2xs"
                     >
                       <span>{g.name}</span>
                       {g.zone && (
-	                        <span className="text-[10px] text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                        <span className="text-[10px] text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
                           {g.zone.name}
                         </span>
                       )}
@@ -1690,21 +1690,21 @@ export default function ScanEventPage() {
                 <div className="absolute top-3 right-3 z-20 flex items-center gap-2">
                   <button
                     onClick={toggleWakeLock}
-	                    className={`p-2 rounded-md border transition-all ${
-	                      wakeLockActive
-	                        ? "bg-amber-50 text-amber-700 border-amber-200"
-	                        : "bg-white text-slate-500 border-slate-200 hover:text-slate-950"
-	                    }`}
-                    title={wakeLockActive ? "Screen lock active" : "Enable screen stay-awake"}
+                    className={`p-2.5 rounded-xl border backdrop-blur-md transition-all active:scale-95 shadow-xs ${
+                      wakeLockActive
+                        ? "bg-amber-100/90 text-amber-900 border-amber-300"
+                        : "bg-white/90 text-slate-600 border-slate-200 hover:text-slate-950"
+                    }`}
+                    title={wakeLockActive ? "Screen stay-awake enabled" : "Enable screen stay-awake"}
                   >
-	                    <Sun className={`w-4 h-4 ${wakeLockActive ? "text-amber-700" : ""}`} />
+                    <Sun className={`w-4 h-4 ${wakeLockActive ? "text-amber-800" : ""}`} />
                   </button>
                   <button
                     onClick={toggleSound}
-	                    className={`p-2 rounded-md border transition-all ${
-	                      soundEnabled
-	                        ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-	                        : "bg-white text-slate-400 border-slate-200"
+                    className={`p-2.5 rounded-xl border backdrop-blur-md transition-all active:scale-95 shadow-xs ${
+                      soundEnabled
+                        ? "bg-emerald-100/90 text-emerald-900 border-emerald-300"
+                        : "bg-white/90 text-slate-400 border-slate-200"
                     }`}
                     title={soundEnabled ? "Audio chime on" : "Audio muted"}
                   >
@@ -1716,15 +1716,15 @@ export default function ScanEventPage() {
 
             {/* Verifying Spinner */}
             {scanState === "verifying" && (
-	              <div className="flex flex-col items-center gap-5 py-8 animate-in fade-in">
-	                <div className="relative w-20 h-20">
-	                  <div className="relative w-full h-full rounded-md bg-white border border-slate-200 flex items-center justify-center">
-	                    <Loader2 className="w-8 h-8 text-slate-700 animate-spin" />
-	                  </div>
-	                </div>
-	                <div className="text-center space-y-1">
-	                  <p className="text-sm font-bold text-slate-950">Verifying pass...</p>
-	                  <p className="text-xs text-slate-500 font-mono">Checking against guest manifest</p>
+              <div className="flex flex-col items-center gap-4 py-8 animate-in fade-in">
+                <div className="relative w-20 h-20">
+                  <div className="relative w-full h-full rounded-2xl bg-white border border-slate-200 flex items-center justify-center shadow-md">
+                    <Loader2 className="w-8 h-8 text-slate-800 animate-spin" />
+                  </div>
+                </div>
+                <div className="text-center space-y-1">
+                  <p className="text-sm font-bold text-slate-900">Verifying pass…</p>
+                  <p className="text-xs text-slate-500 font-mono">Checking against guest manifest</p>
                 </div>
               </div>
             )}
@@ -1794,89 +1794,89 @@ export default function ScanEventPage() {
         )}
       </main>
 
-      {/* ── Floating Bottom Bar (Recent Check-ins Drawer Trigger) ────── */}
-	      <footer className="shrink-0 px-4 py-3 bg-white border-t border-slate-200 z-20">
-	        <div className="max-w-md mx-auto flex items-center justify-between gap-3">
+      {/* ── Floating Mobile Bottom Bar ───────────────────────────────── */}
+      <footer className="shrink-0 px-4 py-3 bg-white/95 backdrop-blur-md border-t border-slate-200 z-20 shadow-md">
+        <div className="max-w-md mx-auto flex items-center justify-between gap-3">
           <button
             onClick={() => setFeedDrawerOpen(true)}
-	            className="flex-1 flex items-center justify-between px-4 py-2.5 rounded-md bg-slate-50 border border-slate-200 hover:bg-slate-100 active:scale-98 transition-all text-left"
+            className="flex-1 flex items-center justify-between px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 hover:bg-slate-100 active:scale-98 transition-all text-left shadow-2xs"
           >
             <div className="flex items-center gap-2">
-	              <Users className="w-4 h-4 text-slate-600" />
-	              <span className="text-xs font-bold text-slate-950">
+              <Users className="w-4 h-4 text-slate-600" />
+              <span className="text-xs font-bold text-slate-900">
                 {scanCount} Admitted
               </span>
             </div>
-	            <span className="text-[11px] font-semibold text-slate-600 flex items-center gap-1">
+            <span className="text-[11px] font-semibold text-slate-600 flex items-center gap-1">
               Live Feed <ChevronUp className="w-3.5 h-3.5" />
             </span>
           </button>
 
           <button
             onClick={toggleTorch}
-	            className={`p-2.5 rounded-md border transition-all active:scale-95 ${
-	              torchOn
-	                ? "bg-amber-100 text-amber-800 border-amber-200"
-	                : "bg-slate-50 border-slate-200 text-slate-600 hover:text-slate-950"
-	            }`}
+            className={`p-3 rounded-xl border transition-all active:scale-95 shadow-2xs ${
+              torchOn
+                ? "bg-amber-100 text-amber-900 border-amber-300"
+                : "bg-slate-50 border-slate-200 text-slate-700 hover:text-slate-950"
+            }`}
             title={torchOn ? "Turn torch off" : "Turn flashlight torch on"}
             aria-label="Flashlight"
           >
-            {torchOn ? <Flashlight className="w-4 h-4 fill-current" /> : <FlashlightOff className="w-4 h-4" />}
+            {torchOn ? <Flashlight className="w-4 h-4 fill-current text-amber-600" /> : <FlashlightOff className="w-4 h-4" />}
           </button>
         </div>
       </footer>
 
       {/* ── Slide-up Recent Activity Feed Drawer ─────────────────────── */}
       {feedDrawerOpen && (
-        <div className="fixed inset-0 z-50 flex flex-col justify-end bg-black/70 backdrop-blur-sm animate-in fade-in duration-150">
+        <div className="fixed inset-0 z-50 flex flex-col justify-end bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-150">
           <div
             className="fixed inset-0"
             onClick={() => setFeedDrawerOpen(false)}
           />
-          <div className="relative bg-neutral-900 border-t border-white/10 rounded-t-3xl max-h-[75vh] flex flex-col p-5 animate-in slide-in-from-bottom duration-200 shadow-2xl">
+          <div className="relative bg-white border-t border-slate-200 rounded-t-3xl max-h-[80svh] flex flex-col p-5 pb-safe animate-in slide-in-from-bottom duration-200 shadow-2xl">
             {/* Grab Handle */}
-            <div className="w-10 h-1 rounded-full bg-white/20 mx-auto mb-3" />
+            <div className="w-12 h-1.5 rounded-full bg-slate-300 mx-auto mb-3" />
 
-            <div className="flex items-center justify-between pb-3 border-b border-white/10">
+            <div className="flex items-center justify-between pb-3.5 border-b border-slate-200">
               <div className="flex items-center gap-2">
-                <Users className="w-4 h-4 text-emerald-400" />
-                <h3 className="text-sm font-bold text-white">Recent Check-ins Feed</h3>
+                <Users className="w-4 h-4 text-emerald-600" />
+                <h3 className="text-sm font-bold text-slate-900">Recent Check-ins Feed</h3>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-emerald-400 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                <span className="text-xs font-bold text-emerald-800 px-2.5 py-0.5 rounded-full bg-emerald-100 border border-emerald-300">
                   {scanCount} Total
                 </span>
                 <button
                   onClick={() => setFeedDrawerOpen(false)}
-                  className="p-1 rounded-full text-white/40 hover:text-white"
+                  className="p-1 rounded-full text-slate-400 hover:text-slate-900 active:scale-95 transition-all"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto mt-3 space-y-2 max-h-[50vh] pr-1">
+            <div className="flex-1 overflow-y-auto mt-3 space-y-2 max-h-[55svh] pr-1">
               {feed.length === 0 ? (
-                <div className="py-12 text-center text-white/40 text-xs">
+                <div className="py-12 text-center text-slate-400 text-xs font-medium">
                   No check-ins recorded yet during this session.
                 </div>
               ) : (
                 feed.map((entry, idx) => (
                   <div
                     key={entry.id || idx}
-                    className="flex items-center justify-between p-3 rounded-xl bg-white/[0.04] border border-white/[0.06]"
+                    className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200 shadow-2xs"
                   >
                     <div className="flex items-center gap-2.5 min-w-0 pr-2">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                       <div className="min-w-0">
-                        <p className="text-xs font-bold text-white truncate">{entry.name}</p>
-                        <p className="text-[10px] text-white/40 font-mono mt-0.5">
+                        <p className="text-xs font-bold text-slate-900 truncate">{entry.name}</p>
+                        <p className="text-[10px] text-slate-500 font-mono mt-0.5">
                           {new Date(entry.ts).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true })}
                         </p>
                       </div>
                     </div>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-violet-500/20 text-violet-300 border border-violet-500/30 uppercase shrink-0">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white text-slate-700 border border-slate-200 uppercase shrink-0">
                       {PASS_TYPE_LABEL[entry.pass_type] ?? entry.pass_type}
                     </span>
                   </div>
@@ -1889,34 +1889,34 @@ export default function ScanEventPage() {
 
       {/* ── Slide-up Scanner Controls & Settings Drawer ──────────────── */}
       {settingsDrawerOpen && (
-        <div className="fixed inset-0 z-50 flex flex-col justify-end bg-black/75 backdrop-blur-sm animate-in fade-in duration-150">
+        <div className="fixed inset-0 z-50 flex flex-col justify-end bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-150">
           <div
             className="fixed inset-0"
             onClick={() => setSettingsDrawerOpen(false)}
           />
-          <div className="relative bg-neutral-900 border-t border-white/10 rounded-t-3xl max-h-[85vh] flex flex-col p-5 animate-in slide-in-from-bottom duration-200 shadow-2xl">
+          <div className="relative bg-white border-t border-slate-200 rounded-t-3xl max-h-[85svh] flex flex-col p-5 pb-safe animate-in slide-in-from-bottom duration-200 shadow-2xl">
             {/* Grab Handle */}
-            <div className="w-10 h-1 rounded-full bg-white/20 mx-auto mb-3" />
+            <div className="w-12 h-1.5 rounded-full bg-slate-300 mx-auto mb-3" />
 
-            <div className="flex items-center justify-between pb-3 border-b border-white/10">
+            <div className="flex items-center justify-between pb-3.5 border-b border-slate-200">
               <div className="flex items-center gap-2">
-                <SlidersHorizontal className="w-4 h-4 text-violet-400" />
-                <h3 className="text-sm font-bold text-white">Scanner Configuration</h3>
+                <SlidersHorizontal className="w-4 h-4 text-slate-700" />
+                <h3 className="text-sm font-bold text-slate-900">Scanner Configuration</h3>
               </div>
               <button
                 onClick={() => setSettingsDrawerOpen(false)}
-                className="p-1 rounded-full text-white/40 hover:text-white"
+                className="p-1 rounded-full text-slate-400 hover:text-slate-900 active:scale-95 transition-all"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto mt-4 space-y-4 max-h-[65vh] pr-1">
+            <div className="flex-1 overflow-y-auto mt-4 space-y-4 max-h-[65svh] pr-1">
 
               {/* 1. Gate Switcher */}
               {gates.length > 0 && (
                 <div className="space-y-2">
-                  <label className="text-[11px] font-bold uppercase tracking-wider text-white/40 flex items-center gap-1.5">
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
                     <DoorOpen className="w-3.5 h-3.5" /> Assigned Gate
                   </label>
                   <div className="grid grid-cols-1 gap-2">
@@ -1930,20 +1930,20 @@ export default function ScanEventPage() {
                             localStorage.setItem(`urpass_gate_${eventId}`, g.id);
                           } catch {}
                         }}
-                        className={`flex items-center justify-between p-3 rounded-2xl border text-left transition-all ${
+                        className={`flex items-center justify-between p-3.5 rounded-xl border text-left transition-all active:scale-98 ${
                           selectedGateId === g.id
-                            ? "bg-violet-600/20 border-violet-500/60 text-white font-bold"
-                            : "bg-white/[0.04] border-white/[0.06] text-white/70 hover:bg-white/[0.08]"
+                            ? "bg-slate-900 border-slate-900 text-white font-bold shadow-xs"
+                            : "bg-slate-50 border-slate-200 text-slate-800 hover:bg-slate-100"
                         }`}
                       >
                         <div>
                           <p className="text-xs font-bold">{g.name}</p>
                           {g.zone && (
-                            <p className="text-[10px] text-violet-300 mt-0.5">{g.zone.name}</p>
+                            <p className={`text-[10px] mt-0.5 ${selectedGateId === g.id ? "text-slate-300" : "text-slate-500"}`}>{g.zone.name}</p>
                           )}
                         </div>
                         {selectedGateId === g.id && (
-                          <Check className="w-4 h-4 text-violet-400 shrink-0" />
+                          <Check className="w-4 h-4 text-white shrink-0" />
                         )}
                       </button>
                     ))}
@@ -1954,20 +1954,20 @@ export default function ScanEventPage() {
               {/* 2. Session Switcher */}
               {sessions.length > 0 && (
                 <div className="space-y-2">
-                  <label className="text-[11px] font-bold uppercase tracking-wider text-white/40 flex items-center gap-1.5">
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
                     <Layers className="w-3.5 h-3.5" /> Tracked Conference Session
                   </label>
                   <div className="grid grid-cols-1 gap-2">
                     <button
                       onClick={() => setSelectedSessionId(null)}
-                      className={`flex items-center justify-between p-3 rounded-2xl border text-left transition-all ${
+                      className={`flex items-center justify-between p-3.5 rounded-xl border text-left transition-all active:scale-98 ${
                         !selectedSessionId
-                          ? "bg-violet-600/20 border-violet-500/60 text-white font-bold"
-                          : "bg-white/[0.04] border-white/[0.06] text-white/70"
+                          ? "bg-slate-900 border-slate-900 text-white font-bold shadow-xs"
+                          : "bg-slate-50 border-slate-200 text-slate-800"
                       }`}
                     >
                       <span className="text-xs font-bold">General Event Entry (No Session)</span>
-                      {!selectedSessionId && <Check className="w-4 h-4 text-violet-400 shrink-0" />}
+                      {!selectedSessionId && <Check className="w-4 h-4 text-white shrink-0" />}
                     </button>
                     {sessions.map((s) => (
                       <button
@@ -1976,20 +1976,20 @@ export default function ScanEventPage() {
                           setSelectedSessionId(s.id);
                           setSelectedGateId(null);
                         }}
-                        className={`flex items-center justify-between p-3 rounded-2xl border text-left transition-all ${
+                        className={`flex items-center justify-between p-3.5 rounded-xl border text-left transition-all active:scale-98 ${
                           selectedSessionId === s.id
-                            ? "bg-violet-600/20 border-violet-500/60 text-white font-bold"
-                            : "bg-white/[0.04] border-white/[0.06] text-white/70 hover:bg-white/[0.08]"
+                            ? "bg-slate-900 border-slate-900 text-white font-bold shadow-xs"
+                            : "bg-slate-50 border-slate-200 text-slate-800 hover:bg-slate-100"
                         }`}
                       >
                         <div className="min-w-0 pr-2">
                           <p className="text-xs font-bold truncate">{s.title}</p>
-                          <p className="text-[10px] text-white/40 mt-0.5">
+                          <p className={`text-[10px] mt-0.5 ${selectedSessionId === s.id ? "text-slate-300" : "text-slate-500"}`}>
                             {s.room?.name || "Main Venue"} · {s.start_time?.slice(0, 5)}
                           </p>
                         </div>
                         {selectedSessionId === s.id && (
-                          <Check className="w-4 h-4 text-violet-400 shrink-0" />
+                          <Check className="w-4 h-4 text-white shrink-0" />
                         )}
                       </button>
                     ))}
@@ -1999,44 +1999,44 @@ export default function ScanEventPage() {
 
               {/* 3. Hardware & Environmental Controls */}
               <div className="space-y-2">
-                <label className="text-[11px] font-bold uppercase tracking-wider text-white/40">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
                   Device Hardware &amp; Feedback
                 </label>
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     onClick={toggleSound}
-                    className={`p-3 rounded-2xl border flex flex-col items-center justify-center gap-1.5 transition-all ${
+                    className={`p-3.5 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all active:scale-95 shadow-2xs ${
                       soundEnabled
-                        ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-300"
-                        : "bg-white/[0.04] border-white/[0.06] text-white/40"
+                        ? "bg-emerald-50 border-emerald-300 text-emerald-800 font-bold"
+                        : "bg-slate-50 border-slate-200 text-slate-500"
                     }`}
                   >
-                    {soundEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
+                    {soundEnabled ? <Volume2 className="w-5 h-5 text-emerald-600" /> : <VolumeX className="w-5 h-5 text-slate-400" />}
                     <span className="text-xs font-bold">{soundEnabled ? "Audio On" : "Audio Muted"}</span>
                   </button>
 
                   <button
                     onClick={toggleWakeLock}
-                    className={`p-3 rounded-2xl border flex flex-col items-center justify-center gap-1.5 transition-all ${
+                    className={`p-3.5 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all active:scale-95 shadow-2xs ${
                       wakeLockActive
-                        ? "bg-amber-400/15 border-amber-400/30 text-amber-300"
-                        : "bg-white/[0.04] border-white/[0.06] text-white/40"
+                        ? "bg-amber-50 border-amber-300 text-amber-900 font-bold"
+                        : "bg-slate-50 border-slate-200 text-slate-500"
                     }`}
                   >
-                    <Sun className={`w-5 h-5 ${wakeLockActive ? "animate-pulse" : ""}`} />
+                    <Sun className={`w-5 h-5 ${wakeLockActive ? "text-amber-600 animate-pulse" : "text-slate-400"}`} />
                     <span className="text-xs font-bold">{wakeLockActive ? "Screen Awake" : "Sleep Normal"}</span>
                   </button>
                 </div>
               </div>
 
               {/* 4. Offline Cache & Sync */}
-              <div className="p-3.5 rounded-2xl bg-white/[0.04] border border-white/[0.06] space-y-3">
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-3 shadow-2xs">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Wifi className="w-4 h-4 text-emerald-400" />
+                    <Wifi className="w-4 h-4 text-emerald-600" />
                     <div>
-                      <p className="text-xs font-bold text-white">Local Offline Cache</p>
-                      <p className="text-[10px] text-white/40">
+                      <p className="text-xs font-bold text-slate-900">Local Offline Cache</p>
+                      <p className="text-[10px] text-slate-500">
                         {cachedPassCount} passes cached on device
                       </p>
                     </div>
@@ -2045,7 +2045,7 @@ export default function ScanEventPage() {
                     <button
                       onClick={refreshManifest}
                       disabled={isRefreshingCache}
-                      className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all active:scale-95 disabled:opacity-50"
+                      className="p-2 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 transition-all active:scale-95 disabled:opacity-50"
                       title="Update local cache"
                     >
                       <RefreshCw className={`w-3.5 h-3.5 ${isRefreshingCache ? "animate-spin" : ""}`} />
@@ -2057,7 +2057,7 @@ export default function ScanEventPage() {
                   <button
                     onClick={syncPendingScans}
                     disabled={isSyncing || !isOnline}
-                    className="w-full py-2.5 px-3 rounded-xl bg-violet-600 text-white text-xs font-bold hover:bg-violet-500 transition-all flex items-center justify-center gap-1.5 shadow-md active:scale-95 disabled:opacity-50"
+                    className="w-full py-3 px-3.5 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition-all flex items-center justify-center gap-1.5 shadow-xs active:scale-95 disabled:opacity-50"
                   >
                     <CloudUpload className={`w-4 h-4 ${isSyncing ? "animate-spin" : ""}`} />
                     <span>Sync {queuePending} Offline Check-in{queuePending > 1 ? "s" : ""}</span>

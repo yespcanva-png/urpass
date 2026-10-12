@@ -172,37 +172,39 @@ export default function QRScanner({ onScan, active, statusVariant = "idle" }: Pr
 
   return (
     <div className="flex flex-col items-center gap-3 w-full">
-      {/* Viewfinder */}
+      {/* Viewfinder — Optimized for mobile screen width and handheld ergonomics */}
       <div
-        className="relative w-full rounded-md overflow-hidden bg-slate-900 border border-slate-300 transition-all duration-300"
+        className="relative w-full rounded-2xl overflow-hidden bg-slate-950 border border-slate-200/90 shadow-lg transition-all duration-300"
         style={{
           aspectRatio: "1",
+          maxHeight: "min(70vw, 420px)",
         }}
       >
-        <div id={SCANNER_ID} className="w-full h-full" />
+        <div id={SCANNER_ID} className="w-full h-full [&>video]:object-cover" />
 
         {/* Starting placeholder */}
         {!started && !cameraError && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-slate-950/80 z-10">
-            <div className="w-12 h-12 rounded-md bg-white/10 border border-white/15 flex items-center justify-center">
-              <Camera className="w-6 h-6 text-slate-200" />
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-slate-950/85 backdrop-blur-xs z-10 p-4">
+            <div className="w-14 h-14 rounded-2xl bg-white/10 border border-white/15 flex items-center justify-center shadow-inner">
+              <Camera className="w-7 h-7 text-slate-200 animate-pulse" />
             </div>
-            <p className="text-xs text-slate-300 font-medium">Initializing camera...</p>
+            <p className="text-xs text-slate-200 font-medium tracking-wide">Starting high-speed camera…</p>
+            <p className="text-[11px] text-slate-400 text-center max-w-[220px]">Point at ticket QR code</p>
           </div>
         )}
 
         {/* Camera error */}
         {cameraError && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-center bg-slate-950/90 z-10">
-            <div className="w-12 h-12 rounded-md bg-red-500/10 border border-red-500/20 flex items-center justify-center">
-              <CameraOff className="w-6 h-6 text-red-300" />
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-center bg-slate-950/95 z-10">
+            <div className="w-13 h-13 rounded-2xl bg-red-500/15 border border-red-500/30 flex items-center justify-center">
+              <CameraOff className="w-6 h-6 text-red-400" />
             </div>
-            <p className="text-xs text-slate-300 leading-relaxed">{cameraError}</p>
+            <p className="text-xs text-slate-200 leading-relaxed max-w-[260px] font-medium">{cameraError}</p>
             <button
               onClick={() => startScanner()}
-              className="mt-2 text-xs font-semibold px-3 py-1.5 rounded-md bg-white text-slate-950 hover:bg-slate-100 transition-colors"
+              className="mt-2 text-xs font-semibold px-4 py-2.5 rounded-xl bg-white text-slate-950 hover:bg-slate-100 active:scale-95 transition-all shadow-sm"
             >
-              Retry Camera
+              Retry Camera Access
             </button>
           </div>
         )}
@@ -210,64 +212,64 @@ export default function QRScanner({ onScan, active, statusVariant = "idle" }: Pr
         {/* Scanner overlay — only when started */}
         {started && (
           <>
-            {/* Vignette — dims edges to focus on center */}
+            {/* Darkened vignette around target zone */}
             <div
               className="absolute inset-0 pointer-events-none transition-opacity duration-300"
               style={{
-	                background: "radial-gradient(ellipse 75% 75% at 50% 50%, transparent 48%, rgba(15,23,42,0.45) 100%)",
+                background: "radial-gradient(ellipse 75% 75% at 50% 50%, transparent 45%, rgba(15,23,42,0.55) 100%)",
               }}
             />
 
-            {/* Corner brackets */}
+            {/* High-visibility corner brackets */}
             <span
-	              className="absolute top-5 left-5 w-10 h-10 rounded-tl-md pointer-events-none transition-all duration-300"
-	              style={{ borderTop: `3px solid ${bracketColor}`, borderLeft: `3px solid ${bracketColor}` }}
+              className="absolute top-4 left-4 w-8 h-8 sm:w-10 sm:h-10 rounded-tl-xl pointer-events-none transition-all duration-300 shadow-xs"
+              style={{ borderTop: `3.5px solid ${bracketColor}`, borderLeft: `3.5px solid ${bracketColor}` }}
             />
             <span
-	              className="absolute top-5 right-5 w-10 h-10 rounded-tr-md pointer-events-none transition-all duration-300"
-	              style={{ borderTop: `3px solid ${bracketColor}`, borderRight: `3px solid ${bracketColor}` }}
+              className="absolute top-4 right-4 w-8 h-8 sm:w-10 sm:h-10 rounded-tr-xl pointer-events-none transition-all duration-300 shadow-xs"
+              style={{ borderTop: `3.5px solid ${bracketColor}`, borderRight: `3.5px solid ${bracketColor}` }}
             />
             <span
-	              className="absolute bottom-5 left-5 w-10 h-10 rounded-bl-md pointer-events-none transition-all duration-300"
-	              style={{ borderBottom: `3px solid ${bracketColor}`, borderLeft: `3px solid ${bracketColor}` }}
+              className="absolute bottom-4 left-4 w-8 h-8 sm:w-10 sm:h-10 rounded-bl-xl pointer-events-none transition-all duration-300 shadow-xs"
+              style={{ borderBottom: `3.5px solid ${bracketColor}`, borderLeft: `3.5px solid ${bracketColor}` }}
             />
             <span
-	              className="absolute bottom-5 right-5 w-10 h-10 rounded-br-md pointer-events-none transition-all duration-300"
-	              style={{ borderBottom: `3px solid ${bracketColor}`, borderRight: `3px solid ${bracketColor}` }}
+              className="absolute bottom-4 right-4 w-8 h-8 sm:w-10 sm:h-10 rounded-br-xl pointer-events-none transition-all duration-300 shadow-xs"
+              style={{ borderBottom: `3.5px solid ${bracketColor}`, borderRight: `3.5px solid ${bracketColor}` }}
             />
 
-            {/* Scan beam — only animated when active */}
+            {/* Scan beam */}
             {active && statusVariant === "idle" && (
               <>
                 <span
-                  className="absolute left-6 right-6 pointer-events-none animate-[scanBeam_1.8s_ease-in-out_infinite]"
+                  className="absolute left-4 right-4 pointer-events-none animate-[scanBeam_1.8s_ease-in-out_infinite]"
                   style={{
-                    height: "28px",
+                    height: "24px",
                     transform: "translateY(-50%)",
-	                    background: "linear-gradient(to bottom, transparent, rgba(15,23,42,0.18) 50%, transparent)",
-	                    borderRadius: "4px",
+                    background: "linear-gradient(to bottom, transparent, rgba(56,189,248,0.15) 50%, transparent)",
+                    borderRadius: "4px",
                   }}
                 />
                 <span
-                  className="absolute left-10 right-10 pointer-events-none animate-[scanBeam_1.8s_ease-in-out_infinite]"
+                  className="absolute left-6 right-6 pointer-events-none animate-[scanBeam_1.8s_ease-in-out_infinite]"
                   style={{
                     height: "2px",
                     transform: "translateY(-50%)",
-	                    background: "linear-gradient(to right, transparent, #CBD5E1 20%, #334155 50%, #CBD5E1 80%, transparent)",
+                    background: "linear-gradient(to right, transparent, #38BDF8 50%, transparent)",
                   }}
                 />
               </>
             )}
 
-            {/* Torch toggle button (when supported by device camera) */}
+            {/* Mobile In-camera Torch Toggle */}
             {torchSupported && (
               <button
                 type="button"
                 onClick={toggleTorch}
-	                className={`absolute bottom-4 right-4 z-20 flex items-center justify-center w-10 h-10 rounded-md transition-all duration-200 active:scale-95 ${
-	                  torchOn
-	                    ? "bg-amber-100 text-amber-800 border border-amber-200"
-	                    : "bg-white text-slate-700 hover:text-slate-950 border border-slate-200"
+                className={`absolute bottom-3 right-3 z-20 flex items-center justify-center w-11 h-11 rounded-xl transition-all active:scale-95 shadow-md ${
+                  torchOn
+                    ? "bg-amber-400 text-amber-950 border border-amber-300 shadow-amber-500/20"
+                    : "bg-slate-900/80 backdrop-blur-md text-white border border-white/20 hover:bg-slate-800"
                 }`}
                 title={torchOn ? "Turn flashlight off" : "Turn flashlight on for low-light scanning"}
                 aria-label={torchOn ? "Flashlight on" : "Flashlight off"}
@@ -275,7 +277,7 @@ export default function QRScanner({ onScan, active, statusVariant = "idle" }: Pr
                 {torchOn ? (
                   <Flashlight className="w-5 h-5 fill-current" />
                 ) : (
-	                  <FlashlightOff className="w-5 h-5 text-slate-500" />
+                  <FlashlightOff className="w-5 h-5 text-slate-300" />
                 )}
               </button>
             )}
