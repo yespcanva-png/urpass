@@ -177,7 +177,39 @@ export async function POST(
     .eq("attendee_id", attendee.id)
     .maybeSingle();
 
-  // If already checked in and require_checkout is true
+  // If attendee previously checked out, or action is explicitly checkin/reentry/override, allow re-entry
+  if (existingCheckIn && existingCheckIn.checkout_time && (action === "checkin" || action === "reentry" || action === "auto" || override)) {
+    const reEntryTime = new Date().toISOString();
+    await supabase
+      .from("session_checkins")
+      .update({
+        checkin_time: reEntryTime,
+        checkout_time: null,
+        scanner_user_id: scannerUserId,
+        device_id: deviceId,
+      })
+      .eq("id", existingCheckIn.id);
+
+    return NextResponse.json({
+      status: "CHECKED_IN",
+      success: true,
+      attendee: {
+        id: attendee.id,
+        name: attendee.name,
+        email: attendee.email,
+        pass_type: attendee.pass_type,
+      },
+      session: {
+        title: session.title,
+        room: roomName,
+        time: formatSessionTimeRange(session.start_time, session.end_time),
+      },
+      checkinTime: reEntryTime,
+      message: `✓ RE-ADMITTED: ${attendee.name}`,
+    });
+  }
+
+  // If already checked in and require_checkout is true or action is checkout
   if (existingCheckIn && !existingCheckIn.checkout_time && (session.require_checkout || action === "checkout")) {
     const checkoutTime = new Date().toISOString();
     await supabase
@@ -189,6 +221,7 @@ export async function POST(
       status: "CHECKED_OUT",
       success: true,
       attendee: {
+        id: attendee.id,
         name: attendee.name,
         email: attendee.email,
         pass_type: attendee.pass_type,
@@ -204,12 +237,13 @@ export async function POST(
     });
   }
 
-  // If already checked in (Duplicate Scan)
-  if (existingCheckIn) {
+  // If already checked in (Duplicate Scan / Already Entered)
+  if (existingCheckIn && !existingCheckIn.checkout_time) {
     return NextResponse.json({
       status: "ALREADY_CHECKED_IN",
       success: false,
       attendee: {
+        id: attendee.id,
         name: attendee.name,
         email: attendee.email,
         pass_type: attendee.pass_type,
@@ -222,7 +256,7 @@ export async function POST(
       checkedInAt: existingCheckIn.checkin_time,
       scannerUserId: existingCheckIn.scanner_user_id,
       deviceId: existingCheckIn.device_id,
-      message: `ALREADY CHECKED IN: ${attendee.name} was checked in at ${new Date(existingCheckIn.checkin_time).toLocaleTimeString("en-IN")}`,
+      message: `ALREADY ADMITTED: ${attendee.name} entered this session at ${new Date(existingCheckIn.checkin_time).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true })}`,
     });
   }
 
@@ -315,6 +349,7 @@ export async function POST(
     status: "CHECKED_IN",
     success: true,
     attendee: {
+      id: attendee.id,
       name: attendee.name,
       email: attendee.email,
       pass_type: attendee.pass_type,

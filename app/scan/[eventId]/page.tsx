@@ -47,6 +47,7 @@ import {
   type OfflineVerificationResult,
 } from "@/lib/offline-scanner";
 import { undoCheckIn, undoCheckInByToken } from "@/app/actions/manual-checkin";
+import { undoSessionCheckIn } from "@/app/actions/session-attendance";
 import GroupEntryModal from "@/components/scan/GroupEntryModal";
 import { parseScannedGroupQR, normalizeScannedToken } from "@/lib/group-entry";
 
@@ -701,6 +702,10 @@ export default function ScanEventPage() {
               passType: data.attendee?.pass_type || "participant",
               checkedInAt: data.checkedInAt,
               gateName: `${data.session.title} (${data.session.room})`,
+              passToken: rawToken,
+              attendeeId: data.attendee?.id,
+              badgeText: "ALREADY ENTERED SESSION",
+              message: data.message || `Attendee has already entered "${data.session.title}". Tap below to allow re-entry.`,
             });
             setScanState("duplicate");
             return;
@@ -1137,7 +1142,21 @@ export default function ScanEventPage() {
     async (attendeeId: string) => {
       setUndoingCheckIn(true);
       try {
-        const res = await undoCheckIn(attendeeId, eventId);
+        let res;
+        if (selectedSessionId) {
+          res = await undoSessionCheckIn({
+            sessionId: selectedSessionId,
+            attendeeId,
+            eventId,
+          });
+          if (res?.success) {
+            setSessionStats((prev) =>
+              prev ? { ...prev, checkedIn: Math.max(0, prev.checkedIn - 1), remaining: prev.capacity ? Math.min(prev.capacity, (prev.remaining ?? 0) + 1) : null } : null
+            );
+          }
+        } else {
+          res = await undoCheckIn(attendeeId, eventId);
+        }
         if (res?.success) {
           setSearchResults((prev) =>
             prev.map((a) => (a.id === attendeeId ? { ...a, pass_status: "generated" } : a))
@@ -1157,7 +1176,7 @@ export default function ScanEventPage() {
         setUndoingCheckIn(false);
       }
     },
-    [eventId]
+    [eventId, selectedSessionId]
   );
 
   const handleDuplicateOverride = useCallback(
@@ -1168,7 +1187,19 @@ export default function ScanEventPage() {
       setUndoingCheckIn(true);
       try {
         let res;
-        if (token) {
+        if (selectedSessionId) {
+          res = await undoSessionCheckIn({
+            sessionId: selectedSessionId,
+            attendeeId,
+            passToken: token,
+            eventId,
+          });
+          if (res?.success) {
+            setSessionStats((prev) =>
+              prev ? { ...prev, checkedIn: Math.max(0, prev.checkedIn - 1), remaining: prev.capacity ? Math.min(prev.capacity, (prev.remaining ?? 0) + 1) : null } : null
+            );
+          }
+        } else if (token) {
           res = await undoCheckInByToken(token, eventId);
         } else if (attendeeId) {
           res = await undoCheckIn(attendeeId, eventId);
@@ -1190,7 +1221,7 @@ export default function ScanEventPage() {
         setUndoingCheckIn(false);
       }
     },
-    [result, eventId, reset]
+    [result, eventId, reset, selectedSessionId]
   );
 
   useEffect(() => {
@@ -1615,7 +1646,7 @@ export default function ScanEventPage() {
 	                    <div className="flex shrink-0 items-center gap-1.5">
 	                      {isIn ? (
 	                        <div className="flex items-center gap-1.5">
-	                          {allowReentry && (
+	                          {(allowReentry || Boolean(selectedSessionId)) && (
 	                            <button
 	                              onClick={() => handleUndoCheckIn(a.id)}
 	                              disabled={undoingCheckIn}
@@ -1769,7 +1800,7 @@ export default function ScanEventPage() {
                   offline={result.offline}
                   onReset={reset}
                   progress={resetProgress}
-                  onAllowReentry={allowReentry ? handleDuplicateOverride : undefined}
+                  onAllowReentry={(allowReentry || Boolean(selectedSessionId)) ? handleDuplicateOverride : undefined}
                   isUndoing={undoingCheckIn}
                   badgeText={result.badgeText}
                   message={result.message}

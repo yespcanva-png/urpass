@@ -192,3 +192,70 @@ export async function correctSessionAttendanceAction({
   revalidatePath(`/event/${record.event_id}/sessions`);
   return { success: true };
 }
+
+/**
+ * Resets/undoes a session check-in record so the attendee can be scanned into the session again.
+ */
+export async function undoSessionCheckIn({
+  sessionId,
+  attendeeId,
+  passToken,
+  eventId,
+}: {
+  sessionId: string;
+  attendeeId?: string;
+  passToken?: string;
+  eventId?: string;
+}): Promise<{ success: boolean; error?: string }> {
+  const db = adminClient();
+
+  let resolvedAttendeeId = attendeeId;
+  let resolvedEventId = eventId;
+
+  if (!resolvedAttendeeId && passToken) {
+    const cleanToken = passToken.includes("/pass/")
+      ? passToken.split("/pass/")[1].split("?")[0]
+      : passToken.trim();
+
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanToken);
+    const { data: pass } = await (isUuid
+      ? db.from("passes").select("attendee_id, event_id").or(`id.eq.${cleanToken},pass_token.eq.${cleanToken}`).maybeSingle()
+      : db.from("passes").select("attendee_id, event_id").eq("pass_token", cleanToken).maybeSingle());
+
+    if (pass) {
+      resolvedAttendeeId = pass.attendee_id;
+      if (!resolvedEventId) resolvedEventId = pass.event_id;
+    }
+  }
+
+  if (!resolvedAttendeeId) {
+    return { success: false, error: "Attendee not found for this session check-in." };
+  }
+
+  // Delete the check-in record for this session
+  const { error: delErr } = await db
+    .from("session_checkins")
+    .delete()
+    .eq("session_id", sessionId)
+    .eq("attendee_id", resolvedAttendeeId);
+
+  if (delErr) {
+    return { success: false, error: delErr.message };
+  }
+
+  // If there was a reservation marked as attended, revert it back to reserved
+  await db
+    .from("session_reservations")
+    .update({ status: "reserved" })
+    .eq("session_id", sessionId)
+    .eq("attendee_id", resolvedAttendeeId)
+    .eq("status", "attended");
+
+  if (resolvedEventId) {
+    revalidatePath(`/scan/${resolvedEventId}`);
+    revalidatePath(`/event/${resolvedEventId}/sessions`);
+  }
+
+  return { success: true };
+}
+
