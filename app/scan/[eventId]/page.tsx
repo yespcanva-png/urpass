@@ -28,11 +28,9 @@ import {
   SlidersHorizontal,
   X,
   Layers,
-  Sparkles,
   ChevronUp,
   Radio,
   Check,
-  Zap,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { createClient } from "@/lib/supabase/client";
@@ -1290,16 +1288,16 @@ export default function ScanEventPage() {
   );
 
   return (
-    <div className="min-h-dvh bg-slate-100 text-slate-900 flex flex-col page-in select-none touch-manipulation pb-safe">
+    <div className="min-h-dvh bg-zinc-50 text-slate-900 flex flex-col page-in select-none touch-manipulation pb-safe">
 
       {/* ── Mobile-Optimized Top HUD Bar ────────────────────────────── */}
-      <header className="shrink-0 flex items-center justify-between px-3 sm:px-5 h-14 bg-white/95 backdrop-blur-md border-b border-slate-200 z-30 sticky top-0 shadow-2xs">
+      <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-3 sm:px-5">
         
         {/* Left: Back & Network Health Indicator */}
         <div className="flex items-center gap-1.5 sm:gap-2">
           <button
             onClick={() => router.push("/scan")}
-            className="p-2 -ml-1 rounded-xl text-slate-500 hover:text-slate-950 hover:bg-slate-100 active:scale-95 transition-all"
+            className="-ml-1 rounded-md p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-950"
             aria-label="Back to events"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -1307,18 +1305,18 @@ export default function ScanEventPage() {
 
           <button
             onClick={() => setSettingsDrawerOpen(true)}
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[11px] font-semibold border transition-all active:scale-95 ${
+            className={`flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-[11px] font-semibold transition-colors ${
               isOnline
                 ? "bg-emerald-50 border-emerald-200 text-emerald-800"
                 : "bg-amber-50 border-amber-300 text-amber-900"
             }`}
           >
-            <span className={`w-2 h-2 rounded-full ${isOnline ? "bg-emerald-500 animate-pulse" : "bg-amber-500"}`} />
+            <span className={`w-2 h-2 rounded-full ${isOnline ? "bg-emerald-500" : "bg-amber-500"}`} />
             <span className="text-[10px] uppercase tracking-wider font-bold">
               {isOnline ? "Live" : "Offline"}
             </span>
             {queuePending > 0 && (
-              <span className="px-1.5 py-0.2 rounded-full bg-slate-900 text-[9px] text-white font-bold">
+              <span className="rounded bg-slate-900 px-1.5 py-0.5 text-[9px] font-bold text-white">
                 {queuePending}
               </span>
             )}
@@ -1350,16 +1348,16 @@ export default function ScanEventPage() {
         <div className="flex items-center gap-1.5">
           <button
             onClick={() => setFeedDrawerOpen(true)}
-            className="cursor-pointer flex items-center gap-1.5 bg-emerald-50/80 border border-emerald-200/90 hover:bg-emerald-100 px-2.5 py-1.5 rounded-xl text-xs font-bold text-emerald-800 active:scale-95 transition-all shadow-2xs"
+            className="flex cursor-pointer items-center gap-1.5 rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-xs font-bold text-emerald-800 transition-colors hover:bg-emerald-100"
             title="View recent scans"
           >
-            <Zap className="w-3.5 h-3.5 fill-current text-emerald-600" />
+            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
             <span className="tabular-nums font-black">{scanCount}</span>
           </button>
 
           <button
             onClick={() => setSettingsDrawerOpen(true)}
-            className="p-2 rounded-xl bg-slate-50 border border-slate-200 hover:bg-slate-100 text-slate-700 active:scale-95 transition-all"
+            className="rounded-md border border-slate-200 bg-slate-50 p-2 text-slate-700 transition-colors hover:bg-slate-100"
             aria-label="Scanner controls & settings"
           >
             <SlidersHorizontal className="w-4 h-4" />
@@ -1384,23 +1382,23 @@ export default function ScanEventPage() {
             onClick={() => setSyncBanner(null)}
             className="text-slate-500 hover:text-slate-900 text-xs p-1"
           >
-            ✕
+            <X className="h-3.5 w-3.5" />
           </button>
         </div>
       )}
 
       {/* ── Mode & Direction Switcher Bar (Mobile Segmented Control) ─── */}
-      <div className="shrink-0 px-3.5 pt-3 pb-1 flex items-center justify-between gap-2 max-w-md mx-auto w-full">
+      <div className="mx-auto flex w-full max-w-lg shrink-0 items-center justify-between gap-2 px-3.5 pb-1 pt-3">
         {/* Segmented Mode Controller */}
-        <div className="flex items-center p-1 rounded-xl bg-white border border-slate-200 shadow-2xs flex-1">
+        <div className="flex flex-1 items-center rounded-md border border-slate-200 bg-white p-1">
           <button
             onClick={() => {
               setManualMode(false);
               if (scanState !== "idle") reset();
             }}
-            className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 active:scale-98 ${
+            className={`flex flex-1 items-center justify-center gap-1.5 rounded px-3 py-2 text-xs font-bold transition-colors ${
               !manualMode
-                ? "bg-slate-900 text-white shadow-xs"
+                ? "bg-blue-700 text-white"
                 : "text-slate-600 hover:text-slate-900"
             }`}
           >
@@ -1414,9 +1412,9 @@ export default function ScanEventPage() {
               setSearchResults([]);
               if (scanState !== "idle") reset();
             }}
-            className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 active:scale-98 ${
+            className={`flex flex-1 items-center justify-center gap-1.5 rounded px-3 py-2 text-xs font-bold transition-colors ${
               manualMode
-                ? "bg-slate-900 text-white shadow-xs"
+                ? "bg-blue-700 text-white"
                 : "text-slate-600 hover:text-slate-900"
             }`}
           >
@@ -1428,7 +1426,7 @@ export default function ScanEventPage() {
         {/* Direction Indicator / Toggle */}
         <button
           onClick={() => setScanDirection((d) => (d === "in" ? "out" : "in"))}
-          className={`px-3 py-2 rounded-xl text-[11px] font-bold uppercase tracking-wider border transition-all active:scale-95 flex items-center gap-1.5 shadow-2xs ${
+          className={`flex items-center gap-1.5 rounded-md border px-3 py-2 text-[11px] font-bold uppercase tracking-wide transition-colors ${
             scanDirection === "in"
               ? "bg-emerald-50 text-emerald-800 border-emerald-300"
               : "bg-blue-50 text-blue-800 border-blue-300"
@@ -1451,14 +1449,14 @@ export default function ScanEventPage() {
           : null;
 
         return (
-          <div className="shrink-0 px-4 py-2.5 mx-3.5 mb-2 bg-white border border-slate-200 rounded-xl shadow-2xs flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="mx-3.5 mb-2 flex shrink-0 items-center justify-between gap-3 rounded-md border border-slate-200 bg-white px-4 py-2.5 animate-in fade-in slide-in-from-top-2 duration-200">
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-blue-500" />
                 <p className="text-xs font-bold text-slate-900 truncate">{selectedSession.title}</p>
               </div>
               <p className="text-[10px] text-slate-500 truncate mt-0.5">
-                {roomName} • {selectedSession.start_time?.slice(0, 5)} - {selectedSession.end_time?.slice(0, 5)}
+                {roomName} / {selectedSession.start_time?.slice(0, 5)} - {selectedSession.end_time?.slice(0, 5)}
               </p>
             </div>
 
@@ -1470,7 +1468,7 @@ export default function ScanEventPage() {
                     {currentChecked}
                   </span>
                   <span className="text-xs font-medium text-slate-400">
-                    / {effectiveCapacity ?? "∞"}
+                    / {effectiveCapacity ?? "Unlimited"}
                   </span>
                 </div>
               </div>
@@ -1497,7 +1495,7 @@ export default function ScanEventPage() {
       })()}
 
       {/* ── Main Viewport Area ──────────────────────────────────────── */}
-      <main className="flex-1 flex flex-col items-center justify-center px-3.5 sm:px-4 py-3 relative w-full max-w-md mx-auto">
+      <main className="relative mx-auto flex w-full max-w-lg flex-1 flex-col items-center justify-center px-3.5 py-3 sm:px-4">
 
         {/* ── Manual Search Mode View ── */}
         {manualMode ? (
@@ -1509,14 +1507,14 @@ export default function ScanEventPage() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search attendee by name or email…"
-                autoFocus
-                className="w-full pl-10 pr-9 py-3 bg-white border border-slate-300 rounded-xl text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-slate-800 focus:ring-2 focus:ring-slate-100 shadow-2xs transition-all"
+	                placeholder="Search attendee by name or email"
+	                autoFocus
+	                className="w-full rounded-md border border-slate-300 bg-white py-3 pl-10 pr-9 text-sm text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-800"
+	                  className="absolute right-3 top-1/2 -translate-y-1/2 rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-800"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -1528,33 +1526,33 @@ export default function ScanEventPage() {
 
             {/* Quick Filter Chips */}
             {searchResults.length > 0 && (
-              <div className="flex items-center gap-1.5 px-0.5 overflow-x-auto no-scrollbar py-0.5">
+	              <div className="flex items-center gap-1.5 overflow-x-auto px-0.5 py-0.5">
                 <button
                   onClick={() => setSearchFilter("all")}
-                  className={`px-3 py-1.5 rounded-full text-[11px] font-bold transition-all shrink-0 active:scale-95 ${
-                    searchFilter === "all"
-                      ? "bg-slate-900 text-white shadow-2xs"
-                      : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
+	                  className={`shrink-0 rounded-md border px-3 py-1.5 text-[11px] font-bold transition-colors ${
+	                    searchFilter === "all"
+	                      ? "border-blue-700 bg-blue-700 text-white"
+	                      : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
                   }`}
                 >
                   All ({searchResults.length})
                 </button>
                 <button
                   onClick={() => setSearchFilter("pending")}
-                  className={`px-3 py-1.5 rounded-full text-[11px] font-bold transition-all shrink-0 active:scale-95 ${
-                    searchFilter === "pending"
-                      ? "bg-amber-100 text-amber-900 border border-amber-300 shadow-2xs"
-                      : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
+	                  className={`shrink-0 rounded-md border px-3 py-1.5 text-[11px] font-bold transition-colors ${
+	                    searchFilter === "pending"
+	                      ? "border-amber-300 bg-amber-50 text-amber-800"
+	                      : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
                   }`}
                 >
                   Not In ({searchResults.filter((a) => a.pass_status !== "checked_in").length})
                 </button>
                 <button
                   onClick={() => setSearchFilter("checked_in")}
-                  className={`px-3 py-1.5 rounded-full text-[11px] font-bold transition-all shrink-0 active:scale-95 ${
-                    searchFilter === "checked_in"
-                      ? "bg-emerald-100 text-emerald-900 border border-emerald-300 shadow-2xs"
-                      : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
+	                  className={`shrink-0 rounded-md border px-3 py-1.5 text-[11px] font-bold transition-colors ${
+	                    searchFilter === "checked_in"
+	                      ? "border-emerald-300 bg-emerald-50 text-emerald-800"
+	                      : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
                   }`}
                 >
                   Admitted ({searchResults.filter((a) => a.pass_status === "checked_in").length})
@@ -1563,17 +1561,17 @@ export default function ScanEventPage() {
             )}
 
             {/* Search Results List */}
-            <div className="flex-1 flex flex-col gap-2 overflow-y-auto max-h-[62vh] pr-0.5">
-              {searchQuery.length >= 2 && !searchLoading && filteredSearchResults.length === 0 && (
-                <div className="flex flex-col items-center justify-center py-12 text-center bg-white rounded-2xl border border-slate-200 p-6">
-                  <Users className="w-10 h-10 text-slate-300 mb-2" />
+	            <div className="flex max-h-[62vh] flex-1 flex-col gap-2 overflow-y-auto pr-0.5">
+	              {searchQuery.length >= 2 && !searchLoading && filteredSearchResults.length === 0 && (
+	                <div className="flex flex-col items-center justify-center rounded-lg border border-slate-200 bg-white p-6 py-12 text-center">
+	                  <Users className="w-10 h-10 text-slate-300 mb-2" />
                   <p className="text-sm font-semibold text-slate-800">No matching attendees found</p>
                   <p className="text-xs text-slate-400 mt-1">Verify name or email spelling</p>
                 </div>
               )}
 
-              {searchQuery.length < 2 && (
-                <div className="flex flex-col items-center justify-center py-12 text-center bg-white rounded-2xl border border-slate-200 p-6">
+	              {searchQuery.length < 2 && (
+	                <div className="flex flex-col items-center justify-center rounded-lg border border-slate-200 bg-white p-6 py-12 text-center">
                   <Search className="w-10 h-10 text-slate-300 mb-2" />
                   <p className="text-sm font-semibold text-slate-800">Type at least 2 characters</p>
                   <p className="text-xs text-slate-400 mt-1">Search attendees for fast manual verification</p>
@@ -1584,37 +1582,46 @@ export default function ScanEventPage() {
                 const isIn = a.pass_status === "checked_in";
                 const isChecking = checkingInId === a.id;
                 return (
-                  <div
-                    key={a.id}
-                    className={`flex items-center justify-between p-3.5 rounded-xl border transition-all ${
-                      isIn
-                        ? "bg-emerald-50/70 border-emerald-200/90"
-                        : "bg-white border-slate-200 hover:border-slate-300 shadow-2xs"
-                    }`}
-                  >
-                    <div className="min-w-0 pr-2">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-sm font-bold text-slate-900 truncate">{a.name}</span>
-                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 uppercase">
-                          {PASS_TYPE_LABEL[a.pass_type] ?? a.pass_type}
-                        </span>
-                      </div>
-                      <p className="text-xs text-slate-500 truncate mt-0.5">{a.email}</p>
-                    </div>
-
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      {isIn ? (
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[10px] font-bold px-2 py-1 rounded-lg bg-emerald-100 text-emerald-800 border border-emerald-300">
-                            Admitted
-                          </span>
-                          {allowReentry && (
-                            <button
-                              onClick={() => handleUndoCheckIn(a.id)}
-                              disabled={undoingCheckIn}
-                              title="Reset check-in"
-                              className="p-2 rounded-lg bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-50 border border-slate-200 active:scale-95 transition-all disabled:opacity-50"
-                            >
+	                  <div
+	                    key={a.id}
+	                    className={`rounded-lg border bg-white p-3 transition-colors ${
+	                      isIn ? "border-emerald-200" : "border-slate-200 hover:border-slate-300"
+	                    }`}
+	                  >
+	                    <div className="flex items-start justify-between gap-3">
+	                      <div className="min-w-0">
+	                        <div className="flex items-center gap-2">
+	                          <span className="truncate text-sm font-bold text-slate-950">{a.name}</span>
+	                          <span className="rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[9px] font-bold uppercase text-slate-600">
+	                            {PASS_TYPE_LABEL[a.pass_type] ?? a.pass_type}
+	                          </span>
+	                        </div>
+	                        <p className="mt-0.5 truncate text-xs text-slate-500">{a.email}</p>
+	                        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+	                          <span
+	                            className={`rounded-md border px-2 py-1 text-[10px] font-bold ${
+	                              isIn
+	                                ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+	                                : "border-amber-200 bg-amber-50 text-amber-700"
+	                            }`}
+	                          >
+	                            {isIn ? "Checked in" : "Not checked in"}
+	                          </span>
+	                          <span className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-[10px] font-semibold capitalize text-slate-600">
+	                            {a.pass_status.replace(/_/g, " ")}
+	                          </span>
+	                        </div>
+	                      </div>
+	                    <div className="flex shrink-0 items-center gap-1.5">
+	                      {isIn ? (
+	                        <div className="flex items-center gap-1.5">
+	                          {allowReentry && (
+	                            <button
+	                              onClick={() => handleUndoCheckIn(a.id)}
+	                              disabled={undoingCheckIn}
+	                              title="Reset check-in"
+	                              className="rounded-md border border-slate-200 bg-white p-2 text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900 disabled:opacity-50"
+	                            >
                               {undoingCheckIn ? (
                                 <Loader2 className="w-4 h-4 animate-spin" />
                               ) : (
@@ -1624,11 +1631,11 @@ export default function ScanEventPage() {
                           )}
                         </div>
                       ) : (
-                        <button
-                          onClick={() => manualCheckIn(a)}
-                          disabled={isChecking}
-                          className="flex items-center gap-1 px-3.5 py-2.5 rounded-xl bg-slate-900 text-white font-bold text-xs shadow-xs active:scale-95 transition-all disabled:opacity-50 hover:bg-slate-800"
-                        >
+	                        <button
+	                          onClick={() => manualCheckIn(a)}
+	                          disabled={isChecking}
+	                          className="flex items-center gap-1 rounded-md bg-blue-700 px-3 py-2 text-xs font-bold text-white transition-colors hover:bg-blue-800 disabled:opacity-50"
+	                        >
                           {isChecking ? (
                             <Loader2 className="w-3.5 h-3.5 animate-spin" />
                           ) : (
@@ -1637,8 +1644,9 @@ export default function ScanEventPage() {
                           Check In
                         </button>
                       )}
-                    </div>
-                  </div>
+	                      </div>
+	                    </div>
+	                  </div>
                 );
               })}
             </div>
@@ -1649,8 +1657,8 @@ export default function ScanEventPage() {
 
             {/* Gate Required Shield (If gates configured but none chosen) */}
             {isGateRequired ? (
-              <div className="w-full bg-white border border-slate-200 rounded-2xl p-6 text-center space-y-4 shadow-sm animate-in fade-in">
-                <div className="w-14 h-14 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700 mx-auto">
+	              <div className="w-full space-y-4 rounded-lg border border-slate-200 bg-white p-6 text-center animate-in fade-in">
+	                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-md border border-slate-200 bg-slate-50 text-slate-700">
                   <DoorOpen className="w-7 h-7" />
                 </div>
                 <div>
@@ -1669,7 +1677,7 @@ export default function ScanEventPage() {
                           localStorage.setItem(`urpass_gate_${eventId}`, g.id);
                         } catch {}
                       }}
-                      className="w-full py-3.5 px-4 rounded-xl text-xs font-bold bg-white hover:bg-slate-50 text-slate-900 border border-slate-200 active:scale-95 transition-all flex items-center justify-between shadow-2xs"
+	                      className="flex w-full items-center justify-between rounded-md border border-slate-200 bg-white px-4 py-3 text-xs font-bold text-slate-900 transition-colors hover:bg-slate-50"
                     >
                       <span>{g.name}</span>
                       {g.zone && (
@@ -1690,10 +1698,10 @@ export default function ScanEventPage() {
                 <div className="absolute top-3 right-3 z-20 flex items-center gap-2">
                   <button
                     onClick={toggleWakeLock}
-                    className={`p-2.5 rounded-xl border backdrop-blur-md transition-all active:scale-95 shadow-xs ${
-                      wakeLockActive
-                        ? "bg-amber-100/90 text-amber-900 border-amber-300"
-                        : "bg-white/90 text-slate-600 border-slate-200 hover:text-slate-950"
+	                    className={`rounded-md border p-2.5 transition-colors ${
+	                      wakeLockActive
+	                        ? "border-amber-300 bg-amber-50 text-amber-900"
+	                        : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-950"
                     }`}
                     title={wakeLockActive ? "Screen stay-awake enabled" : "Enable screen stay-awake"}
                   >
@@ -1701,10 +1709,10 @@ export default function ScanEventPage() {
                   </button>
                   <button
                     onClick={toggleSound}
-                    className={`p-2.5 rounded-xl border backdrop-blur-md transition-all active:scale-95 shadow-xs ${
-                      soundEnabled
-                        ? "bg-emerald-100/90 text-emerald-900 border-emerald-300"
-                        : "bg-white/90 text-slate-400 border-slate-200"
+	                    className={`rounded-md border p-2.5 transition-colors ${
+	                      soundEnabled
+	                        ? "border-emerald-300 bg-emerald-50 text-emerald-900"
+	                        : "border-slate-200 bg-white text-slate-400"
                     }`}
                     title={soundEnabled ? "Audio chime on" : "Audio muted"}
                   >
@@ -1718,12 +1726,12 @@ export default function ScanEventPage() {
             {scanState === "verifying" && (
               <div className="flex flex-col items-center gap-4 py-8 animate-in fade-in">
                 <div className="relative w-20 h-20">
-                  <div className="relative w-full h-full rounded-2xl bg-white border border-slate-200 flex items-center justify-center shadow-md">
+	                  <div className="relative flex h-full w-full items-center justify-center rounded-lg border border-slate-200 bg-white">
                     <Loader2 className="w-8 h-8 text-slate-800 animate-spin" />
                   </div>
                 </div>
                 <div className="text-center space-y-1">
-                  <p className="text-sm font-bold text-slate-900">Verifying pass…</p>
+	                  <p className="text-sm font-bold text-slate-900">Verifying pass...</p>
                   <p className="text-xs text-slate-500 font-mono">Checking against guest manifest</p>
                 </div>
               </div>
@@ -1797,9 +1805,9 @@ export default function ScanEventPage() {
       {/* ── Floating Mobile Bottom Bar ───────────────────────────────── */}
       <footer className="shrink-0 px-4 py-3 bg-white/95 backdrop-blur-md border-t border-slate-200 z-20 shadow-md">
         <div className="max-w-md mx-auto flex items-center justify-between gap-3">
-          <button
-            onClick={() => setFeedDrawerOpen(true)}
-            className="flex-1 flex items-center justify-between px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 hover:bg-slate-100 active:scale-98 transition-all text-left shadow-2xs"
+	          <button
+	            onClick={() => setFeedDrawerOpen(true)}
+	            className="flex flex-1 items-center justify-between rounded-md border border-slate-200 bg-slate-50 px-4 py-3 text-left transition-colors hover:bg-slate-100"
           >
             <div className="flex items-center gap-2">
               <Users className="w-4 h-4 text-slate-600" />
@@ -1814,10 +1822,10 @@ export default function ScanEventPage() {
 
           <button
             onClick={toggleTorch}
-            className={`p-3 rounded-xl border transition-all active:scale-95 shadow-2xs ${
+	            className={`rounded-md border p-3 transition-colors ${
               torchOn
-                ? "bg-amber-100 text-amber-900 border-amber-300"
-                : "bg-slate-50 border-slate-200 text-slate-700 hover:text-slate-950"
+	                ? "border-amber-300 bg-amber-50 text-amber-900"
+	                : "border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 hover:text-slate-950"
             }`}
             title={torchOn ? "Turn torch off" : "Turn flashlight torch on"}
             aria-label="Flashlight"
@@ -1834,9 +1842,9 @@ export default function ScanEventPage() {
             className="fixed inset-0"
             onClick={() => setFeedDrawerOpen(false)}
           />
-          <div className="relative bg-white border-t border-slate-200 rounded-t-3xl max-h-[80svh] flex flex-col p-5 pb-safe animate-in slide-in-from-bottom duration-200 shadow-2xl">
+	          <div className="relative flex max-h-[80svh] flex-col rounded-t-lg border-t border-slate-200 bg-white p-5 pb-safe shadow-2xl animate-in slide-in-from-bottom duration-200">
             {/* Grab Handle */}
-            <div className="w-12 h-1.5 rounded-full bg-slate-300 mx-auto mb-3" />
+	            <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-slate-300" />
 
             <div className="flex items-center justify-between pb-3.5 border-b border-slate-200">
               <div className="flex items-center gap-2">
@@ -1844,7 +1852,7 @@ export default function ScanEventPage() {
                 <h3 className="text-sm font-bold text-slate-900">Recent Check-ins Feed</h3>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-emerald-800 px-2.5 py-0.5 rounded-full bg-emerald-100 border border-emerald-300">
+	                <span className="rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-800">
                   {scanCount} Total
                 </span>
                 <button
@@ -1865,7 +1873,7 @@ export default function ScanEventPage() {
                 feed.map((entry, idx) => (
                   <div
                     key={entry.id || idx}
-                    className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200 shadow-2xs"
+	                    className="flex items-center justify-between rounded-md border border-slate-200 bg-slate-50 p-3"
                   >
                     <div className="flex items-center gap-2.5 min-w-0 pr-2">
                       <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
@@ -1894,9 +1902,9 @@ export default function ScanEventPage() {
             className="fixed inset-0"
             onClick={() => setSettingsDrawerOpen(false)}
           />
-          <div className="relative bg-white border-t border-slate-200 rounded-t-3xl max-h-[85svh] flex flex-col p-5 pb-safe animate-in slide-in-from-bottom duration-200 shadow-2xl">
+	          <div className="relative flex max-h-[85svh] flex-col rounded-t-lg border-t border-slate-200 bg-white p-5 pb-safe shadow-2xl animate-in slide-in-from-bottom duration-200">
             {/* Grab Handle */}
-            <div className="w-12 h-1.5 rounded-full bg-slate-300 mx-auto mb-3" />
+	            <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-slate-300" />
 
             <div className="flex items-center justify-between pb-3.5 border-b border-slate-200">
               <div className="flex items-center gap-2">
@@ -1930,10 +1938,10 @@ export default function ScanEventPage() {
                             localStorage.setItem(`urpass_gate_${eventId}`, g.id);
                           } catch {}
                         }}
-                        className={`flex items-center justify-between p-3.5 rounded-xl border text-left transition-all active:scale-98 ${
-                          selectedGateId === g.id
-                            ? "bg-slate-900 border-slate-900 text-white font-bold shadow-xs"
-                            : "bg-slate-50 border-slate-200 text-slate-800 hover:bg-slate-100"
+	                        className={`flex items-center justify-between rounded-md border p-3.5 text-left transition-colors ${
+	                          selectedGateId === g.id
+	                            ? "border-blue-700 bg-blue-700 font-bold text-white"
+	                            : "bg-slate-50 border-slate-200 text-slate-800 hover:bg-slate-100"
                         }`}
                       >
                         <div>
@@ -1960,10 +1968,10 @@ export default function ScanEventPage() {
                   <div className="grid grid-cols-1 gap-2">
                     <button
                       onClick={() => setSelectedSessionId(null)}
-                      className={`flex items-center justify-between p-3.5 rounded-xl border text-left transition-all active:scale-98 ${
-                        !selectedSessionId
-                          ? "bg-slate-900 border-slate-900 text-white font-bold shadow-xs"
-                          : "bg-slate-50 border-slate-200 text-slate-800"
+	                      className={`flex items-center justify-between rounded-md border p-3.5 text-left transition-colors ${
+	                        !selectedSessionId
+	                          ? "border-blue-700 bg-blue-700 font-bold text-white"
+	                          : "bg-slate-50 border-slate-200 text-slate-800"
                       }`}
                     >
                       <span className="text-xs font-bold">General Event Entry (No Session)</span>
@@ -1976,10 +1984,10 @@ export default function ScanEventPage() {
                           setSelectedSessionId(s.id);
                           setSelectedGateId(null);
                         }}
-                        className={`flex items-center justify-between p-3.5 rounded-xl border text-left transition-all active:scale-98 ${
-                          selectedSessionId === s.id
-                            ? "bg-slate-900 border-slate-900 text-white font-bold shadow-xs"
-                            : "bg-slate-50 border-slate-200 text-slate-800 hover:bg-slate-100"
+	                        className={`flex items-center justify-between rounded-md border p-3.5 text-left transition-colors ${
+	                          selectedSessionId === s.id
+	                            ? "border-blue-700 bg-blue-700 font-bold text-white"
+	                            : "bg-slate-50 border-slate-200 text-slate-800 hover:bg-slate-100"
                         }`}
                       >
                         <div className="min-w-0 pr-2">
@@ -2005,7 +2013,7 @@ export default function ScanEventPage() {
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     onClick={toggleSound}
-                    className={`p-3.5 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all active:scale-95 shadow-2xs ${
+	                    className={`flex flex-col items-center justify-center gap-1.5 rounded-md border p-3.5 transition-colors ${
                       soundEnabled
                         ? "bg-emerald-50 border-emerald-300 text-emerald-800 font-bold"
                         : "bg-slate-50 border-slate-200 text-slate-500"
@@ -2017,7 +2025,7 @@ export default function ScanEventPage() {
 
                   <button
                     onClick={toggleWakeLock}
-                    className={`p-3.5 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all active:scale-95 shadow-2xs ${
+	                    className={`flex flex-col items-center justify-center gap-1.5 rounded-md border p-3.5 transition-colors ${
                       wakeLockActive
                         ? "bg-amber-50 border-amber-300 text-amber-900 font-bold"
                         : "bg-slate-50 border-slate-200 text-slate-500"
@@ -2030,7 +2038,7 @@ export default function ScanEventPage() {
               </div>
 
               {/* 4. Offline Cache & Sync */}
-              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-3 shadow-2xs">
+	              <div className="space-y-3 rounded-md border border-slate-200 bg-slate-50 p-3.5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Wifi className="w-4 h-4 text-emerald-600" />
@@ -2045,7 +2053,7 @@ export default function ScanEventPage() {
                     <button
                       onClick={refreshManifest}
                       disabled={isRefreshingCache}
-                      className="p-2 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 transition-all active:scale-95 disabled:opacity-50"
+	                      className="rounded-md border border-slate-200 bg-white p-2 text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-50"
                       title="Update local cache"
                     >
                       <RefreshCw className={`w-3.5 h-3.5 ${isRefreshingCache ? "animate-spin" : ""}`} />
@@ -2057,7 +2065,7 @@ export default function ScanEventPage() {
                   <button
                     onClick={syncPendingScans}
                     disabled={isSyncing || !isOnline}
-                    className="w-full py-3 px-3.5 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition-all flex items-center justify-center gap-1.5 shadow-xs active:scale-95 disabled:opacity-50"
+	                    className="flex w-full items-center justify-center gap-1.5 rounded-md bg-blue-700 px-3.5 py-3 text-xs font-bold text-white transition-colors hover:bg-blue-800 disabled:opacity-50"
                   >
                     <CloudUpload className={`w-4 h-4 ${isSyncing ? "animate-spin" : ""}`} />
                     <span>Sync {queuePending} Offline Check-in{queuePending > 1 ? "s" : ""}</span>
@@ -2124,34 +2132,33 @@ function ResultCard({
 
   return (
     <div className="w-full flex flex-col gap-3">
-      {/* Main Corporate Status Header Card */}
-      <div
-        className={`rounded-2xl border overflow-hidden p-6 flex flex-col items-center text-center gap-3.5 shadow-sm transition-all ${
-          ok
-            ? "bg-white border-emerald-200/90 text-slate-900"
-            : "bg-amber-50/40 border-amber-300/80 text-amber-950"
-        }`}
-      >
-        <div
-          className={`w-14 h-14 rounded-2xl flex items-center justify-center border shadow-2xs ${
-            ok
-              ? "bg-emerald-50 border-emerald-200 text-emerald-700"
-              : "bg-amber-100 border-amber-300 text-amber-800"
+	      <div
+	        className={`flex flex-col items-center gap-3.5 overflow-hidden rounded-lg border p-6 text-center transition-colors ${
+	          ok
+	            ? "bg-white border-emerald-200/90 text-slate-900"
+	            : "bg-amber-50/40 border-amber-300/80 text-amber-950"
+	        }`}
+	      >
+	        <div
+	          className={`flex h-12 w-12 items-center justify-center rounded-md border ${
+	            ok
+	              ? "bg-emerald-50 border-emerald-200 text-emerald-700"
+	              : "bg-amber-100 border-amber-300 text-amber-800"
           }`}
         >
           {ok ? (
-            <CheckCircle2 className="w-8 h-8 text-emerald-700 animate-in zoom-in-75 duration-200" />
-          ) : (
-            <AlertTriangle className="w-8 h-8 text-amber-800 animate-in zoom-in-75 duration-200" />
-          )}
+	            <CheckCircle2 className="h-7 w-7 text-emerald-700" />
+	          ) : (
+	            <AlertTriangle className="h-7 w-7 text-amber-800" />
+	          )}
         </div>
 
         <div className="space-y-1">
           <span
             className={`text-[10px] font-bold tracking-wider uppercase px-3 py-1 rounded-full border ${
               ok
-                ? "bg-emerald-100 text-emerald-800 border-emerald-300"
-                : "bg-amber-200 text-amber-900 border-amber-400/80"
+	                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+	                : "bg-amber-50 text-amber-800 border-amber-200"
             }`}
           >
             {badgeText || (ok ? "ENTRY GRANTED" : "ALREADY ADMITTED")}
@@ -2172,11 +2179,11 @@ function ResultCard({
 
         {/* Pass Tier & Gate Info Pill */}
         <div className="flex items-center gap-1.5 flex-wrap justify-center pt-0.5">
-          <span className="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-white text-slate-700 border border-slate-200 shadow-2xs uppercase">
+	          <span className="rounded-md border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold uppercase text-slate-700">
             {PASS_TYPE_LABEL[passType] ?? passType}
           </span>
           {gateName && (
-            <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-white text-slate-600 border border-slate-200 shadow-2xs">
+	            <span className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-600">
               <DoorOpen className="w-3.5 h-3.5 shrink-0 text-slate-400" />
               <span>{gateName}</span>
             </span>
@@ -2198,7 +2205,7 @@ function ResultCard({
         )}
 
         {offline && (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300">
+	          <span className="inline-flex items-center gap-1 rounded-md border border-amber-200 bg-amber-50 px-2.5 py-1 text-[10px] font-bold text-amber-800">
             <WifiOff className="w-3 h-3" /> Offline Queued
           </span>
         )}
@@ -2212,7 +2219,7 @@ function ResultCard({
             onAllowReentry();
           }}
           disabled={isUndoing}
-          className="w-full py-3.5 px-4 rounded-xl bg-slate-900 text-white font-semibold text-xs hover:bg-slate-800 active:scale-95 transition-all flex items-center justify-center gap-2 shadow-sm disabled:opacity-50"
+	          className="flex w-full items-center justify-center gap-2 rounded-md bg-blue-700 px-4 py-3.5 text-xs font-semibold text-white transition-colors hover:bg-blue-800 disabled:opacity-50"
         >
           {isUndoing ? (
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -2225,7 +2232,7 @@ function ResultCard({
 
       {/* Auto-reset Progress Bar */}
       <div className="flex flex-col gap-2 pt-1">
-        <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
+	        <div className="h-1 overflow-hidden rounded bg-slate-200">
           <div
             className={`h-full rounded-full transition-none ${ok ? "bg-emerald-600" : "bg-amber-600"}`}
             style={{ width: `${progress}%` }}
@@ -2233,7 +2240,7 @@ function ResultCard({
         </div>
         <button
           onClick={onReset}
-          className="text-center text-xs text-slate-500 hover:text-slate-900 font-medium py-1 active:scale-95 transition-colors"
+	          className="py-1 text-center text-xs font-medium text-slate-500 transition-colors hover:text-slate-900"
         >
           Tap anywhere to scan next pass
         </button>
@@ -2257,7 +2264,7 @@ function AccessDeniedCard({
 }) {
   return (
     <div className="w-full flex flex-col gap-3">
-	      <div className="bg-white border border-red-200 rounded-md p-5 flex flex-col items-center text-center gap-3">
+		      <div className="flex flex-col items-center gap-3 rounded-lg border border-red-200 bg-white p-5 text-center">
 	        <div className="w-14 h-14 rounded-md bg-red-50 flex items-center justify-center">
 	          <ShieldX className="w-8 h-8 text-red-700" />
         </div>
@@ -2281,7 +2288,7 @@ function AccessDeniedCard({
               e.stopPropagation();
               onOverride();
             }}
-	            className="w-full mt-2 py-3 px-4 rounded-md bg-amber-100 text-amber-900 border border-amber-200 font-extrabold text-xs hover:bg-amber-200 active:scale-95 transition-all flex items-center justify-center gap-2"
+		            className="mt-2 flex w-full items-center justify-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-bold text-amber-900 transition-colors hover:bg-amber-100"
           >
 	            <ShieldAlert className="w-4 h-4 text-amber-900" />
             <span>Authorize Supervisor Override</span>

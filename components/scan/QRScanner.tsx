@@ -172,9 +172,9 @@ export default function QRScanner({ onScan, active, statusVariant = "idle" }: Pr
 
   return (
     <div className="flex flex-col items-center gap-3 w-full">
-      {/* Viewfinder — Optimized for mobile screen width and handheld ergonomics */}
+      {/* Viewfinder */}
       <div
-        className="relative w-full rounded-2xl overflow-hidden bg-slate-950 border border-slate-200/90 shadow-lg transition-all duration-300"
+        className="relative w-full overflow-hidden rounded-lg border border-slate-300 bg-slate-950 transition-colors duration-300"
         style={{
           aspectRatio: "1",
           maxHeight: "min(70vw, 420px)",
@@ -184,27 +184,27 @@ export default function QRScanner({ onScan, active, statusVariant = "idle" }: Pr
 
         {/* Starting placeholder */}
         {!started && !cameraError && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-slate-950/85 backdrop-blur-xs z-10 p-4">
-            <div className="w-14 h-14 rounded-2xl bg-white/10 border border-white/15 flex items-center justify-center shadow-inner">
-              <Camera className="w-7 h-7 text-slate-200 animate-pulse" />
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-slate-950/90 p-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-md border border-white/15 bg-white/10">
+              <Camera className="h-6 w-6 text-slate-200" />
             </div>
-            <p className="text-xs text-slate-200 font-medium tracking-wide">Starting high-speed camera…</p>
-            <p className="text-[11px] text-slate-400 text-center max-w-[220px]">Point at ticket QR code</p>
+            <p className="text-xs font-medium text-slate-200">Starting camera</p>
+            <p className="max-w-[220px] text-center text-[11px] text-slate-400">Point at the ticket QR code</p>
           </div>
         )}
 
         {/* Camera error */}
         {cameraError && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-center bg-slate-950/95 z-10">
-            <div className="w-13 h-13 rounded-2xl bg-red-500/15 border border-red-500/30 flex items-center justify-center">
-              <CameraOff className="w-6 h-6 text-red-400" />
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-slate-950/95 px-6 text-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-md border border-red-500/30 bg-red-500/15">
+              <CameraOff className="h-6 w-6 text-red-400" />
             </div>
-            <p className="text-xs text-slate-200 leading-relaxed max-w-[260px] font-medium">{cameraError}</p>
+            <p className="max-w-[260px] text-xs font-medium leading-relaxed text-slate-200">{cameraError}</p>
             <button
               onClick={() => startScanner()}
-              className="mt-2 text-xs font-semibold px-4 py-2.5 rounded-xl bg-white text-slate-950 hover:bg-slate-100 active:scale-95 transition-all shadow-sm"
+              className="mt-2 rounded-md bg-white px-4 py-2 text-xs font-semibold text-slate-950 transition-colors hover:bg-slate-100"
             >
-              Retry Camera Access
+              Retry camera
             </button>
           </div>
         )}
@@ -212,30 +212,28 @@ export default function QRScanner({ onScan, active, statusVariant = "idle" }: Pr
         {/* Scanner overlay — only when started */}
         {started && (
           <>
-            {/* Darkened vignette around target zone */}
             <div
               className="absolute inset-0 pointer-events-none transition-opacity duration-300"
               style={{
-                background: "radial-gradient(ellipse 75% 75% at 50% 50%, transparent 45%, rgba(15,23,42,0.55) 100%)",
+                background: "radial-gradient(ellipse 72% 72% at 50% 50%, transparent 48%, rgba(15,23,42,0.45) 100%)",
               }}
             />
 
-            {/* High-visibility corner brackets */}
             <span
-              className="absolute top-4 left-4 w-8 h-8 sm:w-10 sm:h-10 rounded-tl-xl pointer-events-none transition-all duration-300 shadow-xs"
-              style={{ borderTop: `3.5px solid ${bracketColor}`, borderLeft: `3.5px solid ${bracketColor}` }}
+              className="pointer-events-none absolute left-5 top-5 h-9 w-9 rounded-tl-md transition-all duration-300"
+              style={{ borderTop: `3px solid ${bracketColor}`, borderLeft: `3px solid ${bracketColor}` }}
             />
             <span
-              className="absolute top-4 right-4 w-8 h-8 sm:w-10 sm:h-10 rounded-tr-xl pointer-events-none transition-all duration-300 shadow-xs"
-              style={{ borderTop: `3.5px solid ${bracketColor}`, borderRight: `3.5px solid ${bracketColor}` }}
+              className="pointer-events-none absolute right-5 top-5 h-9 w-9 rounded-tr-md transition-all duration-300"
+              style={{ borderTop: `3px solid ${bracketColor}`, borderRight: `3px solid ${bracketColor}` }}
             />
             <span
-              className="absolute bottom-4 left-4 w-8 h-8 sm:w-10 sm:h-10 rounded-bl-xl pointer-events-none transition-all duration-300 shadow-xs"
-              style={{ borderBottom: `3.5px solid ${bracketColor}`, borderLeft: `3.5px solid ${bracketColor}` }}
+              className="pointer-events-none absolute bottom-5 left-5 h-9 w-9 rounded-bl-md transition-all duration-300"
+              style={{ borderBottom: `3px solid ${bracketColor}`, borderLeft: `3px solid ${bracketColor}` }}
             />
             <span
-              className="absolute bottom-4 right-4 w-8 h-8 sm:w-10 sm:h-10 rounded-br-xl pointer-events-none transition-all duration-300 shadow-xs"
-              style={{ borderBottom: `3.5px solid ${bracketColor}`, borderRight: `3.5px solid ${bracketColor}` }}
+              className="pointer-events-none absolute bottom-5 right-5 h-9 w-9 rounded-br-md transition-all duration-300"
+              style={{ borderBottom: `3px solid ${bracketColor}`, borderRight: `3px solid ${bracketColor}` }}
             />
 
             {/* Scan beam */}
@@ -243,21 +241,21 @@ export default function QRScanner({ onScan, active, statusVariant = "idle" }: Pr
               <>
                 <span
                   className="absolute left-4 right-4 pointer-events-none animate-[scanBeam_1.8s_ease-in-out_infinite]"
-                  style={{
-                    height: "24px",
-                    transform: "translateY(-50%)",
-                    background: "linear-gradient(to bottom, transparent, rgba(56,189,248,0.15) 50%, transparent)",
-                    borderRadius: "4px",
-                  }}
-                />
+	                  style={{
+	                    height: "24px",
+	                    transform: "translateY(-50%)",
+	                    background: "linear-gradient(to bottom, transparent, rgba(37,99,235,0.12) 50%, transparent)",
+	                    borderRadius: "4px",
+	                  }}
+	                />
                 <span
                   className="absolute left-6 right-6 pointer-events-none animate-[scanBeam_1.8s_ease-in-out_infinite]"
-                  style={{
-                    height: "2px",
-                    transform: "translateY(-50%)",
-                    background: "linear-gradient(to right, transparent, #38BDF8 50%, transparent)",
-                  }}
-                />
+	                  style={{
+	                    height: "2px",
+	                    transform: "translateY(-50%)",
+	                    background: "linear-gradient(to right, transparent, #2563EB 50%, transparent)",
+	                  }}
+	                />
               </>
             )}
 
@@ -266,19 +264,19 @@ export default function QRScanner({ onScan, active, statusVariant = "idle" }: Pr
               <button
                 type="button"
                 onClick={toggleTorch}
-                className={`absolute bottom-3 right-3 z-20 flex items-center justify-center w-11 h-11 rounded-xl transition-all active:scale-95 shadow-md ${
-                  torchOn
-                    ? "bg-amber-400 text-amber-950 border border-amber-300 shadow-amber-500/20"
-                    : "bg-slate-900/80 backdrop-blur-md text-white border border-white/20 hover:bg-slate-800"
-                }`}
+	                className={`absolute bottom-3 right-3 z-20 flex h-10 w-10 items-center justify-center rounded-md border transition-colors ${
+	                  torchOn
+	                    ? "border-amber-300 bg-amber-100 text-amber-900"
+	                    : "border-white/20 bg-slate-950/80 text-white hover:bg-slate-800"
+	                }`}
                 title={torchOn ? "Turn flashlight off" : "Turn flashlight on for low-light scanning"}
                 aria-label={torchOn ? "Flashlight on" : "Flashlight off"}
               >
-                {torchOn ? (
-                  <Flashlight className="w-5 h-5 fill-current" />
-                ) : (
-                  <FlashlightOff className="w-5 h-5 text-slate-300" />
-                )}
+	                {torchOn ? (
+	                  <Flashlight className="w-5 h-5 fill-current" />
+	                ) : (
+	                  <FlashlightOff className="h-5 w-5 text-slate-300" />
+	                )}
               </button>
             )}
           </>
