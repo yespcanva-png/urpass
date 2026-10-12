@@ -50,10 +50,10 @@ export default function AttendeeDeliveryActions({
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-lg border border-neutral-200 bg-white hover:bg-neutral-50 text-neutral-700 transition-colors shadow-2xs"
+        className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-md border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition-colors shadow-2xs"
         title="Delivery Status & Resend"
       >
-        <Send className="w-3 h-3 text-neutral-400" />
+        <Send className="w-3 h-3 text-slate-400" />
         <span>Delivery</span>
       </button>
 
@@ -63,22 +63,22 @@ export default function AttendeeDeliveryActions({
             className="fixed inset-0 z-40"
             onClick={() => setOpen(false)}
           />
-          <div className="absolute right-0 mt-1 w-56 rounded-xl bg-white border border-neutral-100 shadow-xl z-50 p-2 text-xs">
-            <div className="px-2 py-1.5 border-b border-neutral-100 mb-1">
-              <p className="font-semibold text-neutral-900 text-[11px] uppercase tracking-wider">
+          <div className="absolute right-0 mt-1 w-56 rounded-lg bg-white border border-slate-200 shadow-xl z-50 p-2 text-xs">
+            <div className="px-2 py-1.5 border-b border-slate-100 mb-1">
+              <p className="font-semibold text-slate-900 text-[11px] uppercase tracking-wider">
                 Pass Delivery Channels
               </p>
-              <p className="text-[10px] text-neutral-400 truncate">
+              <p className="text-[10px] text-slate-400 truncate">
                 {email}
               </p>
             </div>
 
             {statusMsg && (
               <div
-                className={`p-2 rounded-lg text-[11px] mb-2 font-medium flex items-center gap-1.5 ${
+                className={`p-2 rounded-md text-[11px] mb-2 font-medium flex items-center gap-1.5 ${
                   statusMsg.isError
-                    ? "bg-rose-50 text-rose-600 border border-rose-100"
-                    : "bg-emerald-50 text-emerald-700 border border-emerald-100"
+                    ? "bg-rose-50 text-rose-700 border border-rose-200/80"
+                    : "bg-emerald-50 text-emerald-800 border border-emerald-200/80"
                 }`}
               >
                 {statusMsg.isError ? (
@@ -96,14 +96,14 @@ export default function AttendeeDeliveryActions({
                 type="button"
                 disabled={!!resendingChannel}
                 onClick={() => handleResend("EMAIL")}
-                className="flex items-center justify-between w-full px-2.5 py-1.5 rounded-lg hover:bg-neutral-50 transition-colors text-left disabled:opacity-50"
+                className="flex items-center justify-between w-full px-2.5 py-1.5 rounded-md hover:bg-slate-50 transition-colors text-left disabled:opacity-50"
               >
                 <div className="flex items-center gap-2">
-                  <Mail className="w-3.5 h-3.5 text-violet-600" />
-                  <span className="font-medium text-neutral-700">Resend Email</span>
+                  <Mail className="w-3.5 h-3.5 text-slate-700" />
+                  <span className="font-medium text-slate-700">Resend Email</span>
                 </div>
                 {resendingChannel === "EMAIL" && (
-                  <Loader2 className="w-3 h-3 animate-spin text-brand" />
+                  <Loader2 className="w-3 h-3 animate-spin text-slate-900" />
                 )}
               </button>
 
@@ -112,15 +112,15 @@ export default function AttendeeDeliveryActions({
                 type="button"
                 disabled={!!resendingChannel || !phone}
                 onClick={() => handleResend("WHATSAPP")}
-                className="flex items-center justify-between w-full px-2.5 py-1.5 rounded-lg hover:bg-neutral-50 transition-colors text-left disabled:opacity-40"
+                className="flex items-center justify-between w-full px-2.5 py-1.5 rounded-md hover:bg-slate-50 transition-colors text-left disabled:opacity-40"
                 title={!phone ? "No phone number recorded" : undefined}
               >
                 <div className="flex items-center gap-2">
                   <Smartphone className="w-3.5 h-3.5 text-emerald-600" />
                   <div>
-                    <span className="font-medium text-neutral-700 block">Resend WhatsApp</span>
+                    <span className="font-medium text-slate-700 block">Resend WhatsApp</span>
                     {!phone && (
-                      <span className="text-[9px] text-neutral-400 block">No phone number</span>
+                      <span className="text-[9px] text-slate-400 block">No phone number</span>
                     )}
                   </div>
                 </div>
@@ -134,20 +134,20 @@ export default function AttendeeDeliveryActions({
                 type="button"
                 disabled={!!resendingChannel || !phone}
                 onClick={() => handleResend("SMS")}
-                className="flex items-center justify-between w-full px-2.5 py-1.5 rounded-lg hover:bg-neutral-50 transition-colors text-left disabled:opacity-40"
+                className="flex items-center justify-between w-full px-2.5 py-1.5 rounded-md hover:bg-slate-50 transition-colors text-left disabled:opacity-40"
                 title={!phone ? "No phone number recorded" : undefined}
               >
                 <div className="flex items-center gap-2">
-                  <Send className="w-3.5 h-3.5 text-blue-600" />
+                  <Smartphone className="w-3.5 h-3.5 text-slate-600" />
                   <div>
-                    <span className="font-medium text-neutral-700 block">Resend SMS (DLT)</span>
+                    <span className="font-medium text-slate-700 block">Resend SMS (DLT)</span>
                     {!phone && (
-                      <span className="text-[9px] text-neutral-400 block">No phone number</span>
+                      <span className="text-[9px] text-slate-400 block">No phone number</span>
                     )}
                   </div>
                 </div>
                 {resendingChannel === "SMS" && (
-                  <Loader2 className="w-3 h-3 animate-spin text-blue-600" />
+                  <Loader2 className="w-3 h-3 animate-spin text-slate-900" />
                 )}
               </button>
             </div>

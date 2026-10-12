@@ -84,21 +84,21 @@ interface Props {
 }
 
 const statusConfig: Record<Status, { label: string; cls: string; icon: React.ComponentType<{ className?: string }> }> = {
-  pending:    { label: "Pending",    cls: "bg-amber-50 text-amber-700 border-amber-200",    icon: Clock },
-  approved:   { label: "Approved",   cls: "bg-emerald-50 text-emerald-700 border-emerald-200", icon: Check },
-  rejected:   { label: "Rejected",   cls: "bg-red-50 text-red-700 border-red-200",          icon: X },
-  waitlisted: { label: "Waitlisted", cls: "bg-blue-50 text-blue-700 border-blue-200", icon: Clock },
+  pending:    { label: "Pending",    cls: "bg-amber-50 text-amber-700 border-amber-200/80",    icon: Clock },
+  approved:   { label: "Approved",   cls: "bg-emerald-50 text-emerald-700 border-emerald-200/80", icon: Check },
+  rejected:   { label: "Rejected",   cls: "bg-rose-50 text-rose-700 border-rose-200/80",          icon: X },
+  waitlisted: { label: "Waitlisted", cls: "bg-violet-50 text-violet-700 border-violet-200/80", icon: Clock },
 };
 
 function StatusBadge({ status }: { status: Status }) {
   const cfg = statusConfig[status] ?? {
     label: (status || "Pending").charAt(0).toUpperCase() + (status || "Pending").slice(1),
-    cls: "bg-neutral-50 text-neutral-600 border-neutral-200",
+    cls: "bg-slate-50 text-slate-600 border-slate-200",
     icon: Clock,
   };
   const { label, cls, icon: Icon } = cfg;
   return (
-    <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-md border ${cls}`}>
+    <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-md border ${cls}`}>
       <Icon className="w-3 h-3" />
       {label}
     </span>
@@ -106,8 +106,17 @@ function StatusBadge({ status }: { status: Status }) {
 }
 
 function PassTypeBadge({ type }: { type: string }) {
+  const badgeCls =
+    type === "vip"
+      ? "border-amber-200 bg-amber-50 text-amber-800"
+      : type === "speaker"
+      ? "border-violet-200 bg-violet-50 text-violet-800"
+      : type === "organizer"
+      ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+      : "border-slate-200 bg-slate-50 text-slate-700";
+
   return (
-    <span className="inline-flex items-center text-xs font-semibold px-2 py-1 rounded-md border border-slate-200 bg-slate-50 text-slate-600 capitalize">
+    <span className={`inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-md border capitalize ${badgeCls}`}>
       {type}
     </span>
   );
@@ -118,9 +127,9 @@ function Btn({ onClick, pending, variant, children }: {
   onClick: () => void; pending: boolean; variant: BtnVariant; children: React.ReactNode;
 }) {
   const cls: Record<BtnVariant, string> = {
-    primary: "bg-blue-700 text-white hover:bg-blue-800 border border-blue-700",
-    outline: "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50",
-    danger:  "bg-white border border-red-200 text-red-700 hover:bg-red-50",
+    primary: "bg-slate-900 text-white hover:bg-slate-800 border border-slate-900 shadow-sm",
+    outline: "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 shadow-xs",
+    danger:  "bg-white border border-rose-200 text-rose-700 hover:bg-rose-50 shadow-xs",
   };
   const style: Record<BtnVariant, React.CSSProperties | undefined> = {
     primary: undefined, outline: undefined, danger: undefined,
@@ -544,16 +553,16 @@ export default function AttendeeTable({
         <button
           type="button"
           onClick={() => setSelectedAttendee(a)}
-          className="inline-flex min-h-8 items-center gap-1.5 rounded-md border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700 transition-colors hover:bg-blue-100"
+          className="inline-flex min-h-8 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50 hover:text-slate-900 shadow-xs"
         >
-          <Eye className="h-3 w-3" />
+          <Eye className="h-3 w-3 text-slate-500" />
           View
         </button>
 
         {a.application_status === "pending" && (
           <>
             {payment?.status === "paid" && (
-              <span className="hidden xl:inline-flex items-center rounded-md bg-emerald-50 px-2 py-1 text-[10px] font-bold text-emerald-700">
+              <span className="hidden xl:inline-flex items-center rounded-md bg-emerald-50 px-2 py-1 text-[10px] font-bold text-emerald-700 border border-emerald-200/80">
                 Paid
               </span>
             )}
@@ -574,7 +583,7 @@ export default function AttendeeTable({
               </Btn>
             ) : hasToken ? (
               <a href={`/pass/${passTokens[a.id]}`} target="_blank" rel="noopener noreferrer"
-                className="inline-flex min-h-8 items-center gap-1.5 rounded-md border border-blue-700 bg-blue-700 px-2.5 py-1 text-xs font-semibold text-white transition-colors hover:bg-blue-800">
+                className="inline-flex min-h-8 items-center gap-1.5 rounded-md border border-slate-900 bg-slate-900 px-2.5 py-1 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-slate-800">
                 <ExternalLink className="w-3 h-3" /> View pass
               </a>
             ) : (
@@ -676,7 +685,7 @@ export default function AttendeeTable({
               </Link>
             )}
             <button onClick={() => setShowAddModal(true)}
-              className="inline-flex min-h-9 items-center gap-1.5 rounded-md border border-blue-700 bg-blue-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-blue-800">
+              className="inline-flex min-h-9 items-center gap-1.5 rounded-md border border-slate-900 bg-slate-900 px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-slate-800">
               <UserPlus className="h-3.5 w-3.5" />
               Add attendee
             </button>
@@ -687,7 +696,7 @@ export default function AttendeeTable({
           {statCards.map((card) => {
             const Icon = card.icon;
             return (
-              <div key={card.label} className="rounded-md border border-slate-200 bg-slate-50 p-3">
+              <div key={card.label} className="rounded-md border border-slate-200 bg-slate-50/70 p-3">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">{card.label}</p>
@@ -706,12 +715,12 @@ export default function AttendeeTable({
         <div className="border-t border-slate-200 px-4 pb-4">
           <div className="mt-3 h-2 overflow-hidden rounded bg-slate-100">
             <div
-              className={`h-full rounded transition-all duration-500 ${atCapacity ? "bg-red-600" : "bg-blue-700"}`}
+              className={`h-full rounded transition-all duration-500 ${atCapacity ? "bg-rose-600" : "bg-slate-900"}`}
               style={{ width: `${capacityPct}%` }}
             />
           </div>
           {atCapacity && (
-            <p className="mt-2 text-xs font-semibold text-red-700">Event is at full capacity.</p>
+            <p className="mt-2 text-xs font-semibold text-rose-700">Event is at full capacity.</p>
           )}
         </div>
       </div>
@@ -728,31 +737,31 @@ export default function AttendeeTable({
           <div className="flex flex-wrap items-center gap-2">
             {canCSV ? (
               <button onClick={() => setShowCSVModal(true)}
-                className="inline-flex min-h-9 items-center gap-1.5 rounded-md border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50">
+                className="inline-flex min-h-9 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50 shadow-xs">
                 <Upload className="w-3.5 h-3.5" />
                 Upload CSV
               </button>
             ) : (
               <Link href="/billing"
-                className="inline-flex min-h-9 items-center gap-1.5 rounded-md border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-400 transition-colors hover:bg-slate-50">
+                className="inline-flex min-h-9 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-400 transition-colors hover:bg-slate-50 shadow-xs">
                 <Lock className="w-3 h-3" />
                 Upload CSV
-                <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[9px] font-bold uppercase text-amber-700">Starter+</span>
+                <span className="rounded bg-amber-50 border border-amber-200/80 px-1.5 py-0.5 text-[9px] font-bold uppercase text-amber-700">Starter+</span>
               </Link>
             )}
 
             {canExport ? (
               <button onClick={handleExport} disabled={exporting}
-                className="inline-flex min-h-9 items-center gap-1.5 rounded-md border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-50">
+                className="inline-flex min-h-9 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-50 shadow-xs">
                 {exporting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
                 Export CSV
               </button>
             ) : (
               <Link href="/billing"
-                className="inline-flex min-h-9 items-center gap-1.5 rounded-md border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-400 transition-colors hover:bg-slate-50">
+                className="inline-flex min-h-9 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-400 transition-colors hover:bg-slate-50 shadow-xs">
                 <Lock className="w-3 h-3" />
                 Export CSV
-                <span className="rounded bg-blue-100 px-1.5 py-0.5 text-[9px] font-bold uppercase text-blue-700">Pro</span>
+                <span className="rounded bg-violet-50 border border-violet-200/80 px-1.5 py-0.5 text-[9px] font-bold uppercase text-violet-700">Pro</span>
               </Link>
             )}
 
@@ -760,7 +769,7 @@ export default function AttendeeTable({
               <button
                 onClick={handlePromoteNextWaitlist}
                 disabled={promotingWaitlist}
-                className="inline-flex min-h-9 items-center gap-1.5 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700 transition-colors hover:bg-blue-100 disabled:opacity-50"
+                className="inline-flex min-h-9 items-center gap-1.5 rounded-md border border-violet-200 bg-violet-50 px-3 py-2 text-xs font-semibold text-violet-700 transition-colors hover:bg-violet-100 disabled:opacity-50 shadow-xs"
               >
                 {promotingWaitlist ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Clock className="w-3.5 h-3.5" />}
                 Promote next from waitlist ({counts.waitlisted} waiting)
@@ -771,7 +780,7 @@ export default function AttendeeTable({
               <button
                 onClick={handleBulkGenerate}
                 disabled={bulkGenerating}
-                className="inline-flex min-h-9 items-center gap-1.5 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700 transition-colors hover:bg-blue-100 disabled:opacity-50"
+                className="inline-flex min-h-9 items-center gap-1.5 rounded-md border border-slate-900 bg-slate-900 px-3 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-slate-800 disabled:opacity-50"
                 title="Generate passes for all approved attendees without a ticket"
               >
                 {bulkGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Ticket className="w-3.5 h-3.5" />}
@@ -782,7 +791,7 @@ export default function AttendeeTable({
             {approvedCount > 0 && (
               <button
                 onClick={() => setShowBroadcastModal(true)}
-                className="inline-flex min-h-9 items-center gap-1.5 rounded-md border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+                className="inline-flex min-h-9 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50 shadow-xs"
                 title="Broadcast digital pass links to attendees"
               >
                 <Send className="w-3.5 h-3.5 text-slate-500" />
@@ -796,14 +805,14 @@ export default function AttendeeTable({
           <div
             className={`mb-4 flex items-center justify-between rounded-md p-3 text-xs font-semibold ${
               bulkMsg.isError
-                ? "bg-red-50 text-red-700 border border-red-200"
-                : "bg-emerald-50 text-emerald-800 border border-emerald-200"
+                ? "bg-rose-50 text-rose-700 border border-rose-200/80"
+                : "bg-emerald-50 text-emerald-800 border border-emerald-200/80"
             }`}
           >
             <span>{bulkMsg.text}</span>
             <button
               onClick={() => setBulkMsg(null)}
-              className="text-neutral-400 hover:text-neutral-700 text-xs px-1.5"
+              className="text-slate-400 hover:text-slate-700 text-xs px-1.5"
             >
               ✕
             </button>
@@ -816,10 +825,10 @@ export default function AttendeeTable({
             {tabs.map((tab) => (
               <button key={tab} onClick={() => setActiveTab(tab)}
                 className={`whitespace-nowrap rounded px-3 py-1.5 text-xs font-semibold capitalize transition-all ${
-                  activeTab === tab ? "bg-white text-slate-950 shadow-sm" : "text-slate-500 hover:text-slate-700"
+                  activeTab === tab ? "bg-white text-slate-950 shadow-xs" : "text-slate-500 hover:text-slate-700"
                 }`}>
                 {tab === "all" ? "All" : tab}
-                <span className={`ml-1.5 text-xs ${activeTab === tab ? "text-neutral-500" : "text-neutral-400"}`}>
+                <span className={`ml-1.5 text-xs ${activeTab === tab ? "text-slate-600" : "text-slate-400"}`}>
                   {counts[tab]}
                 </span>
               </button>
@@ -829,21 +838,21 @@ export default function AttendeeTable({
             <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
             <input type="text" placeholder="Search name or email…" value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-md border border-slate-200 py-2 pl-8 pr-3 text-xs outline-none transition-colors placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
+              className="w-full rounded-md border border-slate-200 py-2 pl-8 pr-3 text-xs outline-none transition-colors placeholder:text-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900" />
           </div>
         </div>
 
         {/* Table */}
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="w-12 h-12 rounded-2xl bg-neutral-50 flex items-center justify-center mb-3">
-              <Users className="w-6 h-6 text-neutral-200" />
+            <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center mb-3 border border-slate-100">
+              <Users className="w-6 h-6 text-slate-300" />
             </div>
-            <p className="text-sm font-medium text-neutral-500">
+            <p className="text-sm font-medium text-slate-600">
               {attendees.length === 0 ? "No attendees yet" : "No attendees match this filter"}
             </p>
             {attendees.length === 0 && (
-              <p className="text-xs text-neutral-400 mt-1">Add attendees manually or upload a CSV</p>
+              <p className="text-xs text-slate-400 mt-1">Add attendees manually or upload a CSV</p>
             )}
           </div>
         ) : (
@@ -887,25 +896,25 @@ export default function AttendeeTable({
                         </div>
                       </div>
 
-                      <div className="mt-2 rounded-md border border-slate-200 bg-slate-50 p-2 text-xs">
+                      <div className="mt-2 rounded-md border border-slate-200 bg-slate-50/70 p-2 text-xs">
                         <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Entry</p>
                         {isGroup ? (
                           <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                            <span className="inline-flex items-center gap-1 rounded-md border border-blue-200 bg-blue-50 px-2 py-1 text-[10px] font-bold text-blue-700">
-                              <Users className="h-3 w-3" />
+                            <span className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-[10px] font-bold text-slate-700 shadow-2xs">
+                              <Users className="h-3 w-3 text-slate-600" />
                               Group Pass ({groupPasses[a.id]?.totalGuests || customResponses.group_attendee_count || customResponses.guest_count || 1})
                             </span>
                             {groupPasses[a.id] && (
-                              <span className="rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-[10px] font-bold text-emerald-700">
+                              <span className="rounded-md border border-emerald-200/80 bg-emerald-50 px-2 py-1 text-[10px] font-bold text-emerald-700">
                                 {groupPasses[a.id].checkedInGuests}/{groupPasses[a.id].totalGuests} admitted
                               </span>
                             )}
-	                            {groupPasses[a.id]?.admissions && groupPasses[a.id].admissions!.length > 0 && (
-	                              <button
-	                                type="button"
-	                                onClick={() => openGroupHistory(a)}
-	                                className="rounded-md border border-slate-200 bg-white px-2 py-1 text-[10px] font-bold text-slate-700"
-	                              >
+                            {groupPasses[a.id]?.admissions && groupPasses[a.id].admissions!.length > 0 && (
+                              <button
+                                type="button"
+                                onClick={() => openGroupHistory(a)}
+                                className="rounded-md border border-slate-200 bg-white px-2 py-1 text-[10px] font-bold text-slate-700 shadow-2xs hover:bg-slate-50"
+                              >
                                 {groupPasses[a.id].admissions!.length} batches
                               </button>
                             )}
@@ -927,14 +936,14 @@ export default function AttendeeTable({
                       {a.custom_responses && Object.keys(a.custom_responses).length > 0 && (
                         <button
                           type="button"
-	                          onClick={() => setSelectedAttendee(a)}
-                          className="mt-2 inline-flex items-center gap-1 rounded-md border border-blue-200 bg-blue-50 px-2 py-1 text-[10px] font-semibold text-blue-700"
+                          onClick={() => setSelectedAttendee(a)}
+                          className="mt-2 inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-[10px] font-semibold text-slate-700 shadow-2xs hover:bg-slate-50"
                         >
-                          <ClipboardList className="h-3 w-3" />
-	                          View details
+                          <ClipboardList className="h-3 w-3 text-slate-500" />
+                          View details
                         </button>
                       )}
-                      {actionErrors[a.id] && <p className="mt-2 text-xs text-red-600">{actionErrors[a.id]}</p>}
+                      {actionErrors[a.id] && <p className="mt-2 text-xs text-rose-600 font-medium">{actionErrors[a.id]}</p>}
                       <div className="mt-3 border-t border-slate-200 pt-3">
                         {renderActions(a, payment)}
                       </div>
@@ -971,10 +980,10 @@ export default function AttendeeTable({
 	                              <button
                                 type="button"
 	                                onClick={() => setSelectedAttendee(a)}
-	                                className="inline-flex items-center gap-1 rounded-md border border-blue-200 bg-blue-50 px-1.5 py-0.5 text-[10px] font-semibold text-blue-700 transition-colors hover:bg-blue-100"
+	                                className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-semibold text-slate-700 shadow-2xs transition-colors hover:bg-slate-50"
 	                                title="View attendee details"
                               >
-                                <ClipboardList className="w-3 h-3" />
+                                <ClipboardList className="w-3 h-3 text-slate-500" />
 	                                Details
                               </button>
                             )}
@@ -984,19 +993,19 @@ export default function AttendeeTable({
 		                            {isGroup && (
 	                              <div className="mt-2 flex flex-wrap items-center gap-1.5">
 	                                <span
-	                                  className="inline-flex items-center gap-1 rounded-md border border-blue-200 bg-blue-50 px-2 py-1 text-[10px] font-bold text-blue-700"
+	                                  className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-bold text-slate-700 shadow-2xs"
                                   title="Single Group QR with partial check-in"
                                 >
-                                  <Users className="w-3 h-3 text-indigo-600" />
+                                  <Users className="w-3 h-3 text-slate-600" />
 		                                  Group Pass ({groupPasses[a.id]?.totalGuests || customResponses.group_attendee_count || customResponses.guest_count || 1})
                                 </span>
                                 {groupPasses[a.id] ? (
                                   <span
                                     className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md border ${
                                       groupPasses[a.id].checkedInGuests >= groupPasses[a.id].totalGuests
-	                                        ? "text-emerald-700 bg-emerald-50 border-emerald-200"
+	                                        ? "text-emerald-700 bg-emerald-50 border-emerald-200/80"
 	                                        : groupPasses[a.id].checkedInGuests > 0
-	                                        ? "text-amber-700 bg-amber-50 border-amber-200"
+	                                        ? "text-amber-700 bg-amber-50 border-amber-200/80"
 	                                        : "text-slate-600 bg-slate-50 border-slate-200"
                                     }`}
                                   >
@@ -1010,21 +1019,21 @@ export default function AttendeeTable({
                                   <button
                                     type="button"
 	                                    onClick={() => openGroupHistory(a)}
-	                                    className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-1.5 py-1 text-[10px] font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+	                                    className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-semibold text-slate-700 shadow-2xs transition-colors hover:bg-slate-50"
                                     title="View partial entry admissions breakdown"
                                   >
-                                    <History className="w-3 h-3 text-purple-600" />
+                                    <History className="w-3 h-3 text-slate-500" />
                                     {groupPasses[a.id].admissions!.length} {groupPasses[a.id].admissions!.length === 1 ? "entry" : "entries"}
                                   </button>
                                 )}
 
                                 {/* Gate name and time info */}
                                 {checkInInfoMap[a.id] ? (
-	                                  <span className="flex items-center gap-1 rounded bg-slate-100 px-1.5 py-1 text-[10px] font-medium text-slate-600">
-                                    <DoorOpen className="w-2.5 h-2.5 text-neutral-600" />
+	                                  <span className="flex items-center gap-1 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-600">
+                                    <DoorOpen className="w-2.5 h-2.5 text-slate-500" />
                                     <span>{checkInInfoMap[a.id].gateName}</span>
                                     <span>·</span>
-                                    <Clock className="w-2.5 h-2.5 text-neutral-400" />
+                                    <Clock className="w-2.5 h-2.5 text-slate-400" />
                                     <span>
                                       {new Date(checkInInfoMap[a.id].checkedInAt).toLocaleTimeString([], {
                                         hour: "2-digit",
@@ -1033,7 +1042,7 @@ export default function AttendeeTable({
                                     </span>
                                   </span>
                                 ) : a.last_scanned_at ? (
-                                  <span className="text-[10px] font-medium text-neutral-400 flex items-center gap-1">
+                                  <span className="text-[10px] font-medium text-slate-400 flex items-center gap-1">
                                     <Clock className="w-2.5 h-2.5" />
                                     {new Date(a.last_scanned_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                                   </span>
@@ -1048,11 +1057,11 @@ export default function AttendeeTable({
                                   <span>Checked in</span>
                                 </span>
                                 {checkInInfoMap[a.id] ? (
-	                                  <span className="inline-flex items-center gap-1 rounded bg-slate-100 px-1.5 py-1 text-slate-600">
-                                    <DoorOpen className="w-2.5 h-2.5 text-neutral-500" />
+	                                  <span className="inline-flex items-center gap-1 rounded bg-slate-100 px-1.5 py-0.5 text-slate-600">
+                                    <DoorOpen className="w-2.5 h-2.5 text-slate-500" />
                                     <span>{checkInInfoMap[a.id].gateName}</span>
                                     <span>·</span>
-                                    <Clock className="w-2.5 h-2.5 text-neutral-400" />
+                                    <Clock className="w-2.5 h-2.5 text-slate-400" />
                                     <span>
                                       {new Date(checkInInfoMap[a.id].checkedInAt).toLocaleTimeString([], {
                                         hour: "2-digit",
@@ -1061,7 +1070,7 @@ export default function AttendeeTable({
                                     </span>
                                   </span>
                                 ) : a.last_scanned_at ? (
-                                  <span className="text-neutral-500">
+                                  <span className="text-slate-500">
                                     at {new Date(a.last_scanned_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                                   </span>
                                 ) : null}
@@ -1069,7 +1078,7 @@ export default function AttendeeTable({
                             )}
                           </div>
 	                          {actionErrors[a.id] && (
-	                            <p className="text-xs text-red-500 mt-0.5">{actionErrors[a.id]}</p>
+	                            <p className="text-xs text-rose-600 font-medium mt-0.5">{actionErrors[a.id]}</p>
 	                          )}
 	                        </td>
 	                        <td className="px-4 py-3">
@@ -1356,11 +1365,11 @@ export default function AttendeeTable({
                 </div>
 
                 {isGroup && (
-                  <div className="mt-3 rounded-md border border-blue-200 bg-blue-50 p-3">
+                  <div className="mt-3 rounded-md border border-slate-200 bg-slate-50/70 p-3">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                       <div>
-                        <p className="text-xs font-bold text-blue-900">Group Pass</p>
-                        <p className="mt-1 text-xs text-blue-700">
+                        <p className="text-xs font-bold text-slate-900">Group Pass</p>
+                        <p className="mt-1 text-xs text-slate-600">
                           {group ? `${group.checkedInGuests}/${group.totalGuests} admitted` : "Group credential detected"}
                         </p>
                       </div>
@@ -1368,9 +1377,9 @@ export default function AttendeeTable({
                         <button
                           type="button"
                           onClick={() => openGroupHistory(selectedAttendee)}
-                          className="inline-flex items-center justify-center gap-1.5 rounded-md border border-blue-200 bg-white px-3 py-2 text-xs font-bold text-blue-700 transition-colors hover:bg-blue-50"
+                          className="inline-flex items-center justify-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-2xs transition-colors hover:bg-slate-50"
                         >
-                          <History className="h-3.5 w-3.5" />
+                          <History className="h-3.5 w-3.5 text-slate-500" />
                           View admission batches
                         </button>
                       )}
@@ -1407,7 +1416,7 @@ export default function AttendeeTable({
                       href={`/pass/${passToken}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-md border border-blue-700 bg-blue-700 px-3 py-2 text-xs font-bold text-white transition-colors hover:bg-blue-800"
+                      className="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-md border border-slate-900 bg-slate-900 px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-slate-800"
                     >
                       <ExternalLink className="h-3.5 w-3.5" />
                       Open pass
@@ -1416,7 +1425,7 @@ export default function AttendeeTable({
                   <button
                     type="button"
                     onClick={() => setSelectedAttendee(null)}
-                    className="inline-flex min-h-9 items-center justify-center rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-100"
+                    className="inline-flex min-h-9 items-center justify-center rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-2xs transition-colors hover:bg-slate-100"
                   >
                     Close
                   </button>
@@ -1438,7 +1447,7 @@ export default function AttendeeTable({
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
                   <h3 className="truncate text-base font-bold text-slate-950">{selectedGroupHistory.name}</h3>
-                  <span className="rounded-md border border-blue-200 bg-blue-50 px-2 py-1 text-[11px] font-bold text-blue-700">
+                  <span className="rounded-md border border-slate-200 bg-slate-100 px-2 py-0.5 text-[11px] font-bold text-slate-700">
                     Group Pass
                   </span>
                 </div>
@@ -1455,15 +1464,15 @@ export default function AttendeeTable({
 
             <div className="overflow-y-auto px-4 py-4 sm:px-5">
               <div className="grid grid-cols-3 gap-2">
-                <div className="rounded-md border border-slate-200 bg-slate-50 p-3 text-center">
+                <div className="rounded-md border border-slate-200 bg-slate-50/70 p-3 text-center">
                   <span className="block text-[10px] font-bold uppercase tracking-wide text-slate-500">Total</span>
                   <span className="text-lg font-bold text-slate-950">{selectedGroupHistory.totalGuests}</span>
                 </div>
-                <div className="rounded-md border border-blue-200 bg-blue-50 p-3 text-center">
-                  <span className="block text-[10px] font-bold uppercase tracking-wide text-blue-700">Admitted</span>
-                  <span className="text-lg font-bold text-blue-800">{selectedGroupHistory.checkedInGuests}</span>
+                <div className="rounded-md border border-slate-200 bg-slate-100/70 p-3 text-center">
+                  <span className="block text-[10px] font-bold uppercase tracking-wide text-slate-700">Admitted</span>
+                  <span className="text-lg font-bold text-slate-900">{selectedGroupHistory.checkedInGuests}</span>
                 </div>
-                <div className="rounded-md border border-emerald-200 bg-emerald-50 p-3 text-center">
+                <div className="rounded-md border border-emerald-200/80 bg-emerald-50 p-3 text-center">
                   <span className="block text-[10px] font-bold uppercase tracking-wide text-emerald-700">Remaining</span>
                   <span className="text-lg font-bold text-emerald-800">
                     {Math.max(0, selectedGroupHistory.totalGuests - selectedGroupHistory.checkedInGuests)}
