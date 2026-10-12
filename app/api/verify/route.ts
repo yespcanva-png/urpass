@@ -512,6 +512,14 @@ export async function POST(req: NextRequest) {
     const remaining = Math.max(0, total - admitted);
 
     if (remaining <= 0 || pass.status === "checked_in") {
+      const { data: latestAdmission } = await safeMaybeSingle(
+        supabase
+          .from("group_entry_admissions")
+          .select("admitted_at, gate_id")
+          .eq("group_booking_reference", pass.pass_token)
+          .order("admitted_at", { ascending: false })
+      );
+
       return NextResponse.json({
         status: "EXHAUSTED",
         isGroupQR: true,
@@ -521,10 +529,18 @@ export async function POST(req: NextRequest) {
         totalEntitlements: total,
         previouslyAdmitted: admitted,
         remainingEntries: 0,
-        error: `All ${total} group pass entry entitlements have already been admitted.`,
-        message: `All ${total} group pass entry entitlements have already been admitted.`,
+        attendee: {
+          id: passAttendee?.id || pass.id,
+          name: passAttendee?.name || "Group Pass Holder",
+          email: passAttendee?.email || "",
+          pass_type: pass.pass_type || passAttendee?.pass_type || "group",
+        },
+        passType: pass.pass_type || "group",
+        checkedInAt: latestAdmission?.admitted_at || pass.updated_at || null,
+        error: `All ${total} attendees have already been scanned & admitted.`,
+        message: `All ${total} attendees have already been scanned & admitted.`,
         scanOperationId,
-      }, { status: 422 });
+      }, { status: 200 });
     }
 
     return NextResponse.json({

@@ -64,6 +64,8 @@ interface ScanResult {
   offline?: boolean;
   passToken?: string;
   attendeeId?: string;
+  badgeText?: string;
+  message?: string;
 }
 
 interface FeedEntry {
@@ -762,7 +764,20 @@ export default function ScanEventPage() {
             return;
           } else if (data.status === "EXHAUSTED") {
             playScannerFeedback("ALREADY_CHECKED_IN", { sound: soundEnabled });
-            setErrorMsg("All group pass entry entitlements have been used.");
+            const total = data.totalEntitlements || data.previouslyAdmitted || 1;
+            setResult({
+              attendee: data.attendee || {
+                name: data.buyerName || "Group Pass Holder",
+                email: `${total} of ${total} attendees admitted`,
+                pass_type: "group",
+              },
+              passType: "group",
+              checkedInAt: data.checkedInAt || new Date().toISOString(),
+              gateName: selectedGate?.name,
+              passToken: rawToken,
+              badgeText: "ALL ATTENDEES ADMITTED",
+              message: `All ${total} attendees for this pass have already been scanned & admitted into the venue.`,
+            });
             setScanState("duplicate");
             return;
           } else if (parsedGroup.isGroupQR && data.status === "FEATURE_DISABLED") {
@@ -857,7 +872,20 @@ export default function ScanEventPage() {
         // Exhausted group pass check
         if (data.status === "EXHAUSTED") {
           playScannerFeedback("ALREADY_CHECKED_IN", { sound: soundEnabled });
-          setErrorMsg(data.error || "All group pass entry entitlements have been used.");
+          const total = data.totalEntitlements || data.previouslyAdmitted || 1;
+          setResult({
+            attendee: data.attendee || {
+              name: data.buyerName || "Group Pass Holder",
+              email: `${total} of ${total} attendees admitted`,
+              pass_type: "group",
+            },
+            passType: data.passType || "group",
+            checkedInAt: data.checkedInAt || new Date().toISOString(),
+            gateName: selectedGate?.name,
+            passToken: rawToken,
+            badgeText: "ALL ATTENDEES ADMITTED",
+            message: data.message || data.error || `All ${total} attendees for this pass have already been scanned & admitted into the venue.`,
+          });
           setScanState("duplicate");
           return;
         }
@@ -1721,7 +1749,7 @@ export default function ScanEventPage() {
               </div>
             )}
 
-            {/* Result: DUPLICATE (Already Checked In) */}
+            {/* Result: DUPLICATE (Already Checked In / All Attendees Admitted) */}
             {scanState === "duplicate" && result && (
               <div className="w-full select-none animate-in zoom-in-95 duration-150">
                 <ResultCard
@@ -1735,6 +1763,8 @@ export default function ScanEventPage() {
                   progress={resetProgress}
                   onAllowReentry={allowReentry ? handleDuplicateOverride : undefined}
                   isUndoing={undoingCheckIn}
+                  badgeText={result.badgeText}
+                  message={result.message}
                 />
               </div>
             )}
@@ -2074,6 +2104,8 @@ function ResultCard({
   progress,
   onAllowReentry,
   isUndoing,
+  badgeText,
+  message,
 }: {
   variant: "success" | "duplicate";
   attendee: { id?: string; name: string; email: string; pass_type: string };
@@ -2085,6 +2117,8 @@ function ResultCard({
   progress: number;
   onAllowReentry?: () => void;
   isUndoing?: boolean;
+  badgeText?: string;
+  message?: string;
 }) {
   const ok = variant === "success";
 
@@ -2120,16 +2154,20 @@ function ResultCard({
                 : "bg-amber-200 text-amber-900 border-amber-400/80"
             }`}
           >
-            {ok ? "ENTRY GRANTED" : "ALREADY ADMITTED"}
+            {badgeText || (ok ? "ENTRY GRANTED" : "ALREADY ADMITTED")}
           </span>
           <h2 className="text-xl font-bold text-slate-900 mt-2 leading-snug">
             {attendee.name}
           </h2>
-          {attendee.email && (
+          {message ? (
+            <p className="text-xs font-medium text-amber-800 max-w-[280px] mx-auto leading-relaxed pt-0.5">
+              {message}
+            </p>
+          ) : attendee.email ? (
             <p className="text-xs text-slate-500 truncate max-w-[260px] mx-auto">
               {attendee.email}
             </p>
-          )}
+          ) : null}
         </div>
 
         {/* Pass Tier & Gate Info Pill */}

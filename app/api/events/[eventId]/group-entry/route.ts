@@ -832,15 +832,35 @@ export async function POST(
     }
 
     if (remaining <= 0) {
+      let lastScanTime = null;
+      try {
+        const { data: latestAdmit } = await db
+          .from("group_entry_admissions")
+          .select("admitted_at")
+          .in("group_booking_reference", [cleanRef, resolvedBookingReference])
+          .order("admitted_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (latestAdmit?.admitted_at) lastScanTime = latestAdmit.admitted_at;
+      } catch {}
+
       return NextResponse.json({
         success: false,
         status: "EXHAUSTED",
-        error: "All group entitlements have already been admitted.",
+        error: `All ${totalEntitlements} attendee(s) have already been scanned & admitted.`,
         bookingReference: resolvedBookingReference,
         buyerName,
         totalEntitlements,
         previouslyAdmitted: admittedEntitlements,
         remainingEntries: 0,
+        attendee: {
+          id: attendeeObj?.id || passData?.id || orderData?.id,
+          name: buyerName,
+          email: buyerEmail,
+          pass_type: "group",
+        },
+        passType: "group",
+        checkedInAt: lastScanTime,
       }, { status: 422 });
     }
 
