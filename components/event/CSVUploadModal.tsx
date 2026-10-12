@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import {
   X, UploadCloud, FileSpreadsheet, Loader2, CheckCircle2,
   AlertCircle, AlertTriangle, ChevronRight,
@@ -69,8 +70,10 @@ export default function CSVUploadModal({ eventId, onClose, onSuccess }: Props) {
   const [result, setResult]     = useState<ImportResult | null>(null);
   const [parseError, setParseError] = useState("");
   const [dragging, setDragging] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
@@ -148,12 +151,14 @@ export default function CSVUploadModal({ eventId, onClose, onSuccess }: Props) {
   const invalidCount = rows.filter((r) => !r._valid).length;
   const preview      = rows.slice(0, 6);
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/50 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-md animate-in fade-in duration-200"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-xl max-h-[92vh] flex flex-col overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-xl max-h-[92vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
 
         {/* ── Header ─────────────────────────────────── */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 shrink-0 bg-white">
@@ -377,6 +382,7 @@ export default function CSVUploadModal({ eventId, onClose, onSuccess }: Props) {
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

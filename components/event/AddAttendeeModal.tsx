@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { X, Loader2 } from "lucide-react";
@@ -18,6 +19,7 @@ interface Props {
 
 export default function AddAttendeeModal({ eventId, onClose, onSuccess }: Props) {
   const [serverError, setServerError] = useState("");
+  const [mounted, setMounted] = useState(false);
   const firstInputRef = useRef<HTMLInputElement>(null);
 
   const {
@@ -31,6 +33,7 @@ export default function AddAttendeeModal({ eventId, onClose, onSuccess }: Props)
   });
 
   useEffect(() => {
+    setMounted(true);
     firstInputRef.current?.focus();
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") onClose();
@@ -55,12 +58,14 @@ export default function AddAttendeeModal({ eventId, onClose, onSuccess }: Props)
     }
   }
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <div
-      className="fixed inset-0 bg-slate-950/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 bg-slate-950/60 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-in fade-in duration-200"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
         {/* Header */}
         <div className="flex items-center justify-between px-5 pt-4 pb-3.5 border-b border-slate-200 bg-white">
           <div>
@@ -150,6 +155,7 @@ export default function AddAttendeeModal({ eventId, onClose, onSuccess }: Props)
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
