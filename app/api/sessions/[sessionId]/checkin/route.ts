@@ -209,8 +209,12 @@ export async function POST(
     });
   }
 
-  // If already checked in and require_checkout is true or action is checkout
-  if (existingCheckIn && !existingCheckIn.checkout_time && (session.require_checkout || action === "checkout")) {
+  // Only toggle to checkout for explicit exit scans or legacy auto mode.
+  if (
+    existingCheckIn &&
+    !existingCheckIn.checkout_time &&
+    (action === "checkout" || (action === "auto" && session.require_checkout))
+  ) {
     const checkoutTime = new Date().toISOString();
     await supabase
       .from("session_checkins")
@@ -293,7 +297,8 @@ export async function POST(
   const { count: checkedInCountRaw } = await supabase
     .from("session_checkins")
     .select("id", { count: "exact", head: true })
-    .eq("session_id", sessionId);
+    .eq("session_id", sessionId)
+    .is("checkout_time", null);
 
   const currentCheckedIn = checkedInCountRaw || 0;
 
@@ -331,6 +336,35 @@ export async function POST(
     });
 
   if (insertErr) {
+    if (insertErr.code === "23505") {
+      const { data: existingAfterRace } = await supabase
+        .from("session_checkins")
+        .select("*")
+        .eq("session_id", sessionId)
+        .eq("attendee_id", attendee.id)
+        .maybeSingle();
+
+      return NextResponse.json({
+        status: "ALREADY_CHECKED_IN",
+        success: false,
+        attendee: {
+          id: attendee.id,
+          name: attendee.name,
+          email: attendee.email,
+          pass_type: attendee.pass_type,
+        },
+        session: {
+          title: session.title,
+          room: roomName,
+          time: formatSessionTimeRange(session.start_time, session.end_time),
+        },
+        checkedInAt: existingAfterRace?.checkin_time || checkinTime,
+        scannerUserId: existingAfterRace?.scanner_user_id || scannerUserId,
+        deviceId: existingAfterRace?.device_id || deviceId,
+        message: `${attendee.name} is already admitted for this session.`,
+      });
+    }
+
     return NextResponse.json({ error: insertErr.message }, { status: 500 });
   }
 

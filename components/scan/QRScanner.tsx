@@ -174,7 +174,7 @@ export default function QRScanner({ onScan, active, statusVariant = "idle" }: Pr
     <div className="flex flex-col items-center gap-3 w-full">
       {/* Viewfinder */}
       <div
-        className="relative w-full overflow-hidden rounded-lg border border-slate-300 bg-slate-950 transition-colors duration-300"
+        className="relative w-full overflow-hidden rounded-lg border border-zinc-800 bg-slate-950 transition-colors duration-300"
         style={{
           aspectRatio: "1",
           maxHeight: "min(70vw, 420px)",
@@ -202,7 +202,7 @@ export default function QRScanner({ onScan, active, statusVariant = "idle" }: Pr
             <p className="max-w-[260px] text-xs font-medium leading-relaxed text-slate-200">{cameraError}</p>
             <button
               onClick={() => startScanner()}
-              className="mt-2 rounded-md bg-white px-4 py-2 text-xs font-semibold text-slate-950 transition-colors hover:bg-slate-100"
+              className="mt-2 rounded-md border border-zinc-700 bg-zinc-900 px-4 py-2 text-xs font-semibold text-zinc-100 transition-colors hover:bg-zinc-800"
             >
               Retry camera
             </button>
@@ -266,7 +266,7 @@ export default function QRScanner({ onScan, active, statusVariant = "idle" }: Pr
                 onClick={toggleTorch}
 	                className={`absolute bottom-3 right-3 z-20 flex h-10 w-10 items-center justify-center rounded-md border transition-colors ${
 	                  torchOn
-	                    ? "border-amber-300 bg-amber-100 text-amber-900"
+		                    ? "border-amber-500 bg-amber-950/90 text-amber-300"
 	                    : "border-white/20 bg-slate-950/80 text-white hover:bg-slate-800"
 	                }`}
                 title={torchOn ? "Turn flashlight off" : "Turn flashlight on for low-light scanning"}
@@ -288,10 +288,10 @@ export default function QRScanner({ onScan, active, statusVariant = "idle" }: Pr
         <div className="flex items-center gap-2">
           <span
             className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-              active ? "bg-emerald-600" : "bg-slate-500"
+              active ? "bg-emerald-500" : "bg-zinc-500"
             }`}
           />
-          <p className="text-[11px] text-slate-600 font-medium">
+          <p className="text-[11px] text-zinc-400 font-medium">
             {active ? "Scanner active" : "Processing pass..."}
           </p>
         </div>
