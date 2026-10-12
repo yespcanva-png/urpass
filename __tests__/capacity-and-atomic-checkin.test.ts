@@ -270,7 +270,6 @@ describe("P0: Atomic & Idempotent QR Check-In", () => {
     };
 
     const singles: Array<{ data: unknown; error: null }> = [
-      { data: mockEvent, error: null },
       { data: mockPass, error: null },
       { data: mockAttendee, error: null },
     ];
@@ -285,7 +284,11 @@ describe("P0: Atomic & Idempotent QR Check-In", () => {
       update: vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) }),
       insert: vi.fn().mockResolvedValue({ error: null }),
       single: vi.fn().mockImplementation(async () => singles[idx++] ?? { data: null, error: null }),
-      maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+      maybeSingle: vi
+        .fn()
+        .mockResolvedValueOnce({ data: mockEvent, error: null }) // event query
+        .mockResolvedValueOnce({ data: null, error: null }) // scanOperationId idempotency check (none exists yet)
+        .mockResolvedValue({ data: null, error: null }),
     };
 
     vi.mocked(createClient).mockResolvedValue(supabase as never);
@@ -335,8 +338,8 @@ describe("P0: Atomic & Idempotent QR Check-In", () => {
     };
 
     const singles: Array<{ data: unknown; error: null }> = [
-      { data: mockEvent, error: null },
       { data: mockPass, error: null },
+      { data: mockAttendee, error: null },
       { data: mockAttendee, error: null },
     ];
     let idx = 0;
@@ -355,6 +358,7 @@ describe("P0: Atomic & Idempotent QR Check-In", () => {
       single: vi.fn().mockImplementation(async () => singles[idx++] ?? { data: null, error: null }),
       maybeSingle: vi
         .fn()
+        .mockResolvedValueOnce({ data: mockEvent, error: null }) // event query
         .mockResolvedValueOnce({ data: null, error: null }) // Initial op ID check: no prior op
         .mockResolvedValue({ data: { checked_in_at: "2026-09-24T00:00:00.000Z" }, error: null }),
     };
@@ -388,7 +392,6 @@ describe("P0: Atomic & Idempotent QR Check-In", () => {
     const mockEvent = { id: "evt-1", name: "Tech Summit", organizer_id: mockUser.id };
 
     const singles = [
-      { data: mockEvent, error: null },
       { data: { name: "Srinithin", email: "srinithin@example.com", pass_type: "vip" }, error: null },
     ];
     let idx = 0;
@@ -400,14 +403,17 @@ describe("P0: Atomic & Idempotent QR Check-In", () => {
       eq: vi.fn().mockReturnThis(),
       in: vi.fn().mockReturnThis(),
       single: vi.fn().mockImplementation(async () => singles[idx++] ?? { data: null, error: null }),
-      maybeSingle: vi.fn().mockResolvedValue({
-        data: {
-          checked_in_at: "2026-09-24T00:00:00.000Z",
-          pass_id: "pass-1",
-          attendee_id: "att-1",
-        },
-        error: null,
-      }),
+      maybeSingle: vi
+        .fn()
+        .mockResolvedValueOnce({ data: mockEvent, error: null }) // event query
+        .mockResolvedValue({
+          data: {
+            checked_in_at: "2026-09-24T00:00:00.000Z",
+            pass_id: "pass-1",
+            attendee_id: "att-1",
+          },
+          error: null,
+        }),
     };
 
     vi.mocked(createClient).mockResolvedValue(supabase as never);
