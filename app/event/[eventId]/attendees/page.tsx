@@ -241,7 +241,7 @@ export default async function AttendeesPage({ params }: Props) {
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-4 lg:px-0 py-6 page-in">
+    <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8 page-in">
       <AttendeeTable
         attendees={attendees ?? []}
         eventId={eventId}

@@ -84,10 +84,10 @@ interface Props {
 }
 
 const statusConfig: Record<Status, { label: string; cls: string; icon: React.ComponentType<{ className?: string }> }> = {
-  pending:    { label: "Pending",    cls: "bg-amber-50 text-amber-700 border-amber-100",    icon: Clock },
-  approved:   { label: "Approved",   cls: "bg-green-50 text-green-700 border-green-100",    icon: Check },
-  rejected:   { label: "Rejected",   cls: "bg-red-50 text-red-600 border-red-100",          icon: X },
-  waitlisted: { label: "Waitlisted", cls: "bg-purple-50 text-purple-700 border-purple-200", icon: Clock },
+  pending:    { label: "Pending",    cls: "bg-amber-50 text-amber-700 border-amber-200",    icon: Clock },
+  approved:   { label: "Approved",   cls: "bg-emerald-50 text-emerald-700 border-emerald-200", icon: Check },
+  rejected:   { label: "Rejected",   cls: "bg-red-50 text-red-700 border-red-200",          icon: X },
+  waitlisted: { label: "Waitlisted", cls: "bg-blue-50 text-blue-700 border-blue-200", icon: Clock },
 };
 
 function StatusBadge({ status }: { status: Status }) {
@@ -98,7 +98,7 @@ function StatusBadge({ status }: { status: Status }) {
   };
   const { label, cls, icon: Icon } = cfg;
   return (
-    <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full border ${cls}`}>
+    <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-md border ${cls}`}>
       <Icon className="w-3 h-3" />
       {label}
     </span>
@@ -107,7 +107,7 @@ function StatusBadge({ status }: { status: Status }) {
 
 function PassTypeBadge({ type }: { type: string }) {
   return (
-    <span className="inline-flex items-center text-xs font-medium px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-600 capitalize">
+    <span className="inline-flex items-center text-xs font-semibold px-2 py-1 rounded-md border border-slate-200 bg-slate-50 text-slate-600 capitalize">
       {type}
     </span>
   );
@@ -118,16 +118,16 @@ function Btn({ onClick, pending, variant, children }: {
   onClick: () => void; pending: boolean; variant: BtnVariant; children: React.ReactNode;
 }) {
   const cls: Record<BtnVariant, string> = {
-    primary: "text-white hover:opacity-90",
-    outline: "bg-white border border-neutral-200 text-neutral-600 hover:bg-neutral-50",
-    danger:  "bg-white border border-red-100 text-red-500 hover:bg-red-50",
+    primary: "bg-blue-700 text-white hover:bg-blue-800 border border-blue-700",
+    outline: "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50",
+    danger:  "bg-white border border-red-200 text-red-700 hover:bg-red-50",
   };
   const style: Record<BtnVariant, React.CSSProperties | undefined> = {
-    primary: { background: "#6D28D9" }, outline: undefined, danger: undefined,
+    primary: undefined, outline: undefined, danger: undefined,
   };
   return (
     <button onClick={onClick} disabled={pending}
-      className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-xl transition-all disabled:opacity-40 ${cls[variant]}`}
+      className={`inline-flex min-h-8 items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-semibold transition-colors disabled:opacity-40 ${cls[variant]}`}
       style={style[variant]}>
       {pending && <Loader2 className="w-3 h-3 animate-spin" />}
       {children}
@@ -281,6 +281,22 @@ export default function AttendeeTable({
   const unissuedCount = attendees.filter((a) => a.application_status === "approved" && a.pass_status === "not_generated").length;
   const capacityPct   = attendeeLimit > 0 ? Math.min(100, Math.round((approvedCount / attendeeLimit) * 100)) : 0;
   const atCapacity    = approvedCount >= attendeeLimit;
+  const checkedInCount = attendees.filter((a) => a.pass_status === "checked_in").length;
+  const generatedPassCount = attendees.filter((a) => a.pass_status === "generated" || a.pass_status === "checked_in").length;
+  const paidCount = attendees.filter((a) => {
+    const payment = payments[a.id] || payments[`email:${a.email.toLowerCase()}`];
+    return payment?.status === "paid";
+  }).length;
+  const groupPassCount = attendees.filter((a) => {
+    const customResponses = (a.custom_responses as any) || {};
+    return Boolean(
+      groupPasses[a.id] ||
+      customResponses.is_single_group_qr === true ||
+      customResponses.is_single_group_qr === "true" ||
+      customResponses.credential_type === "GROUP_QR" ||
+      customResponses.credentialType === "GROUP_QR"
+    );
+  }).length;
 
   const counts = {
     all:        attendees.length,
@@ -469,90 +485,237 @@ export default function AttendeeTable({
   const paginatedList = filtered.slice(startIndex, endIndex);
 
   const tabs: FilterTab[] = ["all", "pending", "approved", "rejected", "waitlisted"];
+  const statCards = [
+    { label: "Total attendees", value: attendees.length, note: `${filtered.length} visible`, icon: Users, tone: "text-slate-700 bg-slate-50 border-slate-200" },
+    { label: "Approved capacity", value: attendeeLimit > 0 ? `${approvedCount}/${attendeeLimit}` : approvedCount, note: `${capacityPct}% filled`, icon: ClipboardList, tone: atCapacity ? "text-red-700 bg-red-50 border-red-200" : "text-blue-700 bg-blue-50 border-blue-200" },
+    { label: "Checked in", value: checkedInCount, note: `${generatedPassCount} passes issued`, icon: CheckCircle2, tone: "text-emerald-700 bg-emerald-50 border-emerald-200" },
+    { label: "Payments", value: paidCount, note: `${groupPassCount} group passes`, icon: CreditCard, tone: "text-amber-700 bg-amber-50 border-amber-200" },
+  ];
+
+  function getPayment(a: Attendee) {
+    return payments[a.id] || payments[`email:${a.email.toLowerCase()}`];
+  }
+
+  function getGroupMeta(a: Attendee) {
+    const customResponses = (a.custom_responses as any) || {};
+    const isExplicitGroupQr =
+      customResponses.is_single_group_qr === true ||
+      customResponses.is_single_group_qr === "true" ||
+      customResponses.credential_type === "GROUP_QR" ||
+      customResponses.credentialType === "GROUP_QR";
+    return { customResponses, isGroup: Boolean(isExplicitGroupQr || groupPasses[a.id]) };
+  }
+
+  function renderActions(a: Attendee, payment?: AttendeePaymentInfo) {
+    const isLoading = loadingId === a.id;
+    const hasToken = !!passTokens[a.id];
+    const passExists = a.pass_status === "generated" || a.pass_status === "checked_in";
+
+    return (
+      <div className="flex flex-wrap items-center justify-end gap-1.5">
+        {a.application_status === "pending" && (
+          <>
+            {payment?.status === "paid" && (
+              <span className="hidden xl:inline-flex items-center rounded-md bg-emerald-50 px-2 py-1 text-[10px] font-bold text-emerald-700">
+                Paid
+              </span>
+            )}
+            <Btn onClick={() => handleApprove(a.id, a.application_status)} pending={false} variant="primary">
+              <Check className="w-3 h-3" /> Approve
+            </Btn>
+            <Btn onClick={() => handleReject(a.id, a.application_status)} pending={false} variant="outline">
+              Reject
+            </Btn>
+          </>
+        )}
+
+        {a.application_status === "approved" && (
+          <>
+            {!passExists && !hasToken ? (
+              <Btn onClick={() => handleGeneratePass(a.id)} pending={isLoading} variant="primary">
+                <Ticket className="w-3 h-3" /> Generate pass
+              </Btn>
+            ) : hasToken ? (
+              <a href={`/pass/${passTokens[a.id]}`} target="_blank" rel="noopener noreferrer"
+                className="inline-flex min-h-8 items-center gap-1.5 rounded-md border border-blue-700 bg-blue-700 px-2.5 py-1 text-xs font-semibold text-white transition-colors hover:bg-blue-800">
+                <ExternalLink className="w-3 h-3" /> View pass
+              </a>
+            ) : (
+              <Btn onClick={() => handleViewPass(a.id)} pending={isLoading} variant="primary">
+                <ExternalLink className="w-3 h-3" />
+                {isLoading ? "Loading..." : "View pass"}
+              </Btn>
+            )}
+            {passTokens[a.id] && (
+              <>
+                <WhatsAppShareButton
+                  eventName={eventName || "Event"}
+                  eventDate="the upcoming event"
+                  venue="the venue"
+                  passToken={passTokens[a.id]}
+                  attendeeName={a.name}
+                  phone={a.phone}
+                  variant="icon"
+                />
+                <AttendeeDeliveryActions
+                  eventId={eventId}
+                  passToken={passTokens[a.id]}
+                  email={a.email}
+                  phone={a.phone}
+                />
+                <button title="Download pass as PNG"
+                  onClick={async () => {
+                    const token = passTokens[a.id];
+                    const res = await fetch(`/api/pass/image/${token}`);
+                    if (!res.ok) return;
+                    const blob = await res.blob();
+                    const url = URL.createObjectURL(blob);
+                    const dl = document.createElement("a");
+                    dl.href = url; dl.download = `pass-${a.name.replace(/\s+/g, "-").toLowerCase()}.png`; dl.click();
+                    URL.revokeObjectURL(url);
+                  }}
+                  className="inline-flex min-h-8 items-center gap-1.5 rounded-md border border-slate-200 px-2.5 py-1 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-950">
+                  <Download className="w-3 h-3" />
+                </button>
+              </>
+            )}
+            {a.pass_status === "checked_in" && (
+              <Btn onClick={() => handleUndoCheckIn(a.id)} pending={undoingId === a.id} variant="outline">
+                <RotateCcw className="w-3 h-3 text-amber-600" />
+                <span className="text-amber-700">Undo check-in</span>
+              </Btn>
+            )}
+            <Btn onClick={() => handleReject(a.id, a.application_status)} pending={false} variant="danger">
+              Revoke
+            </Btn>
+          </>
+        )}
+
+        {a.application_status === "rejected" && (
+          <Btn onClick={() => handleApprove(a.id, a.application_status)} pending={false} variant="primary">
+            Re-approve
+          </Btn>
+        )}
+
+        {a.application_status === "waitlisted" && (
+          <>
+            <Btn onClick={() => handleApprove(a.id, a.application_status)} pending={false} variant="primary">
+              <Check className="w-3 h-3" /> Promote
+            </Btn>
+            <Btn onClick={() => handleReject(a.id, a.application_status)} pending={false} variant="outline">
+              Remove
+            </Btn>
+          </>
+        )}
+      </div>
+    );
+  }
 
   return (
     <>
-      {/* ── Capacity bar ────────────────────────────────────── */}
-      <div className="bg-white rounded-2xl border border-neutral-100 p-5 mb-4"
-        style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex-1">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-sm font-semibold text-neutral-900">Capacity</p>
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-bold tabular-nums">
-                  {approvedCount}
-                  <span className="text-neutral-400 font-normal"> / {attendeeLimit}</span>
-                  <span className="text-xs text-neutral-400 font-normal ml-1.5">({capacityPct}%)</span>
-                </span>
-                {/* Live indicator */}
-                <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
-                  liveConnected ? "bg-green-50 text-green-600" : "bg-neutral-100 text-neutral-400"
-                }`}>
-                  <Wifi className="w-2.5 h-2.5" />
-                  {liveConnected ? "Live" : "Connecting"}
-                </span>
-              </div>
+      <div className="mb-4 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+        <div className="flex flex-col gap-4 border-b border-slate-200 px-4 py-4 sm:px-5 lg:flex-row lg:items-center lg:justify-between">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="truncate text-lg font-bold text-slate-950 sm:text-xl">{eventName || "Event attendees"}</h1>
+              <span className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-bold uppercase tracking-wide ${
+                liveConnected ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-slate-200 bg-slate-50 text-slate-500"
+              }`}>
+                <Wifi className="h-3 w-3" />
+                {liveConnected ? "Live" : "Connecting"}
+              </span>
             </div>
-            <div className="h-2 bg-neutral-100 rounded-full overflow-hidden">
-              <div className="h-full rounded-full transition-all duration-500"
-                style={{
-                  width: `${capacityPct}%`,
-                  background: atCapacity
-                    ? "linear-gradient(90deg,#dc2626,#ef4444)"
-                    : "linear-gradient(90deg,#6D28D9,#8B5CF6)",
-                }} />
-            </div>
-            {atCapacity && (
-              <p className="text-xs text-amber-600 font-medium mt-1.5">Event is at full capacity</p>
-            )}
+            <p className="mt-1 text-sm text-slate-500">
+              Manage approvals, passes, payments, group admissions, and check-in status from one operations view.
+            </p>
           </div>
 
-          {applicationEnabled && applySlug && (
-            <Link href={`/apply/${applySlug}`} target="_blank" rel="noopener noreferrer"
-              className="shrink-0 flex items-center gap-1.5 text-xs text-neutral-500 border border-neutral-200 rounded-xl px-3 py-2 hover:bg-neutral-50 hover:border-neutral-300 transition-colors">
-              <span className="font-mono font-semibold text-neutral-700">{applySlug}</span>
-              <ExternalLink className="w-3 h-3" />
-            </Link>
+          <div className="flex flex-wrap items-center gap-2">
+            {applicationEnabled && applySlug && (
+              <Link href={`/apply/${applySlug}`} target="_blank" rel="noopener noreferrer"
+                className="inline-flex min-h-9 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50">
+                <span className="font-mono">{applySlug}</span>
+                <ExternalLink className="h-3.5 w-3.5" />
+              </Link>
+            )}
+            <button onClick={() => setShowAddModal(true)}
+              className="inline-flex min-h-9 items-center gap-1.5 rounded-md border border-blue-700 bg-blue-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-blue-800">
+              <UserPlus className="h-3.5 w-3.5" />
+              Add attendee
+            </button>
+          </div>
+        </div>
+
+        <div className="grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-4">
+          {statCards.map((card) => {
+            const Icon = card.icon;
+            return (
+              <div key={card.label} className="rounded-md border border-slate-200 bg-slate-50 p-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">{card.label}</p>
+                    <p className="mt-1 text-2xl font-bold tabular-nums text-slate-950">{card.value}</p>
+                  </div>
+                  <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md border ${card.tone}`}>
+                    <Icon className="h-4 w-4" />
+                  </span>
+                </div>
+                <p className="mt-2 text-xs font-medium text-slate-500">{card.note}</p>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="border-t border-slate-200 px-4 pb-4">
+          <div className="mt-3 h-2 overflow-hidden rounded bg-slate-100">
+            <div
+              className={`h-full rounded transition-all duration-500 ${atCapacity ? "bg-red-600" : "bg-blue-700"}`}
+              style={{ width: `${capacityPct}%` }}
+            />
+          </div>
+          {atCapacity && (
+            <p className="mt-2 text-xs font-semibold text-red-700">Event is at full capacity.</p>
           )}
         </div>
       </div>
 
       {/* ── Table card ──────────────────────────────────────── */}
-      <div className="bg-white rounded-2xl border border-neutral-100 p-5"
-        style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
+      <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
 
         {/* Header bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-          <h2 className="text-sm font-semibold text-neutral-900">Attendees</h2>
-          <div className="flex items-center gap-2 flex-wrap">
+        <div className="mb-4 flex flex-col justify-between gap-3 lg:flex-row lg:items-center">
+          <div>
+            <h2 className="text-sm font-bold text-slate-950">Attendee directory</h2>
+            <p className="mt-0.5 text-xs text-slate-500">Search, filter, issue passes, and inspect entry details.</p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
             {canCSV ? (
               <button onClick={() => setShowCSVModal(true)}
-                className="flex items-center gap-1.5 border border-neutral-200 rounded-xl px-3 py-2 text-xs font-medium hover:bg-neutral-50 transition-colors">
+                className="inline-flex min-h-9 items-center gap-1.5 rounded-md border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50">
                 <Upload className="w-3.5 h-3.5" />
                 Upload CSV
               </button>
             ) : (
               <Link href="/billing"
-                className="flex items-center gap-1.5 border border-neutral-200 rounded-xl px-3 py-2 text-xs font-medium text-neutral-400 hover:bg-neutral-50 transition-colors">
+                className="inline-flex min-h-9 items-center gap-1.5 rounded-md border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-400 transition-colors hover:bg-slate-50">
                 <Lock className="w-3 h-3" />
                 Upload CSV
-                <span className="text-[9px] font-bold uppercase bg-amber-100 text-amber-600 px-1.5 py-0.5 rounded-full">Starter+</span>
+                <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[9px] font-bold uppercase text-amber-700">Starter+</span>
               </Link>
             )}
 
             {canExport ? (
               <button onClick={handleExport} disabled={exporting}
-                className="flex items-center gap-1.5 border border-neutral-200 rounded-xl px-3 py-2 text-xs font-medium hover:bg-neutral-50 transition-colors disabled:opacity-50">
+                className="inline-flex min-h-9 items-center gap-1.5 rounded-md border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-50">
                 {exporting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
                 Export CSV
               </button>
             ) : (
               <Link href="/billing"
-                className="flex items-center gap-1.5 border border-neutral-200 rounded-xl px-3 py-2 text-xs font-medium text-neutral-400 hover:bg-neutral-50 transition-colors">
+                className="inline-flex min-h-9 items-center gap-1.5 rounded-md border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-400 transition-colors hover:bg-slate-50">
                 <Lock className="w-3 h-3" />
                 Export CSV
-                <span className="text-[9px] font-bold uppercase bg-violet-100 text-brand px-1.5 py-0.5 rounded-full">Pro</span>
+                <span className="rounded bg-blue-100 px-1.5 py-0.5 text-[9px] font-bold uppercase text-blue-700">Pro</span>
               </Link>
             )}
 
@@ -560,7 +723,7 @@ export default function AttendeeTable({
               <button
                 onClick={handlePromoteNextWaitlist}
                 disabled={promotingWaitlist}
-                className="flex items-center gap-1.5 bg-purple-50 text-purple-700 border border-purple-200 rounded-xl px-3 py-2 text-xs font-semibold hover:bg-purple-100 transition-colors disabled:opacity-50"
+                className="inline-flex min-h-9 items-center gap-1.5 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700 transition-colors hover:bg-blue-100 disabled:opacity-50"
               >
                 {promotingWaitlist ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Clock className="w-3.5 h-3.5" />}
                 Promote next from waitlist ({counts.waitlisted} waiting)
@@ -571,7 +734,7 @@ export default function AttendeeTable({
               <button
                 onClick={handleBulkGenerate}
                 disabled={bulkGenerating}
-                className="flex items-center gap-1.5 bg-brand-50 text-brand border border-brand-200 rounded-xl px-3 py-2 text-xs font-semibold hover:bg-brand-100 transition-colors disabled:opacity-50"
+                className="inline-flex min-h-9 items-center gap-1.5 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700 transition-colors hover:bg-blue-100 disabled:opacity-50"
                 title="Generate passes for all approved attendees without a ticket"
               >
                 {bulkGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Ticket className="w-3.5 h-3.5" />}
@@ -582,26 +745,19 @@ export default function AttendeeTable({
             {approvedCount > 0 && (
               <button
                 onClick={() => setShowBroadcastModal(true)}
-                className="flex items-center gap-1.5 border border-neutral-200 rounded-xl px-3 py-2 text-xs font-medium hover:bg-neutral-50 transition-colors text-neutral-700"
+                className="inline-flex min-h-9 items-center gap-1.5 rounded-md border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50"
                 title="Broadcast digital pass links to attendees"
               >
-                <Send className="w-3.5 h-3.5 text-neutral-400" />
+                <Send className="w-3.5 h-3.5 text-slate-500" />
                 Broadcast passes
               </button>
             )}
-
-            <button onClick={() => setShowAddModal(true)}
-              className="flex items-center gap-1.5 text-white rounded-xl px-3 py-2 text-xs font-medium hover:opacity-90 transition-opacity"
-              style={{ background: "#6D28D9" }}>
-              <UserPlus className="w-3.5 h-3.5" />
-              Add attendee
-            </button>
           </div>
         </div>
 
         {bulkMsg && (
           <div
-            className={`p-3 rounded-xl mb-4 text-xs font-medium flex items-center justify-between ${
+            className={`mb-4 flex items-center justify-between rounded-md p-3 text-xs font-semibold ${
               bulkMsg.isError
                 ? "bg-red-50 text-red-700 border border-red-200"
                 : "bg-emerald-50 text-emerald-800 border border-emerald-200"
@@ -618,12 +774,12 @@ export default function AttendeeTable({
         )}
 
         {/* Tabs + Search */}
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
-          <div className="flex items-center gap-1 bg-neutral-100 rounded-xl p-1 shrink-0">
+        <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center">
+          <div className="flex shrink-0 items-center gap-1 overflow-x-auto rounded-md border border-slate-200 bg-slate-50 p-1">
             {tabs.map((tab) => (
               <button key={tab} onClick={() => setActiveTab(tab)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all capitalize ${
-                  activeTab === tab ? "bg-white text-neutral-900 shadow-sm" : "text-neutral-500 hover:text-neutral-700"
+                className={`whitespace-nowrap rounded px-3 py-1.5 text-xs font-semibold capitalize transition-all ${
+                  activeTab === tab ? "bg-white text-slate-950 shadow-sm" : "text-slate-500 hover:text-slate-700"
                 }`}>
                 {tab === "all" ? "All" : tab}
                 <span className={`ml-1.5 text-xs ${activeTab === tab ? "text-neutral-500" : "text-neutral-400"}`}>
@@ -632,11 +788,11 @@ export default function AttendeeTable({
               </button>
             ))}
           </div>
-          <div className="relative flex-1 max-w-xs">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-neutral-300 pointer-events-none" />
+          <div className="relative flex-1 lg:max-w-sm">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
             <input type="text" placeholder="Search name or email…" value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-8 pr-3 py-2 text-xs border border-neutral-200 rounded-xl outline-none focus:border-neutral-400 transition-colors placeholder:text-neutral-300" />
+              className="w-full rounded-md border border-slate-200 py-2 pl-8 pr-3 text-xs outline-none transition-colors placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
           </div>
         </div>
 
@@ -654,65 +810,165 @@ export default function AttendeeTable({
             )}
           </div>
         ) : (
-          <div className="rounded-xl overflow-hidden border border-neutral-100">
-            <div className="overflow-x-auto touch-pan-x">
-              <table className="w-full text-sm min-w-[560px] sm:min-w-full">
-                <thead>
-                  <tr className="bg-neutral-50 border-b border-neutral-100">
-                    <th className="text-left text-xs font-medium text-neutral-400 px-4 py-3">Name</th>
-                    <th className="text-left text-xs font-medium text-neutral-400 px-4 py-3 hidden sm:table-cell">Email</th>
-                    <th className="text-left text-xs font-medium text-neutral-400 px-4 py-3 hidden md:table-cell">Type</th>
-                    <th className="text-left text-xs font-medium text-neutral-400 px-4 py-3 hidden lg:table-cell">Payment Proof</th>
-                    <th className="text-left text-xs font-medium text-neutral-400 px-4 py-3">Status</th>
-                    <th className="text-right text-xs font-medium text-neutral-400 px-4 py-3">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-neutral-50">
-                  {paginatedList.map((a) => {
-                    const isLoading  = loadingId === a.id;
-	                    const hasToken   = !!passTokens[a.id];
-	                    const passExists = a.pass_status === "generated" || a.pass_status === "checked_in";
-	                    const payment    = payments[a.id] || payments[`email:${a.email.toLowerCase()}`];
-	                    const customResponses = (a.custom_responses as any) || {};
-	                    const isExplicitGroupQr =
-	                      customResponses.is_single_group_qr === true ||
-	                      customResponses.is_single_group_qr === "true" ||
-	                      customResponses.credential_type === "GROUP_QR" ||
-	                      customResponses.credentialType === "GROUP_QR";
+          <>
+              <div className="space-y-3 md:hidden">
+                {paginatedList.map((a) => {
+                  const payment = getPayment(a);
+                  const { customResponses, isGroup } = getGroupMeta(a);
+                  return (
+                    <div key={a.id} className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-bold text-slate-950">{a.name}</p>
+                          <p className="truncate text-xs text-slate-500">{a.email}</p>
+                          {a.phone && <p className="mt-0.5 text-xs text-slate-400">{a.phone}</p>}
+                        </div>
+                        <StatusBadge status={a.application_status} />
+                      </div>
 
-                    return (
-                      <tr key={a.id} className="hover:bg-neutral-50/50 transition-colors">
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <p className="font-medium text-sm">{a.name}</p>
-                            {a.custom_responses && Object.keys(a.custom_responses).length > 0 && (
+                      <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                        <div className="rounded-md border border-slate-200 bg-slate-50 p-2">
+                          <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Ticket</p>
+                          <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                            <PassTypeBadge type={a.pass_type} />
+                            <span className="capitalize text-slate-500">{a.pass_status.replace(/_/g, " ")}</span>
+                          </div>
+                        </div>
+                        <div className="rounded-md border border-slate-200 bg-slate-50 p-2">
+                          <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Payment</p>
+                          {payment?.status === "paid" ? (
+                            <p className="mt-1 font-bold text-emerald-700">
+                              {payment.currency === "INR" ? "₹" : `${payment.currency} `}{(payment.amount / 100).toLocaleString("en-IN")} Paid
+                            </p>
+                          ) : payment?.status === "created" ? (
+                            <p className="mt-1 font-semibold text-amber-700">Awaiting payment</p>
+                          ) : (
+                            <p className="mt-1 text-slate-500">
+                              {a.pass_type === "vip" || a.pass_type === "speaker" || a.pass_type === "organizer" ? "Complimentary" : "Free Pass"}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="mt-2 rounded-md border border-slate-200 bg-slate-50 p-2 text-xs">
+                        <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Entry</p>
+                        {isGroup ? (
+                          <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                            <span className="inline-flex items-center gap-1 rounded-md border border-blue-200 bg-blue-50 px-2 py-1 text-[10px] font-bold text-blue-700">
+                              <Users className="h-3 w-3" />
+                              Group Pass ({groupPasses[a.id]?.totalGuests || customResponses.group_attendee_count || customResponses.guest_count || 1})
+                            </span>
+                            {groupPasses[a.id] && (
+                              <span className="rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-[10px] font-bold text-emerald-700">
+                                {groupPasses[a.id].checkedInGuests}/{groupPasses[a.id].totalGuests} admitted
+                              </span>
+                            )}
+                            {groupPasses[a.id]?.admissions && groupPasses[a.id].admissions!.length > 0 && (
                               <button
                                 type="button"
+                                onClick={() =>
+                                  setSelectedGroupHistory({
+                                    name: a.name,
+                                    email: a.email,
+                                    totalGuests: groupPasses[a.id].totalGuests,
+                                    checkedInGuests: groupPasses[a.id].checkedInGuests,
+                                    admissions: groupPasses[a.id].admissions || [],
+                                  })
+                                }
+                                className="rounded-md border border-slate-200 bg-white px-2 py-1 text-[10px] font-bold text-slate-700"
+                              >
+                                {groupPasses[a.id].admissions!.length} batches
+                              </button>
+                            )}
+                          </div>
+                        ) : checkInInfoMap[a.id] ? (
+                          <p className="mt-1 font-medium text-slate-700">
+                            {checkInInfoMap[a.id].gateName} · {new Date(checkInInfoMap[a.id].checkedInAt).toLocaleString([], {
+                              day: "2-digit",
+                              month: "short",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </p>
+                        ) : (
+                          <p className="mt-1 text-slate-500">Not checked in</p>
+                        )}
+                      </div>
+
+                      {a.custom_responses && Object.keys(a.custom_responses).length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setSelectedAnswersAttendee(a)}
+                          className="mt-2 inline-flex items-center gap-1 rounded-md border border-blue-200 bg-blue-50 px-2 py-1 text-[10px] font-semibold text-blue-700"
+                        >
+                          <ClipboardList className="h-3 w-3" />
+                          View answers
+                        </button>
+                      )}
+                      {actionErrors[a.id] && <p className="mt-2 text-xs text-red-600">{actionErrors[a.id]}</p>}
+                      <div className="mt-3 border-t border-slate-200 pt-3">
+                        {renderActions(a, payment)}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="hidden overflow-hidden rounded-lg border border-slate-200 md:block">
+            <div className="overflow-x-auto touch-pan-x">
+              <table className="w-full min-w-[760px] text-sm">
+                <thead>
+                  <tr className="border-b border-slate-200 bg-slate-50">
+                    <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-slate-500">Attendee</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-slate-500">Ticket</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-slate-500">Payment</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-slate-500">Entry</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-slate-500">Status</th>
+                    <th className="px-4 py-3 text-right text-xs font-bold uppercase tracking-wide text-slate-500">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {paginatedList.map((a) => {
+		                    const payment = getPayment(a);
+		                    const { customResponses, isGroup } = getGroupMeta(a);
+
+                    return (
+	                      <tr key={a.id} className="transition-colors hover:bg-slate-50/70">
+	                        <td className="px-4 py-3">
+	                          <div className="min-w-0">
+	                            <div className="flex flex-wrap items-center gap-2">
+	                              <p className="font-semibold text-slate-950">{a.name}</p>
+	                            {a.custom_responses && Object.keys(a.custom_responses).length > 0 && (
+	                              <button
+                                type="button"
                                 onClick={() => setSelectedAnswersAttendee(a)}
-                                className="inline-flex items-center gap-1 text-[10px] font-semibold text-brand bg-brand-50 hover:bg-brand-100 px-1.5 py-0.5 rounded-md transition-colors"
+	                                className="inline-flex items-center gap-1 rounded-md border border-blue-200 bg-blue-50 px-1.5 py-0.5 text-[10px] font-semibold text-blue-700 transition-colors hover:bg-blue-100"
                                 title="View registration questions answers"
                               >
                                 <ClipboardList className="w-3 h-3" />
                                 Answers
                               </button>
                             )}
-	                            {(isExplicitGroupQr || groupPasses[a.id]) && (
-                              <div className="flex flex-wrap items-center gap-1.5 mt-1">
-                                <span
-                                  className="inline-flex items-center gap-1 text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-md"
+	                            </div>
+                              <p className="mt-1 truncate text-xs text-slate-500">{a.email}</p>
+                              {a.phone && <p className="mt-0.5 text-xs text-slate-400">{a.phone}</p>}
+		                            {isGroup && (
+	                              <div className="mt-2 flex flex-wrap items-center gap-1.5">
+	                                <span
+	                                  className="inline-flex items-center gap-1 rounded-md border border-blue-200 bg-blue-50 px-2 py-1 text-[10px] font-bold text-blue-700"
                                   title="Single Group QR with partial check-in"
                                 >
                                   <Users className="w-3 h-3 text-indigo-600" />
-	                                  Group Pass ({groupPasses[a.id]?.totalGuests || customResponses.group_attendee_count || customResponses.guest_count || 1} people)
+		                                  Group Pass ({groupPasses[a.id]?.totalGuests || customResponses.group_attendee_count || customResponses.guest_count || 1})
                                 </span>
                                 {groupPasses[a.id] ? (
                                   <span
                                     className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md border ${
                                       groupPasses[a.id].checkedInGuests >= groupPasses[a.id].totalGuests
-                                        ? "text-emerald-700 bg-emerald-50 border-emerald-200"
-                                        : groupPasses[a.id].checkedInGuests > 0
-                                        ? "text-purple-700 bg-purple-50 border-purple-200"
-                                        : "text-neutral-600 bg-neutral-50 border-neutral-200"
+	                                        ? "text-emerald-700 bg-emerald-50 border-emerald-200"
+	                                        : groupPasses[a.id].checkedInGuests > 0
+	                                        ? "text-amber-700 bg-amber-50 border-amber-200"
+	                                        : "text-slate-600 bg-slate-50 border-slate-200"
                                     }`}
                                   >
                                     <CheckCircle2 className="w-2.5 h-2.5" />
@@ -733,7 +989,7 @@ export default function AttendeeTable({
                                         admissions: groupPasses[a.id].admissions || [],
                                       })
                                     }
-                                    className="inline-flex items-center gap-1 text-[10px] font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 px-1.5 py-0.5 rounded-md transition-colors"
+	                                    className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-1.5 py-1 text-[10px] font-semibold text-slate-700 transition-colors hover:bg-slate-50"
                                     title="View partial entry admissions breakdown"
                                   >
                                     <History className="w-3 h-3 text-purple-600" />
@@ -743,7 +999,7 @@ export default function AttendeeTable({
 
                                 {/* Gate name and time info */}
                                 {checkInInfoMap[a.id] ? (
-                                  <span className="text-[10px] font-medium text-neutral-500 bg-neutral-100/80 px-1.5 py-0.5 rounded flex items-center gap-1">
+	                                  <span className="flex items-center gap-1 rounded bg-slate-100 px-1.5 py-1 text-[10px] font-medium text-slate-600">
                                     <DoorOpen className="w-2.5 h-2.5 text-neutral-600" />
                                     <span>{checkInInfoMap[a.id].gateName}</span>
                                     <span>·</span>
@@ -764,14 +1020,14 @@ export default function AttendeeTable({
                               </div>
                             )}
 
-	                            {!(isExplicitGroupQr || groupPasses[a.id]) && a.pass_status === "checked_in" && (
-                              <div className="flex items-center gap-1.5 mt-0.5 text-[10px] text-emerald-600 font-medium flex-wrap">
+		                            {!isGroup && a.pass_status === "checked_in" && (
+	                              <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[10px] font-medium text-emerald-700">
                                 <span className="inline-flex items-center gap-1">
                                   <CheckCircle2 className="w-2.5 h-2.5" />
                                   <span>Checked in</span>
                                 </span>
                                 {checkInInfoMap[a.id] ? (
-                                  <span className="inline-flex items-center gap-1 text-neutral-600 bg-neutral-100 px-1.5 py-0.2 rounded">
+	                                  <span className="inline-flex items-center gap-1 rounded bg-slate-100 px-1.5 py-1 text-slate-600">
                                     <DoorOpen className="w-2.5 h-2.5 text-neutral-500" />
                                     <span>{checkInInfoMap[a.id].gateName}</span>
                                     <span>·</span>
@@ -791,175 +1047,100 @@ export default function AttendeeTable({
                               </div>
                             )}
                           </div>
-                          <p className="text-xs text-neutral-400 sm:hidden">{a.email}</p>
-                          {payment?.status === "paid" && (
-                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded mt-0.5 lg:hidden">
-                              ✓ {payment.currency === "INR" ? "₹" : ""}{(payment.amount / 100).toLocaleString("en-IN")} Paid (Txn: {payment.paymentId || payment.orderId.slice(0, 8)})
-                            </span>
-                          )}
-                          {actionErrors[a.id] && (
-                            <p className="text-xs text-red-500 mt-0.5">{actionErrors[a.id]}</p>
-                          )}
-                        </td>
-                        <td className="px-4 py-3 hidden sm:table-cell">
-                          <span className="text-sm text-neutral-500">{a.email}</span>
-                        </td>
-                        <td className="px-4 py-3 hidden md:table-cell">
-                          <PassTypeBadge type={a.pass_type} />
-                        </td>
-                        <td className="px-4 py-3 hidden lg:table-cell">
-                          {payment?.status === "paid" ? (
-                            <div className="flex flex-col gap-0.5">
-                              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md w-fit">
+	                          {actionErrors[a.id] && (
+	                            <p className="text-xs text-red-500 mt-0.5">{actionErrors[a.id]}</p>
+	                          )}
+	                        </td>
+	                        <td className="px-4 py-3">
+	                          <PassTypeBadge type={a.pass_type} />
+                            <p className="mt-1 text-xs text-slate-500 capitalize">{a.pass_status.replace(/_/g, " ")}</p>
+	                        </td>
+	                        <td className="px-4 py-3">
+	                          {payment?.status === "paid" ? (
+	                            <div className="flex flex-col gap-0.5">
+	                              <span className="inline-flex w-fit items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-[11px] font-bold text-emerald-700">
                                 <CheckCircle2 className="w-3 h-3 text-emerald-600" />
                                 {payment.currency === "INR" ? "₹" : `${payment.currency} `}{(payment.amount / 100).toLocaleString("en-IN")} Paid
                               </span>
                               {payment.paymentId ? (
-                                <span className="text-[10px] font-mono text-neutral-500 truncate max-w-[150px]" title={`Razorpay Transaction ID: ${payment.paymentId}`}>
+	                                <span className="max-w-[150px] truncate font-mono text-[10px] text-slate-500" title={`Razorpay Transaction ID: ${payment.paymentId}`}>
                                   ID: {payment.paymentId}
                                 </span>
                               ) : (
-                                <span className="text-[10px] font-mono text-neutral-400 truncate max-w-[150px]">
+	                                <span className="max-w-[150px] truncate font-mono text-[10px] text-slate-400">
                                   Order: {payment.orderId.slice(0, 14)}...
                                 </span>
                               )}
                             </div>
                           ) : payment?.status === "created" ? (
                             <div className="flex flex-col gap-0.5">
-                              <span className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md w-fit">
+	                              <span className="inline-flex w-fit items-center gap-1 rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] font-semibold text-amber-700">
                                 <Clock className="w-3 h-3 text-amber-600" />
                                 Awaiting Payment
                               </span>
-                              <span className="text-[10px] font-mono text-neutral-400 truncate max-w-[150px]">
+	                              <span className="max-w-[150px] truncate font-mono text-[10px] text-slate-400">
                                 Order: {payment.orderId.slice(0, 14)}...
                               </span>
                             </div>
                           ) : (
-                            <span className="text-xs text-neutral-400 italic">
-                              {a.pass_type === "vip" || a.pass_type === "speaker" || a.pass_type === "organizer" ? "Complimentary" : "Free Pass"}
-                            </span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3">
-                          <StatusBadge status={a.application_status} />
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center justify-end gap-1.5 flex-nowrap">
-                            {a.application_status === "pending" && (
-                              <>
-                                {payment?.status === "paid" && (
-                                  <span className="hidden xl:inline-flex items-center text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded mr-1">
-                                    Paid (Txn: {payment.paymentId?.slice(0, 10)})
-                                  </span>
-                                )}
-                                <Btn onClick={() => handleApprove(a.id, a.application_status)} pending={false} variant="primary">
-                                  <Check className="w-3 h-3" /> Approve
-                                </Btn>
-                                <Btn onClick={() => handleReject(a.id, a.application_status)} pending={false} variant="outline">
-                                  Reject
-                                </Btn>
-                              </>
+	                            <span className="text-xs text-slate-400">
+	                              {a.pass_type === "vip" || a.pass_type === "speaker" || a.pass_type === "organizer" ? "Complimentary" : "Free Pass"}
+	                            </span>
+	                          )}
+	                        </td>
+                          <td className="px-4 py-3">
+                            {checkInInfoMap[a.id] ? (
+                              <div className="space-y-1 text-xs">
+                                <span className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-slate-50 px-2 py-1 font-semibold text-slate-700">
+                                  <DoorOpen className="h-3 w-3" />
+                                  {checkInInfoMap[a.id].gateName}
+                                </span>
+                                <p className="text-slate-500">
+                                  {new Date(checkInInfoMap[a.id].checkedInAt).toLocaleString([], {
+                                    day: "2-digit",
+                                    month: "short",
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  })}
+                                </p>
+                              </div>
+                            ) : a.last_scanned_at ? (
+                              <span className="text-xs text-slate-500">
+                                {new Date(a.last_scanned_at).toLocaleString([], {
+                                  day: "2-digit",
+                                  month: "short",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}
+                              </span>
+                            ) : (
+                              <span className="text-xs text-slate-400">Not checked in</span>
                             )}
-
-                            {a.application_status === "approved" && (
-                              <>
-                                {!passExists && !hasToken ? (
-                                  <Btn onClick={() => handleGeneratePass(a.id)} pending={isLoading} variant="primary">
-                                    <Ticket className="w-3 h-3" /> Generate pass
-                                  </Btn>
-                                ) : hasToken ? (
-                                  <a href={`/pass/${passTokens[a.id]}`} target="_blank" rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-xl text-white hover:opacity-90 transition-all"
-                                    style={{ background: "#6D28D9" }}>
-                                    <ExternalLink className="w-3 h-3" /> View pass
-                                  </a>
-                                ) : (
-                                  <Btn onClick={() => handleViewPass(a.id)} pending={isLoading} variant="primary">
-                                    <ExternalLink className="w-3 h-3" />
-                                    {isLoading ? "Loading…" : "View pass"}
-                                  </Btn>
-                                )}
-                                {passTokens[a.id] && (
-                                  <>
-                                    <WhatsAppShareButton
-                                      eventName={eventName || "Event"}
-                                      eventDate="the upcoming event"
-                                      venue="the venue"
-                                      passToken={passTokens[a.id]}
-                                      attendeeName={a.name}
-                                      phone={a.phone}
-                                      variant="icon"
-                                    />
-                                    <AttendeeDeliveryActions
-                                      eventId={eventId}
-                                      passToken={passTokens[a.id]}
-                                      email={a.email}
-                                      phone={a.phone}
-                                    />
-                                    <button title="Download pass as PNG"
-                                      onClick={async () => {
-                                        const token = passTokens[a.id];
-                                        const res = await fetch(`/api/pass/image/${token}`);
-                                        if (!res.ok) return;
-                                        const blob = await res.blob();
-                                        const url  = URL.createObjectURL(blob);
-                                        const dl   = document.createElement("a");
-                                        dl.href = url; dl.download = `pass-${a.name.replace(/\s+/g, "-").toLowerCase()}.png`; dl.click();
-                                        URL.revokeObjectURL(url);
-                                      }}
-                                      className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-xl border border-neutral-200 text-neutral-500 hover:bg-neutral-50 hover:text-neutral-900 transition-all">
-                                      <Download className="w-3 h-3" />
-                                    </button>
-                                  </>
-                                )}
-                                {a.pass_status === "checked_in" && (
-                                  <Btn onClick={() => handleUndoCheckIn(a.id)} pending={undoingId === a.id} variant="outline">
-                                    <RotateCcw className="w-3 h-3 text-amber-600" />
-                                    <span className="text-amber-700">Undo check-in</span>
-                                  </Btn>
-                                )}
-                                <Btn onClick={() => handleReject(a.id, a.application_status)} pending={false} variant="danger">
-                                  Revoke
-                                </Btn>
-                              </>
-                            )}
-
-                            {a.application_status === "rejected" && (
-                              <Btn onClick={() => handleApprove(a.id, a.application_status)} pending={false} variant="primary">
-                                Re-approve
-                              </Btn>
-                            )}
-
-                            {a.application_status === "waitlisted" && (
-                              <>
-                                <Btn onClick={() => handleApprove(a.id, a.application_status)} pending={false} variant="primary">
-                                  <Check className="w-3 h-3" /> Promote
-                                </Btn>
-                                <Btn onClick={() => handleReject(a.id, a.application_status)} pending={false} variant="outline">
-                                  Remove
-                                </Btn>
-                              </>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
+                          </td>
+	                        <td className="px-4 py-3">
+	                          <StatusBadge status={a.application_status} />
+	                        </td>
+	                        <td className="px-4 py-3">
+	                          {renderActions(a, payment)}
+	                        </td>
+	                      </tr>
                     );
                   })}
                 </tbody>
               </table>
             </div>
-            <div className="px-4 py-2.5 border-t border-neutral-100 bg-neutral-50 flex flex-col sm:flex-row items-center justify-between gap-2">
-              <div className="flex items-center gap-3 text-xs text-neutral-500">
+	            <div className="flex flex-col items-center justify-between gap-2 border-t border-slate-200 bg-slate-50 px-4 py-2.5 sm:flex-row">
+	              <div className="flex items-center gap-3 text-xs text-slate-500">
                 <span>
                   Showing {filtered.length > 0 ? startIndex + 1 : 0}–{endIndex} of {filtered.length} attendee{filtered.length !== 1 ? "s" : ""}
                 </span>
                 {filtered.length > 25 && (
                   <div className="flex items-center gap-1.5">
-                    <span className="text-neutral-400">Rows:</span>
+	                    <span className="text-slate-400">Rows:</span>
                     <select
                       value={pageSize}
                       onChange={(e) => setPageSize(Number(e.target.value))}
-                      className="bg-white border border-neutral-200 rounded px-1.5 py-0.5 text-xs text-neutral-700"
+	                      className="rounded border border-slate-200 bg-white px-1.5 py-0.5 text-xs text-slate-700"
                     >
                       <option value={25}>25</option>
                       <option value={50}>50</option>
@@ -975,17 +1156,17 @@ export default function AttendeeTable({
                   <button
                     onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                     disabled={safePage <= 1}
-                    className="px-2.5 py-1 text-xs border border-neutral-200 rounded-lg hover:bg-neutral-100 transition-colors disabled:opacity-40 disabled:pointer-events-none"
+	                    className="rounded-md border border-slate-200 px-2.5 py-1 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-100 disabled:pointer-events-none disabled:opacity-40"
                   >
                     Previous
                   </button>
-                  <span className="text-xs px-2 text-neutral-600 font-medium">
+	                  <span className="px-2 text-xs font-medium text-slate-600">
                     Page {safePage} of {totalPages}
                   </span>
                   <button
                     onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                     disabled={safePage >= totalPages}
-                    className="px-2.5 py-1 text-xs border border-neutral-200 rounded-lg hover:bg-neutral-100 transition-colors disabled:opacity-40 disabled:pointer-events-none"
+	                    className="rounded-md border border-slate-200 px-2.5 py-1 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-100 disabled:pointer-events-none disabled:opacity-40"
                   >
                     Next
                   </button>
@@ -993,6 +1174,50 @@ export default function AttendeeTable({
               )}
             </div>
           </div>
+
+              <div className="mt-3 flex flex-col items-center justify-between gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-2.5 md:hidden">
+                <div className="flex items-center gap-3 text-xs text-slate-500">
+                  <span>
+                    Showing {filtered.length > 0 ? startIndex + 1 : 0}-{endIndex} of {filtered.length}
+                  </span>
+                  {filtered.length > 25 && (
+                    <select
+                      value={pageSize}
+                      onChange={(e) => setPageSize(Number(e.target.value))}
+                      className="rounded border border-slate-200 bg-white px-1.5 py-0.5 text-xs text-slate-700"
+                      aria-label="Rows per page"
+                    >
+                      <option value={25}>25 rows</option>
+                      <option value={50}>50 rows</option>
+                      <option value={100}>100 rows</option>
+                      <option value={250}>250 rows</option>
+                    </select>
+                  )}
+                </div>
+
+                {totalPages > 1 && (
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                      disabled={safePage <= 1}
+                      className="rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 disabled:opacity-40"
+                    >
+                      Previous
+                    </button>
+                    <span className="px-2 text-xs font-medium text-slate-600">
+                      {safePage}/{totalPages}
+                    </span>
+                    <button
+                      onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                      disabled={safePage >= totalPages}
+                      className="rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 disabled:opacity-40"
+                    >
+                      Next
+                    </button>
+                  </div>
+                )}
+              </div>
+          </>
         )}
       </div>
 
