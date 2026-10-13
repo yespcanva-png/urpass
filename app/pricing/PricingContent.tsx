@@ -87,40 +87,40 @@ type CellValue = boolean | string;
 
 type TableRow =
   | { type: "category"; label: string }
-  | { type: "row"; feature: string; free: CellValue; starter: CellValue; pro: CellValue; business: CellValue };
+  | { type: "row"; feature: string; starter: CellValue; pro: CellValue; business: CellValue };
 
 const TABLE: TableRow[] = [
   { type: "category", label: "Usage" },
-  { type: "row", feature: "Events / month",          free: "2",     starter: "10",    pro: "Unlimited", business: "Unlimited" },
-  { type: "row", feature: "Registrations / month",  free: "100",   starter: "500",   pro: "2,500",     business: "10,000" },
-  { type: "row", feature: "Organizer seats",         free: "1",     starter: "2",     pro: "5",         business: "15" },
+  { type: "row", feature: "Events / month",          starter: "10",    pro: "Unlimited", business: "Unlimited" },
+  { type: "row", feature: "Registrations / month",  starter: "500",   pro: "2,500",     business: "10,000" },
+  { type: "row", feature: "Organizer seats",         starter: "2",     pro: "5",         business: "15" },
 
   { type: "category", label: "Core" },
-  { type: "row", feature: "Registration forms",          free: true, starter: true, pro: true, business: true },
-  { type: "row", feature: "Digital QR passes",           free: true, starter: true, pro: true, business: true },
-  { type: "row", feature: "QR check-in",                 free: true, starter: true, pro: true, business: true },
-  { type: "row", feature: "Duplicate scan prevention",   free: true, starter: true, pro: true, business: true },
-  { type: "row", feature: "Attendee approval",           free: true, starter: true, pro: true, business: true },
-  { type: "row", feature: "Attendance tracking",         free: true, starter: true, pro: true, business: true },
+  { type: "row", feature: "Registration forms",          starter: true, pro: true, business: true },
+  { type: "row", feature: "Digital QR passes",           starter: true, pro: true, business: true },
+  { type: "row", feature: "QR check-in",                 starter: true, pro: true, business: true },
+  { type: "row", feature: "Duplicate scan prevention",   starter: true, pro: true, business: true },
+  { type: "row", feature: "Attendee approval",           starter: true, pro: true, business: true },
+  { type: "row", feature: "Attendance tracking",         starter: true, pro: true, business: true },
 
   { type: "category", label: "Data" },
-  { type: "row", feature: "Email notifications",         free: "Basic",    starter: true,       pro: true,        business: true },
-  { type: "row", feature: "CSV attendee import",         free: false,      starter: true,       pro: true,        business: true },
-  { type: "row", feature: "CSV export",                  free: false,      starter: true,       pro: true,        business: true },
-  { type: "row", feature: "Analytics",                   free: "Basic",    starter: "Standard", pro: "Advanced",  business: "Advanced" },
+  { type: "row", feature: "Email notifications",         starter: true,       pro: true,        business: true },
+  { type: "row", feature: "CSV attendee import",         starter: true,       pro: true,        business: true },
+  { type: "row", feature: "CSV export",                  starter: true,       pro: true,        business: true },
+  { type: "row", feature: "Analytics",                   starter: "Standard", pro: "Advanced",  business: "Advanced" },
 
   { type: "category", label: "Customisation" },
-  { type: "row", feature: "Custom registration fields",  free: "3 fields", starter: "10 fields", pro: "Unlimited", business: "Unlimited" },
-  { type: "row", feature: "Custom pass design",          free: false,      starter: false,       pro: true,        business: true },
-  { type: "row", feature: "Remove URPASS branding",      free: false,      starter: false,       pro: true,        business: true },
+  { type: "row", feature: "Custom registration fields",  starter: "10 fields", pro: "Unlimited", business: "Unlimited" },
+  { type: "row", feature: "Custom pass design",          starter: false,       pro: true,        business: true },
+  { type: "row", feature: "Remove URPASS branding",      starter: false,       pro: true,        business: true },
 
   { type: "category", label: "Scale" },
-  { type: "row", feature: "Team permissions",            free: false, starter: false, pro: "Basic",  business: "Advanced" },
-  { type: "row", feature: "Enterprise SSO (SAML 2.0 & OIDC)", free: false, starter: false, pro: false, business: true },
-  { type: "row", feature: "Custom domain",               free: false, starter: false, pro: false,    business: true },
-  { type: "row", feature: "API access",                  free: false, starter: false, pro: false,    business: true },
-  { type: "row", feature: "Webhooks",                    free: false, starter: false, pro: false,    business: true },
-  { type: "row", feature: "Support",                     free: "Standard", starter: "Standard", pro: "Priority", business: "Priority" },
+  { type: "row", feature: "Team permissions",            starter: false, pro: "Basic",  business: "Advanced" },
+  { type: "row", feature: "Enterprise SSO (SAML 2.0 & OIDC)", starter: false, pro: false, business: true },
+  { type: "row", feature: "Custom domain",               starter: false, pro: false,    business: true },
+  { type: "row", feature: "API access",                  starter: false, pro: false,    business: true },
+  { type: "row", feature: "Webhooks",                    starter: false, pro: false,    business: true },
+  { type: "row", feature: "Support",                     starter: "Standard", pro: "Priority", business: "Priority" },
 ];
 
 // ─── One-event passes ──────────────────────────────────────────────────────────
@@ -430,7 +430,17 @@ export default function PricingContent({
             </div>
           </div>
           {cycle === "annual" && (
-            <p className="mt-3 text-xs text-neutral-400">Save 2 months with annual billing</p>
+            <div className="mt-3 text-xs text-neutral-500 flex items-center justify-center gap-2 flex-wrap">
+              <span>Save 2 months with annual billing.</span>
+              <span className="text-neutral-300">·</span>
+              <span>Looking for university or multi-department plans?</span>
+              <Link
+                href="/campus-event-management-platform"
+                className="font-semibold text-emerald-600 hover:text-emerald-700 underline"
+              >
+                View Campus Licensing (From ₹9,999/year) &rarr;
+              </Link>
+            </div>
           )}
         </section>
 
@@ -477,7 +487,7 @@ export default function PricingContent({
 
         {/* ── 02 Plan Cards ── */}
         <section className="max-w-5xl mx-auto pb-20">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-stretch">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
             {PLANS.map((plan) => {
               const { price, sub } = displayPrice(plan);
               return (
@@ -581,7 +591,7 @@ export default function PricingContent({
                   if (row.type === "category") {
                     return (
                       <tr key={i} className="bg-neutral-50">
-                        <td colSpan={5} className="px-5 py-3 text-[10px] font-bold tracking-widest text-neutral-400 uppercase">
+                        <td colSpan={4} className="px-5 py-3 text-[10px] font-bold tracking-widest text-neutral-400 uppercase">
                           {row.label}
                         </td>
                       </tr>
@@ -590,7 +600,6 @@ export default function PricingContent({
                   return (
                     <tr key={i} className="border-t border-neutral-50 hover:bg-neutral-50/50">
                       <td className="px-5 py-3.5 text-sm text-neutral-600">{row.feature}</td>
-                      <td className="px-4 py-3.5 text-center"><Cell value={row.free} /></td>
                       <td className="px-4 py-3.5 text-center"><Cell value={row.starter} /></td>
                       <td className="px-4 py-3.5 text-center bg-neutral-900/[0.02]"><Cell value={row.pro} /></td>
                       <td className="px-4 py-3.5 text-center"><Cell value={row.business} /></td>
