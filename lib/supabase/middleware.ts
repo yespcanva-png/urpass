@@ -3,9 +3,12 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getSupabaseConfig } from "@/lib/supabase/config";
 import { clearAuthCookies, isRefreshTokenMissingError } from "@/lib/supabase/auth-cookies";
 import { logAuth, logAuthWarn } from "@/lib/auth/logger";
+import { resolveUserSubscriptionAccess } from "@/lib/billing/entitlement-resolver";
 
 const PROTECTED = ["/dashboard", "/event", "/create-event", "/scan", "/billing", "/org"];
 const AUTH_PAGES = ["/login", "/signup"];
+const ENTITLEMENT_REQUIRED = ["/dashboard", "/event", "/create-event", "/scan", "/org"];
+const ENTITLEMENT_ALLOWED = ["/billing", "/onboarding/subscription", "/support", "/contact"];
 
 function matchesPathSegment(pathname: string, route: string) {
   return pathname === route || pathname.startsWith(`${route}/`);
@@ -17,6 +20,18 @@ export function isProtectedPath(pathname: string) {
 
 export function isAuthPagePath(pathname: string) {
   return AUTH_PAGES.some((p) => matchesPathSegment(pathname, p));
+}
+
+function requiresSubscriptionAccess(pathname: string) {
+  // Operational continuity: Active event gate scanner terminals (/scan/[eventId]) must never be interrupted
+  if (pathname.startsWith("/scan/") && pathname !== "/scan") {
+    return false;
+  }
+  return ENTITLEMENT_REQUIRED.some((p) => matchesPathSegment(pathname, p));
+}
+
+function isEntitlementAllowedPath(pathname: string) {
+  return ENTITLEMENT_ALLOWED.some((p) => matchesPathSegment(pathname, p));
 }
 
 export async function updateSession(request: NextRequest) {
@@ -109,6 +124,49 @@ export async function updateSession(request: NextRequest) {
       clearAuthCookies(res, request);
     }
     return res;
+  }
+
+  if (user && (isProtected || isAuthPage) && !isEntitlementAllowedPath(pathname)) {
+    const access = await resolveUserSubscriptionAccess({ supabase, user });
+
+    if (isAuthPage) {
+      logAuth("middleware", "Authenticated user accessed login/signup", {
+        userId: user.id,
+        email: user.email,
+        entitlementState: access.state,
+      });
+      url.pathname = access.shouldRedirectToSubscriptionOnboarding
+        ? "/onboarding/subscription"
+        : access.shouldRedirectToBilling
+        ? "/billing"
+        : "/dashboard";
+      if (access.shouldRedirectToBilling) {
+        url.searchParams.set("reason", access.state);
+      }
+      const res = NextResponse.redirect(url);
+      supabaseResponse.cookies.getAll().forEach((cookie) => {
+        res.cookies.set(cookie);
+      });
+      return res;
+    }
+
+    if (requiresSubscriptionAccess(pathname) && !access.hasOrganizerAccess) {
+      logAuthWarn("middleware", "Missing active entitlement on protected organizer route", {
+        userId: user.id,
+        path: pathname,
+        entitlementState: access.state,
+      });
+      url.pathname = access.shouldRedirectToSubscriptionOnboarding
+        ? "/onboarding/subscription"
+        : "/billing";
+      url.search = "";
+      url.searchParams.set("reason", access.state);
+      const res = NextResponse.redirect(url);
+      supabaseResponse.cookies.getAll().forEach((cookie) => {
+        res.cookies.set(cookie);
+      });
+      return res;
+    }
   }
 
   if (isAuthPage && user) {

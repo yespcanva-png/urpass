@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
   Check,
   Sparkles,
@@ -18,15 +17,10 @@ import {
   ArrowRight,
 } from "lucide-react";
 import CheckoutButton from "./CheckoutButton";
-import SwitchPlanButton from "./SwitchPlanButton";
 import EventPassCheckoutModal from "./EventPassCheckoutModal";
-import TrialConfirmationModal from "./TrialConfirmationModal";
 import FounderCheckoutCta from "./FounderCheckoutCta";
-import { activateUkPlan } from "@/app/actions/billing";
-import { activateUkEventPass } from "@/app/actions/event-passes";
 
 const UK_PLAN_PRICES: Record<string, { monthly: number; annual: number }> = {
-  free: { monthly: 0, annual: 0 },
   starter: { monthly: 15, annual: 120 },
   pro: { monthly: 35, annual: 300 },
   business: { monthly: 79, annual: 699 },
@@ -40,20 +34,6 @@ const UK_EVENT_PASS_PRICES: Record<string, number> = {
 
 // ── Subscription plans ────────────────────────────────────────
 const PLANS = [
-  {
-    slug: "free",
-    name: "Free",
-    priceMonthly: 0,
-    annualTotal: 0,
-    features: [
-      "2 events/month",
-      "100 registrations/month",
-      "1 organizer seat",
-      "QR passes & check-in",
-      "Attendee approval",
-      "Basic analytics",
-    ],
-  },
   {
     slug: "starter",
     name: "Starter",
@@ -98,10 +78,8 @@ const PLANS = [
   },
 ] as const;
 
-type PlanSlug = (typeof PLANS)[number]["slug"];
-const PLAN_ORDER: Record<PlanSlug, number> = { free: 0, starter: 1, pro: 2, business: 3 };
+const PLAN_ORDER: Record<string, number> = { free: 0, starter: 1, pro: 2, business: 3 };
 const PLAN_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
-  free: Sparkles,
   starter: Zap,
   pro: Crown,
   business: TrendingUp,
@@ -173,18 +151,14 @@ export default function PlanGrid({
   trialUsed = false,
   country = "IN",
 }: Props) {
-  const router = useRouter();
   const [tab, setTab] = useState<"subscription" | "one-event" | "lifetime" | "all">("subscription");
   const [cycle, setCycle] = useState<"monthly" | "annual">("monthly");
-  const [activatingSlug, setActivatingSlug] = useState<string | null>(null);
-  const [trialModal, setTrialModal] = useState<{ planSlug: string; planName: string } | null>(null);
   const [passModal, setPassModal] = useState<{
     passType: string;
     passName: string;
     priceRupees: number;
     registrationLimit: number;
   } | null>(null);
-  const [activatingPass, setActivatingPass] = useState<string | null>(null);
   const [actionNotice, setActionNotice] = useState<{ type: "error" | "success"; message: string } | null>(null);
 
   return (
@@ -194,7 +168,7 @@ export default function PlanGrid({
         <div>
           <p className="text-[10px] font-bold tracking-wider uppercase text-neutral-400">
             {tab === "subscription"
-              ? "Recurring Memberships · 4 Tiers"
+              ? "Recurring Memberships · 3 Tiers"
               : tab === "one-event"
               ? "Pay As You Go · Single Event Passes"
               : tab === "lifetime"
@@ -272,8 +246,8 @@ export default function PlanGrid({
       {/* ── Subscription section ─────────────────────────────── */}
       {(tab === "subscription" || tab === "all") && (
         <section className={tab === "all" ? "mb-10" : ""}>
-          {/* Corporate 30-Day Free Trial Notice */}
-          {!trialUsed && (
+          {/* Introductory paid offer notice */}
+          {!trialUsed && country !== "GB" && (
             <div className="mb-6 rounded-2xl p-4 bg-brand-50/60 border border-brand-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-neutral-800 shadow-xs">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-brand-100/70 border border-brand-200/80 flex items-center justify-center text-brand shrink-0">
@@ -282,16 +256,14 @@ export default function PlanGrid({
                 <div>
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-xs font-bold text-neutral-900">
-                      30-Day Free Trial Included
+                      ₹29 Monthly Introductory Offer
                     </span>
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-brand-100 text-brand-700 uppercase tracking-wide">
-                      {country === "GB" ? "No Card Needed" : "AutoPay Protected"}
+                      New monthly subscriptions
                     </span>
                   </div>
                   <p className="text-xs text-neutral-600 mt-0.5">
-                    {country === "GB"
-                      ? "Activate Starter, Pro, or Business with 30 days £0 trial. Cancel anytime."
-                      : "Explore Starter, Pro, or Business for 30 days free. Cancel anytime before your first billing."}
+                    Starter, Pro, or Business starts at ₹29/month for the first 2 paid billing cycles. Autopay is required and regular renewal pricing is shown before activation.
                   </p>
                 </div>
               </div>
@@ -338,11 +310,11 @@ export default function PlanGrid({
           </div>
 
           {/* Clean corporate plan cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {PLANS.map((p) => {
               const isCurrent = p.slug === currentPlanSlug;
               const isMostPopular = p.slug === "pro" && !isCurrent;
-              const planIndex = PLAN_ORDER[p.slug as PlanSlug] ?? 0;
+              const planIndex = PLAN_ORDER[p.slug] ?? 0;
               const isUpgrade = !isCurrent && planIndex > currentPlanIndex;
               const Icon = PLAN_ICONS[p.slug] ?? Sparkles;
               const ukPlan = UK_PLAN_PRICES[p.slug] ?? { monthly: 35, annual: 300 };
@@ -350,9 +322,7 @@ export default function PlanGrid({
               const isIntroEligible = !trialUsed && country !== "GB" && cycle === "monthly" && ["starter", "pro", "business"].includes(p.slug);
 
               const displayPrice =
-                p.priceMonthly === 0
-                  ? "Free"
-                  : isIntroEligible
+                isIntroEligible
                   ? "₹29"
                   : country === "GB"
                   ? cycle === "annual"
@@ -363,9 +333,7 @@ export default function PlanGrid({
                   : `₹${p.priceMonthly.toLocaleString("en-IN")}`;
 
               const displayPeriod =
-                p.priceMonthly === 0
-                  ? ""
-                  : isIntroEligible
+                isIntroEligible
                   ? "/mo (2 mos)"
                   : cycle === "annual"
                   ? "/yr"
@@ -453,7 +421,7 @@ export default function PlanGrid({
                       <div className="w-full text-center text-xs font-semibold py-2.5 rounded-xl border border-neutral-200 bg-neutral-50 text-neutral-400">
                         Current Plan
                       </div>
-                    ) : p.priceMonthly > 0 ? (
+                    ) : (
                       <div className="flex flex-col gap-1.5">
                         <CheckoutButton
                           planSlug={p.slug}
@@ -489,12 +457,6 @@ export default function PlanGrid({
                             : "Autopay required · Cancel renewal anytime"}
                         </p>
                       </div>
-                    ) : (
-                      <SwitchPlanButton
-                        planSlug={p.slug}
-                        planName={p.name}
-                        className="w-full py-2.5 text-xs font-medium rounded-xl border border-neutral-200 text-neutral-700 hover:bg-neutral-50 transition-colors shadow-xs"
-                      />
                     )}
                   </div>
                 </div>
@@ -668,20 +630,6 @@ export default function PlanGrid({
           priceRupees={passModal.priceRupees}
           registrationLimit={passModal.registrationLimit}
           currency={country === "GB" ? "GBP" : "INR"}
-          userEmail={userEmail}
-          userName={userName}
-        />
-      )}
-
-      {/* 30-Day Free Trial Modal */}
-      {trialModal && (
-        <TrialConfirmationModal
-          isOpen={Boolean(trialModal)}
-          onClose={() => setTrialModal(null)}
-          planSlug={trialModal.planSlug}
-          planName={trialModal.planName}
-          cycle={cycle}
-          country={country}
           userEmail={userEmail}
           userName={userName}
         />

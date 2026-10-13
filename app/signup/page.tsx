@@ -144,11 +144,7 @@ function SignupContent() {
       searchParams,
       typeof document !== "undefined" ? document.referrer : null
     );
-    const destination = eventName
-      ? `/create-event?eventName=${encodeURIComponent(eventName)}`
-      : target !== "/dashboard"
-      ? target
-      : "/onboarding";
+    const destination = "/onboarding/subscription";
     setSuccess(true);
     setTimeout(() => router.push(destination), 1200);
   }
@@ -188,6 +184,8 @@ function SignupContent() {
     );
     const destination = eventName
       ? `/create-event?eventName=${encodeURIComponent(eventName)}`
+      : target === "/dashboard"
+      ? "/onboarding/subscription"
       : target;
     window.location.href = `/api/auth/google/redirect?next=${encodeURIComponent(destination)}`;
   }

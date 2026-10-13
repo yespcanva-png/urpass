@@ -11,6 +11,7 @@ import { recordApiUsage } from "@/lib/api-usage";
 import { getSupabaseUrl } from "@/lib/supabase/config";
 import { recordLiveOpsEvent } from "@/lib/ops/events";
 import { validateEventPreflightReadiness } from "@/lib/events/preflight";
+import { resolveUserSubscriptionAccess } from "@/lib/billing/entitlement-resolver";
 import type { CustomFieldDefinition } from "@/types";
 
 function adminClient() {
@@ -62,6 +63,15 @@ export async function createEvent(data: EventInput, organizationId?: string): Pr
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
+
+  const access = await resolveUserSubscriptionAccess({ supabase, user });
+  if (!access.hasOrganizerAccess) {
+    return {
+      error: access.shouldRedirectToSubscriptionOnboarding
+        ? "Paid subscription required to create events. Please activate your subscription at /onboarding/subscription."
+        : "Your subscription has expired. Please renew your subscription to create events.",
+    };
+  }
 
   const parsed = eventSchema.safeParse(data);
   if (!parsed.success) {
@@ -931,6 +941,15 @@ export async function duplicateEvent(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
+
+  const access = await resolveUserSubscriptionAccess({ supabase, user });
+  if (!access.hasOrganizerAccess) {
+    return {
+      error: access.shouldRedirectToSubscriptionOnboarding
+        ? "Paid subscription required to duplicate events. Please activate your subscription at /onboarding/subscription."
+        : "Your subscription has expired. Please renew your subscription to duplicate events.",
+    };
+  }
 
   const { data: source } = await supabase
     .from("events")

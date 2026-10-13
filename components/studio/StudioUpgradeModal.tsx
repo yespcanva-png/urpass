@@ -120,7 +120,7 @@ export default function StudioUpgradeModal({
               Current plan: <span className="uppercase font-bold text-neutral-800">{currentPlan}</span>
             </span>
             <span className="text-xs font-bold text-neutral-900">
-              Pro starts at ₹999/mo · 30-day free trial
+              Pro starts at ₹29/mo (intro offer) or £35/mo
             </span>
           </div>
 
@@ -134,10 +134,10 @@ export default function StudioUpgradeModal({
             </button>
 
             <Link
-              href="/pricing?plan=pro"
+              href="/billing?plan=pro"
               className="flex-1 sm:flex-none px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-1.5"
             >
-              <span>Start 30-Day Trial</span>
+              <span>Upgrade to Pro</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>

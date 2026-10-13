@@ -117,6 +117,8 @@ export async function revertToLifetimePlan(): Promise<ActionResult> {
 }
 
 export async function activateFreeTrial(planSlug: string): Promise<ActionResult> {
+  return { error: "Free trials are no longer available. Please choose and activate a paid subscription." };
+  /*
   if (!planSlug || !["starter", "pro", "business"].includes(planSlug)) {
     return { error: "Free trial is only available on Starter, Pro, or Business plans." };
   }
@@ -220,6 +222,7 @@ export async function activateFreeTrial(planSlug: string): Promise<ActionResult>
 
   revalidateBillingPaths();
   return undefined;
+  */
 }
 
 export async function activateTrialSubscription(
@@ -231,6 +234,8 @@ export async function activateTrialSubscription(
     signature?: string;
   }
 ): Promise<ActionResult> {
+  return { error: "Free trials are no longer available. Please choose and activate a paid subscription." };
+  /*
   if (!planSlug || !["starter", "pro", "business"].includes(planSlug)) {
     return { error: "Free trial is only available on Starter, Pro, or Business plans." };
   }
@@ -362,9 +367,12 @@ export async function activateTrialSubscription(
   }
 
   revalidateBillingPaths();
+  */
 }
 
 export async function activateUkFreeTrial(planSlug: string): Promise<ActionResult> {
+  return { error: "Free trials are no longer available. Please choose and activate a paid subscription." };
+  /*
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
@@ -466,6 +474,7 @@ export async function activateUkFreeTrial(planSlug: string): Promise<ActionResul
 
   revalidateBillingPaths();
   return { success: true };
+  */
 }
 
 export async function activateUkPlan(
@@ -572,8 +581,6 @@ export async function activateUkPlan(
 export async function switchPlan(
   planSlug: string
 ): Promise<ActionResult> {
-  // Only the free plan can be switched to directly without payment verification.
-  // All paid plans must go through activatePaidSubscription with Razorpay verification.
   if (planSlug !== "free") {
     return { error: "Paid plans require payment verification. Please use the checkout flow." };
   }
@@ -594,38 +601,7 @@ export async function switchPlan(
     return revertToLifetimePlan();
   }
 
-  const { data: targetPlan } = await admin
-    .from("plans")
-    .select("id, slug")
-    .eq("slug", planSlug)
-    .eq("is_active", true)
-    .single();
-
-  if (!targetPlan) return { error: "Plan not found." };
-
-  const periodStart = new Date();
-  const { error } = await admin
-    .from("subscriptions")
-    .upsert(
-      {
-        user_id: user.id,
-        plan_id: targetPlan.id,
-        status: "active",
-        provider: "free",
-        billing_cycle: null,
-        current_period_start: periodStart.toISOString(),
-        current_period_end: periodEnd("monthly").toISOString(),
-        cancel_at_period_end: false,
-        registrations_used: 0,
-        has_lifetime_access: false,
-        lifetime_plan_slug: null,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "user_id" }
-    );
-
-  if (error) return { error: error.message };
-  revalidateBillingPaths();
+  return { error: "The Free plan is closed to new activations. Please choose a paid subscription." };
 }
 
 interface CouponRedemptionData {

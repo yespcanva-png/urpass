@@ -30,6 +30,7 @@ interface Props {
   children: React.ReactNode;
   className?: string;
   style?: React.CSSProperties;
+  successRedirect?: string;
 }
 
 export default function CheckoutButton({
@@ -37,7 +38,7 @@ export default function CheckoutButton({
   billingCycle = "monthly",
   userEmail, userName,
   currency = "INR",
-  children, className = "", style,
+  children, className = "", style, successRedirect,
 }: Props) {
   const [open, setOpen] = useState(false);
   const isUk = (currency || "").toUpperCase() === "GBP";
@@ -65,6 +66,7 @@ export default function CheckoutButton({
         currency={currency}
         priceMonthly={prices.priceMonthly}
         annualTotal={prices.annualTotal}
+        successRedirect={successRedirect}
       />
     </>
   );

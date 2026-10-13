@@ -21,6 +21,7 @@ interface Props {
   currency?: "INR" | "GBP";
   priceMonthly: number;
   annualTotal: number;
+  successRedirect?: string;
 }
 
 declare global {
@@ -92,6 +93,7 @@ export default function CheckoutModal({
   userEmail, userName,
   currency = "INR",
   priceMonthly, annualTotal,
+  successRedirect,
 }: Props) {
   const [couponInput, setCouponInput]       = useState("");
   const [couponLoading, setCouponLoading]   = useState(false);
@@ -298,7 +300,12 @@ export default function CheckoutModal({
               return;
             }
             onClose();
-            router.push(isLifetime ? "/billing?upgraded=true&plan=Founder%20Lifetime" : `/billing?upgraded=true&plan=${encodeURIComponent(planName)}`);
+            router.push(
+              successRedirect ||
+                (isLifetime
+                  ? "/billing?upgraded=true&plan=Founder%20Lifetime"
+                  : `/billing?upgraded=true&plan=${encodeURIComponent(planName)}`)
+            );
             router.refresh();
           } catch (err) {
             setPayLoading(false);
@@ -505,6 +512,10 @@ export default function CheckoutModal({
           {isLifetime ? (
             <p className="text-[11px] text-emerald-600 font-medium text-center -mt-2">
               One-time payment · Zero renewal fees · Valid for the lifetime of URPASS
+            </p>
+          ) : isIntroOffer ? (
+            <p className="text-[11px] text-brand-700 font-semibold text-center -mt-2">
+              Introductory offer: ₹29/month for first 2 months. Subsequent regular renewal is ₹{priceMonthly.toLocaleString("en-IN")}/month +GST. Cancel renewal anytime.
             </p>
           ) : coupon?.durationMonths ? (
             <p className="text-[11px] text-neutral-400 text-center -mt-2">

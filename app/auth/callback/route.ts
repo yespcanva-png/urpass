@@ -101,6 +101,15 @@ export async function GET(request: Request) {
         console.error("[auth/callback] notifyOwnerUserLogin error:", e);
       }
     }
+
+    if (isNew && target === "/dashboard") {
+      const onboardingResponse = NextResponse.redirect(`${origin}/onboarding/subscription`);
+      response.cookies.getAll().forEach((c) => {
+        onboardingResponse.cookies.set(c);
+      });
+      return onboardingResponse;
+    }
+
     return response;
   }
 

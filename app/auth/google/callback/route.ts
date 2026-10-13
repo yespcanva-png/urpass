@@ -369,7 +369,9 @@ export async function GET(req: NextRequest) {
       });
     } else {
       userId = linkRes.data.user.id;
-      if (!existingProfile?.user_id) {
+      const userCreatedAt = linkRes.data.user.created_at ? new Date(linkRes.data.user.created_at) : new Date(0);
+      const effectiveAt = new Date(process.env.PAID_ONBOARDING_EFFECTIVE_AT || "2026-10-13T00:00:00.000Z");
+      if (!existingProfile?.user_id && userCreatedAt >= effectiveAt) {
         isNewUser = true;
       }
       logAuth("user_sync", "Resolved user in Supabase Auth", { userId, email: normalizedEmail, isNewUser });
@@ -386,7 +388,7 @@ export async function GET(req: NextRequest) {
     // 5. Determine post-login redirect destination
     const destination = target !== "/dashboard"
       ? target
-      : (isNewUser ? "/onboarding" : "/dashboard");
+      : (isNewUser ? "/onboarding/subscription" : "/dashboard");
 
     // Cache the code -> destination mapping to immediately satisfy any repeat browser/prefetch requests
     recentExchangedCodes.set(code, { destination, ts: Date.now() });

@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Check, Minus, ChevronDown, ShieldCheck, ArrowRight, Globe } from "lucide-react";
 import { cn } from "@/lib/utils";
-import TrialConfirmationModal from "@/components/billing/TrialConfirmationModal";
 import FounderSpotCounter from "@/components/billing/FounderSpotCounter";
 import { detectCountryClient, persistCountryPreference } from "@/lib/country-config";
 
@@ -233,7 +232,6 @@ export default function PricingContent({
 }: Props = {}) {
   const [cycle, setCycle] = useState<Cycle>("monthly");
   const [country, setCountry] = useState<"IN" | "GB">(initialCountry);
-  const [trialModal, setTrialModal] = useState<{ planSlug: string; planName: string } | null>(null);
 
   useEffect(() => {
     const detected = detectCountryClient();
@@ -745,19 +743,6 @@ export default function PricingContent({
         </div>
       </footer>
 
-      {/* ── 30-Day Free Trial Modal ── */}
-      {trialModal && (
-        <TrialConfirmationModal
-          isOpen={Boolean(trialModal)}
-          onClose={() => setTrialModal(null)}
-          planSlug={trialModal.planSlug}
-          planName={trialModal.planName}
-          cycle={cycle}
-          country={country}
-          userEmail={userEmail}
-          userName={userName}
-        />
-      )}
     </div>
   );
 }

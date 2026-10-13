@@ -41,16 +41,16 @@ export default function FAQSection({ initialCountry = "IN" }: Props) {
       a: "No. Each pass can only be checked in once. If a second scan is attempted, URPASS shows an 'Already Checked In' result with the original time.",
     },
     {
-      q: "Can I start for free or try a paid plan?",
+      q: "How does URPASS subscription pricing work?",
       a: isUk
-        ? "Yes. The permanent Free tier lets you host 2 events/month with up to 100 registrations/month at £0 forever with no card required. You can also evaluate any paid plan (Starter, Pro, Business) with a 30-day free trial (payment method required, cancel anytime)."
-        : "Yes. The permanent Free tier lets you host 2 events/month with up to 100 registrations/month at ₹0 forever with no card required. You can also evaluate any paid plan (Starter, Pro, Business) with a 30-day free trial (AutoPay mandate required, ₹0 due today, cancel anytime).",
+        ? "URPASS provides transparent UK plans (Starter £15/mo, Pro £35/mo, and Business £79/mo) with direct activation and cancel-anytime renewal."
+        : "URPASS provides monthly plans starting with an introductory ₹29/month offer for the first 2 months on Starter, Pro, or Business, followed by regular monthly renewal. You can cancel renewal anytime.",
     },
     {
       q: "Does URPASS charge per-ticket commission fees?",
       a: isUk
         ? "No. Unlike platforms like Eventbrite that take 3.7%+ per ticket, URPASS charges zero per-ticket platform fees in the UK. You keep 100% of your ticket revenue."
-        : "No. Unlike platforms like Eventbrite that take 3.7%+ per ticket, URPASS charges zero per-ticket platform fees. You only pay your flat monthly subscription or use the free plan.",
+        : "No. Unlike platforms like Eventbrite that take 3.7%+ per ticket, URPASS charges zero per-ticket platform fees. You only pay your flat monthly subscription or event pass.",
     },
     {
       q: "How fast is the entry check-in scanner?",
