@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import Link from "next/link";
+import Image from "next/image";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import {
   CheckCircle2,
@@ -1406,20 +1408,33 @@ export default function ScanEventPage() {
   );
 
   return (
-    <div className="min-h-dvh bg-zinc-950 text-zinc-100 flex flex-col page-in select-none touch-manipulation pb-safe">
+    <div className="min-h-dvh bg-neutral-950 text-neutral-100 flex flex-col page-in select-none touch-manipulation pb-safe">
 
       {/* ── Corporate Clean Top Navigation Bar ────────────────────────────── */}
-      <header className="sticky top-0 z-30 flex h-14 sm:h-16 shrink-0 items-center justify-between border-b border-zinc-800/80 bg-zinc-900/90 backdrop-blur-md px-3 sm:px-6 shadow-xs">
+      <header className="sticky top-0 z-30 flex h-14 sm:h-16 shrink-0 items-center justify-between border-b border-neutral-800/80 bg-neutral-900/90 backdrop-blur-md px-3 sm:px-6 shadow-xs">
         
         {/* Left: Back & Live Network Health Indicator */}
         <div className="flex items-center gap-2 sm:gap-3">
           <button
             onClick={() => router.push("/scan")}
-            className="-ml-1 rounded-lg p-2 text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-white"
+            className="-ml-1 rounded-lg p-2 text-neutral-400 transition-colors hover:bg-neutral-800 hover:text-white"
             aria-label="Back to events"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
+
+          <Link href="/scan" className="flex items-center gap-2 pr-1 select-none">
+            <Image
+              src="/icon.png"
+              alt="URPASS"
+              width={22}
+              height={22}
+              className="rounded-md object-contain shrink-0"
+            />
+            <span className="font-bold tracking-tight text-sm text-white hidden sm:inline">
+              URPASS
+            </span>
+          </Link>
 
           <button
             onClick={() => setSettingsDrawerOpen(true)}
@@ -1434,7 +1449,7 @@ export default function ScanEventPage() {
               {isOnline ? "Live" : "Offline"}
             </span>
             {queuePending > 0 && (
-              <span className="rounded bg-zinc-800 border border-zinc-700 px-1.5 py-0.5 text-[10px] font-bold text-zinc-200 tabular-nums">
+              <span className="rounded bg-neutral-800 border border-neutral-700 px-1.5 py-0.5 text-[10px] font-bold text-neutral-200 tabular-nums">
                 {queuePending}
               </span>
             )}
@@ -1443,24 +1458,24 @@ export default function ScanEventPage() {
 
         {/* Center: Title & Gate Context */}
         <div className="flex flex-col items-center justify-center min-w-0 px-2 flex-1 text-center">
-          <span className="text-xs sm:text-sm font-bold text-zinc-100 max-w-[140px] sm:max-w-md truncate leading-tight">
+          <span className="text-xs sm:text-sm font-bold text-neutral-100 max-w-[140px] sm:max-w-md truncate leading-tight">
             {eventName || "QR Scanner"}
           </span>
-          <span className="text-[11px] text-zinc-400 font-medium truncate max-w-[180px] sm:max-w-xs flex items-center justify-center gap-1 mt-0.5">
+          <span className="text-[11px] text-neutral-400 font-medium truncate max-w-[180px] sm:max-w-xs flex items-center justify-center gap-1 mt-0.5">
             {selectedSession ? (
-              <span className="inline-flex items-center gap-1 text-blue-400 font-semibold truncate">
+              <span className="inline-flex items-center gap-1 text-emerald-400 font-semibold truncate">
                 <Layers className="w-3 h-3 shrink-0" />
                 <span className="truncate">{selectedSession.title}</span>
               </span>
             ) : selectedGate ? (
-              <span className="inline-flex items-center gap-1 text-zinc-300 truncate">
-                <DoorOpen className="w-3 h-3 shrink-0 text-zinc-500" />
+              <span className="inline-flex items-center gap-1 text-neutral-300 truncate">
+                <DoorOpen className="w-3 h-3 shrink-0 text-neutral-500" />
                 <span className="truncate">{selectedGate.name}</span>
               </span>
             ) : gates.length > 0 ? (
               <span className="text-amber-400 font-semibold">Select Gate</span>
             ) : (
-              <span className="text-zinc-500">General Entrance</span>
+              <span className="text-neutral-500">General Entrance</span>
             )}
           </span>
         </div>
@@ -1478,7 +1493,7 @@ export default function ScanEventPage() {
 
           <button
             onClick={() => setSettingsDrawerOpen(true)}
-            className="rounded-lg border border-zinc-800 bg-zinc-900 p-2 text-zinc-300 transition-colors hover:bg-zinc-800 hover:text-white"
+            className="rounded-lg border border-neutral-800 bg-neutral-900 p-2 text-neutral-300 transition-colors hover:bg-neutral-800 hover:text-white"
             aria-label="Scanner controls & settings"
             title="Gate, Session & Device Settings"
           >
@@ -1502,7 +1517,7 @@ export default function ScanEventPage() {
           </div>
           <button
             onClick={() => setSyncBanner(null)}
-            className="text-zinc-400 hover:text-zinc-200 text-xs p-1"
+            className="text-neutral-400 hover:text-neutral-200 text-xs p-1"
           >
             <X className="h-3.5 w-3.5" />
           </button>
@@ -1518,7 +1533,7 @@ export default function ScanEventPage() {
           {/* Mode & Direction Switcher Bar */}
           <div className="flex w-full shrink-0 items-center justify-between gap-2.5 pb-3">
             {/* Segmented Mode Controller */}
-            <div className="flex flex-1 items-center rounded-lg border border-zinc-800 bg-zinc-900 p-1 shadow-2xs">
+            <div className="flex flex-1 items-center rounded-lg border border-neutral-800 bg-neutral-900 p-1 shadow-2xs">
               <button
                 onClick={() => {
                   setManualMode(false);
@@ -1526,8 +1541,8 @@ export default function ScanEventPage() {
                 }}
                 className={`flex flex-1 items-center justify-center gap-1.5 rounded-md px-3 py-2 text-xs font-bold transition-all ${
                   !manualMode
-                    ? "bg-blue-600 text-white shadow-xs"
-                    : "text-zinc-400 hover:text-zinc-200"
+                    ? "bg-emerald-600 text-white shadow-xs"
+                    : "text-neutral-400 hover:text-neutral-200"
                 }`}
               >
                 <ScanLine className="w-3.5 h-3.5" />
@@ -1542,8 +1557,8 @@ export default function ScanEventPage() {
                 }}
                 className={`flex flex-1 items-center justify-center gap-1.5 rounded-md px-3 py-2 text-xs font-bold transition-all ${
                   manualMode
-                    ? "bg-blue-600 text-white shadow-xs"
-                    : "text-zinc-400 hover:text-zinc-200"
+                    ? "bg-emerald-600 text-white shadow-xs"
+                    : "text-neutral-400 hover:text-neutral-200"
                 }`}
               >
                 <Search className="w-3.5 h-3.5" />
@@ -1557,7 +1572,7 @@ export default function ScanEventPage() {
               className={`flex items-center gap-1.5 rounded-lg border px-3 py-2 text-[11px] font-bold uppercase tracking-wider transition-colors shadow-2xs ${
                 scanDirection === "in"
                   ? "bg-emerald-950/40 text-emerald-400 border-emerald-800/80 hover:bg-emerald-900/50"
-                  : "bg-blue-950/40 text-blue-400 border-blue-800/80 hover:bg-blue-900/50"
+                  : "bg-blue-950/40 text-emerald-400 border-emerald-800/80 hover:bg-blue-900/50"
               }`}
               title="Toggle Entry / Exit"
             >
@@ -1577,25 +1592,25 @@ export default function ScanEventPage() {
               : null;
 
             return (
-              <div className="w-full mb-3 lg:hidden flex shrink-0 items-center justify-between gap-3 rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-2.5 shadow-2xs">
+              <div className="w-full mb-3 lg:hidden flex shrink-0 items-center justify-between gap-3 rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-2.5 shadow-2xs">
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full bg-blue-500" />
-                    <p className="text-xs font-bold text-zinc-100 truncate">{selectedSession.title}</p>
+                    <p className="text-xs font-bold text-neutral-100 truncate">{selectedSession.title}</p>
                   </div>
-                  <p className="text-[10px] text-zinc-400 truncate mt-0.5">
+                  <p className="text-[10px] text-neutral-400 truncate mt-0.5">
                     {roomName} · {selectedSession.start_time?.slice(0, 5)} - {selectedSession.end_time?.slice(0, 5)}
                   </p>
                 </div>
 
                 <div className="flex items-center gap-3 shrink-0">
                   <div className="text-right">
-                    <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">Seats</p>
+                    <p className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider">Seats</p>
                     <div className="flex items-center gap-1">
                       <span className="text-sm font-black text-emerald-400 tabular-nums">
                         {currentChecked}
                       </span>
-                      <span className="text-xs font-medium text-zinc-500">
+                      <span className="text-xs font-medium text-neutral-500">
                         / {effectiveCapacity ?? "∞"}
                       </span>
                     </div>
@@ -1603,14 +1618,14 @@ export default function ScanEventPage() {
 
                   {effectiveCapacity !== null && (
                     <div className="flex flex-col items-end">
-                      <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">Occ.</p>
+                      <p className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider">Occ.</p>
                       <span
                         className={`text-xs font-black tabular-nums ${
                           (occupancyPct ?? 0) >= 100
                             ? "text-red-400"
                             : (occupancyPct ?? 0) >= 80
                             ? "text-amber-400"
-                            : "text-blue-400"
+                            : "text-emerald-400"
                         }`}
                       >
                         {occupancyPct}%
@@ -1630,25 +1645,25 @@ export default function ScanEventPage() {
           <div className="w-full flex-1 flex flex-col gap-3">
             {/* Search Input */}
             <div className="relative">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 pointer-events-none" />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500 pointer-events-none" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search attendee by name or email"
                 autoFocus
-                className="w-full rounded-lg border border-zinc-800 bg-zinc-900 py-3 pl-10 pr-9 text-sm text-zinc-100 outline-none transition-colors placeholder:text-zinc-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-900/40 shadow-2xs"
+                className="w-full rounded-lg border border-neutral-800 bg-neutral-900 py-3 pl-10 pr-9 text-sm text-neutral-100 outline-none transition-colors placeholder:text-neutral-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-900/40 shadow-2xs"
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 rounded p-1 text-zinc-400 hover:bg-zinc-800 hover:text-white"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 rounded p-1 text-neutral-400 hover:bg-neutral-800 hover:text-white"
                 >
                   <X className="w-4 h-4" />
                 </button>
               )}
               {searchLoading && (
-                <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 animate-spin" />
+                <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 animate-spin" />
               )}
             </div>
 
@@ -1659,8 +1674,8 @@ export default function ScanEventPage() {
                   onClick={() => setSearchFilter("all")}
                   className={`shrink-0 rounded-md border px-3 py-1.5 text-[11px] font-bold transition-colors ${
                     searchFilter === "all"
-                      ? "border-blue-600 bg-blue-600 text-white"
-                      : "border-zinc-800 bg-zinc-900 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
+                      ? "border-emerald-600 bg-blue-600 text-white"
+                      : "border-neutral-800 bg-neutral-900 text-neutral-400 hover:bg-neutral-800 hover:text-neutral-200"
                   }`}
                 >
                   All ({searchResults.length})
@@ -1670,7 +1685,7 @@ export default function ScanEventPage() {
                   className={`shrink-0 rounded-md border px-3 py-1.5 text-[11px] font-bold transition-colors ${
                     searchFilter === "pending"
                       ? "border-amber-800/80 bg-amber-950/40 text-amber-300"
-                      : "border-zinc-800 bg-zinc-900 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
+                      : "border-neutral-800 bg-neutral-900 text-neutral-400 hover:bg-neutral-800 hover:text-neutral-200"
                   }`}
                 >
                   Not In ({searchResults.filter((a) => a.pass_status !== "checked_in").length})
@@ -1680,7 +1695,7 @@ export default function ScanEventPage() {
                   className={`shrink-0 rounded-md border px-3 py-1.5 text-[11px] font-bold transition-colors ${
                     searchFilter === "checked_in"
                       ? "border-emerald-800/80 bg-emerald-950/40 text-emerald-300"
-                      : "border-zinc-800 bg-zinc-900 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
+                      : "border-neutral-800 bg-neutral-900 text-neutral-400 hover:bg-neutral-800 hover:text-neutral-200"
                   }`}
                 >
                   Admitted ({searchResults.filter((a) => a.pass_status === "checked_in").length})
@@ -1691,18 +1706,18 @@ export default function ScanEventPage() {
             {/* Search Results List */}
             <div className="flex max-h-[58vh] flex-1 flex-col gap-2 overflow-y-auto pr-0.5">
               {searchQuery.length >= 2 && !searchLoading && filteredSearchResults.length === 0 && (
-                <div className="flex flex-col items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900 p-6 py-12 text-center">
-                  <Users className="w-10 h-10 text-zinc-600 mb-2" />
-                  <p className="text-sm font-semibold text-zinc-300">No matching attendees found</p>
-                  <p className="text-xs text-zinc-500 mt-1">Verify name or email spelling</p>
+                <div className="flex flex-col items-center justify-center rounded-lg border border-neutral-800 bg-neutral-900 p-6 py-12 text-center">
+                  <Users className="w-10 h-10 text-neutral-600 mb-2" />
+                  <p className="text-sm font-semibold text-neutral-300">No matching attendees found</p>
+                  <p className="text-xs text-neutral-500 mt-1">Verify name or email spelling</p>
                 </div>
               )}
 
               {searchQuery.length < 2 && (
-                <div className="flex flex-col items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900 p-6 py-12 text-center">
-                  <Search className="w-10 h-10 text-zinc-600 mb-2" />
-                  <p className="text-sm font-semibold text-zinc-300">Type at least 2 characters</p>
-                  <p className="text-xs text-zinc-500 mt-1">Search attendees for fast manual verification</p>
+                <div className="flex flex-col items-center justify-center rounded-lg border border-neutral-800 bg-neutral-900 p-6 py-12 text-center">
+                  <Search className="w-10 h-10 text-neutral-600 mb-2" />
+                  <p className="text-sm font-semibold text-neutral-300">Type at least 2 characters</p>
+                  <p className="text-xs text-neutral-500 mt-1">Search attendees for fast manual verification</p>
                 </div>
               )}
 
@@ -1712,19 +1727,19 @@ export default function ScanEventPage() {
                 return (
                   <div
                     key={a.id}
-                    className={`rounded-lg border bg-zinc-900 p-3.5 transition-colors ${
-                      isIn ? "border-emerald-800/80 bg-emerald-950/20" : "border-zinc-800 hover:border-zinc-700"
+                    className={`rounded-lg border bg-neutral-900 p-3.5 transition-colors ${
+                      isIn ? "border-emerald-800/80 bg-emerald-950/20" : "border-neutral-800 hover:border-neutral-700"
                     }`}
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className="truncate text-sm font-bold text-zinc-100">{a.name}</span>
-                          <span className="rounded border border-zinc-800 bg-zinc-800/80 px-1.5 py-0.5 text-[9px] font-bold uppercase text-zinc-400">
+                          <span className="truncate text-sm font-bold text-neutral-100">{a.name}</span>
+                          <span className="rounded border border-neutral-800 bg-neutral-800/80 px-1.5 py-0.5 text-[9px] font-bold uppercase text-neutral-400">
                             {PASS_TYPE_LABEL[a.pass_type] ?? a.pass_type}
                           </span>
                         </div>
-                        <p className="mt-0.5 truncate text-xs text-zinc-400">{a.email}</p>
+                        <p className="mt-0.5 truncate text-xs text-neutral-400">{a.email}</p>
                         <div className="mt-2 flex flex-wrap items-center gap-1.5">
                           <span
                             className={`rounded-md border px-2 py-0.5 text-[10px] font-bold ${
@@ -1735,7 +1750,7 @@ export default function ScanEventPage() {
                           >
                             {isIn ? "Checked in" : "Not checked in"}
                           </span>
-                          <span className="rounded-md border border-zinc-800 bg-zinc-800/80 px-2 py-0.5 text-[10px] font-semibold capitalize text-zinc-400">
+                          <span className="rounded-md border border-neutral-800 bg-neutral-800/80 px-2 py-0.5 text-[10px] font-semibold capitalize text-neutral-400">
                             {a.pass_status.replace(/_/g, " ")}
                           </span>
                         </div>
@@ -1748,7 +1763,7 @@ export default function ScanEventPage() {
                                 onClick={() => handleUndoCheckIn(a.id)}
                                 disabled={undoingCheckIn}
                                 title="Reset check-in"
-                                className="rounded-lg border border-zinc-800 bg-zinc-800/80 p-2 text-zinc-400 transition-colors hover:bg-zinc-700 hover:text-white disabled:opacity-50"
+                                className="rounded-lg border border-neutral-800 bg-neutral-800/80 p-2 text-neutral-400 transition-colors hover:bg-neutral-700 hover:text-white disabled:opacity-50"
                               >
                                 {undoingCheckIn ? (
                                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -1762,7 +1777,7 @@ export default function ScanEventPage() {
                           <button
                             onClick={() => manualCheckIn(a)}
                             disabled={isChecking}
-                            className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-xs font-bold text-white transition-colors hover:bg-blue-500 disabled:opacity-50 shadow-2xs"
+                            className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-xs font-bold text-white transition-colors hover:bg-emerald-500 disabled:opacity-50 shadow-2xs"
                           >
                             {isChecking ? (
                               <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -1785,13 +1800,13 @@ export default function ScanEventPage() {
 
             {/* Gate Required Shield (If gates configured but none chosen) */}
             {isGateRequired ? (
-		              <div className="w-full space-y-4 rounded-lg border border-zinc-800 bg-zinc-900 p-6 sm:p-8 text-center animate-in fade-in shadow-xs">
-                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-800/80 text-zinc-300 shadow-2xs">
-                  <DoorOpen className="w-8 h-8 text-blue-400" />
+		              <div className="w-full space-y-4 rounded-lg border border-neutral-800 bg-neutral-900 p-6 sm:p-8 text-center animate-in fade-in shadow-xs">
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-lg border border-neutral-800 bg-neutral-800/80 text-neutral-300 shadow-2xs">
+                  <DoorOpen className="w-8 h-8 text-emerald-400" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-zinc-100">Select Scanner Entry Gate</h3>
-                  <p className="text-xs text-zinc-400 mt-1 max-w-sm mx-auto leading-relaxed">
+                  <h3 className="text-base font-bold text-neutral-100">Select Scanner Entry Gate</h3>
+                  <p className="text-xs text-neutral-400 mt-1 max-w-sm mx-auto leading-relaxed">
                     Select your assigned gate to start scanning tickets and enforce zone access.
                   </p>
                 </div>
@@ -1800,11 +1815,11 @@ export default function ScanEventPage() {
                     <button
                       key={g.id}
                       onClick={() => handleSelectGate(g.id)}
-                      className="flex w-full items-center justify-between rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-3 text-xs font-bold text-zinc-100 transition-colors hover:bg-zinc-800 hover:border-blue-500"
+                      className="flex w-full items-center justify-between rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-3 text-xs font-bold text-neutral-100 transition-colors hover:bg-neutral-800 hover:border-emerald-500"
                     >
                       <span className="text-sm font-semibold">{g.name}</span>
                       {g.zone && (
-                        <span className="text-[10px] text-zinc-400 bg-zinc-800 px-2 py-0.5 rounded border border-zinc-700">
+                        <span className="text-[10px] text-neutral-400 bg-neutral-800 px-2 py-0.5 rounded border border-neutral-700">
                           {g.zone.name}
                         </span>
                       )}
@@ -1815,7 +1830,7 @@ export default function ScanEventPage() {
             ) : (
               /* Scanner Camera Viewfinder */
               <div className={`w-full relative ${scanState === "idle" || scanState === "scanning" ? "block" : "hidden"}`}>
-                <div className="overflow-hidden rounded-lg border border-zinc-800 bg-black shadow-md">
+                <div className="overflow-hidden rounded-lg border border-neutral-800 bg-black shadow-md">
                   <QRScanner onScan={verify} active={isScannerActive} statusVariant={scanState} />
                 </div>
 
@@ -1826,7 +1841,7 @@ export default function ScanEventPage() {
                     className={`rounded-lg border p-2.5 transition-colors shadow-xs ${
                       torchOn
                         ? "border-amber-600 bg-amber-950/80 text-amber-300"
-                        : "border-zinc-700 bg-zinc-900/90 backdrop-blur-sm text-zinc-300 hover:bg-zinc-800 hover:text-white"
+                        : "border-neutral-700 bg-neutral-900/90 backdrop-blur-sm text-neutral-300 hover:bg-neutral-800 hover:text-white"
                     }`}
                     title={torchOn ? "Turn flashlight off" : "Turn flashlight on"}
                   >
@@ -1837,7 +1852,7 @@ export default function ScanEventPage() {
                     className={`rounded-lg border p-2.5 transition-colors shadow-xs ${
                       wakeLockActive
                         ? "border-amber-600 bg-amber-950/80 text-amber-300"
-                        : "border-zinc-700 bg-zinc-900/90 backdrop-blur-sm text-zinc-300 hover:bg-zinc-800 hover:text-white"
+                        : "border-neutral-700 bg-neutral-900/90 backdrop-blur-sm text-neutral-300 hover:bg-neutral-800 hover:text-white"
                     }`}
                     title={wakeLockActive ? "Screen stay-awake enabled" : "Enable screen stay-awake"}
                   >
@@ -1848,7 +1863,7 @@ export default function ScanEventPage() {
                     className={`rounded-lg border p-2.5 transition-colors shadow-xs ${
                       soundEnabled
                         ? "border-emerald-600 bg-emerald-950/80 text-emerald-300"
-                        : "border-zinc-700 bg-zinc-900/90 backdrop-blur-sm text-zinc-500"
+                        : "border-neutral-700 bg-neutral-900/90 backdrop-blur-sm text-neutral-500"
                     }`}
                     title={soundEnabled ? "Audio chime on" : "Audio muted"}
                   >
@@ -1862,13 +1877,13 @@ export default function ScanEventPage() {
             {scanState === "verifying" && (
               <div className="flex flex-col items-center gap-4 py-12 animate-in fade-in">
                 <div className="relative w-20 h-20">
-                  <div className="relative flex h-full w-full items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900 shadow-sm">
-                    <Loader2 className="w-8 h-8 text-blue-400 animate-spin" />
+                  <div className="relative flex h-full w-full items-center justify-center rounded-lg border border-neutral-800 bg-neutral-900 shadow-sm">
+                    <Loader2 className="w-8 h-8 text-emerald-400 animate-spin" />
                   </div>
                 </div>
                 <div className="text-center space-y-1">
-                  <p className="text-sm font-bold text-zinc-100">Verifying pass...</p>
-                  <p className="text-xs text-zinc-400 font-mono">Checking against guest manifest</p>
+                  <p className="text-sm font-bold text-neutral-100">Verifying pass...</p>
+                  <p className="text-xs text-neutral-400 font-mono">Checking against guest manifest</p>
                 </div>
               </div>
             )}
@@ -1943,15 +1958,15 @@ export default function ScanEventPage() {
     <aside className="hidden lg:flex lg:col-span-5 flex-col gap-5 w-full sticky top-20">
       
       {/* 1. Tracked Session / Gate Doorway Card */}
-      <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-5 shadow-xs">
-        <div className="flex items-center justify-between pb-3 border-b border-zinc-800/80">
+      <div className="rounded-lg border border-neutral-800 bg-neutral-900 p-5 shadow-xs">
+        <div className="flex items-center justify-between pb-3 border-b border-neutral-800/80">
           <div className="flex items-center gap-2">
-            <Monitor className="w-4 h-4 text-blue-400" />
-            <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-300">Doorway Telemetry</h3>
+            <Monitor className="w-4 h-4 text-emerald-400" />
+            <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-300">Doorway Telemetry</h3>
           </div>
           <button
             onClick={() => setSettingsDrawerOpen(true)}
-            className="text-xs font-semibold text-blue-400 hover:text-blue-300 transition-colors"
+            className="text-xs font-semibold text-emerald-400 hover:text-emerald-300 transition-colors"
           >
             Change Gate / Session
           </button>
@@ -1969,26 +1984,26 @@ export default function ScanEventPage() {
           return (
             <div className="pt-4 space-y-4">
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-blue-300 bg-blue-950/60 px-2 py-0.5 rounded border border-blue-800/80">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-300 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800/80">
                   Breakout Session
                 </span>
-                <h4 className="text-sm font-bold text-zinc-100 mt-1 leading-snug">{selectedSession.title}</h4>
-                <p className="text-xs text-zinc-400 mt-0.5">
+                <h4 className="text-sm font-bold text-neutral-100 mt-1 leading-snug">{selectedSession.title}</h4>
+                <p className="text-xs text-neutral-400 mt-0.5">
                   {roomName} · {selectedSession.start_time?.slice(0, 5)} - {selectedSession.end_time?.slice(0, 5)}
                 </p>
               </div>
 
               {/* Headcount Metrics Grid */}
               <div className="grid grid-cols-2 gap-3 pt-1">
-                <div className="rounded-lg border border-zinc-800 bg-zinc-950/60 p-3">
-                  <p className="text-[10px] font-bold uppercase text-zinc-400">Admitted Headcount</p>
+                <div className="rounded-lg border border-neutral-800 bg-neutral-950/60 p-3">
+                  <p className="text-[10px] font-bold uppercase text-neutral-400">Admitted Headcount</p>
                   <p className="text-xl font-black text-emerald-400 tabular-nums mt-0.5">
                     {currentChecked}
                   </p>
                 </div>
-                <div className="rounded-lg border border-zinc-800 bg-zinc-950/60 p-3">
-                  <p className="text-[10px] font-bold uppercase text-zinc-400">Capacity Limit</p>
-                  <p className="text-xl font-black text-zinc-200 tabular-nums mt-0.5">
+                <div className="rounded-lg border border-neutral-800 bg-neutral-950/60 p-3">
+                  <p className="text-[10px] font-bold uppercase text-neutral-400">Capacity Limit</p>
+                  <p className="text-xl font-black text-neutral-200 tabular-nums mt-0.5">
                     {effectiveCapacity ? effectiveCapacity : "Unlimited"}
                   </p>
                 </div>
@@ -1997,12 +2012,12 @@ export default function ScanEventPage() {
               {effectiveCapacity !== null && (
                 <div className="space-y-1.5 pt-1">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="font-semibold text-zinc-400">Occupancy</span>
-                    <span className={`font-black tabular-nums ${(occupancyPct ?? 0) >= 100 ? "text-red-400" : (occupancyPct ?? 0) >= 80 ? "text-amber-400" : "text-blue-400"}`}>
+                    <span className="font-semibold text-neutral-400">Occupancy</span>
+                    <span className={`font-black tabular-nums ${(occupancyPct ?? 0) >= 100 ? "text-red-400" : (occupancyPct ?? 0) >= 80 ? "text-amber-400" : "text-emerald-400"}`}>
                       {occupancyPct}%
                     </span>
                   </div>
-                  <div className="h-2 w-full bg-zinc-800 rounded-full overflow-hidden">
+                  <div className="h-2 w-full bg-neutral-800 rounded-full overflow-hidden">
                     <div
                       className={`h-full transition-all duration-300 rounded-full ${
                         (occupancyPct ?? 0) >= 100 ? "bg-red-500" : (occupancyPct ?? 0) >= 80 ? "bg-amber-500" : "bg-blue-500"
@@ -2021,15 +2036,15 @@ export default function ScanEventPage() {
                 <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-300 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800/80">
                   General Event Entry
                 </span>
-                <h4 className="text-sm font-bold text-zinc-100 mt-1">
+                <h4 className="text-sm font-bold text-neutral-100 mt-1">
                   {selectedGate ? selectedGate.name : "Main Entrance Gate"}
                 </h4>
                 {selectedGate?.zone && (
-                  <p className="text-xs text-zinc-400 mt-0.5">Assigned Zone: {selectedGate.zone.name}</p>
+                  <p className="text-xs text-neutral-400 mt-0.5">Assigned Zone: {selectedGate.zone.name}</p>
                 )}
               </div>
               <div className="text-right">
-                <p className="text-[10px] font-bold uppercase text-zinc-400">Total Scanned</p>
+                <p className="text-[10px] font-bold uppercase text-neutral-400">Total Scanned</p>
                 <p className="text-2xl font-black text-emerald-400 tabular-nums">{scanCount}</p>
               </div>
             </div>
@@ -2038,11 +2053,11 @@ export default function ScanEventPage() {
       </div>
 
       {/* 2. Real-time Live Scans Feed Panel */}
-      <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-5 shadow-xs flex flex-col flex-1 max-h-[460px]">
-        <div className="flex items-center justify-between pb-3 border-b border-zinc-800/80 shrink-0">
+      <div className="rounded-lg border border-neutral-800 bg-neutral-900 p-5 shadow-xs flex flex-col flex-1 max-h-[460px]">
+        <div className="flex items-center justify-between pb-3 border-b border-neutral-800/80 shrink-0">
           <div className="flex items-center gap-2">
             <Users className="w-4 h-4 text-emerald-400" />
-            <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-300">Live Activity Feed</h3>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-300">Live Activity Feed</h3>
           </div>
           <span className="rounded-full bg-emerald-950/60 border border-emerald-800/80 px-2.5 py-0.5 text-[11px] font-bold text-emerald-300 tabular-nums">
             {scanCount} admitted
@@ -2051,25 +2066,25 @@ export default function ScanEventPage() {
 
         <div className="flex-1 overflow-y-auto mt-3 space-y-2 pr-1">
           {feed.length === 0 ? (
-            <div className="py-12 text-center text-zinc-500 text-xs font-medium">
+            <div className="py-12 text-center text-neutral-500 text-xs font-medium">
               No check-ins recorded yet. Ready to scan passes!
             </div>
           ) : (
             feed.map((entry, idx) => (
               <div
                 key={entry.id || idx}
-                className="flex items-center justify-between rounded-lg border border-zinc-800 bg-zinc-950/60 p-2.5 transition-colors hover:bg-zinc-800/50"
+                className="flex items-center justify-between rounded-lg border border-neutral-800 bg-neutral-950/60 p-2.5 transition-colors hover:bg-neutral-800/50"
               >
                 <div className="flex items-center gap-2.5 min-w-0 pr-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
                   <div className="min-w-0">
-                    <p className="text-xs font-bold text-zinc-100 truncate">{entry.name}</p>
-                    <p className="text-[10px] text-zinc-500 font-mono mt-0.5">
+                    <p className="text-xs font-bold text-neutral-100 truncate">{entry.name}</p>
+                    <p className="text-[10px] text-neutral-500 font-mono mt-0.5">
                       {new Date(entry.ts).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true })}
                     </p>
                   </div>
                 </div>
-                <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-300 border border-zinc-700 uppercase shrink-0">
+                <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-neutral-800 text-neutral-300 border border-neutral-700 uppercase shrink-0">
                   {PASS_TYPE_LABEL[entry.pass_type] ?? entry.pass_type}
                 </span>
               </div>
@@ -2083,19 +2098,19 @@ export default function ScanEventPage() {
   </div>
 
   {/* ── Ergonomic Mobile Bottom Action Bar (Mobile Only) ─────────── */}
-  <footer className="lg:hidden shrink-0 px-4 py-3 bg-zinc-900/90 backdrop-blur-md border-t border-zinc-800 z-20 shadow-xs">
+  <footer className="lg:hidden shrink-0 px-4 py-3 bg-neutral-900/90 backdrop-blur-md border-t border-neutral-800 z-20 shadow-xs">
     <div className="max-w-md mx-auto flex items-center justify-between gap-3">
       <button
         onClick={() => setFeedDrawerOpen(true)}
-        className="flex flex-1 items-center justify-between rounded-lg border border-zinc-800 bg-zinc-950 px-4 py-2.5 text-left transition-colors hover:bg-zinc-800/80"
+        className="flex flex-1 items-center justify-between rounded-lg border border-neutral-800 bg-neutral-950 px-4 py-2.5 text-left transition-colors hover:bg-neutral-800/80"
       >
         <div className="flex items-center gap-2">
           <Users className="w-4 h-4 text-emerald-400" />
-          <span className="text-xs font-bold text-zinc-100">
+          <span className="text-xs font-bold text-neutral-100">
             {scanCount} Admitted
           </span>
         </div>
-        <span className="text-[11px] font-semibold text-zinc-400 flex items-center gap-1">
+        <span className="text-[11px] font-semibold text-neutral-400 flex items-center gap-1">
           Live Feed <ChevronUp className="w-3.5 h-3.5" />
         </span>
       </button>
@@ -2105,7 +2120,7 @@ export default function ScanEventPage() {
         className={`rounded-lg border p-2.5 transition-colors ${
           torchOn
             ? "border-amber-600 bg-amber-950/80 text-amber-300"
-            : "border-zinc-800 bg-zinc-950 text-zinc-300 hover:bg-zinc-800 hover:text-white"
+            : "border-neutral-800 bg-neutral-950 text-neutral-300 hover:bg-neutral-800 hover:text-white"
         }`}
         title={torchOn ? "Turn torch off" : "Turn flashlight torch on"}
         aria-label="Flashlight"
@@ -2122,14 +2137,14 @@ export default function ScanEventPage() {
             className="fixed inset-0"
             onClick={() => setFeedDrawerOpen(false)}
           />
-		          <div className="relative flex max-h-[80svh] flex-col rounded-t-lg border-t border-zinc-800 bg-zinc-900 p-5 pb-safe shadow-2xl animate-in slide-in-from-bottom duration-200">
+		          <div className="relative flex max-h-[80svh] flex-col rounded-t-lg border-t border-neutral-800 bg-neutral-900 p-5 pb-safe shadow-2xl animate-in slide-in-from-bottom duration-200">
             {/* Grab Handle */}
-		            <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-zinc-700" />
+		            <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-neutral-700" />
 
-            <div className="flex items-center justify-between pb-3.5 border-b border-zinc-800">
+            <div className="flex items-center justify-between pb-3.5 border-b border-neutral-800">
               <div className="flex items-center gap-2">
                 <Users className="w-4 h-4 text-emerald-400" />
-                <h3 className="text-sm font-bold text-zinc-100">Recent Check-ins Feed</h3>
+                <h3 className="text-sm font-bold text-neutral-100">Recent Check-ins Feed</h3>
               </div>
               <div className="flex items-center gap-2">
 		                <span className="rounded-md border border-emerald-800 bg-emerald-950/60 px-2.5 py-1 text-xs font-bold text-emerald-300">
@@ -2137,7 +2152,7 @@ export default function ScanEventPage() {
                 </span>
                 <button
                   onClick={() => setFeedDrawerOpen(false)}
-                  className="p-1 rounded-full text-zinc-400 hover:text-white active:scale-95 transition-all"
+                  className="p-1 rounded-full text-neutral-400 hover:text-white active:scale-95 transition-all"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -2146,25 +2161,25 @@ export default function ScanEventPage() {
 
             <div className="flex-1 overflow-y-auto mt-3 space-y-2 max-h-[55svh] pr-1">
               {feed.length === 0 ? (
-                <div className="py-12 text-center text-zinc-500 text-xs font-medium">
+                <div className="py-12 text-center text-neutral-500 text-xs font-medium">
                   No check-ins recorded yet during this session.
                 </div>
               ) : (
                 feed.map((entry, idx) => (
                   <div
                     key={entry.id || idx}
-		                    className="flex items-center justify-between rounded-md border border-zinc-800 bg-zinc-950/60 p-3"
+		                    className="flex items-center justify-between rounded-md border border-neutral-800 bg-neutral-950/60 p-3"
                   >
                     <div className="flex items-center gap-2.5 min-w-0 pr-2">
 	                      <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
                       <div className="min-w-0">
-	                        <p className="text-xs font-bold text-zinc-100 truncate">{entry.name}</p>
-	                        <p className="text-[10px] text-zinc-500 font-mono mt-0.5">
+	                        <p className="text-xs font-bold text-neutral-100 truncate">{entry.name}</p>
+	                        <p className="text-[10px] text-neutral-500 font-mono mt-0.5">
                           {new Date(entry.ts).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true })}
                         </p>
                       </div>
                     </div>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-300 border border-zinc-700 uppercase shrink-0">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-neutral-800 text-neutral-300 border border-neutral-700 uppercase shrink-0">
                       {PASS_TYPE_LABEL[entry.pass_type] ?? entry.pass_type}
                     </span>
                   </div>
@@ -2182,18 +2197,18 @@ export default function ScanEventPage() {
             className="fixed inset-0"
             onClick={() => setSettingsDrawerOpen(false)}
           />
-		          <div className="relative flex max-h-[85svh] flex-col rounded-t-lg border-t border-zinc-800 bg-zinc-900 p-5 pb-safe shadow-2xl animate-in slide-in-from-bottom duration-200">
+		          <div className="relative flex max-h-[85svh] flex-col rounded-t-lg border-t border-neutral-800 bg-neutral-900 p-5 pb-safe shadow-2xl animate-in slide-in-from-bottom duration-200">
             {/* Grab Handle */}
-		            <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-zinc-700" />
+		            <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-neutral-700" />
 
-            <div className="flex items-center justify-between pb-3.5 border-b border-zinc-800">
+            <div className="flex items-center justify-between pb-3.5 border-b border-neutral-800">
               <div className="flex items-center gap-2">
-                <SlidersHorizontal className="w-4 h-4 text-zinc-300" />
-                <h3 className="text-sm font-bold text-zinc-100">Scanner Configuration</h3>
+                <SlidersHorizontal className="w-4 h-4 text-neutral-300" />
+                <h3 className="text-sm font-bold text-neutral-100">Scanner Configuration</h3>
               </div>
               <button
                 onClick={() => setSettingsDrawerOpen(false)}
-                className="p-1 rounded-full text-zinc-400 hover:text-white active:scale-95 transition-all"
+                className="p-1 rounded-full text-neutral-400 hover:text-white active:scale-95 transition-all"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -2204,7 +2219,7 @@ export default function ScanEventPage() {
               {/* 1. Gate Switcher */}
               {gates.length > 0 && (
                 <div className="space-y-2">
-	                  <label className="text-[11px] font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
+	                  <label className="text-[11px] font-bold uppercase tracking-wider text-neutral-400 flex items-center gap-1.5">
                     <DoorOpen className="w-3.5 h-3.5" /> Assigned Gate
                   </label>
                   <div className="grid grid-cols-1 gap-2">
@@ -2221,13 +2236,13 @@ export default function ScanEventPage() {
 	                        className={`flex items-center justify-between rounded-md border p-3.5 text-left transition-colors ${
 	                          selectedGateId === g.id
 	                            ? "border-blue-700 bg-blue-700 font-bold text-white"
-		                            : "bg-zinc-950/60 border-zinc-800 text-zinc-200 hover:bg-zinc-800"
+		                            : "bg-neutral-950/60 border-neutral-800 text-neutral-200 hover:bg-neutral-800"
                         }`}
                       >
                         <div>
                           <p className="text-xs font-bold">{g.name}</p>
                           {g.zone && (
-	                            <p className={`text-[10px] mt-0.5 ${selectedGateId === g.id ? "text-blue-100" : "text-zinc-500"}`}>{g.zone.name}</p>
+	                            <p className={`text-[10px] mt-0.5 ${selectedGateId === g.id ? "text-blue-100" : "text-neutral-500"}`}>{g.zone.name}</p>
                           )}
                         </div>
                         {selectedGateId === g.id && (
@@ -2242,7 +2257,7 @@ export default function ScanEventPage() {
               {/* 2. Session Switcher */}
               {sessions.length > 0 && (
                 <div className="space-y-2">
-	                  <label className="text-[11px] font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
+	                  <label className="text-[11px] font-bold uppercase tracking-wider text-neutral-400 flex items-center gap-1.5">
                     <Layers className="w-3.5 h-3.5" /> Tracked Conference Session
                   </label>
                   <div className="grid grid-cols-1 gap-2">
@@ -2251,7 +2266,7 @@ export default function ScanEventPage() {
 	                      className={`flex items-center justify-between rounded-md border p-3.5 text-left transition-colors ${
 	                        !selectedSessionId
 	                          ? "border-blue-700 bg-blue-700 font-bold text-white"
-	                          : "bg-zinc-950/60 border-zinc-800 text-zinc-200"
+	                          : "bg-neutral-950/60 border-neutral-800 text-neutral-200"
                       }`}
                     >
                       <span className="text-xs font-bold">General Event Entry (No Session)</span>
@@ -2267,12 +2282,12 @@ export default function ScanEventPage() {
 	                        className={`flex items-center justify-between rounded-md border p-3.5 text-left transition-colors ${
 	                          selectedSessionId === s.id
 	                            ? "border-blue-700 bg-blue-700 font-bold text-white"
-	                            : "bg-zinc-950/60 border-zinc-800 text-zinc-200 hover:bg-zinc-800"
+	                            : "bg-neutral-950/60 border-neutral-800 text-neutral-200 hover:bg-neutral-800"
                         }`}
                       >
                         <div className="min-w-0 pr-2">
                           <p className="text-xs font-bold truncate">{s.title}</p>
-	                          <p className={`text-[10px] mt-0.5 ${selectedSessionId === s.id ? "text-blue-100" : "text-zinc-500"}`}>
+	                          <p className={`text-[10px] mt-0.5 ${selectedSessionId === s.id ? "text-blue-100" : "text-neutral-500"}`}>
                             {s.room?.name || "Main Venue"} · {s.start_time?.slice(0, 5)}
                           </p>
                         </div>
@@ -2287,7 +2302,7 @@ export default function ScanEventPage() {
 
               {/* 3. Hardware & Environmental Controls */}
               <div className="space-y-2">
-	                <label className="text-[11px] font-bold uppercase tracking-wider text-zinc-400">
+	                <label className="text-[11px] font-bold uppercase tracking-wider text-neutral-400">
                   Device Hardware &amp; Feedback
                 </label>
                 <div className="grid grid-cols-2 gap-2">
@@ -2296,10 +2311,10 @@ export default function ScanEventPage() {
 	                    className={`flex flex-col items-center justify-center gap-1.5 rounded-md border p-3.5 transition-colors ${
                       soundEnabled
 	                        ? "bg-emerald-950/60 border-emerald-800 text-emerald-300 font-bold"
-	                        : "bg-zinc-950/60 border-zinc-800 text-zinc-400"
+	                        : "bg-neutral-950/60 border-neutral-800 text-neutral-400"
                     }`}
                   >
-	                    {soundEnabled ? <Volume2 className="w-5 h-5 text-emerald-400" /> : <VolumeX className="w-5 h-5 text-zinc-500" />}
+	                    {soundEnabled ? <Volume2 className="w-5 h-5 text-emerald-400" /> : <VolumeX className="w-5 h-5 text-neutral-500" />}
                     <span className="text-xs font-bold">{soundEnabled ? "Audio On" : "Audio Muted"}</span>
                   </button>
 
@@ -2308,23 +2323,23 @@ export default function ScanEventPage() {
 	                    className={`flex flex-col items-center justify-center gap-1.5 rounded-md border p-3.5 transition-colors ${
                       wakeLockActive
 	                        ? "bg-amber-950/60 border-amber-800 text-amber-300 font-bold"
-	                        : "bg-zinc-950/60 border-zinc-800 text-zinc-400"
+	                        : "bg-neutral-950/60 border-neutral-800 text-neutral-400"
                     }`}
                   >
-	                    <Sun className={`w-5 h-5 ${wakeLockActive ? "text-amber-400 animate-pulse" : "text-zinc-500"}`} />
+	                    <Sun className={`w-5 h-5 ${wakeLockActive ? "text-amber-400 animate-pulse" : "text-neutral-500"}`} />
                     <span className="text-xs font-bold">{wakeLockActive ? "Screen Awake" : "Sleep Normal"}</span>
                   </button>
                 </div>
               </div>
 
               {/* 4. Offline Cache & Sync */}
-		              <div className="space-y-3 rounded-md border border-zinc-800 bg-zinc-950/60 p-3.5">
+		              <div className="space-y-3 rounded-md border border-neutral-800 bg-neutral-950/60 p-3.5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
 	                    <Wifi className="w-4 h-4 text-emerald-400" />
                     <div>
-	                      <p className="text-xs font-bold text-zinc-100">Local Offline Cache</p>
-	                      <p className="text-[10px] text-zinc-500">
+	                      <p className="text-xs font-bold text-neutral-100">Local Offline Cache</p>
+	                      <p className="text-[10px] text-neutral-500">
                         {cachedPassCount} passes cached on device
                       </p>
                     </div>
@@ -2333,7 +2348,7 @@ export default function ScanEventPage() {
                     <button
                       onClick={refreshManifest}
                       disabled={isRefreshingCache}
-		                      className="rounded-md border border-zinc-800 bg-zinc-900 p-2 text-zinc-300 transition-colors hover:bg-zinc-800 disabled:opacity-50"
+		                      className="rounded-md border border-neutral-800 bg-neutral-900 p-2 text-neutral-300 transition-colors hover:bg-neutral-800 disabled:opacity-50"
                       title="Update local cache"
                     >
                       <RefreshCw className={`w-3.5 h-3.5 ${isRefreshingCache ? "animate-spin" : ""}`} />
@@ -2415,8 +2430,8 @@ function ResultCard({
       <div
         className={`flex flex-col items-center gap-3.5 overflow-hidden rounded-lg border p-6 text-center transition-colors shadow-lg ${
           ok
-            ? "bg-zinc-900 border-emerald-500/50 text-zinc-100"
-            : "bg-zinc-900 border-amber-500/50 text-zinc-100"
+            ? "bg-neutral-900 border-emerald-500/50 text-neutral-100"
+            : "bg-neutral-900 border-amber-500/50 text-neutral-100"
         }`}
       >
         <div
@@ -2443,7 +2458,7 @@ function ResultCard({
           >
             {badgeText || (ok ? "ENTRY GRANTED" : "ALREADY ADMITTED")}
           </span>
-          <h2 className="text-xl font-bold text-zinc-100 mt-2 leading-snug">
+          <h2 className="text-xl font-bold text-neutral-100 mt-2 leading-snug">
             {attendee.name}
           </h2>
           {message ? (
@@ -2451,7 +2466,7 @@ function ResultCard({
               {message}
             </p>
           ) : attendee.email ? (
-            <p className="text-xs text-zinc-400 truncate max-w-[260px] mx-auto">
+            <p className="text-xs text-neutral-400 truncate max-w-[260px] mx-auto">
               {attendee.email}
             </p>
           ) : null}
@@ -2459,21 +2474,21 @@ function ResultCard({
 
         {/* Pass Tier & Gate Info Pill */}
         <div className="flex items-center gap-1.5 flex-wrap justify-center pt-0.5">
-          <span className="rounded-md border border-zinc-700 bg-zinc-800 px-2.5 py-1 text-[11px] font-semibold uppercase text-zinc-200">
+          <span className="rounded-md border border-neutral-700 bg-neutral-800 px-2.5 py-1 text-[11px] font-semibold uppercase text-neutral-200">
             {PASS_TYPE_LABEL[passType] ?? passType}
           </span>
           {gateName && (
-            <span className="inline-flex items-center gap-1 rounded-md border border-zinc-700 bg-zinc-800 px-2.5 py-1 text-[11px] font-semibold text-zinc-300">
-              <DoorOpen className="w-3.5 h-3.5 shrink-0 text-zinc-500" />
+            <span className="inline-flex items-center gap-1 rounded-md border border-neutral-700 bg-neutral-800 px-2.5 py-1 text-[11px] font-semibold text-neutral-300">
+              <DoorOpen className="w-3.5 h-3.5 shrink-0 text-neutral-500" />
               <span>{gateName}</span>
             </span>
           )}
         </div>
 
         {checkedInAt && (
-          <p className="text-[11px] font-mono text-zinc-400 mt-0.5">
+          <p className="text-[11px] font-mono text-neutral-400 mt-0.5">
             {ok ? "Admitted at: " : "First scanned at: "}
-            <span className="font-semibold text-zinc-200">
+            <span className="font-semibold text-neutral-200">
               {new Date(checkedInAt).toLocaleTimeString("en-IN", {
                 hour: "2-digit",
                 minute: "2-digit",
@@ -2499,7 +2514,7 @@ function ResultCard({
             onAllowReentry();
           }}
           disabled={isUndoing}
-          className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-3.5 text-xs font-semibold text-white transition-colors hover:bg-blue-500 disabled:opacity-50 shadow-md"
+          className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-3.5 text-xs font-semibold text-white transition-colors hover:bg-emerald-500 disabled:opacity-50 shadow-md"
         >
           {isUndoing ? (
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -2512,7 +2527,7 @@ function ResultCard({
 
       {/* Auto-reset Progress Bar */}
       <div className="flex flex-col gap-2 pt-1">
-        <div className="h-1.5 overflow-hidden rounded-full bg-zinc-800">
+        <div className="h-1.5 overflow-hidden rounded-full bg-neutral-800">
           <div
             className={`h-full rounded-full transition-none ${ok ? "bg-emerald-500" : "bg-amber-500"}`}
             style={{ width: `${progress}%` }}
@@ -2520,7 +2535,7 @@ function ResultCard({
         </div>
         <button
           onClick={onReset}
-          className="py-1 text-center text-xs font-medium text-zinc-400 transition-colors hover:text-zinc-200"
+          className="py-1 text-center text-xs font-medium text-neutral-400 transition-colors hover:text-neutral-200"
         >
           Tap anywhere to scan next pass
         </button>
@@ -2544,7 +2559,7 @@ function AccessDeniedCard({
 }) {
   return (
     <div className="w-full flex flex-col gap-3">
-      <div className="flex flex-col items-center gap-3.5 rounded-lg border border-red-500/50 bg-zinc-900 p-6 text-center shadow-lg">
+      <div className="flex flex-col items-center gap-3.5 rounded-lg border border-red-500/50 bg-neutral-900 p-6 text-center shadow-lg">
         <div className="w-14 h-14 rounded-lg bg-red-950/80 border border-red-500/50 flex items-center justify-center">
           <ShieldX className="w-8 h-8 text-red-400" />
         </div>
@@ -2553,7 +2568,7 @@ function AccessDeniedCard({
           <span className="text-[10px] font-extrabold tracking-widest uppercase px-3 py-1 rounded-full bg-red-950/80 text-red-300 border border-red-700/80">
             ACCESS DENIED
           </span>
-          <h2 className="text-xl font-extrabold text-zinc-100 mt-2 leading-tight">
+          <h2 className="text-xl font-extrabold text-neutral-100 mt-2 leading-tight">
             Not Admitted
           </h2>
           <p className="text-xs text-red-300 mt-1 max-w-[260px] mx-auto leading-relaxed">
@@ -2577,7 +2592,7 @@ function AccessDeniedCard({
       </div>
 
       <div className="flex flex-col gap-2 pt-1">
-        <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+        <div className="h-1.5 bg-neutral-800 rounded-full overflow-hidden">
           <div
             className="h-full rounded-full bg-red-500 transition-none"
             style={{ width: `${progress}%` }}
@@ -2585,7 +2600,7 @@ function AccessDeniedCard({
         </div>
         <button
           onClick={onReset}
-          className="text-center text-xs text-zinc-400 hover:text-zinc-200 font-medium py-1"
+          className="text-center text-xs text-neutral-400 hover:text-neutral-200 font-medium py-1"
         >
           Tap to try again
         </button>
@@ -2607,7 +2622,7 @@ function ErrorCard({
 }) {
   return (
     <div className="w-full flex flex-col gap-3">
-      <div className="bg-zinc-900 border border-red-500/50 rounded-lg p-6 flex flex-col items-center text-center gap-3.5 shadow-lg">
+      <div className="bg-neutral-900 border border-red-500/50 rounded-lg p-6 flex flex-col items-center text-center gap-3.5 shadow-lg">
         <div className="w-14 h-14 rounded-lg bg-red-950/80 border border-red-500/50 flex items-center justify-center">
           <XCircle className="w-8 h-8 text-red-400" />
         </div>
@@ -2616,7 +2631,7 @@ function ErrorCard({
           <span className="text-[10px] font-extrabold tracking-widest uppercase px-3 py-1 rounded-full bg-red-950/80 text-red-300 border border-red-700/80">
             INVALID PASS
           </span>
-          <h2 className="text-xl font-extrabold text-zinc-100 mt-2 leading-tight">
+          <h2 className="text-xl font-extrabold text-neutral-100 mt-2 leading-tight">
             Verification Failed
           </h2>
           <p className="text-xs text-red-300 mt-1 max-w-[260px] mx-auto leading-relaxed">
@@ -2626,7 +2641,7 @@ function ErrorCard({
       </div>
 
       <div className="flex flex-col gap-2 pt-1">
-        <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+        <div className="h-1.5 bg-neutral-800 rounded-full overflow-hidden">
           <div
             className="h-full rounded-full bg-red-500 transition-none"
             style={{ width: `${progress}%` }}
@@ -2634,7 +2649,7 @@ function ErrorCard({
         </div>
         <button
           onClick={onReset}
-          className="text-center text-xs text-zinc-400 hover:text-zinc-200 font-medium py-1"
+          className="text-center text-xs text-neutral-400 hover:text-neutral-200 font-medium py-1"
         >
           Tap anywhere to retry
         </button>
