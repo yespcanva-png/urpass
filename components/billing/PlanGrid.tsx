@@ -347,9 +347,13 @@ export default function PlanGrid({
               const Icon = PLAN_ICONS[p.slug] ?? Sparkles;
               const ukPlan = UK_PLAN_PRICES[p.slug] ?? { monthly: 35, annual: 300 };
 
+              const isIntroEligible = !trialUsed && country !== "GB" && cycle === "monthly" && ["starter", "pro", "business"].includes(p.slug);
+
               const displayPrice =
                 p.priceMonthly === 0
                   ? "Free"
+                  : isIntroEligible
+                  ? "₹29"
                   : country === "GB"
                   ? cycle === "annual"
                     ? `£${ukPlan.annual}`
@@ -359,7 +363,13 @@ export default function PlanGrid({
                   : `₹${p.priceMonthly.toLocaleString("en-IN")}`;
 
               const displayPeriod =
-                p.priceMonthly === 0 ? "" : cycle === "annual" ? "/yr" : "/mo";
+                p.priceMonthly === 0
+                  ? ""
+                  : isIntroEligible
+                  ? "/mo (2 mos)"
+                  : cycle === "annual"
+                  ? "/yr"
+                  : "/mo";
 
               const monthlyEquiv =
                 cycle === "annual" && (country === "GB" ? ukPlan.annual > 0 : p.annualTotal > 0)

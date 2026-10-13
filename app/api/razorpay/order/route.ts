@@ -144,21 +144,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: `Plan '${normalizedSlug}' not found in database` }, { status: 400 });
   }
 
-  // Founder = ₹19,999 or £249 one-time. Annual = 10 months (2 months free).
+  // Integrate V2 Pricing & Offer Engine
+  const { resolveCheckoutPrice } = await import("@/lib/billing/engine/pricing-engine");
+  const priceResolution = await resolveCheckoutPrice({
+    userId: user.id,
+    planSlug: normalizedSlug as any,
+    billingCycle: effectiveBillingCycle as any,
+    currency: currencyCode as any,
+  });
+
   let baseAmount: number;
-  if (isUk) {
-    const ukPrices = UK_PRICES_PENCE[normalizedSlug] ?? { monthly: 3500, annual: 30000 };
-    baseAmount = isFounder
-      ? 24900
-      : effectiveBillingCycle === "annual"
-      ? ukPrices.annual
-      : ukPrices.monthly;
+  if (isFounder) {
+    baseAmount = isUk ? 24900 : 1999900;
   } else {
-    baseAmount = isFounder
-      ? 1999900
-      : effectiveBillingCycle === "annual"
-      ? priceMonthlyPaise * 10
-      : priceMonthlyPaise;
+    baseAmount = priceResolution.amountPaise;
   }
 
   // Re-validate coupon server-side to compute the trusted charged amount

@@ -138,7 +138,14 @@ export default function CheckoutModal({
 
   const isLifetime = billingCycle === "lifetime" || planSlug === "founder" || planSlug === "lifetime";
   const defaultFounder = isUk ? 249 : 19999;
-  const baseAmount = isLifetime ? (annualTotal || priceMonthly || defaultFounder) : billingCycle === "annual" ? annualTotal : priceMonthly;
+  const isIntroOffer = !isUk && billingCycle === "monthly" && ["starter", "pro", "business"].includes(planSlug);
+  const baseAmount = isLifetime
+    ? (annualTotal || priceMonthly || defaultFounder)
+    : billingCycle === "annual"
+    ? annualTotal
+    : isIntroOffer
+    ? 29
+    : priceMonthly;
   const baseTax    = Math.round(baseAmount * (isUk ? 20 : 18)) / 100;
   const baseTotal  = Math.round((baseAmount + baseTax) * 100) / 100;
 

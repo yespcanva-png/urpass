@@ -14,32 +14,11 @@ type Cycle = "monthly" | "annual";
 
 const PLANS = [
   {
-    slug: "free",
-    name: "Free",
-    desc: "For trying URPASS and running small events.",
-    monthly: 0,
-    annual: 0,
-    ukMonthly: 0,
-    ukAnnual: 0,
-    popular: false,
-    highlight: false,
-    cta: "Start Free",
-    href: "/signup",
-    bullets: [
-      "2 events/month",
-      "100 registrations/month",
-      "1 organizer",
-      "Registration forms (3 custom fields)",
-      "Digital QR passes & check-in",
-      "Attendee approval",
-      "Basic analytics",
-    ],
-  },
-  {
     slug: "starter",
     name: "Starter",
     desc: "For individual organizers and small event teams.",
     monthly: 499,
+    introMonthly: 29,
     annual: 4990,
     ukMonthly: 15,
     ukAnnual: 120,
@@ -62,6 +41,7 @@ const PLANS = [
     name: "Pro",
     desc: "For growing event teams, colleges and professional organizers.",
     monthly: 999,
+    introMonthly: 29,
     annual: 9990,
     ukMonthly: 35,
     ukAnnual: 300,
@@ -83,6 +63,7 @@ const PLANS = [
     name: "Business",
     desc: "For organizations managing events at scale.",
     monthly: 2499,
+    introMonthly: 29,
     annual: 24990,
     ukMonthly: 79,
     ukAnnual: 699,
@@ -100,7 +81,6 @@ const PLANS = [
     ],
   },
 ];
-
 // ─── Feature comparison table ──────────────────────────────────────────────────
 
 type CellValue = boolean | string;
@@ -278,20 +258,26 @@ export default function PricingContent({
 
   function displayPrice(plan: typeof PLANS[0]) {
     if (country === "GB") {
-      if (plan.ukMonthly === 0) return { price: "£0", sub: "forever" };
-      if (cycle === "monthly") return { price: `£${plan.ukMonthly}`, sub: "/month +VAT" };
+      if (cycle === "monthly") return { price: `£${plan.ukMonthly}`, sub: "/month +VAT", intro: null };
       const perMonth = Math.round(plan.ukAnnual / 12);
       return {
         price: `£${perMonth}`,
         sub: `/month · £${plan.ukAnnual}/year`,
+        intro: null,
       };
     }
-    if (plan.monthly === 0) return { price: "₹0", sub: "forever" };
-    if (cycle === "monthly") return { price: `₹${plan.monthly.toLocaleString("en-IN")}`, sub: "/month +GST" };
+    if (cycle === "monthly") {
+      return {
+        price: `₹${plan.introMonthly ?? 29}`,
+        sub: `/month for 2 mos · then ₹${plan.monthly.toLocaleString("en-IN")}/mo +GST`,
+        intro: "₹29 INTRO OFFER (2 MONTHS)",
+      };
+    }
     const perMonth = Math.round(plan.annual / 12);
     return {
       price: `₹${perMonth.toLocaleString("en-IN")}`,
-      sub: `/month · ₹${plan.annual.toLocaleString("en-IN")}/year`,
+      sub: `/month · ₹${plan.annual.toLocaleString("en-IN")}/year +GST`,
+      intro: null,
     };
   }
 
@@ -498,6 +484,11 @@ export default function PricingContent({
                   {plan.popular && (
                     <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] font-bold tracking-widest bg-brand text-white px-3 py-1 rounded-full whitespace-nowrap">
                       MOST POPULAR
+                    </span>
+                  )}
+                  {cycle === "monthly" && country !== "GB" && (
+                    <span className="mb-2 inline-block text-[10px] font-extrabold tracking-wider text-emerald-600 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-full w-fit">
+                      ₹29/MO · 2 MONTHS INTRO OFFER
                     </span>
                   )}
                   <p className={`text-xs font-semibold tracking-widest mb-1 ${plan.highlight ? "text-white/50" : "text-neutral-400"}`}>

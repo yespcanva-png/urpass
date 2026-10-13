@@ -498,14 +498,33 @@ export async function getUserPlan(supabase: any, userId: string): Promise<PlanLi
     }
   }
 
-  if (!sub || !slug || !(slug in PLAN_CONFIGS)) return FREE_PLAN;
-
-  // If on trial, verify that trial has not expired
-  if (sub.is_trial || sub.status === "trialing") {
-    const trialEnds = (sub as { trial_ends_at?: string | number | Date | null }).trial_ends_at;
-    if (trialEnds && new Date(trialEnds) < new Date()) {
-      return hasLifetime ? fromSlug("founder") : FREE_PLAN;
+  // 6. ENFORCE LEGACY FREE 30-DAY EXPIRATION POLICY:
+  // Existing Free users are entitled to Free access until 30 days from their signup date.
+  // After 30 days, free access expires and requires checkout at regular pricing.
+  if (slug === "free" && admin) {
+    try {
+      const { data: authUser } = await admin.auth.admin.getUserById(userId);
+      if (authUser?.user?.created_at) {
+        const signupDate = new Date(authUser.user.created_at);
+        const freeExpiresAt = new Date(signupDate.getTime() + 30 * 24 * 60 * 60 * 1000);
+        if (new Date() > freeExpiresAt) {
+          // Free access expired: maintain historical data & event continuity but restrict paid features
+          return {
+            ...FREE_PLAN,
+            maxEvents: 0,
+            maxAttendees: 0,
+            canCreatePaidEvents: false,
+            canCreateOrganizations: false,
+          };
+        }
+      }
+    } catch {
+      // Non-critical fallback
     }
+  }
+
+  if (!slug || !(slug in PLAN_CONFIGS)) {
+    return FREE_PLAN;
   }
 
   return fromSlug(slug);
