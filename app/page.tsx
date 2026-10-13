@@ -22,7 +22,7 @@ import {
 export const metadata: Metadata = {
   title: "Event Registration & QR Check-In Software | URPASS",
   description:
-    "Create event registration pages, issue digital QR passes, accept ticket payments and check attendees in using any smartphone. Start free with URPASS.",
+    "Create event registration pages, issue digital QR passes, accept ticket payments and check attendees in using any smartphone. Plans start at ₹29/month for the introductory offer.",
   keywords: [
     "URPASS",
     "event registration software",
@@ -38,7 +38,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Event Registration & QR Check-In Software | URPASS",
     description:
-      "Create event registration pages, issue digital QR passes, accept ticket payments and check attendees in using any smartphone. Start free with URPASS.",
+      "Create event registration pages, issue digital QR passes, accept ticket payments and check attendees in using any smartphone. Plans start at ₹29/month for the introductory offer.",
     url: "https://urpass.space",
     type: "website",
   },
@@ -232,16 +232,14 @@ export default async function LandingPage() {
                     ? "Digital event registration, QR pass and check-in platform for universities, conferences, hackathons, workshops and corporate events in the UK."
                     : "An India-focused digital event registration, QR pass and check-in platform for colleges, conferences, hackathons, workshops and corporate events.",
                 offers: country === "GB" ? [
-                  { "@type": "Offer", name: "Free Tier", price: "0", priceCurrency: "GBP", description: "2 events/month, 100 registrations/month" },
                   { "@type": "Offer", name: "Starter Tier", price: "15", priceCurrency: "GBP", description: "10 events/month, 500 registrations/month" },
                   { "@type": "Offer", name: "Pro Tier", price: "35", priceCurrency: "GBP", description: "Unlimited events, 2,500 registrations/month" },
                   { "@type": "Offer", name: "Business Tier", price: "79", priceCurrency: "GBP", description: "Unlimited events, 10,000 registrations/month" },
                   { "@type": "Offer", name: "Founder Lifetime Deal", price: "249", priceCurrency: "GBP", description: "Lifetime access to all URPASS features, zero platform fees" },
                 ] : [
-                  { "@type": "Offer", name: "Free Tier", price: "0", priceCurrency: "INR", description: "2 events/month, 100 registrations/month" },
-                  { "@type": "Offer", name: "Starter Tier", price: "499", priceCurrency: "INR", description: "10 events/month, 500 registrations/month" },
-                  { "@type": "Offer", name: "Pro Tier", price: "999", priceCurrency: "INR", description: "Unlimited events, 2,500 registrations/month" },
-                  { "@type": "Offer", name: "Business Tier", price: "2499", priceCurrency: "INR", description: "Unlimited events, 10,000 registrations/month" },
+                  { "@type": "Offer", name: "Starter Tier Intro", price: "29", priceCurrency: "INR", description: "Introductory offer for first 2 months. Then ₹499/month +GST. 10 events/month, 500 registrations/month" },
+                  { "@type": "Offer", name: "Pro Tier Intro", price: "29", priceCurrency: "INR", description: "Introductory offer for first 2 months. Then ₹999/month +GST. Unlimited events, 2,500 registrations/month" },
+                  { "@type": "Offer", name: "Business Tier Intro", price: "29", priceCurrency: "INR", description: "Introductory offer for first 2 months. Then ₹2,499/month +GST. Unlimited events, 10,000 registrations/month" },
                   { "@type": "Offer", name: "Founder Lifetime Deal", price: "19999", priceCurrency: "INR", description: "Lifetime access to all URPASS features, zero platform fees" },
                 ],
               },
@@ -290,12 +288,12 @@ export default async function LandingPage() {
                   },
                   {
                     "@type": "Question",
-                    name: "Can I start for free or try a paid plan?",
+                    name: "How does URPASS pricing work?",
                     acceptedAnswer: {
                       "@type": "Answer",
                       text: country === "GB"
-                        ? "Yes. The permanent free tier lets you host 2 events/month with up to 100 registrations/month at £0 forever with no credit card required. You can also try any paid plan (Starter, Pro, or Business) free for 30 days."
-                        : "Yes. The permanent free tier lets you host 2 events/month with up to 100 registrations/month at ₹0 forever with no credit card required. You can also try any paid plan (Starter, Pro, or Business) free for 30 days.",
+                        ? "UK pricing is available as Starter £15/month, Pro £35/month, and Business £79/month, with direct activation and cancel-anytime renewal."
+                        : "India pricing starts with an introductory ₹29/month offer for the first 2 months on Starter, Pro, or Business. Regular monthly pricing applies after the introductory period.",
                     },
                   },
                 ],
@@ -348,7 +346,7 @@ export default async function LandingPage() {
             </div>
 
             <p className="hero-meta mt-6 sm:mt-8 text-xs text-neutral-400">
-              Free to start · Try any paid plan free for 30 days ·{" "}
+              {country === "GB" ? "Plans from £15/month" : "Intro offer: ₹29/month for first 2 months"} ·{" "}
               <Link href="/mcp-event-management" className="text-neutral-600 hover:text-brand hover:underline font-medium">
                 Model Context Protocol (MCP) supported
               </Link>
@@ -621,7 +619,9 @@ export default async function LandingPage() {
               Book a Demo
             </Link>
           </div>
-          <p className="mt-4 sm:mt-5 text-xs text-white/30">Start free · No credit card required</p>
+          <p className="mt-4 sm:mt-5 text-xs text-white/30">
+            {country === "GB" ? "Plans from £15/month · Cancel anytime" : "Intro offer ₹29/month · Cancel renewal anytime"}
+          </p>
         </AnimateIn>
       </section>
 

@@ -39,29 +39,13 @@ export default function HomePricingSection({ initialCountry = "IN" }: Props) {
   const plans = isUk
     ? [
         {
-          name: "Free",
-          price: "£0",
-          period: "forever",
-          recommended: false,
-          cta: "Start free",
-          href: "/signup",
-          subtext: "Free forever",
-          features: [
-            "2 events/month",
-            "100 registrations/month",
-            "QR passes & check-in",
-            "Attendee approval",
-            "Basic analytics",
-          ],
-        },
-        {
           name: "Starter",
           price: "£15",
           period: "/month +VAT",
           recommended: false,
-          cta: "Try Starter Free",
-          href: "/signup?plan=starter&trial=true&country=GB",
-          subtext: "30 days £0 · Payment method required",
+          cta: "Choose Starter",
+          href: "/signup?from=home-pricing&plan=starter&country=GB&next=/billing",
+          subtext: "UK direct activation · Cancel anytime",
           features: [
             "10 events/month",
             "500 registrations/month",
@@ -75,9 +59,9 @@ export default function HomePricingSection({ initialCountry = "IN" }: Props) {
           price: "£35",
           period: "/month +VAT",
           recommended: true,
-          cta: "Try Pro Free",
-          href: "/signup?plan=pro&trial=true&country=GB",
-          subtext: "30 days £0 · Payment method required",
+          cta: "Choose Pro",
+          href: "/signup?from=home-pricing&plan=pro&country=GB&next=/billing",
+          subtext: "UK direct activation · Cancel anytime",
           features: [
             "Unlimited events",
             "2,500 registrations/month",
@@ -92,9 +76,9 @@ export default function HomePricingSection({ initialCountry = "IN" }: Props) {
           price: "£79",
           period: "/month +VAT",
           recommended: false,
-          cta: "Try Business Free",
-          href: "/signup?plan=business&trial=true&country=GB",
-          subtext: "30 days £0 · Payment method required",
+          cta: "Choose Business",
+          href: "/signup?from=home-pricing&plan=business&country=GB&next=/billing",
+          subtext: "UK direct activation · Cancel anytime",
           features: [
             "Unlimited events",
             "10,000 registrations/month",
@@ -106,29 +90,13 @@ export default function HomePricingSection({ initialCountry = "IN" }: Props) {
       ]
     : [
         {
-          name: "Free",
-          price: "₹0",
-          period: "forever",
-          recommended: false,
-          cta: "Start free",
-          href: "/signup",
-          subtext: "Free forever · No card required",
-          features: [
-            "2 events/month",
-            "100 registrations/month",
-            "QR passes & check-in",
-            "Attendee approval",
-            "Basic analytics",
-          ],
-        },
-        {
           name: "Starter",
-          price: "₹499",
-          period: "/month +GST",
+          price: "₹29",
+          period: "/month",
           recommended: false,
-          cta: "Try Starter Free",
-          href: "/signup?plan=starter&trial=true",
-          subtext: "30 days ₹0 · AutoPay mandate required",
+          cta: "Get Started for ₹29",
+          href: "/signup?from=home-pricing&plan=starter&next=/billing",
+          subtext: "First 2 months · Then ₹499/mo +GST",
           features: [
             "10 events/month",
             "500 registrations/month",
@@ -139,12 +107,12 @@ export default function HomePricingSection({ initialCountry = "IN" }: Props) {
         },
         {
           name: "Pro",
-          price: "₹999",
-          period: "/month +GST",
+          price: "₹29",
+          period: "/month",
           recommended: true,
-          cta: "Try Pro Free",
-          href: "/signup?plan=pro&trial=true",
-          subtext: "30 days ₹0 · AutoPay mandate required",
+          cta: "Get Started for ₹29",
+          href: "/signup?from=home-pricing&plan=pro&next=/billing",
+          subtext: "First 2 months · Then ₹999/mo +GST",
           features: [
             "Unlimited events",
             "2,500 registrations/month",
@@ -156,12 +124,12 @@ export default function HomePricingSection({ initialCountry = "IN" }: Props) {
         },
         {
           name: "Business",
-          price: "₹2,499",
-          period: "/month +GST",
+          price: "₹29",
+          period: "/month",
           recommended: false,
-          cta: "Try Business Free",
-          href: "/signup?plan=business&trial=true",
-          subtext: "30 days ₹0 · AutoPay mandate required",
+          cta: "Get Started for ₹29",
+          href: "/signup?from=home-pricing&plan=business&next=/billing",
+          subtext: "First 2 months · Then ₹2,499/mo +GST",
           features: [
             "Unlimited events",
             "10,000 registrations/month",
@@ -179,8 +147,8 @@ export default function HomePricingSection({ initialCountry = "IN" }: Props) {
   const founderDealHref = isUk ? "/founder-lifetime-deal?country=GB" : "/founder-lifetime-deal";
 
   const subheaderText = isUk
-    ? "Free plan: no card required · Paid trials: 30 days £0 (payment method required) · Cancel anytime"
-    : "Free plan: no card required · Paid trials: 30 days ₹0 (AutoPay mandate required) · Cancel anytime";
+    ? "£15 / £35 / £79 monthly · Direct UK activation · Cancel renewal anytime"
+    : "₹29/month for your first 2 months · Then regular monthly price · Autopay required";
 
   return (
     <section id="pricing" className="py-14 sm:py-28 px-4 sm:px-8 bg-neutral-50">
@@ -188,10 +156,10 @@ export default function HomePricingSection({ initialCountry = "IN" }: Props) {
         <AnimateIn>
           <div className="text-center mb-10 sm:mb-14">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-50 border border-brand-100 text-brand text-[11px] sm:text-xs font-bold tracking-wider uppercase mb-3">
-              YOUR FIRST 30 DAYS ARE FREE
+              {isUk ? "FLEXIBLE EVENT PLANS" : "INTRODUCTORY OFFER · ₹29/MONTH"}
             </div>
             <h2 className="text-2xl sm:text-4xl font-semibold tracking-tight">
-              Choose any plan. Get your first 30 days free.
+              {isUk ? "Simple pricing for every event." : "Get started for ₹29/month."}
             </h2>
             <p className="mt-2 sm:mt-3 text-neutral-500 text-xs sm:text-sm">
               {subheaderText}
@@ -230,7 +198,7 @@ export default function HomePricingSection({ initialCountry = "IN" }: Props) {
           </div>
         </AnimateIn>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-stretch">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch">
           {plans.map((plan, i) => (
             <AnimateIn key={plan.name} delay={i * 90} from="up">
               <div

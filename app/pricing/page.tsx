@@ -5,25 +5,24 @@ import { createClient } from "@/lib/supabase/server";
 import { detectCountryFromHeaders } from "@/lib/country-config";
 
 export const metadata: Metadata = {
-  title: "Pricing — Start Free · 30-Day Free Trial on Paid Plans | URPASS",
+  title: "Pricing — ₹29 Intro Offer · Event Plans | URPASS",
   description:
-    "Free forever tier. Starter, Pro, and Business plans with full features and 30-day free trial. Transparent pricing in your local currency with 0% platform commission.",
+    "Starter, Pro, Business, one-event passes, and campus licensing for URPASS. India plans start at ₹29/month for the first 2 months with transparent renewal pricing.",
   keywords: [
     "URPASS pricing",
-    "try 30 day free trial",
-    "event management free trial",
-    "free event ticketing platform",
-    "Starter plan free trial",
-    "Pro plan free trial",
-    "Business plan free trial",
+    "event management pricing",
+    "event ticketing software pricing",
+    "Starter event plan",
+    "Pro event plan",
+    "Business event plan",
     "event pass software pricing",
-    "no credit card free trial",
+    "₹29 event software offer",
     "zero commission event ticketing pricing",
   ],
   alternates: { canonical: "https://urpass.space/pricing" },
   openGraph: {
-    title: "URPASS Pricing — Start Free · Try Any Paid Plan Free for 30 Days",
-    description: "Try Starter, Pro, or Business free for 30 days. Instant access, zero platform commission.",
+    title: "URPASS Pricing — ₹29 Intro Offer and Event Plans",
+    description: "Choose Starter, Pro, Business, one-event passes, or campus licensing with transparent local pricing.",
     url: "https://urpass.space/pricing",
     siteName: "URPASS",
     type: "website",
@@ -64,18 +63,11 @@ function getPricingJsonLd(isUk: boolean) {
           ? [
               {
                 "@type": "Offer",
-                name: "Free Tier",
-                price: "0",
-                priceCurrency: "GBP",
-                description: "Free forever. 2 events/month, 100 registrations/month, QR passes & sub-second check-in.",
-              },
-              {
-                "@type": "Offer",
                 name: "Starter Tier",
                 price: "15",
                 priceCurrency: "GBP",
                 billingIncrement: "P1M",
-                description: "Try free for 30 days. 10 events/month, 500 registrations/month, 2 organizers, CSV import & export.",
+                description: "10 events/month, 500 registrations/month, 2 organizers, CSV import & export.",
               },
               {
                 "@type": "Offer",
@@ -83,7 +75,7 @@ function getPricingJsonLd(isUk: boolean) {
                 price: "35",
                 priceCurrency: "GBP",
                 billingIncrement: "P1M",
-                description: "Try free for 30 days. Unlimited events, 2,500 registrations/month, 5 organizers, custom pass design, advanced analytics.",
+                description: "Unlimited events, 2,500 registrations/month, 5 organizers, custom pass design, advanced analytics.",
               },
               {
                 "@type": "Offer",
@@ -91,40 +83,33 @@ function getPricingJsonLd(isUk: boolean) {
                 price: "79",
                 priceCurrency: "GBP",
                 billingIncrement: "P1M",
-                description: "Try free for 30 days. Unlimited events, 10,000 registrations/month, 15 organizers, custom domain, API & webhooks.",
+                description: "Unlimited events, 10,000 registrations/month, 15 organizers, custom domain, API & webhooks.",
               },
             ]
           : [
               {
                 "@type": "Offer",
-                name: "Free Tier",
-                price: "0",
+                name: "Starter Tier Intro",
+                price: "29",
                 priceCurrency: "INR",
-                description: "Free forever. 2 events/month, 100 registrations/month, QR passes & sub-second check-in.",
+                billingIncrement: "P1M",
+                description: "Introductory offer for first 2 months. Then ₹499/month +GST. 10 events/month, 500 registrations/month, 2 organizers, CSV import & export.",
               },
               {
                 "@type": "Offer",
-                name: "Starter Tier",
-                price: "499",
+                name: "Pro Tier Intro",
+                price: "29",
                 priceCurrency: "INR",
                 billingIncrement: "P1M",
-                description: "Try free for 30 days. 10 events/month, 500 registrations/month, 2 organizers, CSV import & export.",
+                description: "Introductory offer for first 2 months. Then ₹999/month +GST. Unlimited events, 2,500 registrations/month, 5 organizers, custom pass design, advanced analytics.",
               },
               {
                 "@type": "Offer",
-                name: "Pro Tier",
-                price: "999",
+                name: "Business Tier Intro",
+                price: "29",
                 priceCurrency: "INR",
                 billingIncrement: "P1M",
-                description: "Try free for 30 days. Unlimited events, 2,500 registrations/month, 5 organizers, custom pass design, advanced analytics.",
-              },
-              {
-                "@type": "Offer",
-                name: "Business Tier",
-                price: "2499",
-                priceCurrency: "INR",
-                billingIncrement: "P1M",
-                description: "Try free for 30 days. Unlimited events, 10,000 registrations/month, 15 organizers, custom domain, API & webhooks.",
+                description: "Introductory offer for first 2 months. Then ₹2,499/month +GST. Unlimited events, 10,000 registrations/month, 15 organizers, custom domain, API & webhooks.",
               },
             ],
       },
@@ -141,12 +126,12 @@ function getPricingJsonLd(isUk: boolean) {
           },
           {
             "@type": "Question",
-            name: "Can I start for free or try a paid plan?",
+            name: "How does URPASS pricing work?",
             acceptedAnswer: {
               "@type": "Answer",
               text: isUk
-                ? "Yes. The Free plan is permanently available at £0 forever with 2 events/month and 100 registrations/month. All paid plans include an instant 30-day free trial with no credit card required."
-                : "Yes. The Free plan is permanently available at ₹0 forever with 2 events/month and 100 registrations/month. All paid plans include a 30-day free trial with no credit card required.",
+                ? "UK pricing is available as Starter £15/month, Pro £35/month, and Business £79/month, with direct activation and cancel-anytime renewal."
+                : "India pricing starts with an introductory ₹29/month offer for the first 2 months on Starter, Pro, or Business. Regular monthly pricing applies after the introductory period.",
             },
           },
           {
