@@ -185,7 +185,9 @@ export default function SubscriptionOnboardingClient({
             {isAnnual
               ? "Annual Billing · 2 Months Free (Save ~17%)"
               : isUk
-              ? "Simple Monthly Plans · Cancel anytime"
+              ? introOfferEligible
+                ? "Special Intro Offer · £2/month for your first 2 months"
+                : "Simple Monthly Plans · Cancel anytime"
               : introOfferEligible
               ? "Special Intro Offer · ₹29/month for your first 2 months"
               : "Simple Monthly Plans · Cancel anytime"}
@@ -210,9 +212,9 @@ export default function SubscriptionOnboardingClient({
               }`}
             >
               <span>Monthly</span>
-              {!isUk && introOfferEligible && (
+              {introOfferEligible && (
                 <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-bold text-violet-700">
-                  ₹29 Intro
+                  {isUk ? "£2 Intro" : "₹29 Intro"}
                 </span>
               )}
             </button>
@@ -256,13 +258,17 @@ export default function SubscriptionOnboardingClient({
                 : `₹${plan.annualInrPerMo.toLocaleString("en-IN")}/mo equivalent · 2 months free + GST`;
             } else {
               todayPrice = isUk
-                ? `£${plan.gbp}`
+                ? introOfferEligible
+                  ? "£2"
+                  : `£${plan.gbp}`
                 : introOfferEligible
                 ? "₹29"
                 : `₹${plan.renewalInr.toLocaleString("en-IN")}`;
               billingPeriodLabel = "/ month";
               renewalText = isUk
-                ? "Billed monthly + VAT"
+                ? introOfferEligible
+                  ? `First 2 months · then £${plan.gbp}/mo + VAT`
+                  : `then £${plan.gbp}/mo + VAT`
                 : introOfferEligible
                 ? `First 2 months · then ₹${plan.renewalInr.toLocaleString("en-IN")}/mo + GST`
                 : `then ₹${plan.renewalInr.toLocaleString("en-IN")}/mo + GST`;
@@ -349,8 +355,6 @@ export default function SubscriptionOnboardingClient({
                     <span>
                       {isAnnual
                         ? `Activate ${plan.name} Annual`
-                        : isUk
-                        ? `Choose ${plan.name}`
                         : `Activate ${plan.name} for ${todayPrice}`}
                     </span>
                   </CheckoutButton>

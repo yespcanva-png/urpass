@@ -101,13 +101,6 @@ export async function evaluateOfferEligibility(params: {
     };
   }
 
-  // Rule: UK GBP direct plans follow standard UK pricing unless specific regional campaign
-  if (currency === "GBP") {
-    return {
-      isEligibleForIntroOffer: false,
-      reason: "₹29 introductory offer is specific to INR billing.",
-    };
-  }
 
   const admin = getAdmin();
 
@@ -187,14 +180,15 @@ export async function evaluateOfferEligibility(params: {
     }
   }
 
-  // Eligible! Return ₹29 for Months 1 & 2
+  const isGbp = currency === "GBP";
+  // Eligible! Return £2 (200 pence) for GBP or ₹29 (2900 paise) for INR for Months 1 & 2
   return {
     isEligibleForIntroOffer: true,
     introOffer: {
-      code: "INTRO29",
-      introPricePaise: 2900, // ₹29
+      code: isGbp ? "INTRO2_GBP" : "INTRO29",
+      introPricePaise: isGbp ? 200 : 2900,
       cyclesCount: 2,
-      currency: "INR",
+      currency: isGbp ? "GBP" : "INR",
     },
   };
 }

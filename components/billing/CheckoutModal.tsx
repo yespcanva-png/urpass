@@ -140,13 +140,14 @@ export default function CheckoutModal({
 
   const isLifetime = billingCycle === "lifetime" || planSlug === "founder" || planSlug === "lifetime";
   const defaultFounder = isUk ? 249 : 19999;
-  const isIntroOffer = !isUk && billingCycle === "monthly" && ["starter", "pro", "business"].includes(planSlug);
+  const isIntroOffer = billingCycle === "monthly" && ["starter", "pro", "business"].includes(planSlug);
+  const introAmount = isUk ? 2 : 29;
   const baseAmount = isLifetime
     ? (annualTotal || priceMonthly || defaultFounder)
     : billingCycle === "annual"
     ? annualTotal
     : isIntroOffer
-    ? 29
+    ? introAmount
     : priceMonthly;
   const baseTax    = Math.round(baseAmount * (isUk ? 20 : 18)) / 100;
   const baseTotal  = Math.round((baseAmount + baseTax) * 100) / 100;
@@ -515,7 +516,9 @@ export default function CheckoutModal({
             </p>
           ) : isIntroOffer ? (
             <p className="text-[11px] text-brand-700 font-semibold text-center -mt-2">
-              Introductory offer: ₹29/month for first 2 months. Subsequent regular renewal is ₹{priceMonthly.toLocaleString("en-IN")}/month +GST. Cancel renewal anytime.
+              {isUk
+                ? `Introductory offer: £2/month for first 2 months. Subsequent regular renewal is £${priceMonthly}/month +VAT. Cancel renewal anytime.`
+                : `Introductory offer: ₹29/month for first 2 months. Subsequent regular renewal is ₹${priceMonthly.toLocaleString("en-IN")}/month +GST. Cancel renewal anytime.`}
             </p>
           ) : coupon?.durationMonths ? (
             <p className="text-[11px] text-neutral-400 text-center -mt-2">
