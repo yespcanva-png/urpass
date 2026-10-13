@@ -28,14 +28,6 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [isUk, setIsUk] = useState(isUkRoute);
-  const [bannerVisible, setBannerVisible] = useState(() => {
-    if (typeof window === "undefined") return true;
-    try {
-      return sessionStorage.getItem("urpass_banner_dismissed") !== "true";
-    } catch {
-      return true;
-    }
-  });
 
   useEffect(() => {
     const isUkCurrent = Boolean(pathname?.startsWith("/uk") || pathname?.endsWith("-uk"));
@@ -59,47 +51,8 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  function handleDismiss() {
-    setBannerVisible(false);
-    try {
-      sessionStorage.setItem("urpass_banner_dismissed", "true");
-    } catch {
-      // ignore
-    }
-  }
-
   return (
     <header className="fixed top-0 inset-x-0 z-50 transition-all duration-300">
-      {/* ── Top Notification / Announcement Bar ── */}
-      {bannerVisible && (
-        <div className="bg-neutral-900 text-neutral-200 border-b border-neutral-800 text-[11px] sm:text-xs py-1.5 px-3 sm:px-4 relative z-50">
-          <div className="max-w-6xl mx-auto flex items-center justify-between gap-2">
-            <div className="flex-1 flex items-center justify-center gap-1.5 sm:gap-2 text-center leading-tight truncate">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
-              <span className="text-neutral-300 font-normal">
-                <span className="sm:hidden">{isUk ? "30-day trial · £0 today." : "30-day trial · ₹0 today."}</span>
-                <span className="hidden sm:inline">{isUk ? "Start free or evaluate any paid plan with our 30-day trial. £0 today." : "Start free or evaluate any paid plan with our 30-day trial. ₹0 today."}</span>
-              </span>
-              <Link
-                href="/pricing"
-                className="inline-flex items-center gap-0.5 font-medium text-white hover:text-neutral-300 transition-colors shrink-0 ml-1 underline-offset-2 hover:underline"
-              >
-                <span>{isUk ? "Try free" : "Try free"}</span>
-                <ArrowRight className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-              </Link>
-            </div>
-            <button
-              type="button"
-              onClick={handleDismiss}
-              className="text-neutral-400 hover:text-white p-0.5 rounded transition-colors shrink-0"
-              aria-label="Dismiss notification"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* Main Navbar */}
       <div
         className={cn(
@@ -185,7 +138,7 @@ export default function Navbar() {
               href={signupHref}
               className="text-sm bg-neutral-900 text-white px-4 py-2 rounded-xl font-medium hover:bg-neutral-700 transition-colors shadow-2xs"
             >
-              Create Free Event
+              Get Started
             </Link>
           </div>
 
@@ -273,7 +226,7 @@ export default function Navbar() {
                 onClick={() => setOpen(false)}
                 className="text-sm text-center bg-neutral-900 text-white rounded-xl py-2.5 font-medium hover:bg-neutral-700 transition-colors"
               >
-                Create Free Event
+                Get Started
               </Link>
             </div>
           </div>
