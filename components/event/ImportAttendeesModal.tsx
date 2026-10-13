@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   FileSpreadsheet,
   Loader2,
+  RefreshCw,
   UploadCloud,
   X,
 } from "lucide-react";
@@ -270,9 +271,20 @@ export default function ImportAttendeesModal({ eventId, onClose, onSuccess }: Pr
                       </label>
                     ))}
                   </div>
-                  <div className="border-t border-slate-200 px-3 py-2">
-                    <button onClick={() => runPreview(mapping)} disabled={loading} className="text-xs font-semibold text-slate-700 hover:text-slate-950">
-                      Revalidate mapping
+                  <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50/50 px-3 py-2.5">
+                    <p className="text-[11px] text-slate-500">Changed column assignments? Update the validation below.</p>
+                    <button
+                      type="button"
+                      onClick={() => runPreview(mapping)}
+                      disabled={loading}
+                      className="inline-flex items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-800 shadow-xs transition-colors hover:bg-slate-100 hover:text-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-900/10 disabled:opacity-50"
+                    >
+                      {loading ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-600" />
+                      ) : (
+                        <RefreshCw className="h-3.5 w-3.5 text-slate-600" />
+                      )}
+                      <span>Update & Refresh Preview</span>
                     </button>
                   </div>
                 </div>
@@ -317,7 +329,7 @@ export default function ImportAttendeesModal({ eventId, onClose, onSuccess }: Pr
 
                 <div className="flex flex-col gap-2 border-t border-slate-200 pt-4 sm:flex-row sm:items-center sm:justify-between">
                   <p className="text-xs text-slate-500">
-                    Invalid and duplicate rows will not be imported. Paid ticket types are blocked so CSV cannot bypass payment verification.
+                    Attendees will be imported with approved status and verified QR passes generated automatically. Duplicate emails are skipped.
                   </p>
                   <button
                     onClick={confirmImport}
@@ -334,7 +346,7 @@ export default function ImportAttendeesModal({ eventId, onClose, onSuccess }: Pr
                 <FileSpreadsheet className="h-9 w-9 text-slate-400" />
                 <h3 className="mt-3 text-sm font-bold text-slate-900">Upload a CSV to preview attendees</h3>
                 <p className="mt-1 max-w-md text-xs leading-5 text-slate-500">
-                  UrPass validates missing fields, duplicates, ticket types and paid-ticket restrictions before importing. QR passes are generated after confirmation.
+                  UrPass validates required fields, email formatting, and duplicate emails before importing. Ready attendees receive instant, scanner-compatible QR passes.
                 </p>
               </div>
             )}

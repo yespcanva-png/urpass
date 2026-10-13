@@ -53,5 +53,9 @@ stress-test-results.json
 # python
 __pycache__/
 *.py[cod]
-*$py.class
+# spreadsheets and temp office files
+*.xlsx
+*.xls
+~$*
+garba_night_pilani_registrations.*
 

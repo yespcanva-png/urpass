@@ -54,49 +54,124 @@ export async function POST(req: NextRequest, { params }: Props) {
     return NextResponse.json({ idempotent: true, ...existingBatch.report });
   }
 
-  await admin.from("attendee_import_batches").insert({
-    event_id: eventId,
-    created_by: access.user.id,
-    source: "csv",
-    idempotency_key: idempotencyKey,
-    status: "processing",
-    total_rows: validation.summary.total,
-    valid_rows: validation.summary.valid,
-    invalid_rows: validation.summary.invalid,
-    duplicate_rows: validation.summary.duplicates,
-  });
+  try {
+    await admin.from("attendee_import_batches").insert({
+      event_id: eventId,
+      created_by: access.user.id,
+      source: "csv",
+      idempotency_key: idempotencyKey,
+      status: "processing",
+      total_rows: validation.summary.total,
+      valid_rows: validation.summary.valid,
+      invalid_rows: validation.summary.invalid,
+      duplicate_rows: validation.summary.duplicates,
+    });
+  } catch (e) {
+    console.error("Batch insert tracking notice:", e);
+  }
 
   const imported: Array<{ rowNumber: number; attendeeId: string; passToken: string }> = [];
   const failed = validation.rows
     .filter((r) => r.errors.length > 0)
     .map((r) => ({ rowNumber: r.rowNumber, email: r.email, errors: r.errors }));
 
-  for (const row of validation.rows.filter((r) => r.errors.length === 0)) {
-    const { data, error } = await admin.rpc("import_attendee_with_pass", {
-      p_event_id: eventId,
-      p_name: row.name,
-      p_email: row.email,
-      p_phone: row.phone,
-      p_pass_type: row.passType,
-      p_ticket_type_id: row.ticketTypeId,
-      p_custom_responses: row.customResponses,
-      p_idempotency_key: `${idempotencyKey}:${row.rowNumber}:${row.email}`,
-    });
+  const rowsToImport = validation.rows.filter((r) => r.errors.length === 0);
 
-    const result = data as { status?: string; error?: string; attendee_id?: string; pass_token?: string } | null;
-    if (error || !result || result.status !== "IMPORTED") {
+  // Check event capacity
+  const { count: currentApprovedCount } = await admin
+    .from("attendees")
+    .select("id", { count: "exact", head: true })
+    .eq("event_id", eventId)
+    .eq("application_status", "approved");
+
+  let capacityRemaining = (access.event.attendee_limit || 999999) - (currentApprovedCount || 0);
+
+  for (const row of rowsToImport) {
+    if (capacityRemaining <= 0) {
       failed.push({
         rowNumber: row.rowNumber,
         email: row.email,
-        errors: [error?.message || result?.error || result?.status || "Import failed."],
+        errors: ["Event capacity has been reached."],
       });
       continue;
     }
 
+    // Check duplicate email
+    const { data: existingAttendee } = await admin
+      .from("attendees")
+      .select("id")
+      .eq("event_id", eventId)
+      .ilike("email", row.email)
+      .maybeSingle();
+
+    if (existingAttendee) {
+      failed.push({
+        rowNumber: row.rowNumber,
+        email: row.email,
+        errors: ["Attendee already exists in this event."],
+      });
+      continue;
+    }
+
+    // 1. Insert attendee
+    const { data: attendeeRecord, error: attendeeErr } = await admin
+      .from("attendees")
+      .insert({
+        event_id: eventId,
+        name: row.name,
+        email: row.email,
+        phone: row.phone || null,
+        pass_type: row.passType || "participant",
+        application_status: "approved",
+        pass_status: "generated",
+        ticket_type_id: row.ticketTypeId || null,
+        custom_responses: {
+          ...row.customResponses,
+          imported_from: "csv_import",
+          import_operation_id: `${idempotencyKey}:${row.rowNumber}:${row.email}`,
+        },
+      })
+      .select("id")
+      .single();
+
+    if (attendeeErr || !attendeeRecord) {
+      failed.push({
+        rowNumber: row.rowNumber,
+        email: row.email,
+        errors: [attendeeErr?.message || "Failed to create attendee."],
+      });
+      continue;
+    }
+
+    // 2. Insert pass and get generated pass_token
+    const { data: passRecord, error: passErr } = await admin
+      .from("passes")
+      .insert({
+        event_id: eventId,
+        attendee_id: attendeeRecord.id,
+        pass_type: row.passType || "participant",
+        ticket_type_id: row.ticketTypeId || null,
+        status: "generated",
+        generated_at: new Date().toISOString(),
+      })
+      .select("id, pass_token")
+      .single();
+
+    if (passErr || !passRecord) {
+      await admin.from("attendees").delete().eq("id", attendeeRecord.id);
+      failed.push({
+        rowNumber: row.rowNumber,
+        email: row.email,
+        errors: [passErr?.message || "Failed to generate pass."],
+      });
+      continue;
+    }
+
+    capacityRemaining--;
     imported.push({
       rowNumber: row.rowNumber,
-      attendeeId: String(result.attendee_id),
-      passToken: String(result.pass_token),
+      attendeeId: attendeeRecord.id,
+      passToken: passRecord.pass_token,
     });
   }
 
@@ -124,17 +199,21 @@ export async function POST(req: NextRequest, { params }: Props) {
     ),
   };
 
-  await admin
-    .from("attendee_import_batches")
-    .update({
-      status: failed.length > 0 ? "completed" : "completed",
-      imported_rows: imported.length,
-      failed_rows: failed.length,
-      report,
-      completed_at: new Date().toISOString(),
-    })
-    .eq("event_id", eventId)
-    .eq("idempotency_key", idempotencyKey);
+  try {
+    await admin
+      .from("attendee_import_batches")
+      .update({
+        status: "completed",
+        imported_rows: imported.length,
+        failed_rows: failed.length,
+        report,
+        completed_at: new Date().toISOString(),
+      })
+      .eq("event_id", eventId)
+      .eq("idempotency_key", idempotencyKey);
+  } catch (e) {
+    console.error("Batch update tracking notice:", e);
+  }
 
   return NextResponse.json(report);
 }

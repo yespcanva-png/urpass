@@ -188,7 +188,15 @@ export function validateImportRows({
     const name = mapped.name.trim();
     const email = mapped.email.toLowerCase().trim();
     const passTypeCandidate = mapped.pass_type.toLowerCase().trim() || "participant";
-    const passType = PASS_TYPES.includes(passTypeCandidate as any) ? passTypeCandidate : "participant";
+    const passType = PASS_TYPES.includes(passTypeCandidate as any)
+      ? passTypeCandidate
+      : passTypeCandidate.includes("vip")
+      ? "vip"
+      : passTypeCandidate.includes("speak")
+      ? "speaker"
+      : passTypeCandidate.includes("org")
+      ? "organizer"
+      : "participant";
     let ticketTypeId: string | null = null;
     const ticketTypeName = mapped.ticket_type.trim() || null;
     const paymentStatus = mapped.payment_status.trim() || null;
@@ -220,16 +228,31 @@ export function validateImportRows({
     }
 
     if (ticketTypeName) {
-      const ticket = ticketByName.get(normalizeComparable(ticketTypeName));
-      if (!ticket) {
-        errors.push(`Ticket type "${ticketTypeName}" was not found.`);
-      } else if (ticket.status !== "on_sale") {
-        errors.push(`Ticket type "${ticket.name}" is not on sale.`);
+      const normalizedName = normalizeComparable(ticketTypeName);
+      let ticket = ticketByName.get(normalizedName);
+
+      // Try partial/substring match if exact name not found (e.g. "VIP Pass" matching "VIP")
+      if (!ticket && ticketTypes.length > 0) {
+        ticket = ticketTypes.find((t) => {
+          const tNorm = normalizeComparable(t.name);
+          return normalizedName.includes(tNorm) || tNorm.includes(normalizedName);
+        });
+      }
+
+      if (ticket) {
         ticketTypeId = ticket.id;
+        customResponses["ticket_type"] = ticket.name;
+        if (paymentStatus) {
+          customResponses["payment_status"] = paymentStatus;
+        } else if (ticket.price > 0) {
+          customResponses["payment_status"] = "paid_external";
+        }
       } else {
-        ticketTypeId = ticket.id;
-        if (ticket.price > 0 && (paymentStatus || "").toLowerCase() !== "paid") {
-          errors.push(`Ticket type "${ticket.name}" is paid. Import requires verified paid status outside bulk import.`);
+        // Preserve external or unmapped ticket type in custom responses without blocking import
+        customResponses["imported_ticket_type"] = ticketTypeName;
+        customResponses["ticket_type"] = ticketTypeName;
+        if (paymentStatus) {
+          customResponses["payment_status"] = paymentStatus;
         }
       }
     }
