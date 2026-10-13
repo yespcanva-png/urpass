@@ -740,16 +740,21 @@ export async function handleRazorpayWebhook(req: NextRequest): Promise<NextRespo
       ? "URPASS Founder Lifetime Access (One-Time)"
       : `${rawSlug.toUpperCase()} Plan (${billingCycle})`;
 
-    void createInvoiceForPayment({
+    await createInvoiceForPayment({
       userId,
       subscriptionId: updatedSub?.id ?? existingSubscription?.id ?? null,
       paymentId: payment.id,
       description: invoiceDesc,
       baseAmountRupees: basePaise / 100,
       discountRupees: discountPaise / 100,
+      currency: (payment.currency || "INR").toUpperCase() as "INR" | "GBP",
       docType: "SUB",
       customerEmail: payment.email,
       customerName: notes.customer_name,
+      customerAddress: notes.billing_address || null,
+      customerGstin: notes.customer_gstin || null,
+      customerState: notes.billing_state || null,
+      customerStateCode: notes.billing_state_code || null,
       billingPeriodStart: periodStart,
       billingPeriodEnd: periodEnd,
     });

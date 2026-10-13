@@ -900,14 +900,27 @@ export async function sendUserPaymentSuccessEmail({
   name,
   itemName,
   amountPaise,
+  currency = "INR",
   kind,
+  invoiceUrl,
+  invoiceNumber,
 }: {
   to: string;
   name?: string | null;
   itemName: string;
   amountPaise?: number | null;
+  currency?: string | null;
   kind: "subscription" | "event_pass" | "ticket";
+  invoiceUrl?: string | null;
+  invoiceNumber?: string | null;
 }) {
+  const curr = (currency || "INR").toUpperCase();
+  const isGbp = curr === "GBP";
+  const taxLabel = isGbp ? "Includes 20% VAT" : "Includes 18% GST (SAC: 998313)";
+  const invoiceDownloadUrl = invoiceUrl
+    ? (invoiceUrl.startsWith("http") ? invoiceUrl : `${APP_URL}${invoiceUrl}`)
+    : `${APP_URL}/billing`;
+
   const heading = kind === "subscription"
     ? "Congratulations, your subscription is active"
     : kind === "event_pass"
@@ -932,16 +945,30 @@ export async function sendUserPaymentSuccessEmail({
       </td></tr>
       <tr><td style="padding:28px 32px;">
         <p style="margin:0 0 18px;font-size:14px;color:#374151;line-height:1.6;">
-          Hi <strong>${escapeHtml(name || "there")}</strong>, thanks for your purchase. Your URPASS payment has been confirmed.
+          Hi <strong>${escapeHtml(name || "there")}</strong>, thanks for your purchase. Your payment has been successfully processed and verified.
         </p>
         <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0fdf4;border-radius:14px;border:1px solid #bbf7d0;margin-bottom:20px;">
           <tr><td style="padding:18px 22px;">
             <p style="margin:0 0 4px;font-size:10px;font-weight:700;letter-spacing:2px;color:#6b7280;text-transform:uppercase;">Purchase</p>
             <p style="margin:0 0 4px;font-size:15px;font-weight:800;color:#111827;">${escapeHtml(itemName)}</p>
-            <p style="margin:0;font-size:13px;color:#15803d;font-weight:700;">${escapeHtml(formatInrFromPaise(amountPaise))}</p>
+            <p style="margin:0 0 2px;font-size:14px;color:#15803d;font-weight:700;">${escapeHtml(formatAmount(amountPaise, curr))}</p>
+            <p style="margin:0;font-size:11px;color:#166534;font-weight:500;">${escapeHtml(taxLabel)}</p>
           </td></tr>
         </table>
-        <a href="${APP_URL}/dashboard" style="display:block;background:#6D28D9;color:#ffffff;text-align:center;padding:15px 24px;border-radius:12px;font-size:14px;font-weight:700;text-decoration:none;">Open URPASS &rarr;</a>
+
+        <!-- Official Tax Invoice Section -->
+        <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;border-radius:14px;border:1px solid #e2e8f0;margin-bottom:20px;">
+          <tr><td style="padding:16px 20px;">
+            <p style="margin:0 0 4px;font-size:10px;font-weight:700;letter-spacing:1.5px;color:#64748b;text-transform:uppercase;">Official Tax Invoice</p>
+            ${invoiceNumber ? `<p style="margin:0 0 10px;font-size:13px;color:#1e293b;font-weight:700;">Invoice #: ${escapeHtml(invoiceNumber)}</p>` : ""}
+            <p style="margin:0 0 12px;font-size:12px;color:#475569;line-height:1.5;">
+              A GST-compliant tax invoice with HSN/SAC codes has been automatically issued for this payment.
+            </p>
+            <a href="${invoiceDownloadUrl}" style="display:inline-block;background:#0f172a;color:#ffffff;text-align:center;padding:10px 18px;border-radius:10px;font-size:12px;font-weight:700;text-decoration:none;">Download GST Invoice (PDF) &rarr;</a>
+          </td></tr>
+        </table>
+
+        <a href="${APP_URL}/dashboard" style="display:block;background:#6D28D9;color:#ffffff;text-align:center;padding:14px 24px;border-radius:12px;font-size:14px;font-weight:700;text-decoration:none;">Go to Dashboard &rarr;</a>
       </td></tr>
     </table>
   </td></tr>

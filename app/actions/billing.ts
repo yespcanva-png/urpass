@@ -685,6 +685,7 @@ export async function activatePaidSubscription(
   let orderBasePaise = 0;
   let orderDiscountPaise = 0;
   let orderAmountPaise = 0;
+  let orderCurrency = "INR";
   let orderBillingDetails: CheckoutBillingDetails | undefined = checkoutBillingDetails;
 
   if (normalizedSlug !== "free") {
@@ -712,6 +713,9 @@ export async function activatePaidSubscription(
         return { error: "Payment verification failed: order not found on gateway." };
       }
       orderAmountPaise = Number(order.amount ?? 0);
+      orderCurrency = String(order.currency || "INR").toUpperCase();
+      const isUkOrder = orderCurrency === "GBP";
+      const taxRate = isUkOrder ? 0.20 : 0.18;
 
       const notes = (order.notes ?? {}) as Record<string, string>;
       if (notes.user_id && notes.user_id !== user.id) {
@@ -723,7 +727,7 @@ export async function activatePaidSubscription(
 
       orderBasePaise = notes.base_amount
         ? Number(notes.base_amount)
-        : (order.amount ? Math.round(Number(order.amount) / 1.18) : 0);
+        : (order.amount ? Math.round(Number(order.amount) / (1 + taxRate)) : 0);
       orderDiscountPaise = notes.discount_amount ? Number(notes.discount_amount) : 0;
       orderBillingDetails = {
         companyName: checkoutBillingDetails?.companyName ?? notes.company_name ?? null,
@@ -818,13 +822,14 @@ export async function activatePaidSubscription(
       ? "URPASS Founder Lifetime Access (One-Time)"
       : `${normalizedSlug.toUpperCase()} Plan (${effectiveCycle})`;
 
-    void createInvoiceForPayment({
+    const invoice = await createInvoiceForPayment({
       userId: user.id,
       subscriptionId: updatedSub?.id ?? null,
       paymentId: verifiedPaymentId,
       description: invoiceDescription,
       baseAmountRupees: orderBasePaise / 100,
       discountRupees: orderDiscountPaise / 100,
+      currency: (orderCurrency || "INR") as "INR" | "GBP",
       docType: "SUB",
       customerEmail: user.email,
       customerName: companyName || user.user_metadata?.full_name,
@@ -851,14 +856,18 @@ export async function activatePaidSubscription(
           paymentId: verifiedPaymentId,
           orderId: typeof payment === "object" ? payment.orderId : undefined,
           subscriptionId: verifiedPaymentId,
+          currency: orderCurrency,
         }),
         user.email
           ? sendUserPaymentSuccessEmail({
               to: user.email,
-              name: user.user_metadata?.full_name,
+              name: companyName || user.user_metadata?.full_name,
               itemName,
               amountPaise: orderAmountPaise,
+              currency: orderCurrency,
               kind: "subscription",
+              invoiceUrl: invoice?.id ? `/api/invoices/${invoice.id}/pdf` : undefined,
+              invoiceNumber: invoice?.invoice_number ?? undefined,
             })
           : Promise.resolve(),
       ]);

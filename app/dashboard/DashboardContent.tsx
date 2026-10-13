@@ -338,24 +338,6 @@ export default function DashboardContent() {
         </div>
       )}
 
-      {/* ── Subtitle Trial Alert (Clean & Compact) ───────────────────── */}
-      {loaded && trialInfo?.isEligible && (
-        <div className="rounded-xl px-4 py-3 bg-neutral-900 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-          <div className="flex items-center gap-2.5">
-            <Sparkles className="w-4 h-4 text-emerald-400 shrink-0" />
-            <span>
-              <strong>30-Day Free Trial Available:</strong> Try Starter, Pro, or Business with zero platform fees.
-            </span>
-          </div>
-          <Link
-            href="/billing"
-            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white text-neutral-900 font-semibold text-xs hover:bg-neutral-100 transition-colors whitespace-nowrap self-start sm:self-auto"
-          >
-            <span>Activate Trial</span>
-            <ChevronRight className="w-3.5 h-3.5" />
-          </Link>
-        </div>
-      )}
 
       {/* ── 4 Clean Corporate Metrics ─────────────────────────────────── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">

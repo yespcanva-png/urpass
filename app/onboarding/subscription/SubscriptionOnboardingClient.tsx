@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Check, ShieldCheck, Ticket, Zap, RefreshCw, LogOut } from "lucide-react";
+import { Check, ShieldCheck, Ticket, Zap, RefreshCw, LogOut, Receipt } from "lucide-react";
 import CheckoutButton from "@/components/billing/CheckoutButton";
 import { persistCountryPreference, detectCountryClient } from "@/lib/country-config";
 
@@ -365,8 +365,8 @@ export default function SubscriptionOnboardingClient({
         </div>
 
         {/* Trust & Guarantee Strip */}
-        <div className="mt-12 max-w-3xl mx-auto rounded-2xl border border-neutral-200/80 bg-white/70 p-4 sm:p-5 shadow-sm">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-center sm:text-left text-xs text-neutral-600">
+        <div className="mt-12 max-w-4xl mx-auto rounded-2xl border border-neutral-200/80 bg-white/70 p-4 sm:p-5 shadow-sm">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center sm:text-left text-xs text-neutral-600">
             <div className="flex items-center justify-center sm:justify-start gap-2.5">
               <ShieldCheck className="h-4 w-4 text-emerald-600 shrink-0" />
               <span>Secure Razorpay checkout</span>
@@ -378,6 +378,10 @@ export default function SubscriptionOnboardingClient({
             <div className="flex items-center justify-center sm:justify-start gap-2.5">
               <RefreshCw className="h-4 w-4 text-neutral-500 shrink-0" />
               <span>Cancel renewal anytime</span>
+            </div>
+            <div className="flex items-center justify-center sm:justify-start gap-2.5">
+              <Receipt className="h-4 w-4 text-[#6D28D9] shrink-0" />
+              <span>{isUk ? "Official VAT Tax Invoices" : "Automated GST Tax Invoices"}</span>
             </div>
           </div>
         </div>
