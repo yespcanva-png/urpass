@@ -1,8 +1,10 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Check, ShieldCheck, Ticket, Zap, RefreshCw, LogOut } from "lucide-react";
+import { Check, ShieldCheck, Ticket, Zap, RefreshCw, LogOut, Globe } from "lucide-react";
 import CheckoutButton from "@/components/billing/CheckoutButton";
+import { persistCountryPreference, detectCountryClient } from "@/lib/country-config";
 
 const PLANS = [
   {
@@ -70,7 +72,29 @@ export default function SubscriptionOnboardingClient({
   accessState,
   introOfferEligible,
 }: Props) {
-  const isUk = country === "GB";
+  // Always default to INR ("IN") as primary currency, with dynamic client detection & toggle
+  const [activeCountry, setActiveCountry] = useState<"IN" | "GB">(() => {
+    if (typeof window !== "undefined") {
+      const detected = detectCountryClient();
+      return detected || country || "IN";
+    }
+    return country || "IN";
+  });
+
+  useEffect(() => {
+    // Check if client has a preference or timezone override
+    const detected = detectCountryClient();
+    if (detected && detected !== activeCountry) {
+      setActiveCountry(detected);
+    }
+  }, []);
+
+  function handleCountrySwitch(newCountry: "IN" | "GB") {
+    setActiveCountry(newCountry);
+    persistCountryPreference(newCountry);
+  }
+
+  const isUk = activeCountry === "GB";
 
   return (
     <div
@@ -90,12 +114,39 @@ export default function SubscriptionOnboardingClient({
             <span className="text-sm font-extrabold tracking-widest text-neutral-900">URPASS</span>
           </Link>
 
-          <div className="flex items-center gap-4 text-xs">
+          <div className="flex items-center gap-3 sm:gap-5 text-xs">
+            {/* Currency toggle */}
+            <div className="flex items-center rounded-lg border border-neutral-200 bg-neutral-100/80 p-0.5 text-[11px] font-semibold text-neutral-600">
+              <button
+                type="button"
+                onClick={() => handleCountrySwitch("IN")}
+                className={`rounded-md px-2.5 py-1 transition-all ${
+                  !isUk
+                    ? "bg-white text-neutral-950 font-bold shadow-xs"
+                    : "text-neutral-500 hover:text-neutral-800"
+                }`}
+              >
+                ₹ INR
+              </button>
+              <button
+                type="button"
+                onClick={() => handleCountrySwitch("GB")}
+                className={`rounded-md px-2.5 py-1 transition-all ${
+                  isUk
+                    ? "bg-white text-neutral-950 font-bold shadow-xs"
+                    : "text-neutral-500 hover:text-neutral-800"
+                }`}
+              >
+                £ GBP
+              </button>
+            </div>
+
             {userEmail && (
-              <span className="hidden text-neutral-500 sm:inline">
+              <span className="hidden text-neutral-500 md:inline">
                 Signed in as <strong className="font-semibold text-neutral-800">{userEmail}</strong>
               </span>
             )}
+
             <a
               href="/auth/signout"
               className="inline-flex items-center gap-1.5 text-neutral-500 hover:text-neutral-900 transition-colors font-medium"
@@ -228,7 +279,7 @@ export default function SubscriptionOnboardingClient({
                         : "border border-neutral-300 bg-white text-neutral-800 hover:bg-neutral-50 hover:border-neutral-400 shadow-sm"
                     }`}
                   >
-                    <span>{isUk ? `Choose ${plan.name}` : `Activate for ${todayPrice}`}</span>
+                    <span>{isUk ? `Choose ${plan.name}` : `Activate ${plan.name} for ${todayPrice}`}</span>
                   </CheckoutButton>
                 </div>
               </div>

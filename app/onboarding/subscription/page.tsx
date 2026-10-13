@@ -32,7 +32,7 @@ export default async function SubscriptionOnboardingPage() {
 
   const cookieCountry = cookieStore.get("urpass_country")?.value?.toUpperCase();
   const headerCountry = detectCountryFromHeaders(reqHeaders);
-  const country: "IN" | "GB" = headerCountry === "GB" || cookieCountry === "GB" || cookieCountry === "UK" ? "GB" : "IN";
+  const country: "IN" | "GB" = cookieCountry === "GB" || cookieCountry === "UK" ? "GB" : headerCountry === "GB" && cookieCountry !== "IN" ? "GB" : "IN";
 
   return (
     <SubscriptionOnboardingClient

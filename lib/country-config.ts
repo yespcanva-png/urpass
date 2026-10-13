@@ -376,21 +376,7 @@ export function detectCountryFromHeaders(headers: {
   if (xCountry === "GB" || xCountry === "UK") return "GB";
   if (xCountry === "US") return "US";
 
-  // 5. Browser Accept-Language header
-  const acceptLang = headers.get("accept-language")?.toLowerCase() || "";
-  // Check Indian languages first to prevent false UK detection on Indian browsers
-  if (
-    acceptLang.includes("en-in") ||
-    acceptLang.includes("hi-in") ||
-    acceptLang.includes("ta-in") ||
-    acceptLang.includes("te-in") ||
-    acceptLang.includes("hi") ||
-    acceptLang.includes("ta")
-  ) {
-    return "IN";
-  }
-  if (acceptLang.includes("en-gb")) return "GB";
-
+  // Accept-Language alone should not force UK pricing since many Indian/Commonwealth devices default to en-GB.
   return "IN";
 }
 
