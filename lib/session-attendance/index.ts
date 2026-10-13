@@ -217,6 +217,44 @@ export function processSessionScan({
       };
     }
 
+    // Re-entry: Attendee previously checked out
+    if (existingRecord.checkoutTime && (request.action === "checkin" || request.action === "auto" || request.override)) {
+      const updatedRecord: SessionAttendanceRecord = {
+        ...existingRecord,
+        checkinTime: nowIso,
+        checkoutTime: null,
+        durationMinutes: null,
+        status: "checked_in",
+      };
+
+      return {
+        result: {
+          success: true,
+          status: "CHECKED_IN",
+          session: {
+            id: session.id,
+            name: session.name,
+            roomName: session.roomName,
+            timeRange: `${session.startTime} - ${session.endTime}`,
+            dayIndex: session.dayIndex,
+          },
+          attendee: attendee
+            ? {
+                id: attendee.id,
+                name: attendee.name,
+                email: attendee.email,
+                ticketTier,
+                ticketTypeId,
+              }
+            : undefined,
+          checkinTime: nowIso,
+          currentAttendanceCount: currentCount + 1,
+          message: `✓ RE-ADMITTED: ${attendee?.name || "Attendee"} re-entered session "${session.name}".`,
+        },
+        updatedRecord,
+      };
+    }
+
     // Duplicate Check-In Attempt
     return {
       result: {

@@ -259,3 +259,109 @@ export async function undoSessionCheckIn({
   return { success: true };
 }
 
+/**
+ * Grants an attendee explicit session entitlement (for add-on purchases or VIP/manual grants).
+ */
+export async function grantAttendeeSessionEntitlement({
+  eventId,
+  attendeeId,
+  sessionId,
+  source = "manual_grant",
+  orderId = null,
+}: {
+  eventId: string;
+  attendeeId: string;
+  sessionId: string;
+  source?: "manual_grant" | "addon_purchase" | "vip_override";
+  orderId?: string | null;
+}): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { success: false, error: "Authentication required." };
+  }
+
+  const db = adminClient();
+  const { error } = await db.from("attendee_session_entitlements").upsert(
+    {
+      event_id: eventId,
+      attendee_id: attendeeId,
+      session_id: sessionId,
+      source,
+      order_id: orderId,
+      granted_by: user.id,
+    },
+    { onConflict: "attendee_id,session_id" }
+  );
+
+  if (error) {
+    return { success: false, error: error.message };
+  }
+
+  revalidatePath(`/event/${eventId}/sessions`);
+  return { success: true };
+}
+
+/**
+ * Revokes an attendee explicit session entitlement.
+ */
+export async function revokeAttendeeSessionEntitlement({
+  eventId,
+  attendeeId,
+  sessionId,
+}: {
+  eventId: string;
+  attendeeId: string;
+  sessionId: string;
+}): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { success: false, error: "Authentication required." };
+  }
+
+  const db = adminClient();
+  const { error } = await db
+    .from("attendee_session_entitlements")
+    .delete()
+    .eq("attendee_id", attendeeId)
+    .eq("session_id", sessionId);
+
+  if (error) {
+    return { success: false, error: error.message };
+  }
+
+  revalidatePath(`/event/${eventId}/sessions`);
+  return { success: true };
+}
+
+/**
+ * Retrieves all session entitlements for an attendee.
+ */
+export async function getAttendeeSessionEntitlements(
+  attendeeId: string
+): Promise<Array<{ sessionId: string; sessionTitle: string; source: string; createdAt: string }>> {
+  const db = adminClient();
+  const { data } = await db
+    .from("attendee_session_entitlements")
+    .select(`
+      session_id,
+      source,
+      created_at,
+      session:event_sessions(title)
+    `)
+    .eq("attendee_id", attendeeId);
+
+  return (data || []).map((row: any) => ({
+    sessionId: row.session_id,
+    sessionTitle: row.session?.title || "Session",
+    source: row.source,
+    createdAt: row.created_at,
+  }));
+}

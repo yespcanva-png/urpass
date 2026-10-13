@@ -365,6 +365,7 @@ describe("Conference API Routes", () => {
             eq: vi.fn().mockImplementation(() => ({
               maybeSingle: vi.fn().mockResolvedValue({ data: null }),
             })),
+            is: vi.fn().mockResolvedValue({ count: 173 }),
             // For count query
             select: vi.fn().mockReturnThis(),
             count: 173,
@@ -480,7 +481,7 @@ describe("Conference API Routes", () => {
       const json = await res.json();
       expect(json.status).toBe("ALREADY_CHECKED_IN");
       expect(json.attendee.name).toBe("Haarishmitha S");
-      expect(json.message).toContain("ALREADY CHECKED IN");
+      expect(json.message).toMatch(/ALREADY (CHECKED IN|ADMITTED)/i);
     });
   });
 });

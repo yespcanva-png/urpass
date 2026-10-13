@@ -157,16 +157,18 @@ export default function ScanEventPage() {
     totalEntitlements: number;
     previouslyAdmitted: number;
     remainingEntries: number;
-	    history?: Array<{
-	      id: string;
-	      admittedCount: number;
-	      remainingAfter: number;
-	      gateName?: string;
-	      admittedAt: string;
-	    }>;
-	    operationId: string;
-	    loading: boolean;
-	  } | null>(null);
+    history?: Array<{
+      id: string;
+      admittedCount: number;
+      remainingAfter: number;
+      gateName?: string;
+      admittedAt: string;
+    }>;
+    operationId: string;
+    loading: boolean;
+    sessionId?: string;
+    sessionTitle?: string;
+  } | null>(null);
 
   // Manual search mode
   const [manualMode, setManualMode] = useState(false);
@@ -756,6 +758,63 @@ export default function ScanEventPage() {
 
       // ── Conference Session Check-in Flow ──
       if (selectedSessionId) {
+        const parsedGroup = parseScannedGroupQR(rawToken);
+
+        // Group QR Session Entry: Trigger modal to choose guest admission count
+        if (parsedGroup.isGroupQR && scanDirection !== "out") {
+          try {
+            const lookupRes = await fetch(`/api/sessions/${selectedSessionId}/checkin`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                passToken: rawToken,
+                action: "lookup",
+              }),
+            });
+            const lookupData = await lookupRes.json();
+            if (lookupRes.ok && lookupData.isGroupQR) {
+              if (lookupData.remainingEntries <= 0) {
+                playScannerFeedback("ALREADY_CHECKED_IN", { sound: soundEnabled });
+                const total = lookupData.totalEntitlements || 1;
+                setResult({
+                  attendee: {
+                    name: lookupData.buyerName || "Group Pass Holder",
+                    email: `All ${total} attendees admitted`,
+                    pass_type: "group",
+                  },
+                  passType: "group",
+                  checkedInAt: new Date().toISOString(),
+                  gateName: selectedSession?.title || "Session",
+                  passToken: rawToken,
+                  badgeText: "ALL GROUP ENTRIES ADMITTED",
+                  message: `All ${total} group members have already been admitted to "${selectedSession?.title}".`,
+                });
+                setScanState("duplicate");
+                return;
+              }
+
+              setGroupModalState({
+                isOpen: true,
+                bookingReference: lookupData.bookingReference || rawToken,
+                buyerName: lookupData.buyerName || "Group Pass Holder",
+                ticketCategory: `${selectedSession?.title || "Session"} · Group Pass`,
+                totalEntitlements: lookupData.totalEntitlements || 1,
+                previouslyAdmitted: lookupData.previouslyAdmitted || 0,
+                remainingEntries: lookupData.remainingEntries || 1,
+                history: [],
+                operationId: crypto.randomUUID(),
+                sessionId: selectedSessionId,
+                sessionTitle: selectedSession?.title,
+                loading: false,
+              });
+              setScanState("idle");
+              return;
+            }
+          } catch {
+            // Fall through to regular session checkin on lookup network error
+          }
+        }
+
         try {
           const res = await fetch(`/api/sessions/${selectedSessionId}/checkin`, {
             method: "POST",
@@ -799,10 +858,16 @@ export default function ScanEventPage() {
             setScanState("duplicate");
             return;
           }
-          if (data.status === "ACCESS_NOT_ALLOWED" || data.status === "SESSION_FULL") {
+          if (data.status === "ACCESS_NOT_ALLOWED" || data.status === "SESSION_ACCESS_DENIED" || data.status === "SESSION_FULL" || data.status === "RESERVATION_REQUIRED") {
             playScannerFeedback("NOT_APPROVED", { sound: soundEnabled });
             setAccessDeniedMsg(data.error || "Access not allowed for this session");
             setScanState("access_denied");
+            return;
+          }
+          if (data.status === "PASS_REVOKED" || data.status === "TICKET_CANCELLED" || data.status === "PASS_EXPIRED") {
+            playScannerFeedback("NOT_APPROVED", { sound: soundEnabled });
+            setErrorMsg(data.error || "Pass has been revoked or cancelled");
+            setScanState("error");
             return;
           }
           if (data.status === "WRONG_EVENT") {
@@ -1356,18 +1421,71 @@ export default function ScanEventPage() {
       setGroupModalState((prev) => (prev ? { ...prev, loading: true } : null));
 
       try {
+        // Session-scoped group admission
+        if (groupModalState.sessionId) {
+          const res = await fetch(`/api/sessions/${groupModalState.sessionId}/checkin`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              passToken: groupModalState.bookingReference,
+              action: "checkin",
+              guestCount: quantity,
+              scanOperationId: groupModalState.operationId,
+            }),
+          });
+
+          const data = await res.json();
+          if (res.ok && data.success) {
+            playScannerFeedback("CHECKED_IN", { sound: soundEnabled });
+            setScanCount((c) => c + quantity);
+            if (data.capacity) {
+              setSessionStats({
+                checkedIn: data.checkedInCount,
+                capacity: data.capacity,
+                remaining: data.remainingSeats,
+              });
+            }
+            setFeed((f) => [
+              {
+                id: `group-sess-${Date.now()}`,
+                name: `${groupModalState.buyerName} (+${quantity} to ${groupModalState.sessionTitle || "Session"})`,
+                pass_type: "group",
+                ts: new Date().toISOString(),
+              },
+              ...f.slice(0, 49),
+            ]);
+            setResult({
+              attendee: {
+                name: `${groupModalState.buyerName} (Group of ${quantity})`,
+                email: `${Math.max(0, groupModalState.remainingEntries - quantity)} entries remain in this session`,
+                pass_type: "group",
+              },
+              passType: "group",
+              checkedInAt: data.checkinTime || new Date().toISOString(),
+              gateName: `${data.session?.title || groupModalState.sessionTitle || "Session"} (${data.session?.room || "Room"})`,
+            });
+            setGroupModalState(null);
+            setScanState("success");
+            return;
+          } else {
+            playScannerFeedback("NOT_APPROVED", { sound: soundEnabled });
+            throw new Error(data.error || "Session admission failed");
+          }
+        }
+
+        // Event gate group admission
         const res = await fetch(`/api/events/${eventId}/group-entry`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             action: "admit",
             bookingReference: groupModalState.bookingReference,
-	            quantity,
-	            gateId: selectedGateId,
-	            gateName: selectedGate?.name,
-	            scanOperationId: groupModalState.operationId,
-	          }),
-	        });
+            quantity,
+            gateId: selectedGateId,
+            gateName: selectedGate?.name,
+            scanOperationId: groupModalState.operationId,
+          }),
+        });
 
         const data = await res.json();
 
@@ -2383,7 +2501,7 @@ export default function ScanEventPage() {
           totalEntitlements={groupModalState.totalEntitlements}
           previouslyAdmitted={groupModalState.previouslyAdmitted}
           remainingEntries={groupModalState.remainingEntries}
-          gateName={selectedGate?.name || "Gate A"}
+          gateName={groupModalState.sessionTitle ? groupModalState.sessionTitle : (selectedGate?.name || "Gate A")}
           history={groupModalState.history || []}
           loading={groupModalState.loading}
           onConfirmAdmission={handleConfirmGroupAdmission}

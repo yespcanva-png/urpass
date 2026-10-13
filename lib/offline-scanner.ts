@@ -33,6 +33,17 @@ export interface CachedGate {
   zone?: { name: string } | null;
 }
 
+export interface CachedSession {
+  id: string;
+  title: string;
+  room?: string;
+  startTime: string;
+  endTime: string;
+  capacity?: number | null;
+  eligibleTicketTypeIds?: string[];
+  registrationRequired?: boolean;
+}
+
 export interface ManifestMeta {
   eventId: string;
   eventName: string;
@@ -40,6 +51,7 @@ export interface ManifestMeta {
   totalPasses: number;
   checkedInCount: number;
   gates?: CachedGate[];
+  sessions?: CachedSession[];
 }
 
 export interface OfflineQueueEntry {
@@ -48,6 +60,9 @@ export interface OfflineQueueEntry {
   passToken: string;
   gateId?: string | null;
   gateName?: string | null;
+  sessionId?: string | null;
+  sessionTitle?: string | null;
+  guestCount?: number;
   checkInMethod?: "qr" | "manual";
   scannedAt: string;
   status: "pending" | "syncing" | "synced" | "conflict" | "failed";
@@ -577,6 +592,168 @@ export async function verifyPassOffline(params: {
         offline: true,
         scanOperationId,
         error: "Database error during offline pass verification",
+      });
+    };
+  });
+}
+
+/**
+ * Validates an attendee pass for a specific session offline and queues the scan.
+ * NOTE: Dynamic global session capacity across multiple disconnected devices cannot be guaranteed
+ * without connectivity. The scan is queued with an idempotent scanOperationId and reconciled on reconnect.
+ */
+export async function verifySessionOfflinePass({
+  eventId,
+  sessionId,
+  sessionTitle,
+  passToken,
+  eligibleTicketTypeIds = [],
+  guestCount = 1,
+  operatorEmail = "staff",
+  deviceId = "web-scanner",
+  scanOperationId = crypto.randomUUID(),
+  scannedAt = new Date().toISOString(),
+}: {
+  eventId: string;
+  sessionId: string;
+  sessionTitle: string;
+  passToken: string;
+  eligibleTicketTypeIds?: string[];
+  guestCount?: number;
+  operatorEmail?: string;
+  deviceId?: string;
+  scanOperationId?: string;
+  scannedAt?: string;
+}): Promise<OfflineVerificationResult> {
+  const cleanToken = normalizeToken(passToken);
+  const tokenKey = `${eventId}:${cleanToken}`;
+
+  // In-memory fallback
+  if (!isIndexedDbAvailable()) {
+    const pass = memoryManifestStore.get(tokenKey);
+    if (!pass) {
+      return {
+        status: "INVALID_PASS",
+        success: false,
+        offline: true,
+        scanOperationId,
+        error: "Pass not found in offline manifest",
+      };
+    }
+
+    if (eligibleTicketTypeIds.length > 0) {
+      const isEligible =
+        (pass.ticketTypeId && eligibleTicketTypeIds.includes(pass.ticketTypeId)) ||
+        (pass.passType && eligibleTicketTypeIds.includes(pass.passType));
+
+      if (!isEligible) {
+        return {
+          status: "ACCESS_DENIED",
+          success: false,
+          offline: true,
+          accessDenied: true,
+          error: `Ticket tier (${pass.passType}) not eligible for "${sessionTitle}".`,
+          scanOperationId,
+        };
+      }
+    }
+
+    const queueEntry: OfflineQueueEntry = {
+      scanOperationId,
+      eventId,
+      passToken: cleanToken,
+      sessionId,
+      sessionTitle,
+      guestCount,
+      checkInMethod: "qr",
+      scannedAt,
+      status: "pending",
+      retryCount: 0,
+      createdAt: scannedAt,
+    };
+    memoryQueueStore.set(scanOperationId, queueEntry);
+
+    return {
+      status: "CHECKED_IN",
+      success: true,
+      offline: true,
+      attendee: { name: pass.name, email: pass.email, pass_type: pass.passType },
+      passType: pass.passType,
+      checkedInAt: scannedAt,
+      scanOperationId,
+    };
+  }
+
+  // IndexedDB Execution
+  const db = await openScannerDb();
+  return new Promise((resolve) => {
+    const tx = db.transaction([STORE_MANIFEST, STORE_QUEUE], "readwrite");
+    const manifestStore = tx.objectStore(STORE_MANIFEST);
+    const queueStore = tx.objectStore(STORE_QUEUE);
+
+    const getReq = manifestStore.get(tokenKey);
+    getReq.onsuccess = () => {
+      const pass = getReq.result as ManifestPass | undefined;
+      if (!pass) {
+        return resolve({
+          status: "INVALID_PASS",
+          success: false,
+          offline: true,
+          scanOperationId,
+          error: "Pass not found in offline database",
+        });
+      }
+
+      if (eligibleTicketTypeIds.length > 0) {
+        const isEligible =
+          (pass.ticketTypeId && eligibleTicketTypeIds.includes(pass.ticketTypeId)) ||
+          (pass.passType && eligibleTicketTypeIds.includes(pass.passType));
+
+        if (!isEligible) {
+          return resolve({
+            status: "ACCESS_DENIED",
+            success: false,
+            offline: true,
+            accessDenied: true,
+            error: `Ticket tier (${pass.passType}) not eligible for "${sessionTitle}".`,
+            scanOperationId,
+          });
+        }
+      }
+
+      const queueEntry: OfflineQueueEntry = {
+        scanOperationId,
+        eventId,
+        passToken: cleanToken,
+        sessionId,
+        sessionTitle,
+        guestCount,
+        checkInMethod: "qr",
+        scannedAt,
+        status: "pending",
+        retryCount: 0,
+        createdAt: scannedAt,
+      };
+      queueStore.put(queueEntry);
+
+      resolve({
+        status: "CHECKED_IN",
+        success: true,
+        offline: true,
+        attendee: { name: pass.name, email: pass.email, pass_type: pass.passType },
+        passType: pass.passType,
+        checkedInAt: scannedAt,
+        scanOperationId,
+      });
+    };
+
+    getReq.onerror = () => {
+      resolve({
+        status: "INVALID_PASS",
+        success: false,
+        offline: true,
+        scanOperationId,
+        error: "Failed to read offline manifest",
       });
     };
   });
