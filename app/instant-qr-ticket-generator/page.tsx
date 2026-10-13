@@ -99,7 +99,7 @@ export default function Page() {
           { title: "Pass & Ticket Studio", href: "/design-your-ticket", category: "Product" },
           { title: "Browser QR Code Scanner", href: "/qr-code-scanner", category: "Product" },
           { title: "How to Create QR Passes", href: "/guides/how-to-create-qr-event-pass", category: "Guide" },
-          { title: "Free Event Registration Software", href: "/free-event-registration-software", category: "Product" },
+          { title: "Event Registration Software", href: "/event-registration-software", category: "Product" },
         ],
       }}
     />

@@ -92,9 +92,9 @@ const GUIDE_SECTIONS = [
         summary: "Avoid high commission fees with flat-rate subscriptions and native INR Razorpay support.",
       },
       {
-        title: "How to Create Free Event Tickets Online",
-        href: "/guides/how-to-create-free-event-tickets-online",
-        summary: "Launch free community or meetup tickets with automated QR pass delivery at zero cost.",
+        title: "How to Create QR Tickets for Event Attendees",
+        href: "/guides/how-to-create-qr-codes-for-event-attendees",
+        summary: "Create secure QR passes, send them to attendees, and validate them at the entrance.",
       },
     ],
   },

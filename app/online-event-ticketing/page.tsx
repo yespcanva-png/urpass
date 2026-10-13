@@ -316,7 +316,7 @@ export default function OnlineEventTicketingPage() {
           },
           {
             title: "Free Event Registration",
-            href: "/free-event-registration",
+            href: "/event-registration-platform",
             category: "Product",
           },
           {

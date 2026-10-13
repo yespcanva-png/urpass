@@ -320,7 +320,7 @@ export default function WorkshopTicketingPlatformPage() {
           },
           {
             title: "Free Event Registration",
-            href: "/free-event-registration",
+            href: "/event-registration-platform",
             category: "Product",
           },
           {

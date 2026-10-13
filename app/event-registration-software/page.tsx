@@ -307,7 +307,7 @@ export default function EventRegistrationSoftwarePage() {
           },
           {
             title: "Free Event Registration Platform",
-            href: "/free-event-registration",
+            href: "/event-registration-platform",
             category: "Product",
           },
           {

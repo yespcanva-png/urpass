@@ -1065,7 +1065,7 @@ export const NEXT_25_SEO_PAGES: Record<string, Next25PageData> = {
     secondary: "QR check-in included",
     useCases: ["Customer events", "Paid workshops", "Product launches", "Training sessions"],
     related: [
-      { title: "Free Event Registration Software", href: "/free-event-registration-software", category: "Product" },
+      { title: "Event Registration Software", href: "/event-registration-software", category: "Product" },
       { title: "Event Registration Platform", href: "/event-registration-platform", category: "Product" },
       { title: "Event Check-In Software", href: "/event-check-in-software", category: "Product" },
     ],

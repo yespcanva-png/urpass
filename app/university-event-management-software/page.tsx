@@ -238,8 +238,8 @@ export default function UniversityEventManagementSoftwarePage() {
       "category": "Product"
     },
     {
-      "title": "Free Event Ticketing & QR Check-In Software",
-      "href": "/free-event-ticketing-software",
+      "title": "Event Ticketing Software with QR Check-In",
+      "href": "/event-ticketing-software",
       "category": "Product"
     }
   ]

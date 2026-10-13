@@ -227,8 +227,8 @@ export default function HackathonRegistrationSoftwarePage() {
       "category": "Use Case"
     },
     {
-      "title": "Free Event Ticketing & QR Check-In Software",
-      "href": "/free-event-ticketing-software",
+      "title": "Event Ticketing Software with QR Check-In",
+      "href": "/event-ticketing-software",
       "category": "Product"
     },
     {

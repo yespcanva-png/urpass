@@ -42,11 +42,6 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       {
-        source: "/software/free-event-registration-software",
-        destination: "/free-event-registration-software",
-        permanent: true,
-      },
-      {
         source: "/software/event-ticket-booking-system",
         destination: "/event-ticket-booking-system",
         permanent: true,
