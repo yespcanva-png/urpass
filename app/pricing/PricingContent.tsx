@@ -501,9 +501,23 @@ export default function PricingContent({
                   <p className={`text-xs mb-5 leading-relaxed ${plan.highlight ? "text-white/40" : "text-neutral-400"}`}>
                     {plan.desc}
                   </p>
-                  <div className="flex items-baseline gap-1 mb-6">
-                    <span className="text-3xl font-semibold">{price}</span>
-                    <span className={`text-xs ${plan.highlight ? "text-white/40" : "text-neutral-400"}`}>{sub}</span>
+                  <div className="flex flex-col mb-5">
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-4xl font-extrabold tracking-tight">{price}</span>
+                      <span className={`text-xs font-medium ${plan.highlight ? "text-white/60" : "text-neutral-500"}`}>/month</span>
+                    </div>
+                    {cycle === "monthly" && country !== "GB" ? (
+                      <div className="mt-1">
+                        <p className={`text-xs font-semibold ${plan.highlight ? "text-emerald-400" : "text-emerald-700"}`}>
+                          For your first 2 months
+                        </p>
+                        <p className={`text-xs ${plan.highlight ? "text-white/60" : "text-neutral-500"}`}>
+                          Then ₹{plan.monthly.toLocaleString("en-IN")}/month +GST
+                        </p>
+                      </div>
+                    ) : (
+                      <span className={`text-xs mt-1 ${plan.highlight ? "text-white/60" : "text-neutral-500"}`}>{sub}</span>
+                    )}
                   </div>
                   <ul className="flex flex-col gap-2.5 flex-1 mb-7">
                     {plan.bullets.map((b) => (

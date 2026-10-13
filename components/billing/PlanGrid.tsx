@@ -490,23 +490,6 @@ export default function PlanGrid({
                         </p>
                       </div>
                     ) : (
-                      <CheckoutButton
-                        planSlug={p.slug}
-                        planName={p.name}
-                        billingCycle={cycle}
-                        userEmail={userEmail}
-                        userName={userName}
-                        currency={country === "GB" ? "GBP" : "INR"}
-                        className="w-full py-2.5 text-xs font-semibold rounded-xl text-white bg-neutral-900 hover:bg-neutral-800 transition-colors shadow-xs disabled:opacity-50"
-                        style={
-                          isUpgrade && isMostPopular
-                            ? { background: "linear-gradient(135deg, #6D28D9, #4c1d95)" }
-                            : undefined
-                        }
-                      >
-                        {isUpgrade ? `Upgrade to ${p.name}` : `Switch to ${p.name}`}
-                      </CheckoutButton>
-                    ) : (
                       <SwitchPlanButton
                         planSlug={p.slug}
                         planName={p.name}
