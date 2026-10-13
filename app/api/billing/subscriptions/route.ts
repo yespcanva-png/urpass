@@ -27,6 +27,17 @@ interface BillingDetailsInput {
   stateCode?: string | null;
 }
 
+type ExistingSubscription = {
+  status?: string | null;
+  provider?: string | null;
+  current_period_end?: string | null;
+  has_lifetime_access?: boolean | null;
+  lifetime_plan_slug?: string | null;
+  is_trial?: boolean | null;
+  trial_ends_at?: string | null;
+  plan?: { slug?: string | null } | Array<{ slug?: string | null }> | null;
+};
+
 function adminClient() {
   return createAdminClient(
     getSupabaseUrl(),
@@ -35,16 +46,34 @@ function adminClient() {
   );
 }
 
-function hasValidAccess(sub: {
-  status?: string | null;
-  current_period_end?: string | null;
-  has_lifetime_access?: boolean | null;
-  is_trial?: boolean | null;
-}) {
-  if (sub.has_lifetime_access) return true;
-  const periodEnd = sub.current_period_end ? new Date(sub.current_period_end) : null;
-  const unexpired = periodEnd ? periodEnd.getTime() > Date.now() : false;
-  return unexpired && ["active", "trialing"].includes(String(sub.status || ""));
+function planSlugFromSub(sub: ExistingSubscription | null | undefined) {
+  const plan = Array.isArray(sub?.plan) ? sub?.plan[0] : sub?.plan;
+  return (plan?.slug || "free").toLowerCase();
+}
+
+function isFuture(value: string | null | undefined) {
+  if (!value) return false;
+  const date = new Date(value);
+  return !Number.isNaN(date.getTime()) && date.getTime() > Date.now();
+}
+
+function blocksNewSubscription(sub: ExistingSubscription | null | undefined) {
+  if (!sub) return false;
+  const planSlug = planSlugFromSub(sub);
+  const status = String(sub.status || "").toLowerCase();
+  const provider = String(sub.provider || "").toLowerCase();
+  const hasLifetime = Boolean(
+    sub.has_lifetime_access ||
+    sub.lifetime_plan_slug === "founder" ||
+    planSlug === "founder" ||
+    planSlug === "lifetime"
+  );
+
+  if (hasLifetime) return true;
+  if (sub.is_trial || status === "trialing" || isFuture(sub.trial_ends_at)) return false;
+  if (planSlug === "free" || provider === "free" || provider === "none") return false;
+
+  return status === "active" && isFuture(sub.current_period_end);
 }
 
 export async function POST(req: NextRequest) {
@@ -84,13 +113,13 @@ export async function POST(req: NextRequest) {
   const admin = adminClient();
   const { data: existingSub } = await admin
     .from("subscriptions")
-    .select("id, status, current_period_end, has_lifetime_access, is_trial")
+    .select("status, provider, current_period_end, has_lifetime_access, lifetime_plan_slug, is_trial, trial_ends_at, plan:plans(slug)")
     .eq("user_id", user.id)
     .maybeSingle();
 
-  if (existingSub && hasValidAccess(existingSub)) {
+  if (blocksNewSubscription(existingSub as ExistingSubscription | null)) {
     return NextResponse.json(
-      { error: "This account already has a valid subscription or legacy entitlement." },
+      { error: "This account already has an active paid subscription." },
       { status: 409 }
     );
   }
