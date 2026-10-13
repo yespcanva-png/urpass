@@ -11,7 +11,7 @@ import { approveAttendee, rejectAttendee, exportAttendeesCSV, promoteNextWaitlis
 import { undoCheckIn } from "@/app/actions/manual-checkin";
 import { generatePass, bulkGeneratePasses } from "@/app/actions/passes";
 import AddAttendeeModal from "./AddAttendeeModal";
-import CSVUploadModal from "./CSVUploadModal";
+import ImportAttendeesModal from "./ImportAttendeesModal";
 import BulkBroadcastModal from "./BulkBroadcastModal";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
@@ -166,7 +166,7 @@ export default function AttendeeTable({
   const [activeTab, setActiveTab]   = useState<FilterTab>("all");
   const [search, setSearch]         = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
-  const [showCSVModal, setShowCSVModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
   const [showBroadcastModal, setShowBroadcastModal] = useState(false);
   const [bulkGenerating, setBulkGenerating] = useState(false);
   const [bulkMsg, setBulkMsg] = useState<{ text: string; isError?: boolean } | null>(null);
@@ -742,16 +742,16 @@ export default function AttendeeTable({
           </div>
           <div className="flex flex-wrap items-center gap-2">
             {canCSV ? (
-              <button onClick={() => setShowCSVModal(true)}
+              <button onClick={() => setShowImportModal(true)}
                 className="inline-flex min-h-9 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50 shadow-xs">
                 <Upload className="w-3.5 h-3.5" />
-                Upload CSV
+                Import attendees
               </button>
             ) : (
               <Link href="/billing"
                 className="inline-flex min-h-9 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-400 transition-colors hover:bg-slate-50 shadow-xs">
                 <Lock className="w-3 h-3" />
-                Upload CSV
+                Import attendees
                 <span className="rounded bg-amber-50 border border-amber-200/80 px-1.5 py-0.5 text-[9px] font-bold uppercase text-amber-700">Starter+</span>
               </Link>
             )}
@@ -1261,9 +1261,12 @@ export default function AttendeeTable({
         <AddAttendeeModal eventId={eventId} onClose={() => setShowAddModal(false)}
           onSuccess={() => setShowAddModal(false)} />
       )}
-      {showCSVModal && (
-        <CSVUploadModal eventId={eventId} onClose={() => setShowCSVModal(false)}
-          onSuccess={() => setShowCSVModal(false)} />
+      {showImportModal && (
+        <ImportAttendeesModal
+          eventId={eventId}
+          onClose={() => setShowImportModal(false)}
+          onSuccess={() => setShowImportModal(false)}
+        />
       )}
 
       {mounted && selectedAttendee && createPortal((() => {

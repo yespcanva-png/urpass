@@ -20,6 +20,82 @@ const nextConfig: NextConfig = {
         destination: "/founder-lifetime-deal",
         permanent: true,
       },
+      // SEO architecture: keep established flat commercial URLs canonical.
+      {
+        source: "/software/event-registration-software",
+        destination: "/event-registration-software",
+        permanent: true,
+      },
+      {
+        source: "/software/online-event-ticketing-software",
+        destination: "/online-event-ticketing-software",
+        permanent: true,
+      },
+      {
+        source: "/software/event-check-in-software",
+        destination: "/event-check-in-software",
+        permanent: true,
+      },
+      {
+        source: "/software/event-management-platform",
+        destination: "/event-management-platform",
+        permanent: true,
+      },
+      {
+        source: "/software/free-event-registration-software",
+        destination: "/free-event-registration-software",
+        permanent: true,
+      },
+      {
+        source: "/software/event-ticket-booking-system",
+        destination: "/event-ticket-booking-system",
+        permanent: true,
+      },
+      {
+        source: "/software/event-registration-platform",
+        destination: "/event-registration-software",
+        permanent: true,
+      },
+      {
+        source: "/software/event-attendee-management-software",
+        destination: "/event-attendee-management-software",
+        permanent: true,
+      },
+      {
+        source: "/software/event-entry-management-system",
+        destination: "/event-entry-management-system",
+        permanent: true,
+      },
+      {
+        source: "/software/qr-event-registration-system",
+        destination: "/qr-event-registration-system",
+        permanent: true,
+      },
+      {
+        source: "/software/event-rsvp-management-software",
+        destination: "/event-rsvp-management-software",
+        permanent: true,
+      },
+      {
+        source: "/software/event-organizer-software",
+        destination: "/event-organizer-software",
+        permanent: true,
+      },
+      {
+        source: "/software/event-registration-form-builder",
+        destination: "/event-registration-form-builder",
+        permanent: true,
+      },
+      {
+        source: "/software/paid-event-registration-platform",
+        destination: "/paid-event-registration-platform",
+        permanent: true,
+      },
+      {
+        source: "/software/event-management-saas",
+        destination: "/event-management-saas",
+        permanent: true,
+      },
       // Consolidation 301 redirects: Merge duplicate & cannibalistic commercial landing pages
       {
         source: "/event-registration-platform",

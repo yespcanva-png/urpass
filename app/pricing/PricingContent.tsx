@@ -345,36 +345,40 @@ export default function PricingContent({
 
           {!trialUsed ? (
             <>
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-brand-50 border border-brand-100 text-brand text-xs font-semibold tracking-wider uppercase mb-4">
-                <span className="w-1.5 h-1.5 rounded-full bg-brand inline-block" />
-                YOUR FIRST 30 DAYS ARE FREE
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200/80 text-emerald-700 text-xs font-semibold tracking-wider uppercase mb-4">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 inline-block" />
+                {country === "GB" ? "FLEXIBLE EVENT PLANS" : "INTRODUCTORY OFFER · ₹29/MONTH"}
               </div>
               <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-neutral-900 mb-4">
-                TRY ANY URPASS PLAN FREE FOR 30 DAYS
+                {country === "GB"
+                  ? "SIMPLE PRICING FOR EVERY EVENT"
+                  : "GET STARTED FOR ₹29/MONTH"}
               </h1>
               <p className="text-neutral-600 max-w-2xl mx-auto mb-3 text-base sm:text-lg">
-                Choose Starter, Pro, or Business and unlock all features of that plan for 30 days.
+                {country === "GB"
+                  ? "Choose Starter, Pro, or Business. Unlock powerful QR check-in, bespoke pass design, and analytics."
+                  : "Subscribe to Starter, Pro, or Business at ₹29/month for your first 2 months. Autopay required · Cancel renewal anytime."}
               </p>
               <div className="inline-flex items-center gap-2 text-xs font-medium text-neutral-500 mb-8 bg-neutral-100 px-3.5 py-1.5 rounded-full flex-wrap justify-center">
                 <span>
                   {country === "GB"
-                    ? "30 days £0 · No credit card required · Instant full access"
-                    : "30 days ₹0 · AutoPay required · Cancel anytime"}
+                    ? "£15 / £35 / £79 monthly · Direct UK activation"
+                    : "₹29/month for first 2 months · Then regular monthly price · Autopay required"}
                 </span>
                 <span>·</span>
                 <span>Instant full access</span>
                 <span>·</span>
-                <span>One free trial per account</span>
+                <span>Cancel renewal anytime</span>
               </div>
             </>
           ) : (
             <>
               <p className="text-xs font-semibold tracking-widest text-brand mb-4">PRICING</p>
               <h1 className="text-4xl sm:text-5xl font-semibold tracking-tight mb-4">
-                Simple pricing for every event.
+                Standard Subscription Pricing
               </h1>
               <p className="text-neutral-500 mb-10 text-base">
-                Start free. Upgrade when your events grow. No complicated setup.
+                Upgrade or renew your plan. Choose Starter, Pro, or Business.
               </p>
             </>
           )}
@@ -512,57 +516,31 @@ export default function PricingContent({
                     ))}
                   </ul>
 
-                  {!trialUsed && plan.monthly > 0 ? (
-                    <div className="flex flex-col gap-1.5">
-                      {isAuthenticated ? (
-                        <button
-                          onClick={() => setTrialModal({ planSlug: plan.slug, planName: plan.name })}
-                          className={`w-full text-center py-3 rounded-xl text-sm font-bold transition-all shadow-sm ${
-                            plan.highlight
-                              ? "bg-white text-neutral-900 hover:bg-neutral-100"
-                              : "bg-neutral-900 text-white hover:bg-neutral-800"
-                          }`}
-                        >
-                          Try {plan.name} Free
-                        </button>
-                      ) : (
-                        <Link
-                          href={`/signup?from=pricing&plan=${plan.slug}&trial=true${country === "GB" ? "&country=GB" : ""}&next=${encodeURIComponent(country === "GB" ? `/billing?trial=${plan.slug}&country=GB` : `/billing?trial=${plan.slug}`)}`}
-                          className={`w-full text-center py-3 rounded-xl text-sm font-bold transition-all shadow-sm ${
-                            plan.highlight
-                              ? "bg-white text-neutral-900 hover:bg-neutral-100"
-                              : "bg-neutral-900 text-white hover:bg-neutral-800"
-                          }`}
-                        >
-                          Try {plan.name} Free
-                        </Link>
-                      )}
-                      <p className={`text-[10px] text-center ${plan.highlight ? "text-white/40" : "text-neutral-400"}`}>
-                        {country === "GB"
-                          ? "£0 for 30 days · No card required · Instant access"
-                          : "₹0 for 30 days · Cancel before your first payment"}
-                      </p>
-                    </div>
-                  ) : (
+                  <div className="flex flex-col gap-1.5">
                     <Link
                       href={
-                        plan.monthly === 0
-                          ? isAuthenticated
-                            ? "/dashboard"
-                            : `/signup?from=pricing${country === "GB" ? "&country=GB" : ""}&next=/billing`
-                          : isAuthenticated
+                        isAuthenticated
                           ? `/billing${country === "GB" ? "?country=GB" : ""}`
                           : `/signup?from=pricing&plan=${plan.slug}${country === "GB" ? "&country=GB" : ""}&next=/billing`
                       }
-                      className={`w-full text-center py-3 rounded-xl text-sm font-semibold transition-colors ${
+                      className={`w-full text-center py-3 rounded-xl text-sm font-bold transition-all shadow-sm ${
                         plan.highlight
                           ? "bg-white text-neutral-900 hover:bg-neutral-100"
-                          : "bg-neutral-900 text-white hover:bg-neutral-700"
+                          : "bg-neutral-900 text-white hover:bg-neutral-800"
                       }`}
                     >
-                      {plan.monthly === 0 ? "Start Free" : `Choose ${plan.name}`}
+                      {cycle === "monthly" && country !== "GB"
+                        ? "Get Started for ₹29"
+                        : `Choose ${plan.name}`}
                     </Link>
-                  )}
+                    <p className={`text-[10px] text-center ${plan.highlight ? "text-white/50" : "text-neutral-500"}`}>
+                      {country === "GB"
+                        ? "UK Direct Activation · Cancel renewal anytime"
+                        : cycle === "monthly"
+                        ? "Autopay required · Cancel renewal anytime"
+                        : "Billed annually · Cancel renewal anytime"}
+                    </p>
+                  </div>
                 </div>
               );
             })}

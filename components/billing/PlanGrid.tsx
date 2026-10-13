@@ -425,6 +425,11 @@ export default function PlanGrid({
                         <span className="text-xs text-neutral-400">{displayPeriod}</span>
                       )}
                     </div>
+                    {isIntroEligible && (
+                      <p className="text-[11px] font-semibold text-emerald-700 mt-1">
+                        For your first 2 months · Then ₹{p.priceMonthly.toLocaleString("en-IN")}/mo +GST
+                      </p>
+                    )}
                     {monthlyEquiv && (
                       <p className="text-[11px] mt-0.5 tabular-nums text-neutral-400">
                         {monthlyEquiv} equivalent
@@ -448,11 +453,15 @@ export default function PlanGrid({
                       <div className="w-full text-center text-xs font-semibold py-2.5 rounded-xl border border-neutral-200 bg-neutral-50 text-neutral-400">
                         Current Plan
                       </div>
-                    ) : !trialUsed && p.priceMonthly > 0 ? (
+                    ) : p.priceMonthly > 0 ? (
                       <div className="flex flex-col gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => setTrialModal({ planSlug: p.slug, planName: p.name })}
+                        <CheckoutButton
+                          planSlug={p.slug}
+                          planName={p.name}
+                          billingCycle={cycle}
+                          userEmail={userEmail}
+                          userName={userName}
+                          currency={country === "GB" ? "GBP" : "INR"}
                           className={`w-full py-2.5 text-xs font-semibold rounded-xl text-white shadow-xs transition-all hover:opacity-90 cursor-pointer ${
                             isMostPopular
                               ? "bg-brand hover:bg-brand-600"
@@ -464,26 +473,23 @@ export default function PlanGrid({
                               : undefined
                           }
                         >
-                          Start 30-Day Free Trial
-                        </button>
-                        <CheckoutButton
-                          planSlug={p.slug}
-                          planName={p.name}
-                          billingCycle={cycle}
-                          userEmail={userEmail}
-                          userName={userName}
-                          currency={country === "GB" ? "GBP" : "INR"}
-                          className="w-full py-1 text-[11px] font-medium text-neutral-500 hover:text-neutral-900 transition-colors text-center cursor-pointer"
-                        >
-                          or Buy &amp; Upgrade Directly &rarr;
+                          {isIntroEligible
+                            ? "Get Started for ₹29"
+                            : isUpgrade
+                            ? `Upgrade to ${p.name}`
+                            : `Choose ${p.name}`}
                         </CheckoutButton>
                         <p className="text-[10px] text-center text-neutral-400 font-medium">
-                          {country === "GB"
-                            ? "£0 for 30 days · No card required"
-                            : "₹0 for 30 days · No card required"}
+                          {isIntroEligible
+                            ? "Autopay required · Cancel renewal anytime"
+                            : country === "GB"
+                            ? "UK Direct Activation · Cancel renewal anytime"
+                            : cycle === "annual"
+                            ? "Billed annually · Cancel renewal anytime"
+                            : "Autopay required · Cancel renewal anytime"}
                         </p>
                       </div>
-                    ) : p.priceMonthly > 0 ? (
+                    ) : (
                       <CheckoutButton
                         planSlug={p.slug}
                         planName={p.name}

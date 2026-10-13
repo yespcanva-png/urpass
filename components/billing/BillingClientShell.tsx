@@ -345,13 +345,27 @@ export default function BillingClientShell({
           TAB 1: PLANS & UPGRADES
       ═════════════════════════════════════════════════════════════ */}
       {activeTab === "plans" && (
-        <div className="space-y-8 animate-in fade-in-50 duration-150">
+        <div className="space-y-6 animate-in fade-in-50 duration-150">
+          {(sub?.trial_used || sub?.is_trial || currentPlanSlug !== "free") && (
+            <div className="rounded-2xl border border-neutral-200 bg-neutral-50/70 p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+              <div className="space-y-0.5">
+                <p className="font-bold text-neutral-900">Subscription Renewal</p>
+                <p className="text-neutral-600">
+                  Your account is not eligible for the introductory ₹29 offer. Your selected plan&apos;s standard pricing applies:
+                  <span className="font-semibold text-neutral-900 ml-1">
+                    Starter ₹499 · Pro ₹999 · Business ₹2,499 per month
+                  </span>
+                </p>
+              </div>
+            </div>
+          )}
+
           <PlanGrid
             currentPlanSlug={currentPlanSlug}
             currentPlanIndex={currentPlanIndex}
             userEmail={userEmail}
             userName={userName}
-            trialUsed={sub?.trial_used ?? false}
+            trialUsed={Boolean(sub?.trial_used || sub?.is_trial || currentPlanSlug !== "free")}
             country={resolvedCountry}
           />
         </div>
