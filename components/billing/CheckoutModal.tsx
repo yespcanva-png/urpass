@@ -141,6 +141,11 @@ export default function CheckoutModal({
   const isLifetime = billingCycle === "lifetime" || planSlug === "founder" || planSlug === "lifetime";
   const defaultFounder = isUk ? 249 : 19999;
   const isIntroOffer = billingCycle === "monthly" && ["starter", "pro", "business"].includes(planSlug);
+  const usesRazorpaySubscriptionCheckout =
+    !isUk &&
+    !isLifetime &&
+    billingCycle === "monthly" &&
+    ["starter", "pro", "business"].includes(planSlug);
   const introAmount = isUk ? 2 : 29;
   const baseAmount = isLifetime
     ? (annualTotal || priceMonthly || defaultFounder)
@@ -211,6 +216,92 @@ export default function CheckoutModal({
       if (!loaded) {
         setPayError("Could not load payment SDK. Check your connection.");
         setPayLoading(false);
+        return;
+      }
+
+      if (usesRazorpaySubscriptionCheckout) {
+        if (coupon) {
+          setPayError("Coupon codes are not supported on recurring subscription checkout.");
+          setPayLoading(false);
+          return;
+        }
+
+        const subscriptionRes = await fetch("/api/billing/subscriptions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            planSlug,
+            billingCycle,
+            currency: "INR",
+            billingDetails: {
+              companyName: trimmedCompany || userName,
+              billingAddress: trimmedAddress,
+              gstin: trimmedGstin || null,
+              state: selectedState?.name || "",
+              stateCode: billingStateCode,
+            },
+          }),
+        });
+
+        const subscriptionData = await subscriptionRes.json();
+        if (!subscriptionRes.ok) {
+          setPayError(subscriptionData.error ?? "Could not create subscription.");
+          setPayLoading(false);
+          return;
+        }
+
+        const rzp = new window.Razorpay({
+          key: subscriptionData.keyId,
+          subscription_id: subscriptionData.subscriptionId,
+          name: "URPASS",
+          description: `${planName} — Monthly subscription`,
+          prefill: { name: userName, email: userEmail },
+          theme: { color: "#6D28D9" },
+          modal: { ondismiss: () => setPayLoading(false) },
+          handler: async (response: {
+            razorpay_payment_id?: string;
+            razorpay_subscription_id?: string;
+            razorpay_signature?: string;
+          }) => {
+            if (
+              !response?.razorpay_payment_id ||
+              !response?.razorpay_signature
+            ) {
+              setPayError("Subscription verification details are missing.");
+              setPayLoading(false);
+              return;
+            }
+
+            try {
+              const verifyRes = await fetch("/api/billing/subscriptions/verify", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  planSlug,
+                  subscriptionId: response.razorpay_subscription_id || subscriptionData.subscriptionId,
+                  paymentId: response.razorpay_payment_id,
+                  signature: response.razorpay_signature,
+                }),
+              });
+              const verifyData = await verifyRes.json();
+              setPayLoading(false);
+
+              if (!verifyRes.ok) {
+                setPayError(verifyData.error ?? "Failed to verify subscription.");
+                return;
+              }
+
+              onClose();
+              router.push(successRedirect || `/billing?upgraded=true&plan=${encodeURIComponent(planName)}`);
+              router.refresh();
+            } catch (err) {
+              setPayLoading(false);
+              setPayError(err instanceof Error ? err.message : "Failed to verify subscription.");
+            }
+          },
+        });
+
+        rzp.open();
         return;
       }
 
@@ -355,7 +446,11 @@ export default function CheckoutModal({
           </div>
 
           {/* Coupon input */}
-          {coupon ? (
+          {usesRazorpaySubscriptionCheckout ? (
+            <div className="rounded-lg border border-violet-100 bg-violet-50 px-3 py-2.5 text-xs font-medium text-violet-800">
+              Recurring monthly checkout uses Razorpay subscription offers. Extra coupon codes are disabled for this payment.
+            </div>
+          ) : coupon ? (
             <div className="flex items-center justify-between gap-2 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2.5">
               <div className="flex items-center gap-2.5">
                 <div className="w-7 h-7 rounded-md bg-emerald-100 flex items-center justify-center shrink-0">
@@ -541,7 +636,9 @@ export default function CheckoutModal({
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
               <>
-                Pay {sym}{fmt(totalToday)}
+                {usesRazorpaySubscriptionCheckout
+                  ? `Authorize ${sym}${fmt(baseAmount)} + ${taxName}`
+                  : `Pay ${sym}${fmt(totalToday)}`}
                 <ChevronRight className="w-4 h-4" />
               </>
             )}
@@ -558,7 +655,7 @@ export default function CheckoutModal({
           <div className="flex items-center justify-center gap-2 -mt-1">
             <ShieldCheck className="w-3.5 h-3.5 text-neutral-300 shrink-0" />
             <p className="text-xs text-neutral-400">
-              Razorpay secure checkout · {isUk ? "Includes 20% VAT" : "Includes 18% GST"}
+              Razorpay secure checkout · Prices exclude {isUk ? "20% VAT" : "18% GST"}
             </p>
           </div>
         </div>

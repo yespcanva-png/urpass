@@ -5,7 +5,6 @@ import { createInvoiceForPayment } from "@/lib/invoices";
 import { getSupabaseUrl } from "@/lib/supabase/config";
 import {
   notifyOwnerPaymentSuccess,
-  notifyOwnerTrialActivated,
   notifyOwnerPaidSubscription,
   notifyOwnerOneTimePayment,
   sendUserPaymentSuccessEmail,
@@ -255,27 +254,25 @@ export async function handleRazorpayWebhook(req: NextRequest): Promise<NextRespo
       }
 
       if (eventType === "subscription.authenticated") {
-        // AutoPay authorization confirmed
+        // AutoPay authorization confirmed for a paid subscription.
         const now = new Date();
-        const trialEndsAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+        const currentEnd = subscription.current_end
+          ? new Date(subscription.current_end * 1000)
+          : new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
 
         if (userId) {
           await supabase.from("subscriptions").upsert(
             {
               user_id: userId,
               plan_id: planId,
-              status: "trialing",
+              status: "active",
               provider: "razorpay",
               billing_cycle: subscription.period || "monthly",
               provider_subscription_id: subscription.id,
               current_period_start: now.toISOString(),
-              current_period_end: trialEndsAt.toISOString(),
+              current_period_end: currentEnd.toISOString(),
               cancel_at_period_end: false,
-              trial_used: true,
-              is_trial: true,
-              trial_plan: planSlug,
-              trial_starts_at: now.toISOString(),
-              trial_ends_at: trialEndsAt.toISOString(),
+              is_trial: false,
               autopay_mandate_id: subscription.id,
               autopay_status: "active",
               updated_at: now.toISOString(),
@@ -283,25 +280,10 @@ export async function handleRazorpayWebhook(req: NextRequest): Promise<NextRespo
             { onConflict: "user_id" }
           );
 
-          // Non-blocking notification
-          void notifyOwnerTrialActivated({
-            buyerName: notes.customer_name || null,
-            buyerEmail: notes.customer_email || null,
-            planName: planSlug.toUpperCase(),
-            billingInterval: subscription.period || "monthly",
-            subscriptionId: subscription.id,
-            paymentId: event.payload?.payment?.entity?.id || null,
-            trialEndsAt: trialEndsAt.toLocaleDateString("en-IN", {
-              day: "numeric",
-              month: "long",
-              year: "numeric",
-            }),
-          }).catch((err) => console.error("[email] Error notifying owner of trial activation:", err));
-
           recordLiveOpsEvent({
             level: "SUCCESS",
             category: "BILLING",
-            message: `Free trial activated: ${planSlug.toUpperCase()} for user [${(userId || "").slice(0, 8)}] (${notes.customer_email || "user"})`,
+            message: `Subscription mandate authenticated: ${planSlug.toUpperCase()} for user [${(userId || "").slice(0, 8)}] (${notes.customer_email || "user"})`,
             details: { userId, plan: planSlug, subId: subscription.id },
           });
         }

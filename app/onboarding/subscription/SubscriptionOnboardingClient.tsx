@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Check, ShieldCheck, Ticket, Zap, RefreshCw, LogOut, Receipt } from "lucide-react";
+import { Check, LogOut, ShieldCheck, Ticket } from "lucide-react";
 import CheckoutButton from "@/components/billing/CheckoutButton";
-import { persistCountryPreference, detectCountryClient } from "@/lib/country-config";
+import { detectCountryClient, persistCountryPreference } from "@/lib/country-config";
 
 type Cycle = "monthly" | "annual";
 
@@ -18,15 +18,8 @@ const PLANS = [
     gbp: 15,
     annualGbp: 120,
     annualGbpPerMo: 10,
-    description: "For individual organizers and small events",
-    features: [
-      "10 events / month",
-      "500 registrations / month",
-      "2 organizer seats",
-      "Digital QR passes & scanner",
-      "CSV attendee import & export",
-      "Standard email notifications",
-    ],
+    description: "For small teams starting with QR event operations.",
+    features: ["10 events / month", "500 registrations / month", "2 organizer seats", "QR passes and scanner", "CSV import and export"],
   },
   {
     slug: "pro",
@@ -37,17 +30,9 @@ const PLANS = [
     gbp: 35,
     annualGbp: 300,
     annualGbpPerMo: 25,
-    description: "For conferences, college fests & growing teams",
+    description: "For conferences, campuses and active organizer teams.",
     recommended: true,
-    features: [
-      "Unlimited events",
-      "2,500 registrations / month",
-      "5 organizer seats",
-      "Custom pass design & branding",
-      "Session-wise check-ins & single QR",
-      "Real-time scan analytics",
-      "Priority email support",
-    ],
+    features: ["Unlimited events", "2,500 registrations / month", "5 organizer seats", "Custom pass branding", "Session-wise check-ins", "Live scan analytics"],
   },
   {
     slug: "business",
@@ -58,16 +43,8 @@ const PLANS = [
     gbp: 79,
     annualGbp: 699,
     annualGbpPerMo: 58,
-    description: "For organizations managing events at scale",
-    features: [
-      "Unlimited events",
-      "10,000 registrations / month",
-      "15 organizer seats",
-      "Dedicated custom domain",
-      "API access & webhooks",
-      "Advanced team permissions",
-      "Dedicated priority support",
-    ],
+    description: "For organizations managing higher-volume events.",
+    features: ["Unlimited events", "10,000 registrations / month", "15 organizer seats", "Custom domain", "API access and webhooks", "Advanced permissions"],
   },
 ];
 
@@ -86,322 +63,204 @@ export default function SubscriptionOnboardingClient({
   accessState,
   introOfferEligible,
 }: Props) {
-  // Cycle state: monthly vs annual
   const [billingCycle, setBillingCycle] = useState<Cycle>("monthly");
-
-  // Always default to INR ("IN") as primary currency, with dynamic client detection & toggle
   const [activeCountry, setActiveCountry] = useState<"IN" | "GB">(() => {
     if (typeof window !== "undefined") {
-      const detected = detectCountryClient();
-      return detected || country || "IN";
+      return detectCountryClient() || country || "IN";
     }
     return country || "IN";
   });
 
   useEffect(() => {
     const detected = detectCountryClient();
-    if (detected && detected !== activeCountry) {
-      setActiveCountry(detected);
-    }
-  }, []);
+    if (detected && detected !== activeCountry) setActiveCountry(detected);
+  }, [activeCountry]);
 
-  function handleCountrySwitch(newCountry: "IN" | "GB") {
-    setActiveCountry(newCountry);
-    persistCountryPreference(newCountry);
+  function switchCountry(next: "IN" | "GB") {
+    setActiveCountry(next);
+    persistCountryPreference(next);
   }
 
   const isUk = activeCountry === "GB";
   const isAnnual = billingCycle === "annual";
+  const showIntroOffer = !isUk && !isAnnual && introOfferEligible;
 
   return (
-    <div
-      className="min-h-screen text-neutral-900 flex flex-col justify-between"
-      style={{
-        background:
-          "radial-gradient(ellipse 100% 50% at 50% -5%, #ede9fe 0%, #f7f6fc 35%, #ffffff 75%)",
-      }}
-    >
-      {/* Top Header */}
-      <header className="border-b border-neutral-200/60 bg-white/70 backdrop-blur-md sticky top-0 z-20">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5 sm:px-8">
-          <Link href="/" className="flex items-center gap-2.5 transition-opacity hover:opacity-90">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#6D28D9] text-white shadow-sm shadow-violet-300/40">
-              <Ticket className="h-4.5 w-4.5" />
+    <div className="min-h-screen bg-[#f7f7fb] text-neutral-950">
+      <header className="border-b border-neutral-200 bg-white">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
+          <Link href="/" className="flex items-center gap-3">
+            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#6D28D9] text-white">
+              <Ticket className="h-4 w-4" />
             </span>
-            <span className="text-sm font-extrabold tracking-widest text-neutral-900">URPASS</span>
+            <span className="text-sm font-bold tracking-widest">URPASS</span>
           </Link>
 
-          <div className="flex items-center gap-3 sm:gap-5 text-xs">
-            {/* Currency toggle */}
-            <div className="flex items-center rounded-lg border border-neutral-200 bg-neutral-100/80 p-0.5 text-[11px] font-semibold text-neutral-600">
-              <button
-                type="button"
-                onClick={() => handleCountrySwitch("IN")}
-                className={`rounded-md px-2.5 py-1 transition-all ${
-                  !isUk
-                    ? "bg-white text-neutral-950 font-bold shadow-xs"
-                    : "text-neutral-500 hover:text-neutral-800"
-                }`}
-              >
-                ₹ INR
-              </button>
-              <button
-                type="button"
-                onClick={() => handleCountrySwitch("GB")}
-                className={`rounded-md px-2.5 py-1 transition-all ${
-                  isUk
-                    ? "bg-white text-neutral-950 font-bold shadow-xs"
-                    : "text-neutral-500 hover:text-neutral-800"
-                }`}
-              >
-                £ GBP
-              </button>
-            </div>
-
-            {userEmail && (
-              <span className="hidden text-neutral-500 md:inline">
-                Signed in as <strong className="font-semibold text-neutral-800">{userEmail}</strong>
-              </span>
-            )}
-
+          <div className="flex items-center gap-2">
+            <div className="hidden text-xs text-neutral-500 md:block">{userEmail}</div>
             <a
               href="/auth/signout"
-              className="inline-flex items-center gap-1.5 text-neutral-500 hover:text-neutral-900 transition-colors font-medium"
-              title="Sign out of current account"
+              className="inline-flex h-9 items-center gap-2 rounded-lg border border-neutral-200 bg-white px-3 text-xs font-semibold text-neutral-700 hover:bg-neutral-50"
             >
               <LogOut className="h-3.5 w-3.5" />
-              <span>Sign out</span>
+              Sign out
             </a>
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="mx-auto flex-1 w-full max-w-6xl px-5 py-12 sm:px-8 sm:py-16">
-        {/* Hero Header */}
-        <div className="text-center max-w-2xl mx-auto">
-          <div className="inline-flex items-center gap-2 rounded-full border border-violet-200/70 bg-violet-50/90 px-3.5 py-1 text-xs font-semibold text-violet-800 shadow-sm">
-            <span className="h-1.5 w-1.5 rounded-full bg-violet-600 animate-pulse" />
-            {isAnnual
-              ? "Annual Billing · 2 Months Free (Save ~17%)"
-              : isUk
-              ? introOfferEligible
-                ? "Special Intro Offer · £2/month for your first 2 months"
-                : "Simple Monthly Plans · Cancel anytime"
-              : introOfferEligible
-              ? "Special Intro Offer · ₹29/month for your first 2 months"
-              : "Simple Monthly Plans · Cancel anytime"}
+      <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
+        <section className="flex flex-col gap-6 border-b border-neutral-200 pb-8 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-2xl">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#6D28D9]">Subscription required</p>
+            <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Choose your UrPass plan</h1>
+            <p className="mt-3 text-sm leading-6 text-neutral-600">
+              Activate a paid plan to create events, generate passes, run QR check-ins and access your organizer dashboard.
+            </p>
+            {accessState !== "onboarding_required" && (
+              <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800">
+                Your previous entitlement is inactive. Select a plan to restore workspace access.
+              </p>
+            )}
           </div>
 
-          <h1 className="mt-4 text-3xl font-extrabold tracking-tight text-neutral-900 sm:text-4xl">
-            Choose your plan
-          </h1>
-          <p className="mt-3 text-sm text-neutral-600 sm:text-base leading-relaxed">
-            Select a plan to activate your workspace and start creating events, issuing digital QR passes, and scanning attendees.
-          </p>
-
-          {/* Billing Cycle Toggle (Monthly vs Annual) */}
-          <div className="mt-7 inline-flex items-center rounded-xl border border-neutral-200/90 bg-neutral-100/90 p-1 text-xs font-semibold text-neutral-600 shadow-xs">
-            <button
-              type="button"
-              onClick={() => setBillingCycle("monthly")}
-              className={`flex items-center gap-1.5 rounded-lg px-4 py-2 transition-all ${
-                !isAnnual
-                  ? "bg-white text-neutral-950 font-bold shadow-xs"
-                  : "text-neutral-600 hover:text-neutral-900"
-              }`}
-            >
-              <span>Monthly</span>
-              {introOfferEligible && (
-                <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-bold text-violet-700">
-                  {isUk ? "£2 Intro" : "₹29 Intro"}
-                </span>
-              )}
-            </button>
-            <button
-              type="button"
-              onClick={() => setBillingCycle("annual")}
-              className={`flex items-center gap-1.5 rounded-lg px-4 py-2 transition-all ${
-                isAnnual
-                  ? "bg-white text-neutral-950 font-bold shadow-xs"
-                  : "text-neutral-600 hover:text-neutral-900"
-              }`}
-            >
-              <span>Annual</span>
-              <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
-                2 months free
-              </span>
-            </button>
-          </div>
-
-          {accessState !== "onboarding_required" && (
-            <div className="mt-5 inline-block rounded-xl border border-amber-200 bg-amber-50/90 px-4 py-2.5 text-xs text-amber-800">
-              Your previous subscription is inactive. Select a plan below to restore instant workspace access.
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="inline-flex rounded-lg border border-neutral-200 bg-white p-1 text-xs font-semibold">
+              <button
+                type="button"
+                onClick={() => switchCountry("IN")}
+                className={`rounded-md px-3 py-2 ${!isUk ? "bg-neutral-950 text-white" : "text-neutral-600 hover:text-neutral-950"}`}
+              >
+                INR
+              </button>
+              <button
+                type="button"
+                onClick={() => switchCountry("GB")}
+                className={`rounded-md px-3 py-2 ${isUk ? "bg-neutral-950 text-white" : "text-neutral-600 hover:text-neutral-950"}`}
+              >
+                GBP
+              </button>
             </div>
+
+            <div className="inline-flex rounded-lg border border-neutral-200 bg-white p-1 text-xs font-semibold">
+              <button
+                type="button"
+                onClick={() => setBillingCycle("monthly")}
+                className={`rounded-md px-3 py-2 ${!isAnnual ? "bg-[#6D28D9] text-white" : "text-neutral-600 hover:text-neutral-950"}`}
+              >
+                Monthly
+              </button>
+              <button
+                type="button"
+                onClick={() => setBillingCycle("annual")}
+                className={`rounded-md px-3 py-2 ${isAnnual ? "bg-[#6D28D9] text-white" : "text-neutral-600 hover:text-neutral-950"}`}
+              >
+                Annual
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <div className="mt-8 rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm text-neutral-700">
+          {isAnnual ? (
+            <span>Annual plans are billed upfront. Taxes are added at checkout.</span>
+          ) : showIntroOffer ? (
+            <span>Intro offer for eligible new monthly subscribers: ₹29 for the first 2 billing cycles, then regular monthly pricing. Taxes extra.</span>
+          ) : (
+            <span>Monthly plans renew automatically after payment authorization. Taxes are added at checkout.</span>
           )}
         </div>
 
-        {/* Pricing Cards Grid */}
-        <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-3 items-stretch max-w-5xl mx-auto">
+        <section className="mt-6 grid gap-4 md:grid-cols-3">
           {PLANS.map((plan) => {
-            let todayPrice = "";
-            let billingPeriodLabel = "";
-            let renewalText = "";
-
-            if (isAnnual) {
-              todayPrice = isUk
+            const todayPrice = isAnnual
+              ? isUk
                 ? `£${plan.annualGbp}`
-                : `₹${plan.annualInr.toLocaleString("en-IN")}`;
-              billingPeriodLabel = "/ year";
-              renewalText = isUk
-                ? `£${plan.annualGbpPerMo}/mo equivalent · 2 months free + VAT`
-                : `₹${plan.annualInrPerMo.toLocaleString("en-IN")}/mo equivalent · 2 months free + GST`;
-            } else {
-              todayPrice = isUk
-                ? introOfferEligible
-                  ? "£2"
-                  : `£${plan.gbp}`
-                : introOfferEligible
-                ? "₹29"
-                : `₹${plan.renewalInr.toLocaleString("en-IN")}`;
-              billingPeriodLabel = "/ month";
-              renewalText = isUk
-                ? introOfferEligible
-                  ? `First 2 months · then £${plan.gbp}/mo + VAT`
-                  : `then £${plan.gbp}/mo + VAT`
-                : introOfferEligible
-                ? `First 2 months · then ₹${plan.renewalInr.toLocaleString("en-IN")}/mo + GST`
-                : `then ₹${plan.renewalInr.toLocaleString("en-IN")}/mo + GST`;
-            }
-
-            const isPro = plan.recommended;
+                : `₹${plan.annualInr.toLocaleString("en-IN")}`
+              : isUk
+                ? `£${plan.gbp}`
+                : showIntroOffer ? "₹29" : `₹${plan.renewalInr.toLocaleString("en-IN")}`;
+            const period = isAnnual ? "/ year" : "/ month";
+            const renewalText = isAnnual
+              ? isUk
+                ? `Equivalent £${plan.annualGbpPerMo}/mo + VAT`
+                : `Equivalent ₹${plan.annualInrPerMo.toLocaleString("en-IN")}/mo + GST`
+              : isUk
+                ? `Renews at £${plan.gbp}/mo + VAT`
+                : showIntroOffer ? `Then ₹${plan.renewalInr.toLocaleString("en-IN")}/mo + GST` : `Renews at ₹${plan.renewalInr.toLocaleString("en-IN")}/mo + GST`;
 
             return (
-              <div
+              <article
                 key={plan.slug}
-                className={`relative flex flex-col justify-between rounded-2xl bg-white p-7 transition-all ${
-                  isPro
-                    ? "border-2 border-[#6D28D9] shadow-xl shadow-violet-100/70"
-                    : "border border-neutral-200/80 shadow-sm hover:shadow-md hover:border-neutral-300"
+                className={`flex min-h-[500px] flex-col rounded-xl border bg-white p-5 ${
+                  plan.recommended ? "border-[#6D28D9] shadow-sm ring-1 ring-[#6D28D9]" : "border-neutral-200"
                 }`}
               >
-                {/* Popular pill */}
-                {isPro && (
-                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-[#6D28D9] px-3.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm">
-                    Recommended
-                  </span>
-                )}
-
-                <div>
-                  {/* Plan Name & Tagline */}
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-bold tracking-tight text-neutral-900">
-                      {plan.name}
-                    </h2>
-                    {isPro && (
-                      <span className="rounded-md bg-violet-50 px-2 py-0.5 text-[11px] font-semibold text-violet-700">
-                        Popular
-                      </span>
-                    )}
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h2 className="text-lg font-bold">{plan.name}</h2>
+                    <p className="mt-2 min-h-[42px] text-sm leading-5 text-neutral-600">{plan.description}</p>
                   </div>
-                  <p className="mt-1.5 text-xs text-neutral-500 leading-normal min-h-[32px]">
-                    {plan.description}
-                  </p>
-
-                  {/* Price */}
-                  <div className="mt-5 pb-5 border-b border-neutral-100">
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-4xl font-extrabold tracking-tight text-neutral-900">
-                        {todayPrice}
-                      </span>
-                      <span className="text-xs font-medium text-neutral-500">{billingPeriodLabel}</span>
-                    </div>
-                    <p className="mt-1.5 text-xs font-medium text-emerald-700">
-                      {renewalText}
-                    </p>
-                  </div>
-
-                  {/* Feature Checklist */}
-                  <ul className="mt-5 space-y-2.5">
-                    {plan.features.map((feature) => (
-                      <li key={feature} className="flex items-start gap-2.5 text-xs text-neutral-700 leading-tight">
-                        <span className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full ${
-                          isPro ? "bg-violet-100 text-violet-700" : "bg-emerald-50 text-emerald-600"
-                        }`}>
-                          <Check className="h-2.5 w-2.5 stroke-[3]" />
-                        </span>
-                        <span>{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                {/* Checkout CTA */}
-                <div className="mt-8 pt-2">
-                  <CheckoutButton
-                    planSlug={plan.slug}
-                    planName={plan.name}
-                    billingCycle={billingCycle}
-                    userEmail={userEmail}
-                    userName={userName}
-                    currency={isUk ? "GBP" : "INR"}
-                    successRedirect="/dashboard"
-                    className={`w-full rounded-xl py-3 px-4 text-xs font-bold transition-all ${
-                      isPro
-                        ? "bg-[#6D28D9] text-white hover:bg-violet-800 shadow-md shadow-violet-200"
-                        : "border border-neutral-300 bg-white text-neutral-800 hover:bg-neutral-50 hover:border-neutral-400 shadow-sm"
-                    }`}
-                  >
-                    <span>
-                      {isAnnual
-                        ? `Activate ${plan.name} Annual`
-                        : `Activate ${plan.name} for ${todayPrice}`}
+                  {plan.recommended && (
+                    <span className="rounded-full bg-violet-50 px-2.5 py-1 text-[11px] font-bold text-[#6D28D9]">
+                      Popular
                     </span>
-                  </CheckoutButton>
+                  )}
                 </div>
-              </div>
+
+                <div className="mt-6 border-y border-neutral-100 py-5">
+                  <div className="flex items-end gap-1">
+                    <span className="text-4xl font-bold tracking-tight">{todayPrice}</span>
+                    <span className="pb-1 text-sm text-neutral-500">{period}</span>
+                  </div>
+                  <p className="mt-2 text-xs font-semibold text-neutral-600">{renewalText}</p>
+                </div>
+
+                <ul className="mt-5 flex-1 space-y-3">
+                  {plan.features.map((feature) => (
+                    <li key={feature} className="flex gap-2 text-sm text-neutral-700">
+                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#6D28D9]" />
+                      <span>{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <CheckoutButton
+                  planSlug={plan.slug}
+                  planName={plan.name}
+                  billingCycle={billingCycle}
+                  userEmail={userEmail}
+                  userName={userName}
+                  currency={isUk ? "GBP" : "INR"}
+                  successRedirect="/dashboard"
+                  className={`mt-6 w-full rounded-lg px-4 py-3 text-sm font-bold ${
+                    plan.recommended
+                      ? "bg-[#6D28D9] text-white hover:bg-violet-800"
+                      : "border border-neutral-300 bg-white text-neutral-900 hover:bg-neutral-50"
+                  }`}
+                >
+                  Continue with {plan.name}
+                </CheckoutButton>
+              </article>
             );
           })}
-        </div>
+        </section>
 
-        {/* Trust & Guarantee Strip */}
-        <div className="mt-12 max-w-4xl mx-auto rounded-2xl border border-neutral-200/80 bg-white/70 p-4 sm:p-5 shadow-sm">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center sm:text-left text-xs text-neutral-600">
-            <div className="flex items-center justify-center sm:justify-start gap-2.5">
-              <ShieldCheck className="h-4 w-4 text-emerald-600 shrink-0" />
-              <span>Secure Razorpay checkout</span>
-            </div>
-            <div className="flex items-center justify-center sm:justify-start gap-2.5">
-              <Zap className="h-4 w-4 text-violet-600 shrink-0" />
-              <span>Instant dashboard access</span>
-            </div>
-            <div className="flex items-center justify-center sm:justify-start gap-2.5">
-              <RefreshCw className="h-4 w-4 text-neutral-500 shrink-0" />
-              <span>Cancel renewal anytime</span>
-            </div>
-            <div className="flex items-center justify-center sm:justify-start gap-2.5">
-              <Receipt className="h-4 w-4 text-[#6D28D9] shrink-0" />
-              <span>{isUk ? "Official VAT Tax Invoices" : "Automated GST Tax Invoices"}</span>
-            </div>
+        <section className="mt-6 grid gap-3 rounded-xl border border-neutral-200 bg-white p-4 text-xs text-neutral-600 sm:grid-cols-3">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="h-4 w-4 text-[#6D28D9]" />
+            Razorpay verified payment
           </div>
-        </div>
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="h-4 w-4 text-[#6D28D9]" />
+            Dashboard unlocks after server verification
+          </div>
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="h-4 w-4 text-[#6D28D9]" />
+            Existing subscriptions stay unchanged
+          </div>
+        </section>
       </main>
-
-      {/* Clean Footer */}
-      <footer className="border-t border-neutral-200/60 py-6 text-center text-xs text-neutral-500 bg-white/40">
-        <div className="mx-auto max-w-6xl px-5 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p>© {new Date().getFullYear()} URPASS. All rights reserved.</p>
-          <div className="flex items-center gap-4">
-            <Link href="/pricing" className="hover:text-neutral-800 transition-colors">
-              Compare all features
-            </Link>
-            <span className="text-neutral-300">·</span>
-            <Link href="/support" className="hover:text-neutral-800 transition-colors">
-              Help & Support
-            </Link>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

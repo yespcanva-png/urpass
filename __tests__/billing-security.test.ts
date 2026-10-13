@@ -3,6 +3,10 @@ import crypto from "crypto";
 import { verifyRazorpaySignature } from "@/lib/razorpay";
 import { getUserPlan } from "@/lib/plan";
 import { generateInvoicePdf, type InvoiceRecord } from "@/lib/invoices";
+import {
+  getIntroOfferDisclosure,
+  getIntroOfferId,
+} from "@/lib/billing/razorpay-subscription-offers";
 import { NextRequest } from "next/server";
 
 // ── Mock Next.js server modules ───────────────────────────────────────────────
@@ -41,6 +45,38 @@ describe("Razorpay Signature Verification", () => {
     expect(verifyRazorpaySignature("", paymentId, "sig", secret)).toBe(false);
     expect(verifyRazorpaySignature(orderId, "", "sig", secret)).toBe(false);
     expect(verifyRazorpaySignature(orderId, paymentId, "", secret)).toBe(false);
+  });
+});
+
+describe("Razorpay Subscription Intro Offers", () => {
+  it("maps the configured Starter and Pro introductory offer IDs", () => {
+    vi.stubEnv("RAZORPAY_STARTER_INTRO_OFFER_ID", "");
+    vi.stubEnv("RAZORPAY_PRO_INTRO_OFFER_ID", "");
+    vi.stubEnv("RAZORPAY_BUSINESS_INTRO_OFFER_ID", "");
+    expect(getIntroOfferId("starter")).toBe("offer_TnVgsI4LM5e5tB");
+    expect(getIntroOfferId("pro")).toBe("offer_TnVjl4FlJDxvBr");
+    expect(getIntroOfferId("business")).toBe("offer_TnVkl8l7VXDxHz");
+  });
+
+  it("keeps expected discounts tied to the regular monthly plan amounts", () => {
+    expect(getIntroOfferDisclosure("starter")).toMatchObject({
+      introAmountPaise: 2900,
+      regularAmountPaise: 49900,
+      discountPaise: 47000,
+      cycles: 2,
+    });
+    expect(getIntroOfferDisclosure("pro")).toMatchObject({
+      introAmountPaise: 2900,
+      regularAmountPaise: 99900,
+      discountPaise: 97000,
+      cycles: 2,
+    });
+    expect(getIntroOfferDisclosure("business")).toMatchObject({
+      introAmountPaise: 2900,
+      regularAmountPaise: 249900,
+      discountPaise: 247000,
+      cycles: 2,
+    });
   });
 });
 
