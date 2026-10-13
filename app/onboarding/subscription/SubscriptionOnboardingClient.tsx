@@ -2,16 +2,22 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Check, ShieldCheck, Ticket, Zap, RefreshCw, LogOut, Globe } from "lucide-react";
+import { Check, ShieldCheck, Ticket, Zap, RefreshCw, LogOut } from "lucide-react";
 import CheckoutButton from "@/components/billing/CheckoutButton";
 import { persistCountryPreference, detectCountryClient } from "@/lib/country-config";
+
+type Cycle = "monthly" | "annual";
 
 const PLANS = [
   {
     slug: "starter",
     name: "Starter",
     renewalInr: 499,
+    annualInr: 4990,
+    annualInrPerMo: 415,
     gbp: 15,
+    annualGbp: 120,
+    annualGbpPerMo: 10,
     description: "For individual organizers and small events",
     features: [
       "10 events / month",
@@ -26,7 +32,11 @@ const PLANS = [
     slug: "pro",
     name: "Pro",
     renewalInr: 999,
+    annualInr: 9990,
+    annualInrPerMo: 832,
     gbp: 35,
+    annualGbp: 300,
+    annualGbpPerMo: 25,
     description: "For conferences, college fests & growing teams",
     recommended: true,
     features: [
@@ -43,7 +53,11 @@ const PLANS = [
     slug: "business",
     name: "Business",
     renewalInr: 2499,
+    annualInr: 24990,
+    annualInrPerMo: 2082,
     gbp: 79,
+    annualGbp: 699,
+    annualGbpPerMo: 58,
     description: "For organizations managing events at scale",
     features: [
       "Unlimited events",
@@ -72,6 +86,9 @@ export default function SubscriptionOnboardingClient({
   accessState,
   introOfferEligible,
 }: Props) {
+  // Cycle state: monthly vs annual
+  const [billingCycle, setBillingCycle] = useState<Cycle>("monthly");
+
   // Always default to INR ("IN") as primary currency, with dynamic client detection & toggle
   const [activeCountry, setActiveCountry] = useState<"IN" | "GB">(() => {
     if (typeof window !== "undefined") {
@@ -82,7 +99,6 @@ export default function SubscriptionOnboardingClient({
   });
 
   useEffect(() => {
-    // Check if client has a preference or timezone override
     const detected = detectCountryClient();
     if (detected && detected !== activeCountry) {
       setActiveCountry(detected);
@@ -95,6 +111,7 @@ export default function SubscriptionOnboardingClient({
   }
 
   const isUk = activeCountry === "GB";
+  const isAnnual = billingCycle === "annual";
 
   return (
     <div
@@ -165,7 +182,9 @@ export default function SubscriptionOnboardingClient({
         <div className="text-center max-w-2xl mx-auto">
           <div className="inline-flex items-center gap-2 rounded-full border border-violet-200/70 bg-violet-50/90 px-3.5 py-1 text-xs font-semibold text-violet-800 shadow-sm">
             <span className="h-1.5 w-1.5 rounded-full bg-violet-600 animate-pulse" />
-            {isUk
+            {isAnnual
+              ? "Annual Billing · 2 Months Free (Save ~17%)"
+              : isUk
               ? "Simple Monthly Plans · Cancel anytime"
               : introOfferEligible
               ? "Special Intro Offer · ₹29/month for your first 2 months"
@@ -179,6 +198,40 @@ export default function SubscriptionOnboardingClient({
             Select a plan to activate your workspace and start creating events, issuing digital QR passes, and scanning attendees.
           </p>
 
+          {/* Billing Cycle Toggle (Monthly vs Annual) */}
+          <div className="mt-7 inline-flex items-center rounded-xl border border-neutral-200/90 bg-neutral-100/90 p-1 text-xs font-semibold text-neutral-600 shadow-xs">
+            <button
+              type="button"
+              onClick={() => setBillingCycle("monthly")}
+              className={`flex items-center gap-1.5 rounded-lg px-4 py-2 transition-all ${
+                !isAnnual
+                  ? "bg-white text-neutral-950 font-bold shadow-xs"
+                  : "text-neutral-600 hover:text-neutral-900"
+              }`}
+            >
+              <span>Monthly</span>
+              {!isUk && introOfferEligible && (
+                <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-bold text-violet-700">
+                  ₹29 Intro
+                </span>
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => setBillingCycle("annual")}
+              className={`flex items-center gap-1.5 rounded-lg px-4 py-2 transition-all ${
+                isAnnual
+                  ? "bg-white text-neutral-950 font-bold shadow-xs"
+                  : "text-neutral-600 hover:text-neutral-900"
+              }`}
+            >
+              <span>Annual</span>
+              <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
+                2 months free
+              </span>
+            </button>
+          </div>
+
           {accessState !== "onboarding_required" && (
             <div className="mt-5 inline-block rounded-xl border border-amber-200 bg-amber-50/90 px-4 py-2.5 text-xs text-amber-800">
               Your previous subscription is inactive. Select a plan below to restore instant workspace access.
@@ -189,17 +242,31 @@ export default function SubscriptionOnboardingClient({
         {/* Pricing Cards Grid */}
         <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-3 items-stretch max-w-5xl mx-auto">
           {PLANS.map((plan) => {
-            const todayPrice = isUk
-              ? `£${plan.gbp}`
-              : introOfferEligible
-              ? "₹29"
-              : `₹${plan.renewalInr.toLocaleString("en-IN")}`;
+            let todayPrice = "";
+            let billingPeriodLabel = "";
+            let renewalText = "";
 
-            const renewalText = isUk
-              ? "Billed monthly + VAT"
-              : introOfferEligible
-              ? `First 2 months · then ₹${plan.renewalInr.toLocaleString("en-IN")}/mo + GST`
-              : `then ₹${plan.renewalInr.toLocaleString("en-IN")}/mo + GST`;
+            if (isAnnual) {
+              todayPrice = isUk
+                ? `£${plan.annualGbp}`
+                : `₹${plan.annualInr.toLocaleString("en-IN")}`;
+              billingPeriodLabel = "/ year";
+              renewalText = isUk
+                ? `£${plan.annualGbpPerMo}/mo equivalent · 2 months free + VAT`
+                : `₹${plan.annualInrPerMo.toLocaleString("en-IN")}/mo equivalent · 2 months free + GST`;
+            } else {
+              todayPrice = isUk
+                ? `£${plan.gbp}`
+                : introOfferEligible
+                ? "₹29"
+                : `₹${plan.renewalInr.toLocaleString("en-IN")}`;
+              billingPeriodLabel = "/ month";
+              renewalText = isUk
+                ? "Billed monthly + VAT"
+                : introOfferEligible
+                ? `First 2 months · then ₹${plan.renewalInr.toLocaleString("en-IN")}/mo + GST`
+                : `then ₹${plan.renewalInr.toLocaleString("en-IN")}/mo + GST`;
+            }
 
             const isPro = plan.recommended;
 
@@ -241,7 +308,7 @@ export default function SubscriptionOnboardingClient({
                       <span className="text-4xl font-extrabold tracking-tight text-neutral-900">
                         {todayPrice}
                       </span>
-                      <span className="text-xs font-medium text-neutral-500">/ month</span>
+                      <span className="text-xs font-medium text-neutral-500">{billingPeriodLabel}</span>
                     </div>
                     <p className="mt-1.5 text-xs font-medium text-emerald-700">
                       {renewalText}
@@ -268,7 +335,7 @@ export default function SubscriptionOnboardingClient({
                   <CheckoutButton
                     planSlug={plan.slug}
                     planName={plan.name}
-                    billingCycle="monthly"
+                    billingCycle={billingCycle}
                     userEmail={userEmail}
                     userName={userName}
                     currency={isUk ? "GBP" : "INR"}
@@ -279,7 +346,13 @@ export default function SubscriptionOnboardingClient({
                         : "border border-neutral-300 bg-white text-neutral-800 hover:bg-neutral-50 hover:border-neutral-400 shadow-sm"
                     }`}
                   >
-                    <span>{isUk ? `Choose ${plan.name}` : `Activate ${plan.name} for ${todayPrice}`}</span>
+                    <span>
+                      {isAnnual
+                        ? `Activate ${plan.name} Annual`
+                        : isUk
+                        ? `Choose ${plan.name}`
+                        : `Activate ${plan.name} for ${todayPrice}`}
+                    </span>
                   </CheckoutButton>
                 </div>
               </div>
