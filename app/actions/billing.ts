@@ -762,7 +762,7 @@ export async function activatePaidSubscription(
   // Preserve lifetime access status if a lifetime user subscribes to an upgraded plan
   const { data: currentSub } = await admin
     .from("subscriptions")
-    .select("id, has_lifetime_access, lifetime_plan_slug")
+    .select("id, has_lifetime_access, lifetime_plan_slug, autopay_mandate_id, autopay_status")
     .eq("user_id", user.id)
     .maybeSingle();
 
@@ -770,6 +770,11 @@ export async function activatePaidSubscription(
   const lifetimePlanSlug = isFounder
     ? "founder"
     : (currentSub?.lifetime_plan_slug || (currentSub?.has_lifetime_access ? "founder" : null));
+  const shouldRequireAutopaySetup =
+    normalizedSlug !== "free" &&
+    !isFounder &&
+    effectiveCycle === "monthly" &&
+    currentSub?.autopay_status !== "active";
 
   const periodStart = new Date();
   const periodEndTime = periodEnd(effectiveCycle);
@@ -789,6 +794,10 @@ export async function activatePaidSubscription(
         registrations_used: 0,
         has_lifetime_access: hasLifetimeAccess,
         lifetime_plan_slug: lifetimePlanSlug,
+        autopay_mandate_id: currentSub?.autopay_mandate_id ?? null,
+        autopay_status: shouldRequireAutopaySetup
+          ? "pending"
+          : (currentSub?.autopay_status || (isFounder ? "none" : "none")),
         updated_at: new Date().toISOString(),
       },
       { onConflict: "user_id" }

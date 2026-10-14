@@ -107,6 +107,9 @@ export default function CheckoutModal({
   const [billingAddress, setBillingAddress] = useState("");
   const [billingStateCode, setBillingStateCode] = useState("33");
   const [gstin, setGstin]                   = useState("");
+  const [introPaymentComplete, setIntroPaymentComplete] = useState(false);
+  const [mandateLoading, setMandateLoading] = useState(false);
+  const [mandateError, setMandateError] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
@@ -124,6 +127,9 @@ export default function CheckoutModal({
       setBillingAddress("");
       setBillingStateCode("33");
       setGstin("");
+      setIntroPaymentComplete(false);
+      setMandateLoading(false);
+      setMandateError("");
     }
   }
 
@@ -159,6 +165,107 @@ export default function CheckoutModal({
   const subtotal    = coupon ? coupon.discountedAmountRupees : baseAmount;
   const taxDisplay  = coupon ? coupon.gstRupees              : baseTax;
   const totalToday  = coupon ? coupon.totalRupees            : baseTotal;
+  const regularRenewalTotal = Math.round(priceMonthly * (isUk ? 1.2 : 1.18) * 100) / 100;
+  const mandateAuthTotal = 1;
+
+  async function handleSetupAutopay() {
+    setMandateLoading(true);
+    setMandateError("");
+
+    try {
+      const loaded = await loadRazorpay();
+      if (!loaded) {
+        setMandateError("Could not load payment SDK. Check your connection.");
+        setMandateLoading(false);
+        return;
+      }
+
+      const selectedState = INDIA_STATES.find((state) => state.code === billingStateCode);
+      const mandateRes = await fetch("/api/billing/autopay/mandate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          planSlug,
+          billingCycle,
+          billingDetails: {
+            companyName: companyName.trim() || userName,
+            billingAddress: billingAddress.trim(),
+            gstin: gstin.trim().toUpperCase() || null,
+            state: selectedState?.name || "",
+            stateCode: billingStateCode,
+          },
+        }),
+      });
+
+      const mandateData = await mandateRes.json();
+      if (!mandateRes.ok) {
+        setMandateError(mandateData.error ?? "Could not create AutoPay mandate.");
+        setMandateLoading(false);
+        return;
+      }
+
+      const rzp = new window.Razorpay({
+        key: mandateData.keyId,
+        order_id: mandateData.orderId,
+        customer_id: mandateData.customerId,
+        recurring: "1",
+        amount: mandateData.amount,
+        currency: mandateData.currency,
+        name: "URPASS",
+        description: `${planName} AutoPay mandate up to ₹${(mandateData.maxAmountPaise / 100).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/month`,
+        prefill: { name: userName, email: userEmail },
+        theme: { color: "#6D28D9" },
+        modal: { ondismiss: () => setMandateLoading(false) },
+        handler: async (response: {
+          razorpay_payment_id?: string;
+          razorpay_order_id?: string;
+          razorpay_signature?: string;
+        }) => {
+          if (
+            !response?.razorpay_payment_id ||
+            !response?.razorpay_order_id ||
+            !response?.razorpay_signature
+          ) {
+            setMandateError("AutoPay verification details are missing.");
+            setMandateLoading(false);
+            return;
+          }
+
+          try {
+            const verifyRes = await fetch("/api/billing/autopay/mandate/verify", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                orderId: response.razorpay_order_id,
+                paymentId: response.razorpay_payment_id,
+                signature: response.razorpay_signature,
+                customerId: mandateData.customerId,
+              }),
+            });
+            const verifyData = await verifyRes.json();
+            setMandateLoading(false);
+
+            if (!verifyRes.ok) {
+              setMandateError(verifyData.error ?? "Failed to verify AutoPay mandate.");
+              return;
+            }
+
+            onClose();
+            router.push(successRedirect || `/billing?upgraded=true&autopay=active&plan=${encodeURIComponent(planName)}`);
+            router.refresh();
+          } catch (err) {
+            setMandateLoading(false);
+            setMandateError(err instanceof Error ? err.message : "Failed to verify AutoPay mandate.");
+          }
+        },
+      });
+
+      rzp.open();
+    } catch (err) {
+      setMandateLoading(false);
+      setMandateError(err instanceof Error ? err.message : "AutoPay setup failed. Please try again.");
+    }
+  }
 
   async function applyCoupon() {
     const code = couponInput.trim();
@@ -408,6 +515,10 @@ export default function CheckoutModal({
               setPayError(result.error);
               return;
             }
+            if (isIntroOffer && !isUk && !isLifetime) {
+              setIntroPaymentComplete(true);
+              return;
+            }
             onClose();
             router.push(
               successRedirect ||
@@ -462,6 +573,60 @@ export default function CheckoutModal({
             </button>
           </div>
 
+          {introPaymentComplete ? (
+            <div className="flex flex-col gap-4">
+              <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4">
+                <div className="flex items-start gap-3">
+                  <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700">
+                    <Check className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-emerald-950">Intro payment received</p>
+                    <p className="mt-1 text-xs leading-relaxed text-emerald-800">
+                      Your ₹29 + GST payment is confirmed. Set up AutoPay now so renewal can run against the regular {planName} ceiling.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-4 text-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="font-medium text-neutral-700">Mandate authorization</span>
+                  <span className="font-semibold text-neutral-950">₹{fmt(mandateAuthTotal)}</span>
+                </div>
+                <div className="mt-2 flex items-center justify-between gap-3">
+                  <span className="font-medium text-neutral-700">AutoPay ceiling</span>
+                  <span className="font-semibold text-neutral-950">₹{fmt(regularRenewalTotal)}/month</span>
+                </div>
+                <p className="mt-3 text-xs leading-relaxed text-neutral-600">
+                  Razorpay will authorize recurring payments up to the regular plan amount. Future charges cannot exceed this ceiling without a new mandate.
+                </p>
+              </div>
+
+              <button
+                onClick={handleSetupAutopay}
+                disabled={mandateLoading}
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-neutral-950 py-3.5 text-sm font-semibold text-white transition-all hover:bg-neutral-800 disabled:opacity-50 active:scale-[0.98]"
+              >
+                {mandateLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <>
+                    Set Up AutoPay
+                    <ChevronRight className="h-4 w-4" />
+                  </>
+                )}
+              </button>
+
+              {mandateError && (
+                <div className="flex items-center justify-center gap-1.5 text-xs text-red-600">
+                  <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                  {mandateError}
+                </div>
+              )}
+            </div>
+          ) : (
+            <>
           {/* Coupon input */}
           {usesRazorpaySubscriptionCheckout ? (
             <div className="rounded-lg border border-violet-100 bg-violet-50 px-3 py-2.5 text-xs font-medium text-violet-800">
@@ -648,14 +813,14 @@ export default function CheckoutModal({
                     <tr>
                       <td className="px-3 py-1.5 font-medium">Renewal</td>
                       <td className="px-3 py-1.5 text-right font-semibold text-neutral-950">
-                        ₹{(Math.round(priceMonthly * 1.18 * 100) / 100).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/month
+                        ₹{regularRenewalTotal.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/month
                       </td>
                     </tr>
                   </tbody>
                 </table>
               </div>
               <p className="text-[11px] leading-relaxed text-neutral-600">
-                To activate your UrPass {planName} intro access, Razorpay will charge ₹29 + GST today. Regular renewal is ₹{priceMonthly.toLocaleString("en-IN")} + GST per month.
+                Razorpay will charge ₹29 + GST today. After payment, set up AutoPay with a renewal ceiling of ₹{regularRenewalTotal.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/month.
               </p>
             </div>
           ) : isIntroOffer && isUk ? (
@@ -705,6 +870,8 @@ export default function CheckoutModal({
               Razorpay secure checkout · Prices exclude {isUk ? "20% VAT" : "18% GST"}
             </p>
           </div>
+            </>
+          )}
         </div>
       </div>
     </div>,
