@@ -22,6 +22,7 @@ interface Props {
   priceMonthly: number;
   annualTotal: number;
   successRedirect?: string;
+  introOfferEligible?: boolean;
 }
 
 declare global {
@@ -94,6 +95,7 @@ export default function CheckoutModal({
   currency = "INR",
   priceMonthly, annualTotal,
   successRedirect,
+  introOfferEligible = false,
 }: Props) {
   const [couponInput, setCouponInput]       = useState("");
   const [couponLoading, setCouponLoading]   = useState(false);
@@ -140,7 +142,7 @@ export default function CheckoutModal({
 
   const isLifetime = billingCycle === "lifetime" || planSlug === "founder" || planSlug === "lifetime";
   const defaultFounder = isUk ? 249 : 19999;
-  const isIntroOffer = billingCycle === "monthly" && ["starter", "pro", "business"].includes(planSlug);
+  const isIntroOffer = introOfferEligible && billingCycle === "monthly" && ["starter", "pro", "business"].includes(planSlug);
   const usesRazorpaySubscriptionCheckout =
     false;
   const introAmount = isUk ? 2 : 29;

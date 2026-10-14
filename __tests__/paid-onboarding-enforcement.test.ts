@@ -6,6 +6,7 @@ import {
 import { evaluateOfferEligibility, resolveCheckoutPrice } from "@/lib/billing/engine/pricing-engine";
 import { isProtectedPath } from "@/lib/supabase/middleware";
 import { createEvent, duplicateEvent } from "@/app/actions/events";
+import { createClient as createAdminClient } from "@supabase/supabase-js";
 
 // ── Mock Next.js & external server utilities ────────────────────────────────
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
@@ -254,6 +255,59 @@ describe("URPASS — Paid Onboarding & Entitlement Enforcement (15 Scenarios)", 
     expect(accessExpired.state).toBe("subscription_expired");
     expect(accessExpired.hasOrganizerAccess).toBe(false);
     expect(accessExpired.shouldRedirectToBilling).toBe(true);
+  });
+
+  it("Pricing: active legacy Free rows still receive the ₹29 intro checkout amount", async () => {
+    vi.mocked(createAdminClient).mockReturnValue({
+      from: vi.fn((table: string) => {
+        if (table === "subscriptions") {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            maybeSingle: vi.fn().mockResolvedValue({
+              data: {
+                status: "active",
+                provider: "free",
+                current_period_end: new Date("2026-11-13T00:00:00.000Z").toISOString(),
+                plan: { slug: "free" },
+              },
+              error: null,
+            }),
+          };
+        }
+        if (table === "offer_redemptions") {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+          };
+        }
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+        };
+      }),
+      auth: {
+        admin: {
+          getUserById: vi.fn().mockResolvedValue({
+            data: { user: { id: "usr-free-pricing", created_at: "2026-09-01T00:00:00.000Z" } },
+            error: null,
+          }),
+        },
+      },
+    } as any);
+
+    const price = await resolveCheckoutPrice({
+      userId: "usr-free-pricing",
+      planSlug: "starter",
+      billingCycle: "monthly",
+      currency: "INR",
+    });
+
+    expect(price.isIntroCycle).toBe(true);
+    expect(price.amountPaise).toBe(2900);
+    expect(price.regularPricePaise).toBe(49900);
   });
 
   // ── Scenario 9: Existing active paid subscriber → no interruption ──────────

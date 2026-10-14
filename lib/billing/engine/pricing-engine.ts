@@ -107,11 +107,24 @@ export async function evaluateOfferEligibility(params: {
   // 1. Check legacy/existing subscriptions table for trial or paid history
   const { data: existingSub } = await admin
     .from("subscriptions")
-    .select("id, status, trial_used, is_trial, trial_ends_at, has_lifetime_access, current_period_end")
+    .select("id, status, provider, trial_used, is_trial, trial_ends_at, has_lifetime_access, lifetime_plan_slug, current_period_end, plan:plans(slug)")
     .eq("user_id", userId)
     .maybeSingle();
 
   if (existingSub) {
+    const plan = Array.isArray(existingSub.plan) ? existingSub.plan[0] : existingSub.plan;
+    const existingPlanSlug = String(plan?.slug || "free").toLowerCase();
+    const provider = String(existingSub.provider || "").toLowerCase();
+    const hasLifetime = Boolean(
+      existingSub.has_lifetime_access ||
+      existingSub.lifetime_plan_slug === "founder" ||
+      existingPlanSlug === "founder" ||
+      existingPlanSlug === "lifetime"
+    );
+    const periodEnd = existingSub.current_period_end ? new Date(existingSub.current_period_end) : null;
+    const hasFuturePaidPeriod = Boolean(periodEnd && periodEnd.getTime() > Date.now());
+    const isPaidPlan = !["free", "none"].includes(existingPlanSlug) && !["free", "none"].includes(provider);
+
     if (existingSub.trial_used || existingSub.is_trial) {
       const trialEndsAt = existingSub.trial_ends_at ? new Date(existingSub.trial_ends_at) : null;
       const isExpired = trialEndsAt ? trialEndsAt.getTime() < Date.now() : true;
@@ -131,7 +144,7 @@ export async function evaluateOfferEligibility(params: {
       };
     }
 
-    if (existingSub.status === "active" && !["free", "none"].includes(existingSub.status)) {
+    if (hasLifetime || (existingSub.status === "active" && isPaidPlan && hasFuturePaidPeriod)) {
       return {
         isEligibleForIntroOffer: false,
         reason: "Existing active paid subscribers continue under regular subscription terms.",
@@ -155,30 +168,9 @@ export async function evaluateOfferEligibility(params: {
     }
   }
 
-  // 3. Check legacy Free users: Calculate 30-day expiration from original user signup
+  // 3. Confirm the auth user exists. Legacy/free rows do not block the paid intro checkout.
   const { data: authUser } = await admin.auth.admin.getUserById(userId);
-  if (authUser?.user?.created_at) {
-    const createdAt = new Date(authUser.user.created_at);
-    const freeExpiresAt = new Date(createdAt.getTime() + 30 * 24 * 60 * 60 * 1000);
-    const isFreeExpired = freeExpiresAt.getTime() < Date.now();
-    const daysRemaining = Math.max(0, Math.ceil((freeExpiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
-
-    // If account was created more than 1 hour ago and has previous free usage
-    const accountAgeDays = (Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24);
-    if (accountAgeDays > 1 && !existingSub?.status) {
-      // Existing free user
-      return {
-        isEligibleForIntroOffer: false,
-        reason: "Existing Free users continue for 30 days from signup, then migrate to regular pricing.",
-        legacyFreeStatus: {
-          isLegacyFree: true,
-          expiresAt: freeExpiresAt.toISOString(),
-          isExpired: isFreeExpired,
-          daysRemaining,
-        },
-      };
-    }
-  }
+  void authUser;
 
   const isGbp = currency === "GBP";
   // Eligible! Return £2 (200 pence) for GBP or ₹29 (2900 paise) for INR for Months 1 & 2

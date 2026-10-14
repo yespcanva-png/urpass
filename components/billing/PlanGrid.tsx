@@ -430,6 +430,7 @@ export default function PlanGrid({
                           userEmail={userEmail}
                           userName={userName}
                           currency={country === "GB" ? "GBP" : "INR"}
+                          introOfferEligible={isIntroEligible}
                           className={`w-full py-2.5 text-xs font-semibold rounded-xl text-white shadow-xs transition-all hover:opacity-90 cursor-pointer ${
                             isMostPopular
                               ? "bg-brand hover:bg-brand-600"

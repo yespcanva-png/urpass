@@ -233,6 +233,7 @@ export default function SubscriptionOnboardingClient({
                   userName={userName}
                   currency={isUk ? "GBP" : "INR"}
                   successRedirect="/dashboard"
+                  introOfferEligible={showIntroOffer}
                   className={`mt-6 w-full rounded-lg px-4 py-3 text-sm font-bold ${
                     plan.recommended
                       ? "bg-[#6D28D9] text-white hover:bg-violet-800"
