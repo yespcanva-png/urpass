@@ -331,12 +331,14 @@ export async function GET(req: NextRequest) {
     let userId: string | undefined;
     let isNewUser = false;
 
-    // Check if user already has an existing profile
-    const { data: existingProfile } = await admin
+    // Check if user already has an existing profile in DB
+    let existingProfile: { user_id: string; created_at?: string } | null = null;
+    const { data: profileByEmail } = await admin
       .from("profiles")
-      .select("user_id")
+      .select("user_id, created_at")
       .ilike("email", normalizedEmail)
       .maybeSingle();
+    existingProfile = profileByEmail;
 
     let linkRes = await admin.auth.admin.generateLink({
       type: "magiclink",
@@ -369,12 +371,42 @@ export async function GET(req: NextRequest) {
       });
     } else {
       userId = linkRes.data.user.id;
-      const userCreatedAt = linkRes.data.user.created_at ? new Date(linkRes.data.user.created_at) : new Date(0);
-      const effectiveAt = new Date(process.env.PAID_ONBOARDING_EFFECTIVE_AT || "2026-10-13T00:00:00.000Z");
-      if (!existingProfile?.user_id && userCreatedAt >= effectiveAt) {
-        isNewUser = true;
+
+      if (!existingProfile && userId) {
+        const { data: profileByUid } = await admin
+          .from("profiles")
+          .select("user_id, created_at")
+          .eq("user_id", userId)
+          .maybeSingle();
+        existingProfile = profileByUid;
       }
-      logAuth("user_sync", "Resolved user in Supabase Auth", { userId, email: normalizedEmail, isNewUser });
+
+      // If there is no user in DB, treat as a signup
+      if (!existingProfile?.user_id) {
+        isNewUser = true;
+        logAuth("user_sync", "No user in DB for Google login -> Treating as signup", {
+          userId,
+          email: normalizedEmail,
+        });
+
+        // Ensure user metadata is populated in Supabase auth
+        try {
+          await admin.auth.admin.updateUserById(userId, {
+            user_metadata: {
+              full_name: fullName,
+              avatar_url: avatarUrl,
+            },
+          });
+        } catch {
+          // Non-blocking
+        }
+      } else {
+        isNewUser = false;
+        logAuth("user_sync", "Resolved existing user in DB", {
+          userId,
+          email: normalizedEmail,
+        });
+      }
     }
 
     if (!linkRes.data?.properties?.hashed_token) {
@@ -496,15 +528,21 @@ export async function GET(req: NextRequest) {
     // 7. Profile Upsert & Notifications
     if (userId) {
       try {
+        const nowIso = new Date().toISOString();
+        const profilePayload: Record<string, unknown> = {
+          user_id: userId,
+          email: normalizedEmail,
+          full_name: fullName,
+          avatar_url: avatarUrl,
+          updated_at: nowIso,
+        };
+        if (isNewUser) {
+          profilePayload.created_at = nowIso;
+        }
+
         await Promise.allSettled([
           admin.from("profiles").upsert(
-            {
-              user_id: userId,
-              email: normalizedEmail,
-              full_name: fullName,
-              avatar_url: avatarUrl,
-              updated_at: new Date().toISOString(),
-            },
+            profilePayload,
             { onConflict: "user_id" }
           ),
           isNewUser

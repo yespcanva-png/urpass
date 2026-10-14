@@ -78,19 +78,17 @@ export async function resolveUserSubscriptionAccess(params: {
   const effectiveAt = getPaidOnboardingEffectiveAt();
 
   let createdAt: Date = user.created_at ? new Date(user.created_at) : now;
-  if (!user.created_at) {
-    try {
-      const { data: prof } = await supabase
-        .from("profiles")
-        .select("created_at")
-        .eq("user_id", user.id)
-        .maybeSingle();
-      if (prof?.created_at) {
-        createdAt = new Date(prof.created_at);
-      }
-    } catch {
-      // fallback
+  try {
+    const { data: prof } = await supabase
+      .from("profiles")
+      .select("created_at")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (prof?.created_at) {
+      createdAt = new Date(prof.created_at);
     }
+  } catch {
+    // fallback
   }
 
   const isNewUser = createdAt.getTime() >= effectiveAt.getTime();

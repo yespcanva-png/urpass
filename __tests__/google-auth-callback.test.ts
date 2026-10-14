@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { NextRequest } from "next/server";
 import { GET as googleCallbackGet, clearRecentExchangedCodes } from "@/app/auth/google/callback/route";
 import { GET as googleRedirectGet } from "@/app/api/auth/google/redirect/route";
+import { notifyOwnerNewUser, sendUserWelcomeEmail } from "@/lib/email";
 
 // Mock Supabase admin client
 const mockAdminUpdateUserById = vi.fn().mockResolvedValue({ data: {}, error: null });
@@ -308,6 +309,82 @@ describe("Google Standalone OAuth Routes", () => {
       expect(res.status).toBe(307);
       expect(res.headers.get("location")).toBe("https://urpass.space/dashboard");
       expect(mockVerifyOtp).toHaveBeenCalled();
+    });
+
+    it("treats Google login as a signup if there is no user in DB", async () => {
+      const mockUpsert = vi.fn().mockResolvedValue({ data: {}, error: null });
+      mockAdminFrom.mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          ilike: vi.fn().mockReturnValue({
+            maybeSingle: vi.fn().mockResolvedValue({ data: null }),
+          }),
+          eq: vi.fn().mockReturnValue({
+            maybeSingle: vi.fn().mockResolvedValue({ data: null }),
+          }),
+        }),
+        upsert: mockUpsert,
+      });
+
+      global.fetch = vi.fn().mockImplementation((url: string) => {
+        if (url === "https://oauth2.googleapis.com/token") {
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            json: () =>
+              Promise.resolve({
+                access_token: "mock-access-token",
+                id_token: "mock-valid-id-token",
+              }),
+          });
+        }
+        if (url.includes("googleapis.com/oauth2/v3/userinfo")) {
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            json: () =>
+              Promise.resolve({
+                sub: "google-new-user-789",
+                email: "newuser@example.com",
+                email_verified: "true",
+                name: "New Organizer",
+                picture: "https://example.com/avatar.jpg",
+                aud: "mock-google-client-id.apps.googleusercontent.com",
+              }),
+          });
+        }
+        return Promise.reject(new Error("Unknown URL: " + url));
+      });
+
+      const statePayload = Buffer.from(
+        JSON.stringify({ next: "/dashboard", nonce: "test-nonce-789", redirect_uri: "https://urpass.space/auth/google/callback", ts: Date.now() })
+      ).toString("base64url");
+
+      const req = new NextRequest(`https://urpass.space/auth/google/callback?code=valid_new_user_code&state=${statePayload}`);
+      const res = await googleCallbackGet(req);
+
+      expect(res.status).toBe(307);
+      expect(res.headers.get("location")).toBe("https://urpass.space/onboarding/subscription");
+      expect(notifyOwnerNewUser).toHaveBeenCalledWith(
+        expect.objectContaining({
+          email: "newuser@example.com",
+          name: "New Organizer",
+          provider: "google",
+        })
+      );
+      expect(sendUserWelcomeEmail).toHaveBeenCalledWith(
+        expect.objectContaining({
+          to: "newuser@example.com",
+          name: "New Organizer",
+        })
+      );
+      expect(mockUpsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          email: "newuser@example.com",
+          full_name: "New Organizer",
+          created_at: expect.any(String),
+        }),
+        { onConflict: "user_id" }
+      );
     });
   });
 });
