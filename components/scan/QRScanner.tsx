@@ -292,7 +292,11 @@ export default function QRScanner({ onScan, active, statusVariant = "idle" }: Pr
             }`}
           />
           <p className="text-[11px] text-zinc-400 font-medium">
-            {active ? "Scanner active" : "Processing pass..."}
+            {active
+              ? "Scanner active"
+              : statusVariant === "verifying"
+              ? "Processing pass..."
+              : "Detection paused"}
           </p>
         </div>
       )}

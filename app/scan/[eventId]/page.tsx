@@ -98,9 +98,6 @@ const PASS_TYPE_LABEL: Record<string, string> = {
   organizer: "Organizer",
 };
 
-const AUTO_RESET_SUCCESS_MS = 600;
-const AUTO_RESET_ALERT_MS = 1800;
-const AUTO_RESET_DUPLICATE_MS = 6000;
 const SAME_TOKEN_DEBOUNCE_MS = 2000; // Debounce same QR code to prevent duplicate triggers
 const RAPID_SCAN_COOLDOWN_MS = 150; // Minimal 150ms cooldown between different tickets
 const SOUND_STORAGE_KEY = "urpass_scanner_sound_enabled";
@@ -116,8 +113,9 @@ export default function ScanEventPage() {
   const [result, setResult] = useState<ScanResult | null>(null);
   const [errorMsg, setErrorMsg] = useState("");
   const [accessDeniedMsg, setAccessDeniedMsg] = useState("");
+  const [lastResultAt, setLastResultAt] = useState<string | null>(null);
   const [scanCount, setScanCount] = useState(0);
-  const [resetProgress, setResetProgress] = useState(0);
+  const [sessionCounters, setSessionCounters] = useState({ scanned: 0, successful: 0, rejected: 0 });
   const [feed, setFeed] = useState<FeedEntry[]>([]);
   const [soundEnabled, setSoundEnabled] = useState<boolean>(() => {
     if (typeof window === "undefined") return true;
@@ -199,12 +197,18 @@ export default function ScanEventPage() {
   const lastTokenRef = useRef<string | null>(null);
   const lastTokenTimeRef = useRef<number>(0);
   const cooldownRef = useRef(false);
-  const progressRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const terminalScanCountedRef = useRef(false);
+  const pendingSuccessfulCountRef = useRef(1);
 
   // Force gate selection before scanning begins if gates are configured
   const isGateRequired = gates.length > 0 && !selectedGateId && !selectedSessionId;
-  const isScannerActive = !manualMode && !isGateRequired && (scanState === "idle" || scanState === "scanning" || scanState === "success");
+  const isScannerActive =
+    !manualMode &&
+    !isGateRequired &&
+    !groupModalState?.isOpen &&
+    (scanState === "idle" || scanState === "scanning");
+  const scanContextName = selectedSession?.title || eventName || "Event";
 
   const toggleTorch = useCallback(async () => {
     try {
@@ -728,20 +732,17 @@ export default function ScanEventPage() {
   }, [searchQuery, manualMode, eventId, isOnline]);
 
   const verify = useCallback(
-    async (rawToken: string) => {
+    async (rawToken: string, force = false) => {
+      if (!force && !isScannerActive) return;
       if (cooldownRef.current) return;
       const now = Date.now();
       if (rawToken === lastTokenRef.current && (now - lastTokenTimeRef.current < SAME_TOKEN_DEBOUNCE_MS)) {
         return;
       }
 
-      // Interrupt existing reset countdown if a new ticket is scanned immediately
-      if (progressRef.current) {
-        clearInterval(progressRef.current);
-        progressRef.current = null;
-      }
-
       cooldownRef.current = true;
+      terminalScanCountedRef.current = false;
+      pendingSuccessfulCountRef.current = 1;
       lastTokenRef.current = rawToken;
       lastTokenTimeRef.current = now;
       setTimeout(() => { cooldownRef.current = false; }, RAPID_SCAN_COOLDOWN_MS);
@@ -1158,7 +1159,7 @@ export default function ScanEventPage() {
         handleOfflineResult(offRes);
       }
     },
-    [eventId, isOnline, selectedGateId, selectedGate?.name, soundEnabled, handleOfflineResult, selectedZoneId, scanDirection, isGateRequired, selectedSessionId]
+    [eventId, isOnline, selectedGateId, selectedGate?.name, soundEnabled, handleOfflineResult, selectedZoneId, scanDirection, isGateRequired, selectedSessionId, isScannerActive]
   );
 
   const handleSupervisorOverride = useCallback(async () => {
@@ -1253,7 +1254,7 @@ export default function ScanEventPage() {
         }
 
         setManualMode(false);
-        await verify(passData.pass_token);
+        await verify(passData.pass_token, true);
         setSearchResults((prev) =>
           prev.map((a) =>
             a.id === attendee.id ? { ...a, pass_status: "checked_in" } : a
@@ -1284,11 +1285,12 @@ export default function ScanEventPage() {
   const reset = useCallback(() => {
     lastTokenRef.current = null;
     cooldownRef.current = false;
+    terminalScanCountedRef.current = false;
+    pendingSuccessfulCountRef.current = 1;
     setResult(null);
     setErrorMsg("");
     setAccessDeniedMsg("");
-    setResetProgress(0);
-    if (progressRef.current) clearInterval(progressRef.current);
+    setLastResultAt(null);
     setScanState("idle");
   }, []);
 
@@ -1380,33 +1382,24 @@ export default function ScanEventPage() {
 
   useEffect(() => {
     if (
-      scanState === "success" ||
-      scanState === "duplicate" ||
-      scanState === "error" ||
-      scanState === "access_denied"
+      scanState !== "success" &&
+      scanState !== "duplicate" &&
+      scanState !== "error" &&
+      scanState !== "access_denied"
     ) {
-      const durationMs =
-        scanState === "success"
-          ? AUTO_RESET_SUCCESS_MS
-          : scanState === "duplicate"
-          ? AUTO_RESET_DUPLICATE_MS
-          : AUTO_RESET_ALERT_MS;
-      const initTimer = setTimeout(() => setResetProgress(0), 0);
-      const step = 100 / (durationMs / 50);
-      progressRef.current = setInterval(() => {
-        setResetProgress((p) => {
-          if (p >= 100) { clearInterval(progressRef.current!); return 100; }
-          return p + step;
-        });
-      }, 50);
-      const t = setTimeout(reset, durationMs);
-      return () => {
-        clearTimeout(initTimer);
-        clearTimeout(t);
-        if (progressRef.current) clearInterval(progressRef.current);
-      };
+      return;
     }
-  }, [scanState, reset]);
+
+    if (terminalScanCountedRef.current) return;
+    terminalScanCountedRef.current = true;
+    setLastResultAt(new Date().toISOString());
+
+    setSessionCounters((prev) => ({
+      scanned: prev.scanned + 1,
+      successful: prev.successful + (scanState === "success" ? pendingSuccessfulCountRef.current : 0),
+      rejected: prev.rejected + (scanState === "success" ? 0 : 1),
+    }));
+  }, [scanState]);
 
   // Filtered search results
   const filteredSearchResults = searchResults.filter((a) => {
@@ -1437,6 +1430,7 @@ export default function ScanEventPage() {
           const data = await res.json();
           if (res.ok && data.success) {
             playScannerFeedback("CHECKED_IN", { sound: soundEnabled });
+            pendingSuccessfulCountRef.current = quantity;
             setScanCount((c) => c + quantity);
             if (data.capacity) {
               setSessionStats({
@@ -1491,6 +1485,7 @@ export default function ScanEventPage() {
 
         if (res.ok && data.success) {
           playScannerFeedback("CHECKED_IN", { sound: soundEnabled });
+          pendingSuccessfulCountRef.current = quantity;
           setScanCount((c) => c + quantity);
           setFeed((f) => [
             {
@@ -1641,6 +1636,23 @@ export default function ScanEventPage() {
           </button>
         </div>
       )}
+
+      <div className="shrink-0 border-b border-violet-900/40 bg-violet-950/35 px-3 py-2">
+        <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3">
+          <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-xs font-bold text-violet-100">
+            <span className="tabular-nums">Scanned: {sessionCounters.scanned}</span>
+            <span className="tabular-nums text-emerald-300">Successful: {sessionCounters.successful}</span>
+            <span className="tabular-nums text-red-300">Rejected: {sessionCounters.rejected}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => router.push("/scan")}
+            className="shrink-0 rounded-md border border-violet-700/70 bg-violet-900/70 px-3 py-1.5 text-[11px] font-bold text-violet-100 transition-colors hover:bg-violet-800"
+          >
+            Close Scanner
+          </button>
+        </div>
+      </div>
 
       {/* ── Responsive Cockpit Container (Desktop 2-Col / Mobile Stack) ──── */}
       <div className="w-full max-w-6xl mx-auto px-3 sm:px-6 py-4 flex-1 flex flex-col lg:grid lg:grid-cols-12 lg:gap-8 items-start">
@@ -1947,7 +1959,7 @@ export default function ScanEventPage() {
               </div>
             ) : (
               /* Scanner Camera Viewfinder */
-              <div className={`w-full relative ${scanState === "idle" || scanState === "scanning" ? "block" : "hidden"}`}>
+              <div className="w-full relative">
                 <div className="overflow-hidden rounded-lg border border-neutral-800 bg-black shadow-md">
                   <QRScanner onScan={verify} active={isScannerActive} statusVariant={scanState} />
                 </div>
@@ -2008,36 +2020,36 @@ export default function ScanEventPage() {
 
             {/* Result: SUCCESS (Entry Granted) */}
             {scanState === "success" && result && (
-              <div
-                className="w-full cursor-pointer select-none animate-in zoom-in-95 duration-150"
-                onClick={reset}
-                title="Tap anywhere to scan next"
-              >
+              <div className="w-full select-none animate-in zoom-in-95 duration-150 mt-4">
                 <ResultCard
                   variant="success"
                   attendee={result.attendee}
                   passType={result.passType}
+                  contextName={scanContextName}
                   checkedInAt={result.checkedInAt}
+                  resultAt={lastResultAt}
                   gateName={result.gateName}
                   offline={result.offline}
                   onReset={reset}
-                  progress={resetProgress}
+                  successfulScans={sessionCounters.successful}
                 />
               </div>
             )}
 
             {/* Result: DUPLICATE (Already Checked In / All Attendees Admitted) */}
             {scanState === "duplicate" && result && (
-              <div className="w-full select-none animate-in zoom-in-95 duration-150">
+              <div className="w-full select-none animate-in zoom-in-95 duration-150 mt-4">
                 <ResultCard
                   variant="duplicate"
                   attendee={result.attendee}
                   passType={result.passType}
+                  contextName={scanContextName}
                   checkedInAt={result.checkedInAt}
+                  resultAt={lastResultAt}
                   gateName={result.gateName}
                   offline={result.offline}
                   onReset={reset}
-                  progress={resetProgress}
+                  successfulScans={sessionCounters.successful}
                   onAllowReentry={(allowReentry || Boolean(selectedSessionId)) ? handleDuplicateOverride : undefined}
                   isUndoing={undoingCheckIn}
                   badgeText={result.badgeText}
@@ -2048,11 +2060,14 @@ export default function ScanEventPage() {
 
             {/* Result: ACCESS DENIED */}
             {scanState === "access_denied" && (
-              <div className="w-full select-none animate-in zoom-in-95 duration-150">
+              <div className="w-full select-none animate-in zoom-in-95 duration-150 mt-4">
                 <AccessDeniedCard
                   message={accessDeniedMsg}
                   onReset={reset}
-                  progress={resetProgress}
+                  contextName={scanContextName}
+                  gateName={selectedGate?.name || selectedSession?.title}
+                  resultAt={lastResultAt}
+                  successfulScans={sessionCounters.successful}
                   onOverride={lastScannedAttendee ? handleSupervisorOverride : undefined}
                 />
               </div>
@@ -2060,11 +2075,15 @@ export default function ScanEventPage() {
 
             {/* Result: ERROR / INVALID */}
             {scanState === "error" && (
-              <div
-                className="w-full cursor-pointer select-none animate-in zoom-in-95 duration-150"
-                onClick={reset}
-              >
-                <ErrorCard message={errorMsg} onReset={reset} progress={resetProgress} />
+              <div className="w-full select-none animate-in zoom-in-95 duration-150 mt-4">
+                <ErrorCard
+                  message={errorMsg}
+                  onReset={reset}
+                  contextName={scanContextName}
+                  gateName={selectedGate?.name || selectedSession?.title}
+                  resultAt={lastResultAt}
+                  successfulScans={sessionCounters.successful}
+                />
               </div>
             )}
           </div>
@@ -2518,11 +2537,13 @@ function ResultCard({
   variant,
   attendee,
   passType,
+  contextName,
   checkedInAt,
+  resultAt,
   gateName,
   offline,
   onReset,
-  progress,
+  successfulScans,
   onAllowReentry,
   isUndoing,
   badgeText,
@@ -2531,11 +2552,13 @@ function ResultCard({
   variant: "success" | "duplicate";
   attendee: { id?: string; name: string; email: string; pass_type: string };
   passType: string;
+  contextName: string;
   checkedInAt?: string | null;
+  resultAt?: string | null;
   gateName?: string | null;
   offline?: boolean;
   onReset: () => void;
-  progress: number;
+  successfulScans: number;
   onAllowReentry?: () => void;
   isUndoing?: boolean;
   badgeText?: string;
@@ -2577,8 +2600,9 @@ function ResultCard({
             {badgeText || (ok ? "ENTRY GRANTED" : "ALREADY ADMITTED")}
           </span>
           <h2 className="text-xl font-bold text-neutral-100 mt-2 leading-snug">
-            {attendee.name}
+            {ok ? "Check-in Successful" : "Already Checked In"}
           </h2>
+          <p className="text-sm font-semibold text-neutral-100">{attendee.name}</p>
           {message ? (
             <p className="text-xs font-medium text-amber-300 max-w-[280px] mx-auto leading-relaxed pt-0.5">
               {message}
@@ -2601,13 +2625,16 @@ function ResultCard({
               <span>{gateName}</span>
             </span>
           )}
+          <span className="rounded-md border border-neutral-700 bg-neutral-800 px-2.5 py-1 text-[11px] font-semibold text-neutral-300">
+            {contextName}
+          </span>
         </div>
 
-        {checkedInAt && (
+        {(checkedInAt || resultAt) && (
           <p className="text-[11px] font-mono text-neutral-400 mt-0.5">
             {ok ? "Admitted at: " : "First scanned at: "}
             <span className="font-semibold text-neutral-200">
-              {new Date(checkedInAt).toLocaleTimeString("en-IN", {
+              {new Date(checkedInAt || resultAt || "").toLocaleTimeString("en-IN", {
                 hour: "2-digit",
                 minute: "2-digit",
                 second: "2-digit",
@@ -2622,6 +2649,10 @@ function ResultCard({
             <WifiOff className="w-3 h-3" /> Offline Queued
           </span>
         )}
+
+        <p className="text-[11px] font-bold text-neutral-400">
+          Successful scans this session: <span className="text-emerald-300 tabular-nums">{successfulScans}</span>
+        </p>
       </div>
 
       {/* Corporate Re-entry Override Action for Duplicates */}
@@ -2643,19 +2674,12 @@ function ResultCard({
         </button>
       )}
 
-      {/* Auto-reset Progress Bar */}
       <div className="flex flex-col gap-2 pt-1">
-        <div className="h-1.5 overflow-hidden rounded-full bg-neutral-800">
-          <div
-            className={`h-full rounded-full transition-none ${ok ? "bg-emerald-500" : "bg-amber-500"}`}
-            style={{ width: `${progress}%` }}
-          />
-        </div>
         <button
           onClick={onReset}
-          className="py-1 text-center text-xs font-medium text-neutral-400 transition-colors hover:text-neutral-200"
+          className="flex w-full items-center justify-center gap-2 rounded-lg bg-violet-600 px-4 py-4 text-sm font-black text-white transition-colors hover:bg-violet-500 shadow-md"
         >
-          Tap anywhere to scan next pass
+          Scan Next <span aria-hidden="true">-&gt;</span>
         </button>
       </div>
     </div>
@@ -2667,12 +2691,18 @@ function ResultCard({
 function AccessDeniedCard({
   message,
   onReset,
-  progress,
+  contextName,
+  gateName,
+  resultAt,
+  successfulScans,
   onOverride,
 }: {
   message: string;
   onReset: () => void;
-  progress: number;
+  contextName: string;
+  gateName?: string | null;
+  resultAt?: string | null;
+  successfulScans: number;
   onOverride?: () => void;
 }) {
   return (
@@ -2692,6 +2722,24 @@ function AccessDeniedCard({
           <p className="text-xs text-red-300 mt-1 max-w-[260px] mx-auto leading-relaxed">
             {message}
           </p>
+          <div className="mt-3 flex flex-wrap items-center justify-center gap-1.5">
+            <span className="rounded-md border border-neutral-700 bg-neutral-800 px-2.5 py-1 text-[11px] font-semibold text-neutral-300">
+              {contextName}
+            </span>
+            {gateName && (
+              <span className="rounded-md border border-neutral-700 bg-neutral-800 px-2.5 py-1 text-[11px] font-semibold text-neutral-300">
+                {gateName}
+              </span>
+            )}
+          </div>
+          <p className="mt-3 text-[11px] font-bold text-neutral-400">
+            Successful scans this session: <span className="text-emerald-300 tabular-nums">{successfulScans}</span>
+          </p>
+          {resultAt && (
+            <p className="mt-1 text-[11px] font-mono text-neutral-500">
+              Scanned at {new Date(resultAt).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true })}
+            </p>
+          )}
         </div>
 
         {onOverride && (
@@ -2710,17 +2758,11 @@ function AccessDeniedCard({
       </div>
 
       <div className="flex flex-col gap-2 pt-1">
-        <div className="h-1.5 bg-neutral-800 rounded-full overflow-hidden">
-          <div
-            className="h-full rounded-full bg-red-500 transition-none"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
         <button
           onClick={onReset}
-          className="text-center text-xs text-neutral-400 hover:text-neutral-200 font-medium py-1"
+          className="flex w-full items-center justify-center gap-2 rounded-lg bg-violet-600 px-4 py-4 text-sm font-black text-white transition-colors hover:bg-violet-500 shadow-md"
         >
-          Tap to try again
+          Scan Next <span aria-hidden="true">-&gt;</span>
         </button>
       </div>
     </div>
@@ -2732,11 +2774,17 @@ function AccessDeniedCard({
 function ErrorCard({
   message,
   onReset,
-  progress,
+  contextName,
+  gateName,
+  resultAt,
+  successfulScans,
 }: {
   message: string;
   onReset: () => void;
-  progress: number;
+  contextName: string;
+  gateName?: string | null;
+  resultAt?: string | null;
+  successfulScans: number;
 }) {
   return (
     <div className="w-full flex flex-col gap-3">
@@ -2755,21 +2803,33 @@ function ErrorCard({
           <p className="text-xs text-red-300 mt-1 max-w-[260px] mx-auto leading-relaxed">
             {message}
           </p>
+          <div className="mt-3 flex flex-wrap items-center justify-center gap-1.5">
+            <span className="rounded-md border border-neutral-700 bg-neutral-800 px-2.5 py-1 text-[11px] font-semibold text-neutral-300">
+              {contextName}
+            </span>
+            {gateName && (
+              <span className="rounded-md border border-neutral-700 bg-neutral-800 px-2.5 py-1 text-[11px] font-semibold text-neutral-300">
+                {gateName}
+              </span>
+            )}
+          </div>
+          <p className="mt-3 text-[11px] font-bold text-neutral-400">
+            Successful scans this session: <span className="text-emerald-300 tabular-nums">{successfulScans}</span>
+          </p>
+          {resultAt && (
+            <p className="mt-1 text-[11px] font-mono text-neutral-500">
+              Scanned at {new Date(resultAt).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true })}
+            </p>
+          )}
         </div>
       </div>
 
       <div className="flex flex-col gap-2 pt-1">
-        <div className="h-1.5 bg-neutral-800 rounded-full overflow-hidden">
-          <div
-            className="h-full rounded-full bg-red-500 transition-none"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
         <button
           onClick={onReset}
-          className="text-center text-xs text-neutral-400 hover:text-neutral-200 font-medium py-1"
+          className="flex w-full items-center justify-center gap-2 rounded-lg bg-violet-600 px-4 py-4 text-sm font-black text-white transition-colors hover:bg-violet-500 shadow-md"
         >
-          Tap anywhere to retry
+          Scan Next <span aria-hidden="true">-&gt;</span>
         </button>
       </div>
     </div>
