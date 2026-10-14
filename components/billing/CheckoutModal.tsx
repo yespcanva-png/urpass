@@ -250,6 +250,22 @@ export default function CheckoutModal({
           return;
         }
 
+        const expectedIntroAmountPaise = Number(subscriptionData.expectedIntroAmountPaise ?? 0);
+        const expectedDiscountPaise = Number(subscriptionData.expectedDiscountPaise ?? 0);
+        if (
+          !subscriptionData.hasIntroOffer ||
+          !subscriptionData.offerId ||
+          !subscriptionData.mandatePreviewVerified ||
+          expectedIntroAmountPaise !== 2900 ||
+          expectedDiscountPaise <= 0
+        ) {
+          setPayError(
+            "Intro offer was not verified by Razorpay. Checkout stopped to avoid a full-price mandate."
+          );
+          setPayLoading(false);
+          return;
+        }
+
         const rzp = new window.Razorpay({
           key: subscriptionData.keyId,
           subscription_id: subscriptionData.subscriptionId,

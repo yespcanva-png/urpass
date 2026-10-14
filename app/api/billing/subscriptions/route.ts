@@ -252,6 +252,7 @@ export async function POST(req: NextRequest) {
       currency: "INR",
       hasIntroOffer: true,
       offerId: configuredOfferId,
+      mandatePreviewVerified: true,
       expectedIntroAmountPaise: introDisclosure.introAmountPaise,
       expectedDiscountPaise: introDisclosure.discountPaise,
       regularAmountPaise: introDisclosure.regularAmountPaise,
