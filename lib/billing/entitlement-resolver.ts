@@ -78,20 +78,23 @@ export async function resolveUserSubscriptionAccess(params: {
   const effectiveAt = getPaidOnboardingEffectiveAt();
 
   let createdAt: Date = user.created_at ? new Date(user.created_at) : now;
+  let appIdentityMissing = false;
   try {
     const { data: prof } = await supabase
       .from("profiles")
-      .select("created_at")
+      .select("id, created_at")
       .eq("user_id", user.id)
       .maybeSingle();
     if (prof?.created_at) {
       createdAt = new Date(prof.created_at);
+    } else {
+      appIdentityMissing = true;
     }
   } catch {
-    // fallback
+    appIdentityMissing = true;
   }
 
-  const isNewUser = createdAt.getTime() >= effectiveAt.getTime();
+  const isNewUser = appIdentityMissing || createdAt.getTime() >= effectiveAt.getTime();
 
   let sub: SubscriptionRow | null = null;
   try {
@@ -244,4 +247,3 @@ export async function resolveUserSubscriptionAccess(params: {
     reason: "No valid paid, legacy trial, or legacy Free entitlement is active.",
   };
 }
-

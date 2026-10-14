@@ -3,16 +3,17 @@
 import { useEffect, useRef, useState } from "react";
 import { Html5Qrcode, Html5QrcodeSupportedFormats } from "html5-qrcode";
 import { Camera, CameraOff, Flashlight, FlashlightOff } from "lucide-react";
+import type { ScannerState } from "@/lib/scanner-state";
 
 interface Props {
   onScan: (token: string) => void;
   active: boolean;
-  statusVariant?: "idle" | "verifying" | "success" | "duplicate" | "error" | "access_denied" | "scanning";
+  statusVariant?: ScannerState;
 }
 
 const SCANNER_ID = "urpass-qr-scanner";
 
-export default function QRScanner({ onScan, active, statusVariant = "idle" }: Props) {
+export default function QRScanner({ onScan, active, statusVariant = "READY" }: Props) {
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const [cameraError, setCameraError] = useState("");
   const [started, setStarted] = useState(false);
@@ -160,14 +161,14 @@ export default function QRScanner({ onScan, active, statusVariant = "idle" }: Pr
   }, []);
 
   // Determine status accent without neon effects.
-  let bracketColor = "#334155";
+  let bracketColor = "#8B5CF6";
 
-  if (statusVariant === "success") {
-    bracketColor = "#047857";
-  } else if (statusVariant === "duplicate") {
-    bracketColor = "#B45309";
-  } else if (statusVariant === "error" || statusVariant === "access_denied") {
-    bracketColor = "#B91C1C";
+  if (statusVariant === "SUCCESS") {
+    bracketColor = "#22C55E";
+  } else if (statusVariant === "DUPLICATE") {
+    bracketColor = "#F59E0B";
+  } else if (statusVariant === "ERROR" || statusVariant === "REJECTED") {
+    bracketColor = "#EF4444";
   }
 
   return (
@@ -184,7 +185,7 @@ export default function QRScanner({ onScan, active, statusVariant = "idle" }: Pr
 
         {/* Starting placeholder */}
         {!started && !cameraError && (
-          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-slate-950/90 p-4">
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-[#09090B]/90 p-4">
             <div className="flex h-12 w-12 items-center justify-center rounded-md border border-white/15 bg-white/10">
               <Camera className="h-6 w-6 text-slate-200" />
             </div>
@@ -237,14 +238,14 @@ export default function QRScanner({ onScan, active, statusVariant = "idle" }: Pr
             />
 
             {/* Scan beam */}
-            {active && statusVariant === "idle" && (
+            {active && statusVariant === "READY" && (
               <>
                 <span
                   className="absolute left-4 right-4 pointer-events-none animate-[scanBeam_1.8s_ease-in-out_infinite]"
 	                  style={{
 	                    height: "24px",
 	                    transform: "translateY(-50%)",
-	                    background: "linear-gradient(to bottom, transparent, rgba(37,99,235,0.12) 50%, transparent)",
+                  background: "linear-gradient(to bottom, transparent, rgba(139,92,246,0.18) 50%, transparent)",
 	                    borderRadius: "4px",
 	                  }}
 	                />
@@ -253,7 +254,7 @@ export default function QRScanner({ onScan, active, statusVariant = "idle" }: Pr
 	                  style={{
 	                    height: "2px",
 	                    transform: "translateY(-50%)",
-	                    background: "linear-gradient(to right, transparent, #2563EB 50%, transparent)",
+	                    background: "linear-gradient(to right, transparent, #8B5CF6 50%, transparent)",
 	                  }}
 	                />
               </>
@@ -286,15 +287,15 @@ export default function QRScanner({ onScan, active, statusVariant = "idle" }: Pr
       {/* Status indicator */}
       {started && (
         <div className="flex items-center gap-2">
-          <span
+            <span
             className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-              active ? "bg-emerald-500" : "bg-zinc-500"
+              active ? "bg-[#22C55E]" : "bg-zinc-500"
             }`}
           />
           <p className="text-[11px] text-zinc-400 font-medium">
             {active
               ? "Scanner active"
-              : statusVariant === "verifying"
+              : statusVariant === "PROCESSING"
               ? "Processing pass..."
               : "Detection paused"}
           </p>

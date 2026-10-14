@@ -150,7 +150,7 @@ export default function Sidebar({ email, fullName, planSlug, campusContext }: Pr
       iconBorder: "border-sky-500/30",
       iconBg: "bg-neutral-900",
       iconColor: "text-sky-300",
-      subtitle: "Dedicated Cloud",
+      subtitle: "Enterprise Plan",
     },
     business: {
       label: "Business",
@@ -158,7 +158,7 @@ export default function Sidebar({ email, fullName, planSlug, campusContext }: Pr
       iconBorder: "border-amber-500/30",
       iconBg: "bg-neutral-900",
       iconColor: "text-amber-300",
-      subtitle: "Enterprise Suite",
+      subtitle: "Business Plan",
     },
     pro: {
       label: "Pro",
@@ -166,7 +166,7 @@ export default function Sidebar({ email, fullName, planSlug, campusContext }: Pr
       iconBorder: "border-violet-500/30",
       iconBg: "bg-violet-950/60",
       iconColor: "text-violet-300",
-      subtitle: "Professional",
+      subtitle: "Pro Plan",
     },
     starter: {
       label: "Starter",
@@ -174,7 +174,7 @@ export default function Sidebar({ email, fullName, planSlug, campusContext }: Pr
       iconBorder: "border-white/15",
       iconBg: "bg-neutral-900",
       iconColor: "text-neutral-300",
-      subtitle: "Tier 1",
+      subtitle: "Starter Plan",
     },
     campus: {
       label: "Campus",
@@ -182,7 +182,23 @@ export default function Sidebar({ email, fullName, planSlug, campusContext }: Pr
       iconBorder: "border-emerald-500/30",
       iconBg: "bg-neutral-900",
       iconColor: "text-emerald-300",
-      subtitle: "Academic Suite",
+      subtitle: "Campus Plan",
+    },
+    founder: {
+      label: "Founder",
+      badgeClass: "text-amber-300 bg-amber-400/10 border-amber-400/25",
+      iconBorder: "border-amber-500/30",
+      iconBg: "bg-neutral-900",
+      iconColor: "text-amber-300",
+      subtitle: "Founder Lifetime",
+    },
+    lifetime: {
+      label: "Founder",
+      badgeClass: "text-amber-300 bg-amber-400/10 border-amber-400/25",
+      iconBorder: "border-amber-500/30",
+      iconBg: "bg-neutral-900",
+      iconColor: "text-amber-300",
+      subtitle: "Founder Lifetime",
     },
     free: {
       label: "Free",
@@ -190,7 +206,7 @@ export default function Sidebar({ email, fullName, planSlug, campusContext }: Pr
       iconBorder: "border-white/10",
       iconBg: "bg-neutral-900",
       iconColor: "text-neutral-400",
-      subtitle: "Standard Workspace",
+      subtitle: "Free Plan",
     },
   }[planSlugNormalized] || {
     label: "Free",
@@ -198,7 +214,7 @@ export default function Sidebar({ email, fullName, planSlug, campusContext }: Pr
     iconBorder: "border-white/10",
     iconBg: "bg-neutral-900",
     iconColor: "text-neutral-400",
-    subtitle: "Standard Workspace",
+    subtitle: "Free Plan",
   };
 
   return (

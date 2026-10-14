@@ -52,10 +52,15 @@ import { undoCheckIn, undoCheckInByToken } from "@/app/actions/manual-checkin";
 import { undoSessionCheckIn } from "@/app/actions/session-attendance";
 import GroupEntryModal from "@/components/scan/GroupEntryModal";
 import { parseScannedGroupQR, normalizeScannedToken } from "@/lib/group-entry";
+import {
+  canDecodeQr,
+  initialScannerCounters,
+  isTerminalScannerState,
+  recordScannerOutcome,
+  type ScannerState,
+} from "@/lib/scanner-state";
 
 const QRScanner = dynamic(() => import("@/components/scan/QRScanner"), { ssr: false });
-
-type ScanState = "idle" | "scanning" | "verifying" | "success" | "duplicate" | "error" | "access_denied";
 
 interface ScanResult {
   attendee: { id?: string; name: string; email: string; pass_type: string };
@@ -109,13 +114,13 @@ export default function ScanEventPage() {
   const eventId = params.eventId as string;
 
   const [eventName, setEventName] = useState<string>("");
-  const [scanState, setScanState] = useState<ScanState>("idle");
+  const [scanState, setScanState] = useState<ScannerState>("READY");
   const [result, setResult] = useState<ScanResult | null>(null);
   const [errorMsg, setErrorMsg] = useState("");
   const [accessDeniedMsg, setAccessDeniedMsg] = useState("");
   const [lastResultAt, setLastResultAt] = useState<string | null>(null);
   const [scanCount, setScanCount] = useState(0);
-  const [sessionCounters, setSessionCounters] = useState({ scanned: 0, successful: 0, rejected: 0 });
+  const [sessionCounters, setSessionCounters] = useState(initialScannerCounters);
   const [feed, setFeed] = useState<FeedEntry[]>([]);
   const [soundEnabled, setSoundEnabled] = useState<boolean>(() => {
     if (typeof window === "undefined") return true;
@@ -200,6 +205,7 @@ export default function ScanEventPage() {
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const terminalScanCountedRef = useRef(false);
   const pendingSuccessfulCountRef = useRef(1);
+  const activeAttemptIdRef = useRef(0);
 
   // Force gate selection before scanning begins if gates are configured
   const isGateRequired = gates.length > 0 && !selectedGateId && !selectedSessionId;
@@ -207,7 +213,8 @@ export default function ScanEventPage() {
     !manualMode &&
     !isGateRequired &&
     !groupModalState?.isOpen &&
-    (scanState === "idle" || scanState === "scanning");
+    canDecodeQr(scanState);
+  const isProcessingScan = scanState === "PROCESSING";
   const scanContextName = selectedSession?.title || eventName || "Event";
 
   const toggleTorch = useCallback(async () => {
@@ -608,7 +615,7 @@ export default function ScanEventPage() {
           offline: true,
           passToken,
         });
-        setScanState("success");
+        setScanState("SUCCESS");
         setScanCount((c) => c + 1);
         setFeed((prev) => [
           {
@@ -636,14 +643,14 @@ export default function ScanEventPage() {
           operationId: crypto.randomUUID(),
           loading: false,
         });
-        setScanState("idle");
+        setScanState("READY");
         return;
       }
 
       if (offRes.status === "EXHAUSTED") {
         playScannerFeedback("ALREADY_CHECKED_IN", { sound: soundEnabled });
         setErrorMsg(offRes.error || "All group pass entry entitlements have been used.");
-        setScanState("duplicate");
+        setScanState("DUPLICATE");
         return;
       }
 
@@ -657,20 +664,20 @@ export default function ScanEventPage() {
           offline: true,
           passToken,
         });
-        setScanState("duplicate");
+        setScanState("DUPLICATE");
         return;
       }
 
       if (offRes.status === "ACCESS_DENIED") {
         playScannerFeedback("NOT_APPROVED", { sound: soundEnabled });
         setAccessDeniedMsg(offRes.error || "Pass is not authorized for this gate / zone");
-        setScanState("access_denied");
+        setScanState("REJECTED");
         return;
       }
 
       playScannerFeedback("INVALID_PASS", { sound: soundEnabled });
       setErrorMsg(offRes.error || "Pass not found in offline database");
-      setScanState("error");
+      setScanState("ERROR");
     },
     [eventId, selectedGate?.name, soundEnabled]
   );
@@ -743,6 +750,9 @@ export default function ScanEventPage() {
       cooldownRef.current = true;
       terminalScanCountedRef.current = false;
       pendingSuccessfulCountRef.current = 1;
+      const attemptId = activeAttemptIdRef.current + 1;
+      activeAttemptIdRef.current = attemptId;
+      const isCurrentAttempt = () => activeAttemptIdRef.current === attemptId;
       lastTokenRef.current = rawToken;
       lastTokenTimeRef.current = now;
       setTimeout(() => { cooldownRef.current = false; }, RAPID_SCAN_COOLDOWN_MS);
@@ -751,11 +761,11 @@ export default function ScanEventPage() {
       if (isGateRequired) {
         playScannerFeedback("INVALID_PASS", { sound: soundEnabled });
         setErrorMsg("Please select an entry gate before scanning passes.");
-        setScanState("error");
+        setScanState("ERROR");
         return;
       }
 
-      setScanState("verifying");
+      setScanState("PROCESSING");
 
       // ── Conference Session Check-in Flow ──
       if (selectedSessionId) {
@@ -773,6 +783,7 @@ export default function ScanEventPage() {
               }),
             });
             const lookupData = await lookupRes.json();
+            if (!isCurrentAttempt()) return;
             if (lookupRes.ok && lookupData.isGroupQR) {
               if (lookupData.remainingEntries <= 0) {
                 playScannerFeedback("ALREADY_CHECKED_IN", { sound: soundEnabled });
@@ -790,7 +801,7 @@ export default function ScanEventPage() {
                   badgeText: "ALL GROUP ENTRIES ADMITTED",
                   message: `All ${total} group members have already been admitted to "${selectedSession?.title}".`,
                 });
-                setScanState("duplicate");
+                setScanState("DUPLICATE");
                 return;
               }
 
@@ -808,7 +819,7 @@ export default function ScanEventPage() {
                 sessionTitle: selectedSession?.title,
                 loading: false,
               });
-              setScanState("idle");
+              setScanState("READY");
               return;
             }
           } catch {
@@ -826,6 +837,7 @@ export default function ScanEventPage() {
             }),
           });
           const data = await res.json();
+          if (!isCurrentAttempt()) return;
           if (data.status === "CHECKED_IN" || data.status === "CHECKED_OUT") {
             playScannerFeedback("CHECKED_IN", { sound: soundEnabled });
             setResult({
@@ -841,7 +853,7 @@ export default function ScanEventPage() {
                 remaining: data.remainingSeats,
               });
             }
-            setScanState("success");
+            setScanState("SUCCESS");
             return;
           }
           if (data.status === "ALREADY_CHECKED_IN") {
@@ -856,35 +868,35 @@ export default function ScanEventPage() {
               badgeText: "ALREADY ENTERED SESSION",
               message: data.message || `Attendee has already entered "${data.session.title}". Tap below to allow re-entry.`,
             });
-            setScanState("duplicate");
+            setScanState("DUPLICATE");
             return;
           }
           if (data.status === "ACCESS_NOT_ALLOWED" || data.status === "SESSION_ACCESS_DENIED" || data.status === "SESSION_FULL" || data.status === "RESERVATION_REQUIRED") {
             playScannerFeedback("NOT_APPROVED", { sound: soundEnabled });
             setAccessDeniedMsg(data.error || "Access not allowed for this session");
-            setScanState("access_denied");
+            setScanState("REJECTED");
             return;
           }
           if (data.status === "PASS_REVOKED" || data.status === "TICKET_CANCELLED" || data.status === "PASS_EXPIRED") {
             playScannerFeedback("NOT_APPROVED", { sound: soundEnabled });
             setErrorMsg(data.error || "Pass has been revoked or cancelled");
-            setScanState("error");
+            setScanState("ERROR");
             return;
           }
           if (data.status === "WRONG_EVENT") {
             playScannerFeedback("WRONG_EVENT", { sound: soundEnabled });
             setErrorMsg(data.error || "Pass is registered for a different event");
-            setScanState("error");
+            setScanState("ERROR");
             return;
           }
           playScannerFeedback("INVALID_PASS", { sound: soundEnabled });
           setErrorMsg(data.error || "Verification failed");
-          setScanState("error");
+          setScanState("ERROR");
           return;
         } catch {
           playScannerFeedback("NETWORK_ERROR", { sound: soundEnabled });
           setErrorMsg("Failed to scan session pass");
-          setScanState("error");
+          setScanState("ERROR");
           return;
         }
       }
@@ -905,6 +917,7 @@ export default function ScanEventPage() {
             }),
           });
           const data = await res.json();
+          if (!isCurrentAttempt()) return;
           if (res.ok && data.success) {
 	            setGroupModalState({
 	              isOpen: true,
@@ -918,7 +931,7 @@ export default function ScanEventPage() {
 	              operationId: crypto.randomUUID(),
 	              loading: false,
 	            });
-            setScanState("idle");
+            setScanState("READY");
             return;
           } else if (data.status === "EXHAUSTED") {
             playScannerFeedback("ALREADY_CHECKED_IN", { sound: soundEnabled });
@@ -936,17 +949,17 @@ export default function ScanEventPage() {
               badgeText: "ALL ATTENDEES ADMITTED",
               message: `All ${total} attendees for this pass have already been scanned & admitted into the venue.`,
             });
-            setScanState("duplicate");
+            setScanState("DUPLICATE");
             return;
           } else if (parsedGroup.isGroupQR && data.status === "FEATURE_DISABLED") {
             playScannerFeedback("NOT_APPROVED", { sound: soundEnabled });
             setErrorMsg("Group QR Partial Entry is disabled for this event.");
-            setScanState("access_denied");
+            setScanState("REJECTED");
             return;
           } else if (parsedGroup.isGroupQR && data.status === "BOOKING_INVALID") {
             playScannerFeedback("INVALID_PASS", { sound: soundEnabled });
             setErrorMsg(data.error || "Group pass is invalid, revoked or refunded.");
-            setScanState("error");
+            setScanState("ERROR");
             return;
           }
         } catch {
@@ -988,6 +1001,7 @@ export default function ScanEventPage() {
         });
         clearTimeout(timeoutId);
         const data = await res.json();
+        if (!isCurrentAttempt()) return;
 
         // 0. Single Group QR Entry Flow (Prompt scanner: "How many people are entering now?")
         if (data.status === "GROUP_PASS_DETECTED" || (data.isGroupQR && data.status !== "EXHAUSTED")) {
@@ -1003,6 +1017,7 @@ export default function ScanEventPage() {
                 gateName: selectedGate?.name,
               }),
             });
+            if (!isCurrentAttempt()) return;
             if (histRes.ok) {
               const histData = await histRes.json();
               if (histData.history) batchHistory = histData.history;
@@ -1023,7 +1038,7 @@ export default function ScanEventPage() {
 	            operationId: crypto.randomUUID(),
 	            loading: false,
 	          });
-          setScanState("idle");
+          setScanState("READY");
           return;
         }
 
@@ -1044,7 +1059,7 @@ export default function ScanEventPage() {
             badgeText: "ALL ATTENDEES ADMITTED",
             message: data.message || data.error || `All ${total} attendees for this pass have already been scanned & admitted into the venue.`,
           });
-          setScanState("duplicate");
+          setScanState("DUPLICATE");
           return;
         }
 
@@ -1069,6 +1084,7 @@ export default function ScanEventPage() {
                 }),
               });
               const zoneData = await zoneRes.json();
+              if (!isCurrentAttempt()) return;
               if (zoneData.success && !zoneData.allowed) {
                 playScannerFeedback("NOT_APPROVED", { sound: soundEnabled });
                 setAccessDeniedMsg(zoneData.reason || "Access denied for this zone");
@@ -1078,7 +1094,7 @@ export default function ScanEventPage() {
                   badgeType: data.attendee?.pass_type || "attendee",
                   ticketTypeId: data.attendee?.ticket_type_id,
                 });
-                setScanState("access_denied");
+                setScanState("REJECTED");
                 return;
               }
               if (zoneData.success && zoneData.occupancy !== undefined) {
@@ -1095,7 +1111,7 @@ export default function ScanEventPage() {
 
           playScannerFeedback("CHECKED_IN", { sound: soundEnabled });
           setResult({ ...data, passToken: rawToken });
-          setScanState("success");
+          setScanState("SUCCESS");
           return;
         }
 
@@ -1103,7 +1119,7 @@ export default function ScanEventPage() {
         if (data.status === "ALREADY_CHECKED_IN" || data.alreadyCheckedIn) {
           playScannerFeedback("ALREADY_CHECKED_IN", { sound: soundEnabled });
           setResult({ ...data, passToken: rawToken });
-          setScanState("duplicate");
+          setScanState("DUPLICATE");
           return;
         }
 
@@ -1111,7 +1127,7 @@ export default function ScanEventPage() {
         if (data.status === "WRONG_EVENT") {
           playScannerFeedback("WRONG_EVENT", { sound: soundEnabled });
           setErrorMsg(data.error || "Pass is registered for a different event");
-          setScanState("error");
+          setScanState("ERROR");
           return;
         }
 
@@ -1119,7 +1135,7 @@ export default function ScanEventPage() {
         if (data.status === "NOT_APPROVED") {
           playScannerFeedback("NOT_APPROVED", { sound: soundEnabled });
           setErrorMsg(data.error || "Attendee is not approved for this event");
-          setScanState("error");
+          setScanState("ERROR");
           return;
         }
 
@@ -1127,7 +1143,7 @@ export default function ScanEventPage() {
         if (data.status === "INVALID_PASS" || res.status === 404) {
           playScannerFeedback("INVALID_PASS", { sound: soundEnabled });
           setErrorMsg(data.error || "Invalid pass — pass not found");
-          setScanState("error");
+          setScanState("ERROR");
           return;
         }
 
@@ -1135,7 +1151,7 @@ export default function ScanEventPage() {
         if (res.status === 403 && (data.accessDenied || data.status === "ACCESS_DENIED")) {
           playScannerFeedback("NOT_APPROVED", { sound: soundEnabled });
           setAccessDeniedMsg(data.error || "This pass is not authorized for this gate / zone");
-          setScanState("access_denied");
+          setScanState("REJECTED");
           return;
         }
 
@@ -1143,7 +1159,7 @@ export default function ScanEventPage() {
         if (!res.ok) {
           playScannerFeedback("NETWORK_ERROR", { sound: soundEnabled });
           setErrorMsg(data.error || "Verification failed");
-          setScanState("error");
+          setScanState("ERROR");
           return;
         }
       } catch {
@@ -1156,6 +1172,7 @@ export default function ScanEventPage() {
           gateName: selectedGate?.name,
           checkInMethod: "qr",
         });
+        if (!isCurrentAttempt()) return;
         handleOfflineResult(offRes);
       }
     },
@@ -1199,7 +1216,7 @@ export default function ScanEventPage() {
             )
           );
         }
-        setScanState("success");
+        setScanState("SUCCESS");
       }
     } catch {}
   }, [eventId, lastScannedAttendee, selectedZoneId, selectedGateId, selectedGate?.name, scanDirection, selectedZone, soundEnabled]);
@@ -1287,11 +1304,12 @@ export default function ScanEventPage() {
     cooldownRef.current = false;
     terminalScanCountedRef.current = false;
     pendingSuccessfulCountRef.current = 1;
+    activeAttemptIdRef.current += 1;
     setResult(null);
     setErrorMsg("");
     setAccessDeniedMsg("");
     setLastResultAt(null);
-    setScanState("idle");
+    setScanState("READY");
   }, []);
 
   const handleUndoCheckIn = useCallback(
@@ -1381,12 +1399,7 @@ export default function ScanEventPage() {
   );
 
   useEffect(() => {
-    if (
-      scanState !== "success" &&
-      scanState !== "duplicate" &&
-      scanState !== "error" &&
-      scanState !== "access_denied"
-    ) {
+    if (!isTerminalScannerState(scanState)) {
       return;
     }
 
@@ -1394,11 +1407,7 @@ export default function ScanEventPage() {
     terminalScanCountedRef.current = true;
     setLastResultAt(new Date().toISOString());
 
-    setSessionCounters((prev) => ({
-      scanned: prev.scanned + 1,
-      successful: prev.successful + (scanState === "success" ? pendingSuccessfulCountRef.current : 0),
-      rejected: prev.rejected + (scanState === "success" ? 0 : 1),
-    }));
+    setSessionCounters((prev) => recordScannerOutcome(prev, scanState, pendingSuccessfulCountRef.current));
   }, [scanState]);
 
   // Filtered search results
@@ -1459,7 +1468,7 @@ export default function ScanEventPage() {
               gateName: `${data.session?.title || groupModalState.sessionTitle || "Session"} (${data.session?.room || "Room"})`,
             });
             setGroupModalState(null);
-            setScanState("success");
+            setScanState("SUCCESS");
             return;
           } else {
             playScannerFeedback("NOT_APPROVED", { sound: soundEnabled });
@@ -1507,7 +1516,7 @@ export default function ScanEventPage() {
             gateName: selectedGate?.name,
           });
           setGroupModalState(null);
-          setScanState("success");
+          setScanState("SUCCESS");
         } else {
           playScannerFeedback("NOT_APPROVED", { sound: soundEnabled });
           throw new Error(data.error || "Admission failed");
@@ -1521,10 +1530,10 @@ export default function ScanEventPage() {
   );
 
   return (
-    <div className="min-h-dvh bg-neutral-950 text-neutral-100 flex flex-col page-in select-none touch-manipulation pb-safe">
+    <div className="min-h-dvh bg-[#09090B] text-white flex flex-col page-in select-none touch-manipulation pb-safe">
 
       {/* ── Corporate Clean Top Navigation Bar ────────────────────────────── */}
-      <header className="sticky top-0 z-30 flex h-14 sm:h-16 shrink-0 items-center justify-between border-b border-neutral-800/80 bg-neutral-900/90 backdrop-blur-md px-3 sm:px-6 shadow-xs">
+      <header className="sticky top-0 z-30 flex h-14 sm:h-16 shrink-0 items-center justify-between border-b border-white/10 bg-[#18181B]/90 backdrop-blur-md px-3 sm:px-6 shadow-xs">
         
         {/* Left: Back & Live Network Health Indicator */}
         <div className="flex items-center gap-2 sm:gap-3">
@@ -1637,9 +1646,9 @@ export default function ScanEventPage() {
         </div>
       )}
 
-      <div className="shrink-0 border-b border-violet-900/40 bg-violet-950/35 px-3 py-2">
+      <div className="shrink-0 border-b border-[#6200EE]/35 bg-[#6200EE]/15 px-3 py-2">
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3">
-          <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-xs font-bold text-violet-100">
+          <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-xs font-bold text-white">
             <span className="tabular-nums">Scanned: {sessionCounters.scanned}</span>
             <span className="tabular-nums text-emerald-300">Successful: {sessionCounters.successful}</span>
             <span className="tabular-nums text-red-300">Rejected: {sessionCounters.rejected}</span>
@@ -1647,7 +1656,7 @@ export default function ScanEventPage() {
           <button
             type="button"
             onClick={() => router.push("/scan")}
-            className="shrink-0 rounded-md border border-violet-700/70 bg-violet-900/70 px-3 py-1.5 text-[11px] font-bold text-violet-100 transition-colors hover:bg-violet-800"
+            className="min-h-12 shrink-0 rounded-md border border-[#8B5CF6]/60 bg-[#18181B] px-3 py-1.5 text-[11px] font-bold text-white transition-colors hover:bg-[#222228]"
           >
             Close Scanner
           </button>
@@ -1666,10 +1675,12 @@ export default function ScanEventPage() {
             <div className="flex flex-1 items-center rounded-lg border border-neutral-800 bg-neutral-900 p-1 shadow-2xs">
               <button
                 onClick={() => {
+                  if (isProcessingScan) return;
                   setManualMode(false);
-                  if (scanState !== "idle") reset();
+                  if (scanState !== "READY") reset();
                 }}
-                className={`flex flex-1 items-center justify-center gap-1.5 rounded-md px-3 py-2 text-xs font-bold transition-all ${
+                disabled={isProcessingScan}
+                className={`flex min-h-12 flex-1 items-center justify-center gap-1.5 rounded-md px-3 py-2 text-xs font-bold transition-all disabled:cursor-not-allowed disabled:opacity-50 ${
                   !manualMode
                     ? "bg-emerald-600 text-white shadow-xs"
                     : "text-neutral-400 hover:text-neutral-200"
@@ -1680,12 +1691,14 @@ export default function ScanEventPage() {
               </button>
               <button
                 onClick={() => {
+                  if (isProcessingScan) return;
                   setManualMode(true);
                   setSearchQuery("");
                   setSearchResults([]);
-                  if (scanState !== "idle") reset();
+                  if (scanState !== "READY") reset();
                 }}
-                className={`flex flex-1 items-center justify-center gap-1.5 rounded-md px-3 py-2 text-xs font-bold transition-all ${
+                disabled={isProcessingScan}
+                className={`flex min-h-12 flex-1 items-center justify-center gap-1.5 rounded-md px-3 py-2 text-xs font-bold transition-all disabled:cursor-not-allowed disabled:opacity-50 ${
                   manualMode
                     ? "bg-emerald-600 text-white shadow-xs"
                     : "text-neutral-400 hover:text-neutral-200"
@@ -1698,8 +1711,11 @@ export default function ScanEventPage() {
 
             {/* Direction Indicator / Toggle */}
             <button
-              onClick={() => setScanDirection((d) => (d === "in" ? "out" : "in"))}
-              className={`flex items-center gap-1.5 rounded-lg border px-3 py-2 text-[11px] font-bold uppercase tracking-wider transition-colors shadow-2xs ${
+              onClick={() => {
+                if (!isProcessingScan) setScanDirection((d) => (d === "in" ? "out" : "in"));
+              }}
+              disabled={isProcessingScan}
+              className={`flex min-h-12 items-center gap-1.5 rounded-lg border px-3 py-2 text-[11px] font-bold uppercase tracking-wider transition-colors shadow-2xs disabled:cursor-not-allowed disabled:opacity-50 ${
                 scanDirection === "in"
                   ? "bg-emerald-950/40 text-emerald-400 border-emerald-800/80 hover:bg-emerald-900/50"
                   : "bg-blue-950/40 text-emerald-400 border-emerald-800/80 hover:bg-blue-900/50"
@@ -2004,7 +2020,7 @@ export default function ScanEventPage() {
             )}
 
             {/* Verifying Spinner */}
-            {scanState === "verifying" && (
+            {scanState === "PROCESSING" && (
               <div className="flex flex-col items-center gap-4 py-12 animate-in fade-in">
                 <div className="relative w-20 h-20">
                   <div className="relative flex h-full w-full items-center justify-center rounded-lg border border-neutral-800 bg-neutral-900 shadow-sm">
@@ -2019,7 +2035,7 @@ export default function ScanEventPage() {
             )}
 
             {/* Result: SUCCESS (Entry Granted) */}
-            {scanState === "success" && result && (
+            {scanState === "SUCCESS" && result && (
               <div className="w-full select-none animate-in zoom-in-95 duration-150 mt-4">
                 <ResultCard
                   variant="success"
@@ -2037,7 +2053,7 @@ export default function ScanEventPage() {
             )}
 
             {/* Result: DUPLICATE (Already Checked In / All Attendees Admitted) */}
-            {scanState === "duplicate" && result && (
+            {scanState === "DUPLICATE" && result && (
               <div className="w-full select-none animate-in zoom-in-95 duration-150 mt-4">
                 <ResultCard
                   variant="duplicate"
@@ -2059,7 +2075,7 @@ export default function ScanEventPage() {
             )}
 
             {/* Result: ACCESS DENIED */}
-            {scanState === "access_denied" && (
+            {scanState === "REJECTED" && (
               <div className="w-full select-none animate-in zoom-in-95 duration-150 mt-4">
                 <AccessDeniedCard
                   message={accessDeniedMsg}
@@ -2074,7 +2090,7 @@ export default function ScanEventPage() {
             )}
 
             {/* Result: ERROR / INVALID */}
-            {scanState === "error" && (
+            {scanState === "ERROR" && (
               <div className="w-full select-none animate-in zoom-in-95 duration-150 mt-4">
                 <ErrorCard
                   message={errorMsg}
@@ -2571,21 +2587,21 @@ function ResultCard({
       <div
         className={`flex flex-col items-center gap-3.5 overflow-hidden rounded-lg border p-6 text-center transition-colors shadow-lg ${
           ok
-            ? "bg-neutral-900 border-emerald-500/50 text-neutral-100"
-            : "bg-neutral-900 border-amber-500/50 text-neutral-100"
+            ? "bg-[#222228] border-[#22C55E]/50 text-white"
+            : "bg-[#222228] border-[#F59E0B]/50 text-white"
         }`}
       >
         <div
           className={`flex h-14 w-14 items-center justify-center rounded-lg border ${
             ok
-              ? "bg-emerald-950/80 border-emerald-500/60 text-emerald-400"
-              : "bg-amber-950/80 border-amber-500/60 text-amber-400"
+              ? "bg-[#22C55E]/15 border-[#22C55E]/60 text-[#22C55E]"
+              : "bg-[#F59E0B]/15 border-[#F59E0B]/60 text-[#F59E0B]"
           }`}
         >
           {ok ? (
-            <CheckCircle2 className="h-8 w-8 text-emerald-400" />
+            <CheckCircle2 className="h-8 w-8 text-[#22C55E]" />
           ) : (
-            <AlertTriangle className="h-8 w-8 text-amber-400" />
+            <AlertTriangle className="h-8 w-8 text-[#F59E0B]" />
           )}
         </div>
 
@@ -2593,22 +2609,22 @@ function ResultCard({
           <span
             className={`text-[10px] font-bold tracking-wider uppercase px-3 py-1 rounded-full border ${
               ok
-                ? "bg-emerald-950/80 text-emerald-300 border-emerald-700/80"
-                : "bg-amber-950/80 text-amber-300 border-amber-700/80"
+                ? "bg-[#22C55E]/15 text-[#22C55E] border-[#22C55E]/50"
+                : "bg-[#F59E0B]/15 text-[#F59E0B] border-[#F59E0B]/50"
             }`}
           >
             {badgeText || (ok ? "ENTRY GRANTED" : "ALREADY ADMITTED")}
           </span>
-          <h2 className="text-xl font-bold text-neutral-100 mt-2 leading-snug">
+          <h2 className="text-xl font-bold text-white mt-2 leading-snug">
             {ok ? "Check-in Successful" : "Already Checked In"}
           </h2>
-          <p className="text-sm font-semibold text-neutral-100">{attendee.name}</p>
+          <p className="text-sm font-semibold text-white">{attendee.name}</p>
           {message ? (
-            <p className="text-xs font-medium text-amber-300 max-w-[280px] mx-auto leading-relaxed pt-0.5">
+            <p className="text-xs font-medium text-[#F59E0B] max-w-[280px] mx-auto leading-relaxed pt-0.5">
               {message}
             </p>
           ) : attendee.email ? (
-            <p className="text-xs text-neutral-400 truncate max-w-[260px] mx-auto">
+            <p className="text-xs text-[#A1A1AA] truncate max-w-[260px] mx-auto">
               {attendee.email}
             </p>
           ) : null}
@@ -2616,24 +2632,24 @@ function ResultCard({
 
         {/* Pass Tier & Gate Info Pill */}
         <div className="flex items-center gap-1.5 flex-wrap justify-center pt-0.5">
-          <span className="rounded-md border border-neutral-700 bg-neutral-800 px-2.5 py-1 text-[11px] font-semibold uppercase text-neutral-200">
+          <span className="rounded-md border border-white/10 bg-[#18181B] px-2.5 py-1 text-[11px] font-semibold uppercase text-white">
             {PASS_TYPE_LABEL[passType] ?? passType}
           </span>
           {gateName && (
-            <span className="inline-flex items-center gap-1 rounded-md border border-neutral-700 bg-neutral-800 px-2.5 py-1 text-[11px] font-semibold text-neutral-300">
+            <span className="inline-flex items-center gap-1 rounded-md border border-white/10 bg-[#18181B] px-2.5 py-1 text-[11px] font-semibold text-[#A1A1AA]">
               <DoorOpen className="w-3.5 h-3.5 shrink-0 text-neutral-500" />
               <span>{gateName}</span>
             </span>
           )}
-          <span className="rounded-md border border-neutral-700 bg-neutral-800 px-2.5 py-1 text-[11px] font-semibold text-neutral-300">
+          <span className="rounded-md border border-white/10 bg-[#18181B] px-2.5 py-1 text-[11px] font-semibold text-[#A1A1AA]">
             {contextName}
           </span>
         </div>
 
         {(checkedInAt || resultAt) && (
-          <p className="text-[11px] font-mono text-neutral-400 mt-0.5">
+          <p className="text-[11px] font-mono text-[#A1A1AA] mt-0.5">
             {ok ? "Admitted at: " : "First scanned at: "}
-            <span className="font-semibold text-neutral-200">
+            <span className="font-semibold text-white">
               {new Date(checkedInAt || resultAt || "").toLocaleTimeString("en-IN", {
                 hour: "2-digit",
                 minute: "2-digit",
@@ -2651,7 +2667,7 @@ function ResultCard({
         )}
 
         <p className="text-[11px] font-bold text-neutral-400">
-          Successful scans this session: <span className="text-emerald-300 tabular-nums">{successfulScans}</span>
+          Successful scans this session: <span className="text-[#22C55E] tabular-nums">{successfulScans}</span>
         </p>
       </div>
 
@@ -2677,7 +2693,7 @@ function ResultCard({
       <div className="flex flex-col gap-2 pt-1">
         <button
           onClick={onReset}
-          className="flex w-full items-center justify-center gap-2 rounded-lg bg-violet-600 px-4 py-4 text-sm font-black text-white transition-colors hover:bg-violet-500 shadow-md"
+          className="flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#6200EE] to-[#8B5CF6] px-4 py-4 text-sm font-black text-white transition-transform duration-200 hover:scale-[1.01] shadow-md shadow-[#6200EE]/25"
         >
           Scan Next <span aria-hidden="true">-&gt;</span>
         </button>
@@ -2707,33 +2723,33 @@ function AccessDeniedCard({
 }) {
   return (
     <div className="w-full flex flex-col gap-3">
-      <div className="flex flex-col items-center gap-3.5 rounded-lg border border-red-500/50 bg-neutral-900 p-6 text-center shadow-lg">
-        <div className="w-14 h-14 rounded-lg bg-red-950/80 border border-red-500/50 flex items-center justify-center">
-          <ShieldX className="w-8 h-8 text-red-400" />
+      <div className="flex flex-col items-center gap-3.5 rounded-lg border border-[#EF4444]/50 bg-[#222228] p-6 text-center shadow-lg">
+        <div className="w-14 h-14 rounded-lg bg-[#EF4444]/15 border border-[#EF4444]/50 flex items-center justify-center">
+          <ShieldX className="w-8 h-8 text-[#EF4444]" />
         </div>
 
         <div>
-          <span className="text-[10px] font-extrabold tracking-widest uppercase px-3 py-1 rounded-full bg-red-950/80 text-red-300 border border-red-700/80">
+          <span className="text-[10px] font-extrabold tracking-widest uppercase px-3 py-1 rounded-full bg-[#EF4444]/15 text-[#EF4444] border border-[#EF4444]/50">
             ACCESS DENIED
           </span>
           <h2 className="text-xl font-extrabold text-neutral-100 mt-2 leading-tight">
             Not Admitted
           </h2>
-          <p className="text-xs text-red-300 mt-1 max-w-[260px] mx-auto leading-relaxed">
+          <p className="text-xs text-[#EF4444] mt-1 max-w-[260px] mx-auto leading-relaxed">
             {message}
           </p>
           <div className="mt-3 flex flex-wrap items-center justify-center gap-1.5">
-            <span className="rounded-md border border-neutral-700 bg-neutral-800 px-2.5 py-1 text-[11px] font-semibold text-neutral-300">
+            <span className="rounded-md border border-white/10 bg-[#18181B] px-2.5 py-1 text-[11px] font-semibold text-[#A1A1AA]">
               {contextName}
             </span>
             {gateName && (
-              <span className="rounded-md border border-neutral-700 bg-neutral-800 px-2.5 py-1 text-[11px] font-semibold text-neutral-300">
+              <span className="rounded-md border border-white/10 bg-[#18181B] px-2.5 py-1 text-[11px] font-semibold text-[#A1A1AA]">
                 {gateName}
               </span>
             )}
           </div>
           <p className="mt-3 text-[11px] font-bold text-neutral-400">
-            Successful scans this session: <span className="text-emerald-300 tabular-nums">{successfulScans}</span>
+            Successful scans this session: <span className="text-[#22C55E] tabular-nums">{successfulScans}</span>
           </p>
           {resultAt && (
             <p className="mt-1 text-[11px] font-mono text-neutral-500">
@@ -2760,7 +2776,7 @@ function AccessDeniedCard({
       <div className="flex flex-col gap-2 pt-1">
         <button
           onClick={onReset}
-          className="flex w-full items-center justify-center gap-2 rounded-lg bg-violet-600 px-4 py-4 text-sm font-black text-white transition-colors hover:bg-violet-500 shadow-md"
+          className="flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#6200EE] to-[#8B5CF6] px-4 py-4 text-sm font-black text-white transition-transform duration-200 hover:scale-[1.01] shadow-md shadow-[#6200EE]/25"
         >
           Scan Next <span aria-hidden="true">-&gt;</span>
         </button>
@@ -2788,33 +2804,33 @@ function ErrorCard({
 }) {
   return (
     <div className="w-full flex flex-col gap-3">
-      <div className="bg-neutral-900 border border-red-500/50 rounded-lg p-6 flex flex-col items-center text-center gap-3.5 shadow-lg">
-        <div className="w-14 h-14 rounded-lg bg-red-950/80 border border-red-500/50 flex items-center justify-center">
-          <XCircle className="w-8 h-8 text-red-400" />
+      <div className="bg-[#222228] border border-[#EF4444]/50 rounded-lg p-6 flex flex-col items-center text-center gap-3.5 shadow-lg">
+        <div className="w-14 h-14 rounded-lg bg-[#EF4444]/15 border border-[#EF4444]/50 flex items-center justify-center">
+          <XCircle className="w-8 h-8 text-[#EF4444]" />
         </div>
 
         <div>
-          <span className="text-[10px] font-extrabold tracking-widest uppercase px-3 py-1 rounded-full bg-red-950/80 text-red-300 border border-red-700/80">
+          <span className="text-[10px] font-extrabold tracking-widest uppercase px-3 py-1 rounded-full bg-[#EF4444]/15 text-[#EF4444] border border-[#EF4444]/50">
             INVALID PASS
           </span>
           <h2 className="text-xl font-extrabold text-neutral-100 mt-2 leading-tight">
             Verification Failed
           </h2>
-          <p className="text-xs text-red-300 mt-1 max-w-[260px] mx-auto leading-relaxed">
+          <p className="text-xs text-[#EF4444] mt-1 max-w-[260px] mx-auto leading-relaxed">
             {message}
           </p>
           <div className="mt-3 flex flex-wrap items-center justify-center gap-1.5">
-            <span className="rounded-md border border-neutral-700 bg-neutral-800 px-2.5 py-1 text-[11px] font-semibold text-neutral-300">
+            <span className="rounded-md border border-white/10 bg-[#18181B] px-2.5 py-1 text-[11px] font-semibold text-[#A1A1AA]">
               {contextName}
             </span>
             {gateName && (
-              <span className="rounded-md border border-neutral-700 bg-neutral-800 px-2.5 py-1 text-[11px] font-semibold text-neutral-300">
+              <span className="rounded-md border border-white/10 bg-[#18181B] px-2.5 py-1 text-[11px] font-semibold text-[#A1A1AA]">
                 {gateName}
               </span>
             )}
           </div>
           <p className="mt-3 text-[11px] font-bold text-neutral-400">
-            Successful scans this session: <span className="text-emerald-300 tabular-nums">{successfulScans}</span>
+            Successful scans this session: <span className="text-[#22C55E] tabular-nums">{successfulScans}</span>
           </p>
           {resultAt && (
             <p className="mt-1 text-[11px] font-mono text-neutral-500">
@@ -2827,7 +2843,7 @@ function ErrorCard({
       <div className="flex flex-col gap-2 pt-1">
         <button
           onClick={onReset}
-          className="flex w-full items-center justify-center gap-2 rounded-lg bg-violet-600 px-4 py-4 text-sm font-black text-white transition-colors hover:bg-violet-500 shadow-md"
+          className="flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#6200EE] to-[#8B5CF6] px-4 py-4 text-sm font-black text-white transition-transform duration-200 hover:scale-[1.01] shadow-md shadow-[#6200EE]/25"
         >
           Scan Next <span aria-hidden="true">-&gt;</span>
         </button>

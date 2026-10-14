@@ -6,6 +6,7 @@ import SupportWidget from "@/components/support/SupportWidget";
 import VersionSkewHandler from "@/components/common/VersionSkewHandler";
 import AuthRecoveryHandler from "@/components/common/AuthRecoveryHandler";
 import { CookieConsentBanner } from "@/components/ui/CookieConsentBanner";
+import PwaRuntime from "@/components/pwa/PwaRuntime";
 
 const geist = Geist({
   subsets: ["latin"],
@@ -62,6 +63,7 @@ export const metadata: Metadata = {
   creator: "URPASS",
   publisher: "URPASS",
   applicationName: "URPASS",
+  manifest: "/manifest.webmanifest",
   category: "Event Management Software",
   robots: {
     index: true,
@@ -125,8 +127,15 @@ export const metadata: Metadata = {
     icon: [
       { url: "/favicon.ico", sizes: "any" },
       { url: "/icon.png", type: "image/png" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
     ],
     apple: "/apple-icon.png",
+  },
+  appleWebApp: {
+    capable: true,
+    title: "UrPass",
+    statusBarStyle: "black-translucent",
   },
   other: {
     "geo.region": "IN",
@@ -363,6 +372,7 @@ export default function RootLayout({
       <body className="h-full font-[family-name:var(--font-geist)] antialiased bg-white text-neutral-900">
         <VersionSkewHandler />
         <AuthRecoveryHandler />
+        <PwaRuntime />
         {children}
         <SupportWidget />
         <CookieConsentBanner />

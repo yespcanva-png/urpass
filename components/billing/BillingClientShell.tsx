@@ -489,7 +489,7 @@ export default function BillingClientShell({
                 label="Organizer Seats"
                 used={1}
                 limit={organizerLimit}
-                note={organizerLimit === 1 ? "1 seat included on current tier" : `${organizerLimit} seats allocated`}
+                note={organizerLimit === 1 ? "1 seat included on current plan" : `${organizerLimit} seats allocated`}
               />
             </div>
           </div>

@@ -168,7 +168,7 @@ export default function PlanGrid({
         <div>
           <p className="text-[10px] font-bold tracking-wider uppercase text-neutral-400">
             {tab === "subscription"
-              ? "Recurring Memberships · 3 Tiers"
+              ? "Recurring Memberships · Starter, Pro, Business"
               : tab === "one-event"
               ? "Pay As You Go · Single Event Passes"
               : tab === "lifetime"
@@ -481,7 +481,7 @@ export default function PlanGrid({
               </p>
             </div>
             <span className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-neutral-100 text-neutral-700 border border-neutral-200 self-start sm:self-auto shrink-0">
-              3 Single-Event Tiers
+              3 Single-Event Passes
             </span>
           </div>
 
