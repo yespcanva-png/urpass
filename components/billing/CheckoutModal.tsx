@@ -269,6 +269,8 @@ export default function CheckoutModal({
         const rzp = new window.Razorpay({
           key: subscriptionData.keyId,
           subscription_id: subscriptionData.subscriptionId,
+          offer_id: subscriptionData.offerId,
+          offers: [subscriptionData.offerId],
           name: "URPASS",
           description: `${planName} — Monthly subscription`,
           prefill: { name: userName, email: userEmail },
