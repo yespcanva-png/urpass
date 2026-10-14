@@ -8,14 +8,12 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import { getSupabaseUrl } from "@/lib/supabase/config";
 import { validateGstin } from "@/lib/validations/gstin";
-import { evaluateOfferEligibility } from "@/lib/billing/engine/pricing-engine";
 import {
   getIntroOfferDisclosure,
   getIntroOfferId,
   getMonthlyRazorpayPlanId,
   isIntroOfferPlan,
 } from "@/lib/billing/razorpay-subscription-offers";
-import type { IntroOfferPlanSlug } from "@/lib/billing/razorpay-subscription-offers";
 
 export const dynamic = "force-dynamic";
 
@@ -34,6 +32,7 @@ type ExistingSubscription = {
   has_lifetime_access?: boolean | null;
   lifetime_plan_slug?: string | null;
   is_trial?: boolean | null;
+  trial_used?: boolean | null;
   trial_ends_at?: string | null;
   plan?: { slug?: string | null } | Array<{ slug?: string | null }> | null;
 };
@@ -76,6 +75,19 @@ function blocksNewSubscription(sub: ExistingSubscription | null | undefined) {
   return status === "active" && isFuture(sub.current_period_end);
 }
 
+function cleanRazorpayNotes(raw: Record<string, string | null | undefined>): Record<string, string> {
+  const result: Record<string, string> = {};
+  let count = 0;
+  for (const [key, val] of Object.entries(raw)) {
+    if (val !== null && val !== undefined && val !== "") {
+      result[key] = String(val).slice(0, 255);
+      count++;
+      if (count >= 15) break; // Razorpay strictly allows maximum 15 key-value pairs
+    }
+  }
+  return result;
+}
+
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -113,13 +125,20 @@ export async function POST(req: NextRequest) {
   const admin = adminClient();
   const { data: existingSub } = await admin
     .from("subscriptions")
-    .select("status, provider, current_period_end, has_lifetime_access, lifetime_plan_slug, is_trial, trial_ends_at, plan:plans(slug)")
+    .select("status, provider, current_period_end, has_lifetime_access, lifetime_plan_slug, is_trial, trial_used, trial_ends_at, plan:plans(slug)")
     .eq("user_id", user.id)
     .maybeSingle();
 
   if (blocksNewSubscription(existingSub as ExistingSubscription | null)) {
     return NextResponse.json(
       { error: "This account already has an active paid subscription." },
+      { status: 409 }
+    );
+  }
+
+  if (existingSub?.is_trial || existingSub?.trial_used || isFuture(existingSub?.trial_ends_at)) {
+    return NextResponse.json(
+      { error: "This account has already used a trial or legacy promotional entitlement and is not eligible for the introductory subscription offer." },
       { status: 409 }
     );
   }
@@ -143,22 +162,25 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const eligibility = await evaluateOfferEligibility({
-    userId: user.id,
-    planSlug: planSlug as IntroOfferPlanSlug,
-    billingCycle: "monthly",
-    currency: "INR",
-  });
   const introDisclosure = getIntroOfferDisclosure(planSlug);
-  const offerId = eligibility.isEligibleForIntroOffer ? getIntroOfferId(planSlug) : null;
+  const configuredOfferId = getIntroOfferId(planSlug);
 
-  if (eligibility.isEligibleForIntroOffer && !offerId) {
+  if (!configuredOfferId) {
     return NextResponse.json(
       {
         error:
-          `The ${plan.name} introductory Razorpay offer ID is not configured. Add RAZORPAY_${planSlug.toUpperCase()}_INTRO_OFFER_ID before enabling this intro checkout.`,
+          `The introductory Razorpay offer for ${plan.name} is not configured. Please set RAZORPAY_${planSlug.toUpperCase()}_INTRO_OFFER_ID in your environment with the offer ID created in Razorpay Dashboard (Subscriptions -> Offers on Subscriptions).`,
       },
       { status: 503 }
+    );
+  }
+  if (!configuredOfferId.startsWith("offer_")) {
+    return NextResponse.json(
+      {
+        error:
+          `The introductory Razorpay offer ID "${configuredOfferId}" is invalid. Expected an ID starting with "offer_".`,
+      },
+      { status: 500 }
     );
   }
 
@@ -174,33 +196,43 @@ export async function POST(req: NextRequest) {
 
   try {
     const razorpay = getRazorpayClient();
-    const totalCount = Number(process.env.RAZORPAY_SUBSCRIPTION_TOTAL_COUNT || 120);
+    // Default to 36 billing cycles (3 years) instead of 120 (10 years)
+    const totalCount = Number(process.env.RAZORPAY_SUBSCRIPTION_TOTAL_COUNT || 36);
     const subscriptionPayload = {
       plan_id: razorpayPlanId,
-      total_count: Number.isFinite(totalCount) && totalCount > 0 ? totalCount : 120,
+      total_count: Number.isFinite(totalCount) && totalCount > 0 ? totalCount : 36,
       quantity: 1,
       customer_notify: 1,
-      ...(offerId ? { offer_id: offerId } : {}),
-      notes: {
+      offer_id: configuredOfferId,
+      notes: cleanRazorpayNotes({
         user_id: String(user.id),
         plan_id: String(plan.id),
         plan_slug: String(planSlug),
         billing_cycle: "monthly",
-        currency: "INR",
-        intro_offer_id: String(offerId || ""),
-        intro_cycles: offerId ? "2" : "0",
-        regular_amount: String(introDisclosure.regularAmountPaise),
-        expected_intro_amount: String(offerId ? introDisclosure.introAmountPaise : ""),
-        expected_discount: String(offerId ? introDisclosure.discountPaise : ""),
+        regular_plan_id: String(razorpayPlanId),
+        intro_cycles: "2",
+        expected_discount: String(introDisclosure.discountPaise),
         billing_address: billingAddress,
         billing_state: billingState,
         billing_state_code: billingStateCode,
         customer_gstin: gstin,
         company_name: companyName,
-      },
+      }),
     };
 
     const subscription = await (razorpay.subscriptions as any).create(subscriptionPayload);
+    if (subscription?.offer_id !== configuredOfferId) {
+      if (subscription?.id) {
+        await (razorpay.subscriptions as any).cancel(subscription.id, { cancel_at_cycle_end: 0 }).catch(() => null);
+      }
+      return NextResponse.json(
+        {
+          error:
+            "Razorpay did not attach the introductory offer to this subscription. Checkout was stopped to avoid an incorrect mandate.",
+        },
+        { status: 502 }
+      );
+    }
 
     await admin
       .from("profiles")
@@ -218,10 +250,10 @@ export async function POST(req: NextRequest) {
       planSlug,
       billingCycle: "monthly",
       currency: "INR",
-      hasIntroOffer: Boolean(offerId),
-      offerId,
-      expectedIntroAmountPaise: offerId ? introDisclosure.introAmountPaise : null,
-      expectedDiscountPaise: offerId ? introDisclosure.discountPaise : null,
+      hasIntroOffer: true,
+      offerId: configuredOfferId,
+      expectedIntroAmountPaise: introDisclosure.introAmountPaise,
+      expectedDiscountPaise: introDisclosure.discountPaise,
       regularAmountPaise: introDisclosure.regularAmountPaise,
       taxRatePercent: introDisclosure.taxRatePercent,
     });

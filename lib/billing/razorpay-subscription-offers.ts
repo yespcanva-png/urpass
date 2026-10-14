@@ -13,12 +13,6 @@ export const INTRO_OFFER_EXPECTED = {
   discountPaise: number;
 }>;
 
-const DEFAULT_INTRO_OFFER_IDS: Partial<Record<IntroOfferPlanSlug, string>> = {
-  starter: "offer_TnVgsI4LM5e5tB",
-  pro: "offer_TnVjl4FlJDxvBr",
-  business: "offer_TnVkl8l7VXDxHz",
-};
-
 export function isIntroOfferPlan(planSlug: string): planSlug is IntroOfferPlanSlug {
   return ["starter", "pro", "business"].includes(planSlug);
 }
@@ -30,7 +24,7 @@ export function getMonthlyRazorpayPlanId(planSlug: IntroOfferPlanSlug): string |
 
 export function getIntroOfferId(planSlug: IntroOfferPlanSlug): string | null {
   const envKey = `RAZORPAY_${planSlug.toUpperCase()}_INTRO_OFFER_ID`;
-  return (process.env[envKey] || DEFAULT_INTRO_OFFER_IDS[planSlug] || "").trim() || null;
+  return (process.env[envKey] || "").trim() || null;
 }
 
 export function getIntroOfferDisclosure(planSlug: IntroOfferPlanSlug) {

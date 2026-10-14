@@ -604,16 +604,50 @@ export default function CheckoutModal({
             </div>
           </div>
 
-          {/* Renewal disclosure */}
+          {/* Renewal disclosure & AutoPay Schedule */}
           {isLifetime ? (
             <p className="text-[11px] text-emerald-600 font-medium text-center -mt-2">
               One-time payment · Zero renewal fees · Valid for the lifetime of URPASS
             </p>
-          ) : isIntroOffer ? (
+          ) : isIntroOffer && !isUk ? (
+            <div className="rounded-lg border border-neutral-200 bg-neutral-50/70 p-3.5 flex flex-col gap-2.5 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-neutral-900">UrPass {planName}</span>
+                <span className="rounded bg-neutral-900 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">AutoPay</span>
+              </div>
+              <div className="rounded-md border border-neutral-200 bg-white overflow-hidden">
+                <table className="w-full text-left text-xs">
+                  <thead className="border-b border-neutral-200 bg-neutral-50 text-[10px] uppercase font-semibold text-neutral-500">
+                    <tr>
+                      <th className="px-3 py-1.5">Billing period</th>
+                      <th className="px-3 py-1.5 text-right">Amount incl. GST</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-neutral-100 text-neutral-700">
+                    <tr>
+                      <td className="px-3 py-1.5 font-medium">First month</td>
+                      <td className="px-3 py-1.5 text-right font-semibold text-neutral-950">₹34.22</td>
+                    </tr>
+                    <tr>
+                      <td className="px-3 py-1.5 font-medium">Second month</td>
+                      <td className="px-3 py-1.5 text-right font-semibold text-neutral-950">₹34.22</td>
+                    </tr>
+                    <tr className="bg-neutral-50/50">
+                      <td className="px-3 py-1.5 font-medium">Third month onward</td>
+                      <td className="px-3 py-1.5 text-right font-semibold text-neutral-950">
+                        ₹{(Math.round(priceMonthly * 1.18 * 100) / 100).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/month
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <p className="text-[11px] leading-relaxed text-neutral-600">
+                To activate your UrPass {planName} subscription, ₹29 + GST will be charged now and again next month. From the third billing cycle, ₹{priceMonthly.toLocaleString("en-IN")} + GST will be charged monthly through AutoPay until cancelled.
+              </p>
+            </div>
+          ) : isIntroOffer && isUk ? (
             <p className="text-[11px] text-brand-700 font-semibold text-center -mt-2">
-              {isUk
-                ? `Introductory offer: £2/month for first 2 months. Subsequent regular renewal is £${priceMonthly}/month +VAT. Cancel renewal anytime.`
-                : `Introductory offer: ₹29/month for first 2 months. Subsequent regular renewal is ₹${priceMonthly.toLocaleString("en-IN")}/month +GST. Cancel renewal anytime.`}
+              Introductory offer: £2/month for first 2 months. Subsequent regular renewal is £{priceMonthly}/month +VAT. Cancel renewal anytime.
             </p>
           ) : coupon?.durationMonths ? (
             <p className="text-[11px] text-neutral-400 text-center -mt-2">
@@ -637,7 +671,7 @@ export default function CheckoutModal({
             ) : (
               <>
                 {usesRazorpaySubscriptionCheckout
-                  ? `Authorize ${sym}${fmt(baseAmount)} + ${taxName}`
+                  ? `Authorize AutoPay · ${sym}${fmt(totalToday)} today`
                   : `Pay ${sym}${fmt(totalToday)}`}
                 <ChevronRight className="w-4 h-4" />
               </>

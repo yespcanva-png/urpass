@@ -50,12 +50,12 @@ describe("Razorpay Signature Verification", () => {
 
 describe("Razorpay Subscription Intro Offers", () => {
   it("maps the configured Starter and Pro introductory offer IDs", () => {
-    vi.stubEnv("RAZORPAY_STARTER_INTRO_OFFER_ID", "");
-    vi.stubEnv("RAZORPAY_PRO_INTRO_OFFER_ID", "");
-    vi.stubEnv("RAZORPAY_BUSINESS_INTRO_OFFER_ID", "");
-    expect(getIntroOfferId("starter")).toBe("offer_TnVgsI4LM5e5tB");
-    expect(getIntroOfferId("pro")).toBe("offer_TnVjl4FlJDxvBr");
-    expect(getIntroOfferId("business")).toBe("offer_TnVkl8l7VXDxHz");
+    vi.stubEnv("RAZORPAY_STARTER_INTRO_OFFER_ID", "offer_starter_custom");
+    vi.stubEnv("RAZORPAY_PRO_INTRO_OFFER_ID", "offer_pro_custom");
+    vi.stubEnv("RAZORPAY_BUSINESS_INTRO_OFFER_ID", "offer_business_custom");
+    expect(getIntroOfferId("starter")).toBe("offer_starter_custom");
+    expect(getIntroOfferId("pro")).toBe("offer_pro_custom");
+    expect(getIntroOfferId("business")).toBe("offer_business_custom");
   });
 
   it("keeps expected discounts tied to the regular monthly plan amounts", () => {
