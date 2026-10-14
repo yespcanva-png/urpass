@@ -142,10 +142,7 @@ export default function CheckoutModal({
   const defaultFounder = isUk ? 249 : 19999;
   const isIntroOffer = billingCycle === "monthly" && ["starter", "pro", "business"].includes(planSlug);
   const usesRazorpaySubscriptionCheckout =
-    !isUk &&
-    !isLifetime &&
-    billingCycle === "monthly" &&
-    ["starter", "pro", "business"].includes(planSlug);
+    false;
   const introAmount = isUk ? 2 : 29;
   const baseAmount = isLifetime
     ? (annualTotal || priceMonthly || defaultFounder)
@@ -622,7 +619,7 @@ export default function CheckoutModal({
             </div>
           </div>
 
-          {/* Renewal disclosure & AutoPay Schedule */}
+          {/* Renewal disclosure */}
           {isLifetime ? (
             <p className="text-[11px] text-emerald-600 font-medium text-center -mt-2">
               One-time payment · Zero renewal fees · Valid for the lifetime of URPASS
@@ -631,7 +628,7 @@ export default function CheckoutModal({
             <div className="rounded-lg border border-neutral-200 bg-neutral-50/70 p-3.5 flex flex-col gap-2.5 text-xs">
               <div className="flex items-center justify-between">
                 <span className="font-semibold text-neutral-900">UrPass {planName}</span>
-                <span className="rounded bg-neutral-900 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">AutoPay</span>
+                <span className="rounded bg-neutral-900 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">Intro checkout</span>
               </div>
               <div className="rounded-md border border-neutral-200 bg-white overflow-hidden">
                 <table className="w-full text-left text-xs">
@@ -643,15 +640,11 @@ export default function CheckoutModal({
                   </thead>
                   <tbody className="divide-y divide-neutral-100 text-neutral-700">
                     <tr>
-                      <td className="px-3 py-1.5 font-medium">First month</td>
+                      <td className="px-3 py-1.5 font-medium">Today</td>
                       <td className="px-3 py-1.5 text-right font-semibold text-neutral-950">₹34.22</td>
                     </tr>
                     <tr>
-                      <td className="px-3 py-1.5 font-medium">Second month</td>
-                      <td className="px-3 py-1.5 text-right font-semibold text-neutral-950">₹34.22</td>
-                    </tr>
-                    <tr className="bg-neutral-50/50">
-                      <td className="px-3 py-1.5 font-medium">Third month onward</td>
+                      <td className="px-3 py-1.5 font-medium">Renewal</td>
                       <td className="px-3 py-1.5 text-right font-semibold text-neutral-950">
                         ₹{(Math.round(priceMonthly * 1.18 * 100) / 100).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/month
                       </td>
@@ -660,7 +653,7 @@ export default function CheckoutModal({
                 </table>
               </div>
               <p className="text-[11px] leading-relaxed text-neutral-600">
-                To activate your UrPass {planName} subscription, ₹29 + GST will be charged now and again next month. From the third billing cycle, ₹{priceMonthly.toLocaleString("en-IN")} + GST will be charged monthly through AutoPay until cancelled.
+                To activate your UrPass {planName} intro access, Razorpay will charge ₹29 + GST today. Regular renewal is ₹{priceMonthly.toLocaleString("en-IN")} + GST per month.
               </p>
             </div>
           ) : isIntroOffer && isUk ? (
