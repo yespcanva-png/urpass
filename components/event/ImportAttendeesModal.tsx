@@ -84,14 +84,21 @@ export default function ImportAttendeesModal({ eventId, onClose, onSuccess }: Pr
     typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `import_${Date.now()}`
   );
 
+  const handleClose = () => {
+    if (report?.summary?.imported && report.summary.imported > 0) {
+      onSuccess();
+    }
+    onClose();
+  };
+
   useEffect(() => {
     setMounted(true);
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") handleClose();
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  }, [onClose, onSuccess, report]);
 
   const canPreview = csvText.trim().length > 0;
   const validCount = preview?.summary.valid ?? 0;
@@ -167,7 +174,7 @@ export default function ImportAttendeesModal({ eventId, onClose, onSuccess }: Pr
   return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-3 backdrop-blur-md"
-      onClick={(e) => e.currentTarget === e.target && onClose()}
+      onClick={(e) => e.currentTarget === e.target && handleClose()}
     >
       <div className="flex max-h-[94vh] w-full max-w-5xl flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl">
         <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
@@ -180,7 +187,7 @@ export default function ImportAttendeesModal({ eventId, onClose, onSuccess }: Pr
               <p className="text-xs text-slate-500">Preview, validate, import, and generate QR passes.</p>
             </div>
           </div>
-          <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 text-slate-500 hover:bg-slate-50">
+          <button onClick={handleClose} className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 text-slate-500 hover:bg-slate-50">
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -241,11 +248,27 @@ export default function ImportAttendeesModal({ eventId, onClose, onSuccess }: Pr
                   </div>
                 </div>
                 <SummaryGrid summary={report.summary} />
-                {report.failed.length > 0 && (
-                  <button onClick={downloadErrors} className="rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">
-                    Download error report
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-3 border-t border-slate-200">
+                  {report.failed.length > 0 ? (
+                    <button
+                      type="button"
+                      onClick={downloadErrors}
+                      className="rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+                    >
+                      Download error report
+                    </button>
+                  ) : (
+                    <div />
+                  )}
+                  <button
+                    type="button"
+                    onClick={handleClose}
+                    className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-slate-900 bg-slate-900 px-5 text-xs font-semibold text-white shadow-sm hover:bg-slate-800 transition-colors"
+                  >
+                    <span>Done — View Updated Attendees</span>
+                    <span aria-hidden="true">&rarr;</span>
                   </button>
-                )}
+                </div>
               </div>
             ) : preview ? (
               <div className="space-y-4">

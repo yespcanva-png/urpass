@@ -78,7 +78,7 @@ export default function PwaRuntime() {
     <>
       <InstallUrPassButton />
       {showUpdate && waitingWorker && (
-        <div className="fixed bottom-4 left-4 right-4 z-[60] mx-auto max-w-md rounded-xl border border-violet-200 bg-white p-4 text-neutral-950 shadow-2xl">
+        <div className="fixed z-[60] bottom-20 inset-x-4 mx-auto max-w-md sm:bottom-auto sm:top-5 sm:right-5 sm:left-auto sm:mx-0 sm:max-w-sm rounded-2xl border border-violet-200 bg-white p-4 text-neutral-950 shadow-2xl">
           <div className="flex items-start gap-3">
             <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-50 text-violet-700">
               <RefreshCw className="h-4 w-4" />

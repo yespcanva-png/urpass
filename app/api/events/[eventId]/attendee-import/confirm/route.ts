@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import crypto from "crypto";
 import { adminClient, requireImportAccess } from "../_shared";
 import {
@@ -213,6 +214,13 @@ export async function POST(req: NextRequest, { params }: Props) {
       .eq("idempotency_key", idempotencyKey);
   } catch (e) {
     console.error("Batch update tracking notice:", e);
+  }
+
+  try {
+    revalidatePath(`/event/${eventId}/attendees`);
+    revalidatePath(`/event/${eventId}`);
+  } catch (err) {
+    console.error("Failed to revalidate path:", err);
   }
 
   return NextResponse.json(report);

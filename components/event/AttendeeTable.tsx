@@ -2,10 +2,11 @@
 
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
+import { useRouter } from "next/navigation";
 import {
   UserPlus, Upload, Check, X, Clock, Loader2, Users,
   Search, Ticket, ExternalLink, Download, Lock, Wifi, ClipboardList, RotateCcw,
-  Send, CheckCircle2, CreditCard, DoorOpen, History, Eye, Mail, Phone,
+  Send, CheckCircle2, CreditCard, DoorOpen, History, Eye, Mail, Phone, RefreshCw,
 } from "lucide-react";
 import { approveAttendee, rejectAttendee, exportAttendeesCSV, promoteNextWaitlistAttendee } from "@/app/actions/attendees";
 import { undoCheckIn } from "@/app/actions/manual-checkin";
@@ -160,6 +161,7 @@ export default function AttendeeTable({
   canExport = false,
   customFields = [],
 }: Props) {
+  const router = useRouter();
   const [attendees, setAttendees]   = useState<Attendee[]>(initial);
   const [passTokens, setPassTokens] = useState<Record<string, string>>(initialPassTokens ?? {});
   const [groupPasses, setGroupPasses] = useState(groupPassMap);
@@ -176,6 +178,7 @@ export default function AttendeeTable({
   const [promotingWaitlist, setPromotingWaitlist] = useState(false);
   const [exporting, setExporting]   = useState(false);
   const [liveConnected, setLiveConnected] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedAttendee, setSelectedAttendee] = useState<Attendee | null>(null);
   const [selectedGroupHistory, setSelectedGroupHistory] = useState<{
     name: string;
@@ -188,6 +191,47 @@ export default function AttendeeTable({
   const [pageSize, setPageSize] = useState(50);
   const [mounted, setMounted] = useState(false);
   const initialRef = useRef(initial);
+
+  const refreshAttendees = async (showNotice = true) => {
+    setIsRefreshing(true);
+    try {
+      const supabase = createClient();
+      const [attRes, passRes] = await Promise.all([
+        supabase
+          .from("attendees")
+          .select("id, name, email, phone, pass_type, application_status, pass_status, custom_responses, ticket_type_id, created_at, last_scanned_at, venue_presence_state")
+          .eq("event_id", eventId)
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("passes")
+          .select("attendee_id, pass_token, total_guests, checked_in_guests, is_group_master, is_group_pass, status, updated_at")
+          .eq("event_id", eventId),
+      ]);
+
+      if (attRes.data) {
+        setAttendees(attRes.data as Attendee[]);
+      }
+      if (passRes.data) {
+        setPassTokens((prev) => {
+          const next = { ...prev };
+          for (const p of passRes.data) {
+            if (p.attendee_id && p.pass_token) next[p.attendee_id] = p.pass_token;
+          }
+          return next;
+        });
+      }
+
+      if (showNotice) {
+        setBulkMsg({ text: "Attendee directory refreshed with latest data.", isError: false });
+        window.setTimeout(() => setBulkMsg(null), 3000);
+      }
+    } catch (err) {
+      console.error("Failed to refresh attendees:", err);
+    } finally {
+      setIsRefreshing(false);
+      router.refresh();
+    }
+  };
 
   useEffect(() => {
     setMounted(true);
@@ -756,6 +800,17 @@ export default function AttendeeTable({
               </Link>
             )}
 
+            <button
+              type="button"
+              onClick={() => refreshAttendees(true)}
+              disabled={isRefreshing}
+              title="Refresh attendee data"
+              className="inline-flex min-h-9 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50 shadow-xs disabled:opacity-50"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? "animate-spin text-violet-600" : ""}`} />
+              <span>{isRefreshing ? "Refreshing..." : "Refresh"}</span>
+            </button>
+
             {canExport ? (
               <button onClick={handleExport} disabled={exporting}
                 className="inline-flex min-h-9 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-50 shadow-xs">
@@ -1258,14 +1313,26 @@ export default function AttendeeTable({
       </div>
 
       {showAddModal && (
-        <AddAttendeeModal eventId={eventId} onClose={() => setShowAddModal(false)}
-          onSuccess={() => setShowAddModal(false)} />
+        <AddAttendeeModal
+          eventId={eventId}
+          onClose={() => setShowAddModal(false)}
+          onSuccess={() => {
+            setShowAddModal(false);
+            refreshAttendees(true);
+          }}
+        />
       )}
       {showImportModal && (
         <ImportAttendeesModal
           eventId={eventId}
-          onClose={() => setShowImportModal(false)}
-          onSuccess={() => setShowImportModal(false)}
+          onClose={() => {
+            setShowImportModal(false);
+            refreshAttendees(false);
+          }}
+          onSuccess={() => {
+            setShowImportModal(false);
+            refreshAttendees(true);
+          }}
         />
       )}
 

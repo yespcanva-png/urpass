@@ -43,8 +43,12 @@ function adminClient() {
 type ActionResult = { error: string } | undefined;
 
 function revalidateEvent(eventId: string) {
-  // Only revalidate the overview — the attendees page is realtime-driven
-  revalidatePath(`/event/${eventId}`);
+  try {
+    revalidatePath(`/event/${eventId}`);
+    revalidatePath(`/event/${eventId}/attendees`);
+  } catch (err) {
+    console.error("Failed to revalidate event paths:", err);
+  }
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
