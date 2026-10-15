@@ -6,6 +6,7 @@ import { Check, Minus, ChevronDown, ShieldCheck, ArrowRight, Globe } from "lucid
 import { cn } from "@/lib/utils";
 import FounderSpotCounter from "@/components/billing/FounderSpotCounter";
 import { detectCountryClient, persistCountryPreference } from "@/lib/country-config";
+import ManagedEventsSection from "@/components/landing/ManagedEventsSection";
 
 type Cycle = "monthly" | "annual";
 
@@ -713,7 +714,12 @@ export default function PricingContent({
           </div>
         </section>
 
-        {/* ── 07 FAQ ── */}
+        {/* ── 07 Managed Events ── */}
+        <div className="pb-16 -mx-5 sm:-mx-8">
+          <ManagedEventsSection initialCountry={country} />
+        </div>
+
+        {/* ── 08 FAQ ── */}
         <section className="max-w-2xl mx-auto pb-28">
           <h2 className="text-xl font-semibold tracking-tight text-neutral-900 mb-6">Frequently asked questions</h2>
           <div className="bg-white border border-neutral-100 rounded-2xl px-6">

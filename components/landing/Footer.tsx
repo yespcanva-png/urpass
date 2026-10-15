@@ -8,25 +8,26 @@ export default function Footer() {
     <footer className="bg-neutral-950 text-neutral-300 px-5 sm:px-8 pt-16 pb-12 border-t border-neutral-800/80">
       <div className="max-w-6xl mx-auto">
         {/* Top Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-8 lg:gap-12 mb-14">
-          {/* Brand & Socials Column */}
-          <div className="col-span-2 md:col-span-2 flex flex-col justify-between">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-10 lg:gap-8 mb-14">
+          {/* Brand & Socials Column (Spans 2 columns on large screens) */}
+          <div className="sm:col-span-2 lg:col-span-2 flex flex-col justify-between space-y-6">
             <div>
-              <div className="flex items-center gap-2 mb-2">
-                <span className="font-bold text-lg tracking-tight text-white">URPASS</span>
-                <span className="text-[10px] uppercase font-bold tracking-widest bg-brand/20 text-brand-300 border border-brand/30 px-2 py-0.5 rounded-full">
+              <div className="flex items-center gap-2.5 mb-3">
+                <span className="font-bold text-xl tracking-tight text-white">URPASS</span>
+                <span className="text-[10px] uppercase font-bold tracking-widest bg-violet-500/20 text-violet-300 border border-violet-500/30 px-2.5 py-0.5 rounded-full">
                   Event OS
                 </span>
               </div>
-              <p className="text-xs text-neutral-400 leading-relaxed max-w-sm mb-3">
-                URPASS by Yesp Corporation is an event registration, digital ticketing and QR check-in platform built for colleges, conferences, hackathons, businesses and event organizers worldwide.
+              <p className="text-xs text-neutral-400 leading-relaxed max-w-sm mb-4">
+                URPASS by Yesp Corporation is the all-in-one event registration, digital ticketing, and sub-second QR check-in platform built for modern organizers, conferences, and colleges worldwide.
               </p>
-              <div className="mb-5">
+              
+              <div className="mb-6">
                 <a
                   href="https://yespstudio.com"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-neutral-400 hover:text-white bg-neutral-900 border border-neutral-800 px-2.5 py-1 rounded-md transition-colors"
+                  className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-neutral-400 hover:text-white bg-neutral-900 border border-neutral-800 px-3 py-1.5 rounded-lg transition-colors"
                 >
                   <span>Product of</span>
                   <span className="text-white underline decoration-neutral-600 underline-offset-2">Yesp Corporation ↗</span>
@@ -34,7 +35,7 @@ export default function Footer() {
               </div>
 
               {/* Social Channels */}
-              <div className="flex items-center gap-3 mb-6">
+              <div className="flex flex-wrap items-center gap-3 mb-6">
                 <a
                   href={SOCIAL_LINKS.instagram}
                   target="_blank"
@@ -65,29 +66,19 @@ export default function Footer() {
               </div>
             </div>
 
-            <div className="mt-8 pt-6 border-t border-neutral-900 flex items-center gap-2 text-[11px] text-neutral-500">
+            <div className="pt-5 border-t border-neutral-900 flex items-center gap-2 text-[11px] text-neutral-500">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>All Systems Operational · Cloud Infrastructure &amp; Real-Time Sync</span>
+              <span>All Systems Operational · Sub-Second Cloud Infrastructure</span>
             </div>
           </div>
 
-          {/* Product Links */}
+          {/* Product Column */}
           <div>
             <p className="text-xs font-semibold text-white tracking-wider uppercase mb-4">Product</p>
             <ul className="flex flex-col gap-2.5">
               <li>
-                <Link href="/features" className="text-xs text-emerald-400 hover:text-emerald-300 font-medium transition-colors">
+                <Link href="/features" className="text-xs text-neutral-400 hover:text-white transition-colors">
                   Features Overview
-                </Link>
-              </li>
-              <li>
-                <Link href="/product" className="text-xs text-neutral-400 hover:text-white transition-colors">
-                  Product Architecture
-                </Link>
-              </li>
-              <li>
-                <Link href="/security" className="text-xs text-neutral-400 hover:text-white transition-colors">
-                  Security &amp; Trust
                 </Link>
               </li>
               <li>
@@ -96,25 +87,21 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/founder-lifetime-deal" className="text-xs text-amber-400 hover:text-amber-300 font-medium transition-colors flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
-                  Founder Lifetime Deal
-                </Link>
-              </li>
-              <li>
-                <Link href="/ticket-templates" className="text-xs text-violet-300 hover:text-white font-medium transition-colors flex items-center gap-1">
+                <Link href="/ticket-templates" className="text-xs text-violet-300 hover:text-white font-medium transition-colors flex items-center gap-1.5">
                   <span>Ticket Templates</span>
                   <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-violet-500/30 text-violet-200">New</span>
                 </Link>
               </li>
               <li>
-                <Link href="/design-your-ticket" className="text-xs text-neutral-400 hover:text-white transition-colors">
-                  Design Your Ticket
+                <Link href="/mcp-event-management" className="text-xs text-purple-300 hover:text-white transition-colors flex items-center gap-1.5 font-medium">
+                  <span className="w-1.5 h-1.5 rounded-full bg-purple-400"></span>
+                  Model Context Protocol
                 </Link>
               </li>
               <li>
-                <Link href="/custom-pass-design" className="text-xs text-neutral-400 hover:text-white transition-colors">
-                  Custom Pass Design
+                <Link href="/developers" className="text-xs text-violet-300 hover:text-white font-medium transition-colors flex items-center gap-1.5">
+                  <span>Developer API &amp; EIaaS</span>
+                  <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-violet-500/30 text-violet-200">API</span>
                 </Link>
               </li>
               <li>
@@ -124,7 +111,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link href="/qr-code-scanner" className="text-xs text-neutral-400 hover:text-white transition-colors">
-                  QR Scanner App
+                  Browser QR Scanner
                 </Link>
               </li>
               <li>
@@ -134,7 +121,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link href="/digital-event-pass" className="text-xs text-neutral-400 hover:text-white transition-colors">
-                  Digital Pass Maker
+                  Digital Pass Designer
                 </Link>
               </li>
               <li>
@@ -143,33 +130,34 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/event-badge-printing-software" className="text-xs text-neutral-400 hover:text-white transition-colors">
-                  Badge Printing Studio
+                <Link href="/founder-lifetime-deal" className="text-xs text-amber-400 hover:text-amber-300 font-medium transition-colors flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+                  Founder Deal
                 </Link>
               </li>
               <li>
-                <Link href="/onsite-event-registration-software" className="text-xs text-neutral-400 hover:text-white transition-colors">
-                  Onsite Registration Desk
-                </Link>
-              </li>
-              <li>
-                <Link href="/event-zone-access-control-software" className="text-xs text-neutral-400 hover:text-white transition-colors">
-                  Zone Access Control
-                </Link>
-              </li>
-              <li>
-                <Link href="/mcp-event-management" className="text-xs text-purple-300 hover:text-white transition-colors flex items-center gap-1.5 font-medium">
-                  <span className="w-1.5 h-1.5 rounded-full bg-purple-400"></span>
-                  Model Context Protocol (MCP)
+                <Link href="/security" className="text-xs text-neutral-400 hover:text-white transition-colors">
+                  Security &amp; Privacy
                 </Link>
               </li>
             </ul>
           </div>
 
-          {/* Solutions Links */}
+          {/* Solutions & Services Column */}
           <div>
-            <p className="text-xs font-semibold text-white tracking-wider uppercase mb-4">Solutions</p>
+            <p className="text-xs font-semibold text-white tracking-wider uppercase mb-4">Solutions &amp; Services</p>
             <ul className="flex flex-col gap-2.5">
+              <li>
+                <Link href="/managed-setup" className="text-xs text-violet-300 hover:text-white font-medium transition-colors flex items-center gap-1.5">
+                  <span>Managed Event Setup</span>
+                  <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-violet-500/30 text-violet-200">Service</span>
+                </Link>
+              </li>
+              <li>
+                <Link href="/ticketing-software-for-events" className="text-xs text-neutral-300 hover:text-white font-medium transition-colors">
+                  Ticketing Software for Events
+                </Link>
+              </li>
               <li>
                 <Link href="/college-event-management-software" className="text-xs text-neutral-400 hover:text-white transition-colors">
                   College Event Management
@@ -177,17 +165,12 @@ export default function Footer() {
               </li>
               <li>
                 <Link href="/college-fests" className="text-xs text-neutral-400 hover:text-white transition-colors">
-                  College Fests & Culturals
-                </Link>
-              </li>
-              <li>
-                <Link href="/college-cultural-fest-ticketing" className="text-xs text-neutral-400 hover:text-white transition-colors">
-                  Cultural Fest Ticketing
+                  College Fests &amp; Culturals
                 </Link>
               </li>
               <li>
                 <Link href="/hackathons" className="text-xs text-neutral-400 hover:text-white transition-colors">
-                  Hackathons & Buildathons
+                  Hackathons &amp; Buildathons
                 </Link>
               </li>
               <li>
@@ -197,7 +180,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link href="/workshops" className="text-xs text-neutral-400 hover:text-white transition-colors">
-                  Workshops & Masterclasses
+                  Workshops &amp; Seminars
                 </Link>
               </li>
               <li>
@@ -206,23 +189,8 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/conference-management-software" className="text-xs text-brand-300 hover:text-white transition-colors font-medium">
-                  Conference Management
-                </Link>
-              </li>
-              <li>
-                <Link href="/event-agenda-builder" className="text-xs text-neutral-400 hover:text-white transition-colors">
-                  Agenda Builder
-                </Link>
-              </li>
-              <li>
-                <Link href="/speaker-management-software" className="text-xs text-neutral-400 hover:text-white transition-colors">
-                  Speaker Management
-                </Link>
-              </li>
-              <li>
                 <Link href="/session-qr-check-in" className="text-xs text-neutral-400 hover:text-white transition-colors">
-                  Session QR Check-In
+                  Session Access Control
                 </Link>
               </li>
               <li>
@@ -230,32 +198,12 @@ export default function Footer() {
                   Community Meetups
                 </Link>
               </li>
-              <li>
-                <Link href="/event-lead-retrieval-software" className="text-xs text-neutral-400 hover:text-white transition-colors">
-                  Lead Retrieval App
-                </Link>
-              </li>
-              <li>
-                <Link href="/exhibitor-management-software" className="text-xs text-neutral-400 hover:text-white transition-colors">
-                  Exhibitor Management
-                </Link>
-              </li>
-              <li>
-                <Link href="/event-sponsorship-management-software" className="text-xs text-neutral-400 hover:text-white transition-colors">
-                  Sponsorship Portal
-                </Link>
-              </li>
-              <li>
-                <Link href="/b2b-event-matchmaking-software" className="text-xs text-neutral-400 hover:text-white transition-colors">
-                  B2B Matchmaking Scheduler
-                </Link>
-              </li>
             </ul>
           </div>
 
-          {/* Locations & Regional Markets */}
+          {/* Regional Hubs & Resources Column */}
           <div>
-            <p className="text-xs font-semibold text-white tracking-wider uppercase mb-4">Regional Hubs</p>
+            <p className="text-xs font-semibold text-white tracking-wider uppercase mb-4">Hubs &amp; Resources</p>
             <ul className="flex flex-col gap-2.5">
               <li>
                 <Link href="/in" className="text-xs text-neutral-400 hover:text-white transition-colors flex items-center gap-2">
@@ -270,11 +218,6 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/uk/london" className="text-xs text-neutral-400 hover:text-white transition-colors">
-                  London &amp; UK Universities
-                </Link>
-              </li>
-              <li>
                 <Link href="/in/bangalore" className="text-xs text-neutral-400 hover:text-white transition-colors">
                   Bangalore Tech Events
                 </Link>
@@ -285,7 +228,27 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/sitelinks" className="text-xs font-semibold text-brand-300 hover:text-white transition-colors">
+                <Link href="/uk/london" className="text-xs text-neutral-400 hover:text-white transition-colors">
+                  London &amp; UK Universities
+                </Link>
+              </li>
+              <li>
+                <Link href="/guides" className="text-xs text-neutral-400 hover:text-white transition-colors">
+                  Organizer Guides
+                </Link>
+              </li>
+              <li>
+                <Link href="/compare" className="text-xs text-neutral-400 hover:text-white transition-colors">
+                  Platform Comparisons
+                </Link>
+              </li>
+              <li>
+                <Link href="/faq" className="text-xs text-neutral-400 hover:text-white transition-colors">
+                  Knowledge Base &amp; FAQ
+                </Link>
+              </li>
+              <li>
+                <Link href="/sitelinks" className="text-xs font-semibold text-violet-400 hover:text-violet-300 transition-colors">
                   Explore All Sitelinks →
                 </Link>
               </li>
@@ -294,75 +257,54 @@ export default function Footer() {
         </div>
 
         {/* Bottom Bar */}
-        <div className="pt-8 border-t border-neutral-900 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex flex-wrap items-center gap-3 text-xs text-neutral-500">
+        <div className="pt-8 border-t border-neutral-900 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-neutral-500">
+          <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
             <span>&copy; 2026 URPASS. Built with precision for organizers.</span>
-            <span>·</span>
+            <span className="hidden sm:inline">·</span>
             <span className="flex items-center gap-1.5">
               <span>Markets:</span>
               <Link href="/in" className="text-neutral-400 hover:text-white transition-colors underline-offset-2 hover:underline">
-                India (INR · ₹)
+                India (₹)
               </Link>
               <span>·</span>
               <Link href="/uk" className="text-neutral-400 hover:text-white transition-colors underline-offset-2 hover:underline">
-                United Kingdom (GBP · £)
+                United Kingdom (£)
               </Link>
             </span>
           </div>
 
-          <div className="flex flex-wrap items-center gap-5 text-xs text-neutral-500">
+          <div className="flex flex-wrap items-center justify-center md:justify-end gap-x-5 gap-y-2">
             <Link href="/about" className="hover:text-neutral-300 transition-colors">
               About
             </Link>
             <Link href="/brand" className="text-emerald-400 hover:text-emerald-300 transition-colors font-medium">
-              Brand &amp; Media Kit
+              Brand Kit
             </Link>
             <Link href="/support" className="hover:text-neutral-300 transition-colors">
-              Support Center
+              Support
             </Link>
-            <Link href="/status" className="hover:text-neutral-300 transition-colors flex items-center gap-1">
+            <Link href="/status" className="hover:text-neutral-300 transition-colors flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
               Status
-            </Link>
-            <Link href="/company" className="hover:text-neutral-300 transition-colors">
-              Company
-            </Link>
-            <Link href="/press" className="hover:text-neutral-300 transition-colors">
-              Press
-            </Link>
-            <Link href="/yesp-urpass" className="hover:text-neutral-300 transition-colors">
-              Yesp URPASS
-            </Link>
-            <Link href="/faq" className="hover:text-neutral-300 transition-colors">
-              FAQ
-            </Link>
-            <Link href="/guides" className="hover:text-neutral-300 transition-colors">
-              Guides
-            </Link>
-            <Link href="/compare" className="hover:text-neutral-300 transition-colors">
-              Compare
-            </Link>
-            <Link href="/contact" className="hover:text-neutral-300 transition-colors">
-              Contact
-            </Link>
-            <Link href="/feedback" className="hover:text-neutral-300 transition-colors">
-              Feedback
             </Link>
             <Link href="/docs" className="hover:text-neutral-300 transition-colors">
               Documentation
             </Link>
+            <Link href="/developers" className="text-violet-300 hover:text-white transition-colors">
+              Developers (EIaaS)
+            </Link>
             <Link href="/terms" className="hover:text-neutral-300 transition-colors">
               Terms &amp; Privacy
             </Link>
-            <Link href="/sitelinks" className="hover:text-neutral-300 transition-colors">
-              Sitelinks
+            <Link href="/contact" className="hover:text-neutral-300 transition-colors">
+              Contact
             </Link>
           </div>
         </div>
 
         {/* Contextual Entity Line */}
         <div className="mt-6 pt-4 border-t border-neutral-900/60 text-center text-[11px] text-neutral-600">
-          <p>URPASS is an event technology product developed by Yesp Corporation.</p>
+          <p>URPASS is an event technology platform engineered and operated by Yesp Corporation.</p>
         </div>
       </div>
     </footer>

@@ -6,6 +6,8 @@ import FAQSection from "@/components/landing/FAQSection";
 import AnimateIn from "@/components/ui/AnimateIn";
 import Footer from "@/components/landing/Footer";
 import HomePricingSection from "@/components/landing/HomePricingSection";
+import FeaturesSection from "@/components/landing/FeaturesSection";
+import TestimonialsSection from "@/components/landing/TestimonialsSection";
 import { detectCountryFromHeaders } from "@/lib/country-config";
 import {
   FileText,
@@ -17,14 +19,17 @@ import {
   Megaphone,
   Users2,
   Mic,
+  ArrowRight,
+  Sparkles,
 } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Event Registration & QR Check-In Software | URPASS",
+  title: "UrPass — Event Management Platform | Your event. Your way.",
   description:
-    "Create event registration pages, issue digital QR passes, accept ticket payments and check attendees in using any smartphone. Plans start at ₹29/month for the introductory offer.",
+    "Manage registrations, digital QR passes, ticketing, and attendee check-ins with UrPass. High-speed check-ins, custom passes, and zero platform commission.",
   keywords: [
     "URPASS",
+    "event management platform",
     "event registration software",
     "QR check-in software",
     "event ticketing platform",
@@ -36,9 +41,9 @@ export const metadata: Metadata = {
   ],
   alternates: { canonical: "https://urpass.space" },
   openGraph: {
-    title: "Event Registration & QR Check-In Software | URPASS",
+    title: "UrPass — Event Management Platform | Your event. Your way.",
     description:
-      "Create event registration pages, issue digital QR passes, accept ticket payments and check attendees in using any smartphone. Plans start at ₹29/month for the introductory offer.",
+      "Manage registrations, digital QR passes, ticketing, and attendee check-ins with UrPass. Choose the software or let our team help you set up.",
     url: "https://urpass.space",
     type: "website",
   },
@@ -312,7 +317,7 @@ export default async function LandingPage() {
           <div>
             <div className="flex flex-wrap items-center gap-2.5 mb-6 sm:mb-8">
               <span className="hero-badge inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold tracking-widest uppercase bg-brand/10 text-brand border border-brand/20 shadow-2xs">
-                Create. Share. Scan.
+                URPASS · EVENT MANAGEMENT PLATFORM
               </span>
               <Link
                 href="/mcp-event-management"
@@ -325,29 +330,30 @@ export default async function LandingPage() {
             </div>
 
             <h1 className="hero-line-1 text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-neutral-950 leading-[1.08] mb-4 sm:mb-6">
-              Event Registration, Ticketing &amp; QR Check-In Software
+              Your event. Your way.
             </h1>
 
             <p className="hero-sub text-base sm:text-xl text-neutral-600 leading-relaxed max-w-xl mb-8 sm:mb-10">
-              URPASS helps organisers create event registration pages, issue digital QR tickets, accept payments and scan attendees at the entrance &mdash; from one platform.
+              Manage registrations, digital QR passes, ticketing, and attendee check-ins with UrPass. High-speed smartphone check-ins with zero platform commission.
             </p>
 
-            <div className="hero-ctas flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-              <Link href="/signup" className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-neutral-900 text-white px-6 py-3.5 rounded-xl text-sm font-semibold hover:bg-neutral-700 transition-colors text-center shadow-xs">
-                Create Your Event
-                <span className="text-neutral-400">→</span>
+            <div className="hero-ctas flex flex-col sm:flex-row items-stretch sm:items-center flex-wrap gap-3">
+              <a href="#pricing" className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-neutral-900 text-white px-5 py-3.5 rounded-xl text-sm font-semibold hover:bg-neutral-800 transition-colors text-center shadow-xs">
+                Explore Plans
+                <ArrowRight className="w-4 h-4" />
+              </a>
+              <Link href="/managed-setup" className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-violet-600 text-white px-5 py-3.5 rounded-xl text-sm font-semibold hover:bg-violet-700 transition-colors text-center shadow-xs">
+                <Sparkles className="w-4 h-4 text-violet-200" />
+                Request a Setup
               </Link>
-              <Link href="/contact?subject=Book%20a%20Demo" className="w-full sm:w-auto inline-flex items-center justify-center gap-2 border border-neutral-300 bg-white px-5 py-3.5 rounded-xl text-sm font-semibold text-neutral-800 hover:bg-neutral-50 transition-colors text-center shadow-2xs">
+              <Link href="/contact?subject=Book%20a%20Demo" className="w-full sm:w-auto inline-flex items-center justify-center gap-2 border border-neutral-200 bg-white px-5 py-3.5 rounded-xl text-sm font-semibold text-neutral-800 hover:bg-neutral-50 hover:border-neutral-300 transition-colors text-center shadow-2xs">
                 Book a Demo
               </Link>
-              <a href="#how-it-works" className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-3.5 text-sm font-medium text-neutral-500 hover:text-neutral-900 transition-colors text-center">
-                See how it works ↓
-              </a>
             </div>
 
-            <p className="hero-meta mt-6 sm:mt-8 text-xs text-neutral-400">
-              {country === "GB" ? "Plans from £15/month" : "Intro offer: ₹29/month for first 2 months"} ·{" "}
-              <Link href="/mcp-event-management" className="text-neutral-600 hover:text-brand hover:underline font-medium">
+            <p className="hero-meta mt-6 sm:mt-8 text-xs text-neutral-500">
+              {country === "GB" ? "Plans from £15/month · Direct UK activation" : "Plans from ₹499/mo (Intro ₹29/mo) · Autopay required"} ·{" "}
+              <Link href="/mcp-event-management" className="text-neutral-700 hover:text-brand hover:underline font-medium">
                 Model Context Protocol (MCP) supported
               </Link>
             </p>
@@ -360,114 +366,60 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* ── MCP ONE-LINE STRIP ─────────────────────────────────────────── */}
-      <div className="border-y border-neutral-200/70 bg-neutral-50/80 py-2.5 px-4 text-center">
-        <p className="text-xs sm:text-sm text-neutral-600">
-          <span className="inline-flex items-center gap-1.5 font-semibold text-neutral-900 bg-neutral-200/70 border border-neutral-300/80 px-2 py-0.5 rounded-md text-[11px] mr-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
-            Model Context Protocol
-          </span>
-          Native Model Context Protocol support — control tickets, registrations and check-ins directly inside Claude Desktop &amp; Cursor.{" "}
-          <Link href="/mcp-event-management" className="font-semibold text-neutral-900 hover:underline ml-1 inline-flex items-center gap-0.5">
-            Explore MCP &rarr;
+      {/* ── MCP BANNER CALLOUT ─────────────────────────────────────────── */}
+      <div className="py-4 px-4 sm:px-8 bg-neutral-50/60 border-y border-neutral-200/80">
+        <div className="max-w-5xl mx-auto bg-gradient-to-r from-violet-50/90 via-white to-purple-50/80 border border-violet-200/80 rounded-2xl p-4 sm:p-5 shadow-xs hover:shadow-md transition-all duration-300 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-start sm:items-center gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-violet-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+              <span className="font-mono font-bold text-xs">MCP</span>
+            </div>
+            <div>
+              <div className="flex flex-wrap items-center gap-2 mb-1">
+                <span className="text-xs font-bold text-neutral-950 tracking-tight">Model Context Protocol</span>
+                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  Official Standard
+                </span>
+              </div>
+              <p className="text-xs sm:text-sm text-neutral-600 leading-relaxed">
+                Native Model Context Protocol support — control tickets, registrations, and check-ins directly inside Claude Desktop &amp; Cursor.
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/mcp-event-management"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-violet-700 hover:text-white bg-white hover:bg-violet-600 border border-violet-200 hover:border-violet-600 px-4 py-2 rounded-xl transition-all shadow-2xs shrink-0 group self-stretch sm:self-auto justify-center"
+          >
+            <span>Explore MCP</span>
+            <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
           </Link>
-        </p>
+        </div>
       </div>
 
-      {/* ── 02 PROBLEM ──────────────────────────────────────────────────── */}
-      <section className="py-14 sm:py-24 px-4 sm:px-8 bg-neutral-900">
-        <div className="max-w-5xl mx-auto">
-          <AnimateIn>
-            <h2 className="text-2xl sm:text-4xl font-semibold tracking-tight text-white text-center mb-8 sm:mb-14">
-              Stop managing event entry manually.
-            </h2>
-          </AnimateIn>
+      {/* ── 02 FEATURES ─────────────────────────────────────────────────── */}
+      <FeaturesSection />
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 sm:gap-4 mb-10 sm:mb-16">
-            {[
-              { Icon: FileText, title: "Manual lists",       desc: "Names scattered across spreadsheets, forms, and WhatsApp threads." },
-              { Icon: Clock,    title: "Long queues",        desc: "Attendees wait at the entrance while names are checked one by one." },
-              { Icon: EyeOff,   title: "No live visibility", desc: "You don't know who has actually arrived until the event is over." },
-            ].map(({ Icon, title, desc }, i) => (
-              <AnimateIn key={title} delay={i * 110} from="up">
-                <div className="bg-white/5 border border-white/10 rounded-2xl p-5 sm:p-6 h-full">
-                  <Icon className="w-5 h-5 text-white/40 mb-3" />
-                  <h3 className="font-semibold text-white mb-1.5 sm:mb-2 text-base sm:text-lg">{title}</h3>
-                  <p className="text-xs sm:text-sm text-white/50 leading-relaxed">{desc}</p>
-                </div>
-              </AnimateIn>
-            ))}
-          </div>
-
-          <AnimateIn delay={200}>
-            <div className="text-center">
-              <p className="text-xl sm:text-3xl font-semibold text-white">
-                URPASS fixes the last step.
-              </p>
-              <p className="mt-2 sm:mt-3 text-white/50 text-xs sm:text-sm">
-                From registration to check-in — in one tool.
-              </p>
-            </div>
-          </AnimateIn>
-        </div>
-      </section>
-
-      {/* ── 03 HOW IT WORKS ─────────────────────────────────────────────── */}
-      <section id="how-it-works" className="py-14 sm:py-28 px-4 sm:px-8 bg-white">
-        <div className="max-w-5xl mx-auto">
-          <AnimateIn>
-            <div className="text-center mb-10 sm:mb-16">
-              <p className="text-xs font-semibold tracking-widest text-brand mb-2 sm:mb-3">HOW IT WORKS</p>
-              <h2 className="text-2xl sm:text-4xl font-semibold tracking-tight">One simple workflow</h2>
-            </div>
-          </AnimateIn>
-
-          <div className="grid grid-cols-1 sm:grid-cols-5 gap-3 sm:gap-4">
-            {[
-              { n: "01", title: "Create", desc: "Create your event and application form." },
-              { n: "02", title: "Share",  desc: "Share the application link with your audience." },
-              { n: "03", title: "Pass",   desc: "Approve attendees. Passes are generated instantly." },
-              { n: "04", title: "Scan",   desc: "Scan the QR code at the entrance." },
-              { n: "05", title: "Track",  desc: "Dashboard updates in real time." },
-            ].map((step, i) => (
-              <AnimateIn key={step.n} delay={i * 80} from="up">
-                <div className="relative h-full">
-                  {i < 4 && (
-                    <div className="hidden sm:block absolute top-5 left-full w-full h-px bg-neutral-100 z-0" />
-                  )}
-                  <div className="relative bg-white border border-neutral-100 rounded-2xl p-4 sm:p-5 hover:border-brand-200 hover:shadow-sm transition-all h-full">
-                    <span className="text-xs font-mono text-neutral-300 mb-2 sm:mb-3 block">{step.n}</span>
-                    <h3 className="font-semibold text-sm sm:text-base text-neutral-900 mb-1 sm:mb-1.5">{step.title}</h3>
-                    <p className="text-xs text-neutral-500 leading-relaxed">{step.desc}</p>
-                  </div>
-                </div>
-              </AnimateIn>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── 04 PRODUCT SHOWCASE ──────────────────────────────────────────── */}
-      <section className="py-14 sm:py-28 px-4 sm:px-8 bg-neutral-50">
+      {/* ── 03B PRODUCT SHOWCASE (DASHBOARD & SCANNER PREVIEWS) ─────────── */}
+      <section className="py-14 sm:py-24 px-4 sm:px-8 bg-neutral-50/70 border-t border-neutral-100">
         <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 sm:gap-16 items-center">
           <AnimateIn from="left">
             <div>
               <p className="text-xs font-semibold tracking-widest text-brand mb-3 sm:mb-4">ORGANIZER DASHBOARD</p>
-              <h2 className="text-2xl sm:text-4xl font-semibold tracking-tight mb-4 sm:mb-6">
+              <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-neutral-950 mb-4 sm:mb-6">
                 Your event. Your passes.
               </h2>
-              <p className="text-neutral-500 text-sm sm:text-base leading-relaxed mb-6 sm:mb-8">
-                Manage everything you need from one simple dashboard. No complicated tools.
+              <p className="text-neutral-600 text-sm sm:text-base leading-relaxed mb-6 sm:mb-8">
+                Manage everything you need from one simple dashboard. Real-time attendee verification, bulk actions, and multi-tier pass controls.
               </p>
               <ul className="flex flex-col gap-2.5 sm:gap-3">
                 {[
                   "See applications as they come in",
-                  "Approve or reject attendees",
-                  "Generate passes with one click",
-                  "Track check-ins in real time",
+                  "Approve or reject attendees with one click",
+                  "Generate cryptographically verified digital passes",
+                  "Track live check-ins across multiple entrances",
                 ].map((item) => (
-                  <li key={item} className="flex items-center gap-3 text-xs sm:text-sm text-neutral-600">
-                    <span className="w-5 h-5 rounded-full bg-brand-50 border border-brand-100 flex items-center justify-center shrink-0">
+                  <li key={item} className="flex items-center gap-3 text-xs sm:text-sm text-neutral-700">
+                    <span className="w-5 h-5 rounded-full bg-brand/10 border border-brand/20 flex items-center justify-center shrink-0">
                       <svg className="w-3 h-3 text-brand" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                       </svg>
@@ -487,27 +439,27 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* ── 05 SCANNER SECTION ───────────────────────────────────────────── */}
-      <section className="py-14 sm:py-28 px-4 sm:px-8 bg-neutral-900 overflow-hidden">
+      {/* ── 03C SCANNER PREVIEW ─────────────────────────────────────────── */}
+      <section className="py-14 sm:py-24 px-4 sm:px-8 bg-neutral-900 overflow-hidden">
         <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 sm:gap-16 items-center">
           <AnimateIn from="left">
             <div>
               <p className="text-xs font-semibold tracking-widest text-brand-200 mb-3 sm:mb-4">QR CHECK-IN</p>
-              <h2 className="text-2xl sm:text-4xl font-semibold tracking-tight text-white mb-4 sm:mb-6">
+              <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-white mb-4 sm:mb-6">
                 Entry takes one scan.
               </h2>
-              <p className="text-white/50 text-sm sm:text-base leading-relaxed mb-6">
-                Open the scanner on any phone or tablet, point at the pass, and URPASS instantly validates the QR code and records the check-in.
+              <p className="text-white/60 text-sm sm:text-base leading-relaxed mb-6">
+                Open the scanner on any phone or tablet browser, point at the pass, and URPASS instantly validates the QR code in under 0.3 seconds.
               </p>
-              <ul className="flex flex-col gap-2 sm:gap-2.5">
+              <ul className="flex flex-col gap-2.5 sm:gap-3">
                 {[
-                  "Duplicate check-ins are blocked",
-                  "Invalid passes are flagged immediately",
-                  "Expired passes are caught",
-                  "No app required for attendees",
+                  "Duplicate check-ins are blocked immediately with alerts",
+                  "Invalid and expired passes are flagged on screen",
+                  "Audio and haptic cues for fast throughput",
+                  "Zero app installation required for staff or attendees",
                 ].map((item) => (
-                  <li key={item} className="flex items-center gap-3 text-xs sm:text-sm text-white/60">
-                    <span className="w-1.5 h-1.5 rounded-full bg-brand block shrink-0" />
+                  <li key={item} className="flex items-center gap-3 text-xs sm:text-sm text-white/70">
+                    <span className="w-1.5 h-1.5 rounded-full bg-violet-400 block shrink-0" />
                     {item}
                   </li>
                 ))}
@@ -523,15 +475,15 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* ── 06 EVENT TYPES ───────────────────────────────────────────────── */}
-      <section className="py-14 sm:py-24 px-4 sm:px-8 bg-white">
+      {/* ── 03D EVENT TYPES ──────────────────────────────────────────────── */}
+      <section className="py-14 sm:py-20 px-4 sm:px-8 bg-white border-b border-neutral-100">
         <div className="max-w-5xl mx-auto text-center">
           <AnimateIn>
-            <h2 className="text-2xl sm:text-4xl font-semibold tracking-tight mb-3 sm:mb-4">
+            <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-neutral-950 mb-3 sm:mb-4">
               From workshops to college fests.
             </h2>
             <p className="text-neutral-500 text-sm sm:text-base mb-8 sm:mb-12 max-w-md mx-auto">
-              If you&apos;re organizing an event, URPASS keeps entry simple.
+              If you&apos;re organizing an event, URPASS keeps entry simple and secure.
             </p>
           </AnimateIn>
 
@@ -558,8 +510,11 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* ── 07 PRICING ───────────────────────────────────────────────────── */}
+      {/* ── 04 PRICING ─────────────────────────────────────────────────── */}
       <HomePricingSection initialCountry={country} />
+
+      {/* ── 05 CUSTOMER TESTIMONIALS & REAL EVENT EXAMPLES ────────────────── */}
+      <TestimonialsSection />
 
       {/* ── 08 GEO / AI ENTITY ANSWERS ───────────────────────────────────── */}
       <section className="py-14 sm:py-20 px-4 sm:px-8 bg-neutral-50/70 border-y border-neutral-100">
@@ -599,28 +554,40 @@ export default async function LandingPage() {
       <FAQSection initialCountry={country} />
 
       {/* ── 09 FINAL CTA ─────────────────────────────────────────────────── */}
-      <section className="py-16 sm:py-28 px-4 sm:px-8 bg-neutral-900 text-center">
+      <section className="py-16 sm:py-28 px-4 sm:px-8 bg-neutral-950 text-center text-white relative">
         <AnimateIn>
           <div className="max-w-2xl mx-auto">
-            <h2 className="text-3xl sm:text-5xl font-semibold tracking-tight text-white mb-4 sm:mb-5 leading-tight">
-              Your next event deserves a simpler entry.
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold tracking-widest uppercase bg-brand/10 text-brand-200 border border-brand/20 mb-4">
+              URPASS · EVENT MANAGEMENT PLATFORM
+            </span>
+            <h2 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white mb-4 leading-tight">
+              Modernize your event entry today.
             </h2>
-            <p className="text-white/50 text-sm sm:text-base mb-3">
-              Create your event. Share the link. Scan the passes.
+            <p className="text-neutral-400 text-sm sm:text-base mb-8 max-w-xl mx-auto leading-relaxed">
+              Launch registration in minutes, issue digital passes, and check in attendees at your entrance doors in under 0.3 seconds.
             </p>
           </div>
         </AnimateIn>
-        <AnimateIn delay={120} from="scale">
-          <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
-            <Link href="/signup" className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white text-neutral-900 px-8 py-3.5 sm:py-4 rounded-xl text-sm font-semibold hover:bg-neutral-100 transition-colors shadow-xs">
-              Create Your Event <span>→</span>
-            </Link>
-            <Link href="/contact?subject=Book%20a%20Demo" className="w-full sm:w-auto inline-flex items-center justify-center gap-2 border border-neutral-700 bg-neutral-800 text-white px-8 py-3.5 sm:py-4 rounded-xl text-sm font-semibold hover:bg-neutral-700 transition-colors">
+        <AnimateIn delay={100} from="scale">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 max-w-xl mx-auto">
+            <a
+              href="#pricing"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white text-neutral-950 px-7 py-3.5 rounded-xl text-sm font-semibold hover:bg-neutral-100 transition-colors shadow-sm"
+            >
+              <span>Explore Plans</span>
+              <ArrowRight className="w-4 h-4" />
+            </a>
+            <Link
+              href="/contact?subject=Book%20a%20Demo"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 border border-neutral-800 bg-neutral-900 text-white px-6 py-3.5 rounded-xl text-sm font-semibold hover:bg-neutral-800 transition-colors"
+            >
               Book a Demo
             </Link>
           </div>
-          <p className="mt-4 sm:mt-5 text-xs text-white/30">
-            {country === "GB" ? "Plans from £15/month · Cancel anytime" : "Intro offer ₹29/month · Cancel renewal anytime"}
+          <p className="mt-6 text-xs text-neutral-400">
+            {country === "GB"
+              ? "Plans from £15/mo · Direct UK activation · Cancel renewal anytime"
+              : "Plans from ₹499/mo (Intro ₹29/mo) · Autopay required · Cancel renewal anytime"}
           </p>
         </AnimateIn>
       </section>

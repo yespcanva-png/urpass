@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
   Loader2,
@@ -18,13 +19,29 @@ import { InstagramIcon, YoutubeIcon, SOCIAL_LINKS } from "@/components/landing/S
 const inputCls =
   "border border-neutral-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-neutral-900 transition-colors bg-white placeholder:text-neutral-300 w-full";
 
-export default function ContactPage() {
+function ContactContent() {
+  const searchParams = useSearchParams();
+  const subjectParam = searchParams.get("subject") ?? "";
+  const packageParam = searchParams.get("package") ?? "";
+  const typeParam = searchParams.get("type") ?? "";
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!message) {
+      if (subjectParam.toLowerCase().includes("demo")) {
+        setMessage("Hi UrPass team, I would like to schedule a product demo for our upcoming event.\n\nOrganization / College:\nExpected Attendees:\nTentative Date:");
+      } else if (typeParam === "managed" || subjectParam.toLowerCase().includes("setup")) {
+        const pkgName = packageParam ? packageParam.charAt(0).toUpperCase() + packageParam.slice(1) : "Essential";
+        setMessage(`Hi UrPass team, I would like to request the Managed Event Setup (${pkgName} Package) for our event.\n\nEvent Name:\nExpected Attendees:\nEvent Date & City:\nSpecific Requirements:`);
+      }
+    }
+  }, [subjectParam, packageParam, typeParam, message]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -297,5 +314,13 @@ export default function ContactPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ContactPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-neutral-50 flex items-center justify-center"><Loader2 className="w-6 h-6 animate-spin text-neutral-400" /></div>}>
+      <ContactContent />
+    </Suspense>
   );
 }

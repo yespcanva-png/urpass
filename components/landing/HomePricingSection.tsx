@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ShieldCheck, ArrowRight } from "lucide-react";
+import { Check, ShieldCheck, ArrowRight, Zap, Building2, Sparkles, CreditCard, Clock } from "lucide-react";
 import AnimateIn from "@/components/ui/AnimateIn";
 import { detectCountryClient, persistCountryPreference } from "@/lib/country-config";
 
@@ -29,113 +29,134 @@ export default function HomePricingSection({ initialCountry = "IN" }: Props) {
     return () => window.removeEventListener("urpass_country_changed", onCountryChanged);
   }, []);
 
-  function handleMarketChange(target: "IN" | "GB") {
-    setCountry(target);
-    persistCountryPreference(target);
-  }
-
   const isUk = country === "GB";
 
   const plans = isUk
     ? [
         {
+          id: "starter",
           name: "Starter",
+          target: "For small workshops, meetups & single sessions",
           price: "£15",
           period: "/month +VAT",
+          renewalNotice: "UK direct activation · Cancel anytime",
           recommended: false,
           cta: "Choose Starter",
           href: "/signup?from=home-pricing&plan=starter&country=GB&next=/billing",
-          subtext: "UK direct activation · Cancel anytime",
           features: [
-            "10 events/month",
-            "500 registrations/month",
-            "2 organizers",
-            "CSV import & export",
-            "Standard analytics",
+            "10 events per month",
+            "500 registrations per month",
+            "2 organizer team seats",
+            "10 custom registration form fields",
+            "Instant digital QR passes",
+            "CSV bulk attendee import & export",
+            "Standard attendance analytics",
           ],
         },
         {
+          id: "pro",
           name: "Pro",
+          target: "For college fests, hackathons & conferences",
           price: "£35",
           period: "/month +VAT",
+          renewalNotice: "UK direct activation · Cancel anytime",
           recommended: true,
           cta: "Choose Pro",
           href: "/signup?from=home-pricing&plan=pro&country=GB&next=/billing",
-          subtext: "UK direct activation · Cancel anytime",
           features: [
             "Unlimited events",
-            "2,500 registrations/month",
-            "5 organizers",
-            "Custom pass design",
-            "Advanced analytics",
-            "Priority support",
+            "2,500 registrations per month",
+            "5 organizer team seats",
+            "Custom branded pass design & logo",
+            "Multiple ticket tiers (VIP, Speaker, Attendee)",
+            "Multi-gate scanner synchronization",
+            "Advanced attendance analytics",
+            "Priority email & chat support",
           ],
         },
         {
+          id: "business",
           name: "Business",
+          target: "For multi-track summits, agencies & universities",
           price: "£79",
           period: "/month +VAT",
+          renewalNotice: "UK direct activation · Cancel anytime",
           recommended: false,
           cta: "Choose Business",
           href: "/signup?from=home-pricing&plan=business&country=GB&next=/billing",
-          subtext: "UK direct activation · Cancel anytime",
           features: [
             "Unlimited events",
-            "10,000 registrations/month",
-            "15 organizers",
-            "Custom domain",
-            "API & webhooks",
+            "10,000 registrations per month",
+            "15 organizer team seats",
+            "Custom domain branding",
+            "Full API access & webhooks",
+            "Session-level QR permissions",
+            "Role-based staff permissions",
+            "Dedicated onboarding manager",
           ],
         },
       ]
     : [
         {
+          id: "starter",
           name: "Starter",
+          target: "For small workshops, meetups & single sessions",
           price: "₹29",
           period: "/month",
+          renewalNotice: "First 2 months introductory offer · then ₹499/mo +GST",
           recommended: false,
           cta: "Get Started for ₹29",
           href: "/signup?from=home-pricing&plan=starter&next=/billing",
-          subtext: "First 2 months · Then ₹499/mo +GST",
           features: [
-            "10 events/month",
-            "500 registrations/month",
-            "2 organizers",
-            "CSV import & export",
-            "Standard analytics",
+            "10 events per month",
+            "500 registrations per month",
+            "2 organizer team seats",
+            "10 custom registration form fields",
+            "Instant digital QR passes",
+            "CSV bulk attendee import & export",
+            "Standard attendance analytics",
           ],
         },
         {
+          id: "pro",
           name: "Pro",
+          target: "For college fests, hackathons & conferences",
           price: "₹29",
           period: "/month",
+          renewalNotice: "First 2 months introductory offer · then ₹999/mo +GST",
           recommended: true,
           cta: "Get Started for ₹29",
           href: "/signup?from=home-pricing&plan=pro&next=/billing",
-          subtext: "First 2 months · Then ₹999/mo +GST",
           features: [
             "Unlimited events",
-            "2,500 registrations/month",
-            "5 organizers",
-            "Custom pass design",
-            "Advanced analytics",
-            "Priority support",
+            "2,500 registrations per month",
+            "5 organizer team seats",
+            "Custom branded pass design & logo",
+            "Multiple ticket tiers (VIP, Speaker, Attendee)",
+            "Multi-gate scanner synchronization",
+            "Advanced attendance analytics",
+            "Priority WhatsApp & email support",
           ],
         },
         {
+          id: "business",
           name: "Business",
+          target: "For multi-track summits, agencies & universities",
           price: "₹29",
           period: "/month",
+          renewalNotice: "First 2 months introductory offer · then ₹2,499/mo +GST",
           recommended: false,
           cta: "Get Started for ₹29",
           href: "/signup?from=home-pricing&plan=business&next=/billing",
-          subtext: "First 2 months · Then ₹2,499/mo +GST",
           features: [
             "Unlimited events",
-            "10,000 registrations/month",
-            "15 organizers",
-            "Custom domain",
-            "API & webhooks",
+            "10,000 registrations per month",
+            "15 organizer team seats",
+            "Custom domain branding",
+            "Full API access & webhooks",
+            "Session-level QR permissions",
+            "Role-based staff permissions",
+            "Dedicated account manager",
           ],
         },
       ];
@@ -146,49 +167,63 @@ export default function HomePricingSection({ initialCountry = "IN" }: Props) {
 
   const founderDealHref = isUk ? "/founder-lifetime-deal?country=GB" : "/founder-lifetime-deal";
 
-  const subheaderText = isUk
-    ? "£15 / £35 / £79 monthly · Direct UK activation · Cancel renewal anytime"
-    : "₹29/month for your first 2 months · Then regular monthly price · Autopay required";
-
   return (
-    <section id="pricing" className="py-14 sm:py-28 px-4 sm:px-8 bg-neutral-50">
-      <div className="max-w-5xl mx-auto">
+    <section id="pricing" className="py-16 sm:py-28 px-4 sm:px-8 bg-neutral-50/70 border-t border-neutral-100 relative">
+      <div className="max-w-6xl mx-auto">
         <AnimateIn>
-          <div className="text-center mb-10 sm:mb-14">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-50 border border-brand-100 text-brand text-[11px] sm:text-xs font-bold tracking-wider uppercase mb-3">
-              {isUk ? "FLEXIBLE EVENT PLANS" : "INTRODUCTORY OFFER · ₹29/MONTH"}
+          <div className="text-center mb-12 sm:mb-16">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white border border-neutral-200/90 text-neutral-800 text-xs font-semibold tracking-wide shadow-2xs mb-4">
+              <span className="w-2 h-2 rounded-full bg-brand" />
+              <span>{isUk ? "TRANSPARENT UK PRICING" : "INTRODUCTORY OFFER · ₹29/MONTH"}</span>
             </div>
-            <h2 className="text-2xl sm:text-4xl font-semibold tracking-tight">
-              {isUk ? "Simple pricing for every event." : "Get started for ₹29/month."}
+            <h2 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-neutral-950">
+              Predictable pricing for modern event teams
             </h2>
-            <p className="mt-2 sm:mt-3 text-neutral-500 text-xs sm:text-sm">
-              {subheaderText}
+            <p className="mt-3.5 text-neutral-600 text-sm sm:text-base max-w-2xl mx-auto leading-relaxed">
+              {isUk
+                ? "Simple flat-rate monthly subscriptions with 0% platform commission on ticket sales. Cancel anytime."
+                : "Get full platform access for ₹29/month for your first 2 months. Keep 100% of your ticket revenue with direct bank payouts."}
             </p>
 
+            {/* Corporate Value Strip */}
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-2.5 sm:gap-4 text-xs text-neutral-600 font-medium">
+              <span className="inline-flex items-center gap-1.5 bg-white border border-neutral-200/80 px-3 py-1 rounded-full shadow-2xs">
+                <CreditCard className="w-3.5 h-3.5 text-brand" />
+                0% Per-Ticket Platform Commission
+              </span>
+              <span className="inline-flex items-center gap-1.5 bg-white border border-neutral-200/80 px-3 py-1 rounded-full shadow-2xs">
+                <Zap className="w-3.5 h-3.5 text-brand" />
+                Sub-Second Smartphone QR Scan
+              </span>
+              <span className="inline-flex items-center gap-1.5 bg-white border border-neutral-200/80 px-3 py-1 rounded-full shadow-2xs">
+                <ShieldCheck className="w-3.5 h-3.5 text-brand" />
+                Direct UPI / Bank Payouts
+              </span>
+            </div>
           </div>
         </AnimateIn>
 
         {/* ── Founder Lifetime Plan Callout Banner ── */}
         <AnimateIn delay={60} from="up">
-          <div className="relative overflow-hidden rounded-2xl bg-neutral-900 border border-neutral-800 p-6 sm:p-8 text-white shadow-sm mb-8 sm:mb-10">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
-              <div className="space-y-2">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-neutral-800 border border-neutral-700 text-neutral-300">
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+          <div className="relative overflow-hidden rounded-2xl bg-neutral-950 border border-neutral-800 p-6 sm:p-7 text-white shadow-xl mb-10 sm:mb-12">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-5 relative z-10">
+              <div className="space-y-1.5">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-950/80 border border-emerald-500/30 text-emerald-300">
+                  <ShieldCheck className="w-3 h-3 text-emerald-400" />
                   <span>FOUNDER DEAL · LIMITED TO 20 ACCOUNTS ONLY</span>
                 </div>
-                <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
+                <h3 className="text-lg sm:text-xl font-bold tracking-tight text-white">
                   {founderPriceTitle}
                 </h3>
                 <p className="text-xs sm:text-sm text-neutral-400 max-w-2xl leading-relaxed">
-                  Permanent access to all currently available URPASS features for a one-time payment. Zero renewal fees forever. Valid for the lifetime of URPASS platform.
+                  Permanent access to all currently available URPASS features for a one-time payment. Zero renewal fees forever. Valid for the lifetime of the URPASS platform.
                 </p>
               </div>
 
-              <div className="shrink-0 flex flex-col sm:flex-row gap-3">
+              <div className="shrink-0 flex items-center">
                 <Link
                   href={founderDealHref}
-                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-white text-neutral-900 hover:bg-neutral-100 font-semibold text-xs sm:text-sm transition-colors text-center whitespace-nowrap shadow-sm"
+                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-white text-neutral-950 hover:bg-neutral-100 font-semibold text-xs sm:text-sm transition-colors text-center whitespace-nowrap shadow-sm"
                 >
                   <span>View Lifetime Deal</span>
                   <ArrowRight className="w-4 h-4" />
@@ -198,89 +233,146 @@ export default function HomePricingSection({ initialCountry = "IN" }: Props) {
           </div>
         </AnimateIn>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch">
+        {/* ── 3 Corporate Pricing Cards ── */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch mb-10 sm:mb-12">
           {plans.map((plan, i) => (
-            <AnimateIn key={plan.name} delay={i * 90} from="up">
+            <AnimateIn key={plan.name} delay={i * 80} from="up">
               <div
-                className={`relative rounded-2xl flex flex-col p-5 sm:p-7 h-full ${
+                className={`relative rounded-3xl flex flex-col justify-between p-6 sm:p-8 h-full transition-all ${
                   plan.recommended
-                    ? "bg-neutral-900 text-white shadow-xl"
-                    : "bg-white border border-neutral-100"
+                    ? "bg-neutral-950 text-white border-2 border-violet-500 shadow-2xl shadow-violet-950/20"
+                    : "bg-white text-neutral-900 border border-neutral-200/90 hover:border-neutral-300 shadow-xs hover:shadow-md"
                 }`}
               >
                 {plan.recommended && (
-                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] font-bold tracking-widest bg-brand text-white px-3 py-1 rounded-full">
-                    RECOMMENDED
+                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] font-extrabold tracking-widest bg-violet-600 text-white px-3.5 py-1 rounded-full shadow-md uppercase">
+                    MOST POPULAR
                   </span>
                 )}
-                <p
-                  className={`text-xs font-semibold tracking-widest mb-3 sm:mb-4 ${
-                    plan.recommended ? "text-white/50" : "text-neutral-400"
-                  }`}
-                >
-                  {plan.name.toUpperCase()}
-                </p>
-                <div className="flex items-baseline gap-1 mb-4 sm:mb-6">
-                  <span className="text-3xl sm:text-4xl font-semibold">{plan.price}</span>
-                  <span
-                    className={`text-xs sm:text-sm ${
-                      plan.recommended ? "text-white/40" : "text-neutral-400"
+
+                <div>
+                  <div className="mb-4">
+                    <p
+                      className={`text-xs font-bold uppercase tracking-wider ${
+                        plan.recommended ? "text-violet-300" : "text-neutral-500"
+                      }`}
+                    >
+                      {plan.name}
+                    </p>
+                    <p
+                      className={`text-xs mt-1 leading-snug min-h-[34px] ${
+                        plan.recommended ? "text-neutral-400" : "text-neutral-500"
+                      }`}
+                    >
+                      {plan.target}
+                    </p>
+                  </div>
+
+                  <div className="flex items-baseline gap-1.5 mb-2">
+                    <span className="text-3xl sm:text-4xl font-extrabold tracking-tight">
+                      {plan.price}
+                    </span>
+                    <span
+                      className={`text-xs sm:text-sm font-medium ${
+                        plan.recommended ? "text-neutral-400" : "text-neutral-500"
+                      }`}
+                    >
+                      {plan.period}
+                    </span>
+                  </div>
+
+                  <div
+                    className={`rounded-lg px-2.5 py-1.5 text-[11px] mb-6 font-medium ${
+                      plan.recommended
+                        ? "bg-neutral-900 border border-neutral-800 text-violet-300"
+                        : "bg-neutral-100 border border-neutral-200/80 text-neutral-600"
                     }`}
                   >
-                    {plan.period}
-                  </span>
+                    {plan.renewalNotice}
+                  </div>
+
+                  <div
+                    className={`border-t pt-5 mb-6 ${
+                      plan.recommended ? "border-neutral-800/80" : "border-neutral-100"
+                    }`}
+                  >
+                    <p
+                      className={`text-[11px] font-semibold uppercase tracking-wider mb-3.5 ${
+                        plan.recommended ? "text-neutral-400" : "text-neutral-500"
+                      }`}
+                    >
+                      Plan Inclusions:
+                    </p>
+                    <ul className="flex flex-col gap-2.5">
+                      {plan.features.map((f) => (
+                        <li key={f} className="flex items-start gap-2.5 text-xs sm:text-sm">
+                          <Check
+                            className={`w-4 h-4 shrink-0 mt-0.5 ${
+                              plan.recommended ? "text-violet-400" : "text-brand"
+                            }`}
+                          />
+                          <span
+                            className={plan.recommended ? "text-neutral-300" : "text-neutral-700"}
+                          >
+                            {f}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
-                <ul className="flex flex-col gap-2 sm:gap-2.5 flex-1 mb-6 sm:mb-8">
-                  {plan.features.map((f) => (
-                    <li key={f} className="flex items-center gap-2.5 text-xs sm:text-sm">
-                      <svg
-                        className={`w-4 h-4 shrink-0 ${
-                          plan.recommended ? "text-brand-200" : "text-brand"
-                        }`}
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
-                      <span
-                        className={plan.recommended ? "text-white/70" : "text-neutral-600"}
-                      >
-                        {f}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-                <div className="flex flex-col gap-1.5">
+
+                <div className="flex flex-col gap-2 pt-2">
                   <Link
                     href={plan.href}
-                    className={`w-full text-center py-2.5 sm:py-3 rounded-xl text-sm font-semibold transition-colors ${
+                    className={`w-full text-center py-3 px-4 rounded-xl text-xs sm:text-sm font-semibold transition-all shadow-xs ${
                       plan.recommended
-                        ? "bg-white text-neutral-900 hover:bg-neutral-100"
-                        : "bg-neutral-900 text-white hover:bg-neutral-700"
+                        ? "bg-violet-600 text-white hover:bg-violet-500 shadow-md"
+                        : "bg-neutral-950 text-white hover:bg-neutral-800"
                     }`}
                   >
                     {plan.cta}
                   </Link>
-                  {plan.subtext && (
-                    <p
-                      className={`text-[10px] text-center ${
-                        plan.recommended ? "text-white/40" : "text-neutral-400"
-                      }`}
-                    >
-                      {plan.subtext}
-                    </p>
-                  )}
+                  <p
+                    className={`text-[10px] text-center ${
+                      plan.recommended ? "text-neutral-500" : "text-neutral-400"
+                    }`}
+                  >
+                    Instant account activation · Cancel renewal anytime
+                  </p>
                 </div>
               </div>
             </AnimateIn>
           ))}
         </div>
+
+        {/* ── Enterprise / Custom Inquiry Card ── */}
+        <AnimateIn delay={120} from="up">
+          <div className="rounded-2xl bg-white border border-neutral-200/90 p-5 sm:p-6 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-start sm:items-center gap-3.5">
+              <div className="w-10 h-10 rounded-xl bg-neutral-100 border border-neutral-200 flex items-center justify-center shrink-0 text-neutral-800">
+                <Building2 className="w-5 h-5 text-neutral-700" />
+              </div>
+              <div>
+                <p className="font-semibold text-sm sm:text-base text-neutral-900">
+                  Universities, Large Summits &amp; Enterprise Requirements
+                </p>
+                <p className="text-xs sm:text-sm text-neutral-500 mt-0.5">
+                  Need custom attendee limits, multi-campus licensing, tailored ERP integration, or GST billing?
+                </p>
+              </div>
+            </div>
+            <div className="shrink-0 flex items-center gap-3 w-full sm:w-auto">
+              <Link
+                href="/contact?subject=Enterprise%20Inquiry"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-neutral-900 bg-neutral-100 hover:bg-neutral-200 border border-neutral-200/80 transition-colors"
+              >
+                <span>Talk to Enterprise Sales</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+          </div>
+        </AnimateIn>
       </div>
     </section>
   );
