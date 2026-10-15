@@ -231,9 +231,6 @@ export default function ManagedEventSetupContent({
   canonicalUrl = "https://urpass.space/managed-setup",
 }: ManagedEventSetupContentProps) {
   const [country, setCountry] = useState<"IN" | "GB">("IN");
-  const [activeShowcaseTab, setActiveShowcaseTab] = useState<
-    "pass" | "scanner" | "portal" | "dashboard"
-  >("pass");
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   useEffect(() => {
@@ -411,363 +408,46 @@ export default function ManagedEventSetupContent({
         style={{ paddingTop: "calc(var(--pwa-top-bar-height, 0px) + 6rem)" }}
         className="flex-1 pb-20 transition-[padding-top] duration-200"
       >
-        {/* ── EXECUTIVE CORPORATE HERO ── */}
-        <section className="px-4 sm:px-8 max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-10 items-center mb-16 sm:mb-20">
-            {/* Hero Left: Corporate Value Positioning */}
-            <div className="lg:col-span-7">
-              <AnimateIn>
-                <div className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-neutral-100 text-neutral-800 border border-neutral-200/90 mb-6 shadow-2xs">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0 animate-pulse" />
-                  <span className="font-semibold text-neutral-900">UrPass Managed Services</span>
-                  <span className="text-neutral-300">·</span>
-                  <span className="text-neutral-600 font-medium">Turnkey Technical Operations</span>
-                </div>
-
-                <h1 className="text-3xl sm:text-5xl lg:text-[54px] font-extrabold tracking-tight text-neutral-950 mb-5 leading-[1.12]">
-                  Managed Event Setup &amp; Technical Operations
-                </h1>
-
-                <p className="text-base sm:text-lg text-neutral-600 leading-relaxed mb-7 max-w-2xl font-normal">
-                  Eliminate setup friction and operational risk. The UrPass engineering team configures, tests, and operationalizes your branded registration portal, ticketing tiers, payment routing, and sub-second QR entrance gates — with zero platform ticket commissions.
-                </p>
-
-                {/* Corporate Micro Value Badges */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8 text-xs sm:text-sm text-neutral-700">
-                  <div className="flex items-center gap-2.5 bg-neutral-50/80 border border-neutral-200/70 rounded-xl px-3.5 py-2.5 shadow-2xs">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                    <span className="font-medium text-neutral-900">0% Platform Fee · Direct Bank Settlement</span>
-                  </div>
-                  <div className="flex items-center gap-2.5 bg-neutral-50/80 border border-neutral-200/70 rounded-xl px-3.5 py-2.5 shadow-2xs">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                    <span className="font-medium text-neutral-900">24–48h Turnaround &amp; Gate Load Test</span>
-                  </div>
-                  <div className="flex items-center gap-2.5 bg-neutral-50/80 border border-neutral-200/70 rounded-xl px-3.5 py-2.5 shadow-2xs">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                    <span className="font-medium text-neutral-900">Sub-second Browser QR Scanners</span>
-                  </div>
-                  <div className="flex items-center gap-2.5 bg-neutral-50/80 border border-neutral-200/70 rounded-xl px-3.5 py-2.5 shadow-2xs">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                    <span className="font-medium text-neutral-900">Dedicated Technical Lead on Standby</span>
-                  </div>
-                </div>
-
-                {/* Primary CTA Buttons */}
-                <div className="flex flex-wrap items-center gap-3.5 mb-3">
-                  <a
-                    href="#managed-pricing"
-                    className="inline-flex items-center justify-center gap-2.5 bg-neutral-950 hover:bg-neutral-900 text-white font-semibold text-sm sm:text-base px-7 py-3.5 rounded-xl shadow-sm transition-all group"
-                  >
-                    <span>View Managed Pricing Plans</span>
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                  </a>
-
-                  <a
-                    href="#quote-form"
-                    className="inline-flex items-center justify-center gap-2 bg-white hover:bg-neutral-50 text-neutral-900 font-semibold text-sm sm:text-base px-6 py-3.5 rounded-xl border border-neutral-300 shadow-2xs transition-all"
-                  >
-                    <span>Request Custom Quote</span>
-                  </a>
-                </div>
-
-                <p className="text-xs text-neutral-500 font-medium">
-                  One-time package fee · Zero platform ticket commission · 100% Attendee data ownership
-                </p>
-              </AnimateIn>
+        {/* ── EXECUTIVE CLEAN CORPORATE HERO ── */}
+        <section className="px-4 sm:px-8 max-w-4xl mx-auto text-center mb-16 sm:mb-20">
+          <AnimateIn>
+            <div className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-neutral-100 text-neutral-800 border border-neutral-200/90 mb-6 shadow-2xs">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0 animate-pulse" />
+              <span className="font-semibold text-neutral-900">UrPass Managed Services</span>
+              <span className="text-neutral-300">·</span>
+              <span className="text-neutral-600 font-medium">Turnkey Technical Operations</span>
             </div>
 
-            {/* Hero Right: Live Interactive Operations Console */}
-            <div className="lg:col-span-5">
-              <AnimateIn delay={100} from="up">
-                <div className="bg-neutral-950 rounded-2xl p-5 sm:p-6 shadow-xl border border-neutral-800 text-white relative overflow-hidden">
-                  {/* Subtle enterprise highlight */}
-                  <div className="absolute top-0 right-0 w-56 h-56 bg-violet-600/10 rounded-full blur-3xl pointer-events-none" />
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-neutral-950 mb-6 leading-[1.12]">
+              Managed Event Setup &amp; Technical Operations
+            </h1>
 
-                  {/* Header of Showcase Card */}
-                  <div className="flex items-center justify-between pb-3.5 mb-4 border-b border-neutral-800 relative z-10">
-                    <div className="flex items-center gap-2">
-                      <div className="flex items-center gap-1.5">
-                        <span className="w-2.5 h-2.5 rounded-full bg-neutral-700 inline-block" />
-                        <span className="w-2.5 h-2.5 rounded-full bg-neutral-700 inline-block" />
-                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500/80 inline-block" />
-                      </div>
-                      <span className="text-xs font-mono font-medium tracking-wide text-neutral-300 ml-1.5">
-                        Operations Console
-                      </span>
-                    </div>
-                    <span className="text-[10px] bg-neutral-900 text-neutral-300 font-medium px-2 py-0.5 rounded-full border border-neutral-800">
-                      Pre-Flight Preview
-                    </span>
-                  </div>
+            <p className="text-base sm:text-lg text-neutral-600 leading-relaxed mb-8 max-w-2xl mx-auto font-normal">
+              Eliminate setup friction and operational risk. The UrPass engineering team configures, tests, and delivers your branded registration portal, ticketing tiers, payment routing, and sub-second QR entrance gates — with zero platform ticket commissions.
+            </p>
 
-                  {/* Showcase Tabs */}
-                  <div className="grid grid-cols-4 gap-1 p-1 bg-neutral-900 rounded-xl mb-4 text-[11px] font-medium relative z-10 border border-neutral-800">
-                    <button
-                      type="button"
-                      onClick={() => setActiveShowcaseTab("pass")}
-                      className={cn(
-                        "py-1.5 px-2 rounded-lg text-center transition-all",
-                        activeShowcaseTab === "pass"
-                          ? "bg-neutral-800 text-white font-semibold shadow-xs border border-neutral-700/80"
-                          : "text-neutral-400 hover:text-white"
-                      )}
-                    >
-                      QR Pass
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setActiveShowcaseTab("scanner")}
-                      className={cn(
-                        "py-1.5 px-2 rounded-lg text-center transition-all",
-                        activeShowcaseTab === "scanner"
-                          ? "bg-neutral-800 text-white font-semibold shadow-xs border border-neutral-700/80"
-                          : "text-neutral-400 hover:text-white"
-                      )}
-                    >
-                      Scanner
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setActiveShowcaseTab("portal")}
-                      className={cn(
-                        "py-1.5 px-2 rounded-lg text-center transition-all",
-                        activeShowcaseTab === "portal"
-                          ? "bg-neutral-800 text-white font-semibold shadow-xs border border-neutral-700/80"
-                          : "text-neutral-400 hover:text-white"
-                      )}
-                    >
-                      Portal
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setActiveShowcaseTab("dashboard")}
-                      className={cn(
-                        "py-1.5 px-2 rounded-lg text-center transition-all",
-                        activeShowcaseTab === "dashboard"
-                          ? "bg-neutral-800 text-white font-semibold shadow-xs border border-neutral-700/80"
-                          : "text-neutral-400 hover:text-white"
-                      )}
-                    >
-                      Live Hub
-                    </button>
-                  </div>
+            {/* Primary CTA Buttons */}
+            <div className="flex flex-wrap items-center justify-center gap-3.5 mb-4">
+              <a
+                href="#managed-pricing"
+                className="inline-flex items-center justify-center gap-2.5 bg-neutral-950 hover:bg-neutral-900 text-white font-semibold text-sm sm:text-base px-7 py-3.5 rounded-xl shadow-sm transition-all group"
+              >
+                <span>View Managed Pricing Plans</span>
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </a>
 
-                  {/* Showcase Dynamic Content */}
-                  <div className="relative z-10 min-h-[300px] flex items-center justify-center">
-                    {activeShowcaseTab === "pass" && (
-                      <div className="w-full bg-neutral-900 rounded-xl border border-neutral-800 p-4 sm:p-5 shadow-inner">
-                        <div className="flex items-center justify-between pb-3 border-b border-neutral-800 mb-3">
-                          <span className="text-[10px] font-bold text-neutral-300 uppercase tracking-widest font-mono">
-                            URPASS CREDENTIAL
-                          </span>
-                          <span className="text-[10px] bg-emerald-500/15 text-emerald-400 font-semibold px-2 py-0.5 rounded border border-emerald-500/30">
-                            VERIFIED VALID
-                          </span>
-                        </div>
-
-                        <div className="flex items-center justify-between gap-4 mb-4">
-                          <div>
-                            <div className="text-sm font-bold text-white">
-                              Dr. Sarah Jenkins
-                            </div>
-                            <div className="text-xs text-neutral-400">
-                              Global AI Summit · Delegate
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <span className="text-[11px] font-mono font-bold text-neutral-200 bg-neutral-800 px-2 py-0.5 rounded border border-neutral-700">
-                              GATE 1 · VIP
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Visual Mock QR */}
-                        <div className="bg-white p-3 rounded-xl mx-auto w-36 h-36 flex items-center justify-center shadow-md my-2 relative">
-                          <QrCode className="w-28 h-28 text-neutral-950" />
-                          <div className="absolute inset-x-2 h-0.5 bg-violet-600 animate-pulse" />
-                        </div>
-
-                        <div className="text-center mt-3 pt-3 border-t border-neutral-800 text-[10px] font-mono text-neutral-400">
-                          TOKEN: #UP-2026-98124 · Cryptographically Signed
-                        </div>
-                      </div>
-                    )}
-
-                    {activeShowcaseTab === "scanner" && (
-                      <div className="w-full bg-neutral-900 rounded-xl border border-neutral-800 p-5 shadow-inner text-center">
-                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 mb-3 font-mono">
-                          <Zap className="w-3 h-3 text-emerald-400" />
-                          <span>0.22s LATENCY · SUB-SECOND HUD</span>
-                        </div>
-
-                        <div className="relative border border-emerald-500/40 rounded-xl p-4 bg-emerald-950/20 mb-3">
-                          <div className="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-1">
-                            ✓ ACCESS GRANTED
-                          </div>
-                          <div className="text-base font-bold text-white">
-                            Alex Vance
-                          </div>
-                          <div className="text-xs text-neutral-300">
-                            Executive Pass · Gate 1 Entrance
-                          </div>
-                          <div className="text-[10px] text-emerald-300/80 font-mono mt-1">
-                            Scan Verified · 0 Duplicate Risk
-                          </div>
-                        </div>
-
-                        <p className="text-[11px] text-neutral-400 leading-relaxed">
-                          Runs in mobile Safari and Chrome with zero app store installs. Volunteers begin scanning in 10 seconds.
-                        </p>
-                      </div>
-                    )}
-
-                    {activeShowcaseTab === "portal" && (
-                      <div className="w-full bg-neutral-900 rounded-xl border border-neutral-800 p-5 shadow-inner text-left">
-                        <div className="flex items-center gap-1.5 pb-3 border-b border-neutral-800 mb-3 text-[10px] font-mono text-neutral-400">
-                          <Globe className="w-3.5 h-3.5 text-neutral-400" />
-                          <span>summit2026.urpass.space</span>
-                        </div>
-
-                        <div className="space-y-2.5">
-                          <div className="h-4 bg-neutral-800 rounded w-3/4" />
-                          <div className="h-3 bg-neutral-800/60 rounded w-1/2" />
-                          <div className="p-2.5 rounded-lg bg-neutral-950 border border-neutral-800 flex items-center justify-between text-xs">
-                            <span className="font-semibold text-white">VIP Delegate</span>
-                            <span className="text-neutral-200 font-mono font-bold">
-                              {isUk ? "£149" : "₹4,999"}
-                            </span>
-                          </div>
-                          <div className="p-2.5 rounded-lg bg-neutral-950 border border-neutral-800 flex items-center justify-between text-xs">
-                            <span className="font-semibold text-white">General Pass</span>
-                            <span className="text-neutral-200 font-mono font-bold">
-                              {isUk ? "£49" : "₹1,499"}
-                            </span>
-                          </div>
-                        </div>
-
-                        <div className="mt-3 pt-3 border-t border-neutral-800 text-[10px] text-neutral-400 flex items-center justify-between">
-                          <span>Custom Form Fields Configured</span>
-                          <span className="text-emerald-400 font-semibold">SSL Secured</span>
-                        </div>
-                      </div>
-                    )}
-
-                    {activeShowcaseTab === "dashboard" && (
-                      <div className="w-full bg-neutral-900 rounded-xl border border-neutral-800 p-5 shadow-inner text-left">
-                        <div className="flex items-center justify-between pb-3 border-b border-neutral-800 mb-3">
-                          <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider font-mono">
-                            LIVE GATE TELEMETRY
-                          </span>
-                          <span className="text-[10px] font-mono text-emerald-400">
-                            100% SYNCED
-                          </span>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-2 mb-3">
-                          <div className="p-2.5 bg-neutral-950 rounded-xl border border-neutral-800">
-                            <div className="text-[10px] text-neutral-400 uppercase">Checked In</div>
-                            <div className="text-lg font-bold text-white">
-                              1,482 <span className="text-[10px] text-emerald-400 font-normal">/ 1,800</span>
-                            </div>
-                          </div>
-                          <div className="p-2.5 bg-neutral-950 rounded-xl border border-neutral-800">
-                            <div className="text-[10px] text-neutral-400 uppercase">Velocity</div>
-                            <div className="text-lg font-bold text-white">
-                              24 <span className="text-[10px] text-neutral-400 font-normal">scans/min</span>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="space-y-1.5 text-[11px] text-neutral-300">
-                          <div className="flex justify-between py-1 border-b border-neutral-950">
-                            <span>Main Gate (Auditorium)</span>
-                            <span className="font-mono text-emerald-400">894 checked in</span>
-                          </div>
-                          <div className="flex justify-between py-1 border-b border-neutral-950">
-                            <span>VIP / Speaker Lounge</span>
-                            <span className="font-mono text-neutral-200">142 checked in</span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Card Footer Guarantee Note */}
-                  <div className="mt-4 pt-3 border-t border-neutral-800 flex items-center justify-between text-[11px] text-neutral-400">
-                    <span className="flex items-center gap-1.5 text-neutral-300">
-                      <Shield className="w-3.5 h-3.5 text-emerald-500" />
-                      100% Tested Prior to Launch
-                    </span>
-                    <a
-                      href="#managed-pricing"
-                      className="text-neutral-300 hover:text-white font-semibold flex items-center gap-1"
-                    >
-                      Select Plan <ChevronRight className="w-3 h-3" />
-                    </a>
-                  </div>
-                </div>
-              </AnimateIn>
-            </div>
-          </div>
-
-          {/* ── METRICS & TRUST STRIP ── */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 py-6 px-6 sm:px-8 bg-neutral-50 rounded-2xl border border-neutral-200/80 mb-20 shadow-2xs">
-            <div className="flex items-center gap-3.5">
-              <div className="w-11 h-11 rounded-xl bg-neutral-950 text-white flex items-center justify-center shrink-0 font-bold text-sm">
-                0%
-              </div>
-              <div>
-                <div className="text-xs sm:text-sm font-bold text-neutral-950">
-                  Zero Commission
-                </div>
-                <div className="text-[11px] text-neutral-500">
-                  Direct merchant bank payout
-                </div>
-              </div>
+              <a
+                href="#quote-form"
+                className="inline-flex items-center justify-center gap-2 bg-white hover:bg-neutral-50 text-neutral-900 font-semibold text-sm sm:text-base px-6 py-3.5 rounded-xl border border-neutral-300 shadow-2xs transition-all"
+              >
+                <span>Request Custom Quote</span>
+              </a>
             </div>
 
-            <div className="flex items-center gap-3.5">
-              <div className="w-11 h-11 rounded-xl bg-neutral-950 text-white flex items-center justify-center shrink-0 font-bold text-sm">
-                &lt;0.3s
-              </div>
-              <div>
-                <div className="text-xs sm:text-sm font-bold text-neutral-950">
-                  Gate Scan Speed
-                </div>
-                <div className="text-[11px] text-neutral-500">
-                  Sub-second camera latency
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3.5">
-              <div className="w-11 h-11 rounded-xl bg-neutral-950 text-white flex items-center justify-center shrink-0 font-bold text-sm">
-                24–48h
-              </div>
-              <div>
-                <div className="text-xs sm:text-sm font-bold text-neutral-950">
-                  Turnaround SLA
-                </div>
-                <div className="text-[11px] text-neutral-500">
-                  Ready before event doors open
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3.5">
-              <div className="w-11 h-11 rounded-xl bg-neutral-950 text-white flex items-center justify-center shrink-0 font-bold text-sm">
-                100%
-              </div>
-              <div>
-                <div className="text-xs sm:text-sm font-bold text-neutral-950">
-                  Data Sovereignty
-                </div>
-                <div className="text-[11px] text-neutral-500">
-                  Full attendee CSV export
-                </div>
-              </div>
-            </div>
-          </div>
+            <p className="text-xs text-neutral-500 font-medium">
+              One-time package fee · Zero platform ticket commission · 100% Attendee data ownership
+            </p>
+          </AnimateIn>
         </section>
 
         {/* ── WHAT IS MANAGED SETUP ── */}
