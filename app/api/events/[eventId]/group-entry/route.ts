@@ -359,7 +359,7 @@ export async function POST(
   const isEventUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(eventId);
   let eventLookup = db
     .from("events")
-    .select("id, name, organizer_id, organization_id, status, custom_pass_design");
+    .select("id, name, organizer_id, organization_id, status, custom_pass_design, attendee_limit");
   eventLookup = isEventUuid ? eventLookup.eq("id", eventId) : eventLookup.eq("apply_slug", eventId);
   const { data: event, error: eventErr } = await eventLookup.maybeSingle();
 
@@ -847,7 +847,8 @@ export async function POST(
       return NextResponse.json({
         success: false,
         status: "EXHAUSTED",
-        error: `All ${totalEntitlements} attendee(s) have already been scanned & admitted.`,
+        error: "Maximum limit reached",
+        message: "Maximum limit reached",
         bookingReference: resolvedBookingReference,
         buyerName,
         totalEntitlements,
@@ -906,7 +907,7 @@ export async function POST(
 	  // fall back to non-transactional updates because that can over-admit under
 	  // concurrent gate scans.
   const optimisticGroupAdmission = async () => {
-    const admitQuantity = Number(quantity);
+    let admitQuantity = Number(quantity);
     const operationId = scanOperationId || crypto.randomUUID();
 
     const { data: existingAdmission } = await db
@@ -943,7 +944,8 @@ export async function POST(
         {
           success: false,
           status: "EXHAUSTED",
-          error: "All group entitlements have already been admitted.",
+          error: "Maximum limit reached",
+          message: "Maximum limit reached",
           totalEntitlements,
           previouslyAdmitted: currentAdmitted,
           remainingEntries: 0,
@@ -951,6 +953,37 @@ export async function POST(
         { status: 422 }
       );
     }
+
+    // Venue Hard Capacity Check
+    if (event.attendee_limit && event.attendee_limit > 0) {
+      const { count: currentCheckins } = await db
+        .from("check_ins")
+        .select("id", { count: "exact", head: true })
+        .eq("event_id", canonicalEventId);
+
+      const venueRemaining = Math.max(0, event.attendee_limit - (currentCheckins ?? 0));
+      if (venueRemaining <= 0) {
+        return NextResponse.json(
+          {
+            success: false,
+            status: "EVENT_CAPACITY_REACHED",
+            error: "Event capacity reached",
+            message: "Event capacity reached",
+            totalEntitlements,
+            previouslyAdmitted: currentAdmitted,
+            remainingEntries: currentRemaining,
+            currentCheckins: currentCheckins ?? 0,
+            capacityLimit: event.attendee_limit,
+          },
+          { status: 422 }
+        );
+      }
+
+      if (admitQuantity > venueRemaining) {
+        admitQuantity = venueRemaining;
+      }
+    }
+
     if (admitQuantity > currentRemaining) {
       return NextResponse.json(
         {
@@ -1092,7 +1125,7 @@ export async function POST(
       remainingEntries: nextRemaining,
       admittedAt,
       buyerName,
-      message: `Successfully admitted ${admitQuantity} attendee(s). ${nextRemaining} entitlement(s) remaining.`,
+      message: `Entry allowed; remaining entries: ${nextRemaining}`,
     });
   };
 
@@ -1112,7 +1145,7 @@ export async function POST(
 
 	    if (!rpcErr && rpcResult) {
 	      const parsed = typeof rpcResult === "string" ? JSON.parse(rpcResult) : rpcResult;
-	      const httpStatus = parsed.success ? 200 : parsed.status === "EXHAUSTED" || parsed.status === "EXCEEDS_REMAINING" ? 422 : 400;
+	      const httpStatus = parsed.success ? 200 : parsed.status === "EXHAUSTED" || parsed.status === "EXCEEDS_REMAINING" || parsed.status === "EVENT_CAPACITY_REACHED" ? 422 : 400;
 	      return NextResponse.json(parsed, { status: httpStatus });
 	    }
     if (rpcErr?.message?.includes('column "order_id" does not exist')) {

@@ -359,6 +359,9 @@ export async function POST(req: NextRequest) {
         if (res.status === "ALREADY_CHECKED_IN") {
           return NextResponse.json(res, { status: 200 });
         }
+        if (res.status === "EVENT_CAPACITY_REACHED") {
+          return NextResponse.json(res, { status: 422 });
+        }
         if (res.status === "EVENT_INACTIVE") {
           return NextResponse.json(res, { status: 403 });
         }
@@ -389,7 +392,7 @@ export async function POST(req: NextRequest) {
   // ── 3. Fallback: Conditional Atomic Check-In ──
   // First, verify that the event itself is active
   const { data: currentEvent } = await safeMaybeSingle(
-    supabase.from("events").select("status").eq("id", canonicalEventId)
+    supabase.from("events").select("status, attendee_limit").eq("id", canonicalEventId)
   );
 
   if (currentEvent?.status && currentEvent.status !== "active") {
@@ -465,13 +468,23 @@ export async function POST(req: NextRequest) {
 
     if (otherEventPass) {
       return NextResponse.json(
-        { error: "This pass is registered for a different event.", status: "WRONG_EVENT", scanOperationId },
+        {
+          error: "This pass is not valid for this event",
+          message: "This pass is not valid for this event",
+          status: "WRONG_EVENT",
+          scanOperationId,
+        },
         { status: 404 }
       );
     }
 
     return NextResponse.json(
-      { error: "Invalid pass — not found.", status: "INVALID_PASS", scanOperationId },
+      {
+        error: "Invalid QR pass",
+        message: "Invalid QR pass",
+        status: "INVALID_PASS",
+        scanOperationId,
+      },
       { status: 404 }
     );
   }
@@ -686,11 +699,36 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       status: "ALREADY_CHECKED_IN",
       alreadyCheckedIn: true,
+      error: "Already checked in",
+      message: "Already checked in",
       attendee: { name: attendee.name, email: attendee.email, pass_type: attendee.pass_type },
       passType: pass.pass_type,
       checkedInAt: existingCi?.checked_in_at || null,
       scanOperationId,
     });
+  }
+
+  // ── 3.5 Hard Capacity Check at Event Level ──────────────────────
+  if (currentEvent?.attendee_limit && currentEvent.attendee_limit > 0) {
+    const { count: currentCheckins } = await supabase
+      .from("check_ins")
+      .select("id", { count: "exact", head: true })
+      .eq("event_id", canonicalEventId);
+
+    if ((currentCheckins ?? 0) >= currentEvent.attendee_limit) {
+      return NextResponse.json(
+        {
+          success: false,
+          status: "EVENT_CAPACITY_REACHED",
+          error: "Event capacity reached",
+          message: "Event capacity reached",
+          currentCheckins: currentCheckins ?? 0,
+          capacityLimit: currentEvent.attendee_limit,
+          scanOperationId,
+        },
+        { status: 422 }
+      );
+    }
   }
 
   // ── 4. Atomic conditional check-in insert ───────────────────────
@@ -720,6 +758,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({
         status: "ALREADY_CHECKED_IN",
         alreadyCheckedIn: true,
+        error: "Already checked in",
+        message: "Already checked in",
         attendee: { name: attendee.name, email: attendee.email, pass_type: attendee.pass_type },
         passType: pass.pass_type,
         checkedInAt: existingCi?.checked_in_at || checkedInAt,
@@ -775,6 +815,7 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({
     status: "CHECKED_IN",
     success: true,
+    message: "Entry allowed",
     attendee: { name: attendee.name, email: attendee.email, pass_type: attendee.pass_type },
     passType: pass.pass_type,
     checkedInAt,

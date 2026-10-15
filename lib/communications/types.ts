@@ -58,6 +58,7 @@ export interface TicketDeliveryPayload {
   passType?: string | null;
   ticketUrl?: string;
   version?: string | null;
+  customMessage?: string;
 }
 
 export interface EventCommunicationSettings {

@@ -8,7 +8,7 @@ export async function manualCheckIn(
   attendeeId: string,
   eventId: string,
   gateId?: string
-): Promise<{ success?: boolean; alreadyCheckedIn?: boolean; error?: string }> {
+): Promise<{ success?: boolean; alreadyCheckedIn?: boolean; error?: string; status?: string }> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -18,7 +18,7 @@ export async function manualCheckIn(
   // Verify caller is event organizer or org member with check-in role
   const { data: event } = await supabase
     .from("events")
-    .select("id, organizer_id, organization_id")
+    .select("id, organizer_id, organization_id, attendee_limit")
     .eq("id", eventId)
     .single();
 
@@ -54,6 +54,21 @@ export async function manualCheckIn(
 
   if (pass.status === "checked_in") {
     return { alreadyCheckedIn: true };
+  }
+
+  // Enforce Event Capacity Limit
+  if (event.attendee_limit && event.attendee_limit > 0) {
+    const { count: currentCheckins } = await supabase
+      .from("check_ins")
+      .select("id", { count: "exact", head: true })
+      .eq("event_id", eventId);
+
+    if ((currentCheckins ?? 0) >= event.attendee_limit) {
+      return {
+        error: "Event capacity reached",
+        status: "EVENT_CAPACITY_REACHED",
+      };
+    }
   }
 
   // Insert check_in with method 'manual'

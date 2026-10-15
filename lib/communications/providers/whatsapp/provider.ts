@@ -93,7 +93,7 @@ export class WhatsAppProvider {
           type: "text",
           text: {
             preview_url: true,
-            body: `🎟️ Your ticket for *${payload.eventName}* is confirmed!\nTicket: ${payload.ticketId}\nView your QR pass: ${payload.ticketUrl}`,
+            body: payload.customMessage || `🎟️ Your ticket for *${payload.eventName}* is confirmed!\nTicket: ${payload.ticketId}\nView your QR pass: ${payload.ticketUrl}`,
           },
         }),
         signal: controller.signal,

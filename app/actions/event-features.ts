@@ -282,6 +282,66 @@ export async function updateEventFeatureFlag(
   };
 }
 
+export function extractModuleConfigsFromEvent(event: EventFeatureEventRow): Record<string, Record<string, unknown>> {
+  const design =
+    event.custom_pass_design && typeof event.custom_pass_design === "object"
+      ? (event.custom_pass_design as Record<string, unknown>)
+      : {};
+
+  const unified =
+    design._moduleConfigs && typeof design._moduleConfigs === "object"
+      ? (design._moduleConfigs as Record<string, Record<string, unknown>>)
+      : {};
+
+  return {
+    bulk_ticket_booking: {
+      ...((design._bulkBookingSettings as Record<string, unknown>) || {}),
+      ...(unified.bulk_ticket_booking || {}),
+    },
+    ticket_distribution: {
+      ...((design._distributionSettings as Record<string, unknown>) || {}),
+      ...(unified.ticket_distribution || {}),
+    },
+    member_registration_forms: {
+      ...((design._memberFormConfig as Record<string, unknown>) || {}),
+      ...(unified.member_registration_forms || {}),
+    },
+    serial_number_validation: {
+      ...((design._serialNumberConfig as Record<string, unknown>) || {}),
+      ...(unified.serial_number_validation || {}),
+    },
+    ticket_reassignment: {
+      ...((design._ticketReassignmentConfig as Record<string, unknown>) || {}),
+      ...(unified.ticket_reassignment || {}),
+    },
+    advanced_entry_tracking: {
+      ...((design._gateTrackingConfig as Record<string, unknown>) || {}),
+      ...(unified.advanced_entry_tracking || {}),
+    },
+    session_attendance: {
+      ...((design._sessionAttendanceConfig as Record<string, unknown>) || {}),
+      ...(unified.session_attendance || {}),
+    },
+    csv_management: {
+      ...((design._csvManagementConfig as Record<string, unknown>) || {}),
+      ...(unified.csv_management || {}),
+    },
+    offline_scanning: {
+      ...((design._offlineScanningConfig as Record<string, unknown>) || {}),
+      ...(unified.offline_scanning || {}),
+    },
+    advanced_analytics: {
+      ...((design._advancedAnalyticsConfig as Record<string, unknown>) || {}),
+      ...(unified.advanced_analytics || {}),
+    },
+    group_entry: {
+      ...((design._groupEntryConfig as Record<string, unknown>) || {}),
+      ...(unified.group_entry || {}),
+    },
+    ...unified,
+  };
+}
+
 /**
  * Retrieves the complete feature flags state for an event.
  */
@@ -291,6 +351,7 @@ export async function getEventFeatureFlagsState(eventId: string): Promise<{
   features?: Record<FeatureFlagKey, boolean>;
   usable?: Record<FeatureFlagKey, boolean>;
   platformAvailable?: Record<FeatureFlagKey, boolean>;
+  moduleConfigs?: Record<string, Record<string, unknown>>;
 }> {
   const supabase = await createClient();
   const {
@@ -347,6 +408,175 @@ export async function getEventFeatureFlagsState(eventId: string): Promise<{
     features: resolvedFeatures,
     usable,
     platformAvailable,
+    moduleConfigs: extractModuleConfigsFromEvent(event),
+  };
+}
+
+/**
+ * Saves configuration rules for a specific event module and ensures the feature flag is activated.
+ */
+export async function saveEventModuleConfig(
+  eventId: string,
+  featureKey: FeatureFlagKey,
+  settings: Record<string, unknown>,
+  autoEnable = true
+): Promise<{
+  success: boolean;
+  config?: EventFeaturesConfig;
+  settings?: Record<string, unknown>;
+  error?: string;
+}> {
+  if (!isFeatureKey(featureKey)) {
+    return { success: false, error: `Unknown feature: ${featureKey}` };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { success: false, error: "Authentication required." };
+  }
+
+  const db = adminClient();
+  const eventResult = await getEventAndMembership(db, eventId, user.id);
+  if ("error" in eventResult) return { success: false, error: eventResult.error };
+
+  const { event, memberRole } = eventResult;
+  if (!canManageEventFeatures(event, user.id, memberRole)) {
+    return {
+      success: false,
+      error: "Unauthorized: You do not have permission to configure this event's features.",
+    };
+  }
+
+  let updatedFeatureConfig: EventFeaturesConfig | undefined = undefined;
+
+  if (autoEnable) {
+    const flagResult = await updateEventFeatureFlag(eventId, featureKey, true);
+    if (flagResult.error) {
+      return { success: false, error: flagResult.error };
+    }
+    updatedFeatureConfig = flagResult.config;
+  }
+
+  // Reload current event custom_pass_design after potential flag update
+  const { data: freshEvent } = await db
+    .from("events")
+    .select("custom_pass_design")
+    .eq("id", eventId)
+    .maybeSingle();
+
+  const existingDesign =
+    freshEvent?.custom_pass_design && typeof freshEvent.custom_pass_design === "object"
+      ? (freshEvent.custom_pass_design as Record<string, unknown>)
+      : {};
+
+  const currentUnified =
+    existingDesign._moduleConfigs && typeof existingDesign._moduleConfigs === "object"
+      ? (existingDesign._moduleConfigs as Record<string, Record<string, unknown>>)
+      : {};
+
+  const updatedUnified = {
+    ...currentUnified,
+    [featureKey]: {
+      ...(currentUnified[featureKey] || {}),
+      ...settings,
+    },
+  };
+
+  const updatedDesign: Record<string, unknown> = {
+    ...existingDesign,
+    _moduleConfigs: updatedUnified,
+  };
+
+  if (featureKey === "bulk_ticket_booking") {
+    updatedDesign._bulkBookingSettings = {
+      ...((existingDesign._bulkBookingSettings as Record<string, unknown>) || {}),
+      ...settings,
+      maxQuantityPerOrder: Number(settings.max_per_order) || 10,
+    };
+  } else if (featureKey === "ticket_distribution") {
+    updatedDesign._distributionSettings = {
+      ...((existingDesign._distributionSettings as Record<string, unknown>) || {}),
+      ...settings,
+    };
+  } else if (featureKey === "member_registration_forms") {
+    updatedDesign._memberFormConfig = {
+      ...((existingDesign._memberFormConfig as Record<string, unknown>) || {}),
+      ...settings,
+    };
+  } else if (featureKey === "serial_number_validation") {
+    updatedDesign._serialNumberConfig = {
+      ...((existingDesign._serialNumberConfig as Record<string, unknown>) || {}),
+      ...settings,
+    };
+  } else if (featureKey === "ticket_reassignment") {
+    updatedDesign._ticketReassignmentConfig = {
+      ...((existingDesign._ticketReassignmentConfig as Record<string, unknown>) || {}),
+      ...settings,
+    };
+  } else if (featureKey === "advanced_entry_tracking") {
+    const reEntryPolicy = (settings.re_entry_policy as string) || "allowed";
+    const duplicatePolicy = (settings.duplicate_policy as string) || "reject";
+    const antiPassback = Number(settings.anti_passback_seconds) || 60;
+    updatedDesign._gateTrackingConfig = {
+      ...((existingDesign._gateTrackingConfig as Record<string, unknown>) || {}),
+      ...settings,
+      allowReEntry: reEntryPolicy === "allowed" || reEntryPolicy === "staff_override",
+      duplicateEntryPolicy: duplicatePolicy,
+      duplicateWindowSeconds: antiPassback,
+    };
+  } else if (featureKey === "session_attendance") {
+    updatedDesign._sessionAttendanceConfig = {
+      ...((existingDesign._sessionAttendanceConfig as Record<string, unknown>) || {}),
+      ...settings,
+    };
+  } else if (featureKey === "csv_management") {
+    updatedDesign._csvManagementConfig = {
+      ...((existingDesign._csvManagementConfig as Record<string, unknown>) || {}),
+      ...settings,
+    };
+  } else if (featureKey === "offline_scanning") {
+    updatedDesign._offlineScanningConfig = {
+      ...((existingDesign._offlineScanningConfig as Record<string, unknown>) || {}),
+      ...settings,
+    };
+  } else if (featureKey === "advanced_analytics") {
+    updatedDesign._advancedAnalyticsConfig = {
+      ...((existingDesign._advancedAnalyticsConfig as Record<string, unknown>) || {}),
+      ...settings,
+    };
+  } else if (featureKey === "group_entry") {
+    updatedDesign._groupEntryConfig = {
+      ...((existingDesign._groupEntryConfig as Record<string, unknown>) || {}),
+      ...settings,
+      allow_reset: settings.re_entry === "identity_verified",
+      partial_entry: Boolean(settings.partial_entry !== false),
+    };
+  }
+
+  const { error: updateErr } = await db
+    .from("events")
+    .update({
+      custom_pass_design: updatedDesign,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", eventId);
+
+  if (updateErr) {
+    return { success: false, error: `Failed to save configuration: ${updateErr.message}` };
+  }
+
+  revalidatePath(`/event/${eventId}`);
+  revalidatePath(`/event/${eventId}/settings`);
+  revalidatePath(`/scan/${eventId}`);
+
+  return {
+    success: true,
+    config: updatedFeatureConfig,
+    settings: updatedUnified[featureKey],
   };
 }
 

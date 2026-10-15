@@ -27,6 +27,7 @@ import {
   updateEventCommunicationSettings,
 } from "@/app/actions/communications";
 import type { EventCommunicationSettings } from "@/lib/communications";
+import WhatsAppBulkInviteCard from "@/components/communications/WhatsAppBulkInviteCard";
 
 interface Props {
   eventId: string;
@@ -184,6 +185,9 @@ export default function CommunicationsClient({
           </button>
         </div>
       )}
+
+      {/* WhatsApp Bulk Invitation Management Workflow */}
+      <WhatsAppBulkInviteCard eventId={eventId} eventName={eventName} />
 
       {/* Grid: 1. Actionable Broadcast Triggers & 2. Delivery Channels */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

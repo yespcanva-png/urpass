@@ -37,7 +37,8 @@ export function scannerStateFromResult(status: string | undefined, ok = false): 
     status === "SESSION_ACCESS_DENIED" ||
     status === "SESSION_FULL" ||
     status === "RESERVATION_REQUIRED" ||
-    status === "SCANNER_UNAUTHORIZED"
+    status === "SCANNER_UNAUTHORIZED" ||
+    status === "EVENT_CAPACITY_REACHED"
   ) {
     return "REJECTED";
   }

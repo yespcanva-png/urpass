@@ -285,7 +285,7 @@ export class CommunicationService {
    */
   async sendTicketWhatsApp(
     payload: TicketDeliveryPayload
-  ): Promise<{ success: boolean; unavailable?: boolean; error?: string }> {
+  ): Promise<{ success: boolean; unavailable?: boolean; error?: string; messageId?: string; provider?: string }> {
     const admin = getAdminClient();
     const ticketId = payload.ticketId || formatTicketId(payload.passToken);
     const ticketUrl = payload.ticketUrl || buildTicketUrl(payload.passToken);

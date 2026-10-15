@@ -59,6 +59,7 @@ export interface GroupAdmissionResult {
     | "GROUP_ADMITTED"
     | "EXHAUSTED"
     | "EXCEEDS_REMAINING"
+    | "EVENT_CAPACITY_REACHED"
     | "BOOKING_NOT_FOUND"
     | "BOOKING_INVALID"
     | "INVALID_QUANTITY"
@@ -85,10 +86,12 @@ export function calculateGroupAdmission({
   booking,
   request,
   isFeatureActive = true,
+  venueCapacityRemaining,
 }: {
   booking: GroupBookingState;
   request: GroupAdmissionRequest;
   isFeatureActive?: boolean;
+  venueCapacityRemaining?: number;
 }): {
   result: GroupAdmissionResult;
   updatedBooking?: GroupBookingState;
@@ -168,12 +171,33 @@ export function calculateGroupAdmission({
         remainingEntries: 0,
         admittedAt: now,
         error: "ALL_ENTITLEMENTS_USED",
-        message: `All ${booking.totalEntitlements} entries for this booking have already been admitted.`,
+        message: "Maximum limit reached",
       },
     };
   }
 
-  // 5. Quantity cannot exceed remaining entries
+  // 5. Venue Hard Capacity Check (if venueCapacityRemaining specified)
+  if (venueCapacityRemaining !== undefined) {
+    if (venueCapacityRemaining <= 0) {
+      return {
+        result: {
+          success: false,
+          status: "EVENT_CAPACITY_REACHED",
+          bookingReference: booking.bookingReference,
+          buyerName: booking.buyerName,
+          totalEntitlements: booking.totalEntitlements,
+          previouslyAdmitted: booking.admittedEntitlements,
+          admittedNow: 0,
+          remainingEntries: remaining,
+          admittedAt: now,
+          error: "Event capacity reached",
+          message: "Event capacity reached",
+        },
+      };
+    }
+  }
+
+  // 6. Quantity cannot exceed remaining group entries
   if (request.quantity > remaining) {
     return {
       result: {
@@ -192,8 +216,31 @@ export function calculateGroupAdmission({
     };
   }
 
-  // 6. Successful partial or full admission
-  const newAdmitted = booking.admittedEntitlements + request.quantity;
+  // Determine actual admissions considering venue capacity limits
+  const actualAdmit = venueCapacityRemaining !== undefined
+    ? Math.min(request.quantity, venueCapacityRemaining)
+    : request.quantity;
+
+  if (actualAdmit <= 0) {
+    return {
+      result: {
+        success: false,
+        status: "EVENT_CAPACITY_REACHED",
+        bookingReference: booking.bookingReference,
+        buyerName: booking.buyerName,
+        totalEntitlements: booking.totalEntitlements,
+        previouslyAdmitted: booking.admittedEntitlements,
+        admittedNow: 0,
+        remainingEntries: remaining,
+        admittedAt: now,
+        error: "Event capacity reached",
+        message: "Event capacity reached",
+      },
+    };
+  }
+
+  // 7. Successful partial or full admission
+  const newAdmitted = booking.admittedEntitlements + actualAdmit;
   const newRemaining = booking.totalEntitlements - newAdmitted;
 
   let updatedMembers = booking.members ? [...booking.members] : undefined;
@@ -221,15 +268,12 @@ export function calculateGroupAdmission({
       buyerName: booking.buyerName,
       totalEntitlements: booking.totalEntitlements,
       previouslyAdmitted: booking.admittedEntitlements,
-      admittedNow: request.quantity,
+      admittedNow: actualAdmit,
       remainingEntries: newRemaining,
       admittedAt: now,
       gateName: request.gateName,
       operatorEmail: request.operatorEmail,
-      message:
-        newRemaining === 0
-          ? `All ${booking.totalEntitlements} attendees admitted for booking ${booking.bookingReference}.`
-          : `Admitted ${request.quantity} attendee(s). ${newRemaining} of ${booking.totalEntitlements} remaining.`,
+      message: `Entry allowed; remaining entries: ${newRemaining}`,
     },
     updatedBooking,
   };

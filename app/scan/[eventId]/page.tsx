@@ -1155,7 +1155,15 @@ export default function ScanEventPage() {
           return;
         }
 
-        // 7. General server error
+        // 7. Event capacity exhausted
+        if (data.status === "EVENT_CAPACITY_REACHED") {
+          playScannerFeedback("EVENT_CAPACITY_REACHED", { sound: soundEnabled });
+          setErrorMsg(data.message || data.error || "Event capacity reached");
+          setScanState("REJECTED");
+          return;
+        }
+
+        // 8. General server error
         if (!res.ok) {
           playScannerFeedback("NETWORK_ERROR", { sound: soundEnabled });
           setErrorMsg(data.error || "Verification failed");

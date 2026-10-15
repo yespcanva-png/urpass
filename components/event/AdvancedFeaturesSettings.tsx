@@ -32,6 +32,7 @@ import {
 import {
   updateEventFeatureFlag,
   getEventFeatureFlagsState,
+  saveEventModuleConfig,
 } from "@/app/actions/event-features";
 import { updateEventDistributionSettingsAction } from "@/app/actions/ticket-distribution";
 import { updateEventGateTrackingConfigAction } from "@/app/actions/gate-tracking";
@@ -558,7 +559,10 @@ export default function AdvancedFeaturesSettings({ eventId }: AdvancedFeaturesSe
   // Setup Drawer / Modal state
   const [configuringModule, setConfiguringModule] = useState<ModuleMeta | null>(null);
   const [localModuleSettings, setLocalModuleSettings] = useState<Record<string, unknown>>({});
+  const [moduleConfigs, setModuleConfigs] = useState<Record<string, Record<string, unknown>>>({});
   const [savingSettings, setSavingSettings] = useState(false);
+  const [modalError, setModalError] = useState("");
+  const [modalSuccess, setModalSuccess] = useState(false);
 
   useEffect(() => {
     async function loadFlags() {
@@ -572,6 +576,9 @@ export default function AdvancedFeaturesSettings({ eventId }: AdvancedFeaturesSe
           setUsableFlags(res.usable || ({} as Record<FeatureFlagKey, boolean>));
           setPlatformFlags(res.platformAvailable || ({} as Record<FeatureFlagKey, boolean>));
           setConfig(res.config || null);
+          if (res.moduleConfigs) {
+            setModuleConfigs(res.moduleConfigs);
+          }
         }
       } catch (err) {
         setErrorMsg(err instanceof Error ? err.message : "Failed to load feature flags.");
@@ -648,61 +655,65 @@ export default function AdvancedFeaturesSettings({ eventId }: AdvancedFeaturesSe
 
   const openSetupModal = (mod: ModuleMeta) => {
     setConfiguringModule(mod);
+    setModalError("");
+    setModalSuccess(false);
+    const saved = moduleConfigs[mod.key] || {};
     const initialSettings: Record<string, unknown> = {};
     mod.configOptions?.forEach((opt) => {
-      initialSettings[opt.id] = opt.defaultValue;
+      initialSettings[opt.id] = saved[opt.id] !== undefined ? saved[opt.id] : opt.defaultValue;
     });
     setLocalModuleSettings(initialSettings);
+  };
+
+  const resetToDefaults = () => {
+    if (!configuringModule) return;
+    const defaultSettings: Record<string, unknown> = {};
+    configuringModule.configOptions?.forEach((opt) => {
+      defaultSettings[opt.id] = opt.defaultValue;
+    });
+    setLocalModuleSettings(defaultSettings);
+    setModalError("");
   };
 
   const handleSaveModuleSettings = async () => {
     if (!configuringModule) return;
     setSavingSettings(true);
+    setModalError("");
     try {
-      setErrorMsg("");
-      // If module is currently disabled, also auto-enable it when saving setup
-      if (!flags[configuringModule.key]) {
-        await executeToggle(configuringModule.key, true);
+      const res = await saveEventModuleConfig(
+        eventId,
+        configuringModule.key,
+        localModuleSettings,
+        true
+      );
+
+      if (res.error || !res.success) {
+        setModalError(res.error || "Failed to save module configuration.");
+        return;
       }
 
-      if (configuringModule.key === "ticket_distribution") {
-        const res = await updateEventDistributionSettingsAction({
-          eventId,
-          settings: {
-            enabled: true,
-            ...localModuleSettings,
-          },
-        });
-
-        if (res.error) {
-          setErrorMsg(res.error);
-          return;
-        }
-      } else if (configuringModule.key === "advanced_entry_tracking") {
-        const reEntryPolicy = (localModuleSettings.re_entry_policy as string) || "allowed";
-        const duplicatePolicy = (localModuleSettings.duplicate_policy as any) || "reject";
-        const antiPassback = Number(localModuleSettings.anti_passback_seconds) || 60;
-        const res = await updateEventGateTrackingConfigAction({
-          eventId,
-          config: {
-            enabled: true,
-            allowReEntry: reEntryPolicy === "allowed" || reEntryPolicy === "staff_override",
-            duplicateEntryPolicy: duplicatePolicy,
-            duplicateWindowSeconds: antiPassback,
-          },
-        });
-
-        if (res.error) {
-          setErrorMsg(res.error);
-          return;
-        }
+      // Update local state
+      setFlags((prev) => ({ ...prev, [configuringModule.key]: true }));
+      setUsableFlags((prev) => ({ ...prev, [configuringModule.key]: true }));
+      if (res.config) {
+        setConfig(res.config);
+      }
+      if (res.settings) {
+        setModuleConfigs((prev) => ({
+          ...prev,
+          [configuringModule.key]: res.settings!,
+        }));
       }
 
-      setSuccessMsg(`Rules configured for ${configuringModule.name}.`);
-      setTimeout(() => setSuccessMsg(""), 3500);
-      setConfiguringModule(null);
-    } catch {
-      setErrorMsg("Failed to save module configuration.");
+      setModalSuccess(true);
+      setSuccessMsg(`Rules configured & saved for ${configuringModule.name}.`);
+      setTimeout(() => setSuccessMsg(""), 4000);
+      setTimeout(() => {
+        setConfiguringModule(null);
+        setModalSuccess(false);
+      }, 700);
+    } catch (err) {
+      setModalError(err instanceof Error ? err.message : "Failed to save module configuration.");
     } finally {
       setSavingSettings(false);
     }
@@ -997,7 +1008,7 @@ export default function AdvancedFeaturesSettings({ eventId }: AdvancedFeaturesSe
       {/* ── Interactive Module Setup Drawer / Modal ── */}
       {configuringModule && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-neutral-100 animate-in fade-in zoom-in-95 max-h-[90vh] flex flex-col justify-between">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-neutral-100 animate-in fade-in zoom-in-95 max-h-[92vh] flex flex-col justify-between">
             <div>
               <div className="flex items-start justify-between gap-3 pb-4 border-b border-neutral-100">
                 <div className="flex items-center gap-3">
@@ -1005,84 +1016,137 @@ export default function AdvancedFeaturesSettings({ eventId }: AdvancedFeaturesSe
                     <configuringModule.icon className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="text-base font-bold text-neutral-900 leading-tight">
-                      {configuringModule.defaultConfigTitle || `Setup ${configuringModule.name}`}
-                    </h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-base font-bold text-neutral-900 leading-tight">
+                        {configuringModule.defaultConfigTitle || `Setup ${configuringModule.name}`}
+                      </h3>
+                      <span
+                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                          flags[configuringModule.key]
+                            ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                            : "bg-amber-50 text-amber-700 border border-amber-200"
+                        }`}
+                      >
+                        {flags[configuringModule.key] ? "Active" : "Auto-enables on save"}
+                      </span>
+                    </div>
                     <p className="text-xs text-neutral-500 mt-0.5">
                       {configuringModule.name}
                     </p>
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setConfiguringModule(null)}
-                  className="w-8 h-8 rounded-lg flex items-center justify-center text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 transition-colors"
-                >
-                  <X className="w-4 h-4" />
-                </button>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={resetToDefaults}
+                    className="inline-flex items-center gap-1 text-[11px] font-medium text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100 px-2 py-1 rounded-md transition-colors"
+                    title="Restore default configuration"
+                  >
+                    <RotateCcw className="w-3 h-3" />
+                    <span>Defaults</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setConfiguringModule(null);
+                      setModalError("");
+                      setModalSuccess(false);
+                    }}
+                    className="w-8 h-8 rounded-lg flex items-center justify-center text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
+
+              {/* Inline alerts inside modal */}
+              {modalError && (
+                <div className="mt-4 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-600" />
+                  <span className="flex-1 leading-relaxed">{modalError}</span>
+                </div>
+              )}
+
+              {modalSuccess && (
+                <div className="mt-4 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>Configuration saved and rules updated!</span>
+                </div>
+              )}
 
               {/* Configuration Form Controls */}
               <div className="py-4 space-y-4 overflow-y-auto max-h-[50vh] pr-1">
-                {configuringModule.configOptions?.map((opt) => (
-                  <div
-                    key={opt.id}
-                    className="p-3.5 rounded-xl border border-neutral-200/80 bg-neutral-50/60 space-y-2"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <label className="text-xs font-bold text-neutral-800 block">
-                          {opt.label}
-                        </label>
-                        <p className="text-[11px] text-neutral-500 leading-relaxed mt-0.5">
-                          {opt.description}
-                        </p>
+                {configuringModule.configOptions?.map((opt) => {
+                  const isChecked =
+                    localModuleSettings[opt.id] !== undefined
+                      ? Boolean(localModuleSettings[opt.id])
+                      : Boolean(opt.defaultValue);
+
+                  const currentValue =
+                    localModuleSettings[opt.id] !== undefined
+                      ? String(localModuleSettings[opt.id])
+                      : String(opt.defaultValue);
+
+                  return (
+                    <div
+                      key={opt.id}
+                      className="p-3.5 rounded-xl border border-neutral-200/80 bg-neutral-50/60 space-y-2 hover:border-neutral-300 transition-colors"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 pr-2">
+                          <label className="text-xs font-bold text-neutral-800 block">
+                            {opt.label}
+                          </label>
+                          <p className="text-[11px] text-neutral-500 leading-relaxed mt-0.5">
+                            {opt.description}
+                          </p>
+                        </div>
+
+                        {opt.type === "toggle" && (
+                          <button
+                            type="button"
+                            role="switch"
+                            aria-checked={isChecked}
+                            onClick={() =>
+                              setLocalModuleSettings((prev) => ({
+                                ...prev,
+                                [opt.id]: !isChecked,
+                              }))
+                            }
+                            className={`relative inline-flex h-5 w-9 items-center rounded-full shrink-0 transition-colors duration-200 cursor-pointer ${
+                              isChecked ? "bg-violet-600" : "bg-neutral-300"
+                            }`}
+                          >
+                            <span
+                              className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow-sm transition-transform duration-200 ${
+                                isChecked ? "translate-x-4" : "translate-x-1"
+                              }`}
+                            />
+                          </button>
+                        )}
                       </div>
 
-                      {opt.type === "toggle" && (
-                        <button
-                          type="button"
-                          role="switch"
-                          aria-checked={Boolean(localModuleSettings[opt.id])}
-                          onClick={() =>
+                      {opt.type === "select" && opt.options && (
+                        <select
+                          value={currentValue}
+                          onChange={(e) =>
                             setLocalModuleSettings((prev) => ({
                               ...prev,
-                              [opt.id]: !prev[opt.id],
+                              [opt.id]: e.target.value,
                             }))
                           }
-                          className={`relative inline-flex h-5 w-9 items-center rounded-full shrink-0 transition-colors duration-200 cursor-pointer ${
-                            localModuleSettings[opt.id] ? "bg-violet-600" : "bg-neutral-300"
-                          }`}
+                          className="w-full mt-1.5 px-3 py-1.5 text-xs bg-white border border-neutral-200 rounded-lg outline-none focus:border-brand text-neutral-800 font-medium cursor-pointer"
                         >
-                          <span
-                            className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow-sm transition-transform duration-200 ${
-                              localModuleSettings[opt.id] ? "translate-x-4" : "translate-x-1"
-                            }`}
-                          />
-                        </button>
+                          {opt.options.map((o) => (
+                            <option key={o.value} value={o.value}>
+                              {o.label}
+                            </option>
+                          ))}
+                        </select>
                       )}
                     </div>
-
-                    {opt.type === "select" && opt.options && (
-                      <select
-                        value={String(localModuleSettings[opt.id] || opt.defaultValue)}
-                        onChange={(e) =>
-                          setLocalModuleSettings((prev) => ({
-                            ...prev,
-                            [opt.id]: e.target.value,
-                          }))
-                        }
-                        className="w-full mt-1.5 px-3 py-1.5 text-xs bg-white border border-neutral-200 rounded-lg outline-none focus:border-brand"
-                      >
-                        {opt.options.map((o) => (
-                          <option key={o.value} value={o.value}>
-                            {o.label}
-                          </option>
-                        ))}
-                      </select>
-                    )}
-                  </div>
-                ))}
+                  );
+                })}
 
                 {configuringModule.configUrl && (
                   <div className="pt-2">
@@ -1107,23 +1171,29 @@ export default function AdvancedFeaturesSettings({ eventId }: AdvancedFeaturesSe
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => setConfiguringModule(null)}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold border border-neutral-200 hover:bg-neutral-50 transition-colors text-neutral-700"
+                  onClick={() => {
+                    setConfiguringModule(null);
+                    setModalError("");
+                    setModalSuccess(false);
+                  }}
+                  className="px-4 py-2 rounded-xl text-xs font-semibold border border-neutral-200 hover:bg-neutral-50 transition-colors text-neutral-700 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="button"
                   onClick={handleSaveModuleSettings}
-                  disabled={savingSettings}
+                  disabled={savingSettings || modalSuccess}
                   className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-neutral-900 text-white hover:bg-neutral-800 transition-colors disabled:opacity-50 cursor-pointer shadow-xs"
                 >
                   {savingSettings ? (
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : modalSuccess ? (
+                    <Check className="w-3.5 h-3.5 text-emerald-400" />
                   ) : (
                     <Check className="w-3.5 h-3.5" />
                   )}
-                  <span>Save Configuration</span>
+                  <span>{modalSuccess ? "Saved!" : "Save Configuration"}</span>
                 </button>
               </div>
             </div>

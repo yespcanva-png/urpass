@@ -13,6 +13,7 @@ export type FeedbackType =
   | "INVALID_PASS"
   | "NOT_APPROVED"
   | "WRONG_EVENT"
+  | "EVENT_CAPACITY_REACHED"
   | "NETWORK_ERROR"
   // Backwards-compatible aliases
   | "success"
@@ -95,6 +96,7 @@ export function playScannerFeedback(
         case "INVALID_PASS":
         case "NOT_APPROVED":
         case "WRONG_EVENT":
+        case "EVENT_CAPACITY_REACHED":
         case "access_denied":
         case "error":
           // 250ms stop/investigate buzz
@@ -165,6 +167,7 @@ function playTone(type: FeedbackType) {
       type === "INVALID_PASS" ||
       type === "NOT_APPROVED" ||
       type === "WRONG_EVENT" ||
+      type === "EVENT_CAPACITY_REACHED" ||
       type === "access_denied"
     ) {
       // ── Low Buzz (160Hz Sawtooth, 250ms) ──
