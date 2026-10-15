@@ -60,17 +60,17 @@ export interface BOFUPageConfig {
 }
 
 const DEFAULT_INDIA_TRUST = [
-  "₹0 to start",
+  "₹29 intro offer",
   "Razorpay / UPI",
-  "QR check-in",
-  "WhatsApp passes",
+  "Sub-0.3s QR scan",
+  "0% Ticket Fee",
 ];
 
 const DEFAULT_UK_TRUST = [
-  "£0 to start",
+  "£15/mo Starter",
   "Stripe / Cards / Apple Pay",
-  "QR check-in",
-  "Apple Wallet & Email passes",
+  "Sub-0.3s QR scan",
+  "0% Ticket Fee",
 ];
 
 export const GEO_ENTITY_DEFINITION =
@@ -111,11 +111,11 @@ export const CORE_GEO_FAQS = [
   },
   {
     q: "Does URPASS support free events?",
-    a: "Yes. URPASS offers a permanent Free Tier that includes up to 2 active events per month and up to 100 registrations per month with full QR code generation, browser-based mobile camera scanning, and attendee data export.",
+    a: "Yes. Organizers can host both free RSVP events and paid ticketing events. Free events benefit from the same high-speed mobile browser QR check-in, automated email pass delivery, and duplicate entry protection.",
   },
   {
     q: "How much does URPASS cost?",
-    a: "URPASS offers transparent flat subscription pricing with 0% commission on ticket sales. In India, plans range from ₹0/mo (Free), ₹499/mo (Starter), to ₹999/mo (Pro). In the UK, plans start at £0/mo, £19/mo (Starter), and £39/mo (Pro). Enterprise and custom volume plans are also available.",
+    a: "URPASS offers an introductory offer of ₹29/month for the first 2 months across Starter, Pro, and Business plans with 0% platform commission on ticket sales. Regular subscriptions are ₹499/mo (Starter), ₹999/mo (Pro), and ₹2,499/mo (Business) + GST. Pay-as-you-go single-event passes start at ₹299 (UK: £5). In the UK, monthly plans are £15 (Starter), £35 (Pro), and £79 (Business).",
   },
 ];
 

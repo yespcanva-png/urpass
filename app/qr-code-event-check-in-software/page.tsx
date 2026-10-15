@@ -41,11 +41,11 @@ export default function QrCodeEventCheckInSoftwarePage() {
         hook: "Sell tickets. Accept UPI. Send QR passes. Scan attendees. Keep your event revenue.",
         subDescription:
           "Validate attendees at venue gates in under 0.3 seconds. Works directly inside Safari and Chrome on any smartphone with zero app installations required.",
-        primaryCtaLabel: "Try scanner",
-        primaryCtaHref: "/signup",
-        secondaryCtaLabel: "Book a Demo",
-        secondaryCtaHref: "/contact",
-        trustHighlights: ["₹0 to start", "Razorpay / UPI", "QR check-in", "WhatsApp passes"],
+        primaryCtaLabel: "Launch QR Scanner →",
+        primaryCtaHref: "/signup?plan=pro&from=qr-code-event-check-in-software",
+        secondaryCtaLabel: "View Pricing",
+        secondaryCtaHref: "/pricing",
+        trustHighlights: ["Sub-0.3s QR scan", "Zero App Download", "Atomic Duplicate Lock", "₹29 Intro Offer"],
         currency: "INR",
         cluster: "ticketing",
         description:

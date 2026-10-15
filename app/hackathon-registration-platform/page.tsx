@@ -2,10 +2,11 @@ import type { Metadata } from "next";
 import BOFUMoneyPage from "@/components/landing/BOFUMoneyPage";
 
 export const metadata: Metadata = {
-  title: "Hackathon Registration Platform — Team Applications, Passes & Gate Check-In | URPASS",
+  title: "Hackathon Registration and QR Check-In Platform | URPASS",
   description:
     "The complete hackathon registration platform. Collect developer team registrations, manage application approvals, issue hacker QR passes, and check in attendees in <0.3s.",
   keywords: [
+    "hackathon registration and qr check-in platform",
     "hackathon registration platform",
     "hackathon event management",
     "hackathon team registration software",
@@ -15,7 +16,7 @@ export const metadata: Metadata = {
   ],
   alternates: { canonical: "https://urpass.space/hackathon-registration-platform" },
   openGraph: {
-    title: "Hackathon Registration Platform | Team Applications & QR Check-In | URPASS",
+    title: "Hackathon Registration and QR Check-In Platform | URPASS",
     description:
       "Run your hackathon on URPASS. Team registration, GitHub/LinkedIn profile collection, instant digital hacker passes, and sub-second door check-in.",
     url: "https://urpass.space/hackathon-registration-platform",
@@ -36,15 +37,15 @@ export default function HackathonRegistrationPlatformPage() {
       config={{
         canonicalUrl: "https://urpass.space/hackathon-registration-platform",
         badge: "DEVELOPER HACKATHONS",
-        h1: "Hackathon Registration Platform",
+        h1: "Hackathon Registration and QR Check-In Platform",
         hook: "Sell tickets. Accept UPI. Send QR passes. Scan attendees. Keep your event revenue.",
         subDescription:
           "Built for hackathon organizers and developer communities. Collect team member info, manage review and approvals, issue cryptographic hacker passes, and check in teams in sub-seconds.",
-        primaryCtaLabel: "Create hackathon",
-        primaryCtaHref: "/signup",
-        secondaryCtaLabel: "Book a Demo",
-        secondaryCtaHref: "/contact",
-        trustHighlights: ["₹0 to start", "Team registrations", "QR check-in", "Approval workflows"],
+        primaryCtaLabel: "Launch Hackathon for ₹29 →",
+        primaryCtaHref: "/signup?plan=pro&from=hackathon-registration-platform",
+        secondaryCtaLabel: "View Pricing",
+        secondaryCtaHref: "/pricing",
+        trustHighlights: ["₹29 intro offer", "Team registrations", "Sub-0.3s QR scan", "Approval workflows"],
         currency: "INR",
         cluster: "college",
         description:

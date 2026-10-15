@@ -3,14 +3,14 @@ import { Banknote, Lock, ScanLine, ShieldCheck, Users, Zap } from "lucide-react"
 import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
-  title: "Zoho Backstage Alternative for Registration & Check-In | URPASS",
+  title: "Zoho Backstage Alternative for Event Registration | URPASS",
   description: "The lightweight, agile Zoho Backstage alternative. 3-minute event setup, sub-second QR check-in, 0% ticket fees, and zero enterprise bloat.",
-  keywords: ["Zoho Backstage alternative", "Zoho Backstage competitor", "lightweight event registration software", "fast event check-in software", "simple conference registration platform", "zero commission event ticketing"],
+  keywords: ["Zoho Backstage alternative", "Zoho Backstage alternative for event registration", "Zoho Backstage competitor", "lightweight event registration software", "fast event check-in software", "simple conference registration platform", "zero commission event ticketing"],
   alternates: {
     canonical: "https://urpass.space/zoho-backstage-alternative",
   },
   openGraph: {
-    title: "Zoho Backstage Alternative for Registration & Check-In | URPASS",
+    title: "Zoho Backstage Alternative for Event Registration | URPASS",
     description: "The lightweight, agile Zoho Backstage alternative. 3-minute event setup, sub-second QR check-in, 0% ticket fees, and zero enterprise bloat.",
     url: "https://urpass.space/zoho-backstage-alternative",
     locale: "en_US",
@@ -23,12 +23,15 @@ export default function ZohoBackstageAlternativePage() {
     <SEOPage
       config={{
   "badge": "AGILE EVENT PLATFORM",
-  "h1": "Zoho Backstage Alternative for Registration & Check-In",
+  "h1": "Zoho Backstage Alternative for Event Registration",
   "canonicalUrl": "https://urpass.space/zoho-backstage-alternative",
   "description": "The lightweight, agile Zoho Backstage alternative. 3-minute event setup, sub-second QR check-in, 0% ticket fees, and zero enterprise bloat.",
-  "ctaLabel": "Switch from Zoho Free →",
+  "ctaLabel": "Switch from Zoho for ₹29 →",
+  "ctaHref": "/signup?plan=pro&from=zoho-backstage-alternative",
+  "secondaryCtaLabel": "View Pricing",
+  "secondaryCtaHref": "/pricing",
   "ctaTitle": "Escape Complex Enterprise Event Bloat",
-  "ctaDescription": "Set up your event in 3 minutes instead of 3 weeks. Issue digital QR passes, scan attendees in <0.3s, and keep 100% of your ticket revenue.",
+  "ctaDescription": "Set up your event in 3 minutes instead of 3 weeks. Issue digital QR passes, scan attendees in <0.3s, and keep 100% of your ticket revenue. ₹29 introductory offer.",
   "directAnswer": {
     "title": "Why is URPASS the Best Zoho Backstage Alternative?",
     "summary": "Zoho Backstage is bloated, complex, and tied to the heavy Zoho enterprise ecosystem, requiring steep learning curves and rigid configurations. URPASS is an agile, lightweight alternative focused on the core organizer workflow: fast registration, automated digital QR passes, and sub-second smartphone check-in with zero ticketing commission and 3-minute setup.",

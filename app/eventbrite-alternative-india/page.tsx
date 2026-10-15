@@ -3,14 +3,14 @@ import { Banknote, Building2, Lock, ScanLine, Users, Zap } from "lucide-react";
 import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
-  title: "Eventbrite Alternative India with UPI & QR Check-In | URPASS",
+  title: "Eventbrite Alternative for Indian Event Organizers | URPASS",
   description: "India's zero-commission Eventbrite alternative with instant UPI & Razorpay payments, WhatsApp passes, sub-second QR scanning, and college fest workflows.",
-  keywords: ["Eventbrite alternative India", "event ticketing software India", "UPI event ticketing", "Razorpay event registration", "college fest ticketing platform India", "zero commission event ticketing India"],
+  keywords: ["Eventbrite alternative India", "Eventbrite alternative for Indian event organizers", "event ticketing software India", "UPI event ticketing", "Razorpay event registration", "college fest ticketing platform India", "zero commission event ticketing India"],
   alternates: {
     canonical: "https://urpass.space/eventbrite-alternative-india",
   },
   openGraph: {
-    title: "Eventbrite Alternative India with UPI & QR Check-In | URPASS",
+    title: "Eventbrite Alternative for Indian Event Organizers | URPASS",
     description: "India's zero-commission Eventbrite alternative with instant UPI & Razorpay payments, WhatsApp passes, sub-second QR scanning, and college fest workflows.",
     url: "https://urpass.space/eventbrite-alternative-india",
     locale: "en_IN",
@@ -29,12 +29,15 @@ export default function EventbriteAlternativeIndiaPage() {
     <SEOPage
       config={{
   "badge": "INDIA ZERO-COMMISSION ALTERNATIVE",
-  "h1": "Eventbrite Alternative India with UPI & QR Check-In",
+  "h1": "Eventbrite Alternative for Indian Event Organizers",
   "canonicalUrl": "https://urpass.space/eventbrite-alternative-india",
   "description": "India's zero-commission Eventbrite alternative with instant UPI & Razorpay payments, WhatsApp passes, sub-second QR scanning, and college fest workflows.",
-  "ctaLabel": "Switch to URPASS India Free →",
+  "ctaLabel": "Switch from Eventbrite for ₹29 →",
+  "ctaHref": "/signup?plan=pro&from=eventbrite-alternative-india",
+  "secondaryCtaLabel": "View Pricing",
+  "secondaryCtaHref": "/pricing",
   "ctaTitle": "Sell Event Tickets in India with Instant UPI & 0% Commission",
-  "ctaDescription": "Connect your Razorpay account, accept direct UPI payments, issue WhatsApp & digital QR passes, and admit attendees in <0.3s with volunteer phones.",
+  "ctaDescription": "Connect your Razorpay account, accept direct UPI payments, issue WhatsApp & digital QR passes, and admit attendees in <0.3s. ₹29 introductory offer with 0% ticket commission.",
   "directAnswer": {
     "title": "Why Choose URPASS as Your Eventbrite Alternative in India?",
     "summary": "URPASS is India's leading zero-commission Eventbrite alternative, designed for Indian conferences, college fests, workshops, and tech summits. Unlike Eventbrite, which lacks native UPI QR checkout, charges heavy platform cuts, and delays payouts, URPASS integrates directly with Razorpay for instant UPI settlement, charges 0% ticketing commission, and provides sub-second phone QR scanning.",
@@ -223,8 +226,8 @@ export default function EventbriteAlternativeIndiaPage() {
       "a": "Yes. URPASS pre-caches attendee records in browser memory, enabling uninterrupted scanning even in crowded auditoriums with jammed mobile towers."
     },
     {
-      "q": "Is URPASS free for free college events?",
-      "a": "Yes! URPASS is completely free for free college fests, symposiums, and community meetups with full access to QR generation and mobile scanning."
+      "q": "Can I host free events on URPASS?",
+      "a": "Yes. URPASS supports free registrations with full QR code generation, WhatsApp delivery, and sub-second phone scanning. Organizers can get started with our ₹29 introductory offer or single-event passes."
     }
   ],
   "relatedLinks": [

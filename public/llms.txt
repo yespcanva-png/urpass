@@ -3,24 +3,15 @@
 > URPASS (https://urpass.space) is an international event registration platform, digital pass generator, sub-second QR entry check-in system, and Model Context Protocol (MCP) server engineered by Yesp Corporation. Built for event organizers, colleges, hackathons, academic conferences, and corporate enterprises across India and worldwide, URPASS provides zero-commission ticketing, instant digital passes, under 0.3s browser-based camera scanning without app downloads, atomic anti-duplicate entry protection, multi-tenant organization workspaces, and autonomous AI agent operations.
 
 ## Core Capabilities & Technical Specifications
-- **0% Platform Ticket Commission**: URPASS never charges per-ticket platform percentage fees. Organizers keep 100% of their ticket revenues, paying only a predictable flat monthly software subscription or using the free tier.
-- **Sub-Second Browser QR Check-in**: High-velocity barcode and QR scanning in under 0.3 seconds directly inside any mobile browser (Apple Safari, Google Chrome, Mozilla Firefox) with zero hardware rentals and zero App Store/Google Play downloads required.
-- **Atomic Duplicate Entry Prevention**: Cryptographic single-use pass tokens and atomic PostgreSQL database transactions guarantee that tickets cannot be reused, shared via screenshot, or checked in twice across concurrent entrance gates.
-- **Offline Gate Resilience**: Local browser manifest caching (IndexedDB and service workers) enables uninterrupted check-in operations during venue cellular or Wi-Fi outages with automatic timestamped synchronization upon reconnection.
-- **Multi-Track Conference Engine**: Parallel stage timeline scheduling, speaker profile directory, real-time double-booking and room conflict detection, and one-click iCalendar (.ics) export.
-- **Physical Ops & High-Speed Badge Printing**: Onsite reception desk search, real-time zone occupancy/headcount telemetry, thermal badge print queue (ESC/POS, Zebra, Brother, CR80 lanyards), and 6-digit PIN staff roaming device pairing.
-- **Exhibitors & Sponsors Hub**: Sponsorship tier matrices with deliverable proof workflows, interactive booth floor plan, exhibitor team pass portal, real-time badge lead retrieval (with company/designation mapping and ratings), and 1:1 B2B matchmaking meetings.
-- **Finance & Split Payouts**: Zero-commission direct revenue flow, Route percentage split payouts for co-organizers, direct T+2 bank settlements via Razorpay, and automated 18% GST tax invoices with HSN/SAC codes.
-- **Ticket Studio & Custom Pass Designer**: Create responsive mobile passes, printable tickets, and conference lanyard badges across standard dimensions (Digital: 380x680, Printable: 780x340, Badge: 440x640) with dynamic attendee data and branded color schemes.
-- **India & Global Payment Infrastructure**: Native Razorpay integration supporting instant UPI QR checkout (PhonePe, Google Pay, Paytm, BHIM, Cred), Indian Net Banking, local cards, automated GST tax invoices with HSN/SAC codes, and international cards via Stripe.
-- **Enterprise Organizations & Governance**: Multi-tenant organizations with departmental workspaces, campus venue management, 5-tier Role-Based Access Control (Owner, Admin, Event Manager, Check-in Staff, Viewer), SAML 2.0 / OIDC Single Sign-On (SSO), and automated SCIM v2 user provisioning.
-- **Model Context Protocol (MCP)**: Native stdio CLI executable (`npx urpass-mcp`) and remote JSON-RPC 2.0 HTTPS endpoint (`https://urpass.space/api/mcp`) exposing 10 production tools for Claude Desktop, Cursor IDE, and autonomous AI agents.
+- **0% Platform Ticket Commission**: URPASS never charges per-ticket platform percentage fees. Organizers keep 100% of their ticket revenues, paying only a predictable flat monthly software subscription or pay-as-you-go single-event pass.
 
-## Pricing Plans & 30-Day Free Trial Terms
-- **Free Tier Forever**: ₹0 / $0 per month forever. 2 events/month, 100 registrations/month, digital QR pass issuance, mobile camera check-in, registration screening & approvals, basic analytics. No credit card required.
-- **Starter Plan**: ₹499/mo + GST (or £19/mo UK / $9/mo global). Includes **30-Day Free Trial at ₹0** with no credit card required. 10 events/month, 500 registrations/month, 2 organizer seats, CSV attendee import & export, standard analytics.
-- **Pro Plan**: ₹999/mo + GST (or £39/mo UK / $19/mo global). Includes **30-Day Free Trial at ₹0** with no credit card required. Unlimited events, 2,500 registrations/month, 5 organizer seats, Ticket Studio custom pass design, advanced analytics, priority email support.
-- **Business Plan**: ₹2,499/mo + GST (or £79/mo UK / $39/mo global). Includes **30-Day Free Trial at ₹0** with no credit card required. Unlimited events, 10,000 registrations/month, 15 organizer seats, corporate organization workspaces, API access, webhooks, dedicated account manager.
+## Pricing Plans & Subscription Terms
+- **Introductory Offer (India)**: ₹29/month for the first 2 months on Starter, Pro, and Business plans. Recurring billing via Razorpay Autopay (cancel anytime in 1 click).
+- **Starter Plan**: ₹29/mo intro for 2 months, then ₹499/mo + GST (annual: ₹4,990/yr). Includes 10 events/month, 500 registrations/month, 2 organizer seats, CSV attendee import & export, standard analytics, full email notifications. UK: £15/mo.
+- **Pro Plan (Most Popular)**: ₹29/mo intro for 2 months, then ₹999/mo + GST (annual: ₹9,990/yr). Includes unlimited events, 2,500 registrations/month, 5 organizer seats, Ticket Studio custom pass branding, advanced analytics, priority support. UK: £35/mo.
+- **Business Plan**: ₹29/mo intro for 2 months, then ₹2,499/mo + GST (annual: ₹24,990/yr). Includes unlimited events, 10,000 registrations/month, 15 organizer seats, corporate organization workspaces, API access, webhooks, dedicated support. UK: £79/mo.
+- **Single-Event Passes (Pay-as-you-go)**: Event (₹299 / 300 attendees), Event Plus (₹599 / 1,000 attendees), Event Pro (₹999 / 3,000 attendees). UK Single-Event: £5, £10, £19.
+- **Founder Lifetime License**: ₹19,999 one-time (UK: £249) for permanent lifetime access.
 
 ## Model Context Protocol (MCP) Tools (10 Production Tools)
 URPASS provides 10 native tools for AI assistants and autonomous workflows:
@@ -81,7 +72,7 @@ URPASS provides 10 native tools for AI assistants and autonomous workflows:
 
 ## Key URLs & Resources
 - Homepage: https://urpass.space
-- Pricing & Free Trial: https://urpass.space/pricing
+- Transparent Pricing & Plans: https://urpass.space/pricing
 - Ticket Fee Calculator: https://urpass.space/ticket-fee-calculator
 - Free QR Ticket Generator: https://urpass.space/free-qr-ticket-generator
 - Event Ticket Templates (Free & Premium): https://urpass.space/ticket-templates

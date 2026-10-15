@@ -3,10 +3,11 @@ import { BarChart3, Building2, CheckCircle2, Lock, ScanLine, ShieldCheck, Users,
 import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
-  title: "College Event Management Software & QR Check-In | UrPass",
+  title: "College Event Management Software with QR Entry | URPASS",
   description: "Manage college registrations, digital QR passes, attendee approvals and real-time multi-gate check-in with UrPass. Launch your next college event in minutes.",
   keywords: [
     "college event management software",
+    "college event management software with qr entry",
     "college event management software online",
     "college event management software platform",
     "college event management software check in",
@@ -16,7 +17,7 @@ export const metadata: Metadata = {
     canonical: "https://urpass.space/college-event-management-software",
   },
   openGraph: {
-    title: "College Event Management Software & QR Check-In | UrPass",
+    title: "College Event Management Software with QR Entry | URPASS",
     description: "Manage college registrations, digital QR passes, attendee approvals and real-time multi-gate check-in with UrPass. Launch your next college event in minutes.",
     url: "https://urpass.space/college-event-management-software",
     locale: "en_US",
@@ -29,13 +30,13 @@ export default function Page() {
     <SEOPage
       config={{
         badge: "CAMPUS & COLLEGE EDITION",
-        h1: "Event Management Software Built for Colleges",
+        h1: "College Event Management Software with QR Entry",
         canonicalUrl: "https://urpass.space/college-event-management-software",
         description: "Manage college registrations, digital QR passes, attendee approvals and real-time multi-gate check-in with UrPass. Launch your next college event in minutes.",
-        ctaLabel: "Launch Your College Event",
-        ctaHref: "/signup",
-        secondaryCtaLabel: "Book an UrPass Demo",
-        secondaryCtaHref: "/contact",
+        ctaLabel: "Launch College Event for ₹29 →",
+        ctaHref: "/signup?plan=pro&from=college-event-management-software",
+        secondaryCtaLabel: "View Pricing",
+        secondaryCtaHref: "/pricing",
         directAnswer: {
           title: "What is the best event management software for colleges?",
           summary: "UrPass is an event registration, digital QR pass and check-in platform that lets organisers collect registrations, manage attendees and verify entry from one system. For colleges, UrPass replaces messy spreadsheets and paper desks with instant digital QR passes, multi-gate mobile scanning, faculty approval workflows, and 0% ticket commission on campus events.",
@@ -126,8 +127,8 @@ export default function Page() {
                     "a": "Yes. UrPass supports free registrations, tiered paid tickets, and approval-only passes with integrated payment gateways and zero platform commission."
           }
 ],
-        ctaTitle: "Event Management Software Built for Colleges",
-        ctaDescription: "Launch your event registration in minutes. Permanent free plan available with no credit card required.",
+        ctaTitle: "College Event Management Software with QR Entry",
+        ctaDescription: "Launch your campus symposium or fest in minutes. ₹29 introductory offer for the first 2 months with 0% ticket commission.",
       }}
     />
   );

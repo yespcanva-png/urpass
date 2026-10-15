@@ -3,9 +3,11 @@ import { Palette, QrCode, FileText, Smartphone, ScanLine, ShieldCheck, Printer, 
 import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
-  title: "Event Badge Generator for Attendees | URPASS",
-  description: "Create organized attendee badges and connect registration information with your event entry workflow.",
+  title: "Custom Event Badge and Pass Design Software | URPASS",
+  description: "Create custom event badges, conference lanyards, and digital mobile passes. Connect registration data with sub-second entrance scanning.",
   keywords: [
+    "custom event badge and pass design software",
+    "event badge maker",
     "event badge generator",
     "attendee badge generator",
     "digital badge creator",
@@ -16,8 +18,8 @@ export const metadata: Metadata = {
   ],
   alternates: { canonical: "https://urpass.space/event-badge-generator" },
   openGraph: {
-    title: "Event Badge Generator for Attendees | URPASS",
-    description: "Create organized attendee badges and connect registration information with your event entry workflow.",
+    title: "Custom Event Badge and Pass Design Software | URPASS",
+    description: "Create custom event badges, conference lanyards, and digital mobile passes. Connect registration data with sub-second entrance scanning.",
     url: "https://urpass.space/event-badge-generator",
     locale: "en_IN",
     type: "website",
@@ -28,11 +30,14 @@ export default function Page() {
   return (
     <SEOPage
       config={{
-        badge: "EVENT BADGE GENERATOR",
-        h1: "Create Attendee Badges Without the Manual Work",
+        badge: "EVENT BADGE & PASS DESIGNER",
+        h1: "Custom Event Badge and Pass Design Software",
         canonicalUrl: "https://urpass.space/event-badge-generator",
-        description: "Turn attendee information into organized event identification as part of your registration workflow.",
-        ctaLabel: "Create Event",
+        description: "Turn attendee information into custom conference badges and digital passes as part of your registration workflow.",
+        ctaLabel: "Design Badges for ₹29 →",
+        ctaHref: "/signup?plan=pro&from=event-badge-maker",
+        secondaryCtaLabel: "View Pricing",
+        secondaryCtaHref: "/pricing",
         features: [
           { icon: Palette, title: "Automated Dynamic Badges", desc: "Instantly merge attendee names, organization affiliations, ticket roles (VIP, Speaker, Attendee), and unique QR codes." },
           { icon: QrCode, title: "Digital Mobile & Print Ready", desc: "Deliver responsive mobile credentials that attendees can save to Apple Wallet or print as formatted passes for lanyard pouches." },
@@ -116,10 +121,10 @@ export default function Page() {
           { q: "Can we add sponsor and company logos to the badges?", a: "Yes. You can upload event logos, organization branding, and sponsor logos to appear directly on the badges." },
           { q: "What happens if an attendee's name changes before the event?", a: "Because URPASS digital badges are web-based, any update you make to an attendee's record in your organizer dashboard immediately updates their live digital pass." },
           { q: "How do event staff verify badges at the venue entrance?", a: "Staff open the URPASS mobile camera scanner in Safari or Chrome on any phone and scan the badge QR code. It validates the pass in under 0.3 seconds." },
-          { q: "Is badge generation included on the free tier?", a: "Yes. Organizers on the permanent free tier can generate badges for up to 100 registrations per month at ₹0 forever." },
+          { q: "What plans include custom badge design?", a: "Badge and pass design with custom layouts, sponsor logos, and dynamic attendee credentials is included in the Pro plan (available with our ₹29 introductory offer for the first 2 months), or single-event passes starting at ₹299." },
         ],
-        ctaTitle: "Generate professional event badges today",
-        ctaDescription: "Set up in 5 minutes · Permanent free tier · 30-day free trial on paid plans",
+        ctaTitle: "Custom Event Badge and Pass Design Software",
+        ctaDescription: "Set up in 5 minutes · ₹29 introductory offer for first 2 months · 0% ticket commission",
       }}
     />
   );

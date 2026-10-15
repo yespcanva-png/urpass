@@ -3,14 +3,14 @@ import { Banknote, BarChart3, FileText, ScanLine, ShieldCheck, Users } from "luc
 import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
-  title: "Workshop Registration & Digital Ticketing Software | URPASS",
+  title: "Workshop Registration and Attendance Software | URPASS",
   description: "Workshop registration software with capped capacity, custom intake forms, instant digital QR tickets, and sub-second phone check-in. 0% ticket fees.",
-  keywords: ["workshop registration software", "workshop ticketing platform", "masterclass registration software", "training workshop check-in", "workshop attendee management", "capacity capped event registration"],
+  keywords: ["workshop registration and attendance software", "workshop registration software", "workshop ticketing platform", "masterclass registration software", "training workshop check-in", "workshop attendee management", "capacity capped event registration"],
   alternates: {
     canonical: "https://urpass.space/workshop-registration-software",
   },
   openGraph: {
-    title: "Workshop Registration & Digital Ticketing Software | URPASS",
+    title: "Workshop Registration and Attendance Software | URPASS",
     description: "Workshop registration software with capped capacity, custom intake forms, instant digital QR tickets, and sub-second phone check-in. 0% ticket fees.",
     url: "https://urpass.space/workshop-registration-software",
     locale: "en_US",
@@ -23,12 +23,13 @@ export default function WorkshopRegistrationSoftwarePage() {
     <SEOPage
       config={{
   "badge": "MASTERCLASSES & WORKSHOPS",
-  "h1": "Workshop Registration & Digital Ticketing Software",
+  "h1": "Workshop Registration and Attendance Software",
   "canonicalUrl": "https://urpass.space/workshop-registration-software",
   "description": "Workshop registration software with capped capacity, custom intake forms, instant digital QR tickets, and sub-second phone check-in. 0% ticket fees.",
-  "ctaLabel": "Create Your Workshop Free →",
+  "ctaLabel": "Launch Workshop for ₹29 →",
+  "ctaHref": "/signup?plan=pro&from=workshop-registration-software",
   "ctaTitle": "Host Smooth, Full-Capacity Workshops",
-  "ctaDescription": "Set capacity caps, collect material fees with 0% ticketing commission, and admit participants in <0.3s with smartphone check-in.",
+  "ctaDescription": "Set capacity caps, collect material fees with 0% ticketing commission, and admit participants in <0.3s with smartphone check-in. ₹29 introductory offer for 2 months.",
   "directAnswer": {
     "title": "What is Workshop Registration Software?",
     "summary": "URPASS is workshop registration and digital ticketing software built for masterclasses, hands-on training sessions, creative studios, and professional certifications. It allows instructors to cap seat capacities, accept registration payments with 0% ticketing fees, issue scannable QR tickets, and check participants in seamlessly using volunteer smartphones.",

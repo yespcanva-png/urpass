@@ -3,14 +3,14 @@ import { Banknote, BarChart3, FileText, Lock, ScanLine, Users } from "lucide-rea
 import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
-  title: "Conference Registration Software with QR Check-In | URPASS",
+  title: "Conference Registration & Check-In Software | URPASS",
   description: "Conference registration software with custom delegate passes, multi-tier ticket categories, B2B invoicing, sub-second QR check-in, and real-time attendance.",
-  keywords: ["conference registration software", "conference ticketing platform", "delegate registration software", "conference badge check-in", "academic conference registration", "b2b summit ticketing", "conference qr code scanner"],
+  keywords: ["conference registration software", "conference registration and check in software", "conference ticketing platform", "delegate registration software", "conference badge check-in", "academic conference registration", "b2b summit ticketing", "conference qr code scanner"],
   alternates: {
     canonical: "https://urpass.space/conference-registration-software",
   },
   openGraph: {
-    title: "Conference Registration Software with QR Check-In | URPASS",
+    title: "Conference Registration & Check-In Software | URPASS",
     description: "Conference registration software with custom delegate passes, multi-tier ticket categories, B2B invoicing, sub-second QR check-in, and real-time attendance.",
     url: "https://urpass.space/conference-registration-software",
     locale: "en_US",
@@ -23,12 +23,13 @@ export default function ConferenceRegistrationSoftwarePage() {
     <SEOPage
       config={{
   "badge": "CONFERENCE & SUMMIT EDITION",
-  "h1": "Conference Registration Software with QR Check-In",
+  "h1": "Conference Registration & Check-In Software",
   "canonicalUrl": "https://urpass.space/conference-registration-software",
   "description": "Conference registration software with custom delegate passes, multi-tier ticket categories, B2B invoicing, sub-second QR check-in, and real-time attendance.",
-  "ctaLabel": "Create Your Conference Free →",
+  "ctaLabel": "Launch Conference for ₹29 →",
+  "ctaHref": "/signup?plan=pro&from=conference-registration-software",
   "ctaTitle": "Power Frictionless Entry at Your Next Conference",
-  "ctaDescription": "Set up multi-tier delegate registration, issue dynamic digital QR passes, and admit hundreds of attendees per minute with volunteer phones. Zero commission.",
+  "ctaDescription": "Set up multi-tier delegate registration, issue dynamic digital QR passes, and admit hundreds of attendees per minute with volunteer phones. ₹29 introductory offer with 0% ticket commission.",
   "directAnswer": {
     "title": "What is URPASS Conference Registration Software?",
     "summary": "URPASS is conference registration and QR check-in software that streamlines delegate registration, multi-tier ticket categories, approval workflows, digital badge passes, and multi-door entrance scanning. Built for academic summits, medical congresses, and B2B conventions, it eliminates foyer bottlenecks with sub-0.3s smartphone camera scanning and live attendance analytics.",

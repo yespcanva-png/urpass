@@ -457,9 +457,9 @@ export default function SEOPage({ config }: { config: SEOPageConfig }) {
             offers: {
               "@type": "AggregateOffer",
               priceCurrency: isUkPage ? "GBP" : "INR",
-              lowPrice: "0",
+              lowPrice: isUkPage ? "15" : "29",
               highPrice: isUkPage ? "79" : "2499",
-              offerCount: "4",
+              offerCount: "3",
             },
           }),
         }}
@@ -539,7 +539,9 @@ export default function SEOPage({ config }: { config: SEOPageConfig }) {
               {config.secondaryCtaLabel ?? "View pricing"}
             </Link>
           </div>
-          <p className="mt-6 text-xs text-neutral-400">Free plan available · No credit card required</p>
+          <p className="mt-6 text-xs text-neutral-400">
+            {isUkPage ? "Plans from £15/mo · 0% ticket commission · Cancel anytime" : "₹29 introductory offer · 0% ticket commission · Cancel anytime"}
+          </p>
 
           {/* Direct Answer at the top: 40-80 words engineered for Featured Snippets & AI Search */}
           {config.directAnswer && (
@@ -1178,15 +1180,14 @@ export default function SEOPage({ config }: { config: SEOPageConfig }) {
               {config.ctaTitle ?? "Start your first event today"}
             </h2>
             <p className="text-white/50 mb-8 leading-relaxed">
-              {config.ctaDescription ?? "Free plan · No credit card · Up and running in 5 minutes"}
+              {config.ctaDescription ?? (isUkPage ? "Plans from £15/mo · 0% ticket commission · Up and running in 5 minutes" : "Get started for ₹29 · 0% ticket commission · Up and running in 5 minutes")}
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Link
                 href={config.ctaHref ?? "/signup"}
                 className="inline-flex items-center justify-center gap-2 bg-white text-neutral-900 px-7 py-3.5 rounded-xl text-sm font-semibold hover:bg-neutral-100 transition-colors shadow-sm"
               >
-                {config.ctaLabel ?? "Create free account"}
-                <span className="text-neutral-400">→</span>
+                {config.ctaLabel ?? (isUkPage ? "Get Started →" : "Get Started for ₹29 →")}
               </Link>
               <Link
                 href={config.secondaryCtaHref ?? "/pricing"}

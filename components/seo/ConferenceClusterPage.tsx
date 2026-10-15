@@ -57,7 +57,7 @@ export default function ConferenceClusterPage({ slug }: Props) {
         applicationCategory: "BusinessApplication",
         offers: {
           "@type": "Offer",
-          price: "0",
+          price: "29",
           priceCurrency: "INR",
         },
         description: page.metaDescription,

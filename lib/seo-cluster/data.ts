@@ -1016,11 +1016,11 @@ export const CLUSTER_PAGES: Record<string, ClusterPageConfig> = {
     isPillar: true,
     pillarCategory: "checkin",
     primaryKeyword: "session QR check in",
-    title: "QR Session Check-In Software for Events & Workshops | UrPass",
+    title: "Conference Session Attendance with One QR Pass | UrPass",
     metaDescription:
       "One QR pass for every event session. Validate attendee entry at main gates and individual workshop doorways in <0.3s with UrPass session check-in.",
     badge: "STAGE 1 PILLAR • CHECK-IN ENGINE",
-    h1: "One QR Pass for Every Event Session",
+    h1: "Conference Session Attendance with One QR Pass",
     openingCopy:
       "Attendees don't need separate QR codes for every workshop or conference session. Their existing UrPass pass can be validated at the main entrance, individual sessions, and controlled event areas.",
     geoAnswers: [

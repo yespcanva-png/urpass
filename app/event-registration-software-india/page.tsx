@@ -2,22 +2,23 @@ import type { Metadata } from "next";
 import BOFUMoneyPage from "@/components/landing/BOFUMoneyPage";
 
 export const metadata: Metadata = {
-  title: "Event Registration Software India — Free Forms & QR Passes | URPASS",
+  title: "Event Registration Software for Indian Organizers — QR Passes & UPI | URPASS",
   description:
-    "India's leading event registration software. Build custom registration forms, collect attendee details, accept optional UPI payments, and generate automated QR passes.",
+    "India's leading event registration software for organizers. Build custom registration forms, collect attendee details, accept instant UPI payments via Razorpay, and generate automated QR passes.",
   keywords: [
     "event registration software india",
+    "event registration software for indian organizers",
     "event registration form builder india",
-    "free event registration platform india",
+    "upi event ticketing platform india",
     "qr code event registration",
     "college event registration software",
     "corporate event registration india",
   ],
   alternates: { canonical: "https://urpass.space/event-registration-software-india" },
   openGraph: {
-    title: "Event Registration Software India | Free Forms & QR Passes | URPASS",
+    title: "Event Registration Software for Indian Organizers | URPASS",
     description:
-      "Modern event registration software for India. Custom form fields, instant QR pass generation, UPI integration, and mobile scanning.",
+      "Modern event registration software for Indian organizers. Custom form fields, instant QR pass generation, UPI integration, and sub-second phone scanning.",
     url: "https://urpass.space/event-registration-software-india",
     locale: "en_IN",
     type: "website",
@@ -35,16 +36,16 @@ export default function EventRegistrationSoftwareIndiaPage() {
     <BOFUMoneyPage
       config={{
         canonicalUrl: "https://urpass.space/event-registration-software-india",
-        badge: "EVENT REGISTRATION SOFTWARE",
-        h1: "Event Registration Software India",
+        badge: "EVENT REGISTRATION SOFTWARE INDIA",
+        h1: "Event Registration Software for Indian Organizers",
         hook: "Sell tickets. Accept UPI. Send QR passes. Scan attendees. Keep your event revenue.",
         subDescription:
-          "Replace clunky Google Forms with beautiful, branded registration pages that automatically generate scannable QR tickets and verify attendees at the door.",
-        primaryCtaLabel: "Start free",
-        primaryCtaHref: "/signup",
-        secondaryCtaLabel: "Book a Demo",
-        secondaryCtaHref: "/contact",
-        trustHighlights: ["₹0 to start", "Razorpay / UPI", "QR check-in", "WhatsApp passes"],
+          "Replace clunky Google Forms with high-converting, branded registration pages that automatically generate scannable QR tickets, accept instant UPI payments, and verify attendees at the door in <0.3s.",
+        primaryCtaLabel: "Get Started for ₹29 →",
+        primaryCtaHref: "/signup?plan=pro&from=event-registration-software-india",
+        secondaryCtaLabel: "View Pricing",
+        secondaryCtaHref: "/pricing",
+        trustHighlights: ["₹29 intro offer", "Razorpay / UPI", "Sub-0.3s QR scan", "0% Ticket Fee"],
         currency: "INR",
         cluster: "ticketing",
         description:

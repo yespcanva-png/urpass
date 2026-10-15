@@ -214,7 +214,7 @@ export default function ProductPage() {
               Ready to modernize your event entry?
             </h2>
             <p className="text-neutral-600 text-sm mb-6 max-w-xl mx-auto">
-              Get started for free or test our Pro plan with a 30-day trial. Zero credit card required.
+              Get started with our ₹29 introductory offer for the first 2 months. 0% ticket commission and instant QR check-in.
             </p>
             <div className="flex flex-wrap items-center justify-center gap-4">
               <Link

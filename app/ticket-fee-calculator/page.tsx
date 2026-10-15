@@ -45,7 +45,7 @@ export const metadata: Metadata = {
 const FAQS = [
   {
     q: "How does the URPASS 0% ticket commission model work?",
-    a: "Unlike legacy ticketing aggregators that take 3.7% to 10% from every ticket sale, URPASS does not take any percentage cut from your ticket revenue. Organizers pay only a flat, predictable monthly software subscription or use the ₹0 forever Free Tier. Standard payment processor interchange fees (such as Razorpay or Stripe) settle directly to your merchant account.",
+    a: "Unlike legacy ticketing aggregators that take 3.7% to 10% from every ticket sale, URPASS does not take any percentage cut from your ticket revenue. Organizers pay only a flat, predictable software subscription (starting with a ₹29 introductory offer for the first 2 months) or a pay-as-you-go single-event pass. Standard payment processor interchange fees (such as Razorpay or Stripe) settle directly to your merchant account.",
   },
   {
     q: "How much does Eventbrite charge per ticket?",
@@ -56,8 +56,8 @@ const FAQS = [
     a: "Townscript charges approximately 3.99% plus ₹10 per ticket transaction convenience fee. For an event selling 1,000 tickets at ₹500, this equates to roughly ₹25,000 to ₹30,000 in deducted platform fees.",
   },
   {
-    q: "Can I use URPASS for free events without paying anything?",
-    a: "Yes. URPASS offers a permanent ₹0 Free Tier that includes up to 2 active events per month and 100 attendee registrations per month with full QR code generation, email pass delivery, and mobile browser camera scanning included. No credit card is required.",
+    q: "Can I host free events on URPASS?",
+    a: "Yes. URPASS supports free registrations with full QR code generation, email pass delivery, and mobile browser camera scanning included. Organizers can get started with our ₹29 introductory offer or single-event passes.",
   },
   {
     q: "When and how do I receive the money from ticket sales?",
@@ -140,7 +140,7 @@ export default function TicketFeeCalculatorPage() {
               </div>
               <h3 className="text-base font-bold text-neutral-900">Predictable Flat SaaS</h3>
               <p className="text-xs text-neutral-600 mt-2 leading-relaxed">
-                URPASS operates on 0% per-ticket platform commission. You pay a predictable, flat monthly plan (or ₹0 on the free tier), keeping 100% of ticket sales.
+                URPASS operates on 0% per-ticket platform commission. You pay a predictable, flat monthly plan starting at ₹29 for your first 2 months, keeping 100% of ticket sales.
               </p>
             </div>
 
@@ -230,14 +230,14 @@ export default function TicketFeeCalculatorPage() {
               Ready to stop paying ticketing commissions?
             </h2>
             <p className="mt-3 text-neutral-300 text-xs sm:text-sm max-w-xl mx-auto leading-relaxed">
-              Create your event on URPASS in under 30 seconds. Permanent free tier available, with no credit card required.
+              Create your event on URPASS in under 30 seconds. Get started with our ₹29 introductory offer and keep 100% of your ticket sales.
             </p>
             <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
                 href="/signup?ref=calculator-cta"
                 className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-white hover:bg-neutral-100 text-neutral-950 font-bold text-sm transition-all shadow-md"
               >
-                Create Your Event Free →
+                Get Started for ₹29 →
               </Link>
               <Link
                 href="/pricing"
@@ -247,7 +247,7 @@ export default function TicketFeeCalculatorPage() {
               </Link>
             </div>
             <p className="text-[11px] text-neutral-400 mt-4">
-              ₹0 forever free tier · 30-day free trial on paid plans · No credit card required
+              ₹29 intro offer for first 2 months · 0% ticket commission · Cancel anytime
             </p>
           </div>
         </section>

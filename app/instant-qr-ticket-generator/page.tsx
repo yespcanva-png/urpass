@@ -4,10 +4,12 @@ import SEOPage from "@/components/landing/SEOPage";
 import { TICKET_OG_IMAGE, TICKET_OG_IMAGE_META } from "@/lib/seo/og-images";
 
 export const metadata: Metadata = {
-  title: "Instant QR Ticket Generator for Events | URPASS",
+  title: "Create QR Code Tickets for Your Event | URPASS",
   description:
     "Generate single-use QR event tickets in seconds. Instant automated email delivery, mobile web passes, and fraud-proof cryptographic entry tokens.",
   keywords: [
+    "create qr code tickets for your event",
+    "qr ticket generator",
     "instant qr ticket generator",
     "generate qr passes for events",
     "digital ticket maker",
@@ -17,7 +19,7 @@ export const metadata: Metadata = {
   ],
   alternates: { canonical: "https://urpass.space/instant-qr-ticket-generator" },
   openGraph: {
-    title: "Instant QR Ticket Generator for Events | URPASS",
+    title: "Create QR Code Tickets for Your Event | URPASS",
     description: "Generate single-use QR event tickets in seconds with automated delivery.",
     url: "https://urpass.space/instant-qr-ticket-generator",
     locale: "en_IN",
@@ -35,11 +37,14 @@ export default function Page() {
     <SEOPage
       config={{
         badge: "INSTANT QR PASS GENERATION",
-        h1: "Instant QR Ticket Generator for Modern Events",
+        h1: "Create QR Code Tickets for Your Event",
         canonicalUrl: "https://urpass.space/instant-qr-ticket-generator",
         description:
           "Create and issue tamper-proof digital QR tickets in seconds. Automated delivery via email, mobile web links, and WhatsApp with zero per-ticket commission fees.",
-        ctaLabel: "Generate Free QR Passes",
+        ctaLabel: "Generate QR Passes for ₹29 →",
+        ctaHref: "/signup?plan=pro&from=instant-qr-ticket-generator",
+        secondaryCtaLabel: "View Pricing",
+        secondaryCtaHref: "/pricing",
         directAnswer: {
           title: "How Does the URPASS Instant QR Ticket Generator Work?",
           summary:
