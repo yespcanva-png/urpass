@@ -46,7 +46,10 @@ export default function Navbar() {
   }, []);
 
   return (
-    <header className="fixed top-0 inset-x-0 z-50 transition-all duration-300">
+    <header
+      style={{ top: "var(--pwa-top-bar-height, 0px)" }}
+      className="fixed inset-x-0 z-50 transition-[top] duration-200"
+    >
       {/* Main Navbar */}
       <div
         className={cn(
