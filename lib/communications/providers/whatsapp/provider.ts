@@ -60,13 +60,13 @@ export class WhatsAppProvider {
     }
 
     // 2. Priority 2: Meta WhatsApp Cloud API if credentials present
-    const token = process.env.WHATSAPP_API_TOKEN;
-    const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+    const token = process.env.WHATSAPP_API_TOKEN || process.env.WHATSAPP_CLOUD_ACCESS_TOKEN;
+    const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID || process.env.WHATSAPP_CLOUD_PHONE_NUMBER_ID;
 
     // In local dev/testing without WhatsApp API credentials, simulate delivery
     if (!token || !phoneId) {
       if (process.env.NODE_ENV !== "test") {
-        console.warn(`[WhatsApp] AISENSY_API_KEY or WHATSAPP_API_TOKEN not configured. Simulated WhatsApp pass delivery to: ${payload.phone}`);
+        console.warn(`[WhatsApp] Direct WhatsApp credentials (WHATSAPP_API_TOKEN/WHATSAPP_PHONE_NUMBER_ID) not configured. Simulated delivery to: ${payload.phone}`);
       }
       return {
         success: true,
@@ -79,6 +79,44 @@ export class WhatsAppProvider {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 6000);
 
+      const templateName = payload.templateName || process.env.WHATSAPP_TEMPLATE_NAME;
+      const templateLang = payload.templateLanguage || process.env.WHATSAPP_TEMPLATE_LANG || "en";
+
+      const requestBody = templateName
+        ? {
+            messaging_product: "whatsapp",
+            recipient_type: "individual",
+            to: payload.phone.replace("+", ""),
+            type: "template",
+            template: {
+              name: templateName,
+              language: { code: templateLang },
+              components: [
+                {
+                  type: "body",
+                  parameters: [
+                    { type: "text", text: payload.attendeeName || "Guest" },
+                    { type: "text", text: payload.eventName || "Event" },
+                    { type: "text", text: payload.ticketId || "PASS" },
+                    { type: "text", text: payload.ticketUrl || "https://urpass.space" },
+                  ],
+                },
+              ],
+            },
+          }
+        : {
+            messaging_product: "whatsapp",
+            recipient_type: "individual",
+            to: payload.phone.replace("+", ""),
+            type: "text",
+            text: {
+              preview_url: true,
+              body:
+                payload.customMessage ||
+                `🎟️ Your ticket for *${payload.eventName}* is confirmed!\nTicket: ${payload.ticketId}\nView your QR pass: ${payload.ticketUrl}`,
+            },
+          };
+
       const url = `https://graph.facebook.com/v19.0/${phoneId}/messages`;
       const res = await fetch(url, {
         method: "POST",
@@ -86,16 +124,7 @@ export class WhatsAppProvider {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          messaging_product: "whatsapp",
-          recipient_type: "individual",
-          to: payload.phone.replace("+", ""),
-          type: "text",
-          text: {
-            preview_url: true,
-            body: payload.customMessage || `🎟️ Your ticket for *${payload.eventName}* is confirmed!\nTicket: ${payload.ticketId}\nView your QR pass: ${payload.ticketUrl}`,
-          },
-        }),
+        body: JSON.stringify(requestBody),
         signal: controller.signal,
       });
       clearTimeout(timeoutId);

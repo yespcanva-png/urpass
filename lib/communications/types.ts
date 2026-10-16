@@ -59,6 +59,8 @@ export interface TicketDeliveryPayload {
   ticketUrl?: string;
   version?: string | null;
   customMessage?: string;
+  templateName?: string;
+  templateLanguage?: string;
 }
 
 export interface EventCommunicationSettings {
