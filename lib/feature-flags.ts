@@ -488,3 +488,69 @@ export function assertFeatureEnabled(
   }
   return { enabled: true };
 }
+
+/**
+ * Extracts and normalizes modular configurations from an event's custom_pass_design.
+ */
+export function extractModuleConfigsFromEvent(
+  event?: EventLike | null
+): Record<string, Record<string, unknown>> {
+  const design =
+    event?.custom_pass_design && typeof event.custom_pass_design === "object"
+      ? (event.custom_pass_design as Record<string, unknown>)
+      : {};
+
+  const unified =
+    design._moduleConfigs && typeof design._moduleConfigs === "object"
+      ? (design._moduleConfigs as Record<string, Record<string, unknown>>)
+      : {};
+
+  return {
+    bulk_ticket_booking: {
+      ...((design._bulkBookingSettings as Record<string, unknown>) || {}),
+      ...(unified.bulk_ticket_booking || {}),
+    },
+    ticket_distribution: {
+      ...((design._distributionSettings as Record<string, unknown>) || {}),
+      ...(unified.ticket_distribution || {}),
+    },
+    member_registration_forms: {
+      ...((design._memberFormConfig as Record<string, unknown>) || {}),
+      ...(unified.member_registration_forms || {}),
+    },
+    serial_number_validation: {
+      ...((design._serialNumberConfig as Record<string, unknown>) || {}),
+      ...(unified.serial_number_validation || {}),
+    },
+    ticket_reassignment: {
+      ...((design._ticketReassignmentConfig as Record<string, unknown>) || {}),
+      ...(unified.ticket_reassignment || {}),
+    },
+    advanced_entry_tracking: {
+      ...((design._gateTrackingConfig as Record<string, unknown>) || {}),
+      ...(unified.advanced_entry_tracking || {}),
+    },
+    session_attendance: {
+      ...((design._sessionAttendanceConfig as Record<string, unknown>) || {}),
+      ...(unified.session_attendance || {}),
+    },
+    csv_management: {
+      ...((design._csvManagementConfig as Record<string, unknown>) || {}),
+      ...(unified.csv_management || {}),
+    },
+    offline_scanning: {
+      ...((design._offlineScanningConfig as Record<string, unknown>) || {}),
+      ...(unified.offline_scanning || {}),
+    },
+    advanced_analytics: {
+      ...((design._advancedAnalyticsConfig as Record<string, unknown>) || {}),
+      ...(unified.advanced_analytics || {}),
+    },
+    group_entry: {
+      ...((design._groupEntryConfig as Record<string, unknown>) || {}),
+      ...(unified.group_entry || {}),
+    },
+    ...unified,
+  };
+}
+

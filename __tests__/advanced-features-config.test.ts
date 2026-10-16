@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { extractModuleConfigsFromEvent } from "@/app/actions/event-features";
+import { extractModuleConfigsFromEvent } from "@/lib/feature-flags";
+import { extractModuleConfigsFromEvent as extractModuleConfigsAction } from "@/app/actions/event-features";
 
 describe("Advanced Features Configuration System", () => {
   it("extracts and merges module configurations from custom_pass_design", () => {
@@ -57,5 +58,19 @@ describe("Advanced Features Configuration System", () => {
 
     expect(configs.group_entry.partial_entry).toBe(true);
     expect(configs.group_entry.max_group_size).toBe("100");
+  });
+
+  it("extracts module configs asynchronously via server action", async () => {
+    const mockEvent = {
+      id: "event-async-test",
+      organizer_id: "org-1",
+      custom_pass_design: {
+        _groupEntryConfig: { partial_entry: true, max_group_size: "50" },
+      },
+    };
+
+    const configs = await extractModuleConfigsAction(mockEvent as any);
+    expect(configs.group_entry.partial_entry).toBe(true);
+    expect(configs.group_entry.max_group_size).toBe("50");
   });
 });
