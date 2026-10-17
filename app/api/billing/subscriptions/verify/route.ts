@@ -74,6 +74,31 @@ export async function POST(req: NextRequest) {
       (razorpay.payments as any).fetch(paymentId).catch(() => null),
     ]);
 
+    if (!payment) {
+      return NextResponse.json(
+        { error: "First payment confirmation failed: payment record was not found on Razorpay. Subscription can only be activated after successful payment confirmation." },
+        { status: 400 }
+      );
+    }
+
+    const paymentStatus = String(payment.status || "").toLowerCase();
+    if (paymentStatus !== "captured" && paymentStatus !== "authorized") {
+      return NextResponse.json(
+        {
+          error: `First payment confirmation failed (payment status: ${paymentStatus}). Your subscription can only be activated after successful payment confirmation of ₹34.22.`,
+        },
+        { status: 400 }
+      );
+    }
+
+    if (paymentStatus === "authorized") {
+      try {
+        await (razorpay.payments as any).capture(paymentId, payment.amount, payment.currency || "INR");
+      } catch {
+        // Auto-capture in progress or handled by subscription
+      }
+    }
+
     const notes = (subscription?.notes ?? {}) as Record<string, string>;
     if (notes.user_id && notes.user_id !== user.id) {
       return NextResponse.json({ error: "Subscription does not belong to the authenticated user." }, { status: 403 });
@@ -118,6 +143,8 @@ export async function POST(req: NextRequest) {
           is_trial: false,
           autopay_mandate_id: subscriptionId,
           autopay_status: "active",
+          free_event_trial_active: false,
+          free_event_trial_consumed: false,
           has_lifetime_access: Boolean(existing?.has_lifetime_access),
           lifetime_plan_slug: existing?.lifetime_plan_slug ?? null,
           updated_at: new Date().toISOString(),
@@ -140,9 +167,9 @@ export async function POST(req: NextRequest) {
       userId: user.id,
       subscriptionId: updatedSub?.id ?? null,
       paymentId,
-      description: `${plan.name} Plan (monthly subscription)`,
+      description: `${plan.name} Plan — Monthly AutoPay Subscription (Introductory Offer Cycle 1)`,
       baseAmountRupees: baseAmountPaise / 100,
-      discountRupees: discountPaise / 100,
+      discountRupees: 0,
       currency: paymentCurrency,
       docType: "SUB",
       customerEmail: user.email,

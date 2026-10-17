@@ -2,9 +2,30 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Check, LogOut, ShieldCheck, Ticket } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Check, LogOut, ShieldCheck, Ticket, Sparkles, ArrowRight, Loader2 } from "lucide-react";
 import CheckoutButton from "@/components/billing/CheckoutButton";
 import { detectCountryClient, persistCountryPreference } from "@/lib/country-config";
+
+declare global {
+  interface Window {
+    Razorpay: new (options: Record<string, unknown>) => { open: () => void };
+  }
+}
+
+function loadRazorpay(): Promise<boolean> {
+  return new Promise((resolve) => {
+    if (typeof window !== "undefined" && window.Razorpay) {
+      resolve(true);
+      return;
+    }
+    const s = document.createElement("script");
+    s.src = "https://checkout.razorpay.com/v1/checkout.js";
+    s.onload = () => resolve(true);
+    s.onerror = () => resolve(false);
+    document.body.appendChild(s);
+  });
+}
 
 type Cycle = "monthly" | "annual";
 
@@ -54,6 +75,7 @@ interface Props {
   userName: string;
   accessState: string;
   introOfferEligible: boolean;
+  freeTrialEligible?: boolean;
 }
 
 export default function SubscriptionOnboardingClient({
@@ -62,7 +84,11 @@ export default function SubscriptionOnboardingClient({
   userName,
   accessState,
   introOfferEligible,
+  freeTrialEligible = false,
 }: Props) {
+  const router = useRouter();
+  const [trialLoading, setTrialLoading] = useState(false);
+  const [trialError, setTrialError] = useState("");
   const [billingCycle, setBillingCycle] = useState<Cycle>("monthly");
   const [activeCountry, setActiveCountry] = useState<"IN" | "GB">(() => {
     if (typeof window !== "undefined") {
@@ -79,6 +105,93 @@ export default function SubscriptionOnboardingClient({
   function switchCountry(next: "IN" | "GB") {
     setActiveCountry(next);
     persistCountryPreference(next);
+  }
+
+  async function handleStartFreeEventTrial() {
+    setTrialLoading(true);
+    setTrialError("");
+
+    try {
+      const loaded = await loadRazorpay();
+      if (!loaded || !window.Razorpay) {
+        setTrialError("Could not load payment gateway. Please check your internet connection.");
+        setTrialLoading(false);
+        return;
+      }
+
+      const res = await fetch("/api/billing/autopay/mandate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          planSlug: "pro",
+          billingCycle: "monthly",
+          isFreeTrial: true,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setTrialError(data.error || "Failed to create AutoPay mandate.");
+        setTrialLoading(false);
+        return;
+      }
+
+      const rzp = new window.Razorpay({
+        key: data.keyId,
+        order_id: data.orderId,
+        customer_id: data.customerId,
+        recurring: "1",
+        amount: data.amount,
+        currency: data.currency,
+        name: "URPASS",
+        description: "1 Free Event Trial - AutoPay Mandate Authorization (₹1)",
+        prefill: { name: userName, email: userEmail },
+        theme: { color: "#6D28D9" },
+        modal: { ondismiss: () => setTrialLoading(false) },
+        handler: async (response: {
+          razorpay_payment_id?: string;
+          razorpay_order_id?: string;
+          razorpay_signature?: string;
+        }) => {
+          if (!response?.razorpay_payment_id || !response?.razorpay_order_id || !response?.razorpay_signature) {
+            setTrialError("Mandate details missing from payment authorization.");
+            setTrialLoading(false);
+            return;
+          }
+
+          try {
+            const verifyRes = await fetch("/api/billing/autopay/mandate/verify", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                orderId: response.razorpay_order_id,
+                paymentId: response.razorpay_payment_id,
+                signature: response.razorpay_signature,
+                customerId: data.customerId,
+              }),
+            });
+            const verifyData = await verifyRes.json();
+            setTrialLoading(false);
+
+            if (!verifyRes.ok) {
+              setTrialError(verifyData.error || "Failed to verify AutoPay mandate.");
+              return;
+            }
+
+            router.push(verifyData.redirect || "/create-event");
+            router.refresh();
+          } catch (err) {
+            setTrialLoading(false);
+            setTrialError(err instanceof Error ? err.message : "Failed to verify AutoPay mandate.");
+          }
+        },
+      });
+
+      rzp.open();
+    } catch (err) {
+      setTrialLoading(false);
+      setTrialError(err instanceof Error ? err.message : "Failed to initiate AutoPay trial.");
+    }
   }
 
   const isUk = activeCountry === "GB";
@@ -160,6 +273,56 @@ export default function SubscriptionOnboardingClient({
             </div>
           </div>
         </section>
+
+        {!isUk && freeTrialEligible && (
+          <div className="mt-8 overflow-hidden rounded-2xl border-2 border-[#6D28D9] bg-gradient-to-br from-violet-950 via-purple-900 to-neutral-950 p-6 sm:p-7 text-white shadow-lg">
+            <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+              <div className="max-w-2xl space-y-2.5">
+                <div className="inline-flex items-center gap-1.5 rounded-full bg-violet-400/20 px-3 py-1 text-xs font-bold text-violet-300 border border-violet-400/30">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  Free Trial Offer
+                </div>
+                <h2 className="text-xl sm:text-2xl font-bold tracking-tight">Try 1 Event for Free with AutoPay</h2>
+                <p className="text-sm text-violet-200 leading-relaxed">
+                  Experience UrPass with full Pro features for 1 full event. Authorize a ₹1 AutoPay mandate today to verify your payment method. Pay nothing today—billing only begins after your event concludes.
+                </p>
+                <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-xs text-violet-300/90 pt-1">
+                  <span>✓ 1 event with full Pro tier access</span>
+                  <span>✓ Zero platform commission on tickets</span>
+                  <span>✓ Digital QR badges &amp; scanner gates</span>
+                </div>
+                <p className="text-[11px] text-violet-300/60 pt-0.5">
+                  * Anti-abuse policy: 1 event lifetime quota. Deleting or recreating events is strictly prohibited under trial.
+                </p>
+              </div>
+
+              <div className="flex flex-col items-start lg:items-end gap-2.5 shrink-0">
+                <button
+                  type="button"
+                  onClick={handleStartFreeEventTrial}
+                  disabled={trialLoading}
+                  className="inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3.5 text-sm font-bold text-neutral-950 shadow-md transition-all hover:bg-neutral-100 disabled:opacity-50 active:scale-[0.98]"
+                >
+                  {trialLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin text-[#6D28D9]" />
+                      Authorizing AutoPay...
+                    </>
+                  ) : (
+                    <>
+                      Activate AutoPay &amp; Try 1 Event Free
+                      <ArrowRight className="h-4 w-4" />
+                    </>
+                  )}
+                </button>
+                <span className="text-[11px] text-violet-300">₹1 mandate authorization · Pay after 1 event</span>
+                {trialError && (
+                  <p className="text-xs text-red-300 font-medium max-w-xs">{trialError}</p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="mt-8 rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm text-neutral-700">
           {isAnnual ? (

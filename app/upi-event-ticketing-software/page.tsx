@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import BOFUMoneyPage from "@/components/landing/BOFUMoneyPage";
 
 export const metadata: Metadata = {
-  title: "UPI Event Ticketing Software — Instant PhonePe, GPay & QR Checkout | URPASS",
+  title: "UPI Event Ticketing Software India | UrPass",
   description:
-    "Accept instant UPI payments for your event tickets in India. Seamless checkout via Google Pay, PhonePe, Paytm, and BHIM UPI with 0% platform cuts and direct bank payouts.",
+    "Sell event tickets in India with instant Google Pay, PhonePe, and Paytm UPI checkout, 0% platform cuts and direct bank settlement.",
   keywords: [
     "upi event ticketing software",
     "upi event ticketing",
@@ -16,9 +16,9 @@ export const metadata: Metadata = {
   ],
   alternates: { canonical: "https://urpass.space/upi-event-ticketing-software" },
   openGraph: {
-    title: "UPI Event Ticketing Software | Instant UPI Checkout & 0% Cut | URPASS",
+    title: "UPI Event Ticketing Software India | UrPass",
     description:
-      "Sell event tickets with instant UPI checkout. Support Google Pay, PhonePe, and Paytm with direct bank settlement and sub-second QR check-in.",
+      "Sell event tickets in India with instant Google Pay, PhonePe, and Paytm UPI checkout, 0% platform cuts and direct bank settlement.",
     url: "https://urpass.space/upi-event-ticketing-software",
     locale: "en_IN",
     type: "website",
@@ -37,7 +37,7 @@ export default function UpiEventTicketingSoftwarePage() {
       config={{
         canonicalUrl: "https://urpass.space/upi-event-ticketing-software",
         badge: "INSTANT UPI TICKETING",
-        h1: "UPI Event Ticketing Software",
+        h1: "Sell Event Tickets with UPI Payments",
         hook: "Sell tickets. Accept UPI. Send QR passes. Scan attendees. Keep your event revenue.",
         subDescription:
           "Over 80% of Indian event attendees prefer paying with UPI. Enable one-tap app switching and dynamic UPI QR checkout to minimize mobile cart abandonment.",

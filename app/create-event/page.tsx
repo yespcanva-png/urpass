@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getUserPlan } from "@/lib/plan";
 import { getWorkspaces } from "@/app/actions/workspaces";
 import { getLocations } from "@/app/actions/locations";
+import { resolveUserSubscriptionAccess } from "@/lib/billing/entitlement-resolver";
 import CreateEventForm from "./CreateEventForm";
 
 export default async function CreateEventPage({
@@ -13,6 +14,28 @@ export default async function CreateEventPage({
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
+
+  const access = await resolveUserSubscriptionAccess({ supabase, user });
+  if (!access.hasOrganizerAccess) {
+    if (access.shouldRedirectToSubscriptionOnboarding) {
+      redirect("/onboarding/subscription");
+    }
+    redirect(`/billing?reason=${encodeURIComponent(access.state)}`);
+  }
+
+  // Anti-abuse: if user is on free event autopay trial, verify 1-event trial quota
+  const isTrial = Boolean(access.isTrial || access.state === "autopay_trial_active");
+  if (isTrial) {
+    const { data: existingTrial } = await supabase
+      .from("user_trial_events")
+      .select("id, event_deleted")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (existingTrial) {
+      redirect("/billing?reason=autopay_trial_limit_reached");
+    }
+  }
 
   const { org: orgId } = await searchParams;
 
@@ -56,6 +79,7 @@ export default async function CreateEventPage({
       orgs={orgs}
       workspaces={workspaces}
       locations={locations}
+      isTrial={isTrial}
     />
   );
 }

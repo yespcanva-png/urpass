@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import BOFUMoneyPage from "@/components/landing/BOFUMoneyPage";
 
 export const metadata: Metadata = {
-  title: "College Fest Ticketing Platform — Sell Fest Tickets at 0% Commission | URPASS",
+  title: "College Fest Ticketing Platform India | UrPass",
   description:
-    "The dedicated college fest ticketing platform in India. Sell pro-show passes, workshop tickets, and cultural event registrations with instant UPI and 0% platform cuts.",
+    "All-in-one ticketing and high-speed QR check-in platform for university cultural fests, technical symposiums and concerts.",
   keywords: [
     "college fest ticketing platform",
     "sell college fest tickets",
@@ -15,9 +15,9 @@ export const metadata: Metadata = {
   ],
   alternates: { canonical: "https://urpass.space/college-fest-ticketing-platform" },
   openGraph: {
-    title: "College Fest Ticketing Platform | Sell Fest Tickets at 0% Commission | URPASS",
+    title: "College Fest Ticketing Platform India | UrPass",
     description:
-      "Sell college fest tickets, pronite passes, and competition entries with 0% platform commission. Direct UPI payments, WhatsApp passes, and multi-gate scanning.",
+      "All-in-one ticketing and high-speed QR check-in platform for university cultural fests, technical symposiums and concerts.",
     url: "https://urpass.space/college-fest-ticketing-platform",
     locale: "en_IN",
     type: "website",
@@ -36,7 +36,7 @@ export default function CollegeFestTicketingPlatformPage() {
       config={{
         canonicalUrl: "https://urpass.space/college-fest-ticketing-platform",
         badge: "CAMPUS FEST TICKETING",
-        h1: "College Fest Ticketing Platform",
+        h1: "Sell College Fest Tickets and Manage Entry",
         hook: "Sell tickets. Accept UPI. Send QR passes. Scan attendees. Keep your event revenue.",
         subDescription:
           "Sell pro-show passes, concert wristband vouchers, and technical symposium tickets directly to students. Keep 100% of fest ticket revenue with zero platform commission deductions.",

@@ -37,6 +37,24 @@ function adminClient() {
   );
 }
 
+async function fetchAllAuthUsers(admin: ReturnType<typeof adminClient>) {
+  const allUsers: any[] = [];
+  let page = 1;
+  const perPage = 1000;
+  while (page <= 20) {
+    try {
+      const res = await admin.auth.admin.listUsers({ page, perPage });
+      const users = res?.data?.users || [];
+      allUsers.push(...users);
+      if (users.length < perPage) break;
+      page++;
+    } catch {
+      break;
+    }
+  }
+  return allUsers;
+}
+
 export type { OpsLogItem };
 
 export async function GET() {
@@ -54,46 +72,46 @@ export async function GET() {
     const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
-    // Parallel fetch with corrected schema columns
-    const [subsRes, profRes, evRes, ciRes, auditRes, invRes, authRes] = await Promise.all([
+    // Parallel fetch: fetch comprehensive data across all operational collections
+    const [subsRes, profRes, evRes, ciRes, auditRes, invRes, authUsers] = await Promise.all([
       admin
         .from("subscriptions")
         .select("id, user_id, status, provider, autopay_status, billing_cycle, updated_at, created_at")
         .order("updated_at", { ascending: false })
-        .limit(100),
+        .limit(2000),
 
       admin
         .from("profiles")
         .select("id, user_id, email, full_name, created_at, updated_at")
         .order("created_at", { ascending: false })
-        .limit(100),
+        .limit(2000),
 
       admin
         .from("events")
         .select("id, organizer_id, name, venue, event_date, status, created_at, updated_at")
         .order("created_at", { ascending: false })
-        .limit(50),
+        .limit(2000),
 
       admin
         .from("check_ins")
         .select("id, pass_id, event_id, attendee_id, checked_in_at, checked_in_by, created_at")
         .order("created_at", { ascending: false })
-        .limit(50),
+        .limit(2000),
 
       admin
         .from("enterprise_audit_logs")
         .select("id, action, resource_type, resource_id, details, ip_address, created_at")
         .order("created_at", { ascending: false })
-        .limit(30),
+        .limit(2000),
 
       admin
         .from("invoices")
         .select("id, user_id, invoice_number, invoice_date, customer_name, customer_email, customer_address, customer_gstin, place_of_supply, state_code, taxable_amount, cgst_amount, sgst_amount, igst_amount, total_amount, currency, payment_status, invoice_status, payment_id, created_at")
         .order("invoice_date", { ascending: false })
         .order("created_at", { ascending: false })
-        .limit(100),
+        .limit(2000),
 
-      admin.auth.admin.listUsers({ page: 1, perPage: 50 }).catch(() => ({ data: { users: [] } })),
+      fetchAllAuthUsers(admin),
     ]);
 
     const subs = subsRes.data || [];
@@ -102,7 +120,6 @@ export async function GET() {
     const checkIns = ciRes.data || [];
     const auditLogs = auditRes.data || [];
     const invoices = (invRes.data || []) as OpsInvoiceItem[];
-    const authUsers = authRes.data?.users || [];
 
     const dbLatencyMs = Date.now() - startTime;
 
@@ -163,8 +180,21 @@ export async function GET() {
     }
     const pendingSponsorshipsCount = sponsorshipsList.filter((s) => s.status === "pending").length;
 
-    // Construct user roster with health indicators
-    const userRoster = profiles.map((p) => {
+    // Construct complete user roster including both profiles and Supabase Auth accounts
+    const userMap = new Map<string, {
+      id: string;
+      email: string;
+      name: string;
+      plan: string;
+      billingCycle: string;
+      status: string;
+      autopayStatus: string;
+      healthStatus: "healthy" | "trialing" | "warning" | "expired";
+      lastActive: string | null;
+      createdDate: string;
+    }>();
+
+    for (const p of profiles) {
       const sub = subs.find((s) => s.user_id === p.user_id || s.user_id === p.id);
       let healthStatus: "healthy" | "trialing" | "warning" | "expired" = "healthy";
 
@@ -176,19 +206,58 @@ export async function GET() {
         healthStatus = "expired";
       }
 
-      return {
-        id: p.user_id || p.id,
-        email: p.email || "unknown@urpass.space",
-        name: p.full_name || "Organiser",
-        plan: sub?.status || "Free",
-        billingCycle: sub?.billing_cycle || "monthly",
-        status: sub?.status || "free",
-        autopayStatus: sub?.autopay_status || "none",
-        healthStatus,
-        lastActive: p.updated_at || p.created_at,
-        createdDate: p.created_at,
-      };
-    });
+      const key = (p.user_id || p.id || p.email || "").toString();
+      if (key) {
+        userMap.set(key, {
+          id: p.user_id || p.id,
+          email: p.email || "unknown@urpass.space",
+          name: p.full_name || "Organiser",
+          plan: sub?.status || "Free",
+          billingCycle: sub?.billing_cycle || "monthly",
+          status: sub?.status || "free",
+          autopayStatus: sub?.autopay_status || "none",
+          healthStatus,
+          lastActive: p.updated_at || p.created_at,
+          createdDate: p.created_at,
+        });
+      }
+    }
+
+    // Merge auth accounts not yet in profiles table
+    for (const u of authUsers) {
+      const existing =
+        userMap.get(u.id) ||
+        (u.email ? Array.from(userMap.values()).find((e) => e.email.toLowerCase() === u.email.toLowerCase()) : null);
+      if (!existing) {
+        const sub = subs.find((s) => s.user_id === u.id);
+        let healthStatus: "healthy" | "trialing" | "warning" | "expired" = "healthy";
+
+        if (sub?.status === "trialing") {
+          healthStatus = "trialing";
+        } else if (sub?.status === "MANDATE_PENDING" || sub?.autopay_status === "pending") {
+          healthStatus = "warning";
+        } else if (sub?.status === "cancelled" || sub?.status === "expired") {
+          healthStatus = "expired";
+        }
+
+        userMap.set(u.id, {
+          id: u.id,
+          email: u.email || "unknown@urpass.space",
+          name: u.user_metadata?.full_name || u.user_metadata?.name || u.email?.split("@")[0] || "User",
+          plan: sub?.status || "Free",
+          billingCycle: sub?.billing_cycle || "monthly",
+          status: sub?.status || "free",
+          autopayStatus: sub?.autopay_status || "none",
+          healthStatus,
+          lastActive: u.last_sign_in_at || u.updated_at || u.created_at,
+          createdDate: u.created_at,
+        });
+      }
+    }
+
+    const userRoster = Array.from(userMap.values()).sort(
+      (a, b) => new Date(b.createdDate || 0).getTime() - new Date(a.createdDate || 0).getTime()
+    );
 
     // ── Generate real-time log feed ──
     const logs: OpsLogItem[] = [];
@@ -291,7 +360,7 @@ export async function GET() {
       });
     });
 
-    invoices.slice(0, 25).forEach((inv) => {
+    invoices.forEach((inv) => {
       logs.push({
         id: `invoice-${inv.id}`,
         timestamp: inv.created_at || inv.invoice_date,
@@ -343,14 +412,14 @@ export async function GET() {
         paymentGatewayConfigured: Boolean(process.env.RAZORPAY_KEY_ID),
       },
       userHealth: {
-        totalAccounts,
+        totalAccounts: Math.max(totalAccounts, userRoster.length),
         paidSubs,
         trialingSubs,
         mandatePending,
         lifetimeSubs: 0,
         cancelledSubs,
         healthScore,
-        roster: userRoster.slice(0, 50),
+        roster: userRoster, // Return all users without 50 limit
       },
       activeUsers: {
         active1h,
@@ -363,13 +432,13 @@ export async function GET() {
       sponsorships: {
         pendingCount: pendingSponsorshipsCount,
         totalCount: sponsorshipsList.length,
-        items: sponsorshipsList.slice(0, 50),
+        items: sponsorshipsList,
       },
       invoices: {
         totalCount: invoices.length,
         items: invoices,
       },
-      logs: uniqueLogs.slice(-100), // Return last 100 chronological real logs
+      logs: uniqueLogs, // Return all logs without 100 limit
     });
   } catch (err: unknown) {
     console.error("[ops/telemetry] Unhandled error:", err);

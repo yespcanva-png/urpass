@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Check, Sparkles, ArrowRight, ShieldAlert, Users, CalendarCheck, Zap, Headphones } from "lucide-react";
 import AnimateIn from "@/components/ui/AnimateIn";
 import { detectCountryClient } from "@/lib/country-config";
+import { openRequestEventSetupModal } from "@/components/landing/RequestEventSetupModal";
 
 interface Props {
   initialCountry?: "IN" | "GB";
@@ -174,9 +175,10 @@ export default function ManagedEventsSection({ initialCountry = "IN" }: Props) {
                   </div>
                 </div>
 
-                <Link
-                  href={pkg.href}
-                  className={`w-full py-3 px-4 rounded-xl text-xs sm:text-sm font-semibold transition-all text-center inline-flex items-center justify-center gap-1.5 ${
+                <button
+                  type="button"
+                  onClick={openRequestEventSetupModal}
+                  className={`w-full py-3 px-4 rounded-xl text-xs sm:text-sm font-semibold transition-all text-center inline-flex items-center justify-center gap-1.5 cursor-pointer ${
                     pkg.popular
                       ? "bg-violet-600 text-white hover:bg-violet-500 shadow-md"
                       : "bg-neutral-800 text-white hover:bg-neutral-700 border border-neutral-700"
@@ -184,7 +186,7 @@ export default function ManagedEventsSection({ initialCountry = "IN" }: Props) {
                 >
                   <span>{pkg.cta}</span>
                   <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
+                </button>
               </div>
             </AnimateIn>
           ))}

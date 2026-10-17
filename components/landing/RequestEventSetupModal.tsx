@@ -54,7 +54,7 @@ export function RequestEventSetupButton({
       {children || (
         <>
           <Sparkles className="w-4 h-4 text-violet-200" />
-          <span>Request Event Setup</span>
+          <span>Request a Setup</span>
         </>
       )}
     </button>

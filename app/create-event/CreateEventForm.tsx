@@ -26,6 +26,7 @@ interface Props {
   orgs?: OrgOption[];
   workspaces?: import("@/types").Workspace[];
   locations?: import("@/types").Location[];
+  isTrial?: boolean;
 }
 
 function Field({
@@ -90,6 +91,7 @@ export default function CreateEventForm({
   organizationName,
   workspaces = [],
   locations = [],
+  isTrial = false,
 }: Props) {
   const [serverError, setServerError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
@@ -351,6 +353,22 @@ export default function CreateEventForm({
             <p className="text-sm text-brand font-medium">
               Creating under <strong>{organizationName}</strong>
             </p>
+          </div>
+        )}
+
+        {/* Free Event Trial Banner */}
+        {isTrial && (
+          <div className="flex items-start gap-3 bg-violet-50 border border-violet-200 rounded-xl px-4 py-3.5 mb-6 text-violet-950">
+            <div className="w-8 h-8 rounded-lg bg-violet-100 flex items-center justify-center shrink-0 text-violet-700 mt-0.5">
+              <Globe className="w-4 h-4" />
+            </div>
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wider text-violet-700">1 Free Event Trial Active</p>
+              <p className="text-sm font-semibold mt-0.5">Creating your 1 free event with full Pro features.</p>
+              <p className="text-xs text-violet-700/90 mt-1 leading-relaxed">
+                Anti-abuse policy: This trial covers exactly 1 event. Deleting this event will not allow creating another free event. Once your event is completed, your regular monthly subscription begins.
+              </p>
+            </div>
           </div>
         )}
 

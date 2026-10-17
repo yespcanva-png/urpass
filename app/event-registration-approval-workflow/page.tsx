@@ -3,10 +3,11 @@ import { Users, CheckCircle2, XCircle, ShieldCheck, Mail, Zap, BarChart3, Filter
 import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
-  title: "Event Registration Approval Workflow & Attendee Screening | URPASS",
+  title: "Event Registration Approval Software | UrPass",
   description:
-    "Review and approve event attendees before issuing passes. Custom screening questions, 1-click approval queues, and automated digital pass dispatch.",
+    "Review and approve event registrations before issuing passes. Custom screening questions, 1-click approval queues, and automated digital pass dispatch.",
   keywords: [
+    "event registration approval software",
     "event registration approval workflow",
     "attendee screening software",
     "event application review queue",
@@ -16,8 +17,8 @@ export const metadata: Metadata = {
   ],
   alternates: { canonical: "https://urpass.space/event-registration-approval-workflow" },
   openGraph: {
-    title: "Event Registration Approval Workflow & Attendee Screening | URPASS",
-    description: "Review and approve event attendees before issuing passes with custom screening queues.",
+    title: "Event Registration Approval Software | UrPass",
+    description: "Review and approve event registrations before issuing passes. Custom screening questions, 1-click approval queues, and automated digital pass dispatch.",
     url: "https://urpass.space/event-registration-approval-workflow",
     locale: "en_IN",
     type: "website",
@@ -29,10 +30,10 @@ export default function Page() {
     <SEOPage
       config={{
         badge: "CURATED ATTENDEE SCREENING",
-        h1: "Event Registration Approval Workflow & Screening Queues",
+        h1: "Review and Approve Event Registrations Before Issuing Passes",
         canonicalUrl: "https://urpass.space/event-registration-approval-workflow",
         description:
-          "Screen applications, verify professional credentials, and curate high-quality attendee rosters. 1-click approvals with automated cryptographic pass delivery.",
+          "Review and approve event registrations before issuing passes. Custom screening questions, 1-click approval queues, and automated digital pass dispatch.",
         ctaLabel: "Set Up Approval Queue Free",
         directAnswer: {
           title: "How Does the URPASS Registration Approval Workflow Work?",

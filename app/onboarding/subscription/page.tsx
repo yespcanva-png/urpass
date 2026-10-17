@@ -24,11 +24,17 @@ export default async function SubscriptionOnboardingPage() {
     redirect("/dashboard");
   }
 
-  const [{ data: profile }, reqHeaders, cookieStore] = await Promise.all([
+  const [{ data: profile }, { data: trialEvent }, reqHeaders, cookieStore] = await Promise.all([
     supabase.from("profiles").select("full_name, email").eq("user_id", user.id).maybeSingle(),
+    supabase.from("user_trial_events").select("id").eq("user_id", user.id).maybeSingle(),
     headers(),
     cookies(),
   ]);
+
+  const freeTrialEligible =
+    !access.freeEventTrialConsumed &&
+    !trialEvent &&
+    access.state !== "autopay_trial_completed";
 
   const cookieCountry = cookieStore.get("urpass_country")?.value?.toUpperCase();
   const headerCountry = detectCountryFromHeaders(reqHeaders);
@@ -41,6 +47,7 @@ export default async function SubscriptionOnboardingPage() {
       userName={profile?.full_name ?? user.user_metadata?.full_name ?? user.email?.split("@")[0] ?? "Organizer"}
       accessState={access.state}
       introOfferEligible={access.introOfferEligible}
+      freeTrialEligible={freeTrialEligible}
     />
   );
 }

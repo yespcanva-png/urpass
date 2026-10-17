@@ -740,7 +740,44 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/event-ticketing-with-whatsapp",
   ].map((path) => ({ url: `${BASE}${path}`, priority: 0.95, changeFrequency: "daily" as const }));
 
+  const anniversarySeoGeoPages = [
+    // Batch A: Event registration and visitor management
+    "/corporate-visitor-registration-software",
+    "/trade-show-exhibitor-registration",
+    "/industrial-exhibition-visitor-management",
+    "/dealer-meet-registration-software",
+    "/employee-event-registration-software",
+    "/product-launch-guest-registration",
+    "/vip-invitation-check-in-software",
+    "/business-networking-event-registration",
+    "/association-meeting-registration",
+    "/factory-visitor-event-registration",
+    // Batch B: Ticketing and payment solutions
+    "/event-registration-with-payment-gateway",
+    "/upi-event-ticketing-software",
+    "/zero-commission-event-ticketing",
+    "/paid-workshop-registration-software",
+    "/multi-day-event-ticketing-software",
+    "/event-ticket-sales-reporting",
+    "/college-fest-ticketing-platform",
+    "/conference-ticketing-platform",
+    "/event-ticket-types-management",
+    "/bulk-event-ticket-booking",
+    // Batch C: QR scanning, attendance and event operations
+    "/conference-badge-scanning-software",
+    "/event-capacity-management-software",
+    "/multi-gate-event-check-in",
+    "/session-wise-attendance-tracking",
+    "/group-qr-ticket-check-in",
+    "/event-entry-exit-tracking",
+    "/smartphone-qr-ticket-scanner",
+    "/duplicate-qr-ticket-detection",
+    "/event-attendee-csv-import",
+    "/event-registration-approval-workflow",
+  ].map((path) => ({ url: `${BASE}${path}`, priority: 0.95, changeFrequency: "daily" as const }));
+
   const rawStaticEntries = [
+    ...anniversarySeoGeoPages,
     ...batch50Pages,
     ...core,
     ...bofuMoneyPages,

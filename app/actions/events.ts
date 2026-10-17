@@ -67,10 +67,32 @@ export async function createEvent(data: EventInput, organizationId?: string): Pr
   const access = await resolveUserSubscriptionAccess({ supabase, user });
   if (!access.hasOrganizerAccess) {
     return {
-      error: access.shouldRedirectToSubscriptionOnboarding
-        ? "Paid subscription required to create events. Please activate your subscription at /onboarding/subscription."
-        : "Your subscription has expired. Please renew your subscription to create events.",
+      error:
+        access.state === "autopay_trial_completed"
+          ? "Your 1 free trial event is completed. Please activate a paid subscription to continue."
+          : access.shouldRedirectToSubscriptionOnboarding
+          ? "Paid subscription required to create events. Please activate your subscription at /onboarding/subscription."
+          : "Your subscription has expired. Please renew your subscription to create events.",
     };
+  }
+
+  // Strict anti-abuse: if user is on free event autopay trial, verify 1-event trial quota
+  if (access.isTrial || access.state === "autopay_trial_active") {
+    if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      const admin = adminClient();
+      const { data: existingTrial } = await admin
+        .from("user_trial_events")
+        .select("id, event_deleted")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (existingTrial) {
+        return {
+          error:
+            "You have already used your 1 free event trial. Deleting or recreating events is strictly not permitted under the trial. Please upgrade to a paid subscription to continue.",
+        };
+      }
+    }
   }
 
   const parsed = eventSchema.safeParse(data);
@@ -234,6 +256,31 @@ export async function createEvent(data: EventInput, organizationId?: string): Pr
       status: "on_sale",
       position: 0,
     });
+  }
+
+  // Record trial usage if on free event autopay trial
+  if (access.isTrial || access.state === "autopay_trial_active") {
+    if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      const admin = adminClient();
+      await admin.from("user_trial_events").insert({
+        user_id: user.id,
+        event_id: event.id,
+        event_name: baseFields.name.trim(),
+        event_date: baseFields.event_date || null,
+        event_deleted: false,
+        created_at: new Date().toISOString(),
+      });
+
+      await admin
+        .from("subscriptions")
+        .update({
+          free_event_trial_consumed: true,
+          free_event_trial_id: event.id,
+          trial_events_created: 1,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("user_id", user.id);
+    }
   }
 
   void recordApiUsage(user.id, "events", 1);
@@ -928,6 +975,29 @@ export async function deleteEvent(eventId: string): Promise<ActionResult> {
 
   if (error) return { error: error.message };
 
+  if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    const admin = adminClient();
+    // If this was a trial event, flag it as deleted in user_trial_events (never drop the row)
+    // to strictly prevent creating a new trial event after deleting.
+    await admin
+      .from("user_trial_events")
+      .update({
+        event_deleted: true,
+        deleted_at: new Date().toISOString(),
+      })
+      .eq("event_id", eventId);
+
+    await admin
+      .from("subscriptions")
+      .update({
+        free_event_trial_consumed: true,
+        free_event_trial_id: null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("user_id", user.id)
+      .eq("free_event_trial_active", true);
+  }
+
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/events");
   redirect("/dashboard/events");
@@ -948,6 +1018,14 @@ export async function duplicateEvent(
       error: access.shouldRedirectToSubscriptionOnboarding
         ? "Paid subscription required to duplicate events. Please activate your subscription at /onboarding/subscription."
         : "Your subscription has expired. Please renew your subscription to duplicate events.",
+    };
+  }
+
+  // Trial users can only organize 1 event
+  if (access.isTrial || access.state === "autopay_trial_active") {
+    return {
+      error:
+        "Event duplication is not permitted on the 1 free event trial. Please upgrade to a paid subscription to duplicate events.",
     };
   }
 

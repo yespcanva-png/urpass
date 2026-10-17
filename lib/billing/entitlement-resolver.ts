@@ -1,5 +1,7 @@
 export type SubscriptionAccessState =
   | "onboarding_required"
+  | "autopay_trial_active"
+  | "autopay_trial_completed"
   | "legacy_trial_active"
   | "legacy_free_active"
   | "subscription_active"
@@ -29,6 +31,9 @@ type SubscriptionRow = {
   autopay_status?: string | null;
   has_lifetime_access?: boolean | null;
   lifetime_plan_slug?: string | null;
+  free_event_trial_active?: boolean | null;
+  free_event_trial_consumed?: boolean | null;
+  free_event_trial_id?: string | null;
   plan?: { slug?: string | null } | Array<{ slug?: string | null }> | null;
 };
 
@@ -41,6 +46,8 @@ export interface SubscriptionAccessResolution {
   expiresAt: string | null;
   isNewUser: boolean;
   introOfferEligible: boolean;
+  isTrial?: boolean;
+  freeEventTrialConsumed?: boolean;
   reason: string;
 }
 
@@ -78,7 +85,7 @@ export async function resolveUserSubscriptionAccess(params: {
   const effectiveAt = getPaidOnboardingEffectiveAt();
 
   let createdAt: Date = user.created_at ? new Date(user.created_at) : now;
-  let appIdentityMissing = false;
+  let appIdentityMissing = !user.created_at;
   try {
     const { data: prof } = await supabase
       .from("profiles")
@@ -87,11 +94,10 @@ export async function resolveUserSubscriptionAccess(params: {
       .maybeSingle();
     if (prof?.created_at) {
       createdAt = new Date(prof.created_at);
-    } else {
-      appIdentityMissing = true;
+      appIdentityMissing = false;
     }
   } catch {
-    appIdentityMissing = true;
+    // profile table missing or empty, fall back to user.created_at
   }
 
   const isNewUser = appIdentityMissing || createdAt.getTime() >= effectiveAt.getTime();
@@ -101,7 +107,7 @@ export async function resolveUserSubscriptionAccess(params: {
     const { data } = await supabase
       .from("subscriptions")
       .select(
-        "status, provider, billing_cycle, current_period_end, cancel_at_period_end, trial_used, is_trial, trial_ends_at, autopay_status, has_lifetime_access, lifetime_plan_slug, plan:plans(slug)"
+        "status, provider, billing_cycle, current_period_end, cancel_at_period_end, trial_used, is_trial, trial_ends_at, autopay_status, has_lifetime_access, lifetime_plan_slug, free_event_trial_active, free_event_trial_consumed, free_event_trial_id, plan:plans(slug)"
       )
       .eq("user_id", user.id)
       .maybeSingle();
@@ -131,6 +137,137 @@ export async function resolveUserSubscriptionAccess(params: {
       introOfferEligible: false,
       reason: "Founder lifetime entitlement is active.",
     };
+  }
+
+  // 1 Free Event Trial with AutoPay
+  const isAutopayTrial = Boolean(
+    sub?.autopay_status === "active" &&
+    (sub?.free_event_trial_active || sub?.is_trial || status === "trialing")
+  );
+
+  if (isAutopayTrial) {
+    let hasConsumedTrialEvent = Boolean(sub?.free_event_trial_consumed);
+
+    if (!hasConsumedTrialEvent) {
+      try {
+        const { data: trialEvent } = await supabase
+          .from("user_trial_events")
+          .select("id")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        if (trialEvent) {
+          hasConsumedTrialEvent = true;
+        }
+      } catch {
+        // user_trial_events check fallback
+      }
+    }
+
+    if (!hasConsumedTrialEvent) {
+      return {
+        state: "autopay_trial_active",
+        hasOrganizerAccess: true,
+        shouldRedirectToSubscriptionOnboarding: false,
+        shouldRedirectToBilling: false,
+        planSlug: "pro",
+        expiresAt: sub?.trial_ends_at || null,
+        isNewUser: false,
+        introOfferEligible: false,
+        isTrial: true,
+        freeEventTrialConsumed: false,
+        reason: "1 Free Event Trial with active AutoPay mandate is available.",
+      };
+    } else {
+      // Free trial event has been consumed!
+      // Check if user has upgraded to an active paid subscription
+      const paidPeriodValid = planSlug !== "free" && isFuture(sub?.current_period_end, now) && !sub?.is_trial && !sub?.free_event_trial_active;
+      if (paidPeriodValid && status === "active") {
+        return {
+          state: "subscription_active",
+          hasOrganizerAccess: true,
+          shouldRedirectToSubscriptionOnboarding: false,
+          shouldRedirectToBilling: false,
+          planSlug,
+          expiresAt: sub?.current_period_end || null,
+          isNewUser: false,
+          introOfferEligible: false,
+          isTrial: false,
+          reason: "Paid subscription is active.",
+        };
+      }
+
+      // Check if their single created trial event is still active / upcoming
+      let isEventStillActive = false;
+      try {
+        const todayStr = now.toISOString().split("T")[0];
+        let eventQuery = supabase
+          .from("events")
+          .select("id, event_date, status");
+
+        if (sub?.free_event_trial_id) {
+          eventQuery = eventQuery.eq("id", sub.free_event_trial_id);
+        } else {
+          eventQuery = eventQuery.eq("organizer_id", user.id);
+        }
+
+        const { data: eventRow } = await eventQuery.maybeSingle();
+
+        // Also check if trial event was recorded as deleted in user_trial_events
+        let wasDeleted = false;
+        try {
+          const { data: ute } = await supabase
+            .from("user_trial_events")
+            .select("event_deleted")
+            .eq("user_id", user.id)
+            .maybeSingle();
+          if (ute?.event_deleted) {
+            wasDeleted = true;
+          }
+        } catch {
+          // Fallback
+        }
+
+        if (!wasDeleted && eventRow && eventRow.status !== "cancelled" && eventRow.status !== "completed") {
+          if (!eventRow.event_date || eventRow.event_date >= todayStr) {
+            isEventStillActive = true;
+          }
+        }
+      } catch {
+        // Fallback
+      }
+
+      if (isEventStillActive) {
+        // Allow access to manage the single ongoing event, scan attendees, and view analytics
+        return {
+          state: "autopay_trial_active",
+          hasOrganizerAccess: true,
+          shouldRedirectToSubscriptionOnboarding: false,
+          shouldRedirectToBilling: false,
+          planSlug: "pro",
+          expiresAt: sub?.trial_ends_at || null,
+          isNewUser: false,
+          introOfferEligible: false,
+          isTrial: true,
+          freeEventTrialConsumed: true,
+          reason: "1 Free Event Trial is active for managing your single event.",
+        };
+      }
+
+      // If event has concluded or was deleted, require payment to continue
+      return {
+        state: "autopay_trial_completed",
+        hasOrganizerAccess: false,
+        shouldRedirectToSubscriptionOnboarding: false,
+        shouldRedirectToBilling: true,
+        planSlug: "pro",
+        expiresAt: sub?.trial_ends_at || null,
+        isNewUser: false,
+        introOfferEligible: false,
+        isTrial: true,
+        freeEventTrialConsumed: true,
+        reason: "Your 1 free trial event is completed. Please activate a paid subscription to continue.",
+      };
+    }
   }
 
   const trialEndsAt = sub?.trial_ends_at || null;
@@ -173,6 +310,7 @@ export async function resolveUserSubscriptionAccess(params: {
       expiresAt: sub?.current_period_end || null,
       isNewUser: false,
       introOfferEligible: false,
+      isTrial: Boolean(sub?.is_trial),
       reason: "Paid subscription period is active.",
     };
   }

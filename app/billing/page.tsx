@@ -125,6 +125,9 @@ interface Subscription {
   autopay_status?: string | null;
   has_lifetime_access?: boolean;
   lifetime_plan_slug?: string | null;
+  free_event_trial_active?: boolean;
+  free_event_trial_consumed?: boolean;
+  free_event_trial_id?: string | null;
   plan: SubPlan;
 }
 
@@ -144,7 +147,7 @@ function BillingShellSkeleton() {
 }
 
 export default async function BillingPage(props: {
-  searchParams?: Promise<{ country?: string; trial?: string; tab?: string }>;
+  searchParams?: Promise<{ country?: string; trial?: string; tab?: string; reason?: string }>;
 }) {
   const searchParams = props.searchParams ? await props.searchParams : {};
   const supabase = await createClient();
@@ -158,7 +161,7 @@ export default async function BillingPage(props: {
       supabase
         .from("subscriptions")
         .select(
-          "status, provider, billing_cycle, current_period_start, current_period_end, cancel_at_period_end, registrations_used, trial_used, trial_plan, trial_starts_at, trial_ends_at, is_trial, autopay_mandate_id, autopay_status, has_lifetime_access, lifetime_plan_slug, plan:plans(slug)"
+          "status, provider, billing_cycle, current_period_start, current_period_end, cancel_at_period_end, registrations_used, trial_used, trial_plan, trial_starts_at, trial_ends_at, is_trial, autopay_mandate_id, autopay_status, has_lifetime_access, lifetime_plan_slug, free_event_trial_active, free_event_trial_consumed, free_event_trial_id, plan:plans(slug)"
         )
         .eq("user_id", user.id)
         .maybeSingle(),
@@ -278,6 +281,7 @@ export default async function BillingPage(props: {
           organizerLimit={organizerLimit}
           planCanUseApi={plan.canUse("api_access")}
           initialTab={searchParams?.tab ?? "plans"}
+          reason={searchParams?.reason}
         />
       </Suspense>
     </div>

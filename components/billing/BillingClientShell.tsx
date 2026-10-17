@@ -18,6 +18,7 @@ import {
   Download,
   Check,
   ExternalLink,
+  ShieldAlert,
 } from "lucide-react";
 import CancelButton from "./CancelButton";
 import PlanGrid from "./PlanGrid";
@@ -73,6 +74,9 @@ export interface BillingClientShellProps {
     autopay_status?: string | null;
     has_lifetime_access?: boolean;
     lifetime_plan_slug?: string | null;
+    free_event_trial_active?: boolean;
+    free_event_trial_consumed?: boolean;
+    free_event_trial_id?: string | null;
   } | null;
   invoices: InvoiceItem[];
   userEmail: string;
@@ -85,6 +89,7 @@ export interface BillingClientShellProps {
   organizerLimit: number;
   planCanUseApi: boolean;
   initialTab?: string;
+  reason?: string;
 }
 
 function UsageTile({
@@ -202,9 +207,11 @@ export default function BillingClientShell({
   organizerLimit,
   planCanUseApi,
   initialTab = "plans",
+  reason,
 }: BillingClientShellProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const effectiveReason = reason || searchParams.get("reason") || "";
 
   // Tab state: "plans" | "overview" | "invoices"
   const [activeTab, setActiveTab] = useState<"plans" | "overview" | "invoices">(() => {
@@ -293,6 +300,74 @@ export default function BillingClientShell({
           </div>
         </div>
       </div>
+
+      {/* ── AutoPay Trial Notice Banners ──────────────────────────── */}
+      {effectiveReason === "autopay_trial_completed" && (
+        <div className="rounded-2xl border border-amber-300 bg-amber-50 p-4 sm:p-5 text-amber-950 shadow-xs">
+          <div className="flex items-start gap-3.5">
+            <div className="w-9 h-9 rounded-xl bg-amber-100 flex items-center justify-center shrink-0 text-amber-800 mt-0.5">
+              <Sparkles className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold">Your 1 Free Trial Event is Complete</h3>
+              <p className="text-xs text-amber-800/90 mt-1 leading-relaxed">
+                You have successfully hosted your free trial event! To continue organizing events, managing attendees, or publishing new dates, please choose and activate your subscription below. Note: deleting or recreating events is strictly prohibited under trial rules.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {effectiveReason === "autopay_trial_limit_reached" && (
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-4 sm:p-5 text-red-950 shadow-xs">
+          <div className="flex items-start gap-3.5">
+            <div className="w-9 h-9 rounded-xl bg-red-100 flex items-center justify-center shrink-0 text-red-700 mt-0.5">
+              <ShieldAlert className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold">Trial Event Quota Reached</h3>
+              <p className="text-xs text-red-800/90 mt-1 leading-relaxed">
+                You have already used your 1 free event trial. Deleting or recreating events is strictly prohibited under the free trial terms. Please activate a paid subscription below to host more events.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {sub?.free_event_trial_active && !sub?.free_event_trial_consumed && !effectiveReason && (
+        <div className="rounded-2xl border border-violet-200 bg-violet-50 p-4 sm:p-5 text-violet-950 shadow-xs">
+          <div className="flex items-start gap-3.5">
+            <div className="w-9 h-9 rounded-xl bg-violet-100 flex items-center justify-center shrink-0 text-violet-700 mt-0.5">
+              <Sparkles className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold">1 Free Event Trial Active</h3>
+              <p className="text-xs text-violet-800/90 mt-1 leading-relaxed">
+                Your AutoPay mandate is connected! You have 1 free event slot available with Pro features.{" "}
+                <Link href="/create-event" className="underline font-semibold text-violet-950">
+                  Create your free event now →
+                </Link>
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {sub?.free_event_trial_active && sub?.free_event_trial_consumed && !effectiveReason && (
+        <div className="rounded-2xl border border-violet-200 bg-violet-50 p-4 sm:p-5 text-violet-950 shadow-xs">
+          <div className="flex items-start gap-3.5">
+            <div className="w-9 h-9 rounded-xl bg-violet-100 flex items-center justify-center shrink-0 text-violet-700 mt-0.5">
+              <Sparkles className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold">Free Trial Event In Progress</h3>
+              <p className="text-xs text-violet-800/90 mt-1 leading-relaxed">
+                You are currently hosting your 1 free trial event. Once this event concludes, your regular subscription begins or you can select a plan below. Deleting this event will not allow creating another free event.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Tab Navigation ──────────────────────────────────────── */}
       <div className="inline-flex items-center gap-1 bg-neutral-100/90 border border-neutral-200/80 rounded-xl p-1 shadow-xs">

@@ -3,8 +3,8 @@ import { BarChart3, CheckCircle2, Lock, ScanLine, ShieldCheck, Users, Zap } from
 import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
-  title: "Multi-Gate Event Check-In Software & Fast Queue Management | UrPass",
-  description: "Synchronize check-ins across 20+ stadium or venue gates with atomic duplicate blocking (<150ms), offline failover and real-time rush telemetry.",
+  title: "Multi-Gate Event QR Check-In Software | UrPass",
+  description: "Synchronize attendee check-ins across multiple entry doors, VIP lanes and checkpoints with sub-second cloud synchronization.",
   keywords: [
     "multi gate event check in",
     "multi gate event check in online",
@@ -16,8 +16,8 @@ export const metadata: Metadata = {
     canonical: "https://urpass.space/multi-gate-event-check-in",
   },
   openGraph: {
-    title: "Multi-Gate Event Check-In Software & Fast Queue Management | UrPass",
-    description: "Synchronize check-ins across 20+ stadium or venue gates with atomic duplicate blocking (<150ms), offline failover and real-time rush telemetry.",
+    title: "Multi-Gate Event QR Check-In Software | UrPass",
+    description: "Synchronize attendee check-ins across multiple entry doors, VIP lanes and checkpoints with sub-second cloud synchronization.",
     url: "https://urpass.space/multi-gate-event-check-in",
     locale: "en_US",
     type: "website",
@@ -29,9 +29,9 @@ export default function Page() {
     <SEOPage
       config={{
         badge: "MULTI-GATE SCALE",
-        h1: "Multi-Gate Event Check-In Software Built for Stadiums & Venues",
+        h1: "Manage Multiple Event Entry Gates in Real Time",
         canonicalUrl: "https://urpass.space/multi-gate-event-check-in",
-        description: "Synchronize check-ins across 20+ stadium or venue gates with atomic duplicate blocking (<150ms), offline failover and real-time rush telemetry.",
+        description: "Synchronize attendee check-ins across multiple entry doors, VIP lanes and checkpoints with sub-second cloud synchronization.",
         ctaLabel: "Set Up Multi-Gate Check-In Free",
         ctaHref: "/signup",
         secondaryCtaLabel: "View Pricing",

@@ -6,6 +6,8 @@ import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { detectCountryClient } from "@/lib/country-config";
+import FreeTrialTopBanner from "@/components/landing/FreeTrialTopBanner";
+import RequestEventSetupModal, { openRequestEventSetupModal } from "@/components/landing/RequestEventSetupModal";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -46,10 +48,14 @@ export default function Navbar() {
   }, []);
 
   return (
-    <header
-      style={{ top: "var(--pwa-top-bar-height, 0px)" }}
+    <>
+      <header
+        style={{ top: "var(--pwa-top-bar-height, 0px)" }}
       className="fixed inset-x-0 z-50 transition-[top] duration-200"
     >
+      {/* ── 00 Top Free Trial Offer Banner ── */}
+      <FreeTrialTopBanner isUk={isUk} />
+
       {/* Main Navbar */}
       <div
         className={cn(
@@ -107,14 +113,15 @@ export default function Navbar() {
             </Link>
           </nav>
 
-          {/* Desktop CTA (Focused 2-Button Group) */}
+          {/* Desktop CTA */}
           <div className="hidden lg:flex items-center gap-2.5">
-            <Link
-              href="/managed-setup"
-              className="text-sm font-medium text-neutral-800 hover:text-neutral-950 px-3.5 py-2 rounded-lg border border-neutral-200/90 bg-white hover:bg-neutral-50 hover:border-neutral-300 transition-all shadow-2xs"
+            <button
+              type="button"
+              onClick={() => openRequestEventSetupModal()}
+              className="text-sm font-medium text-neutral-700 hover:text-neutral-950 px-3.5 py-2 rounded-lg hover:bg-neutral-100/80 transition-all cursor-pointer"
             >
               Request a Setup
-            </Link>
+            </button>
             <Link
               href={signupHref}
               className="text-sm font-semibold text-white bg-neutral-950 hover:bg-neutral-800 px-4 py-2 rounded-lg transition-all shadow-xs"
@@ -168,20 +175,6 @@ export default function Navbar() {
               Pricing
             </Link>
             <Link
-              href="/guides"
-              onClick={() => setOpen(false)}
-              className="text-sm font-medium text-neutral-700 py-2 px-2.5 rounded-lg hover:bg-neutral-50 transition-colors"
-            >
-              Guides
-            </Link>
-            <Link
-              href="/faq"
-              onClick={() => setOpen(false)}
-              className="text-sm font-medium text-neutral-700 py-2 px-2.5 rounded-lg hover:bg-neutral-50 transition-colors"
-            >
-              FAQ
-            </Link>
-            <Link
               href="/contact"
               onClick={() => setOpen(false)}
               className="text-sm font-medium text-neutral-700 py-2 px-2.5 rounded-lg hover:bg-neutral-50 transition-colors"
@@ -189,15 +182,18 @@ export default function Navbar() {
               Contact
             </Link>
 
-            {/* Mobile Action Buttons (Focused 2-Button Group) */}
+            {/* Mobile Action Buttons */}
             <div className="pt-3 border-t border-neutral-100 flex flex-col gap-2.5">
-              <Link
-                href="/managed-setup"
-                onClick={() => setOpen(false)}
-                className="text-sm text-center border border-neutral-200/90 rounded-xl py-2.5 font-medium hover:bg-neutral-50 transition-colors text-neutral-900 bg-white shadow-2xs"
+              <button
+                type="button"
+                onClick={() => {
+                  setOpen(false);
+                  openRequestEventSetupModal();
+                }}
+                className="text-sm text-center border border-neutral-200/90 rounded-xl py-2.5 font-medium hover:bg-neutral-50 transition-colors text-neutral-900 bg-white shadow-2xs cursor-pointer w-full"
               >
                 Request a Setup
-              </Link>
+              </button>
               <Link
                 href={signupHref}
                 onClick={() => setOpen(false)}
@@ -210,5 +206,9 @@ export default function Navbar() {
         )}
       </div>
     </header>
+
+    {/* ── Global Request Event Setup Modal ── */}
+    <RequestEventSetupModal />
+    </>
   );
 }

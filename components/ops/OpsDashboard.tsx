@@ -333,7 +333,7 @@ export default function OpsDashboard({ onLogout }: Props) {
           const merged = Array.from(map.values());
           // Sort chronologically ascending (oldest first, newest at the end)
           merged.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
-          return merged.slice(-250);
+          return merged;
         });
       }
     } catch (err) {

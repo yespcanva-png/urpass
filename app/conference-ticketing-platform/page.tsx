@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import BOFUMoneyPage from "@/components/landing/BOFUMoneyPage";
 
 export const metadata: Metadata = {
-  title: "Conference Ticketing Platform — 0% Commission & Multi-Tier Passes | URPASS",
+  title: "Conference Ticketing Software | UrPass",
   description:
-    "The premier conference ticketing platform for tech summits, medical congresses, and business forums. Sell VIP, early bird, and group passes with 0% platform cuts.",
+    "End-to-end ticketing platform for corporate summits, tech conferences and academic conventions with multi-tier ticket capabilities.",
   keywords: [
     "conference ticketing platform",
     "sell conference tickets online",
@@ -15,9 +15,9 @@ export const metadata: Metadata = {
   ],
   alternates: { canonical: "https://urpass.space/conference-ticketing-platform" },
   openGraph: {
-    title: "Conference Ticketing Platform | 0% Commission & Multi-Tier Passes | URPASS",
+    title: "Conference Ticketing Software | UrPass",
     description:
-      "Sell multi-tier conference tickets with 0% platform fees. Instant UPI & card payments, automated GST invoices, and seamless lanyard badge scanning.",
+      "End-to-end ticketing platform for corporate summits, tech conferences and academic conventions with multi-tier ticket capabilities.",
     url: "https://urpass.space/conference-ticketing-platform",
     locale: "en_IN",
     type: "website",
@@ -36,7 +36,7 @@ export default function ConferenceTicketingPlatformPage() {
       config={{
         canonicalUrl: "https://urpass.space/conference-ticketing-platform",
         badge: "CONFERENCE TICKETING",
-        h1: "Conference Ticketing Platform",
+        h1: "Manage Conference Tickets, Registration and Check-In",
         hook: "Sell tickets. Accept UPI. Send QR passes. Scan attendees. Keep your event revenue.",
         subDescription:
           "Create multi-tier delegate passes (Early Bird, Standard, VIP, Workshop add-ons). Collect payments via UPI and corporate cards with direct T+2 bank deposits.",

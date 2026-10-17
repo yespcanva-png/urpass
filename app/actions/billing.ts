@@ -792,6 +792,8 @@ export async function activatePaidSubscription(
         current_period_end: periodEndTime.toISOString(),
         cancel_at_period_end: false,
         registrations_used: 0,
+        is_trial: false,
+        free_event_trial_active: false,
         has_lifetime_access: hasLifetimeAccess,
         lifetime_plan_slug: lifetimePlanSlug,
         autopay_mandate_id: currentSub?.autopay_mandate_id ?? null,

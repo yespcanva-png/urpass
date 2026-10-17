@@ -3,15 +3,15 @@ import { Banknote, BarChart3, CreditCard, Lock, QrCode, ScanLine } from "lucide-
 import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
-  title: "Zero-Commission Event Ticketing Platform | URPASS",
-  description: "Zero-commission event ticketing platform. Keep 100% of your ticket sales with flat subscription pricing, automated QR passes, and sub-second phone scanning.",
+  title: "Zero Commission Event Ticketing Platform | UrPass",
+  description: "Keep 100% of your ticket revenue. UrPass charges zero per-ticket platform fees for paid workshops, conferences and college fests.",
   keywords: ["zero commission event ticketing", "zero fee ticketing platform", "0% commission event tickets", "no fee event ticketing", "flat fee event ticketing software", "event ticketing without commission"],
   alternates: {
     canonical: "https://urpass.space/zero-commission-event-ticketing",
   },
   openGraph: {
-    title: "Zero-Commission Event Ticketing Platform | URPASS",
-    description: "Zero-commission event ticketing platform. Keep 100% of your ticket sales with flat subscription pricing, automated QR passes, and sub-second phone scanning.",
+    title: "Zero Commission Event Ticketing Platform | UrPass",
+    description: "Keep 100% of your ticket revenue. UrPass charges zero per-ticket platform fees for paid workshops, conferences and college fests.",
     url: "https://urpass.space/zero-commission-event-ticketing",
     locale: "en_US",
     type: "website",
@@ -23,9 +23,9 @@ export default function ZeroCommissionEventTicketingPage() {
     <SEOPage
       config={{
   "badge": "0% TICKETING COMMISSION",
-  "h1": "Zero-Commission Event Ticketing Platform",
+  "h1": "Sell Tickets with 0% UrPass Platform Commission",
   "canonicalUrl": "https://urpass.space/zero-commission-event-ticketing",
-  "description": "Zero-commission event ticketing platform. Keep 100% of your ticket sales with flat subscription pricing, automated QR passes, and sub-second phone scanning.",
+  "description": "Keep 100% of your ticket revenue. UrPass charges zero per-ticket platform fees for paid workshops, conferences and college fests.",
   "ctaLabel": "Keep 100% of Ticket Revenue →",
   "ctaTitle": "Retain 100% of Your Gross Ticket Revenue",
   "ctaDescription": "Stop paying 5% to 10% ticketing aggregator commissions. Connect your payment gateway, pay simple flat monthly subscriptions, and keep every penny.",

@@ -256,6 +256,9 @@ export async function POST(req: NextRequest) {
       expectedIntroAmountPaise: introDisclosure.introAmountPaise,
       expectedDiscountPaise: introDisclosure.discountPaise,
       regularAmountPaise: introDisclosure.regularAmountPaise,
+      todayAmountWithGst: introDisclosure.todayAmountWithGst,
+      month2AmountWithGst: introDisclosure.month2AmountWithGst,
+      month3OnwardAmountWithGst: introDisclosure.month3OnwardAmountWithGst,
       taxRatePercent: introDisclosure.taxRatePercent,
     });
   } catch (err: unknown) {

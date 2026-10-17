@@ -1,11 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import crypto from "crypto";
-import { verifyRazorpaySignature } from "@/lib/razorpay";
+import { verifyRazorpaySignature, verifyRazorpaySubscriptionSignature } from "@/lib/razorpay";
 import { getUserPlan } from "@/lib/plan";
 import { generateInvoicePdf, type InvoiceRecord } from "@/lib/invoices";
 import {
   getIntroOfferDisclosure,
   getIntroOfferId,
+  getIntroOfferSchedule,
+  INTRO_OFFER_SCHEDULE,
 } from "@/lib/billing/razorpay-subscription-offers";
 import { NextRequest } from "next/server";
 
@@ -247,3 +249,119 @@ describe("GET /api/invoices/[id]/pdf", () => {
     expect(res.status).toBe(404);
   });
 });
+
+describe("UrPass Final AutoPay Billing Flow Specification", () => {
+  it("enforces exact introductory and renewal schedule with 18% GST", () => {
+    // Starter: ₹34.22 today, ₹34.22 month 2, ₹588.82 month 3 onward
+    const starterSchedule = getIntroOfferSchedule("starter");
+    expect(starterSchedule.todayAmountWithGst).toBe(34.22);
+    expect(starterSchedule.month2AmountWithGst).toBe(34.22);
+    expect(starterSchedule.month3OnwardAmountWithGst).toBe(588.82);
+    expect(starterSchedule.regularMonthlyBase).toBe(499);
+    // Base 29 + 18% GST (5.22) = 34.22
+    expect(Math.round((29 + 29 * 0.18) * 100) / 100).toBe(34.22);
+    // Base 499 + 18% GST (89.82) = 588.82
+    expect(Math.round((499 + 499 * 0.18) * 100) / 100).toBe(588.82);
+
+    // Pro: ₹34.22 today, ₹34.22 month 2, ₹1,178.82 month 3 onward
+    const proSchedule = getIntroOfferSchedule("pro");
+    expect(proSchedule.todayAmountWithGst).toBe(34.22);
+    expect(proSchedule.month2AmountWithGst).toBe(34.22);
+    expect(proSchedule.month3OnwardAmountWithGst).toBe(1178.82);
+    expect(proSchedule.regularMonthlyBase).toBe(999);
+    // Base 999 + 18% GST (179.82) = 1178.82
+    expect(Math.round((999 + 999 * 0.18) * 100) / 100).toBe(1178.82);
+
+    // Business: ₹34.22 today, ₹34.22 month 2, ₹2,948.82 month 3 onward
+    const businessSchedule = getIntroOfferSchedule("business");
+    expect(businessSchedule.todayAmountWithGst).toBe(34.22);
+    expect(businessSchedule.month2AmountWithGst).toBe(34.22);
+    expect(businessSchedule.month3OnwardAmountWithGst).toBe(2948.82);
+    expect(businessSchedule.regularMonthlyBase).toBe(2499);
+    // Base 2499 + 18% GST (449.82) = 2948.82
+    expect(Math.round((2499 + 2499 * 0.18) * 100) / 100).toBe(2948.82);
+  });
+
+  it("verifies Razorpay subscription signature cryptographically", () => {
+    const secret = "test_sub_secret_key";
+    const subId = "sub_MOCK123456789";
+    const paymentId = "pay_MOCK987654321";
+
+    const validSig = crypto
+      .createHmac("sha256", secret)
+      .update(`${paymentId}|${subId}`)
+      .digest("hex");
+
+    expect(verifyRazorpaySubscriptionSignature(subId, paymentId, validSig, secret)).toBe(true);
+    expect(verifyRazorpaySubscriptionSignature(subId, paymentId, "forged_signature", secret)).toBe(false);
+  });
+});
+
+describe("POST /api/billing/subscriptions/verify", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("returns 401 when user is not authenticated", async () => {
+    mockedCreateClient.mockResolvedValue({
+      auth: { getUser: vi.fn().mockResolvedValue({ data: { user: null } }) },
+    } as never);
+
+    const { POST } = await import("@/app/api/billing/subscriptions/verify/route");
+    const req = new NextRequest("http://localhost/api/billing/subscriptions/verify", {
+      method: "POST",
+      body: JSON.stringify({
+        planSlug: "starter",
+        subscriptionId: "sub_123",
+        paymentId: "pay_123",
+        signature: "sig_123",
+      }),
+    });
+
+    const res = await POST(req);
+    expect(res.status).toBe(401);
+  });
+
+  it("returns 400 when required subscription verification parameters are missing", async () => {
+    mockedCreateClient.mockResolvedValue({
+      auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: "user-1", email: "user@example.com" } } }) },
+    } as never);
+
+    const { POST } = await import("@/app/api/billing/subscriptions/verify/route");
+    const req = new NextRequest("http://localhost/api/billing/subscriptions/verify", {
+      method: "POST",
+      body: JSON.stringify({
+        planSlug: "starter",
+        subscriptionId: "sub_123",
+        // paymentId missing
+      }),
+    });
+
+    const res = await POST(req);
+    expect(res.status).toBe(400);
+    const data = await res.json();
+    expect(data.error).toMatch(/required/i);
+  });
+
+  it("returns 400 when Razorpay signature is invalid", async () => {
+    mockedCreateClient.mockResolvedValue({
+      auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: "user-1", email: "user@example.com" } } }) },
+    } as never);
+
+    const { POST } = await import("@/app/api/billing/subscriptions/verify/route");
+    const req = new NextRequest("http://localhost/api/billing/subscriptions/verify", {
+      method: "POST",
+      body: JSON.stringify({
+        planSlug: "starter",
+        subscriptionId: "sub_123",
+        paymentId: "pay_123",
+        signature: "invalid_tampered_signature",
+      }),
+    });
+
+    const res = await POST(req);
+    expect(res.status).toBe(400);
+    const data = await res.json();
+    expect(data.error).toMatch(/invalid signature/i);
+  });
+});
+
+

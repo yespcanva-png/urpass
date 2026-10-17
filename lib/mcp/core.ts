@@ -8,6 +8,7 @@ import {
 } from "@/lib/conference/conflict-detection";
 import { computeConferenceAnalytics, slugify } from "@/lib/conference/helpers";
 import type { EventSession, EventRoom } from "@/types/conference";
+import { resolveUserSubscriptionAccess } from "@/lib/billing/entitlement-resolver";
 
 function adminClient() {
   return createAdminClient(

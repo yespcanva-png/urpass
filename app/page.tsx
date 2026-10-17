@@ -8,6 +8,7 @@ import Footer from "@/components/landing/Footer";
 import HomePricingSection from "@/components/landing/HomePricingSection";
 import FeaturesSection from "@/components/landing/FeaturesSection";
 import TestimonialsSection from "@/components/landing/TestimonialsSection";
+import { RequestEventSetupButton } from "@/components/landing/RequestEventSetupModal";
 import { detectCountryFromHeaders } from "@/lib/country-config";
 import {
   FileText,
@@ -342,10 +343,7 @@ export default async function LandingPage() {
                 Explore Plans
                 <ArrowRight className="w-4 h-4" />
               </a>
-              <Link href="/managed-setup" className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-violet-600 text-white px-5 py-3.5 rounded-xl text-sm font-semibold hover:bg-violet-700 transition-colors text-center shadow-xs">
-                <Sparkles className="w-4 h-4 text-violet-200" />
-                Request a Setup
-              </Link>
+              <RequestEventSetupButton />
               <Link href="/contact?subject=Book%20a%20Demo" className="w-full sm:w-auto inline-flex items-center justify-center gap-2 border border-neutral-200 bg-white px-5 py-3.5 rounded-xl text-sm font-semibold text-neutral-800 hover:bg-neutral-50 hover:border-neutral-300 transition-colors text-center shadow-2xs">
                 Book a Demo
               </Link>
