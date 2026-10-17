@@ -8,7 +8,7 @@ import {
   Search, Ticket, ExternalLink, Download, Lock, Wifi, ClipboardList, RotateCcw,
   Send, CheckCircle2, CreditCard, DoorOpen, History, Eye, Mail, Phone, RefreshCw,
 } from "lucide-react";
-import { approveAttendee, rejectAttendee, exportAttendeesCSV, promoteNextWaitlistAttendee } from "@/app/actions/attendees";
+import { approveAttendee, rejectAttendee, exportAttendeesCSV, promoteNextWaitlistAttendee, reconcileEventPaymentsAction } from "@/app/actions/attendees";
 import { undoCheckIn } from "@/app/actions/manual-checkin";
 import { generatePass, bulkGeneratePasses } from "@/app/actions/passes";
 import AddAttendeeModal from "./AddAttendeeModal";
@@ -190,7 +190,35 @@ export default function AttendeeTable({
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(50);
   const [mounted, setMounted] = useState(false);
+  const [isSyncingPayments, setIsSyncingPayments] = useState(false);
   const initialRef = useRef(initial);
+
+  const syncPayments = async () => {
+    setIsSyncingPayments(true);
+    try {
+      const res = await reconcileEventPaymentsAction(eventId);
+      if (res?.reconciled && res.reconciled > 0) {
+        setBulkMsg({
+          text: `Gateway sync complete! Recovered ${res.reconciled} paid ${res.reconciled === 1 ? "attendee" : "attendees"} and issued passes.`,
+          isError: false,
+        });
+      } else {
+        setBulkMsg({
+          text: "Gateway sync complete. All attendee records and payments are up to date.",
+          isError: false,
+        });
+      }
+      setTimeout(() => setBulkMsg(null), 5000);
+      await refreshAttendees(false);
+    } catch (err) {
+      setBulkMsg({
+        text: err instanceof Error ? err.message : "Failed to sync gateway payments.",
+        isError: true,
+      });
+    } finally {
+      setIsSyncingPayments(false);
+    }
+  };
 
   const refreshAttendees = async (showNotice = true) => {
     setIsRefreshing(true);
@@ -803,12 +831,23 @@ export default function AttendeeTable({
             <button
               type="button"
               onClick={() => refreshAttendees(true)}
-              disabled={isRefreshing}
+              disabled={isRefreshing || isSyncingPayments}
               title="Refresh attendee data"
               className="inline-flex min-h-9 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50 shadow-xs disabled:opacity-50"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? "animate-spin text-violet-600" : ""}`} />
               <span>{isRefreshing ? "Refreshing..." : "Refresh"}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={syncPayments}
+              disabled={isSyncingPayments || isRefreshing}
+              title="Sync gateway payments and auto-recover any paid orders"
+              className="inline-flex min-h-9 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50 shadow-xs disabled:opacity-50"
+            >
+              <CreditCard className={`w-3.5 h-3.5 ${isSyncingPayments ? "animate-spin text-emerald-600" : "text-emerald-600"}`} />
+              <span>{isSyncingPayments ? "Syncing..." : "Sync Payments"}</span>
             </button>
 
             {canExport ? (

@@ -21,6 +21,7 @@ import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import { createGate, deleteGate } from "@/app/actions/scanner-gates";
 import { manualCheckIn, undoCheckIn, exportCheckinsCSV } from "@/app/actions/manual-checkin";
+import SessionAttendanceSection from "@/components/conference/SessionAttendanceSection";
 
 type PassType = "participant" | "vip" | "speaker" | "organizer";
 
@@ -402,6 +403,14 @@ export default function CheckinDashboard({
           />
         </div>
       </div>
+
+      {/* Multi-Session Attendance Section */}
+      <SessionAttendanceSection
+        eventId={event.id}
+        eventName={event.name}
+        approvedAttendeesCount={totalApproved}
+        className="mb-5"
+      />
 
       {/* Scanner Gates */}
       <div className="bg-white rounded-2xl shadow-sm p-5 mb-5">

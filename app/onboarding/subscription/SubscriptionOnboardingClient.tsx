@@ -73,6 +73,7 @@ interface Props {
   country: "IN" | "GB";
   userEmail: string;
   userName: string;
+  userPhone?: string;
   accessState: string;
   introOfferEligible: boolean;
   freeTrialEligible?: boolean;
@@ -82,6 +83,7 @@ export default function SubscriptionOnboardingClient({
   country,
   userEmail,
   userName,
+  userPhone,
   accessState,
   introOfferEligible,
   freeTrialEligible = false,
@@ -89,6 +91,7 @@ export default function SubscriptionOnboardingClient({
   const router = useRouter();
   const [trialLoading, setTrialLoading] = useState(false);
   const [trialError, setTrialError] = useState("");
+  const [phone, setPhone] = useState(userPhone || "");
   const [billingCycle, setBillingCycle] = useState<Cycle>("monthly");
   const [activeCountry, setActiveCountry] = useState<"IN" | "GB">(() => {
     if (typeof window !== "undefined") {
@@ -119,6 +122,22 @@ export default function SubscriptionOnboardingClient({
         return;
       }
 
+      let contactNumber = (phone || userPhone || "").replace(/[^\d]/g, "");
+      if (contactNumber.length < 10) {
+        const entered = window.prompt("Enter your 10-digit mobile number to authorize the AutoPay mandate:");
+        if (!entered) {
+          setTrialLoading(false);
+          return;
+        }
+        contactNumber = entered.replace(/[^\d]/g, "");
+        if (contactNumber.length < 10) {
+          setTrialError("A valid 10-digit mobile number is required for AutoPay mandate authorization.");
+          setTrialLoading(false);
+          return;
+        }
+        setPhone(contactNumber);
+      }
+
       const res = await fetch("/api/billing/autopay/mandate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -126,6 +145,11 @@ export default function SubscriptionOnboardingClient({
           planSlug: "pro",
           billingCycle: "monthly",
           isFreeTrial: true,
+          phone: contactNumber,
+          billingDetails: {
+            phone: contactNumber,
+            contact: contactNumber,
+          },
         }),
       });
 
@@ -145,7 +169,7 @@ export default function SubscriptionOnboardingClient({
         currency: data.currency,
         name: "URPASS",
         description: "1 Free Event Trial - AutoPay Mandate Authorization (₹1)",
-        prefill: { name: userName, email: userEmail },
+        prefill: { name: userName, email: userEmail, contact: contactNumber },
         theme: { color: "#6D28D9" },
         modal: { ondismiss: () => setTrialLoading(false) },
         handler: async (response: {
@@ -196,7 +220,7 @@ export default function SubscriptionOnboardingClient({
 
   const isUk = activeCountry === "GB";
   const isAnnual = billingCycle === "annual";
-  const showIntroOffer = !isUk && !isAnnual && introOfferEligible;
+  const showIntroOffer = !isUk && !isAnnual;
 
   return (
     <div className="min-h-screen bg-[#f7f7fb] text-neutral-950">
@@ -324,11 +348,23 @@ export default function SubscriptionOnboardingClient({
           </div>
         )}
 
-        <div className="mt-8 rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm text-neutral-700">
+        <div className="mt-8 rounded-xl border border-violet-200 bg-violet-50/80 p-4 text-xs sm:text-sm text-violet-950">
           {isAnnual ? (
             <span>Annual plans are billed upfront. Taxes are added at checkout.</span>
           ) : showIntroOffer ? (
-            <span>Intro offer for eligible new monthly subscribers: ₹29 for the first 2 billing cycles, then regular monthly pricing. Taxes extra.</span>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div>
+                <p className="font-bold text-violet-900 text-sm">
+                  ⚡ AutoPay Introductory Offer: Activate Starter, Pro, or Business for ₹29/month
+                </p>
+                <p className="mt-1 text-xs text-violet-700 leading-relaxed">
+                  ₹29/month for your first 2 months, then regular monthly price + GST. AutoPay authorization is required. Your first ₹34.22 payment (₹29 + 18% GST) will be collected upon activation. Cancel anytime.
+                </p>
+              </div>
+              <span className="self-start sm:self-auto rounded-full bg-violet-600 px-3 py-1 text-xs font-bold text-white shrink-0">
+                Save up to 98%
+              </span>
+            </div>
           ) : (
             <span>Monthly plans renew automatically after payment authorization. Taxes are added at checkout.</span>
           )}
@@ -372,11 +408,27 @@ export default function SubscriptionOnboardingClient({
                 </div>
 
                 <div className="mt-6 border-y border-neutral-100 py-5">
-                  <div className="flex items-end gap-1">
-                    <span className="text-4xl font-bold tracking-tight">{todayPrice}</span>
-                    <span className="pb-1 text-sm text-neutral-500">{period}</span>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-4xl font-bold tracking-tight text-neutral-950">{todayPrice}</span>
+                    <span className="text-sm font-medium text-neutral-500">{period}</span>
+                    {showIntroOffer && (
+                      <span className="ml-auto rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 text-[10px] font-bold text-emerald-800">
+                        ₹29 Intro Offer
+                      </span>
+                    )}
                   </div>
-                  <p className="mt-2 text-xs font-semibold text-neutral-600">{renewalText}</p>
+                  {showIntroOffer ? (
+                    <div className="mt-2 space-y-1">
+                      <p className="text-xs font-bold text-violet-900">
+                        ₹29/month for your first 2 months, then ₹{plan.renewalInr.toLocaleString("en-IN")}/month + GST.
+                      </p>
+                      <p className="text-[11px] leading-relaxed text-neutral-500">
+                        AutoPay authorization is required. Your first ₹34.22 payment will be collected upon activation. You can cancel future renewals anytime.
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="mt-2 text-xs font-semibold text-neutral-600">{renewalText}</p>
+                  )}
                 </div>
 
                 <ul className="mt-5 flex-1 space-y-3">
@@ -394,6 +446,7 @@ export default function SubscriptionOnboardingClient({
                   billingCycle={billingCycle}
                   userEmail={userEmail}
                   userName={userName}
+                  userPhone={phone || userPhone}
                   currency={isUk ? "GBP" : "INR"}
                   successRedirect="/dashboard"
                   introOfferEligible={showIntroOffer}
@@ -403,7 +456,7 @@ export default function SubscriptionOnboardingClient({
                       : "border border-neutral-300 bg-white text-neutral-900 hover:bg-neutral-50"
                   }`}
                 >
-                  Continue with {plan.name}
+                  {showIntroOffer ? `Activate ${plan.name} for ₹29/mo` : `Continue with ${plan.name}`}
                 </CheckoutButton>
               </article>
             );

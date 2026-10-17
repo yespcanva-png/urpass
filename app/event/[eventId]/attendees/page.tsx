@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import AttendeeTable from "@/components/event/AttendeeTable";
 import { getUserPlan } from "@/lib/plan";
+import { reconcileEventTicketOrders } from "@/lib/payments/reconcile-event-orders";
 
 interface Props {
   params: Promise<{ eventId: string }>;
@@ -37,6 +38,11 @@ export default async function AttendeesPage({ params }: Props) {
       .maybeSingle();
     if (!member) redirect("/dashboard");
   }
+
+  // Automatically reconcile any pending gateway orders (e.g. mobile UPI drop-offs or missed webhooks)
+  await reconcileEventTicketOrders(canonicalEventId).catch((reconcileErr) => {
+    console.warn("[attendees/page] Order reconciliation warning:", reconcileErr);
+  });
 
   const [attendeesResult, plan] = await Promise.all([
     supabase

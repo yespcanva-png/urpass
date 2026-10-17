@@ -22,6 +22,7 @@ interface Props {
   billingCycle: "monthly" | "annual" | "lifetime";
   userEmail: string;
   userName: string;
+  userPhone?: string;
   currency?: "INR" | "GBP";
   priceMonthly: number;
   annualTotal: number;
@@ -95,7 +96,7 @@ function fmtVal(n: number, isUk: boolean) {
 export default function CheckoutModal({
   isOpen, onClose,
   planSlug, planName, billingCycle,
-  userEmail, userName,
+  userEmail, userName, userPhone,
   currency = "INR",
   priceMonthly, annualTotal,
   successRedirect,
@@ -108,12 +109,10 @@ export default function CheckoutModal({
   const [payLoading, setPayLoading]         = useState(false);
   const [payError, setPayError]             = useState("");
   const [companyName, setCompanyName]       = useState(userName || "");
+  const [phone, setPhone]                   = useState(userPhone || "");
   const [billingAddress, setBillingAddress] = useState("");
   const [billingStateCode, setBillingStateCode] = useState("33");
   const [gstin, setGstin]                   = useState("");
-  const [introPaymentComplete, setIntroPaymentComplete] = useState(false);
-  const [mandateLoading, setMandateLoading] = useState(false);
-  const [mandateError, setMandateError] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
@@ -128,12 +127,10 @@ export default function CheckoutModal({
       setPayError("");
       setPayLoading(false);
       setCompanyName(userName || "");
+      setPhone(userPhone || "");
       setBillingAddress("");
       setBillingStateCode("33");
       setGstin("");
-      setIntroPaymentComplete(false);
-      setMandateLoading(false);
-      setMandateError("");
     }
   }
 
@@ -217,6 +214,13 @@ export default function CheckoutModal({
       const trimmedGstin = gstin.trim().toUpperCase();
       const selectedState = INDIA_STATES.find((state) => state.code === billingStateCode);
 
+      const cleanPhone = phone.replace(/[^\d]/g, "");
+      if (!isUk && cleanPhone.length < 10) {
+        setPayError("A valid 10-digit mobile number is required for AutoPay mandate setup.");
+        setPayLoading(false);
+        return;
+      }
+
       if (!isUk && !trimmedAddress) {
         setPayError("Billing address is required before payment.");
         setPayLoading(false);
@@ -256,8 +260,11 @@ export default function CheckoutModal({
             planSlug,
             billingCycle,
             isFreeTrial: false,
+            phone: cleanPhone,
             billingDetails: {
               companyName: trimmedCompany || userName,
+              phone: cleanPhone,
+              contact: cleanPhone,
               billingAddress: trimmedAddress,
               gstin: trimmedGstin || null,
               state: selectedState?.name || "",
@@ -282,7 +289,7 @@ export default function CheckoutModal({
           currency: mandateData.currency || "INR",
           name: "URPASS",
           description: `${planName} AutoPay — ₹34.22 first payment, then ₹${(mandateData.maxAmountPaise / 100).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/month`,
-          prefill: { name: userName, email: userEmail },
+          prefill: { name: userName, email: userEmail, contact: cleanPhone },
           theme: { color: "#6D28D9" },
           modal: { ondismiss: () => setPayLoading(false) },
           handler: async (response: {
@@ -554,15 +561,36 @@ export default function CheckoutModal({
                 <span className="text-[10px] font-medium uppercase tracking-wider text-neutral-500">India GST</span>
               </div>
 
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-medium text-neutral-600">Billing name</label>
-                <input
-                  type="text"
-                  value={companyName}
-                  onChange={(e) => setCompanyName(e.target.value)}
-                  placeholder="Legal name or company name"
-                  className="w-full rounded-lg border border-neutral-300 px-3 py-2.5 text-sm text-neutral-950 placeholder:text-neutral-400 focus:outline-none focus:border-neutral-700 focus:ring-2 focus:ring-neutral-900/10"
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[11px] font-medium text-neutral-600">Billing name</label>
+                  <input
+                    type="text"
+                    value={companyName}
+                    onChange={(e) => setCompanyName(e.target.value)}
+                    placeholder="Legal name or company name"
+                    className="w-full rounded-lg border border-neutral-300 px-3 py-2.5 text-sm text-neutral-950 placeholder:text-neutral-400 focus:outline-none focus:border-neutral-700 focus:ring-2 focus:ring-neutral-900/10"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[11px] font-medium text-neutral-600">
+                    Mobile number <span className="text-red-500">*</span>
+                    <span className="text-[10px] text-neutral-400 ml-1">(Required for AutoPay)</span>
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-neutral-500">+91</span>
+                    <input
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value.replace(/[^\d]/g, "").slice(0, 10))}
+                      placeholder="9876543210"
+                      maxLength={10}
+                      required
+                      className="w-full rounded-lg border border-neutral-300 pl-11 pr-3 py-2.5 text-sm text-neutral-950 placeholder:text-neutral-400 focus:outline-none focus:border-neutral-700 focus:ring-2 focus:ring-neutral-900/10 font-mono"
+                    />
+                  </div>
+                </div>
               </div>
 
               <div className="flex flex-col gap-1.5">

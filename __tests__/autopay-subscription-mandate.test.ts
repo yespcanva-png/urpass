@@ -88,6 +88,33 @@ describe("Unified AutoPay Mandate Creation & Verification Flow", () => {
       expect(data.error).toMatch(/monthly INR plans/i);
     });
 
+    it("returns 400 when mobile number is missing", async () => {
+      mockedCreateClient.mockResolvedValue({
+        auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: "user_no_phone" } } }) },
+      } as never);
+
+      mockedCreateAdminClient.mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              maybeSingle: vi.fn().mockResolvedValue({ data: null }),
+            }),
+          }),
+        }),
+      } as never);
+
+      const { POST } = await import("@/app/api/billing/autopay/mandate/route");
+      const req = new NextRequest("http://localhost/api/billing/autopay/mandate", {
+        method: "POST",
+        body: JSON.stringify({ planSlug: "starter", billingCycle: "monthly" }),
+      });
+
+      const res = await POST(req);
+      expect(res.status).toBe(400);
+      const data = await res.json();
+      expect(data.error).toMatch(/mobile number is required/i);
+    });
+
     it("creates an AutoPay recurring order charging ₹34.22 immediately for Starter plan", async () => {
       const user = { id: "user_test_starter", email: "starter@example.com" };
       mockedCreateClient.mockResolvedValue({
@@ -99,6 +126,9 @@ describe("Unified AutoPay Mandate Creation & Verification Flow", () => {
           eq: vi.fn().mockReturnValue({
             maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
           }),
+        }),
+        update: vi.fn().mockReturnValue({
+          eq: vi.fn().mockResolvedValue({ data: null, error: null }),
         }),
         upsert: vi.fn().mockResolvedValue({ data: null, error: null }),
       });
@@ -122,6 +152,7 @@ describe("Unified AutoPay Mandate Creation & Verification Flow", () => {
           billingCycle: "monthly",
           billingDetails: {
             companyName: "Acme Events",
+            phone: "9876543210",
             billingAddress: "123 Tech Park, Chennai",
             gstin: "33AAAAA0000A1Z5",
             state: "Tamil Nadu",
@@ -140,6 +171,14 @@ describe("Unified AutoPay Mandate Creation & Verification Flow", () => {
       expect(data.month2AmountWithGst).toBe(34.22);
       expect(data.month3OnwardAmountWithGst).toBe(588.82);
       expect(data.customerId).toBe("cust_starter_123");
+
+      // Verify customer was created with contact
+      expect(mockCustomersCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: "Acme Events",
+          contact: "9876543210",
+        })
+      );
 
       // Verify order creation parameters
       expect(mockOrdersCreate).toHaveBeenCalledWith(
@@ -175,6 +214,9 @@ describe("Unified AutoPay Mandate Creation & Verification Flow", () => {
               maybeSingle: vi.fn().mockResolvedValue({ data: null }),
             }),
           }),
+          update: vi.fn().mockReturnValue({
+            eq: vi.fn().mockResolvedValue({ data: null }),
+          }),
           upsert: vi.fn().mockResolvedValue({ data: null }),
         }),
       } as never);
@@ -192,6 +234,7 @@ describe("Unified AutoPay Mandate Creation & Verification Flow", () => {
         body: JSON.stringify({
           planSlug: "pro",
           billingCycle: "monthly",
+          phone: "9876543210",
         }),
       });
 

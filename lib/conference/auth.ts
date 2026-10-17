@@ -35,7 +35,7 @@ export async function verifyEventOrganizerAccess(eventId: string) {
       .eq("organization_id", event.organization_id)
       .eq("user_id", user.id)
       .eq("status", "active")
-      .in("role", ["owner", "admin", "event_manager"])
+      .in("role", ["owner", "admin", "event_manager", "gate_manager", "checkin_staff"])
       .maybeSingle();
 
     if (member) {

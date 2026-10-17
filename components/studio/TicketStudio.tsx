@@ -31,6 +31,7 @@ import {
   ExternalLink,
   ChevronRight,
   Eye,
+  Wand2,
 } from "lucide-react";
 import {
   type TicketDesignConfig,
@@ -45,6 +46,7 @@ import {
   convertStudioTemplateToTicketDesign,
 } from "@/lib/studio/templates";
 import StudioUpgradeModal from "./StudioUpgradeModal";
+import AiTicketMagicModal from "./AiTicketMagicModal";
 import { getStudioPlanLimits } from "@/lib/studio/limits";
 import type { PlanSlug } from "@/lib/plan";
 
@@ -236,11 +238,29 @@ export default function TicketStudio({
   const [templateFilterCategory, setTemplateFilterCategory] = useState("All");
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [upgradeFeatureName, setUpgradeFeatureName] = useState<string | undefined>(undefined);
+  const [isAiMagicOpen, setIsAiMagicOpen] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get("magic") === "open" || urlParams.get("ai") === "true") {
+        setIsAiMagicOpen(true);
+      }
+    }
+  }, []);
 
   function triggerUpgrade(featureName: string) {
     setUpgradeFeatureName(featureName);
     setUpgradeModalOpen(true);
   }
+
+  const handleApplyAiMagic = (generatedConfig: TicketDesignConfig) => {
+    updateConfig((prev) => ({
+      ...prev,
+      ...generatedConfig,
+    }));
+    setSaveStatus("unsaved");
+  };
 
   // 5. Save & Autosave State
   const [saveStatus, setSaveStatus] = useState<"saved" | "saving" | "unsaved" | "error">("saved");
@@ -724,6 +744,17 @@ export default function TicketStudio({
             )}
           </div>
 
+          {/* AI Ticket Magic Action */}
+          <button
+            type="button"
+            onClick={() => setIsAiMagicOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 border border-violet-200/80 bg-violet-50/80 hover:bg-violet-100/80 text-violet-800 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+            title="Generate themes, colors, and layouts using AI Ticket Magic"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-violet-600" />
+            <span className="hidden sm:inline">AI Ticket Magic</span>
+          </button>
+
           {/* Test Ticket Action */}
           <button
             type="button"
@@ -839,6 +870,39 @@ export default function TicketStudio({
                 </button>
               </div>
             )}
+
+            {/* AI Ticket Magic Corporate Card */}
+            <div className="rounded-xl bg-neutral-50 border border-neutral-200/90 p-4 text-neutral-900 transition-all shadow-2xs">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-white border border-neutral-200 flex items-center justify-center text-neutral-800 shrink-0 shadow-2xs">
+                    <Sparkles className="w-4 h-4 text-violet-600" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-bold text-neutral-950">AI Ticket Magic</span>
+                      <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-violet-100 text-violet-700">
+                        BETA
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-neutral-500 mt-0.5 leading-snug">
+                      Auto-generate contrast-tested brand palettes, shapes, and tier badges.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-3 pt-2.5 border-t border-neutral-200/70 flex items-center justify-between gap-2">
+                <span className="text-[10px] font-medium text-neutral-400">8 Corporate Archetypes</span>
+                <button
+                  type="button"
+                  onClick={() => setIsAiMagicOpen(true)}
+                  className="px-3 py-1.5 rounded-lg bg-neutral-950 hover:bg-neutral-800 text-white text-xs font-semibold transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                >
+                  <Wand2 className="w-3 h-3 text-neutral-300" />
+                  <span>Generate Magic</span>
+                </button>
+              </div>
+            </div>
 
             {/* ═════════════════════════════════════════════════════════
                 SECTION 1: TEMPLATE
@@ -2624,6 +2688,17 @@ export default function TicketStudio({
         onClose={() => setUpgradeModalOpen(false)}
         triggerFeature={upgradeFeatureName}
         currentPlan={limits.planTier}
+      />
+
+      {/* AI Ticket Magic Modal */}
+      <AiTicketMagicModal
+        isOpen={isAiMagicOpen}
+        onClose={() => setIsAiMagicOpen(false)}
+        onApply={handleApplyAiMagic}
+        eventName={eventName}
+        venue={venue}
+        eventDate={eventDate}
+        ticketCategories={ticketCategories}
       />
     </div>
   );

@@ -37,6 +37,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE}/switch-to-urpass`, priority: 0.95, changeFrequency: "weekly" as const },
     { url: `${BASE}/import`, priority: 0.85, changeFrequency: "weekly" as const },
     { url: `${BASE}/ticket-templates`, priority: 0.95, changeFrequency: "weekly" as const },
+    { url: `${BASE}/ticket-magic`, priority: 0.95, changeFrequency: "weekly" as const },
     { url: `${BASE}/templates`, priority: 0.85, changeFrequency: "weekly" as const },
     { url: `${BASE}/sponsorship`, priority: 0.9, changeFrequency: "weekly" as const },
     { url: `${BASE}/contact`, priority: 0.6, changeFrequency: "monthly" as const },

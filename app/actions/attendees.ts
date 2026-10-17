@@ -31,6 +31,7 @@ import { communicationService, formatTicketId, buildTicketUrl } from "@/lib/comm
 import { resolveNextTicketSequence, formatCustomTicketId } from "@/lib/tickets/custom-id";
 import { notifyEventTeamOnApplication } from "@/lib/notifications/event-team-notification";
 import { generatePass } from "./passes";
+import { reconcileEventTicketOrders } from "@/lib/payments/reconcile-event-orders";
 import crypto from "crypto";
 
 function adminClient() {
@@ -1595,4 +1596,26 @@ export async function retryPassGeneration(
   }
 
   return { success: true, passToken: newPass.pass_token };
+}
+
+export async function reconcileEventPaymentsAction(
+  eventId: string
+): Promise<{ success: boolean; reconciled?: number; checked?: number; error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const event = await getEventForOrganizer(supabase, eventId, user.id);
+  if (!event) return { success: false, error: "Event not found or unauthorized." };
+
+  const result = await reconcileEventTicketOrders(event.id);
+  revalidateEvent(event.id);
+  return {
+    success: true,
+    reconciled: result.reconciled,
+    checked: result.checked,
+    error: result.errors.length > 0 ? result.errors.join("; ") : undefined,
+  };
 }

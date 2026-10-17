@@ -109,7 +109,38 @@ export async function POST(req: NextRequest) {
   const disclosure = getRazorpayAutopayDisclosure(planSlug);
   const companyName = String(billingDetails?.companyName || user.user_metadata?.full_name || user.email || "UrPass customer").slice(0, 80);
   const email = String(user.email || "");
-  const contact = String(user.phone || user.user_metadata?.phone || "").replace(/[^\d+]/g, "");
+
+  // Resolve mobile number / contact for Razorpay mandate
+  let rawPhone = String(
+    body?.phone ||
+    billingDetails?.phone ||
+    billingDetails?.contact ||
+    user.phone ||
+    user.user_metadata?.phone ||
+    ""
+  ).replace(/[^\d]/g, "");
+
+  if (rawPhone.length < 10) {
+    const { data: profile } = await admin
+      .from("profiles")
+      .select("phone")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (profile?.phone) {
+      rawPhone = String(profile.phone).replace(/[^\d]/g, "");
+    }
+  }
+
+  if (rawPhone.length < 10) {
+    return NextResponse.json(
+      { error: "A valid 10-digit mobile number is required to authorize recurring AutoPay mandates." },
+      { status: 400 }
+    );
+  }
+
+  const contact = rawPhone.slice(-10);
+  void admin.from("profiles").update({ phone: contact }).eq("user_id", user.id);
+
   const billingAddress = String(billingDetails?.billingAddress || "").slice(0, 200);
   const customerGstin = String(billingDetails?.gstin || "").slice(0, 20);
   const billingState = String(billingDetails?.state || "").slice(0, 60);
@@ -121,14 +152,27 @@ export async function POST(req: NextRequest) {
     const customerPayload: Record<string, unknown> = {
       name: companyName,
       email,
+      contact,
       fail_existing: "0",
       notes: cleanNotes({ user_id: user.id, purpose: "urpass_autopay" }),
     };
-    if (contact) customerPayload.contact = contact;
 
-    const customer = sub?.provider_customer_id
-      ? { id: sub.provider_customer_id }
-      : await (razorpay.customers as any).create(customerPayload);
+    let customer: { id: string };
+    if (sub?.provider_customer_id) {
+      try {
+        await (razorpay.customers as any).edit(sub.provider_customer_id, {
+          name: companyName,
+          email,
+          contact,
+        });
+        customer = { id: sub.provider_customer_id };
+      } catch (editErr) {
+        console.warn("[autopay/mandate] Customer edit failed, creating new customer:", editErr);
+        customer = await (razorpay.customers as any).create(customerPayload);
+      }
+    } else {
+      customer = await (razorpay.customers as any).create(customerPayload);
+    }
 
     const now = new Date();
     const recurringDay = Math.min(28, Math.max(1, now.getDate()));

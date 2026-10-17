@@ -28,6 +28,7 @@ import { createClient } from "@/lib/supabase/client";
 import { updateEventStatus, duplicateEvent } from "@/app/actions/events";
 import EventCommunicationsCard from "@/components/event/EventCommunicationsCard";
 import EventAttendeeFeedbackCard from "@/components/event/EventAttendeeFeedbackCard";
+import SessionAttendanceSection from "@/components/conference/SessionAttendanceSection";
 
 type PassStatus = "not_generated" | "generated" | "checked_in";
 type AppStatus = "pending" | "approved" | "rejected";
@@ -630,6 +631,14 @@ export default function EventOverview({ event, initialAttendees = [] }: Props) {
           </div>
         </div>
       </div>
+
+      {/* ── Multi-Session Attendance Dashboard ─────────────────── */}
+      <SessionAttendanceSection
+        eventId={event.id}
+        eventName={event.name}
+        approvedAttendeesCount={approved}
+        className="mb-5"
+      />
 
       {/* ── Event Attendance Analytics & Gate Velocity ──────────── */}
       <div className="bg-white rounded-3xl shadow-sm p-6 mb-5 border border-neutral-100">

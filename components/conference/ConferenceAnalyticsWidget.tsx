@@ -14,6 +14,7 @@ import {
   Download,
 } from "lucide-react";
 import type { ConferenceAnalytics } from "@/types/conference";
+import SessionAttendanceSection from "./SessionAttendanceSection";
 
 interface ConferenceAnalyticsWidgetProps {
   eventId: string;
@@ -120,6 +121,9 @@ export default function ConferenceAnalyticsWidget({ eventId }: ConferenceAnalyti
           <p className="text-[11px] text-amber-600 mt-0.5">Reserved vs arrived</p>
         </div>
       </div>
+
+      {/* ── Multi-Session Attendance Section & Visual Comparison ── */}
+      <SessionAttendanceSection eventId={eventId} className="border-0 p-0 shadow-none" />
 
       {/* ── Popular Sessions & Extremes ───────────────────────── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

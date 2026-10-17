@@ -12,6 +12,7 @@ import {
 } from "@/lib/email";
 import { communicationService, formatTicketId, buildTicketUrl } from "@/lib/communications";
 import { recordLiveOpsEvent } from "@/lib/ops/events";
+import { reconcileEventTicketOrders } from "@/lib/payments/reconcile-event-orders";
 
 // Use service-role client — webhook runs outside user session
 function adminClient() {
@@ -457,103 +458,10 @@ export async function handleRazorpayWebhook(req: NextRequest): Promise<NextRespo
           orderId: razorpayOrderId,
         }).catch((err) => console.error("[email] Error notifying owner of ticket order:", err));
 
-        // Fallback recovery: if attendee was not created by the client before drop-off
+        // Fallback recovery: ensure attendee, pass, and group entitlements are fully provisioned
         if (!paidOrder.attendee_id) {
           try {
-            const { data: eventData } = await supabase
-              .from("events")
-              .select("id, name, event_date, venue, organizer_id")
-              .eq("id", paidOrder.event_id)
-              .single();
-
-            if (eventData) {
-              const { data: existingAttendee } = await supabase
-                .from("attendees")
-                .select("id, pass_type")
-                .eq("event_id", paidOrder.event_id)
-                .eq("email", paidOrder.buyer_email)
-                .maybeSingle();
-
-              let attendeeId = existingAttendee?.id;
-              let passType = existingAttendee?.pass_type ?? "standard";
-
-              if (!attendeeId) {
-                const { data: newAttendee } = await supabase
-                  .from("attendees")
-                  .insert({
-                    event_id: paidOrder.event_id,
-                    name: paidOrder.buyer_name,
-                    email: paidOrder.buyer_email,
-                    application_status: "approved",
-                    ticket_type_id: paidOrder.ticket_type_id ?? null,
-                    pass_type: "standard",
-                  })
-                  .select("id, pass_type")
-                  .single();
-
-                if (newAttendee) {
-                  attendeeId = newAttendee.id;
-                  passType = newAttendee.pass_type;
-                }
-              }
-
-              if (attendeeId) {
-                await supabase
-                  .from("ticket_orders")
-                  .update({ attendee_id: attendeeId })
-                  .eq("id", paidOrder.id);
-
-                const { data: existingPass } = await supabase
-                  .from("passes")
-                  .select("pass_token")
-                  .eq("attendee_id", attendeeId)
-                  .maybeSingle();
-
-                let passToken = existingPass?.pass_token;
-
-                if (!passToken) {
-                  const { data: newPass } = await supabase
-                    .from("passes")
-                    .insert({
-                      event_id: paidOrder.event_id,
-                      attendee_id: attendeeId,
-                      pass_type: passType,
-                      ticket_type_id: paidOrder.ticket_type_id ?? null,
-                    })
-                    .select("pass_token")
-                    .single();
-
-                  if (newPass) {
-                    passToken = newPass.pass_token;
-                    await supabase
-                      .from("attendees")
-                      .update({ pass_status: "generated" })
-                      .eq("id", attendeeId);
-                  }
-                }
-
-                if (passToken) {
-                  const phone = notes.phone || notes.buyer_phone || payment.contact || null;
-                  void communicationService
-                    .sendTicketCommunications({
-                      eventId: paidOrder.event_id,
-                      eventName: eventData.name,
-                      eventDate: eventData.event_date,
-                      venue: eventData.venue,
-                      ticketId: formatTicketId(passToken),
-                      passToken,
-                      attendeeId,
-                      attendeeName: paidOrder.buyer_name,
-                      email: paidOrder.buyer_email,
-                      phone,
-                      passType,
-                      ticketUrl: buildTicketUrl(passToken),
-                      version: `order_${paidOrder.id}`,
-                    })
-                    .catch((err: unknown) => console.error("[communications]", err));
-                }
-              }
-            }
+            await reconcileEventTicketOrders(paidOrder.event_id);
           } catch (recoverErr) {
             console.error("[webhook ticket recovery error]", recoverErr);
           }

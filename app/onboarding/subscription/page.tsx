@@ -25,7 +25,7 @@ export default async function SubscriptionOnboardingPage() {
   }
 
   const [{ data: profile }, { data: trialEvent }, reqHeaders, cookieStore] = await Promise.all([
-    supabase.from("profiles").select("full_name, email").eq("user_id", user.id).maybeSingle(),
+    supabase.from("profiles").select("full_name, email, phone").eq("user_id", user.id).maybeSingle(),
     supabase.from("user_trial_events").select("id").eq("user_id", user.id).maybeSingle(),
     headers(),
     cookies(),
@@ -45,6 +45,7 @@ export default async function SubscriptionOnboardingPage() {
       country={country}
       userEmail={profile?.email ?? user.email ?? ""}
       userName={profile?.full_name ?? user.user_metadata?.full_name ?? user.email?.split("@")[0] ?? "Organizer"}
+      userPhone={profile?.phone ?? user.phone ?? (user.user_metadata?.phone as string) ?? ""}
       accessState={access.state}
       introOfferEligible={access.introOfferEligible}
       freeTrialEligible={freeTrialEligible}

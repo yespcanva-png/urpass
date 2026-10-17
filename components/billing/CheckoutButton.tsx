@@ -26,6 +26,7 @@ interface Props {
   billingCycle?: "monthly" | "annual" | "lifetime";
   userEmail: string;
   userName: string;
+  userPhone?: string;
   currency?: "INR" | "GBP";
   children: React.ReactNode;
   className?: string;
@@ -37,7 +38,7 @@ interface Props {
 export default function CheckoutButton({
   planSlug, planName,
   billingCycle = "monthly",
-  userEmail, userName,
+  userEmail, userName, userPhone,
   currency = "INR",
   children, className = "", style, successRedirect, introOfferEligible = false,
 }: Props) {
@@ -64,6 +65,7 @@ export default function CheckoutButton({
         billingCycle={billingCycle}
         userEmail={userEmail}
         userName={userName}
+        userPhone={userPhone}
         currency={currency}
         priceMonthly={prices.priceMonthly}
         annualTotal={prices.annualTotal}

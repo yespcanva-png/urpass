@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import {
   Calendar,
@@ -16,6 +16,7 @@ import {
   ExternalLink,
   Layers,
 } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
 import type {
   EventSession,
   EventTrack,
@@ -75,6 +76,38 @@ export default function SessionsManager({
   const totalCheckIns = useMemo(() => {
     return sessions.reduce((acc, s) => acc + (s.checked_in_count || 0), 0);
   }, [sessions]);
+
+  // Real-time listener for live session check-ins
+  useEffect(() => {
+    const supabase = createClient();
+    const channel = supabase
+      .channel(`sessions-manager-${eventId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "session_checkins",
+          filter: `event_id=eq.${eventId}`,
+        },
+        (payload) => {
+          const sessionId = (payload.new as any).session_id;
+          const admitted = (payload.new as any).admitted_guests || 1;
+          setSessions((prev) =>
+            prev.map((s) =>
+              s.id === sessionId
+                ? { ...s, checked_in_count: (s.checked_in_count || 0) + admitted }
+                : s
+            )
+          );
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [eventId]);
 
   function handleCreate() {
     setSessionToEdit(null);
@@ -286,7 +319,7 @@ export default function SessionsManager({
                   <th className="py-3 px-4">Track</th>
                   <th className="py-3 px-4">Room</th>
                   <th className="py-3 px-4">Speakers</th>
-                  <th className="py-3 px-4">Reservations</th>
+                  <th className="py-3 px-4">Attendance &amp; Cap</th>
                   <th className="py-3 px-4">Status</th>
                   <th className="py-3 px-4 text-right">Actions</th>
                 </tr>
@@ -357,13 +390,20 @@ export default function SessionsManager({
                       </td>
 
                       <td className="py-3.5 px-4 whitespace-nowrap">
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-bold text-neutral-900">
-                            {session.reservation_count ?? 0}
-                          </span>
-                          <span className="text-neutral-400">
-                            / {session.capacity || room?.capacity || "∞"}
-                          </span>
+                        <div className="flex flex-col gap-0.5">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-bold tabular-nums text-emerald-700">
+                              {session.checked_in_count ?? 0}
+                            </span>
+                            <span className="text-[11px] text-neutral-400">
+                              checked in / {session.reservation_count ?? 0} reg
+                            </span>
+                          </div>
+                          {(session.capacity || room?.capacity) && (
+                            <span className="text-[10px] text-neutral-400">
+                              Cap: {session.capacity || room?.capacity}
+                            </span>
+                          )}
                         </div>
                       </td>
 
