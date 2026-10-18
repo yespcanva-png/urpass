@@ -24,6 +24,7 @@ import { resolveTicketDesign } from "@/lib/pass-design";
 import StudioPassRenderer from "@/components/studio/StudioPassRenderer";
 import { isStudioDesign } from "@/lib/studio/resolver";
 import { getHardenedPublicPass } from "@/lib/passes/public-pass";
+import { resolveEventOgImage } from "@/lib/seo/og-images";
 
 export async function generateMetadata({
   params,
@@ -40,13 +41,41 @@ export async function generateMetadata({
   if (!pass) return { title: "Event Pass" };
   const { data: event } = await supabase
     .from("events")
-    .select("name")
+    .select("name, banner_url, logo_url, custom_pass_design")
     .eq("id", pass.event_id)
     .single();
+
+  const title = event ? `${event.name} — Your Pass` : "Event Pass";
+  const description = event
+    ? `Your digital entry pass for ${event.name}. Show this QR code at the entrance.`
+    : "Your digital event pass.";
+  const ogImage = resolveEventOgImage(event);
+
   return {
-    title: event ? `${event.name} — Your Pass` : "Event Pass",
-    description: event ? `Your digital entry pass for ${event.name}. Show this QR code at the entrance.` : "Your digital event pass.",
+    title,
+    description,
     robots: { index: false, follow: false },
+    openGraph: {
+      type: "website",
+      title,
+      description,
+      siteName: "URPASS",
+      images: [
+        {
+          url: ogImage.url,
+          secureUrl: ogImage.secureUrl,
+          alt: ogImage.alt,
+          width: 1200,
+          height: 630,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [ogImage.url],
+    },
   };
 }
 

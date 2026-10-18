@@ -4,6 +4,7 @@ import { getEventFeedbackForm } from "@/app/actions/event-feedback";
 import AttendeeEventFeedbackForm from "@/components/feedback/AttendeeEventFeedbackForm";
 import Link from "next/link";
 import { MessageSquare, ArrowLeft } from "lucide-react";
+import { resolveEventOgImage } from "@/lib/seo/og-images";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +26,7 @@ export async function generateMetadata({
   const title = `${form.title || "Share Feedback"} — ${event.name}`;
   const description = `Take 60 seconds to share your thoughts and rate your experience at ${event.name}. Your feedback shapes future editions.`;
   const canonicalUrl = `https://urpass.space/feedback/${event.apply_slug || event.id}`;
+  const ogImage = resolveEventOgImage(event);
 
   return {
     title,
@@ -39,7 +41,8 @@ export async function generateMetadata({
       locale: "en_IN",
       images: [
         {
-          url: event.logo_url || "https://urpass.space/og-image.png",
+          url: ogImage.url,
+          secureUrl: ogImage.secureUrl,
           width: 1200,
           height: 630,
           alt: `${event.name} Feedback Survey`,
@@ -50,7 +53,7 @@ export async function generateMetadata({
       card: "summary_large_image",
       title,
       description,
-      images: [event.logo_url || "https://urpass.space/og-image.png"],
+      images: [ogImage.url],
     },
     other: {
       "geo.placename": event.venue || "India",

@@ -1,6 +1,6 @@
 name,email,phone,pass_type,ticket_type,entries
-Apex Corporate Delegation,apex.delegation@example.com,9876543210,vip,VIP Delegation,5
-TechCorp Engineering Team,techcorp.team@example.com,9876543211,participant,Corporate Group,10
-BioInnovate Research,bio.research@example.com,9876543212,speaker,Speaker Group,3
-Quantum AI Labs,quantum.ai@example.com,9876543213,vip,VIP Delegation,8
-Metropolitan University Delegation,metro.faculty@example.com,9876543214,participant,Academic Group,12
+Apexs Corporate Delegation,apex.delegation@example.com,9876543210,vip,VIP Delegation,5
+TechCorps Engineering Team,techcorp.team@example.com,9876543211,participant,Corporate Group,10
+BioInnovates Research,bio.research@example.com,9876543212,speaker,Speaker Group,3
+Quantum AIs Labs,quantum.ai@example.com,9876543213,vip,VIP Delegation,8
+Metropolitans University Delegation,metro.faculty@example.com,9876543214,participant,Academic Group,12

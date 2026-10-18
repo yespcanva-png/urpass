@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import SessionLandingView from "@/components/conference/SessionLandingView";
 import type { EventSession } from "@/types/conference";
+import { resolveEventOgImage } from "@/lib/seo/og-images";
 
 export const dynamic = "force-dynamic";
 
@@ -11,7 +12,7 @@ export async function generateMetadata({
 }: {
   params: Promise<{ slug: string; sessionSlug: string }>;
 }): Promise<Metadata> {
-  const { sessionSlug } = await params;
+  const { slug, sessionSlug } = await params;
   const supabase = await createClient();
 
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(sessionSlug);
@@ -22,9 +23,40 @@ export async function generateMetadata({
 
   if (!session) return { title: "Session Details — URPASS" };
 
+  const isEventUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug);
+  const { data: event } = await (isEventUuid
+    ? supabase.from("events").select("name, banner_url, logo_url, custom_pass_design").eq("id", slug)
+    : supabase.from("events").select("name, banner_url, logo_url, custom_pass_design").eq("apply_slug", slug)
+  ).maybeSingle();
+
+  const ogImage = resolveEventOgImage(event);
+  const title = `${session.title} — ${event?.name || "URPASS Conference"}`;
+  const description = session.description || undefined;
+
   return {
-    title: `${session.title} — URPASS Conference`,
-    description: session.description || undefined,
+    title,
+    description,
+    openGraph: {
+      type: "website",
+      title,
+      description,
+      siteName: "URPASS",
+      images: [
+        {
+          url: ogImage.url,
+          secureUrl: ogImage.secureUrl,
+          alt: ogImage.alt,
+          width: 1200,
+          height: 630,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [ogImage.url],
+    },
   };
 }
 

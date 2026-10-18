@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import PublicEventWebsite from "@/components/conference/PublicEventWebsite";
 import type { EventSession, EventTrack, EventRoom, EventSpeaker, EventWebsite } from "@/types/conference";
+import { resolveEventOgImage } from "@/lib/seo/og-images";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +18,7 @@ export async function generateMetadata({
   // Try website slug first
   const { data: website } = await supabase
     .from("event_websites")
-    .select("seo_title, seo_description, is_published, event:events(name, description, status)")
+    .select("seo_title, seo_description, is_published, event:events(name, description, status, banner_url, logo_url, custom_pass_design)")
     .eq("slug", slug)
     .maybeSingle();
 
@@ -27,11 +28,36 @@ export async function generateMetadata({
     const status = eventData?.status || "active";
     const isPublic = website.is_published !== false && status === "active";
     const isCompletedOrCancelled = status === "completed" || status === "cancelled";
+    const title = website.seo_title || `${eventName} — Schedule & Passes`;
+    const description = website.seo_description || eventData?.description || `Attend ${eventName}. Complete agenda and passes.`;
+    const ogImage = resolveEventOgImage(eventData);
 
     return {
-      title: website.seo_title || `${eventName} — Schedule & Passes`,
-      description: website.seo_description || eventData?.description || `Attend ${eventName}. Complete agenda and passes.`,
+      title,
+      description,
       alternates: { canonical: `https://urpass.space/e/${slug}` },
+      openGraph: {
+        type: "website",
+        title,
+        description,
+        url: `https://urpass.space/e/${slug}`,
+        siteName: "URPASS",
+        images: [
+          {
+            url: ogImage.url,
+            secureUrl: ogImage.secureUrl,
+            alt: ogImage.alt,
+            width: 1200,
+            height: 630,
+          },
+        ],
+      },
+      twitter: {
+        card: "summary_large_image",
+        title,
+        description,
+        images: [ogImage.url],
+      },
       robots: isPublic
         ? {
             index: true,
@@ -51,8 +77,8 @@ export async function generateMetadata({
   // Try event apply_slug or ID
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug);
   const { data: event } = await (isUuid
-    ? supabase.from("events").select("name, description, status").eq("id", slug)
-    : supabase.from("events").select("name, description, status").eq("apply_slug", slug)
+    ? supabase.from("events").select("name, description, status, banner_url, logo_url, custom_pass_design").eq("id", slug)
+    : supabase.from("events").select("name, description, status, banner_url, logo_url, custom_pass_design").eq("apply_slug", slug)
   ).maybeSingle();
 
   if (!event) {
@@ -64,11 +90,36 @@ export async function generateMetadata({
 
   const isPublic = event.status === "active";
   const isCompletedOrCancelled = event.status === "completed" || event.status === "cancelled";
+  const title = `${event.name} — Schedule & Passes`;
+  const description = event.description || `Attend ${event.name}. Complete agenda and passes.`;
+  const ogImage = resolveEventOgImage(event);
 
   return {
-    title: `${event.name} — Schedule & Passes`,
-    description: event.description || `Attend ${event.name}. Complete agenda and passes.`,
+    title,
+    description,
     alternates: { canonical: `https://urpass.space/e/${slug}` },
+    openGraph: {
+      type: "website",
+      title,
+      description,
+      url: `https://urpass.space/e/${slug}`,
+      siteName: "URPASS",
+      images: [
+        {
+          url: ogImage.url,
+          secureUrl: ogImage.secureUrl,
+          alt: ogImage.alt,
+          width: 1200,
+          height: 630,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [ogImage.url],
+    },
     robots: isPublic
       ? {
           index: true,

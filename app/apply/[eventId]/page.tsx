@@ -5,7 +5,7 @@ import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { CalendarDays, Ticket, ScanLine, Wifi, LayoutGrid } from "lucide-react";
 import ApplyForm from "./ApplyForm";
 import { getSupabaseUrl } from "@/lib/supabase/config";
-import { TICKET_OG_IMAGE, TICKET_OG_IMAGE_META } from "@/lib/seo/og-images";
+import { TICKET_OG_IMAGE, TICKET_OG_IMAGE_META, resolveEventOgImage } from "@/lib/seo/og-images";
 import { isFeatureEnabled } from "@/lib/feature-flags";
 
 export const dynamic = "force-dynamic";
@@ -20,7 +20,7 @@ export async function generateMetadata({
   const supabase = await createClient();
   const query = supabase
     .from("events")
-    .select("id, name, venue, event_date, start_time, description, apply_slug, status")
+    .select("id, name, venue, event_date, start_time, description, apply_slug, status, banner_url, logo_url, custom_pass_design")
     .eq("status", "active");
 
   const { data: event } = await (isUuid
@@ -40,6 +40,8 @@ export async function generateMetadata({
     ? `${event.description.slice(0, 150)}... Register now for ${event.name} at ${event.venue} on ${date}.`
     : `Register for ${event.name} at ${event.venue} on ${date}. Get your digital QR event pass instantly on approval.`;
 
+  const ogImg = resolveEventOgImage(event);
+
   return {
     title: `Register for ${event.name} — Passes & Entry`,
     description: desc,
@@ -51,13 +53,21 @@ export async function generateMetadata({
       url: canonicalUrl,
       siteName: "URPASS",
       locale: "en_IN",
-      images: [{ ...TICKET_OG_IMAGE_META, alt: `${event.name} registration and ticketing on URPASS` }],
+      images: [
+        {
+          url: ogImg.url,
+          secureUrl: ogImg.secureUrl,
+          alt: ogImg.alt,
+          width: 1200,
+          height: 630,
+        },
+      ],
     },
     twitter: {
       card: "summary_large_image",
       title: `${event.name} — Register Now`,
       description: desc,
-      images: [TICKET_OG_IMAGE],
+      images: [ogImg.url],
     },
     other: {
       "geo.placename": event.venue || "India",

@@ -18,6 +18,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import WhatsAppShareButton from "@/components/pass/WhatsAppShareButton";
 import AttendeeDeliveryActions from "./AttendeeDeliveryActions";
+import { isVersionSkewError, triggerRecoveryReload } from "@/components/common/VersionSkewHandler";
 import type { CustomFieldDefinition } from "@/types";
 
 type Status    = "pending" | "approved" | "rejected" | "waitlisted";
@@ -482,6 +483,10 @@ export default function AttendeeTable({
         setTimeout(() => setBulkMsg(null), 4000);
       }
     } catch (err) {
+      if (isVersionSkewError(err)) {
+        triggerRecoveryReload(err instanceof Error ? err.message : "Server action deployment skew");
+        return;
+      }
       setBulkMsg({
         text: err instanceof Error ? err.message : "Failed to bulk generate passes",
         isError: true,
@@ -498,11 +503,19 @@ export default function AttendeeTable({
     approveAttendee(id, eventId)
       .then((result) => {
         if (result?.error) {
+          if (isVersionSkewError(result.error)) {
+            triggerRecoveryReload(result.error);
+            return;
+          }
           setAttendees((prev) => prev.map((a) => a.id === id ? { ...a, application_status: prev_status } : a));
           setErr(id, result.error);
         }
       })
       .catch((err) => {
+        if (isVersionSkewError(err)) {
+          triggerRecoveryReload(err instanceof Error ? err.message : "Server action deployment skew");
+          return;
+        }
         setAttendees((prev) => prev.map((a) => a.id === id ? { ...a, application_status: prev_status } : a));
         setErr(id, err instanceof Error ? err.message : "Failed to approve attendee");
       });
@@ -514,11 +527,19 @@ export default function AttendeeTable({
     rejectAttendee(id, eventId)
       .then((result) => {
         if (result?.error) {
+          if (isVersionSkewError(result.error)) {
+            triggerRecoveryReload(result.error);
+            return;
+          }
           setAttendees((prev) => prev.map((a) => a.id === id ? { ...a, application_status: prev_status } : a));
           setErr(id, result.error);
         }
       })
       .catch((err) => {
+        if (isVersionSkewError(err)) {
+          triggerRecoveryReload(err instanceof Error ? err.message : "Server action deployment skew");
+          return;
+        }
         setAttendees((prev) => prev.map((a) => a.id === id ? { ...a, application_status: prev_status } : a));
         setErr(id, err instanceof Error ? err.message : "Failed to reject attendee");
       });
@@ -530,6 +551,10 @@ export default function AttendeeTable({
       const result = await generatePass(id, eventId);
       setLoadingId(null);
       if (result?.error) {
+        if (isVersionSkewError(result.error)) {
+          triggerRecoveryReload(result.error);
+          return;
+        }
         setErr(id, result.error ?? "");
       } else if (result?.passToken) {
         const token = result.passToken as string;
@@ -538,6 +563,10 @@ export default function AttendeeTable({
       }
     } catch (err) {
       setLoadingId(null);
+      if (isVersionSkewError(err)) {
+        triggerRecoveryReload(err instanceof Error ? err.message : "Server action deployment skew");
+        return;
+      }
       setErr(id, err instanceof Error ? err.message : "Failed to generate pass");
     }
   }
@@ -549,6 +578,10 @@ export default function AttendeeTable({
       const result = await generatePass(id, eventId);
       setLoadingId(null);
       if (result?.error) {
+        if (isVersionSkewError(result.error)) {
+          triggerRecoveryReload(result.error);
+          return;
+        }
         setErr(id, result.error ?? "");
       } else if (result?.passToken) {
         const token = result.passToken as string;
@@ -557,7 +590,11 @@ export default function AttendeeTable({
       }
     } catch (err) {
       setLoadingId(null);
-      setErr(id, err instanceof Error ? err.message : "Failed to load pass");
+      if (isVersionSkewError(err)) {
+        triggerRecoveryReload(err instanceof Error ? err.message : "Server action deployment skew");
+        return;
+      }
+      setErr(id, err instanceof Error ? err.message : "Failed to generate pass");
     }
   }
 
@@ -576,6 +613,10 @@ export default function AttendeeTable({
       }
     } catch (err) {
       setUndoingId(null);
+      if (isVersionSkewError(err)) {
+        triggerRecoveryReload(err instanceof Error ? err.message : "Server action deployment skew");
+        return;
+      }
       setErr(id, err instanceof Error ? err.message : "Failed to undo check-in");
     }
   }
@@ -590,6 +631,10 @@ export default function AttendeeTable({
     try {
       const res = await promoteNextWaitlistAttendee(eventId);
       if (res?.error) {
+        if (isVersionSkewError(res.error)) {
+          triggerRecoveryReload(res.error);
+          return;
+        }
         alert(res.error);
       } else if (res?.attendeeName) {
         setAttendees((prev) => {
