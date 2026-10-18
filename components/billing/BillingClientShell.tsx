@@ -256,7 +256,7 @@ export default function BillingClientShell({
 
   // Price formatting
   const formattedPlanPrice = currentPlanSlug === "managed_enterprise"
-    ? "₹6,000/month (+18% GST)"
+    ? "₹6,000 (+18% GST) · Single Event"
     : isTrial
     ? isUk
       ? "30-Day Free Trial (£0 today)"
@@ -474,6 +474,10 @@ export default function BillingClientShell({
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase">
                       Founder Lifetime License
                     </span>
+                  ) : currentPlanSlug === "managed_enterprise" ? (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 border border-purple-200 uppercase">
+                      Single Event License
+                    </span>
                   ) : billingCycle === "annual" && currentPlanSlug !== "free" ? (
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-brand-50 text-brand border border-brand-100 uppercase">
                       Annual Billing
@@ -509,6 +513,10 @@ export default function BillingClientShell({
                         : `Free trial ends ${renewalDate ?? "in 30 days"} · No card on file (${sub?.has_lifetime_access ? "reverts to Founder Lifetime" : "reverts to Free"})`
                     )}
                   </p>
+                ) : currentPlanSlug === "managed_enterprise" ? (
+                  <p className="text-xs text-neutral-500">
+                    Single Event License with Dedicated Managed Support · Zero recurring renewal payments
+                  </p>
                 ) : currentPlanSlug !== "free" && renewalDate ? (
                   <p className="text-xs text-neutral-500">
                     {sub?.cancel_at_period_end
@@ -519,7 +527,7 @@ export default function BillingClientShell({
               </div>
 
               <div className="flex items-center gap-2.5 shrink-0 self-start sm:self-center">
-                {!isFounderPlan && currentPlanSlug !== "free" && sub && !sub.cancel_at_period_end && sub.autopay_status !== "cancelled" && (
+                {!isFounderPlan && currentPlanSlug !== "managed_enterprise" && currentPlanSlug !== "free" && sub && !sub.cancel_at_period_end && sub.autopay_status !== "cancelled" && (
                   <CancelButton />
                 )}
                 <button

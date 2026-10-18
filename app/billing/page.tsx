@@ -96,16 +96,16 @@ const PLANS = [
   {
     slug: "managed_enterprise",
     name: "Managed Enterprise",
-    desc: "Custom Enterprise Plan with Dedicated Managed Support.",
+    desc: "Single Event Enterprise License with Dedicated Managed Support.",
     priceMonthly: 6000,
     annualTotal: 6000,
     features: [
       "Dedicated Managed Support & Event Operations",
-      "Remove UrPass Branding (100% White-Label)",
-      "Unlimited events & registrations",
+      "Custom Branding (UrPass Branding Removed)",
+      "Single event with unmetered attendees",
       "Custom pass design & branding",
-      "Advanced & cross-event analytics",
-      "Priority VIP check-in & scanner sync",
+      "Live gate telemetry & attendance analytics",
+      "Priority check-in & scanner sync",
     ],
   },
 ] as const;

@@ -108,7 +108,7 @@ export async function POST(req: NextRequest) {
     userId: user.id,
     subscriptionId: updatedSub?.id ?? null,
     paymentId,
-    description: "URPASS Managed Enterprise Plan — Managed Support & Custom Branding",
+    description: "URPASS Managed Enterprise Plan — Single Event Pass & Managed Support",
     baseAmountRupees: 6000,
     discountRupees: 0,
     currency: "INR",

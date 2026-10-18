@@ -862,10 +862,10 @@ export async function generateInvoicePdf(invoice: InvoiceRecord): Promise<Uint8A
     (Math.round(Number(invoice.total_amount)) === 7080 && Math.round(Number(invoice.taxable_amount || invoice.subtotal)) === 6000);
 
   const itemTitle = isManagedInvoice
-    ? "URPASS Managed Enterprise Plan"
+    ? "URPASS Managed Enterprise Plan (Single Event)"
     : URPASS_SERVICE.name;
   const subHeading = isManagedInvoice
-    ? "Includes dedicated event manager, custom branding setup & Managed Support."
+    ? "Includes dedicated event manager, custom branding setup & Managed Support for one event."
     : URPASS_SERVICE.description;
 
   page.drawText("1", { x: colNumX, y: rowY, size: 9, font: fontRegular, color: dark });
@@ -880,6 +880,8 @@ export async function generateInvoicePdf(invoice: InvoiceRecord): Promise<Uint8A
   const periodText = invoice.billing_period_start && invoice.billing_period_end
     ? (invoice.billing_period_end.startsWith("212") || invoice.description?.includes("Founder") || invoice.description?.includes("Lifetime")
       ? `Validity: Lifetime Access (Activated: ${formatInvoiceDisplayDate(invoice.billing_period_start)})`
+      : isManagedInvoice
+      ? `Validity: Single Event Pass & Managed Support`
       : `Billing Period: ${formatInvoiceDisplayDate(invoice.billing_period_start)} to ${formatInvoiceDisplayDate(invoice.billing_period_end)}`)
     : `Invoice Date: ${formatInvoiceDisplayDate(invoice.invoice_date || new Date())}`;
   page.drawText(periodText, {
