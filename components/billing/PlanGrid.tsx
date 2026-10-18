@@ -370,10 +370,10 @@ export default function PlanGrid({
                   <div className="pt-3">
                     <div className="flex items-center gap-2">
                       <span className="w-1.5 h-1.5 rounded-full bg-neutral-900 shrink-0" />
-                      <span className="font-semibold text-neutral-900">Unmetered Event &amp; Attendee Capacity</span>
+                      <span className="font-semibold text-neutral-900">Single Event Unmetered Attendee Capacity</span>
                     </div>
                     <p className="text-[11px] text-neutral-600 pl-3.5 mt-0.5 leading-relaxed">
-                      Unlimited events and registrations with high-throughput QR ticket verification and multi-device scanner synchronization.
+                      Unmetered registration volume and high-throughput QR ticket verification for your event with multi-device scanner synchronization.
                     </p>
                   </div>
 
