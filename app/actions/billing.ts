@@ -869,7 +869,7 @@ export async function activatePaidSubscription(
     const invoiceDescription = isFounder
       ? "URPASS Founder Lifetime Access (One-Time)"
       : isManaged
-      ? "URPASS Managed Enterprise Plan — Managed Support & White-Label"
+      ? "URPASS Managed Enterprise Plan — Managed Support & Custom Branding"
       : `${normalizedSlug.toUpperCase()} Plan (${effectiveCycle})`;
 
     const invoice = await createInvoiceForPayment({

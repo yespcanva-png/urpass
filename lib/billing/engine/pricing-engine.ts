@@ -70,7 +70,7 @@ export const STATIC_V2_PLANS: Record<PlanSlug, { name: string; desc: string; inr
   },
   managed_enterprise: {
     name: "Managed Enterprise",
-    desc: "Dedicated Managed Support, 100% White-Label & Custom Enterprise Features.",
+    desc: "Dedicated Managed Support, Custom Branding & Enterprise Features.",
     inrMonthly: 600000,
     inrAnnual: 600000,
     gbpMonthly: 6000,

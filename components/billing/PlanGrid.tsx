@@ -191,7 +191,7 @@ export default function PlanGrid({
               Managed Enterprise Agreement
             </h2>
             <p className="text-xs text-neutral-500 mt-0.5">
-              Dedicated operational support, full white-label capabilities, and unmetered attendee throughput.
+              Dedicated operational support, custom branding capabilities, and unmetered attendee throughput.
             </p>
           </div>
 
@@ -260,9 +260,6 @@ export default function PlanGrid({
                   <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-neutral-900">
                     Managed Enterprise Agreement
                   </h3>
-                  <p className="text-xs text-neutral-600 mt-1.5 leading-relaxed">
-                    Corporate event operations tier with full White-Labeling, dedicated account management, custom domain configuration, and priority gate check-in infrastructure.
-                  </p>
                 </div>
 
                 {/* Line Item Financial Breakdown */}
@@ -305,7 +302,7 @@ export default function PlanGrid({
                     <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                       <div className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold">
                         <Check className="w-4 h-4 text-emerald-600" />
-                        <span>Agreement Active · Managed Support &amp; White-Label Enabled</span>
+                        <span>Agreement Active · Managed Support &amp; Custom Branding Enabled</span>
                       </div>
                       {latestInvoice && (
                         <a
@@ -363,7 +360,7 @@ export default function PlanGrid({
                   <div className="pt-3">
                     <div className="flex items-center gap-2">
                       <span className="w-1.5 h-1.5 rounded-full bg-neutral-900 shrink-0" />
-                      <span className="font-semibold text-neutral-900">Full White-Labeling (UrPass Branding Removed)</span>
+                      <span className="font-semibold text-neutral-900">Custom Branding (UrPass Branding Removed)</span>
                     </div>
                     <p className="text-[11px] text-neutral-600 pl-3.5 mt-0.5 leading-relaxed">
                       Complete removal of UrPass watermarks and logos across attendee registration pages, digital passes, automated confirmations, and check-in portals.

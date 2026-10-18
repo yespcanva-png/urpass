@@ -69,7 +69,7 @@ describe("Niveditha Managed Enterprise Plan & Invoicing", () => {
       invoice_status: "issued",
       pdf_url: "/api/invoices/inv_test_managed_123/pdf",
       created_at: new Date().toISOString(),
-      description: "URPASS Managed Enterprise Plan — Managed Support & White-Label",
+      description: "URPASS Managed Enterprise Plan — Managed Support & Custom Branding",
     };
 
     const pdfBytes = await generateInvoicePdf(mockInvoice);

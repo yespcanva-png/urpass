@@ -865,7 +865,7 @@ export async function generateInvoicePdf(invoice: InvoiceRecord): Promise<Uint8A
     ? "URPASS Managed Enterprise Plan"
     : URPASS_SERVICE.name;
   const subHeading = isManagedInvoice
-    ? "Includes dedicated event manager, 100% white-label setup & Managed Support."
+    ? "Includes dedicated event manager, custom branding setup & Managed Support."
     : URPASS_SERVICE.description;
 
   page.drawText("1", { x: colNumX, y: rowY, size: 9, font: fontRegular, color: dark });
