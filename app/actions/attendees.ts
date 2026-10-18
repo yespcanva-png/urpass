@@ -526,16 +526,48 @@ export async function bulkAddAttendees(
   let skipped = rows.length - valid.length;
 
   for (const row of valid) {
-    const { error } = await supabase.from("attendees").insert({
-      event_id: eventId,
-      ...row,
-      application_status: "approved",
-    });
+    const rawEntries = Math.max(
+      1,
+      Number(
+        (row as any).entries ||
+        (row as any).custom_responses?.group_attendee_count ||
+        (row as any).custom_responses?.guest_count ||
+        (row as any).custom_responses?.total_guests ||
+        1
+      )
+    );
+    const isSingleGroup = rawEntries > 1;
+
+    const { data: attendee, error } = await supabase
+      .from("attendees")
+      .insert({
+        event_id: eventId,
+        name: row.name,
+        email: row.email,
+        phone: row.phone,
+        pass_type: row.pass_type,
+        application_status: "approved",
+        custom_responses: isSingleGroup
+          ? {
+              is_single_group_qr: true,
+              group_attendee_count: rawEntries,
+              guest_count: rawEntries,
+              bulk_quantity: rawEntries,
+              total_guests: rawEntries,
+            }
+          : undefined,
+      })
+      .select("id")
+      .maybeSingle();
+
     if (error && error.code === "23505") {
       skipped++;
     } else if (error) {
       return { added, skipped, error: error.message };
     } else {
+      if (attendee?.id && isSingleGroup) {
+        await generatePass(attendee.id, eventId);
+      }
       added++;
     }
   }

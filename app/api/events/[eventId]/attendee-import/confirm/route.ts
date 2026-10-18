@@ -114,6 +114,19 @@ export async function POST(req: NextRequest, { params }: Props) {
       continue;
     }
 
+    const totalEntries = Math.max(
+      1,
+      Number(
+        row.entries ||
+        row.customResponses?.entries ||
+        row.customResponses?.group_attendee_count ||
+        row.customResponses?.guest_count ||
+        row.customResponses?.total_guests ||
+        1
+      )
+    );
+    const isSingleGroup = totalEntries > 1;
+
     // 1. Insert attendee
     const { data: attendeeRecord, error: attendeeErr } = await admin
       .from("attendees")
@@ -128,6 +141,13 @@ export async function POST(req: NextRequest, { params }: Props) {
         ticket_type_id: row.ticketTypeId || null,
         custom_responses: {
           ...row.customResponses,
+          ...(isSingleGroup ? {
+            is_single_group_qr: true,
+            group_attendee_count: totalEntries,
+            guest_count: totalEntries,
+            bulk_quantity: totalEntries,
+            total_guests: totalEntries,
+          } : {}),
           imported_from: "csv_import",
           import_operation_id: `${idempotencyKey}:${row.rowNumber}:${row.email}`,
         },
@@ -154,6 +174,11 @@ export async function POST(req: NextRequest, { params }: Props) {
         ticket_type_id: row.ticketTypeId || null,
         status: "generated",
         generated_at: new Date().toISOString(),
+        ...(isSingleGroup ? {
+          is_group_master: true,
+          total_guests: totalEntries,
+          checked_in_guests: 0,
+        } : {}),
       })
       .select("id, pass_token")
       .single();
@@ -168,7 +193,7 @@ export async function POST(req: NextRequest, { params }: Props) {
       continue;
     }
 
-    capacityRemaining--;
+    capacityRemaining -= totalEntries;
     imported.push({
       rowNumber: row.rowNumber,
       attendeeId: attendeeRecord.id,

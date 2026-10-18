@@ -9,7 +9,8 @@ export type ImportColumn =
   | "phone"
   | "pass_type"
   | "ticket_type"
-  | "payment_status";
+  | "payment_status"
+  | "entries";
 
 export type ColumnMapping = Record<string, ImportColumn>;
 
@@ -27,6 +28,7 @@ export interface ValidatedImportRow {
   ticketTypeName: string | null;
   ticketTypeId: string | null;
   paymentStatus: string | null;
+  entries: number;
   customResponses: Record<string, string>;
   errors: string[];
   duplicateReason?: "within_file" | "existing_event";
@@ -122,6 +124,8 @@ export function inferColumnMapping(headers: string[]): ColumnMapping {
       mapping[header] = "ticket_type";
     } else if (["payment_status", "payment", "paid_status"].includes(key)) {
       mapping[header] = "payment_status";
+    } else if (["entries", "entry_count", "guests", "guest_count", "total_guests", "group_size", "quantity", "count"].includes(key)) {
+      mapping[header] = "entries";
     } else {
       mapping[header] = "ignore";
     }
@@ -172,6 +176,7 @@ export function validateImportRows({
       pass_type: "",
       ticket_type: "",
       payment_status: "",
+      entries: "",
     };
     const customResponses: Record<string, string> = {};
 
@@ -257,6 +262,27 @@ export function validateImportRows({
       }
     }
 
+    const rawEntries =
+      (mapped.entries || "").trim() ||
+      customResponses["entries"] ||
+      customResponses["entry_count"] ||
+      customResponses["guests"] ||
+      customResponses["guest_count"] ||
+      customResponses["total_guests"] ||
+      customResponses["group_size"] ||
+      customResponses["count"] ||
+      customResponses["quantity"] ||
+      "1";
+    const entries = Math.max(1, parseInt(rawEntries, 10) || 1);
+
+    if (entries > 1) {
+      customResponses["is_single_group_qr"] = "true";
+      customResponses["group_attendee_count"] = String(entries);
+      customResponses["guest_count"] = String(entries);
+      customResponses["bulk_quantity"] = String(entries);
+      customResponses["total_guests"] = String(entries);
+    }
+
     return {
       rowNumber: row.rowNumber,
       name,
@@ -266,6 +292,7 @@ export function validateImportRows({
       ticketTypeName,
       ticketTypeId,
       paymentStatus,
+      entries,
       customResponses,
       errors: Array.from(new Set(errors)),
       duplicateReason,

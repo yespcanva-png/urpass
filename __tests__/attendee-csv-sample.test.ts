@@ -3,13 +3,13 @@ import fs from "fs";
 import path from "path";
 import { parseCSVText, inferColumnMapping, validateImportRows } from "../lib/attendee-import";
 
-describe("Sample CSV 5-User Import & 1-QR Function", () => {
-  it("successfully parses the sample CSV and maps all 5 rows with 0 errors", () => {
-    const csvPath = path.join(process.cwd(), "public", "sample-attendees-5.csv");
+describe("Single QR Multi-Entry CSV Import (5 entries on one, 10 on another, random)", () => {
+  it("successfully parses the sample CSV and extracts variable entry counts per single QR pass", () => {
+    const csvPath = path.join(process.cwd(), "public", "sample-single-qr-entries.csv");
     const rawCsv = fs.readFileSync(csvPath, "utf-8");
 
     const parsed = parseCSVText(rawCsv);
-    expect(parsed.headers).toEqual(["name", "email", "phone", "pass_type", "ticket_type"]);
+    expect(parsed.headers).toEqual(["name", "email", "phone", "pass_type", "ticket_type", "entries"]);
     expect(parsed.rows.length).toBe(5);
 
     const mapping = inferColumnMapping(parsed.headers);
@@ -19,6 +19,7 @@ describe("Sample CSV 5-User Import & 1-QR Function", () => {
       phone: "phone",
       pass_type: "pass_type",
       ticket_type: "ticket_type",
+      entries: "entries",
     });
 
     const validation = validateImportRows({
@@ -27,10 +28,10 @@ describe("Sample CSV 5-User Import & 1-QR Function", () => {
       mapping,
       existingEmails: new Set(),
       ticketTypes: [
-        { id: "tt-1", name: "General Admission", price: 0, capacity: 500, status: "active" },
-        { id: "tt-2", name: "VIP Access", price: 999, capacity: 100, status: "active" },
-        { id: "tt-3", name: "Speaker Pass", price: 0, capacity: 50, status: "active" },
-        { id: "tt-4", name: "Organizer Pass", price: 0, capacity: 20, status: "active" },
+        { id: "tt-1", name: "Corporate Group", price: 0, capacity: 500, status: "active" },
+        { id: "tt-2", name: "VIP Delegation", price: 999, capacity: 100, status: "active" },
+        { id: "tt-3", name: "Speaker Group", price: 0, capacity: 50, status: "active" },
+        { id: "tt-4", name: "Academic Group", price: 0, capacity: 50, status: "active" },
       ],
     });
 
@@ -38,6 +39,30 @@ describe("Sample CSV 5-User Import & 1-QR Function", () => {
     expect(validation.summary.valid).toBe(5);
     expect(validation.summary.invalid).toBe(0);
     expect(validation.summary.duplicates).toBe(0);
-    expect(validation.rows.every((r) => r.errors.length === 0)).toBe(true);
+
+    // Row 1: 5 entries
+    expect(validation.rows[0].entries).toBe(5);
+    expect(validation.rows[0].customResponses.is_single_group_qr).toBe("true");
+    expect(validation.rows[0].customResponses.group_attendee_count).toBe("5");
+
+    // Row 2: 10 entries
+    expect(validation.rows[1].entries).toBe(10);
+    expect(validation.rows[1].customResponses.is_single_group_qr).toBe("true");
+    expect(validation.rows[1].customResponses.group_attendee_count).toBe("10");
+
+    // Row 3: 3 entries
+    expect(validation.rows[2].entries).toBe(3);
+    expect(validation.rows[2].customResponses.is_single_group_qr).toBe("true");
+    expect(validation.rows[2].customResponses.group_attendee_count).toBe("3");
+
+    // Row 4: 8 entries
+    expect(validation.rows[3].entries).toBe(8);
+    expect(validation.rows[3].customResponses.is_single_group_qr).toBe("true");
+    expect(validation.rows[3].customResponses.group_attendee_count).toBe("8");
+
+    // Row 5: 12 entries
+    expect(validation.rows[4].entries).toBe(12);
+    expect(validation.rows[4].customResponses.is_single_group_qr).toBe("true");
+    expect(validation.rows[4].customResponses.group_attendee_count).toBe("12");
   });
 });

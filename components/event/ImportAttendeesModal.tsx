@@ -12,7 +12,7 @@ import {
   X,
 } from "lucide-react";
 
-type ImportColumn = "ignore" | "name" | "email" | "phone" | "pass_type" | "ticket_type" | "payment_status";
+type ImportColumn = "ignore" | "name" | "email" | "phone" | "pass_type" | "ticket_type" | "payment_status" | "entries";
 type Mapping = Record<string, ImportColumn>;
 
 interface PreviewRow {
@@ -22,6 +22,7 @@ interface PreviewRow {
   phone: string | null;
   passType: string;
   ticketTypeName: string | null;
+  entries?: number;
   errors: string[];
 }
 
@@ -65,6 +66,7 @@ const columnOptions: Array<{ value: ImportColumn; label: string }> = [
   { value: "pass_type", label: "Pass type" },
   { value: "ticket_type", label: "Ticket type" },
   { value: "payment_status", label: "Payment status" },
+  { value: "entries", label: "Entries / Total guests (Single QR)" },
 ];
 
 const inputCls =
@@ -325,6 +327,7 @@ export default function ImportAttendeesModal({ eventId, onClose, onSuccess }: Pr
                           <th className="px-3 py-2">Email</th>
                           <th className="px-3 py-2">Pass</th>
                           <th className="px-3 py-2">Ticket</th>
+                          <th className="px-3 py-2">Entries (QR)</th>
                           <th className="px-3 py-2">Status</th>
                         </tr>
                       </thead>
@@ -336,6 +339,15 @@ export default function ImportAttendeesModal({ eventId, onClose, onSuccess }: Pr
                             <td className="px-3 py-2 text-slate-600">{row.email || "-"}</td>
                             <td className="px-3 py-2 text-slate-600">{row.passType}</td>
                             <td className="px-3 py-2 text-slate-600">{row.ticketTypeName || "Default"}</td>
+                            <td className="px-3 py-2 text-slate-700 font-mono font-medium">
+                              {row.entries && row.entries > 1 ? (
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                  {row.entries} entries (1 QR)
+                                </span>
+                              ) : (
+                                "1 entry"
+                              )}
+                            </td>
                             <td className="px-3 py-2">
                               {row.errors.length ? (
                                 <span className="text-rose-700">{row.errors.join("; ")}</span>

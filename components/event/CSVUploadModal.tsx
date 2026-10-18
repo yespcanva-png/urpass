@@ -15,7 +15,11 @@ interface Props {
   onSuccess: () => void;
 }
 
-type ParsedRow   = AttendeeInput & { _valid: boolean; _error?: string };
+type ParsedRow = AttendeeInput & {
+  entries?: number;
+  _valid: boolean;
+  _error?: string;
+};
 type ImportResult = { added: number; skipped: number; error?: string };
 
 function parseCSV(text: string): ParsedRow[] {
@@ -41,6 +45,8 @@ function parseCSV(text: string): ParsedRow[] {
     const email    = row["email"] ?? "";
     const phone    = row["phone"] ?? "";
     const passType = row["pass_type"] ?? row["pass type"] ?? "participant";
+    const rawEntries = row["entries"] ?? row["entry_count"] ?? row["guests"] ?? row["guest_count"] ?? row["total_guests"] ?? "1";
+    const entries = Math.max(1, parseInt(rawEntries, 10) || 1);
     const validPassType = PASS_TYPES.includes(passType as (typeof PASS_TYPES)[number])
       ? (passType as (typeof PASS_TYPES)[number])
       : "participant";
@@ -49,6 +55,7 @@ function parseCSV(text: string): ParsedRow[] {
       name, email,
       phone: phone || undefined,
       pass_type: validPassType,
+      entries,
       _valid: valid,
       _error: !valid ? (!name ? "Missing name" : "Invalid email") : undefined,
     };
@@ -130,8 +137,8 @@ export default function CSVUploadModal({ eventId, onClose, onSuccess }: Props) {
     try {
       const res = await bulkAddAttendees(
         eventId,
-        valid.map(({ name, email, pass_type, phone }) => ({
-          name, email, pass_type, ...(phone ? { phone } : {}),
+        valid.map(({ name, email, pass_type, phone, entries }) => ({
+          name, email, pass_type, ...(phone ? { phone } : {}), ...(entries && entries > 1 ? { entries } as any : {}),
         }))
       );
       setResult(res);
