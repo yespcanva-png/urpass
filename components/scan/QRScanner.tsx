@@ -9,11 +9,29 @@ interface Props {
   onScan: (token: string) => void;
   active: boolean;
   statusVariant?: ScannerState;
+  torchOn?: boolean;
+  onTorchChange?: (on: boolean) => void;
+  onTorchSupportedChange?: (supported: boolean) => void;
+  facingMode?: "environment" | "user";
+  onFacingModeChange?: (mode: "environment" | "user") => void;
+  onMultipleCamerasDetected?: (hasMultiple: boolean) => void;
+  className?: string;
 }
 
 const SCANNER_ID = "urpass-qr-scanner";
 
-export default function QRScanner({ onScan, active, statusVariant = "READY" }: Props) {
+export default function QRScanner({
+  onScan,
+  active,
+  statusVariant = "READY",
+  torchOn: externalTorchOn,
+  onTorchChange,
+  onTorchSupportedChange,
+  facingMode = "environment",
+  onFacingModeChange,
+  onMultipleCamerasDetected,
+  className = "",
+}: Props) {
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const [cameraError, setCameraError] = useState("");
   const [started, setStarted] = useState(false);
@@ -21,13 +39,14 @@ export default function QRScanner({ onScan, active, statusVariant = "READY" }: P
   const [torchOn, setTorchOn] = useState(false);
   const mountedRef = useRef(true);
   const activeRef = useRef(active);
+  const currentFacingRef = useRef(facingMode);
 
   // Keep activeRef in sync without restarting the camera hardware
   useEffect(() => {
     activeRef.current = active;
   }, [active]);
 
-  async function startScanner() {
+  async function startScanner(targetFacing: "environment" | "user" = facingMode) {
     try {
       if (scannerRef.current) {
         try {
@@ -49,7 +68,7 @@ export default function QRScanner({ onScan, active, statusVariant = "READY" }: P
 
       // Request ideal 720p constraints: lowers CPU decode overhead by ~75% vs 4K/1080p, boosting decode speeds to sub-15ms
       const cameraConstraints: MediaTrackConstraints = {
-        facingMode: "environment",
+        facingMode: targetFacing,
         width: { ideal: 1280, max: 1920 },
         height: { ideal: 720, max: 1080 },
       };
@@ -84,7 +103,9 @@ export default function QRScanner({ onScan, active, statusVariant = "READY" }: P
         if (videoTrack && typeof videoTrack.getCapabilities === "function") {
           const capabilities = videoTrack.getCapabilities() as any;
           if (capabilities && "torch" in capabilities) {
-            setTorchSupported(Boolean(capabilities.torch));
+            const supported = Boolean(capabilities.torch);
+            setTorchSupported(supported);
+            onTorchSupportedChange?.(supported);
           }
           if (capabilities?.focusMode?.includes("continuous")) {
             await videoTrack.applyConstraints({
@@ -111,27 +132,46 @@ export default function QRScanner({ onScan, active, statusVariant = "READY" }: P
     }
   }
 
-  async function toggleTorch() {
+  async function applyTorch(targetTorch: boolean) {
     try {
       const videoEl = document.getElementById(SCANNER_ID)?.querySelector("video") as HTMLVideoElement | null;
       const stream = videoEl?.srcObject as MediaStream | null;
       const videoTrack = stream?.getVideoTracks?.()[0];
       if (!videoTrack) return;
 
-      const nextTorch = !torchOn;
       // @ts-ignore
       await videoTrack.applyConstraints({
-        advanced: [{ torch: nextTorch } as any],
+        advanced: [{ torch: targetTorch } as any],
       });
-      setTorchOn(nextTorch);
+      setTorchOn(targetTorch);
+      onTorchChange?.(targetTorch);
     } catch (err) {
-      console.warn("Failed to toggle torch:", err);
+      console.warn("Failed to apply torch constraint:", err);
     }
+  }
+
+  useEffect(() => {
+    if (externalTorchOn !== undefined && externalTorchOn !== torchOn) {
+      void applyTorch(externalTorchOn);
+    }
+  }, [externalTorchOn]);
+
+  async function toggleTorch() {
+    await applyTorch(!torchOn);
   }
 
   async function stopScanner() {
     if (!scannerRef.current) return;
     try {
+      const videoEl = document.getElementById(SCANNER_ID)?.querySelector("video") as HTMLVideoElement | null;
+      const stream = videoEl?.srcObject as MediaStream | null;
+      if (stream) {
+        stream.getTracks().forEach((track) => {
+          try {
+            track.stop();
+          } catch {}
+        });
+      }
       if ((await scannerRef.current.getState()) === 2) {
         await scannerRef.current.stop();
       }
@@ -144,6 +184,28 @@ export default function QRScanner({ onScan, active, statusVariant = "READY" }: P
       setTorchSupported(false);
     }
   }
+
+  // Handle dynamic facingMode switch (front vs rear camera)
+  useEffect(() => {
+    if (started && facingMode !== currentFacingRef.current) {
+      currentFacingRef.current = facingMode;
+      void startScanner(facingMode);
+    }
+  }, [facingMode, started]);
+
+  // Check if multiple cameras are available on this device
+  useEffect(() => {
+    if (typeof navigator !== "undefined" && navigator.mediaDevices?.enumerateDevices) {
+      navigator.mediaDevices.enumerateDevices()
+        .then((devices) => {
+          const videoInputs = devices.filter((d) => d.kind === "videoinput");
+          if (videoInputs.length > 1) {
+            onMultipleCamerasDetected?.(true);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [onMultipleCamerasDetected]);
 
   // Mount once and keep stream alive until full unmount
   useEffect(() => {
@@ -160,10 +222,37 @@ export default function QRScanner({ onScan, active, statusVariant = "READY" }: P
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Determine status accent without neon effects.
-  let bracketColor = "#8B5CF6";
+  // Safe visibility recovery: if mobile browser suspended video on tab switch, resume smoothly
+  useEffect(() => {
+    const handleVisibility = async () => {
+      if (document.visibilityState === "visible" && mountedRef.current) {
+        try {
+          const videoEl = document.getElementById(SCANNER_ID)?.querySelector("video") as HTMLVideoElement | null;
+          if (videoEl) {
+            if (videoEl.paused) {
+              await videoEl.play().catch(() => {});
+            }
+            const stream = videoEl.srcObject as MediaStream | null;
+            const track = stream?.getVideoTracks?.()[0];
+            if (!track || track.readyState === "ended") {
+              await startScanner();
+            }
+          }
+        } catch {}
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
+  }, []);
 
-  if (statusVariant === "SUCCESS") {
+  // Determine status accent with UrPass electric-violet branding.
+  let bracketColor = "#8B5CF6"; // Electric-violet for READY
+
+  if (statusVariant === "PROCESSING") {
+    bracketColor = "#A78BFA"; // Soft violet pulse
+  } else if (statusVariant === "SUCCESS") {
     bracketColor = "#22C55E";
   } else if (statusVariant === "DUPLICATE") {
     bracketColor = "#F59E0B";
@@ -172,38 +261,32 @@ export default function QRScanner({ onScan, active, statusVariant = "READY" }: P
   }
 
   return (
-    <div className="flex flex-col items-center gap-3 w-full">
-      {/* Viewfinder */}
-      <div
-        className="relative w-full overflow-hidden rounded-lg border border-zinc-800 bg-slate-950 transition-colors duration-300"
-        style={{
-          aspectRatio: "1",
-          maxHeight: "min(70vw, 420px)",
-        }}
-      >
-        <div id={SCANNER_ID} className="w-full h-full [&>video]:object-cover" />
+    <div className={`relative flex flex-col items-center w-full h-full ${className}`}>
+      {/* Viewfinder Frame */}
+      <div className="relative w-full h-full overflow-hidden rounded-2xl bg-zinc-950 transition-colors duration-300">
+        <div id={SCANNER_ID} className="w-full h-full [&>video]:object-cover [&>video]:w-full [&>video]:h-full" />
 
         {/* Starting placeholder */}
         {!started && !cameraError && (
-          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-[#09090B]/90 p-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-md border border-white/15 bg-white/10">
-              <Camera className="h-6 w-6 text-slate-200" />
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-zinc-950/90 p-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-violet-500/30 bg-violet-950/40">
+              <Camera className="h-6 w-6 text-violet-300 animate-pulse" />
             </div>
-            <p className="text-xs font-medium text-slate-200">Starting camera</p>
-            <p className="max-w-[220px] text-center text-[11px] text-slate-400">Point at the ticket QR code</p>
+            <p className="text-xs font-bold text-zinc-200">Starting camera...</p>
+            <p className="max-w-[220px] text-center text-[11px] text-zinc-400">Point at the attendee pass QR</p>
           </div>
         )}
 
         {/* Camera error */}
         {cameraError && (
-          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-slate-950/95 px-6 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-md border border-red-500/30 bg-red-500/15">
-              <CameraOff className="h-6 w-6 text-red-400" />
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-zinc-950/98 px-6 text-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-rose-500/30 bg-rose-500/15">
+              <CameraOff className="h-6 w-6 text-rose-400" />
             </div>
-            <p className="max-w-[260px] text-xs font-medium leading-relaxed text-slate-200">{cameraError}</p>
+            <p className="max-w-[260px] text-xs font-semibold leading-relaxed text-zinc-200">{cameraError}</p>
             <button
               onClick={() => startScanner()}
-              className="mt-2 rounded-md border border-zinc-700 bg-zinc-900 px-4 py-2 text-xs font-semibold text-zinc-100 transition-colors hover:bg-zinc-800"
+              className="mt-2 rounded-xl border border-violet-500 bg-violet-600 px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-violet-500 cursor-pointer shadow-md shadow-violet-950/40"
             >
               Retry camera
             </button>
@@ -237,48 +320,28 @@ export default function QRScanner({ onScan, active, statusVariant = "READY" }: P
               style={{ borderBottom: `3px solid ${bracketColor}`, borderRight: `3px solid ${bracketColor}` }}
             />
 
-            {/* Scan beam */}
+            {/* Electric-Violet Scan Beam — Only actively animating when READY and decoding */}
             {active && statusVariant === "READY" && (
               <>
                 <span
-                  className="absolute left-4 right-4 pointer-events-none animate-[scanBeam_1.8s_ease-in-out_infinite]"
-	                  style={{
-	                    height: "24px",
-	                    transform: "translateY(-50%)",
-                  background: "linear-gradient(to bottom, transparent, rgba(139,92,246,0.18) 50%, transparent)",
-	                    borderRadius: "4px",
-	                  }}
-	                />
+                  className="absolute left-4 right-4 pointer-events-none animate-[scanBeam_1.8s_ease-in-out_infinite] motion-reduce:animate-none"
+                  style={{
+                    height: "24px",
+                    transform: "translateY(-50%)",
+                    background: "linear-gradient(to bottom, transparent, rgba(139,92,246,0.22) 50%, transparent)",
+                    borderRadius: "6px",
+                  }}
+                />
                 <span
-                  className="absolute left-6 right-6 pointer-events-none animate-[scanBeam_1.8s_ease-in-out_infinite]"
-	                  style={{
-	                    height: "2px",
-	                    transform: "translateY(-50%)",
-	                    background: "linear-gradient(to right, transparent, #8B5CF6 50%, transparent)",
-	                  }}
-	                />
+                  className="absolute left-6 right-6 pointer-events-none animate-[scanBeam_1.8s_ease-in-out_infinite] motion-reduce:animate-none"
+                  style={{
+                    height: "2px",
+                    transform: "translateY(-50%)",
+                    background: "linear-gradient(to right, transparent, #8B5CF6 50%, transparent)",
+                    boxShadow: "0 0 12px #8B5CF6",
+                  }}
+                />
               </>
-            )}
-
-            {/* Mobile In-camera Torch Toggle */}
-            {torchSupported && (
-              <button
-                type="button"
-                onClick={toggleTorch}
-	                className={`absolute bottom-3 right-3 z-20 flex h-10 w-10 items-center justify-center rounded-md border transition-colors ${
-	                  torchOn
-		                    ? "border-amber-500 bg-amber-950/90 text-amber-300"
-	                    : "border-white/20 bg-slate-950/80 text-white hover:bg-slate-800"
-	                }`}
-                title={torchOn ? "Turn flashlight off" : "Turn flashlight on for low-light scanning"}
-                aria-label={torchOn ? "Flashlight on" : "Flashlight off"}
-              >
-	                {torchOn ? (
-	                  <Flashlight className="w-5 h-5 fill-current" />
-	                ) : (
-	                  <FlashlightOff className="h-5 w-5 text-slate-300" />
-	                )}
-              </button>
             )}
           </>
         )}
@@ -286,18 +349,18 @@ export default function QRScanner({ onScan, active, statusVariant = "READY" }: P
 
       {/* Status indicator */}
       {started && (
-        <div className="flex items-center gap-2">
-            <span
-            className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-              active ? "bg-[#22C55E]" : "bg-zinc-500"
+        <div className="flex items-center gap-2 mt-2 select-none">
+          <span
+            className={`w-2 h-2 rounded-full shrink-0 transition-colors duration-200 ${
+              active ? "bg-emerald-400 animate-pulse motion-reduce:animate-none" : "bg-zinc-600"
             }`}
           />
-          <p className="text-[11px] text-zinc-400 font-medium">
+          <p className="text-[11px] text-zinc-400 font-medium tracking-wide">
             {active
-              ? "Scanner active"
+              ? "Scanner ready"
               : statusVariant === "PROCESSING"
-              ? "Processing pass..."
-              : "Detection paused"}
+              ? "Verifying ticket..."
+              : "Result locked"}
           </p>
         </div>
       )}

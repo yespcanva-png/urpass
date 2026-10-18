@@ -78,42 +78,42 @@ export default function GroupEntryModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/60 p-0 backdrop-blur-sm animate-in fade-in duration-200 sm:items-center sm:p-4">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/70 p-0 backdrop-blur-md animate-in fade-in duration-200 sm:items-center sm:p-4">
       {/* Backdrop click to dismiss */}
       <div className="fixed inset-0" onClick={onClose} aria-hidden="true" />
 
-      {/* Corporate Modal Card / Mobile Bottom Sheet */}
-      <div className="relative w-full max-h-[92svh] overflow-y-auto rounded-t-lg sm:rounded-lg border-t sm:border border-neutral-800 bg-neutral-900 text-neutral-100 shadow-2xl animate-in slide-in-from-bottom-4 duration-200 sm:max-w-lg sm:slide-in-from-bottom-0 sm:zoom-in-95">
+      {/* Premium Modal Card / Mobile Bottom Sheet */}
+      <div className="relative w-full max-h-[92svh] overflow-y-auto rounded-t-2xl sm:rounded-2xl border-t sm:border border-zinc-800 bg-zinc-950/95 text-zinc-100 shadow-2xl animate-in slide-in-from-bottom-4 duration-200 sm:max-w-lg sm:slide-in-from-bottom-0 sm:zoom-in-95 pb-safe">
         {/* Mobile Grab Bar */}
-        <div className="pt-2.5 pb-1 sm:hidden flex justify-center">
-          <div className="h-1.5 w-12 rounded-full bg-neutral-700" />
+        <div className="pt-3 pb-1 sm:hidden flex justify-center">
+          <div className="h-1.5 w-12 rounded-full bg-zinc-700" />
         </div>
 
         {/* Close Button */}
         <button
           onClick={onClose}
           disabled={loading}
-          className="absolute right-3.5 top-3.5 flex h-8 w-8 items-center justify-center rounded-lg border border-neutral-800 bg-neutral-950 text-neutral-400 transition-colors hover:bg-neutral-800 hover:text-white disabled:opacity-50 z-10"
+          className="absolute right-3.5 top-3.5 flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900/80 text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-white disabled:opacity-50 z-10"
           aria-label="Close"
         >
           <X className="h-4 w-4" />
         </button>
 
-        {/* Corporate Header */}
-        <div className={`border-b px-5 py-4 pr-14 ${isFullyAdmitted ? "bg-amber-950/30 border-amber-800/80" : "bg-neutral-900 border-neutral-800"}`}>
+        {/* Header */}
+        <div className={`border-b px-5 py-4 pr-14 ${isFullyAdmitted ? "bg-amber-950/30 border-amber-800/60" : "bg-zinc-900/60 border-zinc-800/80"}`}>
           <div className="flex items-start gap-3.5">
             <div
-              className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border ${
+              className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border ${
                 isFullyAdmitted
                   ? "border-amber-700 bg-amber-950/70 text-amber-300"
-                  : "border-neutral-800 bg-neutral-950 text-neutral-300"
+                  : "border-violet-500/40 bg-violet-950/40 text-violet-300"
               }`}
             >
               <Users className="h-5 w-5" />
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
-                <h3 className="text-base font-semibold tracking-tight text-neutral-100">
+                <h3 className="text-base font-bold tracking-tight text-white">
                   {isFullyAdmitted ? "Group Entry Summary" : "Group Entry Check-in"}
                 </h3>
                 {isFullyAdmitted ? (
@@ -121,12 +121,12 @@ export default function GroupEntryModal({
                     <AlertCircle className="h-3 w-3 text-amber-400" /> Already Admitted
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1 rounded-full border border-emerald-800 bg-emerald-950/70 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-300">
+                  <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/40 bg-emerald-950/60 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-300">
                     <CheckCircle2 className="h-3 w-3" /> Valid
                   </span>
                 )}
               </div>
-              <p className="mt-1 truncate text-xs font-medium text-neutral-400">
+              <p className="mt-1 truncate text-xs font-medium text-zinc-400">
                 {gateName}{scannerStaffName ? ` · Staff: ${scannerStaffName}` : ""}
               </p>
             </div>
@@ -134,15 +134,15 @@ export default function GroupEntryModal({
         </div>
 
         <div className="space-y-4 px-5 py-4">
-          {/* Prominent Corporate Alert Banner for Already Admitted */}
+          {/* Prominent Alert Banner for Already Admitted */}
           {isFullyAdmitted && (
-            <div className="rounded-lg border border-amber-800 bg-amber-950/40 p-3.5 text-xs text-amber-200 flex items-start gap-3">
+            <div className="rounded-xl border border-amber-800/80 bg-amber-950/40 p-3.5 text-xs text-amber-200 flex items-start gap-3">
               <AlertCircle className="h-5 w-5 shrink-0 text-amber-400 mt-0.5" />
               <div className="min-w-0 space-y-1">
                 <p className="font-semibold text-amber-200">
                   All Entitlements Already Admitted
                 </p>
-                <p className="text-[11px] leading-relaxed text-amber-300">
+                <p className="text-[11px] leading-relaxed text-amber-300/90">
                   All {totalEntitlements} attendee pass entitlement(s) for this booking have already entered the venue. No remaining entries are available for admission.
                 </p>
               </div>
@@ -150,38 +150,38 @@ export default function GroupEntryModal({
           )}
 
           {/* Booking Summary Box */}
-          <div className="rounded-lg border border-neutral-800 bg-neutral-950/60 p-3.5 space-y-3">
+          <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-3.5 space-y-3">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">Booking holder</span>
-                <h4 className="mt-0.5 truncate text-sm font-semibold text-neutral-100">{buyerName}</h4>
-                <p className="truncate text-xs text-neutral-400 mt-0.5">{ticketCategory}</p>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Booking holder</span>
+                <h4 className="mt-0.5 truncate text-sm font-bold text-white">{buyerName}</h4>
+                <p className="truncate text-xs text-zinc-400 mt-0.5">{ticketCategory}</p>
               </div>
-              <span className="shrink-0 rounded-md border border-neutral-800 bg-neutral-900 px-2 py-1 font-mono text-[11px] font-semibold text-neutral-300">
+              <span className="shrink-0 rounded-lg border border-zinc-800 bg-zinc-900 px-2.5 py-1 font-mono text-[11px] font-bold text-zinc-300">
                 {bookingReference}
               </span>
             </div>
 
-            {/* Corporate Metrics Grid */}
+            {/* Metrics Grid */}
             <div className="grid grid-cols-3 gap-2 pt-1">
-              <div className="rounded-lg border border-neutral-800 bg-neutral-900 p-2.5 text-center shadow-xs">
-                <p className="text-xl font-bold tabular-nums text-neutral-100">{totalEntitlements}</p>
-                <p className="mt-0.5 text-[10px] font-bold uppercase tracking-wider text-neutral-500">Total</p>
+              <div className="rounded-xl border border-zinc-800 bg-zinc-900/80 p-2.5 text-center shadow-xs">
+                <p className="text-xl font-bold tabular-nums text-white">{totalEntitlements}</p>
+                <p className="mt-0.5 text-[10px] font-bold uppercase tracking-wider text-zinc-500">Total</p>
               </div>
-              <div className="rounded-lg border border-neutral-800 bg-neutral-900 p-2.5 text-center shadow-xs">
-                <p className={`text-xl font-bold tabular-nums ${isFullyAdmitted ? "text-amber-300" : "text-neutral-100"}`}>
+              <div className="rounded-xl border border-zinc-800 bg-zinc-900/80 p-2.5 text-center shadow-xs">
+                <p className={`text-xl font-bold tabular-nums ${isFullyAdmitted ? "text-amber-300" : "text-white"}`}>
                   {previouslyAdmitted}
                 </p>
-                <p className={`mt-0.5 text-[10px] font-bold uppercase tracking-wider ${isFullyAdmitted ? "text-amber-400" : "text-neutral-500"}`}>
+                <p className={`mt-0.5 text-[10px] font-bold uppercase tracking-wider ${isFullyAdmitted ? "text-amber-400" : "text-zinc-500"}`}>
                   Admitted
                 </p>
               </div>
-              <div className={`rounded-lg border p-2.5 text-center shadow-xs ${
+              <div className={`rounded-xl border p-2.5 text-center shadow-xs ${
                 remainingEntries > 0
-                  ? "border-emerald-800 bg-emerald-950/50 text-emerald-300"
-                  : "border-neutral-800 bg-neutral-900 text-neutral-500"
+                  ? "border-emerald-500/40 bg-emerald-950/50 text-emerald-300"
+                  : "border-zinc-800 bg-zinc-900 text-zinc-500"
               }`}>
-                <p className={`text-xl font-bold tabular-nums ${remainingEntries > 0 ? "text-emerald-300" : "text-neutral-500"}`}>
+                <p className={`text-xl font-bold tabular-nums ${remainingEntries > 0 ? "text-emerald-300" : "text-zinc-500"}`}>
                   {remainingEntries}
                 </p>
                 <p className="mt-0.5 text-[10px] font-bold uppercase tracking-wider">
@@ -192,8 +192,8 @@ export default function GroupEntryModal({
           </div>
 
           {errorMsg && (
-            <div className="flex items-start gap-2.5 rounded-lg border border-red-800 bg-red-950/50 p-3 text-xs font-medium text-red-300">
-              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-400" />
+            <div className="flex items-start gap-2.5 rounded-xl border border-rose-800/80 bg-rose-950/50 p-3 text-xs font-medium text-rose-300">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-rose-400" />
               <span>{errorMsg}</span>
             </div>
           )}
@@ -202,20 +202,20 @@ export default function GroupEntryModal({
           {!isFullyAdmitted ? (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-neutral-400">
+                <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-zinc-400">
                   Admit Attendees Now
                 </label>
-                <div className="grid grid-cols-[48px_1fr_48px] gap-2">
+                <div className="grid grid-cols-[52px_1fr_52px] gap-2">
                   <button
                     type="button"
                     onClick={() => setQuantity((q) => Math.max(1, q - 1))}
                     disabled={quantity <= 1 || loading || remainingEntries <= 0}
-                    className="flex h-12 items-center justify-center rounded-lg border border-neutral-800 bg-neutral-950 text-neutral-300 transition-colors hover:bg-neutral-800 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
+                    className="flex h-13 items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900 text-zinc-200 transition-colors hover:bg-zinc-800 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
                     aria-label="Decrease admission quantity"
                   >
-                    <Minus className="h-4 w-4" />
+                    <Minus className="h-5 w-5" />
                   </button>
-                  <div className="relative flex h-12 items-center justify-center rounded-lg border border-neutral-700 bg-neutral-950 focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-950/50">
+                  <div className="relative flex h-13 items-center justify-center rounded-xl border border-zinc-700 bg-zinc-900/90 focus-within:border-violet-500 focus-within:ring-2 focus-within:ring-violet-950/50">
                     <input
                       type="number"
                       min={remainingEntries > 0 ? 1 : 0}
@@ -226,18 +226,18 @@ export default function GroupEntryModal({
                         const val = parseInt(e.target.value, 10);
                         if (!isNaN(val)) setQuantity(remainingEntries > 0 ? Math.max(1, Math.min(remainingEntries, val)) : 0);
                       }}
-                      className="w-16 bg-transparent text-center text-2xl font-bold tabular-nums text-neutral-100 outline-none disabled:text-neutral-500"
+                      className="w-16 bg-transparent text-center text-2xl font-bold tabular-nums text-white outline-none disabled:text-zinc-500"
                     />
-                    <span className="ml-1 text-xs font-semibold text-neutral-500">Guests</span>
+                    <span className="ml-1 text-xs font-bold text-zinc-500">Guests</span>
                   </div>
                   <button
                     type="button"
                     onClick={() => setQuantity((q) => Math.min(remainingEntries, q + 1))}
                     disabled={quantity >= remainingEntries || loading || remainingEntries <= 0}
-                    className="flex h-12 items-center justify-center rounded-lg border border-neutral-800 bg-neutral-950 text-neutral-300 transition-colors hover:bg-neutral-800 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
+                    className="flex h-13 items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900 text-zinc-200 transition-colors hover:bg-zinc-800 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
                     aria-label="Increase admission quantity"
                   >
-                    <Plus className="h-4 w-4" />
+                    <Plus className="h-5 w-5" />
                   </button>
                 </div>
 
@@ -251,10 +251,10 @@ export default function GroupEntryModal({
                           type="button"
                           disabled={loading}
                           onClick={() => setQuantity(n)}
-                          className={`min-h-10 rounded-lg border px-2 text-xs font-semibold transition-all active:scale-95 disabled:opacity-50 ${
+                          className={`min-h-11 rounded-xl border px-2 text-xs font-bold transition-all active:scale-95 disabled:opacity-50 ${
                             quantity === n
-                              ? "border-emerald-600 bg-emerald-600 text-white shadow-xs"
-                              : "border-neutral-800 bg-neutral-950 text-neutral-300 hover:bg-neutral-800 hover:text-white"
+                              ? "border-violet-500 bg-violet-600 text-white shadow-md shadow-violet-950/40"
+                              : "border-zinc-800 bg-zinc-900 text-zinc-300 hover:bg-zinc-800 hover:text-white"
                           }`}
                         >
                           {n === remainingEntries ? `All ${n}` : `${n}`}
@@ -269,14 +269,14 @@ export default function GroupEntryModal({
                   type="button"
                   onClick={onClose}
                   disabled={loading}
-                  className="h-11 rounded-lg border border-neutral-800 bg-neutral-950 px-4 text-xs font-semibold text-neutral-300 transition-colors hover:bg-neutral-800 hover:text-white active:scale-95 disabled:opacity-50"
+                  className="min-h-12 rounded-xl border border-zinc-800 bg-zinc-900 px-4 text-xs font-bold text-zinc-300 transition-colors hover:bg-zinc-800 hover:text-white active:scale-95 disabled:opacity-50 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={loading || remainingEntries <= 0}
-                  className="flex h-11 items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 text-xs font-semibold text-white transition-colors hover:bg-emerald-500 active:scale-95 disabled:cursor-not-allowed disabled:bg-neutral-800 disabled:text-neutral-500"
+                  className="flex min-h-12 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 px-4 text-sm font-bold text-white shadow-lg shadow-violet-950/40 transition-all active:scale-95 disabled:cursor-not-allowed disabled:from-zinc-800 disabled:to-zinc-800 disabled:text-zinc-500 cursor-pointer"
                 >
                   {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
                   <span>{remainingEntries <= 0 ? "No Entries" : `Admit ${quantity} Guests`}</span>
@@ -288,7 +288,7 @@ export default function GroupEntryModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="w-full h-11 rounded-lg bg-emerald-600 text-white text-xs font-semibold transition-colors hover:bg-emerald-500 active:scale-95"
+                className="w-full min-h-12 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-xs font-bold transition-all hover:from-violet-500 hover:to-indigo-500 active:scale-95 cursor-pointer shadow-lg shadow-violet-950/40"
               >
                 Close &amp; Scan Next Pass
               </button>

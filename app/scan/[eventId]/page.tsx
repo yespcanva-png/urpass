@@ -9,6 +9,7 @@ import {
   XCircle,
   AlertTriangle,
   ArrowLeft,
+  ArrowRight,
   RotateCcw,
   Loader2,
   ScanLine,
@@ -28,6 +29,7 @@ import {
   Flashlight,
   FlashlightOff,
   SlidersHorizontal,
+  SwitchCamera,
   X,
   Layers,
   ChevronUp,
@@ -194,6 +196,15 @@ export default function ScanEventPage() {
 
   // Torch control
   const [torchOn, setTorchOn] = useState<boolean>(false);
+  const [torchSupported, setTorchSupported] = useState<boolean>(false);
+
+  // Camera facing mode and lens detection
+  const [cameraFacing, setCameraFacing] = useState<"environment" | "user">("environment");
+  const [hasMultipleCameras, setHasMultipleCameras] = useState<boolean>(false);
+
+  const toggleCameraFacing = useCallback(() => {
+    setCameraFacing((f) => (f === "environment" ? "user" : "environment"));
+  }, []);
 
   const selectedGate = gates.find((g) => g.id === selectedGateId) ?? null;
   const selectedSession = sessions.find((s) => s.id === selectedSessionId) ?? null;
@@ -206,6 +217,7 @@ export default function ScanEventPage() {
   const terminalScanCountedRef = useRef(false);
   const pendingSuccessfulCountRef = useRef(1);
   const activeAttemptIdRef = useRef(0);
+  const isResettingRef = useRef(false);
 
   // Force gate selection before scanning begins if gates are configured
   const isGateRequired = gates.length > 0 && !selectedGateId && !selectedSessionId;
@@ -1335,7 +1347,15 @@ export default function ScanEventPage() {
   );
 
   const reset = useCallback(() => {
-    lastTokenRef.current = null;
+    if (isResettingRef.current) return;
+    isResettingRef.current = true;
+    setTimeout(() => {
+      isResettingRef.current = false;
+    }, 200);
+
+    // Retain lastTokenRef.current and stamp lastTokenTimeRef with now
+    // so that keeping the same ticket in camera frame does not cause immediate duplicate alerts
+    lastTokenTimeRef.current = Date.now();
     cooldownRef.current = false;
     terminalScanCountedRef.current = false;
     pendingSuccessfulCountRef.current = 1;
@@ -1681,17 +1701,17 @@ export default function ScanEventPage() {
         </div>
       )}
 
-      <div className="shrink-0 border-b border-[#6200EE]/35 bg-[#6200EE]/15 px-3 py-2">
+      <div className="shrink-0 border-b border-violet-500/20 bg-violet-950/20 px-3 py-2">
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3">
           <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-xs font-bold text-white">
-            <span className="tabular-nums">Scanned: {sessionCounters.scanned}</span>
-            <span className="tabular-nums text-emerald-300">Successful: {sessionCounters.successful}</span>
-            <span className="tabular-nums text-red-300">Rejected: {sessionCounters.rejected}</span>
+            <span className="tabular-nums text-zinc-300">Scanned: <span className="text-white">{sessionCounters.scanned}</span></span>
+            <span className="tabular-nums text-emerald-400">Successful: {sessionCounters.successful}</span>
+            <span className="tabular-nums text-rose-400">Rejected: {sessionCounters.rejected}</span>
           </div>
           <button
             type="button"
             onClick={() => router.push("/scan")}
-            className="min-h-12 shrink-0 rounded-md border border-[#8B5CF6]/60 bg-[#18181B] px-3 py-1.5 text-[11px] font-bold text-white transition-colors hover:bg-[#222228]"
+            className="shrink-0 rounded-lg border border-violet-500/40 bg-zinc-900 px-3 py-1.5 text-[11px] font-bold text-zinc-200 transition-colors hover:bg-zinc-800 hover:text-white"
           >
             Close Scanner
           </button>
@@ -1717,7 +1737,7 @@ export default function ScanEventPage() {
                 disabled={isProcessingScan}
                 className={`flex min-h-12 flex-1 items-center justify-center gap-1.5 rounded-md px-3 py-2 text-xs font-bold transition-all disabled:cursor-not-allowed disabled:opacity-50 ${
                   !manualMode
-                    ? "bg-emerald-600 text-white shadow-xs"
+                    ? "bg-violet-600 text-white shadow-xs"
                     : "text-neutral-400 hover:text-neutral-200"
                 }`}
               >
@@ -1735,7 +1755,7 @@ export default function ScanEventPage() {
                 disabled={isProcessingScan}
                 className={`flex min-h-12 flex-1 items-center justify-center gap-1.5 rounded-md px-3 py-2 text-xs font-bold transition-all disabled:cursor-not-allowed disabled:opacity-50 ${
                   manualMode
-                    ? "bg-emerald-600 text-white shadow-xs"
+                    ? "bg-violet-600 text-white shadow-xs"
                     : "text-neutral-400 hover:text-neutral-200"
                 }`}
               >
@@ -1750,10 +1770,10 @@ export default function ScanEventPage() {
                 if (!isProcessingScan) setScanDirection((d) => (d === "in" ? "out" : "in"));
               }}
               disabled={isProcessingScan}
-              className={`flex min-h-12 items-center gap-1.5 rounded-lg border px-3 py-2 text-[11px] font-bold uppercase tracking-wider transition-colors shadow-2xs disabled:cursor-not-allowed disabled:opacity-50 ${
+              className={`flex min-h-12 items-center gap-1.5 rounded-xl border px-3 py-2 text-[11px] font-bold uppercase tracking-wider transition-all shadow-2xs disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer ${
                 scanDirection === "in"
-                  ? "bg-emerald-950/40 text-emerald-400 border-emerald-800/80 hover:bg-emerald-900/50"
-                  : "bg-blue-950/40 text-emerald-400 border-emerald-800/80 hover:bg-blue-900/50"
+                  ? "bg-emerald-950/40 text-emerald-300 border-emerald-800/80 hover:bg-emerald-900/50"
+                  : "bg-blue-950/40 text-blue-300 border-blue-800/80 hover:bg-blue-900/50"
               }`}
               title="Toggle Entry / Exit"
             >
@@ -1822,8 +1842,7 @@ export default function ScanEventPage() {
           <div className="w-full flex-1 flex flex-col items-center justify-center min-h-[360px]">
 
         {/* ── Manual Search Mode View ── */}
-        {manualMode ? (
-          <div className="w-full flex-1 flex flex-col gap-3">
+        <div className={`w-full flex-1 flex-col gap-3 ${manualMode ? "flex" : "hidden"}`}>
             {/* Search Input */}
             <div className="relative">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500 pointer-events-none" />
@@ -1974,171 +1993,191 @@ export default function ScanEventPage() {
                 );
               })}
             </div>
-          </div>
-        ) : (
-          /* ── Camera QR Mode View ── */
-          <div className="w-full flex flex-col items-center justify-center">
+        </div>
 
-            {/* Gate Required Shield (If gates configured but none chosen) */}
-            {isGateRequired ? (
-		              <div className="w-full space-y-4 rounded-lg border border-neutral-800 bg-neutral-900 p-6 sm:p-8 text-center animate-in fade-in shadow-xs">
-                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-lg border border-neutral-800 bg-neutral-800/80 text-neutral-300 shadow-2xs">
-                  <DoorOpen className="w-8 h-8 text-emerald-400" />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-neutral-100">Select Scanner Entry Gate</h3>
-                  <p className="text-xs text-neutral-400 mt-1 max-w-sm mx-auto leading-relaxed">
-                    Select your assigned gate to start scanning tickets and enforce zone access.
-                  </p>
-                </div>
-                <div className="space-y-2 pt-2 max-w-md mx-auto">
-                  {gates.map((g) => (
-                    <button
-                      key={g.id}
-                      onClick={() => handleSelectGate(g.id)}
-                      className="flex w-full items-center justify-between rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-3 text-xs font-bold text-neutral-100 transition-colors hover:bg-neutral-800 hover:border-emerald-500"
-                    >
-                      <span className="text-sm font-semibold">{g.name}</span>
-                      {g.zone && (
-                        <span className="text-[10px] text-neutral-400 bg-neutral-800 px-2 py-0.5 rounded border border-neutral-700">
-                          {g.zone.name}
-                        </span>
-                      )}
-                    </button>
-                  ))}
-                </div>
+        {/* ── Camera QR Mode View ── */}
+        <div className={`w-full flex-col items-center justify-center ${manualMode ? "hidden" : "flex"}`}>
+          {/* Gate Required Shield (If gates configured but none chosen) */}
+          {isGateRequired ? (
+            <div className="w-full space-y-4 rounded-2xl border border-zinc-800 bg-zinc-900/90 p-6 sm:p-8 text-center animate-in fade-in shadow-xl">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-violet-500/30 bg-violet-950/40 text-violet-300 shadow-lg shadow-violet-950/30">
+                <DoorOpen className="w-8 h-8 text-violet-400" />
               </div>
-            ) : (
-              /* Scanner Camera Viewfinder */
-              <div className="w-full relative">
-                <div className="overflow-hidden rounded-lg border border-neutral-800 bg-black shadow-md">
-                  <QRScanner onScan={verify} active={isScannerActive} statusVariant={scanState} />
-                </div>
+              <div>
+                <h3 className="text-base font-bold text-white">Select Scanner Entry Gate</h3>
+                <p className="text-xs text-zinc-400 mt-1 max-w-sm mx-auto leading-relaxed">
+                  Select your assigned gate to start scanning tickets and enforce zone access.
+                </p>
+              </div>
+              <div className="space-y-2 pt-2 max-w-md mx-auto w-full">
+                {gates.map((g) => (
+                  <button
+                    key={g.id}
+                    onClick={() => handleSelectGate(g.id)}
+                    className="flex w-full items-center justify-between rounded-xl border border-zinc-800 bg-zinc-950/80 px-4 py-3 text-xs font-bold text-zinc-100 transition-colors hover:bg-zinc-900 hover:border-violet-500/60 active:scale-[0.99]"
+                  >
+                    <span className="text-sm font-semibold">{g.name}</span>
+                    {g.zone && (
+                      <span className="text-[10px] text-zinc-400 bg-zinc-800/80 px-2 py-0.5 rounded-md border border-zinc-700/60">
+                        {g.zone.name}
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            /* Fixed-Dimension Camera Viewfinder & Floating Result Overlays */
+            <div className="w-full relative max-w-sm sm:max-w-md aspect-square rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-950 shadow-2xl shadow-violet-950/20">
+              <QRScanner
+                onScan={verify}
+                active={isScannerActive}
+                statusVariant={scanState}
+                torchOn={torchOn}
+                onTorchChange={setTorchOn}
+                onTorchSupportedChange={setTorchSupported}
+                facingMode={cameraFacing}
+                onFacingModeChange={setCameraFacing}
+                onMultipleCamerasDetected={setHasMultipleCameras}
+                className="w-full h-full"
+              />
 
-                {/* Floating Quick Action Overlay on Camera */}
-                <div className="absolute top-3 right-3 z-20 flex items-center gap-2">
+              {/* Floating Quick Action Overlay on Camera (Top Right) */}
+              <div className="absolute top-3 right-3 z-20 flex items-center gap-1.5">
+                {hasMultipleCameras && (
+                  <button
+                    onClick={toggleCameraFacing}
+                    className="rounded-xl border p-2.5 transition-all shadow-md active:scale-95 border-zinc-700/80 bg-zinc-900/80 backdrop-blur-md text-zinc-300 hover:bg-zinc-800 hover:text-white"
+                    title={cameraFacing === "environment" ? "Switch to front camera" : "Switch to rear camera"}
+                    aria-label="Switch camera lens"
+                  >
+                    <SwitchCamera className="w-4 h-4 text-violet-400" />
+                  </button>
+                )}
+                {torchSupported && cameraFacing === "environment" && (
                   <button
                     onClick={toggleTorch}
-                    className={`rounded-lg border p-2.5 transition-colors shadow-xs ${
+                    className={`rounded-xl border p-2.5 transition-all shadow-md active:scale-95 ${
                       torchOn
-                        ? "border-amber-600 bg-amber-950/80 text-amber-300"
-                        : "border-neutral-700 bg-neutral-900/90 backdrop-blur-sm text-neutral-300 hover:bg-neutral-800 hover:text-white"
+                        ? "border-amber-500/80 bg-amber-950/90 text-amber-300 ring-2 ring-amber-500/30"
+                        : "border-zinc-700/80 bg-zinc-900/80 backdrop-blur-md text-zinc-300 hover:bg-zinc-800 hover:text-white"
                     }`}
                     title={torchOn ? "Turn flashlight off" : "Turn flashlight on"}
+                    aria-label="Flashlight"
                   >
                     {torchOn ? <Flashlight className="w-4 h-4 text-amber-400 fill-current" /> : <FlashlightOff className="w-4 h-4" />}
                   </button>
-                  <button
-                    onClick={toggleWakeLock}
-                    className={`rounded-lg border p-2.5 transition-colors shadow-xs ${
-                      wakeLockActive
-                        ? "border-amber-600 bg-amber-950/80 text-amber-300"
-                        : "border-neutral-700 bg-neutral-900/90 backdrop-blur-sm text-neutral-300 hover:bg-neutral-800 hover:text-white"
-                    }`}
-                    title={wakeLockActive ? "Screen stay-awake enabled" : "Enable screen stay-awake"}
-                  >
-                    <Sun className={`w-4 h-4 ${wakeLockActive ? "text-amber-400" : ""}`} />
-                  </button>
-                  <button
-                    onClick={toggleSound}
-                    className={`rounded-lg border p-2.5 transition-colors shadow-xs ${
-                      soundEnabled
-                        ? "border-emerald-600 bg-emerald-950/80 text-emerald-300"
-                        : "border-neutral-700 bg-neutral-900/90 backdrop-blur-sm text-neutral-500"
-                    }`}
-                    title={soundEnabled ? "Audio chime on" : "Audio muted"}
-                  >
-                    {soundEnabled ? <Volume2 className="w-4 h-4 text-emerald-400" /> : <VolumeX className="w-4 h-4" />}
-                  </button>
-                </div>
+                )}
+                <button
+                  onClick={toggleWakeLock}
+                  className={`rounded-xl border p-2.5 transition-all shadow-md active:scale-95 ${
+                    wakeLockActive
+                      ? "border-violet-500/80 bg-violet-950/90 text-violet-300 ring-2 ring-violet-500/30"
+                      : "border-zinc-700/80 bg-zinc-900/80 backdrop-blur-md text-zinc-400 hover:bg-zinc-800 hover:text-white"
+                  }`}
+                  title={wakeLockActive ? "Screen stay-awake enabled" : "Enable screen stay-awake"}
+                  aria-label="Stay awake"
+                >
+                  <Sun className={`w-4 h-4 ${wakeLockActive ? "text-violet-400" : ""}`} />
+                </button>
+                <button
+                  onClick={toggleSound}
+                  className={`rounded-xl border p-2.5 transition-all shadow-md active:scale-95 ${
+                    soundEnabled
+                      ? "border-emerald-500/80 bg-emerald-950/90 text-emerald-300 ring-2 ring-emerald-500/30"
+                      : "border-zinc-700/80 bg-zinc-900/80 backdrop-blur-md text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300"
+                  }`}
+                  title={soundEnabled ? "Audio chime on" : "Audio muted"}
+                  aria-label="Sound effects"
+                >
+                  {soundEnabled ? <Volume2 className="w-4 h-4 text-emerald-400" /> : <VolumeX className="w-4 h-4" />}
+                </button>
               </div>
-            )}
 
-            {/* Verifying Spinner */}
-            {scanState === "PROCESSING" && (
-              <div className="flex flex-col items-center gap-4 py-12 animate-in fade-in">
-                <div className="relative w-20 h-20">
-                  <div className="relative flex h-full w-full items-center justify-center rounded-lg border border-neutral-800 bg-neutral-900 shadow-sm">
-                    <Loader2 className="w-8 h-8 text-emerald-400 animate-spin" />
+              {/* 1. Verifying Glass Overlay */}
+              {scanState === "PROCESSING" && (
+                <div className="absolute inset-0 z-30 flex flex-col items-center justify-center p-6 bg-zinc-950/85 backdrop-blur-md animate-in fade-in duration-150 motion-reduce:animate-none">
+                  <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl border border-violet-500/40 bg-violet-950/40 shadow-xl shadow-violet-900/20">
+                    <Loader2 className="w-8 h-8 text-violet-400 animate-spin" />
+                  </div>
+                  <div className="mt-4 text-center space-y-1">
+                    <p className="text-sm font-bold text-white tracking-wide">Verifying pass...</p>
+                    <p className="text-xs text-zinc-400 font-mono">Checking against guest manifest</p>
                   </div>
                 </div>
-                <div className="text-center space-y-1">
-                  <p className="text-sm font-bold text-neutral-100">Verifying pass...</p>
-                  <p className="text-xs text-neutral-400 font-mono">Checking against guest manifest</p>
+              )}
+
+              {/* 2. Result Overlays: SUCCESS */}
+              {scanState === "SUCCESS" && result && (
+                <div className="absolute inset-0 z-30 flex flex-col animate-in fade-in zoom-in-95 duration-150 motion-reduce:animate-none">
+                  <ResultCard
+                    variant="success"
+                    attendee={result.attendee}
+                    passType={result.passType}
+                    contextName={scanContextName}
+                    checkedInAt={result.checkedInAt}
+                    resultAt={lastResultAt}
+                    gateName={result.gateName}
+                    offline={result.offline}
+                    onReset={reset}
+                    successfulScans={sessionCounters.successful}
+                  />
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Result: SUCCESS (Entry Granted) */}
-            {scanState === "SUCCESS" && result && (
-              <div className="w-full select-none animate-in zoom-in-95 duration-150 mt-4">
-                <ResultCard
-                  variant="success"
-                  attendee={result.attendee}
-                  passType={result.passType}
-                  contextName={scanContextName}
-                  checkedInAt={result.checkedInAt}
-                  resultAt={lastResultAt}
-                  gateName={result.gateName}
-                  offline={result.offline}
-                  onReset={reset}
-                  successfulScans={sessionCounters.successful}
-                />
-              </div>
-            )}
+              {/* 3. Result Overlays: DUPLICATE */}
+              {scanState === "DUPLICATE" && result && (
+                <div className="absolute inset-0 z-30 flex flex-col animate-in fade-in zoom-in-95 duration-150 motion-reduce:animate-none">
+                  <ResultCard
+                    variant="duplicate"
+                    attendee={result.attendee}
+                    passType={result.passType}
+                    contextName={scanContextName}
+                    checkedInAt={result.checkedInAt}
+                    resultAt={lastResultAt}
+                    gateName={result.gateName}
+                    offline={result.offline}
+                    onReset={reset}
+                    successfulScans={sessionCounters.successful}
+                    onAllowReentry={(allowReentry || Boolean(selectedSessionId)) ? handleDuplicateOverride : undefined}
+                    isUndoing={undoingCheckIn}
+                    badgeText={result.badgeText}
+                    message={result.message}
+                  />
+                </div>
+              )}
 
-            {/* Result: DUPLICATE (Already Checked In / All Attendees Admitted) */}
-            {scanState === "DUPLICATE" && result && (
-              <div className="w-full select-none animate-in zoom-in-95 duration-150 mt-4">
-                <ResultCard
-                  variant="duplicate"
-                  attendee={result.attendee}
-                  passType={result.passType}
-                  contextName={scanContextName}
-                  checkedInAt={result.checkedInAt}
-                  resultAt={lastResultAt}
-                  gateName={result.gateName}
-                  offline={result.offline}
-                  onReset={reset}
-                  successfulScans={sessionCounters.successful}
-                  onAllowReentry={(allowReentry || Boolean(selectedSessionId)) ? handleDuplicateOverride : undefined}
-                  isUndoing={undoingCheckIn}
-                  badgeText={result.badgeText}
-                  message={result.message}
-                />
-              </div>
-            )}
+              {/* 4. Result Overlays: REJECTED (Access Denied) */}
+              {scanState === "REJECTED" && (
+                <div className="absolute inset-0 z-30 flex flex-col animate-in fade-in zoom-in-95 duration-150 motion-reduce:animate-none">
+                  <AccessDeniedCard
+                    message={accessDeniedMsg}
+                    onReset={reset}
+                    contextName={scanContextName}
+                    gateName={selectedGate?.name || selectedSession?.title}
+                    resultAt={lastResultAt}
+                    successfulScans={sessionCounters.successful}
+                    onOverride={lastScannedAttendee ? handleSupervisorOverride : undefined}
+                  />
+                </div>
+              )}
 
-            {/* Result: ACCESS DENIED */}
-            {scanState === "REJECTED" && (
-              <div className="w-full select-none animate-in zoom-in-95 duration-150 mt-4">
-                <AccessDeniedCard
-                  message={accessDeniedMsg}
-                  onReset={reset}
-                  contextName={scanContextName}
-                  gateName={selectedGate?.name || selectedSession?.title}
-                  resultAt={lastResultAt}
-                  successfulScans={sessionCounters.successful}
-                  onOverride={lastScannedAttendee ? handleSupervisorOverride : undefined}
-                />
-              </div>
-            )}
-
-            {/* Result: ERROR / INVALID */}
-            {scanState === "ERROR" && (
-              <div className="w-full select-none animate-in zoom-in-95 duration-150 mt-4">
-                <ErrorCard
-                  message={errorMsg}
-                  onReset={reset}
-                  contextName={scanContextName}
-                  gateName={selectedGate?.name || selectedSession?.title}
-                  resultAt={lastResultAt}
-                  successfulScans={sessionCounters.successful}
-                />
-              </div>
-            )}
-          </div>
-        )}
+              {/* 5. Result Overlays: ERROR */}
+              {scanState === "ERROR" && (
+                <div className="absolute inset-0 z-30 flex flex-col animate-in fade-in zoom-in-95 duration-150 motion-reduce:animate-none">
+                  <ErrorCard
+                    message={errorMsg}
+                    onReset={reset}
+                    contextName={scanContextName}
+                    gateName={selectedGate?.name || selectedSession?.title}
+                    resultAt={lastResultAt}
+                    successfulScans={sessionCounters.successful}
+                  />
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </section>
 
@@ -2286,35 +2325,47 @@ export default function ScanEventPage() {
   </div>
 
   {/* ── Ergonomic Mobile Bottom Action Bar (Mobile Only) ─────────── */}
-  <footer className="lg:hidden shrink-0 px-4 py-3 bg-neutral-900/90 backdrop-blur-md border-t border-neutral-800 z-20 shadow-xs">
+  <footer className="lg:hidden shrink-0 px-4 py-3 pb-safe bg-zinc-950/90 backdrop-blur-md border-t border-zinc-800 z-20 shadow-xl">
     <div className="max-w-md mx-auto flex items-center justify-between gap-3">
-      <button
-        onClick={() => setFeedDrawerOpen(true)}
-        className="flex flex-1 items-center justify-between rounded-lg border border-neutral-800 bg-neutral-950 px-4 py-2.5 text-left transition-colors hover:bg-neutral-800/80"
-      >
-        <div className="flex items-center gap-2">
-          <Users className="w-4 h-4 text-emerald-400" />
-          <span className="text-xs font-bold text-neutral-100">
-            {scanCount} Admitted
+      {isTerminalScannerState(scanState) ? (
+        <button
+          onClick={reset}
+          className="flex-1 min-h-[48px] flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 px-4 py-3 text-sm font-black text-white shadow-lg shadow-violet-950/40 active:scale-[0.98] transition-all cursor-pointer"
+        >
+          <span>Scan Next</span>
+          <ArrowRight className="w-4 h-4" />
+        </button>
+      ) : (
+        <button
+          onClick={() => setFeedDrawerOpen(true)}
+          className="flex flex-1 items-center justify-between rounded-xl border border-zinc-800 bg-zinc-900/90 px-4 py-2.5 text-left transition-colors hover:bg-zinc-800/80 active:scale-[0.99]"
+        >
+          <div className="flex items-center gap-2">
+            <Users className="w-4 h-4 text-emerald-400" />
+            <span className="text-xs font-bold text-zinc-100">
+              {scanCount} Admitted
+            </span>
+          </div>
+          <span className="text-[11px] font-semibold text-zinc-400 flex items-center gap-1">
+            Live Feed <ChevronUp className="w-3.5 h-3.5" />
           </span>
-        </div>
-        <span className="text-[11px] font-semibold text-neutral-400 flex items-center gap-1">
-          Live Feed <ChevronUp className="w-3.5 h-3.5" />
-        </span>
-      </button>
+        </button>
+      )}
 
-      <button
-        onClick={toggleTorch}
-        className={`rounded-lg border p-2.5 transition-colors ${
-          torchOn
-            ? "border-amber-600 bg-amber-950/80 text-amber-300"
-            : "border-neutral-800 bg-neutral-950 text-neutral-300 hover:bg-neutral-800 hover:text-white"
-        }`}
-        title={torchOn ? "Turn torch off" : "Turn flashlight torch on"}
-        aria-label="Flashlight"
-      >
-        {torchOn ? <Flashlight className="w-4 h-4 fill-current text-amber-400" /> : <FlashlightOff className="w-4 h-4" />}
-      </button>
+      {torchSupported && (
+        <button
+          onClick={toggleTorch}
+          className={`rounded-xl border p-2.5 transition-all shadow-md active:scale-95 ${
+            torchOn
+              ? "border-amber-500/80 bg-amber-950/90 text-amber-300 ring-2 ring-amber-500/30"
+              : "border-zinc-800 bg-zinc-900/90 text-zinc-300 hover:bg-zinc-800 hover:text-white"
+          }`}
+          title={torchOn ? "Turn torch off" : "Turn flashlight torch on"}
+          aria-label="Flashlight"
+        >
+          {torchOn ? <Flashlight className="w-4 h-4 fill-current text-amber-400" /> : <FlashlightOff className="w-4 h-4" />}
+        </button>
+      )}
     </div>
   </footer>
 
@@ -2421,16 +2472,16 @@ export default function ScanEventPage() {
                             localStorage.setItem(`urpass_gate_${eventId}`, g.id);
                           } catch {}
                         }}
-	                        className={`flex items-center justify-between rounded-md border p-3.5 text-left transition-colors ${
+	                        className={`flex items-center justify-between rounded-xl border p-3.5 text-left transition-all ${
 	                          selectedGateId === g.id
-	                            ? "border-blue-700 bg-blue-700 font-bold text-white"
-		                            : "bg-neutral-950/60 border-neutral-800 text-neutral-200 hover:bg-neutral-800"
+	                            ? "border-violet-500 bg-violet-600 font-bold text-white shadow-md shadow-violet-950/40"
+		                            : "bg-zinc-950/60 border-zinc-800 text-zinc-200 hover:bg-zinc-800"
                         }`}
                       >
                         <div>
                           <p className="text-xs font-bold">{g.name}</p>
                           {g.zone && (
-	                            <p className={`text-[10px] mt-0.5 ${selectedGateId === g.id ? "text-blue-100" : "text-neutral-500"}`}>{g.zone.name}</p>
+	                            <p className={`text-[10px] mt-0.5 ${selectedGateId === g.id ? "text-violet-100" : "text-zinc-500"}`}>{g.zone.name}</p>
                           )}
                         </div>
                         {selectedGateId === g.id && (
@@ -2445,17 +2496,17 @@ export default function ScanEventPage() {
               {/* 2. Session Switcher */}
               {sessions.length > 0 && (
                 <div className="space-y-2">
-	                  <label className="text-[11px] font-bold uppercase tracking-wider text-neutral-400 flex items-center gap-1.5">
+	                  <label className="text-[11px] font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
                     <Layers className="w-3.5 h-3.5" /> Tracked Conference Session
                   </label>
                   <div className="grid grid-cols-1 gap-2">
                     <button
                       onClick={() => setSelectedSessionId(null)}
-	                      className={`flex items-center justify-between rounded-md border p-3.5 text-left transition-colors ${
+	                      className={`flex items-center justify-between rounded-xl border p-3.5 text-left transition-all ${
 	                        !selectedSessionId
-	                          ? "border-blue-700 bg-blue-700 font-bold text-white"
-	                          : "bg-neutral-950/60 border-neutral-800 text-neutral-200"
-                      }`}
+	                          ? "border-violet-500 bg-violet-600 font-bold text-white shadow-md shadow-violet-950/40"
+	                          : "bg-zinc-950/60 border-zinc-800 text-zinc-200 hover:bg-zinc-800"
+	                      }`}
                     >
                       <span className="text-xs font-bold">General Event Entry (No Session)</span>
                       {!selectedSessionId && <Check className="w-4 h-4 text-white shrink-0" />}
@@ -2467,15 +2518,15 @@ export default function ScanEventPage() {
                           setSelectedSessionId(s.id);
                           setSelectedGateId(null);
                         }}
-	                        className={`flex items-center justify-between rounded-md border p-3.5 text-left transition-colors ${
+	                        className={`flex items-center justify-between rounded-xl border p-3.5 text-left transition-all ${
 	                          selectedSessionId === s.id
-	                            ? "border-blue-700 bg-blue-700 font-bold text-white"
-	                            : "bg-neutral-950/60 border-neutral-800 text-neutral-200 hover:bg-neutral-800"
-                        }`}
+	                            ? "border-violet-500 bg-violet-600 font-bold text-white shadow-md shadow-violet-950/40"
+	                            : "bg-zinc-950/60 border-zinc-800 text-zinc-200 hover:bg-zinc-800"
+	                        }`}
                       >
                         <div className="min-w-0 pr-2">
                           <p className="text-xs font-bold truncate">{s.title}</p>
-	                          <p className={`text-[10px] mt-0.5 ${selectedSessionId === s.id ? "text-blue-100" : "text-neutral-500"}`}>
+	                          <p className={`text-[10px] mt-0.5 ${selectedSessionId === s.id ? "text-violet-100" : "text-zinc-500"}`}>
                             {s.room?.name || "Main Venue"} · {s.start_time?.slice(0, 5)}
                           </p>
                         </div>
@@ -2490,44 +2541,56 @@ export default function ScanEventPage() {
 
               {/* 3. Hardware & Environmental Controls */}
               <div className="space-y-2">
-	                <label className="text-[11px] font-bold uppercase tracking-wider text-neutral-400">
+	                <label className="text-[11px] font-bold uppercase tracking-wider text-zinc-400">
                   Device Hardware &amp; Feedback
                 </label>
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     onClick={toggleSound}
-	                    className={`flex flex-col items-center justify-center gap-1.5 rounded-md border p-3.5 transition-colors ${
+	                    className={`flex flex-col items-center justify-center gap-1.5 rounded-xl border p-3.5 transition-all cursor-pointer ${
                       soundEnabled
-	                        ? "bg-emerald-950/60 border-emerald-800 text-emerald-300 font-bold"
-	                        : "bg-neutral-950/60 border-neutral-800 text-neutral-400"
+	                        ? "bg-emerald-950/60 border-emerald-500/40 text-emerald-300 font-bold"
+	                        : "bg-zinc-950/60 border-zinc-800 text-zinc-400 hover:bg-zinc-800"
                     }`}
                   >
-	                    {soundEnabled ? <Volume2 className="w-5 h-5 text-emerald-400" /> : <VolumeX className="w-5 h-5 text-neutral-500" />}
+	                    {soundEnabled ? <Volume2 className="w-5 h-5 text-emerald-400" /> : <VolumeX className="w-5 h-5 text-zinc-500" />}
                     <span className="text-xs font-bold">{soundEnabled ? "Audio On" : "Audio Muted"}</span>
                   </button>
 
                   <button
                     onClick={toggleWakeLock}
-	                    className={`flex flex-col items-center justify-center gap-1.5 rounded-md border p-3.5 transition-colors ${
+	                    className={`flex flex-col items-center justify-center gap-1.5 rounded-xl border p-3.5 transition-all cursor-pointer ${
                       wakeLockActive
-	                        ? "bg-amber-950/60 border-amber-800 text-amber-300 font-bold"
-	                        : "bg-neutral-950/60 border-neutral-800 text-neutral-400"
+	                        ? "bg-violet-950/60 border-violet-500/40 text-violet-300 font-bold"
+	                        : "bg-zinc-950/60 border-zinc-800 text-zinc-400 hover:bg-zinc-800"
                     }`}
                   >
-	                    <Sun className={`w-5 h-5 ${wakeLockActive ? "text-amber-400 animate-pulse" : "text-neutral-500"}`} />
+	                    <Sun className={`w-5 h-5 ${wakeLockActive ? "text-violet-400 animate-pulse" : "text-zinc-500"}`} />
                     <span className="text-xs font-bold">{wakeLockActive ? "Screen Awake" : "Sleep Normal"}</span>
                   </button>
+
+                  {hasMultipleCameras && (
+                    <button
+                      onClick={toggleCameraFacing}
+                      className="col-span-2 flex items-center justify-center gap-2 rounded-xl border p-3 transition-all cursor-pointer bg-zinc-950/60 border-zinc-800 text-zinc-300 hover:bg-zinc-800"
+                    >
+                      <SwitchCamera className="w-4 h-4 text-violet-400" />
+                      <span className="text-xs font-bold">
+                        Lens: {cameraFacing === "environment" ? "Rear (Back) Camera" : "Front (Selfie) Camera"}
+                      </span>
+                    </button>
+                  )}
                 </div>
               </div>
 
               {/* 4. Offline Cache & Sync */}
-		              <div className="space-y-3 rounded-md border border-neutral-800 bg-neutral-950/60 p-3.5">
+		              <div className="space-y-3 rounded-xl border border-zinc-800 bg-zinc-950/60 p-3.5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
 	                    <Wifi className="w-4 h-4 text-emerald-400" />
                     <div>
-	                      <p className="text-xs font-bold text-neutral-100">Local Offline Cache</p>
-	                      <p className="text-[10px] text-neutral-500">
+	                      <p className="text-xs font-bold text-zinc-100">Local Offline Cache</p>
+	                      <p className="text-[10px] text-zinc-500">
                         {cachedPassCount} passes cached on device
                       </p>
                     </div>
@@ -2536,7 +2599,7 @@ export default function ScanEventPage() {
                     <button
                       onClick={refreshManifest}
                       disabled={isRefreshingCache}
-		                      className="rounded-md border border-neutral-800 bg-neutral-900 p-2 text-neutral-300 transition-colors hover:bg-neutral-800 disabled:opacity-50"
+		                      className="rounded-xl border border-zinc-800 bg-zinc-900 p-2 text-zinc-300 transition-colors hover:bg-zinc-800 disabled:opacity-50 cursor-pointer"
                       title="Update local cache"
                     >
                       <RefreshCw className={`w-3.5 h-3.5 ${isRefreshingCache ? "animate-spin" : ""}`} />
@@ -2548,7 +2611,7 @@ export default function ScanEventPage() {
                   <button
                     onClick={syncPendingScans}
                     disabled={isSyncing || !isOnline}
-	                    className="flex w-full items-center justify-center gap-1.5 rounded-md bg-blue-700 px-3.5 py-3 text-xs font-bold text-white transition-colors hover:bg-blue-800 disabled:opacity-50"
+	                    className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 px-3.5 py-3 text-xs font-bold text-white shadow-lg shadow-violet-950/40 transition-all hover:from-violet-500 hover:to-indigo-500 disabled:opacity-50 cursor-pointer"
                   >
                     <CloudUpload className={`w-4 h-4 ${isSyncing ? "animate-spin" : ""}`} />
                     <span>Sync {queuePending} Offline Check-in{queuePending > 1 ? "s" : ""}</span>
@@ -2618,119 +2681,124 @@ function ResultCard({
   const ok = variant === "success";
 
   return (
-    <div className="w-full flex flex-col gap-3">
-      <div
-        className={`flex flex-col items-center gap-3.5 overflow-hidden rounded-lg border p-6 text-center transition-colors shadow-lg ${
-          ok
-            ? "bg-[#222228] border-[#22C55E]/50 text-white"
-            : "bg-[#222228] border-[#F59E0B]/50 text-white"
-        }`}
-      >
+    <div
+      className={`relative h-full w-full flex flex-col justify-between p-4 sm:p-5 backdrop-blur-xl bg-zinc-950/95 text-white overflow-y-auto border rounded-2xl ${
+        ok ? "border-emerald-500/40 shadow-emerald-950/30" : "border-amber-500/40 shadow-amber-950/30"
+      }`}
+    >
+      {/* Top Header & Status Icon */}
+      <div className="flex flex-col items-center text-center gap-2">
         <div
-          className={`flex h-14 w-14 items-center justify-center rounded-lg border ${
+          className={`flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-2xl border transition-all ${
             ok
-              ? "bg-[#22C55E]/15 border-[#22C55E]/60 text-[#22C55E]"
-              : "bg-[#F59E0B]/15 border-[#F59E0B]/60 text-[#F59E0B]"
+              ? "bg-emerald-500/15 border-emerald-500/50 text-emerald-400 shadow-lg shadow-emerald-950/40"
+              : "bg-amber-500/15 border-amber-500/50 text-amber-400 shadow-lg shadow-amber-950/40"
           }`}
         >
           {ok ? (
-            <CheckCircle2 className="h-8 w-8 text-[#22C55E]" />
+            <CheckCircle2 className="h-7 w-7 sm:h-8 sm:w-8 text-emerald-400" />
           ) : (
-            <AlertTriangle className="h-8 w-8 text-[#F59E0B]" />
+            <AlertTriangle className="h-7 w-7 sm:h-8 sm:w-8 text-amber-400" />
           )}
         </div>
 
-        <div className="space-y-1">
+        <div className="space-y-1 w-full px-1">
           <span
-            className={`text-[10px] font-bold tracking-wider uppercase px-3 py-1 rounded-full border ${
+            className={`inline-block text-[10px] font-extrabold tracking-widest uppercase px-3 py-0.5 rounded-full border ${
               ok
-                ? "bg-[#22C55E]/15 text-[#22C55E] border-[#22C55E]/50"
-                : "bg-[#F59E0B]/15 text-[#F59E0B] border-[#F59E0B]/50"
+                ? "bg-emerald-500/15 text-emerald-300 border-emerald-500/40"
+                : "bg-amber-500/15 text-amber-300 border-amber-500/40"
             }`}
           >
             {badgeText || (ok ? "ENTRY GRANTED" : "ALREADY ADMITTED")}
           </span>
-          <h2 className="text-xl font-bold text-white mt-2 leading-snug">
+          <h2 className="text-lg sm:text-xl font-black text-white leading-tight">
             {ok ? "Check-in Successful" : "Already Checked In"}
           </h2>
-          <p className="text-sm font-semibold text-white">{attendee.name}</p>
+          <p className="text-sm sm:text-base font-bold text-white truncate max-w-[280px] mx-auto">
+            {attendee.name}
+          </p>
           {message ? (
-            <p className="text-xs font-medium text-[#F59E0B] max-w-[280px] mx-auto leading-relaxed pt-0.5">
+            <p className="text-xs font-medium text-amber-400 max-w-[280px] mx-auto leading-relaxed">
               {message}
             </p>
           ) : attendee.email ? (
-            <p className="text-xs text-[#A1A1AA] truncate max-w-[260px] mx-auto">
+            <p className="text-xs text-zinc-400 truncate max-w-[260px] mx-auto font-mono">
               {attendee.email}
             </p>
           ) : null}
         </div>
 
-        {/* Pass Tier & Gate Info Pill */}
+        {/* Badges and metadata */}
         <div className="flex items-center gap-1.5 flex-wrap justify-center pt-0.5">
-          <span className="rounded-md border border-white/10 bg-[#18181B] px-2.5 py-1 text-[11px] font-semibold uppercase text-white">
+          <span className="rounded-lg border border-white/10 bg-zinc-900/90 px-2.5 py-0.5 text-[10px] sm:text-[11px] font-bold uppercase text-zinc-200">
             {PASS_TYPE_LABEL[passType] ?? passType}
           </span>
           {gateName && (
-            <span className="inline-flex items-center gap-1 rounded-md border border-white/10 bg-[#18181B] px-2.5 py-1 text-[11px] font-semibold text-[#A1A1AA]">
-              <DoorOpen className="w-3.5 h-3.5 shrink-0 text-neutral-500" />
+            <span className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-zinc-900/90 px-2.5 py-0.5 text-[10px] sm:text-[11px] font-semibold text-zinc-300">
+              <DoorOpen className="w-3 h-3 text-zinc-400 shrink-0" />
               <span>{gateName}</span>
             </span>
           )}
-          <span className="rounded-md border border-white/10 bg-[#18181B] px-2.5 py-1 text-[11px] font-semibold text-[#A1A1AA]">
+          <span className="rounded-lg border border-white/10 bg-zinc-900/90 px-2.5 py-0.5 text-[10px] sm:text-[11px] font-semibold text-zinc-400">
             {contextName}
           </span>
         </div>
 
-        {(checkedInAt || resultAt) && (
-          <p className="text-[11px] font-mono text-[#A1A1AA] mt-0.5">
-            {ok ? "Admitted at: " : "First scanned at: "}
-            <span className="font-semibold text-white">
-              {new Date(checkedInAt || resultAt || "").toLocaleTimeString("en-IN", {
-                hour: "2-digit",
-                minute: "2-digit",
-                second: "2-digit",
-                hour12: true,
-              })}
+        <div className="flex items-center justify-center gap-2.5 text-[11px] text-zinc-400 pt-0.5">
+          {(checkedInAt || resultAt) && (
+            <span>
+              {ok ? "Admitted: " : "First scanned: "}
+              <strong className="text-zinc-200 font-mono">
+                {new Date(checkedInAt || resultAt || "").toLocaleTimeString("en-IN", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  second: "2-digit",
+                  hour12: true,
+                })}
+              </strong>
             </span>
-          </p>
-        )}
+          )}
+          <span>•</span>
+          <span>
+            Scans: <strong className="text-emerald-400 tabular-nums">{successfulScans}</strong>
+          </span>
+        </div>
 
         {offline && (
-          <span className="inline-flex items-center gap-1 rounded-md border border-amber-800/80 bg-amber-950/60 px-2.5 py-1 text-[10px] font-bold text-amber-300">
+          <span className="inline-flex items-center gap-1 rounded-md border border-amber-800/80 bg-amber-950/60 px-2 py-0.5 text-[10px] font-bold text-amber-300">
             <WifiOff className="w-3 h-3" /> Offline Queued
           </span>
         )}
-
-        <p className="text-[11px] font-bold text-neutral-400">
-          Successful scans this session: <span className="text-[#22C55E] tabular-nums">{successfulScans}</span>
-        </p>
       </div>
 
-      {/* Corporate Re-entry Override Action for Duplicates */}
-      {variant === "duplicate" && onAllowReentry && (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onAllowReentry();
-          }}
-          disabled={isUndoing}
-          className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-3.5 text-xs font-semibold text-white transition-colors hover:bg-emerald-500 disabled:opacity-50 shadow-md"
-        >
-          {isUndoing ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <RotateCcw className="w-4 h-4" />
-          )}
-          <span>Allow Re-entry (Reset Check-in)</span>
-        </button>
-      )}
+      {/* Action Footer with Scan Next */}
+      <div className="flex flex-col gap-2 pt-2 w-full">
+        {variant === "duplicate" && onAllowReentry && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onAllowReentry();
+            }}
+            disabled={isUndoing}
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-zinc-900 border border-zinc-700 hover:bg-zinc-800 px-3 py-2.5 text-xs font-bold text-zinc-200 transition-colors disabled:opacity-50"
+          >
+            {isUndoing ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <RotateCcw className="w-3.5 h-3.5 text-amber-400" />
+            )}
+            <span>Allow Re-entry (Reset Check-in)</span>
+          </button>
+        )}
 
-      <div className="flex flex-col gap-2 pt-1">
         <button
           onClick={onReset}
-          className="flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#6200EE] to-[#8B5CF6] px-4 py-4 text-sm font-black text-white transition-transform duration-200 hover:scale-[1.01] shadow-md shadow-[#6200EE]/25"
+          autoFocus
+          className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 px-4 py-3 text-sm font-black text-white shadow-lg shadow-violet-950/50 active:scale-[0.98] transition-all cursor-pointer"
         >
-          Scan Next <span aria-hidden="true">-&gt;</span>
+          <span>Scan Next</span>
+          <ArrowRight className="w-4 h-4" />
         </button>
       </div>
     </div>
@@ -2757,42 +2825,52 @@ function AccessDeniedCard({
   onOverride?: () => void;
 }) {
   return (
-    <div className="w-full flex flex-col gap-3">
-      <div className="flex flex-col items-center gap-3.5 rounded-lg border border-[#EF4444]/50 bg-[#222228] p-6 text-center shadow-lg">
-        <div className="w-14 h-14 rounded-lg bg-[#EF4444]/15 border border-[#EF4444]/50 flex items-center justify-center">
-          <ShieldX className="w-8 h-8 text-[#EF4444]" />
+    <div className="relative h-full w-full flex flex-col justify-between p-4 sm:p-5 backdrop-blur-xl bg-zinc-950/95 text-white overflow-y-auto border border-red-500/40 rounded-2xl shadow-xl shadow-red-950/30">
+      <div className="flex flex-col items-center text-center gap-2">
+        <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-2xl border border-red-500/50 bg-red-500/15 text-red-400 shadow-lg shadow-red-950/40">
+          <ShieldX className="h-7 w-7 sm:h-8 sm:w-8 text-red-400" />
         </div>
 
-        <div>
-          <span className="text-[10px] font-extrabold tracking-widest uppercase px-3 py-1 rounded-full bg-[#EF4444]/15 text-[#EF4444] border border-[#EF4444]/50">
+        <div className="space-y-1 w-full px-1">
+          <span className="inline-block text-[10px] font-extrabold tracking-widest uppercase px-3 py-0.5 rounded-full bg-red-500/15 text-red-300 border border-red-500/40">
             ACCESS DENIED
           </span>
-          <h2 className="text-xl font-extrabold text-neutral-100 mt-2 leading-tight">
+          <h2 className="text-lg sm:text-xl font-black text-white leading-tight">
             Not Admitted
           </h2>
-          <p className="text-xs text-[#EF4444] mt-1 max-w-[260px] mx-auto leading-relaxed">
+          <p className="text-xs font-semibold text-red-400 max-w-[280px] mx-auto leading-relaxed">
             {message}
           </p>
-          <div className="mt-3 flex flex-wrap items-center justify-center gap-1.5">
-            <span className="rounded-md border border-white/10 bg-[#18181B] px-2.5 py-1 text-[11px] font-semibold text-[#A1A1AA]">
-              {contextName}
+        </div>
+
+        <div className="flex items-center gap-1.5 flex-wrap justify-center pt-0.5">
+          <span className="rounded-lg border border-white/10 bg-zinc-900/90 px-2.5 py-0.5 text-[10px] sm:text-[11px] font-semibold text-zinc-300">
+            {contextName}
+          </span>
+          {gateName && (
+            <span className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-zinc-900/90 px-2.5 py-0.5 text-[10px] sm:text-[11px] font-semibold text-zinc-300">
+              <DoorOpen className="w-3 h-3 text-zinc-400 shrink-0" />
+              <span>{gateName}</span>
             </span>
-            {gateName && (
-              <span className="rounded-md border border-white/10 bg-[#18181B] px-2.5 py-1 text-[11px] font-semibold text-[#A1A1AA]">
-                {gateName}
-              </span>
-            )}
-          </div>
-          <p className="mt-3 text-[11px] font-bold text-neutral-400">
-            Successful scans this session: <span className="text-[#22C55E] tabular-nums">{successfulScans}</span>
-          </p>
-          {resultAt && (
-            <p className="mt-1 text-[11px] font-mono text-neutral-500">
-              Scanned at {new Date(resultAt).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true })}
-            </p>
           )}
         </div>
 
+        <div className="flex items-center justify-center gap-2.5 text-[11px] text-zinc-400 pt-0.5">
+          {resultAt && (
+            <span>
+              Scanned: <strong className="text-zinc-200 font-mono">
+                {new Date(resultAt).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true })}
+              </strong>
+            </span>
+          )}
+          <span>•</span>
+          <span>
+            Scans: <strong className="text-emerald-400 tabular-nums">{successfulScans}</strong>
+          </span>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-2 pt-2 w-full">
         {onOverride && (
           <button
             type="button"
@@ -2800,20 +2878,20 @@ function AccessDeniedCard({
               e.stopPropagation();
               onOverride();
             }}
-            className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-amber-600 bg-amber-950/80 px-4 py-3 text-xs font-bold text-amber-300 transition-colors hover:bg-amber-900/80 shadow-xs"
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-amber-600 bg-amber-950/80 px-3 py-2.5 text-xs font-bold text-amber-300 transition-colors hover:bg-amber-900/80"
           >
-            <ShieldAlert className="w-4 h-4 text-amber-300" />
+            <ShieldAlert className="w-3.5 h-3.5 text-amber-400" />
             <span>Authorize Supervisor Override</span>
           </button>
         )}
-      </div>
 
-      <div className="flex flex-col gap-2 pt-1">
         <button
           onClick={onReset}
-          className="flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#6200EE] to-[#8B5CF6] px-4 py-4 text-sm font-black text-white transition-transform duration-200 hover:scale-[1.01] shadow-md shadow-[#6200EE]/25"
+          autoFocus
+          className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 px-4 py-3 text-sm font-black text-white shadow-lg shadow-violet-950/50 active:scale-[0.98] transition-all cursor-pointer"
         >
-          Scan Next <span aria-hidden="true">-&gt;</span>
+          <span>Scan Next</span>
+          <ArrowRight className="w-4 h-4" />
         </button>
       </div>
     </div>
@@ -2838,49 +2916,59 @@ function ErrorCard({
   successfulScans: number;
 }) {
   return (
-    <div className="w-full flex flex-col gap-3">
-      <div className="bg-[#222228] border border-[#EF4444]/50 rounded-lg p-6 flex flex-col items-center text-center gap-3.5 shadow-lg">
-        <div className="w-14 h-14 rounded-lg bg-[#EF4444]/15 border border-[#EF4444]/50 flex items-center justify-center">
-          <XCircle className="w-8 h-8 text-[#EF4444]" />
+    <div className="relative h-full w-full flex flex-col justify-between p-4 sm:p-5 backdrop-blur-xl bg-zinc-950/95 text-white overflow-y-auto border border-red-500/40 rounded-2xl shadow-xl shadow-red-950/30">
+      <div className="flex flex-col items-center text-center gap-2">
+        <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-2xl border border-red-500/50 bg-red-500/15 text-red-400 shadow-lg shadow-red-950/40">
+          <XCircle className="h-7 w-7 sm:h-8 sm:w-8 text-red-400" />
         </div>
 
-        <div>
-          <span className="text-[10px] font-extrabold tracking-widest uppercase px-3 py-1 rounded-full bg-[#EF4444]/15 text-[#EF4444] border border-[#EF4444]/50">
+        <div className="space-y-1 w-full px-1">
+          <span className="inline-block text-[10px] font-extrabold tracking-widest uppercase px-3 py-0.5 rounded-full bg-red-500/15 text-red-300 border border-red-500/40">
             INVALID PASS
           </span>
-          <h2 className="text-xl font-extrabold text-neutral-100 mt-2 leading-tight">
+          <h2 className="text-lg sm:text-xl font-black text-white leading-tight">
             Verification Failed
           </h2>
-          <p className="text-xs text-[#EF4444] mt-1 max-w-[260px] mx-auto leading-relaxed">
+          <p className="text-xs font-semibold text-red-400 max-w-[280px] mx-auto leading-relaxed">
             {message}
           </p>
-          <div className="mt-3 flex flex-wrap items-center justify-center gap-1.5">
-            <span className="rounded-md border border-white/10 bg-[#18181B] px-2.5 py-1 text-[11px] font-semibold text-[#A1A1AA]">
-              {contextName}
+        </div>
+
+        <div className="flex items-center gap-1.5 flex-wrap justify-center pt-0.5">
+          <span className="rounded-lg border border-white/10 bg-zinc-900/90 px-2.5 py-0.5 text-[10px] sm:text-[11px] font-semibold text-zinc-300">
+            {contextName}
+          </span>
+          {gateName && (
+            <span className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-zinc-900/90 px-2.5 py-0.5 text-[10px] sm:text-[11px] font-semibold text-zinc-300">
+              <DoorOpen className="w-3 h-3 text-zinc-400 shrink-0" />
+              <span>{gateName}</span>
             </span>
-            {gateName && (
-              <span className="rounded-md border border-white/10 bg-[#18181B] px-2.5 py-1 text-[11px] font-semibold text-[#A1A1AA]">
-                {gateName}
-              </span>
-            )}
-          </div>
-          <p className="mt-3 text-[11px] font-bold text-neutral-400">
-            Successful scans this session: <span className="text-[#22C55E] tabular-nums">{successfulScans}</span>
-          </p>
-          {resultAt && (
-            <p className="mt-1 text-[11px] font-mono text-neutral-500">
-              Scanned at {new Date(resultAt).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true })}
-            </p>
           )}
+        </div>
+
+        <div className="flex items-center justify-center gap-2.5 text-[11px] text-zinc-400 pt-0.5">
+          {resultAt && (
+            <span>
+              Scanned: <strong className="text-zinc-200 font-mono">
+                {new Date(resultAt).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true })}
+              </strong>
+            </span>
+          )}
+          <span>•</span>
+          <span>
+            Scans: <strong className="text-emerald-400 tabular-nums">{successfulScans}</strong>
+          </span>
         </div>
       </div>
 
-      <div className="flex flex-col gap-2 pt-1">
+      <div className="flex flex-col gap-2 pt-2 w-full">
         <button
           onClick={onReset}
-          className="flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#6200EE] to-[#8B5CF6] px-4 py-4 text-sm font-black text-white transition-transform duration-200 hover:scale-[1.01] shadow-md shadow-[#6200EE]/25"
+          autoFocus
+          className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 px-4 py-3 text-sm font-black text-white shadow-lg shadow-violet-950/50 active:scale-[0.98] transition-all cursor-pointer"
         >
-          Scan Next <span aria-hidden="true">-&gt;</span>
+          <span>Scan Next</span>
+          <ArrowRight className="w-4 h-4" />
         </button>
       </div>
     </div>
