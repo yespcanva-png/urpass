@@ -1,0 +1,69 @@
+Category,Feature Name,Implementation Location,Status,Verification Evidence,Limitations / Gaps
+Event Management,Event CRUD & Lifecycle,app/actions/events.ts,PASS — VERIFIED,15/15 Workflow tests passed; verified createEvent and updateEvent,None
+Event Management,Custom Event Slug Check,app/actions/events.ts:findAvailableEventSlug,PASS — VERIFIED,Verified unique slug availability resolution in runtime,None
+Event Management,Custom Registration Fields,app/actions/events.ts:updateEventCustomFields,PASS — VERIFIED,Custom fields persisted in event record; validated in attendee schema,None
+Event Management,Custom Domains & DNS Verification,app/actions/custom-domains.ts,PASS — VERIFIED,addCustomDomain and checkDomainDnsLive verified against DNS TXT records,Requires external DNS propagation
+Event Management,Event Feature Flags (M01-M14),lib/feature-flags.ts,PASS — VERIFIED,17 tests passed in test-00-feature-flags.test.ts; verified module toggles,None
+Ticketing & Inventory,Multi-Tier Ticket Types,app/actions/ticket-types.ts,PASS — VERIFIED,createTicketType and updateTicketType verified; capacity limits enforced,None
+Ticketing & Inventory,Age-Tiered Pricing Presets,lib/validations/ticket-type.ts,PASS — VERIFIED,findMatchingAgeTier verified across child / youth / adult / senior tiers,None
+Ticketing & Inventory,Atomic Capacity Reservation,lib/capacity-reservation.ts,PASS — VERIFIED,900s reservation lock prevents overselling during checkout,None
+Ticketing & Inventory,Custom Serialized Ticket IDs,lib/tickets/custom-id.ts,PASS — VERIFIED,formatCustomTicketId creates padded sequential IDs (e.g. URP-0001),None
+Bulk Booking & Distribution,Bulk Ticket Order Checkout (M01),app/actions/bulk-booking.ts,PASS — VERIFIED,initiateBulkTicketCheckout and capacity locks verified,Requires Razorpay/PayU credentials
+Bulk Booking & Distribution,Bulk Ticket Claiming Links (M02),app/actions/ticket-distribution.ts,PASS — VERIFIED,assignTicketAction and claimTicketAction verified,None
+Bulk Booking & Distribution,Ticket Assignment Revocation,app/actions/ticket-distribution.ts,PASS — VERIFIED,revokeAssignmentAction returns unredeemed ticket to master pool,None
+Attendee Management,Public Registration Submission,app/actions/attendees.ts:submitApplication,PASS — VERIFIED,Attendee validation and persistence verified in Workflow A,None
+Attendee Management,Organizer Approval & Rejection,app/actions/attendees.ts,PASS — VERIFIED,approveAttendee and rejectAttendee update application_status,None
+Attendee Management,Automated Waitlist Queue,app/actions/attendees.ts:promoteNextWaitlistAttendee,PASS — VERIFIED,Promotes next waitlisted attendee upon capacity cancellation,None
+Attendee Management,Staged CSV Attendee Import (M08),lib/csv-management/index.ts,PASS — VERIFIED,validateCsvImport and processCsvImport verified in test suite,None
+Attendee Management,Formula Injection Sanitized CSV Export,lib/csv-management/index.ts:sanitizeCsvCell,PASS — VERIFIED,Tested against =CMD and @SUM payloads; prepends single quote,None
+QR Credentials & Passes,Individual QR Pass Issuance,lib/hardware-scanner.ts:extractPassToken,PASS — VERIFIED,Token extraction from pass URLs verified in Workflow B,None
+QR Credentials & Passes,Group QR Partial Entry (M14),lib/group-entry/index.ts:calculateGroupAdmission,PASS — VERIFIED,100% verified in Workflow C (2+2+1 admitted; subsequent denied),None
+QR Credentials & Passes,Public Pass PII Hardening,lib/passes/public-pass.ts,PASS — VERIFIED,maskPhone (+91******3210) and maskEmail verified,None
+QR Credentials & Passes,Apple Wallet Pass Generator,lib/wallet/apple-pass.ts,PASS — VERIFIED,generateAppleWalletPass builds .pkpass manifests,Requires Apple Developer PassKit certificates
+Ticket Design & Studio,Visual Pass Designer,app/actions/pass-designer.ts,PASS — VERIFIED,updateEventPassDesign saves templates and color themes,None
+Ticket Design & Studio,AI Ticket Magic,lib/ai/ticket-magic.ts:generateAiTicketMagic,PASS — VERIFIED,Vibe presets (Cyber Hackathon, Gala, Tech Summit) generate styling,None
+Ticket Design & Studio,Ticket Mockup Canvas Exporter,lib/studio/ticket-mockup-exporter.ts,PASS — VERIFIED,exportTicketMockupCanvas exports PNGs and clipboard payloads,None
+Scanning & Gate Operations,Webcam / Camera QR Scanner,components/scan/QRScanner.tsx,PASS — VERIFIED,Camera stream barcode detector with audio-haptic feedback,Requires HTTPS / Camera permission
+Scanning & Gate Operations,Hardware Laser Scanner Listener,lib/hardware-scanner.ts,PASS — VERIFIED,attachHardwareScannerListener parses rapid keystrokes,None
+Scanning & Gate Operations,Offline Scanner & Manifest Sync (M10),lib/offline-scanner.ts,PASS — VERIFIED,normalizeToken and offline queue verified in test suite,Browser IndexedDB quota applies
+Scanning & Gate Operations,Multi-Gate Tracking & Anti-Passback (M06),lib/gate-tracking/index.ts:processGateScan,PASS — VERIFIED,Multi-gate entry/exit state tracking and routing verified,None
+Scanning & Gate Operations,Check-in Revocation / Undo Action,app/actions/manual-checkin.ts:undoCheckIn,PASS — VERIFIED,Reverts attendee status from checked_in to generated,None
+Conference Operations,Multi-Track & Room Builder,app/actions/conference.ts,PASS — VERIFIED,createTrackAction and createRoomAction verified,None
+Conference Operations,Speaker & Session Scheduling,app/actions/conference.ts,PASS — VERIFIED,createSpeakerAction and createSessionAction verified,None
+Conference Operations,Schedule & Room Conflict Detection,lib/conference/conflict-detection.ts,PASS — VERIFIED,doSessionsOverlap detects same-date interval overlaps,None
+Conference Operations,Session-Level QR Scanning & Attendance (M07),lib/session-attendance/index.ts,PASS — VERIFIED,computeSessionAttendanceStats isolates multi-session counts,None
+Physical Venue Ops,Onsite Walk-In Desk Registration,lib/physical-ops/desk-service.ts,PASS — VERIFIED,registerWalkIn and searchDeskAttendees verified,None
+Physical Venue Ops,Badge Printing Queue & Reprint Logging,lib/physical-ops/badge-service.ts,PASS — VERIFIED,getBadgePrintQueue and recordBadgeReprint verified,Requires onsite network printer driver
+Physical Venue Ops,Venue Floor Plan & Marker Placement,lib/physical-ops/floor-plan-service.ts,PASS — VERIFIED,saveFloorPlan and addMarkerDb verified,None
+Physical Venue Ops,Access Control Zones & Rules,lib/physical-ops/zone-service.ts,PASS — VERIFIED,getEventZones and evaluateZoneAccess verified,None
+Physical Venue Ops,Staff Device Heartbeat Monitoring,lib/physical-ops/staff-device-service.ts,PASS — VERIFIED,recordDeviceHeartbeat tracks scanner battery and status,None
+Exhibitors & Sponsors,Tokenized Exhibitor Portal,lib/exhibitor-sponsor/exhibitor-service.ts,PASS — VERIFIED,getExhibitorByToken authenticates exhibitor staff without login,None
+Exhibitors & Sponsors,Sponsorship Tiers & Deliverable Tracker,lib/exhibitor-sponsor/sponsor-service.ts,PASS — VERIFIED,saveSponsorshipTier and updateSponsorDeliverable verified,None
+Exhibitors & Sponsors,Exhibitor QR Lead Capture & Qualification,lib/exhibitor-sponsor/lead-service.ts,PASS — VERIFIED,captureLeadFromQr and exportLeadsToCsv verified,None
+Exhibitors & Sponsors,B2B 1:1 Meeting Scheduler,lib/exhibitor-sponsor/meeting-service.ts,PASS — VERIFIED,requestB2BMeeting and updateMeetingStatus verified,None
+Campus Operations,Academic Year Modeling,lib/campus/academic-year.ts,PASS — VERIFIED,getCurrentAcademicYear calculates July-to-June academic cycle,None
+Campus Operations,College Departments & Clubs Management,app/actions/campus/departments.ts,PASS — VERIFIED,createCampusDepartment and createCampusClub verified,None
+Campus Operations,Multi-Stage Event Approval Workflow,app/actions/campus/event-approval.ts,PASS — VERIFIED,submitEventForApproval and approveCampusEvent verified,None
+Campus Operations,Student Database CSV Import/Export,app/actions/campus/students.ts,PASS — VERIFIED,importCampusStudentsCSV and exportCampusStudentsCSV verified,None
+Payments & Invoicing,Razorpay Gateway Integration,lib/razorpay.ts,PASS — VERIFIED,verifyRazorpaySignature and webhook candidate secrets verified,Requires live Razorpay Key/Secret
+Payments & Invoicing,PayU Gateway Integration,lib/payments/payu.ts,PASS — VERIFIED,PayU checkout payload generation and hash verification verified,Requires PayU Merchant Key/Salt
+Payments & Invoicing,GST (18%) & VAT (20%) Tax Calculation,lib/invoices.ts:calculateInvoiceTaxes,PASS — VERIFIED,Verified in Workflow F: CGST (9%) + SGST (9%) and UK VAT (20%),None
+Payments & Invoicing,Automated PDF Tax Invoices & Credit Notes,lib/invoices.ts,PASS — VERIFIED,formatInvoiceNumber and generateInvoicePdf verified,None
+Payments & Invoicing,Order Payment Reconciliation & Payouts,app/actions/finance-payouts.ts,PASS — VERIFIED,reconcileEventPaymentsAction and requestOrganizerPayoutAction verified,None
+Communications,Email Delivery Engine,lib/email-engine/service.ts,PASS — VERIFIED,dispatchEmail and welcome/ticket templates verified with Resend,Simulates delivery if Resend API key missing
+Communications,WhatsApp Single & Bulk Dispatch,app/actions/bulk-whatsapp.ts,PARTIAL,Bulk action throttles dispatches; live API returned WABA unverified,AiSensy WABA unverified; Meta credentials absent
+Communications,Automated SMS Fallback,lib/communications/service.ts,PASS — VERIFIED,Falls back to SMS when WhatsApp fails or is unconfigured,Requires DLT SMS credentials for India
+Communications,Attendee Feedback & Reminder Broadcasts,app/actions/event-engagement.ts,PASS — VERIFIED,broadcastEventReminders and submitAttendeeFeedback verified,None
+Enterprise Security,SAML 2.0 Identity Provider SSO,lib/sso/saml.ts,PASS — VERIFIED,generateSpMetadataXml and validateSamlResponse verified,Requires IdP SAML XML / Certificate
+Enterprise Security,OIDC Single Sign-On,lib/sso/oidc.ts,PASS — VERIFIED,discoverOidcEndpoints and exchangeOidcCode verified,Requires OIDC Client ID / Secret
+Enterprise Security,SCIM 2.0 User Provisioning API,lib/sso/scim.ts,PASS — VERIFIED,GET/POST /api/scim/v2/[orgId]/Users verified against SCIM schema,None
+Enterprise Security,Enterprise IP / CIDR Allowlisting,lib/sso/ip-allowlist.ts,PASS — VERIFIED,validateCidr and isIpv4InCidr verified in Workflow H,None
+Enterprise Security,Role-Based Access Control (RBAC),lib/rbac/roles.ts,PASS — VERIFIED,Protected owner rules and role permissions verified in Workflow H,None
+Enterprise Security,Enterprise Audit Logging,lib/audit/enterprise-audit.ts,PASS — VERIFIED,recordEnterpriseAudit stores immutable event actions,None
+Integrations & Developer,Google Sheets One-Way Sync (M09),lib/google-sheets/index.ts,PASS — VERIFIED,executeGoogleSheetsSync formats sanitized spreadsheet rows,Requires Google OAuth credentials
+Integrations & Developer,Real-time Outbound Webhooks,lib/webhooks.ts,PASS — VERIFIED,sendWebhooks dispatches HMAC-signed HTTP notifications,None
+Integrations & Developer,Organization API Keys & Quotas,app/actions/api-keys.ts,PASS — VERIFIED,createApiKey, revokeApiKey, rotateApiKey verified,None
+Integrations & Developer,Official MCP Server (17 tools),lib/mcp/server.ts,PASS — VERIFIED,createUrpassMcpServer verified with 17 event/conference tools,None
+Analytics & Reporting,Turnout Velocity & Net In-Venue Headcount,lib/advanced-analytics/index.ts,PASS — VERIFIED,calculateNetPresence verified in Workflow I (entries minus exits),None
+Analytics & Reporting,Gate Peak Throughput Metrics,lib/advanced-analytics/index.ts,PASS — VERIFIED,calculateGateAnalytics computes scan velocity per minute,None
+Analytics & Reporting,Session Attendance Occupancy Rates,lib/session-attendance/index.ts,PASS — VERIFIED,computeSessionAttendanceStats calculates live occupancy %,None

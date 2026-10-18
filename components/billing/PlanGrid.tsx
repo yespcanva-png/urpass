@@ -139,6 +139,7 @@ interface Props {
   currentPlanIndex: number;
   userEmail: string;
   userName: string;
+  userPhone?: string;
   trialUsed?: boolean;
   country?: "IN" | "GB";
 }
@@ -148,6 +149,7 @@ export default function PlanGrid({
   currentPlanIndex,
   userEmail,
   userName,
+  userPhone,
   trialUsed = false,
   country = "IN",
 }: Props) {
@@ -429,6 +431,7 @@ export default function PlanGrid({
                           billingCycle={cycle}
                           userEmail={userEmail}
                           userName={userName}
+                          userPhone={userPhone}
                           currency={country === "GB" ? "GBP" : "INR"}
                           introOfferEligible={isIntroEligible}
                           className={`w-full py-2.5 text-xs font-semibold rounded-xl text-white shadow-xs transition-all hover:opacity-90 cursor-pointer ${

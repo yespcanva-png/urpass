@@ -140,6 +140,9 @@ export async function POST(req: NextRequest) {
 
   const contact = rawPhone.slice(-10);
   void admin.from("profiles").update({ phone: contact }).eq("user_id", user.id);
+  void admin?.auth?.admin?.updateUserById?.(user.id, {
+    user_metadata: { ...user.user_metadata, phone: contact },
+  })?.catch?.(() => {});
 
   const billingAddress = String(billingDetails?.billingAddress || "").slice(0, 200);
   const customerGstin = String(billingDetails?.gstin || "").slice(0, 20);
@@ -157,21 +160,55 @@ export async function POST(req: NextRequest) {
       notes: cleanNotes({ user_id: user.id, purpose: "urpass_autopay" }),
     };
 
-    let customer: { id: string };
+    const hasContact = (c: any) =>
+      Boolean(c && typeof c.contact === "string" && c.contact.replace(/[^\d]/g, "").length >= 10);
+
+    let customer: { id: string; contact?: string | null };
     if (sub?.provider_customer_id) {
       try {
-        await (razorpay.customers as any).edit(sub.provider_customer_id, {
-          name: companyName,
-          email,
-          contact,
-        });
-        customer = { id: sub.provider_customer_id };
+        const fetched = await (razorpay.customers as any).fetch(sub.provider_customer_id);
+        if (hasContact(fetched)) {
+          customer = fetched;
+        } else {
+          customer = await (razorpay.customers as any).edit(sub.provider_customer_id, {
+            name: companyName,
+            email,
+            contact,
+          });
+        }
       } catch (editErr) {
-        console.warn("[autopay/mandate] Customer edit failed, creating new customer:", editErr);
+        console.warn("[autopay/mandate] Customer edit failed, creating/finding customer with contact:", editErr);
         customer = await (razorpay.customers as any).create(customerPayload);
       }
     } else {
       customer = await (razorpay.customers as any).create(customerPayload);
+    }
+
+    // Safety verification: ensure resolved customer entity in Razorpay has contact phone
+    if (!hasContact(customer)) {
+      try {
+        customer = await (razorpay.customers as any).edit(customer.id, {
+          name: companyName,
+          email,
+          contact,
+        });
+      } catch (secondEditErr) {
+        console.warn("[autopay/mandate] Secondary customer edit failed:", secondEditErr);
+      }
+    }
+
+    // Ultimate fallback: if contact is still missing on legacy entity, create fresh customer with phone
+    if (!hasContact(customer)) {
+      try {
+        customer = await (razorpay.customers as any).create({
+          name: companyName,
+          email: `${user.id.slice(0, 8)}_${email}`,
+          contact,
+          notes: cleanNotes({ user_id: user.id, purpose: "urpass_autopay_mandate" }),
+        });
+      } catch (fallbackCreateErr) {
+        console.warn("[autopay/mandate] Unique customer creation fallback:", fallbackCreateErr);
+      }
     }
 
     const now = new Date();

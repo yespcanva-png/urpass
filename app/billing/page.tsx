@@ -167,7 +167,7 @@ export default async function BillingPage(props: {
         .maybeSingle(),
       supabase
         .from("profiles")
-        .select("full_name, email")
+        .select("full_name, email, phone")
         .eq("user_id", user.id)
         .single(),
       supabase
@@ -231,6 +231,7 @@ export default async function BillingPage(props: {
 
   const userName = profile?.full_name ?? user.email?.split("@")[0] ?? "Organizer";
   const userEmail = profile?.email ?? user.email ?? "";
+  const userPhone = profile?.phone ?? user.phone ?? (user.user_metadata?.phone as string) ?? "";
   const currentPlan = PLANS.find((p) => p.slug === currentPlanSlug) ?? PLANS[0];
   const invoices = (invoiceData ?? []) as InvoiceItem[];
 
@@ -273,6 +274,7 @@ export default async function BillingPage(props: {
           invoices={invoices}
           userEmail={userEmail}
           userName={userName}
+          userPhone={userPhone}
           country={country}
           eventsThisPeriod={eventsThisPeriod ?? 0}
           eventsLimit={eventsLimit}

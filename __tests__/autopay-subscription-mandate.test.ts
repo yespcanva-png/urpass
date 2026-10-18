@@ -11,6 +11,8 @@ vi.mock("@/lib/invoices", () => ({ createInvoiceForPayment: vi.fn().mockResolved
 const mockOrdersCreate = vi.fn();
 const mockOrdersFetch = vi.fn();
 const mockCustomersCreate = vi.fn();
+const mockCustomersEdit = vi.fn();
+const mockCustomersFetch = vi.fn();
 const mockPaymentsFetch = vi.fn();
 const mockPaymentsCapture = vi.fn();
 
@@ -23,6 +25,8 @@ vi.mock("@/lib/razorpay", () => ({
     },
     customers: {
       create: mockCustomersCreate,
+      edit: mockCustomersEdit,
+      fetch: mockCustomersFetch,
     },
     payments: {
       fetch: mockPaymentsFetch,

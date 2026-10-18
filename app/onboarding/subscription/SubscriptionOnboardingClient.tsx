@@ -122,20 +122,11 @@ export default function SubscriptionOnboardingClient({
         return;
       }
 
-      let contactNumber = (phone || userPhone || "").replace(/[^\d]/g, "");
+      const contactNumber = (phone || userPhone || "").replace(/[^\d]/g, "").slice(-10);
       if (contactNumber.length < 10) {
-        const entered = window.prompt("Enter your 10-digit mobile number to authorize the AutoPay mandate:");
-        if (!entered) {
-          setTrialLoading(false);
-          return;
-        }
-        contactNumber = entered.replace(/[^\d]/g, "");
-        if (contactNumber.length < 10) {
-          setTrialError("A valid 10-digit mobile number is required for AutoPay mandate authorization.");
-          setTrialLoading(false);
-          return;
-        }
-        setPhone(contactNumber);
+        setTrialError("Please enter your 10-digit mobile number below to authorize the AutoPay mandate.");
+        setTrialLoading(false);
+        return;
       }
 
       const res = await fetch("/api/billing/autopay/mandate", {
@@ -320,12 +311,32 @@ export default function SubscriptionOnboardingClient({
                 </p>
               </div>
 
-              <div className="flex flex-col items-start lg:items-end gap-2.5 shrink-0">
+              <div className="flex flex-col items-start lg:items-end gap-3 shrink-0 w-full sm:w-auto">
+                <div className="w-full sm:w-72 space-y-1.5">
+                  <label className="text-[11px] font-semibold text-violet-200 block">
+                    Mobile Number <span className="text-violet-400">* (required for AutoPay)</span>
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-neutral-500">+91</span>
+                    <input
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => {
+                        setTrialError("");
+                        setPhone(e.target.value.replace(/[^\d]/g, "").slice(0, 10));
+                      }}
+                      placeholder="9876543210"
+                      maxLength={10}
+                      className="w-full rounded-xl border border-violet-400/40 bg-white pl-11 pr-3 py-2.5 text-sm text-neutral-950 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-violet-400 font-mono shadow-inner"
+                    />
+                  </div>
+                </div>
+
                 <button
                   type="button"
                   onClick={handleStartFreeEventTrial}
                   disabled={trialLoading}
-                  className="inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3.5 text-sm font-bold text-neutral-950 shadow-md transition-all hover:bg-neutral-100 disabled:opacity-50 active:scale-[0.98]"
+                  className="w-full sm:w-72 inline-flex items-center justify-center gap-2 rounded-xl bg-white px-6 py-3.5 text-sm font-bold text-neutral-950 shadow-md transition-all hover:bg-neutral-100 disabled:opacity-50 active:scale-[0.98]"
                 >
                   {trialLoading ? (
                     <>
@@ -341,7 +352,7 @@ export default function SubscriptionOnboardingClient({
                 </button>
                 <span className="text-[11px] text-violet-300">₹1 mandate authorization · Pay after 1 event</span>
                 {trialError && (
-                  <p className="text-xs text-red-300 font-medium max-w-xs">{trialError}</p>
+                  <p className="text-xs text-rose-300 font-medium max-w-xs">{trialError}</p>
                 )}
               </div>
             </div>

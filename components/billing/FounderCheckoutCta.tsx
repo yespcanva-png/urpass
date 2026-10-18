@@ -12,6 +12,7 @@ interface Props {
   isLoggedIn: boolean;
   userEmail?: string | null;
   userName?: string | null;
+  userPhone?: string | null;
   className?: string;
   variant?: "gradient" | "white" | "billing";
   country?: "IN" | "GB";
@@ -22,6 +23,7 @@ export default function FounderCheckoutCta({
   isLoggedIn,
   userEmail,
   userName,
+  userPhone,
   className = "",
   variant = "gradient",
   country: propCountry,
@@ -137,6 +139,7 @@ export default function FounderCheckoutCta({
         billingCycle="lifetime"
         userEmail={userEmail ?? ""}
         userName={userName ?? ""}
+        userPhone={userPhone ?? ""}
         currency={isUk ? "GBP" : "INR"}
         priceMonthly={isUk ? 249 : 19999}
         annualTotal={isUk ? 249 : 19999}

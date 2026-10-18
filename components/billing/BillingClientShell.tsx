@@ -81,6 +81,7 @@ export interface BillingClientShellProps {
   invoices: InvoiceItem[];
   userEmail: string;
   userName: string;
+  userPhone?: string;
   country: "IN" | "GB";
   eventsThisPeriod: number;
   eventsLimit: number;
@@ -199,6 +200,7 @@ export default function BillingClientShell({
   invoices,
   userEmail,
   userName,
+  userPhone,
   country,
   eventsThisPeriod,
   eventsLimit,
@@ -440,6 +442,7 @@ export default function BillingClientShell({
             currentPlanIndex={currentPlanIndex}
             userEmail={userEmail}
             userName={userName}
+            userPhone={userPhone}
             trialUsed={Boolean(sub?.trial_used || sub?.is_trial || currentPlanSlug !== "free")}
             country={resolvedCountry}
           />
