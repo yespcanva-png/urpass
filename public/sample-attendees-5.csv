@@ -1,0 +1,6 @@
+name,email,phone,pass_type,ticket_type
+Aarav Sharma,aarav.sharma@example.com,9876543210,participant,General Admission
+Priya Patel,priya.patel@example.com,9876543211,vip,VIP Access
+Rohan Verma,rohan.verma@example.com,9876543212,speaker,Speaker Pass
+Ananya Iyer,ananya.iyer@example.com,9876543213,participant,General Admission
+Vikram Malhotra,vikram.malhotra@example.com,9876543214,organizer,Organizer Pass
