@@ -105,6 +105,7 @@ export async function updateEventCommunicationSettings(
     .update({
       ...(settings.sms_enabled !== undefined ? { sms_enabled: settings.sms_enabled } : {}),
       ...(settings.whatsapp_enabled !== undefined ? { whatsapp_enabled: settings.whatsapp_enabled } : {}),
+      ...(settings.whatsapp_settings !== undefined ? { whatsapp_settings: settings.whatsapp_settings } : {}),
       ...(settings.email_enabled !== undefined ? { email_enabled: settings.email_enabled } : {}),
       ...(settings.sms_fallback_enabled !== undefined
         ? { sms_fallback_enabled: settings.sms_fallback_enabled }

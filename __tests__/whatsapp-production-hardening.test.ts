@@ -434,4 +434,137 @@ describe("UrPass — WhatsApp Cloud API Production Hardening & P0 Remediation", 
     expect(normalizePhone("+91 98765 43210")).toBe("+919876543210");
     expect(maskPhone("+919876543210")).toBe("+91 •••••••210");
   });
+
+  // ── Scenario 16: Template Mapping Service Parameter Assembly ───────────────
+  it("Scenario 16: Template mapping service assembles approved template parameters in correct sequence", async () => {
+    const { buildTemplatePayload, APPROVED_TEMPLATES } = await import(
+      "@/lib/communications/providers/whatsapp/templates"
+    );
+
+    // 1. ticket_confirmation
+    const tplTicket = buildTemplatePayload(
+      "ticket_confirmation",
+      {
+        attendeeName: "Ananya",
+        eventName: "UrPass Launch",
+        ticketId: "URP-101",
+        ticketUrl: "https://urpass.space/pass/tok_101",
+        passToken: "tok_101",
+      },
+      "en_US"
+    );
+    expect(tplTicket.name).toBe(APPROVED_TEMPLATES.ticket_confirmation.name);
+    expect(tplTicket.language.code).toBe("en_US");
+    expect(tplTicket.components[0].type).toBe("body");
+    expect(tplTicket.components[0].parameters[0].text).toBe("Ananya");
+    expect(tplTicket.components[0].parameters[1].text).toBe("UrPass Launch");
+    expect(tplTicket.components[0].parameters[2].text).toBe("URP-101");
+    expect(tplTicket.components[0].parameters[3].text).toBe("https://urpass.space/pass/tok_101");
+    // URL button suffix
+    expect(tplTicket.components[1].type).toBe("button");
+    expect(tplTicket.components[1].parameters[0].text).toBe("tok_101");
+
+    // 2. registration_received
+    const tplReg = buildTemplatePayload("registration_received", {
+      attendeeName: "Rahul",
+      eventName: "Founders Meetup",
+      ticketId: "APP-555",
+    });
+    expect(tplReg.components[0].parameters[0].text).toBe("Rahul");
+    expect(tplReg.components[0].parameters[1].text).toBe("Founders Meetup");
+    expect(tplReg.components[0].parameters[2].text).toBe("APP-555");
+
+    // 3. payment_confirmation
+    const tplPay = buildTemplatePayload("payment_confirmation", {
+      attendeeName: "Srinithin",
+      eventName: "Music Gala",
+      amountFormatted: "₹1,499",
+      transactionId: "pay_xyz89",
+    });
+    expect(tplPay.components[0].parameters[2].text).toBe("₹1,499");
+    expect(tplPay.components[0].parameters[3].text).toBe("pay_xyz89");
+
+    // 4. event_cancelled
+    const tplCancel = buildTemplatePayload("event_cancelled", {
+      attendeeName: "Karan",
+      eventName: "Hackathon",
+      reason: "Postponed due to severe weather. Full refunds issued.",
+    });
+    expect(tplCancel.components[0].parameters[2].text).toContain("severe weather");
+  });
+
+  // ── Scenario 17: Inbound WhatsApp Opt-Out ("STOP") ─────────────────────────
+  it("Scenario 17: Inbound opt-out ('STOP') triggers consent revocation and session reply", async () => {
+    const { handleInboundWhatsAppMessage } = await import(
+      "@/lib/communications/providers/whatsapp/inbound"
+    );
+
+    const result = await handleInboundWhatsAppMessage({
+      fromPhone: "+919876543210",
+      messageId: "wamid_inbound_stop_1",
+      text: "STOP",
+      timestamp: String(Date.now()),
+    });
+
+    expect(result.handled).toBe(true);
+    expect(result.action).toBe("opt_out");
+    expect(result.replySent).toBe(true);
+  });
+
+  // ── Scenario 18: Inbound WhatsApp Commands (/pass, /events, /help) ─────────
+  it("Scenario 18: Inbound commands are recognized and answered via 24h session messages", async () => {
+    const { handleInboundWhatsAppMessage } = await import(
+      "@/lib/communications/providers/whatsapp/inbound"
+    );
+
+    // /pass command
+    const passResult = await handleInboundWhatsAppMessage({
+      fromPhone: "+919876543210",
+      messageId: "wamid_inbound_pass_1",
+      text: "/pass",
+    });
+    expect(passResult.handled).toBe(true);
+    expect(passResult.action).toBe("command");
+    expect(passResult.command).toBe("/pass");
+
+    // /help command
+    const helpResult = await handleInboundWhatsAppMessage({
+      fromPhone: "+919876543210",
+      messageId: "wamid_inbound_help_1",
+      text: "HELP",
+    });
+    expect(helpResult.handled).toBe(true);
+    expect(helpResult.action).toBe("command");
+    expect(helpResult.command).toBe("/help");
+  });
+
+  // ── Scenario 19: Admin Diagnostic Authorization Protection ────────────────
+  it("Scenario 19: Diagnostic and test-whatsapp endpoints reject non-admin users with HTTP 403", async () => {
+    const { GET, POST } = await import("@/app/api/communications/test-whatsapp/route");
+
+    // Mock authenticated non-admin user
+    const getRes = await GET();
+    expect(getRes.status).toBe(403);
+    const getData = await getRes.json();
+    expect(getData.error).toContain("Forbidden");
+
+    // POST also protected
+    const postReq = new NextRequest("https://urpass.space/api/communications/test-whatsapp", {
+      method: "POST",
+      body: JSON.stringify({ phone: "+919876543210" }),
+    });
+    const postRes = await POST(postReq);
+    expect(postRes.status).toBe(403);
+  });
+
+  // ── Scenario 20: Outbox Worker Method Availability ─────────────────────────
+  it("Scenario 20: CommunicationService exposes processWhatsAppOutboxRetries for background recovery", async () => {
+    const { communicationService } = await import("@/lib/communications");
+    expect(typeof communicationService.processWhatsAppOutboxRetries).toBe("function");
+
+    const result = await communicationService.processWhatsAppOutboxRetries();
+    expect(result).toHaveProperty("processed");
+    expect(result).toHaveProperty("recovered");
+    expect(result).toHaveProperty("failed");
+  });
 });

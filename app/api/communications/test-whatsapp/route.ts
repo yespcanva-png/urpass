@@ -1,16 +1,47 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { whatsAppProvider } from "@/lib/communications/providers/whatsapp/provider";
-import { normalizePhone, isValidE164 } from "@/lib/communications/utils";
+import { normalizePhone, isValidE164, maskPhone } from "@/lib/communications/utils";
+import { APPROVED_TEMPLATES, WhatsAppTemplateType } from "@/lib/communications/providers/whatsapp/templates";
 
 export const dynamic = "force-dynamic";
 
 /**
- * Diagnostic & Testing Route for Meta WhatsApp Cloud API
+ * Diagnostic & Testing Route for Meta WhatsApp Cloud API (Admin Only)
  *
- * GET: Verifies connectivity with Meta Graph API and reports configuration status.
- * POST: Sends an authenticated test WhatsApp ticket dispatch to a verified phone number.
+ * GET: Verifies connectivity with Meta Graph API, phone number registration,
+ *      webhook configuration, and approved message templates.
+ * POST: Sends an authenticated test WhatsApp message to a verified recipient phone
+ *       without generating fake attendee registrations.
  */
+
+const ADMIN_EMAILS = [
+  "srinithinsomasundaram@gmail.com",
+  "yespcorpindia@gmail.com",
+  "srinithin.260011193@jainuniversity.ac.in",
+  "srinithin002@gmail.com",
+  ...(process.env.ADMIN_EMAILS ? process.env.ADMIN_EMAILS.split(",").map((e) => e.trim().toLowerCase()) : []),
+];
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function verifyAdminAuthorization(supabase: any, user: { id: string; email?: string }): Promise<boolean> {
+  const email = (user.email || "").toLowerCase();
+  if (ADMIN_EMAILS.includes(email)) return true;
+
+  try {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role, is_admin")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (profile?.is_admin === true || profile?.role === "admin" || profile?.role === "owner") {
+      return true;
+    }
+  } catch {}
+
+  return false;
+}
 
 export async function GET() {
   try {
@@ -23,11 +54,19 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized. Please log in to UrPass." }, { status: 401 });
     }
 
+    const isAdmin = await verifyAdminAuthorization(supabase, user);
+    if (!isAdmin) {
+      return NextResponse.json(
+        { error: "Forbidden: WhatsApp diagnostics and credentials management require UrPass administrator privileges." },
+        { status: 403 }
+      );
+    }
+
     const token = process.env.WHATSAPP_CLOUD_ACCESS_TOKEN || process.env.WHATSAPP_API_TOKEN;
     const phoneId = process.env.WHATSAPP_CLOUD_PHONE_NUMBER_ID || process.env.WHATSAPP_PHONE_NUMBER_ID;
+    const wabaId = process.env.WHATSAPP_BUSINESS_ACCOUNT_ID || process.env.WHATSAPP_WABA_ID;
     const verifyTokenSet = Boolean(process.env.WHATSAPP_WEBHOOK_VERIFY_TOKEN || process.env.WHATSAPP_VERIFY_TOKEN);
     const appSecretSet = Boolean(process.env.WHATSAPP_APP_SECRET);
-    const templateName = process.env.WHATSAPP_TEMPLATE_NAME || "ticket_confirmation";
     const graphVersion = process.env.WHATSAPP_GRAPH_VERSION || "v21.0";
 
     const configStatus = {
@@ -38,38 +77,59 @@ export async function GET() {
       appSecretConfigured: appSecretSet,
       accessTokenConfigured: Boolean(token),
       phoneNumberIdConfigured: Boolean(phoneId),
-      templateConfigured: templateName,
+      wabaIdConfigured: Boolean(wabaId),
+      registeredTemplates: Object.keys(APPROVED_TEMPLATES),
     };
 
-    // If live credentials are present, query Meta Graph API to verify live phone connection
+    // If live credentials are present, query Meta Graph API
     if (token && phoneId) {
       try {
-        const metaRes = await fetch(`https://graph.facebook.com/${graphVersion}/${phoneId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+        // 1. Phone number status & quality rating
+        const phoneRes = await fetch(`https://graph.facebook.com/${graphVersion}/${phoneId}`, {
+          headers: { Authorization: `Bearer ${token}` },
         });
+        const phoneData = await phoneRes.json().catch(() => null);
 
-        const metaData = await metaRes.json().catch(() => null);
-
-        if (!metaRes.ok) {
+        if (!phoneRes.ok) {
           return NextResponse.json({
             ...configStatus,
             metaConnection: "failed",
-            metaError: metaData?.error?.message || `Meta Graph API HTTP ${metaRes.status}`,
+            metaError: phoneData?.error?.message || `Meta Graph API HTTP ${phoneRes.status}`,
           });
+        }
+
+        // 2. Query approved templates if WABA ID is configured
+        let approvedTemplatesList: Array<Record<string, unknown>> = [];
+        if (wabaId) {
+          try {
+            const tplRes = await fetch(`https://graph.facebook.com/${graphVersion}/${wabaId}/message_templates?limit=50`, {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+            if (tplRes.ok) {
+              const tplData = await tplRes.json().catch(() => null);
+              if (Array.isArray(tplData?.data)) {
+                approvedTemplatesList = tplData.data.map((t: any) => ({
+                  name: t.name,
+                  status: t.status,
+                  language: t.language,
+                  category: t.category,
+                }));
+              }
+            }
+          } catch {}
         }
 
         return NextResponse.json({
           ...configStatus,
           metaConnection: "connected",
           metaPhoneDetails: {
-            id: metaData?.id,
-            displayPhoneNumber: metaData?.display_phone_number,
-            verifiedName: metaData?.verified_name,
-            qualityRating: metaData?.quality_rating,
-            codeVerificationStatus: metaData?.code_verification_status,
+            id: phoneData?.id,
+            displayPhoneNumber: phoneData?.display_phone_number,
+            verifiedName: phoneData?.verified_name,
+            qualityRating: phoneData?.quality_rating,
+            codeVerificationStatus: phoneData?.code_verification_status,
           },
+          wabaTemplates: approvedTemplatesList.length > 0 ? approvedTemplatesList : "Templates available via Graph API",
         });
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
@@ -84,7 +144,7 @@ export async function GET() {
     return NextResponse.json({
       ...configStatus,
       metaConnection: "credentials_missing",
-      note: "Set WHATSAPP_CLOUD_ACCESS_TOKEN and WHATSAPP_CLOUD_PHONE_NUMBER_ID to enable live Meta Cloud API sending.",
+      note: "Configure WHATSAPP_CLOUD_ACCESS_TOKEN and WHATSAPP_CLOUD_PHONE_NUMBER_ID to activate live Meta Cloud API sending.",
     });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
@@ -101,6 +161,14 @@ export async function POST(req: NextRequest) {
 
     if (!user) {
       return NextResponse.json({ error: "Unauthorized. Please log in to UrPass." }, { status: 401 });
+    }
+
+    const isAdmin = await verifyAdminAuthorization(supabase, user);
+    if (!isAdmin) {
+      return NextResponse.json(
+        { error: "Forbidden: Test messages may only be dispatched by UrPass system administrators." },
+        { status: 403 }
+      );
     }
 
     const body = await req.json().catch(() => null);
@@ -128,10 +196,10 @@ export async function POST(req: NextRequest) {
       ticketId: `TEST-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
       passToken: `test_token_${Date.now()}`,
       attendeeId: user.id,
-      attendeeName: user.user_metadata?.full_name || "Organizer",
-      email: user.email || "organizer@urpass.space",
+      attendeeName: user.user_metadata?.full_name || "Admin Verifier",
+      email: user.email || "admin@urpass.space",
       phone: normalizedPhone,
-      passType: "VIP Pass",
+      passType: "Admin Test Pass",
       ticketUrl: `https://urpass.space/pass/test_token_${Date.now()}`,
       templateName,
       whatsappConsent: true,
@@ -147,7 +215,7 @@ export async function POST(req: NextRequest) {
           error: result.error,
           provider: result.provider,
           payload: {
-            destination: normalizedPhone,
+            destination: maskPhone(normalizedPhone),
             templateName,
           },
         },
@@ -159,7 +227,7 @@ export async function POST(req: NextRequest) {
       success: true,
       messageId: result.messageId,
       provider: result.provider,
-      destination: normalizedPhone,
+      destination: maskPhone(normalizedPhone),
       templateName,
       ticketId: testPayload.ticketId,
       ticketUrl: testPayload.ticketUrl,

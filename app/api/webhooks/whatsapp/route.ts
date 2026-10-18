@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import { communicationService } from "@/lib/communications";
 import { DeliveryStatus } from "@/lib/communications/types";
+import { handleInboundWhatsAppMessage } from "@/lib/communications/providers/whatsapp/inbound";
 
 export const dynamic = "force-dynamic";
 
@@ -209,6 +210,18 @@ export async function POST(req: NextRequest) {
             console.log(
               `[WhatsApp Webhook] Inbound message from +${sender} (type: ${msgType}): ${textBody}`
             );
+
+            // Handle commands and opt-in / opt-out
+            try {
+              await handleInboundWhatsAppMessage({
+                fromPhone: sender,
+                messageId: msgId,
+                text: textBody,
+                timestamp: msg.timestamp,
+              });
+            } catch (err) {
+              console.error("[WhatsApp Webhook] Inbound message handling error:", err);
+            }
           }
         }
       }

@@ -58,11 +58,19 @@ export class CommunicationService {
       };
     }
 
+    const defaultWhatsappSettings = {
+      registration_received: true,
+      ticket_delivery: true,
+      payment_confirmation: true,
+      event_reminders: true,
+      event_cancellation: true,
+    };
+
     try {
       const { data } = await admin
         .from("events")
         .select(
-          "sms_enabled, whatsapp_enabled, email_enabled, sms_fallback_enabled, sms_sender_id, sms_dlt_entity_id, sms_dlt_template_id, sms_provider"
+          "sms_enabled, whatsapp_enabled, email_enabled, sms_fallback_enabled, whatsapp_settings, sms_sender_id, sms_dlt_entity_id, sms_dlt_template_id, sms_provider"
         )
         .eq("id", eventId)
         .maybeSingle();
@@ -73,6 +81,10 @@ export class CommunicationService {
           whatsapp_enabled: !!data.whatsapp_enabled,
           email_enabled: data.email_enabled !== false,
           sms_fallback_enabled: data.sms_fallback_enabled !== false,
+          whatsapp_settings: {
+            ...defaultWhatsappSettings,
+            ...(data.whatsapp_settings || {}),
+          },
           sms_sender_id: data.sms_sender_id || "URPASS",
           sms_dlt_entity_id: data.sms_dlt_entity_id,
           sms_dlt_template_id: data.sms_dlt_template_id,
@@ -86,6 +98,7 @@ export class CommunicationService {
       whatsapp_enabled: false,
       email_enabled: true,
       sms_fallback_enabled: true,
+      whatsapp_settings: defaultWhatsappSettings,
     };
   }
 
@@ -721,6 +734,109 @@ export class CommunicationService {
       return true;
     } catch {
       return false;
+    }
+  }
+
+  /**
+   * Scans and processes pending/retryable WhatsApp dispatches with exponential backoff.
+   * Delays:
+   *   Attempt 1 -> Attempt 2: 1 minute (60s)
+   *   Attempt 2 -> Attempt 3: 5 minutes (300s)
+   *   Attempt 3 -> Failure: 15 minutes (900s)
+   */
+  async processWhatsAppOutboxRetries(): Promise<{ processed: number; recovered: number; failed: number }> {
+    const admin = getAdminClient();
+    if (!admin) return { processed: 0, recovered: 0, failed: 0 };
+
+    const oneMinuteAgo = new Date(Date.now() - 60 * 1000).toISOString();
+
+    try {
+      const { data: pending } = await admin
+        .from("communication_deliveries")
+        .select("id, ticket_id, destination, template_name, attempt_count, last_attempt_at, idempotency_key, metadata, event:events(id, name, event_date, venue)")
+        .eq("channel", "WHATSAPP")
+        .in("status", ["QUEUED", "SENDING"])
+        .lt("last_attempt_at", oneMinuteAgo)
+        .limit(50);
+
+      if (!pending || pending.length === 0) {
+        return { processed: 0, recovered: 0, failed: 0 };
+      }
+
+      let recovered = 0;
+      let failed = 0;
+
+      for (const item of pending) {
+        const attempts = Number(item.attempt_count || 1);
+        const lastAttemptMs = item.last_attempt_at ? new Date(item.last_attempt_at).getTime() : 0;
+        const elapsedSeconds = (Date.now() - lastAttemptMs) / 1000;
+
+        const requiredDelaySeconds = attempts === 1 ? 60 : attempts === 2 ? 300 : 900;
+        if (elapsedSeconds < requiredDelaySeconds) {
+          continue;
+        }
+
+        if (attempts >= 3) {
+          await admin
+            .from("communication_deliveries")
+            .update({
+              status: "FAILED",
+              failure_code: "MAX_RETRIES_EXCEEDED",
+              failure_reason: `Exceeded maximum automated retry attempts (${attempts})`,
+              failed_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", item.id);
+          failed++;
+          continue;
+        }
+
+        const eventData = Array.isArray(item.event) ? item.event[0] : item.event;
+        const passToken = item.metadata?.passToken || item.ticket_id || "";
+
+        await admin
+          .from("communication_deliveries")
+          .update({
+            attempt_count: attempts + 1,
+            last_attempt_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", item.id);
+
+        const res = await this.whatsapp.sendTicketWhatsApp({
+          eventId: eventData?.id || "outbox",
+          eventName: eventData?.name || "Your Event",
+          eventDate: eventData?.event_date,
+          venue: eventData?.venue,
+          ticketId: item.ticket_id || "PASS",
+          passToken,
+          attendeeId: item.metadata?.attendeeId || "outbox",
+          attendeeName: item.metadata?.attendeeName || "Guest",
+          email: item.metadata?.email || "attendee@urpass.space",
+          phone: item.destination,
+          ticketUrl: item.metadata?.ticketUrl || buildTicketUrl(passToken),
+          templateName: item.template_name,
+          whatsappConsent: true,
+        });
+
+        if (res.success) {
+          await admin
+            .from("communication_deliveries")
+            .update({
+              status: "SENT",
+              provider_message_id: res.messageId || null,
+              sent_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", item.id);
+          recovered++;
+        }
+      }
+
+      return { processed: pending.length, recovered, failed };
+    } catch (err) {
+      console.error("[CommunicationService] processWhatsAppOutboxRetries exception:", err);
+      return { processed: 0, recovered: 0, failed: 0 };
     }
   }
 }

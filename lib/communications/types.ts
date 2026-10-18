@@ -66,11 +66,20 @@ export interface TicketDeliveryPayload {
   isSessionReply?: boolean;
 }
 
+export interface WhatsAppNotificationToggles {
+  registration_received?: boolean;
+  ticket_delivery?: boolean;
+  payment_confirmation?: boolean;
+  event_reminders?: boolean;
+  event_cancellation?: boolean;
+}
+
 export interface EventCommunicationSettings {
   sms_enabled: boolean;
   whatsapp_enabled: boolean;
   email_enabled: boolean;
   sms_fallback_enabled: boolean;
+  whatsapp_settings?: WhatsAppNotificationToggles;
   sms_sender_id?: string | null;
   sms_dlt_entity_id?: string | null;
   sms_dlt_template_id?: string | null;

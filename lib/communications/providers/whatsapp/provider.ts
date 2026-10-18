@@ -1,6 +1,7 @@
 import { TicketDeliveryPayload } from "../../types";
 import { isValidE164 } from "../../utils";
 import { aiSensyProvider } from "./aisensy";
+import { buildTemplatePayload, APPROVED_TEMPLATES, WhatsAppTemplateType } from "./templates";
 
 export interface WhatsAppResult {
   success: boolean;
@@ -81,43 +82,40 @@ export class WhatsAppProvider {
 
       const cleanPhone = payload.phone.replace(/^\+/, "").replace(/\s+/g, "").trim();
 
-      const templateComponents: Array<Record<string, unknown>> = [];
+      let templateObj = null;
+      if (templateName) {
+        const knownType = Object.keys(APPROVED_TEMPLATES).includes(templateName)
+          ? (templateName as WhatsAppTemplateType)
+          : "ticket_confirmation";
 
-      // Optional header component (QR pass image or event banner)
-      if (payload.mediaUrl) {
-        templateComponents.push({
-          type: "header",
-          parameters: [
-            {
-              type: "image",
-              image: { link: payload.mediaUrl },
-            },
-          ],
-        });
+        const generated = buildTemplatePayload(
+          knownType,
+          {
+            attendeeName: payload.attendeeName,
+            eventName: payload.eventName,
+            eventDate: payload.eventDate,
+            venue: payload.venue,
+            ticketId: payload.ticketId,
+            ticketUrl: payload.ticketUrl,
+            passToken: payload.passToken,
+            mediaUrl: payload.mediaUrl,
+          },
+          templateLang
+        );
+
+        if (!Object.keys(APPROVED_TEMPLATES).includes(templateName)) {
+          generated.name = templateName;
+        }
+        templateObj = generated;
       }
 
-      // Mandatory Body parameters: [Attendee Name, Event Name, Ticket ID, Pass Link]
-      templateComponents.push({
-        type: "body",
-        parameters: [
-          { type: "text", text: payload.attendeeName || "Guest" },
-          { type: "text", text: payload.eventName || "Event" },
-          { type: "text", text: payload.ticketId || "PASS" },
-          { type: "text", text: payload.ticketUrl || "https://urpass.space" },
-        ],
-      });
-
-      const requestBody = templateName
+      const requestBody = templateObj
         ? {
             messaging_product: "whatsapp",
             recipient_type: "individual",
             to: cleanPhone,
             type: "template",
-            template: {
-              name: templateName,
-              language: { code: templateLang },
-              components: templateComponents,
-            },
+            template: templateObj,
           }
         : {
             messaging_product: "whatsapp",

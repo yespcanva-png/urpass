@@ -26,7 +26,7 @@ import {
 import {
   updateEventCommunicationSettings,
 } from "@/app/actions/communications";
-import type { EventCommunicationSettings } from "@/lib/communications";
+import type { EventCommunicationSettings, WhatsAppNotificationToggles } from "@/lib/communications";
 import WhatsAppBulkInviteCard from "@/components/communications/WhatsAppBulkInviteCard";
 
 interface Props {
@@ -154,6 +154,29 @@ export default function CommunicationsClient({
 
     await updateEventCommunicationSettings(eventId, {
       [key]: updatedValue,
+    });
+  }
+
+  async function handleToggleWhatsAppSubSetting(subKey: keyof WhatsAppNotificationToggles) {
+    const currentSub = settings.whatsapp_settings || {
+      registration_received: true,
+      ticket_delivery: true,
+      payment_confirmation: true,
+      event_reminders: true,
+      event_cancellation: true,
+    };
+    const updatedSub = {
+      ...currentSub,
+      [subKey]: !currentSub[subKey],
+    };
+    const newSettings = {
+      ...settings,
+      whatsapp_settings: updatedSub,
+    };
+    setSettings(newSettings);
+
+    await updateEventCommunicationSettings(eventId, {
+      whatsapp_settings: updatedSub,
     });
   }
 
@@ -370,27 +393,68 @@ export default function CommunicationsClient({
                 </label>
               </div>
 
-              {/* Channel 2: WhatsApp */}
-              <div className="p-3.5 rounded-xl border border-neutral-200 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-                    <MessageSquare className="w-4 h-4" />
+              {/* Channel 2: WhatsApp (Meta Cloud API) */}
+              <div className="p-3.5 rounded-xl border border-neutral-200 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                      <MessageSquare className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-neutral-900">Meta WhatsApp Cloud API</p>
+                      <p className="text-[10px] text-neutral-500">Official business number delivery (admin-managed credentials)</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-xs font-semibold text-neutral-900">WhatsApp (AiSensy)</p>
-                    <p className="text-[10px] text-neutral-500">Direct mobile QR ticket delivery via AiSensy campaign</p>
-                  </div>
+
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={settings.whatsapp_enabled !== false}
+                      onChange={() => handleToggleSetting("whatsapp_enabled")}
+                      className="sr-only peer"
+                    />
+                    <div className="w-9 h-5 bg-neutral-200 peer-focus:outline-hidden rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-neutral-900" />
+                  </label>
                 </div>
 
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={settings.whatsapp_enabled !== false}
-                    onChange={() => handleToggleSetting("whatsapp_enabled")}
-                    className="sr-only peer"
-                  />
-                  <div className="w-9 h-5 bg-neutral-200 peer-focus:outline-hidden rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-neutral-900" />
-                </label>
+                {settings.whatsapp_enabled !== false && (
+                  <div className="pt-2 border-t border-neutral-100 space-y-2 text-[11px]">
+                    <div className="text-[10px] uppercase font-bold tracking-wider text-neutral-400">
+                      Automated Notification Triggers
+                    </div>
+                    <div className="space-y-1.5 pl-0.5">
+                      {[
+                        { key: "registration_received", label: "Registration Received", desc: "Acknowledge application submission" },
+                        { key: "ticket_delivery", label: "QR Pass Delivery", desc: "Deliver secure HTTPS mobile pass link" },
+                        { key: "payment_confirmation", label: "Payment Confirmation", desc: "Receipt for paid registrations" },
+                        { key: "event_reminders", label: "24h Pre-Event Reminder", desc: "Start time, venue and pass link" },
+                        { key: "event_cancellation", label: "Cancellation / Updates", desc: "Advisory notice and refund status" },
+                      ].map((item) => {
+                        const isChecked =
+                          settings.whatsapp_settings?.[item.key as keyof WhatsAppNotificationToggles] !== false;
+                        return (
+                          <label
+                            key={item.key}
+                            className="flex items-center justify-between py-1 cursor-pointer hover:bg-neutral-50 px-1 rounded-md transition-colors"
+                          >
+                            <div>
+                              <p className="font-medium text-neutral-800 text-[11px]">{item.label}</p>
+                              <p className="text-[9px] text-neutral-400">{item.desc}</p>
+                            </div>
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={() =>
+                                handleToggleWhatsAppSubSetting(item.key as keyof WhatsAppNotificationToggles)
+                              }
+                              className="w-3.5 h-3.5 rounded border-neutral-300 text-neutral-900 focus:ring-neutral-900 cursor-pointer"
+                            />
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Channel 3: SMS / DLT */}

@@ -150,9 +150,9 @@ export async function approveAttendee(
     await markReservationApproved(adminClient(), order.razorpay_order_id);
   }
 
-  // Notify the attendee they've been approved
+  // Notify the attendee they've been approved and trigger pass issuance
   const [{ data: att }, { data: evt }] = await Promise.all([
-    supabase.from("attendees").select("name, email").eq("id", attendeeId).single(),
+    supabase.from("attendees").select("name, email, phone, whatsapp_consent").eq("id", attendeeId).single(),
     supabase.from("events").select("name, event_date, venue").eq("id", eventId).single(),
   ]);
   if (att && evt) {
@@ -163,6 +163,11 @@ export async function approveAttendee(
       eventDate: evt.event_date,
       venue: evt.venue,
     }).catch((err: unknown) => console.error("[email]", err));
+
+    // Auto-generate pass and dispatch WhatsApp & multi-channel communications upon approval
+    void generatePass(attendeeId, eventId).catch((err) =>
+      console.error("[approveAttendee] generatePass error:", err)
+    );
   }
 
   if (event.organization_id) {
@@ -203,7 +208,7 @@ export async function rejectAttendee(
 
   const { data: attendee } = await supabase
     .from("attendees")
-    .select("id, name, email, application_status, pass_status, ticket_type_id")
+    .select("id, name, email, phone, whatsapp_consent, application_status, pass_status, ticket_type_id")
     .eq("id", attendeeId)
     .eq("event_id", eventId)
     .single();
@@ -378,6 +383,36 @@ export async function rejectAttendee(
       creditNoteNumber,
       reason: rejectionReason,
     }).catch((emailErr) => console.error("[rejectAttendee] Error sending refund notification:", emailErr));
+  }
+
+  // Send WhatsApp cancellation / rejection update if attendee opted in
+  if (attendee.phone) {
+    void (async () => {
+      try {
+        const commSettings = await communicationService.getEventCommunicationSettings(eventId);
+        if (
+          commSettings.whatsapp_enabled &&
+          commSettings.whatsapp_settings?.event_cancellation !== false &&
+          attendee.whatsapp_consent
+        ) {
+          await communicationService.sendTicketWhatsApp({
+            eventId,
+            eventName: event.name,
+            ticketId: "CANCELLED",
+            passToken: `cancelled_${attendeeId}`,
+            attendeeId: attendee.id,
+            attendeeName: attendee.name,
+            email: attendee.email,
+            phone: attendee.phone,
+            templateName: "event_cancelled",
+            whatsappConsent: true,
+            version: `reject_${attendee.id}_${Date.now()}`,
+          });
+        }
+      } catch (waErr) {
+        console.error("[rejectAttendee] WhatsApp cancellation error:", waErr);
+      }
+    })();
   }
 
   if (event.organization_id) {
@@ -1429,6 +1464,35 @@ export async function submitApplication(
     eventDate: event.event_date,
     venue: event.venue,
   }).catch((err: unknown) => console.error("[email]", err));
+
+  // Send WhatsApp registration received acknowledgment if opted in
+  if (parsed.data.phone && parsed.data.whatsapp_consent) {
+    void (async () => {
+      try {
+        const commSettings = await communicationService.getEventCommunicationSettings(canonicalEventId);
+        if (
+          commSettings.whatsapp_enabled &&
+          commSettings.whatsapp_settings?.registration_received !== false
+        ) {
+          await communicationService.sendTicketWhatsApp({
+            eventId: canonicalEventId,
+            eventName: event.name,
+            ticketId: newAttendee?.id ? `APP-${newAttendee.id.slice(0, 8).toUpperCase()}` : "PENDING",
+            passToken: newAttendee?.id || "pending",
+            attendeeId: newAttendee?.id || "pending",
+            attendeeName: parsed.data.name,
+            email: parsed.data.email,
+            phone: parsed.data.phone,
+            templateName: "registration_received",
+            whatsappConsent: true,
+            version: `app_ack_${newAttendee?.id || Date.now()}`,
+          });
+        }
+      } catch (waErr) {
+        console.error("[submitApplication] WhatsApp registration received error:", waErr);
+      }
+    })();
+  }
 
   // Fire webhook — non-blocking
   sendWebhooks(event.organizer_id, "registration.created", {
