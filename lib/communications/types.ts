@@ -61,6 +61,9 @@ export interface TicketDeliveryPayload {
   customMessage?: string;
   templateName?: string;
   templateLanguage?: string;
+  mediaUrl?: string;
+  whatsappConsent?: boolean;
+  isSessionReply?: boolean;
 }
 
 export interface EventCommunicationSettings {

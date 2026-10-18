@@ -178,6 +178,8 @@ describe("CommunicationService Orchestration", () => {
         attendeeName: "Charlie",
         email: "charlie@example.com",
         phone: "+919876543210",
+        whatsappConsent: true,
+        templateName: "ticket_confirmation",
       },
       {
         email_enabled: false,

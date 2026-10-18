@@ -281,7 +281,8 @@ export class CommunicationService {
   }
 
   /**
-   * Sends ticket via WhatsApp and logs delivery
+   * Sends ticket via WhatsApp with atomic database claiming, strict idempotency,
+   * consent verification, and Monotonic delivery status reconciliation.
    */
   async sendTicketWhatsApp(
     payload: TicketDeliveryPayload
@@ -291,39 +292,168 @@ export class CommunicationService {
     const ticketUrl = payload.ticketUrl || buildTicketUrl(payload.passToken);
     const normalizedPhone = normalizePhone(payload.phone);
 
-    if (!normalizedPhone) {
-      return { success: false, error: "Valid phone number required for WhatsApp" };
+    if (!normalizedPhone || !isValidE164(normalizedPhone)) {
+      return { success: false, error: "Valid phone number in E.164 format is required for WhatsApp" };
+    }
+
+    // ── 1. Attendee Consent Verification ──
+    let consentGranted = payload.whatsappConsent === true;
+    if (!consentGranted && admin && payload.attendeeId) {
+      try {
+        const { data: att } = await admin
+          .from("attendees")
+          .select("whatsapp_consent")
+          .eq("id", payload.attendeeId)
+          .maybeSingle();
+
+        if (att?.whatsapp_consent) {
+          consentGranted = true;
+        }
+      } catch {}
+    }
+
+    if (!consentGranted) {
+      return {
+        success: false,
+        error: "Attendee has not opted in to receive WhatsApp notifications (explicit consent required)",
+      };
     }
 
     const idempotencyKey = generateIdempotencyKey(payload.passToken, "WHATSAPP", payload.version || "v1");
 
-    const res = await this.whatsapp.sendTicketWhatsApp({
-      ...payload,
-      phone: normalizedPhone,
-      ticketId,
-      ticketUrl,
-    });
+    // ── 2. Atomic Database Claim (Prevent Concurrent Duplicate Sends) ──
+    let existingRecord: {
+      id?: string;
+      status?: string;
+      provider?: string;
+      provider_message_id?: string | null;
+      last_attempt_at?: string | null;
+      attempt_count?: number;
+    } | null = null;
+
+    let isNewClaim = false;
 
     if (admin) {
       try {
-        await admin.from("communication_deliveries").upsert(
-          {
+        // Attempt atomic INSERT claim with status: 'SENDING'
+        const { data: inserted, error: insertErr } = await admin
+          .from("communication_deliveries")
+          .insert({
             event_id: payload.eventId,
             ticket_id: ticketId,
             attendee_id: payload.attendeeId,
             channel: "WHATSAPP",
             destination: normalizedPhone,
-            template_name: "ticket_confirmation",
-            provider: res.provider || this.whatsapp.name,
-            provider_message_id: res.messageId || null,
-            status: res.success ? "SENT" : "FAILED",
-            failure_reason: res.error || null,
+            template_name: payload.templateName || process.env.WHATSAPP_TEMPLATE_NAME || "ticket_confirmation",
+            provider: "whatsapp_cloud",
+            status: "SENDING",
+            attempt_count: 1,
+            last_attempt_at: new Date().toISOString(),
             idempotency_key: idempotencyKey,
-            sent_at: res.success ? new Date().toISOString() : null,
-            failed_at: !res.success ? new Date().toISOString() : null,
-          },
-          { onConflict: "idempotency_key" }
-        );
+            metadata: { version: payload.version || "v1" },
+          })
+          .select("id, status, provider_message_id, provider, last_attempt_at, attempt_count")
+          .maybeSingle();
+
+        if (insertErr) {
+          // Row already exists — fetch existing delivery record
+          const { data: existing } = await admin
+            .from("communication_deliveries")
+            .select("id, status, provider_message_id, provider, last_attempt_at, attempt_count")
+            .eq("idempotency_key", idempotencyKey)
+            .maybeSingle();
+
+          existingRecord = existing;
+        } else {
+          existingRecord = inserted;
+          isNewClaim = true;
+        }
+      } catch {
+        // Fallback if database operation throws
+      }
+    }
+
+    // Evaluate existing record to suppress duplicate notifications
+    if (existingRecord && !isNewClaim) {
+      const currentStatus = String(existingRecord.status || "").toUpperCase();
+
+      // Terminal Success: already sent or delivered to attendee
+      if (["SENT", "DELIVERED", "READ"].includes(currentStatus)) {
+        return {
+          success: true,
+          messageId: existingRecord.provider_message_id || undefined,
+          provider: existingRecord.provider || "whatsapp_cloud",
+        };
+      }
+
+      // Concurrency check: if another request is currently in 'SENDING' state
+      if (currentStatus === "SENDING") {
+        const lastAttempt = existingRecord.last_attempt_at ? new Date(existingRecord.last_attempt_at).getTime() : 0;
+        const isRecent = Date.now() - lastAttempt < 60000; // 60s lock window
+        if (isRecent) {
+          return {
+            success: false,
+            error: "A WhatsApp notification for this ticket is currently in-flight. Duplicate send suppressed.",
+          };
+        }
+      }
+
+      // If previous attempt failed or timed out, update attempt count and last_attempt_at
+      if (admin && existingRecord.id) {
+        try {
+          await admin
+            .from("communication_deliveries")
+            .update({
+              status: "SENDING",
+              attempt_count: (existingRecord.attempt_count || 1) + 1,
+              last_attempt_at: new Date().toISOString(),
+            })
+            .eq("id", existingRecord.id);
+        } catch {}
+      }
+    }
+
+    // ── 3. Dispatch to Meta WhatsApp Cloud API Gateway ──
+    let res: { success: boolean; messageId?: string; error?: string; provider?: string };
+    try {
+      res = await this.whatsapp.sendTicketWhatsApp({
+        ...payload,
+        phone: normalizedPhone,
+        ticketId,
+        ticketUrl,
+        whatsappConsent: true,
+      });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      res = {
+        success: false,
+        error: `WhatsApp gateway dispatch exception: ${msg}`,
+        provider: "whatsapp_cloud",
+      };
+    }
+
+    // ── 4. Reconcile Gateway Result in Database ──
+    if (admin) {
+      try {
+        const now = new Date().toISOString();
+        const isSuccess = Boolean(res.success);
+        const isTimeout = !isSuccess && Boolean(res.error?.toLowerCase().includes("timeout") || res.error?.toLowerCase().includes("abort"));
+
+        // If timed out, keep status as 'SENDING' to await webhook reconciliation rather than blindly retrying
+        const updatedStatus = isSuccess ? "SENT" : isTimeout ? "SENDING" : "FAILED";
+
+        await admin
+          .from("communication_deliveries")
+          .update({
+            provider: res.provider || "whatsapp_cloud",
+            provider_message_id: res.messageId || null,
+            status: updatedStatus,
+            failure_reason: res.error || null,
+            sent_at: isSuccess ? now : null,
+            failed_at: !isSuccess && !isTimeout ? now : null,
+            updated_at: now,
+          })
+          .eq("idempotency_key", idempotencyKey);
       } catch {}
     }
 
@@ -366,7 +496,7 @@ export class CommunicationService {
     if (settings.whatsapp_enabled && payload.phone) {
       const waRes = await this.sendTicketWhatsApp(payload);
       out.whatsapp = waRes;
-      if (!waRes.success) {
+      if (!waRes.success && !waRes.error?.includes("opted in")) {
         whatsappFailed = true;
       }
     }
@@ -530,6 +660,7 @@ export class CommunicationService {
       status: DeliveryStatus;
       failureReason?: string;
       deliveredAt?: string;
+      readAt?: string;
       cost?: number;
     }
   ): Promise<boolean> {
@@ -537,30 +668,54 @@ export class CommunicationService {
     if (!admin || !data.providerMessageId) return false;
 
     try {
-      const { data: record } = await admin
+      let query = admin
         .from("communication_deliveries")
-        .select("id, status")
-        .eq("provider", provider)
-        .eq("provider_message_id", data.providerMessageId)
-        .maybeSingle();
+        .select("id, status, delivered_at")
+        .eq("provider_message_id", data.providerMessageId);
+
+      if (provider) {
+        query = query.eq("provider", provider);
+      }
+
+      const { data: record } = await query.maybeSingle();
 
       if (!record) return false;
 
-      // Idempotency: if already in terminal state DELIVERED, ignore older status
-      if (record.status === "DELIVERED" && data.status !== "DELIVERED") {
+      // Status hierarchy preservation:
+      // 1. If already READ, ignore older status updates (DELIVERED, SENT, QUEUED)
+      if (record.status === "READ" && data.status !== "READ") {
         return true;
+      }
+      // 2. If already DELIVERED, ignore older status updates (SENT, QUEUED), but allow promotion to READ
+      if (record.status === "DELIVERED" && (data.status === "SENT" || data.status === "QUEUED")) {
+        return true;
+      }
+
+      const now = new Date().toISOString();
+      const updateData: Record<string, unknown> = {
+        status: data.status,
+        updated_at: now,
+      };
+
+      if (data.status === "DELIVERED") {
+        updateData.delivered_at = data.deliveredAt || now;
+      } else if (data.status === "READ") {
+        updateData.read_at = data.readAt || now;
+        if (!record.delivered_at) {
+          updateData.delivered_at = data.deliveredAt || now;
+        }
+      } else if (data.status === "FAILED") {
+        updateData.failed_at = now;
+        updateData.failure_reason = data.failureReason || null;
+      }
+
+      if (data.cost !== undefined) {
+        updateData.provider_cost = data.cost;
       }
 
       await admin
         .from("communication_deliveries")
-        .update({
-          status: data.status,
-          delivered_at: data.status === "DELIVERED" ? data.deliveredAt || new Date().toISOString() : null,
-          failed_at: data.status === "FAILED" ? new Date().toISOString() : null,
-          failure_reason: data.failureReason || null,
-          ...(data.cost ? { provider_cost: data.cost } : {}),
-          updated_at: new Date().toISOString(),
-        })
+        .update(updateData)
         .eq("id", record.id);
 
       return true;

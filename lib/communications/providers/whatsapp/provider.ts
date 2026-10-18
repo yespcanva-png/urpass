@@ -15,9 +15,6 @@ export class WhatsAppProvider {
   private simulateFailure = false;
 
   get name(): string {
-    if (process.env.AISENSY_API_KEY) {
-      return "aisensy";
-    }
     return "whatsapp_cloud";
   }
 
@@ -47,21 +44,24 @@ export class WhatsAppProvider {
       };
     }
 
-    // 1. Priority 1: AiSensy if AISENSY_API_KEY is configured
-    if (aiSensyProvider.isConfigured()) {
-      const aisResult = await aiSensyProvider.sendTicketWhatsApp(payload);
-      return {
-        success: aisResult.success,
-        messageId: aisResult.messageId,
-        error: aisResult.error,
-        unavailable: !aisResult.success && aisResult.error?.includes("timeout"),
-        provider: "aisensy",
-      };
-    }
+    // Direct Meta WhatsApp Cloud API
 
     // 2. Priority 2: Meta WhatsApp Cloud API if credentials present
     const token = process.env.WHATSAPP_API_TOKEN || process.env.WHATSAPP_CLOUD_ACCESS_TOKEN;
     const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID || process.env.WHATSAPP_CLOUD_PHONE_NUMBER_ID;
+
+    const templateName = payload.templateName || process.env.WHATSAPP_TEMPLATE_NAME;
+    const templateLang = payload.templateLanguage || process.env.WHATSAPP_TEMPLATE_LANG || "en";
+
+    // Meta Policy Enforcement: Outbound business-initiated messages require an approved template
+    if (!templateName && !payload.isSessionReply) {
+      return {
+        success: false,
+        error:
+          "Meta WhatsApp Cloud API strictly requires an approved message template (e.g. WHATSAPP_TEMPLATE_NAME='ticket_confirmation') for outbound business-initiated messages outside the 24-hour customer service window.",
+        provider: "whatsapp_cloud",
+      };
+    }
 
     // In local dev/testing without WhatsApp API credentials, simulate delivery
     if (!token || !phoneId) {
@@ -79,35 +79,50 @@ export class WhatsAppProvider {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 6000);
 
-      const templateName = payload.templateName || process.env.WHATSAPP_TEMPLATE_NAME;
-      const templateLang = payload.templateLanguage || process.env.WHATSAPP_TEMPLATE_LANG || "en";
+      const cleanPhone = payload.phone.replace(/^\+/, "").replace(/\s+/g, "").trim();
+
+      const templateComponents: Array<Record<string, unknown>> = [];
+
+      // Optional header component (QR pass image or event banner)
+      if (payload.mediaUrl) {
+        templateComponents.push({
+          type: "header",
+          parameters: [
+            {
+              type: "image",
+              image: { link: payload.mediaUrl },
+            },
+          ],
+        });
+      }
+
+      // Mandatory Body parameters: [Attendee Name, Event Name, Ticket ID, Pass Link]
+      templateComponents.push({
+        type: "body",
+        parameters: [
+          { type: "text", text: payload.attendeeName || "Guest" },
+          { type: "text", text: payload.eventName || "Event" },
+          { type: "text", text: payload.ticketId || "PASS" },
+          { type: "text", text: payload.ticketUrl || "https://urpass.space" },
+        ],
+      });
 
       const requestBody = templateName
         ? {
             messaging_product: "whatsapp",
             recipient_type: "individual",
-            to: payload.phone.replace("+", ""),
+            to: cleanPhone,
             type: "template",
             template: {
               name: templateName,
               language: { code: templateLang },
-              components: [
-                {
-                  type: "body",
-                  parameters: [
-                    { type: "text", text: payload.attendeeName || "Guest" },
-                    { type: "text", text: payload.eventName || "Event" },
-                    { type: "text", text: payload.ticketId || "PASS" },
-                    { type: "text", text: payload.ticketUrl || "https://urpass.space" },
-                  ],
-                },
-              ],
+              components: templateComponents,
             },
           }
         : {
             messaging_product: "whatsapp",
             recipient_type: "individual",
-            to: payload.phone.replace("+", ""),
+            to: cleanPhone,
             type: "text",
             text: {
               preview_url: true,
@@ -117,7 +132,8 @@ export class WhatsAppProvider {
             },
           };
 
-      const url = `https://graph.facebook.com/v19.0/${phoneId}/messages`;
+      const apiVersion = process.env.WHATSAPP_GRAPH_VERSION || "v21.0";
+      const url = `https://graph.facebook.com/${apiVersion}/${phoneId}/messages`;
       const res = await fetch(url, {
         method: "POST",
         headers: {
@@ -132,16 +148,23 @@ export class WhatsAppProvider {
       const data = await res.json().catch(() => null);
 
       if (!res.ok) {
+        const errObj = data?.error;
+        const detailMsg =
+          errObj?.error_data?.details ||
+          errObj?.message ||
+          `WhatsApp HTTP ${res.status}`;
+        const errorCode = errObj?.code ? ` [Code ${errObj.code}]` : "";
         return {
           success: false,
-          error: data?.error?.message || `WhatsApp HTTP ${res.status}`,
+          error: `${detailMsg}${errorCode}`,
           provider: "whatsapp_cloud",
         };
       }
 
+      const messageId = data?.messages?.[0]?.id || `wamid_${Date.now()}`;
       return {
         success: true,
-        messageId: data?.messages?.[0]?.id || `wamid_${Date.now()}`,
+        messageId,
         provider: "whatsapp_cloud",
       };
     } catch (err: unknown) {

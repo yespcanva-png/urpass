@@ -13,6 +13,7 @@ export const attendeeSchema = z.object({
   pass_type: z.enum(PASS_TYPES, {
     errorMap: () => ({ message: "Select a valid pass type" }),
   }),
+  whatsapp_consent: z.boolean().optional(),
 });
 
 export type AttendeeInput = z.infer<typeof attendeeSchema>;

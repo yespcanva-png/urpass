@@ -938,12 +938,17 @@ export async function submitApplication(
         : {}),
     };
 
+    const hasConsent = Boolean(parsed.data.whatsapp_consent);
     // Insert as approved immediately
     const { data: attendee, error: attendeeError } = await admin
       .from("attendees")
       .insert({
         event_id: canonicalEventId,
         ...parsed.data,
+        whatsapp_consent: hasConsent,
+        whatsapp_consent_at: hasConsent ? new Date().toISOString() : null,
+        whatsapp_consent_disclosure_version: hasConsent ? "urpass_wa_consent_v1" : null,
+        whatsapp_consent_source: "registration_form",
         application_status: "approved",
         ticket_type_id: selectedTicketType?.id ?? null,
         custom_responses: finalCustomResponses,
@@ -1190,6 +1195,7 @@ export async function submitApplication(
           passType: attendee.pass_type,
           ticketUrl: buildTicketUrl(pass.pass_token),
           version: `attendee_${attendee.id}`,
+          whatsappConsent: hasConsent,
         })
         .catch((err: unknown) => console.error("[communications]", err));
 
@@ -1664,3 +1670,23 @@ export async function reconcileEventPaymentsAction(
     error: result.errors.length > 0 ? result.errors.join("; ") : undefined,
   };
 }
+
+export async function updateAttendeeWhatsAppConsent(
+  attendeeId: string,
+  consentGranted: boolean
+): Promise<{ success: boolean; error?: string }> {
+  const admin = adminClient();
+  const now = new Date().toISOString();
+  const { error } = await admin
+    .from("attendees")
+    .update({
+      whatsapp_consent: consentGranted,
+      whatsapp_consent_at: now,
+      whatsapp_consent_source: consentGranted ? "attendee_portal" : "attendee_withdrawn",
+    })
+    .eq("id", attendeeId);
+
+  if (error) return { success: false, error: error.message };
+  return { success: true };
+}
+
