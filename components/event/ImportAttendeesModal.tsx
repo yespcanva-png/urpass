@@ -19,6 +19,7 @@ interface PreviewRow {
   rowNumber: number;
   name: string;
   email: string;
+  isGeneratedEmail?: boolean;
   phone: string | null;
   passType: string;
   ticketTypeName: string | null;
@@ -107,11 +108,38 @@ export default function ImportAttendeesModal({ eventId, onClose, onSuccess }: Pr
   const hasBlockingErrors = validCount === 0;
   const previewRows = useMemo(() => preview?.rows.slice(0, 12) ?? [], [preview]);
 
-  function handleFile(file: File) {
+  async function handleFile(file: File) {
     setError("");
     setReport(null);
     setPreview(null);
     setFileName(file.name);
+
+    const isExcel =
+      file.name.endsWith(".xlsx") ||
+      file.name.endsWith(".xls") ||
+      file.type.includes("spreadsheet") ||
+      file.type.includes("excel");
+
+    if (isExcel) {
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        const XLSX = await import("xlsx");
+        const workbook = XLSX.read(arrayBuffer, { type: "array" });
+        const firstSheetName = workbook.SheetNames[0];
+        if (!firstSheetName || !workbook.Sheets[firstSheetName]) {
+          throw new Error("No sheets found in Excel file.");
+        }
+        const csv = XLSX.utils.sheet_to_csv(workbook.Sheets[firstSheetName]);
+        if (!csv.trim()) {
+          throw new Error("The Excel sheet contains no data rows.");
+        }
+        setCsvText(csv);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Could not read the Excel spreadsheet.");
+      }
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = (ev) => setCsvText(String(ev.target?.result || ""));
     reader.onerror = () => setError("Could not read the CSV file.");
@@ -201,13 +229,13 @@ export default function ImportAttendeesModal({ eventId, onClose, onSuccess }: Pr
               className="flex w-full flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-slate-200 bg-white px-4 py-8 text-center hover:border-slate-300 hover:bg-slate-50"
             >
               <UploadCloud className="h-6 w-6 text-slate-500" />
-              <span className="text-xs font-semibold text-slate-700">{fileName || "Choose CSV file"}</span>
-              <span className="text-[11px] text-slate-400">Headers required in first row</span>
+              <span className="text-xs font-semibold text-slate-700">{fileName || "Choose CSV or Excel file"}</span>
+              <span className="text-[11px] text-slate-400">Supports .csv, .xlsx, .xls</span>
             </button>
             <input
               ref={fileRef}
               type="file"
-              accept=".csv,text/csv"
+              accept=".csv,text/csv,.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,.xls,application/vnd.ms-excel"
               className="hidden"
               onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
             />
@@ -216,6 +244,9 @@ export default function ImportAttendeesModal({ eventId, onClose, onSuccess }: Pr
               <code className="mt-2 block rounded border border-slate-200 bg-slate-50 px-2 py-1 font-mono">
                 name, email, phone, pass_type, ticket_type
               </code>
+              <p className="mt-2.5 text-[11px] leading-4 text-slate-500">
+                💡 <span className="font-semibold text-slate-700">No email?</span> UrPass automatically generates unique <span className="font-mono text-[10px] bg-slate-100 text-slate-800 px-1 py-0.5 rounded">@guest.urpass.space</span> guest passes so tickets can be printed or sent via WhatsApp immediately.
+              </p>
             </div>
 
             <button
@@ -336,7 +367,14 @@ export default function ImportAttendeesModal({ eventId, onClose, onSuccess }: Pr
                           <tr key={`${row.rowNumber}-${row.email}`} className={row.errors.length ? "bg-rose-50/50" : "bg-white"}>
                             <td className="px-3 py-2 text-slate-500">{row.rowNumber}</td>
                             <td className="px-3 py-2 font-semibold text-slate-800">{row.name || "-"}</td>
-                            <td className="px-3 py-2 text-slate-600">{row.email || "-"}</td>
+                            <td className="px-3 py-2 text-slate-600">
+                              <span className="font-mono text-[11px]">{row.email || "-"}</span>
+                              {row.isGeneratedEmail && (
+                                <span className="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-semibold bg-amber-50 text-amber-700 border border-amber-200" title="Auto-generated guest pass for attendee without email">
+                                  Guest Pass
+                                </span>
+                              )}
+                            </td>
                             <td className="px-3 py-2 text-slate-600">{row.passType}</td>
                             <td className="px-3 py-2 text-slate-600">{row.ticketTypeName || "Default"}</td>
                             <td className="px-3 py-2 text-slate-700 font-mono font-medium">

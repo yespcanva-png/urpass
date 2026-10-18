@@ -23,6 +23,7 @@ export interface ValidatedImportRow {
   rowNumber: number;
   name: string;
   email: string;
+  isGeneratedEmail?: boolean;
   phone: string | null;
   passType: string;
   ticketTypeName: string | null;
@@ -151,6 +152,53 @@ export async function getImportContext(
   };
 }
 
+/**
+ * Generates a clean, collision-resistant guest email (@guest.urpass.space)
+ * when an attendee is imported without an email address.
+ * Allows instant import and ticket generation so passes can be printed
+ * or distributed via WhatsApp/on-site search.
+ */
+export function generateGuestEmail({
+  name,
+  phone,
+  rowNumber,
+  seen,
+  existingEmails,
+}: {
+  name?: string;
+  phone?: string | null;
+  rowNumber: number;
+  seen?: Set<string>;
+  existingEmails?: Set<string>;
+}): string {
+  const cleanPhone = phone ? phone.trim().replace(/\D/g, "") : "";
+  const cleanName = (name || "")
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, ".")
+    .replace(/^\.+|\.+$/g, "");
+
+  let candidate = "";
+  if (cleanPhone && cleanPhone.length >= 7) {
+    candidate = `${cleanPhone}@guest.urpass.space`;
+    if (seen?.has(candidate) || existingEmails?.has(candidate)) {
+      candidate = `${cleanPhone}.${rowNumber}@guest.urpass.space`;
+    }
+  } else if (cleanName && cleanName.length >= 2) {
+    candidate = `${cleanName}.${rowNumber}@guest.urpass.space`;
+  } else {
+    candidate = `guest.${rowNumber}@guest.urpass.space`;
+  }
+
+  let counter = 1;
+  while (seen?.has(candidate) || existingEmails?.has(candidate)) {
+    candidate = `guest.${rowNumber}.${counter}@guest.urpass.space`;
+    counter++;
+  }
+
+  return candidate;
+}
+
 export function validateImportRows({
   headers,
   rows,
@@ -191,7 +239,22 @@ export function validateImportRows({
     }
 
     const name = mapped.name.trim();
-    const email = mapped.email.toLowerCase().trim();
+    let email = mapped.email.toLowerCase().trim();
+    let isGeneratedEmail = false;
+
+    // Fix: When no email is provided in the import row, auto-generate a valid guest email ending in @guest.urpass.space
+    if (!email) {
+      isGeneratedEmail = true;
+      email = generateGuestEmail({
+        name,
+        phone: mapped.phone,
+        rowNumber: row.rowNumber,
+        seen,
+        existingEmails,
+      });
+      customResponses["is_guest_email"] = "true";
+    }
+
     const passTypeCandidate = mapped.pass_type.toLowerCase().trim() || "participant";
     const passType = PASS_TYPES.includes(passTypeCandidate as any)
       ? passTypeCandidate
@@ -287,6 +350,7 @@ export function validateImportRows({
       rowNumber: row.rowNumber,
       name,
       email,
+      isGeneratedEmail,
       phone: mapped.phone.trim() || null,
       passType,
       ticketTypeName,

@@ -65,4 +65,41 @@ describe("Single QR Multi-Entry CSV Import (5 entries on one, 10 on another, ran
     expect(validation.rows[4].customResponses.is_single_group_qr).toBe("true");
     expect(validation.rows[4].customResponses.group_attendee_count).toBe("12");
   });
+
+  it("automatically generates valid @guest.urpass.space emails when rows have no email", () => {
+    const csvWithoutEmails = `name,phone,ticket_type
+Ramesh Kumar,+919876543210,General
+Pooja Hegde,,VIP
+Deepak Sharma,+919876543210,General`;
+
+    const parsed = parseCSVText(csvWithoutEmails);
+    const mapping = inferColumnMapping(parsed.headers);
+
+    const validation = validateImportRows({
+      headers: parsed.headers,
+      rows: parsed.rows,
+      mapping,
+      existingEmails: new Set(),
+      ticketTypes: [],
+    });
+
+    expect(validation.summary.total).toBe(3);
+    expect(validation.summary.valid).toBe(3);
+    expect(validation.summary.invalid).toBe(0);
+
+    // Row 1: has phone -> phone-based guest email
+    expect(validation.rows[0].email).toBe("919876543210@guest.urpass.space");
+    expect(validation.rows[0].isGeneratedEmail).toBe(true);
+    expect(validation.rows[0].errors).toEqual([]);
+
+    // Row 2: no phone -> name-based guest email with row number
+    expect(validation.rows[1].email).toBe("pooja.hegde.3@guest.urpass.space");
+    expect(validation.rows[1].isGeneratedEmail).toBe(true);
+    expect(validation.rows[1].errors).toEqual([]);
+
+    // Row 3: same phone as row 1 -> disambiguated with row number
+    expect(validation.rows[2].email).toBe("919876543210.4@guest.urpass.space");
+    expect(validation.rows[2].isGeneratedEmail).toBe(true);
+    expect(validation.rows[2].errors).toEqual([]);
+  });
 });

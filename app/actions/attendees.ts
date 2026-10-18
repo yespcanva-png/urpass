@@ -18,6 +18,7 @@ import Razorpay from "razorpay";
 import { createCreditNoteForPayment } from "@/lib/invoices";
 import { getUserPlan } from "@/lib/plan";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { generateGuestEmail } from "@/lib/attendee-import";
 import { sendWebhooks } from "@/lib/webhooks";
 import { recordApiUsage } from "@/lib/api-usage";
 import { getSupabaseUrl } from "@/lib/supabase/config";
@@ -517,7 +518,19 @@ export async function bulkAddAttendees(
   const event = await getEventForOrganizer(supabase, eventId, user.id);
   if (!event) return { added: 0, skipped: 0, error: "Event not found." };
 
-  const valid = rows.filter((r) => attendeeSchema.safeParse(r).success);
+  const normalizedRows: AttendeeInput[] = rows.map((r, idx) => {
+    let email = (r.email || "").toLowerCase().trim();
+    if (!email) {
+      email = generateGuestEmail({
+        name: r.name,
+        phone: r.phone,
+        rowNumber: idx + 1,
+      });
+    }
+    return { ...r, email };
+  });
+
+  const valid = normalizedRows.filter((r) => attendeeSchema.safeParse(r).success);
   if (valid.length === 0)
     return { added: 0, skipped: rows.length, error: "No valid rows found. Check CSV format." };
 
