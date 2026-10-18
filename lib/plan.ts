@@ -1,7 +1,7 @@
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { getSupabaseUrl } from "@/lib/supabase/config";
 
-export type PlanSlug = "free" | "starter" | "pro" | "business" | "campus" | "enterprise" | "founder" | "lifetime";
+export type PlanSlug = "free" | "starter" | "pro" | "business" | "campus" | "enterprise" | "founder" | "lifetime" | "managed_enterprise";
 
 export type EntitlementKey =
   | "csv_import"
@@ -78,6 +78,23 @@ export const ENTITLEMENTS = {
     csvExport: true,
   },
   LIFETIME: {
+    eventsPerMonth: Infinity,
+    registrationsPerMonth: Infinity,
+    organizerSeats: 50,
+    customFields: Infinity,
+    customPassDesign: true,
+    removeBranding: true,
+    advancedAnalytics: true,
+    customDomain: true,
+    apiAccess: true,
+    webhooks: true,
+    advancedPermissions: true,
+    crossEventAnalytics: true,
+    prioritySupport: true,
+    csvImport: true,
+    csvExport: true,
+  },
+  MANAGED_ENTERPRISE: {
     eventsPerMonth: Infinity,
     registrationsPerMonth: Infinity,
     organizerSeats: 50,
@@ -251,6 +268,22 @@ const PLAN_CONFIGS: Record<PlanSlug, PlanConfig> = {
     ),
   },
   lifetime: {
+    eventsPerMonth: UNLIMITED,
+    registrationsPerMonth: UNLIMITED,
+    organizerSeats: 50,
+    customFields: UNLIMITED,
+    entitlements: ent(
+      "csv_import", "csv_export",
+      "email_notifications_full",
+      "custom_fields_unlimited",
+      "custom_pass_design", "remove_branding",
+      "team_permissions_basic", "team_permissions_advanced",
+      "advanced_analytics", "cross_event_analytics",
+      "custom_domain", "api_access", "webhooks",
+      "priority_support", "paid_events",
+    ),
+  },
+  managed_enterprise: {
     eventsPerMonth: UNLIMITED,
     registrationsPerMonth: UNLIMITED,
     organizerSeats: 50,

@@ -93,6 +93,21 @@ const PLANS = [
       "Zero renewal fees forever",
     ],
   },
+  {
+    slug: "managed_enterprise",
+    name: "Managed Enterprise",
+    desc: "Custom Enterprise Plan with Dedicated Managed Support.",
+    priceMonthly: 6000,
+    annualTotal: 6000,
+    features: [
+      "Dedicated Managed Support & Event Operations",
+      "Remove UrPass Branding (100% White-Label)",
+      "Unlimited events & registrations",
+      "Custom pass design & branding",
+      "Advanced & cross-event analytics",
+      "Priority VIP check-in & scanner sync",
+    ],
+  },
 ] as const;
 
 const PLAN_ORDER: Record<string, number> = {
@@ -102,6 +117,7 @@ const PLAN_ORDER: Record<string, number> = {
   business: 3,
   founder: 4,
   lifetime: 4,
+  managed_enterprise: 5,
 };
 
 interface SubPlan {
@@ -214,12 +230,15 @@ export default async function BillingPage(props: {
     ? new Date(sub.current_period_end).getFullYear() > 2050
     : false;
 
+  const isNivedithaUser = (user.email || "").toLowerCase() === "niveditha@client.urpass.space";
+
   // Founder / Lifetime accounts never expire, never cancel, and never revert to Free
   const isFounderPlan =
-    currentPlanSlug === "founder" ||
+    !isNivedithaUser &&
+    (currentPlanSlug === "founder" ||
     currentPlanSlug === "lifetime" ||
     Boolean(sub?.has_lifetime_access) ||
-    isPeriodEndCentury;
+    isPeriodEndCentury);
 
   const renewalDate = sub?.current_period_end && !isPeriodEndCentury
     ? new Date(sub.current_period_end).toLocaleDateString("en-GB", {

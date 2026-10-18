@@ -68,6 +68,14 @@ export const STATIC_V2_PLANS: Record<PlanSlug, { name: string; desc: string; inr
     gbpMonthly: 0,
     gbpAnnual: 0,
   },
+  managed_enterprise: {
+    name: "Managed Enterprise",
+    desc: "Dedicated Managed Support, 100% White-Label & Custom Enterprise Features.",
+    inrMonthly: 600000,
+    inrAnnual: 600000,
+    gbpMonthly: 6000,
+    gbpAnnual: 6000,
+  },
 };
 
 /**

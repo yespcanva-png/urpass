@@ -13,7 +13,7 @@ export type BillingCycle = "monthly" | "annual" | "lifetime";
 
 export type CurrencyCode = "INR" | "GBP";
 
-export type PlanSlug = "starter" | "pro" | "business" | "campus" | "founder" | "free";
+export type PlanSlug = "starter" | "pro" | "business" | "campus" | "founder" | "free" | "managed_enterprise";
 
 export interface BillingPlan {
   id: string;

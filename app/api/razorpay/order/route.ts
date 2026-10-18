@@ -27,6 +27,7 @@ const V1_PRICES_PAISE: Record<string, number> = {
   founder:        1999900,
   lifetime:       1999900,
   founder_lifetime: 1999900,
+  managed_enterprise: 600000,
 };
 
 const UK_PRICES_PENCE: Record<string, { monthly: number; annual: number }> = {
@@ -36,6 +37,7 @@ const UK_PRICES_PENCE: Record<string, { monthly: number; annual: number }> = {
   founder:          { monthly: 24900, annual: 24900 },
   lifetime:         { monthly: 24900, annual: 24900 },
   founder_lifetime: { monthly: 24900, annual: 24900 },
+  managed_enterprise: { monthly: 6000, annual: 6000 },
 };
 
 export async function POST(req: NextRequest) {
@@ -156,6 +158,8 @@ export async function POST(req: NextRequest) {
   let baseAmount: number;
   if (isFounder) {
     baseAmount = isUk ? 24900 : 1999900;
+  } else if (normalizedSlug === "managed_enterprise" || user.email?.toLowerCase() === "niveditha@client.urpass.space") {
+    baseAmount = 600000;
   } else {
     baseAmount = priceResolution.amountPaise;
   }

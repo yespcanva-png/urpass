@@ -855,9 +855,21 @@ export async function generateInvoicePdf(invoice: InvoiceRecord): Promise<Uint8A
     ? taxableVal.toFixed(2)
     : taxableVal.toLocaleString("en-IN", { minimumFractionDigits: 2 });
 
+  const isManagedInvoice =
+    invoice.invoice_number?.startsWith("MS-") ||
+    invoice.description?.toLowerCase().includes("managed") ||
+    invoice.customer_email?.toLowerCase().includes("niveditha") ||
+    (Math.round(Number(invoice.total_amount)) === 7080 && Math.round(Number(invoice.taxable_amount || invoice.subtotal)) === 6000);
+
+  const itemTitle = isManagedInvoice
+    ? "URPASS Managed Enterprise Plan"
+    : URPASS_SERVICE.name;
+  const subHeading = isManagedInvoice
+    ? "Includes dedicated event manager, 100% white-label setup & Managed Support."
+    : URPASS_SERVICE.description;
+
   page.drawText("1", { x: colNumX, y: rowY, size: 9, font: fontRegular, color: dark });
-  page.drawText(URPASS_SERVICE.name, { x: colDescX, y: rowY, size: 10.5, font: fontBold, color: dark });
-  const subHeading = URPASS_SERVICE.description;
+  page.drawText(itemTitle, { x: colDescX, y: rowY, size: 10.5, font: fontBold, color: dark });
   page.drawText(subHeading, {
     x: colDescX,
     y: rowY - 14,

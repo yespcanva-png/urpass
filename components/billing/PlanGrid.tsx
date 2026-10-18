@@ -15,6 +15,8 @@ import {
   AlertCircle,
   X,
   ArrowRight,
+  Download,
+  Receipt,
 } from "lucide-react";
 import CheckoutButton from "./CheckoutButton";
 import EventPassCheckoutModal from "./EventPassCheckoutModal";
@@ -142,6 +144,12 @@ interface Props {
   userPhone?: string;
   trialUsed?: boolean;
   country?: "IN" | "GB";
+  invoices?: Array<{
+    id: string;
+    invoice_number: string;
+    total_amount: number | string | null;
+    invoice_date: string;
+  }>;
 }
 
 export default function PlanGrid({
@@ -152,6 +160,7 @@ export default function PlanGrid({
   userPhone,
   trialUsed = false,
   country = "IN",
+  invoices = [],
 }: Props) {
   const [tab, setTab] = useState<"subscription" | "one-event" | "lifetime" | "all">("subscription");
   const [cycle, setCycle] = useState<"monthly" | "annual">("monthly");
@@ -162,6 +171,222 @@ export default function PlanGrid({
     registrationLimit: number;
   } | null>(null);
   const [actionNotice, setActionNotice] = useState<{ type: "error" | "success"; message: string } | null>(null);
+
+  const isNiveditha = (userEmail || "").toLowerCase() === "niveditha@client.urpass.space";
+
+  if (isNiveditha) {
+    const isPlanActive = currentPlanSlug === "managed_enterprise";
+    const latestInvoice = invoices && invoices.length > 0 ? invoices[0] : null;
+
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-50 border border-brand-100/80 text-[10px] font-bold uppercase tracking-wider text-brand mb-2">
+              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+              <span>Special Managed Support Arrangement</span>
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-neutral-900">
+              Your Custom Enterprise Plan
+            </h2>
+            <p className="text-xs sm:text-sm text-neutral-500 mt-1">
+              Custom negotiated plan with 1-on-1 Managed Support, 100% White-Label pass delivery, and GST tax invoicing.
+            </p>
+          </div>
+        </div>
+
+        {/* If invoice already generated, show prominent download banner */}
+        {latestInvoice && (
+          <div className="rounded-2xl border border-emerald-300 bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3.5">
+              <div className="w-10 h-10 rounded-xl bg-emerald-100 border border-emerald-200 flex items-center justify-center text-emerald-800 shrink-0">
+                <Receipt className="w-5 h-5" />
+              </div>
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-emerald-200/80 text-emerald-900">
+                  Tax Invoice Issued
+                </span>
+                <h4 className="text-sm font-bold text-emerald-950 mt-1">
+                  Invoice #{latestInvoice.invoice_number} · Paid ₹7,080.00
+                </h4>
+                <p className="text-xs text-emerald-800/90 mt-0.5">
+                  Official GST-compliant invoice for Managed Enterprise with Managed Support.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
+              <a
+                href={`/api/invoices/${latestInvoice.id}/pdf`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-3 py-2 rounded-xl border border-emerald-300 text-xs font-semibold text-emerald-950 bg-white hover:bg-emerald-50 shadow-xs transition-colors"
+              >
+                View PDF
+              </a>
+              <a
+                href={`/api/invoices/${latestInvoice.id}/pdf?download=1`}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-neutral-900 text-xs font-semibold text-white hover:bg-neutral-800 shadow-sm transition-all"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Download Invoice PDF</span>
+              </a>
+            </div>
+          </div>
+        )}
+
+        {/* Custom Plan Hero Card: 7000 discounted to 6000 + 18% GST */}
+        <div className="relative rounded-3xl p-6 sm:p-8 border-2 border-brand ring-4 ring-brand/10 bg-white shadow-xl overflow-hidden">
+          <div className="absolute top-0 right-0 bg-gradient-to-l from-brand to-purple-700 text-white text-[11px] font-bold px-4 py-1.5 rounded-bl-2xl uppercase tracking-wider shadow-xs flex items-center gap-1.5">
+            <Crown className="w-3.5 h-3.5 text-amber-300" />
+            <span>Special Agreed Pricing · Save ₹1,000</span>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            <div className="lg:col-span-7 space-y-4">
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-wider text-brand">
+                  Tailored Exclusively for niveditha@client.urpass.space
+                </p>
+                <h3 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 mt-1 tracking-tight">
+                  Managed Enterprise Plan
+                </h3>
+                <p className="text-xs sm:text-sm text-neutral-600 mt-2 leading-relaxed">
+                  Full unrestricted platform capabilities with White-Labeling, Custom Branding, Unlimited Attendees, and dedicated Managed Support directly from our core team.
+                </p>
+              </div>
+
+              {/* Price display: 7000 discounted to 6000 + 18% GST */}
+              <div className="bg-neutral-50 rounded-2xl p-4 sm:p-5 border border-neutral-200/80 flex flex-col sm:flex-row sm:items-baseline justify-between gap-3">
+                <div>
+                  <div className="flex items-baseline gap-3">
+                    <span className="text-lg sm:text-xl font-bold text-neutral-400 line-through tabular-nums">
+                      ₹7,000
+                    </span>
+                    <span className="text-3xl sm:text-4xl font-extrabold text-neutral-900 tracking-tight tabular-nums">
+                      ₹6,000
+                    </span>
+                    <span className="text-xs font-semibold text-neutral-500">
+                      / month
+                    </span>
+                  </div>
+                  <p className="text-xs font-semibold text-emerald-700 mt-1">
+                    + 18% GST (₹1,080.00) · Total ₹7,080.00 payable today
+                  </p>
+                </div>
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold shrink-0">
+                  <Check className="w-3.5 h-3.5" />
+                  <span>₹1,000 Discount Applied</span>
+                </div>
+              </div>
+
+              {/* Action Button */}
+              <div className="pt-2">
+                {isPlanActive ? (
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                    <div className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-emerald-50 text-emerald-800 border border-emerald-200 font-bold text-xs sm:text-sm">
+                      <Check className="w-4 h-4 text-emerald-600" />
+                      <span>Active Plan · Managed Support &amp; White-Label Enabled</span>
+                    </div>
+                    {latestInvoice && (
+                      <a
+                        href={`/api/invoices/${latestInvoice.id}/pdf?download=1`}
+                        className="inline-flex items-center gap-1.5 px-4 py-3 rounded-2xl bg-neutral-900 text-xs sm:text-sm font-semibold text-white hover:bg-neutral-800 transition-all shadow-xs"
+                      >
+                        <Download className="w-4 h-4" />
+                        <span>Download Tax Invoice (PDF)</span>
+                      </a>
+                    )}
+                  </div>
+                ) : (
+                  <CheckoutButton
+                    planSlug="managed_enterprise"
+                    planName="Managed Enterprise Plan"
+                    billingCycle="monthly"
+                    userEmail={userEmail}
+                    userName={userName}
+                    userPhone={userPhone}
+                    currency="INR"
+                    className="w-full sm:w-auto px-8 py-4 rounded-2xl text-sm font-bold text-white shadow-lg shadow-purple-500/20 hover:opacity-95 transition-all cursor-pointer"
+                    style={{ background: "linear-gradient(135deg, #6D28D9, #4c1d95)" }}
+                  >
+                    <span>Proceed to Payment — ₹7,080 (incl. 18% GST)</span>
+                    <ArrowRight className="w-4 h-4 ml-1" />
+                  </CheckoutButton>
+                )}
+                <p className="text-[11px] text-neutral-400 mt-2">
+                  Official GST Tax Invoice (with instant PDF download button) is generated automatically upon payment.
+                </p>
+              </div>
+            </div>
+
+            {/* Feature Highlights */}
+            <div className="lg:col-span-5 bg-purple-50/50 rounded-2xl p-5 border border-purple-100 space-y-3.5">
+              <p className="text-xs font-bold uppercase tracking-wider text-purple-900">
+                Managed Enterprise Entitlements:
+              </p>
+              <ul className="space-y-3 text-xs text-neutral-700">
+                <li className="flex items-start gap-2.5">
+                  <div className="w-5 h-5 rounded-full bg-brand-100 flex items-center justify-center text-brand shrink-0 mt-0.5">
+                    <Check className="w-3 h-3" />
+                  </div>
+                  <div>
+                    <strong className="text-neutral-900">Dedicated Managed Support:</strong>
+                    <p className="text-[11px] text-neutral-600 mt-0.5">
+                      Direct 1-on-1 account manager, personalized registration setup, and priority day-of-event operations standby.
+                    </p>
+                  </div>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <div className="w-5 h-5 rounded-full bg-brand-100 flex items-center justify-center text-brand shrink-0 mt-0.5">
+                    <Check className="w-3 h-3" />
+                  </div>
+                  <div>
+                    <strong className="text-neutral-900">Remove UrPass Branding (100% White-Label):</strong>
+                    <p className="text-[11px] text-neutral-600 mt-0.5">
+                      Zero UrPass logos or watermarks on event registration forms, attendee QR tickets, and email/WhatsApp dispatches.
+                    </p>
+                  </div>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <div className="w-5 h-5 rounded-full bg-brand-100 flex items-center justify-center text-brand shrink-0 mt-0.5">
+                    <Check className="w-3 h-3" />
+                  </div>
+                  <div>
+                    <strong className="text-neutral-900">Unlimited Events &amp; Attendees:</strong>
+                    <p className="text-[11px] text-neutral-600 mt-0.5">
+                      Publish unlimited events and issue unlimited QR passes with high-volume concurrency.
+                    </p>
+                  </div>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <div className="w-5 h-5 rounded-full bg-brand-100 flex items-center justify-center text-brand shrink-0 mt-0.5">
+                    <Check className="w-3 h-3" />
+                  </div>
+                  <div>
+                    <strong className="text-neutral-900">Custom Domain &amp; Pass Layouts:</strong>
+                    <p className="text-[11px] text-neutral-600 mt-0.5">
+                      Apply your custom vanity subdomain and customized pass branding theme.
+                    </p>
+                  </div>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <div className="w-5 h-5 rounded-full bg-brand-100 flex items-center justify-center text-brand shrink-0 mt-0.5">
+                    <Check className="w-3 h-3" />
+                  </div>
+                  <div>
+                    <strong className="text-neutral-900">Official GST Tax Invoice with Download Button:</strong>
+                    <p className="text-[11px] text-neutral-600 mt-0.5">
+                      GST tax invoice with SAC code 997331 generated automatically with 1-click PDF download upon payment.
+                    </p>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>

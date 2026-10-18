@@ -679,6 +679,34 @@ export async function activatePaidSubscription(
     targetPlan = seededFounder;
   }
 
+  if (!targetPlan && normalizedSlug === "managed_enterprise") {
+    const { data: seededManaged } = await admin
+      .from("plans")
+      .upsert(
+        {
+          name: "Managed Enterprise",
+          slug: "managed_enterprise",
+          price_monthly: 600000,
+          price_yearly: 600000,
+          max_events: 999999,
+          max_attendees: 999999,
+          features: [
+            "Dedicated Managed Support & Event Operations",
+            "Remove UrPass Branding (100% White-Label)",
+            "Unlimited Events & Registrations",
+            "Custom Pass Design & Domain Branding",
+            "Priority VIP Check-In & Scanner Sync",
+            "Official GST Tax Invoicing",
+          ],
+          is_active: true,
+        },
+        { onConflict: "slug" }
+      )
+      .select("id, slug, name")
+      .single();
+    targetPlan = seededManaged;
+  }
+
   if (!targetPlan) return { error: "Plan not found." };
 
   let verifiedPaymentId: string | null = null;
@@ -829,8 +857,19 @@ export async function activatePaidSubscription(
         .eq("user_id", user.id);
     }
 
+    const isManaged = normalizedSlug === "managed_enterprise" || user.email?.toLowerCase() === "niveditha@client.urpass.space";
+
+    if (isManaged) {
+      await admin
+        .from("profiles")
+        .update({ hide_urpass_branding: true })
+        .eq("user_id", user.id);
+    }
+
     const invoiceDescription = isFounder
       ? "URPASS Founder Lifetime Access (One-Time)"
+      : isManaged
+      ? "URPASS Managed Enterprise Plan — Managed Support & White-Label"
       : `${normalizedSlug.toUpperCase()} Plan (${effectiveCycle})`;
 
     const invoice = await createInvoiceForPayment({
@@ -841,7 +880,7 @@ export async function activatePaidSubscription(
       baseAmountRupees: orderBasePaise / 100,
       discountRupees: orderDiscountPaise / 100,
       currency: (orderCurrency || "INR") as "INR" | "GBP",
-      docType: "SUB",
+      docType: isManaged ? "MS" : "SUB",
       customerEmail: user.email,
       customerName: companyName || user.user_metadata?.full_name,
       customerAddress: billingAddress,
@@ -852,9 +891,15 @@ export async function activatePaidSubscription(
       billingPeriodEnd: periodEndTime,
     });
 
-    const planDisplayName = isFounder ? "Founder Lifetime Plan" : `${normalizedSlug.toUpperCase()} Plan`;
+    const planDisplayName = isFounder
+      ? "Founder Lifetime Plan"
+      : isManaged
+      ? "Managed Enterprise Plan"
+      : `${normalizedSlug.toUpperCase()} Plan`;
     const itemName = isFounder
       ? "URPASS Founder Lifetime Access"
+      : isManaged
+      ? "URPASS Managed Enterprise Plan (Managed Support)"
       : `${normalizedSlug.toUpperCase()} Plan (${effectiveCycle})`;
     try {
       await Promise.allSettled([

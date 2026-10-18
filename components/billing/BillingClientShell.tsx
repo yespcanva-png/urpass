@@ -252,9 +252,12 @@ export default function BillingClientShell({
   }, []);
 
   const isUk = resolvedCountry === "GB";
+  const isNiveditha = (userEmail || "").toLowerCase() === "niveditha@client.urpass.space";
 
   // Price formatting
-  const formattedPlanPrice = isTrial
+  const formattedPlanPrice = currentPlanSlug === "managed_enterprise"
+    ? "₹6,000/month (+18% GST)"
+    : isTrial
     ? isUk
       ? "30-Day Free Trial (£0 today)"
       : "30-Day Free Trial (₹0 today)"
@@ -304,7 +307,7 @@ export default function BillingClientShell({
       </div>
 
       {/* ── AutoPay Trial Notice Banners ──────────────────────────── */}
-      {effectiveReason === "autopay_trial_completed" && (
+      {!isNiveditha && effectiveReason === "autopay_trial_completed" && (
         <div className="rounded-2xl border border-amber-300 bg-amber-50 p-4 sm:p-5 text-amber-950 shadow-xs">
           <div className="flex items-start gap-3.5">
             <div className="w-9 h-9 rounded-xl bg-amber-100 flex items-center justify-center shrink-0 text-amber-800 mt-0.5">
@@ -320,7 +323,7 @@ export default function BillingClientShell({
         </div>
       )}
 
-      {effectiveReason === "autopay_trial_limit_reached" && (
+      {!isNiveditha && effectiveReason === "autopay_trial_limit_reached" && (
         <div className="rounded-2xl border border-red-200 bg-red-50 p-4 sm:p-5 text-red-950 shadow-xs">
           <div className="flex items-start gap-3.5">
             <div className="w-9 h-9 rounded-xl bg-red-100 flex items-center justify-center shrink-0 text-red-700 mt-0.5">
@@ -336,7 +339,7 @@ export default function BillingClientShell({
         </div>
       )}
 
-      {sub?.free_event_trial_active && !sub?.free_event_trial_consumed && !effectiveReason && (
+      {!isNiveditha && sub?.free_event_trial_active && !sub?.free_event_trial_consumed && !effectiveReason && (
         <div className="rounded-2xl border border-violet-200 bg-violet-50 p-4 sm:p-5 text-violet-950 shadow-xs">
           <div className="flex items-start gap-3.5">
             <div className="w-9 h-9 rounded-xl bg-violet-100 flex items-center justify-center shrink-0 text-violet-700 mt-0.5">
@@ -355,7 +358,7 @@ export default function BillingClientShell({
         </div>
       )}
 
-      {sub?.free_event_trial_active && sub?.free_event_trial_consumed && !effectiveReason && (
+      {!isNiveditha && sub?.free_event_trial_active && sub?.free_event_trial_consumed && !effectiveReason && (
         <div className="rounded-2xl border border-violet-200 bg-violet-50 p-4 sm:p-5 text-violet-950 shadow-xs">
           <div className="flex items-start gap-3.5">
             <div className="w-9 h-9 rounded-xl bg-violet-100 flex items-center justify-center shrink-0 text-violet-700 mt-0.5">
@@ -423,7 +426,7 @@ export default function BillingClientShell({
       ═════════════════════════════════════════════════════════════ */}
       {activeTab === "plans" && (
         <div className="space-y-6 animate-in fade-in-50 duration-150">
-          {(sub?.trial_used || sub?.is_trial || currentPlanSlug !== "free") && (
+          {!isNiveditha && (sub?.trial_used || sub?.is_trial || currentPlanSlug !== "free") && (
             <div className="rounded-2xl border border-neutral-200 bg-neutral-50/70 p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
               <div className="space-y-0.5">
                 <p className="font-bold text-neutral-900">Subscription Renewal</p>
@@ -445,6 +448,7 @@ export default function BillingClientShell({
             userPhone={userPhone}
             trialUsed={Boolean(sub?.trial_used || sub?.is_trial || currentPlanSlug !== "free")}
             country={resolvedCountry}
+            invoices={invoices}
           />
         </div>
       )}
@@ -618,6 +622,14 @@ export default function BillingClientShell({
                         title="View PDF"
                       >
                         <Eye className="w-4 h-4" />
+                      </a>
+                      <a
+                        href={`/api/invoices/${inv.id}/pdf?download=1`}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-neutral-900 text-[11px] font-semibold text-white hover:bg-neutral-800 transition-colors shadow-xs"
+                        title="Download Invoice PDF"
+                      >
+                        <Download className="w-3 h-3" />
+                        <span>PDF</span>
                       </a>
                     </div>
                   </div>

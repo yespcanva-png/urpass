@@ -126,6 +126,28 @@ export const V2_PLAN_LIMITS: Record<
     organizerSeats: 1,
     features: new Set<EntitlementKey>([]),
   },
+  managed_enterprise: {
+    eventsPerMonth: 999999,
+    registrationsPerMonth: 999999,
+    organizerSeats: 50,
+    features: new Set<EntitlementKey>([
+      "csv_import",
+      "csv_export",
+      "email_notifications_full",
+      "custom_fields_unlimited",
+      "custom_pass_design",
+      "remove_branding",
+      "team_permissions_basic",
+      "team_permissions_advanced",
+      "advanced_analytics",
+      "cross_event_analytics",
+      "custom_domain",
+      "api_access",
+      "webhooks",
+      "priority_support",
+      "paid_events",
+    ]),
+  },
 };
 
 /**

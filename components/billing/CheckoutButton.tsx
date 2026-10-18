@@ -10,6 +10,7 @@ const PLAN_PRICES_INR: Record<string, { priceMonthly: number; annualTotal: numbe
   business: { priceMonthly: 2499,  annualTotal: 24990 },
   founder:  { priceMonthly: 19999, annualTotal: 19999 },
   lifetime: { priceMonthly: 19999, annualTotal: 19999 },
+  managed_enterprise: { priceMonthly: 6000, annualTotal: 6000 },
 };
 
 const PLAN_PRICES_GBP: Record<string, { priceMonthly: number; annualTotal: number }> = {
@@ -18,6 +19,7 @@ const PLAN_PRICES_GBP: Record<string, { priceMonthly: number; annualTotal: numbe
   business: { priceMonthly: 79,  annualTotal: 699 },
   founder:  { priceMonthly: 249, annualTotal: 249 },
   lifetime: { priceMonthly: 249, annualTotal: 249 },
+  managed_enterprise: { priceMonthly: 60, annualTotal: 60 },
 };
 
 interface Props {
