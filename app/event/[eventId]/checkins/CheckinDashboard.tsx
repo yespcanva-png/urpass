@@ -171,8 +171,14 @@ export default function CheckinDashboard({
 
   const filtered = attendees.filter((a) => {
     if (!search) return true;
-    const q = search.toLowerCase();
-    return a.name.toLowerCase().includes(q) || a.email.toLowerCase().includes(q);
+    const q = search.toLowerCase().trim();
+    return (
+      a.name.toLowerCase().includes(q) ||
+      a.email.toLowerCase().includes(q) ||
+      a.pass_type.toLowerCase().includes(q) ||
+      a.pass_status.toLowerCase().includes(q) ||
+      a.application_status.toLowerCase().includes(q)
+    );
   });
 
   async function handleCreateGate() {

@@ -397,8 +397,60 @@ export default function AttendeeTable({
     .filter((a) => activeTab === "all" || a.application_status === activeTab)
     .filter((a) => {
       if (!search) return true;
-      const q = search.toLowerCase();
-      return a.name.toLowerCase().includes(q) || a.email.toLowerCase().includes(q);
+      const q = search.toLowerCase().trim();
+      if (!q) return true;
+
+      // 1. Direct fields: name, email, role/pass_type, status
+      if (a.name?.toLowerCase().includes(q)) return true;
+      if (a.email?.toLowerCase().includes(q)) return true;
+      if (a.pass_type?.toLowerCase().includes(q)) return true;
+      if (a.application_status?.toLowerCase().includes(q)) return true;
+      if (a.pass_status?.toLowerCase().includes(q)) return true;
+
+      // Phone: require at least 3 digits to match phone to prevent single-digit false positives
+      if (a.phone) {
+        const cleanPhone = a.phone.replace(/[^\d]/g, "");
+        const cleanQ = q.replace(/[^\d]/g, "");
+        if (cleanQ.length >= 3 && cleanPhone.includes(cleanQ)) return true;
+      }
+
+      // 2. Pass Token / QR credential reference (minimum 4 chars to avoid single-digit collision)
+      const token = passTokens[a.id];
+      if (token && q.length >= 4 && token.toLowerCase().includes(q)) return true;
+
+      // 3. Single Group QR / Entries / Guests count
+      const group = groupPasses[a.id];
+      const cr = (a.custom_responses || {}) as Record<string, any>;
+      const totalGuests = group?.totalGuests || Number(cr.group_attendee_count || cr.guest_count || cr.total_guests || cr.bulk_quantity || 0);
+      if (totalGuests > 0) {
+        if (q === String(totalGuests) || q === `${totalGuests} entries` || q === `${totalGuests} guests` || q === `${totalGuests} pax`) return true;
+        if (`${totalGuests} entries`.includes(q) || `${totalGuests} guests`.includes(q)) return true;
+        if (["group", "single qr", "master", "entries", "entry"].includes(q)) return true;
+      }
+
+      // 4. Custom responses (e.g. ticket_type, organization, delegation, company, notes)
+      if (a.custom_responses && typeof a.custom_responses === "object") {
+        for (const [key, val] of Object.entries(a.custom_responses)) {
+          if (val !== null && val !== undefined && key !== "is_single_group_qr") {
+            const strVal = String(val).toLowerCase();
+            if (strVal === q || (q.length >= 2 && strVal.includes(q))) return true;
+          }
+        }
+      }
+
+      // 5. Payment details (Payment/Order ID & status)
+      const payment = payments[a.id];
+      if (payment) {
+        if (payment.paymentId?.toLowerCase().includes(q)) return true;
+        if (payment.orderId?.toLowerCase().includes(q)) return true;
+        if (payment.status?.toLowerCase().includes(q)) return true;
+      }
+
+      // 6. Check-in Gate Info
+      const checkin = checkInInfoMap[a.id];
+      if (checkin?.gateName?.toLowerCase().includes(q)) return true;
+
+      return false;
     });
 
   // ── Actions — optimistic, no spinner for approve/reject ─────
@@ -936,7 +988,7 @@ export default function AttendeeTable({
           </div>
           <div className="relative flex-1 lg:max-w-sm">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
-            <input type="text" placeholder="Search name or email…" value={search}
+            <input type="text" placeholder="Search name, email, phone, entries or token…" value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full rounded-md border border-slate-200 py-2 pl-8 pr-3 text-xs outline-none transition-colors placeholder:text-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900" />
           </div>
@@ -949,8 +1001,17 @@ export default function AttendeeTable({
               <Users className="w-6 h-6 text-slate-300" />
             </div>
             <p className="text-sm font-medium text-slate-600">
-              {attendees.length === 0 ? "No attendees yet" : "No attendees match this filter"}
+              {attendees.length === 0 ? "No attendees yet" : search ? `No entries matching "${search}"` : "No attendees match this filter"}
             </p>
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch("")}
+                className="mt-2 text-xs font-semibold text-slate-900 underline hover:text-slate-700 cursor-pointer"
+              >
+                Clear search filter
+              </button>
+            )}
             {attendees.length === 0 && (
               <p className="text-xs text-slate-400 mt-1">Add attendees manually or upload a CSV</p>
             )}

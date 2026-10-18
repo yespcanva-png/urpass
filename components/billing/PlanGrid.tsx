@@ -191,14 +191,14 @@ export default function PlanGrid({
               Managed Enterprise Agreement
             </h2>
             <p className="text-xs text-neutral-500 mt-0.5">
-              Dedicated operational support, custom branding capabilities, and unmetered attendee throughput.
+              Dedicated operational support, custom branding capabilities, and unmetered attendee throughput for your event.
             </p>
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-neutral-200 bg-white text-xs font-semibold text-neutral-700 shadow-xs">
               <span className={`w-2 h-2 rounded-full ${isPlanActive ? "bg-emerald-500" : "bg-neutral-400"}`} />
-              <span>{isPlanActive ? "Active Subscription" : "Pre-Approved Quotation"}</span>
+              <span>{isPlanActive ? "Active Agreement" : "Pre-Approved Quotation"}</span>
             </span>
           </div>
         </div>
@@ -255,7 +255,7 @@ export default function PlanGrid({
                   <div className="flex items-center gap-2 text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-1">
                     <span>Commercial Summary</span>
                     <span>·</span>
-                    <span>Monthly Agreement</span>
+                    <span>Single Event Agreement</span>
                   </div>
                   <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-neutral-900">
                     Managed Enterprise Agreement
@@ -265,7 +265,7 @@ export default function PlanGrid({
                 {/* Line Item Financial Breakdown */}
                 <div className="rounded-xl border border-neutral-200/80 bg-neutral-50/70 p-4 sm:p-5 space-y-3">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-neutral-500">Standard Enterprise Rate</span>
+                    <span className="text-neutral-500">Standard Single-Event Rate</span>
                     <span className="text-neutral-400 line-through tabular-nums font-medium">₹7,000.00</span>
                   </div>
                   <div className="flex items-center justify-between text-xs">
@@ -286,7 +286,7 @@ export default function PlanGrid({
                   <div className="pt-3 border-t border-neutral-300 flex items-baseline justify-between">
                     <div>
                       <p className="text-xs font-bold text-neutral-900">Total Net Payable</p>
-                      <p className="text-[10px] text-neutral-500 mt-0.5">Recurring Monthly · Cancel anytime</p>
+                      <p className="text-[10px] text-neutral-500 mt-0.5">One-Time Payment · Single Event License</p>
                     </div>
                     <div className="text-right">
                       <span className="text-2xl font-bold tracking-tight text-neutral-900 tabular-nums">
@@ -302,7 +302,7 @@ export default function PlanGrid({
                     <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                       <div className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold">
                         <Check className="w-4 h-4 text-emerald-600" />
-                        <span>Agreement Active · Managed Support &amp; Custom Branding Enabled</span>
+                        <span>Agreement Active · Single Event Pass &amp; Custom Branding Enabled</span>
                       </div>
                       {latestInvoice && (
                         <a
@@ -325,7 +325,7 @@ export default function PlanGrid({
                       currency="INR"
                       className="w-full sm:w-auto px-7 py-3.5 rounded-xl text-xs font-semibold text-white bg-neutral-900 hover:bg-neutral-800 shadow-xs transition-colors cursor-pointer"
                     >
-                      <span>Proceed to Payment — ₹7,080.00</span>
+                      <span>Proceed to Payment — ₹7,080.00 (Single Event)</span>
                       <ArrowRight className="w-3.5 h-3.5 ml-1" />
                     </CheckoutButton>
                   )}

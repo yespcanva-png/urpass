@@ -133,12 +133,18 @@ export default function GroupEntryOperationsPage() {
 
   const filteredBookings = useMemo(() => {
     return bookings.filter((b) => {
+      const q = search.trim().toLowerCase();
       const matchesSearch =
-        search.trim() === "" ||
-        b.bookingReference.toLowerCase().includes(search.toLowerCase()) ||
-        b.buyerName.toLowerCase().includes(search.toLowerCase()) ||
-        b.buyerEmail.toLowerCase().includes(search.toLowerCase()) ||
-        b.ticketType.toLowerCase().includes(search.toLowerCase());
+        q === "" ||
+        b.bookingReference.toLowerCase().includes(q) ||
+        b.buyerName.toLowerCase().includes(q) ||
+        b.buyerEmail.toLowerCase().includes(q) ||
+        b.ticketType.toLowerCase().includes(q) ||
+        b.totalEntitlements.toString() === q ||
+        `${b.totalEntitlements} entries`.includes(q) ||
+        `${b.totalEntitlements} guests`.includes(q) ||
+        b.remainingEntitlements.toString() === q ||
+        b.status.toLowerCase().includes(q);
 
       const matchesStatus =
         statusFilter === "ALL" ||

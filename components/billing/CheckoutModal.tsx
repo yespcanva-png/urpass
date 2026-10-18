@@ -148,6 +148,7 @@ export default function CheckoutModal({
   const fmt = (n: number) => fmtVal(n, isUk);
 
   const isLifetime = billingCycle === "lifetime" || planSlug === "founder" || planSlug === "lifetime";
+  const isSingleEvent = planSlug === "managed_enterprise";
   const defaultFounder = isUk ? 249 : 19999;
   const isAutopaySubscription =
     !isUk &&
@@ -372,7 +373,11 @@ export default function CheckoutModal({
         amount: data.amount,
         currency: data.currency,
         name: "URPASS",
-        description: isLifetime ? `${planName} — Lifetime Access` : `${planName} — ${billingCycle}`,
+        description: isSingleEvent
+          ? `${planName} — Single Event Pass`
+          : isLifetime
+          ? `${planName} — Lifetime Access`
+          : `${planName} — ${billingCycle === "annual" ? "Annual" : "Monthly"}`,
         order_id: data.orderId,
         prefill: { name: userName, email: userEmail },
         theme: { color: "#0a0a0a" },
@@ -468,7 +473,7 @@ export default function CheckoutModal({
               <h2 className="text-lg font-semibold tracking-tight text-neutral-950">
                 {planName}
                 <span className="text-neutral-500 font-normal">
-                  {" "}— {isLifetime ? "Lifetime Access" : billingCycle === "annual" ? "Annual" : "Monthly"}
+                  {" "}— {isSingleEvent ? "Single Event Pass" : isLifetime ? "Lifetime Access" : billingCycle === "annual" ? "Annual" : "Monthly"}
                 </span>
               </h2>
             </div>
@@ -641,7 +646,7 @@ export default function CheckoutModal({
           <div className="bg-neutral-50 border border-neutral-200 rounded-lg p-4 flex flex-col gap-2.5 text-sm">
             <div className="flex items-center justify-between">
               <span className="text-neutral-700 font-medium">
-                {planName} ({isLifetime ? "Lifetime License · One-Time" : billingCycle === "annual" ? "12 months" : "1 month"})
+                {planName} ({isSingleEvent ? "Single Event License · One-Time" : isLifetime ? "Lifetime License · One-Time" : billingCycle === "annual" ? "12 months" : "1 month"})
               </span>
               <span className="font-semibold text-neutral-950">{sym}{fmt(baseAmount)}</span>
             </div>
@@ -676,7 +681,11 @@ export default function CheckoutModal({
           </div>
 
           {/* Renewal disclosure */}
-          {isLifetime ? (
+          {isSingleEvent ? (
+            <p className="text-[11px] text-emerald-600 font-medium text-center -mt-2">
+              One-time payment · Single event license with dedicated managed support · No recurring charges
+            </p>
+          ) : isLifetime ? (
             <p className="text-[11px] text-emerald-600 font-medium text-center -mt-2">
               One-time payment · Zero renewal fees · Valid for the lifetime of URPASS
             </p>

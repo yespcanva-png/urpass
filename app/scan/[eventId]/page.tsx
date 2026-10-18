@@ -713,14 +713,41 @@ export default function ScanEventPage() {
 
       try {
         const supabase = createClient();
-        const { data } = await supabase
+        const cleanQuery = searchQuery.trim();
+        const { data: attData } = await supabase
           .from("attendees")
           .select("id, name, email, pass_type, pass_status")
           .eq("event_id", eventId)
           .eq("application_status", "approved")
-          .ilike("name", `%${searchQuery}%`)
-          .limit(15);
-        setSearchResults((data as SearchAttendee[]) ?? []);
+          .or(`name.ilike.%${cleanQuery}%,email.ilike.%${cleanQuery}%,phone.ilike.%${cleanQuery}%,pass_type.ilike.%${cleanQuery}%`)
+          .limit(20);
+
+        const combined: SearchAttendee[] = ((attData as SearchAttendee[]) ?? []);
+
+        // Also search by pass token / credential reference
+        if (cleanQuery.length >= 3 && combined.length < 10) {
+          try {
+            const { data: passData } = await supabase
+              .from("passes")
+              .select("attendee_id, pass_token, attendee:attendees(id, name, email, pass_type, pass_status)")
+              .eq("event_id", eventId)
+              .ilike("pass_token", `%${cleanQuery}%`)
+              .limit(5);
+
+            if (passData) {
+              for (const p of passData) {
+                const a = Array.isArray(p.attendee) ? p.attendee[0] : p.attendee;
+                if (a && !combined.some((item) => item.id === a.id)) {
+                  combined.push(a as SearchAttendee);
+                }
+              }
+            }
+          } catch {
+            // Ignore token lookup failure
+          }
+        }
+
+        setSearchResults(combined);
       } catch {
         const matches = await searchOfflineAttendees(eventId, searchQuery);
         setSearchResults(
