@@ -133,6 +133,60 @@ export function normalizeTemplateLanguage(lang?: string | null, templateName?: s
 }
 
 /**
+ * Extracts and sanitizes the pure unique pass token for Meta dynamic URL buttons.
+ * Guarantees that:
+ * 1. Full URLs (e.g. https://urpass.space/pass/<token>) are stripped to only the raw token.
+ * 2. Literal placeholder artifacts ({{1}}, %7B%7B1%7D%7D, {{passToken}}) are completely removed.
+ * 3. Never returns literal '{{1}}' or placeholder strings.
+ */
+export function extractCleanButtonPassToken(
+  passToken?: string | null,
+  ticketUrl?: string | null,
+  ticketId?: string | null
+): string | null {
+  let candidate = (passToken || "").trim();
+
+  // If candidate is missing or literally '{{1}}', try extracting from ticketUrl
+  if (!candidate || candidate === "{{1}}" || candidate.toLowerCase() === "%7b%7b1%7d%7d") {
+    if (ticketUrl) {
+      const match = ticketUrl.match(/\/pass\/([^/?#]+)/i);
+      if (match && match[1]) {
+        candidate = match[1].trim();
+      }
+    }
+  }
+
+  // If still missing, fallback to ticketId
+  if (!candidate || candidate === "{{1}}" || candidate.toLowerCase() === "%7b%7b1%7d%7d") {
+    candidate = (ticketId || "").trim();
+  }
+
+  if (!candidate || candidate === "{{1}}" || candidate.toLowerCase() === "%7b%7b1%7d%7d") {
+    return null;
+  }
+
+  // Decode URI encoding if present
+  try {
+    candidate = decodeURIComponent(candidate);
+  } catch {}
+
+  // Strip full URL prefix if present
+  candidate = candidate.replace(/^https?:\/\/[^/]+\/pass\//i, "");
+
+  // Strip any literal placeholder prefixes like {{1}}, %7B%7B1%7D%7D
+  candidate = candidate.replace(/^(\{\{[0-9a-zA-Z_]+\}\}|%7b%7b[0-9a-zA-Z_]+%7d%7d)+/gi, "");
+
+  // Strip residual curly braces, slashes, or query params
+  candidate = candidate.split(/[?#]/)[0].replace(/^[{}]+|[{}]+$/g, "").trim();
+
+  if (!candidate || candidate === "{{1}}" || candidate.toLowerCase() === "%7b%7b1%7d%7d") {
+    return null;
+  }
+
+  return candidate;
+}
+
+/**
  * Builds Meta Cloud API template components matching approved template specifications
  */
 export function buildTemplatePayload(
@@ -158,6 +212,8 @@ export function buildTemplatePayload(
         (activeLower === "urpass_ticket" || activeLower.includes("urpass_ticket")) &&
         (params.eventDate !== undefined || params.venue !== undefined || !params.ticketUrl);
 
+      const buttonToken = extractCleanButtonPassToken(params.passToken, params.ticketUrl, params.ticketId);
+
       if (isUrpassSpace) {
         // Live approved Meta template "urpass_space" (Language: en)
         // Body: Hi {{1}},\n\nYour registration for *{{2}}* has been confirmed! ✅\n\n *Date:* {{3}}\n *Venue:* {{4}}\n\n🎟️ Your digital event pass is ready.\n\nPlease use the button below to view your QR pass and present it at the event entrance.\n\nThank you for registering!\n\n*Team UrPass*
@@ -176,8 +232,8 @@ export function buildTemplatePayload(
           ],
         });
 
-        // URL Button: {{1}} passToken (index 0)
-        if (params.passToken || params.ticketId) {
+        // Dynamic URL Button (index 0) with clean attendee passToken
+        if (buttonToken) {
           components.push({
             type: "button",
             sub_type: "url",
@@ -185,7 +241,7 @@ export function buildTemplatePayload(
             parameters: [
               {
                 type: "text",
-                text: params.passToken || params.ticketId || "",
+                text: buttonToken,
               },
             ],
           });
@@ -214,8 +270,8 @@ export function buildTemplatePayload(
           ],
         });
 
-        // URL Button: {{1}} passToken (index 0)
-        if (params.passToken || params.ticketId) {
+        // Dynamic URL Button (index 0) with clean attendee passToken
+        if (buttonToken) {
           components.push({
             type: "button",
             sub_type: "url",
@@ -223,7 +279,7 @@ export function buildTemplatePayload(
             parameters: [
               {
                 type: "text",
-                text: params.passToken || params.ticketId || "",
+                text: buttonToken,
               },
             ],
           });
@@ -244,7 +300,7 @@ export function buildTemplatePayload(
 
         const passUrlText =
           params.ticketUrl ||
-          (params.passToken ? `https://urpass.space/pass/${params.passToken}` : "https://urpass.space");
+          (buttonToken ? `https://urpass.space/pass/${buttonToken}` : "https://urpass.space");
 
         components.push({
           type: "body",
@@ -256,7 +312,7 @@ export function buildTemplatePayload(
           ],
         });
 
-        if (params.passToken) {
+        if (buttonToken) {
           components.push({
             type: "button",
             sub_type: "url",
@@ -264,7 +320,7 @@ export function buildTemplatePayload(
             parameters: [
               {
                 type: "text",
-                text: params.passToken,
+                text: buttonToken,
               },
             ],
           });

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import {
   CalendarDays,
   MapPin,
@@ -23,7 +23,7 @@ import { Suspense } from "react";
 import { resolveTicketDesign } from "@/lib/pass-design";
 import StudioPassRenderer from "@/components/studio/StudioPassRenderer";
 import { isStudioDesign } from "@/lib/studio/resolver";
-import { getHardenedPublicPass } from "@/lib/passes/public-pass";
+import { getHardenedPublicPass, cleanPassToken } from "@/lib/passes/public-pass";
 import { resolveEventOgImage } from "@/lib/seo/og-images";
 
 export async function generateMetadata({
@@ -31,13 +31,14 @@ export async function generateMetadata({
 }: {
   params: Promise<{ passId: string }>;
 }): Promise<Metadata> {
-  const { passId: passToken } = await params;
+  const { passId: rawPassToken } = await params;
+  const passToken = cleanPassToken(rawPassToken);
   const supabase = await createClient();
   const { data: pass } = await supabase
     .from("passes")
     .select("event_id")
-    .eq("pass_token", passToken)
-    .single();
+    .or(`pass_token.eq.${passToken},pass_token.eq.${rawPassToken}`)
+    .maybeSingle();
   if (!pass) return { title: "Event Pass" };
   const { data: event } = await supabase
     .from("events")
@@ -98,7 +99,15 @@ export default async function PassPage({
 }: {
   params: Promise<{ passId: string }>;
 }) {
-  const { passId: passToken } = await params;
+  const { passId: rawPassToken } = await params;
+  const passToken = cleanPassToken(rawPassToken);
+
+  // If the incoming URL contained literal or encoded template placeholders (%7B%7B1%7D%7D or {{1}}),
+  // redirect to the clean pass URL so the browser location has no encoded placeholders.
+  if (rawPassToken && rawPassToken !== passToken) {
+    redirect(`/pass/${passToken}`);
+  }
+
   const publicPass = await getHardenedPublicPass(passToken);
 
   if (!publicPass) notFound();

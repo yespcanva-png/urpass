@@ -567,4 +567,71 @@ describe("UrPass — WhatsApp Cloud API Production Hardening & P0 Remediation", 
     expect(result).toHaveProperty("recovered");
     expect(result).toHaveProperty("failed");
   });
+
+  // ── Scenario 21: Dynamic Pass Token Extraction for WhatsApp URL Buttons ─────
+  it("Scenario 21: extractCleanButtonPassToken strips %7B%7B1%7D%7D, full URLs, and never sends literal {{1}}", async () => {
+    const { extractCleanButtonPassToken } = await import(
+      "@/lib/communications/providers/whatsapp/templates"
+    );
+
+    // Raw valid token
+    expect(extractCleanButtonPassToken("pass_abc123")).toBe("pass_abc123");
+
+    // Full URL input
+    expect(extractCleanButtonPassToken("https://urpass.space/pass/pass_abc123")).toBe("pass_abc123");
+
+    // Encoded template placeholder artifacts
+    expect(extractCleanButtonPassToken("%7B%7B1%7D%7Dpass_abc123")).toBe("pass_abc123");
+    expect(extractCleanButtonPassToken("{{1}}pass_abc123")).toBe("pass_abc123");
+
+    // Extracted from ticketUrl
+    expect(extractCleanButtonPassToken(null, "https://urpass.space/pass/pass_from_url")).toBe("pass_from_url");
+
+    // Extracted from ticketId fallback
+    expect(extractCleanButtonPassToken(null, null, "pass_fallback_id")).toBe("pass_fallback_id");
+
+    // Strictly rejects literal {{1}} or empty
+    expect(extractCleanButtonPassToken("{{1}}")).toBeNull();
+    expect(extractCleanButtonPassToken("%7B%7B1%7D%7D")).toBeNull();
+    expect(extractCleanButtonPassToken(null, null, null)).toBeNull();
+  });
+
+  // ── Scenario 22: Pass Page Token Normalization & Redirect ───────────────────
+  it("Scenario 22: cleanPassToken strips %7B%7B1%7D%7D and {{1}} for seamless resolution", async () => {
+    const { cleanPassToken } = await import("@/lib/passes/public-pass");
+
+    expect(cleanPassToken("clean_token_123")).toBe("clean_token_123");
+    expect(cleanPassToken("%7B%7B1%7D%7Dpass_tok_999")).toBe("pass_tok_999");
+    expect(cleanPassToken("{{1}}pass_tok_999")).toBe("pass_tok_999");
+    expect(cleanPassToken("{{passToken}}pass_tok_999")).toBe("pass_tok_999");
+  });
+
+  // ── Scenario 23: Template Payload Builder Dynamic URL Button Verification ───
+  it("Scenario 23: buildTemplatePayload populates dynamic URL button with clean token and index 0", async () => {
+    const { buildTemplatePayload } = await import(
+      "@/lib/communications/providers/whatsapp/templates"
+    );
+
+    const payload = buildTemplatePayload(
+      "ticket_confirmation",
+      {
+        attendeeName: "Test Guest",
+        eventName: "UrPass Launch",
+        eventDate: "Oct 25, 2026",
+        venue: "Main Hall",
+        passToken: "%7B%7B1%7D%7Dpass_actual_token",
+      },
+      "en",
+      "urpass_space"
+    );
+
+    const buttonComponent = payload.components.find((c: any) => c.type === "button");
+    expect(buttonComponent).toBeDefined();
+    expect(buttonComponent?.sub_type).toBe("url");
+    expect(buttonComponent?.index).toBe("0");
+    expect(buttonComponent?.parameters[0]?.text).toBe("pass_actual_token");
+    expect(buttonComponent?.parameters[0]?.text).not.toContain("%7B%7B1%7D%7D");
+    expect(buttonComponent?.parameters[0]?.text).not.toContain("{{1}}");
+  });
 });
+

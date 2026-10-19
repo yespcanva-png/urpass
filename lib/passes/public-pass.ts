@@ -102,17 +102,33 @@ export interface HardenedPublicPass {
   } | null;
 }
 
+/**
+ * Strips encoded template variable prefixes (e.g. %7B%7B1%7D%7D or {{1}})
+ * that may precede a valid pass token from Meta WhatsApp dynamic URL buttons.
+ */
+export function cleanPassToken(rawToken: string | null | undefined): string {
+  if (!rawToken) return "";
+  let token = String(rawToken).trim();
+  try {
+    token = decodeURIComponent(token);
+  } catch {}
+  token = token.replace(/^(\{\{[0-9a-zA-Z_]+\}\}|%7b%7b[0-9a-zA-Z_]+%7d%7d)+/gi, "");
+  token = token.replace(/^[{}]+|[{}]+$/g, "").trim();
+  return token;
+}
+
 export async function getHardenedPublicPass(
   passToken: string
 ): Promise<HardenedPublicPass | null> {
+  const sanitizedToken = cleanPassToken(passToken);
   const admin = adminClient();
 
   // 1. Fetch pass by pass_token with strictly bounded columns
   const { data: pass, error: passErr } = await admin
     .from("passes")
     .select("pass_token, pass_type, status, attendee_id, event_id, is_group_master, total_guests, checked_in_guests")
-    .eq("pass_token", passToken)
-    .single();
+    .or(`pass_token.eq.${sanitizedToken},pass_token.eq.${passToken}`)
+    .maybeSingle();
 
   if (passErr || !pass) return null;
 
