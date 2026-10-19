@@ -7,6 +7,10 @@ import { getUserPlan } from "@/lib/plan";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getSupabaseUrl } from "@/lib/supabase/config";
+import {
+  updateOrganizationCommunicationSettings,
+  DEFAULT_ORG_COMMUNICATION_SETTINGS,
+} from "@/lib/communications";
 
 function adminClient() {
   return createAdminClient(
@@ -80,6 +84,13 @@ export async function createOrganization(data: OrgInput): Promise<ActionResult |
     });
 
   if (memberError) return { error: memberError.message };
+
+  // Initialize default communication settings: Email enabled by default, WhatsApp not configured
+  try {
+    await updateOrganizationCommunicationSettings(org.id, DEFAULT_ORG_COMMUNICATION_SETTINGS(org.id));
+  } catch (commErr) {
+    console.warn("[createOrganization] Non-blocking notice initializing comm settings:", commErr);
+  }
 
   revalidatePath("/dashboard/organizations");
   return { slug: org.slug };

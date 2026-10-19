@@ -18,7 +18,10 @@ import {
   broadcastPostEventThankYou,
   getEventCommunications,
 } from "@/app/actions/event-engagement";
-import { getEventCommunicationSettings } from "@/app/actions/communications";
+import {
+  getEventCommunicationSettings,
+  getCommunicationControlPanelData,
+} from "@/app/actions/communications";
 import CommunicationsClient from "./CommunicationsClient";
 
 export const dynamic = "force-dynamic";
@@ -62,8 +65,8 @@ export default async function EventCommunicationsPage({
     }
   }
 
-  // Fetch approved & total attendee count
-  const [{ count: approvedCount }, { count: totalAttendees }, logs, settings] = await Promise.all([
+  // Fetch approved & total attendee count and unified control panel data
+  const [{ count: approvedCount }, { count: totalAttendees }, logs, settings, controlPanelData] = await Promise.all([
     supabase
       .from("attendees")
       .select("id", { count: "exact", head: true })
@@ -75,6 +78,7 @@ export default async function EventCommunicationsPage({
       .eq("event_id", eventId),
     getEventCommunications(eventId),
     getEventCommunicationSettings(eventId),
+    getCommunicationControlPanelData(eventId),
   ]);
 
   return (
@@ -90,10 +94,10 @@ export default async function EventCommunicationsPage({
             <span className="font-semibold text-neutral-950">Communications</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-neutral-950">
-            Communications Command Center
+            Communications Control Panel
           </h1>
           <p className="text-xs sm:text-sm text-neutral-500 mt-1 max-w-2xl">
-            Direct Meta WhatsApp Cloud API gateway, digital QR pass issuance, transactional emails, and automated audience broadcasts.
+            Centralized notification command center: default transactional email, Business-plan Self-Service WhatsApp, and UrPass Managed WhatsApp services.
           </p>
         </div>
 
@@ -116,6 +120,7 @@ export default async function EventCommunicationsPage({
         approvedCount={approvedCount || 0}
         initialLogs={logs}
         settings={settings}
+        controlPanelData={controlPanelData}
       />
     </div>
   );

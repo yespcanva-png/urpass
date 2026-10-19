@@ -19,7 +19,8 @@ export type EntitlementKey =
   | "advanced_analytics"
   | "standard_analytics"
   | "cross_event_analytics"
-  | "paid_events";
+  | "paid_events"
+  | "whatsapp_self_service";
 
 export const ENTITLEMENTS = {
   FREE: {
@@ -59,6 +60,7 @@ export const ENTITLEMENTS = {
     webhooks: true,
     advancedPermissions: true,
     crossEventAnalytics: true,
+    whatsappSelfService: true,
   },
   FOUNDER: {
     eventsPerMonth: Infinity,
@@ -76,6 +78,7 @@ export const ENTITLEMENTS = {
     prioritySupport: true,
     csvImport: true,
     csvExport: true,
+    whatsappSelfService: true,
   },
   LIFETIME: {
     eventsPerMonth: Infinity,
@@ -93,6 +96,7 @@ export const ENTITLEMENTS = {
     prioritySupport: true,
     csvImport: true,
     csvExport: true,
+    whatsappSelfService: true,
   },
   MANAGED_ENTERPRISE: {
     eventsPerMonth: Infinity,
@@ -110,6 +114,7 @@ export const ENTITLEMENTS = {
     prioritySupport: true,
     csvImport: true,
     csvExport: true,
+    whatsappSelfService: true,
   },
 } as const;
 
@@ -124,7 +129,8 @@ export type EntitlementFeature =
   | "apiAccess"
   | "webhooks"
   | "advancedPermissions"
-  | "crossEventAnalytics";
+  | "crossEventAnalytics"
+  | "whatsappSelfService";
 
 export function canUseFeature(
   tierOrPlan: string | PlanLimits | { slug?: string; tier?: string } | null | undefined,
@@ -217,6 +223,7 @@ const PLAN_CONFIGS: Record<PlanSlug, PlanConfig> = {
       "advanced_analytics", "cross_event_analytics",
       "custom_domain", "api_access", "webhooks",
       "priority_support", "paid_events",
+      "whatsapp_self_service",
     ),
   },
   campus: {
@@ -233,6 +240,7 @@ const PLAN_CONFIGS: Record<PlanSlug, PlanConfig> = {
       "advanced_analytics", "cross_event_analytics",
       "api_access", "webhooks",
       "priority_support", "paid_events",
+      "whatsapp_self_service",
     ),
   },
   enterprise: {
@@ -249,6 +257,7 @@ const PLAN_CONFIGS: Record<PlanSlug, PlanConfig> = {
       "advanced_analytics", "cross_event_analytics",
       "custom_domain", "api_access", "webhooks",
       "priority_support", "paid_events",
+      "whatsapp_self_service",
     ),
   },
   founder: {
@@ -265,6 +274,7 @@ const PLAN_CONFIGS: Record<PlanSlug, PlanConfig> = {
       "advanced_analytics", "cross_event_analytics",
       "custom_domain", "api_access", "webhooks",
       "priority_support", "paid_events",
+      "whatsapp_self_service",
     ),
   },
   lifetime: {
@@ -281,6 +291,7 @@ const PLAN_CONFIGS: Record<PlanSlug, PlanConfig> = {
       "advanced_analytics", "cross_event_analytics",
       "custom_domain", "api_access", "webhooks",
       "priority_support", "paid_events",
+      "whatsapp_self_service",
     ),
   },
   managed_enterprise: {
@@ -297,6 +308,7 @@ const PLAN_CONFIGS: Record<PlanSlug, PlanConfig> = {
       "advanced_analytics", "cross_event_analytics",
       "custom_domain", "api_access", "webhooks",
       "priority_support", "paid_events",
+      "whatsapp_self_service",
     ),
   },
 };
@@ -315,6 +327,7 @@ export interface PlanLimits {
   canUseAPI: boolean;
   canCreatePaidEvents: boolean;
   canCreateOrganizations: boolean;
+  canWhatsAppSelfService?: boolean;
 }
 
 function fromSlug(slug: PlanSlug): PlanLimits {
@@ -339,6 +352,7 @@ function fromSlug(slug: PlanSlug): PlanLimits {
     canUseAPI: c.entitlements.has("api_access"),
     canCreatePaidEvents: c.entitlements.has("paid_events"),
     canCreateOrganizations: slug !== "free",
+    canWhatsAppSelfService: c.entitlements.has("whatsapp_self_service"),
   };
 }
 

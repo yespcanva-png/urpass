@@ -70,21 +70,37 @@ export class CommunicationService {
       const { data } = await admin
         .from("events")
         .select(
-          "sms_enabled, whatsapp_enabled, email_enabled, sms_fallback_enabled, whatsapp_settings, sms_sender_id, sms_dlt_entity_id, sms_dlt_template_id, sms_provider"
+          "organization_id, sms_enabled, whatsapp_enabled, email_enabled, sms_fallback_enabled, whatsapp_settings, sms_sender_id, sms_dlt_entity_id, sms_dlt_template_id, sms_provider"
         )
         .eq("id", eventId)
         .maybeSingle();
 
       if (data) {
+        let orgSettings = null;
+        if (data.organization_id) {
+          try {
+            const { getOrganizationCommunicationSettings } = await import("./org-settings");
+            orgSettings = await getOrganizationCommunicationSettings(data.organization_id);
+          } catch {}
+        }
+
+        const commEnabled = orgSettings ? orgSettings.enable_communication : true;
+        const emailEnabled = (orgSettings ? orgSettings.email_communication : true) && data.email_enabled !== false;
+        const whatsappEnabled = (orgSettings ? orgSettings.whatsapp_communication : false) || !!data.whatsapp_enabled;
+        const whatsappModel = orgSettings?.whatsapp_integration_model || "none";
+
         return {
+          communication_enabled: commEnabled,
           sms_enabled: !!data.sms_enabled,
-          whatsapp_enabled: !!data.whatsapp_enabled,
-          email_enabled: data.email_enabled !== false,
+          whatsapp_enabled: whatsappEnabled,
+          email_enabled: emailEnabled,
           sms_fallback_enabled: data.sms_fallback_enabled !== false,
+          whatsapp_model: whatsappModel,
           whatsapp_settings: {
             ...defaultWhatsappSettings,
             ...(data.whatsapp_settings || {}),
           },
+          automation_rules: orgSettings?.automation_rules,
           sms_sender_id: data.sms_sender_id || "URPASS",
           sms_dlt_entity_id: data.sms_dlt_entity_id,
           sms_dlt_template_id: data.sms_dlt_template_id,
@@ -94,10 +110,12 @@ export class CommunicationService {
     } catch {}
 
     return {
+      communication_enabled: true,
       sms_enabled: false,
       whatsapp_enabled: false,
       email_enabled: true,
       sms_fallback_enabled: true,
+      whatsapp_model: "none",
       whatsapp_settings: defaultWhatsappSettings,
     };
   }

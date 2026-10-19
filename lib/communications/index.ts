@@ -10,4 +10,6 @@ export {
 } from "./providers/sms";
 export { aiSensyProvider, AiSensyProvider } from "./providers/whatsapp/aisensy";
 export { whatsAppProvider, WhatsAppProvider } from "./providers/whatsapp/provider";
+export * from "./org-settings";
+export * from "./encryption";
 
