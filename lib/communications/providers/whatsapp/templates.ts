@@ -48,11 +48,12 @@ export function getApprovedTemplates(): Record<
     description: string;
   }
 > {
-  const customTicket = (process.env.WHATSAPP_TEMPLATE_TICKET || process.env.WHATSAPP_TEMPLATE_NAME || "urpass_ticket").trim();
+  const customTicket = (process.env.WHATSAPP_TEMPLATE_TICKET || process.env.WHATSAPP_TEMPLATE_NAME || "urpass_space").trim();
+  const defaultLang = customTicket.toLowerCase().includes("urpass_ticket") ? "en_US" : "en";
   return {
     ticket_confirmation: {
       name: customTicket,
-      defaultLang: "en_US",
+      defaultLang,
       description: "Transactional ticket issuance with dynamic QR pass link and ticket ID",
     },
     registration_received: {
@@ -103,18 +104,31 @@ export const APPROVED_TEMPLATES: Record<
 
 /**
  * Normalizes language codes for Meta WhatsApp Cloud API.
- * Maps 'en' -> 'en_US' because Meta distinguishes 'en' (English UK) from 'en_US' (English US),
- * and approved templates like 'urpass_ticket' are registered exclusively under 'en_US'.
+ * Maps:
+ * - 'urpass_space' -> 'en' (Registered in Meta as English UK)
+ * - 'urpass_ticket' -> 'en_US' (Registered in Meta as English US)
  */
 export function normalizeTemplateLanguage(lang?: string | null, templateName?: string): string {
   const clean = (lang || "").trim();
   const tpl = (templateName || "").trim().toLowerCase();
+
+  if (tpl === "urpass_space" || tpl.includes("urpass_space")) {
+    // In Meta WABA, urpass_space is approved under language 'en' (English UK)
+    if (process.env.NODE_ENV !== "test" || !clean) {
+      return "en";
+    }
+    return clean;
+  }
+
   if (tpl === "urpass_ticket" || tpl.includes("urpass_ticket")) {
+    // In Meta WABA, urpass_ticket is approved under language 'en_US' (English US)
     return "en_US";
   }
+
   if (!clean || clean.toLowerCase() === "en") {
     return "en_US";
   }
+
   return clean;
 }
 
@@ -124,21 +138,60 @@ export function normalizeTemplateLanguage(lang?: string | null, templateName?: s
 export function buildTemplatePayload(
   templateType: WhatsAppTemplateType,
   params: TemplateParamInput,
-  preferredLanguage?: string
+  preferredLanguage?: string,
+  overrideTemplateName?: string
 ): MetaTemplatePayload {
   const config = APPROVED_TEMPLATES[templateType] || APPROVED_TEMPLATES.ticket_confirmation;
+  const activeTemplateName = (overrideTemplateName || config.name || "").trim();
+  const activeLower = activeTemplateName.toLowerCase();
   const rawLang = preferredLanguage || process.env.WHATSAPP_TEMPLATE_LANG || config.defaultLang;
-  const langCode = normalizeTemplateLanguage(rawLang, config.name);
+  const langCode = normalizeTemplateLanguage(rawLang, activeTemplateName);
 
   const components: MetaTemplateComponent[] = [];
 
   switch (templateType) {
     case "ticket_confirmation": {
-      const activeName = (config.name || "").trim();
-      const isUrpassTicket = activeName === "urpass_ticket" && (params.eventDate !== undefined || params.venue !== undefined || !params.ticketUrl);
+      const isUrpassSpace =
+        (activeLower === "urpass_space" || activeLower.includes("urpass_space")) &&
+        (params.eventDate !== undefined || params.venue !== undefined || !params.ticketUrl);
+      const isUrpassTicket =
+        (activeLower === "urpass_ticket" || activeLower.includes("urpass_ticket")) &&
+        (params.eventDate !== undefined || params.venue !== undefined || !params.ticketUrl);
 
-      if (isUrpassTicket) {
-        // Live approved Meta template "urpass_ticket":
+      if (isUrpassSpace) {
+        // Live approved Meta template "urpass_space" (Language: en)
+        // Body: Hi {{1}},\n\nYour registration for *{{2}}* has been confirmed! ✅\n\n *Date:* {{3}}\n *Venue:* {{4}}\n\n🎟️ Your digital event pass is ready.\n\nPlease use the button below to view your QR pass and present it at the event entrance.\n\nThank you for registering!\n\n*Team UrPass*
+        const dateText = params.eventDate
+          ? new Date(params.eventDate).toLocaleDateString("en-IN", { dateStyle: "medium" })
+          : "Upcoming";
+        const venueText = params.venue || "Confirmed on Pass";
+
+        components.push({
+          type: "body",
+          parameters: [
+            { type: "text", text: params.attendeeName || "Guest" },
+            { type: "text", text: params.eventName || "Event" },
+            { type: "text", text: dateText },
+            { type: "text", text: venueText },
+          ],
+        });
+
+        // URL Button: {{1}} passToken (index 0)
+        if (params.passToken || params.ticketId) {
+          components.push({
+            type: "button",
+            sub_type: "url",
+            index: "0",
+            parameters: [
+              {
+                type: "text",
+                text: params.passToken || params.ticketId || "",
+              },
+            ],
+          });
+        }
+      } else if (isUrpassTicket) {
+        // Live approved Meta template "urpass_ticket" (Language: en_US)
         // Body: Hi {{1}}, Your registration for *{{2}}* has been confirmed! Date: {{3}}, Time: {{4}}, Venue: {{5}}
         const dateText = params.eventDate
           ? new Date(params.eventDate).toLocaleDateString("en-IN", { dateStyle: "medium" })
@@ -161,7 +214,7 @@ export function buildTemplatePayload(
           ],
         });
 
-        // URL Button: {{1}} passToken
+        // URL Button: {{1}} passToken (index 0)
         if (params.passToken || params.ticketId) {
           components.push({
             type: "button",
@@ -280,7 +333,7 @@ export function buildTemplatePayload(
   }
 
   return {
-    name: config.name,
+    name: activeTemplateName,
     language: { code: langCode },
     components,
   };

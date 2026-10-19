@@ -147,6 +147,7 @@ export default function CommunicationsClient({
   const [testWAModalOpen, setTestWAModalOpen] = useState(false);
   const [testWAPhone, setTestWAPhone] = useState("+91");
   const [testWASending, setTestWASending] = useState(false);
+  const [testWATemplate, setTestWATemplate] = useState<"urpass_space" | "urpass_ticket">("urpass_space");
 
   const [selfServiceModalOpen, setSelfServiceModalOpen] = useState(false);
   const [ssWabaId, setSsWabaId] = useState("");
@@ -304,8 +305,8 @@ export default function CommunicationsClient({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           phone: testWAPhone,
-          templateName: "urpass_ticket",
-          templateLang: "en_US",
+          templateName: testWATemplate,
+          templateLang: testWATemplate === "urpass_space" ? "en" : "en_US",
           eventId,
         }),
       });
@@ -315,7 +316,7 @@ export default function CommunicationsClient({
       } else {
         setFeedback({
           type: "success",
-          text: `WhatsApp pass successfully dispatched! WAMID: ${data.messageId}`,
+          text: `WhatsApp pass successfully dispatched via Meta Cloud API! Template: ${testWATemplate} · WAMID: ${data.messageId}`,
         });
         setTestWAModalOpen(false);
       }
@@ -600,9 +601,9 @@ export default function CommunicationsClient({
             <p className="text-[10px] uppercase font-bold text-neutral-400 tracking-wider">Production Template</p>
             <div className="flex items-center gap-1.5 mt-1.5 min-w-0">
               <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
-              <p className="text-sm font-bold font-mono tracking-tight text-neutral-800 truncate">urpass_ticket</p>
+              <p className="text-sm font-bold font-mono tracking-tight text-neutral-800 truncate">urpass_space</p>
             </div>
-            <p className="text-[11px] text-neutral-400 mt-1">Meta Approved · Utility</p>
+            <p className="text-[11px] text-neutral-400 mt-1">Meta Approved · Utility (en &amp; en_US)</p>
           </div>
         </div>
       </div>
@@ -830,13 +831,24 @@ export default function CommunicationsClient({
               {/* Action */}
               <div className="pt-5 mt-auto">
                 {userPlan.canWhatsAppSelfService ? (
-                  <button
-                    onClick={() => setSelfServiceModalOpen(true)}
-                    className="w-full h-10 rounded-xl bg-neutral-900 hover:bg-black text-white font-bold text-xs transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-xs"
-                  >
-                    <Settings2 className="w-4 h-4" />
-                    {selfServiceConfig.is_configured ? "Update Meta Credentials" : "Connect Meta Account"}
-                  </button>
+                  <div className="flex flex-col gap-2">
+                    <a
+                      href="https://business.facebook.com/messaging/whatsapp/onboard/?app_id=4551986315050244&config_id=1145800595062171&extras=%7B%22version%22%3A%22v4%22%2C%22sessionInfoVersion%22%3A%223%22%2C%22featureType%22%3A%22whatsapp_business_app_onboarding%22%7D"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full h-10 rounded-xl bg-[#25D366] hover:bg-[#20ba59] text-white font-bold text-xs transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-xs"
+                    >
+                      <WhatsAppLogo size={16} variant="white" />
+                      1-Click Connect with Meta
+                    </a>
+                    <button
+                      onClick={() => setSelfServiceModalOpen(true)}
+                      className="w-full h-8 rounded-lg bg-neutral-50 hover:bg-neutral-100 text-neutral-700 font-medium text-[11px] border border-neutral-200 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                      <Settings2 className="w-3.5 h-3.5" />
+                      {selfServiceConfig.is_configured ? "Update Meta Credentials" : "Enter Credentials Manually"}
+                    </button>
+                  </div>
                 ) : (
                   <Link
                     href="/billing?plan=business&tab=plans"
@@ -1482,9 +1494,20 @@ export default function CommunicationsClient({
               </button>
             </div>
             <p className="text-xs text-neutral-500">
-              Dispatches the approved <span className="font-mono font-bold">urpass_ticket</span> template with dynamic
+              Dispatches an approved Meta Cloud API template (<span className="font-mono font-bold">urpass_space</span> or <span className="font-mono font-bold">urpass_ticket</span>) with dynamic
               parameters directly to any WhatsApp phone in real-time.
             </p>
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-neutral-700">Message Template</label>
+              <select
+                value={testWATemplate}
+                onChange={(e) => setTestWATemplate(e.target.value as "urpass_space" | "urpass_ticket")}
+                className="w-full px-3 py-2 rounded-lg border border-neutral-300 text-xs bg-neutral-50 text-neutral-900 focus:outline-hidden font-medium"
+              >
+                <option value="urpass_space">urpass_space (English UK · 4 variables + QR Button)</option>
+                <option value="urpass_ticket">urpass_ticket (English US · 5 variables + QR Button)</option>
+              </select>
+            </div>
             <div className="space-y-1">
               <label className="text-xs font-bold text-neutral-700">Recipient Phone Number (E.164)</label>
               <input

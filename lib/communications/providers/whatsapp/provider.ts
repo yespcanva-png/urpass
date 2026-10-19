@@ -59,9 +59,9 @@ export class WhatsAppProvider {
     const templateName = (
       payload.templateName ||
       process.env.WHATSAPP_TEMPLATE_NAME ||
-      (process.env.NODE_ENV !== "test" ? "urpass_ticket" : undefined)
+      (process.env.NODE_ENV !== "test" ? "urpass_space" : undefined)
     )?.trim();
-    const rawLang = payload.templateLanguage || process.env.WHATSAPP_TEMPLATE_LANG || "en_US";
+    const rawLang = payload.templateLanguage || process.env.WHATSAPP_TEMPLATE_LANG;
     const templateLang = normalizeTemplateLanguage(rawLang, templateName);
 
     // Meta Policy Enforcement: Outbound business-initiated messages require an approved template
@@ -69,7 +69,7 @@ export class WhatsAppProvider {
       return {
         success: false,
         error:
-          "Meta WhatsApp Cloud API strictly requires an approved message template (e.g. WHATSAPP_TEMPLATE_NAME='urpass_ticket') for outbound business-initiated messages outside the 24-hour customer service window.",
+          "Meta WhatsApp Cloud API strictly requires an approved message template (e.g. WHATSAPP_TEMPLATE_NAME='urpass_space' or 'urpass_ticket') for outbound business-initiated messages outside the 24-hour customer service window.",
         provider: "whatsapp_cloud",
       };
     }
@@ -111,12 +111,10 @@ export class WhatsAppProvider {
             passToken: payload.passToken,
             mediaUrl: payload.mediaUrl,
           },
-          templateLang
+          templateLang,
+          templateName
         );
 
-        if (!Object.keys(APPROVED_TEMPLATES).includes(templateName)) {
-          generated.name = templateName;
-        }
         templateObj = generated;
       }
 

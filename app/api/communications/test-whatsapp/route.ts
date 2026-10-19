@@ -202,7 +202,7 @@ export async function POST(req: NextRequest) {
     }
 
     const rawPhone = String(body?.phone || body?.toPhone || "").trim();
-    const templateName = body?.templateName || process.env.WHATSAPP_TEMPLATE_NAME || "ticket_confirmation";
+    const templateName = body?.templateName || process.env.WHATSAPP_TEMPLATE_NAME || "urpass_space";
 
     if (!rawPhone) {
       return NextResponse.json(
@@ -231,7 +231,7 @@ export async function POST(req: NextRequest) {
       passType: "Test Pass",
       ticketUrl: `https://urpass.space/pass/test_token_${Date.now()}`,
       templateName,
-      templateLanguage: body?.templateLang || body?.templateLanguage || "en_US",
+      templateLanguage: body?.templateLang || body?.templateLanguage || (templateName.includes("urpass_ticket") ? "en_US" : "en"),
       whatsappConsent: true,
       customMessage: body?.customMessage,
     };

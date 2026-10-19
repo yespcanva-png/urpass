@@ -518,14 +518,26 @@ export async function getWhatsAppTemplatesCatalog(
 ): Promise<WhatsAppTemplateRecord[]> {
   const systemTemplates: WhatsAppTemplateRecord[] = [
     {
+      id: "sys-urpass-space",
+      name: "urpass_space",
+      category: "UTILITY",
+      language: "en",
+      status: "APPROVED",
+      body_text:
+        "Hi {{1}},\n\nYour registration for *{{2}}* has been confirmed! ✅\n\n *Date:* {{3}}\n *Venue:* {{4}}\n\n🎟️ Your digital event pass is ready.\n\nPlease use the button below to view your QR pass and present it at the event entrance.\n\nThank you for registering!\n\n*Team UrPass*",
+      buttons: [{ type: "URL", text: "View My Pass", url: "https://urpass.space/pass/{{1}}" }],
+      is_system: true,
+      created_at: new Date().toISOString(),
+    },
+    {
       id: "sys-urpass-ticket",
       name: "urpass_ticket",
       category: "UTILITY",
       language: "en_US",
       status: "APPROVED",
       body_text:
-        "Hello {{1}},\n\nYour pass for {{2}} is ready!\n\n📅 Date: {{3}}\n📍 Venue: {{4}}\n🎟️ Ticket ID: {{5}}\n\nClick the button below to view your digital QR ticket.",
-      buttons: [{ type: "URL", text: "View Mobile Ticket", url: "https://urpass.space/pass/{{1}}" }],
+        "Hi {{1}},\n\nYour registration for *{{2}}* has been confirmed! ✅\n\nDate: {{3}}\nTime: {{4}}\nVenue: {{5}}\n\n🎟️ Your digital event pass is ready.\n\nPlease use the button below to view your QR pass and present it at the event entrance.\n\nWe look forward to seeing you!\n\n*Team UrPass*",
+      buttons: [{ type: "URL", text: "View My Event Pass", url: "https://urpass.space/pass/{{1}}" }],
       is_system: true,
       created_at: new Date().toISOString(),
     },

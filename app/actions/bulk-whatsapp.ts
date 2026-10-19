@@ -422,8 +422,11 @@ export async function sendBulkWhatsAppInvitations({
       ticketUrl,
       version: `bulk_${campaignId}`,
       customMessage: messageText,
-      templateName: (process.env.WHATSAPP_TEMPLATE_NAME || "urpass_ticket").trim(),
-      templateLanguage: normalizeTemplateLanguage(process.env.WHATSAPP_TEMPLATE_LANG, "urpass_ticket"),
+      templateName: (process.env.WHATSAPP_TEMPLATE_NAME || "urpass_space").trim(),
+      templateLanguage: normalizeTemplateLanguage(
+        process.env.WHATSAPP_TEMPLATE_LANG,
+        (process.env.WHATSAPP_TEMPLATE_NAME || "urpass_space").trim()
+      ),
       whatsappConsent: true,
     };
 
