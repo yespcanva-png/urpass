@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   Check,
   Sparkles,
@@ -19,6 +20,7 @@ import {
   Receipt,
 } from "lucide-react";
 import CheckoutButton from "./CheckoutButton";
+import CheckoutModal from "./CheckoutModal";
 import EventPassCheckoutModal from "./EventPassCheckoutModal";
 import FounderCheckoutCta from "./FounderCheckoutCta";
 
@@ -144,6 +146,7 @@ interface Props {
   userPhone?: string;
   trialUsed?: boolean;
   country?: "IN" | "GB";
+  autoCheckoutPlan?: string;
   invoices?: Array<{
     id: string;
     invoice_number: string;
@@ -160,8 +163,10 @@ export default function PlanGrid({
   userPhone,
   trialUsed = false,
   country = "IN",
+  autoCheckoutPlan,
   invoices = [],
 }: Props) {
+  const searchParams = useSearchParams();
   const [tab, setTab] = useState<"subscription" | "one-event" | "lifetime" | "all">("subscription");
   const [cycle, setCycle] = useState<"monthly" | "annual">("monthly");
   const [passModal, setPassModal] = useState<{
@@ -170,7 +175,18 @@ export default function PlanGrid({
     priceRupees: number;
     registrationLimit: number;
   } | null>(null);
+  const [activeCheckoutPlan, setActiveCheckoutPlan] = useState<string | null>(() => {
+    const p = autoCheckoutPlan || searchParams?.get("plan");
+    return p && ["starter", "pro", "business", "founder"].includes(p) ? p : null;
+  });
   const [actionNotice, setActionNotice] = useState<{ type: "error" | "success"; message: string } | null>(null);
+
+  useEffect(() => {
+    const p = autoCheckoutPlan || searchParams?.get("plan");
+    if (p && ["starter", "pro", "business", "founder"].includes(p)) {
+      setActiveCheckoutPlan(p);
+    }
+  }, [autoCheckoutPlan, searchParams]);
 
   const isNiveditha = (userEmail || "").toLowerCase() === "niveditha@client.urpass.space";
 
@@ -879,6 +895,42 @@ export default function PlanGrid({
           currency={country === "GB" ? "GBP" : "INR"}
           userEmail={userEmail}
           userName={userName}
+        />
+      )}
+
+      {/* Auto-Triggered Subscription Checkout Modal (e.g. for /billing?plan=business) */}
+      {activeCheckoutPlan && (
+        <CheckoutModal
+          isOpen={Boolean(activeCheckoutPlan)}
+          onClose={() => {
+            setActiveCheckoutPlan(null);
+            if (typeof window !== "undefined") {
+              const url = new URL(window.location.href);
+              url.searchParams.delete("plan");
+              window.history.replaceState({}, "", url.toString());
+            }
+          }}
+          planSlug={activeCheckoutPlan}
+          planName={
+            PLANS.find((p) => p.slug === activeCheckoutPlan)?.name ??
+            (activeCheckoutPlan === "founder" ? "Founder Lifetime" : activeCheckoutPlan.toUpperCase())
+          }
+          billingCycle={activeCheckoutPlan === "founder" ? "lifetime" : cycle}
+          userEmail={userEmail}
+          userName={userName}
+          userPhone={userPhone}
+          currency={country === "GB" ? "GBP" : "INR"}
+          priceMonthly={
+            country === "GB"
+              ? (UK_PLAN_PRICES[activeCheckoutPlan]?.monthly ?? 79)
+              : (PLANS.find((p) => p.slug === activeCheckoutPlan)?.priceMonthly ?? (activeCheckoutPlan === "founder" ? 19999 : 2499))
+          }
+          annualTotal={
+            country === "GB"
+              ? (UK_PLAN_PRICES[activeCheckoutPlan]?.annual ?? 699)
+              : (PLANS.find((p) => p.slug === activeCheckoutPlan)?.annualTotal ?? (activeCheckoutPlan === "founder" ? 19999 : 24990))
+          }
+          introOfferEligible={!trialUsed && country !== "GB" && cycle === "monthly" && ["starter", "pro", "business"].includes(activeCheckoutPlan)}
         />
       )}
     </div>

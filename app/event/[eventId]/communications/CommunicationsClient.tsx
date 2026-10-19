@@ -785,7 +785,7 @@ export default function CommunicationsClient({
                       own Meta Cloud API credentials requires the Business subscription.
                     </p>
                     <Link
-                      href="/pricing"
+                      href="/billing?plan=business&tab=plans"
                       className="inline-flex items-center gap-1 px-3 py-1 rounded-md bg-amber-600 text-white font-bold text-xs hover:bg-amber-700 transition-colors mt-0.5"
                     >
                       Upgrade to Business <ChevronRight className="w-3 h-3" />
@@ -832,12 +832,12 @@ export default function CommunicationsClient({
                     {selfServiceConfig.is_configured ? "Update Meta Credentials" : "Connect Meta Account"}
                   </button>
                 ) : (
-                  <button
-                    disabled
-                    className="w-full h-10 rounded-xl bg-neutral-200 text-neutral-400 font-bold text-xs cursor-not-allowed flex items-center justify-center gap-2"
+                  <Link
+                    href="/billing?plan=business&tab=plans"
+                    className="w-full h-10 rounded-xl bg-neutral-900 hover:bg-black text-white font-bold text-xs transition-colors flex items-center justify-center gap-2 shadow-xs cursor-pointer"
                   >
-                    <Lock className="w-3.5 h-3.5" /> Feature Locked
-                  </button>
+                    <Lock className="w-3.5 h-3.5" /> Upgrade to Business
+                  </Link>
                 )}
               </div>
             </div>

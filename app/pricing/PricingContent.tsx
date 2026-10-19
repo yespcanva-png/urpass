@@ -543,8 +543,8 @@ export default function PricingContent({
                     <Link
                       href={
                         isAuthenticated
-                          ? `/billing${country === "GB" ? "?country=GB" : ""}`
-                          : `/signup?from=pricing&plan=${plan.slug}${country === "GB" ? "&country=GB" : ""}&next=/billing`
+                          ? `/billing?plan=${plan.slug}&tab=plans${country === "GB" ? "&country=GB" : ""}`
+                          : `/signup?from=pricing&plan=${plan.slug}${country === "GB" ? "&country=GB" : ""}&next=${encodeURIComponent(`/billing?plan=${plan.slug}&tab=plans`)}`
                       }
                       className={`w-full text-center py-3 rounded-xl text-sm font-bold transition-all shadow-sm ${
                         plan.highlight

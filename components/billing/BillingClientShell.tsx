@@ -91,6 +91,7 @@ export interface BillingClientShellProps {
   planCanUseApi: boolean;
   initialTab?: string;
   reason?: string;
+  autoCheckoutPlan?: string;
 }
 
 function UsageTile({
@@ -210,6 +211,7 @@ export default function BillingClientShell({
   planCanUseApi,
   initialTab = "plans",
   reason,
+  autoCheckoutPlan,
 }: BillingClientShellProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -217,6 +219,9 @@ export default function BillingClientShell({
 
   // Tab state: "plans" | "overview" | "invoices"
   const [activeTab, setActiveTab] = useState<"plans" | "overview" | "invoices">(() => {
+    if (autoCheckoutPlan || searchParams.get("plan")) {
+      return "plans";
+    }
     const urlTab = searchParams.get("tab");
     if (urlTab === "plans" || urlTab === "invoices" || urlTab === "overview") {
       return urlTab;
@@ -448,6 +453,7 @@ export default function BillingClientShell({
             userPhone={userPhone}
             trialUsed={Boolean(sub?.trial_used || sub?.is_trial || currentPlanSlug !== "free")}
             country={resolvedCountry}
+            autoCheckoutPlan={autoCheckoutPlan || searchParams.get("plan") || undefined}
             invoices={invoices}
           />
         </div>

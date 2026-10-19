@@ -73,7 +73,7 @@ export async function GET() {
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
     // Parallel fetch: fetch comprehensive data across all operational collections
-    const [subsRes, profRes, evRes, ciRes, auditRes, invRes, authUsers] = await Promise.all([
+    const [subsRes, profRes, evRes, ciRes, auditRes, invRes, authUsers, commSettingsRes, managedReqRes, orgMembersRes, orgsRes] = await Promise.all([
       admin
         .from("subscriptions")
         .select("id, user_id, status, provider, autopay_status, billing_cycle, updated_at, created_at")
@@ -88,7 +88,7 @@ export async function GET() {
 
       admin
         .from("events")
-        .select("id, organizer_id, name, venue, event_date, status, created_at, updated_at")
+        .select("id, organizer_id, name, venue, event_date, status, created_at, updated_at, organization_id")
         .order("created_at", { ascending: false })
         .limit(2000),
 
@@ -112,6 +112,27 @@ export async function GET() {
         .limit(2000),
 
       fetchAllAuthUsers(admin),
+
+      admin
+        .from("organization_communication_settings")
+        .select("organization_id, enable_communication, whatsapp_communication, whatsapp_integration_model, whatsapp_setup_status")
+        .limit(2000),
+
+      admin
+        .from("whatsapp_managed_service_requests")
+        .select("id, organization_id, requested_by, status, estimated_monthly_volume, use_case, contact_email, contact_phone, created_at")
+        .order("created_at", { ascending: false })
+        .limit(500),
+
+      admin
+        .from("organization_members")
+        .select("organization_id, user_id, role")
+        .limit(2000),
+
+      admin
+        .from("organizations")
+        .select("id, name, slug, created_by")
+        .limit(2000),
     ]);
 
     const subs = subsRes.data || [];
@@ -120,6 +141,10 @@ export async function GET() {
     const checkIns = ciRes.data || [];
     const auditLogs = auditRes.data || [];
     const invoices = (invRes.data || []) as OpsInvoiceItem[];
+    const commSettings = commSettingsRes.data || [];
+    const managedRequests = managedReqRes.data || [];
+    const orgMembers = orgMembersRes.data || [];
+    const organizations = orgsRes.data || [];
 
     const dbLatencyMs = Date.now() - startTime;
 
@@ -192,7 +217,45 @@ export async function GET() {
       healthStatus: "healthy" | "trialing" | "warning" | "expired";
       lastActive: string | null;
       createdDate: string;
+      whatsappManaged?: boolean;
+      whatsappStatus?: "active" | "pending" | "disabled";
+      orgId?: string;
     }>();
+
+    // Build user -> org and org -> communication settings mappings
+    const userToOrgMap = new Map<string, string>();
+    orgMembers.forEach((m) => {
+      if (m.user_id && m.organization_id) {
+        userToOrgMap.set(m.user_id, m.organization_id);
+      }
+    });
+    organizations.forEach((o) => {
+      if (o.created_by && o.id) {
+        userToOrgMap.set(o.created_by, o.id);
+      }
+    });
+    events.forEach((e) => {
+      if (e.organizer_id && e.organization_id) {
+        userToOrgMap.set(e.organizer_id, e.organization_id);
+      }
+    });
+
+    const orgToSettingsMap = new Map<string, any>();
+    commSettings.forEach((cs) => {
+      if (cs.organization_id) {
+        orgToSettingsMap.set(cs.organization_id, cs);
+      }
+    });
+
+    const userToRequestMap = new Map<string, any>();
+    managedRequests.forEach((mr) => {
+      if (mr.requested_by) {
+        userToRequestMap.set(mr.requested_by, mr);
+      }
+      if (mr.organization_id) {
+        userToRequestMap.set(mr.organization_id, mr);
+      }
+    });
 
     for (const p of profiles) {
       const sub = subs.find((s) => s.user_id === p.user_id || s.user_id === p.id);
@@ -205,6 +268,28 @@ export async function GET() {
       } else if (sub?.status === "cancelled" || sub?.status === "expired") {
         healthStatus = "expired";
       }
+
+      const userId = (p.user_id || p.id || "").toString();
+      const userOrgId = userToOrgMap.get(userId) || `personal_${userId}`;
+      const orgSetting = orgToSettingsMap.get(userOrgId) || orgToSettingsMap.get(`personal_${userId}`);
+      const userReq = userToRequestMap.get(userId) || userToRequestMap.get(userOrgId);
+
+      const isManagedActive =
+        orgSetting?.whatsapp_integration_model === "managed" &&
+        orgSetting?.whatsapp_setup_status === "active";
+      const isPending =
+        !isManagedActive &&
+        userReq &&
+        (userReq.status === "pending_review" ||
+          userReq.status === "quote_provided" ||
+          userReq.status === "pending_payment" ||
+          orgSetting?.whatsapp_setup_status === "pending_verification");
+
+      const whatsappStatus: "active" | "pending" | "disabled" = isManagedActive
+        ? "active"
+        : isPending
+        ? "pending"
+        : "disabled";
 
       const key = (p.user_id || p.id || p.email || "").toString();
       if (key) {
@@ -219,6 +304,9 @@ export async function GET() {
           healthStatus,
           lastActive: p.updated_at || p.created_at,
           createdDate: p.created_at,
+          whatsappManaged: isManagedActive,
+          whatsappStatus,
+          orgId: userOrgId,
         });
       }
     }
@@ -240,6 +328,27 @@ export async function GET() {
           healthStatus = "expired";
         }
 
+        const userOrgId = userToOrgMap.get(u.id) || `personal_${u.id}`;
+        const orgSetting = orgToSettingsMap.get(userOrgId) || orgToSettingsMap.get(`personal_${u.id}`);
+        const userReq = userToRequestMap.get(u.id) || userToRequestMap.get(userOrgId);
+
+        const isManagedActive =
+          orgSetting?.whatsapp_integration_model === "managed" &&
+          orgSetting?.whatsapp_setup_status === "active";
+        const isPending =
+          !isManagedActive &&
+          userReq &&
+          (userReq.status === "pending_review" ||
+            userReq.status === "quote_provided" ||
+            userReq.status === "pending_payment" ||
+            orgSetting?.whatsapp_setup_status === "pending_verification");
+
+        const whatsappStatus: "active" | "pending" | "disabled" = isManagedActive
+          ? "active"
+          : isPending
+          ? "pending"
+          : "disabled";
+
         userMap.set(u.id, {
           id: u.id,
           email: u.email || "unknown@urpass.space",
@@ -251,6 +360,9 @@ export async function GET() {
           healthStatus,
           lastActive: u.last_sign_in_at || u.updated_at || u.created_at,
           createdDate: u.created_at,
+          whatsappManaged: isManagedActive,
+          whatsappStatus,
+          orgId: userOrgId,
         });
       }
     }
@@ -437,6 +549,11 @@ export async function GET() {
       invoices: {
         totalCount: invoices.length,
         items: invoices,
+      },
+      whatsappManaged: {
+        activeCount: userRoster.filter((u) => u.whatsappStatus === "active").length,
+        pendingCount: userRoster.filter((u) => u.whatsappStatus === "pending").length,
+        requests: managedRequests,
       },
       logs: uniqueLogs, // Return all logs without 100 limit
     });

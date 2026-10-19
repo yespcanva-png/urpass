@@ -163,7 +163,7 @@ function BillingShellSkeleton() {
 }
 
 export default async function BillingPage(props: {
-  searchParams?: Promise<{ country?: string; trial?: string; tab?: string; reason?: string }>;
+  searchParams?: Promise<{ country?: string; trial?: string; tab?: string; reason?: string; plan?: string }>;
 }) {
   const searchParams = props.searchParams ? await props.searchParams : {};
   const supabase = await createClient();
@@ -301,8 +301,9 @@ export default async function BillingPage(props: {
           registrationLimit={registrationLimit}
           organizerLimit={organizerLimit}
           planCanUseApi={plan.canUse("api_access")}
-          initialTab={searchParams?.tab ?? "plans"}
+          initialTab={searchParams?.tab ?? (searchParams?.plan ? "plans" : "plans")}
           reason={searchParams?.reason}
+          autoCheckoutPlan={searchParams?.plan}
         />
       </Suspense>
     </div>
