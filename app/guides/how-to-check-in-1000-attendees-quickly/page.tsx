@@ -73,7 +73,7 @@ export default function GuidePage() {
           { q: "Does the scanner work if mobile internet slows down during the rush?", a: "Yes. URPASS utilizes smart client-side caching to ensure responsive scanning even in crowded venue network environments." },
         ],
         ctaTitle: "Streamline your event check-in with URPASS",
-        ctaDescription: "Permanent free tier · Zero app downloads · Fast sub-second scanning",
+        ctaDescription: "Plans from ₹29/mo · Zero app downloads · Fast sub-second scanning",
       }}
     />
   );

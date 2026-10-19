@@ -70,10 +70,10 @@ export default function GuidePage() {
           { q: "Why is browser-based scanning better than downloading a mobile app?", a: "Volunteers often refuse to download heavy apps or have full phone storage. Browser scanning opens instantly via a URL in seconds without app store delays." },
           { q: "How many attendees can one volunteer scan per minute?", a: "With sub-0.3s scanning speed, a volunteer comfortably checks in 15 to 20 attendees per minute including walk-up time." },
           { q: "What happens if an attendee's phone screen is cracked?", a: "High-contrast QR codes with generous error correction scan smoothly even through cracked phone screens or low brightness." },
-          { q: "Is URPASS free to use for check-in?", a: "Yes. Our permanent free tier includes full mobile QR scanning for up to 100 attendees per month at ₹0 forever." },
+          { q: "How does URPASS check-in pricing work?", a: "URPASS includes full mobile browser QR scanning across all subscription plans, starting at an introductory ₹29/month for your first 2 months." },
         ],
         ctaTitle: "Streamline your event check-in with URPASS",
-        ctaDescription: "Permanent free tier · Zero app downloads · Fast sub-second scanning",
+        ctaDescription: "Plans from ₹29/mo · Zero app downloads · Fast sub-second scanning",
       }}
     />
   );

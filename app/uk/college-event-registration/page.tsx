@@ -154,7 +154,7 @@ export default function UkCollegeEventRegistrationPage() {
 
         ctaTitle: "Modernise your college event operations",
         ctaDescription:
-          "Start your 30-day free trial on URPASS today. Branded registration, rapid QR scanning, and UK GDPR compliance.",
+          "Get started on URPASS today with transparent GBP plans. Branded registration, rapid QR scanning, and UK GDPR compliance.",
       }}
     />
   );

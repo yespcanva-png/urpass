@@ -73,7 +73,7 @@ export default function Page() {
           { q: "Can attendees download their ticket as a PDF?", a: "Yes. The digital ticket interface includes options to save or print clean PDF passes." },
         ],
         ctaTitle: "Start streamlining your event with URPASS",
-        ctaDescription: "Permanent free tier · 30-day free trial on paid plans · Fast sub-second check-in",
+        ctaDescription: "Plans start at ₹29/mo · 0% ticket commission · Fast sub-second check-in",
       }}
     />
   );

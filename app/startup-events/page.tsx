@@ -55,7 +55,7 @@ export default function Page() {
             "Zero per-ticket percentage cuts — keep 100% of ticket sales",
             "Native UPI payments via Razorpay (GPay, PhonePe, Paytm)",
             "Curated approval workflows for private investor mixers",
-            "Permanent free tier for up to 100 registrations per month",
+            "Flat monthly pricing with 0% platform ticket commission",
           ],
         },
         useCases: [
@@ -73,7 +73,7 @@ export default function Page() {
           { q: "Can we collect post-event feedback from investors and founders?", a: "Yes. URPASS includes built-in post-event survey tools that invite checked-in guests to leave ratings and reviews." },
         ],
         ctaTitle: "Elevate your event entry with URPASS",
-        ctaDescription: "Permanent free tier · Zero hardware setup · Fast sub-second scanning",
+        ctaDescription: "Plans from ₹29/mo · Zero hardware setup · Fast sub-second scanning",
       }}
     />
   );

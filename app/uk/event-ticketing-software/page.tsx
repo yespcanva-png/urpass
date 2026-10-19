@@ -64,7 +64,7 @@ export default function UkEventTicketingSoftwarePage() {
           },
           {
             criteria: "Free Event Organizer Limits",
-            urpass: "Permanent Free Tier up to 100 registrations/month",
+            urpass: "Plans from £15/mo with 0% ticket fee",
             competitor: "Strict 25-ticket cap on free events before mandatory upgrade",
             urpassAdvantage: true,
           },

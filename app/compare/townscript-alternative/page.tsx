@@ -54,7 +54,7 @@ export default function ComparisonPage() {
             "Zero per-ticket percentage cuts on ticket sales",
             "Native UPI payments via Razorpay (GPay, PhonePe, Paytm)",
             "Sub-0.3s camera check-in with any smartphone browser",
-            "Permanent free tier available for up to 100 attendees per month",
+            "Plans start with ₹29/month introductory offer on all tiers",
           ],
         },
         useCases: [
@@ -69,10 +69,10 @@ export default function ComparisonPage() {
           { q: "How does URPASS pricing compare to Townscript?", a: "Townscript takes a percentage fee from every ticket you sell. URPASS operates on flat monthly subscription tiers with zero per-ticket commissions." },
           { q: "Can Indian event organizers accept UPI payments?", a: "Yes. Native Razorpay integration allows you to accept Google Pay, PhonePe, Paytm, cards, and net banking." },
           { q: "How do door staff scan tickets at the venue?", a: "Staff simply open a secure scanner URL in their phone browser, grant camera access, and scan tickets in under 0.3 seconds." },
-          { q: "Can I host free events on URPASS?", a: "Yes. You can host 2 events per month with up to 100 registrations per month completely free on our permanent free tier." },
+          { q: "How does URPASS pricing work?", a: "URPASS offers flat subscription plans starting at ₹29/month for the first 2 months, with 0% platform ticket fees and direct bank payouts." },
         ],
         ctaTitle: "Experience the URPASS difference today",
-        ctaDescription: "Permanent free tier · Zero ticket commission · Sub-second door check-in",
+        ctaDescription: "Plans start at ₹29/mo · Zero ticket commission · Sub-second door check-in",
       }}
     />
   );

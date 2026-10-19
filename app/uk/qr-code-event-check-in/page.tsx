@@ -238,7 +238,7 @@ export default function UkQrCodeEventCheckInPage() {
 
         ctaTitle: "Experience lightning-fast gate scanning",
         ctaDescription:
-          "Start your 30-day free trial on URPASS today. Sub-second scanning, zero app downloads, and full offline reliability.",
+          "Get started on URPASS today with transparent GBP plans. Sub-second scanning, zero app downloads, and full offline reliability.",
       }}
     />
   );

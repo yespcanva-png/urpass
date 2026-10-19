@@ -55,7 +55,7 @@ export default function GuidePage() {
             "Automated digital QR passes generated for every attendee",
             "Sub-0.3 second door scanning on any smartphone browser",
             "Instant duplicate entry lockout across all gates",
-            "Permanent free tier for up to 100 registrations/month",
+            "Flat subscription with 0% ticket commission",
           ],
         },
         useCases: [
@@ -73,7 +73,7 @@ export default function GuidePage() {
           { q: "Does URPASS cost money for small events?", a: "No. You can host 2 events per month with up to 100 registrations per month for ₹0 forever on our free plan." },
         ],
         ctaTitle: "Streamline your event check-in with URPASS",
-        ctaDescription: "Permanent free tier · Zero app downloads · Fast sub-second scanning",
+        ctaDescription: "Plans from ₹29/mo · Zero app downloads · Fast sub-second scanning",
       }}
     />
   );

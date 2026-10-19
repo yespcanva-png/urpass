@@ -46,7 +46,7 @@ export default function UrpassVsGoogleFormsPage() {
         h1: "URPASS vs Google Forms for Event Registration & Gate Entry",
         description:
           "Google Forms is excellent for general surveys and simple questionnaires. But when used for event management, it creates massive gate bottlenecks, ticket fraud risks, and manual spreadsheet lookups. URPASS bridges the gap by turning registrations into scannable digital passes instantly.",
-        ctaLabel: "Create free event on URPASS",
+        ctaLabel: "Create Your Event →",
         directAnswer: {
           title: "Why Switch from Google Forms to URPASS?",
           summary:
@@ -105,7 +105,7 @@ export default function UrpassVsGoogleFormsPage() {
             },
             {
               criteria: "Setup Time",
-              urpass: "2 minutes · Permanent free plan available",
+              urpass: "2 minutes · ₹29/mo introductory offer",
               competitor: "2 minutes · Free",
               urpassAdvantage: false,
             },
@@ -165,7 +165,7 @@ export default function UrpassVsGoogleFormsPage() {
         faqs: [
           {
             q: "Can I use URPASS for free like Google Forms?",
-            a: "Yes! URPASS provides a permanent free plan with ₹0 platform fees, allowing you to host up to 50 attendees per event (and up to 100 registrations per month across events) with full digital QR pass issuance and in-browser camera scanning.",
+            a: "URPASS offers an introductory offer of ₹29/month for your first 2 months, giving you full digital QR pass issuance, automated email delivery, and in-browser camera scanning with zero ticket commission.",
           },
           {
             q: "Do I have to set up complex Google Form add-ons like Form Publisher or QR generator?",
@@ -181,7 +181,7 @@ export default function UrpassVsGoogleFormsPage() {
           },
         ],
         ctaTitle: "Upgrade from spreadsheets to URPASS",
-        ctaDescription: "Permanent free tier · 0.28s scanning · Instant QR passes · Zero setup friction",
+        ctaDescription: "Plans start at ₹29/mo · 0.28s scanning · Instant QR passes · Zero ticket commission",
       }}
     />
   );

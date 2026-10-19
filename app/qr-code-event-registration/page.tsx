@@ -29,7 +29,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "QR Code Event Registration Software | URPASS",
     description:
-      "Automate event registration with instant QR code passes. Sub-second door scanning, duplicate entry protection, and free forever tier.",
+      "Automate event registration with instant QR code passes. Sub-second door scanning, duplicate entry protection, and transparent flat pricing.",
     url: "https://urpass.space/qr-code-event-registration",
     locale: "en_IN",
     type: "website",
@@ -54,7 +54,7 @@ export default function QrCodeEventRegistrationPage() {
             "Registration to Pass: Instant automated QR pass delivery upon form submission or approval",
             "Door Validation Speed: Validates and checks in attendees in under 0.28 seconds",
             "Zero Hardware Required: Any smartphone running Chrome or Safari functions as an entrance scanner",
-            "Permanent Free Tier: ₹0 to start with up to 50 attendees per event and zero credit card required",
+            "Transparent Flat Pricing: ₹29/mo intro offer with 0% ticket commission",
           ],
         },
         productProof: {
@@ -108,7 +108,7 @@ export default function QrCodeEventRegistrationPage() {
           description:
             "Stop printing paper badges or manually checking names off spreadsheet rosters. URPASS modernizes your entire registration-to-check-in workflow.",
           bullets: [
-            "Permanent free plan available — no credit card needed",
+            "Plans start with ₹29/mo intro offer",
             "In-browser smartphone camera scanning (<0.28s)",
             "Real-time duplicate ticket blocking across all entrance gates",
             "Full attendee CSV exports with arrival timestamps",
@@ -124,7 +124,7 @@ export default function QrCodeEventRegistrationPage() {
         faqs: [
           {
             q: "Can I use URPASS QR code event registration for free?",
-            a: "Yes! URPASS offers a permanent free tier for up to 50 attendees per event (and up to 100 registrations per month across events) with full QR pass issuance and in-browser camera scanning at ₹0 forever.",
+            a: "Yes! URPASS offers transparent plans starting at ₹29/month for the first 2 months, including full QR pass issuance and in-browser camera scanning with zero ticket fees.",
           },
           {
             q: "How do attendees access their QR passes?",

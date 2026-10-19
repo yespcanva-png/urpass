@@ -802,7 +802,77 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/event-registration-approval-workflow",
   ].map((path) => ({ url: `${BASE}${path}`, priority: 0.95, changeFrequency: "daily" as const }));
 
+  const growthBatch25Pages = [
+    // 10 Transactional Pages
+    "/event-registration-software-india",
+    "/qr-code-event-check-in-app",
+    "/zero-commission-event-ticketing",
+    "/event-ticketing-software-razorpay",
+    "/whatsapp-event-ticket-delivery",
+    "/bulk-qr-code-generator-events",
+    "/event-attendance-tracking-software",
+    "/event-registration-form-builder",
+    "/multi-gate-event-entry-management",
+    "/digital-event-pass-generator",
+    // 6 Industry Pages
+    "/college-symposium-registration-software",
+    "/conference-delegate-registration-software",
+    "/exhibition-visitor-registration-system",
+    "/corporate-event-check-in-software",
+    "/hackathon-registration-platform",
+    "/workshop-ticket-booking-software",
+    // 5 Comparison Pages
+    "/luma-alternative-event-registration",
+    "/cvent-alternative-small-events",
+    "/whova-alternative-qr-check-in",
+    "/eventbrite-vs-townscript-vs-urpass",
+    "/zoho-forms-vs-event-registration-software",
+    // 4 Problem-Solving Pages
+    "/prevent-duplicate-qr-ticket-entry",
+    "/group-ticket-qr-check-in-software",
+    "/session-wise-event-attendance-tracking",
+    "/google-sheets-to-qr-event-tickets",
+  ].map((path) => ({ url: `${BASE}${path}`, priority: 0.95, changeFrequency: "weekly" as const }));
+
+  const bengaluruBatch30Pages = [
+    // 10 Software & Ticketing Pages
+    "/bengaluru-event-ticketing-platform",
+    "/bangalore-qr-event-check-in-app",
+    "/bengaluru-paid-event-registration",
+    "/bangalore-razorpay-event-ticketing",
+    "/bengaluru-digital-event-pass-generator",
+    "/bangalore-bulk-event-registration",
+    "/bengaluru-event-attendance-software",
+    "/bangalore-custom-event-registration-forms",
+    "/bengaluru-event-entry-management",
+    "/bangalore-whatsapp-event-tickets",
+    // 10 Event Industry Pages
+    "/bangalore-tech-conference-registration",
+    "/bengaluru-startup-meetup-registration",
+    "/bangalore-hackathon-registration-system",
+    "/bengaluru-college-fest-registration",
+    "/bangalore-corporate-event-registration",
+    "/bengaluru-exhibition-visitor-registration",
+    "/bangalore-workshop-booking-software",
+    "/bengaluru-product-launch-registration",
+    "/bangalore-business-seminar-registration",
+    "/bengaluru-networking-event-registration",
+    // 10 Locality & Ecosystem Use Cases
+    "/whitefield-corporate-event-registration",
+    "/electronic-city-tech-event-registration",
+    "/koramangala-startup-event-registration",
+    "/hsr-layout-workshop-registration",
+    "/manyata-tech-park-event-check-in",
+    "/bellandur-company-event-registration",
+    "/indiranagar-community-event-ticketing",
+    "/jayanagar-training-workshop-registration",
+    "/sarjapur-road-corporate-event-check-in",
+    "/peenya-industrial-event-registration",
+  ].map((path) => ({ url: `${BASE}${path}`, priority: 0.95, changeFrequency: "weekly" as const }));
+
   const rawStaticEntries = [
+    ...bengaluruBatch30Pages,
+    ...growthBatch25Pages,
     ...anniversarySeoGeoPages,
     ...batch50Pages,
     ...core,

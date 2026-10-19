@@ -158,7 +158,7 @@ export default function Page() {
           }
 ],
         ctaTitle: "Event Registration & Multi-Scanner Check-In for 1,000 Attendees",
-        ctaDescription: "Launch your event registration in minutes. Permanent free plan available with no credit card required.",
+        ctaDescription: "Launch your event registration in minutes. Plans starting with a ₹29/month introductory offer.",
       }}
     />
   );

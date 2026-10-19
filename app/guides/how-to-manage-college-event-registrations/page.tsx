@@ -54,7 +54,7 @@ export default function GuidePage() {
           bullets: [
             "Eliminates proxy attendance and fraudulent pass sharing",
             "Instant multi-counter volunteer scanning on any phone",
-            "Permanent free tier for up to 100 students per month",
+            "Plans start at ₹29/mo intro offer with 0% ticket fee",
             "Timestamped attendance logs ready for faculty approval",
           ],
         },
@@ -73,7 +73,7 @@ export default function GuidePage() {
           { q: "Can we export attendance data for faculty or college administration?", a: "Yes. You can export the complete attendance sheet with student names, roll numbers, and entry timestamps to Excel." },
         ],
         ctaTitle: "Streamline your event check-in with URPASS",
-        ctaDescription: "Permanent free tier · Zero app downloads · Fast sub-second scanning",
+        ctaDescription: "Plans from ₹29/mo · Zero app downloads · Fast sub-second scanning",
       }}
     />
   );

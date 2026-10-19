@@ -93,7 +93,7 @@ export default function Page() {
           title: "Provide verified attendance documentation for university accreditation.",
           description: "Accreditation bodies (such as NAAC and NBA in India, or QAA in the UK) require documented proof of student seminar and symposium participation. URPASS delivers timestamped, tamper-proof audit trails for every event on campus.",
           bullets: [
-            "Permanent Free Tier available for departmental clubs and community student meetups",
+            "Transparent flat pricing available for departmental clubs and student meetups",
             "Zero per-ticket percentage cuts keeping student union budgets intact",
             "Works completely offline if campus Wi-Fi drops during large cultural fests",
             "Centralized audit logs with 1-click CSV exports for university authorities",

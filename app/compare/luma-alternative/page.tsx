@@ -176,7 +176,7 @@ export default function LumaAlternativePage() {
           badge: "MIGRATION OFFER",
           title: "Switch to URPASS with ₹0 upfront cost.",
           description:
-            "Test URPASS risk-free. Create your free event in under a minute with up to 100 registrations per month for ₹0 forever, or activate a 30-day free trial on any premium tier without entering a credit card.",
+            "Experience URPASS with our ₹29/month introductory offer for your first 2 months. Launch your event in minutes with zero platform ticket commissions.",
           bullets: [
             "0% commission on all ticket tiers",
             "Instant UPI QR & Card checkouts with direct bank payouts",
@@ -199,7 +199,7 @@ export default function LumaAlternativePage() {
           },
           {
             q: "Does URPASS have an attendee limit on free events?",
-            a: "The permanent ₹0 Free Tier includes up to 2 events per month and 100 registrations per month. For larger events, Starter, Pro, and Business plans offer generous limits and include a 30-day free trial with no credit card required.",
+            a: "URPASS provides flat monthly plans with 0% platform ticket commissions, starting with an introductory offer of ₹29/month for your first 2 months on Starter, Pro, or Business.",
           },
           {
             q: "Can I export all attendee data to CSV?",

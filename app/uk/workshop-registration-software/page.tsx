@@ -154,7 +154,7 @@ export default function UkWorkshopRegistrationSoftwarePage() {
 
         ctaTitle: "Run your next UK workshop with confidence",
         ctaDescription:
-          "Start your 30-day free trial on URPASS today. Enforce seat capacities, issue digital passes, and scan attendees in <0.3s.",
+          "Get started on URPASS today with transparent GBP plans. Enforce seat capacities, issue digital passes, and scan attendees in <0.3s.",
       }}
     />
   );

@@ -164,7 +164,7 @@ export default function Page() {
           }
 ],
         ctaTitle: "Freshers Event Ticketing & Fast QR Door Entry Software UK",
-        ctaDescription: "Launch your event registration in minutes. Permanent free plan available with no credit card required.",
+        ctaDescription: "Launch your event registration in minutes. Plans starting with a ₹29/month introductory offer.",
         geo: {
           region: "United Kingdom",
           placename: "United Kingdom",

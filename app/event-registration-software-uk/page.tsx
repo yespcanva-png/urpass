@@ -141,7 +141,7 @@ export default function EventRegistrationSoftwareUkPage() {
             },
             {
               criteria: "University & Student Societies",
-              urpass: "Free forever tier supporting up to 100 registrations per month at £0",
+              urpass: "Transparent GBP plans starting at £15/month",
               competitor: "Charges fees on every paid ticket regardless of non-profit or student status",
               urpassAdvantage: true,
             },

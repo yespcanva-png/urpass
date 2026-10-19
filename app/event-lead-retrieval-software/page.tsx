@@ -54,7 +54,7 @@ export default function EventLeadRetrievalPage() {
           subtitle: "Why exhibitors and organizers are replacing legacy $400/unit badge scanner guns.",
           headers: ["Feature / Capability", "URPASS Lead Retrieval Engine", "Legacy Hardware Scanner Rentals"],
           rows: [
-            { col1: "Hardware Costs", col2: "Free Forever tier (up to 50 attendees/event); unlimited rep logins", col3: "$300 to $600 per scanner rental fee" },
+            { col1: "Hardware Costs", col2: "Plans starting at ₹29/month intro offer; unlimited rep logins", col3: "$300 to $600 per scanner rental fee" },
             { col1: "Device Setup", col2: "Instant browser login via mobile URL or UrPass One camera scanner", col3: "Long queues at tech desk for bulky proprietary devices" },
             { col1: "Lead Qualification", col2: "Custom tags, hot/warm ratings, and instant voice/text notes", col3: "Limited numeric codes or separate manual paper sheets" },
             { col1: "Data Delivery Speed", col2: "Real-time live dashboard sync + immediate CSV download", col3: "Batch USB stick export 24–48 hours after event close" },
@@ -142,7 +142,7 @@ export default function EventLeadRetrievalPage() {
           },
           {
             q: "Is lead retrieval available on the URPASS free tier?",
-            a: "Yes. Organizers can host events on the Free Forever plan (2 events/month, up to 50 attendees per event) with full access to exhibitor lead capture capabilities.",
+            a: "Yes. Organizers can host events on the Plans starting at ₹29/month intro offer with full access to exhibitor lead capture capabilities.",
           },
         ],
         relatedLinks: [

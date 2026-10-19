@@ -73,7 +73,7 @@ export default function Page() {
           { q: "Can we track check-ins per individual gate?", a: "Yes. Scans record timestamps and device metadata, allowing you to see traffic velocity across different entrance gates." },
         ],
         ctaTitle: "Start streamlining your event with URPASS",
-        ctaDescription: "Permanent free tier · 30-day free trial on paid plans · Fast sub-second check-in",
+        ctaDescription: "Plans start at ₹29/mo · 0% ticket commission · Fast sub-second check-in",
       }}
     />
   );

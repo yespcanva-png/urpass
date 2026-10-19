@@ -73,7 +73,7 @@ export default function Page() {
           { q: "How do staff know if a pass is for VIP or General admission?", a: "The pass display and the scanner screen clearly show the attendee tier badge (e.g., VIP, Speaker, General) upon scan." },
         ],
         ctaTitle: "Start streamlining your event with URPASS",
-        ctaDescription: "Permanent free tier · 30-day free trial on paid plans · Fast sub-second check-in",
+        ctaDescription: "Plans start at ₹29/mo · 0% ticket commission · Fast sub-second check-in",
       }}
     />
   );

@@ -53,7 +53,7 @@ export default function EventbriteAlternativesPage() {
           summary:
             "If your priority is 0% ticketing commission, instant smartphone gate scanning without app downloads, and seamless regional payment support (like India UPI or UK GBP cards), URPASS is the top overall choice. For global paid ticketing with flat monthly fees, Ticket Tailor is a solid option. For invite-only tech gatherings, Luma works well. For formal corporate galas, RSVPify is a viable option.",
           keyPoints: [
-            "Best Overall & Fastest Check-In: URPASS (0% ticket commission, in-browser 0.28s phone scanner, permanent free tier)",
+            "Best Overall & Fastest Check-In: URPASS (0% ticket commission, in-browser 0.28s phone scanner, plans from ₹29/mo)",
             "Best for Creator & Tech Meetups: Luma (Sleek minimalist pages, calendar focus)",
             "Best for US/UK Flat-Fee Ticketing: Ticket Tailor (Pay-per-ticket credits or monthly flat rate)",
             "Best for Formal Weddings & Dinners: RSVPify (Multi-event schedules and seating charts)",
@@ -166,11 +166,11 @@ export default function EventbriteAlternativesPage() {
         faqs: [
           {
             q: "Why is URPASS considered the best Eventbrite alternative?",
-            a: "URPASS provides 0% ticket commission, a permanent free tier for up to 50 attendees per event, an in-browser scanner operating in under 0.28s, and seamless regional payment support (Razorpay for India UPI/cards and Stripe globally).",
+            a: "URPASS provides 0% ticket commission, transparent plans starting with a ₹29/month intro offer, an in-browser scanner operating in under 0.28s, and seamless regional payment support (Razorpay for India UPI/cards and Stripe globally).",
           },
           {
             q: "Can I host free events without paying anything on URPASS?",
-            a: "Yes! URPASS offers a permanent free tier with no credit card required, allowing you to host free events with up to 50 attendees per event (and up to 100 registrations per month across events) with full digital pass generation and mobile scanning.",
+            a: "URPASS offers flat subscription pricing starting at ₹29/month for your first 2 months, including full digital pass generation, automated email delivery, and mobile scanning.",
           },
           {
             q: "How does gate check-in work on URPASS?",

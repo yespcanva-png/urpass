@@ -176,7 +176,7 @@ export default function SwitchToUrpassPage() {
               Ready to eliminate your event ticketing fees?
             </h2>
             <p className="mt-3 text-neutral-300 text-xs sm:text-sm max-w-xl mx-auto leading-relaxed">
-              Launch your fee-free registration page on URPASS today. Permanent free tier available, with no credit card required.
+              Launch your registration page on URPASS today with our ₹29/month introductory offer.
             </p>
             <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link

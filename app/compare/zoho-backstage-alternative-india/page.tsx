@@ -36,7 +36,7 @@ export default function ComparisonPage() {
           { icon: Ticket, title: "Zero App Downloads", desc: "Attendees view responsive digital passes in mobile web browsers or Apple Wallet without downloading dedicated attendee apps." },
           { icon: ScanLine, title: "Sub-Second Mobile Scanning", desc: "Volunteer door staff scan passes in under 0.3s using phone cameras with instant valid/duplicate checks." },
           { icon: Users, title: "Built for Colleges & Startups", desc: "Tailored for dynamic college fests, student symposiums, hackathons, and workshops with flexible approval queues." },
-          { icon: ShieldCheck, title: "Permanent Free Tier", desc: "Host 2 events per month with up to 100 registrations per month for ₹0 forever with no credit card required." },
+          { icon: ShieldCheck, title: "Introductory Offer", desc: "Get full platform access for ₹29/month for your first 2 months with zero platform commission." },
           { icon: BarChart3, title: "Native Razorpay Integration", desc: "Collect ticket payments in INR via UPI, credit/debit cards, and net banking with direct bank settlements." },
         ],
         steps: [
@@ -54,7 +54,7 @@ export default function ComparisonPage() {
             "No complex training or enterprise onboarding required",
             "Browser-based mobile door scanner deployed in seconds",
             "Instant duplicate entry lockout across all venue doors",
-            "Affordable flat monthly pricing with 30-day free trial",
+            "Affordable flat monthly pricing starting at ₹29/month",
           ],
         },
         useCases: [
@@ -69,10 +69,10 @@ export default function ComparisonPage() {
           { q: "Is URPASS easier to set up than Zoho Backstage?", a: "Yes. URPASS can be configured and live in under 5 minutes without complex ticketing workflows or mandatory app downloads." },
           { q: "Do volunteers need an account to scan passes at the door?", a: "No. Organizers share a PIN-protected scanner link so volunteers can scan using their own phone browser." },
           { q: "Can we collect custom attendee questions like student roll numbers?", a: "Yes. You can add custom questions, text fields, and dropdowns to your registration form." },
-          { q: "Can I try URPASS for free before committing?", a: "Yes. We offer a permanent free plan as well as a 30-day free trial on all paid subscription plans." },
+          { q: "How does URPASS pricing work?", a: "URPASS offers transparent monthly plans starting at ₹29/month for your first 2 months in India, and £15/month in the UK, with 0% platform ticket commissions." },
         ],
         ctaTitle: "Experience the URPASS difference today",
-        ctaDescription: "Permanent free tier · Zero ticket commission · Sub-second door check-in",
+        ctaDescription: "Plans start at ₹29/mo · Zero ticket commission · Sub-second door check-in",
       }}
     />
   );

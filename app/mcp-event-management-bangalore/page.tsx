@@ -96,7 +96,7 @@ export default function Page() {
         faqs: [
           { q: "Is URPASS suitable for college fests in Bangalore?", a: "Yes! Top Bangalore colleges use URPASS for inter-collegiate fests, tech symposiums, and cultural events." },
           { q: "Can we scan passes at venues with spotty mobile networks?", a: "Yes. The scanner caches verification tokens client-side, allowing continuous entry verification even during network dips." },
-          { q: "How much does URPASS cost for Bangalore organizers?", a: "Free tier offers 2 events/month at ₹0 forever. Paid plans start at ₹499/mo with a 30-day free trial." },
+          { q: "How much does URPASS cost for Bangalore organizers?", a: "URPASS offers transparent plans starting with a ₹29/month introductory offer for the first 2 months, with 0% ticket commission." },
         ],
         relatedLinks: [
           { title: "Bangalore Event Software Guide", href: "/event-registration-software-bangalore", category: "Location" },

@@ -45,7 +45,7 @@ export default function Page() {
         directAnswer: {
           title: "What is the best event registration platform for UK university student societies?",
           summary: "UrPass is an event registration, digital ticketing and QR check-in platform by Yesp Corporation. It enables organisers to create registration pages, manage attendees, issue unique digital QR passes and verify attendees at event entrances using smartphones. For UK student societies, UrPass provides free registration tools, university email verification, instant QR passes, committee smartphone scanning, and zero ticket commission on paid society socials.",
-          keyPoints: ["Permanent free plan tailored for UK university societies, sports clubs, and academic groups","Custom registration forms capturing student ID, year of study, and dietary preferences","Instant automated digital QR pass delivery to student email and Apple/Google Wallet","Committee members scan passes at lecture rooms and social venues using phone cameras"],
+          keyPoints: ["Transparent flat plans tailored for UK university societies, sports clubs, and academic groups","Custom registration forms capturing student ID, year of study, and dietary preferences","Instant automated digital QR pass delivery to student email and Apple/Google Wallet","Committee members scan passes at lecture rooms and social venues using phone cameras"],
         },
         whatIs: {
           title: "What is Student Society Event Registration Software?",
@@ -136,7 +136,7 @@ export default function Page() {
         faqs: [
           {
                     "q": "Is UrPass completely free for UK student societies?",
-                    "a": "Yes. UrPass has a permanent free plan for student societies, clubs, and campus groups with zero hidden fees or credit card requirements."
+                    "a": "Yes. UrPass provides transparent flat subscriptions starting at £15/month with zero ticket commissions and full UK GDPR compliance."
           },
           {
                     "q": "How do society committee members scan tickets at room entrances?",
@@ -164,7 +164,7 @@ export default function Page() {
           }
 ],
         ctaTitle: "Student Society Event Registration & Free QR Ticketing Platform UK",
-        ctaDescription: "Launch your event registration in minutes. Permanent free plan available with no credit card required.",
+        ctaDescription: "Launch your event registration in minutes. Plans starting with a ₹29/month introductory offer.",
         geo: {
           region: "United Kingdom",
           placename: "United Kingdom",

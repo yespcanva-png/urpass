@@ -125,7 +125,7 @@ export default function Page() {
           { q: "How do I check in attendees who registered online?", a: "Every online registration generates a unique digital QR pass. At the venue entrance, staff simply open the URPASS mobile scanner link in Safari or Chrome and scan attendee QR codes in under 0.3 seconds." },
         ],
         ctaTitle: "Take your event registration online today",
-        ctaDescription: "Set up in 5 minutes · Permanent free tier · 30-day free trial on paid plans",
+        ctaDescription: "Set up in 5 minutes · ₹29 introductory offer · 0% ticket commission",
       }}
     />
   );

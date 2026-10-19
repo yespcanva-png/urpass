@@ -160,11 +160,11 @@ export default function Page() {
           },
           {
                     "q": "What is the pricing for UK universities?",
-                    "a": "UrPass offers transparent GBP (£) pricing with a permanent free plan for community events and affordable unlimited plans for institution-wide use."
+                    "a": "UrPass offers transparent GBP (£) pricing starting from £15/month with 0% ticket fees and unlimited plans for institution-wide use."
           }
 ],
         ctaTitle: "University Open Day Registration Software & Campus QR Check-In UK",
-        ctaDescription: "Launch your event registration in minutes. Permanent free plan available with no credit card required.",
+        ctaDescription: "Launch your event registration in minutes. Plans starting with a ₹29/month introductory offer.",
         geo: {
           region: "United Kingdom",
           placename: "United Kingdom",

@@ -73,7 +73,7 @@ export default function BelfastEventTicketingPage() {
           keyPoints: [
             "Queen's University & Ulster: Ideal for student society balls, hackathons, and academic seminars",
             "In-Browser Scanner: <0.28s gate validation without downloading native apps from app stores",
-            "Zero Platform Fees: 0% per-ticket commission, plus a permanent free tier for free events",
+            "Zero Platform Fees: 0% per-ticket commission with plans from £15/month",
             "UK GDPR & PECR Compliant: Data stored with strict privacy standards and full organizer ownership",
           ],
         },
@@ -132,7 +132,7 @@ export default function BelfastEventTicketingPage() {
           description:
             "Say goodbye to printed paper rosters and slow name lookups. URPASS brings modern, professional entry control to events across Northern Ireland.",
           bullets: [
-            "Permanent free plan available for free community & society events",
+            "Transparent pricing available from £15/mo with 0% ticket fees",
             "In-browser scanner runs on any mobile device (<0.28s)",
             "Instant multi-door cloud sync across venue entry gates",
             "Full UK GDPR compliance with one-click CSV attendance exports",
@@ -150,7 +150,7 @@ export default function BelfastEventTicketingPage() {
         faqs: [
           {
             q: "Can student societies in Belfast use URPASS for free?",
-            a: "Yes! URPASS provides a permanent free plan with no credit card required, allowing student societies to host up to 50 attendees per event with digital QR passes and unlimited scanning.",
+            a: "URPASS provides transparent flat subscriptions starting at £15/month with 0% ticket commission and unlimited scanning.",
           },
           {
             q: "Do Belfast event staff need special scanning equipment?",
@@ -167,7 +167,7 @@ export default function BelfastEventTicketingPage() {
         ],
 
         ctaTitle: "Power your Belfast event with URPASS",
-        ctaDescription: "Permanent free plan · Apple Wallet passes · 0.28s gate scanning · 0% ticket fees",
+        ctaDescription: "Plans from £15/mo · Apple Wallet passes · 0.28s gate scanning · 0% ticket fees",
       }}
     />
   );

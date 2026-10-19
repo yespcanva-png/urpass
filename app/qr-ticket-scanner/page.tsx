@@ -186,7 +186,7 @@ export default function QrTicketScannerPage() {
               badge: "Local State",
             },
             {
-              title: "Free Forever Tier",
+              title: "0% Commission Ticketing",
               description:
                 "Full scanner functionality included on the ₹0 free tier for up to 100 registrations per month.",
               badge: "₹0 Free",

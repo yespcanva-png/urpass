@@ -71,7 +71,7 @@ export default function PunePage() {
         faqs: [
           { q: "Can Pune event organisers use URPASS?", a: "Yes. URPASS is designed for event organisers across Pune for college symposiums, tech meetups, and corporate conferences." },
           { q: "Can Pune college students register for events?", a: "Yes. URPASS registration links are public. Students from any Pune college can register." },
-          { q: "Is there a free plan for Pune events?", a: "Yes. Free plan with 2 events/month and 100 registrations/month — no credit card required. Paid plans start at ₹499/month with a 30-day free trial." },
+          { q: "How does URPASS pricing work for event organizers?", a: "URPASS offers an introductory offer of ₹29/month for the first 2 months across Starter, Pro, and Business plans with 0% platform ticket fees and instant Razorpay UPI payouts." },
           { q: "Does URPASS work for Hinjewadi IT park events?", a: "Yes. Corporate events in Hinjewadi and other Pune IT parks can be managed professionally on URPASS Pro." },
           { q: "What payment methods are available for Pune events?", a: "Razorpay supports UPI, HDFC/ICICI/SBI cards, net banking, and wallets used commonly in Pune." },
           { q: "Can I use URPASS for a large Pune conference?", a: "Yes. Pro and Business plans support 2,500 to 10,000 registrations/month with lightning QR check-in." },

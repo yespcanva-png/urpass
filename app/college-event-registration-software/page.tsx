@@ -55,7 +55,7 @@ export default function CollegeEventRegistrationSoftwarePage() {
             "Campus Security: Cryptographic QR passes prevent gate-crashing and fake screenshot entry",
             "Student ID Verification: Collect roll numbers, college names, and ID card uploads automatically",
             "Volunteer Friendly: Student volunteers scan passes using any smartphone browser (<0.28s)",
-            "Permanent Free Tier: ₹0 to start for student clubs with up to 50 attendees per event",
+            "Transparent Flat Pricing: ₹29/mo intro offer with 0% ticket commission",
           ],
         },
         productProof: {
@@ -109,7 +109,7 @@ export default function CollegeEventRegistrationSoftwarePage() {
           description:
             "Whether you are hosting a departmental seminar or a university-wide cultural fest with thousands of attendees, URPASS simplifies operations from registration to gate entry.",
           bullets: [
-            "Permanent free plan available for student clubs and societies",
+            "Transparent flat plan available for student clubs and societies",
             "In-browser scanner runs on any Android or iPhone (<0.28s)",
             "Multi-gate synchronization across all campus entrance doors",
             "Export attendance records to Excel for certificate generation",
@@ -125,7 +125,7 @@ export default function CollegeEventRegistrationSoftwarePage() {
         faqs: [
           {
             q: "Can college clubs use URPASS for free?",
-            a: "Yes! URPASS provides a permanent free plan with no credit card required, allowing student clubs to host up to 50 attendees per event with digital QR passes and unlimited scanning.",
+            a: "Yes! URPASS provides a introductory ₹29/month offer with no credit card required, allowing student clubs to host up to 50 attendees per event with digital QR passes and unlimited scanning.",
           },
           {
             q: "How does URPASS prevent non-registered students from entering?",

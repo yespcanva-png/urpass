@@ -154,7 +154,7 @@ export default function UkDigitalEventPassesPage() {
 
         ctaTitle: "Upgrade to paperless digital event passes",
         ctaDescription:
-          "Start your 30-day free trial on URPASS today. Beautiful passes, sub-second scanning, and 0% ticket commission.",
+          "Get started on URPASS today with transparent GBP plans. Beautiful passes, sub-second scanning, and 0% ticket commission.",
       }}
     />
   );

@@ -79,7 +79,7 @@ export default function Page() {
           bullets: [
             "Conforms to Anthropic's open Model Context Protocol (MCP) standard",
             "Zero per-ticket percentage cuts with predictable software pricing",
-            "Permanent Free Tier available for developers and community projects",
+            "Transparent pricing with ₹29/mo introductory offer for developers",
             "Secure API keys ensure organizers retain complete control over permissions",
           ],
         },

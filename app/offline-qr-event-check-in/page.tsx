@@ -360,7 +360,7 @@ export default function OfflineQrEventCheckInPage() {
           },
           {
             q: "Does offline check-in cost extra or require a higher tier plan?",
-            a: "No. Offline check-in capabilities are included across all URPASS tiers, including the permanent Free tier.",
+            a: "No. Offline check-in capabilities are included across all URPASS tiers.",
           },
         ],
       }}

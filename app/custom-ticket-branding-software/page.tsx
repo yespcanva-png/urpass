@@ -80,7 +80,7 @@ export default function Page() {
             "Zero third-party advertisements or competitor event links on your passes",
             "Interactive Ticket Studio with live preview across digital and print sizes",
             "Automatic single-use cryptographic token assigned to every attendee",
-            "Permanent Free Tier available for events up to 100 registrations",
+            "Transparent flat pricing with ₹29/mo intro offer",
           ],
         },
         faqs: [

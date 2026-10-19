@@ -112,7 +112,7 @@ export default function UkHackathonRegistrationPlatformPage() {
           description:
             "Whether you are organizing an internal 50-hacker sprint or a major 500-developer inter-university event, URPASS keeps check-in lightning fast.",
           bullets: [
-            "Permanent free plan available for student-led hackathons",
+            "Transparent pricing available from £15/mo with 0% ticket fees",
             "In-browser scanner runs on any mobile device (<0.28s)",
             "Instant multi-gate cloud sync across venue entry doors",
             "Full UK GDPR compliance and attendee data ownership",
@@ -128,7 +128,7 @@ export default function UkHackathonRegistrationPlatformPage() {
         faqs: [
           {
             q: "Can UK student societies use URPASS for free?",
-            a: "Yes! URPASS provides a permanent free plan with no credit card required, allowing student societies to host up to 50 attendees per event with digital QR passes and unlimited scanning.",
+            a: "URPASS provides transparent flat subscriptions starting at £15/month with 0% ticket commission and unlimited scanning.",
           },
           {
             q: "Does URPASS comply with UK GDPR?",
@@ -144,7 +144,7 @@ export default function UkHackathonRegistrationPlatformPage() {
           },
         ],
         ctaTitle: "Launch your UK hackathon with URPASS",
-        ctaDescription: "Permanent free plan · Apple Wallet passes · 0.28s gate scanning · UK GDPR compliant",
+        ctaDescription: "Plans from £15/mo · Apple Wallet passes · 0.28s gate scanning · UK GDPR compliant",
       }}
     />
   );

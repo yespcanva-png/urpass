@@ -186,7 +186,7 @@ export default function EventTicketingSoftwarePage() {
             {
               title: "Transparent INR Pricing",
               description:
-                "Flat, affordable monthly plans in Indian Rupees with 0% platform ticket commissions. Free forever tier for 2 events/month.",
+                "Flat, affordable monthly plans in Indian Rupees with 0% platform ticket commissions, starting with a ₹29/mo introductory offer.",
               badge: "Affordable",
             },
             {
@@ -227,7 +227,7 @@ export default function EventTicketingSoftwarePage() {
               "Keep 100% of your ticket price with zero platform cuts",
               "No surprise 'convenience fees' added to attendees' carts",
               "Predictable monthly operational budgeting",
-              "Permanent free tier available for events under 100 attendees",
+              "Transparent flat plan available for events under 100 attendees",
             ],
             takeaway:
               "Switching from commission-based ticketing to URPASS saves professional organizers tens of thousands of rupees per event.",
@@ -275,7 +275,7 @@ export default function EventTicketingSoftwarePage() {
               urpassAdvantage: true,
             },
             {
-              criteria: "Free Forever Tier",
+              criteria: "Transparent Pricing",
               urpass: "2 events/mo, up to 100 registrations/mo free",
               competitor: "Limited free tickets or paid subscription mandatory",
               urpassAdvantage: true,
@@ -353,7 +353,7 @@ export default function EventTicketingSoftwarePage() {
         faqs: [
           {
             q: "What makes URPASS different from Eventbrite or Townscript?",
-            a: "URPASS charges zero commission on ticket sales (flat monthly subscription starting at ₹499/mo with a permanent free tier), features a visual drag-and-drop Ticket Studio for designing passes, and enables gate check-in directly through mobile browsers in under 0.3 seconds without requiring volunteers to download an app.",
+            a: "URPASS charges zero commission on ticket sales (flat monthly subscription starting at ₹499/mo with a introductory ₹29/month offer), features a visual drag-and-drop Ticket Studio for designing passes, and enables gate check-in directly through mobile browsers in under 0.3 seconds without requiring volunteers to download an app.",
           },
           {
             q: "How do ticket payments and settlements work?",
@@ -361,7 +361,7 @@ export default function EventTicketingSoftwarePage() {
           },
           {
             q: "Can I try URPASS event ticketing for free?",
-            a: "Yes. Our Free tier includes 2 events per month with up to 100 registrations per month at ₹0 forever with no credit card required. All paid plans also include a 30-day free trial.",
+            a: "URPASS offers an introductory offer of ₹29/month for your first 2 months across Starter, Pro, and Business plans. All plans include 0% ticket commission and instant QR check-in.",
           },
           {
             q: "Do door volunteers need to install an app or create an account?",

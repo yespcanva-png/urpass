@@ -188,8 +188,8 @@ export default function CollegeEventTicketingPage() {
             {
               title: "Free Plan for Student Clubs",
               description:
-                "IEEE, ACM, Rotaract, and student cultural clubs can host events up to 100 students completely free forever.",
-              badge: "₹0 Free Tier",
+                "IEEE, ACM, Rotaract, and student cultural clubs can get started with our ₹29/month introductory offer.",
+              badge: "₹29 Intro Offer",
             },
           ],
         },

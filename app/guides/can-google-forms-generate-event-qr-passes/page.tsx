@@ -70,10 +70,10 @@ export default function GuidePage() {
           { q: "Why do Google Forms QR add-ons fail during large events?", a: "Google Apps Script imposes strict daily execution time and email sending quotas. Under heavy traffic, scripts pause or fail, leaving attendees without passes." },
           { q: "Can we still use Google Sheets to analyze data with URPASS?", a: "Yes. You can export complete registration lists and timestamped check-in logs from URPASS to CSV and open them in Google Sheets anytime." },
           { q: "How does URPASS solve pass verification at the door?", a: "URPASS provides a browser-based QR scanner that volunteers open on their own phones to scan and validate passes in under 0.3 seconds." },
-          { q: "Can I try URPASS for free?", a: "Yes. Our permanent free tier supports 2 events per month with up to 100 registrations per month at ₹0 forever." },
+          { q: "How does URPASS pricing work?", a: "URPASS offers an introductory offer of ₹29/month for your first 2 months across Starter, Pro, and Business plans with zero platform ticket commissions." },
         ],
         ctaTitle: "Streamline your event check-in with URPASS",
-        ctaDescription: "Permanent free tier · Zero app downloads · Fast sub-second scanning",
+        ctaDescription: "Plans from ₹29/mo · Zero app downloads · Fast sub-second scanning",
       }}
     />
   );

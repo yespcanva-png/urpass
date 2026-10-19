@@ -48,7 +48,7 @@ export default function LocationPage() {
         },
         description:
           "Organizing a corporate townhall, leadership summit, tech meetup, or industry conference in Gurgaon? URPASS helps enterprise organizers manage registrations, issue digital QR passes, and check in attendees using any phone with zero hardware rental.",
-        ctaLabel: "Start your Gurgaon event free",
+        ctaLabel: "Start your Gurgaon event →",
         features: [
           {
             icon: Building2,

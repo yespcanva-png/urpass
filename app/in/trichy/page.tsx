@@ -106,7 +106,7 @@ export default function TrichyPage() {
         faqs: [
           {
             q: "Can college clubs in Trichy use URPASS for free events?",
-            a: "Yes. The permanent Free Tier includes 2 events per month with up to 100 registrations per month at ₹0 forever with no credit card required—ideal for department workshops and student club meetups.",
+            a: "Yes. URPASS provides an introductory offer of ₹29/month for your first 2 months across all plans with zero platform ticket commissions.",
           },
           {
             q: "How does URPASS manage thousands of attendees at NIT Trichy fests?",

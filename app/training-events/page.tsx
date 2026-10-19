@@ -73,7 +73,7 @@ export default function Page() {
           { q: "Can trainers view real-time class attendance on their phone?", a: "Yes. Trainers can monitor live attendance and see who has arrived from their mobile dashboard." },
         ],
         ctaTitle: "Elevate your event entry with URPASS",
-        ctaDescription: "Permanent free tier · Zero hardware setup · Fast sub-second scanning",
+        ctaDescription: "Plans from ₹29/mo · Zero hardware setup · Fast sub-second scanning",
       }}
     />
   );

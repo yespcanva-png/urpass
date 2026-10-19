@@ -133,7 +133,7 @@ export default function Page() {
           }
 ],
         ctaTitle: "Event Registration Software Built for Birmingham Expos & Conferences",
-        ctaDescription: "Launch your event registration in minutes. Permanent free plan available with no credit card required.",
+        ctaDescription: "Launch your event registration in minutes. Plans starting with a ₹29/month introductory offer.",
         geo: {"region":"West Midlands","placename":"Birmingham","position":"52.4862;-1.8904","latitude":52.4862,"longitude":-1.8904,"country":"United Kingdom","countryCode":"GB"},
       }}
     />

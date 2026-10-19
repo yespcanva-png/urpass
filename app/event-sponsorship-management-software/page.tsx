@@ -142,7 +142,7 @@ export default function EventSponsorshipManagementPage() {
           },
           {
             q: "Is sponsorship management included in the free plan?",
-            a: "Yes. URPASS provides access to sponsorship tiering and deliverables tracking on the Free Forever plan (up to 50 attendees and 2 events/month), enabling organizers to pilot high-end partnership workflows at zero cost.",
+            a: "Yes. URPASS provides access to sponsorship tiering and deliverables tracking on the Plans starting at ₹29/month intro offer, enabling organizers to pilot high-end partnership workflows at zero cost.",
           },
         ],
         relatedLinks: [

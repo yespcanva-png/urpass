@@ -80,7 +80,7 @@ export default function Page() {
             "Seamless fallback between QR camera scanning and manual name search",
             "Multi-device cloud synchronization prevents duplicate admissions across doors",
             "Works completely offline if local venue Wi-Fi drops unexpectedly",
-            "Permanent Free Tier available for community events up to 100 guests",
+            "Transparent flat pricing available with ₹29/mo intro offer",
           ],
         },
         faqs: [

@@ -105,7 +105,7 @@ export default function BestEventRegistrationSoftwareIndiaPage() {
               col3: "Aggregator invoice with booking convenience fees",
             },
             {
-              col1: "Free Forever Tier",
+              col1: "0% Commission Pricing",
               col2: "Yes (2 events/mo, 100 registrations/mo)",
               col3: "Free events allowed but pushed to paid plans",
             },

@@ -142,7 +142,7 @@ export default function ExhibitorManagementPage() {
           },
           {
             q: "What are the pricing terms for exhibitor management?",
-            a: "URPASS includes exhibitor management features in its Free Forever tier (up to 50 attendees and 2 events/month) so organizers can test full expo workflows, with scalable tiers available for large multi-hall expos.",
+            a: "URPASS includes exhibitor management features across all subscription plans starting with an introductory offer of ₹29/month for your first 2 months, with scalable tiers available for large multi-hall expos.",
           },
         ],
         relatedLinks: [

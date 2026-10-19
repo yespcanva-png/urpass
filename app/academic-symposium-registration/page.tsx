@@ -77,7 +77,7 @@ export default function Page() {
           title: "Verify delegate presence with timestamped, tamper-proof check-in logs.",
           description: "Accreditation boards and university grant bodies require rigorous proof of symposium attendance. URPASS replaces easily forged paper sign-in sheets with cryptographic digital check-in records.",
           bullets: [
-            "Permanent Free Tier available for departmental seminars up to 100 delegates",
+            "Transparent pricing with ₹29/mo introductory offer",
             "Zero equipment rentals — runs on standard volunteer and student smartphones",
             "Instant B2B GST tax invoices for delegates claiming university travel allowances",
             "Automated multi-track attendance tracking across separate breakout seminar rooms",

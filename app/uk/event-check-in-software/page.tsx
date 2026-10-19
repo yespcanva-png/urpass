@@ -182,7 +182,7 @@ export default function UkEventCheckInSoftwarePage() {
 
         ctaTitle: "Upgrade your venue gate operations",
         ctaDescription:
-          "Start your 30-day free trial on URPASS today. Real-time synchronisation, sub-second scanning, and full offline resilience.",
+          "Get started on URPASS today with transparent GBP plans. Real-time synchronisation, sub-second scanning, and full offline resilience.",
       }}
     />
   );

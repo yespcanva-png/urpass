@@ -51,7 +51,7 @@ export default function HowToCreateQrTicketsForAnEventPage() {
         directAnswer: {
           title: "How to Generate QR Code Tickets in 4 Steps",
           summary:
-            "To create QR tickets for an event: 1. Sign up on a modern ticketing platform like URPASS (free forever tier available). 2. Set your event details, ticket categories (General, VIP), and capacity limits. 3. Share your registration link with your audience so attendees can sign up and receive personalized digital QR passes. 4. Open your phone camera scanner at the door to validate badges in 0.28 seconds with zero lines.",
+            "To create QR tickets for an event: 1. Sign up on a modern ticketing platform like URPASS (transparent flat pricing available). 2. Set your event details, ticket categories (General, VIP), and capacity limits. 3. Share your registration link with your audience so attendees can sign up and receive personalized digital QR passes. 4. Open your phone camera scanner at the door to validate badges in 0.28 seconds with zero lines.",
           keyPoints: [
             "Step 1: Create an account on URPASS (takes 30 seconds, no credit card required)",
             "Step 2: Configure event details, dates, venue, and ticket types",
@@ -106,11 +106,11 @@ export default function HowToCreateQrTicketsForAnEventPage() {
         ],
         callout: {
           badge: "ZERO COST",
-          title: "Generate up to 50 QR tickets for free forever",
+          title: "Generate QR tickets with transparent flat pricing",
           description:
             "Host your student meetups, workshops, and community events with professional digital QR ticketing without paying a rupee.",
           bullets: [
-            "Permanent free plan with no credit card required",
+            "Plans start with ₹29/mo introductory offer",
             "Personalized digital passes with Apple/Google Wallet support",
             "In-browser smartphone camera scanner (<0.28s)",
             "Instant duplicate ticket warning across all entrance gates",
@@ -126,7 +126,7 @@ export default function HowToCreateQrTicketsForAnEventPage() {
         faqs: [
           {
             q: "Can I generate QR tickets for free?",
-            a: "Yes! URPASS provides a permanent free plan with ₹0 platform fees for up to 50 attendees per event, including full digital QR pass generation and unlimited gate scanning.",
+            a: "Yes! URPASS provides transparent flat pricing starting with a ₹29/mo intro offer for 2 months, including full digital QR pass generation and unlimited gate scanning.",
           },
           {
             q: "Do I need to design the QR code manually?",

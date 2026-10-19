@@ -54,7 +54,7 @@ export default function Page() {
             { col1: "Per-Ticket Surcharge", col2: "$0 / ₹0 per ticket", col3: "$0.99 to $1.79 added per ticket" },
             { col1: "Net Revenue Retained by Organizer", col2: "100% (minus standard gateway fee)", col3: "90% to 94% of gross revenue" },
             { col1: "Payout Timeline", col2: "Direct T+2 business days to your bank", col3: "Withheld until 5–14 days post-event" },
-            { col1: "Free Community Events", col2: "Free forever (up to 100 reg/mo)", col3: "Restricted attendee caps or paid tier" },
+            { col1: "Free Community Events", col2: "Plans from ₹29/mo (intro offer)", col3: "Restricted attendee caps or paid tier" },
           ],
         },
         features: [
@@ -78,19 +78,19 @@ export default function Page() {
           description: "When you sell tickets through legacy ticketing sites, you surrender thousands of dollars that should be funding keynote speakers, catering, and venue improvements. URPASS gives you enterprise ticketing for a simple, flat subscription.",
           bullets: [
             "0% commission across all ticket tiers and pricing levels",
-            "Permanent Free Tier for community events up to 100 registrations/month",
-            "30-day free trial on all paid plans with ₹0 due today and no credit card required",
+            "Transparent flat pricing with 0% ticket fees",
+            "Introductory ₹29/month offer on all paid plans with 0% ticket commission",
             "Complete ownership and exportability of your attendee contact data",
           ],
         },
         faqs: [
           { q: "Are there any hidden fees or setup charges?", a: "No. URPASS charges zero setup fees, zero per-ticket commissions, and zero attendee convenience fees. You only pay standard gateway processing fees directly to Razorpay or Stripe." },
           { q: "How quickly do ticket funds reach my bank account?", a: "Because you connect your own payment gateway (Razorpay or Stripe), payouts settle on standard T+2 business day cycles directly into your bank without being held by URPASS." },
-          { q: "Can I use URPASS for completely free events?", a: "Yes. Our permanent Free Tier allows you to host up to 2 events per month and issue up to 100 passes per month completely free of charge." },
-          { q: "Can I test paid features before subscribing?", a: "Yes. All paid URPASS plans (Starter, Pro, Business) feature a full 30-day free trial with no credit card required." },
+          { q: "How does URPASS pricing work?", a: "URPASS offers an introductory offer of ₹29/month for your first 2 months across Starter, Pro, and Business plans with 0% platform ticket fees." },
+          { q: "Does URPASS charge per-ticket fees?", a: "No. URPASS charges 0% per-ticket platform fees. Organizers keep 100% of their ticket price." },
         ],
         relatedLinks: [
-          { title: "Pricing & 30-Day Free Trial", href: "/pricing", category: "Product" },
+          { title: "Pricing & Plans", href: "/pricing", category: "Product" },
           { title: "Event Registration Without Fees", href: "/event-registration-without-fees", category: "Product" },
           { title: "Eventbrite Alternative", href: "/compare/eventbrite-alternative", category: "Comparison" },
           { title: "Conference Registration Software", href: "/conference-registration-software", category: "Use Case" },

@@ -55,7 +55,7 @@ export default function Page() {
             "Fraud-proof digital QR passes linked to student details",
             "Fast gate scanning with zero paper clipboard delays",
             "Complete visitor log for school administration safety audits",
-            "Permanent free tier for up to 100 registrations per month",
+            "Flat monthly pricing with 0% platform ticket commission",
           ],
         },
         useCases: [
@@ -73,7 +73,7 @@ export default function Page() {
           { q: "Is URPASS suitable for primary and high school events?", a: "Yes. The simple interface requires no accounts or app installations, making it accessible for parents of all tech backgrounds." },
         ],
         ctaTitle: "Elevate your event entry with URPASS",
-        ctaDescription: "Permanent free tier · Zero hardware setup · Fast sub-second scanning",
+        ctaDescription: "Plans from ₹29/mo · Zero hardware setup · Fast sub-second scanning",
       }}
     />
   );

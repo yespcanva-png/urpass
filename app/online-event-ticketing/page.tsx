@@ -184,7 +184,7 @@ export default function OnlineEventTicketingPage() {
               title: "₹0 Free Community Tier",
               description:
                 "Host free community events up to 100 registrations per month at ₹0 forever with full QR passes included.",
-              badge: "Free Tier",
+              badge: "0% Fee",
             },
           ],
         },

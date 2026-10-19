@@ -70,10 +70,10 @@ export default function Page() {
           { q: "Can we track attendance for students from multiple affiliated colleges?", a: "Yes. You can collect the student's affiliated college name on the form and filter attendance by college." },
           { q: "Can security personnel scan passes on multiple campus gates?", a: "Yes. You can deploy unlimited scanning devices across all entrance gates with real-time central synchronization." },
           { q: "Can we export verified attendance for university accreditation?", a: "Yes. The CSV export includes student names, roll numbers, departments, and exact entry timestamps." },
-          { q: "Is URPASS free for departmental seminars?", a: "Yes. Smaller seminars with under 100 participants can use our permanent free plan at ₹0 forever." },
+          { q: "Is URPASS free for departmental seminars?", a: "Organizers can get started with our ₹29/month introductory offer for the first 2 months." },
         ],
         ctaTitle: "Elevate your event entry with URPASS",
-        ctaDescription: "Permanent free tier · Zero hardware setup · Fast sub-second scanning",
+        ctaDescription: "Plans from ₹29/mo · Zero hardware setup · Fast sub-second scanning",
       }}
     />
   );

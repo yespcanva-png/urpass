@@ -154,7 +154,7 @@ export default function UkEventGuestListSoftwarePage() {
 
         ctaTitle: "Manage your private guest list with discretion",
         ctaDescription:
-          "Start your 30-day free trial on URPASS today. Elegant guest management, plus-one controls, and complete UK GDPR privacy.",
+          "Get started on URPASS today with transparent GBP plans. Elegant guest management, plus-one controls, and complete UK GDPR privacy.",
       }}
     />
   );

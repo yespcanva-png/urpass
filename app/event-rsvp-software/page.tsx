@@ -73,7 +73,7 @@ export default function Page() {
           { q: "Can uninvited guests enter if a pass is forwarded?", a: "Each QR pass is strictly single-use. Once scanned, any duplicate presentation is immediately flagged and blocked." },
         ],
         ctaTitle: "Start streamlining your event with URPASS",
-        ctaDescription: "Permanent free tier · 30-day free trial on paid plans · Fast sub-second check-in",
+        ctaDescription: "Plans start at ₹29/mo · 0% ticket commission · Fast sub-second check-in",
       }}
     />
   );

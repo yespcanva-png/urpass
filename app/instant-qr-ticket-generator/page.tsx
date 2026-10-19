@@ -95,7 +95,7 @@ export default function Page() {
           ],
         },
         faqs: [
-          { q: "Can I generate QR tickets for free events?", a: "Yes. URPASS includes a permanent Free Tier allowing you to host up to 2 events per month and issue up to 100 QR passes per month completely free." },
+          { q: "Can I generate QR tickets for free events?", a: "Yes. URPASS provides flat subscription pricing starting at ₹29/month for your first 2 months, including digital QR passes and camera gate scanning." },
           { q: "Do attendees need an app to open their QR ticket?", a: "No. The QR pass opens instantly in any mobile browser (Safari, Chrome, Firefox) and can be saved as an image, added to home screen, or printed as a PDF." },
           { q: "How fast is ticket delivery after registration?", a: "Passes are generated dynamically in milliseconds and delivered via email within 2 to 5 seconds of registration or approval." },
           { q: "Can I customize the look of the QR ticket?", a: "Yes. URPASS Ticket Studio allows you to customize brand colors, logos, attendee fields, and badge formats (digital, printable, or lanyard)." },

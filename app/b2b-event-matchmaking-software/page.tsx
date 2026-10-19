@@ -142,7 +142,7 @@ export default function B2BEventMatchmakingPage() {
           },
           {
             q: "Is B2B matchmaking included in the free plan?",
-            a: "Yes. URPASS includes 1-on-1 meeting scheduling in its Free Forever tier (2 events/month, up to 50 attendees per event), allowing organizers of small roundtables and investor demo days to run matchmaking at zero cost.",
+            a: "Yes. URPASS includes 1-on-1 meeting scheduling in its Plans starting at ₹29/month intro offer, allowing organizers of small roundtables and investor demo days to run matchmaking at zero cost.",
           },
         ],
         relatedLinks: [

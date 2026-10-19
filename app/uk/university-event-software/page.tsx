@@ -234,13 +234,13 @@ export default function UkUniversityEventSoftwarePage() {
           },
           {
             q: "Is there a free tier for small student society events?",
-            a: "Yes. URPASS offers a Free Forever plan supporting up to 100 registrations per month. For larger campus conferences or society balls, our paid tiers start at just £15/month with zero ticket commissions.",
+            a: "Yes. URPASS offers a Transparent GBP plans: Starter (£15/mo), Pro (£35/mo), and Business (£79/mo) with zero platform ticket commissions.",
           },
         ],
 
         ctaTitle: "Bring modern event technology to your campus",
         ctaDescription:
-          "Start your 30-day free trial on URPASS today. No credit card required. Up and running for your university in minutes.",
+          "Get started on URPASS today with transparent GBP plans. No credit card required. Up and running for your university in minutes.",
       }}
     />
   );

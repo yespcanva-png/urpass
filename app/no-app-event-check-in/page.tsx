@@ -80,7 +80,7 @@ export default function Page() {
             "Zero App Store accounts, downloads, or mobile storage space consumed",
             "Protects organizer financial data by providing a PIN-restricted scanner view",
             "Continuous scan mode enables rapid clearance of hundreds of attendees per lane",
-            "Permanent Free Tier available for community events up to 100 registrations",
+            "Transparent pricing with ₹29/mo introductory offer",
           ],
         },
         faqs: [

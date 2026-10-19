@@ -45,7 +45,7 @@ export default function LocationPage() {
           longitude: 83.2185,
         },
         description: "Organizing a college fest, conference, trade expo, or corporate summit in Visakhapatnam? URPASS powers end-to-end event registrations, automated QR pass delivery, native Razorpay UPI ticketing, and sub-0.3s door check-in on any smartphone.",
-        ctaLabel: "Start your Visakhapatnam event free",
+        ctaLabel: "Start your Visakhapatnam event →",
         directAnswer: {
           title: "How URPASS streamlines Visakhapatnam event operations",
           summary: "URPASS replaces error-prone Google Forms, physical paper tickets, and expensive ticketing aggregators for Visakhapatnam organizers. Registrants receive unique cryptographically generated QR passes via instant confirmation. Gate volunteers scan passes directly using their smartphone cameras in under 0.3s with zero app installation, eliminating venue entry queues entirely.",
@@ -84,7 +84,7 @@ export default function LocationPage() {
             "Local INR pricing with automated GST tax invoices",
             "Zero percentage commission deducted from ticket sales",
             "Instant multi-gate duplicate pass lockout",
-            "Permanent free plan available for up to 100 registrations per month"
+            "Plans starting with an introductory ₹29/month offer"
           ],
         },
         useCases: [
@@ -98,10 +98,10 @@ export default function LocationPage() {
           { q: "Can Visakhapatnam organizers accept payments via UPI with zero platform cuts?", a: "Yes. With native Razorpay integration, attendees pay via Google Pay, PhonePe, Paytm, cards, or net banking, and funds settle directly into your bank account with zero platform percentage commissions taken by URPASS." },
           { q: "How fast is check-in during peak entry at Visakhapatnam venues?", a: "Check-in takes under 0.3 seconds per attendee. Volunteers simply point their phone browser camera at the pass QR code. Instant audio-visual cues verify validity and block duplicates." },
           { q: "Can volunteers scan passes without installing an app from the App Store or Play Store?", a: "Yes. Volunteers access a secure web scanning link directly on their mobile browser. No downloads, installations, or app store accounts are required." },
-          { q: "Is there a free tier for student communities and meetups in Visakhapatnam?", a: "Yes. Organizers can host events with up to 100 registrations per month completely free on our starter tier, with full access to QR passes and live scanning." },
+          { q: "How does URPASS pricing work for event organizers?", a: "URPASS offers an introductory offer of ₹29/month for your first 2 months across Starter, Pro, and Business plans with 0% platform ticket commissions and direct UPI settlements." },
         ],
         ctaTitle: "Power your Visakhapatnam event with URPASS",
-        ctaDescription: "Permanent free tier available · Razorpay UPI settlements · Instant mobile browser scanning",
+        ctaDescription: "Plans from ₹29/mo · Razorpay UPI settlements · Instant mobile browser scanning",
       }}
     />
   );

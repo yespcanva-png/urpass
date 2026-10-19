@@ -33,7 +33,7 @@ export default function EventManagementSaasPage() {
         canonicalUrl: "https://urpass.space/event-management-saas",
         description:
           "UrPass is a cloud event management SaaS for organizers who need registration pages, ticketing, digital passes, QR check-in and attendance visibility in one workspace.",
-        ctaLabel: "Start Free",
+        ctaLabel: "Get Started →",
         ctaHref: "/signup",
         secondaryCtaLabel: "View Plans",
         secondaryCtaHref: "/pricing",

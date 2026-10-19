@@ -55,7 +55,7 @@ export default function CollegeFestManagementSoftwarePage() {
             "Gate Security: Prevents fake entry passes and gate-crashing using cryptographic QR validation",
             "Multi-Event Registration: Handle multiple competitions, workshops, and pro-nights on one platform",
             "Volunteer Scanner: Volunteers scan badges directly in mobile browsers with zero app installation",
-            "Permanent Free Tier: ₹0 forever for student organizers with up to 50 attendees per event",
+            "Transparent Flat Pricing: ₹29/mo intro offer with 0% ticket commission",
           ],
         },
         productProof: {
@@ -109,7 +109,7 @@ export default function CollegeFestManagementSoftwarePage() {
           description:
             "Save hundreds of hours of manual roster checking and coordinate your entire fest entry team seamlessly.",
           bullets: [
-            "Permanent free tier available for student-led initiatives",
+            "Transparent flat plan available for student-led initiatives",
             "Works on any mobile device without installing third-party apps",
             "Multi-gate synchronization across all campus entrance doors",
             "Complete exportable attendance reports for faculty review",
@@ -137,7 +137,7 @@ export default function CollegeFestManagementSoftwarePage() {
           },
           {
             q: "Is URPASS free for student fest organizers?",
-            a: "Yes! URPASS provides a permanent free plan with ₹0 platform fees for up to 50 attendees per event, including full QR pass issuance and unlimited scanning.",
+            a: "Yes! URPASS provides transparent flat pricing starting with a ₹29/mo intro offer for 2 months, including full QR pass issuance and unlimited scanning.",
           },
         ],
         ctaTitle: "Elevate your college fest experience",

@@ -48,7 +48,7 @@ export default function LocationPage() {
         },
         description:
           "Organizing an exhibition at India Expo Centre & Mart, an engineering campus fest, or a corporate conference in Noida? URPASS helps organizers manage online registrations, issue digital QR passes, and check in attendees using any smartphone camera.",
-        ctaLabel: "Start your Noida event free",
+        ctaLabel: "Start your Noida event →",
         features: [
           {
             icon: Building2,

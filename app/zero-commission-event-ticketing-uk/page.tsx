@@ -59,7 +59,7 @@ export default function ZeroCommissionEventTicketingUkPage() {
             "0% platform commission on all paid and free ticket registrations",
             "Keep up to £2,500+ per event compared to Eventbrite UK percentage cuts",
             "Sub-second (<0.3s) camera scanning on standard volunteer smartphones",
-            "Instant 30-day free trial for UK organisers with no credit card required",
+            "Transparent GBP pricing for UK organisers starting at £15/month",
           ],
         },
 
@@ -247,8 +247,8 @@ export default function ZeroCommissionEventTicketingUkPage() {
             a: "Eventbrite UK charges up to 6.95% + £0.59 per ticket. For an event with 500 attendees paying £50, Eventbrite takes over £2,030. On URPASS Pro (£35/mo), you pay just £35, saving you approximately £2,000 on a single event.",
           },
           {
-            q: "How do I activate the 30-day free trial in the UK?",
-            a: "Simply sign up on urpass.space and select your preferred plan. For all UK organizers, your 30-day free trial activates instantly with no credit card or payment gateway setup required.",
+            q: "How does URPASS pricing work in the UK?",
+            a: "UK organizers can select from transparent monthly plans (Starter £15/mo, Pro £35/mo, Business £79/mo) with zero platform ticket commissions and UK GDPR compliance.",
           },
           {
             q: "Can I generate HMRC-compliant VAT receipts for UK delegates?",
@@ -265,7 +265,7 @@ export default function ZeroCommissionEventTicketingUkPage() {
         ],
 
         ctaTitle: "Keep 100% of your UK ticket revenue",
-        ctaDescription: "Join UK organisers saving thousands on ticketing fees. Start your 30-day free trial today.",
+        ctaDescription: "Join UK organisers saving thousands on ticketing fees. Get started today with transparent monthly plans.",
         geo: {
           region: "GB",
           placename: "United Kingdom",

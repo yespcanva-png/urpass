@@ -154,7 +154,7 @@ export default function UkQrTicketingSystemPage() {
 
         ctaTitle: "Upgrade to modern QR ticketing",
         ctaDescription:
-          "Start your 30-day free trial on URPASS today. Cryptographic passes, lightning check-in, and 0% ticket commission.",
+          "Get started on URPASS today with transparent GBP plans. Cryptographic passes, lightning check-in, and 0% ticket commission.",
       }}
     />
   );

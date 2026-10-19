@@ -88,7 +88,7 @@ export default function Page() {
           { q: "Can attendees see why their registration is pending?", a: "Yes. When an attendee submits their registration, they see an immediate on-screen confirmation and receive an email stating that their application is under review by the organizer." },
           { q: "Can I approve attendees in bulk?", a: "Yes. You can filter the applicant list and approve multiple qualified attendees simultaneously, triggering pass generation for all of them." },
           { q: "Can AI assistants approve attendees automatically?", a: "Yes. Using the URPASS Model Context Protocol (MCP) server, autonomous agents or Claude Desktop can screen candidate responses against criteria and call `approve_attendee` via natural language." },
-          { q: "Does the approval workflow cost extra?", a: "No. The approval workflow is included in all URPASS plans, including the permanent Free Tier." },
+          { q: "Does the approval workflow cost extra?", a: "No. The approval workflow is included across all URPASS subscription plans with no hidden add-on fees." },
         ],
         relatedLinks: [
           { title: "Event Registration Approval System", href: "/event-registration-approval-system", category: "Product" },

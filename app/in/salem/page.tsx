@@ -106,7 +106,7 @@ export default function SalemPage() {
         faqs: [
           {
             q: "Can Salem student committees use URPASS for free events?",
-            a: "Yes. The permanent Free Tier supports 2 events/month and up to 100 registrations/month at ₹0 forever with no credit card required—perfect for departmental paper presentations and club meetings.",
+            a: "Yes. URPASS provides an introductory offer of ₹29/month for your first 2 months across all plans with zero platform ticket commissions.",
           },
           {
             q: "How many attendees can URPASS scan at large Salem college fests?",

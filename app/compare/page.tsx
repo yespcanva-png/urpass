@@ -71,7 +71,7 @@ const COMPARISONS = [
     title: "URPASS vs Meetup.com: Head-to-Head Comparison",
     href: "/compare/urpass-vs-meetup",
     badge: "COMMUNITY PLATFORMS",
-    description: "Stop paying Meetup's $19–$35/month recurring group fee. URPASS offers a permanent ₹0 Free Tier, digital QR tickets, and 100% data ownership.",
+    description: "Stop paying Meetup's $19–$35/month recurring group fee. URPASS offers flat subscription pricing, digital QR tickets, and 100% data ownership.",
     points: [
       "₹0 monthly organizer fee vs Meetup $19–$35/month",
       "0% ticketing fee on paid workshops and sessions",
@@ -99,7 +99,7 @@ const COMPARISONS = [
     points: [
       "Zero enterprise software complexity or steep learning curve",
       "Instant mobile browser scanning for volunteers",
-      "Permanent free tier for up to 100 registrations/month",
+      "Flat subscription with 0% ticket commission",
       "Built for agile fests, meetups, and academic symposiums",
     ],
   },
@@ -136,7 +136,7 @@ const COMPARISONS = [
       "Zero per-ticket percentage cuts (keep 100% of revenue)",
       "Native UPI (Google Pay, PhonePe, Paytm) integration",
       "Mobile browser scanning with zero app downloads",
-      "Affordable flat monthly plans with 30-day free trial",
+      "Affordable flat monthly plans with 0% ticket commission",
     ],
   },
 ];

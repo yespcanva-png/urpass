@@ -72,7 +72,7 @@ export default function DelhiPage() {
         faqs: [
           { q: "Can Delhi NCR event organisers use URPASS?", a: "Yes. URPASS is designed for Delhi NCR event organisers running college symposiums, corporate conferences, and startup meetups." },
           { q: "Can I use URPASS for Gurugram or Noida events?", a: "Yes. URPASS works for any event in the Delhi NCR region — Delhi, Gurugram, Noida, Faridabad, and Ghaziabad." },
-          { q: "Is there a free plan for Delhi events?", a: "Yes. Free plan with 2 events/month and 100 registrations/month — no credit card required. Paid plans start at ₹499/month with a 30-day free trial." },
+          { q: "How does URPASS pricing work for event organizers?", a: "URPASS offers an introductory offer of ₹29/month for the first 2 months across Starter, Pro, and Business plans with 0% platform ticket fees and instant Razorpay UPI payouts." },
           { q: "Can I brand passes for a Delhi corporate event?", a: "Yes. Pro plan includes custom branding — company name, logo, and brand colour on every pass." },
           { q: "What payment methods work for Delhi events?", a: "Razorpay supports UPI, cards, Paytm, PhonePe, and net banking — popular across Delhi NCR." },
           { q: "Can I manage a large Delhi conference on URPASS?", a: "Yes. Pro and Business plans support 2,500 to 10,000 registrations/month with multi-gate concurrent scanning." },

@@ -133,7 +133,7 @@ export default function Page() {
           }
 ],
         ctaTitle: "Student Event Ticketing Platform Built for UK Student Unions & Societies",
-        ctaDescription: "Launch your event registration in minutes. Permanent free plan available with no credit card required.",
+        ctaDescription: "Launch your event registration in minutes. Plans starting with a ₹29/month introductory offer.",
         geo: {"region":"UK","placename":"United Kingdom","position":"55.3781;-3.4360","latitude":55.3781,"longitude":-3.436,"country":"United Kingdom","countryCode":"GB"},
       }}
     />

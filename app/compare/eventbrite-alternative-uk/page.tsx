@@ -18,7 +18,7 @@ import SEOPage from "@/components/landing/SEOPage";
 export const metadata: Metadata = {
   title: "UK Eventbrite Alternative — 0% Ticket Fees & Fast QR Check-In | URPASS",
   description:
-    "The leading UK Eventbrite alternative. Eliminate 6.95% + £0.59 per-ticket fees with flat GBP pricing. 0% ticket commission, browser-based QR check-in, UK GDPR compliance, and 30-day free trial without a credit card.",
+    "The leading UK Eventbrite alternative. Eliminate 6.95% + £0.59 per-ticket fees with flat GBP pricing. 0% ticket commission, browser-based QR check-in, UK GDPR compliance, and plans starting from £15/month.",
   keywords: [
     "eventbrite alternative uk",
     "event ticketing without fees uk",
@@ -54,18 +54,18 @@ export default function EventbriteAlternativeUkPage() {
         h1: "The UK Eventbrite Alternative with 0% Platform Fees & Fast QR Check-In",
         description:
           "Stop losing 5–8% of every ticket sold to legacy aggregators. URPASS gives UK organisers flat monthly GBP pricing, 0% commission on ticket sales, sub-second browser QR scanning, and full UK GDPR compliance.",
-        ctaLabel: "Start free trial — no card required",
+        ctaLabel: "Choose Your Plan →",
 
         // 10-Point Standard: Direct Answer (40–60 words)
         directAnswer: {
           title: "Why is URPASS the Best Eventbrite Alternative in the UK?",
           summary:
-            "URPASS is the leading UK alternative to Eventbrite, engineered for university societies, students' unions, conferences, and independent organisers looking to avoid steep 6.95% + £0.59 per-ticket commissions. URPASS provides flat monthly GBP subscriptions with 0% ticket fees, sub-second browser QR check-in on volunteer smartphones, strict UK GDPR compliance, and a 30-day free trial with zero credit card required.",
+            "URPASS is the leading UK alternative to Eventbrite, engineered for university societies, students' unions, conferences, and independent organisers looking to avoid steep 6.95% + £0.59 per-ticket commissions. URPASS provides flat monthly GBP subscriptions with 0% ticket fees, sub-second browser QR check-in on volunteer smartphones, strict UK GDPR compliance, and plans starting from £15/month.",
           keyPoints: [
             "0% commission on ticket sales: save up to £1,200+ on a typical 500-person event",
             "No charges to publish events with more than 25 attendees",
             "Door check-in runs in any phone browser — no app store downloads required",
-            "30-day free trial for UK organisers with immediate access and no card needed",
+            "UK plans start at £15/month with immediate access and 0% ticket commission",
           ],
         },
 
@@ -112,7 +112,7 @@ export default function EventbriteAlternativeUkPage() {
               urpassAdvantage: true,
             },
             {
-              criteria: "UK Free Trial Experience",
+              criteria: "UK Pricing Structure",
               urpass: "30 days full trial with zero credit card or payment details required",
               competitor: "Immediate credit card capture or transaction deductions",
               urpassAdvantage: true,
@@ -277,8 +277,8 @@ export default function EventbriteAlternativeUkPage() {
             a: "Yes. Eventbrite is an aggregator marketplace that frequently emails your attendees recommending competing events in your area. URPASS is private software for your organisation: your attendees are never exposed to competitor events or third-party advertising.",
           },
           {
-            q: "How does the 30-day free trial work for UK organisers?",
-            a: "UK organisers can activate a full 30-day free trial of any paid plan (Starter, Pro, or Business) directly from their dashboard without entering any credit card or payment gateway details. You get full access to all features immediately.",
+            q: "How does URPASS pricing work for UK organisers?",
+            a: "UK organisers can choose from transparent monthly plans (Starter £15/mo, Pro £35/mo, or Business £79/mo) with 0% platform ticket commission and full UK GDPR compliance.",
           },
           {
             q: "Can I collect custom registration fields like Student ID?",
@@ -299,7 +299,7 @@ export default function EventbriteAlternativeUkPage() {
         ],
 
         ctaTitle: "Switch from Eventbrite UK and keep 100% of your ticket sales",
-        ctaDescription: "Start your 30-day free trial today. No credit card required. Up and running in minutes.",
+        ctaDescription: "Get started today with transparent monthly plans. 0% ticket commission. Up and running in minutes.",
         geo: {
           region: "GB",
           placename: "United Kingdom",

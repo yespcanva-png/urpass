@@ -54,12 +54,12 @@ export default function UniversitySocietyEventTicketingPage() {
         directAnswer: {
           title: "Why Choose URPASS for UK University Societies & Students' Unions?",
           summary:
-            "URPASS is high-speed event ticketing and QR check-in software purpose-built for UK university societies, sports clubs, and Students' Unions (SUs). It solves common campus ticketing headaches — including clunky SU union portals, high Eventbrite fees, and long queues in the rain — by offering volunteer-friendly smartphone QR scanning, Student ID capture, member pricing tiers, and 0% ticket commission with a 30-day free trial.",
+            "URPASS is high-speed event ticketing and QR check-in software purpose-built for UK university societies, sports clubs, and Students' Unions (SUs). It solves common campus ticketing headaches — including clunky SU union portals, high Eventbrite fees, and long queues in the rain — by offering volunteer-friendly smartphone QR scanning, Student ID capture, member pricing tiers, and 0% ticket commission with plans from £15/month.",
           keyPoints: [
             "0% commission on ticket sales — keep every pound for your society budget",
             "Capture Student ID, course, year of study, and dietary requirements",
             "Volunteer phone scanning in under 0.3s with zero app downloads",
-            "Instant 30-day free trial for UK student societies with no card required",
+            "Transparent GBP pricing for UK student societies from £15/mo",
           ],
         },
 
@@ -244,7 +244,7 @@ export default function UniversitySocietyEventTicketingPage() {
           },
           {
             q: "How much does URPASS cost for student societies?",
-            a: "URPASS has a permanent Free tier (£0 forever for up to 100 registrations/month). For larger events or freshers' week, Starter (£15/mo) and Pro (£35/mo) provide unlimited events with 0% ticket commission. You can activate a 30-day free trial instantly with no credit card.",
+            a: "URPASS provides flat monthly plans with 0% ticket commission: Starter (£15/mo), Pro (£35/mo), and Business (£79/mo) with instant activation and UK GDPR compliance.",
           },
           {
             q: "Do our committee volunteers need to download an app to scan tickets?",
@@ -265,7 +265,7 @@ export default function UniversitySocietyEventTicketingPage() {
         ],
 
         ctaTitle: "Upgrade your student society events today",
-        ctaDescription: "Join student unions and societies saving money and eliminating entrance queues. Start your 30-day free trial today.",
+        ctaDescription: "Join student unions and societies saving money and eliminating entrance queues. Get started today with transparent monthly plans.",
         geo: {
           region: "GB",
           placename: "United Kingdom",

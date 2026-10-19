@@ -16,7 +16,7 @@ import SEOPage from "@/components/landing/SEOPage";
 export const metadata: Metadata = {
   title: "URPASS vs Zoho Backstage: 2026 Comparison for Event Organizers",
   description:
-    "Compare URPASS vs Zoho Backstage. URPASS offers lightweight event registration, permanent free tier, and sub-0.3s QR check-in without Zoho ecosystem lock-in or complex multi-week onboarding.",
+    "Compare URPASS vs Zoho Backstage. URPASS offers lightweight event registration, transparent flat pricing, and sub-0.3s QR check-in without Zoho ecosystem lock-in or complex multi-week onboarding.",
   keywords: [
     "urpass vs zoho backstage",
     "zoho backstage alternative",
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "URPASS vs Zoho Backstage: 2026 Comparison | URPASS",
     description:
-      "Detailed comparison of URPASS and Zoho Backstage. Fast 2-minute setup, permanent free tier, and zero enterprise bloat.",
+      "Detailed comparison of URPASS and Zoho Backstage. Fast 2-minute setup, transparent flat pricing, and zero enterprise bloat.",
     url: "https://urpass.space/compare/urpass-vs-zoho-backstage",
     locale: "en_IN",
     type: "article",
@@ -50,10 +50,10 @@ export default function UrpassVsZohoBackstagePage() {
         directAnswer: {
           title: "Direct Comparison: URPASS vs Zoho Backstage",
           summary:
-            "Zoho Backstage excels at massive multi-day multi-track conventions requiring complex agenda builders, speaker portals, and exhibitor booths. However, for 90% of events—including college fests, workshops, hackathons, seminars, and corporate summits—Zoho Backstage introduces excessive onboarding time, steep subscription tiers, and complex CRM setups. URPASS provides a 2-minute event launch, zero CRM dependencies, a permanent free tier, and an in-browser scanner operating in under 0.28 seconds.",
+            "Zoho Backstage excels at massive multi-day multi-track conventions requiring complex agenda builders, speaker portals, and exhibitor booths. However, for 90% of events—including college fests, workshops, hackathons, seminars, and corporate summits—Zoho Backstage introduces excessive onboarding time, steep subscription tiers, and complex CRM setups. URPASS provides a 2-minute event launch, zero CRM dependencies, transparent flat pricing, and an in-browser scanner operating in under 0.28 seconds.",
           keyPoints: [
             "Setup Velocity: URPASS takes under 2 minutes vs Zoho Backstage requiring multi-step site building and module setup",
-            "Free Tier: URPASS has a permanent free plan (₹0 forever) vs Zoho Backstage's strict 14-day trial",
+            "Pricing Model: URPASS offers flat subscriptions from ₹29/mo intro offer with 0% ticket fees vs Zoho Backstage's complex tiers",
             "Gate Scanning: URPASS uses an in-browser web scanner on any smartphone with zero app downloads",
             "Ecosystem Independence: URPASS operates standalone without requiring Zoho One or Zoho CRM accounts",
           ],
@@ -74,9 +74,9 @@ export default function UrpassVsZohoBackstagePage() {
               urpassAdvantage: true,
             },
             {
-              criteria: "Permanent Free Tier",
-              urpass: "Yes (₹0 forever with 50 attendees per event)",
-              competitor: "No permanent free plan (14-day trial only)",
+              criteria: "Pricing Architecture",
+              urpass: "Flat subscription starting at ₹29/mo introductory offer (0% ticket fee)",
+              competitor: "Steep enterprise pricing tiers (₹5,000+ / event)",
               urpassAdvantage: true,
             },
             {
@@ -119,8 +119,8 @@ export default function UrpassVsZohoBackstagePage() {
           },
           {
             icon: Gift,
-            title: "Permanent Free Tier",
-            desc: "Run smaller meetups, workshops, and student fests completely free forever without entering credit card information.",
+            title: "0% Commission Ticketing",
+            desc: "Sell paid tickets directly through your own Razorpay or Stripe account with zero per-ticket platform cuts.",
           },
           {
             icon: QrCode,
@@ -158,7 +158,7 @@ export default function UrpassVsZohoBackstagePage() {
             "No complex website builders to configure",
             "Zero Zoho CRM account prerequisites",
             "Sub-0.3s gate check-in scanning on any smartphone",
-            "Permanent free plan with no credit card required",
+            "Plans starting with a ₹29/mo introductory offer",
           ],
         },
         useCases: [
@@ -175,7 +175,7 @@ export default function UrpassVsZohoBackstagePage() {
           },
           {
             q: "Does URPASS charge per-ticket fees?",
-            a: "No. URPASS charges ₹0 on our permanent free tier and flat monthly subscriptions on paid plans with 0% ticketing commission.",
+            a: "No. URPASS charges 0% per-ticket commission, operating on predictable flat subscriptions starting at an introductory ₹29/month for your first 2 months.",
           },
           {
             q: "Can I use URPASS without any Zoho account?",
@@ -187,7 +187,7 @@ export default function UrpassVsZohoBackstagePage() {
           },
         ],
         ctaTitle: "Streamline your event check-in with URPASS",
-        ctaDescription: "Permanent free tier · 2-minute setup · Instant QR passes · Zero enterprise bloat",
+        ctaDescription: "Plans from ₹29/mo · 2-minute setup · Instant QR passes · Zero ticket commission",
       }}
     />
   );

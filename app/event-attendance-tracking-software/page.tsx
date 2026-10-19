@@ -1,20 +1,25 @@
 import type { Metadata } from "next";
-import { BarChart3, FileText, Lock, ScanLine, Users, Zap } from "lucide-react";
+import { BarChart3, FileText, ScanLine, ShieldCheck, Users, Zap } from "lucide-react";
 import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
-  title: "Real-Time Event Attendance Tracking Software | URPASS",
-  description: "Real-time event attendance tracking software. Monitor live arrivals, distinguish registrations from attendees, analyze no-show rates, and export verified logs.",
-  keywords: ["event attendance tracking software", "real-time attendance tracking", "event check-in analytics", "attendance tracking for conferences", "event no-show tracking", "live event headcount tracker"],
+  title: "Event Attendance Tracking Software | UrPass",
+  description: "Monitor event registrations, QR check-ins, attendance totals and entry status from one dashboard. Simplify on-site attendance tracking.",
+  keywords: ["event attendance tracking software","track event attendance and check-ins live","live event check in tracker","qr code attendance tracker","real time event attendance analytics","event headcount software"],
   alternates: {
     canonical: "https://urpass.space/event-attendance-tracking-software",
   },
   openGraph: {
-    title: "Real-Time Event Attendance Tracking Software | URPASS",
-    description: "Real-time event attendance tracking software. Monitor live arrivals, distinguish registrations from attendees, analyze no-show rates, and export verified logs.",
+    title: "Event Attendance Tracking Software | UrPass",
+    description: "Monitor event registrations, QR check-ins, attendance totals and entry status from one dashboard. Simplify on-site attendance tracking.",
     url: "https://urpass.space/event-attendance-tracking-software",
     locale: "en_US",
     type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Event Attendance Tracking Software | UrPass",
+    description: "Monitor event registrations, QR check-ins, attendance totals and entry status from one dashboard. Simplify on-site attendance tracking.",
   },
 };
 
@@ -22,227 +27,220 @@ export default function EventAttendanceTrackingSoftwarePage() {
   return (
     <SEOPage
       config={{
-  "badge": "REAL-TIME ATTENDANCE ANALYTICS",
-  "h1": "Real-Time Event Attendance Tracking Software",
-  "canonicalUrl": "https://urpass.space/event-attendance-tracking-software",
-  "description": "Real-time event attendance tracking software. Monitor live arrivals, distinguish registrations from attendees, analyze no-show rates, and export verified logs.",
-  "ctaLabel": "Track Event Attendance Free →",
-  "ctaTitle": "Gain Real-Time Visibility into Event Attendance",
-  "ctaDescription": "Replace guesswork with live attendance telemetry. Track check-in velocity, monitor room headcounts, and export audit-ready logs in one click.",
-  "directAnswer": {
-    "title": "What is Real-Time Event Attendance Tracking Software?",
-    "summary": "Real-time event attendance tracking software is an analytical platform that monitors attendee arrivals live as tickets are scanned at venue doors. URPASS calculates exact check-in velocity, tracks room occupancy against fire safety limits, identifies no-show rates, and produces verified digital timestamp logs for compliance and reporting.",
-    "keyPoints": [
-      "Real-time dashboard showing total registrations, verified arrivals, and no-shows",
-      "Live arrival velocity curves to monitor entrance flow and optimize door staffing",
-      "Instant CSV exports with exact check-in seconds, volunteer names, and gate IDs",
-      "Sub-second (<0.3s) camera check-in on volunteer phones with zero hardware rentals"
-    ]
-  },
-  "whatIs": {
-    "title": "What is Event Attendance Tracking Software?",
-    "definition": "Event attendance tracking software is an operational intelligence solution that captures and analyzes the physical presence of attendees at an event. It converts door ticket scans into actionable data, providing organizers with real-time headcounts, session popularity metrics, and verifiable compliance records.",
-    "details": [
-      "Distinguishes signups from verified physical attendees in real time",
-      "Helps organizers adjust catering, security, and seating based on live attendance",
-      "Provides tamper-proof attendance proof for accredited CPD and regulatory training",
-      "Replaces paper sign-in sheets with automated smartphone QR camera verification"
-    ]
-  },
-  "howItWorksTitle": "How Attendance Tracking Operates",
-  "howItWorksSubtitle": "From door ticket scan to live telemetry dashboard.",
-  "steps": [
-    {
-      "n": "01",
-      "title": "Register attendees online",
-      "desc": "Guests register and receive individualized digital QR entry passes."
-    },
-    {
-      "n": "02",
-      "title": "Deploy door scanners",
-      "desc": "Staff open the scanner web URL on their own smartphones at venue gates."
-    },
-    {
-      "n": "03",
-      "title": "Scan attendees at doors",
-      "desc": "Volunteers scan passes in <0.3s as attendees arrive at the entrance."
-    },
-    {
-      "n": "04",
-      "title": "Instant cloud sync",
-      "desc": "Every scan transmits arrival timestamps and gate IDs to the cloud in real time."
-    },
-    {
-      "n": "05",
-      "title": "Monitor live dashboard",
-      "desc": "Watch check-in curves rise, view hall capacities, and track no-shows live."
-    },
-    {
-      "n": "06",
-      "title": "Export verified reports",
-      "desc": "Download complete attendance rosters to CSV or PDF for compliance reporting."
-    }
-  ],
-  "featuresTitle": "Attendance Analytics Built for Operational Control",
-  "featuresSubtitle": "Live telemetry, no-show calculations, and verified timestamp exports.",
-  "features": [
-    {
-      icon: BarChart3,
-      "title": "Live Arrival Curves",
-      "desc": "Track attendance velocity in real time. Know your peak arrival windows to staff entrances efficiently."
-    },
-    {
-      icon: ScanLine,
-      "title": "Sub-0.3s Scan Logging",
-      "desc": "Record exact check-in timestamps in under 0.3 seconds per attendee without holding up queues."
-    },
-    {
-      icon: Users,
-      "title": "No-Show Rate Analytics",
-      "desc": "Compare registered guests versus checked-in attendees to understand true drop-off rates and optimize future venues."
-    },
-    {
-      icon: Lock,
-      "title": "Fire Code Capacity Monitoring",
-      "desc": "Monitor live hall headcounts to ensure compliance with venue fire regulations and room limits."
-    },
-    {
-      icon: FileText,
-      "title": "One-Click CSV/PDF Exports",
-      "desc": "Download verified attendance logs with attendee names, emails, check-in times, and gate names."
-    },
-    {
-      icon: Zap,
-      "title": "Offline Scan Queuing",
-      "desc": "Scans continue logging in browser memory even if venue Wi-Fi drops, synchronizing automatically when reconnected."
-    }
-  ],
-  "whoShouldUse": {
-    "title": "Who Needs Event Attendance Tracking?",
-    "subtitle": "From corporate compliance managers to conference organizers.",
-    "personas": [
-      {
-        "badge": "CORPORATE",
-        "title": "Corporate L&D & HR Teams",
-        "desc": "Generate verified attendance records for mandatory compliance and safety training programs."
-      },
-      {
-        "badge": "CONFERENCES",
-        "title": "Conference & Summit Directors",
-        "desc": "Track session room headcounts, keynote attendance, and accredited CPD hours."
-      },
-      {
-        "badge": "CAMPUS",
-        "title": "Universities & Academic Faculties",
-        "desc": "Track lecture hall attendance, student symposium presence, and departmental seminar credits."
-      },
-      {
-        "badge": "COMMUNITY",
-        "title": "Meetup & Community Leaders",
-        "desc": "Understand real community engagement by tracking true attendance versus RSVP signups."
-      }
-    ]
-  },
-  "howQrCheckInWorks": {
-    "title": "How Real-Time Attendance Is Recorded",
-    "subtitle": "Sub-second camera scanning on volunteer phones.",
-    "description": "Attendees display their mobile QR pass on their phone screen. Volunteer staff open the scanner URL in Safari or Chrome on their smartphones. Pointing the camera at the pass validates the ticket in under 0.3 seconds with an audible green chime, verifying their registration without needing a paper roster.",
-    "points": [
-      "Zero equipment costs: volunteers use their personal mobile phones.",
-      "Offline engine pre-loads ticket databases to validate passes with zero network connectivity.",
-      "Atomic row-locking prevents shared pass screenshots across different gate tents.",
-      "Rapid manual lookup by name if an attendee's phone battery has died."
-    ]
-  },
-  "keyFactsTable": {
-    "title": "URPASS Real-Time Tracking vs Post-Event Spreadsheets",
-    "subtitle": "Why live attendance tracking outperforms manual counting.",
-    "headers": [
-      "Tracking Metric",
-      "Manual Post-Event Spreadsheets",
-      "URPASS Real-Time Attendance"
-    ],
-    "rows": [
-      {
-        "col1": "Attendance Visibility",
-        "col2": "Unknown until days after manual paper cross-checking",
-        "col3": "Live second-by-second headcount on dashboard"
-      },
-      {
-        "col1": "Capacity Warning",
-        "col2": "Zero warning if room exceeds fire safety capacity",
-        "col3": "Real-time occupancy alerts before limits are hit"
-      },
-      {
-        "col1": "Timestamp Precision",
-        "col2": "No timestamp data; binary yes/no attendance tick",
-        "col3": "Exact second and gate identifier recorded"
-      },
-      {
-        "col1": "Reporting Speed",
-        "col2": "Hours of manual data entry typing sign-in sheets",
-        "col3": "Instant one-click CSV export immediately"
-      }
-    ]
-  },
-  "faqs": [
-    {
-      "q": "What is event attendance tracking software?",
-      "a": "It is an operational software platform that monitors attendee check-ins in real time as tickets are scanned at venue doors, providing live headcounts and exportable attendance logs."
-    },
-    {
-      "q": "How does URPASS track attendance in real time?",
-      "a": "When door staff scan an attendee's QR pass using a smartphone camera, the scan transmits an encrypted confirmation to the cloud database in under 150ms, updating the live dashboard instantly."
-    },
-    {
-      "q": "Can I export verified attendance logs for CPD accreditation?",
-      "a": "Yes. Complete attendance rosters with attendee names, emails, check-in timestamps, and gate identifiers can be exported to CSV or PDF in one click."
-    },
-    {
-      "q": "What happens if our venue Wi-Fi crashes during the event?",
-      "a": "URPASS caches all attendance scans in local browser memory and continues logging timestamps offline. Once connection is restored, all records synchronize automatically."
-    },
-    {
-      "q": "Can I track attendance across multiple breakout rooms or tracks?",
-      "a": "Yes. You can assign different scanners to different rooms (e.g. 'Room A - AI Workshop', 'Room B - Design Track') to track session-specific attendance."
-    },
-    {
-      "q": "Can I export attendance data to Excel or CSV?",
-      "a": "Yes. You can export complete attendance reports including registration data, check-in timestamps, and gate numbers with a single click."
-    },
-    {
-      "q": "Can I view live check-in percentage charts during the event?",
-      "a": "Yes. The organizer dashboard displays real-time attendance velocity, percentage of checked-in delegates, and peak entry hours."
-    }
-  ],
-  "relatedLinks": [
-    {
-      "title": "QR Code Attendance System for Events",
-      "href": "/qr-code-attendance-system-for-events",
-      "category": "Product"
-    },
-    {
-      "title": "Multi-Gate QR Check-In for Large Events",
-      "href": "/multi-gate-event-check-in",
-      "category": "Product"
-    },
-    {
-      "title": "Event Entry Management & QR Access Control",
-      "href": "/event-entry-management-software",
-      "category": "Product"
-    },
-    {
-      "title": "Training Registration & Attendance Tracking",
-      "href": "/training-event-registration-software",
-      "category": "Use Case"
-    },
-    {
-      "title": "Conference Registration Software with QR Check-In",
-      "href": "/conference-registration-software",
-      "category": "Use Case"
-    }
-  ]
-}}
+        badge: "REAL-TIME ATTENDANCE TRACKING",
+        h1: "Track Event Attendance and Check-Ins Live",
+        canonicalUrl: "https://urpass.space/event-attendance-tracking-software",
+        description: "Monitor event registrations, QR check-ins, attendance totals and entry status from one dashboard. Simplify on-site attendance tracking.",
+        ctaLabel: "Create Your Event",
+        ctaHref: "/signup?from=event-attendance-tracking-software",
+        secondaryCtaLabel: "View Pricing",
+        secondaryCtaHref: "/pricing",
+        ctaTitle: "Gain Real-Time Visibility into Event Attendance",
+        ctaDescription: "Replace guesswork with live attendance telemetry. Track check-in velocity, monitor room headcounts, and export audit-ready logs in one click.",
+        directAnswer: {
+        "title": "What is Event Attendance Tracking Software?",
+        "summary": "Event attendance tracking software is an operational platform that monitors registrations, live arrivals, and check-in percentages in real time as attendee QR passes are scanned at venue doors. Organizers view exact headcount metrics, arrival velocity curves, and timestamped attendance records on a centralized dashboard.",
+        "keyPoints": [
+                "Real-time dashboard showing total registrations, verified arrivals, and no-show counts",
+                "Live arrival velocity curves to monitor entrance flow and optimize door staffing",
+                "Instant CSV exports with exact check-in seconds, volunteer names, and gate IDs",
+                "Sub-second (<0.3s) camera check-in on volunteer phones with zero hardware rentals"
+        ]
+},
+        whatIs: {
+        "title": "How UrPass Tracks Event Attendance Live",
+        "definition": "UrPass captures and analyzes the physical presence of attendees at an event by converting door ticket scans into actionable data. It provides organizers with real-time headcounts, session popularity metrics, and verifiable compliance records without manual sign-in sheets.",
+        "details": [
+                "Distinguishes signups from verified physical attendees in real time",
+                "Helps organizers adjust catering, security, and seating based on live attendance",
+                "Provides tamper-proof attendance proof for accredited CPD and regulatory training",
+                "Replaces paper sign-in sheets with automated smartphone QR camera verification"
+        ]
+},
+        keyFactsTable: {
+        "title": "Live Cloud Attendance vs Manual Rosters & Disconnected Systems",
+        "subtitle": "Why live cloud-synchronized attendance tracking is vital for modern event operators.",
+        "headers": [
+                "Operational Metric",
+                "Paper Roster / Standalone Spreadsheets",
+                "UrPass Real-Time Attendance Engine"
+        ],
+        "rows": [
+                {
+                        "col1": "Data Latency",
+                        "col2": "Hours or days to compile paper sign-in sheets manually",
+                        "col3": "Instant sub-second cloud synchronization"
+                },
+                {
+                        "col1": "No-Show Identification",
+                        "col2": "Unknown until days after post-event manual reconciliation",
+                        "col3": "Instant live filter showing unadmitted registered attendees"
+                },
+                {
+                        "col1": "Audit Integrity",
+                        "col2": "Easily forged paper signatures with zero tamper protection",
+                        "col3": "Cryptographic scan records with exact timestamp, device ID & gate"
+                },
+                {
+                        "col1": "Capacity Alerts",
+                        "col2": "Manual headcount with significant room overfill safety risks",
+                        "col3": "Automated real-time warnings when rooms approach safety capacity"
+                }
+        ]
+},
+        deepDiveSections: [
+        {
+                "badge": "LIVE OPERATIONS",
+                "title": "Real-Time Ingress Curves and Crowd Flow Control",
+                "paragraphs": [
+                        "At large events, knowing how many people are inside the venue is a matter of safety, logistical planning, and attendee comfort. If catering staff prepare 1,000 lunches but only 600 attendees have entered by noon, food waste and budget overruns follow.",
+                        "UrPass provides a live ingress curve chart that tracks attendee arrival velocity minute by minute. Organizers can identify peak entry surges, rebalance gate volunteers to clear lines faster, and coordinate catering and session start times based on actual venue occupancy."
+                ],
+                "bullets": [
+                        "Real-time ingress graphs tracking scans per minute across all active gates",
+                        "Live comparison between total registered capacity and admitted headcounts",
+                        "Automated alerts when breakout rooms or auditoriums reach maximum safety limits",
+                        "Instant identification of VIP delegates and speakers as they enter the venue"
+                ],
+                "takeaway": "Live attendance curves give organizers data-backed control over venue logistics and schedules."
+        },
+        {
+                "badge": "AUDIT & REPORTING",
+                "title": "One-Click Timestamped Audit Exports and Compliance Reports",
+                "paragraphs": [
+                        "For corporate training sessions, medical conferences, and university symposiums, attendance data must meet strict audit requirements for accreditation, continuing professional education (CPE/CPD), and regulatory compliance.",
+                        "UrPass stamps every scan with an immutable audit record: exact microsecond timestamp, scanning volunteer name, device identifier, and gate location. Organizers can filter and export full attendance ledgers to CSV or Excel with a single click immediately following the event."
+                ],
+                "bullets": [
+                        "Cryptographically signed check-in records that prevent disputed attendance claims",
+                        "Session-level check-in logs for multi-track workshops and breakout rooms",
+                        "Instant CSV export compatible with Salesforce, HubSpot, and campus ERPs",
+                        "Automated post-event attendance certification emails sent to verified attendees"
+                ],
+                "takeaway": "Tamper-proof audit logs eliminate disputes and streamline professional accreditation."
+        }
+],
+        featuresTitle: "Core Capabilities Built for Event Organizers",
+        featuresSubtitle: "Engineered for speed, reliability, and zero ticketing commission.",
+        features: [
+          {
+            icon: BarChart3,
+            title: "Live Attendance Telemetry",
+            desc: "Monitor check-in percentages, arrival spikes, and remaining expected guests in real time.",
+          },
+          {
+            icon: ScanLine,
+            title: "Sub-0.3s Camera Check-In",
+            desc: "Scan attendee passes using volunteer smartphone browsers with zero app installation.",
+          },
+          {
+            icon: Users,
+            title: "Instant No-Show Identification",
+            desc: "Filter and view attendees who have not yet checked in to send targeted reminders.",
+          },
+          {
+            icon: FileText,
+            title: "Audit-Ready CSV Exports",
+            desc: "Export timestamped attendance records with attendee details, gate names, and scanner IDs.",
+          },
+          {
+            icon: ShieldCheck,
+            title: "Atomic Duplicate Blocking",
+            desc: "Prevent fraudulent entry and pass reuse across multiple doors with database row locks.",
+          },
+          {
+            icon: Zap,
+            title: "Multi-Session Tracking",
+            desc: "Track attendance across workshops, keynotes, and breakout rooms on a single pass.",
+          }
+        ],
+        steps: [
+        {
+                "n": "01",
+                "title": "Publish Registration Form",
+                "desc": "Attendees register and receive personalized digital QR entry passes."
+        },
+        {
+                "n": "02",
+                "title": "Authorize Door Scanners",
+                "desc": "Volunteers scan a setup QR code to activate browser cameras on their phones."
+        },
+        {
+                "n": "03",
+                "title": "Scan Attendees at Doors",
+                "desc": "Door staff scan passes in <0.3s as attendees arrive at entrance gates."
+        },
+        {
+                "n": "04",
+                "title": "Watch Live Dashboard",
+                "desc": "Monitor live arrival graphs, room headcounts, and no-show statistics in real time."
+        },
+        {
+                "n": "05",
+                "title": "Export Attendance Logs",
+                "desc": "Download verified timestamped attendance logs to CSV with one click."
+        }
+],
+        whoShouldUse: {
+        "title": "Who Relies on Live Attendance Tracking?",
+        "subtitle": "Built for organizers who need accurate headcount data and compliance records.",
+        "personas": [
+                {
+                        "badge": "CONFERENCES",
+                        "title": "B2B Conferences & Summits",
+                        "desc": "Track delegate attendance across keynote halls and breakout sessions for sponsor ROI reporting."
+                },
+                {
+                        "badge": "TRAINING",
+                        "title": "Accredited Workshops & CPD",
+                        "desc": "Verify mandatory training attendance with tamper-proof timestamped entry logs."
+                },
+                {
+                        "badge": "COLLEGES",
+                        "title": "University Fests & Symposiums",
+                        "desc": "Monitor venue crowd safety and verify participant presence across competitive tracks."
+                },
+                {
+                        "badge": "CORPORATE",
+                        "title": "Corporate All-Hands & Summits",
+                        "desc": "Track employee participation across departments with domain-restricted registration."
+                }
+        ]
+},
+        howQrCheckInWorks: {
+        "title": "How Real-Time Attendance Validation Works",
+        "subtitle": "Sub-second camera scanning that logs every entry instantly.",
+        "description": "Door staff point their smartphone cameras at an attendee digital QR pass. In under 300 milliseconds, the scanner validates the cryptographic token, displays a green confirmation screen, and transmits the check-in record to the central dashboard, updating live counts instantly.",
+        "points": [
+                "Zero dedicated equipment required; runs on volunteer smartphones.",
+                "Audible audio chimes confirm successful scan in noisy venues.",
+                "Instant duplicate alerts prevent attendees from reusing passes.",
+                "Manual search bar allows check-in by name if a phone battery dies."
+        ]
+},
+        faqs: [
+        {
+                "q": "Can I see how many people have checked in while the event is ongoing?",
+                "a": "Yes. The UrPass organizer dashboard updates in real time, displaying the total number of registered attendees, the exact count of admitted guests, current check-in percentages, and remaining expected arrivals."
+        },
+        {
+                "q": "How does the system handle attendees without smartphones?",
+                "a": "Attendees can present printed QR passes, or gate staff can use the built-in quick search tool on their scanner to look up the attendee by name or email address and mark them present manually with one tap."
+        },
+        {
+                "q": "Can I track attendance for individual workshop sessions within a conference?",
+                "a": "Yes. UrPass supports multi-session and breakout tracking. Scanners assigned to specific rooms will tag the attendee check-in to that session, giving you session-specific attendance counts."
+        },
+        {
+                "q": "Can I export attendance data after the event?",
+                "a": "Yes. You can export a complete CSV file at any time containing attendee names, email addresses, registration fields, ticket tiers, exact check-in timestamps, and scanner gate identifiers."
+        },
+        {
+                "q": "What prevents someone from scanning the same ticket twice?",
+                "a": "UrPass uses database-level atomic row locks. Once a ticket is marked checked in, any subsequent scan attempt immediately triggers an amber duplicate alert showing the previous check-in time and gate location."
+        }
+],
+      }}
     />
   );
 }

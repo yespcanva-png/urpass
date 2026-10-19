@@ -73,7 +73,7 @@ export default function GuidePage() {
           { q: "Is there an extra charge for adding more gates or scanners?", a: "No. URPASS allows unlimited scanning devices and gates across all subscription plans." },
         ],
         ctaTitle: "Streamline your event check-in with URPASS",
-        ctaDescription: "Permanent free tier · Zero app downloads · Fast sub-second scanning",
+        ctaDescription: "Plans from ₹29/mo · Zero app downloads · Fast sub-second scanning",
       }}
     />
   );

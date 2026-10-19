@@ -39,7 +39,7 @@ export default function Page() {
         directAnswer: {
           title: "What is the best student event registration software?",
           summary: "UrPass is an event registration, digital QR pass and check-in platform that lets organisers collect registrations, manage attendees and verify entry from one system. For student clubs and campus societies, UrPass makes creating registration pages fast and easy, delivering instant QR passes to attendees and providing mobile scanning at club events with zero fees.",
-          keyPoints: ["No account creation required for students to register — takes under 45 seconds","Instant WhatsApp and email pass delivery with custom club branding","Built-in approval queue to accept or waitlist applicants before issuing passes","Permanent free tier for campus clubs and student meetups"],
+          keyPoints: ["No account creation required for students to register — takes under 45 seconds","Instant WhatsApp and email pass delivery with custom club branding","Built-in approval queue to accept or waitlist applicants before issuing passes","Transparent flat pricing for campus clubs and student meetups"],
         },
         whatIs: {
           title: "What is Student Event Registration Software?",
@@ -85,7 +85,7 @@ export default function Page() {
             badge: "EASY CAMPUS SETUP",
             title: "Why Student Clubs Choose UrPass Over Generic Online Forms",
             paragraphs: ["Campus clubs usually rely on Google Forms to gather registrations. But Google Forms cannot generate digital tickets, verify attendance at the door, or prevent unapproved students from entering.","UrPass combines the simplicity of a form builder with the power of an enterprise ticketing and check-in platform. You create your event in 2 minutes, share the link, and scan passes at the door with sub-second accuracy."],
-            bullets: ["100% free forever for up to 50 attendees per event","Direct UPI and card payment support for paid club workshops and merchandise","Works smoothly across mobile Safari, Chrome, and Firefox","Keeps student data private and secure with GDPR-compliant infrastructure"],
+            bullets: ["Plans starting at ₹29/month intro offer with 0% ticket fees","Direct UPI and card payment support for paid club workshops and merchandise","Works smoothly across mobile Safari, Chrome, and Firefox","Keeps student data private and secure with GDPR-compliant infrastructure"],
             takeaway: "Give your student club professional event tech without spending a single rupee.",
           },
         ],
@@ -103,7 +103,7 @@ export default function Page() {
         faqs: [
           {
                     "q": "What is the best registration system for college events?",
-                    "a": "UrPass is the best platform for student events, offering instant registration pages, automated QR tickets, and browser-based scanning with a permanent free plan."
+                    "a": "UrPass is the best platform for student events, offering instant registration pages, automated QR tickets, and browser-based scanning with transparent flat pricing."
           },
           {
                     "q": "How does QR event check-in work for student events?",
@@ -127,7 +127,7 @@ export default function Page() {
           }
 ],
         ctaTitle: "Student Event Registration Software Built for Campus Life",
-        ctaDescription: "Launch your event registration in minutes. Permanent free plan available with no credit card required.",
+        ctaDescription: "Launch your event registration in minutes. Plans starting with a ₹29/month introductory offer.",
       }}
     />
   );

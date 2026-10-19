@@ -5,7 +5,7 @@ import SEOPage from "@/components/landing/SEOPage";
 export const metadata: Metadata = {
   title: "Event Registration Without Fees | 0% Commission | URPASS",
   description:
-    "Sell event tickets and manage registrations without per-ticket percentage cuts. Transparent flat pricing, free forever community tier, and direct payments.",
+    "Sell event tickets and manage registrations without per-ticket percentage cuts. Transparent flat pricing, introductory ₹29/month offer, and direct payments.",
   keywords: [
     "event registration without fees",
     "zero fee event registration",
@@ -42,7 +42,7 @@ export default function Page() {
             "0% per-ticket platform commission across all free and paid plans",
             "Keep 100% of your ticket price — zero hidden attendee service fees added at checkout",
             "Direct payment settlement (T+2) directly into your bank via your linked Razorpay/Stripe account",
-            "Permanent Free Tier: ₹0 / $0 forever for up to 100 registrations per month",
+            "Transparent Flat Pricing: Plans starting with a ₹29/mo intro offer",
           ],
         },
         keyFactsTable: {
@@ -54,7 +54,7 @@ export default function Page() {
             { col1: "Per-Ticket Flat Surcharge", col2: "$0 / ₹0 per ticket", col3: "$0.99 to $1.99 + per ticket sold" },
             { col1: "Attendee Convenience Surcharges", col2: "None; buyer pays exact face value", col3: "Hidden 2% to 5% fees added at cart" },
             { col1: "Payout Settlement Schedule", col2: "Direct T+2 business day settlement", col3: "Funds withheld until days after event" },
-            { col1: "Free Community Events", col2: "100% free forever (100 reg/mo)", col3: "Attendee limits or mandatory plan" },
+            { col1: "Free Community Events", col2: "Plans from ₹29/mo (intro offer)", col3: "Attendee limits or mandatory plan" },
           ],
         },
         features: [
@@ -78,19 +78,19 @@ export default function Page() {
           description: "Don't subsidize expensive legacy ticketing middlemen. Switch to flat software pricing and reinvest your ticket revenues directly into better venue amenities, keynote speakers, and attendee experiences.",
           bullets: [
             "0% commission on all ticket tiers regardless of volume",
-            "Transparent monthly software pricing with 30-day free trial",
-            "Permanent Free Tier for community events up to 100 registrations/month",
+            "Transparent monthly software pricing with 0% ticket fee",
+            "Transparent flat pricing with 0% ticket fees",
             "Full data privacy with complete ownership of your attendee roster",
           ],
         },
         faqs: [
           { q: "Is there really zero commission on paid tickets?", a: "Yes. URPASS charges 0% platform commission on ticket sales. You only pay standard gateway processing fees directly to Razorpay or Stripe, keeping 100% of your ticket price." },
           { q: "Does URPASS add convenience fees for ticket buyers?", a: "No. Ticket buyers pay the exact ticket price listed by the organizer with zero surprise convenience charges added at checkout." },
-          { q: "How does URPASS make money if there are no ticket commissions?", a: "URPASS operates as a modern software subscription platform (SaaS). We offer a permanent Free Tier, alongside transparent monthly plans (Starter ₹499/mo, Pro ₹999/mo, Business ₹2,499/mo) for organizers who need higher capacity and enterprise features." },
-          { q: "Can I try paid features for free?", a: "Yes. All paid URPASS plans include a full 30-day free trial with ₹0 due today and no credit card required." },
+          { q: "How does URPASS make money if there are no ticket commissions?", a: "URPASS operates as a modern software subscription platform (SaaS). We offer transparent monthly plans (Starter ₹499/mo, Pro ₹999/mo, Business ₹2,499/mo) starting with an introductory ₹29/month offer for the first 2 months." },
+          { q: "How does URPASS pricing work?", a: "URPASS offers an introductory offer of ₹29/month for the first 2 months across Starter, Pro, and Business plans with zero platform ticket commissions." },
         ],
         relatedLinks: [
-          { title: "Pricing & 30-Day Free Trial", href: "/pricing", category: "Product" },
+          { title: "Pricing & Plans", href: "/pricing", category: "Product" },
           { title: "Eventbrite Alternative", href: "/compare/eventbrite-alternative", category: "Comparison" },
           { title: "Zero Commission Event Ticketing", href: "/zero-commission-event-ticketing", category: "Product" },
           { title: "Conference Registration Software", href: "/conference-registration-software", category: "Use Case" },

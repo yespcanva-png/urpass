@@ -106,7 +106,7 @@ export default function MaduraiPage() {
         faqs: [
           {
             q: "Can Madurai student clubs use URPASS for free events?",
-            a: "Yes. The permanent Free Tier includes 2 events/month and up to 100 registrations/month at ₹0 forever with no credit card required—perfect for departmental paper presentations and club meetings.",
+            a: "URPASS offers an introductory offer of ₹29/month for the first 2 months on all tiers with 0% platform ticket fees and instant Razorpay UPI payouts.",
           },
           {
             q: "How does URPASS manage multi-gate entry at large Madurai venues?",

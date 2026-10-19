@@ -141,9 +141,9 @@ export default function GlobalPage() {
               col3: "No native MCP support for AI coding or workflow agents",
             },
             {
-              col1: "Free Forever Tier",
-              col2: "Free forever: 2 events/mo, 100 registrations/mo, QR check-in",
-              col3: "Strict attendee caps or paid-only ticketing access",
+              col1: "Zero-Commission Ticketing",
+              col2: "Flat monthly pricing starting at ₹29/mo introductory offer",
+              col3: "Strict attendee caps or paid-only ticketing access with percentage fees",
             },
           ],
         },
@@ -244,9 +244,9 @@ export default function GlobalPage() {
               urpassAdvantage: true,
             },
             {
-              criteria: "30-Day Free Trial without Credit Card",
-              urpass: "Full 30-day trial at $0 without credit card",
-              competitor: "Mandatory credit card for plan trials",
+              criteria: "Transparent Subscription Pricing",
+              urpass: "Flat predictable subscription with 0% ticket commission",
+              competitor: "3.7% to 10% cut per ticket sold",
               urpassAdvantage: true,
             },
           ],
@@ -363,7 +363,7 @@ export default function GlobalPage() {
         faqs: [
           {
             q: "What makes URPASS different from Eventbrite for international events?",
-            a: "URPASS operates on a zero-commission model (0% ticket cut vs Eventbrite's 3.7% + per-ticket fee), saving organizers thousands of dollars. Additionally, URPASS requires zero mobile app downloads for ticket scanning (runs entirely in mobile Safari/Chrome), validates passes in under 0.3s, offers native Model Context Protocol (MCP) tools for AI agents, and provides transparent monthly subscription pricing with a 30-day free trial requiring no credit card.",
+            a: "URPASS operates on a zero-commission model (0% ticket cut vs Eventbrite's 3.7% + per-ticket fee), saving organizers thousands of dollars. Additionally, URPASS requires zero mobile app downloads for ticket scanning (runs entirely in mobile Safari/Chrome), validates passes in under 0.3s, offers native Model Context Protocol (MCP) tools for AI agents, and provides transparent subscription plans with zero platform commissions.",
           },
           {
             q: "Can international attendees check in without creating an account or downloading an app?",
@@ -371,7 +371,7 @@ export default function GlobalPage() {
           },
           {
             q: "Does URPASS charge per-ticket transaction percentage fees?",
-            a: "No. URPASS never takes a percentage of your ticket sales. Organizers pay only a predictable flat monthly software subscription (or use our permanent Free tier for up to 100 registrations/month). All ticket revenues flow directly into your connected payment account.",
+            a: "No. URPASS never takes a percentage of your ticket sales. Organizers pay only a predictable flat monthly software subscription. All ticket revenues flow directly into your connected payment account.",
           },
           {
             q: "What devices can door staff use to scan passes at the venue?",
@@ -398,8 +398,8 @@ export default function GlobalPage() {
             a: "URPASS includes a production Model Context Protocol (MCP) server conforming to the open standard developed by Anthropic. It allows AI assistants like Claude Desktop, Cursor IDE, and autonomous agents to query events, filter attendees, screen applications, and inspect check-in velocity via natural language.",
           },
           {
-            q: "Does URPASS offer a free trial?",
-            a: "Yes. URPASS offers a 30-day free trial on all paid plans (Starter, Pro, and Business) with ₹0 / $0 due today and no credit card required. In addition, URPASS offers a permanent Free tier for up to 2 events per month and 100 registrations per month.",
+            q: "How does URPASS pricing work?",
+            a: "URPASS offers transparent, predictable subscription tiers: Starter, Pro, and Business. In India, organizers can take advantage of an introductory offer starting at ₹29/month for the first 2 months. In the UK, plans start at £15/month. All plans feature 0% platform commissions on ticket sales.",
           },
           {
             q: "How does enterprise multi-tenancy work in URPASS?",

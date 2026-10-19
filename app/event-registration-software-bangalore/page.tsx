@@ -45,7 +45,7 @@ export default function LocationPage() {
           longitude: 77.5946,
         },
         description: "Organizing a college fest, conference, workshop or corporate event in Bangalore? URPASS helps organizers manage online registrations, issue digital QR passes and check attendees in using any phone.",
-        ctaLabel: "Start your Bangalore event free",
+        ctaLabel: "Start your Bangalore event →",
         features: [
           { icon: MapPin, title: "Built for Bangalore Events", desc: "Local INR pricing, Razorpay payment gateway integration, and native support for Bangalore colleges, conferences, fests, and corporate summits." },
           { icon: Ticket, title: "UPI & Online Ticketing", desc: "Accept payments via Google Pay, PhonePe, Paytm, net banking, and cards with zero per-ticket platform commission fees." },
@@ -62,7 +62,7 @@ export default function LocationPage() {
             "Local INR pricing with GST compliant invoices",
             "Zero per-ticket percentage cuts on ticket revenue",
             "Instant duplicate pass lockout across all entrance gates",
-            "Permanent free tier available for up to 100 attendees per month"
+            "Plans start with ₹29/mo introductory offer and 0% ticket fee"
           ],
         },
         useCases: [
@@ -76,10 +76,10 @@ export default function LocationPage() {
           { q: "Can Bangalore organizers collect ticket payments in INR via UPI?", a: "Yes. Native Razorpay integration allows Bangalore organizers to accept ticket payments via Google Pay, PhonePe, Paytm, cards, and net banking with zero platform cuts." },
           { q: "How fast is check-in at large Bangalore tech conferences?", a: "Passes verify in under 0.3 seconds directly in mobile phone browsers, eliminating morning keynote foyer queues." },
           { q: "Can we use URPASS for hackathons in Koramangala or HSR Layout?", a: "Yes. URPASS is heavily used for 24h/48h hackathons to manage hacker applications, team QR passes, and late-night re-entry." },
-          { q: "Is URPASS free for Bangalore developer meetups?", a: "Yes. Tech communities can host up to 2 meetups per month with 100 developers per month for ₹0 forever on our free plan." },
+          { q: "How does URPASS pricing work for developer meetups?", a: "Tech communities can get started with an introductory offer of ₹29/month for the first 2 months, with zero platform ticket commissions." },
         ],
         ctaTitle: "Start your Bangalore event with URPASS",
-        ctaDescription: "Free plan available · Razorpay UPI payments · Sub-second mobile scanning",
+        ctaDescription: "Plans from ₹29/mo · Razorpay UPI payments · Sub-second mobile scanning",
       }}
     />
   );

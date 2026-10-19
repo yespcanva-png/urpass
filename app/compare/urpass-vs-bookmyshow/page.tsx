@@ -46,7 +46,7 @@ export default function UrpassVsBookMyShowPage() {
         h1: "URPASS vs BookMyShow: Which Platform is Right for Your Event?",
         description:
           "BookMyShow is India's leading consumer entertainment portal for stadium concerts and movie shows. But for conferences, college fests, workshops, and business events, organizers use URPASS to eliminate high convenience fees, retain 100% attendee data ownership, and get paid directly.",
-        ctaLabel: "Start free with URPASS",
+        ctaLabel: "Create Your Event →",
         directAnswer: {
           title: "URPASS vs BookMyShow: Key Differences",
           summary:
@@ -99,7 +99,7 @@ export default function UrpassVsBookMyShowPage() {
             },
             {
               criteria: "Free Event Support",
-              urpass: "Permanent free tier (₹0 forever for up to 50 attendees)",
+              urpass: "Introductory offer starting at ₹29/month for 2 months",
               competitor: "Not designed for zero-cost community or college registrations",
               urpassAdvantage: true,
             },
@@ -157,7 +157,7 @@ export default function UrpassVsBookMyShowPage() {
           bullets: [
             "No internet handling fees added to your ticket price",
             "Complete exportable roster of phone numbers and emails",
-            "Permanent free plan available for free events",
+            "Transparent flat pricing with 0% ticket commission",
             "In-browser phone camera scanning with sub-0.3s validation",
           ],
         },
@@ -183,7 +183,7 @@ export default function UrpassVsBookMyShowPage() {
           },
           {
             q: "Can I manage free events on URPASS?",
-            a: "Yes. URPASS has a permanent free tier for up to 50 attendees per event (and up to 100 registrations per month across events) with full QR pass issuance and in-browser camera scanning.",
+            a: "URPASS offers an introductory offer of ₹29/month for your first 2 months, providing full access to digital QR passes, mobile camera check-in, and zero ticket commission.",
           },
         ],
         ctaTitle: "Take back control of your event ticketing",

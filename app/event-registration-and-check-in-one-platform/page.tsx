@@ -85,7 +85,7 @@ export default function Page() {
             badge: "UNIFIED PLATFORM ADVANTAGE",
             title: "Why Duct-Taping 4 Separate Event Tools is Costing You Time and Money",
             paragraphs: ["Many event organizers try to piece together their stack: using Google Forms or Typeform for signups, Zapier to create spreadsheets, an email tool for confirmations, and a separate scanner app for door check-in. This fragmented setup is brittle—Zapier syncs fail, attendee names get misspelled, and tickets get lost in spam folders.","UrPass unites the entire event workflow into a single high-performance engine. When an attendee submits your branded registration page, their record is stored, their digital QR pass is generated and emailed, and their barcode is instantly valid on all active gate scanners. Everything works seamlessly without third-party plugins or integrations."],
-            bullets: ["Saves hours of setup time and eliminates brittle third-party Zapier connections","Reduces event technology software subscription costs by up to 70%","Guarantees 100% data integrity from online signup to door check-in scan","Permanent free plan available for free events and community gatherings"],
+            bullets: ["Saves hours of setup time and eliminates brittle third-party Zapier connections","Reduces event technology software subscription costs by up to 70%","Guarantees 100% data integrity from online signup to door check-in scan","Transparent flat pricing with 0% ticket commission and community gatherings"],
             takeaway: "UrPass gives event organisers a modern, integrated event operating system that eliminates complexity and accelerates execution.",
           },
         ],
@@ -154,11 +154,11 @@ export default function Page() {
           },
           {
                     "q": "Is there a free version of UrPass available?",
-                    "a": "Yes. UrPass provides a permanent free plan with no credit card required, ideal for free events, student clubs, and community meetups."
+                    "a": "Yes. UrPass provides a introductory ₹29/month offer with no credit card required, ideal for free events, student clubs, and community meetups."
           }
 ],
         ctaTitle: "Event Registration and QR Check-In on One Unified Platform",
-        ctaDescription: "Launch your event registration in minutes. Permanent free plan available with no credit card required.",
+        ctaDescription: "Launch your event registration in minutes. Plans starting with a ₹29/month introductory offer.",
       }}
     />
   );

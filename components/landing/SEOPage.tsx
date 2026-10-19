@@ -345,9 +345,9 @@ export default function SEOPage({ config }: { config: SEOPageConfig }) {
         offers: {
           "@type": "AggregateOffer",
           priceCurrency: isUkPage ? "GBP" : "INR",
-          lowPrice: "0",
+          lowPrice: isUkPage ? "15" : "29",
           highPrice: isUkPage ? "79" : "2499",
-          offerCount: "4",
+          offerCount: "3",
         },
       }
     : null;

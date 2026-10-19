@@ -81,10 +81,10 @@ const faqJsonLd = {
         },
         {
           "@type": "Question",
-          name: "Is there a free plan available on URPASS?",
+          name: "How does URPASS pricing work?",
           acceptedAnswer: {
             "@type": "Answer",
-            text: "Yes. The permanent free tier lets you host 2 events/month with up to 100 registrations/month at ₹0 forever with no credit card required. You can also try any paid plan (Starter, Pro, or Business) free for 30 days.",
+            text: "URPASS offers transparent monthly plans starting at ₹29/month for your first 2 months in India, and £15/month in the UK, with 0% platform ticket commissions and direct payment settlements.",
           },
         },
       ],

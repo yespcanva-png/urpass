@@ -55,7 +55,7 @@ export default function GuidePage() {
             "100% paperless with zero printing and badge costs",
             "Instant duplicate detection across all entrance gates",
             "Live attendance visibility throughout the event",
-            "Permanent free tier for up to 100 attendees per month",
+            "Plans starting at ₹29/mo introductory offer with 0% ticket fees",
           ],
         },
         useCases: [
@@ -70,10 +70,10 @@ export default function GuidePage() {
           { q: "What if an attendee still wants to print their QR pass on paper?", a: "URPASS passes are formatted so attendees can print high-contrast paper passes if they prefer, which scan just as fast as mobile screens." },
           { q: "How does a digital QR ticket prevent pass duplication?", a: "Each QR code contains a unique encrypted token that can only be marked 'Checked In' once in the database. Any duplicate attempt shows an immediate red alert." },
           { q: "Can we still use paper wristbands alongside QR check-in?", a: "Yes. Many multi-day festivals scan the digital QR pass at the entrance gate and immediately hand the attendee a cloth wristband." },
-          { q: "Is it expensive to switch to digital QR ticketing?", a: "No. URPASS offers a permanent free tier for up to 100 registrations per month, and paid plans start at just ₹499/month." },
+          { q: "Is it expensive to switch to digital QR ticketing?", a: "No. URPASS offers an introductory offer of ₹29/month for your first 2 months across Starter, Pro, and Business plans with 0% ticket fees." },
         ],
         ctaTitle: "Streamline your event check-in with URPASS",
-        ctaDescription: "Permanent free tier · Zero app downloads · Fast sub-second scanning",
+        ctaDescription: "Plans from ₹29/mo · Zero app downloads · Fast sub-second scanning",
       }}
     />
   );

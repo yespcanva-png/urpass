@@ -73,7 +73,7 @@ export default function Page() {
           { q: "Can student volunteers scan alumni passes on their phones?", a: "Yes. Volunteers open the scanner URL in their mobile browser and scan passes with zero app installations." },
         ],
         ctaTitle: "Elevate your event entry with URPASS",
-        ctaDescription: "Permanent free tier · Zero hardware setup · Fast sub-second scanning",
+        ctaDescription: "Plans from ₹29/mo · Zero hardware setup · Fast sub-second scanning",
       }}
     />
   );

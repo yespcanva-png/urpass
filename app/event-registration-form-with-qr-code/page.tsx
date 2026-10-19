@@ -30,7 +30,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Event Registration Form with QR Code Generation | URPASS",
     description:
-      "Build custom registration forms that issue instant QR passes upon submission. Sub-second entrance scanning and permanent free plan.",
+      "Build custom registration forms that issue instant QR passes upon submission. Sub-second entrance scanning and introductory ₹29/month offer.",
     url: "https://urpass.space/event-registration-form-with-qr-code",
     locale: "en_IN",
     type: "website",
@@ -55,7 +55,7 @@ export default function EventRegistrationFormWithQrCodePage() {
             "Native QR Generation: Instant digital pass created automatically upon form submission or approval",
             "Custom Form Fields: Collect phone numbers, student roll numbers, dietary choices, and file uploads",
             "Entrance Gate Scanning: Point any mobile browser camera at the pass for 0.28s validation",
-            "Permanent Free Tier: ₹0 forever for up to 50 attendees per event with no credit card required",
+            "Transparent Flat Pricing: ₹29/mo intro offer with 0% ticket commission",
           ],
         },
         productProof: {
@@ -109,7 +109,7 @@ export default function EventRegistrationFormWithQrCodePage() {
           description:
             "Generic form builders were not engineered for events. Avoid spreadsheet chaos, email merge limits, and stressful manual door lookups.",
           bullets: [
-            "Permanent free plan available — no credit card needed",
+            "Plans start with ₹29/mo intro offer",
             "In-browser smartphone camera scanning (<0.28s)",
             "Automated Apple & Google Wallet pass delivery",
             "Real-time duplicate ticket blocking across all gates",
@@ -133,7 +133,7 @@ export default function EventRegistrationFormWithQrCodePage() {
           },
           {
             q: "Is this free to use?",
-            a: "Yes! URPASS provides a permanent free plan with ₹0 platform fees for up to 50 attendees per event, including full digital QR pass generation and unlimited gate scanning.",
+            a: "Yes! URPASS provides transparent flat pricing starting with a ₹29/mo intro offer for 2 months, including full digital QR pass generation and unlimited gate scanning.",
           },
           {
             q: "How do I scan the QR codes at the event?",

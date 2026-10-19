@@ -88,7 +88,7 @@ export default function Page() {
             title: "Supporting Hyderabad engineering colleges and hackathon leagues",
             paragraphs: [
               "Colleges in Hyderabad, IIIT-H, and university fests frequently deal with huge student turnouts and tight event budgets. Traditional ticketing platforms take heavy cuts of ticket sales.",
-              "URPASS offers a permanent free tier and flat monthly plans with zero per-ticket commission, making enterprise-grade AI check-in accessible to student organizers.",
+              "URPASS offers transparent flat monthly plans with zero per-ticket commission starting at ₹29/mo intro offer, making enterprise-grade AI check-in accessible to student organizers.",
             ],
             takeaway: "Empower student tech leaders with industry-grade event technology.",
           },

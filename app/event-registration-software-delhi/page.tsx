@@ -45,7 +45,7 @@ export default function LocationPage() {
           longitude: 77.209,
         },
         description: "Organizing a college fest, conference, workshop or corporate event in Delhi NCR? URPASS helps organizers manage online registrations, issue digital QR passes and check attendees in using any phone.",
-        ctaLabel: "Start your Delhi NCR event free",
+        ctaLabel: "Start your Delhi NCR event →",
         features: [
           { icon: MapPin, title: "Built for Delhi NCR Events", desc: "Local INR pricing, Razorpay payment gateway integration, and native support for Delhi NCR colleges, conferences, fests, and corporate summits." },
           { icon: Ticket, title: "UPI & Online Ticketing", desc: "Accept payments via Google Pay, PhonePe, Paytm, net banking, and cards with zero per-ticket platform commission fees." },
@@ -62,7 +62,7 @@ export default function LocationPage() {
             "Local INR pricing with GST compliant invoices",
             "Zero per-ticket percentage cuts on ticket revenue",
             "Instant duplicate pass lockout across all entrance gates",
-            "Permanent free tier available for up to 100 attendees per month"
+            "Plans start with ₹29/mo introductory offer and 0% ticket fee"
           ],
         },
         useCases: [
@@ -79,7 +79,7 @@ export default function LocationPage() {
           { q: "Is URPASS free to start for small Delhi seminars?", a: "Yes. Host 2 events per month with up to 100 registrations per month for ₹0 forever on our free plan." },
         ],
         ctaTitle: "Start your Delhi NCR event with URPASS",
-        ctaDescription: "Free plan available · Razorpay UPI payments · Sub-second mobile scanning",
+        ctaDescription: "Plans from ₹29/mo · Razorpay UPI payments · Sub-second mobile scanning",
       }}
     />
   );

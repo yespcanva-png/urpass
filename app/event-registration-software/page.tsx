@@ -187,10 +187,10 @@ export default function EventRegistrationSoftwarePage() {
               badge: "National",
             },
             {
-              title: "₹0 Free Forever Plan",
+              title: "Transparent Flat Pricing",
               description:
                 "Host up to 2 events per month with 100 registrations completely free with no credit card required.",
-              badge: "Free Tier",
+              badge: "0% Fee",
             },
           ],
         },
@@ -367,7 +367,7 @@ export default function EventRegistrationSoftwarePage() {
           },
           {
             q: "Is there a free plan for non-profit and community events?",
-            a: "Yes. URPASS offers a permanent Free tier allowing up to 2 events per month and 100 registrations per month at ₹0 forever with full QR pass generation and gate scanning features included.",
+            a: "Yes. URPASS offers a introductory ₹29/month offer allowing up to 2 events per month and 100 registrations per month at ₹0 forever with full QR pass generation and gate scanning features included.",
           },
           {
             q: "Can I collect custom questions like College Name or T-Shirt Size?",

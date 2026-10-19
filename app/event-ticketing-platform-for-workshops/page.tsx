@@ -189,7 +189,7 @@ export default function WorkshopTicketingPlatformPage() {
               title: "₹0 Free Community Tier",
               description:
                 "Host free community workshops up to 100 registrations per month at ₹0 forever with full QR passes included.",
-              badge: "Free Tier",
+              badge: "0% Fee",
             },
           ],
         },
@@ -271,7 +271,7 @@ export default function WorkshopTicketingPlatformPage() {
               urpassAdvantage: true,
             },
             {
-              criteria: "Free Forever Tier",
+              criteria: "Transparent Pricing",
               urpass: "2 events/mo, up to 100 registrations/mo completely free",
               competitor: "Strict attendee limits or paid software required",
               urpassAdvantage: true,

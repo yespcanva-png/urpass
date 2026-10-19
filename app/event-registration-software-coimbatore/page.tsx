@@ -45,7 +45,7 @@ export default function LocationPage() {
           longitude: 76.9558,
         },
         description: "Organizing a college fest, conference, workshop or corporate event in Coimbatore? URPASS helps organizers manage online registrations, issue digital QR passes and check attendees in using any phone.",
-        ctaLabel: "Start your Coimbatore event free",
+        ctaLabel: "Start your Coimbatore event →",
         features: [
           { icon: MapPin, title: "Built for Coimbatore Events", desc: "Local INR pricing, Razorpay payment gateway integration, and native support for Coimbatore colleges, conferences, fests, and corporate summits." },
           { icon: Ticket, title: "UPI & Online Ticketing", desc: "Accept payments via Google Pay, PhonePe, Paytm, net banking, and cards with zero per-ticket platform commission fees." },
@@ -62,7 +62,7 @@ export default function LocationPage() {
             "Local INR pricing with GST compliant invoices",
             "Zero per-ticket percentage cuts on ticket revenue",
             "Instant duplicate pass lockout across all entrance gates",
-            "Permanent free tier available for up to 100 attendees per month"
+            "Plans start with ₹29/mo introductory offer and 0% ticket fee"
           ],
         },
         useCases: [
@@ -76,10 +76,10 @@ export default function LocationPage() {
           { q: "Is URPASS suitable for engineering colleges in Coimbatore?", a: "Yes. Leading engineering institutions use URPASS to run technical symposiums, paper presentations, and cultural fests with digital gate verification." },
           { q: "Can trade expos at CODISSIA use URPASS for visitor badges?", a: "Yes. Generate printable and mobile QR badges for industrial buyers and scan attendees at exhibition turnstiles." },
           { q: "Can student volunteers scan passes on their own phones?", a: "Yes. Volunteers open the scanner in their mobile browser with PIN protection — no app downloads required." },
-          { q: "Is URPASS free for department workshops in Coimbatore?", a: "Yes. Events with up to 100 participants can use our permanent free tier at ₹0 forever." },
+          { q: "Is URPASS free for department workshops in Coimbatore?", a: "Yes. Events with up to 100 participants can use our introductory ₹29/month offer at ₹0 forever." },
         ],
         ctaTitle: "Start your Coimbatore event with URPASS",
-        ctaDescription: "Free plan available · Razorpay UPI payments · Sub-second mobile scanning",
+        ctaDescription: "Plans from ₹29/mo · Razorpay UPI payments · Sub-second mobile scanning",
       }}
     />
   );

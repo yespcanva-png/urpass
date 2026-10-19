@@ -53,7 +53,7 @@ export default function ProTrialBrandingGuidePage() {
           title: "Deliver professional, branded passes your attendees love.",
           description: "Whether you're organizing a corporate tech summit, collegiate festival, or VIP gala, custom branding elevates your event's credibility from the moment participants register to the second they scan their QR pass at the entrance.",
           bullets: [
-            "30-day free trial includes full Pro plan entitlements and 2,500 registrations",
+            "Introductory offer includes full Pro plan entitlements and 2,500 registrations",
             "Event-level branding overrides allow different themes per event",
             "Automatic synchronization with Ticket Studio and email confirmations",
             "Zero hidden fees with seamless cancellation anytime",

@@ -133,7 +133,7 @@ export default function Page() {
           }
 ],
         ctaTitle: "Event Registration Software Built for Glasgow Arenas & Conferences",
-        ctaDescription: "Launch your event registration in minutes. Permanent free plan available with no credit card required.",
+        ctaDescription: "Launch your event registration in minutes. Plans starting with a ₹29/month introductory offer.",
         geo: {"region":"Scotland","placename":"Glasgow","position":"55.8642;-4.2518","latitude":55.8642,"longitude":-4.2518,"country":"United Kingdom","countryCode":"GB"},
       }}
     />

@@ -58,7 +58,7 @@ export default function UkEventbriteAlternativePage() {
           },
           {
             criteria: "Free Event Cap",
-            urpass: "100 registrations/month on permanent Free Tier",
+            urpass: "Plans from £15/mo with 0% ticket fee",
             competitor: "Capped at 25 tickets unless paying a recurring plan",
             urpassAdvantage: true,
           },

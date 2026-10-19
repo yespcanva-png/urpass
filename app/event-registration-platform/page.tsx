@@ -119,7 +119,7 @@ export default function Page() {
           { q: "Can I export registrant data for sponsors or internal teams?", a: "Yes. You can export your full attendee roster including custom form answers and check-in timestamps to CSV or Excel at any point." },
         ],
         ctaTitle: "Start collecting registrations today",
-        ctaDescription: "Set up in 5 minutes · Permanent free tier · 30-day free trial on paid plans",
+        ctaDescription: "Set up in 5 minutes · ₹29 introductory offer · 0% ticket commission",
       }}
     />
   );

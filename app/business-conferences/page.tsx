@@ -73,7 +73,7 @@ export default function Page() {
           { q: "Is URPASS secure for proprietary corporate events?", a: "Yes. URPASS utilizes encrypted cloud infrastructure and does not monetize or share attendee databases." },
         ],
         ctaTitle: "Elevate your event entry with URPASS",
-        ctaDescription: "Permanent free tier · Zero hardware setup · Fast sub-second scanning",
+        ctaDescription: "Plans from ₹29/mo · Zero hardware setup · Fast sub-second scanning",
       }}
     />
   );

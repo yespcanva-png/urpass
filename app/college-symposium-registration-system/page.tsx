@@ -158,7 +158,7 @@ export default function Page() {
           }
 ],
         ctaTitle: "College Symposium Registration & Technical Fest QR Entry System",
-        ctaDescription: "Launch your event registration in minutes. Permanent free plan available with no credit card required.",
+        ctaDescription: "Launch your event registration in minutes. Plans starting with a ₹29/month introductory offer.",
       }}
     />
   );

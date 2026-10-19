@@ -1,0 +1,252 @@
+import type { Metadata } from "next";
+import { CreditCard, FileSpreadsheet, GraduationCap, QrCode, ScanLine, Sliders } from "lucide-react";
+import SEOPage from "@/components/landing/SEOPage";
+
+export const metadata: Metadata = {
+  title: "Jayanagar Workshop Registration | UrPass",
+  description: "Register participants for Jayanagar training programs and workshops using custom forms, digital passes and attendance exports.",
+  keywords: ["training workshop registration jayanagar","jayanagar south bangalore training passes","professional workshop ticketing jayanagar","jayanagar seminar check-in","coaching institute registration bangalore"],
+  alternates: {
+    canonical: "https://urpass.space/jayanagar-training-workshop-registration",
+  },
+  openGraph: {
+    title: "Jayanagar Workshop Registration | UrPass",
+    description: "Register participants for Jayanagar training programs and workshops using custom forms, digital passes and attendance exports.",
+    url: "https://urpass.space/jayanagar-training-workshop-registration",
+    locale: "en_IN",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Jayanagar Workshop Registration | UrPass",
+    description: "Register participants for Jayanagar training programs and workshops using custom forms, digital passes and attendance exports.",
+  },
+  other: {
+    "geo.region": "IN-KA",
+    "geo.placename": "Bengaluru, Karnataka, India",
+    "geo.position": "12.9716;77.5946",
+    "ICBM": "12.9716, 77.5946",
+  },
+};
+
+export default function JayanagarTrainingWorkshopRegistrationPage() {
+  return (
+    <SEOPage
+      config={{
+        badge: "JAYANAGAR TRAINING TICKETING",
+        h1: "Training and Workshop Registration in Jayanagar",
+        canonicalUrl: "https://urpass.space/jayanagar-training-workshop-registration",
+        description: "Workshop and professional training registration in Jayanagar, South Bangalore. Simple participant forms, direct UPI payments, and digital QR attendance tracking.",
+        ctaLabel: "Create Your Event",
+        ctaHref: "/signup?from=jayanagar-training-workshop-registration",
+        secondaryCtaLabel: "View Pricing",
+        secondaryCtaHref: "/pricing",
+        ctaTitle: "Power Your Jayanagar Training Sessions",
+        ctaDescription: "Collect course tuition directly via UPI with 0% platform cuts, issue digital attendance passes, and track classroom check-in across Jayanagar blocks 1 to 9.",
+        directAnswer: {
+        "title": "What is Training and Workshop Registration for Jayanagar?",
+        "summary": "Training and workshop registration in Jayanagar provides professional coaching centers, wellness trainers, and corporate seminar institutes across Jayanagar blocks 1 through 9 with custom enrollment forms, instant UPI payment collection, and digital QR attendance tracking. UrPass charges 0% ticketing commission and verifies attendees in sub-0.3s.",
+        "keyPoints": [
+                "Tailored for educational academies, certified trainers, and coaching institutes in South Bangalore",
+                "Direct UPI and card settlement via Razorpay with 0% platform ticket commissions",
+                "Capture student prerequisites, GSTIN numbers, and custom educational background fields",
+                "Digital QR pass delivery on WhatsApp and Apple Wallet with real-time attendance logs"
+        ]
+},
+        whatIs: {
+        "title": "Why Jayanagar Training Institutes Choose UrPass",
+        "definition": "Jayanagar is South Bangalore's premier educational and cultural center, home to prominent professional academies, medical training centers, and financial coaching institutes. UrPass delivers a modern enrollment workflow without expensive platform cuts.",
+        "details": [
+                "0% ticket commission—keep all student tuition with transparent, predictable software pricing",
+                "Automated GST invoice generation delivered directly to corporate participants and sponsors",
+                "Digital QR attendance verification replaces paper sign-in sheets and logs exact arrival times",
+                "One-click CSV exports of student rosters with contact info and attendance timestamps"
+        ]
+},
+        keyFactsTable: {
+        "title": "UrPass vs Course Portals in Jayanagar",
+        "subtitle": "Why educational institutes in Jayanagar switch to UrPass.",
+        "headers": [
+                "Enrollment Feature",
+                "Traditional Course Portals",
+                "UrPass Jayanagar Engine"
+        ],
+        "rows": [
+                {
+                        "col1": "Platform Commission",
+                        "col2": "8% to 15% deducted from course fees",
+                        "col3": "0% ticket commission; plans from ₹29/month"
+                },
+                {
+                        "col1": "Attendance Tracking",
+                        "col2": "Manual paper sign-in sheets prone to proxy signing",
+                        "col3": "Sub-0.3s phone camera QR attendance validation"
+                },
+                {
+                        "col1": "Corporate Invoicing",
+                        "col2": "Manual invoicing taking days of admin work",
+                        "col3": "Automated GST tax receipts generated instantly"
+                },
+                {
+                        "col1": "Payment Settlement",
+                        "col2": "Payouts delayed 14 to 30 days after class",
+                        "col3": "Direct settlement into your Razorpay account"
+                }
+        ]
+},
+        deepDiveSections: [
+        {
+                "badge": "ATTENDANCE INTEGRITY",
+                "title": "Digital QR Verification Replaces Paper Classroom Rosters",
+                "paragraphs": [
+                        "Professional certification workshops and seminars in Jayanagar require accurate attendance records to issue completion certificates and comply with accredited educational standards.",
+                        "UrPass provides tamper-proof digital attendance logging. Instructors scan each student's digital QR pass on mobile cameras at the classroom door. The system records an exact timestamp, eliminating proxy attendance."
+                ],
+                "bullets": [
+                        "Scan passes in under 300 milliseconds on standard smartphone cameras",
+                        "Eliminate manual paper attendance sheets and administrative data entry",
+                        "Automated attendance status sync across multi-session weekend workshops",
+                        "Export verified digital attendance logs to CSV with one click"
+                ],
+                "takeaway": "Digital QR scanning ensures verifiable classroom attendance and eliminates proxy signing."
+        },
+        {
+                "badge": "0% COMMISSION",
+                "title": "Keep 100% of Tuition Fees with Direct UPI Settlement",
+                "paragraphs": [
+                        "Educational academies and independent trainers in Jayanagar frequently lose 8% to 15% of course fees when using third-party ticketing and booking aggregators.",
+                        "UrPass charges 0% commission on course fees. Link your verified Razorpay account, and payments from Google Pay, PhonePe, Paytm, and net banking settle straight into your academy's bank account."
+                ],
+                "bullets": [
+                        "Retain 100% of student enrollment revenue on every workshop batch",
+                        "Automated GST invoice generation matching corporate expense requirements",
+                        "Support student payment options: UPI, debit cards, credit cards, and net banking",
+                        "Transparent software pricing with introductory plans starting at ₹29/month"
+                ],
+                "takeaway": "Direct payment routing maximizes academy revenue and streamlines tax invoicing."
+        }
+],
+        featuresTitle: "Core Event Capabilities",
+        featuresSubtitle: "Purpose-built for Bengaluru event organizers seeking speed and zero ticket fees.",
+        features: [
+          {
+            icon: GraduationCap,
+            title: "Training Tiering",
+            desc: "Configure Student, Professional, and Corporate Group tiers with custom pricing.",
+          },
+          {
+            icon: CreditCard,
+            title: "0% Commission via Razorpay",
+            desc: "Receive course fees directly into your account with zero platform percentage deductions.",
+          },
+          {
+            icon: QrCode,
+            title: "WhatsApp & Wallet Passes",
+            desc: "Deliver personalized QR tickets directly to student WhatsApp chats and Apple Wallet.",
+          },
+          {
+            icon: ScanLine,
+            title: "Sub-0.3s Attendance Scan",
+            desc: "Scan and log student attendance instantly using volunteer phone cameras on mobile browsers.",
+          },
+          {
+            icon: Sliders,
+            title: "Custom Trainee Fields",
+            desc: "Capture qualification background, company name, GSTIN numbers, and prerequisites.",
+          },
+          {
+            icon: FileSpreadsheet,
+            title: "Instant Attendance Logs",
+            desc: "Export verified student attendance records with exact timestamps to CSV anytime.",
+          }
+        ],
+        steps: [
+        {
+                "n": "01",
+                "title": "Set Up Training Page",
+                "desc": "Define workshop curriculum, batch dates, seat caps, and student prerequisite questions."
+        },
+        {
+                "n": "02",
+                "title": "Connect Razorpay",
+                "desc": "Link your verified Razorpay merchant account to collect course tuition directly via UPI."
+        },
+        {
+                "n": "03",
+                "title": "Promote Enrollment Portal",
+                "desc": "Share your high-converting registration link with students and professional networks."
+        },
+        {
+                "n": "04",
+                "title": "Issue Digital Passes",
+                "desc": "Enrolled participants receive personalized digital QR passes via WhatsApp and email."
+        },
+        {
+                "n": "05",
+                "title": "Scan at Classroom Door",
+                "desc": "Instructors validate passes in <0.3s with smartphone cameras to log verified attendance."
+        }
+],
+        whoShouldUse: {
+        "title": "Who Uses UrPass for Jayanagar Training Sessions?",
+        "subtitle": "Educators and training academies across South Bangalore.",
+        "personas": [
+                {
+                        "badge": "ACADEMIES",
+                        "title": "Professional Certification Centers",
+                        "desc": "Host financial modeling workshops, project management courses, and legal seminars."
+                },
+                {
+                        "badge": "TECH EDUCATORS",
+                        "title": "Data Science & Coding Studios",
+                        "desc": "Run weekend programming bootcamps, Python masterclasses, and cloud training."
+                },
+                {
+                        "badge": "WELLNESS",
+                        "title": "Yoga & Wellness Instructors",
+                        "desc": "Manage yoga teacher training courses, wellness retreats, and mindfulness workshops."
+                },
+                {
+                        "badge": "TEST PREP",
+                        "title": "Exam & Career Coaching Institutes",
+                        "desc": "Coordinate mock test sessions, career counseling workshops, and parent seminars."
+                }
+        ]
+},
+        howQrCheckInWorks: {
+        "title": "How Student Check-In Works at Jayanagar Academies",
+        "subtitle": "Fast, accurate attendance tracking that eliminates paper sign-in sheets.",
+        "description": "Students display their digital pass on their smartphone screen or Apple Wallet. The instructor or front-desk coordinator points their mobile camera at the pass. UrPass verifies enrollment in under 300 milliseconds, displays the student's name, and logs their attendance timestamp.",
+        "points": [
+                "Eliminates messy paper sign-in sheets and manual roster ticking.",
+                "Displays real-time validation with participant name, tier, and session batch.",
+                "Prevents unverified guests from dropping into limited-capacity masterclasses.",
+                "Allows instant manual search by student email or phone number for quick backup entry."
+        ]
+},
+        faqs: [
+        {
+                "q": "How does UrPass help training institutes in Jayanagar?",
+                "a": "UrPass simplifies course enrolment by providing professional registration pages with custom qualification questionnaires, instant UPI payments, and automated QR pass generation for seamless classroom entry."
+        },
+        {
+                "q": "Can we collect GST invoices for registered trainees?",
+                "a": "Yes. UrPass form fields allow you to collect company names and GST numbers, generating automated receipts for corporate and business participants."
+        },
+        {
+                "q": "How is attendance tracked during multi-day workshops?",
+                "a": "Trainers or front desk staff scan each trainee’s QR code with a smartphone camera at the start of each session, logging real-time digital attendance records."
+        },
+        {
+                "q": "Is there a limit on how many students can register?",
+                "a": "No. UrPass supports both small masterclasses and large 500+ seat academic conventions without per-ticket commission fees."
+        },
+        {
+                "q": "Can attendees save their training pass to Apple Wallet?",
+                "a": "Yes. UrPass digital passes feature native Apple Wallet (.pkpass) support. Attendees can add their pass with one tap and retrieve it from their iPhone lockscreen upon arriving at the venue."
+        }
+],
+      }}
+    />
+  );
+}

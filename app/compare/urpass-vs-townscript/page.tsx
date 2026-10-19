@@ -48,7 +48,7 @@ export default function UrpassVsTownscriptPage() {
         h1: "URPASS vs Townscript: Feature & Pricing Comparison",
         description:
           "Townscript is a legacy Indian ticketing aggregator that takes percentage cuts plus flat convenience fees on every attendee transaction. URPASS offers modern, flat-rate event software with 0% ticketing commission, instant sub-0.3s mobile browser check-in, and direct T+2 bank deposits.",
-        ctaLabel: "Start free event on URPASS",
+        ctaLabel: "Create Your Event →",
         directAnswer: {
           title: "URPASS vs Townscript in 30 Seconds",
           summary:

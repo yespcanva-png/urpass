@@ -73,7 +73,7 @@ export default function ChennaiPage() {
           { q: "Can Chennai colleges use URPASS for event registrations?", a: "Yes. URPASS is engineered for college departments, student clubs, and tech symposium organizers across Chennai and Tamil Nadu for registration, QR passes, and gate check-in." },
           { q: "Can I use URPASS for a Chennai corporate event?", a: "Yes. Corporate events, product launches, and company offsites in Chennai can be managed on URPASS with branded passes on the Pro plan." },
           { q: "Does URPASS support Tamil language events?", a: "URPASS currently operates in English. Event names and descriptions can be in any language." },
-          { q: "Is URPASS free for Chennai events?", a: "Yes. The free plan is available for all Chennai organisers — 2 events/month, 100 registrations/month, full QR check-in, no credit card required. Paid plans start at ₹499/month with a 30-day free trial." },
+          { q: "How does URPASS pricing work for event organizers?", a: "URPASS offers an introductory offer of ₹29/month for the first 2 months across Starter, Pro, and Business plans with 0% platform ticket fees and instant Razorpay UPI payouts." },
           { q: "Can I use Razorpay for Chennai event payments?", a: "Yes. Razorpay integration supports all payment methods popular in Chennai — UPI, credit/debit card, and net banking." },
           { q: "What types of Chennai events can run on URPASS?", a: "College workshops, hackathons, cultural fests, tech conferences, corporate events, and community meetups across Chennai run smoothly on URPASS." },
         ],

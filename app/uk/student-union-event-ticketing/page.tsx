@@ -154,7 +154,7 @@ export default function UkStudentUnionEventTicketingPage() {
 
         ctaTitle: "Upgrade your society event ticketing today",
         ctaDescription:
-          "Start your 30-day free trial on URPASS. 0% ticket commission, sub-second scanning, and student-friendly pricing.",
+          "Get started on URPASS today with transparent GBP plans. 0% ticket commission, sub-second scanning, and student-friendly pricing.",
       }}
     />
   );

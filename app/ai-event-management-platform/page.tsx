@@ -80,14 +80,14 @@ export default function Page() {
             "Conforms to Anthropic's open Model Context Protocol (MCP) standard",
             "Works with Claude Desktop, Cursor IDE, and custom autonomous agents",
             "Zero per-ticket percentage cuts with flat software pricing",
-            "Permanent Free Tier available for community events up to 100 registrations",
+            "Transparent pricing with ₹29/mo introductory offer",
           ],
         },
         faqs: [
           { q: "What is Model Context Protocol (MCP)?", a: "Model Context Protocol is an open standard developed by Anthropic that allows AI assistants (like Claude) to securely connect to external tools, databases, and APIs. URPASS uses MCP to let AI manage events directly." },
           { q: "How do I install the URPASS MCP server?", a: "You can run it locally with `npx -y urpass-mcp` or connect cloud agents to the HTTPS JSON-RPC endpoint at `https://urpass.space/api/mcp` with your API key." },
           { q: "Can an AI agent approve attendee applications for me?", a: "Yes. Using the `approve_attendee` tool, an AI agent can evaluate registration form responses against your criteria and approve qualified attendees, automatically dispatching their QR pass." },
-          { q: "Does using MCP cost extra on URPASS?", a: "No. The MCP server is available across all URPASS tiers, including the permanent Free Tier." },
+          { q: "Does using MCP cost extra on URPASS?", a: "No. The MCP server is available across all URPASS tiers." },
         ],
         relatedLinks: [
           { title: "Model Context Protocol Hub", href: "/mcp-event-management", category: "Product" },

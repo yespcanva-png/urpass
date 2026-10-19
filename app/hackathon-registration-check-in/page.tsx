@@ -127,7 +127,7 @@ export default function Page() {
           }
 ],
         ctaTitle: "Hackathon Registration & QR Check-In Software Built for Dev Events",
-        ctaDescription: "Launch your event registration in minutes. Permanent free plan available with no credit card required.",
+        ctaDescription: "Launch your event registration in minutes. Plans starting with a ₹29/month introductory offer.",
       }}
     />
   );

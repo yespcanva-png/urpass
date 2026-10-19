@@ -48,7 +48,7 @@ export default function UrpassVsLumaPage() {
         h1: "URPASS vs Luma: Feature & Pricing Comparison",
         description:
           "Luma (lu.ma) has built a slick interface for community RSVPs, but takes up to a 5% platform fee on paid tickets and lacks localized payment rails like native Indian UPI. URPASS delivers zero ticketing commission, sub-0.3s browser gate scanning, Ticket Studio multi-ratio passes, and direct payouts.",
-        ctaLabel: "Create free event on URPASS",
+        ctaLabel: "Create Your Event →",
         directAnswer: {
           title: "URPASS vs Luma (lu.ma) in 30 Seconds",
           summary:

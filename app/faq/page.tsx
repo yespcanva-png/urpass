@@ -118,13 +118,13 @@ const FAQ_DATA: FAQItem[] = [
   // 4. Payments, Pricing & Free Trial
   {
     category: "Payments & Pricing",
-    q: "Can I use URPASS completely free?",
-    a: "Yes. The permanent Free Tier allows you to host 2 events per month with up to 100 registrations per month at ₹0 forever with no credit card required.",
+    q: "How does URPASS pricing work?",
+    a: "URPASS offers an introductory offer of ₹29/month for the first 2 months across Starter, Pro, and Business plans with 0% platform ticket commissions. After the introductory period, standard transparent monthly pricing applies (Starter ₹499/mo, Pro ₹999/mo, Business ₹2,499/mo + GST). In the UK, plans start at £15/month.",
   },
   {
     category: "Payments & Pricing",
-    q: "How does the 30-day free trial on paid plans work?",
-    a: "You can test Starter (₹499/mo), Pro (₹999/mo), or Business (₹2,499/mo) completely free for 30 days with no credit card or AutoPay mandate required. You get instant access to all features, and your account simply reverts to the Free plan after 30 days unless you choose to upgrade.",
+    q: "Can I cancel my subscription at any time?",
+    a: "Yes. There are no lock-in contracts. You can cancel or pause your subscription directly from your billing settings at any time without penalties.",
   },
   {
     category: "Payments & Pricing",

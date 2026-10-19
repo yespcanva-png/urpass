@@ -54,7 +54,7 @@ export default function ComparisonPage() {
             "Automated digital QR passes for every registered attendee",
             "Sub-0.3s door check-in using standard smartphone cameras",
             "Instant duplicate entry lockout across all venue doors",
-            "Permanent free tier for up to 100 registrations per month",
+            "Flat monthly pricing with 0% platform ticket commission",
           ],
         },
         useCases: [
@@ -69,10 +69,10 @@ export default function ComparisonPage() {
           { q: "Can I import an existing Google Sheet into URPASS?", a: "Yes. You can export your Google Sheet to CSV and import it into URPASS to generate unique digital QR passes for all attendees immediately." },
           { q: "Why shouldn't I use Google Forms add-ons to send QR codes?", a: "Third-party add-ons rely on Google Apps Script quotas, frequently break under volume, and provide no synchronized scanner to prevent duplicate entry at the door." },
           { q: "Is URPASS as easy to use as Google Forms?", a: "Yes. Creating an event and form takes under 3 minutes with zero technical or coding knowledge required." },
-          { q: "Does URPASS charge money for small events?", a: "No. You can host up to 2 events per month with 100 registrations per month completely free on our permanent free tier." },
+          { q: "How does URPASS pricing work?", a: "URPASS offers an introductory offer of ₹29/month for your first 2 months across all subscription tiers, with zero platform ticket commissions and full access to QR pass issuance and check-in tools." },
         ],
         ctaTitle: "Experience the URPASS difference today",
-        ctaDescription: "Permanent free tier · Zero ticket commission · Sub-second door check-in",
+        ctaDescription: "Plans start at ₹29/mo · Zero ticket commission · Sub-second door check-in",
       }}
     />
   );

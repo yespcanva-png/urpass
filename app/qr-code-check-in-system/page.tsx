@@ -14,7 +14,7 @@ import SEOPage from "@/components/landing/SEOPage";
 export const metadata: Metadata = {
   title: "QR Code Check-In System for Events | Fast Smartphone Scanning",
   description:
-    "Sub-second QR code check-in system for events. Scan digital passes with any smartphone camera in 0.28 seconds. Real-time multi-gate sync, duplicate lockout, and permanent free tier.",
+    "Sub-second QR code check-in system for events. Scan digital passes with any smartphone camera in 0.28 seconds. Real-time multi-gate sync, duplicate lockout, and transparent flat pricing.",
   keywords: [
     "qr code check in system",
     "qr code event check in",
@@ -54,7 +54,7 @@ export default function QrCodeCheckInSystemPage() {
             "Scan Speed: Validates digital QR passes in under 0.28 seconds",
             "Zero Hardware Rental: Runs on iOS and Android phones via standard web browsers",
             "Multi-Gate Synchronization: Multiple entrance doors stay synchronized via real-time cloud updates",
-            "Permanent Free Tier: ₹0 forever for up to 50 attendees per event with no credit card required",
+            "Transparent Flat Pricing: ₹29/mo intro offer with 0% ticket commission",
           ],
         },
         productProof: {
@@ -108,7 +108,7 @@ export default function QrCodeCheckInSystemPage() {
           description:
             "Manual check-in rosters create massive wait lines and security risks. URPASS delivers professional, enterprise-grade gate access control using the smartphones your team already owns.",
           bullets: [
-            "Permanent free plan available with full scanning capabilities",
+            "Plans start with ₹29/mo introductory offer",
             "In-browser scanner runs on any mobile device (<0.28s)",
             "Audible confirmation chime and haptic vibration feedback",
             "Instant CSV attendance export with exact entry timestamps",
@@ -136,7 +136,7 @@ export default function QrCodeCheckInSystemPage() {
           },
           {
             q: "Is there a free tier for QR check-in on URPASS?",
-            a: "Yes! URPASS provides a permanent free plan with ₹0 platform fees for up to 50 attendees per event, including full QR pass generation and unlimited gate scanning.",
+            a: "Yes! URPASS provides transparent flat pricing starting with a ₹29/mo intro offer for 2 months, including full QR pass generation and unlimited gate scanning.",
           },
         ],
         ctaTitle: "Speed up your event entrance with URPASS",

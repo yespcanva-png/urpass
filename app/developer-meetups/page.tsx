@@ -34,7 +34,7 @@ export default function Page() {
         ctaLabel: "Host developer meetup free",
         features: [
           { icon: Users, title: "Developer Profile Fields", desc: "Collect GitHub usernames, technical roles, company/college, and tech stack preferences on custom forms." },
-          { icon: Monitor, title: "Permanent Free Tier", desc: "Host 2 community meetups per month with up to 100 developers per month for ₹0 forever." },
+          { icon: Monitor, title: "Transparent Flat Pricing", desc: "Host community meetups with transparent flat pricing and zero platform ticket commissions." },
           { icon: QrCode, title: "Instant QR Pass Delivery", desc: "Developers receive sleek mobile passes accessible in any browser with zero app installation." },
           { icon: ScanLine, title: "Sub-Second Door Entry", desc: "Volunteers scan passes in under 0.3s at office reception desks, getting developers to talks faster." },
           { icon: Zap, title: "Accurate Swag & Pizza Headcount", desc: "Track exact real-time attendance numbers to accurately order food, drinks, and community swag." },
@@ -53,7 +53,7 @@ export default function Page() {
           description: "Developers appreciate clean, ad-free tools that don't force app downloads or slow down entry. URPASS provides an ultra-fast, modern registration and check-in experience.",
           bullets: [
             "Zero app downloads required for organizers or attendees",
-            "₹0 free forever plan for community-run meetups",
+            "₹29/mo introductory offer for community-run meetups",
             "Accurate headcount data for food, drinks, and venue seating",
             "Built-in post-event survey tools for talk reviews",
           ],
@@ -67,13 +67,13 @@ export default function Page() {
           "Web3 Builder Gatherings",
         ],
         faqs: [
-          { q: "Is URPASS really free for tech community meetups?", a: "Yes. Our permanent free tier allows you to host 2 meetups per month with up to 100 attendees per month at zero cost." },
+          { q: "Is URPASS really free for tech community meetups?", a: "Yes. Our introductory ₹29/month offer allows you to host 2 meetups per month with up to 100 attendees per month at zero cost." },
           { q: "Can we collect GitHub handles and tech interests on the form?", a: "Yes. You can add custom questions to collect developer profiles and topic interests." },
           { q: "Do developers need to create an URPASS account to RSVP?", a: "No. Developers RSVP via a public link and receive their pass without creating an account." },
           { q: "Can office security use the scanner at the corporate building lobby?", a: "Yes. Security guards or volunteers open the scanner URL in their mobile browser to verify guest passes." },
         ],
         ctaTitle: "Elevate your event entry with URPASS",
-        ctaDescription: "Permanent free tier · Zero hardware setup · Fast sub-second scanning",
+        ctaDescription: "Plans from ₹29/mo · Zero hardware setup · Fast sub-second scanning",
       }}
     />
   );

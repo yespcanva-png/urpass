@@ -1,0 +1,252 @@
+import type { Metadata } from "next";
+import { BarChart3, QrCode, ScanLine, ShieldCheck, Smartphone, Zap } from "lucide-react";
+import SEOPage from "@/components/landing/SEOPage";
+
+export const metadata: Metadata = {
+  title: "Digital Event Passes Bengaluru | UrPass",
+  description: "Generate branded digital event passes for Bengaluru conferences, meetups and workshops with unique QR codes and mobile access.",
+  keywords: ["bengaluru digital event pass generator","digital event passes bangalore","qr code pass generator bengaluru","apple wallet event pass bangalore","mobile event pass creator karnataka"],
+  alternates: {
+    canonical: "https://urpass.space/bengaluru-digital-event-pass-generator",
+  },
+  openGraph: {
+    title: "Digital Event Passes Bengaluru | UrPass",
+    description: "Generate branded digital event passes for Bengaluru conferences, meetups and workshops with unique QR codes and mobile access.",
+    url: "https://urpass.space/bengaluru-digital-event-pass-generator",
+    locale: "en_IN",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Digital Event Passes Bengaluru | UrPass",
+    description: "Generate branded digital event passes for Bengaluru conferences, meetups and workshops with unique QR codes and mobile access.",
+  },
+  other: {
+    "geo.region": "IN-KA",
+    "geo.placename": "Bengaluru, Karnataka, India",
+    "geo.position": "12.9716;77.5946",
+    "ICBM": "12.9716, 77.5946",
+  },
+};
+
+export default function BengaluruDigitalEventPassGeneratorPage() {
+  return (
+    <SEOPage
+      config={{
+        badge: "DIGITAL EVENT PASSES",
+        h1: "Digital QR Event Pass Generator for Bengaluru",
+        canonicalUrl: "https://urpass.space/bengaluru-digital-event-pass-generator",
+        description: "Generate branded digital event passes for Bengaluru conferences, meetups and workshops with unique QR codes and mobile access.",
+        ctaLabel: "Create Your Event",
+        ctaHref: "/signup?from=bengaluru-digital-event-pass-generator",
+        secondaryCtaLabel: "View Pricing",
+        secondaryCtaHref: "/pricing",
+        ctaTitle: "Create Branded Digital Event Passes in Minutes",
+        ctaDescription: "Replace plastic lanyards and paper printouts with sustainable digital passes featuring your brand colors, sponsor logos, and Apple Wallet support.",
+        directAnswer: {
+        "title": "What is a Digital QR Event Pass Generator for Bengaluru?",
+        "summary": "A digital QR event pass generator creates branded electronic credentials with embedded dynamic QR codes for Bengaluru events. Passes feature customizable visual themes, attendee details, role badges (VIP, Speaker, Delegate), Apple Wallet compatibility, and sub-0.3-second entrance verification.",
+        "keyPoints": [
+                "12 customizable badge and pass design templates in UrPass Ticket Studio",
+                "Native Apple Wallet (.pkpass) support for lockscreen access and proximity alerts",
+                "Cryptographically signed dynamic QR codes that block screenshot sharing and fraud",
+                "Sub-0.3 second camera check-in on volunteer smartphones with zero hardware rentals"
+        ]
+},
+        whatIs: {
+        "title": "Why Bengaluru Event Organizers Transition to Digital Event Passes",
+        "definition": "Physical badge printing and plastic lanyards cost thousands of rupees per event and create mountains of environmental waste. UrPass Ticket Studio enables organizers to design and distribute dynamic digital credentials that live right on attendees' smartphones.",
+        "details": [
+                "Delivered instantly via WhatsApp, Apple Wallet, and responsive web links",
+                "Eliminates on-site badge printing equipment rentals and ribbon jams",
+                "Features role-based visual badging for VIPs, speakers, delegates, media, and crew",
+                "Backed by database-level atomic locking to prevent duplicate door entries"
+        ]
+},
+        keyFactsTable: {
+        "title": "Digital QR Passes vs Traditional Printed Badges in Bangalore",
+        "subtitle": "Why sustainable digital event passes are replacing expensive physical printouts.",
+        "headers": [
+                "Operational Factor",
+                "Traditional Printed Lanyards & Badges",
+                "UrPass Digital QR Passes"
+        ],
+        "rows": [
+                {
+                        "col1": "Production Cost",
+                        "col2": "₹150 - ₹350 per physical badge, lanyard, and plastic sleeve",
+                        "col3": "₹0 per pass; included in your flat software subscription"
+                },
+                {
+                        "col1": "Environmental Waste",
+                        "col2": "Hundreds of plastic sleeves discarded after every Bangalore summit",
+                        "col3": "100% paperless and zero carbon footprint"
+                },
+                {
+                        "col1": "Last-Minute Changes",
+                        "col2": "Impossible; requires costly rush reprinting or ugly label stickers",
+                        "col3": "Instant cloud updates reflected on attendee mobile passes in real time"
+                },
+                {
+                        "col1": "Gate Check-In Speed",
+                        "col2": "Slow manual searches through badge trays in the lobby",
+                        "col3": "Sub-0.3s camera scan directly from attendee smartphone screen"
+                }
+        ]
+},
+        deepDiveSections: [
+        {
+                "badge": "VISUAL CUSTOMIZATION",
+                "title": "Customize Pass Themes with UrPass Ticket Studio",
+                "paragraphs": [
+                        "In Bengaluru's tech and startup community, your event pass represents your brand standard. A generic black-and-white barcode sent via plain text email looks unpolished and reduces attendee anticipation.",
+                        "UrPass Ticket Studio provides 12 customizable visual layouts designed for tech conferences, hackathons, and corporate summits. Organizers can upload high-resolution event banners, integrate sponsor logos, configure hex brand palettes, and display attendee credentials such as company affiliation and seating tier."
+                ],
+                "bullets": [
+                        "12 customizable badge and pass design templates for diverse event aesthetics",
+                        "Upload high-resolution event logos, sponsor banners, and venue maps",
+                        "Role-based color banners to quickly differentiate VIPs, Speakers, and General attendees",
+                        "Custom data fields displaying table assignments, track selections, or meal preferences"
+                ],
+                "takeaway": "Premium visual badging elevates your event aesthetic and delights attendees."
+        },
+        {
+                "badge": "APPLE WALLET",
+                "title": "Apple Wallet (.pkpass) Support for Effortless Venue Access",
+                "paragraphs": [
+                        "Attendees love the convenience of adding their event ticket to their native phone wallet. With Apple Wallet integration, attendees tap 'Add to Apple Wallet' directly from their confirmation email or pass web page.",
+                        "The pass resides natively on their iPhone lockscreen. As attendees approach the venue, geofenced notifications surface the pass automatically, allowing them to breeze through security checkpoints without searching their email inbox."
+                ],
+                "bullets": [
+                        "One-tap 'Add to Apple Wallet' integration for iPhone users",
+                        "Location-based lockscreen push notifications when approaching the venue",
+                        "High-contrast QR rendering guarantees instant reading even on dimmed screens",
+                        "Accessible offline without requiring an active cellular connection at crowded venues"
+                ],
+                "takeaway": "Native mobile wallet integration provides frictionless lockscreen access on event morning."
+        }
+],
+        featuresTitle: "Core Ticketing & Entry Capabilities",
+        featuresSubtitle: "Engineered for Bengaluru event organizers seeking speed and zero ticket commissions.",
+        features: [
+          {
+            icon: QrCode,
+            title: "12 Designer Pass Templates",
+            desc: "Choose from modern, corporate, minimalist, and festival pass layouts in Ticket Studio.",
+          },
+          {
+            icon: Smartphone,
+            title: "Apple Wallet Compatibility",
+            desc: "One-tap addition to Apple Wallet with lockscreen venue proximity alerts.",
+          },
+          {
+            icon: ShieldCheck,
+            title: "Anti-Counterfeit QR Tokens",
+            desc: "Cryptographically signed tokens prevent ticket tampering and URL manipulation.",
+          },
+          {
+            icon: ScanLine,
+            title: "Sub-0.3s Gate Validation",
+            desc: "Scan and verify passes at venue doors in milliseconds using smartphone cameras.",
+          },
+          {
+            icon: Zap,
+            title: "Instant Multi-Channel Delivery",
+            desc: "Dispatch passes automatically via WhatsApp, transactional email, and SMS.",
+          },
+          {
+            icon: BarChart3,
+            title: "Live Check-In Tracking",
+            desc: "Track pass admissions and monitor remaining expected attendees in real time.",
+          }
+        ],
+        steps: [
+        {
+                "n": "01",
+                "title": "Select Pass Template",
+                "desc": "Choose your pass layout and theme in UrPass Ticket Studio."
+        },
+        {
+                "n": "02",
+                "title": "Add Event Branding",
+                "desc": "Upload your event logo, sponsor graphics, and set your brand color palette."
+        },
+        {
+                "n": "03",
+                "title": "Connect Registration Form",
+                "desc": "Map attendee names, ticket tiers, and custom fields to the pass display."
+        },
+        {
+                "n": "04",
+                "title": "Automated Pass Delivery",
+                "desc": "Attendees receive their branded digital passes via WhatsApp and email."
+        },
+        {
+                "n": "05",
+                "title": "Scan at the Entrance",
+                "desc": "Door staff scan passes with smartphone cameras for instant green entry."
+        }
+],
+        whoShouldUse: {
+        "title": "Who Needs Digital Event Passes in Bengaluru?",
+        "subtitle": "Modern event organizers seeking paperless credentials and fast entry.",
+        "personas": [
+                {
+                        "badge": "CONFERENCES",
+                        "title": "B2B Summits & Conventions",
+                        "desc": "Issue executive digital badges with company affiliations, VIP lounge access, and sponsor branding."
+                },
+                {
+                        "badge": "STARTUPS",
+                        "title": "Founder Meetups & Demo Days",
+                        "desc": "Provide attendees with stylish mobile passes that live in their phone wallets and scan in <0.3s."
+                },
+                {
+                        "badge": "WORKSHOPS",
+                        "title": "Training Seminars & Bootcamps",
+                        "desc": "Deliver personalized participant credentials with session room numbers and timetable details."
+                },
+                {
+                        "badge": "COMMUNITIES",
+                        "title": "Private Member Clubs & Galas",
+                        "desc": "Issue elegant, secure digital invitations with strict non-transferable admission rules."
+                }
+        ]
+},
+        howQrCheckInWorks: {
+        "title": "How Digital Pass Scanning Works at Venue Doors",
+        "subtitle": "High-speed entrance validation that eliminates queue friction.",
+        "description": "Attendees present their digital pass on their phone screen or Apple Wallet. Gate volunteers point their smartphone camera at the pass. UrPass validates the cryptographic token in under 300 milliseconds, flashes a green approval screen, and sounds an audible confirmation chime.",
+        "points": [
+                "Scanners run directly in mobile Safari and Chrome with zero app downloads.",
+                "Atomic row locking catches duplicate passes across all venue doors immediately.",
+                "Audible chimes and haptic vibrations verify admission in noisy environments.",
+                "Door volunteers see attendee name, role badge, and entrance confirmation instantly."
+        ]
+},
+        faqs: [
+        {
+                "q": "Can attendees save digital passes to their Apple Wallet?",
+                "a": "Yes. UrPass digital passes feature native Apple Wallet (.pkpass) support. Attendees can tap 'Add to Apple Wallet' to save their pass directly to their iPhone for instant lockscreen access."
+        },
+        {
+                "q": "Can I customize the colors and logo on the digital pass?",
+                "a": "Yes. Using UrPass Ticket Studio, you can choose from 12 distinct pass templates, upload your event logo and sponsor banners, and configure your exact brand color scheme."
+        },
+        {
+                "q": "What prevents someone from sharing a pass screenshot with someone else?",
+                "a": "UrPass uses cloud-native atomic database row locks. The instant a pass is scanned at any venue entrance, its status is marked as checked in. Any subsequent scan attempt displays an amber duplicate alert showing the exact time and door of the original check-in."
+        },
+        {
+                "q": "Can attendees print out their digital pass if they prefer paper?",
+                "a": "Yes. While designed for mobile screens, UrPass digital passes are fully printable and format cleanly on standard paper if an attendee prefers a physical copy."
+        },
+        {
+                "q": "How are digital passes sent to attendees in Bangalore?",
+                "a": "Passes are dispatched automatically upon registration or ticket purchase via email and WhatsApp (if enabled), providing attendees with multiple easy ways to access their credentials."
+        }
+],
+      }}
+    />
+  );
+}

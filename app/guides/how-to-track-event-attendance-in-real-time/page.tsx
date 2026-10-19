@@ -73,7 +73,7 @@ export default function GuidePage() {
           { q: "Can we export attendance data while the event is still running?", a: "Yes. You can export a CSV snapshot of checked-in attendees at any time during the event." },
         ],
         ctaTitle: "Streamline your event check-in with URPASS",
-        ctaDescription: "Permanent free tier · Zero app downloads · Fast sub-second scanning",
+        ctaDescription: "Plans from ₹29/mo · Zero app downloads · Fast sub-second scanning",
       }}
     />
   );

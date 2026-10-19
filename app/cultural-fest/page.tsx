@@ -73,7 +73,7 @@ export default function Page() {
           { q: "Can student coordinators scan tickets without accessing financial settings?", a: "Yes. Organizers share PIN-protected scanner links that restrict access strictly to entrance camera scanning." },
         ],
         ctaTitle: "Elevate your event entry with URPASS",
-        ctaDescription: "Permanent free tier · Zero hardware setup · Fast sub-second scanning",
+        ctaDescription: "Plans from ₹29/mo · Zero hardware setup · Fast sub-second scanning",
       }}
     />
   );

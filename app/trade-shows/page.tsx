@@ -73,7 +73,7 @@ export default function Page() {
           { q: "Can we export attendee lists for post-show marketing?", a: "Yes. Download complete delegate contact details and timestamps directly to CSV or Excel." },
         ],
         ctaTitle: "Elevate your event entry with URPASS",
-        ctaDescription: "Permanent free tier · Zero hardware setup · Fast sub-second scanning",
+        ctaDescription: "Plans from ₹29/mo · Zero hardware setup · Fast sub-second scanning",
       }}
     />
   );

@@ -133,7 +133,7 @@ export default function Page() {
           }
 ],
         ctaTitle: "Event Registration Software Built for Manchester Events & Academics",
-        ctaDescription: "Launch your event registration in minutes. Permanent free plan available with no credit card required.",
+        ctaDescription: "Launch your event registration in minutes. Plans starting with a ₹29/month introductory offer.",
         geo: {"region":"North West","placename":"Manchester","position":"53.4808;-2.2426","latitude":53.4808,"longitude":-2.2426,"country":"United Kingdom","countryCode":"GB"},
       }}
     />

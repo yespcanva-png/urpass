@@ -45,7 +45,7 @@ export default function LocationPage() {
           longitude: 80.2707,
         },
         description: "Organizing a college fest, conference, workshop or corporate event in Chennai? URPASS helps organizers manage online registrations, issue digital QR passes and check attendees in using any phone.",
-        ctaLabel: "Start your Chennai event free",
+        ctaLabel: "Start your Chennai event →",
         features: [
           { icon: MapPin, title: "Built for Chennai Events", desc: "Local INR pricing, Razorpay payment gateway integration, and native support for Chennai colleges, conferences, fests, and corporate summits." },
           { icon: Ticket, title: "UPI & Online Ticketing", desc: "Accept payments via Google Pay, PhonePe, Paytm, net banking, and cards with zero per-ticket platform commission fees." },
@@ -62,7 +62,7 @@ export default function LocationPage() {
             "Local INR pricing with GST compliant invoices",
             "Zero per-ticket percentage cuts on ticket revenue",
             "Instant duplicate pass lockout across all entrance gates",
-            "Permanent free tier available for up to 100 attendees per month"
+            "Plans start with ₹29/mo introductory offer and 0% ticket fee"
           ],
         },
         useCases: [
@@ -79,7 +79,7 @@ export default function LocationPage() {
           { q: "Can organizers accept UPI ticket payments in Chennai?", a: "Yes. Built-in Razorpay integration enables instant ticket sales through GPay, PhonePe, Paytm, and net banking." },
         ],
         ctaTitle: "Start your Chennai event with URPASS",
-        ctaDescription: "Free plan available · Razorpay UPI payments · Sub-second mobile scanning",
+        ctaDescription: "Plans from ₹29/mo · Razorpay UPI payments · Sub-second mobile scanning",
       }}
     />
   );

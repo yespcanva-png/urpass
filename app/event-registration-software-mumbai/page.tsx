@@ -45,7 +45,7 @@ export default function LocationPage() {
           longitude: 72.8777,
         },
         description: "Organizing a college fest, conference, workshop or corporate event in Mumbai? URPASS helps organizers manage online registrations, issue digital QR passes and check attendees in using any phone.",
-        ctaLabel: "Start your Mumbai event free",
+        ctaLabel: "Start your Mumbai event →",
         features: [
           { icon: MapPin, title: "Built for Mumbai Events", desc: "Local INR pricing, Razorpay payment gateway integration, and native support for Mumbai colleges, conferences, fests, and corporate summits." },
           { icon: Ticket, title: "UPI & Online Ticketing", desc: "Accept payments via Google Pay, PhonePe, Paytm, net banking, and cards with zero per-ticket platform commission fees." },
@@ -62,7 +62,7 @@ export default function LocationPage() {
             "Local INR pricing with GST compliant invoices",
             "Zero per-ticket percentage cuts on ticket revenue",
             "Instant duplicate pass lockout across all entrance gates",
-            "Permanent free tier available for up to 100 attendees per month"
+            "Plans start with ₹29/mo introductory offer and 0% ticket fee"
           ],
         },
         useCases: [
@@ -79,7 +79,7 @@ export default function LocationPage() {
           { q: "Can Mumbai college fests use URPASS for star night crowds?", a: "Yes. High-speed mobile scanning handles thousands of students at campus gates without delays." },
         ],
         ctaTitle: "Start your Mumbai event with URPASS",
-        ctaDescription: "Free plan available · Razorpay UPI payments · Sub-second mobile scanning",
+        ctaDescription: "Plans from ₹29/mo · Razorpay UPI payments · Sub-second mobile scanning",
       }}
     />
   );

@@ -127,7 +127,7 @@ export default function Page() {
           }
 ],
         ctaTitle: "QR Check-In Software Built for Professional Event Companies",
-        ctaDescription: "Launch your event registration in minutes. Permanent free plan available with no credit card required.",
+        ctaDescription: "Launch your event registration in minutes. Plans starting with a ₹29/month introductory offer.",
       }}
     />
   );

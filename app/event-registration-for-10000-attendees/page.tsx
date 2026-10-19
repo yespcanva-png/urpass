@@ -158,7 +158,7 @@ export default function Page() {
           }
 ],
         ctaTitle: "Large-Scale Event Registration & High-Volume QR Check-In for 10,000+ Attendees",
-        ctaDescription: "Launch your event registration in minutes. Permanent free plan available with no credit card required.",
+        ctaDescription: "Launch your event registration in minutes. Plans starting with a ₹29/month introductory offer.",
       }}
     />
   );

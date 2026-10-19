@@ -73,7 +73,7 @@ export default function GuidePage() {
           { q: "Can I edit form questions after publishing the link?", a: "Yes. You can update questions, change seat quotas, and modify form fields anytime in your organizer dashboard." },
         ],
         ctaTitle: "Streamline your event check-in with URPASS",
-        ctaDescription: "Permanent free tier · Zero app downloads · Fast sub-second scanning",
+        ctaDescription: "Plans from ₹29/mo · Zero app downloads · Fast sub-second scanning",
       }}
     />
   );

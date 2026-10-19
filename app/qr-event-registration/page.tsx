@@ -51,7 +51,7 @@ export default function QrEventRegistrationPage() {
           { q: "How does the QR pass work for attendees?", a: "Attendees receive a link to their digital pass. They open it on their phone and show the QR code at the entrance. No app needed." },
           { q: "Can I share the registration link on social media?", a: "Yes. The registration link is a public URL you can share anywhere — WhatsApp, Instagram, email, LinkedIn, or your college notice board." },
           { q: "How quickly do attendees get their QR pass?", a: "With manual approval, passes are issued as soon as you approve the application. With auto-approval, passes are issued within seconds of registration." },
-          { q: "Is there a limit on registrations?", a: "Free plan supports up to 100 registrations per month across 2 events. Starter supports 500 registrations/month, Pro supports 2,500 registrations/month, and Business supports 10,000 registrations/month with a 30-day free trial." },
+          { q: "Is there a limit on registrations?", a: "Starter supports 500 registrations/month, Pro supports 2,500 registrations/month, and Business supports 10,000 registrations/month with an introductory offer of ₹29/month for the first 2 months." },
         ],
         ctaTitle: "Set up QR registration for your next event",
         ctaDescription: "Public registration link · Instant QR passes · Live check-in",

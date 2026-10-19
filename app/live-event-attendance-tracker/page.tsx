@@ -80,7 +80,7 @@ export default function Page() {
             "Instant answers to venue capacity and attendee turnout questions",
             "Eliminates end-of-night manual tallying and misplaced sign-in sheets",
             "Tracks VIP and general attendee arrival ratios in real time",
-            "Permanent Free Tier available for events up to 100 registrations",
+            "Transparent flat pricing with ₹29/mo intro offer",
           ],
         },
         faqs: [

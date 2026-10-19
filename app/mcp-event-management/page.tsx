@@ -83,7 +83,7 @@ export default function Page() {
         ],
         faqs: [
           { q: "What AI clients support the URPASS MCP server?", a: "Claude Desktop, Cursor, Antigravity, Zed, and any custom agent built with LangChain, LlamaIndex, or the official Anthropic MCP SDK." },
-          { q: "Do I need a paid plan to use MCP event management?", a: "MCP support is included on the URPASS Pro and Business plans, and can be tested during the 30-day free trial." },
+          { q: "Do I need a paid plan to use MCP event management?", a: "MCP support is included on the URPASS Pro and Business plans, and is available on all subscription plans." },
           { q: "Can I run the MCP server on a remote server?", a: "Yes. In addition to local stdio (npx urpass-mcp), URPASS hosts a remote JSON-RPC 2.0 endpoint at https://urpass.space/api/mcp." },
         ],
         relatedLinks: [

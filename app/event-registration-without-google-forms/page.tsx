@@ -85,7 +85,7 @@ export default function Page() {
             badge: "PRODUCTIVITY COMPARISON",
             title: "How Switching from Google Forms to UrPass Saves 20+ Hours per Event",
             paragraphs: ["Event organisers using Google Forms spend countless hours setting up third-party mail merge add-ons, designing manual PDF tickets, sending emails one by one, and printing out 20-page paper spreadsheets for entrance desks. On event day, finding names on paper lists takes 45 seconds per person, causing long lobby queues.","UrPass replaces this broken workflow with an all-in-one platform. You publish a beautiful mobile registration page in 2 minutes. When attendees sign up, UrPass handles pass generation, email delivery, and Apple/Google Wallet integration automatically. At the door, volunteers scan QR codes in 0.28 seconds, admitting hundreds of attendees in minutes."],
-            bullets: ["Saves 10 to 20 hours of manual spreadsheet work and ticket mail merging per event","Reduces door check-in time from 45 seconds per person to under 3 seconds total","Eliminates overselling with transactional real-time inventory locking","Permanent free plan available—providing professional power with zero cost"],
+            bullets: ["Saves 10 to 20 hours of manual spreadsheet work and ticket mail merging per event","Reduces door check-in time from 45 seconds per person to under 3 seconds total","Eliminates overselling with transactional real-time inventory locking","Transparent flat plan available—providing professional power with zero cost"],
             takeaway: "UrPass turns amateur, spreadsheet-based event registration into a seamless, automated, and professional operation.",
           },
         ],
@@ -134,7 +134,7 @@ export default function Page() {
           },
           {
                     "q": "Do I need to pay to replace Google Forms with UrPass?",
-                    "a": "No. UrPass offers a permanent free tier with no credit card required, allowing you to host free community events with professional QR check-in at zero cost."
+                    "a": "No. UrPass offers a introductory ₹29/month offer with no credit card required, allowing you to host free community events with professional QR check-in at zero cost."
           },
           {
                     "q": "Can I collect custom questions like in Google Forms?",
@@ -158,7 +158,7 @@ export default function Page() {
           }
 ],
         ctaTitle: "Replace Google Forms for Event Registration with Automated QR Passes",
-        ctaDescription: "Launch your event registration in minutes. Permanent free plan available with no credit card required.",
+        ctaDescription: "Launch your event registration in minutes. Plans starting with a ₹29/month introductory offer.",
       }}
     />
   );

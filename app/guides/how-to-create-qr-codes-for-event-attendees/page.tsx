@@ -54,7 +54,7 @@ export default function GuidePage() {
           bullets: [
             "Zero manual copy-pasting into image generators",
             "Instant token validation against live cloud database",
-            "Permanent free tier for up to 100 registrations/month",
+            "Flat subscription with 0% ticket commission",
             "Single-use security ensures passes cannot be reused",
           ],
         },
@@ -70,10 +70,10 @@ export default function GuidePage() {
           { q: "Can I generate QR codes for an existing attendee list in Excel?", a: "Yes. You can import an existing CSV file of attendees into URPASS, and the platform will automatically generate unique QR passes for everyone." },
           { q: "Can attendees print their QR code on paper?", a: "Yes. URPASS passes are optimized for both mobile screens and standard printable paper badges." },
           { q: "What data is stored inside the attendee QR code?", a: "The QR code contains a secure, encrypted token that refers back to the attendee's database profile, preventing sensitive personal data exposure." },
-          { q: "Is it free to generate QR codes for attendees?", a: "Yes. URPASS includes full QR code generation and mobile scanning on its permanent free plan for up to 100 attendees per month." },
+          { q: "How does URPASS pricing work for QR passes?", a: "URPASS includes full QR code generation and mobile scanning across all plans, starting with an introductory offer of ₹29/month for your first 2 months." },
         ],
         ctaTitle: "Streamline your event check-in with URPASS",
-        ctaDescription: "Permanent free tier · Zero app downloads · Fast sub-second scanning",
+        ctaDescription: "Plans from ₹29/mo · Zero app downloads · Fast sub-second scanning",
       }}
     />
   );

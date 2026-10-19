@@ -79,7 +79,7 @@ export default function Page() {
           bullets: [
             "Check in hundreds of students per minute across North, South, and VIP gates",
             "Zero equipment rental fees — works on existing volunteer smartphones",
-            "Permanent Free Tier for small student clubs and departmental meetups",
+            "Transparent pricing starting with ₹29/mo introductory offer",
             "Full attendance audit trails with exportable CSV rosters for college administration",
           ],
         },

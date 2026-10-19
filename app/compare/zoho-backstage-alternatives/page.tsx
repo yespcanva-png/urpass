@@ -31,7 +31,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Best Zoho Backstage Alternatives in 2026 | URPASS",
     description:
-      "Looking for lightweight Zoho Backstage alternatives? Compare modern event platforms with 2-minute setup, permanent free tiers, and sub-0.3s gate check-in.",
+      "Looking for lightweight Zoho Backstage alternatives? Compare modern event platforms with 2-minute setup, transparent flat pricings, and sub-0.3s gate check-in.",
     url: "https://urpass.space/compare/zoho-backstage-alternatives",
     locale: "en_IN",
     type: "article",
@@ -51,9 +51,9 @@ export default function ZohoBackstageAlternativesPage() {
         directAnswer: {
           title: "Top Zoho Backstage Alternatives at a Glance",
           summary:
-            "If you need an agile event system that launches in 2 minutes with zero configuration bloat, a permanent free tier, and sub-0.28s in-browser mobile scanning, URPASS is the top choice. For massive hybrid conventions with virtual booths, platforms like Hopin or vFairs are alternatives. For community-led workshops and colleges, URPASS provides maximum simplicity and 0% ticketing commission.",
+            "If you need an agile event system that launches in 2 minutes with zero configuration bloat, a transparent flat pricing, and sub-0.28s in-browser mobile scanning, URPASS is the top choice. For massive hybrid conventions with virtual booths, platforms like Hopin or vFairs are alternatives. For community-led workshops and colleges, URPASS provides maximum simplicity and 0% ticketing commission.",
           keyPoints: [
-            "Best for Colleges, Workshops & Fast Check-In: URPASS (2-min setup, permanent free tier, browser QR scanner)",
+            "Best for Colleges, Workshops & Fast Check-In: URPASS (2-min setup, transparent flat pricing, browser QR scanner)",
             "Best for Multi-Day Hybrid Conferences: Hopin / RingCentral Events",
             "Best for Corporate Trade Shows: Cvent or Bizzabo",
             "Best for Open Community Meetups: URPASS or Luma",
@@ -75,9 +75,9 @@ export default function ZohoBackstageAlternativesPage() {
               urpassAdvantage: true,
             },
             {
-              criteria: "Permanent Free Plan",
+              criteria: "Introductory Plan Offer",
               urpass: "Yes (₹0 forever for up to 50 attendees per event)",
-              competitor: "14-day trial only; no permanent free plan",
+              competitor: "14-day trial only; no introductory offer",
               urpassAdvantage: true,
             },
             {
@@ -114,7 +114,7 @@ export default function ZohoBackstageAlternativesPage() {
           },
           {
             icon: Gift,
-            title: "Permanent Free Tier",
+            title: "Introductory Offer",
             desc: "Organize student club fests, hackathons, and small workshops completely free of charge without time-limited trials.",
           },
           {
@@ -152,7 +152,7 @@ export default function ZohoBackstageAlternativesPage() {
           bullets: [
             "Launch events in 2 minutes instead of days",
             "Zero CRM account requirements or software lock-in",
-            "Permanent free plan available for free events",
+            "Transparent flat pricing with 0% ticket commission",
             "Blazing-fast in-browser smartphone camera scanning",
           ],
         },
@@ -166,11 +166,11 @@ export default function ZohoBackstageAlternativesPage() {
         faqs: [
           {
             q: "Why choose URPASS over Zoho Backstage?",
-            a: "URPASS is vastly faster to configure, requires zero Zoho account setup, includes a permanent free tier with no credit card required, and features an in-browser scanner operating in under 0.28 seconds.",
+            a: "URPASS is vastly faster to configure, requires zero Zoho account setup, includes a transparent flat pricing with no credit card required, and features an in-browser scanner operating in under 0.28 seconds.",
           },
           {
             q: "Can I use URPASS for free events?",
-            a: "Yes! URPASS provides a permanent free plan allowing you to host up to 50 attendees per event (and up to 100 registrations per month across events) at ₹0 forever.",
+            a: "Yes! URPASS provides a introductory offer allowing you to host up to 50 attendees per event (and up to 100 registrations per month across events) at ₹0 forever.",
           },
           {
             q: "Do my volunteers need to install an app to scan tickets?",
@@ -182,7 +182,7 @@ export default function ZohoBackstageAlternativesPage() {
           },
         ],
         ctaTitle: "Simplify your event management with URPASS",
-        ctaDescription: "Permanent free plan · 2-minute setup · Sub-0.3s gate scanning · Zero enterprise bloat",
+        ctaDescription: "Plans start at ₹29/mo · 2-minute setup · Sub-0.3s gate scanning · Zero ticket commission",
       }}
     />
   );

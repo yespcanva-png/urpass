@@ -48,13 +48,13 @@ export default function AttendeeManagementPage() {
         faqs: [
           { q: "What does attendee management mean in URPASS?", a: "Attendee management in URPASS covers the full lifecycle: collecting applications, reviewing and approving them, issuing digital passes, and tracking check-ins. All from one dashboard." },
           { q: "Can I manually add attendees without a registration form?", a: "Yes. You can manually add attendees directly from the attendee management page, bypassing the public registration form." },
-          { q: "How many attendees can I manage?", a: "The free plan supports up to 100 registrations per month across 2 events. Starter supports 500 registrations/month, Pro supports 2,500 registrations/month, and Business supports 10,000 registrations/month with a 30-day free trial." },
+          { q: "How many attendees can I manage?", a: "Starter supports 500 registrations/month, Pro supports 2,500 registrations/month, and Business supports 10,000 registrations/month with an introductory offer of ₹29/month for the first 2 months." },
           { q: "Can I export my attendee list?", a: "Yes. Starter, Pro, and Business plans allow CSV export of your full attendee list with all details and statuses." },
           { q: "Can multiple organisers manage the same event?", a: "Yes. Pro plan supports up to 5 organizer seats and Business supports up to 15 seats with role-based access." },
           { q: "What happens to my attendee data after the event?", a: "Your attendee data is stored securely and accessible from your dashboard. You can export it at any time." },
         ],
         ctaTitle: "Put your attendee list under control",
-        ctaDescription: "Full lifecycle management · Digital passes · QR check-in · Free to start",
+        ctaDescription: "Full lifecycle management · Digital passes · QR check-in · Plans from ₹29/mo",
       }}
     />
   );

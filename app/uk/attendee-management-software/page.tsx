@@ -154,7 +154,7 @@ export default function UkAttendeeManagementSoftwarePage() {
 
         ctaTitle: "Master your event attendee management",
         ctaDescription:
-          "Start your 30-day free trial on URPASS today. Complete roster visibility, real-time sync, and strict UK GDPR compliance.",
+          "Get started on URPASS today with transparent GBP plans. Complete roster visibility, real-time sync, and strict UK GDPR compliance.",
       }}
     />
   );

@@ -55,7 +55,7 @@ export default function Page() {
             "Sub-0.3s entrance scanning eliminates hall bottlenecks",
             "Timestamped attendance records for academic compliance",
             "Runs on student volunteers' phones with zero app downloads",
-            "Permanent free tier for up to 100 students per month",
+            "Plans start at ₹29/mo intro offer with 0% ticket fee",
           ],
         },
         useCases: [
@@ -73,7 +73,7 @@ export default function Page() {
           { q: "Can student council volunteers scan passes at the doors?", a: "Yes. Organizers share a PIN-protected scanner link so volunteers can scan using their own phone cameras." },
         ],
         ctaTitle: "Elevate your event entry with URPASS",
-        ctaDescription: "Permanent free tier · Zero hardware setup · Fast sub-second scanning",
+        ctaDescription: "Plans from ₹29/mo · Zero hardware setup · Fast sub-second scanning",
       }}
     />
   );
