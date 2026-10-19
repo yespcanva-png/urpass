@@ -84,7 +84,7 @@ export interface SendBulkWhatsAppResult {
 async function verifyOrganizerAccess(supabase: Awaited<ReturnType<typeof createClient>>, eventId: string, userId: string) {
   const { data: event } = await supabase
     .from("events")
-    .select("id, name, event_date, venue, status, organizer_id, organization_id, whatsapp_enabled")
+    .select("id, name, event_date, start_time, venue, status, organizer_id, organization_id, whatsapp_enabled")
     .eq("id", eventId)
     .single();
 
@@ -126,7 +126,7 @@ export async function getBulkWhatsAppAudience(eventId: string): Promise<BulkWhat
   // 1. Fetch all attendees with their passes
   const { data: attendees, error: attError } = await admin
     .from("attendees")
-    .select("id, name, email, phone, pass_type, pass_status, application_status, passes(id, pass_token, status)")
+    .select("id, name, email, phone, pass_type, pass_status, application_status, whatsapp_consent, passes(id, pass_token, status)")
     .eq("event_id", eventId)
     .order("created_at", { ascending: true });
 
@@ -409,6 +409,7 @@ export async function sendBulkWhatsAppInvitations({
       eventId,
       eventName: event.name,
       eventDate: event.event_date,
+      eventTime: (event as { start_time?: string | null }).start_time || undefined,
       venue: event.venue,
       ticketId,
       passToken,
@@ -420,6 +421,9 @@ export async function sendBulkWhatsAppInvitations({
       ticketUrl,
       version: `bulk_${campaignId}`,
       customMessage: messageText,
+      templateName: (process.env.WHATSAPP_TEMPLATE_NAME || "urpass_ticket").trim(),
+      templateLanguage: (process.env.WHATSAPP_TEMPLATE_LANG || "en_US").trim(),
+      whatsappConsent: true,
     };
 
     try {
@@ -434,6 +438,20 @@ export async function sendBulkWhatsAppInvitations({
           status: "SENT",
           messageId: dispatchRes.messageId,
         });
+
+        // Persist opt-in consent on attendee record for lifecycle messaging
+        if (admin) {
+          try {
+            await admin
+              .from("attendees")
+              .update({
+                whatsapp_consent: true,
+                whatsapp_consent_at: new Date().toISOString(),
+                whatsapp_consent_source: "organizer_invitation_campaign",
+              })
+              .eq("id", att.id);
+          } catch {}
+        }
       } else {
         failedCount++;
         results.push({

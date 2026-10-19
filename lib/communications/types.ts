@@ -48,6 +48,7 @@ export interface TicketDeliveryPayload {
   eventId: string;
   eventName: string;
   eventDate?: string | null;
+  eventTime?: string | null;
   venue?: string | null;
   ticketId: string; // e.g. URP-84721
   passToken: string; // Hex string for URL: /pass/[passToken]

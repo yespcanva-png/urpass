@@ -1096,7 +1096,7 @@ export async function POST(
         .update({
           pass_status: "checked_in",
           venue_presence_state: "inside",
-          last_scanned_at: admittedAt,
+          last_gate_scanned_at: admittedAt,
           updated_at: admittedAt,
         })
         .eq("id", passData.attendee_id);

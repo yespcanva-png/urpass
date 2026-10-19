@@ -228,7 +228,7 @@ export default function AttendeeTable({
       const [attRes, passRes] = await Promise.all([
         supabase
           .from("attendees")
-          .select("id, name, email, phone, pass_type, application_status, pass_status, custom_responses, ticket_type_id, created_at, last_scanned_at, venue_presence_state")
+          .select("id, name, email, phone, pass_type, application_status, pass_status, custom_responses, ticket_type_id, created_at, last_gate_scanned_at, venue_presence_state")
           .eq("event_id", eventId)
           .order("created_at", { ascending: false }),
         supabase
@@ -238,7 +238,11 @@ export default function AttendeeTable({
       ]);
 
       if (attRes.data) {
-        setAttendees(attRes.data as Attendee[]);
+        const mappedAttendees = (attRes.data as any[]).map((a) => ({
+          ...a,
+          last_scanned_at: a.last_gate_scanned_at || null,
+        }));
+        setAttendees(mappedAttendees as Attendee[]);
       }
       if (passRes.data) {
         setPassTokens((prev) => {

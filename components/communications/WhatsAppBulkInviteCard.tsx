@@ -248,17 +248,24 @@ export default function WhatsAppBulkInviteCard({
         <div className={`p-4 border-b text-xs flex items-center justify-between gap-3 ${
           lastResult.failedCount === 0 ? "bg-emerald-50 border-emerald-200 text-emerald-900" : "bg-amber-50 border-amber-200 text-amber-900"
         }`}>
-          <div className="flex items-center gap-2">
-            {lastResult.failedCount === 0 ? (
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-            ) : (
-              <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-2">
+              {lastResult.failedCount === 0 ? (
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              ) : (
+                <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+              )}
+              <span>
+                <strong>Campaign Completed:</strong> Dispatched {lastResult.sentCount} WhatsApp invitation{lastResult.sentCount === 1 ? "" : "s"}.
+                {lastResult.failedCount > 0 && ` ${lastResult.failedCount} failed.`}
+                {lastResult.skippedCount > 0 && ` ${lastResult.skippedCount} skipped.`}
+              </span>
+            </div>
+            {lastResult.failedCount > 0 && (
+              <div className="text-[11px] text-amber-800 font-mono ml-6">
+                Reason: {lastResult.results.find((r) => r.status === "FAILED")?.error || "Delivery rejected by provider"}
+              </div>
             )}
-            <span>
-              <strong>Campaign Completed:</strong> Dispatched {lastResult.sentCount} WhatsApp invitation{lastResult.sentCount === 1 ? "" : "s"}.
-              {lastResult.failedCount > 0 && ` ${lastResult.failedCount} failed.`}
-              {lastResult.skippedCount > 0 && ` ${lastResult.skippedCount} skipped.`}
-            </span>
           </div>
           {lastResult.failedCount > 0 && (
             <button
@@ -283,27 +290,27 @@ export default function WhatsAppBulkInviteCard({
         >
           <span className="flex items-center gap-2">
             <Smartphone className="w-3.5 h-3.5 text-emerald-600" />
-            Preview WhatsApp Template Message
+            Preview WhatsApp Template Message (urpass_ticket)
           </span>
           {showPreview ? <ChevronUp className="w-4 h-4 text-neutral-400" /> : <ChevronDown className="w-4 h-4 text-neutral-400" />}
         </button>
 
         {showPreview && (
           <div className="mt-3 p-4 rounded-xl border border-neutral-200 bg-emerald-50/30 text-xs space-y-2 max-w-lg font-sans">
-            <p className="text-[11px] uppercase tracking-wider font-bold text-emerald-700">Live WhatsApp Template Preview</p>
+            <p className="text-[11px] uppercase tracking-wider font-bold text-emerald-700">Approved Meta WhatsApp Template (urpass_ticket)</p>
             <div className="p-3.5 rounded-lg bg-white border border-neutral-200/80 shadow-2xs text-neutral-800 leading-relaxed space-y-2 whitespace-pre-line font-mono text-[11px]">
-              {`Hello Dr. Priya Sharma,
+              {`Hi Dr. Priya Sharma,
 
-You are invited to the ${eventName}!
+Your registration for *${eventName}* has been confirmed!
 
-Your event pass: https://urpass.space/pass/URP-847219
+Date: ${eventDate ? new Date(eventDate).toLocaleDateString("en-IN", { dateStyle: "medium" }) : "Upcoming"}
+Time: Confirmed on Pass
+Venue: ${venue || "Confirmed on Pass"}
 
-Please present your QR pass at the entrance.
-
-We look forward to welcoming you!`}
+[View Ticket] -> https://urpass.space/pass/URP-847219`}
             </div>
             <p className="text-[10px] text-neutral-400">
-              * Guest name, ticket ID, and personalized pass token URL are dynamically generated per recipient.
+              * Official Meta WhatsApp Cloud API approved template with dynamic button link to mobile pass.
             </p>
           </div>
         )}

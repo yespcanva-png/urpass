@@ -47,14 +47,17 @@ export default async function AttendeesPage({ params }: Props) {
   const [attendeesResult, plan] = await Promise.all([
     supabase
       .from("attendees")
-      .select("id, name, email, phone, pass_type, application_status, pass_status, custom_responses, ticket_type_id, created_at, last_scanned_at, venue_presence_state")
+      .select("id, name, email, phone, pass_type, application_status, pass_status, custom_responses, ticket_type_id, created_at, last_gate_scanned_at, venue_presence_state")
       .eq("event_id", canonicalEventId)
       .order("created_at", { ascending: false }),
     getUserPlan(supabase, user.id),
   ]);
 
-  let attendees = attendeesResult.data;
-  if (attendeesResult.error) {
+  let attendees = attendeesResult.data?.map((a: any) => ({
+    ...a,
+    last_scanned_at: a.last_gate_scanned_at || null,
+  })) ?? null;
+  if (!attendees && attendeesResult.error) {
     const { data: fallbackAttendees } = await supabase
       .from("attendees")
       .select("id, name, email, phone, pass_type, application_status, pass_status, custom_responses, ticket_type_id, created_at")

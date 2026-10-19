@@ -357,7 +357,7 @@ export class CommunicationService {
             attendee_id: payload.attendeeId,
             channel: "WHATSAPP",
             destination: normalizedPhone,
-            template_name: payload.templateName || process.env.WHATSAPP_TEMPLATE_NAME || "ticket_confirmation",
+            template_name: payload.templateName || process.env.WHATSAPP_TEMPLATE_NAME || "urpass_ticket",
             provider: "whatsapp_cloud",
             status: "SENDING",
             attempt_count: 1,
