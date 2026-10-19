@@ -50,6 +50,78 @@ const selfServiceMemoryCache = new Map<string, any>();
 const managedRequestsMemoryCache = new Map<string, WhatsAppManagedServiceRequest[]>();
 
 /**
+ * Resolves a potentially virtual orgId (e.g. personal_${userId}) to a real organization UUID in Postgres.
+ */
+export async function resolveOrgId(orgId: string): Promise<string> {
+  if (!orgId || !orgId.startsWith("personal_")) return orgId;
+  const userId = orgId.replace("personal_", "");
+  const admin = getAdminClient();
+  if (!admin) return orgId;
+
+  try {
+    // 1. Check organization_members
+    const { data: member } = await admin
+      .from("organization_members")
+      .select("organization_id")
+      .eq("user_id", userId)
+      .eq("status", "active")
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+
+    if (member?.organization_id) return member.organization_id;
+
+    // 2. Check organizations created_by
+    const { data: createdOrg } = await admin
+      .from("organizations")
+      .select("id")
+      .eq("created_by", userId)
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+
+    if (createdOrg?.id) return createdOrg.id;
+
+    // 3. Create default organization if none exists
+    const { data: profile } = await admin
+      .from("profiles")
+      .select("full_name, email")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    const name = profile?.full_name?.trim() || "User";
+    const baseSlug = name.toLowerCase().replace(/[^a-z0-9]/g, "") || "org";
+    const slug = `${baseSlug}-${userId.slice(0, 8)}`;
+
+    const { data: newOrg } = await admin
+      .from("organizations")
+      .insert({
+        name: `${name}'s Organization`,
+        slug,
+        contact_email: profile?.email || null,
+        created_by: userId,
+        brand_color: "#6D28D9",
+      })
+      .select("id")
+      .maybeSingle();
+
+    if (newOrg?.id) {
+      await admin.from("organization_members").insert({
+        organization_id: newOrg.id,
+        user_id: userId,
+        invited_email: profile?.email || "",
+        role: "owner",
+        status: "active",
+      });
+      return newOrg.id;
+    }
+  } catch (err) {
+    console.warn("[resolveOrgId] Notice:", err);
+  }
+  return orgId;
+}
+
+/**
  * Retrieves communication settings for an organization
  */
 export async function getOrganizationCommunicationSettings(
@@ -57,18 +129,20 @@ export async function getOrganizationCommunicationSettings(
 ): Promise<OrganizationCommunicationSettings> {
   if (!orgId) return DEFAULT_ORG_COMMUNICATION_SETTINGS("default");
 
+  const resolvedOrgId = await resolveOrgId(orgId);
+
   const admin = getAdminClient();
   if (admin) {
     try {
       const { data, error } = await admin
         .from("organization_communication_settings")
         .select("*")
-        .eq("organization_id", orgId)
+        .eq("organization_id", resolvedOrgId)
         .maybeSingle();
 
       if (!error && data) {
-        return {
-          organization_id: data.organization_id,
+        const result: OrganizationCommunicationSettings = {
+          organization_id: orgId,
           enable_communication: data.enable_communication !== false,
           default_channel: data.default_channel || "email",
           email_communication: data.email_communication !== false,
@@ -82,6 +156,11 @@ export async function getOrganizationCommunicationSettings(
           created_at: data.created_at,
           updated_at: data.updated_at,
         };
+        orgSettingsMemoryCache.set(orgId, result);
+        if (resolvedOrgId !== orgId) {
+          orgSettingsMemoryCache.set(resolvedOrgId, { ...result, organization_id: resolvedOrgId });
+        }
+        return result;
       }
     } catch (err) {
       if (!isTableMissingError(err)) {
@@ -93,6 +172,9 @@ export async function getOrganizationCommunicationSettings(
   // Check memory cache fallback
   if (orgSettingsMemoryCache.has(orgId)) {
     return orgSettingsMemoryCache.get(orgId)!;
+  }
+  if (resolvedOrgId !== orgId && orgSettingsMemoryCache.has(resolvedOrgId)) {
+    return orgSettingsMemoryCache.get(resolvedOrgId)!;
   }
 
   return DEFAULT_ORG_COMMUNICATION_SETTINGS(orgId);
@@ -107,10 +189,12 @@ export async function updateOrganizationCommunicationSettings(
 ): Promise<{ success: boolean; data?: OrganizationCommunicationSettings; error?: string }> {
   if (!orgId) return { success: false, error: "Missing organization ID" };
 
-  const current = await getOrganizationCommunicationSettings(orgId);
+  const resolvedOrgId = await resolveOrgId(orgId);
+  const current = await getOrganizationCommunicationSettings(resolvedOrgId);
   const merged: OrganizationCommunicationSettings = {
     ...current,
     ...updates,
+    organization_id: resolvedOrgId,
     automation_rules: {
       ...current.automation_rules,
       ...(updates.automation_rules || {}),
@@ -125,7 +209,7 @@ export async function updateOrganizationCommunicationSettings(
         .from("organization_communication_settings")
         .upsert(
           {
-            organization_id: orgId,
+            organization_id: resolvedOrgId,
             enable_communication: merged.enable_communication,
             default_channel: merged.default_channel,
             email_communication: merged.email_communication,
@@ -141,7 +225,8 @@ export async function updateOrganizationCommunicationSettings(
         .maybeSingle();
 
       if (!error && data) {
-        orgSettingsMemoryCache.set(orgId, merged);
+        orgSettingsMemoryCache.set(orgId, { ...merged, organization_id: orgId });
+        orgSettingsMemoryCache.set(resolvedOrgId, merged);
         return { success: true, data: merged };
       }
     } catch (err) {
@@ -152,7 +237,8 @@ export async function updateOrganizationCommunicationSettings(
   }
 
   // Fallback update memory cache
-  orgSettingsMemoryCache.set(orgId, merged);
+  orgSettingsMemoryCache.set(orgId, { ...merged, organization_id: orgId });
+  orgSettingsMemoryCache.set(resolvedOrgId, merged);
   return { success: true, data: merged };
 }
 
@@ -337,12 +423,13 @@ export async function createManagedWhatsAppServiceRequest(
     return { success: false, error: "Please fill in all required contact and use case fields." };
   }
 
+  const resolvedOrgId = await resolveOrgId(orgId);
   const id = `req_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
   const now = new Date().toISOString();
 
   const newReq: WhatsAppManagedServiceRequest = {
     id,
-    organization_id: orgId,
+    organization_id: resolvedOrgId,
     requested_by: userId,
     status: "pending_review",
     estimated_monthly_volume: input.estimated_monthly_volume,
@@ -359,7 +446,7 @@ export async function createManagedWhatsAppServiceRequest(
       const { data, error } = await admin
         .from("whatsapp_managed_service_requests")
         .insert({
-          organization_id: orgId,
+          organization_id: resolvedOrgId,
           requested_by: userId,
           status: "pending_review",
           estimated_monthly_volume: input.estimated_monthly_volume,
@@ -377,11 +464,12 @@ export async function createManagedWhatsAppServiceRequest(
     } catch {}
   }
 
-  const existingList = managedRequestsMemoryCache.get(orgId) || [];
+  const existingList = managedRequestsMemoryCache.get(resolvedOrgId) || [];
+  managedRequestsMemoryCache.set(resolvedOrgId, [newReq, ...existingList]);
   managedRequestsMemoryCache.set(orgId, [newReq, ...existingList]);
 
   // Update org communication status to PENDING_VERIFICATION (not yet active until paid and activated by admin)
-  await updateOrganizationCommunicationSettings(orgId, {
+  await updateOrganizationCommunicationSettings(resolvedOrgId, {
     whatsapp_integration_model: "managed",
     whatsapp_setup_status: "pending_verification",
     whatsapp_communication: false, // Remains false until admin activation!
@@ -396,14 +484,22 @@ export async function createManagedWhatsAppServiceRequest(
 export async function getManagedServiceRequests(
   orgId: string
 ): Promise<WhatsAppManagedServiceRequest[]> {
+  const resolvedOrgId = await resolveOrgId(orgId);
   const admin = getAdminClient();
   if (admin) {
     try {
-      const { data, error } = await admin
+      let query = admin
         .from("whatsapp_managed_service_requests")
-        .select("*")
-        .eq("organization_id", orgId)
-        .order("created_at", { ascending: false });
+        .select("*");
+
+      if (orgId.startsWith("personal_")) {
+        const userId = orgId.replace("personal_", "");
+        query = query.or(`organization_id.eq.${resolvedOrgId},requested_by.eq.${userId}`);
+      } else {
+        query = query.eq("organization_id", resolvedOrgId);
+      }
+
+      const { data, error } = await query.order("created_at", { ascending: false });
 
       if (!error && data && data.length > 0) {
         return data as WhatsAppManagedServiceRequest[];
@@ -411,7 +507,7 @@ export async function getManagedServiceRequests(
     } catch {}
   }
 
-  return managedRequestsMemoryCache.get(orgId) || [];
+  return managedRequestsMemoryCache.get(orgId) || managedRequestsMemoryCache.get(resolvedOrgId) || [];
 }
 
 /**

@@ -6,6 +6,7 @@ import {
   updateOrganizationCommunicationSettings,
   getOrganizationCommunicationSettings,
   getManagedServiceRequests,
+  resolveOrgId,
 } from "@/lib/communications";
 import { recordLiveOpsEvent } from "@/lib/ops/events";
 
@@ -88,81 +89,87 @@ export async function POST(req: Request) {
     }
 
     const admin = adminClient();
-    let targetOrgId = providedOrgId;
     let userEmail = "Unknown User";
+    let userPhone = "+91";
 
     // Lookup user details
     if (userId) {
       const { data: profile } = await admin
         .from("profiles")
-        .select("email, full_name")
+        .select("email, full_name, phone")
         .eq("user_id", userId)
         .maybeSingle();
 
       if (profile?.email) {
         userEmail = profile.email;
+        if (profile.phone) userPhone = profile.phone;
       } else {
         const { data: authUser } = await admin.auth.admin.getUserById(userId);
         if (authUser?.user?.email) {
           userEmail = authUser.user.email;
-        }
-      }
-
-      // If orgId not provided, find user's organization
-      if (!targetOrgId) {
-        // 1. Check organization_members
-        const { data: member } = await admin
-          .from("organization_members")
-          .select("organization_id")
-          .eq("user_id", userId)
-          .maybeSingle();
-
-        if (member?.organization_id) {
-          targetOrgId = member.organization_id;
-        } else {
-          // 2. Check events
-          const { data: evt } = await admin
-            .from("events")
-            .select("organization_id")
-            .eq("organizer_id", userId)
-            .not("organization_id", "is", null)
-            .order("created_at", { ascending: false })
-            .limit(1)
-            .maybeSingle();
-
-          if (evt?.organization_id) {
-            targetOrgId = evt.organization_id;
-          } else {
-            // 3. Check organizations created_by
-            const { data: org } = await admin
-              .from("organizations")
-              .select("id")
-              .eq("created_by", userId)
-              .maybeSingle();
-
-            if (org?.id) {
-              targetOrgId = org.id;
-            } else {
-              targetOrgId = `personal_${userId}`;
-            }
-          }
+          if (authUser.user.user_metadata?.phone) userPhone = authUser.user.user_metadata.phone;
         }
       }
     }
 
-    if (!targetOrgId) {
-      targetOrgId = `personal_${userId}`;
+    // Resolve all organization IDs for this user
+    const orgIdsToUpdate = new Set<string>();
+    if (providedOrgId) orgIdsToUpdate.add(providedOrgId);
+    if (userId) {
+      orgIdsToUpdate.add(`personal_${userId}`);
+      const resolved = await resolveOrgId(`personal_${userId}`);
+      if (resolved && !resolved.startsWith("personal_")) {
+        orgIdsToUpdate.add(resolved);
+      }
+
+      // 1. Check organization_members
+      const { data: members } = await admin
+        .from("organization_members")
+        .select("organization_id")
+        .eq("user_id", userId);
+      members?.forEach((m) => m.organization_id && orgIdsToUpdate.add(m.organization_id));
+
+      // 2. Check organizations created_by
+      const { data: createdOrgs } = await admin
+        .from("organizations")
+        .select("id")
+        .eq("created_by", userId);
+      createdOrgs?.forEach((o) => o.id && orgIdsToUpdate.add(o.id));
+
+      // 3. Check events
+      const { data: userEvents } = await admin
+        .from("events")
+        .select("organization_id")
+        .eq("organizer_id", userId);
+      userEvents?.forEach((e) => e.organization_id && orgIdsToUpdate.add(e.organization_id));
     }
 
+    const nonPersonalOrgs = Array.from(orgIdsToUpdate).filter((id) => !id.startsWith("personal_"));
+    const canonicalOrgId =
+      nonPersonalOrgs[0] ||
+      (providedOrgId && !providedOrgId.startsWith("personal_") ? providedOrgId : `personal_${userId}`);
     const now = new Date().toISOString();
 
     if (enabled) {
-      // 1. Activate Managed WhatsApp in organization_communication_settings
-      await updateOrganizationCommunicationSettings(targetOrgId, {
-        whatsapp_integration_model: "managed",
-        whatsapp_setup_status: "active",
-        whatsapp_communication: true,
-      });
+      // 1. Activate Managed WhatsApp in organization_communication_settings for all orgs
+      for (const orgId of Array.from(orgIdsToUpdate)) {
+        await updateOrganizationCommunicationSettings(orgId, {
+          enable_communication: true,
+          whatsapp_communication: true,
+          whatsapp_integration_model: "managed",
+          whatsapp_setup_status: "active",
+          automation_rules: {
+            registration_confirmed: { email: true, whatsapp: true },
+            registration_approved: { email: true, whatsapp: true },
+            registration_rejected: { email: true, whatsapp: false },
+            ticket_issued: { email: true, whatsapp: true },
+            qr_pass_generated: { email: true, whatsapp: true },
+            event_reminder: { email: true, whatsapp: true },
+            event_updated: { email: true, whatsapp: true },
+            event_cancelled: { email: true, whatsapp: true },
+          },
+        });
+      }
 
       // 2. Mark any service requests as active
       if (userId) {
@@ -172,81 +179,122 @@ export async function POST(req: Request) {
             status: "active",
             activated_at: now,
             updated_at: now,
+            admin_notes: "UrPass Managed WhatsApp activated via Ops Command Center",
           })
           .eq("requested_by", userId);
       }
 
-      if (targetOrgId && !targetOrgId.startsWith("personal_")) {
+      if (nonPersonalOrgs.length > 0) {
         await admin
           .from("whatsapp_managed_service_requests")
           .update({
             status: "active",
             activated_at: now,
             updated_at: now,
+            admin_notes: "UrPass Managed WhatsApp activated via Ops Command Center",
           })
-          .eq("organization_id", targetOrgId);
+          .in("organization_id", nonPersonalOrgs);
+      }
+
+      // If no request existed yet, insert an active record so user sees active status and ID
+      if (canonicalOrgId && !canonicalOrgId.startsWith("personal_")) {
+        const { data: existingReqs } = await admin
+          .from("whatsapp_managed_service_requests")
+          .select("id")
+          .or(
+            `requested_by.eq.${userId}${
+              nonPersonalOrgs.length > 0 ? `,organization_id.in.(${nonPersonalOrgs.join(",")})` : ""
+            }`
+          )
+          .limit(1);
+
+        if (!existingReqs || existingReqs.length === 0) {
+          await admin.from("whatsapp_managed_service_requests").insert({
+            organization_id: canonicalOrgId,
+            requested_by: userId,
+            status: "active",
+            estimated_monthly_volume: "10,000 passes/month",
+            use_case: "Event passes & attendee notifications (Ops Activated)",
+            contact_email: userEmail,
+            contact_phone: userPhone,
+            currency: "INR",
+            activated_at: now,
+            admin_notes: "Directly activated via Ops Dashboard",
+          });
+        }
       }
 
       // 3. Enable whatsapp_enabled on all events owned by organizer or organization
-      if (targetOrgId && !targetOrgId.startsWith("personal_")) {
+      if (userId) {
         await admin
           .from("events")
-          .update({ whatsapp_enabled: true, updated_at: now })
-          .eq("organization_id", targetOrgId);
-      } else if (userId) {
-        await admin
-          .from("events")
-          .update({ whatsapp_enabled: true, updated_at: now })
+          .update({
+            whatsapp_enabled: true,
+            organization_id:
+              canonicalOrgId && !canonicalOrgId.startsWith("personal_") ? canonicalOrgId : undefined,
+            updated_at: now,
+          })
           .eq("organizer_id", userId);
+      }
+
+      if (nonPersonalOrgs.length > 0) {
+        await admin
+          .from("events")
+          .update({ whatsapp_enabled: true, updated_at: now })
+          .in("organization_id", nonPersonalOrgs);
       }
 
       // 4. Log live ops event
       recordLiveOpsEvent({
         level: "SUCCESS",
         category: "SYSTEM",
-        message: `[OPS ACTION] UrPass Managed WhatsApp ACTIVATED for ${userEmail} (Org: ${targetOrgId})`,
-        details: { userId, orgId: targetOrgId, enabled: true },
+        message: `[OPS ACTION] UrPass Managed WhatsApp ACTIVATED for ${userEmail} (Org: ${canonicalOrgId})`,
+        details: { userId, orgId: canonicalOrgId, enabled: true },
       });
 
       return NextResponse.json({
         success: true,
         message: `Managed WhatsApp activated for ${userEmail}`,
-        orgId: targetOrgId,
+        orgId: canonicalOrgId,
         enabled: true,
       });
     } else {
       // Disable Managed WhatsApp
-      await updateOrganizationCommunicationSettings(targetOrgId, {
-        whatsapp_communication: false,
-        whatsapp_setup_status: "not_configured",
-        whatsapp_integration_model: "none",
-      });
+      for (const orgId of Array.from(orgIdsToUpdate)) {
+        await updateOrganizationCommunicationSettings(orgId, {
+          whatsapp_communication: false,
+          whatsapp_setup_status: "not_configured",
+          whatsapp_integration_model: "none",
+        });
+      }
 
       // Update events
-      if (targetOrgId && !targetOrgId.startsWith("personal_")) {
-        await admin
-          .from("events")
-          .update({ whatsapp_enabled: false, updated_at: now })
-          .eq("organization_id", targetOrgId);
-      } else if (userId) {
+      if (userId) {
         await admin
           .from("events")
           .update({ whatsapp_enabled: false, updated_at: now })
           .eq("organizer_id", userId);
       }
 
+      if (nonPersonalOrgs.length > 0) {
+        await admin
+          .from("events")
+          .update({ whatsapp_enabled: false, updated_at: now })
+          .in("organization_id", nonPersonalOrgs);
+      }
+
       // Log live ops event
       recordLiveOpsEvent({
         level: "WARN",
         category: "SYSTEM",
-        message: `[OPS ACTION] UrPass Managed WhatsApp DEACTIVATED for ${userEmail} (Org: ${targetOrgId})`,
-        details: { userId, orgId: targetOrgId, enabled: false },
+        message: `[OPS ACTION] UrPass Managed WhatsApp DEACTIVATED for ${userEmail} (Org: ${canonicalOrgId})`,
+        details: { userId, orgId: canonicalOrgId, enabled: false },
       });
 
       return NextResponse.json({
         success: true,
         message: `Managed WhatsApp disabled for ${userEmail}`,
-        orgId: targetOrgId,
+        orgId: canonicalOrgId,
         enabled: false,
       });
     }

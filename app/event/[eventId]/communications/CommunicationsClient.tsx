@@ -100,9 +100,16 @@ export default function CommunicationsClient({
       },
     };
 
+  const managedRequests: WhatsAppManagedServiceRequest[] = controlPanelData?.managedRequests || [];
+  const isManagedActive =
+    (orgSettings.whatsapp_integration_model === "managed" && orgSettings.whatsapp_setup_status === "active") ||
+    managedRequests.some((r) => r.status === "active");
+
   const [masterEnabled, setMasterEnabled] = useState(orgSettings.enable_communication !== false);
   const [emailEnabled, setEmailEnabled] = useState(orgSettings.email_communication !== false);
-  const [whatsappEnabled, setWhatsappEnabled] = useState(Boolean(orgSettings.whatsapp_communication));
+  const [whatsappEnabled, setWhatsappEnabled] = useState(
+    Boolean(orgSettings.whatsapp_communication) || isManagedActive
+  );
   const [automationRules, setAutomationRules] = useState<NotificationAutomationRules>(
     orgSettings.automation_rules
   );
@@ -113,7 +120,6 @@ export default function CommunicationsClient({
     is_configured: false,
     connection_status: "disconnected",
   };
-  const managedRequests: WhatsAppManagedServiceRequest[] = controlPanelData?.managedRequests || [];
   const templates: WhatsAppTemplateRecord[] = controlPanelData?.templates || [];
   const stats = controlPanelData?.stats || {
     totalSent: 0,
@@ -168,7 +174,7 @@ export default function CommunicationsClient({
 
   const isWhatsAppConfigured =
     (orgSettings.whatsapp_integration_model === "self_service" && selfServiceConfig.is_configured) ||
-    (orgSettings.whatsapp_integration_model === "managed" && orgSettings.whatsapp_setup_status === "active");
+    isManagedActive;
 
   const isWhatsAppActive = Boolean(masterEnabled && whatsappEnabled && isWhatsAppConfigured);
 
@@ -584,7 +590,7 @@ export default function CommunicationsClient({
             <p className="text-base font-bold tracking-tight text-neutral-900 mt-1.5 truncate">
               {orgSettings.whatsapp_integration_model === "self_service"
                 ? "Self-Service"
-                : orgSettings.whatsapp_integration_model === "managed"
+                : orgSettings.whatsapp_integration_model === "managed" || isManagedActive
                 ? "UrPass Managed"
                 : "Email Default"}
             </p>
@@ -852,8 +858,14 @@ export default function CommunicationsClient({
                     </div>
                     <span className="font-bold text-sm text-neutral-900">Option 2 — UrPass Managed</span>
                   </div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 leading-none">
-                    Paid Add-on
+                  <span
+                    className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border leading-none ${
+                      isManagedActive
+                        ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                        : "bg-emerald-50 text-emerald-700 border-emerald-200"
+                    }`}
+                  >
+                    {isManagedActive ? "Active · Managed" : "Paid Add-on"}
                   </span>
                 </div>
 
@@ -865,15 +877,27 @@ export default function CommunicationsClient({
                 <div className="p-3.5 rounded-xl bg-neutral-50 border border-neutral-200 text-xs space-y-2">
                   <div className="flex justify-between items-center">
                     <span className="text-neutral-500">Service Status:</span>
-                    <span className="font-bold text-violet-700">
-                      {managedRequests.length > 0
-                        ? managedRequests[0].status.replace(/_/g, " ").toUpperCase()
-                        : "Ready to Request"}
+                    <span
+                      className={`font-bold ${
+                        isManagedActive ? "text-emerald-600 flex items-center gap-1.5" : "text-violet-700"
+                      }`}
+                    >
+                      {isManagedActive ? (
+                        <>
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> ACTIVE &amp; DELIVERING
+                        </>
+                      ) : managedRequests.length > 0 ? (
+                        managedRequests[0].status.replace(/_/g, " ").toUpperCase()
+                      ) : (
+                        "Ready to Request"
+                      )}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-neutral-500">Provider Setup:</span>
-                    <span className="font-medium text-neutral-800">Managed by UrPass</span>
+                    <span className="font-medium text-neutral-800">
+                      {isManagedActive ? "Verified Meta Cloud API (UrPass WABA)" : "Managed by UrPass"}
+                    </span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-neutral-500">Eligibility:</span>
@@ -894,13 +918,29 @@ export default function CommunicationsClient({
 
               {/* Action */}
               <div className="pt-5 mt-auto">
-                <button
-                  onClick={() => setManagedModalOpen(true)}
-                  className="w-full h-10 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-bold text-xs transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-xs"
-                >
-                  <Sparkles className="w-4 h-4" />
-                  {managedRequests.length > 0 ? "Request Additional Quota" : "Request Managed Service"}
-                </button>
+                {isManagedActive ? (
+                  <div className="flex flex-col gap-2">
+                    <div className="w-full h-10 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 font-bold text-xs flex items-center justify-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                      UrPass Managed WhatsApp Active
+                    </div>
+                    <button
+                      onClick={() => setManagedModalOpen(true)}
+                      className="w-full h-8 rounded-lg bg-white hover:bg-neutral-50 text-neutral-600 font-medium text-[11px] border border-neutral-200 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 text-violet-500" />
+                      Request Additional Quota
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setManagedModalOpen(true)}
+                    className="w-full h-10 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-bold text-xs transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-xs"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    {managedRequests.length > 0 ? "Request Additional Quota" : "Request Managed Service"}
+                  </button>
+                )}
               </div>
             </div>
           </div>

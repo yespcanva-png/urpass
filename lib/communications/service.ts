@@ -70,17 +70,18 @@ export class CommunicationService {
       const { data } = await admin
         .from("events")
         .select(
-          "organization_id, sms_enabled, whatsapp_enabled, email_enabled, sms_fallback_enabled, whatsapp_settings, sms_sender_id, sms_dlt_entity_id, sms_dlt_template_id, sms_provider"
+          "organization_id, organizer_id, sms_enabled, whatsapp_enabled, email_enabled, sms_fallback_enabled, whatsapp_settings, sms_sender_id, sms_dlt_entity_id, sms_dlt_template_id, sms_provider"
         )
         .eq("id", eventId)
         .maybeSingle();
 
       if (data) {
         let orgSettings = null;
-        if (data.organization_id) {
+        const targetOrg = data.organization_id || (data.organizer_id ? `personal_${data.organizer_id}` : null);
+        if (targetOrg) {
           try {
             const { getOrganizationCommunicationSettings } = await import("./org-settings");
-            orgSettings = await getOrganizationCommunicationSettings(data.organization_id);
+            orgSettings = await getOrganizationCommunicationSettings(targetOrg);
           } catch {}
         }
 

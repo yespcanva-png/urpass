@@ -163,15 +163,44 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized. Please log in to UrPass." }, { status: 401 });
     }
 
+    const body = await req.json().catch(() => null);
     const isAdmin = await verifyAdminAuthorization(supabase, user);
-    if (!isAdmin) {
+
+    let isAuthorized = isAdmin;
+    let eventName = "UrPass Production Verification";
+
+    if (!isAuthorized && body?.eventId) {
+      const { data: eventData } = await supabase
+        .from("events")
+        .select("id, name, organizer_id, organization_id")
+        .eq("id", body.eventId)
+        .maybeSingle();
+
+      if (eventData) {
+        eventName = eventData.name || eventName;
+        if (eventData.organizer_id === user.id) {
+          isAuthorized = true;
+        } else if (eventData.organization_id) {
+          const { data: member } = await supabase
+            .from("organization_members")
+            .select("role")
+            .eq("organization_id", eventData.organization_id)
+            .eq("user_id", user.id)
+            .eq("status", "active")
+            .in("role", ["owner", "admin", "event_manager"])
+            .maybeSingle();
+          if (member) isAuthorized = true;
+        }
+      }
+    }
+
+    if (!isAuthorized) {
       return NextResponse.json(
-        { error: "Forbidden: Test messages may only be dispatched by UrPass system administrators." },
+        { error: "Forbidden: Test messages may only be dispatched by the event organizer or UrPass system administrators." },
         { status: 403 }
       );
     }
 
-    const body = await req.json().catch(() => null);
     const rawPhone = String(body?.phone || body?.toPhone || "").trim();
     const templateName = body?.templateName || process.env.WHATSAPP_TEMPLATE_NAME || "ticket_confirmation";
 
@@ -191,17 +220,18 @@ export async function POST(req: NextRequest) {
     }
 
     const testPayload = {
-      eventId: "test-event-001",
-      eventName: "UrPass Production Verification",
+      eventId: body?.eventId || "test-event-001",
+      eventName,
       ticketId: `TEST-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
       passToken: `test_token_${Date.now()}`,
       attendeeId: user.id,
-      attendeeName: user.user_metadata?.full_name || "Admin Verifier",
-      email: user.email || "admin@urpass.space",
+      attendeeName: user.user_metadata?.full_name || (isAdmin ? "Admin Verifier" : "Organizer"),
+      email: user.email || "organizer@urpass.space",
       phone: normalizedPhone,
-      passType: "Admin Test Pass",
+      passType: "Test Pass",
       ticketUrl: `https://urpass.space/pass/test_token_${Date.now()}`,
       templateName,
+      templateLanguage: body?.templateLang || body?.templateLanguage || "en_US",
       whatsappConsent: true,
       customMessage: body?.customMessage,
     };

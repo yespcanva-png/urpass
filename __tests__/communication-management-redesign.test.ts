@@ -146,4 +146,42 @@ describe("UrPass — Communication Management Redesign", () => {
       expect(fetched.whatsapp_setup_status).toBe("pending_verification");
     });
   });
+
+  describe("5. Ops Activation of UrPass Managed WhatsApp for User", () => {
+    it("activates managed whatsapp and enables delivery automation for user", async () => {
+      const userOrgId = "personal_user_test_ops_activation_123";
+
+      // Ops enables managed whatsapp for this user
+      const res = await updateOrganizationCommunicationSettings(userOrgId, {
+        enable_communication: true,
+        whatsapp_communication: true,
+        whatsapp_integration_model: "managed",
+        whatsapp_setup_status: "active",
+        automation_rules: {
+          registration_confirmed: { email: true, whatsapp: true },
+          registration_approved: { email: true, whatsapp: true },
+          registration_rejected: { email: true, whatsapp: false },
+          ticket_issued: { email: true, whatsapp: true },
+          qr_pass_generated: { email: true, whatsapp: true },
+          event_reminder: { email: true, whatsapp: true },
+          event_updated: { email: true, whatsapp: true },
+          event_cancelled: { email: true, whatsapp: true },
+        },
+      });
+
+      expect(res.success).toBe(true);
+      expect(res.data?.whatsapp_communication).toBe(true);
+      expect(res.data?.whatsapp_integration_model).toBe("managed");
+      expect(res.data?.whatsapp_setup_status).toBe("active");
+
+      // Verify user's communication settings retrieve active status
+      const userSettings = await getOrganizationCommunicationSettings(userOrgId);
+      expect(userSettings.whatsapp_communication).toBe(true);
+      expect(userSettings.whatsapp_integration_model).toBe("managed");
+      expect(userSettings.whatsapp_setup_status).toBe("active");
+      expect(userSettings.automation_rules.qr_pass_generated.whatsapp).toBe(true);
+      expect(userSettings.automation_rules.ticket_issued.whatsapp).toBe(true);
+    });
+  });
 });
+
