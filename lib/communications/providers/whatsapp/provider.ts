@@ -1,7 +1,12 @@
 import { TicketDeliveryPayload } from "../../types";
 import { isValidE164 } from "../../utils";
 import { aiSensyProvider } from "./aisensy";
-import { buildTemplatePayload, APPROVED_TEMPLATES, WhatsAppTemplateType } from "./templates";
+import {
+  buildTemplatePayload,
+  APPROVED_TEMPLATES,
+  WhatsAppTemplateType,
+  normalizeTemplateLanguage,
+} from "./templates";
 
 export interface WhatsAppResult {
   success: boolean;
@@ -56,7 +61,8 @@ export class WhatsAppProvider {
       process.env.WHATSAPP_TEMPLATE_NAME ||
       (process.env.NODE_ENV !== "test" ? "urpass_ticket" : undefined)
     )?.trim();
-    const templateLang = (payload.templateLanguage || process.env.WHATSAPP_TEMPLATE_LANG || "en_US").trim();
+    const rawLang = payload.templateLanguage || process.env.WHATSAPP_TEMPLATE_LANG || "en_US";
+    const templateLang = normalizeTemplateLanguage(rawLang, templateName);
 
     // Meta Policy Enforcement: Outbound business-initiated messages require an approved template
     if (!templateName && !payload.isSessionReply) {

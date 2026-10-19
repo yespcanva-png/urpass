@@ -12,6 +12,7 @@ import {
   normalizePhone,
 } from "@/lib/communications/utils";
 import type { DeliveryStatus, TicketDeliveryPayload } from "@/lib/communications/types";
+import { normalizeTemplateLanguage } from "@/lib/communications/providers/whatsapp/templates";
 import { revalidatePath } from "next/cache";
 
 function getAdminClient() {
@@ -422,7 +423,7 @@ export async function sendBulkWhatsAppInvitations({
       version: `bulk_${campaignId}`,
       customMessage: messageText,
       templateName: (process.env.WHATSAPP_TEMPLATE_NAME || "urpass_ticket").trim(),
-      templateLanguage: (process.env.WHATSAPP_TEMPLATE_LANG || "en_US").trim(),
+      templateLanguage: normalizeTemplateLanguage(process.env.WHATSAPP_TEMPLATE_LANG, "urpass_ticket"),
       whatsappConsent: true,
     };
 

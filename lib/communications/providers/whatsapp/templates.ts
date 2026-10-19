@@ -102,6 +102,23 @@ export const APPROVED_TEMPLATES: Record<
 });
 
 /**
+ * Normalizes language codes for Meta WhatsApp Cloud API.
+ * Maps 'en' -> 'en_US' because Meta distinguishes 'en' (English UK) from 'en_US' (English US),
+ * and approved templates like 'urpass_ticket' are registered exclusively under 'en_US'.
+ */
+export function normalizeTemplateLanguage(lang?: string | null, templateName?: string): string {
+  const clean = (lang || "").trim();
+  const tpl = (templateName || "").trim().toLowerCase();
+  if (tpl === "urpass_ticket" || tpl.includes("urpass_ticket")) {
+    return "en_US";
+  }
+  if (!clean || clean.toLowerCase() === "en") {
+    return "en_US";
+  }
+  return clean;
+}
+
+/**
  * Builds Meta Cloud API template components matching approved template specifications
  */
 export function buildTemplatePayload(
@@ -110,7 +127,8 @@ export function buildTemplatePayload(
   preferredLanguage?: string
 ): MetaTemplatePayload {
   const config = APPROVED_TEMPLATES[templateType] || APPROVED_TEMPLATES.ticket_confirmation;
-  const langCode = (preferredLanguage || process.env.WHATSAPP_TEMPLATE_LANG || config.defaultLang).trim();
+  const rawLang = preferredLanguage || process.env.WHATSAPP_TEMPLATE_LANG || config.defaultLang;
+  const langCode = normalizeTemplateLanguage(rawLang, config.name);
 
   const components: MetaTemplateComponent[] = [];
 
