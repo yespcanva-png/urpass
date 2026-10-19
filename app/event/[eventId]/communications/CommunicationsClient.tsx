@@ -170,6 +170,8 @@ export default function CommunicationsClient({
     (orgSettings.whatsapp_integration_model === "self_service" && selfServiceConfig.is_configured) ||
     (orgSettings.whatsapp_integration_model === "managed" && orgSettings.whatsapp_setup_status === "active");
 
+  const isWhatsAppActive = Boolean(masterEnabled && whatsappEnabled && isWhatsAppConfigured);
+
   // Handlers
   async function handleToggleMaster(newVal: boolean) {
     setLoadingToggle("master");
@@ -482,27 +484,28 @@ export default function CommunicationsClient({
         {/* Channel Overview Strip */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Email Channel Pill */}
-          <div className="p-4 rounded-xl bg-neutral-50/80 border border-neutral-200/80 flex items-center justify-between">
-            <div className="flex items-center gap-3.5">
-              <div className="w-9 h-9 rounded-lg bg-violet-100 text-violet-700 flex items-center justify-center font-bold">
-                <Mail className="w-4 h-4" />
+          <div className="p-4 rounded-xl bg-neutral-50/80 border border-neutral-200/80 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3.5 min-w-0">
+              <div className="w-10 h-10 rounded-lg bg-violet-100 text-violet-700 flex items-center justify-center font-bold shrink-0">
+                <Mail className="w-5 h-5" />
               </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <p className="text-sm font-bold text-neutral-900">Email Communication</p>
-                  <span className="text-[10px] font-bold px-2 py-0.2 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="text-sm font-bold text-neutral-900 leading-tight">Email Communication</p>
+                  <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 inline-flex items-center leading-none">
                     Default Channel
                   </span>
                 </div>
-                <p className="text-xs text-neutral-500">Pre-configured with verified ZeptoMail infrastructure</p>
+                <p className="text-xs text-neutral-500 mt-0.5 truncate">Pre-configured with verified ZeptoMail infrastructure</p>
               </div>
             </div>
             <button
               onClick={() => handleToggleChannel("email", !emailEnabled)}
               disabled={loadingToggle === "email" || !masterEnabled}
+              aria-label="Toggle Email Communication"
               className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
                 emailEnabled && masterEnabled ? "bg-emerald-500" : "bg-neutral-200"
-              }`}
+              } ${!masterEnabled ? "opacity-50 cursor-not-allowed" : ""}`}
             >
               <span
                 className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-xs ring-0 transition duration-200 ease-in-out ${
@@ -513,16 +516,16 @@ export default function CommunicationsClient({
           </div>
 
           {/* WhatsApp Channel Pill with Real WhatsApp Logo */}
-          <div className="p-4 rounded-xl bg-neutral-50/80 border border-neutral-200/80 flex items-center justify-between">
-            <div className="flex items-center gap-3.5">
-              <div className="w-9 h-9 rounded-lg bg-emerald-50 flex items-center justify-center font-bold">
-                <WhatsAppLogo size={22} variant="brand" />
+          <div className="p-4 rounded-xl bg-neutral-50/80 border border-neutral-200/80 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3.5 min-w-0">
+              <div className="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center shrink-0">
+                <WhatsAppLogo size={24} variant="brand" />
               </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <p className="text-sm font-bold text-neutral-900">WhatsApp Communication</p>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="text-sm font-bold text-neutral-900 leading-tight">WhatsApp Communication</p>
                   <span
-                    className={`text-[10px] font-bold px-2 py-0.2 rounded-full border ${
+                    className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border inline-flex items-center leading-none ${
                       isWhatsAppConfigured
                         ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                         : "bg-neutral-100 text-neutral-500 border-neutral-200"
@@ -535,7 +538,7 @@ export default function CommunicationsClient({
                       : "Not Configured"}
                   </span>
                 </div>
-                <p className="text-xs text-neutral-500">
+                <p className="text-xs text-neutral-500 mt-0.5 truncate">
                   {isWhatsAppConfigured
                     ? "Official Meta Cloud API Gateway connected"
                     : "Configure Self-Service or Managed WhatsApp below"}
@@ -545,12 +548,13 @@ export default function CommunicationsClient({
             <button
               onClick={() => handleToggleChannel("whatsapp", !whatsappEnabled)}
               disabled={loadingToggle === "whatsapp" || !masterEnabled || !isWhatsAppConfigured}
+              aria-label="Toggle WhatsApp Communication"
               title={!isWhatsAppConfigured ? "WhatsApp must be activated before enabling" : "Toggle WhatsApp"}
               className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
                 whatsappEnabled && masterEnabled && isWhatsAppConfigured
                   ? "bg-[#25D366]"
                   : "bg-neutral-200 opacity-60"
-              }`}
+              } ${!masterEnabled || !isWhatsAppConfigured ? "cursor-not-allowed" : ""}`}
             >
               <span
                 className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-xs ring-0 transition duration-200 ease-in-out ${
@@ -561,95 +565,118 @@ export default function CommunicationsClient({
           </div>
         </div>
 
-        {/* Corporate KPI Counters */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
-          <div className="p-3.5 rounded-xl bg-white border border-neutral-200/90 text-left">
+        {/* Corporate KPI Counters (Aligned and uniform height) */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 pt-1">
+          <div className="p-4 rounded-xl bg-white border border-neutral-200/90 shadow-2xs flex flex-col justify-between h-full min-h-[96px] text-left">
             <p className="text-[10px] uppercase font-bold text-neutral-400 tracking-wider">Total Dispatches</p>
-            <p className="text-xl font-bold text-neutral-900 mt-0.5">{stats.totalSent || 0}</p>
-            <p className="text-[11px] text-neutral-400 mt-0.5">Across email & WhatsApp</p>
+            <p className="text-2xl font-bold tracking-tight text-neutral-900 mt-1">{stats.totalSent || 0}</p>
+            <p className="text-[11px] text-neutral-400 mt-1">Across email & WhatsApp</p>
           </div>
-          <div className="p-3.5 rounded-xl bg-white border border-neutral-200/90 text-left">
+          <div className="p-4 rounded-xl bg-white border border-neutral-200/90 shadow-2xs flex flex-col justify-between h-full min-h-[96px] text-left">
             <p className="text-[10px] uppercase font-bold text-emerald-600 tracking-wider">Passes Delivered</p>
-            <p className="text-xl font-bold text-emerald-600 mt-0.5">{stats.delivered || 0}</p>
-            <p className="text-[11px] text-neutral-400 mt-0.5">
+            <p className="text-2xl font-bold tracking-tight text-emerald-600 mt-1">{stats.delivered || 0}</p>
+            <p className="text-[11px] text-neutral-400 mt-1">
               {stats.totalSent > 0 ? Math.round((stats.delivered / stats.totalSent) * 100) : 100}% verified rate
             </p>
           </div>
-          <div className="p-3.5 rounded-xl bg-white border border-neutral-200/90 text-left">
+          <div className="p-4 rounded-xl bg-white border border-neutral-200/90 shadow-2xs flex flex-col justify-between h-full min-h-[96px] text-left">
             <p className="text-[10px] uppercase font-bold text-neutral-400 tracking-wider">Current Model</p>
-            <p className="text-sm font-bold text-neutral-900 mt-1">
+            <p className="text-base font-bold tracking-tight text-neutral-900 mt-1.5 truncate">
               {orgSettings.whatsapp_integration_model === "self_service"
                 ? "Self-Service"
                 : orgSettings.whatsapp_integration_model === "managed"
                 ? "UrPass Managed"
                 : "Email Default"}
             </p>
-            <p className="text-[11px] text-neutral-400 mt-0.5">Plan: {userPlan.slug.toUpperCase()}</p>
+            <p className="text-[11px] text-neutral-400 mt-1">Plan: {userPlan.slug.toUpperCase()}</p>
           </div>
-          <div className="p-3.5 rounded-xl bg-white border border-neutral-200/90 text-left">
+          <div className="p-4 rounded-xl bg-white border border-neutral-200/90 shadow-2xs flex flex-col justify-between h-full min-h-[96px] text-left">
             <p className="text-[10px] uppercase font-bold text-neutral-400 tracking-wider">Production Template</p>
-            <div className="flex items-center gap-1.5 mt-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-              <p className="text-xs font-bold text-neutral-800">urpass_ticket</p>
+            <div className="flex items-center gap-1.5 mt-1.5 min-w-0">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+              <p className="text-sm font-bold font-mono tracking-tight text-neutral-800 truncate">urpass_ticket</p>
             </div>
-            <p className="text-[11px] text-neutral-400 mt-0.5">Meta Approved · Utility</p>
+            <p className="text-[11px] text-neutral-400 mt-1">Meta Approved · Utility</p>
           </div>
         </div>
       </div>
 
       {/* ─────────────────────────────────────────────────────────────
-          CORPORATE NAVIGATION TABS
+          CORPORATE NAVIGATION TABS (Pixel-perfect alignments & gated Pass Delivery)
       ───────────────────────────────────────────────────────────── */}
-      <div className="flex flex-wrap items-center gap-2 border-b border-neutral-200 pb-2">
+      <div className="flex flex-wrap items-center gap-2 border-b border-neutral-200 pb-2.5">
         <button
           onClick={() => setActiveTab("gateways")}
-          className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+          className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
             activeTab === "gateways"
               ? "bg-neutral-900 text-white shadow-2xs"
               : "text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100"
           }`}
         >
-          Channels & WhatsApp Models
+          <Sliders className="w-3.5 h-3.5" />
+          <span>Channels & WhatsApp Models</span>
         </button>
+
         <button
           onClick={() => setActiveTab("automation")}
-          className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+          className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
             activeTab === "automation"
               ? "bg-neutral-900 text-white shadow-2xs"
               : "text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100"
           }`}
         >
-          Notification Automation Rules
+          <Layers className="w-3.5 h-3.5" />
+          <span>Notification Automation Rules</span>
         </button>
+
         <button
           onClick={() => setActiveTab("templates")}
-          className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+          className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
             activeTab === "templates"
               ? "bg-neutral-900 text-white shadow-2xs"
               : "text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100"
           }`}
         >
-          Approved WhatsApp Templates
+          <FileText className="w-3.5 h-3.5" />
+          <span>Approved WhatsApp Templates</span>
         </button>
+
+        {/* Pass Delivery & Broadcasts: Gated strictly to active WhatsApp Delivery */}
         <button
           onClick={() => setActiveTab("campaigns")}
-          className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+          className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
             activeTab === "campaigns"
               ? "bg-neutral-900 text-white shadow-2xs"
-              : "text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100"
+              : isWhatsAppActive
+              ? "text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100"
+              : "text-neutral-500 hover:text-neutral-800 hover:bg-neutral-100"
           }`}
         >
-          Pass Delivery & Broadcasts
+          {isWhatsAppActive ? (
+            <WhatsAppLogo size={14} variant="brand" />
+          ) : (
+            <Lock className="w-3.5 h-3.5 text-neutral-400" />
+          )}
+          <span>Pass Delivery & Broadcasts</span>
+          {isWhatsAppActive ? (
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+          ) : (
+            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-neutral-100 text-neutral-500 border border-neutral-200 shrink-0">
+              Requires WhatsApp
+            </span>
+          )}
         </button>
+
         <button
           onClick={() => setActiveTab("logs")}
-          className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+          className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
             activeTab === "logs"
               ? "bg-neutral-900 text-white shadow-2xs"
               : "text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100"
           }`}
         >
-          Delivery Audit Logs
+          <Clock className="w-3.5 h-3.5" />
+          <span>Delivery Audit Logs</span>
         </button>
       </div>
 
@@ -795,11 +822,11 @@ export default function CommunicationsClient({
               </div>
 
               {/* Action */}
-              <div className="pt-5">
+              <div className="pt-5 mt-auto">
                 {userPlan.canWhatsAppSelfService ? (
                   <button
                     onClick={() => setSelfServiceModalOpen(true)}
-                    className="w-full py-2.5 rounded-xl bg-neutral-900 hover:bg-black text-white font-bold text-xs transition-colors flex items-center justify-center gap-2"
+                    className="w-full h-10 rounded-xl bg-neutral-900 hover:bg-black text-white font-bold text-xs transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-xs"
                   >
                     <Settings2 className="w-4 h-4" />
                     {selfServiceConfig.is_configured ? "Update Meta Credentials" : "Connect Meta Account"}
@@ -807,7 +834,7 @@ export default function CommunicationsClient({
                 ) : (
                   <button
                     disabled
-                    className="w-full py-2.5 rounded-xl bg-neutral-200 text-neutral-400 font-bold text-xs cursor-not-allowed flex items-center justify-center gap-2"
+                    className="w-full h-10 rounded-xl bg-neutral-200 text-neutral-400 font-bold text-xs cursor-not-allowed flex items-center justify-center gap-2"
                   >
                     <Lock className="w-3.5 h-3.5" /> Feature Locked
                   </button>
@@ -816,16 +843,16 @@ export default function CommunicationsClient({
             </div>
 
             {/* ── OPTION 2: URPASS MANAGED WHATSAPP (PAID ADD-ON) ── */}
-            <div className="bg-white rounded-2xl p-6 border border-neutral-200/90 shadow-2xs flex flex-col justify-between">
+            <div className="bg-white rounded-2xl p-6 border border-neutral-200/90 shadow-2xs flex flex-col justify-between h-full">
               <div className="space-y-3.5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
-                    <div className="w-6 h-6 rounded-md bg-violet-100 flex items-center justify-center text-violet-700">
+                    <div className="w-6 h-6 rounded-md bg-violet-100 flex items-center justify-center text-violet-700 shrink-0">
                       <ShieldCheck className="w-4 h-4" />
                     </div>
                     <span className="font-bold text-sm text-neutral-900">Option 2 — UrPass Managed</span>
                   </div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 leading-none">
                     Paid Add-on
                   </span>
                 </div>
@@ -866,10 +893,10 @@ export default function CommunicationsClient({
               </div>
 
               {/* Action */}
-              <div className="pt-5">
+              <div className="pt-5 mt-auto">
                 <button
                   onClick={() => setManagedModalOpen(true)}
-                  className="w-full py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-bold text-xs transition-colors flex items-center justify-center gap-2"
+                  className="w-full h-10 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-bold text-xs transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-xs"
                 >
                   <Sparkles className="w-4 h-4" />
                   {managedRequests.length > 0 ? "Request Additional Quota" : "Request Managed Service"}
@@ -950,22 +977,22 @@ export default function CommunicationsClient({
                   const rule = automationRules[row.key] || { email: true, whatsapp: false };
                   return (
                     <tr key={row.key} className="hover:bg-neutral-50/60 transition-colors">
-                      <td className="py-3.5 px-4 font-bold text-neutral-900">{row.label}</td>
-                      <td className="py-3.5 px-4 text-neutral-500 max-w-xs">{row.desc}</td>
-                      <td className="py-3.5 px-4 text-center">
+                      <td className="py-3.5 px-4 font-bold text-neutral-900 align-middle">{row.label}</td>
+                      <td className="py-3.5 px-4 text-neutral-500 max-w-xs align-middle leading-relaxed">{row.desc}</td>
+                      <td className="py-3.5 px-4 text-center align-middle">
                         <button
                           onClick={() => handleToggleAutomationRule(row.key, "email")}
-                          className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold transition-colors ${
+                          className={`inline-flex items-center justify-center gap-1.5 w-28 px-3 py-1 rounded-full text-[11px] font-bold transition-colors cursor-pointer ${
                             rule.email
                               ? "bg-violet-50 text-violet-700 border border-violet-200"
                               : "bg-neutral-100 text-neutral-400"
                           }`}
                         >
                           {rule.email ? <Check className="w-3 h-3" /> : <X className="w-3 h-3" />}
-                          {rule.email ? "Default On" : "Disabled"}
+                          <span>{rule.email ? "Default On" : "Disabled"}</span>
                         </button>
                       </td>
-                      <td className="py-3.5 px-4 text-center">
+                      <td className="py-3.5 px-4 text-center align-middle">
                         <button
                           onClick={() => handleToggleAutomationRule(row.key, "whatsapp")}
                           disabled={!isWhatsAppConfigured}
@@ -974,28 +1001,30 @@ export default function CommunicationsClient({
                               ? "Requires active WhatsApp connection"
                               : "Toggle WhatsApp for this trigger"
                           }
-                          className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold transition-colors ${
+                          className={`inline-flex items-center justify-center gap-1.5 w-28 px-3 py-1 rounded-full text-[11px] font-bold transition-colors ${
                             rule.whatsapp && isWhatsAppConfigured
-                              ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                              ? "bg-emerald-50 text-emerald-700 border border-emerald-200 cursor-pointer"
                               : isWhatsAppConfigured
-                              ? "bg-neutral-100 text-neutral-500 hover:bg-neutral-200"
+                              ? "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 cursor-pointer"
                               : "bg-neutral-100 text-neutral-400 cursor-not-allowed opacity-50"
                           }`}
                         >
                           {rule.whatsapp && isWhatsAppConfigured ? (
-                            <Check className="w-3 h-3" />
+                            <Check className="w-3 h-3 text-emerald-600" />
                           ) : (
-                            <X className="w-3 h-3" />
+                            <X className="w-3 h-3 text-neutral-400" />
                           )}
-                          {rule.whatsapp && isWhatsAppConfigured
-                            ? "Active"
-                            : !isWhatsAppConfigured
-                            ? "Locked"
-                            : "Optional"}
+                          <span>
+                            {rule.whatsapp && isWhatsAppConfigured
+                              ? "Active"
+                              : !isWhatsAppConfigured
+                              ? "Locked"
+                              : "Optional"}
+                          </span>
                         </button>
                       </td>
-                      <td className="py-3.5 px-4 text-right">
-                        <span className="text-[10px] font-bold text-neutral-400 uppercase">
+                      <td className="py-3.5 px-4 text-right align-middle">
+                        <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">
                           {rule.email && rule.whatsapp && isWhatsAppConfigured
                             ? "Dual Channel"
                             : rule.email
@@ -1044,50 +1073,52 @@ export default function CommunicationsClient({
             {templates.map((tpl) => (
               <div
                 key={tpl.id}
-                className="p-5 rounded-xl bg-white border border-neutral-200 shadow-2xs space-y-3"
+                className="p-5 rounded-xl bg-white border border-neutral-200 shadow-2xs flex flex-col justify-between h-full space-y-3"
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs font-bold text-neutral-900">{tpl.name}</span>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-violet-50 text-violet-700 border border-violet-200">
-                      {tpl.category}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-xs font-bold text-neutral-900">{tpl.name}</span>
+                      <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-violet-50 text-violet-700 border border-violet-200 leading-none">
+                        {tpl.category}
+                      </span>
+                    </div>
+                    <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 leading-none">
+                      {tpl.status}
                     </span>
                   </div>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                    {tpl.status}
-                  </span>
-                </div>
 
-                <div className="p-3 rounded-lg bg-neutral-50 border border-neutral-200 text-xs font-mono whitespace-pre-wrap text-neutral-800 leading-relaxed">
-                  {tpl.body_text}
-                </div>
-
-                {tpl.buttons && tpl.buttons.length > 0 && (
-                  <div className="flex flex-wrap gap-2 pt-1">
-                    {tpl.buttons.map((b, idx) => (
-                      <span
-                        key={idx}
-                        className="inline-flex items-center gap-1 px-3 py-1 rounded-md bg-emerald-50 text-emerald-800 font-bold text-xs border border-emerald-200"
-                      >
-                        <ExternalLink className="w-3 h-3" />
-                        {b.text}
-                      </span>
-                    ))}
+                  <div className="p-3 rounded-lg bg-neutral-50 border border-neutral-200 text-xs font-mono whitespace-pre-wrap text-neutral-800 leading-relaxed">
+                    {tpl.body_text}
                   </div>
-                )}
 
-                <div className="flex items-center justify-between pt-3 border-t border-neutral-100 text-xs">
-                  <span className="text-neutral-400">Language: {tpl.language}</span>
+                  {tpl.buttons && tpl.buttons.length > 0 && (
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      {tpl.buttons.map((b, idx) => (
+                        <span
+                          key={idx}
+                          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-emerald-50 text-emerald-800 font-bold text-xs border border-emerald-200 leading-none"
+                        >
+                          <ExternalLink className="w-3 h-3 text-[#25D366]" />
+                          {b.text}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between pt-3 border-t border-neutral-100 text-xs mt-auto">
+                  <span className="text-neutral-400 font-medium">Language: {tpl.language}</span>
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => setSimulatorTemplate(tpl)}
-                      className="px-3 py-1.5 rounded-lg border border-neutral-200 hover:bg-neutral-50 text-xs font-bold transition-colors"
+                      className="h-8.5 px-3 rounded-lg border border-neutral-200 hover:bg-neutral-50 text-xs font-bold transition-colors inline-flex items-center justify-center cursor-pointer"
                     >
                       Preview Simulator
                     </button>
                     <button
                       onClick={() => setTestWAModalOpen(true)}
-                      className="px-3 py-1.5 rounded-lg bg-[#25D366] text-white hover:bg-[#20ba59] text-xs font-bold transition-colors"
+                      className="h-8.5 px-3 rounded-lg bg-[#25D366] text-white hover:bg-[#20ba59] text-xs font-bold transition-colors inline-flex items-center justify-center cursor-pointer shadow-xs"
                     >
                       Test Pass
                     </button>
@@ -1100,16 +1131,124 @@ export default function CommunicationsClient({
       )}
 
       {/* ─────────────────────────────────────────────────────────────
-          TAB 4: PASS DELIVERY & CAMPAIGNS (BULK & SINGLE DISPATCH)
+          TAB 4: PASS DELIVERY & CAMPAIGNS (GATED TO ACTIVE WHATSAPP DELIVERY)
       ───────────────────────────────────────────────────────────── */}
       {activeTab === "campaigns" && (
         <div className="space-y-6">
-          <WhatsAppBulkInviteCard
-            eventId={eventId}
-            eventName={eventName}
-            eventDate={eventDate}
-            venue={venue}
-          />
+          {isWhatsAppActive ? (
+            <WhatsAppBulkInviteCard
+              eventId={eventId}
+              eventName={eventName}
+              eventDate={eventDate}
+              venue={venue}
+            />
+          ) : (
+            <div className="bg-white border border-neutral-200/90 rounded-2xl p-8 sm:p-12 shadow-2xs text-center max-w-2xl mx-auto space-y-6">
+              <div className="w-16 h-16 rounded-2xl bg-neutral-100 border border-neutral-200 flex items-center justify-center mx-auto relative shadow-2xs">
+                <div className="opacity-40 grayscale">
+                  <WhatsAppLogo size={34} variant="brand" />
+                </div>
+                <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-neutral-900 text-white flex items-center justify-center shadow-xs">
+                  <Lock className="w-3.5 h-3.5" />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-50 text-amber-800 border border-amber-200 leading-none">
+                  WhatsApp Delivery Inactive
+                </div>
+                <h3 className="text-xl font-bold tracking-tight text-neutral-900">
+                  Pass Delivery & Broadcasts are Locked
+                </h3>
+                <p className="text-xs sm:text-sm text-neutral-500 max-w-lg mx-auto leading-relaxed">
+                  Bulk QR pass delivery and attendee messaging broadcasts are exclusively available when WhatsApp communication is active and properly connected.
+                </p>
+              </div>
+
+              {/* Channel Health Diagnostics Checklist */}
+              <div className="bg-neutral-50 border border-neutral-200/90 rounded-xl p-4 text-xs space-y-2.5 max-w-md mx-auto text-left">
+                <div className="flex items-center justify-between">
+                  <span className="text-neutral-600 font-medium flex items-center gap-2">
+                    <Radio className="w-3.5 h-3.5 text-neutral-400 shrink-0" /> Master Communication Switch
+                  </span>
+                  <span className={`font-bold px-2 py-0.5 rounded-full text-[10px] inline-flex items-center gap-1 leading-none ${
+                    masterEnabled
+                      ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                      : "bg-amber-50 text-amber-700 border border-amber-200"
+                  }`}>
+                    {masterEnabled ? <Check className="w-3 h-3" /> : <X className="w-3 h-3" />}
+                    {masterEnabled ? "Active" : "Paused"}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-neutral-600 font-medium flex items-center gap-2">
+                    <WhatsAppLogo size={14} variant="brand" /> WhatsApp Channel
+                  </span>
+                  <span className={`font-bold px-2 py-0.5 rounded-full text-[10px] inline-flex items-center gap-1 leading-none ${
+                    whatsappEnabled
+                      ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                      : "bg-neutral-100 text-neutral-500 border border-neutral-200"
+                  }`}>
+                    {whatsappEnabled ? <Check className="w-3 h-3" /> : <X className="w-3 h-3" />}
+                    {whatsappEnabled ? "Enabled" : "Disabled"}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-neutral-600 font-medium flex items-center gap-2">
+                    <ShieldCheck className="w-3.5 h-3.5 text-neutral-400 shrink-0" /> Meta Integration Model
+                  </span>
+                  <span className={`font-bold px-2 py-0.5 rounded-full text-[10px] inline-flex items-center gap-1 leading-none ${
+                    isWhatsAppConfigured
+                      ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                      : "bg-amber-50 text-amber-700 border border-amber-200"
+                  }`}>
+                    {isWhatsAppConfigured ? <Check className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />}
+                    {isWhatsAppConfigured ? "Connected" : "Not Configured"}
+                  </span>
+                </div>
+              </div>
+
+              {/* 1-Click Action to Enable & Unlock */}
+              <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+                {!isWhatsAppConfigured ? (
+                  <button
+                    onClick={() => setActiveTab("gateways")}
+                    className="w-full sm:w-auto h-9.5 px-5 rounded-xl bg-neutral-900 hover:bg-black text-white font-bold text-xs transition-colors flex items-center justify-center gap-2 shadow-xs cursor-pointer"
+                  >
+                    <Settings2 className="w-4 h-4" />
+                    Configure WhatsApp Gateway
+                  </button>
+                ) : !masterEnabled ? (
+                  <button
+                    onClick={() => handleToggleMaster(true)}
+                    disabled={loadingToggle === "master"}
+                    className="w-full sm:w-auto h-9.5 px-5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-bold text-xs transition-colors flex items-center justify-center gap-2 shadow-xs cursor-pointer"
+                  >
+                    {loadingToggle === "master" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
+                    Enable Master Switch
+                  </button>
+                ) : !whatsappEnabled ? (
+                  <button
+                    onClick={() => handleToggleChannel("whatsapp", true)}
+                    disabled={loadingToggle === "whatsapp"}
+                    className="w-full sm:w-auto h-9.5 px-5 rounded-xl bg-[#25D366] hover:bg-[#20ba59] text-white font-bold text-xs transition-colors flex items-center justify-center gap-2 shadow-xs cursor-pointer"
+                  >
+                    {loadingToggle === "whatsapp" ? <Loader2 className="w-4 h-4 animate-spin" /> : <WhatsAppLogo size={16} variant="white" />}
+                    Enable WhatsApp Delivery
+                  </button>
+                ) : null}
+
+                <button
+                  onClick={() => setActiveTab("gateways")}
+                  className="w-full sm:w-auto h-9.5 px-4 rounded-xl border border-neutral-200 bg-white hover:bg-neutral-50 text-neutral-700 font-bold text-xs transition-colors flex items-center justify-center cursor-pointer"
+                >
+                  View Gateways & Settings
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -1135,14 +1274,14 @@ export default function CommunicationsClient({
                   placeholder="Filter by name, ticket..."
                   value={logSearch}
                   onChange={(e) => setLogSearch(e.target.value)}
-                  className="pl-8 pr-3 py-1.5 rounded-lg border border-neutral-200 text-xs bg-neutral-50 text-neutral-900 focus:outline-hidden"
+                  className="w-48 sm:w-60 h-8.5 pl-8 pr-3 rounded-lg border border-neutral-200 text-xs bg-neutral-50 text-neutral-900 focus:outline-hidden focus:border-neutral-400"
                 />
               </div>
 
               <select
                 value={channelFilter}
                 onChange={(e) => setChannelFilter(e.target.value as any)}
-                className="px-2.5 py-1.5 rounded-lg border border-neutral-200 text-xs bg-neutral-50 text-neutral-800"
+                className="h-8.5 px-3 rounded-lg border border-neutral-200 text-xs bg-neutral-50 text-neutral-800 focus:outline-hidden cursor-pointer"
               >
                 <option value="ALL">All Channels</option>
                 <option value="EMAIL">Email</option>
@@ -1153,7 +1292,7 @@ export default function CommunicationsClient({
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value as any)}
-                className="px-2.5 py-1.5 rounded-lg border border-neutral-200 text-xs bg-neutral-50 text-neutral-800"
+                className="h-8.5 px-3 rounded-lg border border-neutral-200 text-xs bg-neutral-50 text-neutral-800 focus:outline-hidden cursor-pointer"
               >
                 <option value="ALL">All Statuses</option>
                 <option value="DELIVERED">Delivered</option>

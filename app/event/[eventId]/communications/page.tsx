@@ -85,8 +85,8 @@ export default async function EventCommunicationsPage({
     <div className="max-w-7xl mx-auto space-y-6 pb-16">
       {/* Top Corporate Command Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-1">
-        <div>
-          <div className="flex items-center gap-2 mb-1.5 text-xs text-neutral-500">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2 text-xs text-neutral-500">
             <span>Events</span>
             <span>/</span>
             <span className="font-medium text-neutral-800 truncate max-w-[200px] sm:max-w-xs">{event.name}</span>
@@ -96,18 +96,19 @@ export default async function EventCommunicationsPage({
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-neutral-950">
             Communications Control Panel
           </h1>
-          <p className="text-xs sm:text-sm text-neutral-500 mt-1 max-w-2xl">
+          <p className="text-xs sm:text-sm text-neutral-500 max-w-2xl leading-relaxed">
             Centralized notification command center: default transactional email, Business-plan Self-Service WhatsApp, and UrPass Managed WhatsApp services.
           </p>
         </div>
 
         {/* Corporate Audience Metric */}
         <div className="flex items-center gap-2 self-start sm:self-center shrink-0">
-          <div className="px-4 py-2.5 rounded-2xl bg-white border border-neutral-200/90 shadow-2xs text-left">
+          <div className="px-5 py-3 rounded-2xl bg-white border border-neutral-200/90 shadow-2xs text-left min-w-[200px]">
             <p className="text-[10px] uppercase font-bold text-neutral-400 tracking-wider">Approved Audience</p>
-            <p className="text-lg font-bold tracking-tight text-neutral-900 mt-0.5">
-              {approvedCount || 0} <span className="text-xs font-normal text-neutral-400">/ {totalAttendees || 0} registered</span>
-            </p>
+            <div className="flex items-baseline gap-1.5 mt-0.5">
+              <span className="text-2xl font-bold tracking-tight text-neutral-900">{approvedCount || 0}</span>
+              <span className="text-xs font-medium text-neutral-400">/ {totalAttendees || 0} registered</span>
+            </div>
           </div>
         </div>
       </div>

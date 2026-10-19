@@ -375,7 +375,7 @@ export default function WhatsAppBulkInviteCard({
             }`}
           >
             <span>Ready to Send</span>
-            <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${
+            <span className={`px-2 py-0.5 leading-none rounded-full text-[10px] font-bold ${
               filterTab === "eligible" ? "bg-white/20 text-white" : "bg-neutral-200 text-neutral-700"
             }`}>
               {summary.eligibleCount}
@@ -392,7 +392,7 @@ export default function WhatsAppBulkInviteCard({
             }`}
           >
             <span>All Guests</span>
-            <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${
+            <span className={`px-2 py-0.5 leading-none rounded-full text-[10px] font-bold ${
               filterTab === "all" ? "bg-white/20 text-white" : "bg-neutral-200 text-neutral-700"
             }`}>
               {summary.totalAttendees}
@@ -409,7 +409,7 @@ export default function WhatsAppBulkInviteCard({
             }`}
           >
             <span>Delivered</span>
-            <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${
+            <span className={`px-2 py-0.5 leading-none rounded-full text-[10px] font-bold ${
               filterTab === "sent" ? "bg-white/20 text-white" : "bg-neutral-200 text-neutral-700"
             }`}>
               {summary.alreadySentCount}
@@ -427,7 +427,7 @@ export default function WhatsAppBulkInviteCard({
               }`}
             >
               <span>Failed</span>
-              <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${
+              <span className={`px-2 py-0.5 leading-none rounded-full text-[10px] font-bold ${
                 filterTab === "failed" ? "bg-white/20 text-white" : "bg-amber-200/80 text-amber-900"
               }`}>
                 {summary.failedCount}
@@ -446,7 +446,7 @@ export default function WhatsAppBulkInviteCard({
               }`}
             >
               <span>Invalid Phone</span>
-              <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${
+              <span className={`px-2 py-0.5 leading-none rounded-full text-[10px] font-bold ${
                 filterTab === "invalid" ? "bg-white/20 text-white" : "bg-red-200 text-red-900"
               }`}>
                 {summary.invalidPhoneCount}
@@ -623,12 +623,12 @@ export default function WhatsAppBulkInviteCard({
                             {item.normalizedPhone || item.phone}
                           </span>
                           {!item.isValidPhone && (
-                            <span className="text-[9px] font-bold text-red-700 bg-red-100 border border-red-200 px-1.5 py-0.2 rounded-md">
+                            <span className="text-[9px] font-bold text-red-700 bg-red-100 border border-red-200 px-1.5 py-0.5 leading-none rounded-md">
                               Invalid Format
                             </span>
                           )}
                           {item.isDuplicatePhone && (
-                            <span className="text-[9px] font-bold text-amber-800 bg-amber-100 border border-amber-200 px-1.5 py-0.2 rounded-md">
+                            <span className="text-[9px] font-bold text-amber-800 bg-amber-100 border border-amber-200 px-1.5 py-0.5 leading-none rounded-md">
                               Duplicate
                             </span>
                           )}
