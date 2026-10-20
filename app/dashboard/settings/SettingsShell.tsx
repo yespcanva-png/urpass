@@ -78,25 +78,33 @@ const NAV: { id: Section; label: string; icon: React.ComponentType<{ className?:
 
 const PLAN_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   free: Sparkles, starter: Zap, pro: Crown, business: Building2, campus: Building2, enterprise: Building2,
+  managed_enterprise: Crown, managed_service: Crown, managed: Crown,
 };
 const PLAN_GRADIENT: Record<string, string> = {
-  free:       "linear-gradient(135deg, #1c1c28 0%, #13111c 100%)",
-  starter:    "linear-gradient(135deg, #1e1030 0%, #13111c 100%)",
-  pro:        "linear-gradient(135deg, #2a1a00 0%, #13111c 100%)",
-  business:   "linear-gradient(135deg, #082f49 0%, #13111c 100%)",
-  campus:     "linear-gradient(135deg, #064e3b 0%, #13111c 100%)",
-  enterprise: "linear-gradient(135deg, #0c1624 0%, #13111c 100%)",
+  free:               "linear-gradient(135deg, #1c1c28 0%, #13111c 100%)",
+  starter:            "linear-gradient(135deg, #1e1030 0%, #13111c 100%)",
+  pro:                "linear-gradient(135deg, #2a1a00 0%, #13111c 100%)",
+  business:           "linear-gradient(135deg, #082f49 0%, #13111c 100%)",
+  campus:             "linear-gradient(135deg, #064e3b 0%, #13111c 100%)",
+  enterprise:         "linear-gradient(135deg, #0c1624 0%, #13111c 100%)",
+  managed_enterprise: "linear-gradient(135deg, #2e1065 0%, #13111c 100%)",
+  managed_service:    "linear-gradient(135deg, #2e1065 0%, #13111c 100%)",
+  managed:            "linear-gradient(135deg, #2e1065 0%, #13111c 100%)",
 };
 const PLAN_ACCENT: Record<string, string> = {
   free: "#a78bfa", starter: "#a78bfa", pro: "#fbbf24", business: "#38bdf8", campus: "#34d399", enterprise: "#94a3b8",
+  managed_enterprise: "#c084fc", managed_service: "#c084fc", managed: "#c084fc",
 };
 const PLAN_FEATURES: Record<string, string[]> = {
-  free:       ["2 events/month", "100 registrations/month", "Digital passes", "QR check-in"],
-  starter:    ["10 events/month", "500 registrations/month", "CSV upload", "Standard analytics"],
-  pro:        ["Unlimited events", "2,500 registrations/month", "API access", "Webhooks"],
-  business:   ["Unlimited events", "10,000 registrations/month", "Advanced teams", "API & webhooks"],
-  campus:     ["Unlimited events", "Unlimited registrations", "Campus teams", "API & webhooks"],
-  enterprise: ["Everything in Business", "Dedicated support", "Custom SLAs", "Volume discounts"],
+  free:               ["2 events/month", "100 registrations/month", "Digital passes", "QR check-in"],
+  starter:            ["10 events/month", "500 registrations/month", "CSV upload", "Standard analytics"],
+  pro:                ["Unlimited events", "2,500 registrations/month", "API access", "Webhooks"],
+  business:           ["Unlimited events", "10,000 registrations/month", "Advanced teams", "API & webhooks"],
+  campus:             ["Unlimited events", "Unlimited registrations", "Campus teams", "API & webhooks"],
+  enterprise:         ["Everything in Business", "Dedicated support", "Custom SLAs", "Volume discounts"],
+  managed_enterprise: ["Dedicated Managed Support", "Custom Pass & Domain Branding", "Single Event Pass", "Priority VIP Check-In"],
+  managed_service:    ["Dedicated Managed Support", "Custom Pass & Domain Branding", "Single Event Pass", "Priority VIP Check-In"],
+  managed:            ["Dedicated Managed Support", "Custom Pass & Domain Branding", "Single Event Pass", "Priority VIP Check-In"],
 };
 
 /* ── Shared section label ──────────────────────────────────────────────── */
@@ -132,7 +140,10 @@ function PlanCard({
   const planGradient = PLAN_GRADIENT[plan.slug] ?? PLAN_GRADIENT.free;
   const planAccent   = PLAN_ACCENT[plan.slug] ?? PLAN_ACCENT.free;
   const planFeatures = PLAN_FEATURES[plan.slug] ?? PLAN_FEATURES.free;
-  const displayPrice = currentPlan
+  const isManaged = plan.slug === "managed_enterprise" || plan.slug === "managed_service" || plan.slug === "managed" || currentPlan?.slug === "managed_enterprise";
+  const displayPrice = isManaged
+    ? 600000
+    : currentPlan
     ? billingCycle === "annual" ? currentPlan.price_monthly * 10 : currentPlan.price_monthly
     : 0;
   const eventUsagePct = plan.unlimited
@@ -170,7 +181,11 @@ function PlanCard({
                   </span>
                 )}
               </div>
-              <p className="text-lg font-bold text-white">{currentPlan?.name ?? (plan.slug !== "free" ? plan.slug.toUpperCase() : "Free")}</p>
+              <p className="text-lg font-bold text-white">
+                {isManaged
+                  ? "Managed Service"
+                  : (currentPlan?.name ?? (plan.slug !== "free" ? plan.slug.toUpperCase() : "Free"))}
+              </p>
             </div>
           </div>
           <div className="text-right">
@@ -180,6 +195,8 @@ function PlanCard({
             <p className="text-[10px] text-white/30">
               {isTrial
                 ? "30-day trial"
+                : isManaged
+                ? "single event"
                 : currentPlan && currentPlan.price_monthly > 0
                 ? billingCycle === "annual" ? "/year" : "/month"
                 : "forever"}
@@ -212,7 +229,7 @@ function PlanCard({
           </div>
         </div>
 
-        {renewalDate && currentPlan && currentPlan.price_monthly > 0 && (
+        {renewalDate && currentPlan && currentPlan.price_monthly > 0 && !isManaged && (
           <p className="relative text-[10px] text-white/25">
             {cancelAtPeriodEnd ? "Cancels" : "Renews"} {renewalDate}
           </p>

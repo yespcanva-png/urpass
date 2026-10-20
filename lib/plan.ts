@@ -390,11 +390,13 @@ export async function getUserPlan(supabase: any, userId: string): Promise<PlanLi
     const rawSlug = p?.slug?.toLowerCase();
     if (rawSlug) {
       if (rawSlug === "founder_lifetime") return "founder";
+      if (rawSlug === "managed_service" || rawSlug === "managed") return "managed_enterprise";
       if (rawSlug in PLAN_CONFIGS) return rawSlug as PlanSlug;
     }
     const trialPlan = (s.trial_plan as string | undefined)?.toLowerCase();
     if (trialPlan) {
       if (trialPlan === "founder_lifetime") return "founder";
+      if (trialPlan === "managed_service" || trialPlan === "managed") return "managed_enterprise";
       if (trialPlan in PLAN_CONFIGS) return trialPlan as PlanSlug;
     }
     return undefined;
@@ -483,8 +485,12 @@ export async function getUserPlan(supabase: any, userId: string): Promise<PlanLi
         .select("slug")
         .eq("id", sub.plan_id)
         .maybeSingle();
-      if (planRow?.slug && (planRow.slug in PLAN_CONFIGS)) {
-        slug = planRow.slug as PlanSlug;
+      if (planRow?.slug) {
+        const rowSlug = planRow.slug.toLowerCase();
+        const mappedSlug = (rowSlug === "managed_service" || rowSlug === "managed") ? "managed_enterprise" : rowSlug;
+        if (mappedSlug in PLAN_CONFIGS) {
+          slug = mappedSlug as PlanSlug;
+        }
       }
     } catch {
       // ignore

@@ -152,6 +152,30 @@ export default function Sidebar({ email, fullName, planSlug, campusContext }: Pr
       iconColor: "text-sky-300",
       subtitle: "Enterprise Plan",
     },
+    managed_enterprise: {
+      label: "Managed Service",
+      badgeClass: "text-purple-300 bg-purple-500/15 border-purple-500/25",
+      iconBorder: "border-purple-500/30",
+      iconBg: "bg-purple-950/60",
+      iconColor: "text-purple-300",
+      subtitle: "Managed Service",
+    },
+    managed_service: {
+      label: "Managed Service",
+      badgeClass: "text-purple-300 bg-purple-500/15 border-purple-500/25",
+      iconBorder: "border-purple-500/30",
+      iconBg: "bg-purple-950/60",
+      iconColor: "text-purple-300",
+      subtitle: "Managed Service",
+    },
+    managed: {
+      label: "Managed Service",
+      badgeClass: "text-purple-300 bg-purple-500/15 border-purple-500/25",
+      iconBorder: "border-purple-500/30",
+      iconBg: "bg-purple-950/60",
+      iconColor: "text-purple-300",
+      subtitle: "Managed Service",
+    },
     business: {
       label: "Business",
       badgeClass: "text-amber-300 bg-amber-400/10 border-amber-400/25",
@@ -323,7 +347,7 @@ export default function Sidebar({ email, fullName, planSlug, campusContext }: Pr
               label="Ticket Studio"
               active={isActive("/studio") || isActive("/dashboard/ticket-design") || isActive("/dashboard/pass-design")}
             />
-            {planSlug && ["pro", "business", "campus", "enterprise"].includes(planSlug) && (
+            {planSlug && ["pro", "business", "campus", "enterprise", "managed_enterprise", "managed_service", "managed"].includes(planSlug) && (
               <NavLink href="/dashboard/api-keys" icon={Key} label="API Keys" active={isActive("/dashboard/api-keys")} />
             )}
           </nav>

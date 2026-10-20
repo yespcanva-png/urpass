@@ -260,7 +260,8 @@ export default function BillingClientShell({
   const isNiveditha = (userEmail || "").toLowerCase() === "niveditha@client.urpass.space";
 
   // Price formatting
-  const formattedPlanPrice = currentPlanSlug === "managed_enterprise"
+  const isManaged = currentPlanSlug === "managed_enterprise" || currentPlanSlug === "managed_service" || currentPlanSlug === "managed";
+  const formattedPlanPrice = isManaged
     ? "₹6,000 (+18% GST) · Single Event"
     : isTrial
     ? isUk
@@ -303,7 +304,9 @@ export default function BillingClientShell({
         <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white border border-neutral-200/80 shadow-xs">
             <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
-            <span className="text-xs font-semibold text-neutral-800">{currentPlanName} Plan</span>
+            <span className="text-xs font-semibold text-neutral-800">
+              {currentPlanName.endsWith("Plan") || currentPlanName.endsWith("Service") ? currentPlanName : `${currentPlanName} Plan`}
+            </span>
             <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-brand-50 text-brand border border-brand-100 uppercase">
               {isTrial ? "Trial" : isFounderPlan ? "Lifetime" : "Active"}
             </span>
@@ -480,9 +483,9 @@ export default function BillingClientShell({
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase">
                       Founder Lifetime License
                     </span>
-                  ) : currentPlanSlug === "managed_enterprise" ? (
+                  ) : isManaged ? (
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 border border-purple-200 uppercase">
-                      Single Event License
+                      Managed Service
                     </span>
                   ) : billingCycle === "annual" && currentPlanSlug !== "free" ? (
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-brand-50 text-brand border border-brand-100 uppercase">
@@ -493,7 +496,7 @@ export default function BillingClientShell({
 
                 <div className="flex items-baseline gap-2.5 flex-wrap">
                   <h2 className="text-2xl font-bold tracking-tight text-neutral-900">
-                    {currentPlanName} Plan
+                    {currentPlanName.endsWith("Plan") || currentPlanName.endsWith("Service") ? currentPlanName : `${currentPlanName} Plan`}
                   </h2>
                   <span className="text-sm font-semibold text-neutral-600">
                     {formattedPlanPrice}
@@ -519,9 +522,9 @@ export default function BillingClientShell({
                         : `Free trial ends ${renewalDate ?? "in 30 days"} · No card on file (${sub?.has_lifetime_access ? "reverts to Founder Lifetime" : "reverts to Free"})`
                     )}
                   </p>
-                ) : currentPlanSlug === "managed_enterprise" ? (
+                ) : isManaged ? (
                   <p className="text-xs text-neutral-500">
-                    Single Event License with Dedicated Managed Support · Zero recurring renewal payments
+                    Managed Service with Dedicated Event Operations · Zero recurring renewal payments
                   </p>
                 ) : currentPlanSlug !== "free" && renewalDate ? (
                   <p className="text-xs text-neutral-500">
@@ -533,7 +536,7 @@ export default function BillingClientShell({
               </div>
 
               <div className="flex items-center gap-2.5 shrink-0 self-start sm:self-center">
-                {!isFounderPlan && currentPlanSlug !== "managed_enterprise" && currentPlanSlug !== "free" && sub && !sub.cancel_at_period_end && sub.autopay_status !== "cancelled" && (
+                {!isFounderPlan && !isManaged && currentPlanSlug !== "free" && sub && !sub.cancel_at_period_end && sub.autopay_status !== "cancelled" && (
                   <CancelButton />
                 )}
                 <button

@@ -69,7 +69,7 @@ export const STATIC_V2_PLANS: Record<PlanSlug, { name: string; desc: string; inr
     gbpAnnual: 0,
   },
   managed_enterprise: {
-    name: "Managed Enterprise",
+    name: "Managed Service",
     desc: "Single Event License with Dedicated Managed Support, Custom Branding & Enterprise Features.",
     inrMonthly: 600000,
     inrAnnual: 600000,

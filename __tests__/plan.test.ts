@@ -272,4 +272,53 @@ describe("getUserPlan", () => {
       expect(plan.canUse("webhooks")).toBe(true);
     });
   });
+
+  describe("Managed Service plan", () => {
+    it("returns managed_enterprise plan with unlimited events and branding removal", async () => {
+      const futureDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+      const mockSupabase = {
+        from: vi.fn().mockReturnThis(),
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        in: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({
+          data: {
+            status: "active",
+            is_trial: false,
+            current_period_end: futureDate,
+            plan: { slug: "managed_enterprise" },
+          },
+        }),
+      };
+
+      const plan = await getUserPlan(mockSupabase, "user-managed");
+      expect(plan.slug).toBe("managed_enterprise");
+      expect(plan.canUse("remove_branding")).toBe(true);
+      expect(plan.canUse("custom_pass_design")).toBe(true);
+      expect(plan.canUse("priority_support")).toBe(true);
+      expect(plan.unlimited).toBe(true);
+    });
+
+    it("normalizes managed_service and managed slugs to managed_enterprise", async () => {
+      const futureDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+      const mockSupabase = {
+        from: vi.fn().mockReturnThis(),
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        in: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({
+          data: {
+            status: "active",
+            is_trial: false,
+            current_period_end: futureDate,
+            plan: { slug: "managed_service" },
+          },
+        }),
+      };
+
+      const plan = await getUserPlan(mockSupabase, "user-managed-service");
+      expect(plan.slug).toBe("managed_enterprise");
+      expect(plan.canUse("remove_branding")).toBe(true);
+    });
+  });
 });

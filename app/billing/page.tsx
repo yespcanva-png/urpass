@@ -95,8 +95,8 @@ const PLANS = [
   },
   {
     slug: "managed_enterprise",
-    name: "Managed Enterprise",
-    desc: "Single Event Enterprise License with Dedicated Managed Support.",
+    name: "Managed Service",
+    desc: "Single Event License with Dedicated Managed Support.",
     priceMonthly: 6000,
     annualTotal: 6000,
     features: [
@@ -118,6 +118,8 @@ const PLAN_ORDER: Record<string, number> = {
   founder: 4,
   lifetime: 4,
   managed_enterprise: 5,
+  managed_service: 5,
+  managed: 5,
 };
 
 interface SubPlan {
@@ -251,7 +253,13 @@ export default async function BillingPage(props: {
   const userName = profile?.full_name ?? user.email?.split("@")[0] ?? "Organizer";
   const userEmail = profile?.email ?? user.email ?? "";
   const userPhone = profile?.phone ?? user.phone ?? (user.user_metadata?.phone as string) ?? "";
-  const currentPlan = PLANS.find((p) => p.slug === currentPlanSlug) ?? PLANS[0];
+  const currentPlan =
+    PLANS.find(
+      (p) =>
+        p.slug === currentPlanSlug ||
+        (["managed_enterprise", "managed_service", "managed"].includes(currentPlanSlug) &&
+          p.slug === "managed_enterprise")
+    ) ?? PLANS[0];
   const invoices = (invoiceData ?? []) as InvoiceItem[];
 
   const registrationLimit = plan.getLimit("registrations_per_month");

@@ -684,7 +684,7 @@ export async function activatePaidSubscription(
       .from("plans")
       .upsert(
         {
-          name: "Managed Enterprise",
+          name: "Managed Service",
           slug: "managed_enterprise",
           price_monthly: 600000,
           price_yearly: 600000,
@@ -869,7 +869,7 @@ export async function activatePaidSubscription(
     const invoiceDescription = isFounder
       ? "URPASS Founder Lifetime Access (One-Time)"
       : isManaged
-      ? "URPASS Managed Enterprise Plan — Single Event Pass & Managed Support"
+      ? "URPASS Managed Service — Single Event Pass & Managed Support"
       : `${normalizedSlug.toUpperCase()} Plan (${effectiveCycle})`;
 
     const invoice = await createInvoiceForPayment({
@@ -894,12 +894,12 @@ export async function activatePaidSubscription(
     const planDisplayName = isFounder
       ? "Founder Lifetime Plan"
       : isManaged
-      ? "Managed Enterprise Plan (Single Event)"
+      ? "Managed Service"
       : `${normalizedSlug.toUpperCase()} Plan`;
     const itemName = isFounder
       ? "URPASS Founder Lifetime Access"
       : isManaged
-      ? "URPASS Managed Enterprise Plan (Single Event Pass)"
+      ? "URPASS Managed Service (Single Event Pass)"
       : `${normalizedSlug.toUpperCase()} Plan (${effectiveCycle})`;
     try {
       await Promise.allSettled([

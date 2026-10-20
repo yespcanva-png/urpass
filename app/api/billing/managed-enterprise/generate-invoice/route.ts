@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
       .from("plans")
       .upsert(
         {
-          name: "Managed Enterprise",
+          name: "Managed Service",
           slug: "managed_enterprise",
           price_monthly: 600000,
           price_yearly: 600000,
@@ -108,7 +108,7 @@ export async function POST(req: NextRequest) {
     userId: user.id,
     subscriptionId: updatedSub?.id ?? null,
     paymentId,
-    description: "URPASS Managed Enterprise Plan — Single Event Pass & Managed Support",
+    description: "URPASS Managed Service — Single Event Pass & Managed Support",
     baseAmountRupees: 6000,
     discountRupees: 0,
     currency: "INR",

@@ -180,7 +180,10 @@ export default function DashboardContent() {
         const isTrial = Boolean(sub?.is_trial && sub?.trial_ends_at && new Date(sub.trial_ends_at) >= new Date());
         const isTrialExpired = Boolean(sub?.is_trial && sub?.trial_ends_at && new Date(sub.trial_ends_at) < new Date());
         const slug = isTrialExpired ? "free" : ((sub?.plan as unknown as { slug: string } | null)?.slug ?? "free");
-        const planName = (sub?.plan as unknown as { name: string } | null)?.name ?? (slug ? slug.toUpperCase() : "Pro");
+        const isManagedSlug = slug === "managed_enterprise" || slug === "managed_service" || slug === "managed";
+        const planName = isManagedSlug
+          ? "Managed Service"
+          : ((sub?.plan as unknown as { name: string } | null)?.name ?? (slug ? slug.toUpperCase() : "Pro"));
         const trialUsed = sub?.trial_used ?? false;
 
         let trialState = null;

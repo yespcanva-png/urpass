@@ -862,7 +862,7 @@ export async function generateInvoicePdf(invoice: InvoiceRecord): Promise<Uint8A
     (Math.round(Number(invoice.total_amount)) === 7080 && Math.round(Number(invoice.taxable_amount || invoice.subtotal)) === 6000);
 
   const itemTitle = isManagedInvoice
-    ? "URPASS Managed Enterprise Plan (Single Event)"
+    ? "URPASS Managed Service (Single Event)"
     : URPASS_SERVICE.name;
   const subHeading = isManagedInvoice
     ? "Includes dedicated event manager, custom branding setup & Managed Support for one event."

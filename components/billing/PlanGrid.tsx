@@ -191,7 +191,7 @@ export default function PlanGrid({
   const isNiveditha = (userEmail || "").toLowerCase() === "niveditha@client.urpass.space";
 
   if (isNiveditha) {
-    const isPlanActive = currentPlanSlug === "managed_enterprise";
+    const isPlanActive = currentPlanSlug === "managed_enterprise" || currentPlanSlug === "managed_service" || currentPlanSlug === "managed";
     const latestInvoice = invoices && invoices.length > 0 ? invoices[0] : null;
 
     return (
@@ -204,7 +204,7 @@ export default function PlanGrid({
               <span>Enterprise Agreement · niveditha@client.urpass.space</span>
             </div>
             <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-neutral-900">
-              Managed Enterprise Agreement
+              Managed Service Agreement
             </h2>
             <p className="text-xs text-neutral-500 mt-0.5">
               Dedicated operational support, custom branding capabilities, and unmetered attendee throughput for your event.
@@ -274,7 +274,7 @@ export default function PlanGrid({
                     <span>Single Event Agreement</span>
                   </div>
                   <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-neutral-900">
-                    Managed Enterprise Agreement
+                    Managed Service Agreement
                   </h3>
                 </div>
 
@@ -318,7 +318,7 @@ export default function PlanGrid({
                     <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                       <div className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold">
                         <Check className="w-4 h-4 text-emerald-600" />
-                        <span>Agreement Active · Single Event Pass &amp; Custom Branding Enabled</span>
+                        <span>Agreement Active · Managed Service &amp; Custom Branding Enabled</span>
                       </div>
                       {latestInvoice && (
                         <a
@@ -333,7 +333,7 @@ export default function PlanGrid({
                   ) : (
                     <CheckoutButton
                       planSlug="managed_enterprise"
-                      planName="Managed Enterprise Plan"
+                      planName="Managed Service"
                       billingCycle="monthly"
                       userEmail={userEmail}
                       userName={userName}
