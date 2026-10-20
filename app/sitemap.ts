@@ -870,7 +870,44 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/peenya-industrial-event-registration",
   ].map((path) => ({ url: `${BASE}${path}`, priority: 0.95, changeFrequency: "weekly" as const }));
 
+  const bengaluruBatch2Pages = [
+    // 12 High-Conversion Software Pages (31 to 42)
+    "/bangalore-event-invitation-management-software",
+    "/bengaluru-vip-guest-check-in-software",
+    "/bangalore-event-rsvp-tracking-platform",
+    "/bengaluru-multi-day-event-ticketing",
+    "/bangalore-event-approval-workflow-software",
+    "/bengaluru-early-bird-event-ticketing",
+    "/bangalore-event-capacity-management-software",
+    "/bengaluru-attendee-data-export-software",
+    "/bangalore-event-ticket-qr-validation",
+    "/bengaluru-event-organizer-dashboard",
+    "/bangalore-event-registration-api-integration",
+    "/bengaluru-branded-event-ticket-design",
+    // 10 Event Industry Pages (43 to 52)
+    "/bangalore-ai-ml-conference-registration",
+    "/bengaluru-developer-meetup-check-in",
+    "/bangalore-recruitment-drive-registration",
+    "/bengaluru-alumni-meet-registration",
+    "/bangalore-industrial-expo-ticketing",
+    "/bengaluru-investor-pitch-event-registration",
+    "/bangalore-medical-conference-registration",
+    "/bengaluru-real-estate-expo-registration",
+    "/bangalore-training-certification-event-registration",
+    "/bengaluru-award-ceremony-guest-management",
+    // 8 Operational Problem-Solving Pages (53 to 60)
+    "/bangalore-event-entry-queue-management",
+    "/bengaluru-event-ticket-fraud-prevention",
+    "/bangalore-last-minute-event-registration",
+    "/bengaluru-event-re-entry-tracking",
+    "/bangalore-event-gate-staff-management",
+    "/bengaluru-event-ticket-category-management",
+    "/bangalore-event-attendance-report-generator",
+    "/bengaluru-event-registration-data-collection",
+  ].map((path) => ({ url: `${BASE}${path}`, priority: 0.95, changeFrequency: "weekly" as const }));
+
   const rawStaticEntries = [
+    ...bengaluruBatch2Pages,
     ...bengaluruBatch30Pages,
     ...growthBatch25Pages,
     ...anniversarySeoGeoPages,
