@@ -33,9 +33,11 @@ import {
   Eye,
   Pencil,
   X,
+  Briefcase,
 } from "lucide-react";
 import OpsTerminal from "./OpsTerminal";
 import OpsEmailEngine from "./OpsEmailEngine";
+import OpsCareersManager from "./OpsCareersManager";
 import type { OpsInvoiceItem, OpsLogItem } from "@/app/api/ops/telemetry/route";
 
 function getInvoiceSeriesBadge(invoiceNumber: string) {
@@ -236,7 +238,7 @@ export default function OpsDashboard({ onLogout }: Props) {
   const [data, setData] = useState<TelemetryData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [activeTab, setActiveTab] = useState<"terminal" | "roster" | "sponsorships" | "invoices" | "emails">("terminal");
+  const [activeTab, setActiveTab] = useState<"terminal" | "roster" | "sponsorships" | "invoices" | "emails" | "careers">("terminal");
   const [userSearch, setUserSearch] = useState("");
   const [sponsorshipFilter, setSponsorshipFilter] = useState<"pending" | "approved" | "all">("pending");
   const [invoiceSearch, setInvoiceSearch] = useState("");
@@ -945,6 +947,18 @@ export default function OpsDashboard({ onLogout }: Props) {
                   {data?.invoices?.totalCount}
                 </span>
               )}
+            </button>
+
+            <button
+              onClick={() => setActiveTab("careers")}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer relative ${
+                activeTab === "careers"
+                  ? "bg-purple-500/25 text-purple-200 border border-purple-500/50 shadow-sm"
+                  : "bg-white/5 text-white/60 hover:text-white hover:bg-white/10"
+              }`}
+            >
+              <Briefcase className="w-3.5 h-3.5 text-purple-400" />
+              Careers & Jobs
             </button>
           </div>
 
@@ -1724,6 +1738,13 @@ export default function OpsDashboard({ onLogout }: Props) {
         {activeTab === "emails" && (
           <div className="animate-in fade-in duration-200">
             <OpsEmailEngine />
+          </div>
+        )}
+
+        {/* ── Tab 6: Careers & Talent Pipeline ── */}
+        {activeTab === "careers" && (
+          <div className="animate-in fade-in duration-200">
+            <OpsCareersManager />
           </div>
         )}
       </main>

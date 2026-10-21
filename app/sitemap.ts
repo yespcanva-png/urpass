@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { createClient } from "@/lib/supabase/server";
+import { getPublishedJobs } from "@/lib/careers/service";
 
 const BASE = "https://urpass.space";
 
@@ -40,6 +41,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE}/ticket-magic`, priority: 0.95, changeFrequency: "weekly" as const },
     { url: `${BASE}/templates`, priority: 0.85, changeFrequency: "weekly" as const },
     { url: `${BASE}/sponsorship`, priority: 0.9, changeFrequency: "weekly" as const },
+    { url: `${BASE}/careers`, priority: 0.9, changeFrequency: "weekly" as const },
     { url: `${BASE}/contact`, priority: 0.6, changeFrequency: "monthly" as const },
     { url: `${BASE}/privacy`, priority: 0.7, changeFrequency: "monthly" as const },
     { url: `${BASE}/terms`, priority: 0.4, changeFrequency: "monthly" as const },
@@ -923,7 +925,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...mcpPages,
   ];
 
-  // Deduplicate entries by URL, giving preference to earlier entries (so bofuMoneyPages keeps 0.95 priority)
+    // Deduplicate entries by URL, giving preference to earlier entries (so bofuMoneyPages keeps 0.95 priority)
   const seenUrls = new Set<string>();
   const staticEntries = rawStaticEntries
     .filter((item) => {
@@ -933,5 +935,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })
     .map((item) => ({ ...item, lastModified: now }));
 
-  return [...staticEntries, ...eventEntries];
+  // Query published careers jobs so open job descriptions are indexed
+  let jobEntries: MetadataRoute.Sitemap = [];
+  try {
+    const jobs = await getPublishedJobs();
+    if (jobs && jobs.length > 0) {
+      jobEntries = jobs.map((j) => ({
+        url: `${BASE}/careers/${j.slug}`,
+        priority: 0.85,
+        changeFrequency: "weekly" as const,
+        lastModified: j.updated_at || now,
+      }));
+    }
+  } catch {
+    // Silently fall back if careers service is unavailable at build-time
+  }
+
+  return [...staticEntries, ...eventEntries, ...jobEntries];
 }

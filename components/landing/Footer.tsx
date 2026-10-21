@@ -277,6 +277,10 @@ export default function Footer() {
             <Link href="/about" className="hover:text-neutral-300 transition-colors">
               About
             </Link>
+            <Link href="/careers" className="text-violet-300 hover:text-white transition-colors font-medium flex items-center gap-1.5">
+              <span>Careers</span>
+              <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-violet-500/30 text-violet-200">Hiring</span>
+            </Link>
             <Link href="/brand" className="text-emerald-400 hover:text-emerald-300 transition-colors font-medium">
               Brand Kit
             </Link>
