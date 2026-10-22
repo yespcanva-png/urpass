@@ -351,6 +351,11 @@ export class CommunicationService {
       };
     }
 
+    const eventSettings = await this.getEventCommunicationSettings(payload.eventId);
+    const templateName = eventSettings.whatsapp_settings?.template_name?.trim()
+      || process.env.WHATSAPP_TEMPLATE_NAME?.trim()
+      || "urpass_space";
+
     const idempotencyKey = generateIdempotencyKey(payload.passToken, "WHATSAPP", payload.version || "v1");
 
     // ── 2. Atomic Database Claim (Prevent Concurrent Duplicate Sends) ──
@@ -376,7 +381,7 @@ export class CommunicationService {
             attendee_id: payload.attendeeId,
             channel: "WHATSAPP",
             destination: normalizedPhone,
-            template_name: payload.templateName || process.env.WHATSAPP_TEMPLATE_NAME || "urpass_space",
+            template_name: templateName,
             provider: "whatsapp_cloud",
             status: "SENDING",
             attempt_count: 1,
@@ -450,6 +455,7 @@ export class CommunicationService {
     try {
       res = await this.whatsapp.sendTicketWhatsApp({
         ...payload,
+        templateName,
         phone: normalizedPhone,
         ticketId,
         ticketUrl,

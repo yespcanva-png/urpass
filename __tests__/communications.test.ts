@@ -123,6 +123,31 @@ describe("CommunicationService Orchestration", () => {
     service = new CommunicationService();
   });
 
+  it.each([
+    [" custom_pass ", "custom_pass"],
+    ["", "urpass_space"],
+    ["   ", "urpass_space"],
+  ])("uses the saved template or default for %j", async (saved, expected) => {
+    vi.stubEnv("WHATSAPP_TEMPLATE_NAME", "");
+    const { whatsAppProvider } = await import("@/lib/communications/providers/whatsapp/provider");
+    const send = vi.spyOn(whatsAppProvider, "sendTicketWhatsApp").mockResolvedValue({ success: true });
+    vi.spyOn(service, "getEventCommunicationSettings").mockResolvedValue({
+      email_enabled: false, sms_enabled: false, whatsapp_enabled: true,
+      sms_fallback_enabled: false, whatsapp_settings: { template_name: saved },
+    });
+    try {
+      await service.sendTicketWhatsApp({
+        eventId: "evt-1", eventName: "Demo", passToken: "template-test", ticketId: "URP-TEST",
+        attendeeId: "att-1", attendeeName: "Alice", email: "alice@example.com",
+        phone: "+919876543210", whatsappConsent: true, templateName: "old_template",
+      });
+      expect(send).toHaveBeenCalledWith(expect.objectContaining({ templateName: expected }));
+    } finally {
+      vi.restoreAllMocks();
+      vi.unstubAllEnvs();
+    }
+  });
+
   it("sendTicketSMS returns validation error for missing or malformed phone", async () => {
     const res = await service.sendTicketSMS({
       eventId: "evt-1",

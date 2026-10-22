@@ -138,6 +138,31 @@ export async function updateEventCommunicationSettings(
   return { success: true };
 }
 
+/** Saves the optional event template override without replacing notification toggles. */
+export async function saveWhatsAppTemplateNameAction(eventId: string, name: string) {
+  if (typeof name !== "string") return { error: "Enter a valid template name." };
+  const templateName = name.trim();
+  if (templateName && !/^[a-z0-9_]{1,512}$/.test(templateName)) {
+    return { error: "Use only lowercase letters, numbers, and underscores for the template name." };
+  }
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+  if (!await verifyEventOrganizer(supabase, user, eventId)) {
+    return { error: "You are not authorized to configure communications for this event." };
+  }
+  const db = adminClient();
+  const { data, error } = await db.from("events").select("whatsapp_settings").eq("id", eventId).single();
+  if (error) return { error: error.message };
+  const { error: saveError } = await db.from("events").update({
+    whatsapp_settings: { ...(data.whatsapp_settings || {}), template_name: templateName },
+    updated_at: new Date().toISOString(),
+  }).eq("id", eventId);
+  if (saveError) return { error: saveError.message };
+  revalidatePath(`/event/${eventId}/communications`);
+  return { success: true };
+}
+
 /**
  * Sends a test transactional SMS to verify DLT header and template configuration
  */
@@ -437,6 +462,7 @@ export async function getCommunicationControlPanelData(eventId: string) {
     selfServiceConfig,
     managedRequests,
     templates,
+    defaultWhatsAppTemplateName: process.env.WHATSAPP_TEMPLATE_NAME?.trim() || "urpass_space",
     eventSettings,
     stats,
     recentLogs: sanitizedLogs,

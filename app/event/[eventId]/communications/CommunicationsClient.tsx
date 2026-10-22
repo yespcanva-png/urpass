@@ -39,6 +39,7 @@ import {
 } from "@/app/actions/event-engagement";
 import {
   updateEventCommunicationSettings,
+  saveWhatsAppTemplateNameAction,
   toggleMasterCommunicationAction,
   toggleChannelAction,
   saveSelfServiceWhatsAppAction,
@@ -120,6 +121,9 @@ export default function CommunicationsClient({
     is_configured: false,
     connection_status: "disconnected",
   };
+  const defaultTemplateName = controlPanelData?.defaultWhatsAppTemplateName || "urpass_space";
+  const [manualTemplateName, setManualTemplateName] = useState(controlPanelData?.eventSettings?.whatsapp_settings?.template_name || "");
+  const [savingTemplate, setSavingTemplate] = useState(false);
   const templates: WhatsAppTemplateRecord[] = controlPanelData?.templates || [];
   const stats = controlPanelData?.stats || {
     totalSent: 0,
@@ -147,7 +151,7 @@ export default function CommunicationsClient({
   const [testWAModalOpen, setTestWAModalOpen] = useState(false);
   const [testWAPhone, setTestWAPhone] = useState("+91");
   const [testWASending, setTestWASending] = useState(false);
-  const [testWATemplate, setTestWATemplate] = useState<"urpass_space" | "urpass_ticket">("urpass_space");
+  const [testWATemplate, setTestWATemplate] = useState(manualTemplateName || defaultTemplateName);
 
   const [selfServiceModalOpen, setSelfServiceModalOpen] = useState(false);
   const [ssWabaId, setSsWabaId] = useState("");
@@ -305,7 +309,7 @@ export default function CommunicationsClient({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           phone: testWAPhone,
-          templateName: testWATemplate,
+          templateName: testWATemplate.trim() || defaultTemplateName,
           templateLang: testWATemplate === "urpass_space" ? "en" : "en_US",
           eventId,
         }),
@@ -1094,7 +1098,7 @@ export default function CommunicationsClient({
       )}
 
       {/* ─────────────────────────────────────────────────────────────
-          TAB 3: APPROVED WHATSAPP TEMPLATES (USERS CANNOT CREATE TEMPLATES)
+          TAB 3: WHATSAPP TEMPLATE SETTINGS
       ───────────────────────────────────────────────────────────── */}
       {activeTab === "templates" && (
         <div className="bg-white border border-neutral-200/90 rounded-2xl p-6 shadow-2xs space-y-5">
@@ -1105,8 +1109,7 @@ export default function CommunicationsClient({
                 <h3 className="text-base font-bold text-neutral-900">Approved WhatsApp Message Templates</h3>
               </div>
               <p className="text-xs text-neutral-500 mt-1">
-                Meta strictly enforces approved utility templates for business-initiated WhatsApp messaging. UrPass
-                provides pre-certified production templates to guarantee immediate 100% deliverability.
+                Enter an approved WhatsApp template name for this event, or leave it blank to use the default.
               </p>
             </div>
 
@@ -1119,6 +1122,31 @@ export default function CommunicationsClient({
               Send Live Test Pass
             </button>
           </div>
+
+          <form className="space-y-3 rounded-xl border border-neutral-200 p-4" onSubmit={async (e) => {
+            e.preventDefault();
+            setSavingTemplate(true);
+            try {
+              const result = await saveWhatsAppTemplateNameAction(eventId, manualTemplateName);
+              if (result.error) setFeedback({ type: "error", text: result.error });
+              else {
+                setManualTemplateName(manualTemplateName.trim());
+                setFeedback({ type: "success", text: `Template saved: ${manualTemplateName.trim() || defaultTemplateName}` });
+                setTestWATemplate(manualTemplateName.trim() || defaultTemplateName);
+              }
+            } catch {
+              setFeedback({ type: "error", text: "Unable to save the template name. Please try again." });
+            } finally { setSavingTemplate(false); }
+          }}>
+            <label htmlFor="whatsapp-template-name" className="block text-sm font-bold text-neutral-900">Template name (optional)</label>
+            <input id="whatsapp-template-name" value={manualTemplateName} onChange={(e) => setManualTemplateName(e.target.value)}
+              placeholder={defaultTemplateName} maxLength={512} disabled={savingTemplate}
+              className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm" />
+            <p className="text-xs text-neutral-500">Default: <strong>{defaultTemplateName}</strong>. Clear this field and save to restore the default. Custom templates must be approved in your WhatsApp account and match the pass message variables.</p>
+            <button type="submit" disabled={savingTemplate} className="rounded-lg bg-neutral-900 px-4 py-2 text-xs font-bold text-white disabled:opacity-50">
+              {savingTemplate ? "Saving…" : "Save template"}
+            </button>
+          </form>
 
           {/* Template Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1494,19 +1522,17 @@ export default function CommunicationsClient({
               </button>
             </div>
             <p className="text-xs text-neutral-500">
-              Dispatches an approved Meta Cloud API template (<span className="font-mono font-bold">urpass_space</span> or <span className="font-mono font-bold">urpass_ticket</span>) with dynamic
+              Dispatches your selected approved Meta Cloud API template with dynamic
               parameters directly to any WhatsApp phone in real-time.
             </p>
             <div className="space-y-1">
               <label className="text-xs font-bold text-neutral-700">Message Template</label>
-              <select
+              <input
                 value={testWATemplate}
-                onChange={(e) => setTestWATemplate(e.target.value as "urpass_space" | "urpass_ticket")}
+                placeholder={defaultTemplateName}
+                onChange={(e) => setTestWATemplate(e.target.value)}
                 className="w-full px-3 py-2 rounded-lg border border-neutral-300 text-xs bg-neutral-50 text-neutral-900 focus:outline-hidden font-medium"
-              >
-                <option value="urpass_space">urpass_space (English UK · 4 variables + QR Button)</option>
-                <option value="urpass_ticket">urpass_ticket (English US · 5 variables + QR Button)</option>
-              </select>
+              />
             </div>
             <div className="space-y-1">
               <label className="text-xs font-bold text-neutral-700">Recipient Phone Number (E.164)</label>
