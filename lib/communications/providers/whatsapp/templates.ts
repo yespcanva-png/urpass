@@ -5,6 +5,8 @@
  * language fallback, and interactive button payload formatting.
  */
 
+import { formatTimeWithAmPm } from "@/lib/utils";
+
 export type WhatsAppTemplateType =
   | "ticket_confirmation"
   | "registration_received"
@@ -220,7 +222,7 @@ export function buildTemplatePayload(
         const dateText = params.eventDate
           ? new Date(params.eventDate).toLocaleDateString("en-IN", { dateStyle: "long", timeZone: "Asia/Kolkata" })
           : "24 October 2026";
-        const timeText = params.eventTime || (params.eventDate?.includes("T")
+        const timeText = formatTimeWithAmPm(params.eventTime) || (params.eventDate?.includes("T")
           ? new Date(params.eventDate).toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: "Asia/Kolkata" })
           : "11:00 AM");
         const venueText = params.venue || "Confirmed on Pass";
@@ -289,7 +291,7 @@ export function buildTemplatePayload(
           ? new Date(params.eventDate).toLocaleDateString("en-IN", { dateStyle: "medium" })
           : "Upcoming";
 
-        const timeText = params.eventTime || (params.eventDate && params.eventDate.includes("T")
+        const timeText = formatTimeWithAmPm(params.eventTime) || (params.eventDate && params.eventDate.includes("T")
           ? new Date(params.eventDate).toLocaleTimeString("en-IN", { hour: "numeric", minute: "numeric", hour12: true })
           : "Confirmed on Pass");
 

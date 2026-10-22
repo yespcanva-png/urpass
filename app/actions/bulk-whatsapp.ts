@@ -13,6 +13,7 @@ import {
 } from "@/lib/communications/utils";
 import type { DeliveryStatus, TicketDeliveryPayload } from "@/lib/communications/types";
 import { normalizeTemplateLanguage } from "@/lib/communications/providers/whatsapp/templates";
+import { formatTimeWithAmPm } from "@/lib/utils";
 import { revalidatePath } from "next/cache";
 
 function getAdminClient() {
@@ -410,7 +411,9 @@ export async function sendBulkWhatsAppInvitations({
       eventId,
       eventName: event.name,
       eventDate: event.event_date,
-      eventTime: (event as { start_time?: string | null }).start_time || undefined,
+      eventTime: (event as { start_time?: string | null }).start_time
+        ? formatTimeWithAmPm((event as { start_time?: string | null }).start_time)
+        : undefined,
       venue: event.venue,
       ticketId,
       passToken,

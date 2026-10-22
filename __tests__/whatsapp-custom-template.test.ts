@@ -73,6 +73,25 @@ describe("Custom WhatsApp template translations", () => {
     });
   });
 
+  it("formats 24-hour database time strings into clean AM/PM times for nivi", async () => {
+    vi.stubEnv("WHATSAPP_API_TOKEN", "test-token");
+    vi.stubEnv("WHATSAPP_PHONE_NUMBER_ID", "test-phone-id");
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true, json: async () => ({ messages: [{ id: "test-message" }] }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const result = await new WhatsAppProvider().sendTicketWhatsApp({
+      eventId: "event-1", eventName: "Festivals for Joy", eventDate: "2026-10-24",
+      eventTime: "11:00:00", venue: "Celebration Hall",
+      attendeeId: "attendee-1", attendeeName: "Guest Name", email: "guest@example.com",
+      phone: "+919876543210", ticketId: "URP-TEST", passToken: "pass-token",
+      templateName: "nivi1", templateLanguage: "en",
+    });
+    expect(result.success).toBe(true);
+    const sent = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(sent.template.components[0].parameters[1].text).toBe("11:00 AM");
+  });
+
   it("keeps an explicit en code when building an unknown custom template", () => {
     const payload = buildTemplatePayload("ticket_confirmation", { passToken: "pass-token" }, "en", "custom_invitation");
     expect(payload.language.code).toBe("en");

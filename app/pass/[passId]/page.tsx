@@ -20,6 +20,7 @@ import WhatsAppShareButton from "@/components/pass/WhatsAppShareButton";
 import AddToCalendarButton from "@/components/pass/AddToCalendarButton";
 import PersonalizePassModal from "@/components/pass/PersonalizePassModal";
 import { Suspense } from "react";
+import { formatTimeWithAmPm } from "@/lib/utils";
 import { resolveTicketDesign } from "@/lib/pass-design";
 import StudioPassRenderer from "@/components/studio/StudioPassRenderer";
 import { isStudioDesign } from "@/lib/studio/resolver";
@@ -503,7 +504,7 @@ export default async function PassPage({
                     className={`text-xs font-medium tracking-wide ${subtextCls} flex items-center gap-1.5`}
                   >
                     <CalendarDays className="w-3.5 h-3.5 opacity-70 shrink-0" />
-                    <span>{formattedDate}{event.start_time ? ` · ${event.start_time}` : ""}</span>
+                    <span>{formattedDate}{event.start_time ? ` · ${formatTimeWithAmPm(event.start_time)}` : ""}</span>
                   </p>
                 )}
                 {design.showVenue && event.venue && (

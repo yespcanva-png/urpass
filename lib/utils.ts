@@ -82,9 +82,46 @@ export function getEventDateRange(
   return dates;
 }
 
+/**
+ * Formats a 24-hour time string ("11:00:00", "11:00", "14:30") into a clean 12-hour AM/PM string ("11:00 AM", "2:30 PM").
+ * Preserves already-formatted 12-hour strings (e.g., "11:00 AM", "11:00 AM – 1:00 PM").
+ */
+export function formatTimeWithAmPm(timeStr?: string | null): string {
+  if (!timeStr) return "";
+  const trimmed = timeStr.trim();
+  if (!trimmed) return "";
+
+  // If already contains AM or PM, normalize casing
+  if (/am|pm/i.test(trimmed)) {
+    return trimmed.replace(/\b(am|pm)\b/gi, (m) => m.toUpperCase());
+  }
+
+  // Handle single time string (HH:MM or HH:MM:SS)
+  const match = trimmed.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
+  if (match) {
+    const h = parseInt(match[1], 10);
+    const m = match[2];
+    const ampm = h >= 12 ? "PM" : "AM";
+    const h12 = h % 12 || 12;
+    return `${h12}:${m} ${ampm}`;
+  }
+
+  // Handle range e.g. "11:00 - 13:00" or "11:00:00 - 13:00:00"
+  if (trimmed.includes("–") || trimmed.includes("-")) {
+    const parts = trimmed.split(/[-–]/).map((p) => p.trim());
+    if (parts.length === 2) {
+      return `${formatTimeWithAmPm(parts[0])} – ${formatTimeWithAmPm(parts[1])}`;
+    }
+  }
+
+  return trimmed;
+}
+
 export function formatEventTimeWithOvernight(startTime: string, endTime: string): string {
   if (!startTime) return "";
-  if (!endTime) return startTime;
+  const startFmt = formatTimeWithAmPm(startTime);
+  if (!endTime) return startFmt;
+  const endFmt = formatTimeWithAmPm(endTime);
 
   const startParts = startTime.split(":");
   const endParts = endTime.split(":");
@@ -97,10 +134,10 @@ export function formatEventTimeWithOvernight(startTime: string, endTime: string)
       const startTotal = startH * 60 + (isNaN(startM) ? 0 : startM);
       const endTotal = endH * 60 + (isNaN(endM) ? 0 : endM);
       if (endTotal < startTotal) {
-        return `${startTime} – ${endTime} (Next Day · Overnight)`;
+        return `${startFmt} – ${endFmt} (Next Day · Overnight)`;
       }
     }
   }
-  return `${startTime} – ${endTime}`;
+  return `${startFmt} – ${endFmt}`;
 }
 

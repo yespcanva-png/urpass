@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getUserPlan } from "@/lib/plan";
+import { formatTimeWithAmPm } from "@/lib/utils";
 import TicketStudio from "@/components/studio/TicketStudio";
 
 import {
@@ -107,7 +108,7 @@ export default async function StudioEventPage({
       userPlanTier={effectivePlanSlug}
       eventId={event.id}
       eventName={event.name}
-      eventDate={`${formattedDate} | ${event.start_time || "10:00 AM"}`}
+      eventDate={`${formattedDate} | ${formatTimeWithAmPm(event.start_time) || "10:00 AM"}`}
       venue={event.venue || "Venue TBD"}
       backHref={`/event/${event.id}`}
       ticketCategories={ticketTypes || []}

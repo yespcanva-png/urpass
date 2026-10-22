@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import QRCode from "qrcode";
 import { getSupabaseUrl } from "@/lib/supabase/config";
 import { resolveTicketDesign } from "@/lib/pass-design";
+import { formatTimeWithAmPm } from "@/lib/utils";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -440,7 +441,7 @@ export async function GET(
               }}
             >
               {design.showEventDate !== false && (
-                <span>{formattedDate}{event.start_time ? ` · ${event.start_time}` : ""}</span>
+                <span>{formattedDate}{event.start_time ? ` · ${formatTimeWithAmPm(event.start_time)}` : ""}</span>
               )}
               {design.showVenue && event.venue && <span>{event.venue}</span>}
             </div>

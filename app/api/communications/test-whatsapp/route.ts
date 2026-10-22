@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { whatsAppProvider } from "@/lib/communications/providers/whatsapp/provider";
 import { normalizePhone, isValidE164, maskPhone } from "@/lib/communications/utils";
 import { APPROVED_TEMPLATES, WhatsAppTemplateType } from "@/lib/communications/providers/whatsapp/templates";
+import { formatTimeWithAmPm } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -168,16 +169,22 @@ export async function POST(req: NextRequest) {
 
     let isAuthorized = isAdmin;
     let eventName = "UrPass Production Verification";
+    let eventDate: string | undefined = undefined;
+    let eventTime: string | undefined = undefined;
+    let eventVenue: string | undefined = undefined;
 
     if (!isAuthorized && body?.eventId) {
       const { data: eventData } = await supabase
         .from("events")
-        .select("id, name, organizer_id, organization_id")
+        .select("id, name, organizer_id, organization_id, event_date, start_time, venue")
         .eq("id", body.eventId)
         .maybeSingle();
 
       if (eventData) {
         eventName = eventData.name || eventName;
+        eventDate = eventData.event_date || undefined;
+        eventTime = formatTimeWithAmPm(eventData.start_time) || undefined;
+        eventVenue = eventData.venue || undefined;
         if (eventData.organizer_id === user.id) {
           isAuthorized = true;
         } else if (eventData.organization_id) {
@@ -191,6 +198,18 @@ export async function POST(req: NextRequest) {
             .maybeSingle();
           if (member) isAuthorized = true;
         }
+      }
+    } else if (body?.eventId) {
+      const { data: eventData } = await supabase
+        .from("events")
+        .select("id, name, event_date, start_time, venue")
+        .eq("id", body.eventId)
+        .maybeSingle();
+      if (eventData) {
+        eventName = eventData.name || eventName;
+        eventDate = eventData.event_date || undefined;
+        eventTime = formatTimeWithAmPm(eventData.start_time) || undefined;
+        eventVenue = eventData.venue || undefined;
       }
     }
 
@@ -222,6 +241,9 @@ export async function POST(req: NextRequest) {
     const testPayload = {
       eventId: body?.eventId || "test-event-001",
       eventName,
+      eventDate,
+      eventTime,
+      venue: eventVenue,
       ticketId: `TEST-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
       passToken: `test_token_${Date.now()}`,
       attendeeId: user.id,
