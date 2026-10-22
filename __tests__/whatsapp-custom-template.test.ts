@@ -46,7 +46,7 @@ describe("Custom WhatsApp template translations", () => {
     });
   });
 
-  it("sends nivi's three body variables and clean dynamic pass button", async () => {
+  it("sends nivi's three body variables without button component", async () => {
     vi.stubEnv("WHATSAPP_API_TOKEN", "test-token");
     vi.stubEnv("WHATSAPP_PHONE_NUMBER_ID", "test-phone-id");
     const fetchMock = vi.fn().mockResolvedValue({
@@ -69,7 +69,6 @@ describe("Custom WhatsApp template translations", () => {
           { type: "text", text: "11:00 AM – 1:00 PM" },
           { type: "text", text: "Celebration Hall" },
         ] },
-        { type: "button", sub_type: "url", index: "0", parameters: [{ type: "text", text: "pass-token" }] },
       ],
     });
   });

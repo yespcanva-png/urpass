@@ -240,7 +240,7 @@ export function buildTemplatePayload(
           });
         } else {
           // Approved nivi body: Date {{1}}, Time {{2}}, Venue {{3}}.
-          // Its header and footer are static; only the URL button is dynamic.
+          // Static header & footer; no button component exists in Meta for this template.
           components.push({
             type: "body",
             parameters: [
@@ -248,10 +248,6 @@ export function buildTemplatePayload(
               { type: "text", text: timeText },
               { type: "text", text: venueText },
             ],
-          });
-          if (buttonToken) components.push({
-            type: "button", sub_type: "url", index: "0",
-            parameters: [{ type: "text", text: buttonToken }],
           });
         }
       } else if (isUrpassSpace) {
