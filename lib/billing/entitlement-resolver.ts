@@ -4,6 +4,7 @@ export type SubscriptionAccessState =
   | "autopay_trial_completed"
   | "legacy_trial_active"
   | "legacy_free_active"
+  | "free_forever_active"
   | "subscription_active"
   | "subscription_cancelled_but_valid"
   | "payment_pending"
@@ -343,33 +344,18 @@ export async function resolveUserSubscriptionAccess(params: {
     };
   }
 
-  const legacyFreeExpiresAt = addDays(createdAt, 30);
   const hasOnlyFreeOrNoSubscription = !sub || planSlug === "free" || sub.provider === "free";
-  if (!isNewUser && hasOnlyFreeOrNoSubscription && legacyFreeExpiresAt.getTime() >= now.getTime()) {
+  if (hasOnlyFreeOrNoSubscription) {
     return {
-      state: "legacy_free_active",
+      state: "free_forever_active",
       hasOrganizerAccess: true,
       shouldRedirectToSubscriptionOnboarding: false,
       shouldRedirectToBilling: false,
       planSlug: "free",
-      expiresAt: legacyFreeExpiresAt.toISOString(),
+      expiresAt: null,
       isNewUser: false,
       introOfferEligible: false,
-      reason: "Legacy Free access is valid until 30 days after the user's signup date.",
-    };
-  }
-
-  if (isNewUser && hasOnlyFreeOrNoSubscription) {
-    return {
-      state: "onboarding_required",
-      hasOrganizerAccess: false,
-      shouldRedirectToSubscriptionOnboarding: true,
-      shouldRedirectToBilling: false,
-      planSlug: "none",
-      expiresAt: null,
-      isNewUser: true,
-      introOfferEligible: true,
-      reason: "New user must activate a paid subscription before accessing organizer features.",
+      reason: "Free Forever plan is active (1 active event, 100 registrations/month).",
     };
   }
 
@@ -379,7 +365,7 @@ export async function resolveUserSubscriptionAccess(params: {
     shouldRedirectToSubscriptionOnboarding: false,
     shouldRedirectToBilling: true,
     planSlug,
-    expiresAt: sub?.current_period_end || trialEndsAt || legacyFreeExpiresAt.toISOString(),
+    expiresAt: sub?.current_period_end || trialEndsAt || null,
     isNewUser,
     introOfferEligible: false,
     reason: "No valid paid, legacy trial, or legacy Free entitlement is active.",

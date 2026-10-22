@@ -24,13 +24,13 @@ export type EntitlementKey =
 
 export const ENTITLEMENTS = {
   FREE: {
-    eventsPerMonth: 2,
+    eventsPerMonth: 1,
     registrationsPerMonth: 100,
     organizerSeats: 1,
     customFields: 3,
   },
   STARTER: {
-    eventsPerMonth: 10,
+    eventsPerMonth: 3,
     registrationsPerMonth: 500,
     organizerSeats: 2,
     customFields: 10,
@@ -38,7 +38,7 @@ export const ENTITLEMENTS = {
     csvExport: true,
   },
   PRO: {
-    eventsPerMonth: Infinity,
+    eventsPerMonth: 10,
     registrationsPerMonth: 2500,
     organizerSeats: 5,
     customFields: Infinity,
@@ -46,6 +46,7 @@ export const ENTITLEMENTS = {
     removeBranding: true,
     advancedAnalytics: true,
     prioritySupport: true,
+    sessionAttendance: true,
   },
   BUSINESS: {
     eventsPerMonth: Infinity,
@@ -61,6 +62,7 @@ export const ENTITLEMENTS = {
     advancedPermissions: true,
     crossEventAnalytics: true,
     whatsappSelfService: true,
+    sessionAttendance: true,
   },
   FOUNDER: {
     eventsPerMonth: Infinity,
@@ -175,14 +177,14 @@ function ent(...keys: EntitlementKey[]): ReadonlySet<EntitlementKey> {
 
 const PLAN_CONFIGS: Record<PlanSlug, PlanConfig> = {
   free: {
-    eventsPerMonth: 2,
+    eventsPerMonth: 1,
     registrationsPerMonth: 100,
     organizerSeats: 1,
     customFields: 3,
     entitlements: ent(),
   },
   starter: {
-    eventsPerMonth: 10,
+    eventsPerMonth: 3,
     registrationsPerMonth: 500,
     organizerSeats: 2,
     customFields: 10,
@@ -194,7 +196,7 @@ const PLAN_CONFIGS: Record<PlanSlug, PlanConfig> = {
     ),
   },
   pro: {
-    eventsPerMonth: UNLIMITED,
+    eventsPerMonth: 10,
     registrationsPerMonth: 2_500,
     organizerSeats: 5,
     customFields: UNLIMITED,
@@ -205,7 +207,6 @@ const PLAN_CONFIGS: Record<PlanSlug, PlanConfig> = {
       "custom_pass_design", "remove_branding",
       "team_permissions_basic",
       "advanced_analytics",
-      "api_access", "webhooks",
       "priority_support", "paid_events",
     ),
   },

@@ -155,17 +155,11 @@ export default function CheckoutModal({
     !isLifetime &&
     billingCycle === "monthly" &&
     ["starter", "pro", "business"].includes(planSlug);
-  const isIntroOffer = isAutopaySubscription;
-  const introSchedule = !isUk && ["starter", "pro", "business"].includes(planSlug)
-    ? INTRO_OFFER_SCHEDULE[planSlug as IntroOfferPlanSlug]
-    : null;
-  const introAmount = isUk ? 2 : 29;
+  const isIntroOffer = false;
   const baseAmount = isLifetime
     ? (annualTotal || priceMonthly || defaultFounder)
     : billingCycle === "annual"
     ? annualTotal
-    : isAutopaySubscription
-    ? 29
     : priceMonthly;
   const baseTax    = Math.round(baseAmount * (isUk ? 20 : 18)) / 100;
   const baseTotal  = Math.round((baseAmount + baseTax) * 100) / 100;
@@ -174,9 +168,7 @@ export default function CheckoutModal({
   const taxDisplay  = coupon && !isAutopaySubscription ? coupon.gstRupees              : baseTax;
   const totalToday  = coupon && !isAutopaySubscription ? coupon.totalRupees            : baseTotal;
   const regularRenewalTotal = Math.round(priceMonthly * (isUk ? 1.2 : 1.18) * 100) / 100;
-  const month3OnwardTotal = introSchedule
-    ? introSchedule.month3OnwardAmountWithGst
-    : regularRenewalTotal;
+  const month3OnwardTotal = regularRenewalTotal;
 
   async function applyCoupon() {
     if (isAutopaySubscription) {
@@ -485,25 +477,25 @@ export default function CheckoutModal({
             </button>
           </div>
 
-          {/* Introductory checkout message */}
-          {isIntroOffer && !isUk && (
+          {/* Autopay subscription details */}
+          {isAutopaySubscription && !isUk && (
             <div className="rounded-xl border border-violet-200 bg-violet-50/80 p-4 space-y-1.5">
               <h3 className="text-sm font-bold text-violet-950">
-                Activate {planName} for ₹29/month
+                {planName} Monthly Subscription
               </h3>
               <p className="text-xs font-semibold text-violet-900">
-                ₹29/month for your first 2 months, then ₹{priceMonthly.toLocaleString("en-IN")}/month + GST.
+                ₹{priceMonthly.toLocaleString("en-IN")}/month + 18% GST (₹{Math.round(priceMonthly * 1.18 * 100) / 100}/month total).
               </p>
               <p className="text-[11px] leading-relaxed text-violet-700">
-                AutoPay authorization is required. Your first ₹34.22 payment will be collected upon activation. You can cancel future renewals anytime.
+                Autopay authorization via UPI Autopay, Cards, or eMandate. Renews automatically on the scheduled billing date. Cancel anytime from Billing Settings.
               </p>
             </div>
           )}
 
           {/* Coupon input */}
           {isAutopaySubscription ? (
-            <div className="rounded-lg border border-violet-100 bg-violet-50 px-3 py-2.5 text-xs font-medium text-violet-800">
-              AutoPay monthly plans include introductory ₹29 pricing. Additional coupon codes cannot be applied to AutoPay activations.
+            <div className="rounded-lg border border-violet-100 bg-violet-50 px-3 py-2 text-xs font-medium text-violet-800">
+              Recurring Autopay plans bill the standard flat monthly price. Coupon codes apply to annual and single-event activations.
             </div>
           ) : coupon ? (
             <div className="flex items-center justify-between gap-2 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2.5">

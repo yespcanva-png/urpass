@@ -44,11 +44,11 @@ const PLANS = [
     priceMonthly: 499,
     annualTotal: 4990,
     features: [
-      "10 events/month",
+      "3 active events",
       "500 registrations/month",
       "2 organizer seats",
+      "Custom registration forms",
       "CSV import & export",
-      "10 custom fields",
       "Standard analytics",
     ],
   },
@@ -58,9 +58,10 @@ const PLANS = [
     priceMonthly: 999,
     annualTotal: 9990,
     features: [
-      "Unlimited events",
+      "10 active events",
       "2,500 registrations/month",
       "5 organizer seats",
+      "Session attendance tracking",
       "Custom pass design & branding",
       "Advanced analytics",
       "Priority support",
@@ -72,10 +73,11 @@ const PLANS = [
     priceMonthly: 2499,
     annualTotal: 24990,
     features: [
-      "Unlimited events",
+      "Unlimited active events*",
       "10,000 registrations/month",
       "15 organizer seats",
-      "Custom domain, API & webhooks",
+      "Developer API & webhooks",
+      "Session attendance tracking",
       "Advanced permissions",
       "Cross-event analytics",
     ],
@@ -507,30 +509,6 @@ export default function PlanGrid({
       {/* ── Subscription section ─────────────────────────────── */}
       {(tab === "subscription" || tab === "all") && (
         <section className={tab === "all" ? "mb-10" : ""}>
-          {/* Introductory paid offer notice */}
-          {!trialUsed && country !== "GB" && (
-            <div className="mb-6 rounded-2xl p-4 bg-brand-50/60 border border-brand-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-neutral-800 shadow-xs">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-brand-100/70 border border-brand-200/80 flex items-center justify-center text-brand shrink-0">
-                  <CalendarCheck className="w-4 h-4" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-xs font-bold text-neutral-900">
-                      ₹29 Monthly Introductory Offer
-                    </span>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-brand-100 text-brand-700 uppercase tracking-wide">
-                      New monthly subscriptions
-                    </span>
-                  </div>
-                  <p className="text-xs text-neutral-600 mt-0.5">
-                    Starter, Pro, or Business starts at ₹29/month for the first 2 paid billing cycles. Autopay is required and regular renewal pricing is shown before activation.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* Billing cycle toggle & section title */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
             <div>
@@ -580,12 +558,8 @@ export default function PlanGrid({
               const Icon = PLAN_ICONS[p.slug] ?? Sparkles;
               const ukPlan = UK_PLAN_PRICES[p.slug] ?? { monthly: 35, annual: 300 };
 
-              const isIntroEligible = !trialUsed && country !== "GB" && cycle === "monthly" && ["starter", "pro", "business"].includes(p.slug);
-
               const displayPrice =
-                isIntroEligible
-                  ? "₹29"
-                  : country === "GB"
+                country === "GB"
                   ? cycle === "annual"
                     ? `£${ukPlan.annual}`
                     : `£${ukPlan.monthly}`
@@ -593,12 +567,7 @@ export default function PlanGrid({
                   ? `₹${p.annualTotal.toLocaleString("en-IN")}`
                   : `₹${p.priceMonthly.toLocaleString("en-IN")}`;
 
-              const displayPeriod =
-                isIntroEligible
-                  ? "/mo (2 mos)"
-                  : cycle === "annual"
-                  ? "/yr"
-                  : "/mo";
+              const displayPeriod = cycle === "annual" ? "/yr" : "/mo";
 
               const monthlyEquiv =
                 cycle === "annual" && (country === "GB" ? ukPlan.annual > 0 : p.annualTotal > 0)
@@ -654,11 +623,6 @@ export default function PlanGrid({
                         <span className="text-xs text-neutral-400">{displayPeriod}</span>
                       )}
                     </div>
-                    {isIntroEligible && (
-                      <p className="text-[11px] font-semibold text-emerald-700 mt-1">
-                        For your first 2 months · Then ₹{p.priceMonthly.toLocaleString("en-IN")}/mo +GST
-                      </p>
-                    )}
                     {monthlyEquiv && (
                       <p className="text-[11px] mt-0.5 tabular-nums text-neutral-400">
                         {monthlyEquiv} equivalent
@@ -692,7 +656,7 @@ export default function PlanGrid({
                           userName={userName}
                           userPhone={userPhone}
                           currency={country === "GB" ? "GBP" : "INR"}
-                          introOfferEligible={isIntroEligible}
+                          introOfferEligible={false}
                           className={`w-full py-2.5 text-xs font-semibold rounded-xl text-white shadow-xs transition-all hover:opacity-90 cursor-pointer ${
                             isMostPopular
                               ? "bg-brand hover:bg-brand-600"
@@ -704,16 +668,12 @@ export default function PlanGrid({
                               : undefined
                           }
                         >
-                          {isIntroEligible
-                            ? "Get Started for ₹29"
-                            : isUpgrade
+                          {isUpgrade
                             ? `Upgrade to ${p.name}`
                             : `Choose ${p.name}`}
                         </CheckoutButton>
                         <p className="text-[10px] text-center text-neutral-400 font-medium">
-                          {isIntroEligible
-                            ? "Autopay required · Cancel renewal anytime"
-                            : country === "GB"
+                          {country === "GB"
                             ? "UK Direct Activation · Cancel renewal anytime"
                             : cycle === "annual"
                             ? "Billed annually · Cancel renewal anytime"

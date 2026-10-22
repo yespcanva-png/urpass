@@ -162,27 +162,9 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const introDisclosure = getIntroOfferDisclosure(planSlug);
   const configuredOfferId = getIntroOfferId(planSlug);
-
-  if (!configuredOfferId) {
-    return NextResponse.json(
-      {
-        error:
-          `The introductory Razorpay offer for ${plan.name} is not configured. Please set RAZORPAY_${planSlug.toUpperCase()}_INTRO_OFFER_ID in your environment with the offer ID created in Razorpay Dashboard (Subscriptions -> Offers on Subscriptions).`,
-      },
-      { status: 503 }
-    );
-  }
-  if (!configuredOfferId.startsWith("offer_")) {
-    return NextResponse.json(
-      {
-        error:
-          `The introductory Razorpay offer ID "${configuredOfferId}" is invalid. Expected an ID starting with "offer_".`,
-      },
-      { status: 500 }
-    );
-  }
+  const isValidOffer = Boolean(configuredOfferId && configuredOfferId.startsWith("offer_"));
+  const introDisclosure = isValidOffer ? getIntroOfferDisclosure(planSlug) : null;
 
   let keyId: string;
   try {
@@ -198,20 +180,21 @@ export async function POST(req: NextRequest) {
     const razorpay = getRazorpayClient();
     // Default to 36 billing cycles (3 years) instead of 120 (10 years)
     const totalCount = Number(process.env.RAZORPAY_SUBSCRIPTION_TOTAL_COUNT || 36);
-    const subscriptionPayload = {
+    const regularAmountPaise = planSlug === "starter" ? 49900 : planSlug === "pro" ? 99900 : 249900;
+    const baseRupees = regularAmountPaise / 100;
+    const monthlyWithGst = Math.round(baseRupees * 1.18 * 100) / 100;
+
+    const subscriptionPayload: Record<string, unknown> = {
       plan_id: razorpayPlanId,
       total_count: Number.isFinite(totalCount) && totalCount > 0 ? totalCount : 36,
       quantity: 1,
       customer_notify: 1,
-      offer_id: configuredOfferId,
       notes: cleanRazorpayNotes({
         user_id: String(user.id),
         plan_id: String(plan.id),
         plan_slug: String(planSlug),
         billing_cycle: "monthly",
         regular_plan_id: String(razorpayPlanId),
-        intro_cycles: "2",
-        expected_discount: String(introDisclosure.discountPaise),
         billing_address: billingAddress,
         billing_state: billingState,
         billing_state_code: billingStateCode,
@@ -220,8 +203,12 @@ export async function POST(req: NextRequest) {
       }),
     };
 
+    if (isValidOffer && configuredOfferId) {
+      subscriptionPayload.offer_id = configuredOfferId;
+    }
+
     const subscription = await (razorpay.subscriptions as any).create(subscriptionPayload);
-    if (subscription?.offer_id !== configuredOfferId) {
+    if (isValidOffer && configuredOfferId && subscription?.offer_id !== configuredOfferId) {
       if (subscription?.id) {
         await (razorpay.subscriptions as any).cancel(subscription.id, { cancel_at_cycle_end: 0 }).catch(() => null);
       }
@@ -250,16 +237,16 @@ export async function POST(req: NextRequest) {
       planSlug,
       billingCycle: "monthly",
       currency: "INR",
-      hasIntroOffer: true,
-      offerId: configuredOfferId,
+      hasIntroOffer: isValidOffer,
+      offerId: configuredOfferId || null,
       mandatePreviewVerified: true,
-      expectedIntroAmountPaise: introDisclosure.introAmountPaise,
-      expectedDiscountPaise: introDisclosure.discountPaise,
-      regularAmountPaise: introDisclosure.regularAmountPaise,
-      todayAmountWithGst: introDisclosure.todayAmountWithGst,
-      month2AmountWithGst: introDisclosure.month2AmountWithGst,
-      month3OnwardAmountWithGst: introDisclosure.month3OnwardAmountWithGst,
-      taxRatePercent: introDisclosure.taxRatePercent,
+      expectedIntroAmountPaise: introDisclosure ? introDisclosure.introAmountPaise : regularAmountPaise,
+      expectedDiscountPaise: introDisclosure ? introDisclosure.discountPaise : 0,
+      regularAmountPaise: introDisclosure ? introDisclosure.regularAmountPaise : regularAmountPaise,
+      todayAmountWithGst: introDisclosure ? introDisclosure.todayAmountWithGst : monthlyWithGst,
+      month2AmountWithGst: introDisclosure ? introDisclosure.month2AmountWithGst : monthlyWithGst,
+      month3OnwardAmountWithGst: introDisclosure ? introDisclosure.month3OnwardAmountWithGst : monthlyWithGst,
+      taxRatePercent: 18,
     });
   } catch (err: unknown) {
     console.error("[api/billing/subscriptions] Razorpay subscription error:", err);

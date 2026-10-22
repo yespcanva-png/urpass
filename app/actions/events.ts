@@ -76,22 +76,35 @@ export async function createEvent(data: EventInput, organizationId?: string): Pr
     };
   }
 
-  // Strict anti-abuse: if user is on free event autopay trial, verify 1-event trial quota
-  if (access.isTrial || access.state === "autopay_trial_active") {
-    if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
-      const admin = adminClient();
-      const { data: existingTrial } = await admin
-        .from("user_trial_events")
-        .select("id, event_deleted")
-        .eq("user_id", user.id)
-        .maybeSingle();
+  // Enforce active event limits based on plan
+  const planSlug = access.planSlug || "free";
+  let maxActiveEvents = 1;
+  if (planSlug === "starter") maxActiveEvents = 3;
+  else if (planSlug === "pro") maxActiveEvents = 10;
+  else if (["business", "campus", "founder", "lifetime", "managed_enterprise"].includes(planSlug)) {
+    maxActiveEvents = Infinity;
+  }
 
-      if (existingTrial) {
+  if (maxActiveEvents !== Infinity) {
+    const todayStr = new Date().toISOString().split("T")[0];
+    const { count } = await supabase
+      .from("events")
+      .select("id", { count: "exact", head: true })
+      .eq("organizer_id", user.id)
+      .in("status", ["active", "draft", "published"])
+      .gte("event_date", todayStr);
+
+    const activeCount = count ?? 0;
+    if (activeCount >= maxActiveEvents) {
+      if (planSlug === "free") {
         return {
           error:
-            "You have already used your 1 free event trial. Deleting or recreating events is strictly not permitted under the trial. Please upgrade to a paid subscription to continue.",
+            "The Free plan includes 1 active event at a time (up to 100 registrations). You already have an active event in progress. Please upgrade to Starter (3 active events) or Pro (10 active events) to host multiple events concurrently.",
         };
       }
+      return {
+        error: `Your ${planSlug.charAt(0).toUpperCase() + planSlug.slice(1)} plan allows ${maxActiveEvents} active events. Please upgrade your subscription to launch additional concurrent events.`,
+      };
     }
   }
 
@@ -1021,12 +1034,36 @@ export async function duplicateEvent(
     };
   }
 
-  // Trial users can only organize 1 event
-  if (access.isTrial || access.state === "autopay_trial_active") {
-    return {
-      error:
-        "Event duplication is not permitted on the 1 free event trial. Please upgrade to a paid subscription to duplicate events.",
-    };
+  // Check active event limits on duplicate
+  const planSlug = access.planSlug || "free";
+  let maxActiveEvents = 1;
+  if (planSlug === "starter") maxActiveEvents = 3;
+  else if (planSlug === "pro") maxActiveEvents = 10;
+  else if (["business", "campus", "founder", "lifetime", "managed_enterprise"].includes(planSlug)) {
+    maxActiveEvents = Infinity;
+  }
+
+  if (maxActiveEvents !== Infinity) {
+    const todayStr = new Date().toISOString().split("T")[0];
+    const { count } = await supabase
+      .from("events")
+      .select("id", { count: "exact", head: true })
+      .eq("organizer_id", user.id)
+      .in("status", ["active", "draft", "published"])
+      .gte("event_date", todayStr);
+
+    const activeCount = count ?? 0;
+    if (activeCount >= maxActiveEvents) {
+      if (planSlug === "free") {
+        return {
+          error:
+            "The Free plan allows 1 active event at a time. To run your duplicated event concurrently with your current event, please upgrade to Starter (3 active events) or Pro (10 active events).",
+        };
+      }
+      return {
+        error: `Your ${planSlug.charAt(0).toUpperCase() + planSlug.slice(1)} plan allows ${maxActiveEvents} active events. Please upgrade your subscription to duplicate and launch additional concurrent events.`,
+      };
+    }
   }
 
   const { data: source } = await supabase

@@ -14,11 +14,32 @@ type Cycle = "monthly" | "annual";
 
 const PLANS = [
   {
+    slug: "free",
+    name: "Free",
+    desc: "Run a real event with zero software cost and zero friction.",
+    monthly: 0,
+    annual: 0,
+    ukMonthly: 0,
+    ukAnnual: 0,
+    popular: false,
+    highlight: false,
+    cta: "Start Free",
+    href: "/signup",
+    bullets: [
+      "1 active event",
+      "100 attendees/month",
+      "1 team member",
+      "QR tickets & mobile scanning",
+      "Basic custom registration",
+      "Standard pass with UrPass watermark",
+      "No payment details required",
+    ],
+  },
+  {
     slug: "starter",
     name: "Starter",
-    desc: "For individual organizers and small event teams.",
+    desc: "For individual organizers and recurring event teams.",
     monthly: 499,
-    introMonthly: 29,
     annual: 4990,
     ukMonthly: 15,
     ukAnnual: 120,
@@ -27,21 +48,20 @@ const PLANS = [
     cta: "Choose Starter",
     href: "/signup",
     bullets: [
-      "10 events/month",
-      "500 registrations/month",
-      "2 organizer seats",
-      "10 custom registration fields",
+      "3 active events",
+      "500 attendees/month",
+      "2 team members",
+      "Custom registration forms",
       "CSV import & export",
       "Standard analytics",
-      "Full email notifications",
+      "Autopay enabled",
     ],
   },
   {
     slug: "pro",
     name: "Pro",
-    desc: "For growing event teams, colleges and professional organizers.",
+    desc: "For growing event teams, colleges and professional summits.",
     monthly: 999,
-    introMonthly: 29,
     annual: 9990,
     ukMonthly: 35,
     ukAnnual: 300,
@@ -50,9 +70,10 @@ const PLANS = [
     cta: "Choose Pro",
     href: "/signup",
     bullets: [
-      "Unlimited events",
-      "2,500 registrations/month",
-      "5 organizer seats",
+      "10 active events",
+      "2,500 attendees/month",
+      "5 team members",
+      "Session attendance tracking",
       "Custom pass design & branding",
       "Advanced analytics",
       "Priority support",
@@ -61,9 +82,8 @@ const PLANS = [
   {
     slug: "business",
     name: "Business",
-    desc: "For organizations managing events at scale.",
+    desc: "For organizations managing high-density events at scale.",
     monthly: 2499,
-    introMonthly: 29,
     annual: 24990,
     ukMonthly: 79,
     ukAnnual: 699,
@@ -72,10 +92,11 @@ const PLANS = [
     cta: "Choose Business",
     href: "/signup",
     bullets: [
-      "Unlimited events",
-      "10,000 registrations/month",
-      "15 organizer seats",
-      "Custom domain, API & webhooks",
+      "Unlimited active events*",
+      "10,000 attendees/month",
+      "15 team members",
+      "Developer API & webhooks",
+      "Session attendance tracking",
       "Advanced team permissions",
       "Cross-event analytics",
     ],
@@ -87,40 +108,33 @@ type CellValue = boolean | string;
 
 type TableRow =
   | { type: "category"; label: string }
-  | { type: "row"; feature: string; starter: CellValue; pro: CellValue; business: CellValue };
+  | { type: "row"; feature: string; free: CellValue; starter: CellValue; pro: CellValue; business: CellValue };
 
 const TABLE: TableRow[] = [
-  { type: "category", label: "Usage" },
-  { type: "row", feature: "Events / month",          starter: "10",    pro: "Unlimited", business: "Unlimited" },
-  { type: "row", feature: "Registrations / month",  starter: "500",   pro: "2,500",     business: "10,000" },
-  { type: "row", feature: "Organizer seats",         starter: "2",     pro: "5",         business: "15" },
+  { type: "category", label: "Capacity & Limits" },
+  { type: "row", feature: "Active events", free: "1", starter: "3", pro: "10", business: "Unlimited*" },
+  { type: "row", feature: "Attendees / month", free: "100", starter: "500", pro: "2,500", business: "10,000" },
+  { type: "row", feature: "Team members", free: "1", starter: "2", pro: "5", business: "15" },
 
-  { type: "category", label: "Core" },
-  { type: "row", feature: "Registration forms",          starter: true, pro: true, business: true },
-  { type: "row", feature: "Digital QR passes",           starter: true, pro: true, business: true },
-  { type: "row", feature: "QR check-in",                 starter: true, pro: true, business: true },
-  { type: "row", feature: "Duplicate scan prevention",   starter: true, pro: true, business: true },
-  { type: "row", feature: "Attendee approval",           starter: true, pro: true, business: true },
-  { type: "row", feature: "Attendance tracking",         starter: true, pro: true, business: true },
+  { type: "category", label: "Check-in & Registration" },
+  { type: "row", feature: "QR tickets & mobile scanning", free: true, starter: true, pro: true, business: true },
+  { type: "row", feature: "Custom registration forms", free: "Basic", starter: true, pro: true, business: true },
+  { type: "row", feature: "Session attendance tracking", free: false, starter: false, pro: true, business: true },
+  { type: "row", feature: "Duplicate scan prevention", free: true, starter: true, pro: true, business: true },
+  { type: "row", feature: "Attendee approval workflow", free: true, starter: true, pro: true, business: true },
 
-  { type: "category", label: "Data" },
-  { type: "row", feature: "Email notifications",         starter: true,       pro: true,        business: true },
-  { type: "row", feature: "CSV attendee import",         starter: true,       pro: true,        business: true },
-  { type: "row", feature: "CSV export",                  starter: true,       pro: true,        business: true },
-  { type: "row", feature: "Analytics",                   starter: "Standard", pro: "Advanced",  business: "Advanced" },
+  { type: "category", label: "Analytics & Automation" },
+  { type: "row", feature: "Analytics", free: "Basic", starter: "Standard", pro: "Advanced", business: "Advanced" },
+  { type: "row", feature: "CSV attendee import & export", free: false, starter: true, pro: true, business: true },
+  { type: "row", feature: "Email notifications", free: true, starter: true, pro: true, business: true },
+  { type: "row", feature: "Autopay recurring billing", free: false, starter: true, pro: true, business: true },
 
-  { type: "category", label: "Customisation" },
-  { type: "row", feature: "Custom registration fields",  starter: "10 fields", pro: "Unlimited", business: "Unlimited" },
-  { type: "row", feature: "Custom pass design",          starter: false,       pro: true,        business: true },
-  { type: "row", feature: "Remove URPASS branding",      starter: false,       pro: true,        business: true },
-
-  { type: "category", label: "Scale" },
-  { type: "row", feature: "Team permissions",            starter: false, pro: "Basic",  business: "Advanced" },
-  { type: "row", feature: "Enterprise SSO (SAML 2.0 & OIDC)", starter: false, pro: false, business: true },
-  { type: "row", feature: "Custom domain",               starter: false, pro: false,    business: true },
-  { type: "row", feature: "API access",                  starter: false, pro: false,    business: true },
-  { type: "row", feature: "Webhooks",                    starter: false, pro: false,    business: true },
-  { type: "row", feature: "Support",                     starter: "Standard", pro: "Priority", business: "Priority" },
+  { type: "category", label: "Branding & Developer API" },
+  { type: "row", feature: "Custom pass design", free: false, starter: false, pro: true, business: true },
+  { type: "row", feature: "Remove UrPass branding", free: false, starter: false, pro: true, business: true },
+  { type: "row", feature: "Developer API & webhooks", free: false, starter: false, pro: false, business: true },
+  { type: "row", feature: "Enterprise SSO & custom domain", free: false, starter: false, pro: false, business: true },
+  { type: "row", feature: "Priority support", free: "Community", starter: "Standard", pro: "Priority", business: "Dedicated" },
 ];
 
 // ─── One-event passes ──────────────────────────────────────────────────────────
@@ -256,6 +270,13 @@ export default function PricingContent({
   }
 
   function displayPrice(plan: typeof PLANS[0]) {
+    if (plan.slug === "free") {
+      return {
+        price: country === "GB" ? "£0" : "₹0",
+        sub: "forever · no card required",
+        intro: null,
+      };
+    }
     if (country === "GB") {
       if (cycle === "monthly") return { price: `£${plan.ukMonthly}`, sub: "/month +VAT", intro: null };
       const perMonth = Math.round(plan.ukAnnual / 12);
@@ -267,9 +288,9 @@ export default function PricingContent({
     }
     if (cycle === "monthly") {
       return {
-        price: `₹${plan.introMonthly ?? 29}`,
-        sub: `/month for 2 mos · then ₹${plan.monthly.toLocaleString("en-IN")}/mo +GST`,
-        intro: "₹29 INTRO OFFER (2 MONTHS)",
+        price: `₹${plan.monthly.toLocaleString("en-IN")}`,
+        sub: "/month +18% GST · cancel anytime",
+        intro: null,
       };
     }
     const perMonth = Math.round(plan.annual / 12);
@@ -342,45 +363,27 @@ export default function PricingContent({
         {/* ── 01 Hero + Toggle ── */}
         <section className="max-w-5xl mx-auto text-center pt-20 pb-14">
 
-          {!trialUsed ? (
-            <>
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200/80 text-emerald-700 text-xs font-semibold tracking-wider uppercase mb-4">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 inline-block" />
-                {country === "GB" ? "FLEXIBLE EVENT PLANS" : "INTRODUCTORY OFFER · ₹29/MONTH"}
-              </div>
-              <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-neutral-900 mb-4">
-                {country === "GB"
-                  ? "SIMPLE PRICING FOR EVERY EVENT"
-                  : "GET STARTED FOR ₹29/MONTH"}
-              </h1>
-              <p className="text-neutral-600 max-w-2xl mx-auto mb-3 text-base sm:text-lg">
-                {country === "GB"
-                  ? "Choose Starter, Pro, or Business. Unlock powerful QR check-in, bespoke pass design, and analytics."
-                  : "Subscribe to Starter, Pro, or Business at ₹29/month for your first 2 months. Autopay required · Cancel renewal anytime."}
-              </p>
-              <div className="inline-flex items-center gap-2 text-xs font-medium text-neutral-500 mb-8 bg-neutral-100 px-3.5 py-1.5 rounded-full flex-wrap justify-center">
-                <span>
-                  {country === "GB"
-                    ? "£15 / £35 / £79 monthly · Direct UK activation"
-                    : "₹29/month for first 2 months · Then regular monthly price · Autopay required"}
-                </span>
-                <span>·</span>
-                <span>Instant full access</span>
-                <span>·</span>
-                <span>Cancel renewal anytime</span>
-              </div>
-            </>
-          ) : (
-            <>
-              <p className="text-xs font-semibold tracking-widest text-brand mb-4">PRICING</p>
-              <h1 className="text-4xl sm:text-5xl font-semibold tracking-tight mb-4">
-                Standard Subscription Pricing
-              </h1>
-              <p className="text-neutral-500 mb-10 text-base">
-                Upgrade or renew your plan. Choose Starter, Pro, or Business.
-              </p>
-            </>
-          )}
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-violet-50 border border-violet-200/80 text-violet-700 text-xs font-semibold tracking-wider uppercase mb-4">
+            <span className="w-1.5 h-1.5 rounded-full bg-violet-600 inline-block" />
+            FREE FOREVER + TRANSPARENT EVENT SAAS
+          </div>
+          <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-neutral-900 mb-4">
+            Simple, transparent pricing for every event
+          </h1>
+          <p className="text-neutral-600 max-w-2xl mx-auto mb-3 text-base sm:text-lg">
+            Start free with 1 active event and 100 registrations. Upgrade to Starter, Pro, or Business as your attendance, team, and multi-event operations expand.
+          </p>
+          <div className="inline-flex items-center gap-2 text-xs font-medium text-neutral-500 mb-8 bg-neutral-100 px-3.5 py-1.5 rounded-full flex-wrap justify-center">
+            <span>
+              {country === "GB"
+                ? "Free (£0) · Starter (£15) · Pro (£35) · Business (£79)"
+                : "Free Forever (₹0) · Starter (₹499) · Pro (₹999) · Business (₹2,499)"}
+            </span>
+            <span>·</span>
+            <span>Sub-second QR check-in</span>
+            <span>·</span>
+            <span>Autopay enabled</span>
+          </div>
 
           {/* Toggles Container */}
           <div className="flex flex-wrap items-center justify-center gap-3">
@@ -486,22 +489,23 @@ export default function PricingContent({
 
         {/* ── 02 Plan Cards ── */}
         <section className="max-w-5xl mx-auto pb-20">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 items-stretch">
             {PLANS.map((plan) => {
               const { price, sub } = displayPrice(plan);
+              const isFree = plan.slug === "free";
               return (
                 <div
                   key={plan.slug}
-                  className={`relative flex flex-col rounded-2xl p-6 h-full ${plan.highlight ? "bg-neutral-900 text-white" : "bg-white border border-neutral-100"}`}
+                  className={`relative flex flex-col rounded-2xl p-6 h-full ${plan.highlight ? "bg-neutral-900 text-white shadow-lg" : "bg-white border border-neutral-200/80 shadow-xs"}`}
                 >
                   {plan.popular && (
-                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] font-bold tracking-widest bg-brand text-white px-3 py-1 rounded-full whitespace-nowrap">
+                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] font-bold tracking-widest bg-brand text-white px-3 py-1 rounded-full whitespace-nowrap shadow-xs">
                       MOST POPULAR
                     </span>
                   )}
-                  {cycle === "monthly" && country !== "GB" && (
-                    <span className="mb-2 inline-block text-[10px] font-extrabold tracking-wider text-emerald-600 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-full w-fit">
-                      ₹29/MO · 2 MONTHS INTRO OFFER
+                  {isFree && (
+                    <span className="mb-2 inline-block text-[10px] font-extrabold tracking-wider text-violet-700 bg-violet-50 border border-violet-200/80 px-2 py-0.5 rounded-full w-fit">
+                      FREE FOREVER
                     </span>
                   )}
                   <p className={`text-xs font-semibold tracking-widest mb-1 ${plan.highlight ? "text-white/50" : "text-neutral-400"}`}>
@@ -515,18 +519,7 @@ export default function PricingContent({
                       <span className="text-4xl font-extrabold tracking-tight">{price}</span>
                       <span className={`text-xs font-medium ${plan.highlight ? "text-white/60" : "text-neutral-500"}`}>/month</span>
                     </div>
-                    {cycle === "monthly" && country !== "GB" ? (
-                      <div className="mt-1">
-                        <p className={`text-xs font-semibold ${plan.highlight ? "text-emerald-400" : "text-emerald-700"}`}>
-                          For your first 2 months
-                        </p>
-                        <p className={`text-xs ${plan.highlight ? "text-white/60" : "text-neutral-500"}`}>
-                          Then ₹{plan.monthly.toLocaleString("en-IN")}/month +GST
-                        </p>
-                      </div>
-                    ) : (
-                      <span className={`text-xs mt-1 ${plan.highlight ? "text-white/60" : "text-neutral-500"}`}>{sub}</span>
-                    )}
+                    <span className={`text-xs mt-1 ${plan.highlight ? "text-white/60" : "text-neutral-500"}`}>{sub}</span>
                   </div>
                   <ul className="flex flex-col gap-2.5 flex-1 mb-7">
                     {plan.bullets.map((b) => (
@@ -542,26 +535,30 @@ export default function PricingContent({
                   <div className="flex flex-col gap-1.5">
                     <Link
                       href={
-                        isAuthenticated
-                          ? `/billing?plan=${plan.slug}&tab=plans${country === "GB" ? "&country=GB" : ""}`
-                          : `/signup?from=pricing&plan=${plan.slug}${country === "GB" ? "&country=GB" : ""}&next=${encodeURIComponent(`/billing?plan=${plan.slug}&tab=plans`)}`
+                        isFree
+                          ? (isAuthenticated ? "/dashboard" : "/signup")
+                          : (isAuthenticated
+                              ? `/billing?plan=${plan.slug}&tab=plans${country === "GB" ? "&country=GB" : ""}`
+                              : `/signup?from=pricing&plan=${plan.slug}${country === "GB" ? "&country=GB" : ""}&next=${encodeURIComponent(`/billing?plan=${plan.slug}&tab=plans`)}`)
                       }
                       className={`w-full text-center py-3 rounded-xl text-sm font-bold transition-all shadow-sm ${
                         plan.highlight
                           ? "bg-white text-neutral-900 hover:bg-neutral-100"
+                          : isFree
+                          ? "bg-violet-600 text-white hover:bg-violet-700"
                           : "bg-neutral-900 text-white hover:bg-neutral-800"
                       }`}
                     >
-                      {cycle === "monthly" && country !== "GB"
-                        ? "Get Started for ₹29"
-                        : `Choose ${plan.name}`}
+                      {isFree ? "Start Free" : `Choose ${plan.name}`}
                     </Link>
                     <p className={`text-[10px] text-center ${plan.highlight ? "text-white/50" : "text-neutral-500"}`}>
-                      {country === "GB"
+                      {isFree
+                        ? "No credit card required · Upgrade anytime"
+                        : country === "GB"
                         ? "UK Direct Activation · Cancel renewal anytime"
-                        : cycle === "monthly"
-                        ? "Autopay required · Cancel renewal anytime"
-                        : "Billed annually · Cancel renewal anytime"}
+                        : cycle === "annual"
+                        ? "Billed annually · Cancel renewal anytime"
+                        : "Autopay enabled · Cancel renewal anytime"}
                     </p>
                   </div>
                 </div>
@@ -577,7 +574,7 @@ export default function PricingContent({
             <table className="w-full min-w-[640px] text-sm border-collapse">
               <thead>
                 <tr className="border-b border-neutral-100">
-                  <th className="text-left px-5 py-4 text-xs font-semibold text-neutral-400 w-[40%]">Feature</th>
+                  <th className="text-left px-5 py-4 text-xs font-semibold text-neutral-400 w-[32%]">Feature</th>
                   {PLANS.map((p) => (
                     <th key={p.slug} className={`px-4 py-4 text-xs font-semibold text-center ${p.highlight ? "bg-neutral-900 text-white" : "text-neutral-700"}`}>
                       {p.name}
@@ -590,7 +587,7 @@ export default function PricingContent({
                   if (row.type === "category") {
                     return (
                       <tr key={i} className="bg-neutral-50">
-                        <td colSpan={4} className="px-5 py-3 text-[10px] font-bold tracking-widest text-neutral-400 uppercase">
+                        <td colSpan={5} className="px-5 py-3 text-[10px] font-bold tracking-widest text-neutral-400 uppercase">
                           {row.label}
                         </td>
                       </tr>
@@ -599,6 +596,7 @@ export default function PricingContent({
                   return (
                     <tr key={i} className="border-t border-neutral-50 hover:bg-neutral-50/50">
                       <td className="px-5 py-3.5 text-sm text-neutral-600">{row.feature}</td>
+                      <td className="px-4 py-3.5 text-center"><Cell value={row.free} /></td>
                       <td className="px-4 py-3.5 text-center"><Cell value={row.starter} /></td>
                       <td className="px-4 py-3.5 text-center bg-neutral-900/[0.02]"><Cell value={row.pro} /></td>
                       <td className="px-4 py-3.5 text-center"><Cell value={row.business} /></td>

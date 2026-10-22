@@ -36,7 +36,8 @@ describe("getUserPlan", () => {
     expect(plan.slug).toBe("pro");
     expect(plan.canUse("custom_pass_design")).toBe(true);
     expect(plan.canUse("remove_branding")).toBe(true);
-    expect(plan.canUse("api_access")).toBe(true);
+    expect(plan.canUse("advanced_analytics")).toBe(true);
+    expect(plan.canUse("api_access")).toBe(false);
   });
 
   it("resolves pro plan from trial_plan when status is trialing and trial is active", async () => {

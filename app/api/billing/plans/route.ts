@@ -17,14 +17,7 @@ export async function GET() {
         monthly: data.gbpMonthly / 100,
         annual: data.gbpAnnual / 100,
       },
-      introOffer: ["starter", "pro", "business"].includes(slug)
-        ? {
-            price: 29,
-            cycles: 2,
-            currency: "INR",
-            eligibility: "New users on monthly billing",
-          }
-        : null,
+      introOffer: null,
     })),
   });
 }

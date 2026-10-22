@@ -34,6 +34,25 @@ export default function HomePricingSection({ initialCountry = "IN" }: Props) {
   const plans = isUk
     ? [
         {
+          id: "free",
+          name: "Free",
+          target: "Run your first real event with zero software cost",
+          price: "£0",
+          period: "forever",
+          renewalNotice: "No card required · Upgrade anytime",
+          recommended: false,
+          cta: "Start Free",
+          href: "/signup?from=home-pricing&plan=free",
+          features: [
+            "1 active event",
+            "100 attendees per month",
+            "1 organizer team seat",
+            "Basic QR pass & camera scanner",
+            "Standard registration forms",
+            "UrPass pass watermark",
+          ],
+        },
+        {
           id: "starter",
           name: "Starter",
           target: "For small workshops, meetups & single sessions",
@@ -44,10 +63,10 @@ export default function HomePricingSection({ initialCountry = "IN" }: Props) {
           cta: "Choose Starter",
           href: "/signup?from=home-pricing&plan=starter&country=GB&next=/billing",
           features: [
-            "10 events per month",
+            "3 active events",
             "500 registrations per month",
             "2 organizer team seats",
-            "10 custom registration form fields",
+            "Custom registration form fields",
             "Instant digital QR passes",
             "CSV bulk attendee import & export",
             "Standard attendance analytics",
@@ -64,14 +83,14 @@ export default function HomePricingSection({ initialCountry = "IN" }: Props) {
           cta: "Choose Pro",
           href: "/signup?from=home-pricing&plan=pro&country=GB&next=/billing",
           features: [
-            "Unlimited events",
+            "10 active events",
             "2,500 registrations per month",
             "5 organizer team seats",
+            "Session attendance tracking",
             "Custom branded pass design & logo",
-            "Multiple ticket tiers (VIP, Speaker, Attendee)",
             "Multi-gate scanner synchronization",
             "Advanced attendance analytics",
-            "Priority email & chat support",
+            "Priority support",
           ],
         },
         {
@@ -85,33 +104,51 @@ export default function HomePricingSection({ initialCountry = "IN" }: Props) {
           cta: "Choose Business",
           href: "/signup?from=home-pricing&plan=business&country=GB&next=/billing",
           features: [
-            "Unlimited events",
+            "Unlimited active events*",
             "10,000 registrations per month",
             "15 organizer team seats",
-            "Custom domain branding",
-            "Full API access & webhooks",
-            "Session-level QR permissions",
+            "Developer API & webhooks",
+            "Session attendance tracking",
             "Role-based staff permissions",
-            "Dedicated onboarding manager",
+            "Cross-event analytics",
           ],
         },
       ]
     : [
         {
+          id: "free",
+          name: "Free",
+          target: "Run your first real event with zero software cost",
+          price: "₹0",
+          period: "forever",
+          renewalNotice: "No credit card required · Upgrade anytime",
+          recommended: false,
+          cta: "Start Free",
+          href: "/signup?from=home-pricing&plan=free",
+          features: [
+            "1 active event",
+            "100 attendees per month",
+            "1 organizer team seat",
+            "Basic QR pass & camera scanner",
+            "Standard registration forms",
+            "UrPass pass watermark",
+          ],
+        },
+        {
           id: "starter",
           name: "Starter",
           target: "For small workshops, meetups & single sessions",
-          price: "₹29",
+          price: "₹499",
           period: "/month",
-          renewalNotice: "First 2 months introductory offer · then ₹499/mo +GST",
+          renewalNotice: "Flat SaaS pricing +18% GST · Cancel anytime",
           recommended: false,
-          cta: "Get Started for ₹29",
+          cta: "Choose Starter",
           href: "/signup?from=home-pricing&plan=starter&next=/billing",
           features: [
-            "10 events per month",
+            "3 active events",
             "500 registrations per month",
             "2 organizer team seats",
-            "10 custom registration form fields",
+            "Custom registration form fields",
             "Instant digital QR passes",
             "CSV bulk attendee import & export",
             "Standard attendance analytics",
@@ -121,42 +158,41 @@ export default function HomePricingSection({ initialCountry = "IN" }: Props) {
           id: "pro",
           name: "Pro",
           target: "For college fests, hackathons & conferences",
-          price: "₹29",
+          price: "₹999",
           period: "/month",
-          renewalNotice: "First 2 months introductory offer · then ₹999/mo +GST",
+          renewalNotice: "Flat SaaS pricing +18% GST · Cancel anytime",
           recommended: true,
-          cta: "Get Started for ₹29",
+          cta: "Choose Pro",
           href: "/signup?from=home-pricing&plan=pro&next=/billing",
           features: [
-            "Unlimited events",
+            "10 active events",
             "2,500 registrations per month",
             "5 organizer team seats",
+            "Session attendance tracking",
             "Custom branded pass design & logo",
-            "Multiple ticket tiers (VIP, Speaker, Attendee)",
             "Multi-gate scanner synchronization",
             "Advanced attendance analytics",
-            "Priority WhatsApp & email support",
+            "Priority support",
           ],
         },
         {
           id: "business",
           name: "Business",
           target: "For multi-track summits, agencies & universities",
-          price: "₹29",
+          price: "₹2,499",
           period: "/month",
-          renewalNotice: "First 2 months introductory offer · then ₹2,499/mo +GST",
+          renewalNotice: "Flat SaaS pricing +18% GST · Cancel anytime",
           recommended: false,
-          cta: "Get Started for ₹29",
+          cta: "Choose Business",
           href: "/signup?from=home-pricing&plan=business&next=/billing",
           features: [
-            "Unlimited events",
+            "Unlimited active events*",
             "10,000 registrations per month",
             "15 organizer team seats",
-            "Custom domain branding",
-            "Full API access & webhooks",
-            "Session-level QR permissions",
+            "Developer API & webhooks",
+            "Session attendance tracking",
             "Role-based staff permissions",
-            "Dedicated account manager",
+            "Cross-event analytics",
           ],
         },
       ];
@@ -174,15 +210,15 @@ export default function HomePricingSection({ initialCountry = "IN" }: Props) {
           <div className="text-center mb-12 sm:mb-16">
             <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white border border-neutral-200/90 text-neutral-800 text-xs font-semibold tracking-wide shadow-2xs mb-4">
               <span className="w-2 h-2 rounded-full bg-brand" />
-              <span>{isUk ? "TRANSPARENT UK PRICING" : "INTRODUCTORY OFFER · ₹29/MONTH"}</span>
+              <span>{isUk ? "TRANSPARENT UK PRICING" : "FREE FOREVER + TRANSPARENT SAAS"}</span>
             </div>
             <h2 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-neutral-950">
               Predictable pricing for modern event teams
             </h2>
             <p className="mt-3.5 text-neutral-600 text-sm sm:text-base max-w-2xl mx-auto leading-relaxed">
               {isUk
-                ? "Simple flat-rate monthly subscriptions with 0% platform commission on ticket sales. Cancel anytime."
-                : "Get full platform access for ₹29/month for your first 2 months. Keep 100% of your ticket revenue with direct bank payouts."}
+                ? "Start free with 1 event and 100 attendees, or choose flat-rate monthly subscriptions with 0% platform commission on ticket sales."
+                : "Start free with 1 active event and 100 registrations. Upgrade to Starter, Pro, or Business as your events and team scale."}
             </p>
 
             {/* Corporate Value Strip */}
@@ -233,8 +269,8 @@ export default function HomePricingSection({ initialCountry = "IN" }: Props) {
           </div>
         </AnimateIn>
 
-        {/* ── 3 Corporate Pricing Cards ── */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch mb-10 sm:mb-12">
+        {/* ── 4 Corporate Pricing Cards ── */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 items-stretch mb-10 sm:mb-12">
           {plans.map((plan, i) => (
             <AnimateIn key={plan.name} delay={i * 80} from="up">
               <div

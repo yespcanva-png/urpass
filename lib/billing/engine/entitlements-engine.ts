@@ -25,7 +25,7 @@ export const V2_PLAN_LIMITS: Record<
   }
 > = {
   starter: {
-    eventsPerMonth: 10,
+    eventsPerMonth: 3,
     registrationsPerMonth: 500,
     organizerSeats: 2,
     features: new Set<EntitlementKey>([
@@ -37,7 +37,7 @@ export const V2_PLAN_LIMITS: Record<
     ]),
   },
   pro: {
-    eventsPerMonth: 999999, // Unlimited
+    eventsPerMonth: 10,
     registrationsPerMonth: 2500,
     organizerSeats: 5,
     features: new Set<EntitlementKey>([
@@ -49,8 +49,6 @@ export const V2_PLAN_LIMITS: Record<
       "remove_branding",
       "team_permissions_basic",
       "advanced_analytics",
-      "api_access",
-      "webhooks",
       "priority_support",
       "paid_events",
     ]),
@@ -121,7 +119,7 @@ export const V2_PLAN_LIMITS: Record<
     ]),
   },
   free: {
-    eventsPerMonth: 2,
+    eventsPerMonth: 1,
     registrationsPerMonth: 100,
     organizerSeats: 1,
     features: new Set<EntitlementKey>([]),

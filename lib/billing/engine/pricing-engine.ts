@@ -61,8 +61,8 @@ export const STATIC_V2_PLANS: Record<PlanSlug, { name: string; desc: string; inr
     gbpAnnual: 24900,
   },
   free: {
-    name: "Free (Legacy)",
-    desc: "30-day trial for legacy accounts.",
+    name: "Free Forever",
+    desc: "Genuine free plan for 1 active event up to 100 registrations/month with QR passes and mobile scanning.",
     inrMonthly: 0,
     inrAnnual: 0,
     gbpMonthly: 0,
@@ -91,105 +91,12 @@ export async function evaluateOfferEligibility(params: {
   billingCycle: BillingCycle;
   currency?: CurrencyCode;
 }): Promise<EligibilityResult> {
-  const { userId, organizationId, planSlug, billingCycle, currency = "INR" } = params;
-
-  // Rule: Only monthly plans are eligible for ₹29 intro offer
-  if (billingCycle !== "monthly") {
-    return {
-      isEligibleForIntroOffer: false,
-      reason: "Introductory ₹29 offer is only available on monthly subscription plans.",
-    };
-  }
-
-  // Rule: Only Starter, Pro, Business qualify
-  if (!["starter", "pro", "business"].includes(planSlug)) {
-    return {
-      isEligibleForIntroOffer: false,
-      reason: "Introductory offer is only applicable to Starter, Pro, and Business plans.",
-    };
-  }
-
-
-  const admin = getAdmin();
-
-  // 1. Check legacy/existing subscriptions table for trial or paid history
-  const { data: existingSub } = await admin
-    .from("subscriptions")
-    .select("id, status, provider, trial_used, is_trial, trial_ends_at, has_lifetime_access, lifetime_plan_slug, current_period_end, plan:plans(slug)")
-    .eq("user_id", userId)
-    .maybeSingle();
-
-  if (existingSub) {
-    const plan = Array.isArray(existingSub.plan) ? existingSub.plan[0] : existingSub.plan;
-    const existingPlanSlug = String(plan?.slug || "free").toLowerCase();
-    const provider = String(existingSub.provider || "").toLowerCase();
-    const hasLifetime = Boolean(
-      existingSub.has_lifetime_access ||
-      existingSub.lifetime_plan_slug === "founder" ||
-      existingPlanSlug === "founder" ||
-      existingPlanSlug === "lifetime"
-    );
-    const periodEnd = existingSub.current_period_end ? new Date(existingSub.current_period_end) : null;
-    const hasFuturePaidPeriod = Boolean(periodEnd && periodEnd.getTime() > Date.now());
-    const isPaidPlan = !["free", "none"].includes(existingPlanSlug) && !["free", "none"].includes(provider);
-
-    if (existingSub.trial_used || existingSub.is_trial) {
-      const trialEndsAt = existingSub.trial_ends_at ? new Date(existingSub.trial_ends_at) : null;
-      const isExpired = trialEndsAt ? trialEndsAt.getTime() < Date.now() : true;
-      const daysRemaining = trialEndsAt
-        ? Math.max(0, Math.ceil((trialEndsAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
-        : 0;
-
-      return {
-        isEligibleForIntroOffer: false,
-        reason: "Existing trial users are not eligible for the ₹29 introductory promotion.",
-        existingTrialStatus: {
-          isTrial: true,
-          expiresAt: existingSub.trial_ends_at || new Date().toISOString(),
-          isExpired,
-          daysRemaining,
-        },
-      };
-    }
-
-    if (hasLifetime || (existingSub.status === "active" && isPaidPlan && hasFuturePaidPeriod)) {
-      return {
-        isEligibleForIntroOffer: false,
-        reason: "Existing active paid subscribers continue under regular subscription terms.",
-      };
-    }
-  }
-
-  // 2. Check if organization has already redeemed the offer
-  if (organizationId) {
-    const { data: redemption } = await admin
-      .from("offer_redemptions")
-      .select("id")
-      .eq("organization_id", organizationId)
-      .maybeSingle();
-
-    if (redemption) {
-      return {
-        isEligibleForIntroOffer: false,
-        reason: "This organization has already redeemed the ₹29 introductory promotion.",
-      };
-    }
-  }
-
-  // 3. Confirm the auth user exists. Legacy/free rows do not block the paid intro checkout.
-  const { data: authUser } = await admin.auth.admin.getUserById(userId);
-  void authUser;
-
-  const isGbp = currency === "GBP";
-  // Eligible! Return £2 (200 pence) for GBP or ₹29 (2900 paise) for INR for Months 1 & 2
+  void params;
+  // ₹29 introductory promotion is officially retired as part of the transparent SaaS pricing model.
   return {
-    isEligibleForIntroOffer: true,
-    introOffer: {
-      code: isGbp ? "INTRO2_GBP" : "INTRO29",
-      introPricePaise: isGbp ? 200 : 2900,
-      cyclesCount: 2,
-      currency: isGbp ? "GBP" : "INR",
-    },
+    isEligibleForIntroOffer: false,
+    introOffer: null,
+    reason: "The ₹29 introductory promotion has been retired. Standard transparent subscriptions are active.",
   };
 }
 
