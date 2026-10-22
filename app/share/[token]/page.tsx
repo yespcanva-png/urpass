@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { getShareInvitationData } from "@/lib/communications/invitation-share";
 import ShareClient from "./ShareClient";
 
@@ -50,3 +51,4 @@ export default async function SharePage({ params }: PageProps) {
 
   return <ShareClient data={data} />;
 }
+

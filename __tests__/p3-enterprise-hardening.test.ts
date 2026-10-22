@@ -41,12 +41,14 @@ describe("P3 — Enterprise Hardening", () => {
           };
         }
         if (table === "passes") {
+          const resultQuery = {
+            single: vi.fn().mockResolvedValue({ data: null, error: { message: "Pass not found" } }),
+            maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+          };
           return {
             select: vi.fn().mockReturnValue({
-              eq: vi.fn().mockReturnValue({
-                single: vi.fn().mockResolvedValue({ data: null, error: { message: "Pass not found" } }),
-                maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
-              }),
+              eq: vi.fn().mockReturnValue(resultQuery),
+              or: vi.fn().mockReturnValue(resultQuery),
             }),
           };
         }
