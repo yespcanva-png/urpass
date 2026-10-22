@@ -65,4 +65,28 @@ describe("camera scan callbacks", () => {
     expect(secondGate.mock.calls).toEqual([["second-pass"], ["next-pass"]]);
     expect(camera.start).toHaveBeenCalledTimes(1);
   });
+
+  it("passes a 1-key cameraIdOrConfig object to html5-qrcode start", async () => {
+    render(<QRScanner active onScan={vi.fn()} />);
+    await waitFor(() => expect(camera.start).toHaveBeenCalled());
+    const [cameraIdOrConfig] = camera.start.mock.calls[0];
+    expect(typeof cameraIdOrConfig).toBe("object");
+    expect(Object.keys(cameraIdOrConfig)).toEqual(["facingMode"]);
+  });
+
+  it("falls back gracefully when high-resolution camera constraints fail", async () => {
+    let callCount = 0;
+    camera.start.mockImplementation(async (_constraints, _config, decode) => {
+      callCount++;
+      if (callCount === 1) {
+        throw new Error("OverconstrainedError: Constraints could not be satisfied");
+      }
+      camera.decode = decode;
+    });
+
+    render(<QRScanner active onScan={vi.fn()} />);
+    await waitFor(() => expect(camera.start).toHaveBeenCalledTimes(2));
+    const [fallbackIdOrConfig] = camera.start.mock.calls[1];
+    expect(Object.keys(fallbackIdOrConfig)).toEqual(["facingMode"]);
+  });
 });

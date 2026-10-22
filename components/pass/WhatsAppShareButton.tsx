@@ -2,6 +2,8 @@
 
 import { MessageCircle } from "lucide-react";
 
+import { cleanPassToken } from "@/lib/passes/public-pass";
+
 interface Props {
   eventName: string;
   eventDate: string;
@@ -11,6 +13,7 @@ interface Props {
   phone?: string | null;
   buttonText?: string;
   variant?: "full" | "icon";
+  shareUrl?: string;
 }
 
 export function buildWhatsAppPassUrl({
@@ -20,6 +23,7 @@ export function buildWhatsAppPassUrl({
   passToken,
   attendeeName,
   phone,
+  shareUrl,
 }: {
   eventName: string;
   eventDate: string;
@@ -27,12 +31,15 @@ export function buildWhatsAppPassUrl({
   passToken: string;
   attendeeName?: string;
   phone?: string | null;
+  shareUrl?: string;
 }) {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://urpass.space";
-  const passUrl = `${appUrl}/pass/${passToken}`;
+  const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "https://urpass.space").replace(/\/+$/, "");
+  const cleanToken = cleanPassToken(passToken) || passToken;
+  const passUrl = `${appUrl}/pass/${cleanToken}`;
+  const effectiveShareUrl = shareUrl || `${appUrl}/share/${cleanToken}`;
 
   const greeting = attendeeName ? `Hi ${attendeeName}! ` : "Hey! ";
-  const text = `${greeting}Here is your digital entry pass for *${eventName}*.\n\n📅 Date: ${eventDate}\n📍 Venue: ${venue}\n\n🎟️ View & present your QR pass here:\n${passUrl}\n\nShow this pass at the entrance for instant check-in!`;
+  const text = `${greeting}Here is your digital entry pass for *${eventName}*.\n\n📅 Date: ${eventDate}\n📍 Venue: ${venue}\n\n🎟️ View & present your QR pass here:\n${passUrl}\n\n📲 Share this invitation:\n${effectiveShareUrl}\n\nShow this pass at the entrance for instant check-in!`;
 
   let cleanPhone = "";
   if (phone) {
@@ -55,6 +62,7 @@ export default function WhatsAppShareButton({
   phone,
   buttonText = "Share Pass via WhatsApp",
   variant = "full",
+  shareUrl,
 }: Props) {
   const href = buildWhatsAppPassUrl({
     eventName,
@@ -63,6 +71,7 @@ export default function WhatsAppShareButton({
     passToken,
     attendeeName,
     phone,
+    shareUrl,
   });
 
   if (variant === "icon") {

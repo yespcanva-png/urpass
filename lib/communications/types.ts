@@ -173,6 +173,7 @@ export interface WhatsAppNotificationToggles {
   payment_confirmation?: boolean;
   event_reminders?: boolean;
   event_cancellation?: boolean;
+  allow_pass_sharing?: boolean;
 }
 
 export interface EventCommunicationSettings {

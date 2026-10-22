@@ -56,7 +56,9 @@ export default function QRScanner({
             await scannerRef.current.stop();
           }
         } catch {}
-        scannerRef.current.clear();
+        try {
+          scannerRef.current.clear();
+        } catch {}
       }
 
       const scanner = new Html5Qrcode(SCANNER_ID, {
@@ -68,34 +70,75 @@ export default function QRScanner({
       });
       scannerRef.current = scanner;
 
-      // Request ideal 720p constraints: lowers CPU decode overhead by ~75% vs 4K/1080p, boosting decode speeds to sub-15ms
-      const cameraConstraints: MediaTrackConstraints = {
-        facingMode: targetFacing,
-        width: { ideal: 1280, max: 1920 },
-        height: { ideal: 720, max: 1080 },
+      const handleScanSuccess = (decodedText: string) => {
+        if (mountedRef.current && activeRef.current) {
+          onScanRef.current(decodedText.trim());
+        }
       };
 
-      await scanner.start(
-        cameraConstraints,
-        {
-          fps: 30,
-          qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
-            const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
-            return {
-              width: Math.floor(minEdge * 0.92),
-              height: Math.floor(minEdge * 0.92),
-            };
-          },
-          aspectRatio: 1.0,
-          videoConstraints: cameraConstraints,
+      // html5-qrcode strictly requires cameraIdOrConfig to have exactly 1 key when passed as an object
+      const cameraFacingConstraint = { facingMode: targetFacing };
+
+      const primaryConfig = {
+        fps: 25,
+        qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
+          const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+          return {
+            width: Math.max(50, Math.floor(minEdge * 0.88)),
+            height: Math.max(50, Math.floor(minEdge * 0.88)),
+          };
         },
-        (decodedText) => {
-          if (mountedRef.current && activeRef.current) {
-            onScanRef.current(decodedText);
+        aspectRatio: 1.0,
+        videoConstraints: {
+          facingMode: targetFacing,
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+        },
+      };
+
+      // Multi-tier camera start for rock-solid mobile compatibility
+      try {
+        await scanner.start(
+          cameraFacingConstraint,
+          primaryConfig,
+          handleScanSuccess,
+          () => {}
+        );
+      } catch (primaryErr) {
+        console.warn("Primary camera stream config failed, trying basic fallback:", primaryErr);
+        try {
+          // Fallback 1: basic facingMode without resolution/aspectRatio constraints
+          await scanner.start(
+            cameraFacingConstraint,
+            { fps: 20 },
+            handleScanSuccess,
+            () => {}
+          );
+        } catch (facingErr) {
+          console.warn("FacingMode fallback failed, attempting camera device enumeration:", facingErr);
+          // Fallback 2: enumerate physical cameras and pass specific deviceId
+          if (typeof Html5Qrcode.getCameras === "function") {
+            const cameras = await Html5Qrcode.getCameras();
+            if (cameras && cameras.length > 0) {
+              const chosenCamera =
+                targetFacing === "environment"
+                  ? cameras.find((c) => /back|rear|environment/i.test(c.label)) || cameras[cameras.length - 1]
+                  : cameras.find((c) => /front|user/i.test(c.label)) || cameras[0];
+
+              await scanner.start(
+                chosenCamera.id,
+                { fps: 20 },
+                handleScanSuccess,
+                () => {}
+              );
+            } else {
+              throw facingErr;
+            }
+          } else {
+            throw facingErr;
           }
-        },
-        () => {}
-      );
+        }
+      }
 
       // Attempt to apply continuous auto-focus and detect torch capability
       try {
@@ -125,9 +168,13 @@ export default function QRScanner({
       const msg = err instanceof Error ? err.message : String(err);
       if (mountedRef.current) {
         setCameraError(
-          msg.includes("permission") || msg.includes("NotAllowedError")
+          msg.includes("permission") || msg.includes("NotAllowedError") || msg.includes("PermissionDeniedError")
             ? "Camera permission denied. Allow camera access and refresh."
-            : "Could not initialize high-speed camera stream."
+            : msg.includes("secure context") || msg.includes("HTTPS") || msg.includes("mediaDevices")
+            ? "Camera access requires HTTPS or a supported mobile browser."
+            : msg.includes("NotFound") || msg.includes("DevicesNotFoundError")
+            ? "No camera found on this device."
+            : "Could not initialize camera stream. Tap retry below."
         );
         setStarted(false);
       }
