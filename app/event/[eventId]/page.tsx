@@ -17,7 +17,7 @@ export default async function EventPage({
 
   const { data: event } = await supabase
     .from("events")
-    .select("id, name, application_enabled, attendee_limit, status, apply_slug, organizer_id, organization_id")
+    .select("id, name, application_enabled, attendee_limit, status, apply_slug, organizer_id, organization_id, event_date")
     .eq("id", eventId)
     .maybeSingle();
 

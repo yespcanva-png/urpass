@@ -22,6 +22,7 @@ import {
   Loader2,
   AlertCircle,
   Copy,
+  Sparkles,
 } from "lucide-react";
 import CopyLinkButton from "@/components/event/CopyLinkButton";
 import { createClient } from "@/lib/supabase/client";
@@ -65,6 +66,7 @@ interface Event {
   attendee_limit: number;
   status: string;
   apply_slug: string | null;
+  event_date?: string | null;
 }
 
 interface Props {
@@ -413,6 +415,37 @@ export default function EventOverview({ event, initialAttendees = [] }: Props) {
         <div className="mb-6 p-4 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-900 flex items-center gap-2.5 text-xs font-semibold shadow-2xs">
           <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
           <span>Event published successfully! Your registration link is now live and accepting applications.</span>
+        </div>
+      )}
+
+      {/* ── Post-Event Retention & Turnout Banner ──────────────── */}
+      {(currentStatus === "completed" || (Boolean(event.event_date) && new Date(event.event_date!) < new Date())) && currentStatus !== "draft" && (
+        <div className="mb-6 p-4 sm:p-5 rounded-2xl border border-violet-200 bg-gradient-to-r from-violet-50 via-white to-purple-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-2xs">
+          <div className="flex items-start sm:items-center gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-violet-100 border border-violet-200 flex items-center justify-center shrink-0">
+              <Sparkles className="w-5 h-5 text-violet-700" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <p className="text-xs font-bold text-neutral-900">Event Concluded · Turnout Summary</p>
+                <span className="px-2 py-0.5 rounded-full bg-violet-100 text-violet-800 text-[10px] font-bold">
+                  {attendees.length > 0 ? Math.round((checkins.length / attendees.length) * 100) : 0}% Turnout
+                </span>
+              </div>
+              <p className="text-[11px] text-neutral-600 mt-0.5">
+                {checkins.length} of {attendees.length} registered attendees scanned at entrance. Ready for your next edition?
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={handleDuplicateEvent}
+            disabled={isDuplicating}
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-violet-700 hover:bg-violet-800 transition-colors shrink-0 shadow-xs disabled:opacity-50 cursor-pointer"
+          >
+            {isDuplicating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Copy className="w-3.5 h-3.5" />}
+            <span>{isDuplicating ? "Duplicating..." : "Duplicate for Next Event (60s)"}</span>
+          </button>
         </div>
       )}
 

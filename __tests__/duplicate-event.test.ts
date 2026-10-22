@@ -37,6 +37,7 @@ function makeSupabase(overrides: Record<string, unknown> = {}) {
     eq: vi.fn().mockReturnThis(),
     neq: vi.fn().mockReturnThis(),
     in: vi.fn().mockReturnThis(),
+    gte: vi.fn().mockReturnThis(),
     order: vi.fn().mockReturnThis(),
     limit: vi.fn().mockReturnThis(),
     single: vi.fn().mockResolvedValue({ data: null, error: null }),
@@ -71,6 +72,8 @@ describe("Event Duplication & Cloning (duplicateEvent)", () => {
           return {
             select: vi.fn().mockReturnThis(),
             eq: vi.fn().mockReturnThis(),
+            in: vi.fn().mockReturnThis(),
+            gte: vi.fn().mockReturnThis(),
             single: vi.fn().mockResolvedValue({
               data: {
                 id: "evt-victim",
@@ -160,6 +163,8 @@ describe("Event Duplication & Cloning (duplicateEvent)", () => {
           return {
             select: vi.fn().mockReturnThis(),
             eq: vi.fn().mockReturnThis(),
+            in: vi.fn().mockReturnThis(),
+            gte: vi.fn().mockReturnThis(),
             single: vi.fn().mockResolvedValue({ data: mockSourceEvent, error: null }),
             insert: vi.fn((payload: Record<string, unknown>) => {
               insertedEventPayload = payload;

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useSyncExternalStore, useMemo } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Plus,
   Calendar,
@@ -25,11 +26,14 @@ import {
   Mic,
   BookOpen,
   Sparkles,
+  Loader2,
 } from "lucide-react";
 import { getUserOrganizations } from "@/app/actions/organizations";
+import { duplicateEvent } from "@/app/actions/events";
 import { createClient } from "@/lib/supabase/client";
 import { detectCountryClient } from "@/lib/country-config";
 import CorporateWhatsNewCard from "@/components/dashboard/CorporateWhatsNewCard";
+import OrganizerOnboardingChecklist from "@/components/dashboard/OrganizerOnboardingChecklist";
 
 const emptySubscribe = () => () => {};
 
@@ -39,6 +43,7 @@ interface EventRow {
   venue: string;
   event_date: string;
   status: string;
+  apply_slug?: string;
 }
 
 interface OrgRow {
@@ -100,6 +105,7 @@ const EVENT_TEMPLATES = [
 ];
 
 export default function DashboardContent() {
+  const router = useRouter();
   const [firstName, setFirstName] = useState("");
   const dateLabel = useSyncExternalStore(emptySubscribe, formatDate, () => "Today");
   const greeting = useSyncExternalStore(emptySubscribe, getGreeting, () => "Welcome");
@@ -119,6 +125,7 @@ export default function DashboardContent() {
   const [loadError, setLoadError] = useState("");
   const [loaded, setLoaded] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
   const [whatsNewDismissed, setWhatsNewDismissed] = useState<boolean | null>(null);
   const [currentUser, setCurrentUser] = useState<{ email?: string | null; id?: string | null } | null>(null);
 
@@ -149,7 +156,7 @@ export default function DashboardContent() {
           memberships,
         ] = await Promise.all([
           supabase.from("profiles").select("full_name").eq("user_id", user.id).single(),
-          supabase.from("events").select("id, name, venue, event_date, status")
+          supabase.from("events").select("id, name, venue, event_date, status, apply_slug")
             .eq("organizer_id", user.id).order("created_at", { ascending: false }),
           supabase
             .from("subscriptions")
@@ -239,6 +246,24 @@ export default function DashboardContent() {
     navigator.clipboard.writeText(url);
     setCopiedId(eventId);
     setTimeout(() => setCopiedId(null), 2000);
+  }
+
+  async function handleDuplicate(e: React.MouseEvent, id: string) {
+    e.preventDefault();
+    e.stopPropagation();
+    setDuplicatingId(id);
+    try {
+      const res = await duplicateEvent(id);
+      if (res?.error) {
+        alert(res.error);
+        setDuplicatingId(null);
+      } else if (res?.newEventId) {
+        router.push(`/event/${res.newEventId}`);
+      }
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to duplicate event");
+      setDuplicatingId(null);
+    }
   }
 
   // Filtered Events
@@ -341,6 +366,17 @@ export default function DashboardContent() {
         </div>
       )}
 
+      {/* ── First-Event Onboarding Checklist ──────────────────────────── */}
+      {loaded && (
+        <OrganizerOnboardingChecklist
+          firstEventId={events[0]?.id}
+          firstEventSlug={events[0]?.apply_slug}
+          hasEvents={events.length > 0}
+          isEventActive={events.some((e) => e.status === "active")}
+          totalPasses={stats.passes}
+          totalCheckedIn={stats.checkedIn}
+        />
+      )}
 
       {/* ── 4 Clean Corporate Metrics ─────────────────────────────────── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
@@ -544,6 +580,21 @@ export default function DashboardContent() {
             </div>
           </div>
 
+          {/* Past Event Retention Callout */}
+          {filterTab === "past" && filteredEvents.length > 0 && (
+            <div className="mx-4 sm:mx-5 my-3 p-3.5 rounded-xl border border-violet-200 bg-gradient-to-r from-violet-50/90 via-white to-purple-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+              <div className="flex items-center gap-2.5">
+                <Sparkles className="w-4 h-4 text-violet-600 shrink-0" />
+                <div>
+                  <span className="font-bold text-neutral-900">Run your next edition in 60 seconds</span>
+                  <p className="text-[11px] text-neutral-500">
+                    Click &quot;Duplicate&quot; on any past event to clone registration forms, badge designs, and ticket tiers.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Table Rows */}
           {!loaded ? (
             <div className="p-4 space-y-3">
@@ -649,6 +700,22 @@ export default function DashboardContent() {
                         <ScanLine className="w-3 h-3 text-neutral-400" />
                         <span>Scan</span>
                       </Link>
+                      <button
+                        type="button"
+                        onClick={(e) => handleDuplicate(e, event.id)}
+                        disabled={duplicatingId === event.id}
+                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium text-neutral-600 hover:text-neutral-900 bg-white border border-neutral-200 hover:bg-neutral-50 transition-colors cursor-pointer disabled:opacity-50"
+                        title="Duplicate event to launch next edition"
+                      >
+                        {duplicatingId === event.id ? (
+                          <Loader2 className="w-3 h-3 animate-spin text-violet-600" />
+                        ) : (
+                          <Copy className="w-3 h-3 text-neutral-400" />
+                        )}
+                        <span className="hidden sm:inline">
+                          {duplicatingId === event.id ? "Copying..." : "Duplicate"}
+                        </span>
+                      </button>
                       <Link
                         href={`/event/${event.id}`}
                         className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-semibold text-white bg-neutral-900 hover:bg-neutral-800 transition-colors"
