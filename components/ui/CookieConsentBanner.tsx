@@ -21,6 +21,22 @@ export function isPublicEventRoute(pathname?: string | null): boolean {
     path === "/events" ||
     path.startsWith("/apply/") ||
     path === "/apply" ||
+    path.startsWith("/pass/") ||
+    path === "/pass" ||
+    path.startsWith("/passes/") ||
+    path === "/passes" ||
+    path.startsWith("/claim-ticket/") ||
+    path === "/claim-ticket" ||
+    path.startsWith("/ticket/") ||
+    path.startsWith("/tickets/") ||
+    path === "/ticket" ||
+    path === "/tickets" ||
+    path.startsWith("/t/") ||
+    path === "/t" ||
+    path.startsWith("/badge/") ||
+    path === "/badge" ||
+    path.startsWith("/scan/") ||
+    path === "/scan" ||
     path.startsWith("/e/") ||
     path === "/e" ||
     path.startsWith("/p/") ||

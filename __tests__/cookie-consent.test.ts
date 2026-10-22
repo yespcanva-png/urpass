@@ -21,6 +21,10 @@ describe("CookieConsentBanner route separation", () => {
 
       // Public ticket pass views
       expect(isPublicEventRoute("/p/pass_abc123")).toBe(true);
+      expect(isPublicEventRoute("/pass/0f035bbff37a44752e1f68b1ee4dd964a86d486c175fee54c0d6f73a40aa1a21")).toBe(true);
+      expect(isPublicEventRoute("/pass/pass_abc123")).toBe(true);
+      expect(isPublicEventRoute("/pass")).toBe(true);
+      expect(isPublicEventRoute("/claim-ticket/tok-123")).toBe(true);
 
       // Public gate scanner & ticket verification
       expect(isPublicEventRoute("/verify")).toBe(true);
