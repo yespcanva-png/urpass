@@ -91,7 +91,7 @@ export default function SubscriptionOnboardingClient({
   const router = useRouter();
   const [trialLoading, setTrialLoading] = useState(false);
   const [trialError, setTrialError] = useState("");
-  const [phone, setPhone] = useState(userPhone || "");
+  const [phone, setPhone] = useState("");
   const [billingCycle, setBillingCycle] = useState<Cycle>("monthly");
   const [activeCountry, setActiveCountry] = useState<"IN" | "GB">(() => {
     if (typeof window !== "undefined") {
@@ -314,7 +314,7 @@ export default function SubscriptionOnboardingClient({
               <div className="flex flex-col items-start lg:items-end gap-3 shrink-0 w-full sm:w-auto">
                 <div className="w-full sm:w-72 space-y-1.5">
                   <label className="text-[11px] font-semibold text-violet-200 block">
-                    Mobile Number <span className="text-violet-400">* (required for AutoPay)</span>
+                    Mobile Number
                   </label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-neutral-500">+91</span>
@@ -325,7 +325,7 @@ export default function SubscriptionOnboardingClient({
                         setTrialError("");
                         setPhone(e.target.value.replace(/[^\d]/g, "").slice(0, 10));
                       }}
-                      placeholder="9876543210"
+                      placeholder=""
                       maxLength={10}
                       className="w-full rounded-xl border border-violet-400/40 bg-white pl-11 pr-3 py-2.5 text-sm text-neutral-950 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-violet-400 font-mono shadow-inner"
                     />

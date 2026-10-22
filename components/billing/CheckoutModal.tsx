@@ -109,7 +109,7 @@ export default function CheckoutModal({
   const [payLoading, setPayLoading]         = useState(false);
   const [payError, setPayError]             = useState("");
   const [companyName, setCompanyName]       = useState(userName || "");
-  const [phone, setPhone]                   = useState(userPhone || "");
+  const [phone, setPhone]                   = useState("");
   const [billingAddress, setBillingAddress] = useState("");
   const [billingStateCode, setBillingStateCode] = useState("33");
   const [gstin, setGstin]                   = useState("");
@@ -127,7 +127,7 @@ export default function CheckoutModal({
       setPayError("");
       setPayLoading(false);
       setCompanyName(userName || "");
-      setPhone(userPhone || "");
+      setPhone("");
       setBillingAddress("");
       setBillingStateCode("33");
       setGstin("");
@@ -212,8 +212,8 @@ export default function CheckoutModal({
       const selectedState = INDIA_STATES.find((state) => state.code === billingStateCode);
 
       const cleanPhone = phone.replace(/[^\d]/g, "");
-      if (!isUk && cleanPhone.length < 10) {
-        setPayError("A valid 10-digit mobile number is required for AutoPay mandate setup.");
+      if (!isUk && cleanPhone && cleanPhone.length > 0 && cleanPhone.length < 10) {
+        setPayError("Please enter a valid 10-digit mobile number.");
         setPayLoading(false);
         return;
       }
@@ -575,19 +575,15 @@ export default function CheckoutModal({
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[11px] font-medium text-neutral-600">
-                    Mobile number <span className="text-red-500">*</span>
-                    <span className="text-[10px] text-neutral-400 ml-1">(Required for AutoPay)</span>
-                  </label>
+                  <label className="text-[11px] font-medium text-neutral-600">Mobile number</label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-neutral-500">+91</span>
                     <input
                       type="tel"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value.replace(/[^\d]/g, "").slice(0, 10))}
-                      placeholder="9876543210"
+                      placeholder=""
                       maxLength={10}
-                      required
                       className="w-full rounded-lg border border-neutral-300 pl-11 pr-3 py-2.5 text-sm text-neutral-950 placeholder:text-neutral-400 focus:outline-none focus:border-neutral-700 focus:ring-2 focus:ring-neutral-900/10 font-mono"
                     />
                   </div>
