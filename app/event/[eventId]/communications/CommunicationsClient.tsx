@@ -123,6 +123,7 @@ export default function CommunicationsClient({
   };
   const defaultTemplateName = controlPanelData?.defaultWhatsAppTemplateName || "urpass_space";
   const [manualTemplateName, setManualTemplateName] = useState(controlPanelData?.eventSettings?.whatsapp_settings?.template_name || "");
+  const [templateLanguage, setTemplateLanguage] = useState(controlPanelData?.eventSettings?.whatsapp_settings?.template_language || "en");
   const [savingTemplate, setSavingTemplate] = useState(false);
   const templates: WhatsAppTemplateRecord[] = controlPanelData?.templates || [];
   const stats = controlPanelData?.stats || {
@@ -310,7 +311,7 @@ export default function CommunicationsClient({
         body: JSON.stringify({
           phone: testWAPhone,
           templateName: testWATemplate.trim() || defaultTemplateName,
-          templateLang: testWATemplate === "urpass_space" ? "en" : "en_US",
+          templateLang: templateLanguage,
           eventId,
         }),
       });
@@ -1127,7 +1128,7 @@ export default function CommunicationsClient({
             e.preventDefault();
             setSavingTemplate(true);
             try {
-              const result = await saveWhatsAppTemplateNameAction(eventId, manualTemplateName);
+              const result = await saveWhatsAppTemplateNameAction(eventId, manualTemplateName, templateLanguage);
               if (result.error) setFeedback({ type: "error", text: result.error });
               else {
                 setManualTemplateName(manualTemplateName.trim());
@@ -1142,6 +1143,10 @@ export default function CommunicationsClient({
             <input id="whatsapp-template-name" value={manualTemplateName} onChange={(e) => setManualTemplateName(e.target.value)}
               placeholder={defaultTemplateName} maxLength={512} disabled={savingTemplate}
               className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm" />
+            <label htmlFor="whatsapp-template-language" className="block text-sm font-bold text-neutral-900">Template language code</label>
+            <input id="whatsapp-template-language" value={templateLanguage} onChange={(e) => setTemplateLanguage(e.target.value)} disabled={savingTemplate}
+              placeholder="en" className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm" />
+            <p className="text-xs text-neutral-500">Use the exact language registered in Meta: English is en; English (US) is en_US. The nivi template uses en with date, time, and venue variables.</p>
             <p className="text-xs text-neutral-500">Default: <strong>{defaultTemplateName}</strong>. Clear this field and save to restore the default. Custom templates must be approved in your WhatsApp account and match the pass message variables.</p>
             <button type="submit" disabled={savingTemplate} className="rounded-lg bg-neutral-900 px-4 py-2 text-xs font-bold text-white disabled:opacity-50">
               {savingTemplate ? "Saving…" : "Save template"}

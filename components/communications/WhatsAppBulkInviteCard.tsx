@@ -337,7 +337,7 @@ export default function WhatsAppBulkInviteCard({
               <p className="text-xs opacity-90 mt-0.5">
                 {lastResult.failedCount > 0 && `${lastResult.failedCount} failed delivery. `}
                 {lastResult.skippedCount > 0 && `${lastResult.skippedCount} skipped (already delivered or duplicates). `}
-                Meta Cloud API message receipts recorded.
+                {lastResult.sentCount > 0 ? "Accepted by Meta for sending; delivery status updates separately." : "No invitations were accepted by Meta for sending."}
               </p>
               {lastResult.failedCount > 0 && (
                 <p className="text-[11px] font-mono mt-1 text-amber-950 bg-amber-100/70 px-2 py-0.5 rounded-md inline-block">

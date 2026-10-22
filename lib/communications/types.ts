@@ -167,6 +167,7 @@ export interface WhatsAppTemplateRecord {
 
 export interface WhatsAppNotificationToggles {
   template_name?: string;
+  template_language?: string;
   registration_received?: boolean;
   ticket_delivery?: boolean;
   payment_confirmation?: boolean;

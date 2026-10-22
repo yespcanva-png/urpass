@@ -139,9 +139,12 @@ export async function updateEventCommunicationSettings(
 }
 
 /** Saves the optional event template override without replacing notification toggles. */
-export async function saveWhatsAppTemplateNameAction(eventId: string, name: string) {
+export async function saveWhatsAppTemplateNameAction(eventId: string, name: string, language = "en") {
   if (typeof name !== "string") return { error: "Enter a valid template name." };
   const templateName = name.trim();
+  if (typeof language !== "string" || !/^[a-z]{2,3}(?:_[A-Z]{2})?$/.test(language.trim())) {
+    return { error: "Enter a valid template language code, such as en or en_US." };
+  }
   if (templateName && !/^[a-z0-9_]{1,512}$/.test(templateName)) {
     return { error: "Use only lowercase letters, numbers, and underscores for the template name." };
   }
@@ -155,7 +158,7 @@ export async function saveWhatsAppTemplateNameAction(eventId: string, name: stri
   const { data, error } = await db.from("events").select("whatsapp_settings").eq("id", eventId).single();
   if (error) return { error: error.message };
   const { error: saveError } = await db.from("events").update({
-    whatsapp_settings: { ...(data.whatsapp_settings || {}), template_name: templateName },
+    whatsapp_settings: { ...(data.whatsapp_settings || {}), template_name: templateName, template_language: templateName ? language.trim() : undefined },
     updated_at: new Date().toISOString(),
   }).eq("id", eventId);
   if (saveError) return { error: saveError.message };

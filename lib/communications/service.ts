@@ -18,6 +18,7 @@ import {
 } from "./utils";
 import { getSMSProvider, SMSProvider } from "./providers/sms";
 import { emailProvider, EmailProvider } from "./providers/email/resend";
+import { normalizeTemplateLanguage } from "./providers/whatsapp/templates";
 import { whatsAppProvider, WhatsAppProvider } from "./providers/whatsapp/provider";
 
 function getAdminClient() {
@@ -356,6 +357,13 @@ export class CommunicationService {
       || process.env.WHATSAPP_TEMPLATE_NAME?.trim()
       || "urpass_space";
 
+    const templateLanguage = normalizeTemplateLanguage(
+      eventSettings.whatsapp_settings?.template_name?.trim()
+        ? eventSettings.whatsapp_settings.template_language || undefined
+        : payload.templateLanguage || process.env.WHATSAPP_TEMPLATE_LANG,
+      templateName
+    );
+
     const idempotencyKey = generateIdempotencyKey(payload.passToken, "WHATSAPP", payload.version || "v1");
 
     // ── 2. Atomic Database Claim (Prevent Concurrent Duplicate Sends) ──
@@ -387,7 +395,7 @@ export class CommunicationService {
             attempt_count: 1,
             last_attempt_at: new Date().toISOString(),
             idempotency_key: idempotencyKey,
-            metadata: { version: payload.version || "v1" },
+            metadata: { version: payload.version || "v1", templateLanguage },
           })
           .select("id, status, provider_message_id, provider, last_attempt_at, attempt_count")
           .maybeSingle();
@@ -456,6 +464,7 @@ export class CommunicationService {
       res = await this.whatsapp.sendTicketWhatsApp({
         ...payload,
         templateName,
+        templateLanguage,
         phone: normalizedPhone,
         ticketId,
         ticketUrl,
@@ -841,6 +850,7 @@ export class CommunicationService {
           phone: item.destination,
           ticketUrl: item.metadata?.ticketUrl || buildTicketUrl(passToken),
           templateName: item.template_name,
+          templateLanguage: item.metadata?.templateLanguage,
           whatsappConsent: true,
         });
 
