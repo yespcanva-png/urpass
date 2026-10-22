@@ -6,6 +6,7 @@ import {
   APPROVED_TEMPLATES,
   WhatsAppTemplateType,
   normalizeTemplateLanguage,
+  extractCleanButtonPassToken,
 } from "./templates";
 
 export interface WhatsAppResult {
@@ -141,7 +142,7 @@ export class WhatsAppProvider {
 
       const apiVersion = process.env.WHATSAPP_GRAPH_VERSION || "v21.0";
       const url = `https://graph.facebook.com/${apiVersion}/${phoneId}/messages`;
-      const res = await fetch(url, {
+      let res = await fetch(url, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -152,7 +153,95 @@ export class WhatsAppProvider {
       });
       clearTimeout(timeoutId);
 
-      const data = await res.json().catch(() => null);
+      let data = await res.json().catch(() => null);
+
+      // ── Self-Healing Dynamic Template Button Resolver ──
+      // Automatically handles templates that REQUIRE a button parameter (Code 131008)
+      // and templates that DO NOT support a button component (Code 132018) without code changes.
+      if (!res.ok && templateObj) {
+        const errObj = data?.error;
+        const code = errObj?.code;
+        const details = (
+          (errObj?.error_data?.details || "") +
+          " " +
+          (errObj?.message || "")
+        ).toLowerCase();
+
+        const isButtonParamMissing =
+          code === 131008 ||
+          details.includes("131008") ||
+          details.includes("button at index 0 of type url requires a parameter") ||
+          (details.includes("button") && details.includes("requires a parameter"));
+
+        const isButtonNotSupported =
+          code === 132018 ||
+          details.includes("132018") ||
+          details.includes("template does not contain a button component") ||
+          details.includes("param does not exist in template") ||
+          (details.includes("button") && details.includes("not contain"));
+
+        if (isButtonParamMissing) {
+          // Template requires a dynamic URL button parameter: attach clean button component and retry
+          const buttonToken =
+            extractCleanButtonPassToken(payload.passToken, payload.ticketUrl, payload.ticketId) ||
+            payload.passToken ||
+            "pass";
+
+          templateObj.components = (templateObj.components || []).filter(
+            (c: any) => c.type !== "button"
+          );
+          templateObj.components.push({
+            type: "button",
+            sub_type: "url",
+            index: "0",
+            parameters: [
+              {
+                type: "text",
+                text: buttonToken,
+              },
+            ],
+          });
+          requestBody.template = templateObj;
+
+          try {
+            const retryController = new AbortController();
+            const retryTimeoutId = setTimeout(() => retryController.abort(), 6000);
+            res = await fetch(url, {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(requestBody),
+              signal: retryController.signal,
+            });
+            clearTimeout(retryTimeoutId);
+            data = await res.json().catch(() => null);
+          } catch {}
+        } else if (isButtonNotSupported) {
+          // Template in Meta has no button component: strip button component and retry
+          templateObj.components = (templateObj.components || []).filter(
+            (c: any) => c.type !== "button"
+          );
+          requestBody.template = templateObj;
+
+          try {
+            const retryController = new AbortController();
+            const retryTimeoutId = setTimeout(() => retryController.abort(), 6000);
+            res = await fetch(url, {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(requestBody),
+              signal: retryController.signal,
+            });
+            clearTimeout(retryTimeoutId);
+            data = await res.json().catch(() => null);
+          } catch {}
+        }
+      }
 
       if (!res.ok) {
         const errObj = data?.error;
