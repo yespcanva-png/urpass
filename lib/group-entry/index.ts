@@ -321,14 +321,14 @@ export function normalizeScannedToken(rawToken: string): string {
         url.searchParams.get("code");
       if (queryToken) return decodeURIComponent(queryToken).trim();
 
-      const match = url.pathname.match(/\/pass\/([^\/]+)/);
+      const match = url.pathname.match(/\/(?:pass|share)\/([^\/]+)/);
       if (match && match[1]) {
         trimmed = decodeURIComponent(match[1]);
       } else {
-        trimmed = trimmed.replace(/^https?:\/\/[^\/]+\/pass\//, "").split("?")[0].split("#")[0];
+        trimmed = trimmed.replace(/^https?:\/\/[^\/]+\/(?:pass|share)\//, "").split("?")[0].split("#")[0];
       }
     } catch {
-      trimmed = trimmed.replace(/^https?:\/\/[^\/]+\/pass\//, "").split("?")[0].split("#")[0];
+      trimmed = trimmed.replace(/^https?:\/\/[^\/]+\/(?:pass|share)\//, "").split("?")[0].split("#")[0];
     }
   }
   return trimmed.trim();

@@ -80,19 +80,17 @@ export default function QRScanner({
       const cameraFacingConstraint = { facingMode: targetFacing };
 
       const primaryConfig = {
-        fps: 25,
+        fps: 20,
         qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
           const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+          const size = Math.max(50, Math.floor(minEdge * 0.92));
           return {
-            width: Math.max(50, Math.floor(minEdge * 0.88)),
-            height: Math.max(50, Math.floor(minEdge * 0.88)),
+            width: size,
+            height: size,
           };
         },
-        aspectRatio: 1.0,
         videoConstraints: {
           facingMode: targetFacing,
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
         },
       };
 
@@ -140,9 +138,15 @@ export default function QRScanner({
         }
       }
 
-      // Attempt to apply continuous auto-focus and detect torch capability
+      // Attempt to apply continuous auto-focus, lock playsinline for iOS, and detect torch capability
       try {
         const videoEl = document.getElementById(SCANNER_ID)?.querySelector("video") as HTMLVideoElement | null;
+        if (videoEl) {
+          videoEl.setAttribute("playsinline", "true");
+          videoEl.setAttribute("webkit-playsinline", "true");
+          videoEl.setAttribute("muted", "true");
+          videoEl.muted = true;
+        }
         const stream = videoEl?.srcObject as MediaStream | null;
         const videoTrack = stream?.getVideoTracks?.()[0];
         if (videoTrack && typeof videoTrack.getCapabilities === "function") {
@@ -313,7 +317,7 @@ export default function QRScanner({
     <div className={`relative flex flex-col items-center w-full h-full ${className}`}>
       {/* Viewfinder Frame */}
       <div className="relative w-full h-full overflow-hidden rounded-2xl bg-zinc-950 transition-colors duration-300">
-        <div id={SCANNER_ID} className="w-full h-full [&>video]:object-cover [&>video]:w-full [&>video]:h-full" />
+        <div id={SCANNER_ID} className="w-full h-full flex items-center justify-center overflow-hidden [&>video]:min-w-full [&>video]:min-h-full [&>video]:w-auto [&>video]:h-auto [&>video]:max-w-none" />
 
         {/* Starting placeholder */}
         {!started && !cameraError && (
