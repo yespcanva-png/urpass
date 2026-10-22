@@ -825,7 +825,7 @@ export async function updateEventStatus(
 
   const { data: event } = await supabase
     .from("events")
-    .select("id, organizer_id, organization_id, status")
+    .select("id, name, organizer_id, organization_id, status")
     .eq("id", eventId)
     .single();
 
@@ -941,6 +941,31 @@ export async function updateEventStatus(
         newStatus: status,
       },
     });
+  }
+
+  if (status === "completed" && user.email) {
+    try {
+      const [{ count: regCount }, { count: checkinCount }] = await Promise.all([
+        supabase.from("attendees").select("id", { count: "exact", head: true }).eq("event_id", eventId),
+        supabase.from("check_ins").select("id", { count: "exact", head: true }).eq("event_id", eventId),
+      ]);
+      const totalReg = regCount ?? 0;
+      const totalCheckin = checkinCount ?? 0;
+      const turnoutRate = totalReg > 0 ? Math.round((totalCheckin / totalReg) * 100) : 0;
+
+      const { sendOrganizerPostEventSummaryEmail } = await import("@/lib/email");
+      void sendOrganizerPostEventSummaryEmail({
+        organizerEmail: user.email,
+        organizerName: user.user_metadata?.full_name || user.email.split("@")[0] || "Organizer",
+        eventName: event.name || "Your Event",
+        eventId,
+        totalRegistered: totalReg,
+        totalCheckedIn: totalCheckin,
+        turnoutRate,
+      }).catch((err) => console.error("[sendOrganizerPostEventSummaryEmail] failed:", err));
+    } catch (err) {
+      console.error("[updateEventStatus:completed] failed to send post-event report:", err);
+    }
   }
 
   revalidatePath(`/event/${eventId}`);

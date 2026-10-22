@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import AttendeeTable from "@/components/event/AttendeeTable";
 import { getUserPlan } from "@/lib/plan";
 import { reconcileEventTicketOrders } from "@/lib/payments/reconcile-event-orders";
@@ -249,8 +250,57 @@ export default async function AttendeesPage({ params }: Props) {
     }
   }
 
+  const regLimit = plan.getLimit("registrations_per_month");
+  const currentCount = attendees?.length ?? 0;
+  const isNearLimit = regLimit < 999_999 && currentCount >= regLimit * 0.8;
+  const isAtLimit = regLimit < 999_999 && currentCount >= regLimit;
+
+  const planTitle = plan.slug.charAt(0).toUpperCase() + plan.slug.slice(1);
+
   return (
     <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8 page-in">
+      {isNearLimit && (
+        <div
+          className={`mb-6 p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs ${
+            isAtLimit
+              ? "border-amber-300 bg-amber-50 text-amber-950"
+              : "border-violet-200 bg-gradient-to-r from-violet-50 via-white to-purple-50 text-neutral-900"
+          }`}
+        >
+          <div className="flex items-center gap-3">
+            <span
+              className={`w-9 h-9 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 ${
+                isAtLimit ? "bg-amber-200 text-amber-900" : "bg-violet-100 text-violet-800"
+              }`}
+            >
+              {Math.min(100, Math.round((currentCount / regLimit) * 100))}%
+            </span>
+            <div>
+              <p className="text-xs font-bold">
+                {isAtLimit
+                  ? `Monthly Registration Quota Reached (${currentCount}/${regLimit})`
+                  : `Approaching Monthly Registration Limit (${currentCount}/${regLimit})`}
+              </p>
+              <p className="text-[11px] text-neutral-600 mt-0.5">
+                {isAtLimit
+                  ? "New attendee submissions are paused for this billing period. Upgrade your plan to increase quota and accept more attendees."
+                  : `Your ${planTitle} plan includes ${regLimit} registrations/month. Upgrade to Starter (500) or Pro (2,500) for more capacity.`}
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/billing"
+            className={`inline-flex items-center justify-center px-4 py-2 rounded-lg text-xs font-bold transition-colors shrink-0 shadow-xs ${
+              isAtLimit
+                ? "bg-amber-900 text-white hover:bg-amber-800"
+                : "bg-violet-700 text-white hover:bg-violet-800"
+            }`}
+          >
+            Upgrade Plan &rarr;
+          </Link>
+        </div>
+      )}
+
       <AttendeeTable
         attendees={attendees ?? []}
         eventId={eventId}

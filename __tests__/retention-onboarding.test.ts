@@ -95,4 +95,33 @@ describe("Retention & Organizer Onboarding Logic", () => {
     const empty = calculatePostEventSummary(0, 0);
     expect(empty.turnoutRate).toBe(0);
   });
+
+  it("evaluates registration quota thresholds for upgrade triggers", () => {
+    function evaluateQuotaWarning(currentAttendees: number, regLimit: number) {
+      const isNearLimit = regLimit < 999_999 && currentAttendees >= regLimit * 0.8;
+      const isAtLimit = regLimit < 999_999 && currentAttendees >= regLimit;
+      return { isNearLimit, isAtLimit, percent: Math.round((currentAttendees / regLimit) * 100) };
+    }
+
+    // Free plan: 100 limit, 50 attendees (no warning)
+    const freeLow = evaluateQuotaWarning(50, 100);
+    expect(freeLow.isNearLimit).toBe(false);
+    expect(freeLow.isAtLimit).toBe(false);
+
+    // Free plan: 82 attendees (near limit warning triggered)
+    const freeNear = evaluateQuotaWarning(82, 100);
+    expect(freeNear.isNearLimit).toBe(true);
+    expect(freeNear.isAtLimit).toBe(false);
+    expect(freeNear.percent).toBe(82);
+
+    // Free plan: 100 attendees (quota reached, hard upgrade alert triggered)
+    const freeMax = evaluateQuotaWarning(100, 100);
+    expect(freeMax.isNearLimit).toBe(true);
+    expect(freeMax.isAtLimit).toBe(true);
+
+    // Business unlimited: 1,000 attendees (no warning)
+    const busHigh = evaluateQuotaWarning(1000, 999_999);
+    expect(busHigh.isNearLimit).toBe(false);
+    expect(busHigh.isAtLimit).toBe(false);
+  });
 });

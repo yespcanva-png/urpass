@@ -1543,6 +1543,92 @@ export async function sendPostEventThankYouEmail({
   });
 }
 
+export async function sendOrganizerPostEventSummaryEmail({
+  organizerEmail,
+  organizerName,
+  eventName,
+  eventId,
+  totalRegistered,
+  totalCheckedIn,
+  turnoutRate,
+}: {
+  organizerEmail: string;
+  organizerName: string;
+  eventName: string;
+  eventId: string;
+  totalRegistered: number;
+  totalCheckedIn: number;
+  turnoutRate: number;
+}) {
+  const eventDashboardUrl = `${APP_URL}/event/${eventId}`;
+
+  await sendEmail({
+    from: FROM,
+    to: organizerEmail,
+    subject: `Event Summary: ${eventName} (${turnoutRate}% turnout) · UrPass`,
+    html: `
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /></head>
+<body style="margin:0;padding:0;background:#f0effe;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f0effe;padding:40px 16px;">
+  <tr><td align="center">
+    <p style="margin:0 0 20px;font-size:11px;font-weight:700;letter-spacing:4px;color:#9333ea;text-transform:uppercase;">URPASS</p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="max-width:500px;background:#ffffff;border-radius:24px;overflow:hidden;box-shadow:0 8px 40px rgba(109,40,217,0.12);">
+      <tr>
+        <td style="background:linear-gradient(135deg,#6D28D9 0%,#4c1d95 100%);padding:30px 32px;">
+          <p style="margin:0 0 4px;font-size:10px;font-weight:700;letter-spacing:3px;color:rgba(255,255,255,0.7);text-transform:uppercase;">Post-Event Report</p>
+          <p style="margin:0;font-size:22px;font-weight:800;color:#ffffff;">Congratulations on completing your event!</p>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:28px 32px;">
+          <p style="margin:0 0 16px;font-size:14px;color:#374151;line-height:1.6;">
+            Hi <strong>${escapeHtml(organizerName)}</strong>, here is the official turnout summary for <strong>${escapeHtml(eventName)}</strong>:
+          </p>
+          <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;">
+            <tr style="background:#f9fafb;">
+              <td style="padding:12px 16px;font-size:12px;color:#6b7280;font-weight:600;">Total Registrations</td>
+              <td style="padding:12px 16px;font-size:14px;color:#111827;font-weight:700;text-align:right;">${totalRegistered}</td>
+            </tr>
+            <tr style="border-top:1px solid #e5e7eb;">
+              <td style="padding:12px 16px;font-size:12px;color:#6b7280;font-weight:600;">Checked In at Gate</td>
+              <td style="padding:12px 16px;font-size:14px;color:#111827;font-weight:700;text-align:right;">${totalCheckedIn}</td>
+            </tr>
+            <tr style="border-top:1px solid #e5e7eb;background:#faf5ff;">
+              <td style="padding:12px 16px;font-size:12px;color:#6D28D9;font-weight:700;">Turnout Rate</td>
+              <td style="padding:12px 16px;font-size:16px;color:#6D28D9;font-weight:800;text-align:right;">${turnoutRate}%</td>
+            </tr>
+          </table>
+
+          <div style="background:#f5f3ff;border:1px solid #ddd6fe;border-radius:14px;padding:20px;margin-bottom:24px;text-align:center;">
+            <p style="margin:0 0 6px;font-size:14px;font-weight:700;color:#4c1d95;">Planning your next event or edition?</p>
+            <p style="margin:0 0 16px;font-size:12px;color:#6b7280;line-height:1.5;">
+              Duplicate this event in 1 click to copy your registration questions, ticket tiers, and custom pass badges with zero manual setup.
+            </p>
+            <a href="${eventDashboardUrl}" style="display:inline-block;background:#6D28D9;color:#ffffff;padding:12px 24px;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;">
+              Duplicate for Next Event &rarr;
+            </a>
+          </div>
+
+          <p style="margin:0;font-size:12px;color:#9ca3af;text-align:center;">
+            Need help scaling your next event? Reach out to our concierge team at <a href="mailto:support@urpass.space" style="color:#6D28D9;">support@urpass.space</a>.
+          </p>
+        </td>
+      </tr>
+      <tr>
+        <td style="border-top:1px solid #f3f4f6;padding:16px 32px;background:#fafafa;border-radius:0 0 24px 24px;text-align:center;">
+          <p style="margin:0;font-size:11px;color:#d1d5db;">Powered by URPASS &middot; <a href="${APP_URL}" style="color:#a78bfa;text-decoration:none;">urpass.space</a></p>
+        </td>
+      </tr>
+    </table>
+  </td></tr>
+</table>
+</body>
+</html>`.trim(),
+  });
+}
+
 export async function sendInvoiceEmail({
   to,
   name,
