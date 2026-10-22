@@ -99,6 +99,24 @@ describe("addAttendee", () => {
     expect(result?.error).toBe("Event not found.");
   });
 
+  it.each([
+    { email: "", phone: "+91 98765 43210", expected: "919876543210@event.urpass.space" },
+    { email: "   ", phone: "9876543210", expected: "9876543210@event.urpass.space" },
+    { email: undefined, phone: undefined, expected: /^\d+@event\.urpass\.space$/ },
+    { email: "Alice@Example.com", phone: "9876543210", expected: "alice@example.com" },
+  ])("assigns or preserves the manual attendee email: $email", async ({ email, phone, expected }) => {
+    const supabase = makeSupabase();
+    supabase.single.mockResolvedValue({ data: { id: "evt-1", organizer_id: "user-123" }, error: null });
+    supabase.insert = vi.fn().mockResolvedValue({ error: null });
+    mockedCreateClient.mockResolvedValue(supabase as never);
+    const { addAttendee } = await import("@/app/actions/attendees");
+    const result = await addAttendee("evt-1", { name: "Alice", email, phone, pass_type: "participant" });
+    expect(result).toBeUndefined();
+    expect(supabase.insert).toHaveBeenCalledWith(expect.objectContaining({
+      email: typeof expected === "string" ? expected : expect.stringMatching(expected),
+    }));
+  });
+
   it("returns duplicate error on postgres code 23505", async () => {
     const supabase = makeSupabase();
     let callCount = 0;

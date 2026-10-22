@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { X, Loader2 } from "lucide-react";
-import { attendeeSchema, type AttendeeInput, PASS_TYPES } from "@/lib/validations/attendee";
+import { manualAttendeeSchema, type ManualAttendeeInput, PASS_TYPES } from "@/lib/validations/attendee";
 import { addAttendee } from "@/app/actions/attendees";
 
 const inputCls =
@@ -27,9 +27,9 @@ export default function AddAttendeeModal({ eventId, onClose, onSuccess }: Props)
     handleSubmit,
     formState: { errors, isSubmitting },
     reset,
-  } = useForm<AttendeeInput>({
-    resolver: zodResolver(attendeeSchema),
-    defaultValues: { pass_type: "participant" },
+  } = useForm<ManualAttendeeInput>({
+    resolver: zodResolver(manualAttendeeSchema),
+    defaultValues: { email: "", pass_type: "participant" },
   });
 
   useEffect(() => {
@@ -42,7 +42,7 @@ export default function AddAttendeeModal({ eventId, onClose, onSuccess }: Props)
     return () => document.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  async function onSubmit(data: AttendeeInput) {
+  async function onSubmit(data: ManualAttendeeInput) {
     setServerError("");
     try {
       const result = await addAttendee(eventId, data);
@@ -98,13 +98,14 @@ export default function AddAttendeeModal({ eventId, onClose, onSuccess }: Props)
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold text-slate-700">Email</label>
+            <label className="text-xs font-semibold text-slate-700">Email <span className="text-slate-400 font-normal">(optional)</span></label>
             <input
               type="email"
               placeholder="attendee@example.com"
               className={inputCls}
               {...register("email")}
             />
+            <p className="text-xs text-slate-500">Leave blank to generate an address using the phone number, or an assigned number, at event.urpass.space.</p>
             {errors.email && <p className="text-xs text-rose-600 font-medium">{errors.email.message}</p>}
           </div>
 

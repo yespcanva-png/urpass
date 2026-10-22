@@ -234,6 +234,17 @@ describe("AddAttendeeModal", () => {
     });
   });
 
+  it("submits a manual attendee with no email", async () => {
+    const { addAttendee } = await import("@/app/actions/attendees");
+    render(<AddAttendeeModal eventId="evt-1" onClose={onClose} onSuccess={onSuccess} />);
+    await userEvent.type(screen.getByPlaceholderText("Attendee name"), "Alice Kumar");
+    await userEvent.click(screen.getByRole("button", { name: /add attendee/i }));
+    await waitFor(() => expect(addAttendee).toHaveBeenCalledWith(
+      "evt-1", expect.objectContaining({ name: "Alice Kumar", email: "" })
+    ));
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+  });
+
   it("calls addAttendee and closes on valid submit", async () => {
     const { addAttendee } = await import("@/app/actions/attendees");
     render(<AddAttendeeModal eventId="evt-1" onClose={onClose} onSuccess={onSuccess} />);

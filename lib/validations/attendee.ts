@@ -17,3 +17,9 @@ export const attendeeSchema = z.object({
 });
 
 export type AttendeeInput = z.infer<typeof attendeeSchema>;
+
+// Manual registrations can omit email; the server assigns an event address.
+export const manualAttendeeSchema = attendeeSchema.extend({
+  email: z.string().trim().pipe(z.string().email("Enter a valid email").or(z.literal(""))).optional(),
+});
+export type ManualAttendeeInput = z.infer<typeof manualAttendeeSchema>;

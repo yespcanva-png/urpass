@@ -2,7 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
-import { attendeeSchema, type AttendeeInput } from "@/lib/validations/attendee";
+import { attendeeSchema, manualAttendeeSchema, type AttendeeInput, type ManualAttendeeInput } from "@/lib/validations/attendee";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
@@ -500,7 +500,7 @@ export async function promoteNextWaitlistAttendee(
 
 export async function addAttendee(
   eventId: string,
-  data: AttendeeInput
+  data: ManualAttendeeInput
 ): Promise<ActionResult> {
   const supabase = await createClient();
   const {
@@ -511,7 +511,14 @@ export async function addAttendee(
   const event = await getEventForOrganizer(supabase, eventId, user.id);
   if (!event) return { error: "Event not found." };
 
-  const parsed = attendeeSchema.safeParse(data);
+  const manual = manualAttendeeSchema.safeParse(data);
+  if (!manual.success) return { error: manual.error.issues[0].message };
+  const attendeeNumber = manual.data.phone?.replace(/\D/g, "")
+    || crypto.randomBytes(8).readBigUInt64BE().toString();
+  const parsed = attendeeSchema.safeParse({
+    ...manual.data,
+    email: manual.data.email || `${attendeeNumber}@event.urpass.space`,
+  });
   if (!parsed.success) return { error: parsed.error.issues[0].message };
 
 
