@@ -3,12 +3,13 @@ import { Banknote, CheckCircle2, ShieldCheck, Zap, Receipt, Users, Clock, Award 
 import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
-  title: "Event Registration Software Pricing in India — ₹29 Intro Offer | URPASS",
+  title: "Event Registration Software Pricing in India — Free Forever & Fair SaaS | URPASS",
   description:
-    "Transparent event registration software pricing in India. Get started with our ₹29 introductory offer, 0% platform ticket commission, and pay-as-you-go single-event passes.",
+    "Transparent event registration software pricing in India. Get started on our Free Forever plan with 0% platform commission, or scale with Starter (₹499), Pro (₹999), and Business (₹2,499).",
   keywords: [
     "event management software pricing",
     "event registration software pricing in india",
+    "free event registration software india",
     "event ticketing software pricing india",
     "zero commission event ticketing india",
     "cheap event registration software india",
@@ -21,7 +22,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Event Registration Software Pricing in India | URPASS",
     description:
-      "Transparent event registration software pricing for Indian organizers. ₹29 introductory offer, 0% ticket commission, and pay-as-you-go passes.",
+      "Transparent event registration software pricing for Indian organizers. Free Forever plan, 0% ticket commission, and scalable paid tiers.",
     url: "https://urpass.space/event-management-software-pricing",
     locale: "en_IN",
     type: "website",
@@ -42,20 +43,20 @@ export default function EventManagementSoftwarePricingPage() {
         h1: "Event Registration Software Pricing in India",
         canonicalUrl: "https://urpass.space/event-management-software-pricing",
         description:
-          "Zero percentage commissions, direct Razorpay UPI settlements, and predictable flat pricing. Start with our ₹29 introductory offer for the first 2 months.",
-        ctaLabel: "Get Started for ₹29 →",
-        ctaHref: "/signup?plan=pro&from=event-management-software-pricing",
-        secondaryCtaLabel: "View All Plans",
+          "Zero percentage commissions, direct Razorpay UPI settlements, and predictable flat pricing. Start on our Free Forever plan with no credit card required.",
+        ctaLabel: "Start Free Forever →",
+        ctaHref: "/signup",
+        secondaryCtaLabel: "Compare All Plans",
         secondaryCtaHref: "/pricing",
         directAnswer: {
           title: "How Much Does Event Registration Software Cost in India?",
           summary:
-            "Unlike legacy ticketing portals that charge 3% to 8% plus convenience fees on every ticket sold, URPASS operates on 0% platform ticket commissions. Indian organizers can get started with an introductory offer of ₹29/month for their first 2 months on Starter (₹499/mo renewal) or Pro (₹999/mo renewal) plans, or choose single-event passes starting at ₹299 with zero recurring commitment.",
+            "Unlike legacy ticketing portals that charge 3% to 8% plus convenience fees on every ticket sold, URPASS operates on 0% platform ticket commissions. Indian organizers can get started on our Free Forever plan (1 active event, 100 registrations/month, no credit card required), or upgrade to Starter (₹499/mo), Pro (₹999/mo), or Business (₹2,499/mo) for higher volume and multi-seat team management.",
           keyPoints: [
-            "₹29 introductory offer for the first 2 consecutive months on monthly plans",
+            "Free Forever plan: ₹0/month with 1 active event, 100 registrations, and QR scanning",
             "0% platform commission on paid ticket revenue — retain 100% of ticket sales",
             "Direct T+2 bank deposits via your verified Razorpay merchant gateway",
-            "Pay-as-you-go single-event passes starting at ₹299 for one-off college fests",
+            "Paid tiers from ₹499/mo (Starter) to ₹2,499/mo (Business) with automated GST invoicing",
           ],
         },
         whatIs: {
@@ -75,19 +76,24 @@ export default function EventManagementSoftwarePricingPage() {
           headers: ["Plan Tier", "Pricing (INR)", "Event & Registration Limits"],
           rows: [
             {
+              col1: "Free Forever",
+              col2: "₹0 / Free Forever",
+              col3: "1 active event · 100 registrations/mo · 1 seat · Full QR scanning",
+            },
+            {
               col1: "Starter Plan",
-              col2: "₹29/mo (First 2 Months), then ₹499/mo + GST",
-              col3: "10 events/mo · 500 registrations/mo · 2 organizer seats",
+              col2: "₹499/mo + GST",
+              col3: "3 active events · 500 registrations/mo · 2 organizer seats",
             },
             {
               col1: "Pro Plan (Recommended)",
-              col2: "₹29/mo (First 2 Months), then ₹999/mo + GST",
-              col3: "Unlimited events · 2,500 registrations/mo · 5 seats · Ticket Studio pass branding",
+              col2: "₹999/mo + GST",
+              col3: "10 active events · 2,500 registrations/mo · 5 seats · Ticket Studio & session tracking",
             },
             {
               col1: "Business Plan",
-              col2: "₹29/mo (First 2 Months), then ₹2,499/mo + GST",
-              col3: "Unlimited events · 10,000 registrations/mo · 15 seats · API & webhooks",
+              col2: "₹2,499/mo + GST",
+              col3: "Unlimited active events · 10,000 registrations/mo · 15 seats · API & webhooks",
             },
             {
               col1: "Event Pass (Single Event)",
@@ -98,11 +104,6 @@ export default function EventManagementSoftwarePricingPage() {
               col1: "Event Plus (Single Event)",
               col2: "₹599 one-time",
               col3: "1 event · Up to 1,000 registrations · Full QR scanning",
-            },
-            {
-              col1: "Event Pro (Single Event)",
-              col2: "₹999 one-time",
-              col3: "1 event · Up to 3,000 registrations · Full QR scanning",
             },
           ],
         },
@@ -116,8 +117,8 @@ export default function EventManagementSoftwarePricingPage() {
           },
           {
             icon: Zap,
-            title: "₹29 Introductory Offer",
-            desc: "Launch your first 2 months for just ₹29/month with full access to sub-second QR entry check-in.",
+            title: "Free Forever Plan",
+            desc: "Launch your first event for free with up to 100 attendees and full sub-second QR entry check-in.",
           },
           {
             icon: Receipt,
@@ -142,8 +143,8 @@ export default function EventManagementSoftwarePricingPage() {
         ],
         faqs: [
           {
-            q: "How does the ₹29 introductory offer work?",
-            a: "When you subscribe to Starter, Pro, or Business monthly plans, you pay only ₹29 for your first month and ₹29 for your second month. Starting from month three, billing continues at the standard monthly rate (₹499/mo for Starter, ₹999/mo for Pro, ₹2,499/mo for Business + GST). You can cancel anytime in 1 click from Billing settings.",
+            q: "Is there a genuinely free plan on URPASS?",
+            a: "Yes. Our Free Forever plan costs ₹0 and includes 1 active event at a time, up to 100 attendee registrations per month, custom registration forms, instant QR pass delivery, and smartphone camera scanning. No credit card is required to sign up.",
           },
           {
             q: "Does URPASS take any commission on ticket sales?",
@@ -159,7 +160,7 @@ export default function EventManagementSoftwarePricingPage() {
           },
           {
             q: "Can I upgrade or downgrade my plan at any time?",
-            a: "Yes. You can upgrade, downgrade, or cancel your subscription at any time directly inside your account. Changes take effect on your next renewal date.",
+            a: "Yes. You can upgrade, downgrade, or cancel your subscription at any time directly inside your account. Changes take effect immediately or on your next renewal date.",
           },
         ],
         relatedLinks: [
@@ -169,8 +170,8 @@ export default function EventManagementSoftwarePricingPage() {
           { title: "Eventbrite Alternative India", href: "/eventbrite-alternative-india", category: "Comparison" },
           { title: "College Event Management Software", href: "/college-event-management-software", category: "Use Case" },
         ],
-        ctaTitle: "Start for ₹29 Today",
-        ctaDescription: "₹29 introductory offer for first 2 months · 0% ticket commission · Cancel anytime",
+        ctaTitle: "Start Free Today",
+        ctaDescription: "Free Forever · 100 attendees/mo · 0% ticket commission · No credit card required",
       }}
     />
   );

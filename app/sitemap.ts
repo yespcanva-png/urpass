@@ -50,6 +50,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   const seoPages = [
+    "/free-event-registration-software",
     "/digital-event-entry-system",
     "/event-registration-and-check-in-one-platform",
     "/replace-excel-event-attendance",
