@@ -436,7 +436,9 @@ export async function updateEvent(
     baseUpdateFields.event_logo_url !== undefined ||
     baseUpdateFields.hide_branding !== undefined ||
     baseUpdateFields.allow_reentry !== undefined ||
-    baseUpdateFields.allow_reset !== undefined
+    baseUpdateFields.allow_reset !== undefined ||
+    baseUpdateFields.allow_multiple_scans !== undefined ||
+    baseUpdateFields.multi_scan_enabled !== undefined
   ) {
     const currentDesign = (event.custom_pass_design as Record<string, unknown>) || {};
     const updatedDesign: Record<string, unknown> = { ...currentDesign };
@@ -462,6 +464,12 @@ export async function updateEvent(
     }
     if (baseUpdateFields.allow_reset !== undefined) {
       updatedDesign.allow_reset = baseUpdateFields.allow_reset;
+    }
+    if (baseUpdateFields.allow_multiple_scans !== undefined) {
+      updatedDesign.allow_multiple_scans = Boolean(baseUpdateFields.allow_multiple_scans);
+    }
+    if (baseUpdateFields.multi_scan_enabled !== undefined) {
+      updatedDesign.allow_multiple_scans = Boolean(baseUpdateFields.multi_scan_enabled);
     }
     updatePayload.custom_pass_design = updatedDesign;
   }

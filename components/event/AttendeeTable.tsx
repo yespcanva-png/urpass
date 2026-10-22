@@ -1266,6 +1266,11 @@ export default function AttendeeTable({
                                   <CheckCircle2 className="w-2.5 h-2.5" />
                                   <span>Checked in</span>
                                 </span>
+                                {Number((a.custom_responses as any)?.scan_count || 0) > 1 && (
+                                  <span className="inline-flex items-center gap-0.5 rounded bg-indigo-50 border border-indigo-200 px-1.5 py-0.5 font-bold text-indigo-700">
+                                    {Number((a.custom_responses as any).scan_count)} scans
+                                  </span>
+                                )}
                                 {checkInInfoMap[a.id] ? (
 	                                  <span className="inline-flex items-center gap-1 rounded bg-slate-100 px-1.5 py-0.5 text-slate-600">
                                     <DoorOpen className="w-2.5 h-2.5 text-slate-500" />
@@ -1586,6 +1591,49 @@ export default function AttendeeTable({
                     ) : (
                       <p className="mt-2 text-sm font-semibold text-slate-500">Not checked in</p>
                     )}
+
+                    {/* Multi-scan history and total scan count display */}
+                    {(() => {
+                      const attCr = (selectedAttendee.custom_responses as Record<string, any>) || {};
+                      const multiScanCount = Number(attCr.scan_count || (Array.isArray(attCr.scan_history) ? attCr.scan_history.length : 0));
+                      const multiScanHistory = Array.isArray(attCr.scan_history) ? attCr.scan_history : [];
+
+                      if (multiScanCount <= 1 && multiScanHistory.length <= 1) return null;
+
+                      return (
+                        <div className="mt-3 pt-2.5 border-t border-slate-200/80">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-bold uppercase tracking-wide text-indigo-600">
+                              Scan Log ({multiScanCount} Total)
+                            </span>
+                            <span className="text-[11px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-full">
+                              Multi-Scan Active
+                            </span>
+                          </div>
+                          {multiScanHistory.length > 0 && (
+                            <div className="mt-2 space-y-1.5 max-h-36 overflow-y-auto pr-0.5">
+                              {multiScanHistory.map((sh: any, idx: number) => (
+                                <div
+                                  key={idx}
+                                  className="flex items-center justify-between text-xs py-1 border-b border-slate-100 last:border-0"
+                                >
+                                  <span className="font-semibold text-slate-800">
+                                    Scan #{sh.scan_number || idx + 1}{sh.gate_name ? ` · ${sh.gate_name}` : ""}
+                                  </span>
+                                  <span className="font-mono text-[11px] text-slate-500">
+                                    {new Date(sh.scanned_at).toLocaleTimeString([], {
+                                      hour: "2-digit",
+                                      minute: "2-digit",
+                                      second: "2-digit",
+                                    })}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
 

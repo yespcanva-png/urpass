@@ -72,6 +72,9 @@ export async function GET(
     "Pass Type",
     "Application Status",
     "Pass Status",
+    "Total Scans",
+    "First Scanned At",
+    "Last Scanned At",
     "Registered At",
     ...customHeaders,
   ];
@@ -113,6 +116,11 @@ export async function GET(
 
           let chunk = "";
           for (const a of rows) {
+            const cr = (a.custom_responses as Record<string, any>) || {};
+            const scanCount = cr.scan_count || (a.pass_status === "checked_in" ? 1 : 0);
+            const firstScanned = cr.first_scanned_at || "";
+            const lastScanned = cr.last_scanned_at || "";
+
             const customVals = customFields.map((f) => {
               const val = (a as unknown as { custom_responses?: Record<string, unknown> }).custom_responses?.[f.id];
               if (val === true) return "Yes";
@@ -127,6 +135,9 @@ export async function GET(
               a.pass_type,
               a.application_status,
               a.pass_status,
+              String(scanCount),
+              firstScanned,
+              lastScanned,
               a.created_at ? new Date(a.created_at).toISOString().slice(0, 10) : "",
               ...customVals,
             ];

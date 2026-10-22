@@ -24,9 +24,199 @@ interface AuthCacheRecord {
   hasOrgAccess: boolean;
   organizerId: string;
   organizationId?: string | null;
+  custom_pass_design?: Record<string, unknown> | null;
   expiresAt: number;
 }
 const authCache = new Map<string, AuthCacheRecord>();
+
+async function processMultiScanEntry({
+  supabase,
+  canonicalEventId,
+  cleanPassToken,
+  pass: providedPass,
+  attendee: providedAttendee,
+  gateId,
+  resolvedGateName,
+  checkInMethod,
+  scanOperationId,
+  user,
+  organizerId,
+}: {
+  supabase: any;
+  canonicalEventId: string;
+  cleanPassToken: string;
+  pass?: any;
+  attendee?: any;
+  gateId?: string | null;
+  resolvedGateName?: string | null;
+  checkInMethod?: string;
+  scanOperationId: string;
+  user: { id: string; email?: string } | null;
+  organizerId: string;
+}) {
+  let pass = providedPass;
+  if (!pass) {
+    const { data: p } = await safeMaybeSingle(
+      supabase
+        .from("passes")
+        .select("id, pass_token, pass_type, status, attendee_id, event_id")
+        .eq("pass_token", cleanPassToken)
+        .eq("event_id", canonicalEventId)
+    );
+    pass = p;
+  }
+  if (!pass) return null;
+
+  let attendee = providedAttendee;
+  if (!attendee) {
+    const { data: a } = await safeMaybeSingle(
+      supabase
+        .from("attendees")
+        .select("id, name, email, pass_type, application_status, pass_status, custom_responses, last_gate_scanned_at")
+        .eq("id", pass.attendee_id)
+    );
+    attendee = a;
+  }
+  if (!attendee) return null;
+
+  const nowIso = new Date().toISOString();
+  const cr = (attendee.custom_responses as Record<string, any>) || {};
+  const priorHistory: Array<{
+    scan_number: number;
+    scanned_at: string;
+    gate_id?: string | null;
+    gate_name?: string | null;
+    scanned_by?: string | null;
+    method?: string;
+  }> = Array.isArray(cr.scan_history) ? [...cr.scan_history] : [];
+
+  if (priorHistory.length === 0) {
+    const firstTime = cr.first_scanned_at || attendee.last_gate_scanned_at || nowIso;
+    priorHistory.push({
+      scan_number: 1,
+      scanned_at: firstTime,
+      gate_id: null,
+      gate_name: "Initial Check-in",
+      scanned_by: null,
+      method: "qr",
+    });
+  }
+
+  const nextScanNumber = Math.max(priorHistory.length + 1, Number(cr.scan_count || 1) + 1);
+  const gateName = resolvedGateName || "Main Gate";
+
+  const newScanRecord = {
+    scan_number: nextScanNumber,
+    scanned_at: nowIso,
+    gate_id: gateId || null,
+    gate_name: gateName,
+    scanned_by: user?.id || null,
+    method: checkInMethod || "qr",
+  };
+  const updatedHistory = [...priorHistory, newScanRecord];
+
+  const updatedCr = {
+    ...cr,
+    scan_count: nextScanNumber,
+    first_scanned_at: cr.first_scanned_at || priorHistory[0]?.scanned_at || nowIso,
+    last_scanned_at: nowIso,
+    scan_history: updatedHistory,
+  };
+
+  await Promise.all([
+    supabase
+      .from("attendees")
+      .update({
+        pass_status: "checked_in",
+        venue_presence_state: "INSIDE",
+        last_gate_id: gateId || null,
+        last_gate_scanned_at: nowIso,
+        custom_responses: updatedCr,
+        updated_at: nowIso,
+      })
+      .eq("id", attendee.id),
+    supabase
+      .from("passes")
+      .update({
+        status: "checked_in",
+        updated_at: nowIso,
+      })
+      .eq("id", pass.id),
+  ]);
+
+  try {
+    await supabase.from("gate_scan_events").insert({
+      event_id: canonicalEventId,
+      credential_id: cleanPassToken,
+      ticket_id: pass.id,
+      attendee_id: attendee.id,
+      gate_id: gateId || null,
+      operator_id: user?.id || null,
+      operator_email: user?.email || "scanner",
+      operation_mode: "re_entry",
+      presence_before: "OUTSIDE",
+      presence_after: "INSIDE",
+      result: "GRANTED",
+      reason_code: `MULTI_SCAN_${nextScanNumber}`,
+      metadata: {
+        scan_count: nextScanNumber,
+        timestamp: nowIso,
+        gate_name: gateName,
+      },
+    });
+  } catch {
+    // Non-blocking
+  }
+
+  sendWebhooks(organizerId, "checkin.completed", {
+    attendee_id: attendee.id,
+    event_id: canonicalEventId,
+    name: attendee.name,
+    email: attendee.email,
+    pass_type: attendee.pass_type,
+    checked_in_at: nowIso,
+    scan_count: nextScanNumber,
+    is_multi_scan: true,
+  }).catch(() => {});
+
+  recordLiveOpsEvent({
+    level: "SUCCESS",
+    category: "SCAN",
+    message: `Gate scan verified (Scan #${nextScanNumber}): ${attendee.name || "Attendee"} (${attendee.email || "Pass"}) admitted`,
+    details: {
+      eventId: canonicalEventId,
+      passId: pass.id,
+      attendee: attendee.email,
+      scanCount: nextScanNumber,
+      scannedAt: nowIso,
+      gateName,
+    },
+  });
+
+  void recordApiUsage(organizerId, "check_ins");
+
+  return {
+    status: "CHECKED_IN",
+    success: true,
+    isMultiScan: true,
+    scanCount: nextScanNumber,
+    checkedInAt: nowIso,
+    lastScannedAt: nowIso,
+    firstScannedAt: updatedCr.first_scanned_at,
+    scanHistory: updatedHistory,
+    gateName,
+    badgeText: `SCAN #${nextScanNumber} VERIFIED`,
+    message: `Entry allowed (Scan #${nextScanNumber})`,
+    attendee: {
+      id: attendee.id,
+      name: attendee.name,
+      email: attendee.email,
+      pass_type: attendee.pass_type,
+    },
+    passType: pass.pass_type,
+    scanOperationId,
+  };
+}
 
 export async function POST(req: NextRequest) {
   let supabase = await createClient();
@@ -69,11 +259,12 @@ export async function POST(req: NextRequest) {
   let organizerId = "";
   let canonicalEventId = eventId;
   const isEventUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(eventId);
+  let eventCustomDesign: Record<string, unknown> | null = null;
 
   if (user.id === "service-role") {
     let eventQuery = supabase
       .from("events")
-      .select("id, name, organizer_id, organization_id");
+      .select("id, name, organizer_id, organization_id, custom_pass_design");
     eventQuery = isEventUuid ? eventQuery.eq("id", eventId) : eventQuery.eq("apply_slug", eventId);
     const { data: event } = await eventQuery.maybeSingle();
 
@@ -82,6 +273,7 @@ export async function POST(req: NextRequest) {
     }
     canonicalEventId = event.id;
     organizerId = event.organizer_id;
+    eventCustomDesign = (event.custom_pass_design as Record<string, unknown> | null) ?? null;
     user = { id: event.organizer_id, email: "admin@urpass.space" };
   } else {
     // Verify user has access to check in at this event (cached for 60s per user/event in production)
@@ -96,10 +288,11 @@ export async function POST(req: NextRequest) {
       }
       organizerId = cachedAuth.organizerId;
       canonicalEventId = (cachedAuth as any).canonicalEventId || eventId;
+      eventCustomDesign = cachedAuth.custom_pass_design ?? null;
     } else {
       let eventQuery = supabase
         .from("events")
-        .select("id, name, organizer_id, organization_id");
+        .select("id, name, organizer_id, organization_id, custom_pass_design");
       eventQuery = isEventUuid ? eventQuery.eq("id", eventId) : eventQuery.eq("apply_slug", eventId);
       const { data: event } = await eventQuery.maybeSingle();
 
@@ -108,6 +301,7 @@ export async function POST(req: NextRequest) {
       }
 
       canonicalEventId = event.id;
+      eventCustomDesign = (event.custom_pass_design as Record<string, unknown> | null) ?? null;
       const isOrganizer = event.organizer_id === user.id;
       let hasOrgAccess = false;
       if (!isOrganizer && event.organization_id) {
@@ -137,6 +331,7 @@ export async function POST(req: NextRequest) {
           organizerId: event.organizer_id,
           organizationId: event.organization_id,
           canonicalEventId: event.id,
+          custom_pass_design: eventCustomDesign,
           expiresAt: now + 60000,
         } as any);
       }
@@ -325,6 +520,24 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  // Resolve gate name for notifications and history logging
+  let resolvedGateName: string | null = null;
+  if (gateId) {
+    try {
+      const { data: gateRec } = await safeMaybeSingle(
+        supabase.from("scanner_gates").select("name").eq("id", gateId)
+      );
+      resolvedGateName = gateRec?.name || null;
+    } catch {}
+  }
+
+  const allowMultipleScans = Boolean(
+    eventCustomDesign?.allow_multiple_scans === true ||
+    eventCustomDesign?.allow_multiple_scans === "true" ||
+    eventCustomDesign?.multi_scan_enabled === true ||
+    eventCustomDesign?.multi_scan_enabled === "true"
+  );
+
   // ── 3. Attempt Database-Level Atomic Check-In via Stored Procedure ──
   if (typeof supabase.rpc === "function") {
     try {
@@ -354,9 +567,77 @@ export async function POST(req: NextRequest) {
             details: { eventId: canonicalEventId, passType: res.passType, attendee: res.attendee?.email },
           });
           void recordApiUsage(organizerId, "check_ins");
+
+          if (allowMultipleScans) {
+            try {
+              const { data: pRow } = await safeMaybeSingle(
+                supabase
+                  .from("passes")
+                  .select("id, attendee_id")
+                  .eq("pass_token", cleanPassToken)
+                  .eq("event_id", canonicalEventId)
+              );
+              if (pRow?.attendee_id) {
+                const { data: aRow } = await safeMaybeSingle(
+                  supabase.from("attendees").select("id, custom_responses").eq("id", pRow.attendee_id)
+                );
+                if (aRow) {
+                  const cr = (aRow.custom_responses as Record<string, any>) || {};
+                  const initialRecord = {
+                    scan_number: 1,
+                    scanned_at: res.checkedInAt || new Date().toISOString(),
+                    gate_id: gateId || null,
+                    gate_name: resolvedGateName || "Main Gate",
+                    scanned_by: user?.id || null,
+                    method: checkInMethod || "qr",
+                  };
+                  await supabase.from("attendees").update({
+                    custom_responses: {
+                      ...cr,
+                      scan_count: 1,
+                      first_scanned_at: res.checkedInAt || new Date().toISOString(),
+                      last_scanned_at: res.checkedInAt || new Date().toISOString(),
+                      scan_history: [initialRecord],
+                    },
+                    last_gate_scanned_at: res.checkedInAt || new Date().toISOString(),
+                  }).eq("id", aRow.id);
+                }
+              }
+            } catch {}
+
+            return NextResponse.json({
+              ...res,
+              isMultiScan: true,
+              scanCount: 1,
+              badgeText: "ENTRY GRANTED (SCAN #1)",
+              scanHistory: [{
+                scan_number: 1,
+                scanned_at: res.checkedInAt || new Date().toISOString(),
+                gate_id: gateId || null,
+                gate_name: resolvedGateName || "Main Gate",
+              }],
+            }, { status: 200 });
+          }
+
           return NextResponse.json(res, { status: 200 });
         }
         if (res.status === "ALREADY_CHECKED_IN") {
+          if (allowMultipleScans) {
+            const multiRes = await processMultiScanEntry({
+              supabase,
+              canonicalEventId,
+              cleanPassToken,
+              gateId,
+              resolvedGateName,
+              checkInMethod,
+              scanOperationId,
+              user,
+              organizerId,
+            });
+            if (multiRes) {
+              return NextResponse.json(multiRes, { status: 200 });
+            }
+          }
           return NextResponse.json(res, { status: 200 });
         }
         if (res.status === "EVENT_CAPACITY_REACHED") {
@@ -650,6 +931,22 @@ export async function POST(req: NextRequest) {
   }
 
   if (pass.status === "checked_in") {
+    if (allowMultipleScans) {
+      const multiRes = await processMultiScanEntry({
+        supabase,
+        canonicalEventId,
+        cleanPassToken,
+        pass,
+        gateId,
+        resolvedGateName,
+        checkInMethod,
+        scanOperationId,
+        user,
+        organizerId,
+      });
+      if (multiRes) return NextResponse.json(multiRes, { status: 200 });
+    }
+
     // Already checked in — return existing record without creating duplicate
     const { data: attendee } = await supabase
       .from("attendees")
@@ -677,7 +974,7 @@ export async function POST(req: NextRequest) {
   // Fetch attendee
   const { data: attendee } = await supabase
     .from("attendees")
-    .select("id, name, email, pass_type, application_status, pass_status")
+    .select("id, name, email, pass_type, application_status, pass_status, custom_responses")
     .eq("id", pass.attendee_id)
     .single();
 
@@ -689,6 +986,23 @@ export async function POST(req: NextRequest) {
   }
 
   if (attendee.pass_status === "checked_in") {
+    if (allowMultipleScans) {
+      const multiRes = await processMultiScanEntry({
+        supabase,
+        canonicalEventId,
+        cleanPassToken,
+        pass,
+        attendee,
+        gateId,
+        resolvedGateName,
+        checkInMethod,
+        scanOperationId,
+        user,
+        organizerId,
+      });
+      if (multiRes) return NextResponse.json(multiRes, { status: 200 });
+    }
+
     const { data: existingCi } = await safeMaybeSingle(
       supabase
         .from("check_ins")
@@ -748,6 +1062,23 @@ export async function POST(req: NextRequest) {
   if (ciError) {
     // Constraint violation 23505 means another gate/thread scanned simultaneously
     if (ciError.code === "23505" || ciError.message?.includes("unique") || ciError.message?.includes("duplicate")) {
+      if (allowMultipleScans) {
+        const multiRes = await processMultiScanEntry({
+          supabase,
+          canonicalEventId,
+          cleanPassToken,
+          pass,
+          attendee,
+          gateId,
+          resolvedGateName,
+          checkInMethod,
+          scanOperationId,
+          user,
+          organizerId,
+        });
+        if (multiRes) return NextResponse.json(multiRes, { status: 200 });
+      }
+
       const { data: existingCi } = await safeMaybeSingle(
         supabase
           .from("check_ins")
@@ -811,6 +1142,47 @@ export async function POST(req: NextRequest) {
   });
 
   void recordApiUsage(organizerId, "check_ins");
+
+  if (allowMultipleScans) {
+    const initialRecord = {
+      scan_number: 1,
+      scanned_at: checkedInAt,
+      gate_id: gateId || null,
+      gate_name: resolvedGateName || "Main Gate",
+      scanned_by: user?.id || null,
+      method: checkInMethod || "qr",
+    };
+    const cr = (attendee.custom_responses as Record<string, any>) || {};
+    try {
+      await supabase.from("attendees").update({
+        custom_responses: {
+          ...cr,
+          scan_count: 1,
+          first_scanned_at: checkedInAt,
+          last_scanned_at: checkedInAt,
+          scan_history: [initialRecord],
+        },
+        last_gate_scanned_at: checkedInAt,
+      }).eq("id", attendee.id);
+    } catch {}
+
+    return NextResponse.json({
+      status: "CHECKED_IN",
+      success: true,
+      isMultiScan: true,
+      scanCount: 1,
+      checkedInAt,
+      lastScannedAt: checkedInAt,
+      firstScannedAt: checkedInAt,
+      scanHistory: [initialRecord],
+      gateName: resolvedGateName || "Main Gate",
+      badgeText: "ENTRY GRANTED (SCAN #1)",
+      message: "Entry allowed (Scan #1)",
+      attendee: { name: attendee.name, email: attendee.email, pass_type: attendee.pass_type },
+      passType: pass.pass_type,
+      scanOperationId,
+    });
+  }
 
   return NextResponse.json({
     status: "CHECKED_IN",

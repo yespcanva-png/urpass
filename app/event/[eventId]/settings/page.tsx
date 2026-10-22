@@ -199,6 +199,8 @@ export default function EventSettingsPage() {
   const [hideBranding, setHideBranding]         = useState(false);
   const [allowReentry, setAllowReentry]         = useState(false);
   const [initialAllowReentry, setInitialAllowReentry] = useState(false);
+  const [allowMultipleScans, setAllowMultipleScans] = useState(false);
+  const [initialAllowMultipleScans, setInitialAllowMultipleScans] = useState(false);
   const [canRemoveBranding, setCanRemoveBranding] = useState(false);
   const [isPro, setIsPro]                       = useState(false);
   const [isTrialActive, setIsTrialActive]       = useState(false);
@@ -469,6 +471,15 @@ export default function EventSettingsPage() {
         setAllowReentry(resolvedAllowReentry);
         setInitialAllowReentry(resolvedAllowReentry);
 
+        const resolvedAllowMultipleScans = Boolean(
+          design.allow_multiple_scans === true ||
+          design.allow_multiple_scans === "true" ||
+          design.multi_scan_enabled === true ||
+          design.multi_scan_enabled === "true"
+        );
+        setAllowMultipleScans(resolvedAllowMultipleScans);
+        setInitialAllowMultipleScans(resolvedAllowMultipleScans);
+
         if (effectiveSlug === "starter") {
           setCustomFieldsLimit({ max: 10, isUnlimited: false });
         } else if (effectiveSlug && effectiveSlug !== "free") {
@@ -498,6 +509,8 @@ export default function EventSettingsPage() {
       hide_branding: hideBranding,
       allow_reentry: allowReentry,
       allow_reset: allowReentry,
+      allow_multiple_scans: allowMultipleScans,
+      multi_scan_enabled: allowMultipleScans,
     };
     const result = await updateEvent(eventId, payload);
     if (result?.error) {
@@ -510,6 +523,7 @@ export default function EventSettingsPage() {
       }
       reset(data);
       setInitialAllowReentry(allowReentry);
+      setInitialAllowMultipleScans(allowMultipleScans);
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
     }
@@ -1114,6 +1128,13 @@ export default function EventSettingsPage() {
             checked={allowReentry}
             onChange={() => setAllowReentry(!allowReentry)}
           />
+          <div className="h-px bg-neutral-50" />
+          <ToggleRow
+            label="Allow Multiple QR Scans (Multi-Scan Tracking)"
+            description="Permit passes to be scanned multiple times with accurate tracking of total scan count and timestamp history for every scan (ideal for multi-session attendance, food/swag check-ins, or unrestricted re-entry)"
+            checked={allowMultipleScans}
+            onChange={() => setAllowMultipleScans(!allowMultipleScans)}
+          />
         </SectionCard>
 
         {/* ── Custom registration questions ── */}
@@ -1284,7 +1305,7 @@ export default function EventSettingsPage() {
         <div className="flex justify-end">
           <button
             type="submit"
-            disabled={isSubmitting || (!isDirty && allowReentry === initialAllowReentry)}
+            disabled={isSubmitting || (!isDirty && allowReentry === initialAllowReentry && allowMultipleScans === initialAllowMultipleScans)}
             className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
             style={{ background: "#6D28D9" }}
           >

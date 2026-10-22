@@ -74,6 +74,16 @@ interface ScanResult {
   attendeeId?: string;
   badgeText?: string;
   message?: string;
+  isMultiScan?: boolean;
+  scanCount?: number;
+  lastScannedAt?: string | null;
+  firstScannedAt?: string | null;
+  scanHistory?: Array<{
+    scan_number: number;
+    scanned_at: string;
+    gate_name?: string | null;
+    scanned_by?: string | null;
+  }>;
 }
 
 interface FeedEntry {
@@ -2121,6 +2131,10 @@ export default function ScanEventPage() {
                     offline={result.offline}
                     onReset={reset}
                     successfulScans={sessionCounters.successful}
+                    badgeText={result.badgeText}
+                    message={result.message}
+                    scanCount={result.scanCount}
+                    scanHistory={result.scanHistory}
                   />
                 </div>
               )}
@@ -2662,6 +2676,8 @@ function ResultCard({
   isUndoing,
   badgeText,
   message,
+  scanCount,
+  scanHistory,
 }: {
   variant: "success" | "duplicate";
   attendee: { id?: string; name: string; email: string; pass_type: string };
@@ -2677,6 +2693,13 @@ function ResultCard({
   isUndoing?: boolean;
   badgeText?: string;
   message?: string;
+  scanCount?: number;
+  scanHistory?: Array<{
+    scan_number: number;
+    scanned_at: string;
+    gate_name?: string | null;
+    scanned_by?: string | null;
+  }>;
 }) {
   const ok = variant === "success";
 
@@ -2710,10 +2733,10 @@ function ResultCard({
                 : "bg-amber-500/15 text-amber-300 border-amber-500/40"
             }`}
           >
-            {badgeText || (ok ? "ENTRY GRANTED" : "ALREADY ADMITTED")}
+            {badgeText || (ok ? (scanCount && scanCount > 1 ? `SCAN #${scanCount} VERIFIED` : "ENTRY GRANTED") : "ALREADY ADMITTED")}
           </span>
           <h2 className="text-lg sm:text-xl font-black text-white leading-tight">
-            {ok ? "Check-in Successful" : "Already Checked In"}
+            {ok ? (scanCount && scanCount > 1 ? `Scan #${scanCount} Successful` : "Check-in Successful") : "Already Checked In"}
           </h2>
           <p className="text-sm sm:text-base font-bold text-white truncate max-w-[280px] mx-auto">
             {attendee.name}
@@ -2761,9 +2784,43 @@ function ResultCard({
           )}
           <span>•</span>
           <span>
-            Scans: <strong className="text-emerald-400 tabular-nums">{successfulScans}</strong>
+            Scans: <strong className="text-emerald-400 tabular-nums">{scanCount || successfulScans}</strong>
           </span>
         </div>
+
+        {/* Multi-scan timestamp tracking timeline */}
+        {scanCount && scanCount > 1 && (
+          <div className="w-full mt-2 p-2.5 rounded-xl border border-indigo-500/30 bg-indigo-950/40 text-left space-y-1.5">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-bold text-indigo-300 flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse" />
+                Multi-Scan Verified
+              </span>
+              <span className="font-black text-indigo-200 bg-indigo-500/20 px-2 py-0.5 rounded-md border border-indigo-400/30 font-mono">
+                Scan #{scanCount}
+              </span>
+            </div>
+            {scanHistory && scanHistory.length > 0 && (
+              <div className="space-y-1 max-h-24 overflow-y-auto pr-1 text-[11px] text-zinc-300 divide-y divide-white/5">
+                {scanHistory.map((sh, idx) => (
+                  <div key={idx} className="flex items-center justify-between pt-1">
+                    <span className="text-zinc-400">
+                      Scan #{sh.scan_number || idx + 1}{sh.gate_name ? ` · ${sh.gate_name}` : ""}
+                    </span>
+                    <span className="font-mono text-zinc-300">
+                      {new Date(sh.scanned_at).toLocaleTimeString("en-IN", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        second: "2-digit",
+                        hour12: true,
+                      })}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {offline && (
           <span className="inline-flex items-center gap-1 rounded-md border border-amber-800/80 bg-amber-950/60 px-2 py-0.5 text-[10px] font-bold text-amber-300">

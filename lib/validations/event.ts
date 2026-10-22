@@ -53,6 +53,8 @@ export const eventSchema = z
     hide_branding: z.boolean().optional(),
     allow_reentry: z.boolean().optional(),
     allow_reset: z.boolean().optional(),
+    allow_multiple_scans: z.boolean().optional(),
+    multi_scan_enabled: z.boolean().optional(),
   })
   .superRefine((data, ctx) => {
     // 1. Date & Time validation (supports multi-day and overnight / past-midnight schedules)
