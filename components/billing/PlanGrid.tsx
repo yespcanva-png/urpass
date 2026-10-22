@@ -377,9 +377,9 @@ export default function PlanGrid({
                       desc: "High-volume attendee throughput across all published events",
                     },
                     {
-                      label: "WhatsApp Pass Delivery & Alerts",
+                      label: "WhatsApp Delivery",
                       val: "Enabled (₹500 Add-On)",
-                      desc: "Automated instant WhatsApp delivery with QR ticket pass and alerts",
+                      desc: "Automated instant WhatsApp delivery",
                     },
                     {
                       label: "Team Seats",
