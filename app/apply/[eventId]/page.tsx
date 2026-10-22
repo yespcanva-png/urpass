@@ -612,6 +612,10 @@ export default async function ApplyPage({
         event={{
           ...event,
           end_date: ((event.custom_pass_design as Record<string, unknown> | null)?.end_date as string | undefined) || null,
+          allow_multiple_scans: Boolean(
+            (event.custom_pass_design as Record<string, unknown> | null)?.allow_multiple_scans ||
+            (event.custom_pass_design as Record<string, unknown> | null)?.multi_scan_enabled
+          ),
         } as EventInfo}
         branding={branding}
         staffScanLink={staffScanLink}

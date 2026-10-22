@@ -148,4 +148,28 @@ describe("Multi-Scan Tracking & Event Setting", () => {
     expect(multiScanAllowed.success).toBe(true);
     expect(multiScanAllowed.isMultiScan).toBe(true);
   });
+
+  it("displays 'Allows multiple entry' when allow_multiple_scans is enabled", async () => {
+    const { resolveTicketDesign } = await import("@/lib/pass-design");
+    
+    // When enabled
+    const designMulti = resolveTicketDesign({ allow_multiple_scans: true }, null, null);
+    expect(designMulti.allow_multiple_scans).toBe(true);
+    const entryRuleMulti = designMulti.allow_multiple_scans
+      ? "Allows multiple entry"
+      : designMulti.showSingleEntryRule !== false
+      ? "Valid for single entry"
+      : null;
+    expect(entryRuleMulti).toBe("Allows multiple entry");
+
+    // When disabled
+    const designSingle = resolveTicketDesign({ allow_multiple_scans: false }, null, null);
+    expect(designSingle.allow_multiple_scans).toBe(false);
+    const entryRuleSingle = designSingle.allow_multiple_scans
+      ? "Allows multiple entry"
+      : designSingle.showSingleEntryRule !== false
+      ? "Valid for single entry"
+      : null;
+    expect(entryRuleSingle).toBe("Valid for single entry");
+  });
 });

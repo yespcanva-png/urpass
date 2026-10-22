@@ -117,8 +117,21 @@ export async function GET(
   const shortCode = (passToken.slice(0, 8).match(/.{1,4}/g) ?? []).join("-").toUpperCase();
   const isCheckedIn = pass.status === "checked_in";
 
+  const isMultiScan = Boolean(
+    design.allow_multiple_scans ||
+    design.multi_scan_enabled ||
+    (event.custom_pass_design as Record<string, unknown> | null)?.allow_multiple_scans ||
+    (event.custom_pass_design as Record<string, unknown> | null)?.multi_scan_enabled
+  );
+
+  const entryRuleText = isMultiScan
+    ? "Allows multiple entry"
+    : design.showSingleEntryRule !== false
+    ? "Valid for single entry"
+    : null;
+
   const rulesList = [
-    design.showSingleEntryRule !== false ? "Valid for single entry" : null,
+    entryRuleText,
     design.showGateNotice !== false ? "Keep QR ready at gate" : null,
     design.customInstruction || null,
   ].filter(Boolean);

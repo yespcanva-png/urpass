@@ -177,8 +177,21 @@ export default async function PassPage({
     ? PLATFORM_LABEL[event.meeting_platform] ?? "Online Meeting"
     : "Online Meeting";
 
+  const isMultiScan = Boolean(
+    design.allow_multiple_scans ||
+    design.multi_scan_enabled ||
+    (event.custom_pass_design as Record<string, unknown> | null)?.allow_multiple_scans ||
+    (event.custom_pass_design as Record<string, unknown> | null)?.multi_scan_enabled
+  );
+
+  const entryRuleText = isMultiScan
+    ? "Allows multiple entry"
+    : design.showSingleEntryRule !== false
+    ? "Valid for single entry"
+    : null;
+
   const rulesList = [
-    design.showSingleEntryRule !== false ? "Valid for single entry" : null,
+    entryRuleText,
     design.showGateNotice !== false ? "Keep QR ready at gate" : null,
     design.customInstruction || null,
   ].filter(Boolean);
@@ -194,9 +207,10 @@ export default async function PassPage({
       ];
 
   function getStatusText() {
-    if (isCheckedIn) return null;
+    if (isCheckedIn && !isMultiScan) return null;
     if (isOnline) return "Approved · Use Join button below";
     if (isHybrid) return "Valid · QR for entry or join online";
+    if (isMultiScan) return isCheckedIn ? "Verified · Multi-scan active" : "Valid · Allows multiple entry";
     return "Valid · Show at entrance";
   }
 
@@ -560,7 +574,7 @@ export default async function PassPage({
                 <div className="w-full flex items-center gap-2 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 rounded-xl px-3 py-2.5 justify-center shadow-2xs">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
                   <span className="text-xs font-bold text-emerald-800 dark:text-emerald-300">
-                    VERIFIED ENTRY · CHECKED IN
+                    {isMultiScan ? "VERIFIED ENTRY · MULTI-SCAN ACTIVE" : "VERIFIED ENTRY · CHECKED IN"}
                   </span>
                 </div>
               ) : (

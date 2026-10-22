@@ -82,9 +82,15 @@ export default function TicketPreview({
     [1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 1],
   ];
 
+  const isMultiScan = Boolean(config.allow_multiple_scans || config.multi_scan_enabled);
+
   // Rules text builder
   const rulesList: string[] = [];
-  if (config.showSingleEntryRule) rulesList.push("Valid for one entry");
+  if (isMultiScan) {
+    rulesList.push("Allows multiple entry");
+  } else if (config.showSingleEntryRule) {
+    rulesList.push("Valid for one entry");
+  }
   if (config.showGateNotice) rulesList.push("Keep this QR ready at the gate");
   if (config.customInstruction) rulesList.push(config.customInstruction);
 

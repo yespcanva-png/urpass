@@ -616,9 +616,15 @@ export default function TicketStudio({
   const qrSizePx = config.qrSize === "sm" ? 116 : config.qrSize === "lg" ? 164 : 140;
   const qrCellSizePx = config.qrSize === "sm" ? 5.8 : config.qrSize === "lg" ? 8.2 : 7.0;
 
+  const isMultiScan = Boolean(config.allow_multiple_scans || config.multi_scan_enabled);
+
   // Admission Rules
   const rulesList: string[] = [];
-  if (config.showSingleEntryRule !== false) rulesList.push("Valid for one entry");
+  if (isMultiScan) {
+    rulesList.push("Allows multiple entry");
+  } else if (config.showSingleEntryRule !== false) {
+    rulesList.push("Valid for one entry");
+  }
   if (config.showGateNotice !== false) rulesList.push("Keep QR ready at gate");
   if (config.customInstruction) rulesList.push(config.customInstruction);
 
@@ -1773,7 +1779,23 @@ export default function TicketStudio({
                         }
                         className="w-4 h-4 rounded text-neutral-900 border-neutral-300 focus:ring-0"
                       />
-                      <span>Valid for one entry</span>
+                      <span>{isMultiScan ? "Allows multiple entry" : "Valid for one entry"}</span>
+                    </label>
+
+                    <label className="flex items-center gap-2.5 text-xs text-neutral-700 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={!!config.allow_multiple_scans}
+                        onChange={(e) =>
+                          updateConfig((prev) => ({
+                            ...prev,
+                            allow_multiple_scans: e.target.checked,
+                            multi_scan_enabled: e.target.checked,
+                          }))
+                        }
+                        className="w-4 h-4 rounded text-neutral-900 border-neutral-300 focus:ring-0"
+                      />
+                      <span>Allow Multiple QR Scans (Multi-Scan Tracking)</span>
                     </label>
 
                     <label className="flex items-center gap-2.5 text-xs text-neutral-700 cursor-pointer">

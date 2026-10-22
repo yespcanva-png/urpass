@@ -75,6 +75,7 @@ interface EventInfo {
   event_type: string;
   custom_fields?: CustomFieldDefinition[];
   event_images?: string[];
+  allow_multiple_scans?: boolean;
 }
 
 interface Branding {
@@ -1246,6 +1247,8 @@ export default function ApplyForm({
                   const durationTag = tt.duration_label || (tt.duration_days ? `${tt.duration_days} Day${tt.duration_days > 1 ? "s" : ""}` : null);
                   const peopleTag = tt.included_guests && tt.included_guests > 1
                     ? `Valid for ${tt.included_guests} guests`
+                    : event.allow_multiple_scans
+                    ? "Allows multiple entry"
                     : "Single entry";
 
                   return (

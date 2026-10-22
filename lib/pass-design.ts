@@ -33,6 +33,10 @@ export interface TicketDesignConfig {
   showOrganizerContact?: boolean;
   customInstruction?: string;
 
+  // Multi-scan & entry policy
+  allow_multiple_scans?: boolean;
+  multi_scan_enabled?: boolean;
+
   // Ticket type / category accent colors (e.g. { "VIP": "#18181B", "General": "#4F46E5" })
   categoryColors?: Record<string, string>;
 
@@ -75,6 +79,8 @@ export const DEFAULT_TICKET_DESIGN: TicketDesignConfig = {
   showOrganizerContact: false,
   customInstruction: "",
   categoryColors: {},
+  allow_multiple_scans: false,
+  multi_scan_enabled: false,
   isPublished: true,
 };
 
@@ -252,6 +258,18 @@ export function sanitizeTicketDesign(input: unknown): TicketDesignConfig {
     showOrganizerContact,
     customInstruction,
     categoryColors,
+    allow_multiple_scans: Boolean(
+      raw.allow_multiple_scans === true ||
+      raw.allow_multiple_scans === "true" ||
+      raw.multi_scan_enabled === true ||
+      raw.multi_scan_enabled === "true"
+    ),
+    multi_scan_enabled: Boolean(
+      raw.allow_multiple_scans === true ||
+      raw.allow_multiple_scans === "true" ||
+      raw.multi_scan_enabled === true ||
+      raw.multi_scan_enabled === "true"
+    ),
     isPublished,
     updatedAt: typeof raw.updatedAt === "string" ? raw.updatedAt : undefined,
   };
