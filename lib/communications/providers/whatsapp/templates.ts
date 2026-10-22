@@ -126,7 +126,7 @@ export function normalizeTemplateLanguage(lang?: string | null, templateName?: s
   }
 
   // Meta template 2295998374554657 is approved as English (en).
-  if (tpl === "nivi") return "en";
+  if (tpl === "nivi" || tpl === "nivi1") return "en";
 
   // English (en) and English (US) (en_US) are distinct Meta translations.
   if (!clean) return "en_US";
@@ -216,27 +216,44 @@ export function buildTemplatePayload(
 
       const buttonToken = extractCleanButtonPassToken(params.passToken, params.ticketUrl, params.ticketId);
 
-      if (activeLower === "nivi") {
-        // Approved nivi body: Date {{1}}, Time {{2}}, Venue {{3}}.
-        // Its header and footer are static; only the URL button is dynamic.
+      if (activeLower === "nivi" || activeLower === "nivi1") {
         const dateText = params.eventDate
           ? new Date(params.eventDate).toLocaleDateString("en-IN", { dateStyle: "long", timeZone: "Asia/Kolkata" })
-          : "Confirmed on Pass";
+          : "24 October 2026";
         const timeText = params.eventTime || (params.eventDate?.includes("T")
           ? new Date(params.eventDate).toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: "Asia/Kolkata" })
-          : "Confirmed on Pass");
-        components.push({
-          type: "body",
-          parameters: [
-            { type: "text", text: dateText },
-            { type: "text", text: timeText },
-            { type: "text", text: params.venue || "Confirmed on Pass" },
-          ],
-        });
-        if (buttonToken) components.push({
-          type: "button", sub_type: "url", index: "0",
-          parameters: [{ type: "text", text: buttonToken }],
-        });
+          : "11:00 AM");
+        const venueText = params.venue || "Confirmed on Pass";
+
+        if (activeLower === "nivi1") {
+          // Template nivi1 body: Date {{1}}, Time {{2}}, Venue {{3}}, Pass URL {{4}}.
+          // Static header & footer; pass URL is embedded in body text (no button component).
+          const passUrl = params.ticketUrl || (buttonToken ? `https://urpass.space/pass/${buttonToken}` : "https://urpass.space");
+          components.push({
+            type: "body",
+            parameters: [
+              { type: "text", text: dateText },
+              { type: "text", text: timeText },
+              { type: "text", text: venueText },
+              { type: "text", text: passUrl },
+            ],
+          });
+        } else {
+          // Approved nivi body: Date {{1}}, Time {{2}}, Venue {{3}}.
+          // Its header and footer are static; only the URL button is dynamic.
+          components.push({
+            type: "body",
+            parameters: [
+              { type: "text", text: dateText },
+              { type: "text", text: timeText },
+              { type: "text", text: venueText },
+            ],
+          });
+          if (buttonToken) components.push({
+            type: "button", sub_type: "url", index: "0",
+            parameters: [{ type: "text", text: buttonToken }],
+          });
+        }
       } else if (isUrpassSpace) {
         // Live approved Meta template "urpass_space" (Language: en)
         // Body: Hi {{1}},\n\nYour registration for *{{2}}* has been confirmed! ✅\n\n *Date:* {{3}}\n *Venue:* {{4}}\n\n🎟️ Your digital event pass is ready.\n\nPlease use the button below to view your QR pass and present it at the event entrance.\n\nThank you for registering!\n\n*Team UrPass*

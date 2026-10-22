@@ -15,6 +15,35 @@ describe("Custom WhatsApp template translations", () => {
 
   it("uses the verified nivi translation despite a stale US language setting", () => {
     expect(normalizeTemplateLanguage("en_US", "nivi")).toBe("en");
+    expect(normalizeTemplateLanguage("en_US", "nivi1")).toBe("en");
+  });
+
+  it("sends nivi1's four body variables without a button component", async () => {
+    vi.stubEnv("WHATSAPP_API_TOKEN", "test-token");
+    vi.stubEnv("WHATSAPP_PHONE_NUMBER_ID", "test-phone-id");
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true, json: async () => ({ messages: [{ id: "test-message" }] }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const result = await new WhatsAppProvider().sendTicketWhatsApp({
+      eventId: "event-1", eventName: "Festivals for Joy", eventDate: "2026-10-24",
+      eventTime: "11:00 AM", venue: "D-1 Prathapaparudra, Jubilee Hills",
+      attendeeId: "attendee-1", attendeeName: "Guest Name", email: "guest@example.com",
+      phone: "+919876543210", ticketId: "URP-TEST", passToken: "token123",
+      templateName: "nivi1", templateLanguage: "en",
+    });
+    expect(result.success).toBe(true);
+    const sent = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(sent.template).toEqual({
+      name: "nivi1", language: { code: "en" }, components: [
+        { type: "body", parameters: [
+          { type: "text", text: "24 October 2026" },
+          { type: "text", text: "11:00 AM" },
+          { type: "text", text: "D-1 Prathapaparudra, Jubilee Hills" },
+          { type: "text", text: "https://urpass.space/pass/token123" },
+        ] },
+      ],
+    });
   });
 
   it("sends nivi's three body variables and clean dynamic pass button", async () => {
