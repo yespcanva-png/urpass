@@ -46,8 +46,10 @@ export default function CheckoutButton({
 }: Props) {
   const [open, setOpen] = useState(false);
   const isUk = (currency || "").toUpperCase() === "GBP";
+  const isNiveditha = (userEmail || "").toLowerCase() === "niveditha@client.urpass.space";
   const priceMap = isUk ? PLAN_PRICES_GBP : PLAN_PRICES_INR;
   const prices = priceMap[planSlug] ?? { priceMonthly: 0, annualTotal: 0 };
+  const effectivePriceMonthly = isNiveditha && planSlug === "business" ? 2999 : prices.priceMonthly;
 
   return (
     <>
@@ -69,7 +71,7 @@ export default function CheckoutButton({
         userName={userName}
         userPhone={userPhone}
         currency={currency}
-        priceMonthly={prices.priceMonthly}
+        priceMonthly={effectivePriceMonthly}
         annualTotal={prices.annualTotal}
         successRedirect={successRedirect}
         introOfferEligible={introOfferEligible}

@@ -857,16 +857,19 @@ export async function activatePaidSubscription(
         .eq("user_id", user.id);
     }
 
-    const isManaged = normalizedSlug === "managed_enterprise" || user.email?.toLowerCase() === "niveditha@client.urpass.space";
+    const isNiveditha = user.email?.toLowerCase() === "niveditha@client.urpass.space";
+    const isManaged = normalizedSlug === "managed_enterprise";
 
-    if (isManaged) {
+    if (isManaged || isNiveditha) {
       await admin
         .from("profiles")
         .update({ hide_urpass_branding: true })
         .eq("user_id", user.id);
     }
 
-    const invoiceDescription = isFounder
+    const invoiceDescription = isNiveditha
+      ? "URPASS Business Plan + WhatsApp Delivery Integration (Monthly)"
+      : isFounder
       ? "URPASS Founder Lifetime Access (One-Time)"
       : isManaged
       ? "URPASS Managed Service — Single Event Pass & Managed Support"
@@ -891,12 +894,16 @@ export async function activatePaidSubscription(
       billingPeriodEnd: periodEndTime,
     });
 
-    const planDisplayName = isFounder
+    const planDisplayName = isNiveditha
+      ? "Business Plan + WhatsApp Integration"
+      : isFounder
       ? "Founder Lifetime Plan"
       : isManaged
       ? "Managed Service"
       : `${normalizedSlug.toUpperCase()} Plan`;
-    const itemName = isFounder
+    const itemName = isNiveditha
+      ? "URPASS Business Plan + WhatsApp Delivery Integration"
+      : isFounder
       ? "URPASS Founder Lifetime Access"
       : isManaged
       ? "URPASS Managed Service (Single Event Pass)"

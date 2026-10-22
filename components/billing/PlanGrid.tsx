@@ -193,7 +193,7 @@ export default function PlanGrid({
   const isNiveditha = (userEmail || "").toLowerCase() === "niveditha@client.urpass.space";
 
   if (isNiveditha) {
-    const isPlanActive = currentPlanSlug === "managed_enterprise" || currentPlanSlug === "managed_service" || currentPlanSlug === "managed";
+    const isPlanActive = currentPlanSlug === "business" || currentPlanSlug === "managed_enterprise" || currentPlanSlug === "managed_service";
     const latestInvoice = invoices && invoices.length > 0 ? invoices[0] : null;
 
     return (
@@ -203,13 +203,13 @@ export default function PlanGrid({
           <div>
             <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-neutral-100 border border-neutral-200 text-[11px] font-semibold text-neutral-700 mb-2">
               <span className="w-1.5 h-1.5 rounded-full bg-neutral-900" />
-              <span>Enterprise Agreement · niveditha@client.urpass.space</span>
+              <span>Custom Agreement · niveditha@client.urpass.space</span>
             </div>
             <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-neutral-900">
-              Managed Service Agreement
+              Business Plan + WhatsApp Integration
             </h2>
             <p className="text-xs text-neutral-500 mt-0.5">
-              Dedicated operational support, custom branding capabilities, and unmetered attendee throughput for your event.
+              Unlimited events, 10,000 attendee registrations/month, 15 team organizer seats, developer API &amp; webhooks, plus dedicated WhatsApp ticket delivery &amp; attendee notifications.
             </p>
           </div>
 
@@ -238,7 +238,7 @@ export default function PlanGrid({
                   </span>
                 </div>
                 <p className="text-xs text-neutral-500 mt-0.5">
-                  Amount: ₹7,080.00 (₹6,000.00 + 18% GST) · Issued on {new Date(latestInvoice.invoice_date).toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit", year: "numeric" })}
+                  Amount: ₹{Number(latestInvoice.total_amount).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} · Issued on {new Date(latestInvoice.invoice_date).toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit", year: "numeric" })}
                 </p>
               </div>
             </div>
@@ -273,42 +273,42 @@ export default function PlanGrid({
                   <div className="flex items-center gap-2 text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-1">
                     <span>Commercial Summary</span>
                     <span>·</span>
-                    <span>Single Event Agreement</span>
+                    <span>Monthly Agreement</span>
                   </div>
                   <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-neutral-900">
-                    Managed Service Agreement
+                    Business Plan + WhatsApp Integration
                   </h3>
                 </div>
 
                 {/* Line Item Financial Breakdown */}
                 <div className="rounded-xl border border-neutral-200/80 bg-neutral-50/70 p-4 sm:p-5 space-y-3">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-neutral-500">Standard Single-Event Rate</span>
-                    <span className="text-neutral-400 line-through tabular-nums font-medium">₹7,000.00</span>
+                    <span className="text-neutral-700 font-medium">Business Plan (Monthly)</span>
+                    <span className="text-neutral-900 font-semibold tabular-nums">₹2,499.00</span>
                   </div>
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-emerald-700 font-medium">Agreed Commercial Discount</span>
-                    <span className="text-emerald-700 font-semibold tabular-nums">-₹1,000.00</span>
+                    <span className="text-neutral-700 font-medium">WhatsApp Delivery &amp; Notifications Add-On</span>
+                    <span className="text-neutral-900 font-semibold tabular-nums">+₹500.00</span>
                   </div>
                   <div className="pt-2 border-t border-neutral-200 flex items-center justify-between text-xs">
-                    <span className="text-neutral-700 font-medium">Taxable Base Amount</span>
-                    <span className="text-neutral-900 font-bold tabular-nums">₹6,000.00</span>
+                    <span className="text-neutral-700 font-bold">Taxable Base Amount</span>
+                    <span className="text-neutral-900 font-bold tabular-nums">₹2,999.00</span>
                   </div>
                   <div className="flex items-center justify-between text-xs">
                     <div className="flex items-center gap-1.5">
                       <span className="text-neutral-600">Goods &amp; Services Tax (GST 18%)</span>
                       <span className="text-[10px] text-neutral-400 font-mono">SAC 997331</span>
                     </div>
-                    <span className="text-neutral-900 font-medium tabular-nums">₹1,080.00</span>
+                    <span className="text-neutral-900 font-medium tabular-nums">₹539.82</span>
                   </div>
                   <div className="pt-3 border-t border-neutral-300 flex items-baseline justify-between">
                     <div>
                       <p className="text-xs font-bold text-neutral-900">Total Net Payable</p>
-                      <p className="text-[10px] text-neutral-500 mt-0.5">One-Time Payment · Single Event License</p>
+                      <p className="text-[10px] text-neutral-500 mt-0.5">Monthly Billing · Includes 18% GST</p>
                     </div>
                     <div className="text-right">
                       <span className="text-2xl font-bold tracking-tight text-neutral-900 tabular-nums">
-                        ₹7,080.00
+                        ₹3,538.82
                       </span>
                     </div>
                   </div>
@@ -320,7 +320,7 @@ export default function PlanGrid({
                     <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                       <div className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold">
                         <Check className="w-4 h-4 text-emerald-600" />
-                        <span>Agreement Active · Managed Service &amp; Custom Branding Enabled</span>
+                        <span>Plan Active · Business Plan &amp; WhatsApp Integration Enabled</span>
                       </div>
                       {latestInvoice && (
                         <a
@@ -334,8 +334,8 @@ export default function PlanGrid({
                     </div>
                   ) : (
                     <CheckoutButton
-                      planSlug="managed_enterprise"
-                      planName="Managed Service"
+                      planSlug="business"
+                      planName="Business Plan (with WhatsApp Integration)"
                       billingCycle="monthly"
                       userEmail={userEmail}
                       userName={userName}
@@ -343,7 +343,7 @@ export default function PlanGrid({
                       currency="INR"
                       className="w-full sm:w-auto px-7 py-3.5 rounded-xl text-xs font-semibold text-white bg-neutral-900 hover:bg-neutral-800 shadow-xs transition-colors cursor-pointer"
                     >
-                      <span>Proceed to Payment — ₹7,080.00 (Single Event)</span>
+                      <span>Proceed to Payment — ₹3,538.82 / month</span>
                       <ArrowRight className="w-3.5 h-3.5 ml-1" />
                     </CheckoutButton>
                   )}
@@ -360,60 +360,54 @@ export default function PlanGrid({
                     Agreement Scope &amp; Deliverables
                   </h4>
                   <p className="text-[11px] text-neutral-500 mt-0.5">
-                    Authorized features and SLA allocations for this account.
+                    Authorized Business Plan tier + automated WhatsApp ticketing add-on.
                   </p>
                 </div>
 
-                <div className="space-y-3.5 divide-y divide-neutral-200/60 text-xs">
-                  <div className="pt-2 first:pt-0">
-                    <div className="flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-neutral-900 shrink-0" />
-                      <span className="font-semibold text-neutral-900">Dedicated Managed Support</span>
+                <div className="space-y-3">
+                  {[
+                    {
+                      label: "Concurrent Active Events",
+                      val: "Unlimited",
+                      desc: "Run parallel and recurring events simultaneously with zero locking",
+                    },
+                    {
+                      label: "Monthly Registrations",
+                      val: "10,000 / month",
+                      desc: "High-volume attendee throughput across all published events",
+                    },
+                    {
+                      label: "WhatsApp Pass Delivery & Alerts",
+                      val: "Enabled (₹500 Add-On)",
+                      desc: "Automated instant WhatsApp delivery with QR ticket pass and alerts",
+                    },
+                    {
+                      label: "Team Seats",
+                      val: "15 Organizer Seats",
+                      desc: "Invite coordinators, gate leads, and finance staff with role-based access",
+                    },
+                    {
+                      label: "Custom Pass Studio & White-Label",
+                      val: "Included",
+                      desc: "Personalize ticket designs, badge layouts, and remove UrPass branding",
+                    },
+                    {
+                      label: "Developer REST API & Webhooks",
+                      val: "Included",
+                      desc: "Direct integration with CRM, internal tools, and webhook notifications",
+                    },
+                  ].map((item, i) => (
+                    <div
+                      key={i}
+                      className="p-3 rounded-lg border border-neutral-200/70 bg-white shadow-2xs space-y-1"
+                    >
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-semibold text-neutral-900">{item.label}</span>
+                        <span className="font-bold text-neutral-900">{item.val}</span>
+                      </div>
+                      <p className="text-[11px] text-neutral-500">{item.desc}</p>
                     </div>
-                    <p className="text-[11px] text-neutral-600 pl-3.5 mt-0.5 leading-relaxed">
-                      Assigned 1-on-1 event account manager, bespoke registration form and pass template engineering, plus priority standby during live event days.
-                    </p>
-                  </div>
-
-                  <div className="pt-3">
-                    <div className="flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-neutral-900 shrink-0" />
-                      <span className="font-semibold text-neutral-900">Custom Branding (UrPass Branding Removed)</span>
-                    </div>
-                    <p className="text-[11px] text-neutral-600 pl-3.5 mt-0.5 leading-relaxed">
-                      Complete removal of UrPass watermarks and logos across attendee registration pages, digital passes, automated confirmations, and check-in portals.
-                    </p>
-                  </div>
-
-                  <div className="pt-3">
-                    <div className="flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-neutral-900 shrink-0" />
-                      <span className="font-semibold text-neutral-900">Single Event Unmetered Attendee Capacity</span>
-                    </div>
-                    <p className="text-[11px] text-neutral-600 pl-3.5 mt-0.5 leading-relaxed">
-                      Unmetered registration volume and high-throughput QR ticket verification for your event with multi-device scanner synchronization.
-                    </p>
-                  </div>
-
-                  <div className="pt-3">
-                    <div className="flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-neutral-900 shrink-0" />
-                      <span className="font-semibold text-neutral-900">Custom Domain &amp; Bespoke Pass Architecture</span>
-                    </div>
-                    <p className="text-[11px] text-neutral-600 pl-3.5 mt-0.5 leading-relaxed">
-                      Vanity subdomain routing, institutional color themes, and tailored sponsor/delegation badge configurations.
-                    </p>
-                  </div>
-
-                  <div className="pt-3">
-                    <div className="flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-neutral-900 shrink-0" />
-                      <span className="font-semibold text-neutral-900">B2B GST Tax Invoicing with 1-Click PDF Download</span>
-                    </div>
-                    <p className="text-[11px] text-neutral-600 pl-3.5 mt-0.5 leading-relaxed">
-                      Official tax invoices with SAC code 997331 generated automatically with an instant download button available in your dashboard.
-                    </p>
-                  </div>
+                  ))}
                 </div>
               </div>
 

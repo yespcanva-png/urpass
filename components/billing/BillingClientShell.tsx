@@ -260,8 +260,10 @@ export default function BillingClientShell({
   const isNiveditha = (userEmail || "").toLowerCase() === "niveditha@client.urpass.space";
 
   // Price formatting
-  const isManaged = currentPlanSlug === "managed_enterprise" || currentPlanSlug === "managed_service" || currentPlanSlug === "managed";
-  const formattedPlanPrice = isManaged
+  const isManaged = !isNiveditha && (currentPlanSlug === "managed_enterprise" || currentPlanSlug === "managed_service" || currentPlanSlug === "managed");
+  const formattedPlanPrice = isNiveditha
+    ? "₹2,999 (+18% GST ₹539.82) = ₹3,538.82/month"
+    : isManaged
     ? "₹6,000 (+18% GST) · Single Event"
     : isTrial
     ? isUk

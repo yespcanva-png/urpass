@@ -29,44 +29,16 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
   const admin = adminClient();
 
-  // Find or seed managed_enterprise plan
-  let { data: managedPlan } = await admin
+  // Find business plan
+  let { data: businessPlan } = await admin
     .from("plans")
     .select("id, name, slug")
-    .eq("slug", "managed_enterprise")
+    .eq("slug", "business")
     .maybeSingle();
-
-  if (!managedPlan) {
-    const { data: seeded } = await admin
-      .from("plans")
-      .upsert(
-        {
-          name: "Managed Service",
-          slug: "managed_enterprise",
-          price_monthly: 600000,
-          price_yearly: 600000,
-          max_events: 999999,
-          max_attendees: 999999,
-          features: [
-            "Dedicated Managed Support & Event Operations",
-            "Remove UrPass Branding (100% White-Label)",
-            "Unlimited Events & Registrations",
-            "Custom Pass Design & Domain Branding",
-            "Priority VIP Check-In & Scanner Sync",
-            "Official GST Tax Invoicing",
-          ],
-          is_active: true,
-        },
-        { onConflict: "slug" }
-      )
-      .select("id, name, slug")
-      .single();
-    managedPlan = seeded;
-  }
 
   const now = new Date();
   const periodEnd = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-  const paymentId = String(body.paymentId || `pay_managed_${Date.now()}`);
+  const paymentId = String(body.paymentId || `pay_business_wa_${Date.now()}`);
 
   // Activate subscription
   const { data: updatedSub, error: subError } = await admin
@@ -74,7 +46,7 @@ export async function POST(req: NextRequest) {
     .upsert(
       {
         user_id: user.id,
-        plan_id: managedPlan?.id,
+        plan_id: businessPlan?.id,
         status: "active",
         provider: "razorpay",
         billing_cycle: "monthly",
@@ -103,16 +75,16 @@ export async function POST(req: NextRequest) {
     .update({ hide_urpass_branding: true })
     .eq("user_id", user.id);
 
-  // Generate GST tax invoice
+  // Generate GST tax invoice (₹2,499 Business + ₹500 WhatsApp = ₹2,999 + 18% GST = ₹3,538.82)
   const invoice = await createInvoiceForPayment({
     userId: user.id,
     subscriptionId: updatedSub?.id ?? null,
     paymentId,
-    description: "URPASS Managed Service — Single Event Pass & Managed Support",
-    baseAmountRupees: 6000,
+    description: "URPASS Business Plan + WhatsApp Delivery Integration (Monthly)",
+    baseAmountRupees: 2999,
     discountRupees: 0,
     currency: "INR",
-    docType: "MS",
+    docType: "SUB",
     customerEmail: user.email,
     customerName: body.customerName || "Niveditha",
     customerAddress: body.customerAddress || null,

@@ -158,7 +158,9 @@ export async function POST(req: NextRequest) {
   let baseAmount: number;
   if (isFounder) {
     baseAmount = isUk ? 24900 : 1999900;
-  } else if (normalizedSlug === "managed_enterprise" || user.email?.toLowerCase() === "niveditha@client.urpass.space") {
+  } else if (user.email?.toLowerCase() === "niveditha@client.urpass.space") {
+    baseAmount = 299900; // ₹2,499 Business Plan + ₹500 WhatsApp Delivery Add-On
+  } else if (normalizedSlug === "managed_enterprise") {
     baseAmount = 600000;
   } else {
     baseAmount = priceResolution.amountPaise;

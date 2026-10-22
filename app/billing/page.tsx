@@ -253,13 +253,19 @@ export default async function BillingPage(props: {
   const userName = profile?.full_name ?? user.email?.split("@")[0] ?? "Organizer";
   const userEmail = profile?.email ?? user.email ?? "";
   const userPhone = profile?.phone ?? user.phone ?? (user.user_metadata?.phone as string) ?? "";
-  const currentPlan =
-    PLANS.find(
-      (p) =>
-        p.slug === currentPlanSlug ||
-        (["managed_enterprise", "managed_service", "managed"].includes(currentPlanSlug) &&
-          p.slug === "managed_enterprise")
-    ) ?? PLANS[0];
+  const currentPlan = isNivedithaUser
+    ? {
+        name: "Business Plan (with WhatsApp Integration)",
+        slug: "business",
+        priceMonthly: 2999,
+        annualTotal: 35988,
+      }
+    : PLANS.find(
+        (p) =>
+          p.slug === currentPlanSlug ||
+          (["managed_enterprise", "managed_service", "managed"].includes(currentPlanSlug) &&
+            p.slug === "managed_enterprise")
+      ) ?? PLANS[0];
   const invoices = (invoiceData ?? []) as InvoiceItem[];
 
   const registrationLimit = plan.getLimit("registrations_per_month");

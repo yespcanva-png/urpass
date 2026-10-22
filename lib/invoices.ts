@@ -855,16 +855,21 @@ export async function generateInvoicePdf(invoice: InvoiceRecord): Promise<Uint8A
     ? taxableVal.toFixed(2)
     : taxableVal.toLocaleString("en-IN", { minimumFractionDigits: 2 });
 
+  const isNivedithaInvoice = invoice.customer_email?.toLowerCase().includes("niveditha");
   const isManagedInvoice =
-    invoice.invoice_number?.startsWith("MS-") ||
+    !isNivedithaInvoice &&
+    (invoice.invoice_number?.startsWith("MS-") ||
     invoice.description?.toLowerCase().includes("managed") ||
-    invoice.customer_email?.toLowerCase().includes("niveditha") ||
-    (Math.round(Number(invoice.total_amount)) === 7080 && Math.round(Number(invoice.taxable_amount || invoice.subtotal)) === 6000);
+    (Math.round(Number(invoice.total_amount)) === 7080 && Math.round(Number(invoice.taxable_amount || invoice.subtotal)) === 6000));
 
-  const itemTitle = isManagedInvoice
+  const itemTitle = isNivedithaInvoice
+    ? "URPASS Business Plan + WhatsApp Delivery Integration"
+    : isManagedInvoice
     ? "URPASS Managed Service (Single Event)"
     : URPASS_SERVICE.name;
-  const subHeading = isManagedInvoice
+  const subHeading = isNivedithaInvoice
+    ? "Business Plan with 10,000 attendees/mo, unlimited events, 15 seats, API access, and automated WhatsApp pass delivery."
+    : isManagedInvoice
     ? "Includes dedicated event manager, custom branding setup & Managed Support for one event."
     : URPASS_SERVICE.description;
 

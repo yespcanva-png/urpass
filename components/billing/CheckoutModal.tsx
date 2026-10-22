@@ -147,16 +147,20 @@ export default function CheckoutModal({
   const taxName = isUk ? "VAT (20%)" : "GST (18%)";
   const fmt = (n: number) => fmtVal(n, isUk);
 
+  const isNivedithaUser = (userEmail || "").toLowerCase() === "niveditha@client.urpass.space";
   const isLifetime = billingCycle === "lifetime" || planSlug === "founder" || planSlug === "lifetime";
   const isSingleEvent = planSlug === "managed_enterprise";
   const defaultFounder = isUk ? 249 : 19999;
   const isAutopaySubscription =
+    !isNivedithaUser &&
     !isUk &&
     !isLifetime &&
     billingCycle === "monthly" &&
     ["starter", "pro", "business"].includes(planSlug);
   const isIntroOffer = false;
-  const baseAmount = isLifetime
+  const baseAmount = isNivedithaUser && planSlug === "business"
+    ? 2999
+    : isLifetime
     ? (annualTotal || priceMonthly || defaultFounder)
     : billingCycle === "annual"
     ? annualTotal
@@ -636,12 +640,25 @@ export default function CheckoutModal({
 
           {/* Price breakdown */}
           <div className="bg-neutral-50 border border-neutral-200 rounded-lg p-4 flex flex-col gap-2.5 text-sm">
-            <div className="flex items-center justify-between">
-              <span className="text-neutral-700 font-medium">
-                {planName} ({isSingleEvent ? "Single Event License · One-Time" : isLifetime ? "Lifetime License · One-Time" : billingCycle === "annual" ? "12 months" : "1 month"})
-              </span>
-              <span className="font-semibold text-neutral-950">{sym}{fmt(baseAmount)}</span>
-            </div>
+            {isNivedithaUser && planSlug === "business" ? (
+              <>
+                <div className="flex items-center justify-between">
+                  <span className="text-neutral-700 font-medium">Business Plan (Monthly)</span>
+                  <span className="font-semibold text-neutral-950">₹2,499.00</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-neutral-700 font-medium">WhatsApp Delivery &amp; Notifications Add-On</span>
+                  <span className="font-semibold text-neutral-950">+₹500.00</span>
+                </div>
+              </>
+            ) : (
+              <div className="flex items-center justify-between">
+                <span className="text-neutral-700 font-medium">
+                  {planName} ({isSingleEvent ? "Single Event License · One-Time" : isLifetime ? "Lifetime License · One-Time" : billingCycle === "annual" ? "12 months" : "1 month"})
+                </span>
+                <span className="font-semibold text-neutral-950">{sym}{fmt(baseAmount)}</span>
+              </div>
+            )}
 
             {coupon && (
               <div className="flex items-center justify-between">
