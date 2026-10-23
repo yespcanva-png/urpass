@@ -1,9 +1,10 @@
-import { generateNext25Metadata, Next25SeoPage } from "@/lib/seo/next-25-pages";
+import type { Metadata } from "next";
+import { generateOctober23Metadata, October23SeoPage } from "@/lib/seo/october-23-batch";
 
 const slug = "alumni-meet-registration-software";
 
-export const metadata = generateNext25Metadata(slug);
+export const metadata: Metadata = generateOctober23Metadata(slug);
 
 export default function Page() {
-  return <Next25SeoPage slug={slug} />;
+  return <October23SeoPage slug={slug} />;
 }
