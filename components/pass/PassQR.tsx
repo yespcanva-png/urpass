@@ -32,7 +32,7 @@ export default function PassQR({ value, size = 180, showGateTip = true }: Props)
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") setFullscreen(true);
         }}
-        className="group relative bg-white p-4 rounded-2xl inline-block shadow-sm border border-neutral-100 cursor-pointer transition-all hover:shadow-md hover:border-neutral-200 text-center"
+        className="group relative bg-white p-4 rounded-2xl inline-block max-w-full shadow-sm border border-neutral-100 cursor-pointer transition-all hover:shadow-md hover:border-neutral-200 text-center"
         title="Tap to enlarge for gate scan"
       >
         <QRCodeSVG
@@ -41,7 +41,7 @@ export default function PassQR({ value, size = 180, showGateTip = true }: Props)
           level="M"
           bgColor="#ffffff"
           fgColor="#0a0a0a"
-          style={{ display: "block", margin: "0 auto" }}
+          style={{ display: "block", margin: "0 auto", maxWidth: "100%", height: "auto" }}
         />
 
         <div className="absolute inset-0 bg-neutral-950/0 group-hover:bg-neutral-950/5 rounded-2xl flex items-center justify-center transition-colors pointer-events-none">
@@ -82,14 +82,14 @@ export default function PassQR({ value, size = 180, showGateTip = true }: Props)
               <span>Gate Entry Ready</span>
             </div>
 
-            <div className="p-2 bg-white rounded-2xl">
+            <div className="p-2 bg-white rounded-2xl max-w-full">
               <QRCodeSVG
                 value={value}
                 size={240}
                 level="M"
                 bgColor="#ffffff"
                 fgColor="#000000"
-                style={{ display: "block" }}
+                style={{ display: "block", maxWidth: "100%", height: "auto" }}
               />
             </div>
 

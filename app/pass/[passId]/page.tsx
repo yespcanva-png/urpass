@@ -11,11 +11,11 @@ import {
   CheckCircle2,
   Lock,
   Users,
-  Share2,
 } from "lucide-react";
 import PassQR from "@/components/pass/PassQR";
 import DownloadPassButton from "@/components/pass/DownloadPassButton";
 import AutoDownload from "@/components/pass/AutoDownload";
+import WhatsAppLogo from "@/components/icons/WhatsAppLogo";
 import WhatsAppShareButton from "@/components/pass/WhatsAppShareButton";
 import AddToCalendarButton from "@/components/pass/AddToCalendarButton";
 import PersonalizePassModal from "@/components/pass/PersonalizePassModal";
@@ -219,7 +219,7 @@ export default async function PassPage({
 
   return (
     <div
-      className="min-h-screen flex flex-col items-center justify-center p-5 pb-16 relative overflow-hidden"
+      className="min-h-screen flex flex-col items-center justify-center px-3 py-5 sm:p-5 pb-16 relative overflow-hidden"
       style={{
         backgroundColor: isDark ? "#0a0a0d" : "#f8fafc",
       }}
@@ -290,7 +290,7 @@ export default async function PassPage({
           )}
 
           {/* Card Interior */}
-          <div className="relative z-10 p-6 flex flex-col items-center text-center">
+          <div className="relative z-10 p-4 sm:p-6 flex flex-col items-center text-center">
             {/* Event Logo & Sponsor */}
             <div className="mb-3 flex items-center justify-center gap-3">
               {logoToDisplay ? (
@@ -323,7 +323,7 @@ export default async function PassPage({
             </div>
 
             {/* Event Name */}
-            <h1 className="text-lg font-bold tracking-tight mb-2 uppercase leading-snug max-w-xs">
+            <h1 className="text-lg font-bold tracking-tight mb-2 uppercase leading-snug max-w-full break-words">
               {event.name}
             </h1>
 
@@ -350,7 +350,7 @@ export default async function PassPage({
                 className={`my-2 p-3.5 bg-white rounded-xl flex flex-col items-center justify-center ${
                   design.showQrBorder !== false ? "border border-neutral-200/90 shadow-2xs" : ""
                 }`}
-                style={{ width: qrSizePx + 28, height: qrSizePx + 44 }}
+                style={{ width: qrSizePx + 60, maxWidth: "100%" }}
               >
                 <PassQR value={pass.pass_token} size={qrSizePx} />
                 <span className="text-[8px] font-bold tracking-widest text-neutral-400 uppercase mt-2">
@@ -485,7 +485,7 @@ export default async function PassPage({
                 className={`my-3 p-3.5 bg-white rounded-xl flex flex-col items-center justify-center ${
                   design.showQrBorder !== false ? "border border-neutral-200/90 shadow-2xs" : ""
                 }`}
-                style={{ width: qrSizePx + 28, height: qrSizePx + 44 }}
+                style={{ width: qrSizePx + 60, maxWidth: "100%" }}
               >
                 <PassQR value={pass.pass_token} size={qrSizePx} />
                 <span className="text-[8px] font-bold tracking-widest text-neutral-400 uppercase mt-2">
@@ -510,7 +510,7 @@ export default async function PassPage({
                 {design.showVenue && event.venue && (
                   <p className={`text-xs ${subtextCls} flex items-center gap-1.5`}>
                     <MapPin className="w-3.5 h-3.5 opacity-70 shrink-0" />
-                    <span className="truncate max-w-[240px]">{event.venue}</span>
+                    <span className="min-w-0 break-words text-center">{event.venue}</span>
                   </p>
                 )}
               </div>
@@ -633,7 +633,7 @@ export default async function PassPage({
               return (
                 <div
                   key={idx}
-                  className={`flex items-center justify-between p-2.5 rounded-xl border transition-all ${
+                  className={`flex flex-wrap items-center justify-between gap-2 p-2.5 rounded-xl border transition-all ${
                     isCurrent
                       ? "bg-violet-50/60 dark:bg-violet-950/25 border-violet-200 dark:border-violet-800/60"
                       : "bg-neutral-50/80 dark:bg-neutral-900/50 border-neutral-100 dark:border-neutral-800/60 hover:border-neutral-300 dark:hover:border-neutral-700"
@@ -676,11 +676,11 @@ export default async function PassPage({
                           href={waLink}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 border border-emerald-200 dark:border-emerald-800/60 transition-colors flex items-center justify-center"
+                          className="min-w-11 min-h-11 shrink-0 p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 border border-emerald-200 dark:border-emerald-800/60 transition-colors flex items-center justify-center"
                           title={`Send pass to ${member.name} via WhatsApp`}
                           aria-label={`Send pass to ${member.name} via WhatsApp`}
                         >
-                          <Share2 className="w-3.5 h-3.5" />
+                          <WhatsAppLogo className="w-5 h-5" variant="brand" />
                         </a>
                       </>
                     )}

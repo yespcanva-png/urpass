@@ -1,6 +1,6 @@
 "use client";
 
-import { MessageCircle } from "lucide-react";
+import WhatsAppLogo from "@/components/icons/WhatsAppLogo";
 
 import { cleanPassToken } from "@/lib/passes/public-pass";
 
@@ -81,9 +81,10 @@ export default function WhatsAppShareButton({
         target="_blank"
         rel="noopener noreferrer"
         title="Send Pass via WhatsApp"
-        className="inline-flex items-center justify-center w-7 h-7 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 hover:text-emerald-700 transition-colors"
+        aria-label="Send Pass via WhatsApp"
+        className="inline-flex items-center justify-center w-11 h-11 shrink-0 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 hover:text-emerald-700 transition-colors"
       >
-        <MessageCircle className="w-3.5 h-3.5" />
+        <WhatsAppLogo className="w-5 h-5 shrink-0" variant="brand" />
       </a>
     );
   }
@@ -93,11 +94,11 @@ export default function WhatsAppShareButton({
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="flex items-center justify-center gap-2 w-full max-w-sm py-3 px-5 rounded-2xl text-sm font-bold text-white shadow-sm transition-all duration-150 hover:opacity-95 active:scale-[0.99]"
+      className="flex items-center justify-center gap-2 w-full min-w-0 min-h-12 max-w-sm py-3 px-4 sm:px-5 rounded-2xl text-sm font-bold text-white shadow-sm transition-all duration-150 hover:opacity-95 active:scale-[0.99]"
       style={{ background: "#25D366" }}
     >
-      <MessageCircle className="w-4 h-4" />
-      {buttonText}
+      <WhatsAppLogo className="w-5 h-5 shrink-0" variant="white" />
+      <span className="min-w-0 break-words text-center">{buttonText}</span>
     </a>
   );
 }

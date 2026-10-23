@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import type { StudioDesign, StudioElement } from "@/lib/studio/types";
 import type { DummyAttendee, SampleEventData } from "@/lib/studio/dummy-attendees";
 import TextElement from "./elements/TextElement";
@@ -37,6 +37,19 @@ export default function StudioPassRenderer({
   passToken,
   ticketId,
 }: Props) {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [availableWidth, setAvailableWidth] = useState(Math.min(390, design.width));
+
+  useEffect(() => {
+    const card = cardRef.current;
+    if (!card) return;
+    const resize = () => setAvailableWidth(card.clientWidth);
+    resize();
+    const observer = new ResizeObserver(resize);
+    observer.observe(card);
+    return () => observer.disconnect();
+  }, []);
+
   const formattedDate = new Date(event.event_date).toLocaleDateString("en-IN", {
     day: "numeric",
     month: "short",
@@ -95,15 +108,17 @@ export default function StudioPassRenderer({
   }
 
   // Calculate proportional scaling for mobile screen widths
-  const maxCardWidth = Math.min(390, design.width);
+  const maxCardWidth = Math.min(390, design.width, availableWidth);
   const scale = maxCardWidth / design.width;
   const scaledHeight = Math.round(design.height * scale);
 
   return (
     <div
+      ref={cardRef}
       className="relative rounded-2xl overflow-hidden shadow-xl border border-neutral-200/80 mx-auto select-none"
       style={{
-        width: `${maxCardWidth}px`,
+        width: "100%",
+        maxWidth: `${Math.min(390, design.width)}px`,
         height: `${scaledHeight}px`,
         backgroundColor: design.background.color || "#FFFFFF",
       }}

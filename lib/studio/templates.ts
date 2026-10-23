@@ -1,3 +1,4 @@
+import { CINEMA_TICKET_DESIGN } from "./cinema-template";
 import type { StudioDesign, TicketFormat } from "./types";
 import type { TicketDesignConfig, TicketTemplate, TicketShape } from "@/lib/pass-design";
 
@@ -322,6 +323,20 @@ export const STUDIO_TEMPLATES: StudioTemplateDefinition[] = [
     tags: ["Corporate", "Clean", "Minimal", "Conference"],
     thumbnailBg: "#FFFFFF",
     design: createDigitalPassDesign("Corporate Minimal", "#FFFFFF", "#18181B", "#18181B"),
+  },
+  {
+    id: "cinema-ticket",
+    name: "Cinema Ticket",
+    category: "Events & Entertainment",
+    format: "digital",
+    tier: "free",
+    priceINR: 0,
+    badgeLabel: "Free",
+    featured: true,
+    description: "BookMyShow-inspired cinema ticket with a rose header, event details, perforated stub, and personal entry QR.",
+    tags: ["Cinema", "BookMyShow", "Concert", "Entertainment", "Ticket"],
+    thumbnailBg: "#FFF0F3",
+    design: CINEMA_TICKET_DESIGN,
   },
   {
     id: "executive-blue",

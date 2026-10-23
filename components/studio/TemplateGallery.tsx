@@ -55,6 +55,7 @@ export default function TemplateGallery({
 
   const categories = [
     "All",
+    "Events & Entertainment",
     "Minimal",
     "Corporate",
     "Conference",
@@ -265,7 +266,21 @@ export default function TemplateGallery({
                   )}
                 </div>
 
-                <div
+                {template.id === "cinema-ticket" ? (
+                  <div className="w-full max-w-[190px] overflow-hidden rounded-lg bg-white shadow-sm text-left border border-rose-100">
+                    <div className="bg-[#F84464] px-3 py-1.5 text-[8px] font-black tracking-widest text-white">URPASS / LIVE</div>
+                    <div className="px-3 py-2">
+                      <p className="text-[10px] font-black text-[#20212B]">YOUR NEXT GREAT EXPERIENCE</p>
+                      <p className="mt-1 text-[7px] text-neutral-500">DATE · TIME · VENUE</p>
+                    </div>
+                    <div className="flex items-center justify-between border-t border-dashed border-neutral-300 bg-neutral-50 px-3 py-2">
+                      <span className="text-[7px] font-bold tracking-wider text-neutral-500">BOOKING ID<br />URP-10284</span>
+                      <div className="grid grid-cols-3 gap-0.5 bg-white p-1" aria-hidden="true">
+                        {[0, 1, 2, 3, 4, 5, 6, 7, 8].map((cell) => <span key={cell} className={`h-1.5 w-1.5 ${cell === 4 ? "bg-white" : "bg-neutral-900"}`} />)}
+                      </div>
+                    </div>
+                  </div>
+                ) : (<div
                   className="rounded-lg p-2.5 flex flex-col items-center justify-center text-center shadow-xs border border-white/20 w-full max-w-[200px]"
                   style={{
                     backgroundColor:
@@ -285,7 +300,7 @@ export default function TemplateGallery({
                     [ QR ]
                   </div>
                   <span className="text-[8px] font-mono opacity-60">#URP-PREVIEW</span>
-                </div>
+                </div>)}
 
                 {isSelected && (
                   <div className="absolute top-2.5 right-2.5 w-6 h-6 rounded-full bg-violet-600 text-white flex items-center justify-center shadow-md">
