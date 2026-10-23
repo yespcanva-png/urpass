@@ -41,11 +41,11 @@ export default function OnlineEventTicketingPlatformIndiaPage() {
         hook: "Sell tickets. Accept UPI. Send QR passes. Scan attendees. Keep your event revenue.",
         subDescription:
           "Create your paid event in minutes. Connect your Razorpay account, collect UPI & card payments with zero platform commission, and validate guests with digital QR passes.",
-        primaryCtaLabel: "Sell Tickets for ₹29 →",
+        primaryCtaLabel: "Sell Tickets →",
         primaryCtaHref: "/signup?plan=pro&from=online-event-ticketing-platform-india",
         secondaryCtaLabel: "View Pricing",
         secondaryCtaHref: "/pricing",
-        trustHighlights: ["₹29 intro offer", "Razorpay / UPI", "Sub-0.3s QR scan", "0% Ticket Fee"],
+        trustHighlights: ["Plans from ₹499/mo", "Razorpay / UPI", "Sub-0.3s QR scan", "0% Ticket Fee"],
         currency: "INR",
         cluster: "ticketing",
         description:
@@ -53,7 +53,7 @@ export default function OnlineEventTicketingPlatformIndiaPage() {
         comparisonRows: [
           {
             criteria: "Platform Commission on Sales",
-            urpass: "0% Commission (Fixed monthly plan starting at ₹29)",
+            urpass: "0% Commission (Fixed monthly plan starting from ₹499)",
             competitor: "4.0% to 7.9% deducted per ticket sold",
             urpassAdvantage: true,
           },

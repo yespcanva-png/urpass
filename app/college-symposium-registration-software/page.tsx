@@ -237,7 +237,7 @@ export default function CollegeSymposiumRegistrationSoftwarePage() {
         },
         {
                 "q": "How much does UrPass cost for college symposiums?",
-                "a": "UrPass offers an introductory plan starting at ₹29/month for your first 2 months with 0% platform ticket commission. Single event pay-as-you-go passes are also available starting from ₹299."
+                "a": "UrPass offers an introductory plan starting from ₹499/month with 0% platform ticket commission. Single event pay-as-you-go passes are also available starting from ₹299."
         }
 ],
       }}

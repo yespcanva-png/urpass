@@ -134,7 +134,7 @@ export default function Page() {
           },
           {
                     "q": "Do I need to pay to replace Google Forms with UrPass?",
-                    "a": "No. UrPass offers a introductory ₹29/month offer with no credit card required, allowing you to host free community events with professional QR check-in at zero cost."
+                    "a": "No. UrPass offers plans starting from ₹499/month with no credit card required, allowing you to host free community events with professional QR check-in at zero cost."
           },
           {
                     "q": "Can I collect custom questions like in Google Forms?",
@@ -158,7 +158,7 @@ export default function Page() {
           }
 ],
         ctaTitle: "Replace Google Forms for Event Registration with Automated QR Passes",
-        ctaDescription: "Launch your event registration in minutes. Plans starting with a ₹29/month introductory offer.",
+        ctaDescription: "Launch your event registration in minutes. Plans starting from ₹499/month with 0% ticket commission.",
       }}
     />
   );

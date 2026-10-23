@@ -120,7 +120,7 @@ export default function StudioUpgradeModal({
               Current plan: <span className="uppercase font-bold text-neutral-800">{currentPlan}</span>
             </span>
             <span className="text-xs font-bold text-neutral-900">
-              Pro starts at ₹29/mo (intro offer) or £35/mo
+              Pro starts at ₹999/mo or £35/mo
             </span>
           </div>
 

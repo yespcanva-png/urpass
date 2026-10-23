@@ -367,7 +367,7 @@ export default function EventRegistrationSoftwarePage() {
           },
           {
             q: "Is there a free plan for non-profit and community events?",
-            a: "Yes. URPASS offers a introductory ₹29/month offer allowing up to 2 events per month and 100 registrations per month at ₹0 forever with full QR pass generation and gate scanning features included.",
+            a: "Yes. URPASS offers plans starting from ₹499/month allowing up to 2 events per month and 100 registrations per month at ₹0 forever with full QR pass generation and gate scanning features included.",
           },
           {
             q: "Can I collect custom questions like College Name or T-Shirt Size?",

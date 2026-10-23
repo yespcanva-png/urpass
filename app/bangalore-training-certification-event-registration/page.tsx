@@ -75,7 +75,7 @@ export default function BangaloreTrainingCertificationEventRegistrationPage() {
                 {
                         "col1": "Platform Commission",
                         "col2": "8% to 15% deducted from course tuition",
-                        "col3": "0% ticket commission; plans from ₹29/month"
+                        "col3": "0% ticket commission; plans from ₹499/month"
                 },
                 {
                         "col1": "Attendance Verification",
@@ -121,7 +121,7 @@ export default function BangaloreTrainingCertificationEventRegistrationPage() {
                         "Retain 100% of student enrollment revenue on every workshop batch",
                         "Automated GST invoice generation matching corporate expense requirements",
                         "Support student payment options: UPI, debit cards, credit cards, and net banking",
-                        "Transparent software pricing with introductory plans starting at ₹29/month"
+                        "Transparent software pricing starting from ₹499/month"
                 ],
                 "takeaway": "Direct payment routing maximizes academy revenue and streamlines tax invoicing."
         }

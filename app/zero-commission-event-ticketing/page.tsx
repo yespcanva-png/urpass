@@ -44,12 +44,12 @@ export default function ZeroCommissionEventTicketingPage() {
                 "0% platform commission on all paid ticket sales",
                 "Direct bank settlements via your own Razorpay or Stripe gateway",
                 "Automatic digital QR pass generation and instant multi-channel delivery",
-                "Predictable flat subscription model starting with introductory ₹29/mo offer"
+                "Predictable flat subscription model starting with introductory ₹499/mo offer"
         ]
 },
         whatIs: {
         "title": "How UrPass Delivers 0% Commission Ticketing",
-        "definition": "UrPass replaces predatory percentage-based ticketing aggregator models with a modern SaaS subscription. Organizers pay a predictable flat subscription starting at ₹29/mo (introductory offer) or £15/mo in the UK, connect their merchant gateway, and keep every rupee or pound of ticket revenue minus standard payment processor interchange fees.",
+        "definition": "UrPass replaces predatory percentage-based ticketing aggregator models with a modern SaaS subscription. Organizers pay a predictable flat subscription starting from ₹499/mo (introductory offer) or £15/mo in the UK, connect their merchant gateway, and keep every rupee or pound of ticket revenue minus standard payment processor interchange fees.",
         "details": [
                 "Saves event producers thousands in variable ticketing aggregator cuts",
                 "Eliminates multi-week payout holds by settling ticket revenue directly to your merchant account",
@@ -69,7 +69,7 @@ export default function ZeroCommissionEventTicketingPage() {
                 {
                         "col1": "₹1,00,000 (100 tickets @ ₹1,000)",
                         "col2": "₹6,000 to ₹8,000 lost to platform fees",
-                        "col3": "₹0 commission; ₹29 intro offer subscription"
+                        "col3": "0% commission; plans from ₹499/mo"
                 },
                 {
                         "col1": "₹5,00,000 (500 tickets @ ₹1,000)",
@@ -221,7 +221,7 @@ export default function ZeroCommissionEventTicketingPage() {
         faqs: [
         {
                 "q": "Does UrPass really charge 0% commission on ticket sales?",
-                "a": "Yes. UrPass charges zero percentage fees on your ticket revenue. You pay only our transparent subscription (starting with our ₹29/mo intro offer in India or £15/mo in the UK) and standard payment processing fees directly to Razorpay or Stripe."
+                "a": "Yes. UrPass charges zero percentage fees on your ticket revenue. You pay only our transparent subscription (starting with our plans starting from ₹499/mo in India or £15/mo in the UK) and standard payment processing fees directly to Razorpay or Stripe."
         },
         {
                 "q": "When do I receive my ticket money?",

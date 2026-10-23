@@ -75,7 +75,7 @@ export default function IndiranagarCommunityEventTicketingPage() {
                 {
                         "col1": "Platform Commission",
                         "col2": "5% to 10% fee deducted per ticket sold",
-                        "col3": "0% ticket commission; plans from ₹29/month"
+                        "col3": "0% ticket commission; plans from ₹499/month"
                 },
                 {
                         "col1": "Audience Marketing",
@@ -105,7 +105,7 @@ export default function IndiranagarCommunityEventTicketingPage() {
                 "bullets": [
                         "Save thousands of rupees on every workshop, mixer, and showcase",
                         "Collect payments directly via UPI, cards, and net banking with instant confirmation",
-                        "Transparent, predictable monthly subscription (introductory offer ₹29/month)",
+                        "Transparent, predictable monthly subscription (plans from ₹499/month)",
                         "Automated financial reconciliation with instant CSV sales reporting"
                 ],
                 "takeaway": "Zero commission means creative communities keep the revenue they earn."

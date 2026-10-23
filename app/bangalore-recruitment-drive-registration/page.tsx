@@ -243,7 +243,7 @@ export default function BangaloreRecruitmentDriveRegistrationPage() {
         },
         {
                 "q": "What pricing applies to recruitment drives on UrPass?",
-                "a": "UrPass offers transparent flat software subscriptions starting at an introductory ₹29/month for your first 2 months (then ₹999/month), with zero per-candidate ticketing fees."
+                "a": "UrPass offers transparent flat software subscriptions starting from ₹499/month, with zero per-candidate ticketing fees."
         }
 ],
       }}

@@ -62,7 +62,7 @@ export default function LocationPage() {
             "Local INR pricing with GST compliant invoices",
             "Zero per-ticket percentage cuts on ticket revenue",
             "Instant duplicate pass lockout across all entrance gates",
-            "Plans start with ₹29/mo introductory offer and 0% ticket fee"
+            "Plans start from ₹499/mo with 0% ticket fee"
           ],
         },
         useCases: [
@@ -76,10 +76,10 @@ export default function LocationPage() {
           { q: "Can Kochi startup events use URPASS for demo days?", a: "Yes. Curate founder and investor RSVPs, issue digital badges, and verify guests at the entrance in under 0.3s." },
           { q: "Can Kerala colleges use URPASS for inter-college fests?", a: "Yes. Manage student roll numbers, cap workshop seats, and scan passes at campus gates with any smartphone." },
           { q: "Can organizers accept ticket payments via UPI in Kochi?", a: "Yes. Built-in Razorpay integration enables instant ticket sales through GPay, PhonePe, Paytm, and net banking." },
-          { q: "Is URPASS free for community meetups in Kochi?", a: "Yes. Community meetups with up to 100 attendees can use our introductory ₹29/month offer at ₹0 forever." },
+          { q: "Is URPASS free for community meetups in Kochi?", a: "Yes. Community meetups with up to 100 attendees can use our plans starting from ₹499/month at ₹0 forever." },
         ],
         ctaTitle: "Start your Kochi event with URPASS",
-        ctaDescription: "Plans from ₹29/mo · Razorpay UPI payments · Sub-second mobile scanning",
+        ctaDescription: "Plans from ₹499/mo · Razorpay UPI payments · Sub-second mobile scanning",
       }}
     />
   );

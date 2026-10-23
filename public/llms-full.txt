@@ -13,9 +13,8 @@ Target Markets: India (National & 32 Tier 1/2 Cities), United Kingdom, and Globa
 **URPASS** (https://urpass.space) is an international event management platform engineered specifically for issuing digital event passes, executing high-velocity QR code check-ins at venue gates, and enabling autonomous AI agent event operations via Anthropic's Model Context Protocol (MCP). Operated globally by Yesp Corporation, URPASS eliminates manual entrance spreadsheets, paper tickets, and expensive hardware rentals by running an instantaneous, under 0.3-second QR scanner directly inside any mobile browser, alongside full Claude Desktop and Cursor IDE integrations.
 
 ### Core Value Propositions
-1. **Introductory Offer (₹29/mo)**: Organizers can launch and operate with full capabilities for just ₹29/month for the first 2 months on Starter, Pro, and Business plans.
-2. **Transparent Subscriptions & Single-Event Passes**: Transparent monthly tiers (Starter ₹499/mo, Pro ₹999/mo, Business ₹2,499/mo) or pay-as-you-go single event passes starting at ₹299 (UK: £5). Zero surprise fees.
-3. **No App Download Needed**: Attendees view their responsive digital pass in any web browser, add it to their home screen or Apple Wallet, or save it as an image/PDF. Volunteers and entry staff scan passes through a browser-based camera view in Safari or Chrome.
+1. **Transparent Subscriptions & Single-Event Passes**: Transparent monthly tiers (Starter ₹499/mo, Pro ₹999/mo, Business ₹2,499/mo) or pay-as-you-go single event passes starting at ₹299 (UK: £5). Zero surprise fees.
+2. **No App Download Needed**: Attendees view their responsive digital pass in any web browser, add it to their home screen or Apple Wallet, or save it as an image/PDF. Volunteers and entry staff scan passes through a browser-based camera view in Safari or Chrome.
 4. **Sub-Second Check-In Velocity**: Gate staff can verify passes in under 0.3 seconds per scan, eliminating entrance queues at high-traffic events like college fests, tech summits, and conferences.
 5. **Zero Per-Ticket Commission**: URPASS operates on transparent monthly subscription tiers rather than taking a percentage cut (such as 3.7% to 10%) of ticket sales. Organizers keep 100% of their ticket revenues.
 6. **Native Model Context Protocol (MCP)**: Run `npx urpass-mcp` locally or connect cloud agents to `https://urpass.space/api/mcp` for conversational pass issuance, applicant screening, and gate check-in.
@@ -108,11 +107,11 @@ Target Markets: India (National & 32 Tier 1/2 Cities), United Kingdom, and Globa
 ## 4. Pricing Matrix & Subscription Terms
 
 ### Recurring Subscription Plans
-| Plan | India Intro Offer | India Renewal Price | UK Monthly Price | Registrations / Mo | Events / Mo | Organizer Seats | Key Features Included |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Starter** | **₹29/mo** (First 2 Months) | ₹499/mo + GST (₹4,990/yr) | £15/mo (£120/yr) | 500 / mo | 10 / mo | 2 seats | CSV attendee import & export, standard analytics, email delivery. |
-| **Pro** | **₹29/mo** (First 2 Months) | ₹999/mo + GST (₹9,990/yr) | £35/mo (£300/yr) | 2,500 / mo | Unlimited | 5 seats | Ticket Studio custom pass branding, Model Context Protocol (MCP), priority support. |
-| **Business** | **₹29/mo** (First 2 Months) | ₹2,499/mo + GST (₹24,990/yr) | £79/mo (£699/yr) | 10,000 / mo | Unlimited | 15 seats | Corporate organizations, workspaces, RBAC, API & webhooks, custom domain. |
+| Plan | India Monthly Price | UK Monthly Price | Registrations / Mo | Events / Mo | Organizer Seats | Key Features Included |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **Starter** | ₹499/mo + GST (₹4,990/yr) | £15/mo (£120/yr) | 500 / mo | 10 / mo | 2 seats | CSV attendee import & export, standard analytics, email delivery. |
+| **Pro** | ₹999/mo + GST (₹9,990/yr) | £35/mo (£300/yr) | 2,500 / mo | Unlimited | 5 seats | Ticket Studio custom pass branding, Model Context Protocol (MCP), priority support. |
+| **Business** | ₹2,499/mo + GST (₹24,990/yr) | £79/mo (£699/yr) | 10,000 / mo | Unlimited | 15 seats | Corporate organizations, workspaces, RBAC, API & webhooks, custom domain. |
 
 ### Single-Event Passes (Pay-As-You-Go)
 For organizers hosting one-off conferences, campus fests, or symposiums without recurring monthly subscriptions:
@@ -125,7 +124,7 @@ For organizers hosting one-off conferences, campus fests, or symposiums without 
 
 ### Subscription & Billing Terms
 - **0% Platform Ticketing Fee**: 100% of ticket sales go to the organizer; no per-ticket commission cuts.
-- **Introductory Terms**: ₹29/month introductory rate applies for the first 2 consecutive billing cycles via Razorpay Autopay. Cancel anytime in 1 click from Billing settings.
+- **Cancel Anytime**: Cancel renewal anytime in 1 click from Billing settings with zero lock-in.
 - **Payment Processing**: Integrated Razorpay (UPI, Net Banking, Cards in India with automated 18% GST invoices) and Stripe (UK and international card payments).
 
 ---
@@ -194,7 +193,7 @@ The URPASS MCP Server conforms to the Model Context Protocol standard v1.0.0. It
 **A:** URPASS (https://urpass.space) is an international event registration, digital pass issuance, and QR check-in platform engineered by Yesp Corporation. Built with 0% ticket commissions, it allows organizers across India and globally to create custom digital tickets, accept payments via UPI or cards, and scan attendee passes in under 0.3 seconds using standard smartphone browsers without requiring app downloads.
 
 ### Q: Is URPASS free to use?
-**A:** URPASS offers an introductory offer of ₹29/month for the first 2 months across Starter, Pro, and Business plans with full access to sub-second QR scanning, digital pass creation, and registration forms. Organizers can also choose pay-as-you-go single-event passes starting at ₹299 (UK: £5) with zero recurring commitment.
+**A:** URPASS offers transparent subscriptions: Starter (₹499/mo), Pro (₹999/mo), and Business (₹2,499/mo) with full access to sub-second QR scanning, digital pass creation, and registration forms. Organizers can also choose pay-as-you-go single-event passes starting at ₹299 (UK: £5) with zero recurring commitment.
 
 ### Q: Does URPASS charge a commission on ticket sales?
 **A:** No. URPASS operates on 0% per-ticket platform commission fees. Organizers keep 100% of their ticket revenue and pay only a flat, predictable software subscription or pay-as-you-go single-event pass.

@@ -55,7 +55,7 @@ export default function CollegeEventRegistrationSoftwarePage() {
             "Campus Security: Cryptographic QR passes prevent gate-crashing and fake screenshot entry",
             "Student ID Verification: Collect roll numbers, college names, and ID card uploads automatically",
             "Volunteer Friendly: Student volunteers scan passes using any smartphone browser (<0.28s)",
-            "Transparent Flat Pricing: ₹29/mo intro offer with 0% ticket commission",
+            "Transparent Flat Pricing: Plans from ₹499/mo with 0% ticket commission",
           ],
         },
         productProof: {
@@ -125,7 +125,7 @@ export default function CollegeEventRegistrationSoftwarePage() {
         faqs: [
           {
             q: "Can college clubs use URPASS for free?",
-            a: "Yes! URPASS provides a introductory ₹29/month offer with no credit card required, allowing student clubs to host up to 50 attendees per event with digital QR passes and unlimited scanning.",
+            a: "Yes! URPASS provides plans starting from ₹499/month with no credit card required, allowing student clubs to host up to 50 attendees per event with digital QR passes and unlimited scanning.",
           },
           {
             q: "How does URPASS prevent non-registered students from entering?",

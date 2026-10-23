@@ -49,7 +49,7 @@ export default function CampusEventsPage() {
           { q: "Can I use URPASS across multiple departments in the same college?", a: "Yes. Multiple organisers can have separate accounts for their department events, or a single account can manage events for the whole campus." },
           { q: "Can I collect student ID or roll number at registration?", a: "Yes. Add a custom field for student ID, roll number, department, or year in your registration form." },
           { q: "Does URPASS help with maintaining official attendance records?", a: "Yes. Every check-in is timestamped and stored. You can export the full attendance log to CSV for official records." },
-          { q: "Is URPASS free for campus events?", a: "Campus event teams can get started with an introductory offer of ₹29/month for the first 2 months. Regular plans start at ₹499/month for Starter and ₹999/month for Pro with zero platform ticket commissions." },
+          { q: "Is URPASS free for campus events?", a: "Campus event teams can get started with an transparent plans starting from ₹499/month. Regular plans start at ₹499/month for Starter and ₹999/month for Pro with zero platform ticket commissions." },
           { q: "Can multiple clubs or committees use URPASS?", a: "Yes. Each club or committee can create their own URPASS account, or multiple team members can share one account on the Pro plan." },
           { q: "Can I run campus events for both students and external guests?", a: "Yes. The registration form is public. You can differentiate internal students from external guests using custom form fields." },
         ],

@@ -79,7 +79,7 @@ export default function Page() {
           bullets: [
             "Native Model Context Protocol (MCP) server with 10 production tools",
             "Zero per-ticket percentage cuts keeping your platform costs predictable",
-            "Transparent pricing with ₹29/mo introductory offer",
+            "Transparent pricing starting from ₹499/mo",
             "Complete unencumbered ownership of your attendee relationships and data",
           ],
         },

@@ -110,7 +110,7 @@ export default function HowToCreateQrTicketsForAnEventPage() {
           description:
             "Host your student meetups, workshops, and community events with professional digital QR ticketing without paying a rupee.",
           bullets: [
-            "Plans start with ₹29/mo introductory offer",
+            "Plans start from ₹499/mo",
             "Personalized digital passes with Apple/Google Wallet support",
             "In-browser smartphone camera scanner (<0.28s)",
             "Instant duplicate ticket warning across all entrance gates",
@@ -126,7 +126,7 @@ export default function HowToCreateQrTicketsForAnEventPage() {
         faqs: [
           {
             q: "Can I generate QR tickets for free?",
-            a: "Yes! URPASS provides transparent flat pricing starting with a ₹29/mo intro offer for 2 months, including full digital QR pass generation and unlimited gate scanning.",
+            a: "Yes! URPASS provides transparent flat pricing starting from ₹499/mo, including full digital QR pass generation and unlimited gate scanning.",
           },
           {
             q: "Do I need to design the QR code manually?",

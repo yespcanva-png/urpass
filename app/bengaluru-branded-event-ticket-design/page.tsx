@@ -243,7 +243,7 @@ export default function BengaluruBrandedEventTicketDesignPage() {
         },
         {
                 "q": "What pricing applies to custom branded ticket design?",
-                "a": "Custom pass design is included in UrPass plans starting at an introductory ₹29/month for your first 2 months (then ₹999/month), with 0% platform ticket fees."
+                "a": "Custom pass design is included in UrPass plans starting from ₹499/month, with 0% platform ticket fees."
         }
 ],
       }}

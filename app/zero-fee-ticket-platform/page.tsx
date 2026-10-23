@@ -54,7 +54,7 @@ export default function Page() {
             { col1: "Per-Ticket Surcharge", col2: "$0 / ₹0 per ticket", col3: "$0.99 to $1.79 added per ticket" },
             { col1: "Net Revenue Retained by Organizer", col2: "100% (minus standard gateway fee)", col3: "90% to 94% of gross revenue" },
             { col1: "Payout Timeline", col2: "Direct T+2 business days to your bank", col3: "Withheld until 5–14 days post-event" },
-            { col1: "Free Community Events", col2: "Plans from ₹29/mo (intro offer)", col3: "Restricted attendee caps or paid tier" },
+            { col1: "Free Community Events", col2: "Plans from ₹499/mo (intro offer)", col3: "Restricted attendee caps or paid tier" },
           ],
         },
         features: [
@@ -79,14 +79,14 @@ export default function Page() {
           bullets: [
             "0% commission across all ticket tiers and pricing levels",
             "Transparent flat pricing with 0% ticket fees",
-            "Introductory ₹29/month offer on all paid plans with 0% ticket commission",
+            "Introductory ₹499/month offer on all paid plans with 0% ticket commission",
             "Complete ownership and exportability of your attendee contact data",
           ],
         },
         faqs: [
           { q: "Are there any hidden fees or setup charges?", a: "No. URPASS charges zero setup fees, zero per-ticket commissions, and zero attendee convenience fees. You only pay standard gateway processing fees directly to Razorpay or Stripe." },
           { q: "How quickly do ticket funds reach my bank account?", a: "Because you connect your own payment gateway (Razorpay or Stripe), payouts settle on standard T+2 business day cycles directly into your bank without being held by URPASS." },
-          { q: "How does URPASS pricing work?", a: "URPASS offers an introductory offer of ₹29/month for your first 2 months across Starter, Pro, and Business plans with 0% platform ticket fees." },
+          { q: "How does URPASS pricing work?", a: "URPASS offers plans starting from ₹499/month across Starter, Pro, and Business tiers with 0% platform ticket fees." },
           { q: "Does URPASS charge per-ticket fees?", a: "No. URPASS charges 0% per-ticket platform fees. Organizers keep 100% of their ticket price." },
         ],
         relatedLinks: [

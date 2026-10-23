@@ -120,7 +120,7 @@ export default function Page() {
           { q: "Can multiple team members manage registrations simultaneously?", a: "Yes. URPASS supports role-based team management, allowing co-organizers, volunteers, and gate staff to coordinate approvals and gate check-in simultaneously with instant cloud synchronization." },
         ],
         ctaTitle: "Streamline your next event with URPASS",
-        ctaDescription: "Plans from ₹29/mo · Zero ticket commission · Up and running in 5 minutes",
+        ctaDescription: "Plans from ₹499/mo · Zero ticket commission · Up and running in 5 minutes",
       }}
     />
   );

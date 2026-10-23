@@ -73,7 +73,7 @@ export default function Page() {
           { q: "Is URPASS suitable for primary and high school events?", a: "Yes. The simple interface requires no accounts or app installations, making it accessible for parents of all tech backgrounds." },
         ],
         ctaTitle: "Elevate your event entry with URPASS",
-        ctaDescription: "Plans from ₹29/mo · Zero hardware setup · Fast sub-second scanning",
+        ctaDescription: "Plans from ₹499/mo · Zero hardware setup · Fast sub-second scanning",
       }}
     />
   );

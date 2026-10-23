@@ -154,11 +154,11 @@ export default function Page() {
           },
           {
                     "q": "Is there a free version of UrPass available?",
-                    "a": "Yes. UrPass provides a introductory ₹29/month offer with no credit card required, ideal for free events, student clubs, and community meetups."
+                    "a": "Yes. UrPass provides plans starting from ₹499/month with no credit card required, ideal for free events, student clubs, and community meetups."
           }
 ],
         ctaTitle: "Event Registration and QR Check-In on One Unified Platform",
-        ctaDescription: "Launch your event registration in minutes. Plans starting with a ₹29/month introductory offer.",
+        ctaDescription: "Launch your event registration in minutes. Plans starting from ₹499/month with 0% ticket commission.",
       }}
     />
   );

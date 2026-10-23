@@ -73,7 +73,7 @@ export default function GuidePage() {
           { q: "Can we display sponsor logos on attendee digital passes?", a: "Yes. The custom pass designer allows you to upload primary organization and sponsor logos." },
         ],
         ctaTitle: "Streamline your event check-in with URPASS",
-        ctaDescription: "Plans from ₹29/mo · Zero app downloads · Fast sub-second scanning",
+        ctaDescription: "Plans from ₹499/mo · Zero app downloads · Fast sub-second scanning",
       }}
     />
   );

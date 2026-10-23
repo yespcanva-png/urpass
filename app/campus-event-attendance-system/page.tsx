@@ -158,7 +158,7 @@ export default function Page() {
           }
 ],
         ctaTitle: "Campus Event Attendance System & Real-Time QR Verification",
-        ctaDescription: "Launch your event registration in minutes. Plans starting with a ₹29/month introductory offer.",
+        ctaDescription: "Launch your event registration in minutes. Plans starting from ₹499/month with 0% ticket commission.",
       }}
     />
   );

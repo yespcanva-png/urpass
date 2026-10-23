@@ -285,7 +285,7 @@ export default function CheckoutModal({
           amount: mandateData.amount,
           currency: mandateData.currency || "INR",
           name: "URPASS",
-          description: `${planName} AutoPay — ₹34.22 first payment, then ₹${(mandateData.maxAmountPaise / 100).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/month`,
+          description: `${planName} AutoPay — ₹${(mandateData.maxAmountPaise / 100).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/month`,
           prefill: { name: userName, email: userEmail, contact: cleanPhone },
           theme: { color: "#6D28D9" },
           modal: { ondismiss: () => setPayLoading(false) },
@@ -697,39 +697,13 @@ export default function CheckoutModal({
           ) : isAutopaySubscription ? (
             <div className="rounded-lg border border-neutral-200 bg-neutral-50/70 p-3.5 flex flex-col gap-2.5 text-xs">
               <div className="flex items-center justify-between">
-                <span className="font-semibold text-neutral-900">UrPass AutoPay Billing Schedule</span>
+                <span className="font-semibold text-neutral-900">UrPass AutoPay Recurring Billing</span>
                 <span className="rounded bg-neutral-900 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
                   Incl. 18% GST
                 </span>
               </div>
-              <div className="rounded-md border border-neutral-200 bg-white overflow-hidden shadow-xs">
-                <table className="w-full text-left text-xs">
-                  <thead className="border-b border-neutral-200 bg-neutral-50 text-[10px] uppercase font-semibold text-neutral-500">
-                    <tr>
-                      <th className="px-3 py-2">Billing Cycle</th>
-                      <th className="px-3 py-2 text-right">Amount (incl. 18% GST)</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-neutral-100 text-neutral-700">
-                    <tr>
-                      <td className="px-3 py-2 font-medium">Today (Month 1)</td>
-                      <td className="px-3 py-2 text-right font-semibold text-neutral-950">₹34.22</td>
-                    </tr>
-                    <tr>
-                      <td className="px-3 py-2 font-medium">Month 2</td>
-                      <td className="px-3 py-2 text-right font-semibold text-neutral-950">₹34.22</td>
-                    </tr>
-                    <tr className="bg-neutral-50/50">
-                      <td className="px-3 py-2 font-medium">Month 3 onward</td>
-                      <td className="px-3 py-2 text-right font-semibold text-neutral-950">
-                        ₹{month3OnwardTotal.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/month
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
               <p className="text-[11px] leading-relaxed text-neutral-600">
-                AutoPay authorization is required. Your first ₹34.22 payment will be collected upon activation. You can cancel future renewals anytime.
+                Monthly recurring AutoPay authorization. Renews at ₹{regularRenewalTotal.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/month. Cancel renewal anytime from billing settings.
               </p>
             </div>
           ) : isIntroOffer && isUk ? (
@@ -758,7 +732,7 @@ export default function CheckoutModal({
             ) : (
               <>
                 {isAutopaySubscription
-                  ? `Authorize AutoPay · ₹34.22 today`
+                  ? `Authorize AutoPay · ₹${regularRenewalTotal.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} today`
                   : `Pay ${sym}${fmt(totalToday)}`}
                 <ChevronRight className="w-4 h-4" />
               </>

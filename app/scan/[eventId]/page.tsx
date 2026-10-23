@@ -2157,6 +2157,8 @@ export default function ScanEventPage() {
                     isUndoing={undoingCheckIn}
                     badgeText={result.badgeText}
                     message={result.message}
+                    scanCount={result.scanCount}
+                    scanHistory={result.scanHistory}
                   />
                 </div>
               )}
@@ -2784,31 +2786,59 @@ function ResultCard({
           )}
           <span>•</span>
           <span>
-            Scans: <strong className="text-emerald-400 tabular-nums">{scanCount || successfulScans}</strong>
+            Checked In:{" "}
+            <strong className={`${ok ? "text-emerald-400" : "text-amber-400"} tabular-nums font-bold`}>
+              {scanCount ?? 1} {Number(scanCount) === 1 ? "time" : "times"}
+            </strong>
           </span>
         </div>
 
-        {/* Multi-scan timestamp tracking timeline */}
-        {scanCount && scanCount > 1 && (
-          <div className="w-full mt-2 p-2.5 rounded-xl border border-indigo-500/30 bg-indigo-950/40 text-left space-y-1.5">
+        {/* Check-in timestamp tracking timeline & history */}
+        {((scanHistory && scanHistory.length > 0) || (scanCount && scanCount > 1)) && (
+          <div
+            className={`w-full mt-2 p-2.5 rounded-xl border text-left space-y-1.5 ${
+              ok
+                ? "border-emerald-500/30 bg-emerald-950/30"
+                : "border-amber-500/30 bg-amber-950/40"
+            }`}
+          >
             <div className="flex items-center justify-between text-xs">
-              <span className="font-bold text-indigo-300 flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse" />
-                Multi-Scan Verified
+              <span
+                className={`font-bold flex items-center gap-1.5 ${
+                  ok ? "text-emerald-300" : "text-amber-300"
+                }`}
+              >
+                <span
+                  className={`w-2 h-2 rounded-full ${
+                    ok ? "bg-emerald-400 animate-pulse" : "bg-amber-400"
+                  }`}
+                />
+                {ok ? "Check-in Log" : "Previous Check-in Log"}
               </span>
-              <span className="font-black text-indigo-200 bg-indigo-500/20 px-2 py-0.5 rounded-md border border-indigo-400/30 font-mono">
-                Scan #{scanCount}
+              <span
+                className={`font-black px-2 py-0.5 rounded-md border font-mono text-[11px] ${
+                  ok
+                    ? "text-emerald-200 bg-emerald-500/20 border-emerald-400/30"
+                    : "text-amber-200 bg-amber-500/20 border-amber-400/30"
+                }`}
+              >
+                Total: {scanCount ?? scanHistory?.length ?? 1} {Number(scanCount ?? scanHistory?.length ?? 1) === 1 ? "Scan" : "Scans"}
               </span>
             </div>
-            {scanHistory && scanHistory.length > 0 && (
-              <div className="space-y-1 max-h-24 overflow-y-auto pr-1 text-[11px] text-zinc-300 divide-y divide-white/5">
+            {scanHistory && scanHistory.length > 0 ? (
+              <div className="space-y-1 max-h-28 overflow-y-auto pr-1 text-[11px] text-zinc-300 divide-y divide-white/5">
                 {scanHistory.map((sh, idx) => (
                   <div key={idx} className="flex items-center justify-between pt-1">
-                    <span className="text-zinc-400">
-                      Scan #{sh.scan_number || idx + 1}{sh.gate_name ? ` · ${sh.gate_name}` : ""}
+                    <span className="text-zinc-300 flex items-center gap-1">
+                      <span className="font-semibold text-zinc-200">
+                        Scan #{sh.scan_number || idx + 1}
+                      </span>
+                      {sh.gate_name && (
+                        <span className="text-zinc-400">· {sh.gate_name}</span>
+                      )}
                     </span>
-                    <span className="font-mono text-zinc-300">
-                      {new Date(sh.scanned_at).toLocaleTimeString("en-IN", {
+                    <span className="font-mono text-zinc-300 text-[10px]">
+                      {new Date(sh.scanned_at).toLocaleString("en-IN", {
                         hour: "2-digit",
                         minute: "2-digit",
                         second: "2-digit",
@@ -2818,7 +2848,19 @@ function ResultCard({
                   </div>
                 ))}
               </div>
-            )}
+            ) : checkedInAt ? (
+              <div className="flex items-center justify-between text-[11px] pt-1 text-zinc-300">
+                <span className="text-zinc-400">Scan #1 {gateName ? `· ${gateName}` : ""}</span>
+                <span className="font-mono text-zinc-300">
+                  {new Date(checkedInAt).toLocaleTimeString("en-IN", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    second: "2-digit",
+                    hour12: true,
+                  })}
+                </span>
+              </div>
+            ) : null}
           </div>
         )}
 

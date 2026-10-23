@@ -119,7 +119,7 @@ export default function Page() {
           { q: "What happens if my spreadsheet contains duplicate emails?", a: "URPASS automatically identifies duplicate entries and alerts you before committing the import, giving you the choice to overwrite, update, or skip duplicate records." },
         ],
         ctaTitle: "Import your attendee list today",
-        ctaDescription: "Set up in 5 minutes · ₹29 introductory offer · 0% ticket commission",
+        ctaDescription: "Set up in 5 minutes · Plans from ₹499/mo · 0% ticket commission",
       }}
     />
   );

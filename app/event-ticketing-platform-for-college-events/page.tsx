@@ -188,8 +188,8 @@ export default function CollegeEventTicketingPage() {
             {
               title: "Free Plan for Student Clubs",
               description:
-                "IEEE, ACM, Rotaract, and student cultural clubs can get started with our ₹29/month introductory offer.",
-              badge: "₹29 Intro Offer",
+                "IEEE, ACM, Rotaract, and student cultural clubs can get started with our plans starting from ₹499/month.",
+              badge: "Plans from ₹499/mo",
             },
           ],
         },

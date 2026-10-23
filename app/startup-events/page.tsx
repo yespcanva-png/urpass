@@ -73,7 +73,7 @@ export default function Page() {
           { q: "Can we collect post-event feedback from investors and founders?", a: "Yes. URPASS includes built-in post-event survey tools that invite checked-in guests to leave ratings and reviews." },
         ],
         ctaTitle: "Elevate your event entry with URPASS",
-        ctaDescription: "Plans from ₹29/mo · Zero hardware setup · Fast sub-second scanning",
+        ctaDescription: "Plans from ₹499/mo · Zero hardware setup · Fast sub-second scanning",
       }}
     />
   );

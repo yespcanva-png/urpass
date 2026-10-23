@@ -36,7 +36,7 @@ export default function EventRegistrationSoftwareIndiaPage() {
         secondaryCtaLabel: "View Pricing",
         secondaryCtaHref: "/pricing",
         ctaTitle: "Modernize Your Event Registration in India",
-        ctaDescription: "Launch branded registration forms, accept UPI payments via Razorpay, and verify attendees at the gate in <0.3s. Introductory offer at ₹29/mo.",
+        ctaDescription: "Launch branded registration forms, accept UPI payments via Razorpay, and verify attendees at the gate in <0.3s. Introductory offer at ₹499/mo.",
         directAnswer: {
         "title": "What is Event Registration Software for India?",
         "summary": "Event registration software for Indian organizers enables event teams to publish custom registration forms, accept direct UPI and card payments via Razorpay, automatically generate digital QR passes, and verify attendees at venue gates in under 0.3 seconds using standard smartphone browsers without requiring dedicated scanner apps.",
@@ -69,7 +69,7 @@ export default function EventRegistrationSoftwareIndiaPage() {
                 {
                         "col1": "Platform Commission",
                         "col2": "5% to 10% taken from every ticket sale",
-                        "col3": "0% commission; flat introductory subscription at ₹29/mo"
+                        "col3": "0% commission; flat introductory subscription at ₹499/mo"
                 },
                 {
                         "col1": "Payment Settlement",
@@ -229,7 +229,7 @@ export default function EventRegistrationSoftwareIndiaPage() {
         },
         {
                 "q": "Does UrPass charge a percentage commission on Indian ticket sales?",
-                "a": "No. UrPass charges 0% platform ticket commission. Organizers keep 100% of their ticket price and pay only standard gateway interchange fees directly to Razorpay. Subscriptions start with an introductory offer of ₹29/month for your first 2 months."
+                "a": "No. UrPass charges 0% platform ticket commission. Organizers keep 100% of their ticket price and pay only standard gateway interchange fees directly to Razorpay. Subscriptions start with an transparent plans starting from ₹499/month."
         },
         {
                 "q": "Can college symposium organizers manage free and paid events simultaneously?",

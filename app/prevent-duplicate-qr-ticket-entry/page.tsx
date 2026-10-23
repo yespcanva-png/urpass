@@ -237,7 +237,7 @@ export default function PreventDuplicateQrTicketEntryPage() {
         },
         {
                 "q": "How much does duplicate entry protection cost?",
-                "a": "Anti-duplicate atomic row locking is included across all UrPass plans at no extra charge. Subscriptions start with an introductory offer of ₹29/month for your first 2 months in India (£15/month in the UK) with 0% platform ticket commissions."
+                "a": "Anti-duplicate atomic row locking is included across all UrPass plans at no extra charge. Subscriptions start with an transparent plans starting from ₹499/month in India (£15/month in the UK) with 0% platform ticket commissions."
         }
 ],
       }}

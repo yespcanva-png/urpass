@@ -54,7 +54,7 @@ export default function WhovaAlternativeQrCheckInPage() {
                 "Whova forces attendees to download an app from Google Play or the App Store to retrieve passes",
                 "UrPass delivers passes directly via WhatsApp, email, and native Apple Wallet with zero downloads",
                 "Whova requires custom pricing quotes and sales negotiations for every event",
-                "UrPass offers instant self-service activation starting with our ₹29 intro offer / £15/mo in UK"
+                "UrPass offers instant self-service activation starting with our plans from ₹499/mo / £15/mo in UK"
         ]
 },
         keyFactsTable: {
@@ -79,7 +79,7 @@ export default function WhovaAlternativeQrCheckInPage() {
                 {
                         "col1": "Pricing Transparency",
                         "col2": "Quote-based sales calls; often £1,500 - £6,000+ per event",
-                        "col3": "Transparent flat monthly plans starting with ₹29 intro offer / £15/mo"
+                        "col3": "Transparent flat monthly plans starting with plans from ₹499/mo / £15/mo"
                 },
                 {
                         "col1": "Platform Commission",

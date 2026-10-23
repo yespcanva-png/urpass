@@ -243,7 +243,7 @@ export default function BengaluruDeveloperMeetupCheckInPage() {
         },
         {
                 "q": "What pricing applies to developer community events?",
-                "a": "UrPass offers a transparent software subscription starting at an introductory ₹29/month for your first 2 months (then ₹999/month), with 0% platform ticket fees on paid tiers."
+                "a": "UrPass offers a transparent software subscription starting from ₹499/month, with 0% platform ticket fees on paid tiers."
         }
 ],
       }}

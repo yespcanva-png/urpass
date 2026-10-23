@@ -4,7 +4,7 @@ import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
   title: "Event Registration & QR Check-In Software Bangalore",
-  description: "URPASS event registration and QR check-in platform for Bangalore. For tech meetups, startup events, corporate conferences, and college events. Plans from ₹29/mo.",
+  description: "URPASS event registration and QR check-in platform for Bangalore. For tech meetups, startup events, corporate conferences, and college events. Plans from ₹499/mo.",
   keywords: [
     "event registration Bangalore",
     "QR check-in Bangalore",
@@ -73,12 +73,12 @@ export default function BangalorePage() {
           { q: "Can Bangalore event organisers use URPASS?", a: "Yes. URPASS is designed for tech event organisers, startups, and colleges across Bangalore for registration, QR passes, and gate check-in." },
           { q: "Can I use URPASS for a Bangalore startup event?", a: "Yes. URPASS is ideal for Bangalore startup pitch events, demo days, and founder meetups — with both free and paid event support." },
           { q: "Does URPASS support large Bangalore conferences?", a: "Yes. The Pro and Business plans support 2,500 to 10,000 registrations/month — suitable for large Bangalore tech conferences." },
-          { q: "How does URPASS pricing work for event organizers?", a: "URPASS offers an introductory offer of ₹29/month for the first 2 months across Starter, Pro, and Business plans with 0% platform ticket fees and instant Razorpay UPI payouts." },
+          { q: "How does URPASS pricing work for event organizers?", a: "URPASS offers plans starting from ₹499/month across Starter, Pro, and Business tiers with 0% platform ticket fees and instant Razorpay UPI payouts." },
           { q: "Which Bangalore payment methods does URPASS support?", a: "Razorpay integration supports UPI, cards, net banking, and wallets — all the payment methods Bangalore attendees prefer." },
           { q: "Can I use URPASS for Bangalore college events?", a: "Yes. URPASS is designed for campus events, department symposiums, hackathons, and student clubs across Bangalore colleges and universities." },
         ],
         ctaTitle: "Start your Bangalore event on URPASS",
-        ctaDescription: "Engineered for Bangalore · Plans from ₹29/mo · Tech events · Razorpay",
+        ctaDescription: "Engineered for Bangalore · Plans from ₹499/mo · Tech events · Razorpay",
       }}
     />
   );

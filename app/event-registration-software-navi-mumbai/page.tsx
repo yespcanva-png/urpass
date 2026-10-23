@@ -84,7 +84,7 @@ export default function LocationPage() {
             "Local INR pricing with automated GST tax invoices",
             "Zero percentage commission deducted from ticket sales",
             "Instant multi-gate duplicate pass lockout",
-            "Plans starting with an introductory ₹29/month offer"
+            "Plans starting from ₹499/month with 0% ticket commission"
           ],
         },
         useCases: [
@@ -98,10 +98,10 @@ export default function LocationPage() {
           { q: "Can Navi Mumbai organizers accept payments via UPI with zero platform cuts?", a: "Yes. With native Razorpay integration, attendees pay via Google Pay, PhonePe, Paytm, cards, or net banking, and funds settle directly into your bank account with zero platform percentage commissions taken by URPASS." },
           { q: "How fast is check-in during peak entry at Navi Mumbai venues?", a: "Check-in takes under 0.3 seconds per attendee. Volunteers simply point their phone browser camera at the pass QR code. Instant audio-visual cues verify validity and block duplicates." },
           { q: "Can volunteers scan passes without installing an app from the App Store or Play Store?", a: "Yes. Volunteers access a secure web scanning link directly on their mobile browser. No downloads, installations, or app store accounts are required." },
-          { q: "How does URPASS pricing work for event organizers?", a: "URPASS offers an introductory offer of ₹29/month for your first 2 months across Starter, Pro, and Business plans with 0% platform ticket commissions and direct UPI settlements." },
+          { q: "How does URPASS pricing work for event organizers?", a: "URPASS offers plans starting from ₹499/month across Starter, Pro, and Business tiers with 0% platform ticket commissions and direct UPI settlements." },
         ],
         ctaTitle: "Power your Navi Mumbai event with URPASS",
-        ctaDescription: "Plans from ₹29/mo · Razorpay UPI settlements · Instant mobile browser scanning",
+        ctaDescription: "Plans from ₹499/mo · Razorpay UPI settlements · Instant mobile browser scanning",
       }}
     />
   );

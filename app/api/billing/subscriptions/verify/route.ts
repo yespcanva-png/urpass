@@ -158,16 +158,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    const paymentAmount = Number(payment?.amount ?? disclosure.introAmountPaise);
+    const regularPlanPaise = planSlug === "starter" ? 49900 : planSlug === "pro" ? 99900 : 249900;
+    const paymentAmount = Number(payment?.amount ?? regularPlanPaise);
     const paymentCurrency = String(payment?.currency || "INR").toUpperCase() as "INR" | "GBP";
-    const baseAmountPaise = paymentAmount ? Math.round(paymentAmount / 1.18) : disclosure.introAmountPaise;
+    const baseAmountPaise = paymentAmount ? Math.round(paymentAmount / 1.18) : regularPlanPaise;
     const discountPaise = notes.expected_discount ? Number(notes.expected_discount) : 0;
 
     await createInvoiceForPayment({
       userId: user.id,
       subscriptionId: updatedSub?.id ?? null,
       paymentId,
-      description: `${plan.name} Plan — Monthly AutoPay Subscription (Introductory Offer Cycle 1)`,
+      description: `${plan.name} Plan — Monthly AutoPay Subscription`,
       baseAmountRupees: baseAmountPaise / 100,
       discountRupees: 0,
       currency: paymentCurrency,

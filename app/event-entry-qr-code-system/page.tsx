@@ -80,7 +80,7 @@ export default function Page() {
             "Atomic PostgreSQL database locks guarantee zero duplicate entries",
             "Eliminates paper checklists, clipboards, and manual ticket hole-punching",
             "Works completely offline if local venue Wi-Fi drops unexpectedly",
-            "Transparent flat pricing with ₹29/mo intro offer",
+            "Transparent flat pricing starting from ₹499/mo",
           ],
         },
         faqs: [

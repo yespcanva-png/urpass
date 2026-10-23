@@ -119,7 +119,7 @@ export default function EventAccessControlPage() {
           { q: "How many scanning devices can we run at the same time?", a: "You can run unlimited scanning devices simultaneously. All scans synchronize instantaneously across the cloud database to prevent multi-gate duplicate entries." },
         ],
         ctaTitle: "Secure your event access today",
-        ctaDescription: "Set up in 5 minutes · ₹29 introductory offer · 0% ticket commission",
+        ctaDescription: "Set up in 5 minutes · Plans from ₹499/mo · 0% ticket commission",
       }}
     />
   );

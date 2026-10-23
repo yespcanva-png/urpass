@@ -46,7 +46,6 @@ import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { createInvoiceForPayment } from "@/lib/invoices";
 import {
   AUTOPAY_AUTH_AMOUNT_PAISE,
-  AUTOPAY_INTRO_CHARGE_PAISE,
   getRazorpayAutopayDisclosure,
 } from "@/lib/billing/razorpay-autopay";
 
@@ -119,7 +118,7 @@ describe("Unified AutoPay Mandate Creation & Verification Flow", () => {
       expect(data.error).toMatch(/mobile number is required/i);
     });
 
-    it("creates an AutoPay recurring order charging ₹34.22 immediately for Starter plan", async () => {
+    it("creates an AutoPay recurring order charging standard monthly for Starter plan", async () => {
       const user = { id: "user_test_starter", email: "starter@example.com" };
       mockedCreateClient.mockResolvedValue({
         auth: { getUser: vi.fn().mockResolvedValue({ data: { user } }) },
@@ -144,7 +143,7 @@ describe("Unified AutoPay Mandate Creation & Verification Flow", () => {
       mockCustomersCreate.mockResolvedValue({ id: "cust_starter_123" });
       mockOrdersCreate.mockResolvedValue({
         id: "order_starter_rzp_456",
-        amount: 3422,
+        amount: 58882,
         currency: "INR",
       });
 
@@ -170,9 +169,9 @@ describe("Unified AutoPay Mandate Creation & Verification Flow", () => {
       const data = await res.json();
 
       expect(data.orderId).toBe("order_starter_rzp_456");
-      expect(data.amount).toBe(AUTOPAY_INTRO_CHARGE_PAISE); // 3422 paise
-      expect(data.todayAmountWithGst).toBe(34.22);
-      expect(data.month2AmountWithGst).toBe(34.22);
+      expect(data.amount).toBe(58882); // 58882 paise
+      expect(data.todayAmountWithGst).toBe(588.82);
+      expect(data.month2AmountWithGst).toBe(588.82);
       expect(data.month3OnwardAmountWithGst).toBe(588.82);
       expect(data.customerId).toBe("cust_starter_123");
 
@@ -187,7 +186,7 @@ describe("Unified AutoPay Mandate Creation & Verification Flow", () => {
       // Verify order creation parameters
       expect(mockOrdersCreate).toHaveBeenCalledWith(
         expect.objectContaining({
-          amount: 3422,
+          amount: 58882,
           currency: "INR",
           customer_id: "cust_starter_123",
           token: expect.objectContaining({
@@ -197,7 +196,7 @@ describe("Unified AutoPay Mandate Creation & Verification Flow", () => {
           notes: expect.objectContaining({
             kind: "urpass_autopay_mandate",
             plan_slug: "starter",
-            intro_charge_paise: "3422",
+            intro_charge_paise: "58882",
             company_name: "Acme Events",
             customer_gstin: "33AAAAA0000A1Z5",
           }),
@@ -205,7 +204,7 @@ describe("Unified AutoPay Mandate Creation & Verification Flow", () => {
       );
     });
 
-    it("creates an AutoPay recurring order charging ₹34.22 with regular ceiling for Pro & Business", async () => {
+    it("creates an AutoPay recurring order charging full monthly with regular ceiling for Pro & Business", async () => {
       const user = { id: "user_test_pro", email: "pro@example.com" };
       mockedCreateClient.mockResolvedValue({
         auth: { getUser: vi.fn().mockResolvedValue({ data: { user } }) },
@@ -228,7 +227,7 @@ describe("Unified AutoPay Mandate Creation & Verification Flow", () => {
       mockCustomersCreate.mockResolvedValue({ id: "cust_pro_123" });
       mockOrdersCreate.mockResolvedValue({
         id: "order_pro_rzp_789",
-        amount: 3422,
+        amount: 117882,
         currency: "INR",
       });
 
@@ -246,16 +245,16 @@ describe("Unified AutoPay Mandate Creation & Verification Flow", () => {
       expect(res.status).toBe(200);
       const data = await res.json();
 
-      expect(data.amount).toBe(3422);
-      expect(data.todayAmountWithGst).toBe(34.22);
-      expect(data.month2AmountWithGst).toBe(34.22);
+      expect(data.amount).toBe(117882);
+      expect(data.todayAmountWithGst).toBe(1178.82);
+      expect(data.month2AmountWithGst).toBe(1178.82);
       expect(data.month3OnwardAmountWithGst).toBe(1178.82);
 
       // Verify token max amount for Pro
       const disclosure = getRazorpayAutopayDisclosure("pro");
       expect(mockOrdersCreate).toHaveBeenCalledWith(
         expect.objectContaining({
-          amount: 3422,
+          amount: 117882,
           token: expect.objectContaining({
             max_amount: disclosure.maxAmountPaise, // 117882
           }),
@@ -391,13 +390,13 @@ describe("Unified AutoPay Mandate Creation & Verification Flow", () => {
         expect.anything()
       );
 
-      // Verify tax invoice created for ₹34.22 (₹29 base + ₹5.22 GST)
+      // Verify tax invoice created for ₹588.82 (₹499 base + ₹89.82 GST)
       expect(mockedCreateInvoice).toHaveBeenCalledWith(
         expect.objectContaining({
           userId: user.id,
           subscriptionId: "sub_db_row_123",
           paymentId,
-          baseAmountRupees: 29,
+          baseAmountRupees: 499,
           currency: "INR",
           customerName: "Summit Events",
           customerAddress: "78 MG Road, Bengaluru",

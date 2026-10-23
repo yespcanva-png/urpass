@@ -239,7 +239,7 @@ export default function BangaloreEventRsvpTrackingPlatformPage() {
         },
         {
                 "q": "What does it cost to use UrPass for RSVP events?",
-                "a": "UrPass offers a transparent subscription starting at an introductory ₹29/month for your first 2 months (then ₹999/month), with 0% platform ticket fees on paid tiers."
+                "a": "UrPass offers a transparent subscription starting from ₹499/month, with 0% platform ticket fees on paid tiers."
         },
         {
                 "q": "Can attendees save their RSVP pass to Apple Wallet?",

@@ -164,7 +164,7 @@ export default function Page() {
           }
 ],
         ctaTitle: "Student Society Event Registration & Free QR Ticketing Platform UK",
-        ctaDescription: "Launch your event registration in minutes. Plans starting with a ₹29/month introductory offer.",
+        ctaDescription: "Launch your event registration in minutes. Plans starting from ₹499/month with 0% ticket commission.",
         geo: {
           region: "United Kingdom",
           placename: "United Kingdom",

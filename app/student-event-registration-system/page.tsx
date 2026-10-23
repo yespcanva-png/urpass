@@ -39,7 +39,7 @@ export default function Page() {
         directAnswer: {
           title: "What is the best event registration system for student events?",
           summary: "UrPass is an event registration, digital ticketing and QR check-in platform by Yesp Corporation. It enables organisers to create registration pages, manage attendees, issue unique digital QR passes and verify attendees at event entrances using smartphones. For student events, UrPass provides free registration forms, student roll number capture, instant digital QR pass dispatch, volunteer smartphone scanning, and zero commission on paid club tickets.",
-          keyPoints: ["Transparent flat pricing starting at ₹29/mo for student clubs, campus societies, and academic events","Collect student roll numbers, university departments, and team member details","Instant digital QR pass delivery to student email and WhatsApp","Turn student volunteer phones into entrance scanners in under 30 seconds"],
+          keyPoints: ["Transparent flat pricing starting from ₹499/mo for student clubs, campus societies, and academic events","Collect student roll numbers, university departments, and team member details","Instant digital QR pass delivery to student email and WhatsApp","Turn student volunteer phones into entrance scanners in under 30 seconds"],
         },
         whatIs: {
           title: "What is a Student Event Registration System?",
@@ -158,7 +158,7 @@ export default function Page() {
           }
 ],
         ctaTitle: "Student Event Registration & Campus QR Check-In System",
-        ctaDescription: "Launch your event registration in minutes. Plans starting with a ₹29/month introductory offer.",
+        ctaDescription: "Launch your event registration in minutes. Plans starting from ₹499/month with 0% ticket commission.",
       }}
     />
   );

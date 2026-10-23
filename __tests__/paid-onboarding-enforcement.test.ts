@@ -192,7 +192,7 @@ describe("URPASS — Paid Onboarding & Entitlement Enforcement (15 Scenarios)", 
   });
 
   // ── Scenario 7: Existing trial expiration → regular pricing, not intro offer ─
-  it("Scenario 7: Expired trial -> subscription_expired & ineligible for ₹29 intro offer", async () => {
+  it("Scenario 7: Expired trial -> subscription_expired & ineligible for intro offer", async () => {
     const expiredTrialUser = {
       id: "usr-expired-trial-7",
       created_at: new Date("2026-09-01T00:00:00.000Z").toISOString(),
@@ -257,7 +257,7 @@ describe("URPASS — Paid Onboarding & Entitlement Enforcement (15 Scenarios)", 
     expect(accessExpired.shouldRedirectToBilling).toBe(true);
   });
 
-  it("Pricing: active legacy Free rows still receive the ₹29 intro checkout amount", async () => {
+  it("Pricing: active legacy Free rows resolve at standard subscription pricing (intro offer retired)", async () => {
     vi.mocked(createAdminClient).mockReturnValue({
       from: vi.fn((table: string) => {
         if (table === "subscriptions") {
@@ -305,8 +305,8 @@ describe("URPASS — Paid Onboarding & Entitlement Enforcement (15 Scenarios)", 
       currency: "INR",
     });
 
-    expect(price.isIntroCycle).toBe(true);
-    expect(price.amountPaise).toBe(2900);
+    expect(price.isIntroCycle).toBe(false);
+    expect(price.amountPaise).toBe(49900);
     expect(price.regularPricePaise).toBe(49900);
   });
 

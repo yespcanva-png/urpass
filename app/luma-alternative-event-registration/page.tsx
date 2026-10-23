@@ -74,7 +74,7 @@ export default function LumaAlternativeEventRegistrationPage() {
                 {
                         "col1": "Platform Ticketing Fee",
                         "col2": "Takes a percentage fee on paid tickets (up to 5% + Stripe fees)",
-                        "col3": "0% ticket commission; flat subscription from ₹29 intro offer / £15/mo"
+                        "col3": "0% ticket commission; flat subscription from plans from ₹499/mo / £15/mo"
                 },
                 {
                         "col1": "Multi-Gate Fraud Protection",
@@ -225,7 +225,7 @@ export default function LumaAlternativeEventRegistrationPage() {
         },
         {
                 "q": "Does UrPass charge a percentage commission like Luma does on paid tickets?",
-                "a": "No. UrPass charges 0% platform ticket commission. You pay only our transparent monthly subscription (starting from ₹29/mo intro offer / £15/mo in UK) and standard payment processing fees directly to Razorpay or Stripe."
+                "a": "No. UrPass charges 0% platform ticket commission. You pay only our transparent monthly subscription (starting from plans starting from ₹499/mo / £15/mo in UK) and standard payment processing fees directly to Razorpay or Stripe."
         },
         {
                 "q": "Can attendees still add passes to Apple Wallet with UrPass?",

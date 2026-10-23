@@ -118,10 +118,10 @@ export default function Page() {
           { q: "What happens if an attendee presents a screenshot of a used pass?", a: "The moment a pass is scanned, its status permanently changes to 'Checked In'. Any subsequent scan attempt triggers an immediate red 'Already Checked In' warning with the original check-in timestamp." },
           { q: "Can we have staff scanning at multiple doors simultaneously?", a: "Yes. You can deploy unlimited scanning devices across multiple entrance gates. All check-ins synchronize in real time across the cloud database." },
           { q: "What happens if an attendee's phone battery is dead?", a: "Staff can use the built-in manual lookup feature inside the scanner interface to search by attendee name, email address, or registration ID and check them in manually." },
-          { q: "Is there a limit on how many attendees we can check in?", a: "The introductory ₹29/month offer includes 100 registrations per month. Paid plans scale from 500 up to unlimited registrations and check-ins." },
+          { q: "Is there a limit on how many attendees we can check in?", a: "The plans starting from ₹499/month includes 100 registrations per month. Paid plans scale from 500 up to unlimited registrations and check-ins." },
         ],
         ctaTitle: "Experience sub-second check-in today",
-        ctaDescription: "Set up in 5 minutes · ₹29 introductory offer · 0% ticket commission",
+        ctaDescription: "Set up in 5 minutes · Plans from ₹499/mo · 0% ticket commission",
       }}
     />
   );

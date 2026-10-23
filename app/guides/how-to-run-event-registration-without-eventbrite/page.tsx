@@ -38,7 +38,7 @@ export default function GuidePage() {
           { icon: QrCode, title: "Browser-Based Door Scanner", desc: "No need to download heavy organizer apps. Staff scan passes directly inside Safari or Chrome on any phone." },
           { icon: ScanLine, title: "Sub-Second Pass Verification", desc: "Verify attendee QR passes in under 0.3 seconds with instant duplicate entry lockout across all venue gates." },
           { icon: Users, title: "Direct Attendee Ownership", desc: "Your attendee database belongs strictly to your organization with zero competitor ads or cross-marketing." },
-          { icon: BarChart3, title: "Transparent Flat Pricing", desc: "Choose flat monthly plans starting with an introductory ₹29/month offer for your first 2 months." },
+          { icon: BarChart3, title: "Transparent Flat Pricing", desc: "Choose flat monthly plans starting with plans starting from ₹499/month for your first 2 months." },
         ],
         steps: [
           { n: "01", title: "Create Free Account", desc: "Sign up on URPASS with no credit card required." },
@@ -55,7 +55,7 @@ export default function GuidePage() {
             "Zero per-ticket percentage cuts on ticket revenue",
             "Native UPI payments via Razorpay (GPay, PhonePe, Paytm)",
             "Instant door check-in with any mobile phone browser",
-            "Introductory ₹29/month offer available on all paid plans",
+            "Transparent pricing starting from ₹499/month on paid plans",
           ],
         },
         useCases: [
@@ -70,10 +70,10 @@ export default function GuidePage() {
           { q: "How much money can I save compared to Eventbrite?", a: "Eventbrite charges 3.7% + fees per ticket. On ₹2,00,000 of ticket sales, you save ₹10,000+ by using URPASS's flat monthly subscription." },
           { q: "Does URPASS support UPI payments in India?", a: "Yes. Native Razorpay integration supports all major UPI apps (Google Pay, PhonePe, Paytm), net banking, and cards." },
           { q: "How do volunteers scan tickets at the door?", a: "Volunteers open a secure scanner URL in their phone's web browser, grant camera access, and scan passes in under 0.3 seconds." },
-          { q: "How does URPASS pricing work?", a: "URPASS offers transparent monthly plans starting at ₹29/month for your first 2 months in India, and £15/month in the UK, with 0% platform ticket commissions." },
+          { q: "How does URPASS pricing work?", a: "URPASS offers transparent monthly plans starting at ₹499/month in India, and £15/month in the UK, with 0% platform ticket commissions." },
         ],
         ctaTitle: "Streamline your event check-in with URPASS",
-        ctaDescription: "Plans from ₹29/mo · Zero app downloads · Fast sub-second scanning",
+        ctaDescription: "Plans from ₹499/mo · Zero app downloads · Fast sub-second scanning",
       }}
     />
   );

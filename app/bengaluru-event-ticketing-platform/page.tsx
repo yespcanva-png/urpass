@@ -50,7 +50,7 @@ export default function BengaluruEventTicketingPlatformPage() {
                 "0% platform commission on ticket sales with direct Razorpay UPI settlement to your bank",
                 "Instant digital QR pass generation delivered via WhatsApp, Apple Wallet, and email",
                 "Sub-0.3s camera check-in on volunteer smartphones with zero expensive equipment rentals",
-                "Predictable flat subscription pricing starting from ₹29/mo introductory offer"
+                "Predictable flat subscription pricing starting from plans starting from ₹499/mo"
         ]
 },
         whatIs: {
@@ -106,7 +106,7 @@ export default function BengaluruEventTicketingPlatformPage() {
                         "Accept all Indian UPI apps (Google Pay, PhonePe, Paytm, Cred, BHIM) seamlessly",
                         "Credit cards, debit cards, corporate cards, and net banking supported natively",
                         "Automated GST invoice generation with custom business tax registration details",
-                        "Flat introductory subscription starting from ₹29/month for your first 2 months"
+                        "Flat subscription starting from ₹499/month"
                 ],
                 "takeaway": "Direct payment gateway integration protects your margins and provides immediate cash flow."
         },
@@ -243,7 +243,7 @@ export default function BengaluruEventTicketingPlatformPage() {
         },
         {
                 "q": "How much does UrPass cost for Bengaluru organizers?",
-                "a": "UrPass offers an introductory plan starting at ₹29/month for your first 2 months with 0% platform ticket commission. Single event pay-as-you-go passes are also available starting from ₹299."
+                "a": "UrPass offers an introductory plan starting from ₹499/month with 0% platform ticket commission. Single event pay-as-you-go passes are also available starting from ₹299."
         }
 ],
       }}

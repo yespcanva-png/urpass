@@ -106,7 +106,7 @@ export default function ErodePage() {
         faqs: [
           {
             q: "Can college clubs in Erode use URPASS for free events?",
-            a: "Yes. URPASS provides an introductory offer of ₹29/month for your first 2 months across all plans with zero platform ticket commissions.",
+            a: "Yes. URPASS provides plans starting from ₹499/month across all tiers with zero platform ticket commissions.",
           },
           {
             q: "How does URPASS handle poor connectivity in campus auditoriums?",

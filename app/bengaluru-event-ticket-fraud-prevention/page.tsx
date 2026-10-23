@@ -243,7 +243,7 @@ export default function BengaluruEventTicketFraudPreventionPage() {
         },
         {
                 "q": "What pricing applies to fraud prevention on UrPass?",
-                "a": "Full ticket fraud prevention and atomic locking are included on all UrPass plans, starting at an introductory ₹29/month for your first 2 months (then ₹999/month), with 0% platform ticket fees."
+                "a": "Full ticket fraud prevention and atomic locking are included on all UrPass plans, starting from ₹499/month, with 0% platform ticket fees."
         }
 ],
       }}

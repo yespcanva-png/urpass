@@ -71,7 +71,7 @@ export default function HyderabadPage() {
         faqs: [
           { q: "Can Hyderabad event organisers use URPASS?", a: "Yes. URPASS is designed for event organisers in Hyderabad for tech meetups, college symposiums, and corporate conferences." },
           { q: "Can I use URPASS for a HITEC City tech event?", a: "Yes. URPASS is ideal for Hyderabad's tech event ecosystem in HITEC City, Gachibowli, and Madhapur." },
-          { q: "How does URPASS pricing work for event organizers?", a: "URPASS offers an introductory offer of ₹29/month for the first 2 months across Starter, Pro, and Business plans with 0% platform ticket fees and instant Razorpay UPI payouts." },
+          { q: "How does URPASS pricing work for event organizers?", a: "URPASS offers plans starting from ₹499/month across Starter, Pro, and Business tiers with 0% platform ticket fees and instant Razorpay UPI payouts." },
           { q: "Does URPASS support Telangana college events?", a: "Yes. URPASS supports college symposiums, workshops, and fests across Telangana and Andhra Pradesh with instant QR passes and gate scanning." },
           { q: "What payment methods work for Hyderabad events?", a: "Razorpay supports UPI, PhonePe, Google Pay, cards, and net banking — all popular in Hyderabad." },
           { q: "Can I run a large Hyderabad conference on URPASS?", a: "Yes. Pro and Business plans support 2,500 to 10,000 registrations/month with multi-gate check-in scanning." },

@@ -37,7 +37,7 @@ export default function ComparisonPage() {
           { icon: ScanLine, title: "Browser-Based Door Scanner", desc: "No need for volunteers to download heavy organizer apps. Staff scan passes directly inside Safari or Chrome on any phone." },
           { icon: QrCode, title: "Sub-Second Pass Verification", desc: "High-contrast QR recognition verifies tickets in under 0.3 seconds with instant duplicate entry lockout across all doors." },
           { icon: ShieldCheck, title: "Direct Attendee Ownership", desc: "Your attendee database belongs solely to your organization with zero competitor ads or cross-marketing." },
-          { icon: BarChart3, title: "Transparent Flat Pricing", desc: "Flat monthly plans starting at an introductory ₹29/month for your first 2 months, with 0% ticket commission." },
+          { icon: BarChart3, title: "Transparent Flat Pricing", desc: "Flat monthly plans starting from ₹499/month, with 0% ticket commission." },
         ],
         steps: [
           { n: "01", title: "Create Free Account", desc: "Sign up on URPASS in seconds with no credit card required." },
@@ -54,7 +54,7 @@ export default function ComparisonPage() {
             "Zero per-ticket percentage cuts on ticket revenue",
             "Direct settlements to your Indian bank account via Razorpay",
             "Mobile browser scanning with zero hardware rentals",
-            "Introductory ₹29/month offer available on all paid plans",
+            "Transparent pricing starting from ₹499/month on paid plans",
           ],
         },
         useCases: [
@@ -68,11 +68,11 @@ export default function ComparisonPage() {
         faqs: [
           { q: "How much money can Indian organizers save compared to Eventbrite?", a: "On ₹2,00,000 of ticket sales, Eventbrite fees can exceed ₹10,000+. URPASS charges zero per-ticket commission, saving you thousands on flat subscription plans." },
           { q: "Does URPASS support PhonePe, Google Pay, and Paytm?", a: "Yes. Native Razorpay integration supports all major UPI apps, debit/credit cards, and net banking." },
-          { q: "How does URPASS pricing work?", a: "URPASS offers an introductory offer of ₹29/month for your first 2 months across Starter, Pro, and Business plans with 0% platform ticket fees." },
+          { q: "How does URPASS pricing work?", a: "URPASS offers plans starting from ₹499/month across Starter, Pro, and Business tiers with 0% platform ticket fees." },
           { q: "Can volunteers scan tickets without creating an account?", a: "Yes. Organizers share a PIN-protected scanner link so volunteers can scan using their phone browser immediately." },
         ],
         ctaTitle: "Experience the URPASS difference today",
-        ctaDescription: "Plans start at ₹29/mo · Zero ticket commission · Sub-second door check-in",
+        ctaDescription: "Plans start at ₹499/mo · Zero ticket commission · Sub-second door check-in",
       }}
     />
   );

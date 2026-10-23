@@ -54,7 +54,7 @@ export default function QrCodeCheckInSystemPage() {
             "Scan Speed: Validates digital QR passes in under 0.28 seconds",
             "Zero Hardware Rental: Runs on iOS and Android phones via standard web browsers",
             "Multi-Gate Synchronization: Multiple entrance doors stay synchronized via real-time cloud updates",
-            "Transparent Flat Pricing: ₹29/mo intro offer with 0% ticket commission",
+            "Transparent Flat Pricing: Plans from ₹499/mo with 0% ticket commission",
           ],
         },
         productProof: {
@@ -108,7 +108,7 @@ export default function QrCodeCheckInSystemPage() {
           description:
             "Manual check-in rosters create massive wait lines and security risks. URPASS delivers professional, enterprise-grade gate access control using the smartphones your team already owns.",
           bullets: [
-            "Plans start with ₹29/mo introductory offer",
+            "Plans start from ₹499/mo",
             "In-browser scanner runs on any mobile device (<0.28s)",
             "Audible confirmation chime and haptic vibration feedback",
             "Instant CSV attendance export with exact entry timestamps",
@@ -136,7 +136,7 @@ export default function QrCodeCheckInSystemPage() {
           },
           {
             q: "Is there a free tier for QR check-in on URPASS?",
-            a: "Yes! URPASS provides transparent flat pricing starting with a ₹29/mo intro offer for 2 months, including full QR pass generation and unlimited gate scanning.",
+            a: "Yes! URPASS provides transparent flat pricing starting with plans starting from ₹499/mo for 2 months, including full QR pass generation and unlimited gate scanning.",
           },
         ],
         ctaTitle: "Speed up your event entrance with URPASS",

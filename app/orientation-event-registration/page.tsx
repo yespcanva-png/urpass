@@ -127,7 +127,7 @@ export default function Page() {
           }
 ],
         ctaTitle: "Freshers & Orientation Event Registration Built for Campus Welcome",
-        ctaDescription: "Launch your event registration in minutes. Plans starting with a ₹29/month introductory offer.",
+        ctaDescription: "Launch your event registration in minutes. Plans starting from ₹499/month with 0% ticket commission.",
       }}
     />
   );

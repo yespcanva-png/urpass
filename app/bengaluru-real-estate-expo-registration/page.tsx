@@ -243,7 +243,7 @@ export default function BengaluruRealEstateExpoRegistrationPage() {
         },
         {
                 "q": "What pricing applies to real estate exhibitions on UrPass?",
-                "a": "UrPass offers transparent flat software subscriptions starting at an introductory ₹29/month for your first 2 months (then ₹999/month), with zero per-visitor ticketing fees."
+                "a": "UrPass offers transparent flat software subscriptions starting from ₹499/month, with zero per-visitor ticketing fees."
         }
 ],
       }}

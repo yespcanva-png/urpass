@@ -54,7 +54,7 @@ export default function CollegeEventRegistrationSystemPage() {
         ],
         faqs: [
           { q: "Why should I replace Google Forms for college event registration?", a: "Google Forms collects data but doesn't generate passes, prevent duplicate entries, or provide real-time check-in tracking. URPASS does all of this automatically once a student registers." },
-          { q: "How does URPASS pricing work for college registrations?", a: "College organizers can get started with an introductory offer of ₹29/month for the first 2 months across Starter, Pro, and Business plans with zero platform ticket commissions." },
+          { q: "How does URPASS pricing work for college registrations?", a: "College organizers can get started with an transparent plans starting from ₹499/month across Starter, Pro, and Business plans with zero platform ticket commissions." },
           { q: "Can volunteers use URPASS to check students in?", a: "Yes. Volunteers open the URPASS scanner in any phone browser and start scanning immediately. No training or account required for scanning." },
           { q: "Can I collect department and year from students?", a: "Yes. Add custom fields for department, year, roll number, college name, or any other student detail." },
           { q: "What if students don't have internet access at the venue?", a: "Students can screenshot their QR pass before coming. The QR works from a screenshot." },

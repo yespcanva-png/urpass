@@ -119,7 +119,7 @@ export default function Page() {
           { q: "Can leadership compare attendance metrics across different locations?", a: "Yes. The central analytics dashboard provides side-by-side comparisons of registration volume, check-in velocity, no-show rates, and attendee feedback across all event locations." },
         ],
         ctaTitle: "Coordinate your multi-location events with URPASS",
-        ctaDescription: "Set up in 5 minutes · ₹29 introductory offer · 0% ticket commission",
+        ctaDescription: "Set up in 5 minutes · Plans from ₹499/mo · 0% ticket commission",
       }}
     />
   );

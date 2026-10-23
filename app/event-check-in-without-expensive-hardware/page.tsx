@@ -158,7 +158,7 @@ export default function Page() {
           }
 ],
         ctaTitle: "Event Check-In Without Expensive Hardware Rentals or Dedicated Scanners",
-        ctaDescription: "Launch your event registration in minutes. Plans starting with a ₹29/month introductory offer.",
+        ctaDescription: "Launch your event registration in minutes. Plans starting from ₹499/month with 0% ticket commission.",
       }}
     />
   );

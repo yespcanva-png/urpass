@@ -80,7 +80,7 @@ export default function Page() {
             "Conforms to Anthropic's open Model Context Protocol (MCP) standard",
             "Works with Claude Desktop, Cursor IDE, and custom autonomous agents",
             "Zero per-ticket percentage cuts with flat software pricing",
-            "Transparent pricing with ₹29/mo introductory offer",
+            "Transparent pricing starting from ₹499/mo",
           ],
         },
         faqs: [

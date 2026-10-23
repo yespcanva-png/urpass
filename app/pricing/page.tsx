@@ -5,9 +5,9 @@ import { createClient } from "@/lib/supabase/server";
 import { detectCountryFromHeaders } from "@/lib/country-config";
 
 export const metadata: Metadata = {
-  title: "Pricing — ₹29 Intro Offer · Event Plans | URPASS",
+  title: "Pricing — Event Plans & Subscriptions | URPASS",
   description:
-    "Starter, Pro, Business, one-event passes, and campus licensing for URPASS. India plans start at ₹29/month for the first 2 months with transparent renewal pricing.",
+    "Starter (₹499/mo), Pro (₹999/mo), Business (₹2,499/mo), one-event passes, and campus licensing for URPASS with transparent pricing and 0% ticket commissions.",
   keywords: [
     "URPASS pricing",
     "event management pricing",
@@ -16,12 +16,11 @@ export const metadata: Metadata = {
     "Pro event plan",
     "Business event plan",
     "event pass software pricing",
-    "₹29 event software offer",
     "zero commission event ticketing pricing",
   ],
   alternates: { canonical: "https://urpass.space/pricing" },
   openGraph: {
-    title: "URPASS Pricing — ₹29 Intro Offer and Event Plans",
+    title: "URPASS Pricing — Event Plans & Subscriptions",
     description: "Choose Starter, Pro, Business, one-event passes, or campus licensing with transparent local pricing.",
     url: "https://urpass.space/pricing",
     siteName: "URPASS",
@@ -89,27 +88,27 @@ function getPricingJsonLd(isUk: boolean) {
           : [
               {
                 "@type": "Offer",
-                name: "Starter Tier Intro",
-                price: "29",
+                name: "Starter Tier",
+                price: "499",
                 priceCurrency: "INR",
                 billingIncrement: "P1M",
-                description: "Introductory offer for first 2 months. Then ₹499/month +GST. 10 events/month, 500 registrations/month, 2 organizers, CSV import & export.",
+                description: "₹499/month + GST. 10 events/month, 500 registrations/month, 2 organizers, CSV import & export.",
               },
               {
                 "@type": "Offer",
-                name: "Pro Tier Intro",
-                price: "29",
+                name: "Pro Tier",
+                price: "999",
                 priceCurrency: "INR",
                 billingIncrement: "P1M",
-                description: "Introductory offer for first 2 months. Then ₹999/month +GST. Unlimited events, 2,500 registrations/month, 5 organizers, custom pass design, advanced analytics.",
+                description: "₹999/month + GST. Unlimited events, 2,500 registrations/month, 5 organizers, custom pass design, advanced analytics.",
               },
               {
                 "@type": "Offer",
-                name: "Business Tier Intro",
-                price: "29",
+                name: "Business Tier",
+                price: "2499",
                 priceCurrency: "INR",
                 billingIncrement: "P1M",
-                description: "Introductory offer for first 2 months. Then ₹2,499/month +GST. Unlimited events, 10,000 registrations/month, 15 organizers, custom domain, API & webhooks.",
+                description: "₹2,499/month + GST. Unlimited events, 10,000 registrations/month, 15 organizers, custom domain, API & webhooks.",
               },
             ],
       },
@@ -131,7 +130,7 @@ function getPricingJsonLd(isUk: boolean) {
               "@type": "Answer",
               text: isUk
                 ? "UK pricing is available as Starter £15/month, Pro £35/month, and Business £79/month, with direct activation and cancel-anytime renewal."
-                : "India pricing starts with an introductory ₹29/month offer for the first 2 months on Starter, Pro, or Business. Regular monthly pricing applies after the introductory period.",
+                : "India pricing offers Starter at ₹499/month, Pro at ₹999/month, and Business at ₹2,499/month (+GST). Alternatively, single event passes start at ₹299.",
             },
           },
           {

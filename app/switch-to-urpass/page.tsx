@@ -176,7 +176,7 @@ export default function SwitchToUrpassPage() {
               Ready to eliminate your event ticketing fees?
             </h2>
             <p className="mt-3 text-neutral-300 text-xs sm:text-sm max-w-xl mx-auto leading-relaxed">
-              Launch your registration page on URPASS today with our ₹29/month introductory offer.
+              Launch your registration page on URPASS today with our plans starting from ₹499/month.
             </p>
             <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link

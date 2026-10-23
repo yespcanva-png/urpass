@@ -73,7 +73,7 @@ export default function CollegeEventsPage() {
           },
         ],
         faqs: [
-          { q: "How does URPASS pricing work for college events?", a: "College organizers can get started with an introductory offer of ₹29/month for the first 2 months across Starter, Pro, and Business plans with zero platform ticket commissions." },
+          { q: "How does URPASS pricing work for college events?", a: "College organizers can get started with an transparent plans starting from ₹499/month across Starter, Pro, and Business plans with zero platform ticket commissions." },
           { q: "Can I collect department or year from students?", a: "Yes. You can add custom registration fields for any information you need — department, year, roll number, or college name." },
           { q: "How do students receive their pass?", a: "After registration is approved, students get a link to their digital QR pass. They show it on their phone at the event entrance." },
           { q: "Can one coordinator manage the full event?", a: "Yes. One person can set up the event, manage registrations, and run QR check-in from the same account." },
@@ -81,7 +81,7 @@ export default function CollegeEventsPage() {
           { q: "Can I use URPASS for inter-college events?", a: "Yes. The registration form is public — students from any college can register via the shared link." },
         ],
         ctaTitle: "Run your college event the modern way",
-        ctaDescription: "Plans from ₹29/mo · QR passes · Any phone as scanner · 5-minute setup",
+        ctaDescription: "Plans from ₹499/mo · QR passes · Any phone as scanner · 5-minute setup",
       }}
     />
   );

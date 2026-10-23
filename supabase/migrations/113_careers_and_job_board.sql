@@ -97,3 +97,4 @@ CREATE POLICY "Service role full access to job applications"
 INSERT INTO storage.buckets (id, name, public)
 VALUES ('resumes', 'resumes', true)
 ON CONFLICT (id) DO NOTHING;
+

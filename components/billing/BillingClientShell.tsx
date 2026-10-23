@@ -441,7 +441,7 @@ export default function BillingClientShell({
               <div className="space-y-0.5">
                 <p className="font-bold text-neutral-900">Subscription Renewal</p>
                 <p className="text-neutral-600">
-                  Your account is not eligible for the introductory ₹29 offer. Your selected plan&apos;s standard pricing applies:
+                  Standard subscription pricing applies:
                   <span className="font-semibold text-neutral-900 ml-1">
                     Starter ₹499 · Pro ₹999 · Business ₹2,499 per month
                   </span>

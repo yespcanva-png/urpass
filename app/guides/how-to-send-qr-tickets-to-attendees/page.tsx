@@ -73,7 +73,7 @@ export default function GuidePage() {
           { q: "Can we customize the branding of the digital pass?", a: "Yes. Organizers can customize pass colors, upload logos, and configure visible attendee fields." },
         ],
         ctaTitle: "Streamline your event check-in with URPASS",
-        ctaDescription: "Plans from ₹29/mo · Zero app downloads · Fast sub-second scanning",
+        ctaDescription: "Plans from ₹499/mo · Zero app downloads · Fast sub-second scanning",
       }}
     />
   );

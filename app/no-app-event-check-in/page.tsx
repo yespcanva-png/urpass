@@ -80,7 +80,7 @@ export default function Page() {
             "Zero App Store accounts, downloads, or mobile storage space consumed",
             "Protects organizer financial data by providing a PIN-restricted scanner view",
             "Continuous scan mode enables rapid clearance of hundreds of attendees per lane",
-            "Transparent pricing with ₹29/mo introductory offer",
+            "Transparent pricing starting from ₹499/mo",
           ],
         },
         faqs: [

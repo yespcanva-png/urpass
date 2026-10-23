@@ -121,7 +121,7 @@ export default function BengaluruMultiDayEventTicketingPage() {
                         "Create Early Bird, Regular, and Late Bird price shifts for multi-day passes",
                         "Automated GST invoice generation matching corporate expense requirements",
                         "Support student payment options: UPI, debit cards, credit cards, and net banking",
-                        "Transparent software pricing with introductory plans starting at ₹29/month"
+                        "Transparent software pricing starting from ₹499/month"
                 ],
                 "takeaway": "Direct payment routing maximizes multi-day conference ticket yields."
         }

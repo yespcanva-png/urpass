@@ -55,7 +55,7 @@ export default function Page() {
             "Precise timestamps for every verified attendee scan",
             "Instant export to Excel/CSV for accreditation and certificates",
             "Multi-device scanning synchronized across all venue doors",
-            "Plans starting at ₹29/mo introductory offer with 0% ticket fees",
+            "Plans starting from ₹499/mo with 0% ticket fees",
           ],
         },
         useCases: [
@@ -73,7 +73,7 @@ export default function Page() {
           { q: "How many gates can track attendance simultaneously?", a: "Unlimited. Multiple entrance staff can scan at different doors simultaneously with real-time central synchronization." },
         ],
         ctaTitle: "Start streamlining your event with URPASS",
-        ctaDescription: "Plans start at ₹29/mo · 0% ticket commission · Fast sub-second check-in",
+        ctaDescription: "Plans start at ₹499/mo · 0% ticket commission · Fast sub-second check-in",
       }}
     />
   );

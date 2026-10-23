@@ -239,7 +239,7 @@ export default function BangaloreEventInvitationManagementSoftwarePage() {
         },
         {
                 "q": "What pricing applies to private invitation events?",
-                "a": "UrPass offers a transparent subscription starting at ₹29/month for your first 2 months (then ₹999/month), with 0% platform ticket commissions on paid tiers."
+                "a": "UrPass offers a transparent subscription starting from ₹499/month, with 0% platform ticket commissions on paid tiers."
         },
         {
                 "q": "Can I export the final attendee list for post-event follow-ups?",

@@ -243,7 +243,7 @@ export default function BengaluruEventRegistrationDataCollectionPage() {
         },
         {
                 "q": "What pricing applies to custom data collection on UrPass?",
-                "a": "Unlimited custom fields and complete CSV data exports are included on all UrPass plans, starting at an introductory ₹29/month for your first 2 months (then ₹999/month), with 0% platform ticket fees."
+                "a": "Unlimited custom fields and complete CSV data exports are included on all UrPass plans, starting from ₹499/month, with 0% platform ticket fees."
         }
 ],
       }}

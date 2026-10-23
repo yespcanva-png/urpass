@@ -75,7 +75,7 @@ export default function BengaluruEarlyBirdEventTicketingPage() {
                 {
                         "col1": "Platform Commission",
                         "col2": "5% to 8% cut on every early bird and VIP pass",
-                        "col3": "0% ticket commission; plans from ₹29/month"
+                        "col3": "0% ticket commission; plans from ₹499/month"
                 },
                 {
                         "col1": "Tier Automation",
@@ -121,7 +121,7 @@ export default function BengaluruEarlyBirdEventTicketingPage() {
                         "Retain 100% of ticket sales across all early bird and VIP tiers",
                         "Automated GST invoice generation matching corporate expense requirements",
                         "Support student payment options: UPI, debit cards, credit cards, and net banking",
-                        "Transparent software pricing with introductory plans starting at ₹29/month"
+                        "Transparent software pricing starting from ₹499/month"
                 ],
                 "takeaway": "Zero commission protects your margins on high-value VIP ticket tiers."
         }
@@ -231,7 +231,7 @@ export default function BengaluruEarlyBirdEventTicketingPage() {
         },
         {
                 "q": "Does UrPass charge commission on high-value VIP tickets?",
-                "a": "No. UrPass charges 0% commission on ticket sales. You pay a transparent monthly subscription (introductory offer ₹29/mo, then ₹999/mo) and connect your own Razorpay account."
+                "a": "No. UrPass charges 0% commission on ticket sales. You pay a transparent monthly subscription (plans from ₹499/mo) and connect your own Razorpay account."
         },
         {
                 "q": "Can I create secret or hidden ticket tiers for VIP guests?",

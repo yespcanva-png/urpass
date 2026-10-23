@@ -119,7 +119,7 @@ export default function Page() {
           { q: "Can we customize the check-in scanner interface for door staff?", a: "Yes. The browser-based scanner interface reflects your event name and branding, providing a cohesive, professional experience for volunteers, guards, and attendees alike." },
         ],
         ctaTitle: "Build your white-label event platform today",
-        ctaDescription: "Custom domain · Branded passes · Zero marketplace ads · Plans from ₹29/mo",
+        ctaDescription: "Custom domain · Branded passes · Zero marketplace ads · Plans from ₹499/mo",
       }}
     />
   );

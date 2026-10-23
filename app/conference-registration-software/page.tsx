@@ -26,10 +26,10 @@ export default function ConferenceRegistrationSoftwarePage() {
   "h1": "Conference Registration & Check-In Software",
   "canonicalUrl": "https://urpass.space/conference-registration-software",
   "description": "Conference registration software with custom delegate passes, multi-tier ticket categories, B2B invoicing, sub-second QR check-in, and real-time attendance.",
-  "ctaLabel": "Launch Conference for ₹29 →",
+  "ctaLabel": "Launch Conference →",
   "ctaHref": "/signup?plan=pro&from=conference-registration-software",
   "ctaTitle": "Power Frictionless Entry at Your Next Conference",
-  "ctaDescription": "Set up multi-tier delegate registration, issue dynamic digital QR passes, and admit hundreds of attendees per minute with volunteer phones. ₹29 introductory offer with 0% ticket commission.",
+  "ctaDescription": "Set up multi-tier delegate registration, issue dynamic digital QR passes, and admit hundreds of attendees per minute with volunteer phones. plans from ₹499/mo with 0% ticket commission.",
   "directAnswer": {
     "title": "What is URPASS Conference Registration Software?",
     "summary": "URPASS is conference registration and QR check-in software that streamlines delegate registration, multi-tier ticket categories, approval workflows, digital badge passes, and multi-door entrance scanning. Built for academic summits, medical congresses, and B2B conventions, it eliminates foyer bottlenecks with sub-0.3s smartphone camera scanning and live attendance analytics.",

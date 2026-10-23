@@ -54,7 +54,7 @@ export default function QrCodeEventRegistrationPage() {
             "Registration to Pass: Instant automated QR pass delivery upon form submission or approval",
             "Door Validation Speed: Validates and checks in attendees in under 0.28 seconds",
             "Zero Hardware Required: Any smartphone running Chrome or Safari functions as an entrance scanner",
-            "Transparent Flat Pricing: ₹29/mo intro offer with 0% ticket commission",
+            "Transparent Flat Pricing: Plans from ₹499/mo with 0% ticket commission",
           ],
         },
         productProof: {
@@ -108,7 +108,7 @@ export default function QrCodeEventRegistrationPage() {
           description:
             "Stop printing paper badges or manually checking names off spreadsheet rosters. URPASS modernizes your entire registration-to-check-in workflow.",
           bullets: [
-            "Plans start with ₹29/mo intro offer",
+            "Plans start from ₹499/mo",
             "In-browser smartphone camera scanning (<0.28s)",
             "Real-time duplicate ticket blocking across all entrance gates",
             "Full attendee CSV exports with arrival timestamps",
@@ -124,7 +124,7 @@ export default function QrCodeEventRegistrationPage() {
         faqs: [
           {
             q: "Can I use URPASS QR code event registration for free?",
-            a: "Yes! URPASS offers transparent plans starting at ₹29/month for the first 2 months, including full QR pass issuance and in-browser camera scanning with zero ticket fees.",
+            a: "Yes! URPASS offers transparent plans starting from ₹499/month, including full QR pass issuance and in-browser camera scanning with zero ticket fees.",
           },
           {
             q: "How do attendees access their QR passes?",

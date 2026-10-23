@@ -119,7 +119,7 @@ const FAQ_DATA: FAQItem[] = [
   {
     category: "Payments & Pricing",
     q: "How does URPASS pricing work?",
-    a: "URPASS offers an introductory offer of ₹29/month for the first 2 months across Starter, Pro, and Business plans with 0% platform ticket commissions. After the introductory period, standard transparent monthly pricing applies (Starter ₹499/mo, Pro ₹999/mo, Business ₹2,499/mo + GST). In the UK, plans start at £15/month.",
+    a: "URPASS offers an transparent plans starting from ₹499/month across Starter, Pro, and Business plans with 0% platform ticket commissions. After the introductory period, standard transparent monthly pricing applies (Starter ₹499/mo, Pro ₹999/mo, Business ₹2,499/mo + GST). In the UK, plans start at £15/month.",
   },
   {
     category: "Payments & Pricing",

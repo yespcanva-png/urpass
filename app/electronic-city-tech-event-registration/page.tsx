@@ -75,7 +75,7 @@ export default function ElectronicCityTechEventRegistrationPage() {
                 {
                         "col1": "Platform Commission",
                         "col2": "5% to 8% cut on every developer pass sold",
-                        "col3": "0% ticket commission; plans from ₹29/month"
+                        "col3": "0% ticket commission; plans from ₹499/month"
                 },
                 {
                         "col1": "Team Ticketing",
@@ -235,7 +235,7 @@ export default function ElectronicCityTechEventRegistrationPage() {
         },
         {
                 "q": "Does UrPass take a percentage of our tech summit ticket sales?",
-                "a": "No. UrPass charges 0% commission on ticket sales. You pay a transparent monthly subscription (introductory offer ₹29/mo, then ₹999/mo) and connect your own Razorpay account."
+                "a": "No. UrPass charges 0% commission on ticket sales. You pay a transparent monthly subscription (plans from ₹499/mo) and connect your own Razorpay account."
         },
         {
                 "q": "Can gate volunteers check in attendees if campus Wi-Fi fluctuates?",

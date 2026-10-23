@@ -54,7 +54,7 @@ export default function Page() {
           bullets: [
             "Clean digital passes with attendee professional details",
             "Sub-0.3s check-in gets professionals networking faster",
-            "Plans start at ₹29/mo intro offer with 0% ticket fee",
+            "Plans start from ₹499/mo with 0% ticket fee",
             "Instant duplicate entry lockout prevents uninvited guests",
           ],
         },
@@ -73,7 +73,7 @@ export default function Page() {
           { q: "Can door hosts look up guests by name if they forgot their phone?", a: "Yes. Staff can search attendees by name or email directly inside the mobile scanner interface." },
         ],
         ctaTitle: "Elevate your event entry with URPASS",
-        ctaDescription: "Plans from ₹29/mo · Zero hardware setup · Fast sub-second scanning",
+        ctaDescription: "Plans from ₹499/mo · Zero hardware setup · Fast sub-second scanning",
       }}
     />
   );

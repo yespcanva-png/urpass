@@ -211,7 +211,7 @@ export default function SubscriptionOnboardingClient({
 
   const isUk = activeCountry === "GB";
   const isAnnual = billingCycle === "annual";
-  const showIntroOffer = !isUk && !isAnnual;
+  const showIntroOffer = false;
 
   return (
     <div className="min-h-screen bg-[#f7f7fb] text-neutral-950">
@@ -362,20 +362,6 @@ export default function SubscriptionOnboardingClient({
         <div className="mt-8 rounded-xl border border-violet-200 bg-violet-50/80 p-4 text-xs sm:text-sm text-violet-950">
           {isAnnual ? (
             <span>Annual plans are billed upfront. Taxes are added at checkout.</span>
-          ) : showIntroOffer ? (
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <div>
-                <p className="font-bold text-violet-900 text-sm">
-                  ⚡ AutoPay Introductory Offer: Activate Starter, Pro, or Business for ₹29/month
-                </p>
-                <p className="mt-1 text-xs text-violet-700 leading-relaxed">
-                  ₹29/month for your first 2 months, then regular monthly price + GST. AutoPay authorization is required. Your first ₹34.22 payment (₹29 + 18% GST) will be collected upon activation. Cancel anytime.
-                </p>
-              </div>
-              <span className="self-start sm:self-auto rounded-full bg-violet-600 px-3 py-1 text-xs font-bold text-white shrink-0">
-                Save up to 98%
-              </span>
-            </div>
           ) : (
             <span>Monthly plans renew automatically after payment authorization. Taxes are added at checkout.</span>
           )}
@@ -389,7 +375,7 @@ export default function SubscriptionOnboardingClient({
                 : `₹${plan.annualInr.toLocaleString("en-IN")}`
               : isUk
                 ? `£${plan.gbp}`
-                : showIntroOffer ? "₹29" : `₹${plan.renewalInr.toLocaleString("en-IN")}`;
+                : `₹${plan.renewalInr.toLocaleString("en-IN")}`;
             const period = isAnnual ? "/ year" : "/ month";
             const renewalText = isAnnual
               ? isUk
@@ -397,7 +383,7 @@ export default function SubscriptionOnboardingClient({
                 : `Equivalent ₹${plan.annualInrPerMo.toLocaleString("en-IN")}/mo + GST`
               : isUk
                 ? `Renews at £${plan.gbp}/mo + VAT`
-                : showIntroOffer ? `Then ₹${plan.renewalInr.toLocaleString("en-IN")}/mo + GST` : `Renews at ₹${plan.renewalInr.toLocaleString("en-IN")}/mo + GST`;
+                : `Renews at ₹${plan.renewalInr.toLocaleString("en-IN")}/mo + GST`;
 
             return (
               <article
@@ -422,24 +408,8 @@ export default function SubscriptionOnboardingClient({
                   <div className="flex items-baseline gap-2">
                     <span className="text-4xl font-bold tracking-tight text-neutral-950">{todayPrice}</span>
                     <span className="text-sm font-medium text-neutral-500">{period}</span>
-                    {showIntroOffer && (
-                      <span className="ml-auto rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 text-[10px] font-bold text-emerald-800">
-                        ₹29 Intro Offer
-                      </span>
-                    )}
                   </div>
-                  {showIntroOffer ? (
-                    <div className="mt-2 space-y-1">
-                      <p className="text-xs font-bold text-violet-900">
-                        ₹29/month for your first 2 months, then ₹{plan.renewalInr.toLocaleString("en-IN")}/month + GST.
-                      </p>
-                      <p className="text-[11px] leading-relaxed text-neutral-500">
-                        AutoPay authorization is required. Your first ₹34.22 payment will be collected upon activation. You can cancel future renewals anytime.
-                      </p>
-                    </div>
-                  ) : (
-                    <p className="mt-2 text-xs font-semibold text-neutral-600">{renewalText}</p>
-                  )}
+                  <p className="mt-2 text-xs font-semibold text-neutral-600">{renewalText}</p>
                 </div>
 
                 <ul className="mt-5 flex-1 space-y-3">
@@ -460,14 +430,14 @@ export default function SubscriptionOnboardingClient({
                   userPhone={phone || userPhone}
                   currency={isUk ? "GBP" : "INR"}
                   successRedirect="/dashboard"
-                  introOfferEligible={showIntroOffer}
+                  introOfferEligible={false}
                   className={`mt-6 w-full rounded-lg px-4 py-3 text-sm font-bold ${
                     plan.recommended
                       ? "bg-[#6D28D9] text-white hover:bg-violet-800"
                       : "border border-neutral-300 bg-white text-neutral-900 hover:bg-neutral-50"
                   }`}
                 >
-                  {showIntroOffer ? `Activate ${plan.name} for ₹29/mo` : `Continue with ${plan.name}`}
+                  Continue with {plan.name}
                 </CheckoutButton>
               </article>
             );

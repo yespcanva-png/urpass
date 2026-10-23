@@ -72,7 +72,7 @@ export default function KochiPage() {
           { q: "Can I use URPASS for a college fest in Kerala?", a: "Yes. URPASS is widely used for college fests, technical symposiums, and cultural events across Kerala with fast approval and QR ticketing." },
           { q: "Does URPASS support UPI payments in Kerala?", a: "Yes. Attendees can pay via Google Pay, PhonePe, Paytm, BHIM UPI, and credit/debit cards powered by Razorpay." },
           { q: "Do entrance volunteers need to install a special app?", a: "No. The scanner works right in the mobile browser with camera permissions. No App Store or Play Store downloads required." },
-          { q: "How does URPASS pricing work for Kochi organizers?", a: "URPASS offers an introductory offer of ₹29/month for the first 2 months across Starter, Pro, and Business plans with 0% platform ticket fees." },
+          { q: "How does URPASS pricing work for Kochi organizers?", a: "URPASS offers an transparent plans starting from ₹499/month across Starter, Pro, and Business plans with 0% platform ticket fees." },
         ],
         ctaTitle: "Launch your Kochi or Kerala event on URPASS",
         ctaDescription: "Free to start · Instant UPI ticketing · QR check-in without apps",

@@ -243,7 +243,7 @@ export default function BangaloreLastMinuteEventRegistrationPage() {
         },
         {
                 "q": "What pricing applies to on-site walk-in registrations on UrPass?",
-                "a": "On-site self-registration is included in all UrPass plans, starting at an introductory ₹29/month for your first 2 months (then ₹999/month), with 0% platform ticket fees."
+                "a": "On-site self-registration is included in all UrPass plans, starting from ₹499/month, with 0% platform ticket fees."
         }
 ],
       }}

@@ -299,7 +299,7 @@ export default async function LandingPage() {
                       "@type": "Answer",
                       text: country === "GB"
                         ? "UK pricing is available as Starter £15/month, Pro £35/month, and Business £79/month, with direct activation and cancel-anytime renewal."
-                        : "India pricing starts with an introductory ₹29/month offer for the first 2 months on Starter, Pro, or Business. Regular monthly pricing applies after the introductory period.",
+                        : "India pricing offers Starter at ₹499/month, Pro at ₹999/month, and Business at ₹2,499/month (+GST) with transparent cancel-anytime renewal.",
                     },
                   },
                 ],
@@ -350,7 +350,7 @@ export default async function LandingPage() {
             </div>
 
             <p className="hero-meta mt-6 sm:mt-8 text-xs text-neutral-500">
-              {country === "GB" ? "Plans from £15/month · Direct UK activation" : "Plans from ₹499/mo (Intro ₹29/mo) · Autopay required"} ·{" "}
+              {country === "GB" ? "Plans from £15/month · Direct UK activation" : "Plans from ₹499/mo · Autopay required"} ·{" "}
               <Link href="/mcp-event-management" className="text-neutral-700 hover:text-brand hover:underline font-medium">
                 Model Context Protocol (MCP) supported
               </Link>
@@ -585,7 +585,7 @@ export default async function LandingPage() {
           <p className="mt-6 text-xs text-neutral-400">
             {country === "GB"
               ? "Plans from £15/mo · Direct UK activation · Cancel renewal anytime"
-              : "Plans from ₹499/mo (Intro ₹29/mo) · Autopay required · Cancel renewal anytime"}
+              : "Plans from ₹499/mo · Autopay required · Cancel renewal anytime"}
           </p>
         </AnimateIn>
       </section>

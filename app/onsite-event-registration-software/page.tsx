@@ -142,7 +142,7 @@ export default function OnsiteEventRegistrationPage() {
           },
           {
             q: "Is onsite registration desk software included in the free tier?",
-            a: "Yes! URPASS includes full onsite desk functionality across all plans starting with an introductory offer of ₹29/month for your first 2 months.",
+            a: "Yes! URPASS includes full onsite desk functionality across all plans starting from ₹499/month.",
           },
         ],
         relatedLinks: [

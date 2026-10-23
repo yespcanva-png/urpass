@@ -73,7 +73,7 @@ export default function Page() {
           { q: "Can we export attendee lists to Excel?", a: "Yes. You can export your full attendee roster and check-in logs to CSV format at any time." },
         ],
         ctaTitle: "Start streamlining your event with URPASS",
-        ctaDescription: "Plans start at ₹29/mo · 0% ticket commission · Fast sub-second check-in",
+        ctaDescription: "Plans start at ₹499/mo · 0% ticket commission · Fast sub-second check-in",
       }}
     />
   );

@@ -243,7 +243,7 @@ export default function BangaloreEventRegistrationApiIntegrationPage() {
         },
         {
                 "q": "What pricing applies to API and webhook access?",
-                "a": "Developer API access is included with UrPass plans starting at an introductory ₹29/month for your first 2 months (then ₹999/month), with 0% platform ticket fees."
+                "a": "Developer API access is included with UrPass plans starting from ₹499/month, with 0% platform ticket fees."
         }
 ],
       }}

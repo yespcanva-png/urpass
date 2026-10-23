@@ -73,7 +73,7 @@ export default function Page() {
           { q: "Can exhibitors scan visitor badges for lead generation?", a: "Visitors have verifiable QR passes that can be validated at booth entrances and seminar tracks." },
         ],
         ctaTitle: "Elevate your event entry with URPASS",
-        ctaDescription: "Plans from ₹29/mo · Zero hardware setup · Fast sub-second scanning",
+        ctaDescription: "Plans from ₹499/mo · Zero hardware setup · Fast sub-second scanning",
       }}
     />
   );

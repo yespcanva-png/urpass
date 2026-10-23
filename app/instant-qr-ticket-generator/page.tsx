@@ -41,7 +41,7 @@ export default function Page() {
         canonicalUrl: "https://urpass.space/instant-qr-ticket-generator",
         description:
           "Create and issue tamper-proof digital QR tickets in seconds. Automated delivery via email, mobile web links, and WhatsApp with zero per-ticket commission fees.",
-        ctaLabel: "Generate QR Passes for ₹29 →",
+        ctaLabel: "Generate QR Passes →",
         ctaHref: "/signup?plan=pro&from=instant-qr-ticket-generator",
         secondaryCtaLabel: "View Pricing",
         secondaryCtaHref: "/pricing",
@@ -95,7 +95,7 @@ export default function Page() {
           ],
         },
         faqs: [
-          { q: "Can I generate QR tickets for free events?", a: "Yes. URPASS provides flat subscription pricing starting at ₹29/month for your first 2 months, including digital QR passes and camera gate scanning." },
+          { q: "Can I generate QR tickets for free events?", a: "Yes. URPASS provides flat subscription pricing starting from ₹499/month, including digital QR passes and camera gate scanning." },
           { q: "Do attendees need an app to open their QR ticket?", a: "No. The QR pass opens instantly in any mobile browser (Safari, Chrome, Firefox) and can be saved as an image, added to home screen, or printed as a PDF." },
           { q: "How fast is ticket delivery after registration?", a: "Passes are generated dynamically in milliseconds and delivered via email within 2 to 5 seconds of registration or approval." },
           { q: "Can I customize the look of the QR ticket?", a: "Yes. URPASS Ticket Studio allows you to customize brand colors, logos, attendee fields, and badge formats (digital, printable, or lanyard)." },

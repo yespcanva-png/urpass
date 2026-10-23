@@ -182,7 +182,7 @@ export default function ZohoBackstageAlternativesPage() {
           },
         ],
         ctaTitle: "Simplify your event management with URPASS",
-        ctaDescription: "Plans start at ₹29/mo · 2-minute setup · Sub-0.3s gate scanning · Zero ticket commission",
+        ctaDescription: "Plans start at ₹499/mo · 2-minute setup · Sub-0.3s gate scanning · Zero ticket commission",
       }}
     />
   );

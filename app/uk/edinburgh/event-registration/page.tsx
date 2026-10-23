@@ -133,7 +133,7 @@ export default function Page() {
           }
 ],
         ctaTitle: "Event Registration Software Built for Edinburgh Festivals & Colloquiums",
-        ctaDescription: "Launch your event registration in minutes. Plans starting with a ₹29/month introductory offer.",
+        ctaDescription: "Launch your event registration in minutes. Plans starting from ₹499/month with 0% ticket commission.",
         geo: {"region":"Scotland","placename":"Edinburgh","position":"55.9533;-3.1883","latitude":55.9533,"longitude":-3.1883,"country":"United Kingdom","countryCode":"GB"},
       }}
     />

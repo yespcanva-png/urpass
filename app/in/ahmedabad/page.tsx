@@ -72,7 +72,7 @@ export default function AhmedabadPage() {
           { q: "Can URPASS handle large business expos in Ahmedabad?", a: "Yes. URPASS scales effortlessly to thousands of attendees with multi-counter scanning and real-time check-in counts." },
           { q: "Does URPASS support GST invoices for business attendees in Gujarat?", a: "Yes. Attendee records and transactions are exportable with full receipt details for corporate expense claims." },
           { q: "Can attendees show passes on WhatsApp or Apple Wallet?", a: "Yes. Passes can be saved directly on smartphones, printed as PDF passes, or displayed from emails at the gate." },
-          { q: "How does URPASS pricing work?", a: "URPASS offers an introductory offer of ₹29/month for your first 2 months across Starter, Pro, and Business plans with 0% platform ticket fees and instant Razorpay UPI payouts." },
+          { q: "How does URPASS pricing work?", a: "URPASS offers an transparent plans starting from ₹499/month across Starter, Pro, and Business plans with 0% platform ticket fees and instant Razorpay UPI payouts." },
         ],
         ctaTitle: "Start your Ahmedabad event on URPASS today",
         ctaDescription: "Free tier available · Razorpay Indian payments · Instant mobile check-in",

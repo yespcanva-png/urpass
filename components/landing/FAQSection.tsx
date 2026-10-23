@@ -57,7 +57,7 @@ export default function FAQSection({ initialCountry = "IN" }: Props) {
       q: "How does UrPass pricing work for organizers?",
       a: isUk
         ? "Organizers can choose self-service monthly subscriptions: Starter (£15/mo), Pro (£35/mo), or Business (£79/mo) with direct activation and cancel-anytime renewal. Alternatively, one-off event passes (£5 / £10 / £19) are available if you only host occasional events."
-        : "Organizers can choose self-service plans (Starter ₹499/mo, Pro ₹999/mo, Business ₹2,499/mo) with an introductory offer of ₹29/month for your first 2 months. Alternatively, single event passes (₹299 / ₹599 / ₹999) are available for one-off events.",
+        : "Organizers can choose self-service plans (Starter ₹499/mo, Pro ₹999/mo, Business ₹2,499/mo) with transparent cancel-anytime renewal. Alternatively, single event passes (₹299 / ₹599 / ₹999) are available for one-off events.",
     },
     {
       q: "Does UrPass take a cut of my ticket sales?",

@@ -243,7 +243,7 @@ export default function BangaloreEventGateStaffManagementPage() {
         },
         {
                 "q": "What pricing applies to gate staff management on UrPass?",
-                "a": "Gate staff management and unlimited scanner links are included on all UrPass plans, starting at an introductory ₹29/month for your first 2 months (then ₹999/month), with 0% platform ticket fees."
+                "a": "Gate staff management and unlimited scanner links are included on all UrPass plans, starting from ₹499/month, with 0% platform ticket fees."
         }
 ],
       }}

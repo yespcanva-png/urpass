@@ -243,7 +243,7 @@ export default function BangaloreEventAttendanceReportGeneratorPage() {
         },
         {
                 "q": "What pricing applies to attendance report generation on UrPass?",
-                "a": "Full attendance reporting and CSV exports are included on all UrPass plans, starting at an introductory ₹29/month for your first 2 months (then ₹999/month), with 0% platform ticket fees."
+                "a": "Full attendance reporting and CSV exports are included on all UrPass plans, starting from ₹499/month, with 0% platform ticket fees."
         }
 ],
       }}

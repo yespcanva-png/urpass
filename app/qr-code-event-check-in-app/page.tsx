@@ -237,7 +237,7 @@ export default function QrCodeEventCheckInAppPage() {
         },
         {
                 "q": "How much does the QR check-in scanner cost?",
-                "a": "The scanner is included across all UrPass plans with zero per-scan charges. Subscriptions start with an introductory offer of ₹29/month for your first 2 months in India (£15/month in the UK) with 0% platform ticket commissions."
+                "a": "The scanner is included across all UrPass plans with zero per-scan charges. Subscriptions start with an transparent plans starting from ₹499/month in India (£15/month in the UK) with 0% platform ticket commissions."
         }
 ],
       }}

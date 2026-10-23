@@ -75,7 +75,7 @@ export default function PeenyaIndustrialEventRegistrationPage() {
                 {
                         "col1": "Platform Commission",
                         "col2": "5% to 8% cut on delegate and visitor passes",
-                        "col3": "0% ticket commission; plans from ₹29/month"
+                        "col3": "0% ticket commission; plans from ₹499/month"
                 },
                 {
                         "col1": "Exhibitor Roster Upload",

@@ -116,10 +116,10 @@ export default function Page() {
           { q: "How does check-in work at executive and VIP events?", a: "Door staff or receptionists open the URPASS camera scanner link on any smartphone or tablet. When the guest presents their phone or printed pass, the QR code is verified in under 0.3 seconds, displaying their name and credential tier." },
           { q: "Can we restrict event signups to employees only?", a: "Yes. You can enable corporate domain restrictions (e.g. only allowing registrations from @yourcompany.com) so private company gatherings cannot be accessed by external parties." },
           { q: "Can we capture post-event feedback from attendees?", a: "Yes. URPASS includes integrated post-event feedback surveys, allowing you to collect attendee ratings and qualitative reviews immediately following the event." },
-          { q: "What plans are available for corporate event teams?", a: "URPASS offers transparent plans: Starter (₹499/mo), Pro (₹999/mo), and Business (₹2,499/mo) with an introductory offer of ₹29/month for the first 2 months and zero platform ticket commission." },
+          { q: "What plans are available for corporate event teams?", a: "URPASS offers transparent plans: Starter (₹499/mo), Pro (₹999/mo), and Business (₹2,499/mo) with an transparent plans starting from ₹499/month and zero platform ticket commission." },
         ],
         ctaTitle: "Elevate your next corporate event",
-        ctaDescription: "Set up in 5 minutes · ₹29 introductory offer · 0% ticket commission",
+        ctaDescription: "Set up in 5 minutes · Plans from ₹499/mo · 0% ticket commission",
       }}
     />
   );

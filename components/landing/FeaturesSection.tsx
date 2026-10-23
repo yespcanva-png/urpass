@@ -143,7 +143,7 @@ export default function FeaturesSection() {
               <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
             </Link>
             <p className="mt-3 text-xs text-neutral-400">
-              Free setup · ₹29 introductory pricing · Zero commission fees
+              Free setup · Plans from ₹499/mo · Zero commission fees
             </p>
           </div>
         </AnimateIn>

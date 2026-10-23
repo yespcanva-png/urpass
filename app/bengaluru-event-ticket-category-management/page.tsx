@@ -75,7 +75,7 @@ export default function BengaluruEventTicketCategoryManagementPage() {
                 {
                         "col1": "Platform Commission",
                         "col2": "5% to 8% cut on every ticket tier sold",
-                        "col3": "0% ticket commission; plans from ₹29/month"
+                        "col3": "0% ticket commission; plans from ₹499/month"
                 },
                 {
                         "col1": "Tier Flexibility",
@@ -235,7 +235,7 @@ export default function BengaluruEventTicketCategoryManagementPage() {
         },
         {
                 "q": "Does UrPass charge commission on expensive VIP ticket tiers?",
-                "a": "No. UrPass charges 0% commission on ticket sales. You pay a transparent monthly subscription (introductory offer ₹29/mo, then ₹999/mo) and connect your own Razorpay account."
+                "a": "No. UrPass charges 0% commission on ticket sales. You pay a transparent monthly subscription (plans from ₹499/mo) and connect your own Razorpay account."
         },
         {
                 "q": "Can attendees save their tiered tickets to Apple Wallet?",

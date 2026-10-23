@@ -99,7 +99,7 @@ export default function UrpassVsBookMyShowPage() {
             },
             {
               criteria: "Free Event Support",
-              urpass: "Introductory offer starting at ₹29/month for 2 months",
+              urpass: "Flat subscription starting from ₹499/month",
               competitor: "Not designed for zero-cost community or college registrations",
               urpassAdvantage: true,
             },
@@ -183,7 +183,7 @@ export default function UrpassVsBookMyShowPage() {
           },
           {
             q: "Can I manage free events on URPASS?",
-            a: "URPASS offers an introductory offer of ₹29/month for your first 2 months, providing full access to digital QR passes, mobile camera check-in, and zero ticket commission.",
+            a: "URPASS offers an transparent plans starting from ₹499/month, providing full access to digital QR passes, mobile camera check-in, and zero ticket commission.",
           },
         ],
         ctaTitle: "Take back control of your event ticketing",

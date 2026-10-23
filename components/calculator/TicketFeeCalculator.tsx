@@ -256,7 +256,7 @@ export default function TicketFeeCalculator() {
               </div>
               <div className="flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>₹29 intro offer · 0% ticket commission</span>
+                <span>Plans from ₹499/mo · 0% ticket commission</span>
               </div>
             </div>
           </div>
@@ -265,7 +265,7 @@ export default function TicketFeeCalculator() {
             href="/signup?ref=fee-calculator"
             className="w-full py-3.5 px-4 rounded-xl bg-white hover:bg-neutral-100 text-neutral-900 font-bold text-sm text-center flex items-center justify-center gap-2 transition-all shadow-md group cursor-pointer"
           >
-            <span>Start with ₹29 Intro Offer</span>
+            <span>Explore Plans & Get Started</span>
             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </Link>
         </div>

@@ -75,7 +75,7 @@ export default function BellandurCompanyEventRegistrationPage() {
                 {
                         "col1": "Platform Ticketing Fee",
                         "col2": "5% to 8% deduction per paid delegate pass",
-                        "col3": "0% ticket commission; plans from ₹29/month"
+                        "col3": "0% ticket commission; plans from ₹499/month"
                 },
                 {
                         "col1": "Morning Gate Check-In",

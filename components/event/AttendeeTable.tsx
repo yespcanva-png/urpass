@@ -1598,16 +1598,24 @@ export default function AttendeeTable({
                       const multiScanCount = Number(attCr.scan_count || (Array.isArray(attCr.scan_history) ? attCr.scan_history.length : 0));
                       const multiScanHistory = Array.isArray(attCr.scan_history) ? attCr.scan_history : [];
 
-                      if (multiScanCount <= 1 && multiScanHistory.length <= 1) return null;
+                      if (multiScanCount < 1 && multiScanHistory.length < 1) return null;
 
                       return (
                         <div className="mt-3 pt-2.5 border-t border-slate-200/80">
                           <div className="flex items-center justify-between">
                             <span className="text-[10px] font-bold uppercase tracking-wide text-indigo-600">
-                              Scan Log ({multiScanCount} Total)
+                              Scan Log ({multiScanCount || multiScanHistory.length} Total)
                             </span>
-                            <span className="text-[11px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-full">
-                              Multi-Scan Active
+                            <span
+                              className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${
+                                multiScanCount > 1
+                                  ? "text-indigo-700 bg-indigo-50 border-indigo-200"
+                                  : "text-emerald-700 bg-emerald-50 border-emerald-200"
+                              }`}
+                            >
+                              {multiScanCount > 1
+                                ? `Multi-Scan Active (${multiScanCount})`
+                                : "Checked In (1 Scan)"}
                             </span>
                           </div>
                           {multiScanHistory.length > 0 && (

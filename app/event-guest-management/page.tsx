@@ -21,7 +21,7 @@ export default function EventGuestManagementPage() {
         badge: "EVENT GUEST MANAGEMENT",
         h1: "Event Guest List and QR Entry Management",
         description: "Collect guest registrations, manage your approved guest list, issue digital QR passes, and scan guests at the entrance. All from one clean platform.",
-        ctaLabel: "Manage Guests for ₹29 →",
+        ctaLabel: "Manage Guests →",
         ctaHref: "/signup?plan=pro&from=event-guest-management",
         secondaryCtaLabel: "View Pricing",
         secondaryCtaHref: "/pricing",
@@ -54,10 +54,10 @@ export default function EventGuestManagementPage() {
           { q: "How does a guest get their entry pass?", a: "Once you approve their registration, the guest receives a digital QR pass via a link. They show it on their phone at the entrance." },
           { q: "Can I add VIP guests separately?", a: "Yes. When approving guests, you can assign pass types such as VIP, Speaker, or Organizer in addition to the standard Participant type." },
           { q: "Can I manage a walk-in guest list?", a: "Yes. You can manually add attendees directly from the attendee management dashboard for walk-in guests." },
-          { q: "How much does guest management cost on URPASS?", a: "URPASS offers plans starting at ₹29/month for the first 2 months for Starter (500 registrations/mo) and Pro (2,500 registrations/mo), or pay-as-you-go single-event passes starting at ₹299 for up to 300 guests with 0% ticket fees." },
+          { q: "How much does guest management cost on URPASS?", a: "URPASS offers plans starting from ₹499/month for Starter (500 registrations/mo) and Pro (2,500 registrations/mo), or pay-as-you-go single-event passes starting at ₹299 for up to 300 guests with 0% ticket fees." },
         ],
         ctaTitle: "Event Guest List and QR Entry Management",
-        ctaDescription: "Registration to entry · Digital QR passes · ₹29 introductory offer",
+        ctaDescription: "Registration to entry · Digital QR passes · plans from ₹499/mo",
       }}
     />
   );

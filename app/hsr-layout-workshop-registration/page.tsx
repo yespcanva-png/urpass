@@ -75,7 +75,7 @@ export default function HsrLayoutWorkshopRegistrationPage() {
                 {
                         "col1": "Platform Commission",
                         "col2": "8% to 15% deducted from student tuition",
-                        "col3": "0% ticket commission; plans from ₹29/month"
+                        "col3": "0% ticket commission; plans from ₹499/month"
                 },
                 {
                         "col1": "Seat Capacity Limits",
@@ -235,7 +235,7 @@ export default function HsrLayoutWorkshopRegistrationPage() {
         },
         {
                 "q": "Are there hidden ticketing fees taken from my course revenue?",
-                "a": "No. UrPass charges 0% commission on ticket sales. You only pay a flat monthly software subscription (introductory ₹29/month) plus standard payment gateway fees."
+                "a": "No. UrPass charges 0% commission on ticket sales. You only pay a flat monthly software subscription (plans from ₹499/month) plus standard payment gateway fees."
         },
         {
                 "q": "Can I export student registration rosters to Excel or CSV?",

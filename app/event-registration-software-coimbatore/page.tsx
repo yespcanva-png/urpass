@@ -62,7 +62,7 @@ export default function LocationPage() {
             "Local INR pricing with GST compliant invoices",
             "Zero per-ticket percentage cuts on ticket revenue",
             "Instant duplicate pass lockout across all entrance gates",
-            "Plans start with ₹29/mo introductory offer and 0% ticket fee"
+            "Plans start from ₹499/mo with 0% ticket fee"
           ],
         },
         useCases: [
@@ -76,10 +76,10 @@ export default function LocationPage() {
           { q: "Is URPASS suitable for engineering colleges in Coimbatore?", a: "Yes. Leading engineering institutions use URPASS to run technical symposiums, paper presentations, and cultural fests with digital gate verification." },
           { q: "Can trade expos at CODISSIA use URPASS for visitor badges?", a: "Yes. Generate printable and mobile QR badges for industrial buyers and scan attendees at exhibition turnstiles." },
           { q: "Can student volunteers scan passes on their own phones?", a: "Yes. Volunteers open the scanner in their mobile browser with PIN protection — no app downloads required." },
-          { q: "Is URPASS free for department workshops in Coimbatore?", a: "Yes. Events with up to 100 participants can use our introductory ₹29/month offer at ₹0 forever." },
+          { q: "Is URPASS free for department workshops in Coimbatore?", a: "Yes. Events with up to 100 participants can use our plans starting from ₹499/month at ₹0 forever." },
         ],
         ctaTitle: "Start your Coimbatore event with URPASS",
-        ctaDescription: "Plans from ₹29/mo · Razorpay UPI payments · Sub-second mobile scanning",
+        ctaDescription: "Plans from ₹499/mo · Razorpay UPI payments · Sub-second mobile scanning",
       }}
     />
   );

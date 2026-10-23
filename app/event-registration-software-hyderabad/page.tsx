@@ -62,7 +62,7 @@ export default function LocationPage() {
             "Local INR pricing with GST compliant invoices",
             "Zero per-ticket percentage cuts on ticket revenue",
             "Instant duplicate pass lockout across all entrance gates",
-            "Plans start with ₹29/mo introductory offer and 0% ticket fee"
+            "Plans start from ₹499/mo with 0% ticket fee"
           ],
         },
         useCases: [
@@ -79,7 +79,7 @@ export default function LocationPage() {
           { q: "Can we export attendance data for corporate audit records?", a: "Yes. Download complete attendee records with exact entrance timestamps to Excel or CSV at any time." },
         ],
         ctaTitle: "Start your Hyderabad event with URPASS",
-        ctaDescription: "Plans from ₹29/mo · Razorpay UPI payments · Sub-second mobile scanning",
+        ctaDescription: "Plans from ₹499/mo · Razorpay UPI payments · Sub-second mobile scanning",
       }}
     />
   );

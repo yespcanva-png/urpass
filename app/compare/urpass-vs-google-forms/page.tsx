@@ -105,7 +105,7 @@ export default function UrpassVsGoogleFormsPage() {
             },
             {
               criteria: "Setup Time",
-              urpass: "2 minutes · ₹29/mo introductory offer",
+              urpass: "2 minutes · plans starting from ₹499/mo",
               competitor: "2 minutes · Free",
               urpassAdvantage: false,
             },
@@ -165,7 +165,7 @@ export default function UrpassVsGoogleFormsPage() {
         faqs: [
           {
             q: "Can I use URPASS for free like Google Forms?",
-            a: "URPASS offers an introductory offer of ₹29/month for your first 2 months, giving you full digital QR pass issuance, automated email delivery, and in-browser camera scanning with zero ticket commission.",
+            a: "URPASS offers an transparent plans starting from ₹499/month, giving you full digital QR pass issuance, automated email delivery, and in-browser camera scanning with zero ticket commission.",
           },
           {
             q: "Do I have to set up complex Google Form add-ons like Form Publisher or QR generator?",
@@ -181,7 +181,7 @@ export default function UrpassVsGoogleFormsPage() {
           },
         ],
         ctaTitle: "Upgrade from spreadsheets to URPASS",
-        ctaDescription: "Plans start at ₹29/mo · 0.28s scanning · Instant QR passes · Zero ticket commission",
+        ctaDescription: "Plans start at ₹499/mo · 0.28s scanning · Instant QR passes · Zero ticket commission",
       }}
     />
   );

@@ -69,10 +69,10 @@ export default function ComparisonPage() {
           { q: "Can I import an existing Google Sheet into URPASS?", a: "Yes. You can export your Google Sheet to CSV and import it into URPASS to generate unique digital QR passes for all attendees immediately." },
           { q: "Why shouldn't I use Google Forms add-ons to send QR codes?", a: "Third-party add-ons rely on Google Apps Script quotas, frequently break under volume, and provide no synchronized scanner to prevent duplicate entry at the door." },
           { q: "Is URPASS as easy to use as Google Forms?", a: "Yes. Creating an event and form takes under 3 minutes with zero technical or coding knowledge required." },
-          { q: "How does URPASS pricing work?", a: "URPASS offers an introductory offer of ₹29/month for your first 2 months across all subscription tiers, with zero platform ticket commissions and full access to QR pass issuance and check-in tools." },
+          { q: "How does URPASS pricing work?", a: "URPASS offers an transparent plans starting from ₹499/month across all subscription tiers, with zero platform ticket commissions and full access to QR pass issuance and check-in tools." },
         ],
         ctaTitle: "Experience the URPASS difference today",
-        ctaDescription: "Plans start at ₹29/mo · Zero ticket commission · Sub-second door check-in",
+        ctaDescription: "Plans start at ₹499/mo · Zero ticket commission · Sub-second door check-in",
       }}
     />
   );

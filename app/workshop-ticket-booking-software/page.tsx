@@ -69,7 +69,7 @@ export default function WorkshopTicketBookingSoftwarePage() {
                 {
                         "col1": "Platform Commission",
                         "col2": "5% to 10% deducted from every workshop ticket",
-                        "col3": "0% ticket fee; flat subscription starting from ₹29 intro offer"
+                        "col3": "0% ticket fee; flat subscription starting from ₹499/mo"
                 },
                 {
                         "col1": "Payout Schedule",

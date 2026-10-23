@@ -158,7 +158,7 @@ export default function Page() {
           }
 ],
         ctaTitle: "Event Registration & Fast QR Check-In for 500 Attendees",
-        ctaDescription: "Launch your event registration in minutes. Plans starting with a ₹29/month introductory offer.",
+        ctaDescription: "Launch your event registration in minutes. Plans starting from ₹499/month with 0% ticket commission.",
       }}
     />
   );

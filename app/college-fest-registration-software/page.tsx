@@ -70,7 +70,7 @@ export default function CollegeFestRegistrationSoftwarePage() {
           },
           {
             criteria: "Platform Pricing for Colleges",
-            urpass: "Plans start at ₹29/mo intro offer; 0% commission on tickets",
+            urpass: "Plans start at ₹499/mo intro offer; 0% commission on tickets",
             competitor: "High per-ticket cuts taking funds from student budgets",
             urpassAdvantage: true,
           },

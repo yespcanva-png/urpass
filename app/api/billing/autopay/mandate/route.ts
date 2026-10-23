@@ -9,7 +9,6 @@ import { createClient } from "@/lib/supabase/server";
 import { getSupabaseUrl } from "@/lib/supabase/config";
 import {
   AUTOPAY_AUTH_AMOUNT_PAISE,
-  AUTOPAY_INTRO_CHARGE_PAISE,
   getRazorpayAutopayDisclosure,
   isRazorpayAutopayPlan,
 } from "@/lib/billing/razorpay-autopay";
@@ -148,7 +147,7 @@ export async function POST(req: NextRequest) {
   const customerGstin = String(billingDetails?.gstin || "").slice(0, 20);
   const billingState = String(billingDetails?.state || "").slice(0, 60);
   const billingStateCode = String(billingDetails?.stateCode || "").slice(0, 10);
-  const orderAmount = isFreeTrial ? AUTOPAY_AUTH_AMOUNT_PAISE : AUTOPAY_INTRO_CHARGE_PAISE;
+  const orderAmount = isFreeTrial ? AUTOPAY_AUTH_AMOUNT_PAISE : disclosure.maxAmountPaise;
 
   try {
     const razorpay = getRazorpayClient();

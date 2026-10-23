@@ -94,7 +94,7 @@ export default function EventbriteVsTownscriptVsUrpassPage() {
                 "title": "The Math of Ticketing Fees: How Much Do You Actually Keep?",
                 "paragraphs": [
                         "Ticketing aggregator percentage cuts sound modest until calculated on total event revenue. On an event generating ₹10,00,000 (£10,000) in ticket sales, an aggregator taking 6% to 8% deducts ₹60,000 to ₹80,000 (£600 to £800) straight from your profit margin.",
-                        "With UrPass, you pay zero platform ticket commission. You pay only our transparent monthly subscription (starting from ₹29/mo intro offer / £15/mo in UK) and standard payment processor interchange fees directly to Razorpay or Stripe. You retain tens of thousands in profit that would otherwise be lost to aggregators."
+                        "With UrPass, you pay zero platform ticket commission. You pay only our transparent monthly subscription (starting from plans starting from ₹499/mo / £15/mo in UK) and standard payment processor interchange fees directly to Razorpay or Stripe. You retain tens of thousands in profit that would otherwise be lost to aggregators."
                 ],
                 "bullets": [
                         "Save 5% to 8% of your gross ticket revenue on every paid event",
@@ -237,7 +237,7 @@ export default function EventbriteVsTownscriptVsUrpassPage() {
         },
         {
                 "q": "How much does UrPass cost?",
-                "a": "UrPass offers an introductory offer of ₹29/month for your first 2 months in India (£15/month in the UK) with 0% platform ticket commissions. Pay-as-you-go single-event options start at ₹299 (UK: £5)."
+                "a": "UrPass offers an transparent plans starting from ₹499/month in India (£15/month in the UK) with 0% platform ticket commissions. Pay-as-you-go single-event options start at ₹299 (UK: £5)."
         }
 ],
       }}

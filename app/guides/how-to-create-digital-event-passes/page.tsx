@@ -73,7 +73,7 @@ export default function GuidePage() {
           { q: "Can passes be used for different tiers like VIP or Student?", a: "Yes. You can configure multiple ticket classes, and the digital pass prominently displays the attendee's specific tier badge." },
         ],
         ctaTitle: "Streamline your event check-in with URPASS",
-        ctaDescription: "Plans from ₹29/mo · Zero app downloads · Fast sub-second scanning",
+        ctaDescription: "Plans from ₹499/mo · Zero app downloads · Fast sub-second scanning",
       }}
     />
   );

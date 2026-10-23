@@ -70,10 +70,10 @@ export default function Page() {
           { q: "Can we collect registrations from external colleges across the state?", a: "Yes. The registration link is public and shareable, allowing students from any university to register easily." },
           { q: "Can we track attendance at both the main gate and individual presentation halls?", a: "Yes. You can use separate scanning phones at the main gate and outside individual lab rooms." },
           { q: "Can we collect registration fees via UPI?", a: "Yes. Native Razorpay integration allows you to accept registration fees via UPI (GPay, PhonePe, Paytm) and cards." },
-          { q: "Is URPASS free for department technical symposiums?", a: "Department symposiums can get started with our ₹29/month introductory offer for the first 2 months." },
+          { q: "Is URPASS free for department technical symposiums?", a: "Department symposiums can get started with our plans starting from ₹499/month for the first 2 months." },
         ],
         ctaTitle: "Elevate your event entry with URPASS",
-        ctaDescription: "Plans from ₹29/mo · Zero hardware setup · Fast sub-second scanning",
+        ctaDescription: "Plans from ₹499/mo · Zero hardware setup · Fast sub-second scanning",
       }}
     />
   );

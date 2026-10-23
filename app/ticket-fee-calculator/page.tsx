@@ -45,7 +45,7 @@ export const metadata: Metadata = {
 const FAQS = [
   {
     q: "How does the URPASS 0% ticket commission model work?",
-    a: "Unlike legacy ticketing aggregators that take 3.7% to 10% from every ticket sale, URPASS does not take any percentage cut from your ticket revenue. Organizers pay only a flat, predictable software subscription (starting with a ₹29 introductory offer for the first 2 months) or a pay-as-you-go single-event pass. Standard payment processor interchange fees (such as Razorpay or Stripe) settle directly to your merchant account.",
+    a: "Unlike legacy ticketing aggregators that take 3.7% to 10% from every ticket sale, URPASS does not take any percentage cut from your ticket revenue. Organizers pay only a flat, predictable software subscription (starting with plans from ₹499/mo for the first 2 months) or a pay-as-you-go single-event pass. Standard payment processor interchange fees (such as Razorpay or Stripe) settle directly to your merchant account.",
   },
   {
     q: "How much does Eventbrite charge per ticket?",
@@ -57,7 +57,7 @@ const FAQS = [
   },
   {
     q: "Can I host free events on URPASS?",
-    a: "Yes. URPASS supports free registrations with full QR code generation, email pass delivery, and mobile browser camera scanning included. Organizers can get started with our ₹29 introductory offer or single-event passes.",
+    a: "Yes. URPASS supports free registrations with full QR code generation, email pass delivery, and mobile browser camera scanning included. Organizers can get started with our plans from ₹499/mo or single-event passes.",
   },
   {
     q: "When and how do I receive the money from ticket sales?",
@@ -140,7 +140,7 @@ export default function TicketFeeCalculatorPage() {
               </div>
               <h3 className="text-base font-bold text-neutral-900">Predictable Flat SaaS</h3>
               <p className="text-xs text-neutral-600 mt-2 leading-relaxed">
-                URPASS operates on 0% per-ticket platform commission. You pay a predictable, flat monthly plan starting at ₹29 for your first 2 months, keeping 100% of ticket sales.
+                URPASS operates on 0% per-ticket platform commission. You pay a predictable, flat monthly plan starting at ₹499 for your first 2 months, keeping 100% of ticket sales.
               </p>
             </div>
 
@@ -230,14 +230,14 @@ export default function TicketFeeCalculatorPage() {
               Ready to stop paying ticketing commissions?
             </h2>
             <p className="mt-3 text-neutral-300 text-xs sm:text-sm max-w-xl mx-auto leading-relaxed">
-              Create your event on URPASS in under 30 seconds. Get started with our ₹29 introductory offer and keep 100% of your ticket sales.
+              Create your event on URPASS in under 30 seconds. Get started with our plans from ₹499/mo and keep 100% of your ticket sales.
             </p>
             <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
                 href="/signup?ref=calculator-cta"
                 className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-white hover:bg-neutral-100 text-neutral-950 font-bold text-sm transition-all shadow-md"
               >
-                Get Started for ₹29 →
+                Get Started →
               </Link>
               <Link
                 href="/pricing"
@@ -247,7 +247,7 @@ export default function TicketFeeCalculatorPage() {
               </Link>
             </div>
             <p className="text-[11px] text-neutral-400 mt-4">
-              ₹29 intro offer for first 2 months · 0% ticket commission · Cancel anytime
+              Plans from ₹499/mo · 0% ticket commission · Cancel anytime
             </p>
           </div>
         </section>

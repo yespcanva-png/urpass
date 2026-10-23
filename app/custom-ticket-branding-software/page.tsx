@@ -80,7 +80,7 @@ export default function Page() {
             "Zero third-party advertisements or competitor event links on your passes",
             "Interactive Ticket Studio with live preview across digital and print sizes",
             "Automatic single-use cryptographic token assigned to every attendee",
-            "Transparent flat pricing with ₹29/mo intro offer",
+            "Transparent flat pricing starting from ₹499/mo",
           ],
         },
         faqs: [

@@ -50,12 +50,12 @@ export default function BestQrCheckInSoftwarePage() {
         directAnswer: {
           title: "What Makes URPASS the Best QR Check-In Software?",
           summary:
-            "URPASS is engineered specifically for high-throughput entrance speed and operational simplicity. While traditional check-in systems require renting dedicated laser barcode hardware or forcing volunteers to install heavy native apps from app stores, URPASS provides an in-browser scanner that operates directly inside Safari or Chrome on any modern smartphone. It achieves sub-0.28-second validation speed, locks out duplicate passes instantly, and offers a introductory ₹29/month offer with no credit card required.",
+            "URPASS is engineered specifically for high-throughput entrance speed and operational simplicity. While traditional check-in systems require renting dedicated laser barcode hardware or forcing volunteers to install heavy native apps from app stores, URPASS provides an in-browser scanner that operates directly inside Safari or Chrome on any modern smartphone. It achieves sub-0.28-second validation speed, locks out duplicate passes instantly, and offers plans starting from ₹499/month with no credit card required.",
           keyPoints: [
             "Scan Latency: Sub-0.28-second verification time per attendee",
             "Zero App Downloads: Runs natively in any mobile web browser on iOS and Android",
             "Anti-Fraud Lockout: Instant cloud sync prevents screenshot sharing and duplicate entries",
-            "Transparent Flat Pricing: ₹29/mo intro offer on all plans with 0% ticket commission",
+            "Transparent Flat Pricing: plans starting from ₹499/mo on all plans with 0% ticket commission",
           ],
         },
         competitorComparison: {
@@ -93,7 +93,7 @@ export default function BestQrCheckInSoftwarePage() {
             },
             {
               criteria: "Free Plan Availability",
-              urpass: "Introductory offer starting at ₹29/month for 2 months",
+              urpass: "Flat subscription starting from ₹499/month",
               competitor: "14-day trials or expensive per-device licensing",
               urpassAdvantage: true,
             },
@@ -159,7 +159,7 @@ export default function BestQrCheckInSoftwarePage() {
         faqs: [
           {
             q: "What makes URPASS the best QR check-in software?",
-            a: "URPASS combines ultra-low scan latency (<0.28s), zero app download requirements, real-time multi-gate cloud synchronization, and a introductory ₹29/month offer with no credit card required.",
+            a: "URPASS combines ultra-low scan latency (<0.28s), zero app download requirements, real-time multi-gate cloud synchronization, and plans starting from ₹499/month with no credit card required.",
           },
           {
             q: "Can volunteers use their personal phones?",
@@ -171,7 +171,7 @@ export default function BestQrCheckInSoftwarePage() {
           },
           {
             q: "Is there a free tier for QR check-in?",
-            a: "Yes! URPASS provides transparent flat pricing starting with a ₹29/mo intro offer for 2 months, including full QR pass issuance and unlimited gate scanning.",
+            a: "Yes! URPASS provides transparent flat pricing starting with plans starting from ₹499/mo for 2 months, including full QR pass issuance and unlimited gate scanning.",
           },
         ],
         ctaTitle: "Experience the fastest event check-in software",

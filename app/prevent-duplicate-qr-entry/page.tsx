@@ -158,7 +158,7 @@ export default function Page() {
           }
 ],
         ctaTitle: "Prevent Duplicate QR Ticket Entry & Counterfeit Passes in Real Time",
-        ctaDescription: "Launch your event registration in minutes. Plans starting with a ₹29/month introductory offer.",
+        ctaDescription: "Launch your event registration in minutes. Plans starting from ₹499/month with 0% ticket commission.",
       }}
     />
   );

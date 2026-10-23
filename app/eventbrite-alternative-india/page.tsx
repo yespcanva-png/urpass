@@ -32,12 +32,12 @@ export default function EventbriteAlternativeIndiaPage() {
   "h1": "Eventbrite Alternative for Indian Event Organizers",
   "canonicalUrl": "https://urpass.space/eventbrite-alternative-india",
   "description": "India's zero-commission Eventbrite alternative with instant UPI & Razorpay payments, WhatsApp passes, sub-second QR scanning, and college fest workflows.",
-  "ctaLabel": "Switch from Eventbrite for ₹29 →",
+  "ctaLabel": "Switch from Eventbrite →",
   "ctaHref": "/signup?plan=pro&from=eventbrite-alternative-india",
   "secondaryCtaLabel": "View Pricing",
   "secondaryCtaHref": "/pricing",
   "ctaTitle": "Sell Event Tickets in India with Instant UPI & 0% Commission",
-  "ctaDescription": "Connect your Razorpay account, accept direct UPI payments, issue WhatsApp & digital QR passes, and admit attendees in <0.3s. ₹29 introductory offer with 0% ticket commission.",
+  "ctaDescription": "Connect your Razorpay account, accept direct UPI payments, issue WhatsApp & digital QR passes, and admit attendees in <0.3s. plans from ₹499/mo with 0% ticket commission.",
   "directAnswer": {
     "title": "Why Choose URPASS as Your Eventbrite Alternative in India?",
     "summary": "URPASS is India's leading zero-commission Eventbrite alternative, designed for Indian conferences, college fests, workshops, and tech summits. Unlike Eventbrite, which lacks native UPI QR checkout, charges heavy platform cuts, and delays payouts, URPASS integrates directly with Razorpay for instant UPI settlement, charges 0% ticketing commission, and provides sub-second phone QR scanning.",
@@ -227,7 +227,7 @@ export default function EventbriteAlternativeIndiaPage() {
     },
     {
       "q": "Can I host free events on URPASS?",
-      "a": "Yes. URPASS supports free registrations with full QR code generation, WhatsApp delivery, and sub-second phone scanning. Organizers can get started with our ₹29 introductory offer or single-event passes."
+      "a": "Yes. URPASS supports free registrations with full QR code generation, WhatsApp delivery, and sub-second phone scanning. Organizers can get started with our plans from ₹499/mo or single-event passes."
     }
   ],
   "relatedLinks": [

@@ -45,7 +45,7 @@ export default function QrCodeEventCheckInSoftwarePage() {
         primaryCtaHref: "/signup?plan=pro&from=qr-code-event-check-in-software",
         secondaryCtaLabel: "View Pricing",
         secondaryCtaHref: "/pricing",
-        trustHighlights: ["Sub-0.3s QR scan", "Zero App Download", "Atomic Duplicate Lock", "₹29 Intro Offer"],
+        trustHighlights: ["Sub-0.3s QR scan", "Zero App Download", "Atomic Duplicate Lock", "Plans from ₹499/mo"],
         currency: "INR",
         cluster: "ticketing",
         description:

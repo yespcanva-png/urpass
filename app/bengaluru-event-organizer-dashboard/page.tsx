@@ -243,7 +243,7 @@ export default function BengaluruEventOrganizerDashboardPage() {
         },
         {
                 "q": "What pricing applies to the UrPass organizer dashboard?",
-                "a": "Full dashboard access is included with all UrPass plans, starting with an introductory offer of ₹29/month for your first 2 months (then ₹999/month), with 0% platform ticket fees."
+                "a": "Full dashboard access is included with all UrPass plans, starting from ₹499/month (then ₹999/month), with 0% platform ticket fees."
         }
 ],
       }}

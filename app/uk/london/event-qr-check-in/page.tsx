@@ -133,7 +133,7 @@ export default function Page() {
           }
 ],
         ctaTitle: "Event QR Code Check-In Built for London Venues & Summits",
-        ctaDescription: "Launch your event registration in minutes. Plans starting with a ₹29/month introductory offer.",
+        ctaDescription: "Launch your event registration in minutes. Plans starting from ₹499/month with 0% ticket commission.",
         geo: {"region":"Greater London","placename":"London","position":"51.5074;-0.1278","latitude":51.5074,"longitude":-0.1278,"country":"United Kingdom","countryCode":"GB"},
       }}
     />

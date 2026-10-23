@@ -85,7 +85,7 @@ export default function IndiaPage() {
         },
         description:
           "An India-focused digital event registration, QR pass and check-in platform for colleges, conferences, hackathons, workshops and corporate events across India with native INR pricing, UPI payments, and zero ticket commission.",
-        ctaLabel: "Get Started for ₹29",
+        ctaLabel: "Get Started",
 
         // 10-Point Standard: Direct Answer at the Top (40-80 words)
         directAnswer: {
@@ -108,7 +108,7 @@ export default function IndiaPage() {
           rows: [
             {
               col1: "Platform Commission on Tickets",
-              col2: "0% (Plans start at ₹29/mo intro offer)",
+              col2: "0% (Plans start at ₹499/mo intro offer)",
               col3: "3.7% to 8% per ticket sold + fixed fees",
             },
             {
@@ -138,7 +138,7 @@ export default function IndiaPage() {
             },
             {
               col1: "Pricing & Introductory Offer",
-              col2: "₹29/mo introductory offer for first 2 months across all tiers",
+              col2: "plans starting from ₹499/mo for first 2 months across all tiers",
               col3: "Strict attendee limits or expensive enterprise contracts",
             },
           ],
@@ -225,7 +225,7 @@ export default function IndiaPage() {
             {
               title: "Transparent INR Pricing",
               description:
-                "Flat monthly subscriptions with zero per-ticket commissions, starting with a ₹29/month introductory offer on all tiers.",
+                "Flat monthly subscriptions with zero per-ticket commissions, starting with plans starting from ₹499/month on all tiers.",
               badge: "Transparent INR",
             },
           ],
@@ -309,7 +309,7 @@ export default function IndiaPage() {
             },
             {
               criteria: "Introductory Offer",
-              urpass: "₹29/mo introductory pricing for first 2 months",
+              urpass: "Plans from ₹499/mo",
               competitor: "Zero free events or heavy restrictions",
               urpassAdvantage: true,
             },
@@ -464,11 +464,11 @@ export default function IndiaPage() {
           },
           {
             q: "How does 0% commission work on paid tickets?",
-            a: "Unlike legacy platforms that deduct 5% to 8% of your ticket revenue, URPASS operates on flat, predictable software subscriptions starting with an introductory offer of ₹29/month for your first 2 months. You connect your own Razorpay account, and 100% of ticket sales settle directly into your bank account.",
+            a: "Unlike legacy platforms that deduct 5% to 8% of your ticket revenue, URPASS operates on flat, predictable software subscriptions starting from ₹499/month. You connect your own Razorpay account, and 100% of ticket sales settle directly into your bank account.",
           },
           {
             q: "How does URPASS pricing work in India?",
-            a: "URPASS offers an introductory offer of ₹29/month for your first 2 months across Starter, Pro, and Business plans. This provides event organizers full access to registrations, QR pass delivery, and check-in tools with zero ticket commissions.",
+            a: "URPASS offers an transparent plans starting from ₹499/month across Starter, Pro, and Business plans. This provides event organizers full access to registrations, QR pass delivery, and check-in tools with zero ticket commissions.",
           },
           {
             q: "How do volunteers scan passes at the entrance?",
@@ -482,7 +482,7 @@ export default function IndiaPage() {
 
         ctaTitle: "Start your event in India today",
         ctaDescription:
-          "Intro offer starting at ₹29/mo · Instant UPI payments · 0% ticket commission · Built for Indian events",
+          "Plans from ₹499/mo · Instant UPI payments · 0% ticket commission · Built for Indian events",
       }}
     />
   );

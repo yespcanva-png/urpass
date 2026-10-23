@@ -57,13 +57,13 @@ export default async function CheckinsPage({
   ] = await Promise.all([
     supabase
       .from("attendees")
-      .select("id, name, email, pass_type, pass_status, application_status")
+      .select("id, name, email, phone, pass_type, pass_status, application_status, custom_responses, last_gate_scanned_at, created_at")
       .eq("event_id", eventId)
       .eq("application_status", "approved")
       .order("name", { ascending: true }),
     supabase
       .from("check_ins")
-      .select("id, attendee_id, checked_in_at, gate:scanner_gates(name)")
+      .select("id, attendee_id, checked_in_at, check_in_method, gate:scanner_gates(name)")
       .eq("event_id", eventId)
       .order("checked_in_at", { ascending: false }),
     supabase

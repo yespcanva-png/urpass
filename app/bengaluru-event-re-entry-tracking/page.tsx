@@ -243,7 +243,7 @@ export default function BengaluruEventReEntryTrackingPage() {
         },
         {
                 "q": "What pricing applies to re-entry tracking on UrPass?",
-                "a": "Re-entry and exit tracking are included on all UrPass plans, starting at an introductory ₹29/month for your first 2 months (then ₹999/month), with 0% platform ticket fees."
+                "a": "Re-entry and exit tracking are included on all UrPass plans, starting from ₹499/month, with 0% platform ticket fees."
         }
 ],
       }}

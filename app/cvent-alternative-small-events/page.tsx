@@ -41,7 +41,7 @@ export default function CventAlternativeSmallEventsPage() {
         "title": "Why Seek a Cvent Alternative for Small to Mid-Sized Events?",
         "summary": "Cvent is engineered for massive enterprise corporations with dedicated procurement teams and six-figure budgets. For small to mid-sized events, Cvent's annual lock-in contracts, complex multi-month onboarding, mandatory sales demos, and per-registration fees create unnecessary expense and operational friction. UrPass offers transparent self-serve pricing, instant 5-minute setup, and browser-based phone check-in.",
         "keyPoints": [
-                "Transparent flat subscription pricing starting from ₹29 intro offer / £15/mo vs Cvent multi-thousand-dollar contracts",
+                "Transparent flat subscription pricing starting from plans from ₹499/mo / £15/mo vs Cvent multi-thousand-dollar contracts",
                 "Instant self-serve event creation in under 5 minutes without mandatory sales demos",
                 "Sub-0.3s smartphone camera check-in with zero expensive hardware terminal rentals",
                 "0% platform commission on ticket sales with direct bank deposits via Stripe and Razorpay"
@@ -69,7 +69,7 @@ export default function CventAlternativeSmallEventsPage() {
                 {
                         "col1": "Pricing & Contracts",
                         "col2": "Mandatory annual contracts costing £3,000 - £20,000+ ($5k - $30k+)",
-                        "col3": "Flat monthly plans starting with ₹29 intro offer / £15/mo; cancel anytime"
+                        "col3": "Flat monthly plans starting with plans from ₹499/mo / £15/mo; cancel anytime"
                 },
                 {
                         "col1": "Onboarding Time",
@@ -94,7 +94,7 @@ export default function CventAlternativeSmallEventsPage() {
                 "title": "No Multi-Year Lock-In: Transparent, Predictable Flat SaaS",
                 "paragraphs": [
                         "Event planners frequently cite Cvent's sales process as their biggest frustration: you cannot see pricing on their website, you must sit through multi-stage sales demonstrations, and you are pressured into signing 12-month or multi-year contracts regardless of how many events you actually produce.",
-                        "UrPass provides radical pricing transparency. Our plans are listed publicly, starting with our introductory offer of ₹29/month for your first 2 months in India (£15/month in the UK). You pay flat, predictable subscription pricing with 0% platform ticket commissions and complete freedom to cancel whenever you choose."
+                        "UrPass provides radical pricing transparency. Our plans are listed publicly, starting with our transparent plans starting from ₹499/month in India (£15/month in the UK). You pay flat, predictable subscription pricing with 0% platform ticket commissions and complete freedom to cancel whenever you choose."
                 ],
                 "bullets": [
                         "Zero annual lock-in contracts or surprise auto-renewals",

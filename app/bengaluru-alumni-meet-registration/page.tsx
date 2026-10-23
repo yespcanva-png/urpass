@@ -121,7 +121,7 @@ export default function BengaluruAlumniMeetRegistrationPage() {
                         "Retain 100% of alumni contributions across dinner and banquet ticket sales",
                         "Automated financial reconciliation matching alumni names with payment references",
                         "Support multiple payment methods: UPI, corporate cards, debit cards, and net banking",
-                        "Transparent software pricing with introductory plans starting at ₹29/month"
+                        "Transparent software pricing starting from ₹499/month"
                 ],
                 "takeaway": "Direct payment routing protects alumni funds and simplifies accounting."
         }
@@ -243,7 +243,7 @@ export default function BengaluruAlumniMeetRegistrationPage() {
         },
         {
                 "q": "What pricing applies to alumni association events?",
-                "a": "UrPass offers transparent flat software subscriptions starting at an introductory ₹29/month for your first 2 months (then ₹999/month), with 0% platform ticket fees on paid tiers."
+                "a": "UrPass offers transparent flat software subscriptions starting from ₹499/month, with 0% platform ticket fees on paid tiers."
         }
 ],
       }}

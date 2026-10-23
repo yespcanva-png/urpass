@@ -243,7 +243,7 @@ export default function BangaloreEventEntryQueueManagementPage() {
         },
         {
                 "q": "What pricing applies to queue management on UrPass?",
-                "a": "High-speed camera scanning is included on all UrPass plans, starting at an introductory ₹29/month for your first 2 months (then ₹999/month), with 0% platform ticket fees."
+                "a": "High-speed camera scanning is included on all UrPass plans, starting from ₹499/month, with 0% platform ticket fees."
         }
 ],
       }}

@@ -69,7 +69,7 @@ export default function ConferenceDelegateRegistrationSoftwarePage() {
                 {
                         "col1": "Pricing Model",
                         "col2": "Annual lock-in contracts costing £3,000 - £15,000+ per year",
-                        "col3": "Transparent monthly plans starting with ₹29 intro offer / £15/mo"
+                        "col3": "Transparent monthly plans starting with plans from ₹499/mo / £15/mo"
                 },
                 {
                         "col1": "Platform Commission",

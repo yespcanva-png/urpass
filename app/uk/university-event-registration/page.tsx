@@ -133,7 +133,7 @@ export default function Page() {
           }
 ],
         ctaTitle: "University Event Registration Software Built for UK Higher Ed",
-        ctaDescription: "Launch your event registration in minutes. Plans starting with a ₹29/month introductory offer.",
+        ctaDescription: "Launch your event registration in minutes. Plans starting from ₹499/month with 0% ticket commission.",
         geo: {"region":"UK","placename":"United Kingdom","position":"55.3781;-3.4360","latitude":55.3781,"longitude":-3.436,"country":"United Kingdom","countryCode":"GB"},
       }}
     />

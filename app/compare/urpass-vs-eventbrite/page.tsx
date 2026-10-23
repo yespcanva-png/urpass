@@ -31,7 +31,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "URPASS vs Eventbrite: 2026 Head-to-Head Comparison | URPASS",
     description:
-      "Compare URPASS vs Eventbrite for event registration, digital QR passes, and check-in speed. Flat pricing, 0% ticket commission, and plans from ₹29/mo.",
+      "Compare URPASS vs Eventbrite for event registration, digital QR passes, and check-in speed. Flat pricing, 0% ticket commission, and plans from ₹499/mo.",
     url: "https://urpass.space/compare/urpass-vs-eventbrite",
     locale: "en_IN",
     type: "article",
@@ -51,11 +51,11 @@ export default function UrpassVsEventbritePage() {
         directAnswer: {
           title: "URPASS vs Eventbrite in 30 Seconds",
           summary:
-            "Eventbrite is optimized for consumer discovery and large commercial ticket sales, but charges organizers up to 3.7% + per-ticket fees and restricts free tiers to 25 attendees. URPASS is designed for event organizers who want full control over their registration, zero per-ticket platform commissions, instant in-browser QR check-in (<0.28s), and transparent flat pricing starting with a ₹29/mo intro offer.",
+            "Eventbrite is optimized for consumer discovery and large commercial ticket sales, but charges organizers up to 3.7% + per-ticket fees and restricts free tiers to 25 attendees. URPASS is designed for event organizers who want full control over their registration, zero per-ticket platform commissions, instant in-browser QR check-in (<0.28s), and transparent flat pricing starting with plans starting from ₹499/mo.",
           keyPoints: [
             "Platform Commission: URPASS charges 0% per-ticket fee vs Eventbrite's 3.7% + fee per ticket",
             "Gate Scanner: URPASS runs in any mobile browser (<0.28s) vs Eventbrite requiring dedicated app download",
-            "Pricing Model: URPASS offers 0% ticket commission with ₹29/mo intro offer vs Eventbrite taking up to 3.7% + per-ticket fees",
+            "Pricing Model: URPASS offers 0% ticket commission with plans starting from ₹499/mo vs Eventbrite taking up to 3.7% + per-ticket fees",
             "Payment Gateways: Direct payouts via Razorpay (UPI, RuPay, Cards) and Stripe",
           ],
         },
@@ -192,7 +192,7 @@ export default function UrpassVsEventbritePage() {
           },
           {
             q: "How does URPASS pricing compare to Eventbrite?",
-            a: "Eventbrite charges up to 3.7% + per-ticket service fees on paid tickets. URPASS offers flat subscription plans starting with an introductory ₹29/month offer for 2 months, charging 0% platform ticket fees across all tiers.",
+            a: "Eventbrite charges up to 3.7% + per-ticket service fees on paid tickets. URPASS offers flat subscription plans starting with plans starting from ₹499/month for 2 months, charging 0% platform ticket fees across all tiers.",
           },
           {
             q: "Can volunteers scan tickets without creating accounts?",

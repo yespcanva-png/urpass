@@ -176,7 +176,7 @@ export default function LumaAlternativePage() {
           badge: "MIGRATION OFFER",
           title: "Switch to URPASS with ₹0 upfront cost.",
           description:
-            "Experience URPASS with our ₹29/month introductory offer for your first 2 months. Launch your event in minutes with zero platform ticket commissions.",
+            "Experience URPASS with our plans starting from ₹499/month for your first 2 months. Launch your event in minutes with zero platform ticket commissions.",
           bullets: [
             "0% commission on all ticket tiers",
             "Instant UPI QR & Card checkouts with direct bank payouts",
@@ -199,7 +199,7 @@ export default function LumaAlternativePage() {
           },
           {
             q: "Does URPASS have an attendee limit on free events?",
-            a: "URPASS provides flat monthly plans with 0% platform ticket commissions, starting with an introductory offer of ₹29/month for your first 2 months on Starter, Pro, or Business.",
+            a: "URPASS provides flat monthly plans with 0% platform ticket commissions, starting from ₹499/month on Starter, Pro, or Business.",
           },
           {
             q: "Can I export all attendee data to CSV?",

@@ -345,7 +345,7 @@ export default function SEOPage({ config }: { config: SEOPageConfig }) {
         offers: {
           "@type": "AggregateOffer",
           priceCurrency: isUkPage ? "GBP" : "INR",
-          lowPrice: isUkPage ? "15" : "29",
+          lowPrice: isUkPage ? "15" : "499",
           highPrice: isUkPage ? "79" : "2499",
           offerCount: "3",
         },
@@ -457,7 +457,7 @@ export default function SEOPage({ config }: { config: SEOPageConfig }) {
             offers: {
               "@type": "AggregateOffer",
               priceCurrency: isUkPage ? "GBP" : "INR",
-              lowPrice: isUkPage ? "15" : "29",
+              lowPrice: isUkPage ? "15" : "499",
               highPrice: isUkPage ? "79" : "2499",
               offerCount: "3",
             },
@@ -540,7 +540,7 @@ export default function SEOPage({ config }: { config: SEOPageConfig }) {
             </Link>
           </div>
           <p className="mt-6 text-xs text-neutral-400">
-            {isUkPage ? "Plans from £15/mo · 0% ticket commission · Cancel anytime" : "₹29 introductory offer · 0% ticket commission · Cancel anytime"}
+            {isUkPage ? "Plans from £15/mo · 0% ticket commission · Cancel anytime" : "Plans from ₹499/mo · 0% ticket commission · Cancel anytime"}
           </p>
 
           {/* Direct Answer at the top: 40-80 words engineered for Featured Snippets & AI Search */}
@@ -1180,14 +1180,14 @@ export default function SEOPage({ config }: { config: SEOPageConfig }) {
               {config.ctaTitle ?? "Start your first event today"}
             </h2>
             <p className="text-white/50 mb-8 leading-relaxed">
-              {config.ctaDescription ?? (isUkPage ? "Plans from £15/mo · 0% ticket commission · Up and running in 5 minutes" : "Get started for ₹29 · 0% ticket commission · Up and running in 5 minutes")}
+              {config.ctaDescription ?? (isUkPage ? "Plans from £15/mo · 0% ticket commission · Up and running in 5 minutes" : "Plans from ₹499/mo · 0% ticket commission · Up and running in 5 minutes")}
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Link
                 href={config.ctaHref ?? "/signup"}
                 className="inline-flex items-center justify-center gap-2 bg-white text-neutral-900 px-7 py-3.5 rounded-xl text-sm font-semibold hover:bg-neutral-100 transition-colors shadow-sm"
               >
-                {config.ctaLabel ?? (isUkPage ? "Get Started →" : "Get Started for ₹29 →")}
+                {config.ctaLabel ?? "Get Started →"}
               </Link>
               <Link
                 href={config.secondaryCtaHref ?? "/pricing"}

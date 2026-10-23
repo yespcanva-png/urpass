@@ -62,7 +62,7 @@ export default function LocationPage() {
             "Local INR pricing with GST compliant invoices",
             "Zero per-ticket percentage cuts on ticket revenue",
             "Instant duplicate pass lockout across all entrance gates",
-            "Plans start with ₹29/mo introductory offer and 0% ticket fee"
+            "Plans start from ₹499/mo with 0% ticket fee"
           ],
         },
         useCases: [
@@ -79,7 +79,7 @@ export default function LocationPage() {
           { q: "Is URPASS free to start for small Delhi seminars?", a: "Yes. Host 2 events per month with up to 100 registrations per month for ₹0 forever on our free plan." },
         ],
         ctaTitle: "Start your Delhi NCR event with URPASS",
-        ctaDescription: "Plans from ₹29/mo · Razorpay UPI payments · Sub-second mobile scanning",
+        ctaDescription: "Plans from ₹499/mo · Razorpay UPI payments · Sub-second mobile scanning",
       }}
     />
   );

@@ -55,7 +55,7 @@ export default function GuidePage() {
             "Custom application review and approval workflow",
             "Digital QR passes for hackers, mentors, and judges",
             "Seamless door check-in and overnight re-entry validation",
-            "Plans starting at ₹29/mo introductory offer with 0% ticket fees",
+            "Plans starting from ₹499/mo with 0% ticket fees",
           ],
         },
         useCases: [
@@ -70,10 +70,10 @@ export default function GuidePage() {
           { q: "Can we collect GitHub links and portfolio URLs on the form?", a: "Yes. You can add custom URL and text fields to review applicants' technical experience." },
           { q: "How do we handle late-night re-entry for hackers stepping outside?", a: "Staff scan the hacker's pass to verify identity and re-entry authorization at any hour of the night." },
           { q: "Can we issue different passes for mentors, judges, and hackers?", a: "Yes. You can configure distinct pass tiers with visual badge pills for Hackers, Mentors, Judges, and Organizers." },
-          { q: "How does URPASS pricing work for student hackathons?", a: "Student hackathons can get started with our introductory offer of ₹29/month for the first 2 months across all subscription tiers." },
+          { q: "How does URPASS pricing work for student hackathons?", a: "Student hackathons can get started with our transparent plans starting from ₹499/month across all subscription tiers." },
         ],
         ctaTitle: "Streamline your event check-in with URPASS",
-        ctaDescription: "Plans from ₹29/mo · Zero app downloads · Fast sub-second scanning",
+        ctaDescription: "Plans from ₹499/mo · Zero app downloads · Fast sub-second scanning",
       }}
     />
   );

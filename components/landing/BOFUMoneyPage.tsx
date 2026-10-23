@@ -60,7 +60,7 @@ export interface BOFUPageConfig {
 }
 
 const DEFAULT_INDIA_TRUST = [
-  "₹29 intro offer",
+  "Plans from ₹499/mo",
   "Razorpay / UPI",
   "Sub-0.3s QR scan",
   "0% Ticket Fee",
@@ -115,7 +115,7 @@ export const CORE_GEO_FAQS = [
   },
   {
     q: "How much does URPASS cost?",
-    a: "URPASS offers an introductory offer of ₹29/month for the first 2 months across Starter, Pro, and Business plans with 0% platform commission on ticket sales. Regular subscriptions are ₹499/mo (Starter), ₹999/mo (Pro), and ₹2,499/mo (Business) + GST. Pay-as-you-go single-event passes start at ₹299 (UK: £5). In the UK, monthly plans are £15 (Starter), £35 (Pro), and £79 (Business).",
+    a: "URPASS offers transparent subscriptions: Starter ₹499/mo, Pro ₹999/mo, and Business ₹2,499/mo (+ GST) with 0% platform commission on ticket sales. Pay-as-you-go single-event passes start at ₹299 (UK: £5). In the UK, monthly plans are £15 (Starter), £35 (Pro), and £79 (Business).",
   },
 ];
 

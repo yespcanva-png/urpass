@@ -218,6 +218,78 @@ async function processMultiScanEntry({
   };
 }
 
+async function buildAlreadyCheckedInResponse({
+  supabase,
+  pass,
+  attendee,
+  scanOperationId,
+  resolvedGateName,
+}: {
+  supabase: any;
+  pass: any;
+  attendee?: any;
+  scanOperationId: string;
+  resolvedGateName?: string | null;
+}) {
+  let att = attendee;
+  if (!att || !att.custom_responses) {
+    const { data: fetchedAttendee } = await supabase
+      .from("attendees")
+      .select("id, name, email, pass_type, custom_responses, last_gate_scanned_at")
+      .eq("id", pass.attendee_id)
+      .single();
+    if (fetchedAttendee) att = fetchedAttendee;
+  }
+
+  const { data: existingCi } = await supabase
+    .from("check_ins")
+    .select("checked_in_at, check_in_method, gate:scanner_gates(name)")
+    .eq("pass_id", pass.id)
+    .order("checked_in_at", { ascending: true });
+
+  const cr = ((att?.custom_responses as Record<string, any>) || {});
+  let history: Array<{
+    scan_number: number;
+    scanned_at: string;
+    gate_id?: string | null;
+    gate_name?: string | null;
+    scanned_by?: string | null;
+    method?: string;
+  }> = Array.isArray(cr.scan_history) ? [...cr.scan_history] : [];
+
+  if (history.length === 0 && existingCi && existingCi.length > 0) {
+    history = existingCi.map((ci: any, idx: number) => ({
+      scan_number: idx + 1,
+      scanned_at: ci.checked_in_at,
+      gate_name: ci.gate?.name || resolvedGateName || "Main Gate",
+      method: ci.check_in_method || "qr",
+    }));
+  }
+
+  const scanCount = Math.max(Number(cr.scan_count || 0), history.length, 1);
+  const checkedInAt = history[0]?.scanned_at || existingCi?.[0]?.checked_in_at || null;
+  const firstScannedAt = cr.first_scanned_at || checkedInAt;
+  const lastScannedAt = cr.last_scanned_at || history[history.length - 1]?.scanned_at || checkedInAt;
+  const gateName = resolvedGateName || history[history.length - 1]?.gate_name || "Main Gate";
+
+  return NextResponse.json({
+    status: "ALREADY_CHECKED_IN",
+    alreadyCheckedIn: true,
+    error: "Already checked in",
+    message: `Already checked in (Checked in ${scanCount} ${scanCount === 1 ? 'time' : 'times'})`,
+    attendee: att ? { id: att.id, name: att.name, email: att.email, pass_type: att.pass_type } : { name: "Attendee", email: "", pass_type: pass.pass_type },
+    passType: pass.pass_type,
+    checkedInAt,
+    firstScannedAt,
+    lastScannedAt,
+    scanCount,
+    scanHistory: history,
+    gateName,
+    badgeText: `ALREADY CHECKED IN (${scanCount} ${scanCount === 1 ? 'TIME' : 'TIMES'})`,
+    scanOperationId,
+  });
+}
+
 export async function POST(req: NextRequest) {
   let supabase = await createClient();
   let user: { id: string; email?: string } | null = null;
@@ -948,26 +1020,11 @@ export async function POST(req: NextRequest) {
     }
 
     // Already checked in — return existing record without creating duplicate
-    const { data: attendee } = await supabase
-      .from("attendees")
-      .select("name, email, pass_type")
-      .eq("id", pass.attendee_id)
-      .single();
-
-    const { data: existingCi } = await safeMaybeSingle(
-      supabase
-        .from("check_ins")
-        .select("checked_in_at")
-        .eq("pass_id", pass.id)
-    );
-
-    return NextResponse.json({
-      status: "ALREADY_CHECKED_IN",
-      alreadyCheckedIn: true,
-      attendee: attendee ?? { name: "Unknown", email: "", pass_type: pass.pass_type },
-      passType: pass.pass_type,
-      checkedInAt: existingCi?.checked_in_at || null,
+    return buildAlreadyCheckedInResponse({
+      supabase,
+      pass,
       scanOperationId,
+      resolvedGateName,
     });
   }
 
@@ -1003,22 +1060,12 @@ export async function POST(req: NextRequest) {
       if (multiRes) return NextResponse.json(multiRes, { status: 200 });
     }
 
-    const { data: existingCi } = await safeMaybeSingle(
-      supabase
-        .from("check_ins")
-        .select("checked_in_at")
-        .eq("pass_id", pass.id)
-    );
-
-    return NextResponse.json({
-      status: "ALREADY_CHECKED_IN",
-      alreadyCheckedIn: true,
-      error: "Already checked in",
-      message: "Already checked in",
-      attendee: { name: attendee.name, email: attendee.email, pass_type: attendee.pass_type },
-      passType: pass.pass_type,
-      checkedInAt: existingCi?.checked_in_at || null,
+    return buildAlreadyCheckedInResponse({
+      supabase,
+      pass,
+      attendee,
       scanOperationId,
+      resolvedGateName,
     });
   }
 
@@ -1079,22 +1126,12 @@ export async function POST(req: NextRequest) {
         if (multiRes) return NextResponse.json(multiRes, { status: 200 });
       }
 
-      const { data: existingCi } = await safeMaybeSingle(
-        supabase
-          .from("check_ins")
-          .select("checked_in_at")
-          .eq("pass_id", pass.id)
-      );
-
-      return NextResponse.json({
-        status: "ALREADY_CHECKED_IN",
-        alreadyCheckedIn: true,
-        error: "Already checked in",
-        message: "Already checked in",
-        attendee: { name: attendee.name, email: attendee.email, pass_type: attendee.pass_type },
-        passType: pass.pass_type,
-        checkedInAt: existingCi?.checked_in_at || checkedInAt,
+      return buildAlreadyCheckedInResponse({
+        supabase,
+        pass,
+        attendee,
         scanOperationId,
+        resolvedGateName,
       });
     }
     return NextResponse.json({ error: ciError.message }, { status: 500 });
@@ -1143,54 +1180,42 @@ export async function POST(req: NextRequest) {
 
   void recordApiUsage(organizerId, "check_ins");
 
-  if (allowMultipleScans) {
-    const initialRecord = {
-      scan_number: 1,
-      scanned_at: checkedInAt,
-      gate_id: gateId || null,
-      gate_name: resolvedGateName || "Main Gate",
-      scanned_by: user?.id || null,
-      method: checkInMethod || "qr",
-    };
-    const cr = (attendee.custom_responses as Record<string, any>) || {};
-    try {
-      await supabase.from("attendees").update({
-        custom_responses: {
-          ...cr,
-          scan_count: 1,
-          first_scanned_at: checkedInAt,
-          last_scanned_at: checkedInAt,
-          scan_history: [initialRecord],
-        },
-        last_gate_scanned_at: checkedInAt,
-      }).eq("id", attendee.id);
-    } catch {}
-
-    return NextResponse.json({
-      status: "CHECKED_IN",
-      success: true,
-      isMultiScan: true,
-      scanCount: 1,
-      checkedInAt,
-      lastScannedAt: checkedInAt,
-      firstScannedAt: checkedInAt,
-      scanHistory: [initialRecord],
-      gateName: resolvedGateName || "Main Gate",
-      badgeText: "ENTRY GRANTED (SCAN #1)",
-      message: "Entry allowed (Scan #1)",
-      attendee: { name: attendee.name, email: attendee.email, pass_type: attendee.pass_type },
-      passType: pass.pass_type,
-      scanOperationId,
-    });
-  }
+  const initialRecord = {
+    scan_number: 1,
+    scanned_at: checkedInAt,
+    gate_id: gateId || null,
+    gate_name: resolvedGateName || "Main Gate",
+    scanned_by: user?.id || null,
+    method: checkInMethod || "qr",
+  };
+  const cr = (attendee.custom_responses as Record<string, any>) || {};
+  try {
+    await supabase.from("attendees").update({
+      custom_responses: {
+        ...cr,
+        scan_count: 1,
+        first_scanned_at: checkedInAt,
+        last_scanned_at: checkedInAt,
+        scan_history: [initialRecord],
+      },
+      last_gate_scanned_at: checkedInAt,
+    }).eq("id", attendee.id);
+  } catch {}
 
   return NextResponse.json({
     status: "CHECKED_IN",
     success: true,
-    message: "Entry allowed",
-    attendee: { name: attendee.name, email: attendee.email, pass_type: attendee.pass_type },
-    passType: pass.pass_type,
+    isMultiScan: Boolean(allowMultipleScans),
+    scanCount: 1,
     checkedInAt,
+    lastScannedAt: checkedInAt,
+    firstScannedAt: checkedInAt,
+    scanHistory: [initialRecord],
+    gateName: resolvedGateName || "Main Gate",
+    badgeText: "ENTRY GRANTED (SCAN #1)",
+    message: "Entry allowed (Scan #1)",
+    attendee: { id: attendee.id, name: attendee.name, email: attendee.email, pass_type: attendee.pass_type },
+    passType: pass.pass_type,
     scanOperationId,
   });
 }

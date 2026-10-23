@@ -24,7 +24,7 @@ export default function ZohoBackstageAlternativePage() {
         ctaLabel: "Try URPASS free",
         features: [
           { icon: Zap, title: "5-minute setup", desc: "Create an event and start collecting registrations in 5 minutes. No training, no onboarding, no sales call." },
-          { icon: Gift, title: "Intro Offer", desc: "Introductory offer of ₹29/month for your first 2 months on all plans with 0% platform commission." },
+          { icon: Gift, title: "Intro Offer", desc: "Introductory offer of ₹499/month for your first 2 months on all plans with 0% platform commission." },
           { icon: QrCode, title: "QR check-in included", desc: "Every plan includes digital QR passes and phone-based check-in scanning. No add-on required." },
           { icon: CreditCard, title: "Razorpay payments", desc: "Accept INR payments via UPI, cards, and net banking with Razorpay — no complex payment setup." },
           { icon: Users, title: "Simple attendee management", desc: "Registration, approval, pass issuance, and check-in tracking from one clean dashboard." },
@@ -47,7 +47,7 @@ export default function ZohoBackstageAlternativePage() {
         ],
         faqs: [
           { q: "When should I use URPASS instead of Zoho Backstage?", a: "Use URPASS if you need simple event registration, digital QR passes, and check-in scanning — without the complexity of managing speakers, sessions, agendas, and exhibitors. URPASS is faster to set up and free to start." },
-          { q: "How does URPASS pricing work?", a: "URPASS offers an introductory offer of ₹29/month for the first 2 months on Starter, Pro, and Business plans with zero platform ticket commissions." },
+          { q: "How does URPASS pricing work?", a: "URPASS offers an transparent plans starting from ₹499/month on Starter, Pro, and Business plans with zero platform ticket commissions." },
           { q: "Can URPASS handle paid events with Razorpay?", a: "Yes. Starter and Pro plans support paid ticketing with Razorpay integration for UPI, cards, and net banking." },
           { q: "Does URPASS have QR check-in?", a: "Yes. All URPASS plans include QR-based check-in scanning. No additional module or cost." },
           { q: "Is URPASS suitable for corporate events?", a: "Yes. The Pro plan includes custom branding (company name, logo, colour on passes) and team management with role-based access." },

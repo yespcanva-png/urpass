@@ -53,7 +53,7 @@ export default function UrpassVsZohoBackstagePage() {
             "Zoho Backstage excels at massive multi-day multi-track conventions requiring complex agenda builders, speaker portals, and exhibitor booths. However, for 90% of events—including college fests, workshops, hackathons, seminars, and corporate summits—Zoho Backstage introduces excessive onboarding time, steep subscription tiers, and complex CRM setups. URPASS provides a 2-minute event launch, zero CRM dependencies, transparent flat pricing, and an in-browser scanner operating in under 0.28 seconds.",
           keyPoints: [
             "Setup Velocity: URPASS takes under 2 minutes vs Zoho Backstage requiring multi-step site building and module setup",
-            "Pricing Model: URPASS offers flat subscriptions from ₹29/mo intro offer with 0% ticket fees vs Zoho Backstage's complex tiers",
+            "Pricing Model: URPASS offers flat subscriptions from plans starting from ₹499/mo with 0% ticket fees vs Zoho Backstage's complex tiers",
             "Gate Scanning: URPASS uses an in-browser web scanner on any smartphone with zero app downloads",
             "Ecosystem Independence: URPASS operates standalone without requiring Zoho One or Zoho CRM accounts",
           ],
@@ -75,7 +75,7 @@ export default function UrpassVsZohoBackstagePage() {
             },
             {
               criteria: "Pricing Architecture",
-              urpass: "Flat subscription starting at ₹29/mo introductory offer (0% ticket fee)",
+              urpass: "Flat subscription starting from ₹499/mo introductory offer (0% ticket fee)",
               competitor: "Steep enterprise pricing tiers (₹5,000+ / event)",
               urpassAdvantage: true,
             },
@@ -158,7 +158,7 @@ export default function UrpassVsZohoBackstagePage() {
             "No complex website builders to configure",
             "Zero Zoho CRM account prerequisites",
             "Sub-0.3s gate check-in scanning on any smartphone",
-            "Plans starting with a ₹29/mo introductory offer",
+            "Plans starting with plans starting from ₹499/mo",
           ],
         },
         useCases: [
@@ -175,7 +175,7 @@ export default function UrpassVsZohoBackstagePage() {
           },
           {
             q: "Does URPASS charge per-ticket fees?",
-            a: "No. URPASS charges 0% per-ticket commission, operating on predictable flat subscriptions starting at an introductory ₹29/month for your first 2 months.",
+            a: "No. URPASS charges 0% per-ticket commission, operating on predictable flat subscriptions starting from ₹499/month.",
           },
           {
             q: "Can I use URPASS without any Zoho account?",
@@ -187,7 +187,7 @@ export default function UrpassVsZohoBackstagePage() {
           },
         ],
         ctaTitle: "Streamline your event check-in with URPASS",
-        ctaDescription: "Plans from ₹29/mo · 2-minute setup · Instant QR passes · Zero ticket commission",
+        ctaDescription: "Plans from ₹499/mo · 2-minute setup · Instant QR passes · Zero ticket commission",
       }}
     />
   );

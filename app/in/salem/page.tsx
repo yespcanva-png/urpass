@@ -106,7 +106,7 @@ export default function SalemPage() {
         faqs: [
           {
             q: "Can Salem student committees use URPASS for free events?",
-            a: "Yes. URPASS provides an introductory offer of ₹29/month for your first 2 months across all plans with zero platform ticket commissions.",
+            a: "Yes. URPASS provides plans starting from ₹499/month across all tiers with zero platform ticket commissions.",
           },
           {
             q: "How many attendees can URPASS scan at large Salem college fests?",

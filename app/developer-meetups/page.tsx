@@ -53,7 +53,7 @@ export default function Page() {
           description: "Developers appreciate clean, ad-free tools that don't force app downloads or slow down entry. URPASS provides an ultra-fast, modern registration and check-in experience.",
           bullets: [
             "Zero app downloads required for organizers or attendees",
-            "₹29/mo introductory offer for community-run meetups",
+            "plans starting from ₹499/mo for community-run meetups",
             "Accurate headcount data for food, drinks, and venue seating",
             "Built-in post-event survey tools for talk reviews",
           ],
@@ -67,13 +67,13 @@ export default function Page() {
           "Web3 Builder Gatherings",
         ],
         faqs: [
-          { q: "Is URPASS really free for tech community meetups?", a: "Yes. Our introductory ₹29/month offer allows you to host 2 meetups per month with up to 100 attendees per month at zero cost." },
+          { q: "Is URPASS really free for tech community meetups?", a: "Yes. Our plans starting from ₹499/month allows you to host 2 meetups per month with up to 100 attendees per month at zero cost." },
           { q: "Can we collect GitHub handles and tech interests on the form?", a: "Yes. You can add custom questions to collect developer profiles and topic interests." },
           { q: "Do developers need to create an URPASS account to RSVP?", a: "No. Developers RSVP via a public link and receive their pass without creating an account." },
           { q: "Can office security use the scanner at the corporate building lobby?", a: "Yes. Security guards or volunteers open the scanner URL in their mobile browser to verify guest passes." },
         ],
         ctaTitle: "Elevate your event entry with URPASS",
-        ctaDescription: "Plans from ₹29/mo · Zero hardware setup · Fast sub-second scanning",
+        ctaDescription: "Plans from ₹499/mo · Zero hardware setup · Fast sub-second scanning",
       }}
     />
   );

@@ -85,7 +85,7 @@ export default function Page() {
             badge: "EASY CAMPUS SETUP",
             title: "Why Student Clubs Choose UrPass Over Generic Online Forms",
             paragraphs: ["Campus clubs usually rely on Google Forms to gather registrations. But Google Forms cannot generate digital tickets, verify attendance at the door, or prevent unapproved students from entering.","UrPass combines the simplicity of a form builder with the power of an enterprise ticketing and check-in platform. You create your event in 2 minutes, share the link, and scan passes at the door with sub-second accuracy."],
-            bullets: ["Plans starting at ₹29/month intro offer with 0% ticket fees","Direct UPI and card payment support for paid club workshops and merchandise","Works smoothly across mobile Safari, Chrome, and Firefox","Keeps student data private and secure with GDPR-compliant infrastructure"],
+            bullets: ["Plans starting at ₹499/month intro offer with 0% ticket fees","Direct UPI and card payment support for paid club workshops and merchandise","Works smoothly across mobile Safari, Chrome, and Firefox","Keeps student data private and secure with GDPR-compliant infrastructure"],
             takeaway: "Give your student club professional event tech without spending a single rupee.",
           },
         ],
@@ -127,7 +127,7 @@ export default function Page() {
           }
 ],
         ctaTitle: "Student Event Registration Software Built for Campus Life",
-        ctaDescription: "Launch your event registration in minutes. Plans starting with a ₹29/month introductory offer.",
+        ctaDescription: "Launch your event registration in minutes. Plans starting from ₹499/month with 0% ticket commission.",
       }}
     />
   );

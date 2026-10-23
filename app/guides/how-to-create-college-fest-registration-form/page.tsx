@@ -73,7 +73,7 @@ export default function GuidePage() {
           { q: "Is URPASS free for student fests?", a: "Yes. You can host up to 2 events per month with 100 registrations per month for ₹0 forever on our free plan." },
         ],
         ctaTitle: "Streamline your event check-in with URPASS",
-        ctaDescription: "Plans from ₹29/mo · Zero app downloads · Fast sub-second scanning",
+        ctaDescription: "Plans from ₹499/mo · Zero app downloads · Fast sub-second scanning",
       }}
     />
   );

@@ -186,7 +186,7 @@ export default function EventTicketingSoftwarePage() {
             {
               title: "Transparent INR Pricing",
               description:
-                "Flat, affordable monthly plans in Indian Rupees with 0% platform ticket commissions, starting with a ₹29/mo introductory offer.",
+                "Flat, affordable monthly plans in Indian Rupees with 0% platform ticket commissions, starting with plans starting from ₹499/mo.",
               badge: "Affordable",
             },
             {
@@ -353,7 +353,7 @@ export default function EventTicketingSoftwarePage() {
         faqs: [
           {
             q: "What makes URPASS different from Eventbrite or Townscript?",
-            a: "URPASS charges zero commission on ticket sales (flat monthly subscription starting at ₹499/mo with a introductory ₹29/month offer), features a visual drag-and-drop Ticket Studio for designing passes, and enables gate check-in directly through mobile browsers in under 0.3 seconds without requiring volunteers to download an app.",
+            a: "URPASS charges zero commission on ticket sales (flat monthly subscription starting at ₹499/mo with plans starting from ₹499/month), features a visual drag-and-drop Ticket Studio for designing passes, and enables gate check-in directly through mobile browsers in under 0.3 seconds without requiring volunteers to download an app.",
           },
           {
             q: "How do ticket payments and settlements work?",
@@ -361,7 +361,7 @@ export default function EventTicketingSoftwarePage() {
           },
           {
             q: "Can I try URPASS event ticketing for free?",
-            a: "URPASS offers an introductory offer of ₹29/month for your first 2 months across Starter, Pro, and Business plans. All plans include 0% ticket commission and instant QR check-in.",
+            a: "URPASS offers an transparent plans starting from ₹499/month across Starter, Pro, and Business plans. All plans include 0% ticket commission and instant QR check-in.",
           },
           {
             q: "Do door volunteers need to install an app or create an account?",

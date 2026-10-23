@@ -84,7 +84,7 @@ const faqJsonLd = {
           name: "How does URPASS pricing work?",
           acceptedAnswer: {
             "@type": "Answer",
-            text: "URPASS offers transparent monthly plans starting at ₹29/month for your first 2 months in India, and £15/month in the UK, with 0% platform ticket commissions and direct payment settlements.",
+            text: "URPASS offers transparent monthly plans starting at ₹499/month in India, and £15/month in the UK, with 0% platform ticket commissions and direct payment settlements.",
           },
         },
       ],

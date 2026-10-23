@@ -127,7 +127,7 @@ export default function InteractiveFreeSoftwareHero() {
       <div className="text-center max-w-3xl mx-auto mb-12">
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200/80 text-emerald-800 text-xs font-semibold tracking-wide mb-6 shadow-xs">
           <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
-          <span>₹29 INTRODUCTORY OFFER · ZERO PLATFORM FEES</span>
+          <span>PLANS FROM ₹499/MO · ZERO PLATFORM FEES</span>
         </div>
 
         <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-neutral-900 leading-[1.08] mb-6">

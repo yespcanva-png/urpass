@@ -225,7 +225,7 @@ export default function ZohoFormsVsEventRegistrationSoftwarePage() {
         },
         {
                 "q": "Does UrPass charge a percentage commission on paid ticket sales?",
-                "a": "No. UrPass charges 0% platform ticket commission. You pay only our transparent flat subscription (starting with our ₹29/mo intro offer in India / £15/mo in UK) and standard payment processing fees directly to Razorpay or Stripe."
+                "a": "No. UrPass charges 0% platform ticket commission. You pay only our transparent flat subscription (starting with our plans starting from ₹499/mo in India / £15/mo in UK) and standard payment processing fees directly to Razorpay or Stripe."
         },
         {
                 "q": "Can attendees save their UrPass ticket to Apple Wallet?",

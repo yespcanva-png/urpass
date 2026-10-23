@@ -158,7 +158,7 @@ export default function Page() {
           }
 ],
         ctaTitle: "Event Registration & QR Check-In Software Built for Event Agencies",
-        ctaDescription: "Launch your event registration in minutes. Plans starting with a ₹29/month introductory offer.",
+        ctaDescription: "Launch your event registration in minutes. Plans starting from ₹499/month with 0% ticket commission.",
       }}
     />
   );

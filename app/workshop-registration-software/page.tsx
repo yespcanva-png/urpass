@@ -26,10 +26,10 @@ export default function WorkshopRegistrationSoftwarePage() {
   "h1": "Workshop Registration and Attendance Software",
   "canonicalUrl": "https://urpass.space/workshop-registration-software",
   "description": "Workshop registration software with capped capacity, custom intake forms, instant digital QR tickets, and sub-second phone check-in. 0% ticket fees.",
-  "ctaLabel": "Launch Workshop for ₹29 →",
+  "ctaLabel": "Launch Workshop →",
   "ctaHref": "/signup?plan=pro&from=workshop-registration-software",
   "ctaTitle": "Host Smooth, Full-Capacity Workshops",
-  "ctaDescription": "Set capacity caps, collect material fees with 0% ticketing commission, and admit participants in <0.3s with smartphone check-in. ₹29 introductory offer for 2 months.",
+  "ctaDescription": "Set capacity caps, collect material fees with 0% ticketing commission, and admit participants in <0.3s with smartphone check-in. plans from ₹499/mo for 2 months.",
   "directAnswer": {
     "title": "What is Workshop Registration Software?",
     "summary": "URPASS is workshop registration and digital ticketing software built for masterclasses, hands-on training sessions, creative studios, and professional certifications. It allows instructors to cap seat capacities, accept registration payments with 0% ticketing fees, issue scannable QR tickets, and check participants in seamlessly using volunteer smartphones.",

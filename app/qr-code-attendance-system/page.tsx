@@ -70,10 +70,10 @@ export default function Page() {
           { q: "How does this system prevent students from marking attendance for friends?", a: "Each QR code is linked to an individual student and can only be scanned once at the door. Screenshots or forwarded codes are locked out once used." },
           { q: "Can we export attendance data with exact entry timestamps?", a: "Yes. The CSV export includes attendee name, email, department, pass tier, and the exact timestamp of their check-in." },
           { q: "Does the system require dedicated scanning hardware?", a: "No. Any staff member or volunteer can scan using the camera on their own smartphone via a web browser." },
-          { q: "How does URPASS pricing work for workshops?", a: "Workshops can get started with an introductory offer of ₹29/month for the first 2 months with zero platform ticket fees." },
+          { q: "How does URPASS pricing work for workshops?", a: "Workshops can get started with an transparent plans starting from ₹499/month with zero platform ticket fees." },
         ],
         ctaTitle: "Start streamlining your event with URPASS",
-        ctaDescription: "Plans start at ₹29/mo · 0% ticket commission · Fast sub-second check-in",
+        ctaDescription: "Plans start at ₹499/mo · 0% ticket commission · Fast sub-second check-in",
       }}
     />
   );

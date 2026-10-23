@@ -142,7 +142,7 @@ export default function ExhibitorManagementPage() {
           },
           {
             q: "What are the pricing terms for exhibitor management?",
-            a: "URPASS includes exhibitor management features across all subscription plans starting with an introductory offer of ₹29/month for your first 2 months, with scalable tiers available for large multi-hall expos.",
+            a: "URPASS includes exhibitor management features across all subscription plans starting from ₹499/month, with scalable tiers available for large multi-hall expos.",
           },
         ],
         relatedLinks: [

@@ -75,7 +75,7 @@ export default function BangaloreAiMlConferenceRegistrationPage() {
                 {
                         "col1": "Platform Commission",
                         "col2": "5% to 8% cut on delegate and enterprise passes",
-                        "col3": "0% ticket commission; plans from ₹29/month"
+                        "col3": "0% ticket commission; plans from ₹499/month"
                 },
                 {
                         "col1": "Corporate Invoicing",
@@ -243,7 +243,7 @@ export default function BangaloreAiMlConferenceRegistrationPage() {
         },
         {
                 "q": "What pricing applies to AI conferences on UrPass?",
-                "a": "UrPass offers transparent flat software subscriptions starting at an introductory ₹29/month for your first 2 months (then ₹999/month), with 0% platform ticket fees on paid tiers."
+                "a": "UrPass offers transparent flat software subscriptions starting from ₹499/month, with 0% platform ticket fees on paid tiers."
         }
 ],
       }}

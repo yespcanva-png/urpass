@@ -33,7 +33,7 @@ export default function Page() {
         h1: "College Event Management Software with QR Entry",
         canonicalUrl: "https://urpass.space/college-event-management-software",
         description: "Manage college registrations, digital QR passes, attendee approvals and real-time multi-gate check-in with UrPass. Launch your next college event in minutes.",
-        ctaLabel: "Launch College Event for ₹29 →",
+        ctaLabel: "Launch College Event →",
         ctaHref: "/signup?plan=pro&from=college-event-management-software",
         secondaryCtaLabel: "View Pricing",
         secondaryCtaHref: "/pricing",
@@ -128,7 +128,7 @@ export default function Page() {
           }
 ],
         ctaTitle: "College Event Management Software with QR Entry",
-        ctaDescription: "Launch your campus symposium or fest in minutes. ₹29 introductory offer for the first 2 months with 0% ticket commission.",
+        ctaDescription: "Launch your campus symposium or fest in minutes. plans from ₹499/mo for the first 2 months with 0% ticket commission.",
       }}
     />
   );

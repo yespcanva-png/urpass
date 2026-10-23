@@ -142,7 +142,7 @@ export default function EventZoneAccessControlPage() {
           },
           {
             q: "Is zone access control available on the free plan?",
-            a: "Yes. Organizers can configure zones, access rules, and live occupancy on the Plans starting at ₹29/month intro offer to test multi-room security workflows without upfront cost.",
+            a: "Yes. Organizers can configure zones, access rules, and live occupancy on the Plans starting at ₹499/month intro offer to test multi-room security workflows without upfront cost.",
           },
         ],
         relatedLinks: [

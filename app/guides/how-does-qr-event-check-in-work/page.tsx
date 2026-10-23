@@ -73,7 +73,7 @@ export default function GuidePage() {
           { q: "Do volunteers need to download an app to scan passes?", a: "No. The URPASS scanner runs completely in mobile Safari or Chrome without any App Store or Play Store downloads." },
         ],
         ctaTitle: "Streamline your event check-in with URPASS",
-        ctaDescription: "Plans from ₹29/mo · Zero app downloads · Fast sub-second scanning",
+        ctaDescription: "Plans from ₹499/mo · Zero app downloads · Fast sub-second scanning",
       }}
     />
   );

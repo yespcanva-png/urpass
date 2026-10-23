@@ -154,11 +154,11 @@ export default function Page() {
           },
           {
                     "q": "Is UrPass expensive compared to Excel?",
-                    "a": "UrPass offers transparent plans starting at ₹29/month for your first 2 months, giving you enterprise-grade QR check-in with zero platform ticket commission."
+                    "a": "UrPass offers transparent plans starting from ₹499/month, giving you enterprise-grade QR check-in with zero platform ticket commission."
           }
 ],
         ctaTitle: "Replace Excel Event Attendance Spreadsheets with Instant Mobile QR Check-In",
-        ctaDescription: "Launch your event registration in minutes. Plans starting with a ₹29/month introductory offer.",
+        ctaDescription: "Launch your event registration in minutes. Plans starting from ₹499/month with 0% ticket commission.",
       }}
     />
   );

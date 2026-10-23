@@ -69,10 +69,10 @@ export default function ComparisonPage() {
           { q: "Why should I use URPASS instead of an event discovery site?", a: "Event discovery sites charge high commissions and show competitor events on your listing. URPASS gives you a clean, dedicated page with zero per-ticket cuts." },
           { q: "Does URPASS charge per-ticket transaction fees?", a: "No. URPASS operates on transparent flat monthly plans with zero per-ticket commission." },
           { q: "Can attendees show their tickets on mobile phones?", a: "Yes. Tickets open directly in mobile Safari or Chrome and can be saved to Apple Wallet or screenshot." },
-          { q: "How does URPASS pricing work?", a: "URPASS offers transparent monthly plans starting at ₹29/month for your first 2 months in India, and £15/month in the UK, with 0% platform ticket commissions." },
+          { q: "How does URPASS pricing work?", a: "URPASS offers transparent monthly plans starting at ₹499/month in India, and £15/month in the UK, with 0% platform ticket commissions." },
         ],
         ctaTitle: "Experience the URPASS difference today",
-        ctaDescription: "Plans start at ₹29/mo · Zero ticket commission · Sub-second door check-in",
+        ctaDescription: "Plans start at ₹499/mo · Zero ticket commission · Sub-second door check-in",
       }}
     />
   );

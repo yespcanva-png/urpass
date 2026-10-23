@@ -73,7 +73,7 @@ export default function Page() {
           { q: "Can I limit registrations to a maximum number of participants?", a: "Yes. Configure a maximum attendee cap to close registration automatically once full." },
         ],
         ctaTitle: "Start streamlining your event with URPASS",
-        ctaDescription: "Plans start at ₹29/mo · 0% ticket commission · Fast sub-second check-in",
+        ctaDescription: "Plans start at ₹499/mo · 0% ticket commission · Fast sub-second check-in",
       }}
     />
   );

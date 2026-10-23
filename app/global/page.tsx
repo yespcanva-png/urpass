@@ -142,7 +142,7 @@ export default function GlobalPage() {
             },
             {
               col1: "Zero-Commission Ticketing",
-              col2: "Flat monthly pricing starting at ₹29/mo introductory offer",
+              col2: "Flat monthly pricing starting from ₹499/mo introductory offer",
               col3: "Strict attendee caps or paid-only ticketing access with percentage fees",
             },
           ],
@@ -399,7 +399,7 @@ export default function GlobalPage() {
           },
           {
             q: "How does URPASS pricing work?",
-            a: "URPASS offers transparent, predictable subscription tiers: Starter, Pro, and Business. In India, organizers can take advantage of an introductory offer starting at ₹29/month for the first 2 months. In the UK, plans start at £15/month. All plans feature 0% platform commissions on ticket sales.",
+            a: "URPASS offers transparent, predictable subscription tiers: Starter, Pro, and Business. In India, organizers can take advantage of an introductory offer starting from ₹499/month. In the UK, plans start at £15/month. All plans feature 0% platform commissions on ticket sales.",
           },
           {
             q: "How does enterprise multi-tenancy work in URPASS?",

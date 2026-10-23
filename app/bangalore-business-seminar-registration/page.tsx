@@ -75,7 +75,7 @@ export default function BangaloreBusinessSeminarRegistrationPage() {
                 {
                         "col1": "Platform Commission",
                         "col2": "5% to 8% deducted from every delegate ticket",
-                        "col3": "0% ticket fee; flat subscription starting from ₹29 intro offer"
+                        "col3": "0% ticket fee; flat subscription starting from ₹499/mo"
                 },
                 {
                         "col1": "Corporate Invoicing",

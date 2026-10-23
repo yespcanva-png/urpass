@@ -75,7 +75,7 @@ export default function KoramangalaStartupEventRegistrationPage() {
                 {
                         "col1": "Platform Commission",
                         "col2": "5% to 10% fee taken from every ticket",
-                        "col3": "0% ticket commission; plans from ₹29/month"
+                        "col3": "0% ticket commission; plans from ₹499/month"
                 },
                 {
                         "col1": "Attendee Data Privacy",
@@ -115,7 +115,7 @@ export default function KoramangalaStartupEventRegistrationPage() {
                 "title": "Keep 100% of Ticket Revenue with Direct Razorpay UPI Settlement",
                 "paragraphs": [
                         "Startup communities and event operators run on tight budgets. Traditional ticketing aggregators cut 5% to 10% from ticket sales and delay payouts for weeks after the meetup concludes.",
-                        "UrPass eliminates ticket fees entirely. Pay a transparent flat subscription (starting at introductory ₹29/month), connect your Razorpay account, and receive attendee UPI payments directly with immediate settlement."
+                        "UrPass eliminates ticket fees entirely. Pay a transparent flat subscription (starting from ₹499/month), connect your Razorpay account, and receive attendee UPI payments directly with immediate settlement."
                 ],
                 "bullets": [
                         "Zero commission on paid tickets regardless of event size",
