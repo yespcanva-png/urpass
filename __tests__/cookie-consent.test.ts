@@ -1,64 +1,66 @@
 import { describe, it, expect } from "vitest";
-import { isPublicEventRoute } from "@/components/ui/CookieConsentBanner";
+import { isLandingPageRoute, isPublicEventRoute } from "@/components/ui/CookieConsentBanner";
 
-describe("CookieConsentBanner route separation", () => {
-  describe("isPublicEventRoute", () => {
-    it("identifies public event and registration paths to suppress cookie popup", () => {
-      // Direct SEO public event routes
-      expect(isPublicEventRoute("/events/pilani-grand-garba-night-2026")).toBe(true);
-      expect(isPublicEventRoute("/events/tech-summit")).toBe(true);
-      expect(isPublicEventRoute("/events")).toBe(true);
+describe("CookieConsentBanner route restriction", () => {
+  describe("isLandingPageRoute", () => {
+    it("identifies landing page routes to show cookie consent banner", () => {
+      expect(isLandingPageRoute("/")).toBe(true);
+      expect(isLandingPageRoute("")).toBe(true);
+      expect(isLandingPageRoute(null)).toBe(true);
+      expect(isLandingPageRoute(undefined)).toBe(true);
+      expect(isLandingPageRoute("/?ref=google")).toBe(true);
+      expect(isLandingPageRoute("/#features")).toBe(true);
 
-      // Public apply & booking routes
-      expect(isPublicEventRoute("/apply/kaqq-dwgi")).toBe(true);
-      expect(isPublicEventRoute("/apply/550e8400-e29b-41d4-a716-446655440000")).toBe(true);
-      expect(isPublicEventRoute("/apply")).toBe(true);
-
-      // Public event microsite, sessions, & agenda
-      expect(isPublicEventRoute("/e/pilani-grand-garba-night-2026")).toBe(true);
-      expect(isPublicEventRoute("/e/tech-conf/session/keynote-1")).toBe(true);
-      expect(isPublicEventRoute("/e/tech-conf/my-agenda")).toBe(true);
-
-      // Public ticket pass views
-      expect(isPublicEventRoute("/p/pass_abc123")).toBe(true);
-      expect(isPublicEventRoute("/pass/0f035bbff37a44752e1f68b1ee4dd964a86d486c175fee54c0d6f73a40aa1a21")).toBe(true);
-      expect(isPublicEventRoute("/pass/pass_abc123")).toBe(true);
-      expect(isPublicEventRoute("/pass")).toBe(true);
-      expect(isPublicEventRoute("/claim-ticket/tok-123")).toBe(true);
-
-      // Public gate scanner & ticket verification
-      expect(isPublicEventRoute("/verify")).toBe(true);
-      expect(isPublicEventRoute("/verify?code=xyz")).toBe(true);
-
-      // Public attendee feedback
-      expect(isPublicEventRoute("/feedback/kaqq-dwgi")).toBe(true);
+      // Regional landing pages
+      expect(isLandingPageRoute("/in")).toBe(true);
+      expect(isLandingPageRoute("/in/")).toBe(true);
+      expect(isLandingPageRoute("/uk")).toBe(true);
+      expect(isLandingPageRoute("/uk/")).toBe(true);
     });
 
-    it("keeps cookie consent active on platform, dashboard, auth, and marketing pages", () => {
+    it("removes cookie consent on all other pages", () => {
       // Platform dashboard & organizer settings
-      expect(isPublicEventRoute("/dashboard")).toBe(false);
-      expect(isPublicEventRoute("/dashboard/events")).toBe(false);
-      expect(isPublicEventRoute("/event/123/settings")).toBe(false);
-      expect(isPublicEventRoute("/event/123/attendees")).toBe(false);
-      expect(isPublicEventRoute("/create-event")).toBe(false);
-      expect(isPublicEventRoute("/billing")).toBe(false);
-      expect(isPublicEventRoute("/onboarding")).toBe(false);
+      expect(isLandingPageRoute("/dashboard")).toBe(false);
+      expect(isLandingPageRoute("/dashboard/events")).toBe(false);
+      expect(isLandingPageRoute("/event/123/settings")).toBe(false);
+      expect(isLandingPageRoute("/event/123/attendees")).toBe(false);
+      expect(isLandingPageRoute("/event/123/communications")).toBe(false);
+      expect(isLandingPageRoute("/create-event")).toBe(false);
+      expect(isLandingPageRoute("/billing")).toBe(false);
+      expect(isLandingPageRoute("/onboarding")).toBe(false);
 
       // Auth flows
-      expect(isPublicEventRoute("/login")).toBe(false);
-      expect(isPublicEventRoute("/forgot-password")).toBe(false);
+      expect(isLandingPageRoute("/login")).toBe(false);
+      expect(isLandingPageRoute("/signup")).toBe(false);
+      expect(isLandingPageRoute("/forgot-password")).toBe(false);
 
-      // Marketing & landing pages
+      // Other marketing and info pages
+      expect(isLandingPageRoute("/pricing")).toBe(false);
+      expect(isLandingPageRoute("/about")).toBe(false);
+      expect(isLandingPageRoute("/features")).toBe(false);
+      expect(isLandingPageRoute("/contact")).toBe(false);
+      expect(isLandingPageRoute("/careers")).toBe(false);
+      expect(isLandingPageRoute("/privacy")).toBe(false);
+      expect(isLandingPageRoute("/terms")).toBe(false);
+
+      // Public event, booking, and pass views
+      expect(isLandingPageRoute("/events/tech-summit")).toBe(false);
+      expect(isLandingPageRoute("/events")).toBe(false);
+      expect(isLandingPageRoute("/apply/kaqq-dwgi")).toBe(false);
+      expect(isLandingPageRoute("/pass/pass_abc123")).toBe(false);
+      expect(isLandingPageRoute("/claim-ticket/tok-123")).toBe(false);
+      expect(isLandingPageRoute("/scan")).toBe(false);
+      expect(isLandingPageRoute("/verify")).toBe(false);
+    });
+  });
+
+  describe("isPublicEventRoute (backward-compatibility alias)", () => {
+    it("returns true (suppressed) for all non-landing routes", () => {
+      expect(isPublicEventRoute("/dashboard")).toBe(true);
+      expect(isPublicEventRoute("/events/tech-summit")).toBe(true);
+      expect(isPublicEventRoute("/login")).toBe(true);
+      expect(isPublicEventRoute("/pricing")).toBe(true);
       expect(isPublicEventRoute("/")).toBe(false);
-      expect(isPublicEventRoute("/pricing")).toBe(false);
-      expect(isPublicEventRoute("/about")).toBe(false);
-      expect(isPublicEventRoute("/uk")).toBe(false);
-      expect(isPublicEventRoute("/uk/qr-event-check-in-software")).toBe(false);
-
-      // Null / empty safety
-      expect(isPublicEventRoute(null)).toBe(false);
-      expect(isPublicEventRoute(undefined)).toBe(false);
-      expect(isPublicEventRoute("")).toBe(false);
     });
   });
 });

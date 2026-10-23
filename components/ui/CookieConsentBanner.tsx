@@ -9,42 +9,23 @@ import { detectCountryClient } from "@/lib/country-config";
 type RegionMode = "uk" | "in" | "common";
 
 /**
- * Returns true if the given pathname is a public event / registration / attendee pass page.
- * For public event visitors, the cookie banner popup is suppressed to eliminate friction
- * and deliver an instant, seamless event details and ticket booking experience.
+ * Returns true only if the given pathname is the landing page.
+ * Cookie consent is removed from all internal pages, dashboards, event pages, auth, docs, etc.
+ * and is strictly presented only on the landing page ("/", "/in", "/uk").
+ */
+export function isLandingPageRoute(pathname?: string | null): boolean {
+  if (!pathname) return true;
+  const pathWithoutQuery = pathname.split(/[?#]/)[0];
+  const normalized = pathWithoutQuery.trim().toLowerCase().replace(/\/+$/, "") || "/";
+  return normalized === "/" || normalized === "/in" || normalized === "/uk";
+}
+
+/**
+ * Retained for backwards compatibility: returns true for all non-landing routes
+ * where cookie consent is suppressed.
  */
 export function isPublicEventRoute(pathname?: string | null): boolean {
-  if (!pathname) return false;
-  const path = pathname.toLowerCase();
-  return (
-    path.startsWith("/events/") ||
-    path === "/events" ||
-    path.startsWith("/apply/") ||
-    path === "/apply" ||
-    path.startsWith("/pass/") ||
-    path === "/pass" ||
-    path.startsWith("/passes/") ||
-    path === "/passes" ||
-    path.startsWith("/claim-ticket/") ||
-    path === "/claim-ticket" ||
-    path.startsWith("/ticket/") ||
-    path.startsWith("/tickets/") ||
-    path === "/ticket" ||
-    path === "/tickets" ||
-    path.startsWith("/t/") ||
-    path === "/t" ||
-    path.startsWith("/badge/") ||
-    path === "/badge" ||
-    path.startsWith("/scan/") ||
-    path === "/scan" ||
-    path.startsWith("/e/") ||
-    path === "/e" ||
-    path.startsWith("/p/") ||
-    path === "/p" ||
-    path.startsWith("/verify") ||
-    path.startsWith("/feedback/") ||
-    path === "/feedback"
-  );
+  return !isLandingPageRoute(pathname);
 }
 
 export function CookieConsentBanner() {
@@ -52,11 +33,11 @@ export function CookieConsentBanner() {
   const [visible, setVisible] = useState(false);
   const [region, setRegion] = useState<RegionMode>("common");
 
-  // If on a public event, registration, or pass page, never show the cookie consent popup
-  const isPublicEvent = isPublicEventRoute(pathname);
+  // Only allow cookie consent on the landing page
+  const isLanding = isLandingPageRoute(pathname);
 
   useEffect(() => {
-    if (isPublicEvent) {
+    if (!isLanding) {
       setVisible(false);
       return;
     }
@@ -101,7 +82,7 @@ export function CookieConsentBanner() {
           .catch(() => {});
       }
     } catch {}
-  }, [isPublicEvent, pathname]);
+  }, [isLanding, pathname]);
 
   const handleAcceptAll = () => {
     try {
@@ -119,7 +100,7 @@ export function CookieConsentBanner() {
     setVisible(false);
   };
 
-  if (isPublicEvent || !visible) return null;
+  if (!isLanding || !visible) return null;
 
   const content = {
     uk: {
