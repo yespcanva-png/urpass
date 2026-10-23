@@ -28,6 +28,14 @@ export interface GateStat {
   name: string;
   scans: number;
   pct: number;
+  uniqueAttendees?: number;
+  reEntries?: number;
+  firstEntries?: number;
+  reEntryPct?: number;
+  peakHourLabel?: string;
+  peakHourScans?: number;
+  avgScansPerHour?: number;
+  methodBreakdown?: { qr: number; manual: number; search: number };
 }
 
 export interface PassTypeStat {
@@ -48,6 +56,8 @@ export interface RecentScan {
   gateName: string;
   method: string;
   checkedInAt: string;
+  scanSequence?: number;
+  isReEntry?: boolean;
 }
 
 export interface EventComparisonItem {
@@ -63,6 +73,10 @@ export interface EventComparisonItem {
   checkedInCount: number;
   attendanceRate: number;
   peakVelocityPerHour: number;
+  uniqueCheckedInCount?: number;
+  totalScansCount?: number;
+  reEntryCount?: number;
+  reEntryRate?: number;
 }
 
 export interface AnalyticsData {
@@ -95,6 +109,18 @@ export interface AnalyticsData {
   passTypeBreakdown: PassTypeStat[];
   recentScans: RecentScan[];
   eventComparison: EventComparisonItem[];
+
+  // Enhanced Multi-Checkin & Gate Telemetry
+  uniqueCheckedInCount?: number;
+  totalScansCount?: number;
+  multipleCheckinsCount?: number;
+  reEntryCount?: number;
+  reEntryRate?: number;
+  avgScansPerAttendee?: number;
+  singleScanCount?: number;
+  multiScanCount?: number;
+  highFrequencyScanCount?: number;
+  currentInsideCount?: number;
 }
 
 interface RawAttendee {
@@ -106,6 +132,7 @@ interface RawAttendee {
   pass_type: string;
   application_status: string;
   pass_status: string;
+  venue_presence_state?: string | null;
   created_at: string;
   ticket_type_id?: string | null;
 }
@@ -272,6 +299,16 @@ export async function getAnalyticsData(targetEventId?: string): Promise<Analytic
       passTypeBreakdown: [],
       recentScans: [],
       eventComparison: [],
+      uniqueCheckedInCount: 0,
+      totalScansCount: 0,
+      multipleCheckinsCount: 0,
+      reEntryCount: 0,
+      reEntryRate: 0,
+      avgScansPerAttendee: 0,
+      singleScanCount: 0,
+      multiScanCount: 0,
+      highFrequencyScanCount: 0,
+      currentInsideCount: 0,
     };
   }
 
@@ -286,7 +323,7 @@ export async function getAnalyticsData(targetEventId?: string): Promise<Analytic
   ] = await Promise.all([
     supabase
       .from("attendees")
-      .select("id, event_id, name, email, phone, pass_type, application_status, pass_status, created_at, ticket_type_id")
+      .select("id, event_id, name, email, phone, pass_type, application_status, pass_status, venue_presence_state, created_at, ticket_type_id")
       .in("event_id", eventIdsToQuery)
       .order("created_at", { ascending: false }),
     supabase
@@ -332,6 +369,50 @@ export async function getAnalyticsData(targetEventId?: string): Promise<Analytic
     checkinsByAttendee.set(checkin.attendee_id, (checkinsByAttendee.get(checkin.attendee_id) ?? 0) + 1);
   }
 
+  // Chronologically sort checkins to trace 1st entry vs subsequent re-entries
+  const sortedCheckins = [...checkins].sort(
+    (a, b) => new Date(a.checked_in_at).getTime() - new Date(b.checked_in_at).getTime()
+  );
+
+  const attendeeScanSeqMap = new Map<string, number>();
+  const checkinSeqMap = new Map<string, number>();
+  sortedCheckins.forEach((c) => {
+    const seq = (attendeeScanSeqMap.get(c.attendee_id) ?? 0) + 1;
+    attendeeScanSeqMap.set(c.attendee_id, seq);
+    checkinSeqMap.set(c.id, seq);
+  });
+
+  // Calculate unique checked in attendees:
+  const uniqueAttendeeIds = new Set(checkins.map((c) => c.attendee_id));
+  const uniqueCheckedInCount = uniqueAttendeeIds.size;
+  const totalScansCount = checkins.length;
+
+  let singleScanCount = 0;
+  let multiScanCount = 0;
+  let highFrequencyScanCount = 0;
+
+  attendeeScanSeqMap.forEach((count) => {
+    if (count === 1) singleScanCount += 1;
+    else if (count === 2) multiScanCount += 1;
+    else if (count >= 3) {
+      multiScanCount += 1;
+      highFrequencyScanCount += 1;
+    }
+  });
+
+  const multipleCheckinsCount = Array.from(attendeeScanSeqMap.values()).filter((c) => c > 1).length;
+  const reEntryCount = Math.max(0, totalScansCount - uniqueCheckedInCount);
+  const reEntryRate =
+    uniqueCheckedInCount > 0 ? Math.round((multipleCheckinsCount / uniqueCheckedInCount) * 1000) / 10 : 0;
+  const avgScansPerAttendee =
+    uniqueCheckedInCount > 0 ? Math.round((totalScansCount / uniqueCheckedInCount) * 10) / 10 : 1.0;
+
+  // Active presence / inside count
+  const insideAttendees = attendees.filter(
+    (a) => a.venue_presence_state?.toUpperCase() === "INSIDE" || (a.pass_status === "checked_in" && (checkinsByAttendee.get(a.id) ?? 0) > 0)
+  );
+  const currentInsideCount = insideAttendees.length > 0 ? insideAttendees.length : uniqueCheckedInCount;
+
   // 3. Core KPI Computations
   const totalRegistrations = attendees.length;
   const approvedAttendees = attendees.filter((a) => a.application_status === "approved");
@@ -345,7 +426,7 @@ export async function getAnalyticsData(targetEventId?: string): Promise<Analytic
         : sum,
     0
   );
-  const checkedInCount = checkins.length;
+  const checkedInCount = uniqueCheckedInCount;
   const notArrivedCount = Math.max(0, approvedCount - checkedInCount);
 
   const attendanceRate =
@@ -419,28 +500,101 @@ export async function getAnalyticsData(targetEventId?: string): Promise<Analytic
   const avgScansPerHour =
     checkedInCount > 0 ? Math.round((checkedInCount / activeHours) * 10) / 10 : 0;
 
-  // 5. Gate Breakdown
-  const gateMap = new Map<string, { name: string; count: number }>();
+  // 5. Gate Breakdown with Deep Multi-Checkin & Lane Metrics
+  interface GateDataTracker {
+    name: string;
+    totalScans: number;
+    uniqueAttendees: Set<string>;
+    firstEntries: number;
+    reEntries: number;
+    hourlyCounts: Map<number, number>;
+    methodCounts: { qr: number; manual: number; search: number };
+  }
+
+  const gateMap = new Map<string, GateDataTracker>();
   // Prepopulate gates
   gates.forEach((g) => {
-    gateMap.set(g.id, { name: g.name, count: 0 });
+    gateMap.set(g.id, {
+      name: g.name,
+      totalScans: 0,
+      uniqueAttendees: new Set(),
+      firstEntries: 0,
+      reEntries: 0,
+      hourlyCounts: new Map(),
+      methodCounts: { qr: 0, manual: 0, search: 0 },
+    });
   });
 
   checkins.forEach((c) => {
     const gateId = c.gate_id ?? "default";
     const gateName = resolveGateName(c.gate) || (c.gate_id && gateMap.get(c.gate_id)?.name) || "Main Entrance";
-    const existing = gateMap.get(gateId) ?? { name: gateName, count: 0 };
-    existing.count += 1;
-    gateMap.set(gateId, existing);
+    const tracker = gateMap.get(gateId) ?? {
+      name: gateName,
+      totalScans: 0,
+      uniqueAttendees: new Set(),
+      firstEntries: 0,
+      reEntries: 0,
+      hourlyCounts: new Map(),
+      methodCounts: { qr: 0, manual: 0, search: 0 },
+    };
+
+    tracker.totalScans += 1;
+    tracker.uniqueAttendees.add(c.attendee_id);
+
+    const seq = checkinSeqMap.get(c.id) ?? 1;
+    if (seq === 1) {
+      tracker.firstEntries += 1;
+    } else {
+      tracker.reEntries += 1;
+    }
+
+    const h = new Date(c.checked_in_at).getHours();
+    tracker.hourlyCounts.set(h, (tracker.hourlyCounts.get(h) ?? 0) + 1);
+
+    const m = (c.check_in_method ?? "qr") as "qr" | "manual" | "search";
+    if (m === "manual") tracker.methodCounts.manual += 1;
+    else if (m === "search") tracker.methodCounts.search += 1;
+    else tracker.methodCounts.qr += 1;
+
+    gateMap.set(gateId, tracker);
   });
 
   const gateBreakdown: GateStat[] = Array.from(gateMap.entries())
-    .map(([gateId, { name, count }]) => ({
-      gateId: gateId === "default" ? null : gateId,
-      name,
-      scans: count,
-      pct: checkedInCount > 0 ? Math.round((count / checkedInCount) * 100) : 0,
-    }))
+    .map(([gateId, tracker]) => {
+      let gatePeakHour = 0;
+      let gatePeakScans = 0;
+      tracker.hourlyCounts.forEach((cnt, hr) => {
+        if (cnt > gatePeakScans) {
+          gatePeakScans = cnt;
+          gatePeakHour = hr;
+        }
+      });
+      const h12 = gatePeakHour % 12 || 12;
+      const ampm = gatePeakHour >= 12 ? "PM" : "AM";
+      const nextH = (gatePeakHour + 1) % 24;
+      const nextH12 = nextH % 12 || 12;
+      const nextAmpm = nextH >= 12 ? "PM" : "AM";
+      const peakHourLabel = gatePeakScans > 0 ? `${h12} ${ampm} – ${nextH12} ${nextAmpm}` : "N/A";
+
+      const activeGateHours = Array.from(tracker.hourlyCounts.values()).filter((c) => c > 0).length || 1;
+      const avgVelocity = tracker.totalScans > 0 ? Math.round((tracker.totalScans / activeGateHours) * 10) / 10 : 0;
+      const reEntryPct = tracker.totalScans > 0 ? Math.round((tracker.reEntries / tracker.totalScans) * 100) : 0;
+
+      return {
+        gateId: gateId === "default" ? null : gateId,
+        name: tracker.name,
+        scans: tracker.totalScans,
+        pct: totalScansCount > 0 ? Math.round((tracker.totalScans / totalScansCount) * 100) : 0,
+        uniqueAttendees: tracker.uniqueAttendees.size,
+        reEntries: tracker.reEntries,
+        firstEntries: tracker.firstEntries,
+        reEntryPct,
+        peakHourLabel,
+        peakHourScans: gatePeakScans,
+        avgScansPerHour: avgVelocity,
+        methodBreakdown: tracker.methodCounts,
+      };
+    })
     .filter((g) => g.scans > 0 || gates.length > 0)
     .sort((a, b) => b.scans - a.scans);
 
@@ -508,14 +662,15 @@ export async function getAnalyticsData(targetEventId?: string): Promise<Analytic
 
   const totalRevenue = Math.round(totalVerifiedRevenuePaise / 100);
 
-  // 8. Recent Check-ins
+  // 8. Recent Check-ins with Scan Sequence & Re-entry telemetry
   const attendeeMap = new Map<string, RawAttendee>();
   attendees.forEach((a) => attendeeMap.set(a.id, a));
 
-  const recentScans: RecentScan[] = checkins.slice(0, 15).map((c) => {
+  const recentScans: RecentScan[] = checkins.slice(0, 25).map((c) => {
     const att = attendeeMap.get(c.attendee_id);
     const gateName = resolveGateName(c.gate) || (c.gate_id && gateMap.get(c.gate_id)?.name) || "Main Entrance";
     const passType = att?.pass_type ? PASS_LABELS[att.pass_type] ?? att.pass_type : "Participant";
+    const seq = checkinSeqMap.get(c.id) ?? 1;
 
     return {
       id: c.id,
@@ -526,6 +681,8 @@ export async function getAnalyticsData(targetEventId?: string): Promise<Analytic
       gateName,
       method: c.check_in_method ?? "qr",
       checkedInAt: c.checked_in_at,
+      scanSequence: seq,
+      isReEntry: seq > 1,
     };
   });
 
@@ -545,8 +702,13 @@ export async function getAnalyticsData(targetEventId?: string): Promise<Analytic
           : sum,
       0
     );
-    const checkCount = evtCheckins.length;
-    const rate = appCount > 0 ? Math.round((checkCount / appCount) * 1000) / 10 : 0;
+
+    const evtUniqueIds = new Set(evtCheckins.map((c) => c.attendee_id));
+    const evtUniqueCount = evtUniqueIds.size;
+    const evtTotalScans = evtCheckins.length;
+    const evtReEntries = Math.max(0, evtTotalScans - evtUniqueCount);
+    const evtReEntryRate = evtUniqueCount > 0 ? Math.round((evtReEntries / evtUniqueCount) * 1000) / 10 : 0;
+    const rate = appCount > 0 ? Math.round((evtUniqueCount / appCount) * 1000) / 10 : 0;
 
     // Peak velocity for this event
     const evtHourCounts = new Map<number, number>();
@@ -569,9 +731,13 @@ export async function getAnalyticsData(targetEventId?: string): Promise<Analytic
       totalRegistrations: regCount,
       approvedCount: appCount,
       passesGenerated: passCount,
-      checkedInCount: checkCount,
+      checkedInCount: evtUniqueCount,
       attendanceRate: rate,
       peakVelocityPerHour: evtPeak,
+      uniqueCheckedInCount: evtUniqueCount,
+      totalScansCount: evtTotalScans,
+      reEntryCount: evtReEntries,
+      reEntryRate: evtReEntryRate,
     };
   });
 
@@ -605,5 +771,17 @@ export async function getAnalyticsData(targetEventId?: string): Promise<Analytic
     passTypeBreakdown,
     recentScans,
     eventComparison,
+
+    // Enhanced Multi-Checkin & Gate Telemetry
+    uniqueCheckedInCount,
+    totalScansCount,
+    multipleCheckinsCount,
+    reEntryCount,
+    reEntryRate,
+    avgScansPerAttendee,
+    singleScanCount,
+    multiScanCount,
+    highFrequencyScanCount,
+    currentInsideCount,
   };
 }

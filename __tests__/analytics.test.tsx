@@ -247,6 +247,178 @@ describe("Analytics Suite", () => {
       expect(res.gateBreakdown[0].name).toBe("VIP North Gate");
       expect(res.methodBreakdown.qr).toBe(2);
     });
+
+    it("accurately handles multiple check-ins, re-entries, and gate lane metrics", async () => {
+      const mockEvents = [
+        {
+          id: "evt-multi",
+          name: "Annual Music Fest",
+          venue: "Main Arena",
+          event_date: "2026-11-15",
+          start_time: "10:00:00",
+          end_time: "22:00:00",
+          attendee_limit: 200,
+          status: "active",
+          created_at: "2026-11-01T00:00:00Z",
+        },
+      ];
+
+      const mockAttendees = [
+        {
+          id: "att-1",
+          event_id: "evt-multi",
+          name: "Alice Wonderland",
+          email: "alice@example.com",
+          pass_type: "general",
+          application_status: "approved",
+          pass_status: "checked_in",
+          created_at: "2026-11-02T00:00:00Z",
+          ticket_type_id: null,
+        },
+        {
+          id: "att-2",
+          event_id: "evt-multi",
+          name: "Bob Builder",
+          email: "bob@example.com",
+          pass_type: "vip",
+          application_status: "approved",
+          pass_status: "checked_in",
+          created_at: "2026-11-03T00:00:00Z",
+          ticket_type_id: null,
+        },
+      ];
+
+      // Alice checks in once at West Gate, then re-enters at VIP East Gate, then re-enters again at West Gate (3 scans)
+      // Bob checks in once at West Gate (1 scan)
+      // Total scans: 4. Unique attendees: 2. Re-entries: 2.
+      const mockCheckins = [
+        {
+          id: "chk-1",
+          attendee_id: "att-1",
+          event_id: "evt-multi",
+          checked_in_at: "2026-11-15T10:00:00Z",
+          gate_id: "gate-1",
+          check_in_method: "qr",
+          gate: { name: "West Gate" },
+        },
+        {
+          id: "chk-2",
+          attendee_id: "att-2",
+          event_id: "evt-multi",
+          checked_in_at: "2026-11-15T10:30:00Z",
+          gate_id: "gate-1",
+          check_in_method: "qr",
+          gate: { name: "West Gate" },
+        },
+        {
+          id: "chk-3",
+          attendee_id: "att-1",
+          event_id: "evt-multi",
+          checked_in_at: "2026-11-15T14:00:00Z",
+          gate_id: "gate-2",
+          check_in_method: "qr",
+          gate: { name: "VIP East Gate" },
+        },
+        {
+          id: "chk-4",
+          attendee_id: "att-1",
+          event_id: "evt-multi",
+          checked_in_at: "2026-11-15T18:00:00Z",
+          gate_id: "gate-1",
+          check_in_method: "manual",
+          gate: { name: "West Gate" },
+        },
+      ];
+
+      const mockGates = [
+        { id: "gate-1", event_id: "evt-multi", name: "West Gate", zone_id: null },
+        { id: "gate-2", event_id: "evt-multi", name: "VIP East Gate", zone_id: null },
+      ];
+
+      const mockSupabase = {
+        auth: {
+          getUser: vi.fn().mockResolvedValue({ data: { user: { id: "user-123" } } }),
+        },
+        from: vi.fn((table: string) => {
+          if (table === "events") {
+            return {
+              select: vi.fn().mockReturnValue({
+                eq: vi.fn().mockReturnValue({
+                  order: vi.fn().mockResolvedValue({ data: mockEvents }),
+                }),
+              }),
+            };
+          }
+          if (table === "organization_members") {
+            return {
+              select: vi.fn().mockReturnValue({
+                eq: vi.fn().mockReturnValue({
+                  eq: vi.fn().mockResolvedValue({ data: [] }),
+                }),
+              }),
+            };
+          }
+          if (table === "attendees") {
+            return {
+              select: vi.fn().mockReturnValue({
+                in: vi.fn().mockReturnValue({
+                  order: vi.fn().mockResolvedValue({ data: mockAttendees }),
+                }),
+              }),
+            };
+          }
+          if (table === "check_ins") {
+            return {
+              select: vi.fn().mockReturnValue({
+                in: vi.fn().mockReturnValue({
+                  order: vi.fn().mockResolvedValue({ data: mockCheckins }),
+                }),
+              }),
+            };
+          }
+          if (table === "scanner_gates") {
+            return {
+              select: vi.fn().mockReturnValue({
+                in: vi.fn().mockResolvedValue({ data: mockGates }),
+              }),
+            };
+          }
+          return {
+            select: vi.fn().mockReturnValue({
+              in: vi.fn().mockResolvedValue({ data: [] }),
+            }),
+          };
+        }),
+      };
+
+      mockedCreateClient.mockResolvedValue(mockSupabase as never);
+
+      const res = await getAnalyticsData("evt-multi");
+      expect(res.uniqueCheckedInCount).toBe(2);
+      expect(res.totalScansCount).toBe(4);
+      expect(res.multipleCheckinsCount).toBe(1); // Only Alice scanned multiple times
+      expect(res.reEntryCount).toBe(2); // 4 total - 2 unique = 2 re-entry scans
+      expect(res.reEntryRate).toBe(50); // 1 out of 2 attendees re-entered = 50%
+      expect(res.avgScansPerAttendee).toBe(2); // 4 scans / 2 attendees = 2.0
+
+      // Gate stats breakdown
+      const westGate = res.gateBreakdown.find((g) => g.name === "West Gate");
+      expect(westGate).toBeDefined();
+      expect(westGate?.scans).toBe(3);
+      expect(westGate?.uniqueAttendees).toBe(2); // Alice & Bob
+      expect(westGate?.firstEntries).toBe(2); // Alice 1st, Bob 1st
+      expect(westGate?.reEntries).toBe(1); // Alice 3rd entry
+
+      const eastGate = res.gateBreakdown.find((g) => g.name === "VIP East Gate");
+      expect(eastGate).toBeDefined();
+      expect(eastGate?.scans).toBe(1);
+      expect(eastGate?.uniqueAttendees).toBe(1); // Alice
+      expect(eastGate?.firstEntries).toBe(0); // It was Alice's 2nd scan
+      expect(eastGate?.reEntries).toBe(1); // Re-entry
+
+      // Recent scans sequence
+      expect(res.recentScans[0].scanSequence).toBeDefined();
+    });
   });
 
   describe("AnalyticsDashboard Component", () => {
@@ -346,6 +518,28 @@ describe("Analytics Suite", () => {
       expect(screen.getByText(/Real-Time Scan Activity Stream/i)).toBeTruthy();
       expect(screen.getByText("Rohan Sharma")).toBeTruthy();
       expect(screen.getByText("rohan@test.com")).toBeTruthy();
+    });
+
+    it("renders Check-In Dynamics & Re-Entry Intelligence card with gate telemetry", () => {
+      render(
+        <AnalyticsDashboard
+          initialData={{
+            ...sampleData,
+            uniqueCheckedInCount: 160,
+            totalScansCount: 188,
+            multipleCheckinsCount: 28,
+            reEntryCount: 28,
+            reEntryRate: 17.5,
+            avgScansPerAttendee: 1.2,
+          }}
+        />
+      );
+
+      expect(screen.getByText(/Check-In Dynamics & Re-Entry Intelligence/i)).toBeTruthy();
+      expect(screen.getByText(/Admission Frequency Spectrum/i)).toBeTruthy();
+      expect(screen.getByText(/Unique Guests Admitted/i)).toBeTruthy();
+      expect(screen.getByText(/Total Gate Scans/i)).toBeTruthy();
+      expect(screen.getByText(/Re-Entries & Multi-Scans/i)).toBeTruthy();
     });
   });
 });

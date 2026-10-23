@@ -24,6 +24,11 @@ import {
   Zap,
   ArrowUpRight,
   UserX,
+  Repeat,
+  LogIn,
+  ArrowRightLeft,
+  UserCheck,
+  Layers,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { AnalyticsData, RecentScan } from "@/app/actions/analytics";
@@ -53,7 +58,7 @@ export default function AnalyticsDashboard({ initialData, isScopedToEvent = fals
     setData(initialData);
   }
 
-  // Realtime check-in updates
+  // Realtime check-in updates with re-entry & gate tracking
   useEffect(() => {
     const supabase = createClient();
     const eventFilter =
@@ -75,7 +80,25 @@ export default function AnalyticsDashboard({ initialData, isScopedToEvent = fals
         (payload: any) => {
           const newCheckin = payload.new;
           setData((prev) => {
-            const nextCheckedIn = prev.checkedInCount + 1;
+            const isRepeat = prev.recentScans.some((s) => s.attendeeId === newCheckin.attendee_id);
+            const priorScansCount = prev.recentScans.filter((s) => s.attendeeId === newCheckin.attendee_id).length;
+            const newScanSeq = isRepeat ? priorScansCount + 1 : 1;
+
+            const nextUniqueCheckedIn = isRepeat 
+              ? (prev.uniqueCheckedInCount ?? prev.checkedInCount)
+              : (prev.uniqueCheckedInCount ?? prev.checkedInCount) + 1;
+            const nextCheckedIn = nextUniqueCheckedIn;
+            const nextTotalScans = (prev.totalScansCount ?? prev.checkedInCount) + 1;
+            const nextReEntries = isRepeat 
+              ? (prev.reEntryCount ?? 0) + 1 
+              : (prev.reEntryCount ?? 0);
+            const nextMultiCheckins = isRepeat && priorScansCount === 1
+              ? (prev.multipleCheckinsCount ?? 0) + 1
+              : (prev.multipleCheckinsCount ?? 0);
+            const nextReEntryRate = nextUniqueCheckedIn > 0 
+              ? Math.round((nextMultiCheckins / nextUniqueCheckedIn) * 1000) / 10 
+              : 0;
+
             const nextNotArrived = Math.max(0, prev.approvedCount - nextCheckedIn);
             const nextAttendanceRate =
               prev.approvedCount > 0
@@ -91,12 +114,33 @@ export default function AnalyticsDashboard({ initialData, isScopedToEvent = fals
                 return {
                   ...b,
                   scans: b.scans + 1,
-                  pct: Math.round(((b.scans + 1) / nextCheckedIn) * 100),
+                  pct: Math.round(((b.scans + 1) / nextTotalScans) * 100),
                 };
               }
               return {
                 ...b,
-                pct: Math.round((b.scans / nextCheckedIn) * 100),
+                pct: Math.round((b.scans / nextTotalScans) * 100),
+              };
+            });
+
+            // Update gate stats in real-time
+            const updatedGates = prev.gateBreakdown.map((g) => {
+              if (g.gateId === newCheckin.gate_id || (!g.gateId && !newCheckin.gate_id)) {
+                const nextGateScans = g.scans + 1;
+                const nextGateUnique = isRepeat ? (g.uniqueAttendees ?? g.scans) : (g.uniqueAttendees ?? g.scans) + 1;
+                const nextGateReEntries = isRepeat ? (g.reEntries ?? 0) + 1 : (g.reEntries ?? 0);
+                return {
+                  ...g,
+                  scans: nextGateScans,
+                  uniqueAttendees: nextGateUnique,
+                  reEntries: nextGateReEntries,
+                  reEntryPct: Math.round((nextGateReEntries / nextGateScans) * 100),
+                  pct: Math.round((nextGateScans / nextTotalScans) * 100),
+                };
+              }
+              return {
+                ...g,
+                pct: Math.round((g.scans / nextTotalScans) * 100),
               };
             });
 
@@ -106,18 +150,26 @@ export default function AnalyticsDashboard({ initialData, isScopedToEvent = fals
               name: "Just Scanned",
               email: "Verified pass entry",
               passType: "Pass Holder",
-              gateName: "Entrance",
+              gateName: "Main Entrance",
               method: newCheckin.check_in_method ?? "qr",
               checkedInAt: newCheckin.checked_in_at,
+              scanSequence: newScanSeq,
+              isReEntry: isRepeat,
             };
 
             return {
               ...prev,
               checkedInCount: nextCheckedIn,
+              uniqueCheckedInCount: nextUniqueCheckedIn,
+              totalScansCount: nextTotalScans,
+              reEntryCount: nextReEntries,
+              multipleCheckinsCount: nextMultiCheckins,
+              reEntryRate: nextReEntryRate,
               notArrivedCount: nextNotArrived,
               attendanceRate: nextAttendanceRate,
               hourlyTimeline: updatedTimeline,
-              recentScans: [newScanEntry, ...prev.recentScans.slice(0, 14)],
+              gateBreakdown: updatedGates,
+              recentScans: [newScanEntry, ...prev.recentScans.slice(0, 24)],
             };
           });
         }
@@ -155,7 +207,8 @@ export default function AnalyticsDashboard({ initialData, isScopedToEvent = fals
         "Attendee Name",
         "Email",
         "Pass Type / Ticket Tier",
-        "Gate Name",
+        "Gate Lane",
+        "Entry Sequence",
         "Check-in Method",
         "Check-in Timestamp (ISO)",
         "Check-in Date & Time (IST)",
@@ -167,27 +220,37 @@ export default function AnalyticsDashboard({ initialData, isScopedToEvent = fals
           dateStyle: "medium",
           timeStyle: "medium",
         });
+        const seqText = s.scanSequence && s.scanSequence > 1 
+          ? `Re-Entry #${s.scanSequence - 1} (Scan ${s.scanSequence})` 
+          : "1st Entry";
+
         return [
           `"${s.name.replace(/"/g, '""')}"`,
           `"${s.email.replace(/"/g, '""')}"`,
           `"${s.passType.replace(/"/g, '""')}"`,
           `"${s.gateName.replace(/"/g, '""')}"`,
+          `"${seqText}"`,
           `"${s.method.toUpperCase()}"`,
           `"${s.checkedInAt}"`,
           `"${istDate}"`,
         ].join(",");
       });
 
-      // Summary lines
+      // Summary lines with comprehensive check-in and re-entry telemetry
       const summaryRows = [
-        `"--- URPASS ANALYTICS AUDIT REPORT ---"`,
+        `"--- URPASS COMPREHENSIVE ATTENDANCE & GATE AUDIT REPORT ---"`,
         `"Event:","${(data.eventName ?? "All Events").replace(/"/g, '""')}"`,
         `"Report Generated:","${new Date().toISOString()}"`,
         `"Total Registrations:","${data.totalRegistrations}"`,
         `"Approved Attendees:","${data.approvedCount}"`,
         `"Passes Generated:","${data.passesGeneratedCount}"`,
-        `"Total Checked In:","${data.checkedInCount}"`,
-        `"Attendance Rate:","${data.attendanceRate}%"`,
+        `"Unique Checked-In Guests:","${data.uniqueCheckedInCount ?? data.checkedInCount}"`,
+        `"Total Gate Admissions (Scans):","${data.totalScansCount ?? data.checkedInCount}"`,
+        `"Multiple Check-In Attendees:","${data.multipleCheckinsCount ?? 0}"`,
+        `"Total Re-Entries Processed:","${data.reEntryCount ?? 0}"`,
+        `"Re-Entry Rate:","${data.reEntryRate ?? 0}%"`,
+        `"Avg Admissions / Attendee:","${data.avgScansPerAttendee ?? 1.0}"`,
+        `"Turnout Rate:","${data.attendanceRate}%"`,
         `"Peak Velocity:","${data.peakVelocity} scans/hr (${data.peakVelocityTime})"`,
         `""`,
         headers.join(","),
@@ -347,10 +410,17 @@ export default function AnalyticsDashboard({ initialData, isScopedToEvent = fals
             </div>
           </div>
           <div>
-            <p className="text-3xl font-extrabold tracking-tight tabular-nums text-emerald-600">
-              {data.checkedInCount.toLocaleString()}
-            </p>
-            <div className="flex items-center gap-1.5 mt-2 text-xs">
+            <div className="flex items-baseline gap-2 flex-wrap">
+              <p className="text-3xl font-extrabold tracking-tight tabular-nums text-emerald-600">
+                {data.checkedInCount.toLocaleString()}
+              </p>
+              {(data.reEntryCount ?? 0) > 0 && (
+                <span className="text-[11px] font-bold text-violet-700 bg-violet-50 border border-violet-200/60 px-2 py-0.5 rounded-md">
+                  +{data.reEntryCount} re-entries
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-1.5 mt-2 text-xs flex-wrap">
               <span className="font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md">
                 {data.attendanceRate}% turnout
               </span>
@@ -379,6 +449,143 @@ export default function AnalyticsDashboard({ initialData, isScopedToEvent = fals
               {data.peakVelocityTime}
             </p>
           </div>
+        </div>
+      </div>
+
+      {/* ── Multi-Checkin & Re-Entry Telemetry Section ────────────── */}
+      <div className="bg-gradient-to-br from-neutral-900 to-neutral-800 text-white rounded-3xl p-6 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="p-1 rounded-lg bg-white/10 text-brand-200">
+                <Repeat className="w-4 h-4 text-violet-300" />
+              </span>
+              <h2 className="text-base font-bold tracking-tight text-white">
+                Check-In Dynamics &amp; Re-Entry Intelligence
+              </h2>
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-white/10 text-emerald-300 border border-white/10">
+                Live Door Telemetry
+              </span>
+            </div>
+            <p className="text-xs text-neutral-400 mt-1">
+              Distinguishing unique attendee check-ins from repeat admissions, turnstile re-entries, and multi-entry pass scans.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-white/10 text-neutral-200 border border-white/10">
+              Avg {data.avgScansPerAttendee ?? (data.totalScansCount && data.checkedInCount ? Math.round((data.totalScansCount / data.checkedInCount) * 10) / 10 : 1.0)} Scans / Guest
+            </span>
+          </div>
+        </div>
+
+        {/* 4 Stat Metric Pillars */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5 mb-5">
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-3.5 backdrop-blur-xs">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">
+              Unique Guests Admitted
+            </span>
+            <p className="text-2xl font-black tabular-nums text-emerald-400 mt-1">
+              {(data.uniqueCheckedInCount ?? data.checkedInCount).toLocaleString()}
+            </p>
+            <p className="text-[11px] text-neutral-400 mt-0.5">Distinct verified individuals</p>
+          </div>
+
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-3.5 backdrop-blur-xs">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">
+              Total Gate Scans
+            </span>
+            <p className="text-2xl font-black tabular-nums text-white mt-1">
+              {(data.totalScansCount ?? data.checkedInCount).toLocaleString()}
+            </p>
+            <p className="text-[11px] text-neutral-400 mt-0.5">Cumulative admissions recorded</p>
+          </div>
+
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-3.5 backdrop-blur-xs">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">
+              Re-Entries &amp; Multi-Scans
+            </span>
+            <div className="flex items-baseline gap-2 mt-1">
+              <p className="text-2xl font-black tabular-nums text-violet-300">
+                {(data.reEntryCount ?? 0).toLocaleString()}
+              </p>
+              <span className="text-xs font-bold text-violet-300">
+                ({data.reEntryRate ?? 0}%)
+              </span>
+            </div>
+            <p className="text-[11px] text-neutral-400 mt-0.5">
+              {data.multipleCheckinsCount ?? 0} guests scanned &gt;1 time
+            </p>
+          </div>
+
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-3.5 backdrop-blur-xs">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">
+              Est. In-Venue Presence
+            </span>
+            <p className="text-2xl font-black tabular-nums text-amber-300 mt-1">
+              {(data.currentInsideCount ?? data.checkedInCount).toLocaleString()}
+            </p>
+            <p className="text-[11px] text-neutral-400 mt-0.5">Active inside venue capacity</p>
+          </div>
+        </div>
+
+        {/* Multi-Scan Frequency Spectrum Bar */}
+        <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
+          <div className="flex items-center justify-between text-xs mb-2">
+            <span className="font-semibold text-neutral-300 flex items-center gap-1.5">
+              <Layers className="w-3.5 h-3.5 text-neutral-400" />
+              Admission Frequency Spectrum
+            </span>
+            <span className="text-neutral-400 text-[11px]">
+              {data.checkedInCount > 0 ? "Single vs Multiple entries breakdown" : "Awaiting check-in scans"}
+            </span>
+          </div>
+
+          {data.checkedInCount === 0 ? (
+            <div className="h-3 bg-white/10 rounded-full overflow-hidden" />
+          ) : (
+            <>
+              {(() => {
+                const totalAtts = Math.max(1, data.uniqueCheckedInCount ?? data.checkedInCount);
+                const singleCount = data.singleScanCount ?? Math.max(0, totalAtts - (data.multipleCheckinsCount ?? 0));
+                const multiCount = data.multipleCheckinsCount ?? 0;
+                const singlePct = Math.round((singleCount / totalAtts) * 100);
+                const multiPct = Math.max(0, 100 - singlePct);
+
+                return (
+                  <div>
+                    <div className="h-3 w-full bg-white/10 rounded-full overflow-hidden flex">
+                      <div
+                        className="h-full bg-emerald-500 transition-all duration-500"
+                        style={{ width: `${singlePct}%` }}
+                        title={`Single Entry: ${singleCount} (${singlePct}%)`}
+                      />
+                      <div
+                        className="h-full bg-violet-500 transition-all duration-500"
+                        style={{ width: `${multiPct}%` }}
+                        title={`Multiple Entries: ${multiCount} (${multiPct}%)`}
+                      />
+                    </div>
+
+                    <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-neutral-400 mt-2.5">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-xs bg-emerald-500" />
+                        <span className="text-neutral-200 font-medium">
+                          Single Entry (1 Scan): <strong className="text-white">{singleCount}</strong> ({singlePct}%)
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-xs bg-violet-500" />
+                        <span className="text-neutral-200 font-medium">
+                          Multi-Entry / Re-Admitted (2+ Scans): <strong className="text-white">{multiCount}</strong> ({multiPct}%)
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+            </>
+          )}
         </div>
       </div>
 
@@ -660,7 +867,7 @@ export default function AnalyticsDashboard({ initialData, isScopedToEvent = fals
                 Gate Throughput &amp; Entrance Lanes
               </h3>
               <p className="text-xs text-neutral-400 mt-0.5">
-                Traffic balance across assigned entrance scanners and gates
+                Multi-lane traffic distribution, unique vs re-entry admissions, and lane velocity
               </p>
             </div>
             <span className="text-xs font-semibold text-neutral-500 bg-neutral-100 px-2.5 py-1 rounded-xl">
@@ -673,28 +880,85 @@ export default function AnalyticsDashboard({ initialData, isScopedToEvent = fals
               No scanner gates configured. Scans will be attributed to Main Entrance.
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {data.gateBreakdown.map((gate) => (
-                <div
-                  key={gate.name}
-                  className="bg-neutral-50/80 border border-neutral-100 rounded-2xl p-4 flex flex-col justify-between"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="text-sm font-semibold text-neutral-900 truncate">
-                      {gate.name}
-                    </p>
-                    <span className="text-xs font-bold text-brand bg-brand-50 px-2 py-0.5 rounded-md shrink-0">
-                      {gate.pct}% traffic
-                    </span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              {data.gateBreakdown.map((gate) => {
+                const uniqueAtts = gate.uniqueAttendees ?? gate.scans;
+                const reEntries = gate.reEntries ?? Math.max(0, gate.scans - uniqueAtts);
+                const firstEntries = gate.firstEntries ?? (gate.scans - reEntries);
+                const firstPct = gate.scans > 0 ? Math.round((firstEntries / gate.scans) * 100) : 100;
+                const rePct = gate.scans > 0 ? Math.round((reEntries / gate.scans) * 100) : 0;
+
+                return (
+                  <div
+                    key={gate.name}
+                    className="bg-neutral-50/80 hover:bg-neutral-50 border border-neutral-100 rounded-2xl p-4 flex flex-col justify-between transition-all"
+                  >
+                    <div>
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <div className="min-w-0">
+                          <p className="text-sm font-bold text-neutral-900 truncate">
+                            {gate.name}
+                          </p>
+                          <p className="text-[11px] text-neutral-400">
+                            Entrance Lane Verification
+                          </p>
+                        </div>
+                        <span className="text-xs font-bold text-brand bg-brand-50 border border-brand-100/60 px-2 py-0.5 rounded-md shrink-0">
+                          {gate.pct}% traffic
+                        </span>
+                      </div>
+
+                      {/* 3 Metric Mini-Pillars */}
+                      <div className="grid grid-cols-3 gap-2 my-2.5 p-2 bg-white rounded-xl border border-neutral-200/50 text-center">
+                        <div>
+                          <p className="text-[9px] uppercase font-bold tracking-wider text-neutral-400">Scans</p>
+                          <p className="text-sm font-extrabold tabular-nums text-neutral-900">{gate.scans}</p>
+                        </div>
+                        <div>
+                          <p className="text-[9px] uppercase font-bold tracking-wider text-neutral-400">Unique</p>
+                          <p className="text-sm font-extrabold tabular-nums text-emerald-600">{uniqueAtts}</p>
+                        </div>
+                        <div>
+                          <p className="text-[9px] uppercase font-bold tracking-wider text-neutral-400">Re-entry</p>
+                          <p className="text-sm font-extrabold tabular-nums text-violet-600">{reEntries}</p>
+                        </div>
+                      </div>
+
+                      {/* Stacked Entry Proportion Bar */}
+                      <div className="space-y-1 mt-2">
+                        <div className="h-2 w-full bg-neutral-200/60 rounded-full overflow-hidden flex">
+                          <div
+                            className="h-full bg-emerald-500 transition-all duration-500"
+                            style={{ width: `${firstPct}%` }}
+                            title={`1st Entry: ${firstEntries} (${firstPct}%)`}
+                          />
+                          <div
+                            className="h-full bg-violet-500 transition-all duration-500"
+                            style={{ width: `${rePct}%` }}
+                            title={`Re-entry: ${reEntries} (${rePct}%)`}
+                          />
+                        </div>
+                        <div className="flex items-center justify-between text-[10px] text-neutral-400 px-0.5">
+                          <span className="flex items-center gap-1 font-medium">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                            1st: {firstEntries} ({firstPct}%)
+                          </span>
+                          <span className="flex items-center gap-1 font-medium">
+                            <span className="w-1.5 h-1.5 rounded-full bg-violet-500" />
+                            Re-entry: {reEntries} ({rePct}%)
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Lane Velocity Footer */}
+                    <div className="mt-3 pt-2.5 border-t border-neutral-200/60 flex items-center justify-between text-[11px] text-neutral-400">
+                      <span>Peak: <strong className="text-neutral-700 font-semibold">{gate.peakHourScans || 0} scans/hr</strong></span>
+                      <span>Avg: <strong className="text-neutral-700 font-semibold">{gate.avgScansPerHour || 0} scans/hr</strong></span>
+                    </div>
                   </div>
-                  <div className="mt-3">
-                    <p className="text-2xl font-black tabular-nums text-neutral-800">
-                      {gate.scans}
-                    </p>
-                    <p className="text-[11px] text-neutral-400 mt-0.5">verified scans</p>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
@@ -893,16 +1157,34 @@ export default function AnalyticsDashboard({ initialData, isScopedToEvent = fals
                       {scan.name.charAt(0).toUpperCase()}
                     </div>
                     <div className="min-w-0">
-                      <p className="text-xs font-bold text-neutral-900 truncate">{scan.name}</p>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="text-xs font-bold text-neutral-900 truncate">{scan.name}</p>
+                        {scan.isReEntry || (scan.scanSequence && scan.scanSequence > 1) ? (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-violet-100 text-violet-800 border border-violet-200 shrink-0">
+                            Re-Entry #{scan.scanSequence ? scan.scanSequence - 1 : 1}
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 shrink-0">
+                            1st Entry
+                          </span>
+                        )}
+                      </div>
                       <p className="text-[11px] text-neutral-400 truncate">{scan.email || "Pass Verified"}</p>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3 shrink-0">
+                  <div className="flex items-center gap-2.5 shrink-0">
                     <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-violet-50 text-brand border border-brand-100 hidden sm:inline-block">
                       {scan.passType}
                     </span>
-                    <span className="text-[10px] font-medium text-neutral-500 bg-neutral-100 px-2 py-0.5 rounded-md hidden md:inline-block">
+                    <span className="text-[10px] font-medium text-neutral-600 bg-neutral-100 px-2 py-0.5 rounded-md hidden md:inline-flex items-center gap-1">
+                      {scan.method === "manual" ? (
+                        <CheckCircle2 className="w-2.5 h-2.5 text-neutral-500" />
+                      ) : scan.method === "search" ? (
+                        <ShieldCheck className="w-2.5 h-2.5 text-blue-500" />
+                      ) : (
+                        <QrCode className="w-2.5 h-2.5 text-emerald-600" />
+                      )}
                       {scan.gateName}
                     </span>
                     <span className="text-xs font-semibold tabular-nums text-neutral-600">
