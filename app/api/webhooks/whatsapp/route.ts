@@ -174,9 +174,12 @@ export async function POST(req: NextRequest) {
             }
 
             let failureReason: string | undefined;
+            let failureCode: string | undefined;
             if (Array.isArray(st.errors) && st.errors.length > 0) {
               const err = st.errors[0];
+              failureCode = err.code != null ? String(err.code) : undefined;
               failureReason =
+                err.error_data?.details ||
                 err.details ||
                 err.message ||
                 err.title ||
@@ -188,6 +191,7 @@ export async function POST(req: NextRequest) {
               providerMessageId,
               status: normalizedStatus,
               failureReason,
+              failureCode,
               deliveredAt: normalizedStatus === "DELIVERED" ? timestamp : undefined,
               readAt: normalizedStatus === "READ" ? timestamp : undefined,
             });

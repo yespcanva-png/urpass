@@ -706,6 +706,7 @@ export class CommunicationService {
       providerMessageId: string;
       status: DeliveryStatus;
       failureReason?: string;
+      failureCode?: string;
       deliveredAt?: string;
       readAt?: string;
       cost?: number;
@@ -754,6 +755,7 @@ export class CommunicationService {
       } else if (data.status === "FAILED") {
         updateData.failed_at = now;
         updateData.failure_reason = data.failureReason || null;
+        updateData.failure_code = data.failureCode || null;
       }
 
       if (data.cost !== undefined) {

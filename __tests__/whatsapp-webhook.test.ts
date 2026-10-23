@@ -156,6 +156,7 @@ describe("WhatsApp Webhook Endpoint (app/api/webhooks/whatsapp/route.ts)", () =>
         providerMessageId: "wamid.FAIL_123",
         status: "FAILED",
         failureReason: "Recipient is not registered on WhatsApp",
+        failureCode: "131026",
       })
     );
   });

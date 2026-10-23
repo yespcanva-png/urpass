@@ -114,7 +114,48 @@ export function buildWhatsAppInvitationText({
 
   const teamName = orgName?.trim() || "Team UrPass";
 
-  // Template 1: nivi1 / nivi (Date, Time, Venue, Pass URL embedded in body)
+  // Template 1: nivi122 / nivi1 / nivi (Date, Time, Venue, Pass URL embedded in body)
+  if (tpl === "nivi122") {
+    const longDateText = eventDate
+      ? new Date(eventDate).toLocaleDateString("en-IN", {
+          dateStyle: "long",
+          timeZone: "Asia/Kolkata",
+        })
+      : dateText;
+
+    const niviTimeText =
+      timeText ||
+      (eventDate && eventDate.includes("T")
+        ? new Date(eventDate).toLocaleTimeString("en-IN", {
+            hour: "numeric",
+            minute: "2-digit",
+            hour12: true,
+            timeZone: "Asia/Kolkata",
+          })
+        : "11:00 AM");
+
+    return [
+      `Your invitation for *${title}* is confirmed.`,
+      "",
+      `📅 *Date:* ${longDateText}`,
+      `⏰ *Time:* ${niviTimeText}`,
+      `🍽️ Lunch follows`,
+      "",
+      `📍 *Venue:*`,
+      `${venueText}`,
+      "",
+      `🎟️ Your digital invitation pass is ready.`,
+      "",
+      `*Download / View Your Invitation Pass:*`,
+      `${passUrl}`,
+      "",
+      `*Thank you!*`,
+      "",
+      `📲 *Share Invitation:*`,
+      `${shareUrl}`,
+    ].join("\n");
+  }
+
   if (tpl === "nivi" || tpl === "nivi1") {
     const longDateText = eventDate
       ? new Date(eventDate).toLocaleDateString("en-IN", {

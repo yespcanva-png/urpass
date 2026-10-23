@@ -127,8 +127,8 @@ export function normalizeTemplateLanguage(lang?: string | null, templateName?: s
     return "en_US";
   }
 
-  // Meta template 2295998374554657 is approved as English (en).
-  if (tpl === "nivi" || tpl === "nivi1") return "en";
+  // Meta templates nivi, nivi1, nivi122 are approved as English (en).
+  if (tpl === "nivi" || tpl === "nivi1" || tpl === "nivi122" || tpl.startsWith("nivi")) return "en";
 
   // English (en) and English (US) (en_US) are distinct Meta translations.
   if (!clean) return "en_US";
@@ -218,7 +218,7 @@ export function buildTemplatePayload(
 
       const buttonToken = extractCleanButtonPassToken(params.passToken, params.ticketUrl, params.ticketId);
 
-      if (activeLower === "nivi" || activeLower === "nivi1") {
+      if (activeLower === "nivi" || activeLower === "nivi1" || activeLower === "nivi122" || activeLower.startsWith("nivi")) {
         const dateText = params.eventDate
           ? new Date(params.eventDate).toLocaleDateString("en-IN", { dateStyle: "long", timeZone: "Asia/Kolkata" })
           : "24 October 2026";
@@ -226,11 +226,37 @@ export function buildTemplatePayload(
           ? new Date(params.eventDate).toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: "Asia/Kolkata" })
           : "11:00 AM");
         const venueText = params.venue || "Confirmed on Pass";
+        const passUrl = params.ticketUrl || (buttonToken ? `https://urpass.space/pass/${buttonToken}` : "https://urpass.space");
 
-        if (activeLower === "nivi1") {
+        if (activeLower === "nivi122") {
+          // Live approved Meta template "nivi122" (Language: en, Category: MARKETING)
+          // Body (5 params):
+          // {{1}}: Event Name
+          // {{2}}: Date
+          // {{3}}: Time
+          // {{4}}: Venue
+          // {{5}}: Pass URL
+          components.push({
+            type: "body",
+            parameters: [
+              { type: "text", text: params.eventName || "Festivals for Joy – 5th Anniversary Celebration" },
+              { type: "text", text: dateText },
+              { type: "text", text: timeText },
+              { type: "text", text: venueText },
+              { type: "text", text: passUrl },
+            ],
+          });
+          if (buttonToken) {
+            components.push({
+              type: "button",
+              sub_type: "url",
+              index: "0",
+              parameters: [{ type: "text", text: buttonToken }],
+            });
+          }
+        } else if (activeLower === "nivi1") {
           // Template nivi1 body: Date {{1}}, Time {{2}}, Venue {{3}}, Pass URL {{4}}.
-          // Static header & footer; pass URL is embedded in body text (no button component).
-          const passUrl = params.ticketUrl || (buttonToken ? `https://urpass.space/pass/${buttonToken}` : "https://urpass.space");
+          // Static header; body URL plus the approved dynamic Share Invitation button.
           components.push({
             type: "body",
             parameters: [
@@ -240,6 +266,14 @@ export function buildTemplatePayload(
               { type: "text", text: passUrl },
             ],
           });
+          if (buttonToken) {
+            components.push({
+              type: "button",
+              sub_type: "url",
+              index: "0",
+              parameters: [{ type: "text", text: buttonToken }],
+            });
+          }
         } else {
           // Approved nivi body: Date {{1}}, Time {{2}}, Venue {{3}}.
           // Static header & footer; no button component exists in Meta for this template.

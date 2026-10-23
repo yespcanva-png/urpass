@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { explainWhatsAppFailure } from "@/lib/communications/whatsapp-errors";
 import Link from "next/link";
 import {
   Mail,
@@ -1441,6 +1442,13 @@ export default function CommunicationsClient({
                           <CheckCheck className="w-3 h-3" />
                           {log.status}
                         </span>
+                        {log.status === "FAILED" && (
+                          <p className="mt-1 max-w-xs text-[11px] text-rose-700">
+                            {log.channel === "WHATSAPP"
+                              ? explainWhatsAppFailure(log.failure_reason, log.failure_code)
+                              : log.failure_reason || "Delivery failed."}
+                          </p>
+                        )}
                       </td>
                       <td className="py-3 px-4 text-neutral-400 text-[11px]">
                         {new Date(log.created_at || log.sent_at).toLocaleTimeString([], {

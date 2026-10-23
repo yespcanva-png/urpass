@@ -1,5 +1,6 @@
 import { TicketDeliveryPayload } from "../../types";
 import { isValidE164 } from "../../utils";
+import { formatTimeWithAmPm } from "@/lib/utils";
 import { aiSensyProvider } from "./aisensy";
 import {
   buildTemplatePayload,
@@ -155,10 +156,12 @@ export class WhatsAppProvider {
 
       let data = await res.json().catch(() => null);
 
-      // ── Self-Healing Dynamic Template Button Resolver ──
-      // Automatically handles templates that REQUIRE a button parameter (Code 131008)
-      // and templates that DO NOT support a button component (Code 132018) without code changes.
-      if (!res.ok && templateObj) {
+      // ── Self-Healing Dynamic Template Resolver ──
+      // Automatically resolves:
+      // 1. Parameter count mismatches (Code 132000): e.g. 4 params sent when 5 expected
+      // 2. Templates that REQUIRE a button parameter (Code 131008)
+      // 3. Templates that DO NOT support a button component (Code 132018)
+      for (let attempt = 0; attempt < 2 && !res.ok && templateObj; attempt++) {
         const errObj = data?.error;
         const code = errObj?.code;
         const details = (
@@ -180,8 +183,113 @@ export class WhatsAppProvider {
           details.includes("param does not exist in template") ||
           (details.includes("button") && details.includes("not contain"));
 
+        const isParamMismatch =
+          code === 132000 ||
+          details.includes("132000") ||
+          details.includes("number of localizable_params") ||
+          details.includes("does not match the expected number of params");
+
+        if (!isButtonParamMissing && !isButtonNotSupported && !isParamMismatch) {
+          break;
+        }
+
+        let modified = false;
+
+        if (isParamMismatch) {
+          const match =
+            details.match(/expected number of params\s*(?:\(|:)?\s*(\d+)/i) ||
+            details.match(/localizable_params\s*\(\s*\d+\s*\)\s*does not match(?: the)? expected number of params\s*\(\s*(\d+)\s*\)/i);
+          const expectedCount = match ? parseInt(match[1], 10) : null;
+
+          if (expectedCount !== null) {
+            const buttonToken =
+              extractCleanButtonPassToken(payload.passToken, payload.ticketUrl, payload.ticketId) ||
+              payload.passToken ||
+              "pass";
+            const dateText = payload.eventDate
+              ? new Date(payload.eventDate).toLocaleDateString("en-IN", { dateStyle: "long", timeZone: "Asia/Kolkata" })
+              : "24 October 2026";
+            const timeText =
+              formatTimeWithAmPm(payload.eventTime) ||
+              (payload.eventDate?.includes("T")
+                ? new Date(payload.eventDate).toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: "Asia/Kolkata" })
+                : "11:00 AM");
+            const venueText = payload.venue || "Confirmed on Pass";
+            const passUrl =
+              payload.ticketUrl || (buttonToken ? `https://urpass.space/pass/${buttonToken}` : "https://urpass.space");
+            const eventName = payload.eventName || "Event";
+            const attendeeName = payload.attendeeName || "Guest";
+            const ticketId = payload.ticketId || "PASS";
+
+            let bodyComp = (templateObj.components || []).find((c: any) => c.type === "body");
+            if (!bodyComp) {
+              bodyComp = { type: "body", parameters: [] };
+              templateObj.components = templateObj.components || [];
+              templateObj.components.push(bodyComp);
+            }
+
+            const tName = (templateObj.name || "").toLowerCase();
+            if (expectedCount === 5) {
+              if (tName.includes("nivi")) {
+                bodyComp.parameters = [
+                  { type: "text", text: eventName },
+                  { type: "text", text: dateText },
+                  { type: "text", text: timeText },
+                  { type: "text", text: venueText },
+                  { type: "text", text: passUrl },
+                ];
+              } else {
+                bodyComp.parameters = [
+                  { type: "text", text: attendeeName },
+                  { type: "text", text: eventName },
+                  { type: "text", text: dateText },
+                  { type: "text", text: timeText },
+                  { type: "text", text: venueText },
+                ];
+              }
+            } else if (expectedCount === 4) {
+              if (tName.includes("nivi")) {
+                bodyComp.parameters = [
+                  { type: "text", text: dateText },
+                  { type: "text", text: timeText },
+                  { type: "text", text: venueText },
+                  { type: "text", text: passUrl },
+                ];
+              } else {
+                bodyComp.parameters = [
+                  { type: "text", text: attendeeName },
+                  { type: "text", text: eventName },
+                  { type: "text", text: dateText },
+                  { type: "text", text: venueText },
+                ];
+              }
+            } else if (expectedCount === 3) {
+              bodyComp.parameters = [
+                { type: "text", text: dateText },
+                { type: "text", text: timeText },
+                { type: "text", text: venueText },
+              ];
+            } else if (expectedCount === 2) {
+              bodyComp.parameters = [
+                { type: "text", text: attendeeName },
+                { type: "text", text: eventName },
+              ];
+            } else if (expectedCount === 1) {
+              bodyComp.parameters = [
+                { type: "text", text: eventName || attendeeName },
+              ];
+            } else {
+              const pool = [attendeeName, eventName, dateText, timeText, venueText, passUrl, ticketId];
+              bodyComp.parameters = Array.from({ length: expectedCount }, (_, idx) => ({
+                type: "text",
+                text: pool[idx % pool.length],
+              }));
+            }
+            modified = true;
+          }
+        }
+
         if (isButtonParamMissing) {
-          // Template requires a dynamic URL button parameter: attach clean button component and retry
           const buttonToken =
             extractCleanButtonPassToken(payload.passToken, payload.ticketUrl, payload.ticketId) ||
             payload.passToken ||
@@ -201,45 +309,34 @@ export class WhatsAppProvider {
               },
             ],
           });
-          requestBody.template = templateObj;
-
-          try {
-            const retryController = new AbortController();
-            const retryTimeoutId = setTimeout(() => retryController.abort(), 6000);
-            res = await fetch(url, {
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify(requestBody),
-              signal: retryController.signal,
-            });
-            clearTimeout(retryTimeoutId);
-            data = await res.json().catch(() => null);
-          } catch {}
+          modified = true;
         } else if (isButtonNotSupported) {
-          // Template in Meta has no button component: strip button component and retry
           templateObj.components = (templateObj.components || []).filter(
             (c: any) => c.type !== "button"
           );
-          requestBody.template = templateObj;
+          modified = true;
+        }
 
-          try {
-            const retryController = new AbortController();
-            const retryTimeoutId = setTimeout(() => retryController.abort(), 6000);
-            res = await fetch(url, {
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify(requestBody),
-              signal: retryController.signal,
-            });
-            clearTimeout(retryTimeoutId);
-            data = await res.json().catch(() => null);
-          } catch {}
+        if (!modified) break;
+
+        requestBody.template = templateObj;
+
+        try {
+          const retryController = new AbortController();
+          const retryTimeoutId = setTimeout(() => retryController.abort(), 6000);
+          res = await fetch(url, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(requestBody),
+            signal: retryController.signal,
+          });
+          clearTimeout(retryTimeoutId);
+          data = await res.json().catch(() => null);
+        } catch {
+          break;
         }
       }
 
