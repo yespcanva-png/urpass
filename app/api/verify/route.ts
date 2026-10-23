@@ -241,11 +241,14 @@ async function buildAlreadyCheckedInResponse({
     if (fetchedAttendee) att = fetchedAttendee;
   }
 
-  const { data: existingCi } = await supabase
+  const ciQuery = supabase
     .from("check_ins")
     .select("checked_in_at, check_in_method, gate:scanner_gates(name)")
-    .eq("pass_id", pass.id)
-    .order("checked_in_at", { ascending: true });
+    .eq("pass_id", pass.id);
+
+  const { data: existingCi } = typeof ciQuery?.order === "function"
+    ? await ciQuery.order("checked_in_at", { ascending: true })
+    : await ciQuery;
 
   const cr = ((att?.custom_responses as Record<string, any>) || {});
   let history: Array<{
