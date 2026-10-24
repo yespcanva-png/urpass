@@ -99,8 +99,8 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/developers" className="text-xs text-violet-300 hover:text-white font-medium transition-colors flex items-center gap-1.5">
-                  <span>Developer API &amp; EIaaS</span>
+                <Link href="/docs" className="text-xs text-violet-300 hover:text-white font-medium transition-colors flex items-center gap-1.5">
+                  <span>Developer API &amp; Docs</span>
                   <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-violet-500/30 text-violet-200">API</span>
                 </Link>
               </li>
@@ -293,9 +293,6 @@ export default function Footer() {
             </Link>
             <Link href="/docs" className="hover:text-neutral-300 transition-colors">
               Documentation
-            </Link>
-            <Link href="/developers" className="text-violet-300 hover:text-white transition-colors">
-              Developers (EIaaS)
             </Link>
             <Link href="/terms" className="hover:text-neutral-300 transition-colors">
               Terms &amp; Privacy

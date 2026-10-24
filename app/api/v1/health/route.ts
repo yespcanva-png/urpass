@@ -14,6 +14,6 @@ export async function GET() {
       events: "/api/v1/events",
       mcp: "/api/mcp",
     },
-    documentation: "https://urpass.space/developers",
+    documentation: "https://urpass.space/docs",
   });
 }
