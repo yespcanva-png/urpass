@@ -21,7 +21,6 @@ import {
 } from "@/lib/pass-design";
 import { RealisticLanyardClip } from "@/components/templates/TicketVisualShowcase";
 import TicketCutDivider from "@/components/pass/TicketCutDivider";
-import TicketBarcode from "@/components/pass/TicketBarcode";
 
 interface PassPreviewCardProps {
   design: CustomPassDesign;
@@ -195,12 +194,7 @@ export default function PassPreviewCard({
             </div>
           </div>
 
-          {/* Barcode Strip */}
-          <div className="w-full my-2 px-3 py-1.5 rounded-xl bg-white/70 dark:bg-white/5 border border-neutral-200/70 dark:border-white/10">
-            <TicketBarcode code={shortCode} isDark={true} height={26} />
-          </div>
-
-          <p className="text-[8px] font-mono font-bold tracking-widest text-neutral-400 mb-2.5">
+          <p className="text-[8px] font-mono font-bold tracking-widest text-neutral-400 my-2">
             SCAN AT ENTRANCE TERMINAL
           </p>
 
@@ -328,12 +322,7 @@ export default function PassPreviewCard({
             </div>
           </div>
 
-          {/* Barcode Strip */}
-          <div className="w-full my-2 px-3 py-1.5 rounded-xl bg-white/70 dark:bg-white/5 border border-neutral-200/70 dark:border-white/10">
-            <TicketBarcode code={shortCode} isDark={true} height={26} />
-          </div>
-
-          <p className="text-[8px] font-mono text-neutral-400 tracking-wider mb-2.5">
+          <p className="text-[8px] font-mono text-neutral-400 tracking-wider my-2">
             TOKEN: {displayTicketCode}
           </p>
 
@@ -429,12 +418,7 @@ export default function PassPreviewCard({
             </div>
           </div>
 
-          {/* Barcode Strip */}
-          <div className="w-full my-1.5 px-3 py-1 rounded bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800">
-            <TicketBarcode code={shortCode} isDark={false} height={22} />
-          </div>
-
-          <span className="text-[7.5px] font-mono tracking-widest text-neutral-500 uppercase mt-1">
+          <span className="text-[7.5px] font-mono tracking-widest text-neutral-500 uppercase mt-2">
             SWISS MONOCHROME VALIDATION
           </span>
         </div>
@@ -549,10 +533,7 @@ export default function PassPreviewCard({
               </div>
             </div>
 
-            {/* Barcode Strip */}
-            <div className="w-full my-2 px-3 py-1.5 rounded-xl bg-white/70 dark:bg-white/5 border border-neutral-200/70 dark:border-white/10">
-              <TicketBarcode code={shortCode} isDark={true} height={24} />
-            </div>
+
 
             {design.footerNote && (
               <p className="text-[9px] text-neutral-400 text-center leading-normal mb-2">
@@ -662,14 +643,9 @@ export default function PassPreviewCard({
           </div>
         </div>
 
-        {/* Barcode Strip */}
-        <div className="w-full my-2 px-3 py-1.5 rounded-xl bg-[#121622]/80 border border-[#262C38]/90">
-          <TicketBarcode code={shortCode} isDark={true} height={26} />
-        </div>
-
-        <p className="text-[8px] font-mono text-amber-300/80 tracking-widest mb-2.5">
-          SECURITY TOKEN: {displayTicketCode}
-        </p>
+          <p className="text-[8px] font-mono text-amber-300/80 tracking-widest my-2">
+            SECURITY TOKEN: {displayTicketCode}
+          </p>
 
         <div className="w-full py-2.5 px-3 rounded-xl flex items-center justify-center gap-2 text-xs font-bold bg-gradient-to-r from-amber-400 to-amber-500 text-neutral-950 shadow-md">
           <ShieldCheck className="w-3.5 h-3.5 text-neutral-950" />

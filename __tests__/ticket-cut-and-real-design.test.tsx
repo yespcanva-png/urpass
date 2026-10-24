@@ -82,9 +82,9 @@ describe("TicketPreview Real Ticket Layout", () => {
     expect(container.querySelector('[data-ticket-cut="true"]')).toBeInTheDocument();
     expect(screen.getByText("ADMIT ONE · TEAR OR SCAN")).toBeInTheDocument();
 
-    // Scannable Stub with Barcode and QR
+    // Scannable Stub with QR and Credential Tag
     expect(screen.getByText("SCAN FOR ENTRY")).toBeInTheDocument();
-    expect(container.querySelector("svg")).toBeInTheDocument();
+    expect(screen.getAllByText("#URP-9921").length).toBeGreaterThanOrEqual(1);
   });
 });
 
@@ -107,7 +107,7 @@ describe("GroupPassCard Ticket Design", () => {
     ],
   };
 
-  it("renders group pass with ticket cut and linear barcode", () => {
+  it("renders group pass with ticket cut and scannable QR stub", () => {
     const { container } = render(
       <GroupPassCard passRecord={sampleGroupRecord as unknown as any} />
     );
@@ -116,9 +116,9 @@ describe("GroupPassCard Ticket Design", () => {
 
     // Check for Ticket Cut Notches
     expect(container.querySelector('[data-ticket-cut="true"]')).toBeInTheDocument();
-    expect(screen.getByText("ADMIT GROUP · MASTER PASS")).toBeInTheDocument();
+    expect(screen.getByText("✦ ADMIT GROUP · MASTER PASS ✦")).toBeInTheDocument();
 
-    // Check for Barcode
-    expect(screen.getByText("* GRP-TOK-1234 *")).toBeInTheDocument();
+    // Check for Scannable Group Token
+    expect(screen.getByText("GRP-TOK-1234")).toBeInTheDocument();
   });
 });

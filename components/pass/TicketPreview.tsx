@@ -1,10 +1,9 @@
 "use client";
 
 import React from "react";
-import { MapPin, Calendar, Scissors, Ticket as TicketIcon, ShieldCheck, CheckCircle2 } from "lucide-react";
+import { MapPin, Calendar, Scissors, Ticket as TicketIcon, ShieldCheck, CheckCircle2, Sparkles } from "lucide-react";
 import type { TicketDesignConfig } from "@/lib/pass-design";
 import TicketCutDivider from "@/components/pass/TicketCutDivider";
-import TicketBarcode from "@/components/pass/TicketBarcode";
 
 interface TicketPreviewProps {
   config: TicketDesignConfig;
@@ -325,14 +324,17 @@ export default function TicketPreview({
             </div>
           </div>
 
-          {/* Realistic Linear Barcode Graphic Strip */}
-          <div className="w-full my-2 px-3 py-2 rounded-xl bg-neutral-50/90 dark:bg-neutral-900/60 border border-neutral-200/80 dark:border-neutral-800">
-            <TicketBarcode
-              code={ticketId.replace('#', '')}
-              isDark={isDark}
-              height={30}
-              showText={true}
-            />
+          {/* Executive Security Credential Pill */}
+          <div className="w-full my-2.5 px-3.5 py-2 rounded-xl bg-neutral-100/80 dark:bg-neutral-900/70 border border-neutral-200/80 dark:border-neutral-800 flex items-center justify-between shadow-2xs">
+            <div className="flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+              <span className="text-[9px] font-mono font-bold tracking-widest uppercase text-neutral-500 dark:text-neutral-400">
+                CREDENTIAL
+              </span>
+            </div>
+            <span className="text-[10px] font-mono font-extrabold tracking-wider text-neutral-900 dark:text-neutral-100">
+              {ticketId}
+            </span>
           </div>
 
           {/* Real-time Status Strip */}

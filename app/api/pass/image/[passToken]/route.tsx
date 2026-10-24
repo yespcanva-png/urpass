@@ -527,48 +527,42 @@ export async function GET(
             />
           </div>
 
-          {/* Linear Barcode graphic */}
+          {/* Executive Security Credential Pill */}
           <div
             style={{
               display: "flex",
-              flexDirection: "column",
               alignItems: "center",
-              justifyContent: "center",
+              justifyContent: "space-between",
               width: "100%",
-              marginTop: 4,
+              padding: "6px 14px",
+              borderRadius: 8,
+              backgroundColor: isDark ? "#18181b" : "#f4f4f5",
+              border: `1px solid ${borderColor}`,
+              marginTop: 6,
               marginBottom: 6,
             }}
           >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 2,
-                height: 24,
-              }}
-            >
-              {Array.from({ length: 38 }).map((_, i) => (
-                <div
-                  key={i}
-                  style={{
-                    width: i % 4 === 0 ? 3 : i % 3 === 0 ? 2 : 1,
-                    height: 22,
-                    backgroundColor: isDark ? "#e2e8f0" : "#18181b",
-                  }}
-                />
-              ))}
-            </div>
             <span
               style={{
                 fontSize: 8,
                 fontFamily: "monospace",
+                fontWeight: 700,
                 letterSpacing: 2,
                 color: "#9ca3af",
-                marginTop: 3,
+                textTransform: "uppercase",
               }}
             >
-              * URP-{shortCode} *
+              ✦ OFFICIAL CREDENTIAL
+            </span>
+            <span
+              style={{
+                fontSize: 9,
+                fontFamily: "monospace",
+                fontWeight: 800,
+                color: textColor,
+              }}
+            >
+              #{shortCode}
             </span>
           </div>
 

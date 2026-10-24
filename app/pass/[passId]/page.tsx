@@ -11,6 +11,7 @@ import {
   CheckCircle2,
   Lock,
   Users,
+  Sparkles,
 } from "lucide-react";
 import PassQR from "@/components/pass/PassQR";
 import DownloadPassButton from "@/components/pass/DownloadPassButton";
@@ -24,7 +25,6 @@ import { formatTimeWithAmPm } from "@/lib/utils";
 import { resolveTicketDesign } from "@/lib/pass-design";
 import StudioPassRenderer from "@/components/studio/StudioPassRenderer";
 import TicketCutDivider from "@/components/pass/TicketCutDivider";
-import TicketBarcode from "@/components/pass/TicketBarcode";
 import { isStudioDesign } from "@/lib/studio/resolver";
 import { getHardenedPublicPass, cleanPassToken } from "@/lib/passes/public-pass";
 import { resolveEventOgImage } from "@/lib/seo/og-images";
@@ -519,7 +519,7 @@ export default async function PassPage({
             {/* ✂ REAL TICKET CUT: Semicircular Punch Notches + Perforated Rip Line */}
             <TicketCutDivider
               isDark={isDark}
-              label="ADMIT ONE · TEAR OR SCAN"
+              label="✦ ADMIT ONE · VERIFIED ENTRY ✦"
               cutoutColor={isDark ? "#0a0a0d" : "#f8fafc"}
               negativeMarginCls="-mx-4 sm:-mx-5"
             />
@@ -549,14 +549,17 @@ export default async function PassPage({
                 </div>
               )}
 
-              {/* Realistic Linear Barcode Graphic Strip */}
-              <div className="w-full my-2 px-3 py-2 rounded-xl bg-neutral-50/90 dark:bg-neutral-900/60 border border-neutral-200/80 dark:border-neutral-800">
-                <TicketBarcode
-                  code={`URP-${shortCode.toUpperCase()}`}
-                  isDark={isDark}
-                  height={32}
-                  showText={true}
-                />
+              {/* Executive Cryptographic Verification Tag */}
+              <div className="w-full my-2.5 px-3.5 py-2 rounded-xl bg-neutral-100/80 dark:bg-neutral-900/70 border border-neutral-200/80 dark:border-white/10 flex items-center justify-between shadow-2xs">
+                <div className="flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                  <span className="text-[9px] font-mono font-bold tracking-widest uppercase text-neutral-500 dark:text-neutral-400">
+                    PASS CREDENTIAL
+                  </span>
+                </div>
+                <span className="text-[10px] font-mono font-extrabold tracking-wider text-neutral-900 dark:text-neutral-100">
+                  {pass.custom_ticket_id || `#${shortCode.toUpperCase()}`}
+                </span>
               </div>
 
               {/* Real-time Status Strip */}
