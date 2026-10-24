@@ -4,6 +4,8 @@ import React from "react";
 import { GroupPassRecord, GroupMember } from "@/lib/passes/group-passes";
 import { Users, CheckCircle2, Circle, QrCode, Shield, Calendar, Clock } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
+import TicketCutDivider from "@/components/pass/TicketCutDivider";
+import TicketBarcode from "@/components/pass/TicketBarcode";
 
 interface GroupPassCardProps {
   passRecord: GroupPassRecord;
@@ -88,8 +90,23 @@ export function GroupPassCard({
         </div>
       </div>
 
+      {/* ✂ Real Ticket Cut: Semicircular Punch Notches + Perforated Rip Line */}
+      <TicketCutDivider
+        isDark={true}
+        label="ADMIT GROUP · MASTER PASS"
+        cutoutColor="#020617"
+        negativeMarginCls="-mx-6"
+        className="my-1"
+      />
+
       {/* QR Code Container */}
-      <div className="bg-white rounded-2xl p-4 flex flex-col items-center justify-center shadow-inner">
+      <div className="bg-white rounded-2xl p-4 flex flex-col items-center justify-center shadow-inner relative">
+        {/* Scanner corner crosshair brackets */}
+        <div className="absolute top-2 left-2 w-3 h-3 border-t-2 border-l-2 border-purple-600/70 rounded-tl-xs pointer-events-none" />
+        <div className="absolute top-2 right-2 w-3 h-3 border-t-2 border-r-2 border-purple-600/70 rounded-tr-xs pointer-events-none" />
+        <div className="absolute bottom-2 left-2 w-3 h-3 border-b-2 border-l-2 border-purple-600/70 rounded-bl-xs pointer-events-none" />
+        <div className="absolute bottom-2 right-2 w-3 h-3 border-b-2 border-r-2 border-purple-600/70 rounded-br-xs pointer-events-none" />
+
         <QRCodeSVG
           value={passRecord.qrCodePayload}
           size={180}
@@ -100,6 +117,16 @@ export function GroupPassCard({
         <div className="mt-2 text-center text-[11px] font-mono text-slate-800 font-bold tracking-wide">
           {passRecord.passToken.toUpperCase()}
         </div>
+      </div>
+
+      {/* Realistic Linear Barcode Graphic Strip */}
+      <div className="w-full my-1 px-3 py-1.5 rounded-xl bg-slate-900/90 border border-slate-800">
+        <TicketBarcode
+          code={passRecord.passToken.toUpperCase()}
+          isDark={true}
+          height={26}
+          showText={true}
+        />
       </div>
 
       {/* Member Roster */}

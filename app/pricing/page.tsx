@@ -5,26 +5,35 @@ import { createClient } from "@/lib/supabase/server";
 import { detectCountryFromHeaders } from "@/lib/country-config";
 
 export const metadata: Metadata = {
-  title: "Pricing — Event Plans & Subscriptions | URPASS",
+  title: "UrPass Pricing | Event Ticketing & Remote Managed Services",
   description:
-    "Starter (₹499/mo), Pro (₹999/mo), Business (₹2,499/mo), one-event passes, and campus licensing for URPASS with transparent pricing and 0% ticket commissions.",
+    "Compare UrPass event registration and ticketing subscriptions with one-time remote managed event packages. Transparent pricing and QR check-in.",
   keywords: [
-    "URPASS pricing",
-    "event management pricing",
+    "UrPass pricing",
+    "event registration pricing India",
     "event ticketing software pricing",
-    "Starter event plan",
-    "Pro event plan",
-    "Business event plan",
-    "event pass software pricing",
-    "zero commission event ticketing pricing",
+    "Starter event plan ₹499",
+    "Pro event plan ₹999",
+    "Business event plan ₹2499",
+    "Remote managed event services ₹2999",
+    "QR event check-in pricing",
+    "zero commission event ticketing",
   ],
   alternates: { canonical: "https://urpass.space/pricing" },
   openGraph: {
-    title: "URPASS Pricing — Event Plans & Subscriptions",
-    description: "Choose Starter, Pro, Business, one-event passes, or campus licensing with transparent local pricing.",
+    title: "UrPass Pricing | Event Ticketing & Remote Managed Services",
+    description:
+      "Compare UrPass event registration and ticketing subscriptions with one-time remote managed event packages. Transparent pricing and QR check-in.",
     url: "https://urpass.space/pricing",
-    siteName: "URPASS",
+    siteName: "UrPass",
+    locale: "en_IN",
     type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "UrPass Pricing | Event Ticketing & Remote Managed Services",
+    description:
+      "Compare UrPass event registration and ticketing subscriptions with one-time remote managed event packages. Transparent pricing and QR check-in.",
   },
 };
 
@@ -51,96 +60,116 @@ function getPricingJsonLd(isUk: boolean) {
       },
       {
         "@type": "SoftwareApplication",
-        name: "URPASS",
+        name: "UrPass Self-Service Event Software",
         applicationCategory: "BusinessApplication",
         operatingSystem: "Web, iOS, Android",
         url: "https://urpass.space/pricing",
         description: isUk
-          ? "High-speed digital event registration, QR pass and gate check-in platform for UK university societies, conferences, hackathons, and corporate summits."
-          : "India-focused digital event registration, QR pass and check-in platform for colleges, conferences, hackathons, workshops and corporate events.",
-        offers: isUk
-          ? [
-              {
-                "@type": "Offer",
-                name: "Starter Tier",
-                price: "15",
-                priceCurrency: "GBP",
-                billingIncrement: "P1M",
-                description: "10 events/month, 500 registrations/month, 2 organizers, CSV import & export.",
-              },
-              {
-                "@type": "Offer",
-                name: "Pro Tier",
-                price: "35",
-                priceCurrency: "GBP",
-                billingIncrement: "P1M",
-                description: "Unlimited events, 2,500 registrations/month, 5 organizers, custom pass design, advanced analytics.",
-              },
-              {
-                "@type": "Offer",
-                name: "Business Tier",
-                price: "79",
-                priceCurrency: "GBP",
-                billingIncrement: "P1M",
-                description: "Unlimited events, 10,000 registrations/month, 15 organizers, custom domain, API & webhooks.",
-              },
-            ]
-          : [
-              {
-                "@type": "Offer",
-                name: "Starter Tier",
-                price: "499",
-                priceCurrency: "INR",
-                billingIncrement: "P1M",
-                description: "₹499/month + GST. 10 events/month, 500 registrations/month, 2 organizers, CSV import & export.",
-              },
-              {
-                "@type": "Offer",
-                name: "Pro Tier",
-                price: "999",
-                priceCurrency: "INR",
-                billingIncrement: "P1M",
-                description: "₹999/month + GST. Unlimited events, 2,500 registrations/month, 5 organizers, custom pass design, advanced analytics.",
-              },
-              {
-                "@type": "Offer",
-                name: "Business Tier",
-                price: "2499",
-                priceCurrency: "INR",
-                billingIncrement: "P1M",
-                description: "₹2,499/month + GST. Unlimited events, 10,000 registrations/month, 15 organizers, custom domain, API & webhooks.",
-              },
-            ],
+          ? "High-speed digital event registration, QR pass and gate check-in platform for UK university societies, conferences, and festivals."
+          : "India's premier 0% ticket commission event registration and QR check-in software for organizers, colleges, and conferences.",
+        offers: [
+          {
+            "@type": "Offer",
+            name: "Free Forever",
+            price: "0",
+            priceCurrency: "INR",
+            billingIncrement: "P1M",
+            description: "1 active event, 100 registrations/event, basic QR check-in.",
+          },
+          {
+            "@type": "Offer",
+            name: "Starter Plan",
+            price: "499",
+            priceCurrency: "INR",
+            billingIncrement: "P1M",
+            description: "₹499/month + GST. 3 active events, 1,000 attendees/event, paid ticketing (0% commission), 2 team seats.",
+          },
+          {
+            "@type": "Offer",
+            name: "Pro Plan",
+            price: "999",
+            priceCurrency: "INR",
+            billingIncrement: "P1M",
+            description: "₹999/month + GST. 10 active events, 5,000 attendees/event, group QR, multi-gate check-in, 5 team seats.",
+          },
+          {
+            "@type": "Offer",
+            name: "Business Plan",
+            price: "2499",
+            priceCurrency: "INR",
+            billingIncrement: "P1M",
+            description: "₹2,499/month + GST. 30 active events, 15,000 attendees/event, API & webhooks, 15 team seats.",
+          },
+        ],
+      },
+      {
+        "@type": "Service",
+        name: "UrPass Remote Managed Event Services",
+        serviceType: "Event Technical Setup & QR Check-in Management",
+        provider: {
+          "@type": "Organization",
+          name: "UrPass",
+          url: "https://urpass.space",
+        },
+        description:
+          "End-to-end remote technical setup, registration configuration, ticketing setup, invitation testing, scanner configuration, and coordinator training.",
+        offers: [
+          {
+            "@type": "Offer",
+            name: "Essential Remote Setup",
+            price: "2999",
+            priceCurrency: "INR",
+            description: "Up to 1,000 attendees. Form setup, tickets, QR passes, 1 remote training session.",
+          },
+          {
+            "@type": "Offer",
+            name: "Pro Remote Management",
+            price: "7999",
+            priceCurrency: "INR",
+            description: "Up to 5,000 attendees. Advanced tiers, group QR, multi-gate routing, 2 remote training sessions.",
+          },
+          {
+            "@type": "Offer",
+            name: "Premium Remote Operations",
+            price: "14999",
+            priceCurrency: "INR",
+            description: "Up to 15,000 attendees. Session attendance, rehearsal, 3 training sessions, dedicated remote lead.",
+          },
+        ],
       },
       {
         "@type": "FAQPage",
         mainEntity: [
           {
             "@type": "Question",
-            name: "Can I cancel anytime?",
+            name: "What is the difference between Self-Service and Remote Managed Service?",
             acceptedAnswer: {
               "@type": "Answer",
-              text: "Yes. Cancel from your billing settings at any time with no lock-in. You keep access until the end of your current billing period.",
+              text: "With Self-Service, you subscribe monthly and configure your events yourself using our software. With Remote Managed Services, our technical team remotely handles your complete event setup, ticketing, QR passes, coordinator training, and event-day hotline for a one-time flat fee.",
             },
           },
           {
             "@type": "Question",
-            name: "How does URPASS pricing work?",
+            name: "Does UrPass charge commission on paid ticket sales?",
             acceptedAnswer: {
               "@type": "Answer",
-              text: isUk
-                ? "UK pricing is available as Starter £15/month, Pro £35/month, and Business £79/month, with direct activation and cancel-anytime renewal."
-                : "India pricing offers Starter at ₹499/month, Pro at ₹999/month, and Business at ₹2,499/month (+GST). Alternatively, single event passes start at ₹299.",
+              text: "No. UrPass charges 0% per-ticket platform commission on all paid plans (Starter, Pro, Business). Ticket revenues settle directly into your connected Razorpay payment gateway.",
             },
           },
           {
             "@type": "Question",
-            name: "Can I sell paid tickets?",
+            name: "Does Remote Managed Service include on-site event staff?",
             acceptedAnswer: {
               "@type": "Answer",
-              text: isUk
-                ? "Yes. URPASS supports paid ticket sales with zero per-ticket platform commissions, direct payouts, and full UK GDPR compliance."
-                : "Yes. URPASS supports paid ticket sales with direct Razorpay integration, accepting UPI, debit/credit cards, and net banking with zero per-ticket commission fees.",
+              text: "No. UrPass Remote Managed Services provide strictly remote technical operations, system configuration, scanner training, and hotline support. The organizer provides on-site staff, smartphones, and venue internet.",
+            },
+          },
+          {
+            "@type": "Question",
+            name: "Can I cancel my Self-Service subscription anytime?",
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: "Yes. You can cancel future renewals anytime directly in your customer billing portal. You retain full paid access until the end of your current paid billing period with zero cancellation fees.",
             },
           },
         ],
@@ -177,34 +206,21 @@ export default async function PricingPage(props: {
     data: { user },
   } = await supabase.auth.getUser();
 
-  let trialUsed = false;
-  let userEmail = "";
-  let userName = "";
-
-  if (user) {
-    userEmail = user.email ?? "";
-    userName = user.user_metadata?.full_name ?? user.email?.split("@")[0] ?? "";
-    const { data: sub } = await supabase
-      .from("subscriptions")
-      .select("trial_used, provider")
-      .eq("user_id", user.id)
-      .maybeSingle();
-    trialUsed = sub?.trial_used ?? false;
-  }
-
-  const pricingJsonLd = getPricingJsonLd(isUk);
+  const jsonLd = getPricingJsonLd(isUk);
 
   return (
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(pricingJsonLd) }}
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(jsonLd)
+            .replace(/</g, "\\u003C")
+            .replace(/>/g, "\\u003E"),
+        }}
       />
       <PricingContent
         isAuthenticated={Boolean(user)}
-        trialUsed={trialUsed}
-        userEmail={userEmail}
-        userName={userName}
+        userEmail={user?.email || ""}
         initialCountry={country}
       />
     </>

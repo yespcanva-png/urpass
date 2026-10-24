@@ -466,14 +466,119 @@ export async function GET(
             </div>
           )}
 
-          {/* Admission Rules */}
+          {/* ✂ Ticket Cut Divider: Punch Notches + Perforated Line */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              width: "calc(100% + 48px)",
+              marginLeft: -24,
+              marginRight: -24,
+              marginTop: 12,
+              marginBottom: 8,
+            }}
+          >
+            <div
+              style={{
+                width: 22,
+                height: 22,
+                borderRadius: 9999,
+                marginLeft: -11,
+                backgroundColor: isDark ? "#0a0a0d" : "#f8fafc",
+                border: `1px solid ${borderColor}`,
+              }}
+            />
+            <div
+              style={{
+                flex: 1,
+                borderTop: "2px dashed #9ca3af",
+                margin: "0 8px",
+              }}
+            />
+            <span
+              style={{
+                fontSize: 8,
+                fontFamily: "monospace",
+                fontWeight: 700,
+                letterSpacing: 2,
+                color: "#9ca3af",
+                textTransform: "uppercase",
+              }}
+            >
+              ADMIT ONE
+            </span>
+            <div
+              style={{
+                flex: 1,
+                borderTop: "2px dashed #9ca3af",
+                margin: "0 8px",
+              }}
+            />
+            <div
+              style={{
+                width: 22,
+                height: 22,
+                borderRadius: 9999,
+                marginRight: -11,
+                backgroundColor: isDark ? "#0a0a0d" : "#f8fafc",
+                border: `1px solid ${borderColor}`,
+              }}
+            />
+          </div>
+
+          {/* Linear Barcode graphic */}
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              width: "100%",
+              marginTop: 4,
+              marginBottom: 6,
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 2,
+                height: 24,
+              }}
+            >
+              {Array.from({ length: 38 }).map((_, i) => (
+                <div
+                  key={i}
+                  style={{
+                    width: i % 4 === 0 ? 3 : i % 3 === 0 ? 2 : 1,
+                    height: 22,
+                    backgroundColor: isDark ? "#e2e8f0" : "#18181b",
+                  }}
+                />
+              ))}
+            </div>
+            <span
+              style={{
+                fontSize: 8,
+                fontFamily: "monospace",
+                letterSpacing: 2,
+                color: "#9ca3af",
+                marginTop: 3,
+              }}
+            >
+              * URP-{shortCode} *
+            </span>
+          </div>
+
           {rulesList.length > 0 && (
             <div
               style={{
                 display: "flex",
                 justifyContent: "center",
-                paddingTop: 8,
-                marginTop: 8,
+                paddingTop: 6,
+                marginTop: 4,
                 borderTop: `1px solid ${borderColor}`,
                 width: "100%",
                 fontSize: 9,

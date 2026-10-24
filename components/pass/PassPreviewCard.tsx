@@ -20,6 +20,8 @@ import {
   darkenHex,
 } from "@/lib/pass-design";
 import { RealisticLanyardClip } from "@/components/templates/TicketVisualShowcase";
+import TicketCutDivider from "@/components/pass/TicketCutDivider";
+import TicketBarcode from "@/components/pass/TicketBarcode";
 
 interface PassPreviewCardProps {
   design: CustomPassDesign;
@@ -135,12 +137,14 @@ export default function PassPreviewCard({
           </div>
         </div>
 
-        {/* Micro-perforated coupon notch line */}
-        <div className="relative h-4 bg-transparent flex items-center">
-          <div className="absolute -left-2.5 w-5 h-5 rounded-full bg-neutral-100/90 dark:bg-neutral-900/90 border border-neutral-200/80 dark:border-neutral-800 backdrop-blur-sm" />
-          <div className="absolute -right-2.5 w-5 h-5 rounded-full bg-neutral-100/90 dark:bg-neutral-900/90 border border-neutral-200/80 dark:border-neutral-800 backdrop-blur-sm" />
-          <div className="w-full border-t border-dashed border-neutral-300/80 dark:border-neutral-700 mx-5" />
-        </div>
+        {/* Ticket Cut: Die-cut notches & perforation rip line */}
+        <TicketCutDivider
+          isDark={true}
+          label="ADMIT ONE · BOARDING PASS"
+          cutoutColor="transparent"
+          negativeMarginCls="-mx-5"
+          className="my-1"
+        />
 
         {/* Ticket Body */}
         <div className="px-5 pb-5 flex flex-col items-center">
@@ -191,7 +195,12 @@ export default function PassPreviewCard({
             </div>
           </div>
 
-          <p className="text-[9px] font-mono font-bold tracking-widest text-neutral-400 mb-3">
+          {/* Barcode Strip */}
+          <div className="w-full my-2 px-3 py-1.5 rounded-xl bg-white/70 dark:bg-white/5 border border-neutral-200/70 dark:border-white/10">
+            <TicketBarcode code={shortCode} isDark={true} height={26} />
+          </div>
+
+          <p className="text-[8px] font-mono font-bold tracking-widest text-neutral-400 mb-2.5">
             SCAN AT ENTRANCE TERMINAL
           </p>
 
@@ -285,6 +294,15 @@ export default function PassPreviewCard({
             </div>
           </div>
 
+          {/* Ticket Cut: Die-cut notches & perforation rip line */}
+          <TicketCutDivider
+            isDark={true}
+            label="ADMIT ONE · DELEGATE PASS"
+            cutoutColor="transparent"
+            negativeMarginCls="-mx-6"
+            className="my-2"
+          />
+
           {/* QR Container */}
           <div
             className={`p-3 rounded-2xl mb-2 bg-white/90 dark:bg-white/95 backdrop-blur-md shadow-xs ${
@@ -310,7 +328,12 @@ export default function PassPreviewCard({
             </div>
           </div>
 
-          <p className="text-[9px] font-mono text-neutral-400 tracking-wider mb-3">
+          {/* Barcode Strip */}
+          <div className="w-full my-2 px-3 py-1.5 rounded-xl bg-white/70 dark:bg-white/5 border border-neutral-200/70 dark:border-white/10">
+            <TicketBarcode code={shortCode} isDark={true} height={26} />
+          </div>
+
+          <p className="text-[8px] font-mono text-neutral-400 tracking-wider mb-2.5">
             TOKEN: {displayTicketCode}
           </p>
 
@@ -381,6 +404,15 @@ export default function PassPreviewCard({
           </span>
         </div>
 
+        {/* Ticket Cut: Die-cut notches & perforation rip line */}
+        <TicketCutDivider
+          isDark={false}
+          label="ADMIT ONE · VALIDATION"
+          cutoutColor="transparent"
+          negativeMarginCls="-mx-5"
+          className="my-2"
+        />
+
         <div className="flex flex-col items-center mb-3">
           <div className="w-28 h-28 border border-neutral-900 dark:border-neutral-700 rounded-xl flex items-center justify-center p-2 mb-1.5 bg-white/95 backdrop-blur-sm shadow-xs">
             <div className="w-20 h-20 grid grid-cols-5 grid-rows-5 gap-1">
@@ -396,7 +428,13 @@ export default function PassPreviewCard({
               ))}
             </div>
           </div>
-          <span className="text-[8px] font-mono tracking-widest text-neutral-500 uppercase">
+
+          {/* Barcode Strip */}
+          <div className="w-full my-1.5 px-3 py-1 rounded bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800">
+            <TicketBarcode code={shortCode} isDark={false} height={22} />
+          </div>
+
+          <span className="text-[7.5px] font-mono tracking-widest text-neutral-500 uppercase mt-1">
             SWISS MONOCHROME VALIDATION
           </span>
         </div>
@@ -463,7 +501,7 @@ export default function PassPreviewCard({
             <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5 mb-3">{attendeeEmail}</p>
 
             <div
-              className="px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-wider text-white mb-4 shadow-2xs backdrop-blur-xs"
+              className="px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-wider text-white mb-3 shadow-2xs backdrop-blur-xs"
               style={{
                 backgroundColor: design.primaryColor,
               }}
@@ -471,8 +509,17 @@ export default function PassPreviewCard({
               {badgeText}
             </div>
 
+            {/* Ticket Cut */}
+            <TicketCutDivider
+              isDark={true}
+              label="ADMIT ONE · ACCREDITED"
+              cutoutColor="transparent"
+              negativeMarginCls="-mx-6"
+              className="my-1.5"
+            />
+
             {/* Event & QR Section */}
-            <div className="w-full flex items-center justify-between bg-white/70 dark:bg-white/5 backdrop-blur-md rounded-2xl p-3 border border-neutral-200/70 dark:border-white/10 mb-3 shadow-2xs">
+            <div className="w-full flex items-center justify-between bg-white/70 dark:bg-white/5 backdrop-blur-md rounded-2xl p-3 border border-neutral-200/70 dark:border-white/10 mb-2 shadow-2xs">
               <div className="text-left text-[10px] text-neutral-500 dark:text-neutral-400 flex flex-col gap-0.5">
                 <span className="font-bold text-neutral-800 dark:text-neutral-200">{eventDate}</span>
                 <span className="truncate max-w-[130px]">{venue}</span>
@@ -500,6 +547,11 @@ export default function PassPreviewCard({
                   ))}
                 </div>
               </div>
+            </div>
+
+            {/* Barcode Strip */}
+            <div className="w-full my-2 px-3 py-1.5 rounded-xl bg-white/70 dark:bg-white/5 border border-neutral-200/70 dark:border-white/10">
+              <TicketBarcode code={shortCode} isDark={true} height={24} />
             </div>
 
             {design.footerNote && (
@@ -575,13 +627,22 @@ export default function PassPreviewCard({
 
       {/* Luxury Body */}
       <div className="p-5 flex flex-col items-center bg-[#0A0D14]/75 backdrop-blur-md">
-        <div className="w-full bg-[#121622]/80 backdrop-blur-md border border-[#262C38]/90 rounded-2xl p-3 mb-3.5 shadow-2xs">
+        <div className="w-full bg-[#121622]/80 backdrop-blur-md border border-[#262C38]/90 rounded-2xl p-3 mb-2 shadow-2xs">
           <p className="text-[8px] text-amber-400/80 uppercase tracking-widest mb-0.5 font-bold">
             HONORED GUEST
           </p>
           <p className="text-sm font-bold text-white truncate">{attendeeName}</p>
           <p className="text-[10px] text-neutral-400 truncate">{attendeeEmail}</p>
         </div>
+
+        {/* Ticket Cut */}
+        <TicketCutDivider
+          isDark={true}
+          label="ADMIT ONE · VIP GUEST"
+          cutoutColor="transparent"
+          negativeMarginCls="-mx-5"
+          className="my-2"
+        />
 
         {/* QR container with champagne-gold border */}
         <div className="p-3.5 bg-white/95 backdrop-blur-md rounded-2xl mb-2 border border-amber-400/40 shadow-md">
@@ -601,7 +662,12 @@ export default function PassPreviewCard({
           </div>
         </div>
 
-        <p className="text-[9px] font-mono text-amber-300/80 tracking-widest mb-3">
+        {/* Barcode Strip */}
+        <div className="w-full my-2 px-3 py-1.5 rounded-xl bg-[#121622]/80 border border-[#262C38]/90">
+          <TicketBarcode code={shortCode} isDark={true} height={26} />
+        </div>
+
+        <p className="text-[8px] font-mono text-amber-300/80 tracking-widest mb-2.5">
           SECURITY TOKEN: {displayTicketCode}
         </p>
 

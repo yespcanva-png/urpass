@@ -23,6 +23,8 @@ import { Suspense } from "react";
 import { formatTimeWithAmPm } from "@/lib/utils";
 import { resolveTicketDesign } from "@/lib/pass-design";
 import StudioPassRenderer from "@/components/studio/StudioPassRenderer";
+import TicketCutDivider from "@/components/pass/TicketCutDivider";
+import TicketBarcode from "@/components/pass/TicketBarcode";
 import { isStudioDesign } from "@/lib/studio/resolver";
 import { getHardenedPublicPass, cleanPassToken } from "@/lib/passes/public-pass";
 import { resolveEventOgImage } from "@/lib/seo/og-images";
@@ -260,7 +262,7 @@ export default async function PassPage({
       ) : (
         <div
           id="printable-ticket-card"
-          className={`w-full max-w-[360px] printable-pass-container ${shapeRadius} border ${cardBorder} ${cardBg} overflow-hidden shadow-[0_12px_36px_-6px_rgba(0,0,0,0.08),0_4px_12px_-2px_rgba(0,0,0,0.04)] relative select-none transition-all duration-150 z-10`}
+          className={`w-full max-w-[360px] printable-pass-container ${shapeRadius} border ${cardBorder} ${cardBg} overflow-hidden shadow-[0_20px_50px_-10px_rgba(0,0,0,0.12),0_4px_16px_-2px_rgba(0,0,0,0.06)] relative select-none transition-all duration-150 z-10`}
         >
           {/* Optional background image with contrast-preserving overlay */}
           {design.backgroundImageUrl && (
@@ -281,83 +283,145 @@ export default async function PassPage({
             </div>
           )}
 
-          {/* Top Accent Strip for Event & Modern */}
-          {(design.template === "event" || isModern) && (
-            <div
-              className="h-2 w-full relative z-10"
-              style={{ backgroundColor: activeColor }}
-            />
-          )}
+          {/* Premium Foil Accent Strip & Issuer Serial Header */}
+          <div
+            className="h-2.5 w-full relative z-10"
+            style={{
+              background: `linear-gradient(90deg, ${activeColor} 0%, #a855f7 35%, ${activeColor} 70%, #ec4899 100%)`,
+            }}
+          />
 
-          {/* Card Interior */}
-          <div className="relative z-10 p-4 sm:p-6 flex flex-col items-center text-center">
-            {/* Event Logo & Sponsor */}
-            <div className="mb-3 flex items-center justify-center gap-3">
-              {logoToDisplay ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={logoToDisplay}
-                  alt="Logo"
-                  className="h-8 max-w-[130px] object-contain"
-                />
-              ) : (
-                <span
-                  className="text-[11px] font-bold tracking-widest uppercase"
-                  style={{ color: isDark ? "#ffffff" : "#111827" }}
-                >
-                  {orgName || "URPASS"}
-                </span>
-              )}
-
-              {design.sponsorLogoUrl && (
-                <>
-                  <span className="text-neutral-300 text-xs">×</span>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
+          {/* Main Ticket Pass Body */}
+          <div className="relative z-10 p-4 sm:p-5 flex flex-col items-center text-center">
+            {/* Header: Organization & Official Badge */}
+            <div className="w-full flex items-center justify-between gap-2 mb-3 pb-2 border-b border-dashed border-neutral-200/80 dark:border-neutral-800">
+              <div className="flex items-center gap-2 min-w-0">
+                {logoToDisplay ? (
+                  // eslint-disable-next-line @next/next/no-img-element
                   <img
-                    src={design.sponsorLogoUrl}
-                    alt="Sponsor Logo"
-                    className="h-6 max-w-[100px] object-contain opacity-80"
+                    src={logoToDisplay}
+                    alt="Logo"
+                    className="h-6 max-w-[110px] object-contain"
                   />
-                </>
-              )}
+                ) : (
+                  <span
+                    className="text-[10px] font-black tracking-widest uppercase truncate"
+                    style={{ color: isDark ? "#ffffff" : "#111827" }}
+                  >
+                    {orgName || "URPASS EVENT PASS"}
+                  </span>
+                )}
+
+                {design.sponsorLogoUrl && (
+                  <>
+                    <span className="text-neutral-300 text-xs">×</span>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={design.sponsorLogoUrl}
+                      alt="Sponsor Logo"
+                      className="h-5 max-w-[80px] object-contain opacity-80"
+                    />
+                  </>
+                )}
+              </div>
+
+              <div className="flex items-center gap-1 shrink-0">
+                <span className="text-[9px] font-mono font-bold px-2 py-0.5 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 border border-neutral-200/80 dark:border-neutral-700">
+                  #{shortCode.toUpperCase()}
+                </span>
+              </div>
             </div>
 
             {/* Event Name */}
-            <h1 className="text-lg font-bold tracking-tight mb-2 uppercase leading-snug max-w-full break-words">
+            <h1 className="text-lg font-black tracking-tight mb-2 uppercase leading-snug max-w-full break-words">
               {event.name}
             </h1>
 
-            {/* Ticket Type Pill */}
+            {/* Ticket Category Pill */}
             {design.showTicketType && (
-              <div className="mb-2.5">
+              <div className="mb-3">
                 <span
-                  className="inline-flex items-center gap-1 text-[11px] font-semibold tracking-wider uppercase px-3 py-0.5 rounded-full border"
+                  className="inline-flex items-center gap-1.5 text-[11px] font-extrabold tracking-wider uppercase px-3 py-1 rounded-full border shadow-2xs"
                   style={{
-                    borderColor: `${activeColor}35`,
+                    borderColor: `${activeColor}40`,
                     color: activeColor,
-                    backgroundColor: `${activeColor}12`,
+                    backgroundColor: `${activeColor}15`,
                   }}
                 >
-                  <Ticket className="w-3 h-3" />
+                  <Ticket className="w-3.5 h-3.5" />
                   {PASS_TYPE_LABEL[pass.pass_type] ?? pass.pass_type}
                 </span>
               </div>
             )}
 
-            {/* QR Code Matrix (Positioned center if not bottom) */}
-            {design.qrPosition !== "bottom" && !isOnline && (
-              <div
-                className={`my-2 p-3.5 bg-white rounded-xl flex flex-col items-center justify-center ${
-                  design.showQrBorder !== false ? "border border-neutral-200/90 shadow-2xs" : ""
-                }`}
-                style={{ width: qrSizePx + 60, maxWidth: "100%" }}
-              >
-                <PassQR value={pass.pass_token} size={qrSizePx} />
-                <span className="text-[8px] font-bold tracking-widest text-neutral-400 uppercase mt-2">
-                  SCAN FOR ENTRY
-                </span>
+            {/* Structured Real Ticket Metadata Grid */}
+            <div className="w-full grid grid-cols-2 gap-2 text-left my-1 p-3 rounded-2xl bg-neutral-50/90 dark:bg-neutral-900/60 border border-neutral-200/70 dark:border-neutral-800/80 shadow-2xs">
+              {/* Date & Time */}
+              {design.showEventDate !== false && event.event_date && (
+                <div className="min-w-0">
+                  <p className="text-[8px] font-mono font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 flex items-center gap-1">
+                    <CalendarDays className="w-2.5 h-2.5" />
+                    <span>DATE &amp; TIME</span>
+                  </p>
+                  <p className="text-[11px] font-bold text-neutral-900 dark:text-neutral-100 truncate mt-0.5">
+                    {formattedDate}
+                  </p>
+                  {event.start_time && (
+                    <p className="text-[10px] text-neutral-500 dark:text-neutral-400 font-medium">
+                      {formatTimeWithAmPm(event.start_time)}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Venue */}
+              {design.showVenue && event.venue && (
+                <div className="min-w-0">
+                  <p className="text-[8px] font-mono font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 flex items-center gap-1">
+                    <MapPin className="w-2.5 h-2.5" />
+                    <span>VENUE / HALL</span>
+                  </p>
+                  <p className="text-[11px] font-bold text-neutral-900 dark:text-neutral-100 truncate mt-0.5" title={event.venue}>
+                    {event.venue}
+                  </p>
+                  <p className="text-[10px] text-neutral-500 dark:text-neutral-400 font-medium">
+                    Main Gate
+                  </p>
+                </div>
+              )}
+
+              {/* Pass Holder */}
+              {design.showAttendeeName && (
+                <div className="min-w-0">
+                  <p className="text-[8px] font-mono font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+                    PASS HOLDER
+                  </p>
+                  <p className="text-[11px] font-bold text-neutral-900 dark:text-neutral-100 truncate mt-0.5">
+                    {attendee.name}
+                  </p>
+                  {(design.showOrganization && ((attendee as any).company || (attendee as any).organization)) && (
+                    <p className="text-[10px] text-neutral-500 dark:text-neutral-400 truncate">
+                      {(attendee as any).company || (attendee as any).organization}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Serial / Ticket ID */}
+              <div className="min-w-0">
+                <p className="text-[8px] font-mono font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+                  TICKET ID
+                </p>
+                <p className="text-[11px] font-mono font-bold text-neutral-900 dark:text-neutral-100 truncate mt-0.5">
+                  {pass.custom_ticket_id || `#${shortCode.toUpperCase()}`}
+                </p>
+                {design.showRegistrationNumber && (
+                  <p className="text-[10px] font-mono text-neutral-500 dark:text-neutral-400">
+                    REG-{shortCode.toUpperCase()}
+                  </p>
+                )}
               </div>
-            )}
+            </div>
 
             {/* Online-only executive access module */}
             {isOnline && (
@@ -424,101 +488,9 @@ export default async function PassPage({
               </div>
             )}
 
-            {/* Dynamic Ordered Fields */}
-            <div className="w-full flex flex-col items-center text-center space-y-1 mt-1">
-              {orderedFields.map((fieldId) => {
-                if (fieldId === "showAttendeeName" && design.showAttendeeName) {
-                  return (
-                    <p key="showAttendeeName" className="text-base font-semibold tracking-tight text-inherit pt-1">
-                      {attendee.name}
-                    </p>
-                  );
-                }
-
-                if (fieldId === "showOrganization" && design.showOrganization) {
-                  const orgText = (attendee as any).company || (attendee as any).organization;
-                  if (!orgText) return null;
-                  return (
-                    <p key="showOrganization" className={`text-xs font-normal ${subtextCls}`}>
-                      {orgText}
-                    </p>
-                  );
-                }
-
-                if (fieldId === "showPhone" && design.showPhone && attendee.phone) {
-                  return (
-                    <p key="showPhone" className={`text-[11px] font-mono ${subtextCls}`}>
-                      {attendee.phone}
-                    </p>
-                  );
-                }
-
-                if (fieldId === "showRegistrationNumber" && design.showRegistrationNumber) {
-                  return (
-                    <span key="showRegistrationNumber" className="text-[10px] font-mono font-medium px-2 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300">
-                      REG-{shortCode.toUpperCase()}
-                    </span>
-                  );
-                }
-
-                if (fieldId === "showTicketId" && design.showTicketId) {
-                  const displayId = pass.custom_ticket_id || `#${shortCode.toUpperCase()}`;
-                  return (
-                    <div key="showTicketId" className="flex items-center justify-center gap-1.5 py-0.5">
-                      <span className="text-[9px] font-semibold tracking-wider uppercase text-neutral-400">
-                        TICKET ID:
-                      </span>
-                      <span className="text-xs font-mono font-bold tracking-wide">
-                        {displayId}
-                      </span>
-                    </div>
-                  );
-                }
-
-                return null;
-              })}
-            </div>
-
-            {/* Bottom QR Code (If QR position is set to 'bottom') */}
-            {design.qrPosition === "bottom" && !isOnline && (
-              <div
-                className={`my-3 p-3.5 bg-white rounded-xl flex flex-col items-center justify-center ${
-                  design.showQrBorder !== false ? "border border-neutral-200/90 shadow-2xs" : ""
-                }`}
-                style={{ width: qrSizePx + 60, maxWidth: "100%" }}
-              >
-                <PassQR value={pass.pass_token} size={qrSizePx} />
-                <span className="text-[8px] font-bold tracking-widest text-neutral-400 uppercase mt-2">
-                  SCAN FOR ENTRY
-                </span>
-              </div>
-            )}
-
-            {/* Date & Venue Footer */}
-            {(design.showEventDate !== false || (design.showVenue && event.venue)) && (
-              <div
-                className={`w-full border-t ${dividerCls} pt-2.5 mt-2.5 flex flex-col items-center gap-1`}
-              >
-                {design.showEventDate !== false && event.event_date && (
-                  <p
-                    className={`text-xs font-medium tracking-wide ${subtextCls} flex items-center gap-1.5`}
-                  >
-                    <CalendarDays className="w-3.5 h-3.5 opacity-70 shrink-0" />
-                    <span>{formattedDate}{event.start_time ? ` · ${formatTimeWithAmPm(event.start_time)}` : ""}</span>
-                  </p>
-                )}
-                {design.showVenue && event.venue && (
-                  <p className={`text-xs ${subtextCls} flex items-center gap-1.5`}>
-                    <MapPin className="w-3.5 h-3.5 opacity-70 shrink-0" />
-                    <span className="min-w-0 break-words text-center">{event.venue}</span>
-                  </p>
-                )}
-              </div>
-            )}
-
             {/* Custom Message */}
             {design.customMessage && (
-              <div className={`mt-2.5 pt-2 border-t border-dashed ${isDark ? "border-neutral-800" : "border-neutral-200"} w-full`}>
+              <div className={`mt-2 pt-1.5 border-t border-dashed ${isDark ? "border-neutral-800" : "border-neutral-200"} w-full`}>
                 <p className="text-xs italic opacity-85 max-w-xs mx-auto">
                   &ldquo;{design.customMessage}&rdquo;
                 </p>
@@ -528,7 +500,7 @@ export default async function PassPage({
             {/* Admission Rules */}
             {rulesList.length > 0 && (
               <div
-                className={`mt-3 pt-2.5 border-t ${dividerCls} w-full text-[10px] ${subtextCls} leading-relaxed`}
+                className={`mt-2 pt-2 border-t ${dividerCls} w-full text-[10px] ${subtextCls} leading-relaxed`}
               >
                 <p className="font-medium">{rulesList.join(" • ")}</p>
                 {design.showTermsLink && (
@@ -544,56 +516,102 @@ export default async function PassPage({
               </div>
             )}
 
-            {/* Real-time Status Strip */}
-            <div className="w-full mt-4">
-              {pass.is_group_master ? (
-                <div className="w-full flex flex-col gap-1.5 p-3 rounded-xl bg-indigo-50/80 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/60 shadow-2xs">
-                  <div className="flex items-center justify-between text-xs font-bold text-indigo-950 dark:text-indigo-200">
-                    <span className="flex items-center gap-1.5">
-                      <Users className="w-3.5 h-3.5 text-indigo-600" />
-                      Single Group QR Pass
-                    </span>
-                    <span className="text-[11px] font-mono">
-                      {pass.checked_in_guests || 0} / {pass.total_guests || 1} Admitted
-                    </span>
-                  </div>
-                  <div className="w-full h-1.5 bg-indigo-200/60 dark:bg-indigo-900/60 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-indigo-600 rounded-full transition-all duration-300"
-                      style={{
-                        width: `${Math.min(100, Math.round(((pass.checked_in_guests || 0) / (pass.total_guests || 1)) * 100))}%`,
-                      }}
-                    />
-                  </div>
-                  <p className="text-[10px] text-indigo-700 dark:text-indigo-300 font-medium text-center">
-                    {Math.max(0, (pass.total_guests || 1) - (pass.checked_in_guests || 0)) === 0
-                      ? "All members checked in"
-                      : `${Math.max(0, (pass.total_guests || 1) - (pass.checked_in_guests || 0))} entries remaining for partial check-in at the gate`}
-                  </p>
-                </div>
-              ) : isCheckedIn ? (
-                <div className="w-full flex items-center gap-2 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 rounded-xl px-3 py-2.5 justify-center shadow-2xs">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                  <span className="text-xs font-bold text-emerald-800 dark:text-emerald-300">
-                    {isMultiScan ? "VERIFIED ENTRY · MULTI-SCAN ACTIVE" : "VERIFIED ENTRY · CHECKED IN"}
+            {/* ✂ REAL TICKET CUT: Semicircular Punch Notches + Perforated Rip Line */}
+            <TicketCutDivider
+              isDark={isDark}
+              label="ADMIT ONE · TEAR OR SCAN"
+              cutoutColor={isDark ? "#0a0a0d" : "#f8fafc"}
+              negativeMarginCls="-mx-4 sm:-mx-5"
+            />
+
+            {/* ══════════════════════════════════════════════════════════ */}
+            {/* SCANNABLE ADMISSION STUB (TEAR-OFF SECTION) */}
+            {/* ══════════════════════════════════════════════════════════ */}
+            <div className="w-full flex flex-col items-center">
+              {/* QR Code Container with Scanner Corner Brackets */}
+              {!isOnline && (
+                <div
+                  className={`my-1 p-3.5 bg-white rounded-2xl flex flex-col items-center justify-center relative shadow-xs ${
+                    design.showQrBorder !== false ? "border border-neutral-200/90" : ""
+                  }`}
+                  style={{ width: qrSizePx + 56, maxWidth: "100%" }}
+                >
+                  {/* Scanner alignment crosshair brackets */}
+                  <div className="absolute top-2 left-2 w-3.5 h-3.5 border-t-2 border-l-2 border-brand/70 rounded-tl-xs pointer-events-none" />
+                  <div className="absolute top-2 right-2 w-3.5 h-3.5 border-t-2 border-r-2 border-brand/70 rounded-tr-xs pointer-events-none" />
+                  <div className="absolute bottom-2 left-2 w-3.5 h-3.5 border-b-2 border-l-2 border-brand/70 rounded-bl-xs pointer-events-none" />
+                  <div className="absolute bottom-2 right-2 w-3.5 h-3.5 border-b-2 border-r-2 border-brand/70 rounded-br-xs pointer-events-none" />
+
+                  <PassQR value={pass.pass_token} size={qrSizePx} />
+                  <span className="text-[8px] font-black tracking-widest text-neutral-400 uppercase mt-2">
+                    SCAN FOR ADMISSION
                   </span>
                 </div>
-              ) : (
-                <div
-                  className="w-full flex items-center gap-2 rounded-xl px-3 py-2.5 justify-center text-xs font-bold shadow-2xs"
-                  style={{
-                    backgroundColor: `${activeColor}12`,
-                    color: activeColor,
-                    border: `1px solid ${activeColor}25`,
-                  }}
-                >
-                  <span
-                    className="w-2 h-2 rounded-full animate-pulse shrink-0"
-                    style={{ backgroundColor: activeColor }}
-                  />
-                  <span>{statusText}</span>
-                </div>
               )}
+
+              {/* Realistic Linear Barcode Graphic Strip */}
+              <div className="w-full my-2 px-3 py-2 rounded-xl bg-neutral-50/90 dark:bg-neutral-900/60 border border-neutral-200/80 dark:border-neutral-800">
+                <TicketBarcode
+                  code={`URP-${shortCode.toUpperCase()}`}
+                  isDark={isDark}
+                  height={32}
+                  showText={true}
+                />
+              </div>
+
+              {/* Real-time Status Strip */}
+              <div className="w-full mt-1">
+                {pass.is_group_master ? (
+                  <div className="w-full flex flex-col gap-1.5 p-3 rounded-xl bg-indigo-50/80 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/60 shadow-2xs">
+                    <div className="flex items-center justify-between text-xs font-bold text-indigo-950 dark:text-indigo-200">
+                      <span className="flex items-center gap-1.5">
+                        <Users className="w-3.5 h-3.5 text-indigo-600" />
+                        Single Group QR Pass
+                      </span>
+                      <span className="text-[11px] font-mono">
+                        {pass.checked_in_guests || 0} / {pass.total_guests || 1} Admitted
+                      </span>
+                    </div>
+                    <div className="w-full h-1.5 bg-indigo-200/60 dark:bg-indigo-900/60 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-indigo-600 rounded-full transition-all duration-300"
+                        style={{
+                          width: `${Math.min(100, Math.round(((pass.checked_in_guests || 0) / (pass.total_guests || 1)) * 100))}%`,
+                        }}
+                      />
+                    </div>
+                    <p className="text-[10px] text-indigo-700 dark:text-indigo-300 font-medium text-center">
+                      {Math.max(0, (pass.total_guests || 1) - (pass.checked_in_guests || 0)) === 0
+                        ? "All members checked in"
+                        : `${Math.max(0, (pass.total_guests || 1) - (pass.checked_in_guests || 0))} entries remaining for partial check-in at the gate`}
+                    </p>
+                  </div>
+                ) : isCheckedIn ? (
+                  <div className="w-full flex items-center gap-2 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 rounded-xl px-3 py-2.5 justify-center shadow-2xs">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                    <span className="text-xs font-bold text-emerald-800 dark:text-emerald-300">
+                      {isMultiScan ? "VERIFIED ENTRY · MULTI-SCAN ACTIVE" : "VERIFIED ENTRY · CHECKED IN"}
+                    </span>
+                  </div>
+                ) : (
+                  <div
+                    className="w-full flex items-center gap-2 rounded-xl px-3 py-2.5 justify-center text-xs font-bold shadow-2xs"
+                    style={{
+                      backgroundColor: `${activeColor}12`,
+                      color: activeColor,
+                      border: `1px solid ${activeColor}25`,
+                    }}
+                  >
+                    <ShieldCheck className="w-4 h-4 shrink-0" />
+                    <span>{statusText || "AUTHENTICATED PASS · READY FOR SCAN"}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Security Microprint Disclaimer */}
+              <p className="text-[8px] font-mono tracking-wider uppercase text-neutral-400 dark:text-neutral-500 text-center mt-2">
+                OFFICIAL ADMISSION PASS · NON-TRANSFERABLE · PRESENT AT GATE
+              </p>
             </div>
           </div>
         </div>

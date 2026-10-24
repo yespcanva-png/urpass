@@ -3,6 +3,8 @@
 import React from "react";
 import { MapPin, Calendar, Scissors, Ticket as TicketIcon, ShieldCheck, CheckCircle2 } from "lucide-react";
 import type { TicketDesignConfig } from "@/lib/pass-design";
+import TicketCutDivider from "@/components/pass/TicketCutDivider";
+import TicketBarcode from "@/components/pass/TicketBarcode";
 
 interface TicketPreviewProps {
   config: TicketDesignConfig;
@@ -122,49 +124,57 @@ export default function TicketPreview({
         </div>
       )}
 
-      {/* Top Accent Strip (Event or Modern template) */}
-      {(config.template === "event" || config.template === "modern") && (
-        <div
-          className="h-2 w-full relative z-10"
-          style={{ backgroundColor: activeColor }}
-        />
-      )}
+      {/* Top Foil Accent Strip */}
+      <div
+        className="h-2 w-full relative z-10"
+        style={{
+          background: `linear-gradient(90deg, ${activeColor} 0%, #a855f7 40%, ${activeColor} 70%, #ec4899 100%)`,
+        }}
+      />
 
       {/* Ticket Body */}
       <div className={`relative z-10 ${paddingCls} flex flex-col items-center text-center`}>
-        {/* Logo & Sponsor Header */}
-        <div className="mb-3.5 flex items-center justify-center gap-3">
-          {config.logoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={config.logoUrl}
-              alt="Logo"
-              className="h-7 max-w-[120px] object-contain"
-            />
-          ) : (
-            <span
-              className="text-[11px] font-black tracking-widest uppercase"
-              style={{ color: isDark ? "#ffffff" : "#111827" }}
-            >
-              URPASS
-            </span>
-          )}
-
-          {config.sponsorLogoUrl && (
-            <>
-              <span className="text-neutral-300 text-xs">×</span>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
+        {/* Header: Logo, Organization & Serial */}
+        <div className="w-full flex items-center justify-between gap-2 mb-3 pb-2 border-b border-dashed border-neutral-200/80 dark:border-neutral-800">
+          <div className="flex items-center gap-2 min-w-0">
+            {config.logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={config.sponsorLogoUrl}
-                alt="Sponsor Logo"
-                className="h-6 max-w-[100px] object-contain opacity-80"
+                src={config.logoUrl}
+                alt="Logo"
+                className="h-6 max-w-[110px] object-contain"
               />
-            </>
-          )}
+            ) : (
+              <span
+                className="text-[10px] font-black tracking-widest uppercase truncate"
+                style={{ color: isDark ? "#ffffff" : "#111827" }}
+              >
+                URPASS
+              </span>
+            )}
+
+            {config.sponsorLogoUrl && (
+              <>
+                <span className="text-neutral-300 text-xs">×</span>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={config.sponsorLogoUrl}
+                  alt="Sponsor Logo"
+                  className="h-5 max-w-[80px] object-contain opacity-80"
+                />
+              </>
+            )}
+          </div>
+
+          <div className="flex items-center gap-1 shrink-0">
+            <span className="text-[9px] font-mono font-bold px-2 py-0.5 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 border border-neutral-200/80 dark:border-neutral-700">
+              {ticketId}
+            </span>
+          </div>
         </div>
 
         {/* Event Name */}
-        <h2 className="text-xl font-bold tracking-tight mb-2 uppercase leading-snug max-w-xs">
+        <h2 className="text-lg font-black tracking-tight mb-2 uppercase leading-snug max-w-xs">
           {eventName}
         </h2>
 
@@ -172,107 +182,83 @@ export default function TicketPreview({
         {config.showTicketType && (
           <div className="mb-3">
             <span
-              className="inline-flex items-center gap-1 text-[11px] font-bold tracking-wider uppercase px-3 py-1 rounded-full border"
+              className="inline-flex items-center gap-1.5 text-[11px] font-extrabold tracking-wider uppercase px-3 py-1 rounded-full border shadow-2xs"
               style={{
-                borderColor: `${activeColor}35`,
+                borderColor: `${activeColor}40`,
                 color: activeColor,
-                backgroundColor: `${activeColor}12`,
+                backgroundColor: `${activeColor}15`,
               }}
             >
-              <TicketIcon className="w-3 h-3" />
+              <TicketIcon className="w-3.5 h-3.5" />
               {ticketType}
             </span>
           </div>
         )}
 
-        {/* Large Centered QR Code Card with clean contrast */}
-        <div className="my-2 flex flex-col items-center">
-          <div
-            className="p-4 bg-white rounded-2xl shadow-xs border border-neutral-100 flex flex-col items-center justify-center"
-            title={`QR Value: ${qrValue}`}
-            data-qr-value={qrValue}
-          >
-            <div className="w-36 h-36 flex flex-col justify-between">
-              {qrPattern.map((row, rIdx) => (
-                <div key={rIdx} className="flex justify-between w-full h-[7px]">
-                  {row.map((cell, cIdx) => (
-                    <div
-                      key={cIdx}
-                      className={`w-[7px] h-[7px] ${cell === 1 ? "bg-black" : "bg-white"}`}
-                    />
-                  ))}
-                </div>
-              ))}
+        {/* Structured Real Ticket Metadata Grid */}
+        <div className="w-full grid grid-cols-2 gap-2 text-left my-1 p-3 rounded-2xl bg-neutral-50/90 dark:bg-neutral-900/60 border border-neutral-200/70 dark:border-neutral-800/80 shadow-2xs">
+          {/* Date & Time */}
+          {config.showEventDate !== false && eventDate && (
+            <div className="min-w-0">
+              <p className="text-[8px] font-mono font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 flex items-center gap-1">
+                <Calendar className="w-2.5 h-2.5" />
+                <span>SCHEDULE</span>
+              </p>
+              <p className="text-[11px] font-bold text-neutral-900 dark:text-neutral-100 truncate mt-0.5">
+                {eventDate}
+              </p>
             </div>
-            <span className="text-[9px] font-black tracking-widest text-neutral-400 uppercase mt-2">
-              SCAN FOR ENTRY
-            </span>
+          )}
+
+          {/* Venue */}
+          {config.showVenue && venue && (
+            <div className="min-w-0">
+              <p className="text-[8px] font-mono font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 flex items-center gap-1">
+                <MapPin className="w-2.5 h-2.5" />
+                <span>LOCATION</span>
+              </p>
+              <p className="text-[11px] font-bold text-neutral-900 dark:text-neutral-100 truncate mt-0.5" title={venue}>
+                {venue}
+              </p>
+            </div>
+          )}
+
+          {/* Attendee */}
+          {config.showAttendeeName && (
+            <div className="min-w-0">
+              <p className="text-[8px] font-mono font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+                DELEGATE
+              </p>
+              <p className="text-[11px] font-bold text-neutral-900 dark:text-neutral-100 truncate mt-0.5">
+                {attendeeName}
+              </p>
+              {config.showOrganization && attendeeOrganization && (
+                <p className="text-[10px] text-neutral-500 dark:text-neutral-400 truncate">
+                  {attendeeOrganization}
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Serial / Reg */}
+          <div className="min-w-0">
+            <p className="text-[8px] font-mono font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+              CREDENTIAL
+            </p>
+            <p className="text-[11px] font-mono font-bold text-neutral-900 dark:text-neutral-100 truncate mt-0.5">
+              {ticketId}
+            </p>
+            {config.showRegistrationNumber && attendeeRegNumber && (
+              <p className="text-[10px] font-mono text-neutral-500 dark:text-neutral-400">
+                {attendeeRegNumber}
+              </p>
+            )}
           </div>
         </div>
 
-        {/* Attendee Name (Toggled) */}
-        {config.showAttendeeName && (
-          <div className="mt-2 mb-0.5">
-            <p className="text-base font-bold tracking-tight">
-              {attendeeName}
-            </p>
-          </div>
-        )}
-
-        {/* Dynamic Fields: Company / College, Phone, Registration Number */}
-        {config.showOrganization && attendeeOrganization && (
-          <p className={`text-xs font-medium ${subtextCls} mb-0.5`}>
-            {attendeeOrganization}
-          </p>
-        )}
-
-        {config.showPhone && attendeePhone && (
-          <p className={`text-[11px] font-mono ${subtextCls} mb-0.5`}>
-            {attendeePhone}
-          </p>
-        )}
-
-        {config.showRegistrationNumber && attendeeRegNumber && (
-          <div className="my-1">
-            <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300">
-              {attendeeRegNumber}
-            </span>
-          </div>
-        )}
-
-        {/* Ticket ID (Toggled) */}
-        {config.showTicketId && (
-          <div className="my-1.5 flex items-center justify-center gap-1.5">
-            <span className="text-[9px] font-bold tracking-widest uppercase text-neutral-400">
-              TICKET ID
-            </span>
-            <span className="text-xs font-mono font-semibold tracking-wider">
-              {ticketId}
-            </span>
-          </div>
-        )}
-
-        {/* Date & Venue (Toggled) */}
-        {(config.showEventDate !== false || (config.showVenue && venue)) && (
-          <div className={`w-full border-t ${dividerCls} pt-2.5 mt-2 flex flex-col items-center gap-1`}>
-            {config.showEventDate !== false && eventDate && (
-              <p className={`text-xs font-semibold tracking-wide ${subtextCls} flex items-center gap-1.5`}>
-                <Calendar className="w-3.5 h-3.5 opacity-70 shrink-0" />
-                <span>{eventDate}</span>
-              </p>
-            )}
-            {config.showVenue && venue && (
-              <p className={`text-xs ${subtextCls} flex items-center gap-1.5`}>
-                <MapPin className="w-3.5 h-3.5 opacity-70 shrink-0" />
-                <span className="truncate max-w-[240px]">{venue}</span>
-              </p>
-            )}
-          </div>
-        )}
-
         {/* Custom Message */}
         {config.customMessage && (
-          <div className="mt-2.5 pt-2 border-t border-dashed border-neutral-200/80 w-full">
+          <div className="mt-2 pt-1.5 border-t border-dashed border-neutral-200/80 dark:border-neutral-800 w-full">
             <p className="text-xs italic opacity-85 max-w-xs mx-auto">
               &ldquo;{config.customMessage}&rdquo;
             </p>
@@ -281,7 +267,7 @@ export default function TicketPreview({
 
         {/* Ticket Rules Strip */}
         {rulesList.length > 0 && (
-          <div className={`mt-3 pt-2.5 border-t ${dividerCls} w-full text-[10px] ${subtextCls} leading-relaxed`}>
+          <div className={`mt-2 pt-2 border-t ${dividerCls} w-full text-[10px] ${subtextCls} leading-relaxed`}>
             <p className="font-medium">{rulesList.join(" • ")}</p>
             {config.showTermsLink && (
               <p className="mt-0.5 underline opacity-70 cursor-pointer">
@@ -295,19 +281,79 @@ export default function TicketPreview({
             )}
           </div>
         )}
-        {/* Real-time Status Strip */}
-        <div className="w-full mt-3">
-          <div
-            className="w-full flex items-center gap-1.5 rounded-xl px-3 py-2 justify-center text-[10px] font-bold shadow-2xs"
-            style={{
-              backgroundColor: `${activeColor}12`,
-              color: activeColor,
-              border: `1px solid ${activeColor}25`,
-            }}
-          >
-            <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
-            <span>AUTHENTICATED PASS · READY FOR SCAN</span>
+
+        {/* ✂ REAL TICKET CUT: Semicircular Punch Notches + Perforated Rip Line */}
+        <TicketCutDivider
+          isDark={isDark}
+          label="ADMIT ONE · TEAR OR SCAN"
+          cutoutColor={isPdf ? "#f3f4f6" : (isDark ? "#0f131d" : "#f1f5f9")}
+          negativeMarginCls="-mx-4 sm:-mx-6"
+        />
+
+        {/* ══════════════════════════════════════════════════════════ */}
+        {/* SCANNABLE ADMISSION STUB (TEAR-OFF SECTION) */}
+        {/* ══════════════════════════════════════════════════════════ */}
+        <div className="w-full flex flex-col items-center">
+          {/* Large Centered QR Code Card with clean contrast and alignment crosshairs */}
+          <div className="my-1 flex flex-col items-center">
+            <div
+              className="p-3.5 bg-white rounded-2xl shadow-xs border border-neutral-200/80 flex flex-col items-center justify-center relative"
+              title={`QR Value: ${qrValue}`}
+              data-qr-value={qrValue}
+            >
+              {/* Corner brackets */}
+              <div className="absolute top-2 left-2 w-3 h-3 border-t-2 border-l-2 border-brand/70 rounded-tl-xs pointer-events-none" />
+              <div className="absolute top-2 right-2 w-3 h-3 border-t-2 border-r-2 border-brand/70 rounded-tr-xs pointer-events-none" />
+              <div className="absolute bottom-2 left-2 w-3 h-3 border-b-2 border-l-2 border-brand/70 rounded-bl-xs pointer-events-none" />
+              <div className="absolute bottom-2 right-2 w-3 h-3 border-b-2 border-r-2 border-brand/70 rounded-br-xs pointer-events-none" />
+
+              <div className="w-32 h-32 flex flex-col justify-between">
+                {qrPattern.map((row, rIdx) => (
+                  <div key={rIdx} className="flex justify-between w-full h-[6.5px]">
+                    {row.map((cell, cIdx) => (
+                      <div
+                        key={cIdx}
+                        className={`w-[6.5px] h-[6.5px] ${cell === 1 ? "bg-black" : "bg-white"}`}
+                      />
+                    ))}
+                  </div>
+                ))}
+              </div>
+              <span className="text-[8px] font-black tracking-widest text-neutral-400 uppercase mt-2">
+                SCAN FOR ENTRY
+              </span>
+            </div>
           </div>
+
+          {/* Realistic Linear Barcode Graphic Strip */}
+          <div className="w-full my-2 px-3 py-2 rounded-xl bg-neutral-50/90 dark:bg-neutral-900/60 border border-neutral-200/80 dark:border-neutral-800">
+            <TicketBarcode
+              code={ticketId.replace('#', '')}
+              isDark={isDark}
+              height={30}
+              showText={true}
+            />
+          </div>
+
+          {/* Real-time Status Strip */}
+          <div className="w-full mt-1">
+            <div
+              className="w-full flex items-center gap-1.5 rounded-xl px-3 py-2 justify-center text-[10px] font-bold shadow-2xs"
+              style={{
+                backgroundColor: `${activeColor}12`,
+                color: activeColor,
+                border: `1px solid ${activeColor}25`,
+              }}
+            >
+              <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
+              <span>AUTHENTICATED PASS · READY FOR SCAN</span>
+            </div>
+          </div>
+
+          {/* Security Microprint Disclaimer */}
+          <p className="text-[8px] font-mono tracking-wider uppercase text-neutral-400 dark:text-neutral-500 text-center mt-2">
+            OFFICIAL ADMISSION TICKET · VALID FOR ENTRY · URPASS
+          </p>
         </div>
       </div>
     </div>

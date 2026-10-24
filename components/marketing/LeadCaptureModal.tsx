@@ -10,6 +10,7 @@ interface LeadCaptureModalProps {
   pageSlug: string;
   contentCluster?: string;
   eventTypeName?: string;
+  defaultPackage?: "essential" | "pro" | "premium" | "enterprise";
 }
 
 export default function LeadCaptureModal({
@@ -18,6 +19,7 @@ export default function LeadCaptureModal({
   pageSlug,
   contentCluster = "general",
   eventTypeName,
+  defaultPackage = "pro",
 }: LeadCaptureModalProps) {
   const [organizerName, setOrganizerName] = useState("");
   const [businessEmail, setBusinessEmail] = useState("");
@@ -27,7 +29,7 @@ export default function LeadCaptureModal({
   const [city, setCity] = useState("");
   const [expectedAttendees, setExpectedAttendees] = useState("500–2,000");
   const [eventPricingType, setEventPricingType] = useState<"free" | "paid" | "private">("free");
-  const [preferredPackage, setPreferredPackage] = useState<"essential" | "pro" | "premium" | "enterprise">("pro");
+  const [preferredPackage, setPreferredPackage] = useState<"essential" | "pro" | "premium" | "enterprise">(defaultPackage);
   const [supportRequirements, setSupportRequirements] = useState("");
   const [comments, setComments] = useState("");
   const [consentGiven, setConsentGiven] = useState(true);

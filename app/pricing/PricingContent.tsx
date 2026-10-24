@@ -1,752 +1,733 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import { Check, Minus, ChevronDown, ShieldCheck, ArrowRight, Globe } from "lucide-react";
+import {
+  Check,
+  Minus,
+  ChevronDown,
+  ShieldCheck,
+  ArrowRight,
+  Sparkles,
+  Zap,
+  Users,
+  Calendar,
+  Layers,
+  HelpCircle,
+  Clock,
+  ShieldAlert,
+  Headphones,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
-import FounderSpotCounter from "@/components/billing/FounderSpotCounter";
-import { detectCountryClient, persistCountryPreference } from "@/lib/country-config";
-import ManagedEventsSection from "@/components/landing/ManagedEventsSection";
-
-type Cycle = "monthly" | "annual";
-
-// ─── Plan definitions ──────────────────────────────────────────────────────────
-
-const PLANS = [
-  {
-    slug: "free",
-    name: "Free",
-    desc: "Run a real event with zero software cost and zero friction.",
-    monthly: 0,
-    annual: 0,
-    ukMonthly: 0,
-    ukAnnual: 0,
-    popular: false,
-    highlight: false,
-    cta: "Start Free",
-    href: "/signup",
-    bullets: [
-      "1 active event",
-      "100 attendees/month",
-      "1 team member",
-      "QR tickets & mobile scanning",
-      "Basic custom registration",
-      "Standard pass with UrPass watermark",
-      "No payment details required",
-    ],
-  },
-  {
-    slug: "starter",
-    name: "Starter",
-    desc: "For individual organizers and recurring event teams.",
-    monthly: 499,
-    annual: 4990,
-    ukMonthly: 15,
-    ukAnnual: 120,
-    popular: false,
-    highlight: false,
-    cta: "Choose Starter",
-    href: "/signup",
-    bullets: [
-      "3 active events",
-      "500 attendees/month",
-      "2 team members",
-      "Custom registration forms",
-      "CSV import & export",
-      "Standard analytics",
-      "Autopay enabled",
-    ],
-  },
-  {
-    slug: "pro",
-    name: "Pro",
-    desc: "For growing event teams, colleges and professional summits.",
-    monthly: 999,
-    annual: 9990,
-    ukMonthly: 35,
-    ukAnnual: 300,
-    popular: true,
-    highlight: true,
-    cta: "Choose Pro",
-    href: "/signup",
-    bullets: [
-      "10 active events",
-      "2,500 attendees/month",
-      "5 team members",
-      "Session attendance tracking",
-      "Custom pass design & branding",
-      "Advanced analytics",
-      "Priority support",
-    ],
-  },
-  {
-    slug: "business",
-    name: "Business",
-    desc: "For organizations managing high-density events at scale.",
-    monthly: 2499,
-    annual: 24990,
-    ukMonthly: 79,
-    ukAnnual: 699,
-    popular: false,
-    highlight: false,
-    cta: "Choose Business",
-    href: "/signup",
-    bullets: [
-      "Unlimited active events*",
-      "10,000 attendees/month",
-      "15 team members",
-      "Developer API & webhooks",
-      "Session attendance tracking",
-      "Advanced team permissions",
-      "Cross-event analytics",
-    ],
-  },
-];
-// ─── Feature comparison table ──────────────────────────────────────────────────
-
-type CellValue = boolean | string;
-
-type TableRow =
-  | { type: "category"; label: string }
-  | { type: "row"; feature: string; free: CellValue; starter: CellValue; pro: CellValue; business: CellValue };
-
-const TABLE: TableRow[] = [
-  { type: "category", label: "Capacity & Limits" },
-  { type: "row", feature: "Active events", free: "1", starter: "3", pro: "10", business: "Unlimited*" },
-  { type: "row", feature: "Attendees / month", free: "100", starter: "500", pro: "2,500", business: "10,000" },
-  { type: "row", feature: "Team members", free: "1", starter: "2", pro: "5", business: "15" },
-
-  { type: "category", label: "Check-in & Registration" },
-  { type: "row", feature: "QR tickets & mobile scanning", free: true, starter: true, pro: true, business: true },
-  { type: "row", feature: "Custom registration forms", free: "Basic", starter: true, pro: true, business: true },
-  { type: "row", feature: "Session attendance tracking", free: false, starter: false, pro: true, business: true },
-  { type: "row", feature: "Duplicate scan prevention", free: true, starter: true, pro: true, business: true },
-  { type: "row", feature: "Attendee approval workflow", free: true, starter: true, pro: true, business: true },
-
-  { type: "category", label: "Analytics & Automation" },
-  { type: "row", feature: "Analytics", free: "Basic", starter: "Standard", pro: "Advanced", business: "Advanced" },
-  { type: "row", feature: "CSV attendee import & export", free: false, starter: true, pro: true, business: true },
-  { type: "row", feature: "Email notifications", free: true, starter: true, pro: true, business: true },
-  { type: "row", feature: "Autopay recurring billing", free: false, starter: true, pro: true, business: true },
-
-  { type: "category", label: "Branding & Developer API" },
-  { type: "row", feature: "Custom pass design", free: false, starter: false, pro: true, business: true },
-  { type: "row", feature: "Remove UrPass branding", free: false, starter: false, pro: true, business: true },
-  { type: "row", feature: "Developer API & webhooks", free: false, starter: false, pro: false, business: true },
-  { type: "row", feature: "Enterprise SSO & custom domain", free: false, starter: false, pro: false, business: true },
-  { type: "row", feature: "Priority support", free: "Community", starter: "Standard", pro: "Priority", business: "Dedicated" },
-];
-
-// ─── One-event passes ──────────────────────────────────────────────────────────
-
-const EVENT_PASSES = [
-  {
-    name: "Event",
-    price: 299,
-    ukPrice: 5,
-    regs: "250 registrations",
-    features: ["1 event", "QR passes & check-in", "Attendee approval", "CSV export", "Basic analytics"],
-  },
-  {
-    name: "Event Plus",
-    price: 599,
-    ukPrice: 10,
-    regs: "1,000 registrations",
-    features: ["1 event", "QR passes & check-in", "Attendee approval", "CSV export", "Analytics", "Custom pass design"],
-  },
-  {
-    name: "Large Event",
-    price: 999,
-    ukPrice: 19,
-    regs: "2,500 registrations",
-    features: ["1 event", "QR passes & check-in", "Attendee approval", "CSV export", "Analytics", "Custom pass design", "Remove branding"],
-  },
-];
-
-// ─── FAQ ───────────────────────────────────────────────────────────────────────
-
-function getFaqs(country: "IN" | "GB") {
-  return [
-    {
-      q: "Can I cancel anytime?",
-      a: "Yes. Cancel from your billing settings at any time. You keep access until the end of your current billing period — no prorated refunds, no lock-in.",
-    },
-    {
-      q: "What happens when I reach my registration limit?",
-      a: "New registrations are paused and a notice is shown to you in the dashboard. Your existing attendee data, passes, and check-in records are always accessible — nothing is deleted.",
-    },
-    {
-      q: "Can I change plans mid-cycle?",
-      a: "Yes. Upgrades take effect immediately. Downgrades take effect at the start of your next billing period so you keep what you paid for.",
-    },
-    {
-      q: "Do attendees need a URPASS account?",
-      a: "No. Attendees receive their QR pass by email or a shareable link. No account, app download, or login required on their side.",
-    },
-    {
-      q: "Can I purchase URPASS for a single event?",
-      a:
-        country === "GB"
-          ? "Yes. Event passes (£5 / £10 / £19) let you run one event without a monthly subscription. You pick the tier based on expected registrations."
-          : "Yes. Event passes (₹299 / ₹599 / ₹999) let you run one event without a monthly subscription. You pick the tier based on expected registrations.",
-    },
-    {
-      q: "Can I sell paid tickets?",
-      a:
-        country === "GB"
-          ? "Yes. URPASS supports paid ticket sales with zero per-ticket platform commissions, direct payouts, and full UK GDPR compliance."
-          : "Yes. Connect Razorpay to sell paid tickets with direct payouts to your Indian bank account via UPI, cards, and net banking — with zero per-ticket platform commissions from URPASS.",
-    },
-    {
-      q: "What happens to my data if I cancel?",
-      a: "Your event and attendee data is retained for 30 days after cancellation, giving you time to export everything. After 30 days, data is permanently deleted.",
-    },
-  ];
-}
-
-// ─── Helper components ─────────────────────────────────────────────────────────
-
-function Cell({ value }: { value: CellValue }) {
-  if (value === true)  return <Check className="w-4 h-4 text-brand mx-auto" />;
-  if (value === false) return <Minus className="w-4 h-4 text-neutral-200 mx-auto" />;
-  return <span className="text-xs text-neutral-500">{value}</span>;
-}
-
-function FaqItem({ q, a }: { q: string; a: string }) {
-  const [open, setOpen] = useState(false);
-  return (
-    <div className="border-b border-neutral-100 last:border-0">
-      <button
-        onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between py-5 text-left gap-4"
-      >
-        <span className="text-sm font-medium text-neutral-900">{q}</span>
-        <ChevronDown className={`w-4 h-4 text-neutral-400 shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />
-      </button>
-      {open && (
-        <p className="pb-5 text-sm text-neutral-500 leading-relaxed">{a}</p>
-      )}
-    </div>
-  );
-}
+import {
+  SELF_SERVICE_PLANS,
+  REMOTE_MANAGED_PACKAGES,
+  REMOTE_MANAGED_SERVICE_BOUNDARIES,
+  ServiceModel,
+  BillingCycle,
+} from "@/lib/billing/catalog";
+import { calculateGst, formatInr } from "@/lib/billing/tax";
+import LeadCaptureModal from "@/components/marketing/LeadCaptureModal";
 
 interface Props {
   isAuthenticated?: boolean;
-  trialUsed?: boolean;
   userEmail?: string;
-  userName?: string;
   initialCountry?: "IN" | "GB";
 }
 
 export default function PricingContent({
   isAuthenticated = false,
-  trialUsed = false,
   userEmail = "",
-  userName = "",
   initialCountry = "IN",
-}: Props = {}) {
-  const [cycle, setCycle] = useState<Cycle>("monthly");
-  const [country, setCountry] = useState<"IN" | "GB">(initialCountry);
+}: Props) {
+  const [serviceModel, setServiceModel] = useState<ServiceModel>("self_service");
+  const [cycle, setCycle] = useState<BillingCycle>("monthly");
+  const [managedModalOpen, setManagedModalOpen] = useState(false);
+  const [selectedManagedPackage, setSelectedManagedPackage] = useState<
+    "essential" | "pro" | "premium" | "enterprise"
+  >("pro");
 
-  useEffect(() => {
-    const detected = detectCountryClient();
-    if (detected) {
-      setCountry(detected);
-    }
-
-    const onCountryChanged = (e: Event) => {
-      const custom = e as CustomEvent<{ country: "IN" | "GB" }>;
-      if (custom.detail?.country) {
-        setCountry(custom.detail.country);
-      }
-    };
-    window.addEventListener("urpass_country_changed", onCountryChanged);
-    return () => window.removeEventListener("urpass_country_changed", onCountryChanged);
-  }, []);
-
-  function handleCountryChange(newCountry: "IN" | "GB") {
-    setCountry(newCountry);
-    persistCountryPreference(newCountry);
-  }
-
-  function displayPrice(plan: typeof PLANS[0]) {
-    if (plan.slug === "free") {
-      return {
-        price: country === "GB" ? "£0" : "₹0",
-        sub: "forever · no card required",
-        intro: null,
-      };
-    }
-    if (country === "GB") {
-      if (cycle === "monthly") return { price: `£${plan.ukMonthly}`, sub: "/month +VAT", intro: null };
-      const perMonth = Math.round(plan.ukAnnual / 12);
-      return {
-        price: `£${perMonth}`,
-        sub: `/month · £${plan.ukAnnual}/year`,
-        intro: null,
-      };
-    }
-    if (cycle === "monthly") {
-      return {
-        price: `₹${plan.monthly.toLocaleString("en-IN")}`,
-        sub: "/month +18% GST · cancel anytime",
-        intro: null,
-      };
-    }
-    const perMonth = Math.round(plan.annual / 12);
-    return {
-      price: `₹${perMonth.toLocaleString("en-IN")}`,
-      sub: `/month · ₹${plan.annual.toLocaleString("en-IN")}/year +GST`,
-      intro: null,
-    };
+  function handleOpenManagedModal(pkgCode: "essential" | "pro" | "premium" | "enterprise") {
+    setSelectedManagedPackage(pkgCode);
+    setManagedModalOpen(true);
   }
 
   return (
-    <div className="min-h-screen bg-white">
-
-      {/* ── Header ── */}
-      <header className="border-b border-neutral-100 px-6 py-4 flex items-center justify-between">
-        <Link href="/" className="font-semibold tracking-tight text-base text-neutral-900">URPASS</Link>
-        <div className="flex items-center gap-3 sm:gap-4">
-          {/* Corporate Regional Market Switcher */}
-          <div className="inline-flex items-center p-0.5 rounded-xl border border-neutral-200/90 bg-neutral-100/80 shadow-2xs">
-            <span className="pl-2 pr-1 text-neutral-400 flex items-center justify-center">
-              <Globe className="w-3.5 h-3.5" />
-            </span>
-            <button
-              type="button"
-              onClick={() => handleCountryChange("IN")}
-              className={cn(
-                "px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all cursor-pointer flex items-center gap-1",
-                country !== "GB"
-                  ? "bg-white text-neutral-900 font-bold shadow-xs border border-neutral-200/70"
-                  : "text-neutral-500 hover:text-neutral-800"
-              )}
-              title="India Edition (INR · ₹)"
-              aria-label="Switch to India (INR ₹)"
-            >
-              <span>INR</span>
-              <span className={country !== "GB" ? "text-neutral-500 font-normal" : "text-neutral-400 font-normal"}>₹</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleCountryChange("GB")}
-              className={cn(
-                "px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all cursor-pointer flex items-center gap-1",
-                country === "GB"
-                  ? "bg-white text-neutral-900 font-bold shadow-xs border border-neutral-200/70"
-                  : "text-neutral-500 hover:text-neutral-800"
-              )}
-              title="UK Edition (GBP · £)"
-              aria-label="Switch to UK (GBP £)"
-            >
-              <span>GBP</span>
-              <span className={country === "GB" ? "text-neutral-500 font-normal" : "text-neutral-400 font-normal"}>£</span>
-            </button>
+    <div className="min-h-screen bg-slate-950 text-slate-100 antialiased selection:bg-violet-500/30">
+      {/* ── Top Navigation Bar ── */}
+      <header className="border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-md sticky top-0 z-40 px-6 py-4 flex items-center justify-between">
+        <Link href="/" className="flex items-center gap-2 group">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-violet-600 to-indigo-500 flex items-center justify-center font-bold text-white shadow-md shadow-violet-500/20 group-hover:scale-105 transition-transform">
+            UP
           </div>
-
+          <span className="font-extrabold tracking-tight text-lg text-white">
+            UrPass<span className="text-violet-400">.</span>
+          </span>
+        </Link>
+        <div className="flex items-center gap-4">
+          <Link
+            href="/remote-managed-event-services"
+            className="hidden sm:inline-flex text-xs text-slate-300 hover:text-white transition-colors"
+          >
+            Remote Managed Services
+          </Link>
+          <Link
+            href="/self-service-vs-managed-events"
+            className="hidden sm:inline-flex text-xs text-slate-300 hover:text-white transition-colors"
+          >
+            Compare Models
+          </Link>
           {isAuthenticated ? (
-            <Link href="/dashboard" className="text-sm bg-neutral-900 text-white px-4 py-2 rounded-lg hover:bg-neutral-700 transition-colors">
-              Dashboard
+            <Link
+              href="/dashboard/billing"
+              className="text-xs font-semibold bg-violet-600 hover:bg-violet-500 text-white px-4 py-2 rounded-lg transition-colors shadow-sm"
+            >
+              Billing Portal
             </Link>
           ) : (
-            <>
-              <Link href="/login?from=pricing&next=/billing" className="text-sm text-neutral-500 hover:text-neutral-900 transition-colors">Log in</Link>
-              <Link href="/signup?from=pricing&next=/billing" className="text-sm bg-neutral-900 text-white px-4 py-2 rounded-lg hover:bg-neutral-700 transition-colors">Get started</Link>
-            </>
+            <div className="flex items-center gap-3">
+              <Link
+                href="/login?from=pricing"
+                className="text-xs font-medium text-slate-300 hover:text-white transition-colors"
+              >
+                Log In
+              </Link>
+              <Link
+                href="/login?intent=signup&plan=free"
+                className="text-xs font-semibold bg-white hover:bg-slate-100 text-slate-950 px-4 py-2 rounded-lg transition-colors shadow-sm"
+              >
+                Start Free
+              </Link>
+            </div>
           )}
         </div>
       </header>
 
-      <main className="px-5 sm:px-8">
-
-        {/* ── 01 Hero + Toggle ── */}
-        <section className="max-w-5xl mx-auto text-center pt-20 pb-14">
-
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-violet-50 border border-violet-200/80 text-violet-700 text-xs font-semibold tracking-wider uppercase mb-4">
-            <span className="w-1.5 h-1.5 rounded-full bg-violet-600 inline-block" />
-            FREE FOREVER + TRANSPARENT EVENT SAAS
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-24">
+        {/* ── Hero Section ── */}
+        <section className="text-center max-w-4xl mx-auto mb-16">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-violet-500/10 border border-violet-500/30 text-violet-300 text-xs font-semibold uppercase tracking-wider mb-6">
+            <Sparkles className="w-3.5 h-3.5 text-violet-400" />
+            Transparent Event Pricing · 0% Ticket Commission
           </div>
-          <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-neutral-900 mb-4">
-            Simple, transparent pricing for every event
-          </h1>
-          <p className="text-neutral-600 max-w-2xl mx-auto mb-3 text-base sm:text-lg">
-            Start free with 1 active event and 100 registrations. Upgrade to Starter, Pro, or Business as your attendance, team, and multi-event operations expand.
-          </p>
-          <div className="inline-flex items-center gap-2 text-xs font-medium text-neutral-500 mb-8 bg-neutral-100 px-3.5 py-1.5 rounded-full flex-wrap justify-center">
-            <span>
-              {country === "GB"
-                ? "Free (£0) · Starter (£15) · Pro (£35) · Business (£79)"
-                : "Free Forever (₹0) · Starter (₹499) · Pro (₹999) · Business (₹2,499)"}
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight text-white mb-6">
+            Simple, Transparent Pricing <br className="hidden sm:inline" />
+            <span className="bg-gradient-to-r from-violet-400 via-purple-300 to-indigo-300 bg-clip-text text-transparent">
+              for Every Event
             </span>
-            <span>·</span>
-            <span>Sub-second QR check-in</span>
-            <span>·</span>
-            <span>Autopay enabled</span>
+          </h1>
+          <p className="text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed mb-10">
+            Choose independent Self-Service SaaS tools with 0% ticket commissions, or delegate full technical setup to our remote operations engineers.
+          </p>
+
+          {/* ── Model Selector (Dual Engine) ── */}
+          <div className="inline-flex p-1.5 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl max-w-md mx-auto w-full mb-8">
+            <button
+              type="button"
+              onClick={() => setServiceModel("self_service")}
+              className={cn(
+                "flex-1 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center justify-center gap-2",
+                serviceModel === "self_service"
+                  ? "bg-violet-600 text-white shadow-md shadow-violet-600/30"
+                  : "text-slate-400 hover:text-white"
+              )}
+            >
+              <Zap className="w-4 h-4" />
+              Self-Service Subscriptions
+            </button>
+            <button
+              type="button"
+              onClick={() => setServiceModel("remote_managed")}
+              className={cn(
+                "flex-1 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center justify-center gap-2",
+                serviceModel === "remote_managed"
+                  ? "bg-violet-600 text-white shadow-md shadow-violet-600/30"
+                  : "text-slate-400 hover:text-white"
+              )}
+            >
+              <Headphones className="w-4 h-4" />
+              Remote Managed Service
+            </button>
           </div>
 
-          {/* Toggles Container */}
-          <div className="flex flex-wrap items-center justify-center gap-3">
-            {/* Monthly / Annual billing cycle toggle */}
-            <div className="inline-flex items-center bg-neutral-100 rounded-xl p-1 gap-1">
-              <button
-                type="button"
-                onClick={() => setCycle("monthly")}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${cycle === "monthly" ? "bg-white text-neutral-900 shadow-sm" : "text-neutral-500 hover:text-neutral-700"}`}
-              >
-                Monthly
-              </button>
-              <button
-                type="button"
-                onClick={() => setCycle("annual")}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${cycle === "annual" ? "bg-white text-neutral-900 shadow-sm" : "text-neutral-500 hover:text-neutral-700"}`}
-              >
-                Annual
-                <span className="text-[10px] font-bold tracking-wider text-brand bg-brand-50 px-2 py-0.5 rounded-full">
-                  SAVE 2 MO
-                </span>
-              </button>
-            </div>
-
-            {/* Corporate Market / Currency toggle */}
-            <div className="inline-flex items-center bg-neutral-100 rounded-xl p-1 gap-1 border border-neutral-200/60">
-              <span className="pl-2 pr-1 text-neutral-400 flex items-center">
-                <Globe className="w-3.5 h-3.5" />
-              </span>
-              <button
-                type="button"
-                onClick={() => handleCountryChange("IN")}
-                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${country === "IN" ? "bg-white text-neutral-900 font-semibold shadow-xs" : "text-neutral-500 hover:text-neutral-700"}`}
-                title="View India pricing in INR (₹) with UPI & Razorpay"
-              >
-                <span>India · INR (₹)</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleCountryChange("GB")}
-                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${country === "GB" ? "bg-white text-neutral-900 font-semibold shadow-xs" : "text-neutral-500 hover:text-neutral-700"}`}
-                title="View UK pricing in GBP (£) with Razorpay & 0% fee"
-              >
-                <span>United Kingdom · GBP (£)</span>
-              </button>
-            </div>
-          </div>
-          {cycle === "annual" && (
-            <div className="mt-3 text-xs text-neutral-500 flex items-center justify-center gap-2 flex-wrap">
-              <span>Save 2 months with annual billing.</span>
-              <span className="text-neutral-300">·</span>
-              <span>Looking for university or multi-department plans?</span>
-              <Link
-                href="/campus-event-management-platform"
-                className="font-semibold text-emerald-600 hover:text-emerald-700 underline"
-              >
-                View Campus Licensing (From ₹9,999/year) &rarr;
-              </Link>
+          {/* Monthly / Annual Toggle for Self-Service */}
+          {serviceModel === "self_service" && (
+            <div className="flex flex-col items-center gap-2">
+              <div className="inline-flex items-center bg-slate-900/80 rounded-xl p-1 border border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setCycle("monthly")}
+                  className={cn(
+                    "px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer",
+                    cycle === "monthly"
+                      ? "bg-slate-800 text-white shadow-xs"
+                      : "text-slate-400 hover:text-white"
+                  )}
+                >
+                  Monthly Billing
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCycle("annual")}
+                  className={cn(
+                    "flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer",
+                    cycle === "annual"
+                      ? "bg-slate-800 text-white shadow-xs"
+                      : "text-slate-400 hover:text-white"
+                  )}
+                >
+                  Annual Billing
+                  <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
+                    SAVE 2 MONTHS
+                  </span>
+                </button>
+              </div>
+              {cycle === "annual" && (
+                <p className="text-[11px] text-amber-300/80 flex items-center gap-1.5 mt-1">
+                  <Clock className="w-3.5 h-3.5" />
+                  Annual billing uses configured catalog rates (10x monthly equivalent). Razorpay annual mandates are scheduled per merchant agreement.
+                </p>
+              )}
             </div>
           )}
         </section>
 
-        {/* ── Founder Lifetime Plan Callout Banner ── */}
-        <section className="max-w-5xl mx-auto mb-12">
-          <div className="relative overflow-hidden rounded-2xl bg-neutral-900 border border-neutral-800 p-6 sm:p-8 text-white shadow-sm">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
-              <div className="space-y-2">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-neutral-800 border border-neutral-700 text-neutral-300">
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>FOUNDER DEAL · LIMITED TO 20 ACCOUNTS ONLY</span>
-                </div>
-                <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
-                  {country === "GB"
-                    ? "URPASS Founder Lifetime Access — £249 One-Time"
-                    : "URPASS Founder Lifetime Access — ₹19,999 One-Time"}
-                </h3>
-                <p className="text-xs sm:text-sm text-neutral-400 max-w-2xl leading-relaxed">
-                  Get permanent access to all currently available URPASS features for a one-time payment. Create event landing pages on urpass.space and lock in all features for lifetime (Term 2125).
-                </p>
+        {/* ── SECTION A: SELF-SERVICE SUBSCRIPTION CARDS ── */}
+        {serviceModel === "self_service" && (
+          <section className="mb-20">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {SELF_SERVICE_PLANS.map((plan) => {
+                const isMonthly = cycle === "monthly";
+                const baseInr = isMonthly ? plan.priceMonthlyInr : Math.round(plan.priceAnnualInr / 12);
+                const basePaise = isMonthly ? plan.priceMonthlyPaise : plan.priceAnnualPaise;
+                const tax = calculateGst(basePaise);
+                const totalInrWithGst = isMonthly
+                  ? plan.priceMonthlyInr === 0
+                    ? 0
+                    : Math.round(tax.totalAmountPaise) / 100
+                  : Math.round(tax.totalAmountPaise) / 100;
 
-                <div className="pt-2 max-w-lg">
-                  <FounderSpotCounter
-                    claimedCount={14}
-                    totalCount={20}
-                    variant="compact"
-                    showFeaturesLock={true}
-                  />
-                </div>
-              </div>
+                return (
+                  <div
+                    key={plan.slug}
+                    className={cn(
+                      "relative flex flex-col rounded-2xl p-6 sm:p-7 transition-all border",
+                      plan.popular
+                        ? "bg-gradient-to-b from-slate-900 via-slate-900/95 to-slate-950 border-violet-500/60 shadow-2xl shadow-violet-950/40 lg:-translate-y-2"
+                        : "bg-slate-900/70 border-slate-800 hover:border-slate-700"
+                    )}
+                  >
+                    {plan.badge && (
+                      <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-violet-600 text-white shadow-md">
+                        {plan.badge}
+                      </div>
+                    )}
 
-              <div className="shrink-0 flex flex-col sm:flex-row gap-3">
-                <Link
-                  href={country === "GB" ? "/founder-lifetime-deal?country=GB" : "/founder-lifetime-deal"}
-                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-white text-neutral-900 hover:bg-neutral-100 font-semibold text-xs sm:text-sm transition-colors text-center whitespace-nowrap shadow-sm"
-                >
-                  <span>View Lifetime Plan</span>
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ── 02 Plan Cards ── */}
-        <section className="max-w-5xl mx-auto pb-20">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 items-stretch">
-            {PLANS.map((plan) => {
-              const { price, sub } = displayPrice(plan);
-              const isFree = plan.slug === "free";
-              return (
-                <div
-                  key={plan.slug}
-                  className={`relative flex flex-col rounded-2xl p-6 h-full ${plan.highlight ? "bg-neutral-900 text-white shadow-lg" : "bg-white border border-neutral-200/80 shadow-xs"}`}
-                >
-                  {plan.popular && (
-                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] font-bold tracking-widest bg-brand text-white px-3 py-1 rounded-full whitespace-nowrap shadow-xs">
-                      MOST POPULAR
-                    </span>
-                  )}
-                  {isFree && (
-                    <span className="mb-2 inline-block text-[10px] font-extrabold tracking-wider text-violet-700 bg-violet-50 border border-violet-200/80 px-2 py-0.5 rounded-full w-fit">
-                      FREE FOREVER
-                    </span>
-                  )}
-                  <p className={`text-xs font-semibold tracking-widest mb-1 ${plan.highlight ? "text-white/50" : "text-neutral-400"}`}>
-                    {plan.name.toUpperCase()}
-                  </p>
-                  <p className={`text-xs mb-5 leading-relaxed ${plan.highlight ? "text-white/40" : "text-neutral-400"}`}>
-                    {plan.desc}
-                  </p>
-                  <div className="flex flex-col mb-5">
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-4xl font-extrabold tracking-tight">{price}</span>
-                      <span className={`text-xs font-medium ${plan.highlight ? "text-white/60" : "text-neutral-500"}`}>/month</span>
+                    <div className="mb-5">
+                      <h3 className="text-xl font-bold text-white mb-1.5">{plan.name}</h3>
+                      <p className="text-xs text-slate-400 min-h-[32px]">{plan.tagline}</p>
                     </div>
-                    <span className={`text-xs mt-1 ${plan.highlight ? "text-white/60" : "text-neutral-500"}`}>{sub}</span>
-                  </div>
-                  <ul className="flex flex-col gap-2.5 flex-1 mb-7">
-                    {plan.bullets.map((b) => (
-                      <li key={b} className="flex items-start gap-2 text-sm">
-                        <svg className={`w-4 h-4 shrink-0 mt-0.5 ${plan.highlight ? "text-brand-200" : "text-brand"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                        <span className={plan.highlight ? "text-white/70" : "text-neutral-600"}>{b}</span>
-                      </li>
-                    ))}
-                  </ul>
 
-                  <div className="flex flex-col gap-1.5">
+                    {/* Price Block */}
+                    <div className="mb-6 pb-6 border-b border-slate-800/80">
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="text-4xl font-extrabold text-white">
+                          {formatInr(baseInr)}
+                        </span>
+                        <span className="text-xs text-slate-400">
+                          {plan.priceMonthlyInr === 0 ? "forever" : "/ month"}
+                        </span>
+                      </div>
+                      {plan.priceMonthlyInr > 0 && (
+                        <div className="mt-1.5 text-[11px] text-slate-400">
+                          <span>+18% GST ({formatInr(tax.taxAmountInr)})</span>
+                          <span className="text-slate-500"> · </span>
+                          <span className="text-slate-300 font-medium">
+                            {formatInr(totalInrWithGst)} total
+                          </span>
+                        </div>
+                      )}
+                      {plan.priceMonthlyInr === 0 && (
+                        <p className="text-[11px] text-emerald-400 font-medium mt-1.5">
+                          Zero card or autopay required
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Quick Allowances */}
+                    <div className="space-y-2 mb-6 text-xs text-slate-300 bg-slate-950/60 p-3.5 rounded-xl border border-slate-800/60">
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-400">Active Events:</span>
+                        <span className="font-bold text-white">
+                          {plan.limits.activeEvents === "unlimited" ? "Unlimited" : plan.limits.activeEvents}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-400">Attendees / Event:</span>
+                        <span className="font-bold text-white">
+                          {plan.limits.attendeesPerEvent === "unlimited"
+                            ? "Unlimited"
+                            : plan.limits.attendeesPerEvent.toLocaleString("en-IN")}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-400">Team Seats:</span>
+                        <span className="font-bold text-white">{plan.limits.teamSeats}</span>
+                      </div>
+                    </div>
+
+                    {/* Feature Bullets */}
+                    <ul className="space-y-2.5 mb-8 flex-1 text-xs text-slate-300">
+                      {plan.features.map((feature, idx) => (
+                        <li key={idx} className="flex items-start gap-2.5">
+                          <Check className="w-4 h-4 text-violet-400 shrink-0 mt-0.5" />
+                          <span>{feature}</span>
+                        </li>
+                      ))}
+                      {plan.restrictions?.map((restriction, idx) => (
+                        <li key={`rest-${idx}`} className="flex items-start gap-2.5 text-slate-500">
+                          <Minus className="w-4 h-4 text-slate-600 shrink-0 mt-0.5" />
+                          <span>{restriction}</span>
+                        </li>
+                      ))}
+                    </ul>
+
+                    {/* Action Button */}
                     <Link
                       href={
-                        isFree
-                          ? (isAuthenticated ? "/dashboard" : "/signup")
-                          : (isAuthenticated
-                              ? `/billing?plan=${plan.slug}&tab=plans${country === "GB" ? "&country=GB" : ""}`
-                              : `/signup?from=pricing&plan=${plan.slug}${country === "GB" ? "&country=GB" : ""}&next=${encodeURIComponent(`/billing?plan=${plan.slug}&tab=plans`)}`)
+                        isAuthenticated
+                          ? plan.slug === "free"
+                            ? "/dashboard"
+                            : `/billing?plan=${plan.slug}`
+                          : plan.slug === "free"
+                          ? "/login?intent=signup&plan=free"
+                          : `/billing?plan=${plan.slug}`
                       }
-                      className={`w-full text-center py-3 rounded-xl text-sm font-bold transition-all shadow-sm ${
-                        plan.highlight
-                          ? "bg-white text-neutral-900 hover:bg-neutral-100"
-                          : isFree
-                          ? "bg-violet-600 text-white hover:bg-violet-700"
-                          : "bg-neutral-900 text-white hover:bg-neutral-800"
-                      }`}
+                      className={cn(
+                        "w-full py-3 px-4 rounded-xl text-xs font-bold text-center transition-all flex items-center justify-center gap-1.5",
+                        plan.popular
+                          ? "bg-violet-600 hover:bg-violet-500 text-white shadow-lg shadow-violet-600/30"
+                          : "bg-slate-800 hover:bg-slate-700 text-white"
+                      )}
                     >
-                      {isFree ? "Start Free" : `Choose ${plan.name}`}
+                      {plan.ctaText}
+                      <ArrowRight className="w-3.5 h-3.5" />
                     </Link>
-                    <p className={`text-[10px] text-center ${plan.highlight ? "text-white/50" : "text-neutral-500"}`}>
-                      {isFree
-                        ? "No credit card required · Upgrade anytime"
-                        : country === "GB"
-                        ? "UK Direct Activation · Cancel renewal anytime"
-                        : cycle === "annual"
-                        ? "Billed annually · Cancel renewal anytime"
-                        : "Autopay enabled · Cancel renewal anytime"}
-                    </p>
                   </div>
-                </div>
-              );
-            })}
-          </div>
-        </section>
+                );
+              })}
+            </div>
+          </section>
+        )}
 
-        {/* ── 03 Compare All Features ── */}
-        <section className="max-w-5xl mx-auto pb-24">
-          <h2 className="text-xl font-semibold tracking-tight text-neutral-900 mb-8">Compare all features</h2>
-          <div className="overflow-x-auto rounded-2xl border border-neutral-100">
-            <table className="w-full min-w-[640px] text-sm border-collapse">
+        {/* ── SECTION B: REMOTE MANAGED SERVICE CARDS ── */}
+        {serviceModel === "remote_managed" && (
+          <section className="mb-20">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {REMOTE_MANAGED_PACKAGES.map((pkg) => {
+                const tax = calculateGst(pkg.pricePaise);
+                const totalInrWithGst = pkg.priceInr === 0 ? 0 : Math.round(tax.totalAmountPaise) / 100;
+                const depositInr = Math.floor(totalInrWithGst / 2);
+
+                return (
+                  <div
+                    key={pkg.code}
+                    className={cn(
+                      "relative flex flex-col rounded-2xl p-6 sm:p-7 transition-all border",
+                      pkg.popular
+                        ? "bg-gradient-to-b from-slate-900 via-slate-900/95 to-slate-950 border-violet-500/60 shadow-2xl shadow-violet-950/40 lg:-translate-y-2"
+                        : "bg-slate-900/70 border-slate-800 hover:border-slate-700"
+                    )}
+                  >
+                    {pkg.badge && (
+                      <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-violet-600 text-white shadow-md">
+                        {pkg.badge}
+                      </div>
+                    )}
+
+                    <div className="mb-5">
+                      <h3 className="text-xl font-bold text-white mb-1.5">{pkg.name}</h3>
+                      <p className="text-xs text-slate-400 min-h-[32px]">{pkg.tagline}</p>
+                    </div>
+
+                    {/* Price Block */}
+                    <div className="mb-6 pb-6 border-b border-slate-800/80">
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="text-4xl font-extrabold text-white">
+                          {pkg.priceInr === 0 ? "Custom" : formatInr(pkg.priceInr)}
+                        </span>
+                        <span className="text-xs text-slate-400">
+                          {pkg.priceInr === 0 ? "quote" : "/ event"}
+                        </span>
+                      </div>
+                      {pkg.priceInr > 0 ? (
+                        <div className="mt-1.5 text-[11px] text-slate-400">
+                          <span>+18% GST ({formatInr(tax.taxAmountInr)})</span>
+                          <span className="text-slate-500"> · </span>
+                          <span className="text-slate-300 font-medium">
+                            {formatInr(totalInrWithGst)} total
+                          </span>
+                        </div>
+                      ) : (
+                        <p className="text-[11px] text-violet-400 font-medium mt-1.5">
+                          Capacity over 15,000 attendees
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Deposit Structure Pill */}
+                    {pkg.priceInr > 0 && (
+                      <div className="mb-6 bg-slate-950/70 border border-slate-800/80 p-3 rounded-xl text-xs space-y-1.5">
+                        <div className="flex justify-between items-center text-slate-300">
+                          <span>50% Advance Deposit:</span>
+                          <span className="font-bold text-violet-300">{formatInr(depositInr)}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-slate-400 text-[11px]">
+                          <span>50% Balance Due:</span>
+                          <span>Before Event Launch</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Feature Bullets */}
+                    <ul className="space-y-2.5 mb-8 flex-1 text-xs text-slate-300">
+                      {pkg.features.map((feat, idx) => (
+                        <li key={idx} className="flex items-start gap-2.5">
+                          <Check className="w-4 h-4 text-violet-400 shrink-0 mt-0.5" />
+                          <span>{feat}</span>
+                        </li>
+                      ))}
+                    </ul>
+
+                    {/* Action Button */}
+                    <button
+                      type="button"
+                      onClick={() => handleOpenManagedModal(pkg.code)}
+                      className={cn(
+                        "w-full py-3 px-4 rounded-xl text-xs font-bold text-center transition-all cursor-pointer flex items-center justify-center gap-1.5",
+                        pkg.popular
+                          ? "bg-violet-600 hover:bg-violet-500 text-white shadow-lg shadow-violet-600/30"
+                          : "bg-slate-800 hover:bg-slate-700 text-white"
+                      )}
+                    >
+                      {pkg.ctaText}
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
+        {/* ── SECTION C: DETAILED SELF-SERVICE FEATURE COMPARISON TABLE ── */}
+        <section className="mb-20">
+          <div className="text-center max-w-3xl mx-auto mb-10">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-white mb-3">
+              Compare Self-Service Plan Features
+            </h2>
+            <p className="text-sm text-slate-400">
+              Every plan includes 0% platform ticket commissions, sub-second smartphone QR scanning, and automated attendee confirmations.
+            </p>
+          </div>
+
+          <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-900/60 shadow-xl">
+            <table className="w-full text-left text-xs text-slate-300 border-collapse">
               <thead>
-                <tr className="border-b border-neutral-100">
-                  <th className="text-left px-5 py-4 text-xs font-semibold text-neutral-400 w-[32%]">Feature</th>
-                  {PLANS.map((p) => (
-                    <th key={p.slug} className={`px-4 py-4 text-xs font-semibold text-center ${p.highlight ? "bg-neutral-900 text-white" : "text-neutral-700"}`}>
-                      {p.name}
-                    </th>
-                  ))}
+                <tr className="border-b border-slate-800 bg-slate-950/80">
+                  <th className="py-4 px-6 font-bold text-white w-1/3">Features & Entitlements</th>
+                  <th className="py-4 px-4 font-bold text-slate-300 text-center">Free (₹0)</th>
+                  <th className="py-4 px-4 font-bold text-slate-300 text-center">Starter (₹499)</th>
+                  <th className="py-4 px-4 font-bold text-violet-300 text-center bg-violet-950/20">Pro (₹999)</th>
+                  <th className="py-4 px-4 font-bold text-slate-300 text-center">Business (₹2,499)</th>
                 </tr>
               </thead>
-              <tbody>
-                {TABLE.map((row, i) => {
-                  if (row.type === "category") {
-                    return (
-                      <tr key={i} className="bg-neutral-50">
-                        <td colSpan={5} className="px-5 py-3 text-[10px] font-bold tracking-widest text-neutral-400 uppercase">
-                          {row.label}
-                        </td>
-                      </tr>
-                    );
-                  }
-                  return (
-                    <tr key={i} className="border-t border-neutral-50 hover:bg-neutral-50/50">
-                      <td className="px-5 py-3.5 text-sm text-neutral-600">{row.feature}</td>
-                      <td className="px-4 py-3.5 text-center"><Cell value={row.free} /></td>
-                      <td className="px-4 py-3.5 text-center"><Cell value={row.starter} /></td>
-                      <td className="px-4 py-3.5 text-center bg-neutral-900/[0.02]"><Cell value={row.pro} /></td>
-                      <td className="px-4 py-3.5 text-center"><Cell value={row.business} /></td>
-                    </tr>
-                  );
-                })}
+              <tbody className="divide-y divide-slate-800/60">
+                {/* Limits */}
+                <tr className="bg-slate-950/40">
+                  <td colSpan={5} className="py-2.5 px-6 font-bold text-[11px] text-slate-400 uppercase tracking-wider">
+                    Event & Attendee Capacity
+                  </td>
+                </tr>
+                <tr>
+                  <td className="py-3 px-6 text-slate-200 font-medium">Active Events Simultaneously</td>
+                  <td className="py-3 px-4 text-center">1 active event</td>
+                  <td className="py-3 px-4 text-center">3 active events</td>
+                  <td className="py-3 px-4 text-center bg-violet-950/10 font-bold text-white">10 active events</td>
+                  <td className="py-3 px-4 text-center">30 active events</td>
+                </tr>
+                <tr>
+                  <td className="py-3 px-6 text-slate-200 font-medium">Max Attendees / Registrations Per Event</td>
+                  <td className="py-3 px-4 text-center">100 attendees</td>
+                  <td className="py-3 px-4 text-center">1,000 attendees</td>
+                  <td className="py-3 px-4 text-center bg-violet-950/10 font-bold text-white">5,000 attendees</td>
+                  <td className="py-3 px-4 text-center">15,000 attendees</td>
+                </tr>
+                <tr>
+                  <td className="py-3 px-6 text-slate-200 font-medium">Team Member Seats</td>
+                  <td className="py-3 px-4 text-center">1 seat</td>
+                  <td className="py-3 px-4 text-center">2 seats</td>
+                  <td className="py-3 px-4 text-center bg-violet-950/10 font-bold text-white">5 seats</td>
+                  <td className="py-3 px-4 text-center">15 seats</td>
+                </tr>
+
+                {/* Ticketing */}
+                <tr className="bg-slate-950/40">
+                  <td colSpan={5} className="py-2.5 px-6 font-bold text-[11px] text-slate-400 uppercase tracking-wider">
+                    Ticketing & Payment Processing
+                  </td>
+                </tr>
+                <tr>
+                  <td className="py-3 px-6 text-slate-200 font-medium">Platform Ticket Commission Fee</td>
+                  <td className="py-3 px-4 text-center text-slate-500">Free events only</td>
+                  <td className="py-3 px-4 text-center text-emerald-400 font-bold">0% Commission</td>
+                  <td className="py-3 px-4 text-center bg-violet-950/10 text-emerald-400 font-bold">0% Commission</td>
+                  <td className="py-3 px-4 text-center text-emerald-400 font-bold">0% Commission</td>
+                </tr>
+                <tr>
+                  <td className="py-3 px-6 text-slate-200 font-medium">Direct Indian Payment Gateway (UPI, Cards)</td>
+                  <td className="py-3 px-4 text-center"><Minus className="w-4 h-4 text-slate-600 mx-auto" /></td>
+                  <td className="py-3 px-4 text-center"><Check className="w-4 h-4 text-emerald-400 mx-auto" /></td>
+                  <td className="py-3 px-4 text-center bg-violet-950/10"><Check className="w-4 h-4 text-emerald-400 mx-auto" /></td>
+                  <td className="py-3 px-4 text-center"><Check className="w-4 h-4 text-emerald-400 mx-auto" /></td>
+                </tr>
+                <tr>
+                  <td className="py-3 px-6 text-slate-200 font-medium">Tiered Pricing & Early Bird Drops</td>
+                  <td className="py-3 px-4 text-center"><Minus className="w-4 h-4 text-slate-600 mx-auto" /></td>
+                  <td className="py-3 px-4 text-center">Standard</td>
+                  <td className="py-3 px-4 text-center bg-violet-950/10 font-bold text-white">Advanced Tiers</td>
+                  <td className="py-3 px-4 text-center font-bold text-white">Advanced Tiers</td>
+                </tr>
+
+                {/* Check-in & Gate Operations */}
+                <tr className="bg-slate-950/40">
+                  <td colSpan={5} className="py-2.5 px-6 font-bold text-[11px] text-slate-400 uppercase tracking-wider">
+                    Gate Check-in & Pass Verification
+                  </td>
+                </tr>
+                <tr>
+                  <td className="py-3 px-6 text-slate-200 font-medium">Smartphone QR Camera Scanning</td>
+                  <td className="py-3 px-4 text-center"><Check className="w-4 h-4 text-violet-400 mx-auto" /></td>
+                  <td className="py-3 px-4 text-center"><Check className="w-4 h-4 text-violet-400 mx-auto" /></td>
+                  <td className="py-3 px-4 text-center bg-violet-950/10"><Check className="w-4 h-4 text-violet-400 mx-auto" /></td>
+                  <td className="py-3 px-4 text-center"><Check className="w-4 h-4 text-violet-400 mx-auto" /></td>
+                </tr>
+                <tr>
+                  <td className="py-3 px-6 text-slate-200 font-medium">Duplicate Scan Detection (Anti-Fraud)</td>
+                  <td className="py-3 px-4 text-center"><Check className="w-4 h-4 text-violet-400 mx-auto" /></td>
+                  <td className="py-3 px-4 text-center"><Check className="w-4 h-4 text-violet-400 mx-auto" /></td>
+                  <td className="py-3 px-4 text-center bg-violet-950/10"><Check className="w-4 h-4 text-violet-400 mx-auto" /></td>
+                  <td className="py-3 px-4 text-center"><Check className="w-4 h-4 text-violet-400 mx-auto" /></td>
+                </tr>
+                <tr>
+                  <td className="py-3 px-6 text-slate-200 font-medium">Group QR Tickets & Partial Gate Entry</td>
+                  <td className="py-3 px-4 text-center"><Minus className="w-4 h-4 text-slate-600 mx-auto" /></td>
+                  <td className="py-3 px-4 text-center"><Minus className="w-4 h-4 text-slate-600 mx-auto" /></td>
+                  <td className="py-3 px-4 text-center bg-violet-950/10"><Check className="w-4 h-4 text-emerald-400 mx-auto" /></td>
+                  <td className="py-3 px-4 text-center"><Check className="w-4 h-4 text-emerald-400 mx-auto" /></td>
+                </tr>
+                <tr>
+                  <td className="py-3 px-6 text-slate-200 font-medium">Multi-Gate Configuration & Gate Captains</td>
+                  <td className="py-3 px-4 text-center"><Minus className="w-4 h-4 text-slate-600 mx-auto" /></td>
+                  <td className="py-3 px-4 text-center"><Minus className="w-4 h-4 text-slate-600 mx-auto" /></td>
+                  <td className="py-3 px-4 text-center bg-violet-950/10"><Check className="w-4 h-4 text-emerald-400 mx-auto" /></td>
+                  <td className="py-3 px-4 text-center"><Check className="w-4 h-4 text-emerald-400 mx-auto" /></td>
+                </tr>
+
+                {/* Data, API & Customization */}
+                <tr className="bg-slate-950/40">
+                  <td colSpan={5} className="py-2.5 px-6 font-bold text-[11px] text-slate-400 uppercase tracking-wider">
+                    Data, Branding & Integrations
+                  </td>
+                </tr>
+                <tr>
+                  <td className="py-3 px-6 text-slate-200 font-medium">CSV Attendee Import & Export</td>
+                  <td className="py-3 px-4 text-center text-slate-500">Basic Export</td>
+                  <td className="py-3 px-4 text-center"><Check className="w-4 h-4 text-violet-400 mx-auto" /></td>
+                  <td className="py-3 px-4 text-center bg-violet-950/10"><Check className="w-4 h-4 text-violet-400 mx-auto" /></td>
+                  <td className="py-3 px-4 text-center"><Check className="w-4 h-4 text-violet-400 mx-auto" /></td>
+                </tr>
+                <tr>
+                  <td className="py-3 px-6 text-slate-200 font-medium">Custom Pass Colors & Branding</td>
+                  <td className="py-3 px-4 text-center"><Minus className="w-4 h-4 text-slate-600 mx-auto" /></td>
+                  <td className="py-3 px-4 text-center"><Minus className="w-4 h-4 text-slate-600 mx-auto" /></td>
+                  <td className="py-3 px-4 text-center bg-violet-950/10"><Check className="w-4 h-4 text-emerald-400 mx-auto" /></td>
+                  <td className="py-3 px-4 text-center"><Check className="w-4 h-4 text-emerald-400 mx-auto" /></td>
+                </tr>
+                <tr>
+                  <td className="py-3 px-6 text-slate-200 font-medium">REST API Access & Real-Time Webhooks</td>
+                  <td className="py-3 px-4 text-center"><Minus className="w-4 h-4 text-slate-600 mx-auto" /></td>
+                  <td className="py-3 px-4 text-center"><Minus className="w-4 h-4 text-slate-600 mx-auto" /></td>
+                  <td className="py-3 px-4 text-center bg-violet-950/10"><Minus className="w-4 h-4 text-slate-600 mx-auto" /></td>
+                  <td className="py-3 px-4 text-center"><Check className="w-4 h-4 text-emerald-400 mx-auto" /></td>
+                </tr>
               </tbody>
             </table>
           </div>
         </section>
 
-        {/* ── 04 One-Event Passes ── */}
-        <section className="max-w-5xl mx-auto pb-24">
-          <div className="bg-neutral-50 rounded-3xl p-10">
-            <p className="text-xs font-semibold tracking-widest text-brand mb-3">ONE EVENT?</p>
-            <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight mb-2">
-              Don&apos;t run events every month?
-            </h2>
-            <p className="text-neutral-500 mb-10">
-              Pay only for your next event. No subscription required.
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {EVENT_PASSES.map((pass) => (
-                <div key={pass.name} className="bg-white border border-neutral-100 rounded-2xl p-6 flex flex-col">
-                  <p className="text-xs font-semibold tracking-widest text-neutral-400 mb-1">{pass.name.toUpperCase()}</p>
-                  <div className="flex items-baseline gap-1 mb-1">
-                    <span className="text-3xl font-semibold">
-                      {country === "GB" ? `£${pass.ukPrice}` : `₹${pass.price}`}
-                    </span>
-                    <span className="text-xs text-neutral-400">one-time</span>
-                  </div>
-                  <p className="text-sm font-medium text-neutral-700 mb-5">{pass.regs}</p>
-                  <ul className="flex flex-col gap-2 flex-1 mb-7">
-                    {pass.features.map((f) => (
-                      <li key={f} className="flex items-center gap-2 text-sm text-neutral-600">
-                        <Check className="w-3.5 h-3.5 text-brand shrink-0" />
-                        {f}
-                      </li>
-                    ))}
-                  </ul>
-                  <Link href={isAuthenticated ? "/billing" : "/signup?from=pricing&next=/billing"} className="w-full text-center py-2.5 rounded-xl text-sm font-semibold bg-neutral-900 text-white hover:bg-neutral-700 transition-colors">
-                    Create One Event
-                  </Link>
+        {/* ── SECTION D: STRICT MANAGED SERVICE BOUNDARY DISCLOSURE ── */}
+        <section className="mb-20 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-950 border border-slate-800 p-8 shadow-xl">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center text-violet-400">
+              <ShieldAlert className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-white">
+                {REMOTE_MANAGED_SERVICE_BOUNDARIES.headline}
+              </h3>
+              <p className="text-xs text-slate-400">
+                Transparent expectations for our paid technical assistance packages
+              </p>
+            </div>
+          </div>
+          <p className="text-sm text-slate-300 mb-6 leading-relaxed">
+            {REMOTE_MANAGED_SERVICE_BOUNDARIES.description}
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs">
+            <div className="bg-slate-950/80 p-5 rounded-xl border border-red-500/20 space-y-2.5">
+              <span className="font-bold text-red-400 block mb-2 uppercase tracking-wider text-[11px]">
+                Strict Service Exclusions
+              </span>
+              {REMOTE_MANAGED_SERVICE_BOUNDARIES.exclusions.map((item, idx) => (
+                <div key={idx} className="flex items-start gap-2 text-slate-300">
+                  <Minus className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+                  <span>{item}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="bg-slate-950/80 p-5 rounded-xl border border-emerald-500/20 space-y-2.5">
+              <span className="font-bold text-emerald-400 block mb-2 uppercase tracking-wider text-[11px]">
+                Organizer On-Site Responsibilities
+              </span>
+              {REMOTE_MANAGED_SERVICE_BOUNDARIES.organizerResponsibilities.map((item, idx) => (
+                <div key={idx} className="flex items-start gap-2 text-slate-300">
+                  <Check className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                  <span>{item}</span>
                 </div>
               ))}
             </div>
           </div>
         </section>
 
-        {/* ── 05 Paid Ticketing Teaser ── */}
-        <section className="max-w-5xl mx-auto pb-24">
-          <div className="border border-neutral-100 rounded-3xl p-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
-            <div>
-              <p className="text-xs font-semibold tracking-widest text-brand mb-2">PAID EVENTS</p>
-              <h2 className="text-xl font-semibold tracking-tight text-neutral-900 mb-2">
-                Sell tickets. Issue QR passes. Check attendees in.
-              </h2>
-              <p className="text-sm text-neutral-500 leading-relaxed max-w-lg">
-                Accept online payments and issue QR tickets automatically — early bird, general, VIP, student, and more.
-                Ticketing pricing coming soon.
-              </p>
+        {/* ── SECTION E: GST & TRANSACTION TRANSPARENCY ── */}
+        <section className="mb-20 grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-slate-900/60 p-6 rounded-2xl border border-slate-800">
+            <div className="w-9 h-9 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-bold mb-3">
+              0%
             </div>
-            <Link
-              href="/contact"
-              className="shrink-0 inline-flex items-center gap-2 border border-neutral-900 text-neutral-900 px-5 py-3 rounded-xl text-sm font-semibold hover:bg-neutral-900 hover:text-white transition-colors whitespace-nowrap"
-            >
-              Contact Sales →
-            </Link>
+            <h4 className="font-bold text-white text-base mb-1.5">Zero Ticket Commission</h4>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              We never take 5%, 8%, or 10% of your ticket sales. You pay only your flat subscription or managed fee. You keep 100% of ticket sales revenue.
+            </p>
+          </div>
+
+          <div className="bg-slate-900/60 p-6 rounded-2xl border border-slate-800">
+            <div className="w-9 h-9 rounded-lg bg-violet-500/10 text-violet-400 flex items-center justify-center font-bold mb-3">
+              18%
+            </div>
+            <h4 className="font-bold text-white text-base mb-1.5">Indian GST Invoicing</h4>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              All displayed prices are exclusive of 18% GST. Enter your company GSTIN during checkout to receive official tax deduction invoices.
+            </p>
+          </div>
+
+          <div className="bg-slate-900/60 p-6 rounded-2xl border border-slate-800">
+            <div className="w-9 h-9 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center font-bold mb-3">
+              ₹0
+            </div>
+            <h4 className="font-bold text-white text-base mb-1.5">No Cancellation Fees</h4>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              Cancel recurring subscription renewals anytime from your dashboard. Keep full access until the end of your current period with zero penalties.
+            </p>
           </div>
         </section>
 
-        {/* ── 06 Campus ── */}
-        <section className="max-w-5xl mx-auto pb-24">
-          <div className="bg-neutral-900 rounded-3xl p-10 grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
-            <div>
-              <p className="text-xs font-semibold tracking-widest text-brand-200 mb-3">URPASS CAMPUS</p>
-              <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-white mb-4 leading-snug">
-                One platform for every event across your campus.
-              </h2>
-              <p className="text-white/50 text-sm leading-relaxed mb-6">
-                Departments, clubs, and organizers — all under one institution account. Registration, QR check-in, and analytics across every event, every semester.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-3">
-                <Link
-                  href="/contact"
-                  className="inline-flex items-center justify-center gap-2 bg-white text-neutral-900 px-6 py-3 rounded-xl text-sm font-semibold hover:bg-neutral-100 transition-colors"
-                >
-                  Talk to URPASS →
-                </Link>
-              </div>
-            </div>
-            <div className="flex flex-col gap-4">
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
-                <p className="text-sm font-semibold text-white mb-1">Campus Starter</p>
-                <div className="flex items-baseline gap-1 mb-2">
-                  <span className="text-2xl font-semibold text-white">
-                    {country === "GB" ? "from £149" : "from ₹9,999"}
-                  </span>
-                  <span className="text-xs text-white/40">/year</span>
-                </div>
-                <p className="text-xs text-white/40 leading-relaxed">
-                  {country === "GB"
-                    ? "For universities, students' unions, and student societies running regular campus events."
-                    : "For colleges with multiple departments and clubs running regular events."}
-                </p>
-              </div>
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
-                <p className="text-sm font-semibold text-white mb-1">University / Institution</p>
-                <p className="text-2xl font-semibold text-white mb-2">Custom</p>
-                <p className="text-xs text-white/40 leading-relaxed">Dedicated support, custom SLAs, volume pricing, and onboarding help.</p>
-              </div>
-            </div>
+        {/* ── SECTION F: BILLING FAQ ── */}
+        <section className="mb-20 max-w-4xl mx-auto">
+          <div className="text-center mb-10">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-white mb-2">
+              Frequently Asked Questions
+            </h2>
+            <p className="text-sm text-slate-400">
+              Clear, transparent answers about payments, subscriptions, and managed services.
+            </p>
           </div>
-        </section>
 
-        {/* ── 07 Managed Events ── */}
-        <div className="pb-16 -mx-5 sm:-mx-8">
-          <ManagedEventsSection initialCountry={country} />
-        </div>
-
-        {/* ── 08 FAQ ── */}
-        <section className="max-w-2xl mx-auto pb-28">
-          <h2 className="text-xl font-semibold tracking-tight text-neutral-900 mb-6">Frequently asked questions</h2>
-          <div className="bg-white border border-neutral-100 rounded-2xl px-6">
-            {getFaqs(country).map((faq) => (
-              <FaqItem key={faq.q} q={faq.q} a={faq.a} />
+          <div className="space-y-4">
+            {[
+              {
+                q: "What is the difference between Self-Service and Remote Managed Service?",
+                a: "Self-Service gives you full access to our cloud software to create, customize, and manage your events yourself on a monthly subscription. Remote Managed Services assigns our engineering coordinators to configure everything remotely for you (forms, tiers, QR passes, coordinator training) for a single flat fee per event.",
+              },
+              {
+                q: "Do I have to buy a monthly subscription if I choose Remote Managed Service?",
+                a: "No. Remote Managed Service is billed once per event. You do not need an active recurring subscription to purchase a managed setup package.",
+              },
+              {
+                q: "How does the 50% deposit work for Remote Managed Services?",
+                a: "To begin configuration and reserve operational capacity, a 50% deposit is paid upon order approval via Razorpay one-time payment. The remaining 50% balance is collected after you review and approve the setup before event launch.",
+              },
+              {
+                q: "What happens if our event exceeds our plan's attendee capacity?",
+                a: "We never cancel your event or delete attendee records. When you reach 100% capacity, registration is paused until you either upgrade your subscription or add extra capacity for managed events.",
+              },
+              {
+                q: "Can I sell paid tickets on the Free plan?",
+                a: "No. The Free plan is limited to free RSVP events up to 100 attendees. To sell paid tickets with 0% platform commission, choose Starter (₹499), Pro (₹999), or Business (₹2,499).",
+              },
+              {
+                q: "Does UrPass provide barcode scanners or phones at the gates?",
+                a: "No. UrPass QR codes are verified using standard web browsers on any modern smartphone camera. Your event volunteers simply open the scanner web link on their own phones — no hardware rental required.",
+              },
+            ].map((faq, i) => (
+              <div
+                key={i}
+                className="bg-slate-900/60 border border-slate-800 rounded-xl p-5 text-left"
+              >
+                <h4 className="text-sm font-bold text-white mb-2">{faq.q}</h4>
+                <p className="text-xs text-slate-300 leading-relaxed">{faq.a}</p>
+              </div>
             ))}
           </div>
-          <p className="mt-8 text-center text-sm text-neutral-400">
-            Still have questions?{" "}
-            <Link href="/contact" className="text-brand hover:underline underline-offset-2">
-              Contact us
-            </Link>
-          </p>
         </section>
 
+        {/* ── SECTION G: FINAL CONVERSION CTA ── */}
+        <section className="rounded-3xl bg-gradient-to-r from-violet-900/60 via-purple-900/40 to-slate-900 border border-violet-500/30 p-10 sm:p-14 text-center max-w-5xl mx-auto shadow-2xl shadow-violet-950/50">
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-white mb-4">
+            Ready to Launch Your Event?
+          </h2>
+          <p className="text-sm sm:text-base text-slate-300 max-w-xl mx-auto mb-8 leading-relaxed">
+            Create your account in under 60 seconds with our Free Forever tier, or talk to our operations team for a complete remote setup.
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Link
+              href="/login?intent=signup&plan=free"
+              className="w-full sm:w-auto px-8 py-3.5 rounded-xl text-sm font-bold bg-white text-slate-950 hover:bg-slate-100 transition-all shadow-md"
+            >
+              Create Free Account
+            </Link>
+            <button
+              type="button"
+              onClick={() => handleOpenManagedModal("pro")}
+              className="w-full sm:w-auto px-8 py-3.5 rounded-xl text-sm font-bold bg-violet-600 hover:bg-violet-500 text-white transition-all shadow-lg shadow-violet-600/30 cursor-pointer"
+            >
+              Request Remote Managed Setup
+            </button>
+          </div>
+        </section>
       </main>
 
-      {/* ── Footer ── */}
-      <footer className="border-t border-neutral-100 px-6 py-8">
-        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-neutral-400">© 2026 URPASS · urpass.space</p>
-          <div className="flex items-center gap-6">
-            {[{ label: "Home", href: "/" }, { label: "Contact", href: "/contact" }, { label: "Terms", href: "/terms" }].map((l) => (
-              <Link key={l.label} href={l.href} className="text-xs text-neutral-400 hover:text-neutral-700 transition-colors">{l.label}</Link>
-            ))}
-          </div>
-        </div>
-      </footer>
-
+      {/* ── Remote Managed Service Inquiry Modal ── */}
+      <LeadCaptureModal
+        isOpen={managedModalOpen}
+        onClose={() => setManagedModalOpen(false)}
+        defaultPackage={selectedManagedPackage}
+        pageSlug="pricing"
+        contentCluster="pricing"
+      />
     </div>
   );
 }
