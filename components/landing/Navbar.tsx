@@ -154,12 +154,6 @@ export default function Navbar({ isAuthenticated: initialAuth }: NavbarProps = {
                 </>
               ) : (
                 <>
-                  <Link
-                    href={isFromPricing ? "/login?from=pricing" : "/login"}
-                    className="text-sm font-medium text-neutral-600 hover:text-neutral-950 px-3 py-2 rounded-lg hover:bg-neutral-100/70 transition-all"
-                  >
-                    Log In
-                  </Link>
                   <button
                     type="button"
                     onClick={() => openRequestEventSetupModal()}
@@ -235,22 +229,13 @@ export default function Navbar({ isAuthenticated: initialAuth }: NavbarProps = {
                     {pathname === "/pricing" ? "Billing Portal" : "Dashboard"}
                   </Link>
                 ) : (
-                  <div className="grid grid-cols-2 gap-2">
-                    <Link
-                      href={isFromPricing ? "/login?from=pricing" : "/login"}
-                      onClick={() => setOpen(false)}
-                      className="text-sm text-center border border-neutral-200/90 text-neutral-800 rounded-xl py-2.5 font-semibold hover:bg-neutral-50 transition-colors"
-                    >
-                      Log In
-                    </Link>
-                    <Link
-                      href={signupHref}
-                      onClick={() => setOpen(false)}
-                      className="text-sm text-center bg-neutral-950 text-white rounded-xl py-2.5 font-semibold hover:bg-neutral-800 transition-colors shadow-xs"
-                    >
-                      Get Started
-                    </Link>
-                  </div>
+                  <Link
+                    href={signupHref}
+                    onClick={() => setOpen(false)}
+                    className="block text-sm text-center bg-neutral-950 text-white rounded-xl py-2.5 font-semibold hover:bg-neutral-800 transition-colors shadow-xs"
+                  >
+                    Get Started
+                  </Link>
                 )}
               </div>
             </div>

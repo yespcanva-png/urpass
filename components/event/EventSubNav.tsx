@@ -11,8 +11,6 @@ import {
   Globe,
   BarChart3,
   Settings,
-  Radio,
-  Store,
   Mail,
 } from "lucide-react";
 
@@ -61,30 +59,15 @@ export default function EventSubNav({ eventId }: { eventId: string }) {
       isActive: (p, b) =>
         p.startsWith(`${b}/attendees`) ||
         p.startsWith(`${b}/checkins`) ||
+        p.startsWith(`${b}/desk`) ||
+        p.startsWith(`${b}/badges`) ||
         p.startsWith(`${b}/feedback`),
       subTabs: [
         { label: "Attendee List", href: `${base}/attendees`, isActive: (p) => p.startsWith(`${base}/attendees`) },
         { label: "Gate Check-ins", href: `${base}/checkins`, isActive: (p) => p.startsWith(`${base}/checkins`) },
-        { label: "Feedback & Reviews", href: `${base}/feedback`, isActive: (p) => p.startsWith(`${base}/feedback`) },
-      ],
-    },
-    {
-      id: "operations",
-      label: "Operations",
-      href: `${base}/operations`,
-      icon: Radio,
-      isActive: (p, b) =>
-        p.startsWith(`${b}/operations`) ||
-        p.startsWith(`${b}/desk`) ||
-        p.startsWith(`${b}/badges`) ||
-        p.startsWith(`${b}/access-rules`) ||
-        p.startsWith(`${b}/staff-devices`) ||
-        p.startsWith(`${b}/operations-analytics`),
-      subTabs: [
-        { label: "Live Operations", href: `${base}/operations`, isActive: (p) => p === `${base}/operations` || p === `${base}/operations/` },
-        { label: "Group Entry", href: `${base}/operations/group-entry`, isActive: (p) => p.startsWith(`${base}/operations/group-entry`) },
         { label: "Check-in Desk", href: `${base}/desk`, isActive: (p) => p.startsWith(`${base}/desk`) },
         { label: "Badge Studio", href: `${base}/badges`, isActive: (p) => p.startsWith(`${base}/badges`) },
+        { label: "Feedback & Reviews", href: `${base}/feedback`, isActive: (p) => p.startsWith(`${base}/feedback`) },
       ],
     },
     {
