@@ -49,8 +49,11 @@ export function getMonthlyRazorpayPlanId(planSlug: IntroOfferPlanSlug): string |
 }
 
 export function getIntroOfferId(planSlug: IntroOfferPlanSlug): string | null {
-  void planSlug;
-  // ₹29 introductory promotion is retired
+  const envKey = `RAZORPAY_${planSlug.toUpperCase()}_INTRO_OFFER_ID`;
+  if (process.env[envKey]) {
+    return process.env[envKey] as string;
+  }
+  // ₹29 introductory promotion is retired by default
   return null;
 }
 

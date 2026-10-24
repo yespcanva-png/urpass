@@ -65,9 +65,12 @@ export async function POST(req: NextRequest) {
 
     if (!isFreeTrial) {
       if (paymentStatus !== "captured" && paymentStatus !== "authorized") {
+        const actualAmtFormatted = payment?.amount
+          ? `₹${(Number(payment.amount) / 100).toFixed(2)}`
+          : "the plan subscription amount";
         return NextResponse.json(
           {
-            error: `First payment confirmation failed (payment status: ${paymentStatus}). Your subscription can only be activated after successful payment confirmation of ₹34.22.`,
+            error: `First payment confirmation failed (payment status: ${paymentStatus}). Your subscription can only be activated after successful payment confirmation of ${actualAmtFormatted}.`,
           },
           { status: 400 }
         );
@@ -176,7 +179,10 @@ export async function POST(req: NextRequest) {
       if (targetPlan?.id) updatePayload.plan_id = targetPlan.id;
       updatePayload.current_period_start = now.toISOString();
       updatePayload.current_period_end = periodEnd.toISOString();
+      updatePayload.next_billing_date = periodEnd.toISOString();
       updatePayload.cancel_at_period_end = false;
+      updatePayload.cancellation_state = "none";
+      updatePayload.cancellation_error = null;
       updatePayload.registrations_used = 0;
       updatePayload.is_trial = false;
       updatePayload.free_event_trial_active = false;
@@ -201,12 +207,22 @@ export async function POST(req: NextRequest) {
 
     if (!isFreeTrial && targetPlan) {
       try {
+        const baseAmountRupees = notes.base_amount
+          ? Number(notes.base_amount) / 100
+          : payment?.amount
+          ? Math.round(Number(payment.amount) / 1.18) / 100
+          : targetPlan.slug === "starter"
+          ? 1499
+          : targetPlan.slug === "pro"
+          ? 3499
+          : 7999;
+
         await createInvoiceForPayment({
           userId: user.id,
           subscriptionId: updatedSub?.id ?? null,
           paymentId,
           description: `${targetPlan.name} Plan — Monthly AutoPay Subscription`,
-          baseAmountRupees: targetPlan.slug === "starter" ? 499 : targetPlan.slug === "pro" ? 999 : 2499,
+          baseAmountRupees,
           discountRupees: 0,
           currency: "INR",
           docType: "SUB",

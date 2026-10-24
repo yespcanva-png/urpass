@@ -100,6 +100,30 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: `Plan '${planSlug}' not found or is free` }, { status: 400 });
   }
 
+  // Check if account already has an active, uncancelled subscription for this identical plan
+  const { data: existingSub } = await supabase
+    .from("subscriptions")
+    .select("status, current_period_end, cancel_at_period_end, autopay_status, plan:plans(slug)")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  const planData = existingSub?.plan as any;
+  const currentPlanSlug = (Array.isArray(planData) ? planData[0]?.slug : planData?.slug) || "";
+  const isPeriodFuture = existingSub?.current_period_end && new Date(existingSub.current_period_end) > new Date();
+
+  if (
+    existingSub?.status === "active" &&
+    isPeriodFuture &&
+    currentPlanSlug === normalizedSlug &&
+    !existingSub?.cancel_at_period_end &&
+    existingSub?.autopay_status === "active"
+  ) {
+    return NextResponse.json(
+      { error: `You already have an active subscription for ${normalizedSlug.toUpperCase()}. You do not need to purchase it again.` },
+      { status: 409 }
+    );
+  }
+
   // Fetch plan from DB with fallback to admin client
   let { data: plan } = await supabase
     .from("plans")

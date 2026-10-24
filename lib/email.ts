@@ -2576,3 +2576,332 @@ export async function notifyEventTeamNewApplication({
     return false;
   }
 }
+
+// ══════════════════════════════════════════════════════════════════════════════
+// SUBSCRIPTION LIFECYCLE & CANCELLATION EMAILS
+// ══════════════════════════════════════════════════════════════════════════════
+
+export async function sendSubscriptionCancellationScheduledEmail(params: {
+  to: string;
+  userName?: string | null;
+  planName: string;
+  paidThroughDate: string;
+  billingCycle?: string;
+}): Promise<boolean> {
+  const safeName = escapeHtml(params.userName || "Organizer");
+  const safePlan = escapeHtml(params.planName);
+  const safeDate = escapeHtml(params.paidThroughDate);
+  const subject = `UrPass Subscription Auto-Renewal Cancelled — Access Valid Through ${safeDate}`;
+
+  const html = `<!DOCTYPE html>
+<html>
+<body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:#f3f4f6;margin:0;padding:24px;">
+<table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e5e7eb;">
+  <tr><td style="background:#6D28D9;padding:24px 32px;text-align:left;">
+    <h1 style="color:#ffffff;font-size:20px;font-weight:700;margin:0;">Subscription Auto-Renewal Cancelled</h1>
+    <p style="color:#ddd6fe;font-size:13px;margin:6px 0 0;">Your paid access remains active until the end of your billing cycle</p>
+  </td></tr>
+  <tr><td style="padding:28px 32px;">
+    <p style="font-size:14px;color:#374151;margin:0 0 16px;">Hi ${safeName},</p>
+    <p style="font-size:14px;color:#374151;line-height:1.6;margin:0 0 20px;">
+      We have processed your cancellation request. Auto-renewal for your <strong>${safePlan}</strong> has been cancelled with Razorpay. <strong>No further recurring payments will be charged to your card or account.</strong>
+    </p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:16px 20px;margin-bottom:24px;font-size:13px;">
+      <tr><td style="padding:4px 0;color:#6b7280;width:45%;font-weight:600;">Plan:</td><td style="padding:4px 0;color:#111827;font-weight:600;">${safePlan}</td></tr>
+      <tr><td style="padding:4px 0;color:#6b7280;font-weight:600;">Paid-Through Date:</td><td style="padding:4px 0;color:#111827;font-weight:700;color:#6D28D9;">${safeDate}</td></tr>
+      <tr><td style="padding:4px 0;color:#6b7280;font-weight:600;">Future Recurring Debits:</td><td style="padding:4px 0;color:#059669;font-weight:700;">Stopped (₹0)</td></tr>
+      <tr><td style="padding:4px 0;color:#6b7280;font-weight:600;">Existing Events &amp; Passes:</td><td style="padding:4px 0;color:#111827;font-weight:600;">Fully Protected</td></tr>
+    </table>
+    <p style="font-size:13px;color:#4b5563;line-height:1.6;margin:0 0 24px;">
+      All your events, attendee registrations, QR tickets, and check-in scanner consoles will continue working normally through <strong>${safeDate}</strong>. If you change your mind before this date, you can easily reactivate your subscription from your billing dashboard.
+    </p>
+    <div style="text-align:center;">
+      <a href="${APP_URL}/dashboard/settings" style="display:inline-block;background:#6D28D9;color:#ffffff;text-decoration:none;font-weight:700;font-size:13px;padding:12px 24px;border-radius:10px;">
+        View Billing Dashboard &rarr;
+      </a>
+    </div>
+  </td></tr>
+  <tr><td style="border-top:1px solid #f3f4f6;padding:16px 32px;background:#fafafa;text-align:center;font-size:11px;color:#9ca3af;">
+    UrPass Event Infrastructure · <a href="${APP_URL}" style="color:#6D28D9;text-decoration:none;">urpass.space</a>
+  </td></tr>
+</table>
+</body>
+</html>`.trim();
+
+  try {
+    await sendEmail({ from: getFromEmail(), to: params.to, subject, html });
+    return true;
+  } catch (err) {
+    console.error("[email] Failed to send cancellation scheduled email:", err);
+    return false;
+  }
+}
+
+export async function sendSubscriptionReactivatedEmail(params: {
+  to: string;
+  userName?: string | null;
+  planName: string;
+  nextBillingDate?: string | null;
+}): Promise<boolean> {
+  const safeName = escapeHtml(params.userName || "Organizer");
+  const safePlan = escapeHtml(params.planName);
+  const safeDate = escapeHtml(params.nextBillingDate || "your scheduled billing date");
+  const subject = `UrPass Subscription Reactivated — ${safePlan}`;
+
+  const html = `<!DOCTYPE html>
+<html>
+<body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:#f3f4f6;margin:0;padding:24px;">
+<table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e5e7eb;">
+  <tr><td style="background:#059669;padding:24px 32px;text-align:left;">
+    <h1 style="color:#ffffff;font-size:20px;font-weight:700;margin:0;">Subscription Reactivated</h1>
+    <p style="color:#a7f3d0;font-size:13px;margin:6px 0 0;">Your auto-renewal and uninterrupted quota access have been restored</p>
+  </td></tr>
+  <tr><td style="padding:28px 32px;">
+    <p style="font-size:14px;color:#374151;margin:0 0 16px;">Hi ${safeName},</p>
+    <p style="font-size:14px;color:#374151;line-height:1.6;margin:0 0 20px;">
+      Welcome back! You have successfully reactivated auto-renewal for your <strong>${safePlan}</strong>. Your account will renew as normal on <strong>${safeDate}</strong>.
+    </p>
+    <div style="text-align:center;margin-top:24px;">
+      <a href="${APP_URL}/dashboard" style="display:inline-block;background:#059669;color:#ffffff;text-decoration:none;font-weight:700;font-size:13px;padding:12px 24px;border-radius:10px;">
+        Go to Organizer Console &rarr;
+      </a>
+    </div>
+  </td></tr>
+  <tr><td style="border-top:1px solid #f3f4f6;padding:16px 32px;background:#fafafa;text-align:center;font-size:11px;color:#9ca3af;">
+    UrPass Event Infrastructure · <a href="${APP_URL}" style="color:#059669;text-decoration:none;">urpass.space</a>
+  </td></tr>
+</table>
+</body>
+</html>`.trim();
+
+  try {
+    await sendEmail({ from: getFromEmail(), to: params.to, subject, html });
+    return true;
+  } catch (err) {
+    console.error("[email] Failed to send subscription reactivated email:", err);
+    return false;
+  }
+}
+
+export async function sendSubscriptionRenewalSuccessEmail(params: {
+  to: string;
+  userName?: string | null;
+  planName: string;
+  amountMinor: number;
+  currency?: string;
+  invoiceNumber?: string | null;
+  nextBillingDate?: string | null;
+}): Promise<boolean> {
+  const safeName = escapeHtml(params.userName || "Organizer");
+  const safePlan = escapeHtml(params.planName);
+  const safeAmt = formatAmount(params.amountMinor, params.currency || "INR");
+  const safeInv = escapeHtml(params.invoiceNumber || "Available in Dashboard");
+  const safeNext = escapeHtml(params.nextBillingDate || "next month");
+  const subject = `UrPass Renewal Confirmed — ${safePlan} (${safeAmt})`;
+
+  const html = `<!DOCTYPE html>
+<html>
+<body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:#f3f4f6;margin:0;padding:24px;">
+<table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e5e7eb;">
+  <tr><td style="background:#6D28D9;padding:24px 32px;text-align:left;">
+    <h1 style="color:#ffffff;font-size:20px;font-weight:700;margin:0;">Subscription Renewed Successfully</h1>
+    <p style="color:#ddd6fe;font-size:13px;margin:6px 0 0;">Your monthly event quotas and team seats have been refreshed</p>
+  </td></tr>
+  <tr><td style="padding:28px 32px;">
+    <p style="font-size:14px;color:#374151;margin:0 0 16px;">Hi ${safeName},</p>
+    <p style="font-size:14px;color:#374151;line-height:1.6;margin:0 0 20px;">
+      Your subscription renewal payment of <strong>${safeAmt}</strong> has been received and verified. Your GST tax invoice is ready.
+    </p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:16px 20px;margin-bottom:24px;font-size:13px;">
+      <tr><td style="padding:4px 0;color:#6b7280;width:45%;font-weight:600;">Plan:</td><td style="padding:4px 0;color:#111827;font-weight:600;">${safePlan}</td></tr>
+      <tr><td style="padding:4px 0;color:#6b7280;font-weight:600;">Amount Paid:</td><td style="padding:4px 0;color:#111827;font-weight:700;">${safeAmt}</td></tr>
+      <tr><td style="padding:4px 0;color:#6b7280;font-weight:600;">Invoice Reference:</td><td style="padding:4px 0;color:#6D28D9;font-weight:700;">${safeInv}</td></tr>
+      <tr><td style="padding:4px 0;color:#6b7280;font-weight:600;">Next Renewal:</td><td style="padding:4px 0;color:#111827;font-weight:600;">${safeNext}</td></tr>
+    </table>
+    <div style="text-align:center;">
+      <a href="${APP_URL}/dashboard/settings" style="display:inline-block;background:#6D28D9;color:#ffffff;text-decoration:none;font-weight:700;font-size:13px;padding:12px 24px;border-radius:10px;">
+        Download Official GST Invoice &rarr;
+      </a>
+    </div>
+  </td></tr>
+  <tr><td style="border-top:1px solid #f3f4f6;padding:16px 32px;background:#fafafa;text-align:center;font-size:11px;color:#9ca3af;">
+    UrPass Event Infrastructure · <a href="${APP_URL}" style="color:#6D28D9;text-decoration:none;">urpass.space</a>
+  </td></tr>
+</table>
+</body>
+</html>`.trim();
+
+  try {
+    await sendEmail({ from: getFromEmail(), to: params.to, subject, html });
+    return true;
+  } catch (err) {
+    console.error("[email] Failed to send subscription renewal success email:", err);
+    return false;
+  }
+}
+
+export async function sendSubscriptionRenewalFailedEmail(params: {
+  to: string;
+  userName?: string | null;
+  planName: string;
+  gracePeriodEndsAt?: string | null;
+}): Promise<boolean> {
+  const safeName = escapeHtml(params.userName || "Organizer");
+  const safePlan = escapeHtml(params.planName);
+  const safeGrace = escapeHtml(params.gracePeriodEndsAt || "3 days");
+  const subject = `Action Required: Renewal Payment Failed for ${safePlan}`;
+
+  const html = `<!DOCTYPE html>
+<html>
+<body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:#f3f4f6;margin:0;padding:24px;">
+<table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #fecaca;">
+  <tr><td style="background:#dc2626;padding:24px 32px;text-align:left;">
+    <h1 style="color:#ffffff;font-size:20px;font-weight:700;margin:0;">Renewal Payment Failed</h1>
+    <p style="color:#fee2e2;font-size:13px;margin:6px 0 0;">Grace period active — please update your payment method</p>
+  </td></tr>
+  <tr><td style="padding:28px 32px;">
+    <p style="font-size:14px;color:#374151;margin:0 0 16px;">Hi ${safeName},</p>
+    <p style="font-size:14px;color:#374151;line-height:1.6;margin:0 0 20px;">
+      We attempted to charge your card or AutoPay account for your <strong>${safePlan}</strong> renewal, but the payment gateway reported a failure.
+    </p>
+    <p style="font-size:14px;color:#374151;line-height:1.6;margin:0 0 20px;">
+      Your account has entered a grace period until <strong>${safeGrace}</strong>. Your events and check-in terminals remain functional, but please update your payment method promptly to prevent account downgrade.
+    </p>
+    <div style="text-align:center;margin-top:24px;">
+      <a href="${APP_URL}/dashboard/settings" style="display:inline-block;background:#dc2626;color:#ffffff;text-decoration:none;font-weight:700;font-size:13px;padding:12px 24px;border-radius:10px;">
+        Update Payment Method &rarr;
+      </a>
+    </div>
+  </td></tr>
+  <tr><td style="border-top:1px solid #f3f4f6;padding:16px 32px;background:#fafafa;text-align:center;font-size:11px;color:#9ca3af;">
+    UrPass Event Infrastructure · <a href="${APP_URL}" style="color:#dc2626;text-decoration:none;">urpass.space</a>
+  </td></tr>
+</table>
+</body>
+</html>`.trim();
+
+  try {
+    await sendEmail({ from: getFromEmail(), to: params.to, subject, html });
+    return true;
+  } catch (err) {
+    console.error("[email] Failed to send renewal failed email:", err);
+    return false;
+  }
+}
+
+export async function sendPlanChangeScheduledEmail(params: {
+  to: string;
+  userName?: string | null;
+  currentPlan: string;
+  newPlan: string;
+  effectiveDate: string;
+}): Promise<boolean> {
+  const safeName = escapeHtml(params.userName || "Organizer");
+  const safeCurr = escapeHtml(params.currentPlan);
+  const safeNew = escapeHtml(params.newPlan);
+  const safeDate = escapeHtml(params.effectiveDate);
+  const subject = `UrPass Plan Downgrade Scheduled for ${safeDate}`;
+
+  const html = `<!DOCTYPE html>
+<html>
+<body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:#f3f4f6;margin:0;padding:24px;">
+<table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e5e7eb;">
+  <tr><td style="background:#6D28D9;padding:24px 32px;text-align:left;">
+    <h1 style="color:#ffffff;font-size:20px;font-weight:700;margin:0;">Plan Change Scheduled</h1>
+    <p style="color:#ddd6fe;font-size:13px;margin:6px 0 0;">Your current plan entitlements remain active until the end of your billing cycle</p>
+  </td></tr>
+  <tr><td style="padding:28px 32px;">
+    <p style="font-size:14px;color:#374151;margin:0 0 16px;">Hi ${safeName},</p>
+    <p style="font-size:14px;color:#374151;line-height:1.6;margin:0 0 20px;">
+      You have scheduled a downgrade from <strong>${safeCurr}</strong> to <strong>${safeNew}</strong>. This change will take effect on <strong>${safeDate}</strong>.
+    </p>
+    <p style="font-size:13px;color:#4b5563;line-height:1.6;margin:0 0 20px;">
+      You will retain full access to all features and quotas of your ${safeCurr} until ${safeDate}. None of your existing events or attendee data will be deleted.
+    </p>
+    <div style="text-align:center;">
+      <a href="${APP_URL}/dashboard/settings" style="display:inline-block;background:#6D28D9;color:#ffffff;text-decoration:none;font-weight:700;font-size:13px;padding:12px 24px;border-radius:10px;">
+        Manage Subscription in Dashboard &rarr;
+      </a>
+    </div>
+  </td></tr>
+  <tr><td style="border-top:1px solid #f3f4f6;padding:16px 32px;background:#fafafa;text-align:center;font-size:11px;color:#9ca3af;">
+    UrPass Event Infrastructure · <a href="${APP_URL}" style="color:#6D28D9;text-decoration:none;">urpass.space</a>
+  </td></tr>
+</table>
+</body>
+</html>`.trim();
+
+  try {
+    await sendEmail({ from: getFromEmail(), to: params.to, subject, html });
+    return true;
+  } catch (err) {
+    console.error("[email] Failed to send plan change scheduled email:", err);
+    return false;
+  }
+}
+
+export async function notifyOwnerSubscriptionCancelled(params: {
+  buyerName?: string | null;
+  buyerEmail?: string | null;
+  planName: string;
+  paidThroughDate: string;
+  subscriptionId?: string | null;
+}): Promise<boolean> {
+  const safeName = escapeHtml(params.buyerName || "Organizer");
+  const safeEmail = escapeHtml(params.buyerEmail || "No email");
+  const safePlan = escapeHtml(params.planName);
+  const safeDate = escapeHtml(params.paidThroughDate);
+  const safeSubId = escapeHtml(params.subscriptionId || "N/A");
+  const subject = `[URPASS ALERT] Subscription Cancelled: ${safeName} (${safePlan})`;
+
+  const html = `<!DOCTYPE html>
+<html>
+<body style="font-family:sans-serif;padding:20px;background:#fef2f2;">
+  <h2 style="color:#b91c1c;">Subscription Auto-Renewal Cancelled</h2>
+  <p><strong>Customer:</strong> ${safeName} (${safeEmail})</p>
+  <p><strong>Plan:</strong> ${safePlan}</p>
+  <p><strong>Paid Through:</strong> ${safeDate}</p>
+  <p><strong>Provider Reference:</strong> ${safeSubId}</p>
+</body>
+</html>`.trim();
+
+  try {
+    await sendEmail({ from: getFromEmail(), to: getOwnerEmail(), subject, html });
+    return true;
+  } catch (err) {
+    console.error("[email] Failed to notify owner of cancellation:", err);
+    return false;
+  }
+}
+
+export async function notifyOwnerSubscriptionReactivated(params: {
+  buyerName?: string | null;
+  buyerEmail?: string | null;
+  planName: string;
+  subscriptionId?: string | null;
+}): Promise<boolean> {
+  const safeName = escapeHtml(params.buyerName || "Organizer");
+  const safeEmail = escapeHtml(params.buyerEmail || "No email");
+  const safePlan = escapeHtml(params.planName);
+  const safeSubId = escapeHtml(params.subscriptionId || "N/A");
+  const subject = `[URPASS SUCCESS] Subscription Reactivated: ${safeName} (${safePlan})`;
+
+  const html = `<!DOCTYPE html>
+<html>
+<body style="font-family:sans-serif;padding:20px;background:#f0fdf4;">
+  <h2 style="color:#15803d;">Subscription Reactivated</h2>
+  <p><strong>Customer:</strong> ${safeName} (${safeEmail})</p>
+  <p><strong>Plan:</strong> ${safePlan}</p>
+  <p><strong>Provider Reference:</strong> ${safeSubId}</p>
+</body>
+</html>`.trim();
+
+  try {
+    await sendEmail({ from: getFromEmail(), to: getOwnerEmail(), subject, html });
+    return true;
+  } catch (err) {
+    console.error("[email] Failed to notify owner of reactivation:", err);
+    return false;
+  }
+}
+

@@ -9,6 +9,8 @@ import {
   notifyOwnerOneTimePayment,
   sendUserPaymentSuccessEmail,
   sendUserSubscriptionActivatedEmail,
+  sendSubscriptionRenewalSuccessEmail,
+  sendSubscriptionRenewalFailedEmail,
 } from "@/lib/email";
 import { communicationService, formatTicketId, buildTicketUrl } from "@/lib/communications";
 import { recordLiveOpsEvent } from "@/lib/ops/events";
@@ -306,7 +308,7 @@ export async function handleRazorpayWebhook(req: NextRequest): Promise<NextRespo
       }
 
       if (eventType === "subscription.charged") {
-        // First charge after trial or renewal charge
+        // Renewal charge or first cycle after auth
         const payment = event.payload?.payment?.entity;
         const currentStart = subscription.current_start
           ? new Date(subscription.current_start * 1000).toISOString()
@@ -316,19 +318,87 @@ export async function handleRazorpayWebhook(req: NextRequest): Promise<NextRespo
           : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
 
         if (userId) {
+          // Check for pending plan downgrade
+          const { data: existingSub } = await supabase
+            .from("subscriptions")
+            .select("id, pending_plan_id, pending_plan_slug, pending_plan_effective_at")
+            .eq("user_id", userId)
+            .maybeSingle();
+
+          let resolvedPlanId = planId;
+          if (existingSub?.pending_plan_id) {
+            resolvedPlanId = existingSub.pending_plan_id;
+          }
+
+          const updateData: Record<string, any> = {
+            status: "active",
+            is_trial: false,
+            autopay_status: "active",
+            cancellation_state: "none",
+            cancellation_error: null,
+            current_period_start: currentStart,
+            current_period_end: currentEnd,
+            next_billing_date: currentEnd,
+            pending_plan_id: null,
+            pending_plan_slug: null,
+            pending_plan_effective_at: null,
+            updated_at: new Date().toISOString(),
+          };
+          if (resolvedPlanId) {
+            updateData.plan_id = resolvedPlanId;
+          }
+
           await supabase
             .from("subscriptions")
-            .update({
-              status: "active",
-              is_trial: false,
-              autopay_status: "active",
-              current_period_start: currentStart,
-              current_period_end: currentEnd,
-              updated_at: new Date().toISOString(),
-            })
+            .update(updateData)
             .eq("user_id", userId);
 
           if (payment) {
+            // Generate renewal tax invoice
+            let invoiceRecord: any = null;
+            try {
+              const basePaise = payment.amount ? Math.round(payment.amount / 1.18) : 0;
+              invoiceRecord = await createInvoiceForPayment({
+                userId,
+                subscriptionId: existingSub?.id ?? null,
+                paymentId: payment.id,
+                description: `${planSlug.toUpperCase()} Plan (Renewal)`,
+                baseAmountRupees: basePaise / 100,
+                discountRupees: 0,
+                currency: (payment.currency || "INR").toUpperCase() as "INR" | "GBP",
+                docType: "SUB",
+                customerEmail: payment.email || notes.customer_email,
+                customerName: notes.customer_name || payment.email,
+                customerAddress: notes.billing_address || null,
+                customerGstin: notes.customer_gstin || null,
+                customerState: notes.billing_state || null,
+                customerStateCode: notes.billing_state_code || null,
+                billingPeriodStart: new Date(currentStart),
+                billingPeriodEnd: new Date(currentEnd),
+              });
+            } catch (invErr) {
+              console.error("[razorpay-webhook] Renewal invoice generation error:", invErr);
+            }
+
+            const formattedNext = new Date(currentEnd).toLocaleDateString("en-IN", {
+              day: "numeric",
+              month: "long",
+              year: "numeric",
+            });
+
+            const targetCustomerEmail = payment.email || notes.customer_email;
+            if (targetCustomerEmail) {
+              void sendSubscriptionRenewalSuccessEmail({
+                to: targetCustomerEmail,
+                userName: notes.customer_name || payment.email?.split("@")[0],
+                planName: `${planSlug.toUpperCase()} Plan`,
+                amountMinor: payment.amount,
+                currency: payment.currency || "INR",
+                invoiceNumber: invoiceRecord?.invoice_number || null,
+                nextBillingDate: formattedNext,
+              }).catch(() => null);
+            }
+
             void notifyOwnerPaidSubscription({
               buyerName: notes.customer_name || payment.email,
               buyerEmail: notes.customer_email || payment.email,
@@ -362,6 +432,20 @@ export async function handleRazorpayWebhook(req: NextRequest): Promise<NextRespo
               updated_at: new Date().toISOString(),
             })
             .eq("user_id", userId);
+
+          if (notes.customer_email) {
+            const gracePeriodEnd = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toLocaleDateString("en-IN", {
+              day: "numeric",
+              month: "long",
+              year: "numeric",
+            });
+            void sendSubscriptionRenewalFailedEmail({
+              to: notes.customer_email,
+              userName: notes.customer_name,
+              planName: `${planSlug.toUpperCase()} Plan`,
+              gracePeriodEndsAt: gracePeriodEnd,
+            }).catch(() => null);
+          }
         }
         return respondSuccess({ received: true, event: eventType });
       }
@@ -384,7 +468,7 @@ export async function handleRazorpayWebhook(req: NextRequest): Promise<NextRespo
         if (userId) {
           const { data: currentSub } = await supabase
             .from("subscriptions")
-            .select("is_trial, trial_ends_at")
+            .select("is_trial, trial_ends_at, current_period_end")
             .eq("user_id", userId)
             .maybeSingle();
 
@@ -394,11 +478,15 @@ export async function handleRazorpayWebhook(req: NextRequest): Promise<NextRespo
               new Date(currentSub.trial_ends_at) > new Date()
           );
 
+          const hasFuturePaidPeriod = currentSub?.current_period_end && new Date(currentSub.current_period_end) > new Date();
+
           await supabase
             .from("subscriptions")
             .update({
               cancel_at_period_end: true,
-              status: inTrial ? "trialing" : "cancelled",
+              cancellation_state: hasFuturePaidPeriod ? "cancellation_scheduled" : "cancellation_confirmed",
+              cancellation_confirmed_at: new Date().toISOString(),
+              status: inTrial ? "trialing" : hasFuturePaidPeriod ? "active" : "cancelled",
               autopay_status: "cancelled",
               updated_at: new Date().toISOString(),
             })

@@ -77,6 +77,11 @@ export interface BillingClientShellProps {
     free_event_trial_active?: boolean;
     free_event_trial_consumed?: boolean;
     free_event_trial_id?: string | null;
+    cancellation_state?: string | null;
+    cancellation_error?: string | null;
+    cancellation_confirmed_at?: string | null;
+    pending_plan_slug?: string | null;
+    pending_plan_effective_at?: string | null;
   } | null;
   invoices: InvoiceItem[];
   userEmail: string;
@@ -529,17 +534,29 @@ export default function BillingClientShell({
                     Managed Service with Dedicated Event Operations · Zero recurring renewal payments
                   </p>
                 ) : currentPlanSlug !== "free" && renewalDate ? (
-                  <p className="text-xs text-neutral-500">
-                    {sub?.cancel_at_period_end
-                      ? `Cancels ${renewalDate} (${sub?.has_lifetime_access ? "reverts to Founder Lifetime" : "reverts to Free"})`
-                      : `Renews on ${renewalDate}${sub?.has_lifetime_access ? " · Founder Lifetime protected" : ""}`}
-                  </p>
+                  <div className="space-y-0.5">
+                    <p className="text-xs text-neutral-500">
+                      {sub?.cancel_at_period_end || sub?.autopay_status === "cancelled"
+                        ? `Auto-renewal cancelled · Paid access valid until ${renewalDate} (${sub?.has_lifetime_access ? "reverts to Founder Lifetime" : "reverts to Free"})`
+                        : `Renews on ${renewalDate}${sub?.has_lifetime_access ? " · Founder Lifetime protected" : ""}`}
+                    </p>
+                    {sub?.pending_plan_slug && (
+                      <p className="text-[11px] font-semibold text-brand">
+                        Downgrade to {sub.pending_plan_slug.toUpperCase()} scheduled for {renewalDate}
+                      </p>
+                    )}
+                  </div>
                 ) : null}
               </div>
 
               <div className="flex items-center gap-2.5 shrink-0 self-start sm:self-center">
-                {!isFounderPlan && !isManaged && currentPlanSlug !== "free" && sub && !sub.cancel_at_period_end && sub.autopay_status !== "cancelled" && (
-                  <CancelButton />
+                {!isFounderPlan && !isManaged && currentPlanSlug !== "free" && sub && (
+                  <CancelButton
+                    cancellationState={sub.cancellation_state}
+                    cancellationError={sub.cancellation_error}
+                    paidThroughDate={renewalDate}
+                    isCancelledAtEnd={Boolean(sub.cancel_at_period_end || sub.autopay_status === "cancelled")}
+                  />
                 )}
                 <button
                   type="button"

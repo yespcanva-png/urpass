@@ -19,9 +19,14 @@ import {
   notifyOwnerOneTimePayment,
   sendUserPaymentSuccessEmail,
   sendTrialStartedEmail,
+  sendSubscriptionCancellationScheduledEmail,
+  sendSubscriptionReactivatedEmail,
+  sendPlanChangeScheduledEmail,
+  notifyOwnerSubscriptionCancelled,
+  notifyOwnerSubscriptionReactivated,
 } from "@/lib/email";
 
-type ActionResult = { error?: string; success?: boolean } | undefined;
+type ActionResult = { error?: string; success?: boolean; message?: string } | undefined;
 type BillingCycle = "monthly" | "annual" | "lifetime";
 
 function adminClient() {
@@ -29,6 +34,13 @@ function adminClient() {
     getSupabaseUrl(),
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
+}
+
+function getPlanField(plan: unknown, field: "name" | "slug", fallback = ""): string {
+  const p = plan as any;
+  if (!p) return fallback;
+  if (Array.isArray(p)) return String(p[0]?.[field] || fallback);
+  return String(p[field] || fallback);
 }
 
 function revalidateBillingPaths() {
@@ -109,16 +121,401 @@ export async function cancelSubscription(): Promise<ActionResult> {
   if (!user) redirect("/login");
 
   const admin = adminClient();
-  const { error } = await admin
+
+  // 1. Fetch current subscription details
+  const { data: existingSub, error: fetchError } = await admin
+    .from("subscriptions")
+    .select(`
+      id,
+      status,
+      plan_id,
+      provider,
+      billing_cycle,
+      current_period_end,
+      cancel_at_period_end,
+      autopay_mandate_id,
+      autopay_status,
+      provider_subscription_id,
+      provider_customer_id,
+      cancellation_state,
+      plan:plans(id, name, slug)
+    `)
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (fetchError || !existingSub) {
+    return { error: "No active subscription found for this account." };
+  }
+
+  // 2. Check idempotency: if already scheduled or confirmed
+  if (
+    existingSub.cancellation_state === "cancellation_scheduled" ||
+    (existingSub.cancel_at_period_end && existingSub.autopay_status === "cancelled")
+  ) {
+    return { success: true, message: "Subscription auto-renewal is already scheduled for cancellation." };
+  }
+
+  // 3. Mark cancellation requested in DB and record audit log
+  const now = new Date();
+  await admin
+    .from("subscriptions")
+    .update({
+      cancellation_state: "cancellation_requested",
+      cancellation_requested_at: now.toISOString(),
+      updated_at: now.toISOString(),
+    })
+    .eq("user_id", user.id);
+
+  try {
+    await admin.from("billing_audit_logs").insert({
+      user_id: user.id,
+      subscription_id: existingSub.id,
+      event_type: "cancellation_requested",
+      provider: existingSub.provider || "razorpay",
+      provider_reference_id: existingSub.provider_subscription_id || existingSub.autopay_mandate_id,
+      details: {
+        plan_id: existingSub.plan_id,
+        current_period_end: existingSub.current_period_end,
+      },
+    });
+  } catch (auditErr) {
+    console.warn("[billing] Could not insert billing_audit_log:", auditErr);
+  }
+
+  const planName = getPlanField(existingSub.plan, "name", "UrPass Subscription");
+  let providerConfirmed = false;
+  let providerError: string | null = null;
+  let providerCancellationId: string | null = null;
+
+  // 4. Distinguish between native Razorpay Subscriptions (sub_...) and Token-based mandates
+  const nativeSubId =
+    (existingSub.provider_subscription_id?.startsWith("sub_") ? existingSub.provider_subscription_id : null) ||
+    (existingSub.autopay_mandate_id?.startsWith("sub_") ? existingSub.autopay_mandate_id : null);
+
+  if (nativeSubId) {
+    try {
+      const razorpay = getRazorpayClient();
+      // Razorpay subscriptions API cancel: cancel(id, { cancel_at_cycle_end: 1 })
+      const res = await (razorpay.subscriptions as any).cancel(nativeSubId, { cancel_at_cycle_end: 1 });
+      providerConfirmed = true;
+      providerCancellationId = res?.id || nativeSubId;
+    } catch (rzpErr: any) {
+      const msg = rzpErr?.error?.description || rzpErr?.message || String(rzpErr);
+      if (
+        msg.toLowerCase().includes("already cancelled") ||
+        msg.toLowerCase().includes("cancelled") ||
+        msg.toLowerCase().includes("not active")
+      ) {
+        providerConfirmed = true;
+        providerCancellationId = nativeSubId;
+      } else {
+        providerError = msg;
+      }
+    }
+  } else if (existingSub.provider_customer_id && existingSub.autopay_mandate_id?.startsWith("token_")) {
+    try {
+      const razorpay = getRazorpayClient();
+      await (razorpay.customers as any).deleteToken(
+        existingSub.provider_customer_id,
+        existingSub.autopay_mandate_id
+      );
+      providerConfirmed = true;
+      providerCancellationId = existingSub.autopay_mandate_id;
+    } catch (tokenErr: any) {
+      const msg = tokenErr?.error?.description || tokenErr?.message || String(tokenErr);
+      if (msg.toLowerCase().includes("not found") || msg.toLowerCase().includes("deleted")) {
+        providerConfirmed = true;
+        providerCancellationId = existingSub.autopay_mandate_id;
+      } else {
+        console.warn("[billing] Token delete warning:", msg);
+        providerConfirmed = true;
+        providerCancellationId = existingSub.autopay_mandate_id;
+      }
+    }
+  } else {
+    // Legacy or manual subscription: cancellation confirmed locally
+    providerConfirmed = true;
+  }
+
+  // 5. Update database with provider result
+  if (!providerConfirmed) {
+    await admin
+      .from("subscriptions")
+      .update({
+        cancellation_state: "cancellation_failed",
+        cancellation_error: providerError || "Provider cancellation failed",
+        updated_at: new Date().toISOString(),
+      })
+      .eq("user_id", user.id);
+
+    try {
+      await admin.from("billing_audit_logs").insert({
+        user_id: user.id,
+        subscription_id: existingSub.id,
+        event_type: "cancellation_failed",
+        provider: "razorpay",
+        provider_reference_id: nativeSubId || existingSub.autopay_mandate_id,
+        details: { error: providerError },
+      });
+    } catch {}
+
+    return {
+      error: `Failed to cancel auto-renewal with Razorpay: ${providerError}. Please contact support so we can verify your mandate immediately.`,
+    };
+  }
+
+  // 6. Confirmed provider cancellation at period end: persist state and preserve paid-through access
+  const { error: updateError } = await admin
     .from("subscriptions")
     .update({
       cancel_at_period_end: true,
       autopay_status: "cancelled",
+      cancellation_state: "cancellation_scheduled",
+      cancellation_confirmed_at: new Date().toISOString(),
+      cancellation_error: null,
+      provider_cancellation_id: providerCancellationId,
+      updated_at: new Date().toISOString(),
     })
     .eq("user_id", user.id);
 
-  if (error) return { error: error.message };
+  if (updateError) {
+    return { error: updateError.message };
+  }
+
+  try {
+    await admin.from("billing_audit_logs").insert({
+      user_id: user.id,
+      subscription_id: existingSub.id,
+      event_type: "cancellation_scheduled",
+      provider: "razorpay",
+      provider_reference_id: providerCancellationId,
+      details: {
+        paid_through_date: existingSub.current_period_end,
+        plan_name: planName,
+      },
+    });
+  } catch {}
+
+  const formattedPeriodEnd = existingSub.current_period_end
+    ? new Date(existingSub.current_period_end).toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      })
+    : "the end of your billing cycle";
+
+  // 7. Dispatch transactional notifications
+  try {
+    await Promise.allSettled([
+      user.email
+        ? sendSubscriptionCancellationScheduledEmail({
+            to: user.email,
+            userName: user.user_metadata?.full_name,
+            planName,
+            paidThroughDate: formattedPeriodEnd,
+            billingCycle: existingSub.billing_cycle || "monthly",
+          })
+        : Promise.resolve(),
+      notifyOwnerSubscriptionCancelled({
+        buyerName: user.user_metadata?.full_name,
+        buyerEmail: user.email,
+        planName,
+        paidThroughDate: formattedPeriodEnd,
+        subscriptionId: providerCancellationId,
+      }),
+    ]);
+  } catch (err) {
+    console.error("[billing] Error sending cancellation emails:", err);
+  }
+
   revalidateBillingPaths();
+  return { success: true, message: "Subscription auto-renewal cancelled. Access remains active until period end." };
+}
+
+export async function reactivateSubscription(): Promise<ActionResult> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const admin = adminClient();
+  const { data: existingSub } = await admin
+    .from("subscriptions")
+    .select(`
+      id,
+      status,
+      current_period_end,
+      cancel_at_period_end,
+      cancellation_state,
+      provider_subscription_id,
+      autopay_mandate_id,
+      plan:plans(name)
+    `)
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (!existingSub) {
+    return { error: "No subscription found." };
+  }
+
+  const isPeriodActive = existingSub.current_period_end
+    ? new Date(existingSub.current_period_end) > new Date()
+    : false;
+
+  if (!isPeriodActive) {
+    return {
+      error: "Your previous billing period has already ended. Please select a plan from the pricing grid to start a new subscription.",
+    };
+  }
+
+  const nativeSubId =
+    (existingSub.provider_subscription_id?.startsWith("sub_") ? existingSub.provider_subscription_id : null) ||
+    (existingSub.autopay_mandate_id?.startsWith("sub_") ? existingSub.autopay_mandate_id : null);
+
+  if (nativeSubId) {
+    try {
+      const razorpay = getRazorpayClient();
+      const rzpSub = await (razorpay.subscriptions as any).fetch(nativeSubId);
+      if (rzpSub?.status === "cancelled") {
+        return {
+          error:
+            "Your bank AutoPay mandate has already been finalized as cancelled with Razorpay. Your current paid access remains fully active until the end of this billing cycle. On or before that date, you can choose a plan to restart billing.",
+        };
+      }
+    } catch {
+      // Proceed if gateway status check is unavailable
+    }
+  }
+
+  const { error: updateError } = await admin
+    .from("subscriptions")
+    .update({
+      cancel_at_period_end: false,
+      autopay_status: "active",
+      cancellation_state: "none",
+      cancellation_error: null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("user_id", user.id);
+
+  if (updateError) {
+    return { error: updateError.message };
+  }
+
+  try {
+    await admin.from("billing_audit_logs").insert({
+      user_id: user.id,
+      subscription_id: existingSub.id,
+      event_type: "subscription_reactivated",
+      provider: "razorpay",
+      provider_reference_id: nativeSubId || existingSub.autopay_mandate_id,
+      details: { reactivated_at: new Date().toISOString() },
+    });
+  } catch {}
+
+  const planName = getPlanField(existingSub.plan, "name", "UrPass Subscription");
+  const formattedNext = existingSub.current_period_end
+    ? new Date(existingSub.current_period_end).toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      })
+    : null;
+
+  try {
+    await Promise.allSettled([
+      user.email
+        ? sendSubscriptionReactivatedEmail({
+            to: user.email,
+            userName: user.user_metadata?.full_name,
+            planName,
+            nextBillingDate: formattedNext,
+          })
+        : Promise.resolve(),
+      notifyOwnerSubscriptionReactivated({
+        buyerName: user.user_metadata?.full_name,
+        buyerEmail: user.email,
+        planName,
+        subscriptionId: nativeSubId || existingSub.autopay_mandate_id,
+      }),
+    ]);
+  } catch (err) {
+    console.error("[billing] Error sending reactivation emails:", err);
+  }
+
+  revalidateBillingPaths();
+  return { success: true, message: "Subscription auto-renewal successfully reactivated." };
+}
+
+export async function schedulePlanDowngrade(targetSlug: string): Promise<ActionResult> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const admin = adminClient();
+  const { data: existingSub } = await admin
+    .from("subscriptions")
+    .select(`
+      id,
+      status,
+      current_period_end,
+      plan:plans(id, name, slug)
+    `)
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (!existingSub) {
+    return { error: "No active subscription found." };
+  }
+
+  const { data: targetPlan } = await admin
+    .from("plans")
+    .select("id, name, slug")
+    .eq("slug", targetSlug)
+    .maybeSingle();
+
+  if (!targetPlan) {
+    return { error: `Target plan '${targetSlug}' not found.` };
+  }
+
+  const effectiveAt = existingSub.current_period_end || new Date().toISOString();
+
+  const { error: updateError } = await admin
+    .from("subscriptions")
+    .update({
+      pending_plan_id: targetPlan.id,
+      pending_plan_slug: targetPlan.slug,
+      pending_plan_effective_at: effectiveAt,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("user_id", user.id);
+
+  if (updateError) {
+    return { error: updateError.message };
+  }
+
+  const currentPlanName = getPlanField(existingSub.plan, "name", "Current Plan");
+  const formattedEffective = new Date(effectiveAt).toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
+  try {
+    if (user.email) {
+      await sendPlanChangeScheduledEmail({
+        to: user.email,
+        userName: user.user_metadata?.full_name,
+        currentPlan: currentPlanName,
+        newPlan: targetPlan.name,
+        effectiveDate: formattedEffective,
+      });
+    }
+  } catch (err) {
+    console.error("[billing] Error sending downgrade scheduled email:", err);
+  }
+
+  revalidateBillingPaths();
+  return { success: true, message: `Downgrade to ${targetPlan.name} scheduled for ${formattedEffective}.` };
 }
 
 export async function revertToLifetimePlan(): Promise<ActionResult> {
@@ -842,11 +1239,26 @@ export async function activatePaidSubscription(
   }
 
   // Preserve lifetime access status if a lifetime user subscribes to an upgraded plan
+  // Preserve lifetime access status and retire any previous recurring Razorpay subscription
   const { data: currentSub } = await admin
     .from("subscriptions")
-    .select("id, has_lifetime_access, lifetime_plan_slug, autopay_mandate_id, autopay_status")
+    .select("id, has_lifetime_access, lifetime_plan_slug, autopay_mandate_id, autopay_status, provider_subscription_id")
     .eq("user_id", user.id)
     .maybeSingle();
+
+  // If upgrading from a previous native Razorpay subscription, cancel the previous one to prevent duplicate billing
+  const oldNativeSubId =
+    (currentSub?.provider_subscription_id?.startsWith("sub_") ? currentSub.provider_subscription_id : null) ||
+    (currentSub?.autopay_mandate_id?.startsWith("sub_") ? currentSub.autopay_mandate_id : null);
+
+  if (oldNativeSubId && oldNativeSubId !== verifiedPaymentId) {
+    try {
+      const razorpay = getRazorpayClient();
+      await (razorpay.subscriptions as any).cancel(oldNativeSubId, { cancel_at_cycle_end: 0 }).catch(() => null);
+    } catch (oldCancelErr) {
+      console.warn("[billing] Notice: could not cancel old subscription on upgrade:", oldCancelErr);
+    }
+  }
 
   const hasLifetimeAccess = isFounder || Boolean(currentSub?.has_lifetime_access);
   const lifetimePlanSlug = isFounder
@@ -872,7 +1284,13 @@ export async function activatePaidSubscription(
         provider_subscription_id: verifiedPaymentId,
         current_period_start: periodStart.toISOString(),
         current_period_end: periodEndTime.toISOString(),
+        next_billing_date: isFounder ? null : periodEndTime.toISOString(),
         cancel_at_period_end: false,
+        cancellation_state: "none",
+        cancellation_error: null,
+        pending_plan_id: null,
+        pending_plan_slug: null,
+        pending_plan_effective_at: null,
         registrations_used: 0,
         is_trial: false,
         free_event_trial_active: false,
@@ -890,6 +1308,21 @@ export async function activatePaidSubscription(
     .single();
 
   if (error) return { error: error.message };
+
+  try {
+    await admin.from("billing_audit_logs").insert({
+      user_id: user.id,
+      subscription_id: updatedSub?.id,
+      event_type: "subscription_activated",
+      provider: "razorpay",
+      provider_reference_id: verifiedPaymentId,
+      details: {
+        plan: normalizedSlug,
+        billing_cycle: effectiveCycle,
+        amount_paise: orderAmountPaise,
+      },
+    });
+  } catch {}
 
   // Issue invoice for paid activation
   if (verifiedPaymentId && normalizedSlug !== "free") {
