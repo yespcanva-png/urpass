@@ -4,6 +4,7 @@ import { getSupabaseConfig } from "@/lib/supabase/config";
 import { clearAuthCookies, isRefreshTokenMissingError } from "@/lib/supabase/auth-cookies";
 import { logAuth, logAuthWarn } from "@/lib/auth/logger";
 import { resolveUserSubscriptionAccess } from "@/lib/billing/entitlement-resolver";
+import { resolveCustomDomainTarget } from "@/lib/dns/custom-domain-router";
 
 const PROTECTED = ["/dashboard", "/event", "/create-event", "/scan", "/billing", "/org"];
 const AUTH_PAGES = ["/login", "/signup"];
@@ -48,6 +49,15 @@ export async function updateSession(request: NextRequest) {
   }
 
   const pathname = url.pathname;
+
+  // Custom Domain edge rewrite: Map external CNAME domains to their registered event or conference route
+  if (!isLocal) {
+    const customTarget = await resolveCustomDomainTarget(host);
+    if (customTarget && (pathname === "/" || pathname === "/register")) {
+      url.pathname = customTarget.rewritePath;
+      return NextResponse.rewrite(url);
+    }
+  }
 
   const isProtected = isProtectedPath(pathname);
   const isAuthPage = isAuthPagePath(pathname);

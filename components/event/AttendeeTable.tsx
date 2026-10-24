@@ -7,6 +7,7 @@ import {
   UserPlus, Upload, Check, X, Clock, Loader2, Users,
   Search, Ticket, ExternalLink, Download, Lock, Wifi, ClipboardList, RotateCcw,
   Send, CheckCircle2, CreditCard, DoorOpen, History, Eye, Mail, Phone, RefreshCw,
+  Pencil,
 } from "lucide-react";
 import { approveAttendee, rejectAttendee, exportAttendeesCSV, promoteNextWaitlistAttendee, reconcileEventPaymentsAction } from "@/app/actions/attendees";
 import { undoCheckIn } from "@/app/actions/manual-checkin";
@@ -14,6 +15,7 @@ import { generatePass, bulkGeneratePasses } from "@/app/actions/passes";
 import AddAttendeeModal from "./AddAttendeeModal";
 import ImportAttendeesModal from "./ImportAttendeesModal";
 import BulkBroadcastModal from "./BulkBroadcastModal";
+import EditAttendeeModal from "./EditAttendeeModal";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import WhatsAppShareButton from "@/components/pass/WhatsAppShareButton";
@@ -181,6 +183,7 @@ export default function AttendeeTable({
   const [liveConnected, setLiveConnected] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedAttendee, setSelectedAttendee] = useState<Attendee | null>(null);
+  const [editingAttendee, setEditingAttendee] = useState<Attendee | null>(null);
   const [selectedGroupHistory, setSelectedGroupHistory] = useState<{
     name: string;
     email: string;
@@ -695,19 +698,63 @@ export default function AttendeeTable({
   }
 
   function getCustomAnswerRows(a: Attendee) {
+    const rawResponses = (a.custom_responses || {}) as Record<string, any>;
+    const handledKeys = new Set<string>();
+    const rows: { id: string; label: string; value: string }[] = [];
+
+    // Internal system metadata keys that should not be displayed as custom registration answers
+    const IGNORED_KEYS = new Set([
+      "is_single_group_qr",
+      "credential_type",
+      "credentialType",
+      "scan_count",
+      "scan_history",
+      "group_members",
+      "guest_count",
+      "bulk_quantity",
+      "custom_ticket_id",
+      "parent_attendee_id",
+      "primary_buyer_name",
+      "primary_buyer_email",
+      "guest_index",
+    ]);
+
+    // 1. Process active custom questions configured on event
     if (customFields && customFields.length > 0) {
-      return customFields.map((field) => {
-        const rawVal = a.custom_responses?.[field.id];
-        const displayVal = rawVal === true ? "Yes" : rawVal === false ? "No" : rawVal ? String(rawVal) : "-";
-        return { id: field.id, label: field.label, value: displayVal };
+      for (const field of customFields) {
+        handledKeys.add(field.id);
+        const rawVal = rawResponses[field.id];
+        let displayVal = "-";
+        if (rawVal === true) displayVal = "Yes";
+        else if (rawVal === false) displayVal = "No";
+        else if (typeof rawVal === "object" && rawVal !== null && rawVal.fileName) {
+          displayVal = `📄 ${rawVal.fileName}`;
+        } else if (rawVal !== undefined && rawVal !== null && rawVal !== "") {
+          displayVal = String(rawVal);
+        }
+        rows.push({ id: field.id, label: field.label, value: displayVal });
+      }
+    }
+
+    // 2. Historical preservation: Include any responses stored in attendee record that are not in current customFields
+    for (const [key, rawVal] of Object.entries(rawResponses)) {
+      if (handledKeys.has(key) || IGNORED_KEYS.has(key)) continue;
+      let displayVal = "-";
+      if (rawVal === true) displayVal = "Yes";
+      else if (rawVal === false) displayVal = "No";
+      else if (typeof rawVal === "object" && rawVal !== null && rawVal.fileName) {
+        displayVal = `📄 ${rawVal.fileName}`;
+      } else if (rawVal !== undefined && rawVal !== null && rawVal !== "") {
+        displayVal = String(rawVal);
+      }
+      rows.push({
+        id: key,
+        label: key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+        value: displayVal,
       });
     }
 
-    return Object.entries(a.custom_responses || {}).map(([key, val]) => ({
-      id: key,
-      label: key,
-      value: val === true ? "Yes" : val === false ? "No" : String(val ?? "-"),
-    }));
+    return rows;
   }
 
   function openGroupHistory(a: Attendee) {
@@ -736,6 +783,15 @@ export default function AttendeeTable({
         >
           <Eye className="h-3 w-3 text-slate-500" />
           View
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setEditingAttendee(a)}
+          className="inline-flex min-h-8 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50 hover:text-slate-900 shadow-xs"
+        >
+          <Pencil className="h-3 w-3 text-slate-500" />
+          Edit
         </button>
 
         {a.application_status === "pending" && (
@@ -1489,6 +1545,30 @@ export default function AttendeeTable({
           }}
         />
       )}
+      {editingAttendee && (
+        <EditAttendeeModal
+          eventId={eventId}
+          attendee={editingAttendee}
+          customFields={customFields}
+          onClose={() => setEditingAttendee(null)}
+          onSuccess={(updated) => {
+            setAttendees((prev) =>
+              prev.map((att) =>
+                att.id === editingAttendee.id
+                  ? {
+                      ...att,
+                      name: updated.name,
+                      email: updated.email,
+                      phone: updated.phone,
+                      custom_responses: updated.custom_responses,
+                    }
+                  : att
+              )
+            );
+            refreshAttendees(true);
+          }}
+        />
+      )}
 
       {mounted && selectedAttendee && createPortal((() => {
         const payment = getPayment(selectedAttendee);
@@ -1703,6 +1783,18 @@ export default function AttendeeTable({
                       Open pass
                     </a>
                   )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const att = selectedAttendee;
+                      setSelectedAttendee(null);
+                      setEditingAttendee(att);
+                    }}
+                    className="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-2xs transition-colors hover:bg-slate-100"
+                  >
+                    <Pencil className="h-3.5 w-3.5 text-slate-500" />
+                    Edit details
+                  </button>
                   <button
                     type="button"
                     onClick={() => setSelectedAttendee(null)}

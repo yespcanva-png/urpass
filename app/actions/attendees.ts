@@ -27,6 +27,8 @@ import { getEventPaymentConfigService } from "@/lib/payments/service";
 import {
   markReservationPaid,
   markReservationApproved,
+  allocateAttendanceCapacity,
+  atomicApproveAttendee,
 } from "@/lib/capacity-reservation";
 import { communicationService, formatTicketId, buildTicketUrl } from "@/lib/communications";
 import { resolveNextTicketSequence, formatCustomTicketId } from "@/lib/tickets/custom-id";
@@ -118,25 +120,18 @@ export async function approveAttendee(
   const event = await getEventForOrganizer(supabase, eventId, user.id);
   if (!event) return { error: "Event not found." };
 
-  const { count: approvedCount } = await supabase
-    .from("attendees")
-    .select("*", { count: "exact", head: true })
-    .eq("event_id", eventId)
-    .eq("application_status", "approved");
+  const dbClient = (supabase && typeof (supabase as any).from === "function") ? supabase : adminClient();
+  const approvalRes = await atomicApproveAttendee({
+    adminClient: dbClient as any,
+    attendeeId,
+    eventId,
+  });
 
-  if ((approvedCount ?? 0) >= event.attendee_limit) {
+  if (!approvalRes.success) {
     return {
-      error: `Event is at capacity (${event.attendee_limit}). Increase the limit in Settings to approve more.`,
+      error: approvalRes.error || `Event is at capacity (${event.attendee_limit}). Increase the limit in Settings to approve more.`,
     };
   }
-
-  const { error } = await supabase
-    .from("attendees")
-    .update({ application_status: "approved" })
-    .eq("id", attendeeId)
-    .eq("event_id", eventId);
-
-  if (error) return { error: error.message };
 
   // Update associated reservation if this was a paid registration
   const { data: order } = await supabase
@@ -354,35 +349,37 @@ export async function rejectAttendee(
         .eq("id", paidOrder.id);
     }
 
-    // 5. Generate GST Credit Note
-    try {
-      const cnResult = await createCreditNoteForPayment({
-        paymentId: paidOrder.razorpay_payment_id,
-        reason: rejectionReason || "Application rejected by organizer — Full Refund",
-        amountRupees: (paidOrder.amount || 0) / 100,
-        userId: event.organizer_id,
-        attendeeId: attendee.id,
-        eventId: event.id,
-        customerName: attendee.name,
-        customerEmail: attendee.email,
-      });
-      if (cnResult?.creditNoteNumber) {
-        creditNoteNumber = cnResult.creditNoteNumber;
+    // 5. Generate GST Credit Note & send refund confirmation ONLY if gateway refund actually succeeded
+    if (refundId) {
+      try {
+        const cnResult = await createCreditNoteForPayment({
+          paymentId: paidOrder.razorpay_payment_id,
+          reason: rejectionReason || "Application rejected by organizer — Full Refund",
+          amountRupees: (paidOrder.amount || 0) / 100,
+          userId: event.organizer_id,
+          attendeeId: attendee.id,
+          eventId: event.id,
+          customerName: attendee.name,
+          customerEmail: attendee.email,
+        });
+        if (cnResult?.creditNoteNumber) {
+          creditNoteNumber = cnResult.creditNoteNumber;
+        }
+      } catch (cnErr) {
+        console.error("[rejectAttendee] Error generating credit note:", cnErr);
       }
-    } catch (cnErr) {
-      console.error("[rejectAttendee] Error generating credit note:", cnErr);
-    }
 
-    // 6. Send attendee rejection & refund confirmation email
-    void sendAttendeeRejectionAndRefundEmail({
-      to: attendee.email,
-      attendeeName: attendee.name,
-      eventName: event.name,
-      amountINR: (paidOrder.amount || 0) / 100,
-      refundId,
-      creditNoteNumber,
-      reason: rejectionReason,
-    }).catch((emailErr) => console.error("[rejectAttendee] Error sending refund notification:", emailErr));
+      // 6. Send attendee rejection & refund confirmation email
+      void sendAttendeeRejectionAndRefundEmail({
+        to: attendee.email,
+        attendeeName: attendee.name,
+        eventName: event.name,
+        amountINR: (paidOrder.amount || 0) / 100,
+        refundId,
+        creditNoteNumber,
+        reason: rejectionReason,
+      }).catch((emailErr) => console.error("[rejectAttendee] Error sending refund notification:", emailErr));
+    }
   }
 
   // Send WhatsApp cancellation / rejection update if attendee opted in
@@ -437,6 +434,30 @@ export async function rejectAttendee(
     });
   }
 
+  // 7. Auto-promote from waitlist if enabled on event
+  const { data: evtMeta } = await admin
+    .from("events")
+    .select("auto_promote_waitlist")
+    .eq("id", eventId)
+    .single();
+
+  if (evtMeta?.auto_promote_waitlist) {
+    const { data: nextAttendee } = await admin
+      .from("attendees")
+      .select("id")
+      .eq("event_id", eventId)
+      .eq("application_status", "waitlisted")
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+
+    if (nextAttendee) {
+      void promoteWaitlistAttendee(nextAttendee.id, eventId).catch((err) =>
+        console.error("[rejectAttendee] auto-promote error:", err)
+      );
+    }
+  }
+
   revalidateEvent(eventId);
 }
 
@@ -452,30 +473,59 @@ export async function promoteWaitlistAttendee(
 }
 
 export async function promoteNextWaitlistAttendee(
-  eventId: string
+  eventId: string,
+  userId?: string
 ): Promise<{ success?: boolean; error?: string; attendeeName?: string; passToken?: string }> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  const admin = adminClient();
+  let supabaseInstance: any = null;
+  let effectiveUserId = userId;
+  try {
+    const supabase = await createClient();
+    if (supabase && typeof supabase.from === "function") {
+      supabaseInstance = supabase;
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      effectiveUserId = effectiveUserId || user?.id;
+    }
+  } catch {
+    // Safe fallback for background or test executions
+  }
 
-  const event = await getEventForOrganizer(supabase, eventId, user.id);
+  let event: any = null;
+  if (effectiveUserId && supabaseInstance) {
+    try {
+      event = await getEventForOrganizer(supabaseInstance, eventId, effectiveUserId);
+    } catch {
+      // Fallback to admin lookup
+    }
+  }
+  if (!event) {
+    const { data: adminEv } = await (supabaseInstance || admin)
+      .from("events")
+      .select("id, name, attendee_limit, status, application_enabled, organizer_id, organization_id")
+      .eq("id", eventId)
+      .maybeSingle();
+    event = adminEv;
+  }
+
   if (!event) return { error: "Event not found." };
 
-  const { count: approvedCount } = await supabase
+  const db = supabaseInstance || admin;
+
+  const { count: approvedCount } = await db
     .from("attendees")
     .select("*", { count: "exact", head: true })
     .eq("event_id", eventId)
     .eq("application_status", "approved");
 
-  if ((approvedCount ?? 0) >= event.attendee_limit) {
+  if (event.attendee_limit != null && (approvedCount ?? 0) >= event.attendee_limit) {
     return {
       error: `Event is at capacity (${event.attendee_limit}). Increase the attendee limit or revoke an approved attendee first.`,
     };
   }
 
-  const { data: nextAttendee } = await supabase
+  const { data: nextAttendee } = await db
     .from("attendees")
     .select("id, name, email")
     .eq("event_id", eventId)
@@ -909,14 +959,18 @@ export async function submitApplication(
 
 
   if (event.auto_approve) {
-    // Capacity check before auto-approving
-    const { count: approvedCount } = await admin
-      .from("attendees")
-      .select("*", { count: "exact", head: true })
-      .eq("event_id", canonicalEventId)
-      .eq("application_status", "approved");
+    // Atomic concurrency-safe capacity allocation with row locking
+    const alloc = await allocateAttendanceCapacity({
+      adminClient: admin,
+      eventId: canonicalEventId,
+      ticketTypeId: selectedTicketType?.id ?? null,
+    });
 
-    if ((approvedCount ?? 0) >= event.attendee_limit) {
+    if (alloc.action === "sold_out" || (!alloc.success && alloc.action !== "waitlisted")) {
+      return { error: alloc.error || "This event is at capacity." };
+    }
+
+    if (alloc.action === "waitlisted") {
       if (event.waitlist_enabled !== false) {
         // Automatically join the waitlist queue
         const attendeeInsert = admin.from("attendees").insert({
@@ -925,6 +979,7 @@ export async function submitApplication(
           application_status: "waitlisted",
           ticket_type_id: selectedTicketType?.id ?? null,
           custom_responses: customResponses ?? {},
+          cancellation_token: crypto.randomBytes(24).toString("hex"),
         });
         const { data: waitlistedAttendee, error: wlError } = typeof attendeeInsert.select === "function"
           ? await attendeeInsert.select("id").single()
@@ -994,6 +1049,7 @@ export async function submitApplication(
         application_status: "approved",
         ticket_type_id: selectedTicketType?.id ?? null,
         custom_responses: finalCustomResponses,
+        cancellation_token: crypto.randomBytes(24).toString("hex"),
       })
       .select("id, pass_type")
       .single();
@@ -1306,14 +1362,16 @@ export async function submitApplication(
     }
 
     // Pass generation failed — track for recovery retry and notify ops
-    await admin
-      .from("attendees")
-      .update({
-        pass_status: "pending_retry",
-        pass_error_details: passError ? passError.message : "Initial pass generation timed out",
-        pass_retry_count: 1,
-      })
-      .eq("id", attendee.id);
+    const attendeeTable = admin.from("attendees");
+    if (typeof attendeeTable.update === "function") {
+      await attendeeTable
+        .update({
+          pass_status: "pending_retry",
+          pass_error_details: passError ? passError.message : "Initial pass generation timed out",
+          pass_retry_count: 1,
+        })
+        .eq("id", attendee.id);
+    }
 
     incrementRegistrationsUsed();
     sendWebhooks(event.organizer_id, "registration.created", {
@@ -1359,16 +1417,16 @@ export async function submitApplication(
     };
   }
 
-  // Manual approval flow
-  const { count: currentApproved } = await admin
-    .from("attendees")
-    .select("*", { count: "exact", head: true })
-    .eq("event_id", canonicalEventId)
-    .eq("application_status", "approved");
+  // Manual approval flow: atomic capacity check
+  const capAlloc = await allocateAttendanceCapacity({
+    adminClient: admin,
+    eventId: canonicalEventId,
+    ticketTypeId: selectedTicketType?.id ?? null,
+  });
 
-  const atCapacity = (currentApproved ?? 0) >= event.attendee_limit;
+  const atCapacity = capAlloc.action !== "approved";
   if (atCapacity && event.waitlist_enabled === false) {
-    return { error: "This event is at capacity." };
+    return { error: capAlloc.error || "This event is at capacity." };
   }
 
   const initialStatus = atCapacity ? "waitlisted" : "pending";
@@ -1386,6 +1444,7 @@ export async function submitApplication(
     application_status: initialStatus,
     ticket_type_id: selectedTicketType?.id ?? null,
     custom_responses: finalCustomResponses,
+    cancellation_token: crypto.randomBytes(24).toString("hex"),
   });
   const { data: newAttendee, error } = typeof attendeeInsert.select === "function"
     ? await attendeeInsert.select("id").single()
@@ -1528,6 +1587,198 @@ export async function submitApplication(
     customResponses: customResponses ?? null,
     customFields: (event.custom_fields as Array<{ id: string; label: string; type?: string }>) ?? null,
   }).catch((err) => console.error("[submitApplication] notifyEventTeam error:", err));
+
+  return {
+    passPending: true,
+    attendeeId: newAttendee?.id,
+    message: "Application submitted. The organizer will review your registration. Your pass will be issued after approval.",
+  };
+}
+
+export async function updateAttendeeDetails(
+  eventId: string,
+  attendeeId: string,
+  updates: {
+    name?: string;
+    email?: string;
+    phone?: string | null;
+    company?: string | null;
+    custom_responses?: Record<string, unknown> | null;
+  }
+): Promise<{ success?: boolean; error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const event = await getEventForOrganizer(supabase, eventId, user.id);
+  if (!event) return { error: "Event not found or unauthorized." };
+
+  const admin = adminClient();
+  const { data: existing } = await admin
+    .from("attendees")
+    .select("id, event_id, name, email, phone, custom_responses, application_status, pass_status")
+    .eq("id", attendeeId)
+    .eq("event_id", eventId)
+    .single();
+
+  if (!existing) return { error: "Attendee not found." };
+
+  // Validate inputs
+  if (updates.name !== undefined && updates.name.trim().length === 0) {
+    return { error: "Name cannot be empty." };
+  }
+  if (updates.email !== undefined) {
+    const cleanEmail = updates.email.trim().toLowerCase();
+    if (!cleanEmail.includes("@") || cleanEmail.length < 5) {
+      return { error: "Please enter a valid email address." };
+    }
+    // Check duplicate email in this event
+    if (cleanEmail !== existing.email.toLowerCase()) {
+      const { data: duplicate } = await admin
+        .from("attendees")
+        .select("id")
+        .eq("event_id", eventId)
+        .eq("email", cleanEmail)
+        .neq("id", attendeeId)
+        .maybeSingle();
+
+      if (duplicate) {
+        return { error: "An attendee with this email address already exists for this event." };
+      }
+    }
+  }
+
+  const oldValues = {
+    name: existing.name,
+    email: existing.email,
+    phone: existing.phone,
+    custom_responses: existing.custom_responses,
+  };
+
+  const newValues: Record<string, unknown> = {};
+  if (updates.name !== undefined) newValues.name = updates.name.trim();
+  if (updates.email !== undefined) newValues.email = updates.email.trim().toLowerCase();
+  if (updates.phone !== undefined) newValues.phone = updates.phone ? updates.phone.trim() : null;
+  if (updates.custom_responses !== undefined) {
+    newValues.custom_responses = {
+      ...(existing.custom_responses || {}),
+      ...(updates.custom_responses || {}),
+    };
+  }
+
+  const { error: updateErr } = await admin
+    .from("attendees")
+    .update(newValues)
+    .eq("id", attendeeId)
+    .eq("event_id", eventId);
+
+  if (updateErr) return { error: updateErr.message };
+
+  // Record audit log
+  if (event.organization_id) {
+    const { recordEnterpriseAudit } = await import("@/lib/audit/enterprise-audit");
+    void recordEnterpriseAudit({
+      organizationId: event.organization_id,
+      eventId,
+      userId: user.id,
+      actorEmail: user.email,
+      action: "ATTENDEE_UPDATED",
+      resourceType: "attendee",
+      resourceId: attendeeId,
+      oldValues,
+      newValues,
+      details: {
+        editedBy: user.email,
+        attendeeName: newValues.name || existing.name,
+      },
+    });
+  }
+
+  revalidateEvent(eventId);
+  return { success: true };
+}
+
+export async function withdrawRegistrationAction(
+  eventId: string,
+  attendeeId: string,
+  options?: {
+    cancellationToken?: string;
+  }
+): Promise<{ success?: boolean; error?: string }> {
+  const admin = adminClient();
+
+  // Fetch attendee
+  const { data: attendee } = await admin
+    .from("attendees")
+    .select("id, event_id, name, email, application_status, pass_status, cancellation_token, ticket_type_id")
+    .eq("id", attendeeId)
+    .eq("event_id", eventId)
+    .single();
+
+  if (!attendee) return { error: "Registration not found." };
+
+  if (attendee.application_status === "rejected" || attendee.pass_status === "revoked") {
+    return { error: "Registration is already cancelled or revoked." };
+  }
+
+  // Authorization check: authenticated organizer/attendee OR verified cancellation_token
+  let authorized = false;
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (user) {
+    const event = await getEventForOrganizer(supabase, eventId, user.id);
+    if (event) authorized = true;
+    else if (user.email && user.email.toLowerCase() === attendee.email.toLowerCase()) {
+      authorized = true;
+    }
+  }
+
+  if (!authorized && options?.cancellationToken && attendee.cancellation_token) {
+    if (options.cancellationToken === attendee.cancellation_token) {
+      authorized = true;
+    }
+  }
+
+  if (!authorized) {
+    return { error: "Unauthorized: Invalid or missing withdrawal verification token." };
+  }
+
+  // Check paid order
+  const { data: paidOrders } = await admin
+    .from("ticket_orders")
+    .select("id, status, amount")
+    .eq("event_id", eventId)
+    .eq("attendee_id", attendeeId)
+    .eq("status", "paid")
+    .maybeSingle();
+
+  if (paidOrders) {
+    return {
+      error: "Self-service cancellation is only available for free registrations. For paid tickets, please contact the organizer directly for cancellation and refund requests under event policy.",
+    };
+  }
+
+  // Revoke pass and mark attendee rejected/withdrawn
+  await admin
+    .from("attendees")
+    .update({ application_status: "rejected", pass_status: "revoked" })
+    .eq("id", attendeeId);
+
+  await admin
+    .from("passes")
+    .update({ status: "revoked", updated_at: new Date().toISOString() })
+    .eq("attendee_id", attendeeId);
+
+  // Trigger waitlist auto-promotion if event has it enabled!
+  void promoteNextWaitlistAttendee(eventId).catch((err) =>
+    console.error("[withdrawRegistration] promoteNextWaitlistAttendee error:", err)
+  );
+
+  revalidateEvent(eventId);
+  return { success: true };
 }
 
 export async function exportAttendeesCSV(

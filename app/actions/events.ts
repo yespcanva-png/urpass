@@ -5,7 +5,7 @@ import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { eventSchema, type EventInput } from "@/lib/validations/event";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { generateApplySlug, slugify } from "@/lib/utils";
+import { generateApplySlug, slugify, isReservedSlug } from "@/lib/utils";
 import { getUserPlan } from "@/lib/plan";
 import { recordApiUsage } from "@/lib/api-usage";
 import { getSupabaseUrl } from "@/lib/supabase/config";
@@ -26,11 +26,17 @@ export async function findAvailableEventSlug(
   desiredSlugOrName: string,
   excludeEventId?: string
 ): Promise<string> {
-  const cleanBase = slugify(desiredSlugOrName) || "event";
+  let cleanBase = slugify(desiredSlugOrName) || "event";
+  if (isReservedSlug(cleanBase)) {
+    cleanBase = `event-${cleanBase}`;
+  }
   let candidate = cleanBase;
   let counter = 1;
 
   while (true) {
+    if (isReservedSlug(candidate)) {
+      candidate = `event-${candidate}`;
+    }
     let query = supabaseClient
       .from("events")
       .select("id", { count: "exact", head: true })
@@ -410,6 +416,7 @@ export async function updateEvent(
     status: baseUpdateFields.status,
     application_enabled: baseUpdateFields.application_enabled,
     auto_approve: baseUpdateFields.auto_approve,
+    auto_promote_waitlist: baseUpdateFields.auto_promote_waitlist !== undefined ? Boolean(baseUpdateFields.auto_promote_waitlist) : false,
     is_paid_event: baseUpdateFields.is_paid_event,
     ticket_price: baseUpdateFields.is_paid_event ? baseUpdateFields.ticket_price : 0,
   };
@@ -689,6 +696,11 @@ export async function updateEventSlugAction(
     return { error: "Event URL slug can only contain lowercase letters, numbers, and hyphens." };
   }
 
+  // Check reserved system keywords
+  if (isReservedSlug(cleanSlug)) {
+    return { error: `The URL "/events/${cleanSlug}" is a reserved system keyword. Please choose a different URL.` };
+  }
+
   // Check if taken by another event using db (adminClient) to avoid RLS false-negatives
   const { data: existing } = await db
     .from("events")
@@ -823,7 +835,8 @@ export async function updateEventCustomFields(
 
 export async function updateEventStatus(
   eventId: string,
-  status: "draft" | "active" | "completed" | "cancelled"
+  status: "draft" | "active" | "completed" | "cancelled" | "archived",
+  cancellationReason?: string
 ): Promise<ActionResult> {
   const supabase = await createClient();
   const {
@@ -831,11 +844,22 @@ export async function updateEventStatus(
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: event } = await supabase
+  const db = process.env.SUPABASE_SERVICE_ROLE_KEY ? adminClient() : supabase;
+
+  let { data: event } = await supabase
     .from("events")
     .select("id, name, organizer_id, organization_id, status")
     .eq("id", eventId)
-    .single();
+    .maybeSingle();
+
+  if (!event && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    const { data: adminEv } = await db
+      .from("events")
+      .select("id, name, organizer_id, organization_id, status")
+      .eq("id", eventId)
+      .maybeSingle();
+    event = adminEv;
+  }
 
   if (!event) return { error: "Event not found." };
 
@@ -848,7 +872,7 @@ export async function updateEventStatus(
       .eq("user_id", user.id)
       .eq("status", "active")
       .in("role", ["owner", "admin", "event_manager"])
-      .single();
+      .maybeSingle();
     isAuthorized = !!member;
   }
 
@@ -873,7 +897,7 @@ export async function updateEventStatus(
         .from("subscriptions")
         .select("current_period_start")
         .eq("user_id", ownerId)
-        .single(),
+        .maybeSingle(),
     ]);
 
     const eventsLimit = plan.getLimit("events_per_month");
@@ -925,12 +949,60 @@ export async function updateEventStatus(
     }
   }
 
-  const { error } = await supabase
+  const nowIso = new Date().toISOString();
+  const updatePayload: Record<string, unknown> = {
+    status,
+    updated_at: nowIso,
+  };
+
+  if (status === "cancelled") {
+    updatePayload.application_enabled = false;
+  } else if (status === "archived") {
+    updatePayload.application_enabled = false;
+    updatePayload.archived_at = nowIso;
+  } else if (status === "draft" || status === "active") {
+    updatePayload.archived_at = null;
+  }
+
+  let { error } = await supabase
     .from("events")
-    .update({ status })
+    .update(updatePayload)
     .eq("id", eventId);
 
+  if (error && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    const { error: adminErr } = await db
+      .from("events")
+      .update(updatePayload)
+      .eq("id", eventId);
+    error = adminErr;
+  }
+
   if (error) return { error: error.message };
+
+  // Close ticket types if event was cancelled or archived
+  if (status === "cancelled" || status === "archived") {
+    try {
+      await db
+        .from("ticket_types")
+        .update({ status: "closed" })
+        .eq("event_id", eventId)
+        .eq("status", "on_sale");
+    } catch {
+      // Non-blocking
+    }
+  }
+
+  // Idempotent cancellation communications to attendees
+  if (status === "cancelled") {
+    try {
+      const { notifyAttendeesEventCancelled } = await import("@/lib/communications/event-cancellation");
+      void notifyAttendeesEventCancelled(eventId, cancellationReason).catch((err) =>
+        console.error("[notifyAttendeesEventCancelled] error:", err)
+      );
+    } catch {
+      // Non-blocking
+    }
+  }
 
   if (event.organization_id) {
     const { recordEnterpriseAudit } = await import("@/lib/audit/enterprise-audit");
@@ -980,6 +1052,11 @@ export async function updateEventStatus(
   revalidatePath(`/event/${eventId}/settings`);
   revalidatePath("/dashboard/events");
   revalidatePath("/dashboard");
+  return { eventId };
+}
+
+export async function archiveEvent(eventId: string): Promise<ActionResult> {
+  return await updateEventStatus(eventId, "archived");
 }
 
 export async function deleteEvent(eventId: string): Promise<ActionResult> {
@@ -989,11 +1066,22 @@ export async function deleteEvent(eventId: string): Promise<ActionResult> {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: event } = await supabase
+  const db = process.env.SUPABASE_SERVICE_ROLE_KEY ? adminClient() : supabase;
+
+  let { data: event } = await supabase
     .from("events")
     .select("id, organizer_id, organization_id")
     .eq("id", eventId)
-    .single();
+    .maybeSingle();
+
+  if (!event && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    const { data: adminEv } = await db
+      .from("events")
+      .select("id, organizer_id, organization_id")
+      .eq("id", eventId)
+      .maybeSingle();
+    event = adminEv;
+  }
 
   if (!event) return { error: "Event not found." };
 
@@ -1006,7 +1094,7 @@ export async function deleteEvent(eventId: string): Promise<ActionResult> {
       .eq("user_id", user.id)
       .eq("status", "active")
       .in("role", ["owner", "admin"])
-      .single();
+      .maybeSingle();
     isAuthorized = !!member;
   }
 
@@ -1014,10 +1102,59 @@ export async function deleteEvent(eventId: string): Promise<ActionResult> {
     return { error: "You are not authorized to delete this event." };
   }
 
-  const { error } = await supabase
+  // Critical data protection: inspect financial, registration, and attendance records
+  const [{ count: approvedCount }, { count: checkinCount }, { count: orderCount }] = await Promise.all([
+    db
+      .from("attendees")
+      .select("id", { count: "exact", head: true })
+      .eq("event_id", eventId)
+      .eq("application_status", "approved"),
+    db
+      .from("check_ins")
+      .select("id", { count: "exact", head: true })
+      .eq("event_id", eventId),
+    db
+      .from("ticket_orders")
+      .select("id", { count: "exact", head: true })
+      .eq("event_id", eventId)
+      .in("status", ["paid", "completed"]),
+  ]);
+
+  const hasRegistrations = (approvedCount ?? 0) > 0;
+  const hasCheckins = (checkinCount ?? 0) > 0;
+  const hasOrders = (orderCount ?? 0) > 0;
+
+  if (hasRegistrations || hasCheckins || hasOrders) {
+    return {
+      error: `This event cannot be permanently deleted because it contains active business records (${approvedCount ?? 0} confirmed attendees, ${orderCount ?? 0} paid orders, ${checkinCount ?? 0} check-ins). Please archive or cancel the event instead to preserve financial and audit records.`,
+    };
+  }
+
+  const nowIso = new Date().toISOString();
+
+  // Soft-delete to prevent accidental cascade purging
+  let { error } = await supabase
     .from("events")
-    .delete()
+    .update({
+      deleted_at: nowIso,
+      status: "cancelled",
+      application_enabled: false,
+      updated_at: nowIso,
+    })
     .eq("id", eventId);
+
+  if (error && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    const { error: adminErr } = await db
+      .from("events")
+      .update({
+        deleted_at: nowIso,
+        status: "cancelled",
+        application_enabled: false,
+        updated_at: nowIso,
+      })
+      .eq("id", eventId);
+    error = adminErr;
+  }
 
   if (error) return { error: error.message };
 
@@ -1029,7 +1166,7 @@ export async function deleteEvent(eventId: string): Promise<ActionResult> {
       .from("user_trial_events")
       .update({
         event_deleted: true,
-        deleted_at: new Date().toISOString(),
+        deleted_at: nowIso,
       })
       .eq("event_id", eventId);
 
@@ -1038,7 +1175,7 @@ export async function deleteEvent(eventId: string): Promise<ActionResult> {
       .update({
         free_event_trial_consumed: true,
         free_event_trial_id: null,
-        updated_at: new Date().toISOString(),
+        updated_at: nowIso,
       })
       .eq("user_id", user.id)
       .eq("free_event_trial_active", true);
@@ -1048,6 +1185,7 @@ export async function deleteEvent(eventId: string): Promise<ActionResult> {
   revalidatePath("/dashboard/events");
   redirect("/dashboard/events");
 }
+
 
 export async function duplicateEvent(
   eventId: string

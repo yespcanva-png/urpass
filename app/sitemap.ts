@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { getPublishedJobs } from "@/lib/careers/service";
+import { getAllPublishedPages } from "@/lib/seo/pages";
 
 const BASE = "https://urpass.space";
 
@@ -937,7 +938,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/bengaluru-event-registration-data-collection",
   ].map((path) => ({ url: `${BASE}${path}`, priority: 0.95, changeFrequency: "weekly" as const }));
 
+  const marketingEntries = getAllPublishedPages().map((page) => ({
+    url: `${BASE}/${page.slug}`,
+    priority: page.cluster === "evergreen" ? 0.95 : 0.9,
+    changeFrequency: "weekly" as const,
+  }));
+
   const rawStaticEntries = [
+    ...marketingEntries,
     ...bengaluruBatch2Pages,
     ...bengaluruBatch30Pages,
     ...growthBatch25Pages,

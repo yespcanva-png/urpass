@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isReservedSlug } from "@/lib/utils";
 
 export const eventSchema = z
   .object({
@@ -25,7 +26,7 @@ export const eventSchema = z
       .int()
       .positive("Must be greater than 0")
       .max(100_000, "Maximum 100,000 attendees"),
-    status: z.enum(["draft", "active"]),
+    status: z.enum(["draft", "active", "completed", "cancelled", "archived"]).default("draft"),
     application_enabled: z.boolean(),
     auto_approve: z.boolean(),
     is_paid_event: z.boolean(),
@@ -48,6 +49,7 @@ export const eventSchema = z
     timezone: z.string().default("Asia/Kolkata"),
     event_images: z.array(z.string()).optional(),
     custom_slug: z.string().max(100, "URL slug cannot exceed 100 characters").optional().nullable(),
+    apply_slug: z.string().max(100, "URL slug cannot exceed 100 characters").optional().nullable(),
     event_brand_color: z.string().max(16).optional().nullable(),
     event_logo_url: z.string().max(500).optional().nullable(),
     hide_branding: z.boolean().optional(),
@@ -55,6 +57,7 @@ export const eventSchema = z
     allow_reset: z.boolean().optional(),
     allow_multiple_scans: z.boolean().optional(),
     multi_scan_enabled: z.boolean().optional(),
+    auto_promote_waitlist: z.boolean().optional(),
   })
   .superRefine((data, ctx) => {
     // 1. Date & Time validation (supports multi-day and overnight / past-midnight schedules)
@@ -111,6 +114,19 @@ export const eventSchema = z
           code: z.ZodIssueCode.custom,
           message: "Event logo URL must be a valid https URL",
           path: ["event_logo_url"],
+        });
+      }
+    }
+
+    // 5. Custom slug / apply_slug reserved words validation
+    const candidateSlug = data.custom_slug || data.apply_slug;
+    if (candidateSlug && candidateSlug.trim()) {
+      if (isReservedSlug(candidateSlug.trim())) {
+        const errorPath = data.apply_slug ? "apply_slug" : "custom_slug";
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `The URL slug "${candidateSlug.trim()}" is a reserved system keyword. Please choose a different URL slug.`,
+          path: [errorPath],
         });
       }
     }

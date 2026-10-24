@@ -14,6 +14,52 @@ export function slugify(str: string): string {
     .replace(/[\s_-]+/g, "-")
     .replace(/^-+|-+$/g, "");
 }
+export const RESERVED_SLUGS = new Set([
+  "admin",
+  "api",
+  "apply",
+  "auth",
+  "billing",
+  "compare",
+  "contact",
+  "create-event",
+  "dashboard",
+  "discover",
+  "e",
+  "event",
+  "events",
+  "guides",
+  "in",
+  "legal",
+  "login",
+  "mcp",
+  "onboarding",
+  "ops",
+  "org",
+  "pass",
+  "pricing",
+  "privacy",
+  "scan",
+  "settings",
+  "signup",
+  "status",
+  "studio",
+  "support",
+  "terms",
+  "tickets",
+  "uk",
+  "verify",
+  "portal",
+  "checkout",
+  "help",
+  "whats-new",
+]);
+
+export function isReservedSlug(slug?: string | null): boolean {
+  if (!slug) return false;
+  const clean = slugify(slug);
+  return RESERVED_SLUGS.has(clean);
+}
 
 // Generates an SEO-friendly URL-safe slug from event name (e.g. "Pilani Grand Garba Night 2026" -> "pilani-grand-garba-night-2026")
 // Falls back to a clean random 8-character string if no name is provided

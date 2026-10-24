@@ -79,6 +79,17 @@ export function detectMagicBytes(buffer: Buffer): string | null {
     return "image/webp";
   }
 
+  // PDF: 25 50 44 46 (%PDF)
+  if (
+    buffer.length >= 4 &&
+    buffer[0] === 0x25 &&
+    buffer[1] === 0x50 &&
+    buffer[2] === 0x44 &&
+    buffer[3] === 0x46
+  ) {
+    return "application/pdf";
+  }
+
   // SVG: Inspect text header
   const sample = buffer.toString("utf8", 0, Math.min(buffer.length, 1024)).trim();
   if (
@@ -177,10 +188,11 @@ export async function validateAndSanitizeUpload(
     };
   }
 
-  // 4. Binary images (PNG, JPEG, WebP)
+  // 4. Binary images & PDF (PNG, JPEG, WebP, PDF)
   let extension = "png";
   if (detectedMime === "image/jpeg") extension = "jpg";
   else if (detectedMime === "image/webp") extension = "webp";
+  else if (detectedMime === "application/pdf") extension = "pdf";
 
   return {
     valid: true,

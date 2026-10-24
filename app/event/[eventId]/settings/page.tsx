@@ -9,10 +9,10 @@ import {
   Loader2, Trash2, AlertTriangle, IndianRupee,
   FileText, CalendarDays, Users, CreditCard,
   Radio, CheckCircle2, AlertCircle, Wifi, Link2, Ticket, Image as ImageIcon,
-  Globe, Copy, Check, ExternalLink, Sparkles, Palette, Upload, ArrowRight, Lock,
+  Globe, Copy, Check, ExternalLink, Sparkles, Palette, Upload, ArrowRight, Lock, Archive,
 } from "lucide-react";
 import { eventSchema, type EventInput } from "@/lib/validations/event";
-import { updateEvent, updateEventStatus, deleteEvent, updateEventImagesAction, updateEventSlugAction } from "@/app/actions/events";
+import { updateEvent, updateEventStatus, archiveEvent, deleteEvent, updateEventImagesAction, updateEventSlugAction } from "@/app/actions/events";
 import { setTicketTypeStatus, createDefaultTicketType } from "@/app/actions/ticket-types";
 import { createClient } from "@/lib/supabase/client";
 import { slugify } from "@/lib/utils";
@@ -144,6 +144,7 @@ const STATUS_CONFIG = {
   active:    { label: "Active",    dot: "bg-green-500",   bg: "bg-green-50",    text: "text-green-700",    border: "border-green-200" },
   completed: { label: "Completed", dot: "bg-blue-400",    bg: "bg-blue-50",     text: "text-blue-700",     border: "border-blue-200" },
   cancelled: { label: "Cancelled", dot: "bg-red-400",     bg: "bg-red-50",      text: "text-red-700",      border: "border-red-200" },
+  archived:  { label: "Archived",  dot: "bg-neutral-500", bg: "bg-neutral-100", text: "text-neutral-700", border: "border-neutral-300" },
 } as const;
 
 const EVENT_TYPE_OPTIONS = [
@@ -184,7 +185,9 @@ export default function EventSettingsPage() {
   const [saveError, setSaveError]               = useState("");
   const [saveSuccess, setSaveSuccess]           = useState(false);
   const [statusLoading, setStatusLoading]       = useState(false);
+  const [archiveLoading, setArchiveLoading]     = useState(false);
   const [deleteConfirm, setDeleteConfirm]       = useState(false);
+  const [deleteConfirmInput, setDeleteConfirmInput] = useState("");
   const [deleteLoading, setDeleteLoading]       = useState(false);
   const [hasPaymentGateway, setHasPaymentGateway] = useState<boolean | null>(null);
   const [ticketTypes, setTicketTypes]           = useState<{id: string; name: string; price: number; status: string}[]>([]);
@@ -228,6 +231,7 @@ export default function EventSettingsPage() {
 
   const applicationEnabled = watch("application_enabled");
   const autoApprove        = watch("auto_approve");
+  const autoPromoteWaitlist = watch("auto_promote_waitlist");
   const isPaidEvent        = watch("is_paid_event");
   const eventType          = watch("event_type");
   const eventDate          = watch("event_date");
@@ -389,7 +393,7 @@ export default function EventSettingsPage() {
       const supabase = createClient();
       const [{ data }, { data: { user } }] = await Promise.all([
         supabase.from("events")
-          .select("id,name,description,event_date,start_time,end_time,venue,attendee_limit,status,application_enabled,auto_approve,is_paid_event,ticket_price,event_type,meeting_url,meeting_platform,sms_enabled,whatsapp_enabled,email_enabled,sms_fallback_enabled,sms_sender_id,sms_dlt_entity_id,sms_dlt_template_id,sms_provider,custom_fields,custom_pass_design,apply_slug")
+          .select("id,name,description,event_date,start_time,end_time,venue,attendee_limit,status,application_enabled,auto_approve,auto_promote_waitlist,is_paid_event,ticket_price,event_type,meeting_url,meeting_platform,sms_enabled,whatsapp_enabled,email_enabled,sms_fallback_enabled,sms_sender_id,sms_dlt_entity_id,sms_dlt_template_id,sms_provider,custom_fields,custom_pass_design,apply_slug")
           .eq("id", eventId).single(),
         supabase.auth.getUser(),
       ]);
@@ -408,6 +412,7 @@ export default function EventSettingsPage() {
           venue: data.venue ?? "", attendee_limit: data.attendee_limit,
           status: data.status as "draft" | "active",
           application_enabled: data.application_enabled, auto_approve: data.auto_approve,
+          auto_promote_waitlist: Boolean(data.auto_promote_waitlist),
           is_paid_event: data.is_paid_event, ticket_price: data.ticket_price,
           event_type: (data.event_type as "physical" | "online" | "hybrid") ?? "physical",
           meeting_url: data.meeting_url ?? null,
@@ -529,15 +534,41 @@ export default function EventSettingsPage() {
     }
   }
 
-  async function handleStatusChange(newStatus: "draft" | "active" | "completed" | "cancelled") {
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isDirty) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [isDirty]);
+
+  async function handleStatusChange(newStatus: "draft" | "active" | "completed" | "cancelled" | "archived") {
     setStatusLoading(true);
+    setSaveError("");
     const result = await updateEventStatus(eventId, newStatus);
-    if (result?.error) { setSaveError(result.error); }
-    else {
+    if (result?.error) {
+      setSaveError(result.error);
+    } else {
       router.refresh();
       setEvent((e) => (e ? { ...e, status: newStatus } : e));
     }
     setStatusLoading(false);
+  }
+
+  async function handleArchive() {
+    setArchiveLoading(true);
+    setSaveError("");
+    const result = await archiveEvent(eventId);
+    if (result?.error) {
+      setSaveError(result.error);
+    } else {
+      router.refresh();
+      setEvent((e) => (e ? { ...e, status: "archived" } : e));
+    }
+    setArchiveLoading(false);
   }
 
   async function handleTicketTypeToggle(ticketTypeId: string, currentStatus: string) {
@@ -554,9 +585,19 @@ export default function EventSettingsPage() {
   }
 
   async function handleDelete() {
+    const expected = event?.name?.trim() || "";
+    const typed = deleteConfirmInput.trim();
+    if (typed.toLowerCase() !== "delete" && typed !== expected) {
+      setSaveError(`Please type "${expected}" or "DELETE" to confirm permanent deletion.`);
+      return;
+    }
     setDeleteLoading(true);
+    setSaveError("");
     const result = await deleteEvent(eventId);
-    if (result?.error) { setSaveError(result.error); setDeleteLoading(false); }
+    if (result?.error) {
+      setSaveError(result.error);
+      setDeleteLoading(false);
+    }
   }
 
   if (loading) {
@@ -1123,6 +1164,13 @@ export default function EventSettingsPage() {
           )}
           <div className="h-px bg-neutral-50" />
           <ToggleRow
+            label="Automatically fill available places from the waitlist"
+            description="When a spot opens due to cancellation or rejection, automatically promote the oldest eligible waitlisted attendee and issue their pass (FIFO)"
+            checked={!!autoPromoteWaitlist}
+            onChange={() => setValue("auto_promote_waitlist", !autoPromoteWaitlist, { shouldDirty: true })}
+          />
+          <div className="h-px bg-neutral-50" />
+          <ToggleRow
             label="Allow Re-entry & Check-in Reset in Scanner"
             description="Permit gate staff to undo check-in or allow re-entry from duplicate/checked-in screens"
             checked={allowReentry}
@@ -1338,12 +1386,20 @@ export default function EventSettingsPage() {
         </div>
         <div className="px-6 py-5 flex flex-wrap gap-2">
           {event.status === "draft" && (
-            <button onClick={() => handleStatusChange("active")} disabled={statusLoading}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
-              style={{ background: "#6D28D9" }}>
-              {statusLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-              Publish event
-            </button>
+            <>
+              <button onClick={() => handleStatusChange("active")} disabled={statusLoading}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+                style={{ background: "#6D28D9" }}>
+                {statusLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                Publish event
+              </button>
+              <button onClick={handleArchive} disabled={archiveLoading}
+                className="flex items-center gap-2 border border-neutral-200 px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-neutral-50 transition-colors disabled:opacity-50 text-neutral-600">
+                {archiveLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                <Archive className="w-4 h-4 text-neutral-400" />
+                Archive event
+              </button>
+            </>
           )}
           {event.status === "active" && (
             <>
@@ -1355,61 +1411,171 @@ export default function EventSettingsPage() {
                 className="flex items-center gap-2 border border-red-100 text-red-600 px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-red-50 transition-colors disabled:opacity-50">
                 Cancel event
               </button>
+              <button onClick={handleArchive} disabled={archiveLoading}
+                className="flex items-center gap-2 border border-neutral-200 px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-neutral-50 transition-colors disabled:opacity-50 text-neutral-600">
+                {archiveLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                <Archive className="w-4 h-4 text-neutral-400" />
+                Archive event
+              </button>
             </>
           )}
           {(event.status === "completed" || event.status === "cancelled") && (
+            <>
+              <button onClick={() => handleStatusChange("draft")} disabled={statusLoading}
+                className="flex items-center gap-2 border border-neutral-200 px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-neutral-50 transition-colors disabled:opacity-50">
+                Revert to draft
+              </button>
+              <button onClick={handleArchive} disabled={archiveLoading}
+                className="flex items-center gap-2 border border-neutral-200 px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-neutral-50 transition-colors disabled:opacity-50 text-neutral-600">
+                {archiveLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                <Archive className="w-4 h-4 text-neutral-400" />
+                Archive event
+              </button>
+            </>
+          )}
+          {event.status === "archived" && (
             <button onClick={() => handleStatusChange("draft")} disabled={statusLoading}
-              className="flex items-center gap-2 border border-neutral-200 px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-neutral-50 transition-colors disabled:opacity-50">
-              Revert to draft
+              className="flex items-center gap-2 border border-violet-200 text-violet-700 bg-violet-50/50 px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-violet-50 transition-colors disabled:opacity-50">
+              {statusLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+              Restore to draft
             </button>
           )}
         </div>
       </div>
 
-
-
       {/* ── Danger zone ── */}
-      <div className="mt-5 rounded-2xl border border-red-100 overflow-hidden">
+      <div className="mt-5 rounded-2xl border border-red-100 overflow-hidden bg-white">
         <div className="flex items-center gap-3 px-6 py-4 border-b border-red-50 bg-red-50/40">
           <div className="w-8 h-8 rounded-lg bg-red-50 border border-red-100 flex items-center justify-center shrink-0">
             <Trash2 className="w-4 h-4 text-red-500" />
           </div>
           <div>
             <h2 className="text-sm font-semibold text-red-700 leading-none">Danger zone</h2>
-            <p className="text-xs text-red-400 mt-0.5">Irreversible actions</p>
+            <p className="text-xs text-red-400 mt-0.5">Event lifecycle and permanent deletion controls</p>
           </div>
         </div>
-        <div className="px-6 py-5">
-          <p className="text-xs text-neutral-500 mb-4">
-            Deleting this event is permanent — all attendees, passes, and check-in records will be removed.
-          </p>
-          {!deleteConfirm ? (
-            <button onClick={() => setDeleteConfirm(true)}
-              className="flex items-center gap-2 border border-red-200 text-red-600 bg-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-red-50 transition-colors">
-              <Trash2 className="w-4 h-4" />
-              Delete event
-            </button>
-          ) : (
-            <div className="bg-red-50 border border-red-100 rounded-xl p-4">
-              <div className="flex items-start gap-2.5 mb-4">
-                <AlertTriangle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
-                <p className="text-sm font-medium text-red-700">Are you absolutely sure? This cannot be undone.</p>
-              </div>
-              <div className="flex gap-2">
-                <button onClick={handleDelete} disabled={deleteLoading}
-                  className="flex items-center gap-2 bg-red-600 text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-red-700 transition-colors disabled:opacity-50">
-                  {deleteLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                  Yes, delete permanently
-                </button>
-                <button onClick={() => setDeleteConfirm(false)}
-                  className="px-4 py-2.5 rounded-xl text-sm font-medium border border-neutral-200 hover:bg-neutral-50 transition-colors">
-                  Cancel
-                </button>
+        <div className="px-6 py-5 space-y-4">
+          <div className="rounded-xl border border-amber-200/80 bg-amber-50/60 p-4">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+              <div className="text-xs text-amber-800 leading-relaxed space-y-1">
+                <p className="font-semibold text-amber-900">Critical Data Protection Policy</p>
+                <p>
+                  Events with registered attendees, paid orders, tax invoices, or scan records <strong>cannot be permanently deleted</strong>.
+                  Archiving safely removes the event from your active dashboard while preserving legal audit trails and issued tickets.
+                </p>
               </div>
             </div>
-          )}
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-1">
+            <div>
+              <p className="text-sm font-medium text-neutral-800">Archive this event</p>
+              <p className="text-xs text-neutral-400">Hide from public routes and active dashboards without losing historical data</p>
+            </div>
+            <button
+              type="button"
+              onClick={handleArchive}
+              disabled={archiveLoading || event.status === "archived"}
+              className="flex items-center justify-center gap-2 border border-neutral-200 text-neutral-700 bg-white px-4 py-2 rounded-xl text-xs font-semibold hover:bg-neutral-50 transition-colors disabled:opacity-40"
+            >
+              {archiveLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Archive className="w-3.5 h-3.5" />}
+              {event.status === "archived" ? "Already archived" : "Archive event"}
+            </button>
+          </div>
+
+          <div className="border-t border-neutral-100 pt-4">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-medium text-red-700">Permanent deletion</p>
+                <p className="text-xs text-neutral-400">Available only for zero-attendee draft or test events</p>
+              </div>
+              {!deleteConfirm && (
+                <button
+                  type="button"
+                  onClick={() => { setDeleteConfirm(true); setDeleteConfirmInput(""); }}
+                  className="flex items-center justify-center gap-2 border border-red-200 text-red-600 bg-white px-4 py-2 rounded-xl text-xs font-semibold hover:bg-red-50 transition-colors"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  Delete event…
+                </button>
+              )}
+            </div>
+
+            {deleteConfirm && (
+              <div className="mt-4 bg-red-50/70 border border-red-200 rounded-xl p-4 space-y-3">
+                <div className="flex items-start gap-2.5">
+                  <AlertTriangle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+                  <div className="text-xs text-red-700 space-y-1">
+                    <p className="font-semibold">Explicit Confirmation Required</p>
+                    <p>
+                      To confirm deletion of <strong>{event.name}</strong>, type <span className="font-mono font-semibold bg-white px-1.5 py-0.5 rounded border border-red-200">DELETE</span> or the exact event name below:
+                    </p>
+                  </div>
+                </div>
+
+                <input
+                  type="text"
+                  value={deleteConfirmInput}
+                  onChange={(e) => setDeleteConfirmInput(e.target.value)}
+                  placeholder={`Type "${event.name}" or "DELETE"`}
+                  className="w-full text-xs font-mono px-3 py-2 rounded-lg border border-red-200 bg-white text-neutral-800 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-red-400"
+                />
+
+                <div className="flex items-center gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={handleDelete}
+                    disabled={deleteLoading || (deleteConfirmInput.trim().toLowerCase() !== "delete" && deleteConfirmInput.trim() !== event.name?.trim())}
+                    className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-xl text-xs font-semibold hover:bg-red-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    {deleteLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                    Confirm permanent deletion
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setDeleteConfirm(false); setDeleteConfirmInput(""); }}
+                    className="px-3 py-2 rounded-xl text-xs font-medium border border-neutral-200 hover:bg-white text-neutral-600 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
+
+      {/* Floating Save Bar for unsaved changes */}
+      {isDirty && (
+        <div className="fixed bottom-6 inset-x-0 z-50 flex justify-center px-4 pointer-events-none animate-in fade-in slide-in-from-bottom-4 duration-200">
+          <div className="bg-neutral-900 text-white rounded-2xl shadow-2xl px-5 py-3 flex items-center gap-4 border border-neutral-700 pointer-events-auto max-w-lg w-full justify-between">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+              <span className="text-xs font-medium text-neutral-200">You have unsaved changes</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => reset()}
+                className="text-xs px-3 py-1.5 rounded-lg border border-neutral-600 hover:bg-neutral-800 text-neutral-300 font-medium transition-colors"
+              >
+                Discard
+              </button>
+              <button
+                type="button"
+                onClick={handleSubmit(onSubmit, onInvalid)}
+                disabled={isSubmitting}
+                className="text-xs px-4 py-1.5 rounded-lg text-white font-semibold transition-opacity hover:opacity-90 flex items-center gap-1.5 disabled:opacity-50"
+                style={{ background: "#6D28D9" }}
+              >
+                {isSubmitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                Save changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 30-Day Free Trial Modal */}
       <TrialConfirmationModal

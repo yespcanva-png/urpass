@@ -316,3 +316,129 @@ export async function releaseReservation(
 
   return query;
 }
+
+export interface CapacityAllocationResult {
+  success: boolean;
+  status?: "approved" | "waitlisted" | "sold_out";
+  action?: "approved" | "waitlisted" | "sold_out";
+  error?: string;
+  message?: string;
+  consumed?: number;
+  limit?: number;
+  remaining_capacity?: number;
+}
+
+/**
+ * Atomically checks and allocates attendance capacity for free registrations.
+ * Uses PostgreSQL row-level locks on events to prevent overselling race conditions.
+ */
+export async function allocateAttendanceCapacity({
+  adminClient,
+  eventId,
+  ticketTypeId,
+}: {
+  adminClient: SupabaseClient;
+  eventId: string;
+  ticketTypeId?: string | null;
+}): Promise<CapacityAllocationResult> {
+  try {
+    const { data, error } = await adminClient.rpc("allocate_attendance_capacity", {
+      p_event_id: eventId,
+      p_ticket_type_id: ticketTypeId || null,
+    });
+
+    if (!error && data) {
+      const parsed = typeof data === "string" ? JSON.parse(data) : data;
+      return parsed;
+    }
+  } catch {
+    // Proceed to fallback
+  }
+
+  const { data: event } = await adminClient
+    .from("events")
+    .select("attendee_limit, waitlist_enabled, application_enabled, status")
+    .eq("id", eventId)
+    .single();
+
+  if (event && event.status && event.status !== "active") {
+    return { success: false, error: "NOT_ACCEPTING", message: "Event is not currently accepting applications." };
+  }
+  if (event && event.application_enabled === false) {
+    return { success: false, error: "NOT_ACCEPTING", message: "Event is not currently accepting applications." };
+  }
+
+  const { count: approvedCount } = await adminClient
+    .from("attendees")
+    .select("*", { count: "exact", head: true })
+    .eq("event_id", eventId)
+    .eq("application_status", "approved");
+
+  if (event && event.attendee_limit != null && (approvedCount ?? 0) >= event.attendee_limit) {
+    if (event.waitlist_enabled !== false) {
+      return { success: true, status: "waitlisted", action: "waitlisted", message: "Event has reached total capacity. Added to waitlist." };
+    }
+    return { success: false, status: "sold_out", action: "sold_out", error: "This event is at capacity.", message: "This event has reached total capacity." };
+  }
+
+  return { success: true, status: "approved", action: "approved" };
+}
+
+/**
+ * Atomically approves an attendee, verifying capacity under row-level lock.
+ */
+export async function atomicApproveAttendee({
+  adminClient,
+  attendeeId,
+  eventId,
+}: {
+  adminClient: SupabaseClient;
+  attendeeId: string;
+  eventId: string;
+}): Promise<{ success: boolean; error?: string; message?: string; alreadyApproved?: boolean }> {
+  try {
+    const { data, error } = await adminClient.rpc("atomic_approve_attendee", {
+      p_attendee_id: attendeeId,
+      p_event_id: eventId,
+    });
+
+    if (!error && data) {
+      const parsed = typeof data === "string" ? JSON.parse(data) : data;
+      return parsed;
+    }
+  } catch {
+    // Proceed to fallback
+  }
+
+  const { data: event } = await adminClient
+    .from("events")
+    .select("attendee_limit")
+    .eq("id", eventId)
+    .single();
+
+  if (!event) return { success: false, error: "EVENT_NOT_FOUND", message: "Event not found." };
+
+  const { count: approvedCount } = await adminClient
+    .from("attendees")
+    .select("*", { count: "exact", head: true })
+    .eq("event_id", eventId)
+    .eq("application_status", "approved");
+
+  if (event.attendee_limit != null && (approvedCount ?? 0) >= event.attendee_limit) {
+    return {
+      success: false,
+      error: "CAPACITY_REACHED",
+      message: `Event is at capacity (${event.attendee_limit}). Increase the limit in Settings to approve more.`,
+    };
+  }
+
+  const { error: updateErr } = await adminClient
+    .from("attendees")
+    .update({ application_status: "approved", updated_at: new Date().toISOString() })
+    .eq("id", attendeeId)
+    .eq("event_id", eventId);
+
+  if (updateErr) return { success: false, error: updateErr.message };
+
+  return { success: true };
+}

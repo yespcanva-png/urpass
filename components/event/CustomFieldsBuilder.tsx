@@ -23,6 +23,8 @@ interface CustomFieldsBuilderProps {
 
 const FIELD_TYPES: { type: CustomFieldType; label: string; desc: string }[] = [
   { type: "text", label: "Text", desc: "Short answer (e.g., College, Company, GitHub URL)" },
+  { type: "textarea", label: "Long Text (Textarea)", desc: "Multi-line answer (e.g., Bio, Project Abstract)" },
+  { type: "file_upload", label: "File Upload", desc: "Document / PDF upload (e.g., ID Proof, Resume)" },
   { type: "number", label: "Number", desc: "Numeric value (e.g., Year of Study, Age)" },
   { type: "select", label: "Dropdown", desc: "Single choice from options (e.g., T-Shirt Size)" },
   { type: "checkbox", label: "Checkbox", desc: "Yes / No confirmation (e.g., Agree to Rules)" },

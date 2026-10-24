@@ -32,6 +32,8 @@ import {
   Building,
   GraduationCap,
   Calendar,
+  Clock,
+  Upload,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { attendeeSchema, type AttendeeInput } from "@/lib/validations/attendee";
@@ -85,7 +87,12 @@ interface Branding {
   orgLogoUrl: string | null;
 }
 
-type SuccessState = { type: "pending" | "waitlisted"; attendeeName: string };
+type SuccessState = {
+  type: "approved" | "pending" | "waitlisted" | "rejected";
+  attendeeName: string;
+  message?: string;
+  passToken?: string;
+};
 
 const inputCls =
   "w-full bg-neutral-50/80 border border-neutral-200/90 rounded-xl px-3.5 py-3 sm:py-2.5 text-base sm:text-sm text-neutral-900 font-medium placeholder:text-neutral-400 placeholder:font-normal outline-none transition-all duration-150 focus:border-brand focus:bg-white focus:ring-2 focus:ring-brand/10 hover:border-neutral-300";
@@ -662,6 +669,11 @@ export default function ApplyForm({
 
   // ── Success Confirmation Screen ──
   if (success) {
+    const isApproved = success.type === "approved";
+    const isPending = success.type === "pending";
+    const isWaitlisted = success.type === "waitlisted";
+    const isRejected = success.type === "rejected";
+
     return (
       <div
         className="min-h-screen flex flex-col items-center justify-center p-4 sm:p-5 font-[family-name:var(--font-geist)]"
@@ -670,20 +682,79 @@ export default function ApplyForm({
         }}
       >
         <div className="max-w-md w-full bg-white border border-neutral-200/90 rounded-3xl p-6 sm:p-8 text-center shadow-[0_20px_50px_rgba(0,0,0,0.06)] animate-in zoom-in-95 duration-300">
-          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center mx-auto mb-4 text-emerald-600 shadow-xs">
-            <CheckCircle2 className="w-6 h-6 sm:w-7 sm:h-7" />
+          <div
+            className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xs ${
+              isApproved
+                ? "bg-emerald-50 border border-emerald-100 text-emerald-600"
+                : isWaitlisted
+                ? "bg-violet-50 border border-violet-100 text-violet-600"
+                : isRejected
+                ? "bg-red-50 border border-red-100 text-red-600"
+                : "bg-amber-50 border border-amber-100 text-amber-600"
+            }`}
+          >
+            {isApproved ? (
+              <CheckCircle2 className="w-6 h-6 sm:w-7 sm:h-7" />
+            ) : isWaitlisted ? (
+              <Users className="w-6 h-6 sm:w-7 sm:h-7" />
+            ) : isRejected ? (
+              <AlertCircle className="w-6 h-6 sm:w-7 sm:h-7" />
+            ) : (
+              <Clock className="w-6 h-6 sm:w-7 sm:h-7" />
+            )}
           </div>
 
-          <span className="inline-block px-3 py-1 rounded-full text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.08em] bg-emerald-50 text-emerald-700 border border-emerald-200/80 mb-2.5">
-            {success.type === "waitlisted" ? "Waitlist Confirmed" : "Registration Received"}
+          <span
+            className={`inline-block px-3 py-1 rounded-full text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.08em] mb-2.5 ${
+              isApproved
+                ? "bg-emerald-50 text-emerald-700 border border-emerald-200/80"
+                : isWaitlisted
+                ? "bg-violet-50 text-violet-700 border border-violet-200/80"
+                : isRejected
+                ? "bg-red-50 text-red-700 border border-red-200/80"
+                : "bg-amber-50 text-amber-700 border border-amber-200/80"
+            }`}
+          >
+            {isApproved
+              ? "Registration Confirmed"
+              : isWaitlisted
+              ? "Added to Waitlist"
+              : isRejected
+              ? "Application Status"
+              : "Review Pending"}
           </span>
 
           <h1 className="text-xl sm:text-2xl font-extrabold tracking-[-0.02em] text-neutral-900 mb-2">
-            {success.type === "waitlisted" ? "You're on the waitlist!" : "Pass Confirmed!"}
+            {isApproved
+              ? "Registration Confirmed! Your QR pass is ready."
+              : isWaitlisted
+              ? "You're on the Waitlist!"
+              : isRejected
+              ? "Registration Not Approved"
+              : "Application Submitted"}
           </h1>
 
           <p className="text-xs sm:text-sm text-neutral-600 leading-relaxed mb-5 font-normal">
-            Thank you, <strong className="text-neutral-900 font-semibold">{success.attendeeName}</strong>. Your verified digital pass and barcode entry credentials have been issued and emailed.
+            {isApproved && (
+              <>
+                Thank you, <strong className="text-neutral-900 font-semibold">{success.attendeeName}</strong>. Your QR pass has been issued and emailed.
+              </>
+            )}
+            {isPending && (
+              <>
+                Thank you, <strong className="text-neutral-900 font-semibold">{success.attendeeName}</strong>. The organizer will review your registration. Your pass will be issued after approval.
+              </>
+            )}
+            {isWaitlisted && (
+              <>
+                Thank you, <strong className="text-neutral-900 font-semibold">{success.attendeeName}</strong>. You have been added to the waitlist. You will be notified automatically if a place becomes available.
+              </>
+            )}
+            {isRejected && (
+              <>
+                {success.message || "Your registration could not be confirmed at this time. Please contact the event organizer for assistance."}
+              </>
+            )}
           </p>
 
           <div className="p-3.5 sm:p-4 rounded-2xl bg-neutral-50/80 border border-neutral-200/80 text-xs text-left text-neutral-700 space-y-2.5 mb-5">
@@ -701,9 +772,39 @@ export default function ApplyForm({
             </div>
           </div>
 
+          {isApproved && success.passToken && (
+            <button
+              type="button"
+              onClick={() => router.push(`/pass/${success.passToken}`)}
+              className="w-full py-2.5 rounded-xl text-xs font-bold text-white shadow-sm hover:opacity-95 transition-all mb-3"
+              style={{ background: brandColor }}
+            >
+              View My QR Pass
+            </button>
+          )}
+
           <div className="flex items-center justify-center gap-1.5 text-xs text-neutral-500">
-            <BadgeCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-            <span>Digital QR Check-In Enabled at Gate</span>
+            {isApproved ? (
+              <>
+                <BadgeCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>Digital QR Pass Active & Ready for Gate Check-In</span>
+              </>
+            ) : isPending ? (
+              <>
+                <Clock className="w-4 h-4 text-amber-600 shrink-0" />
+                <span>Pass will be issued upon organizer approval</span>
+              </>
+            ) : isWaitlisted ? (
+              <>
+                <Users className="w-4 h-4 text-violet-600 shrink-0" />
+                <span>FIFO waitlist priority reserved for your spot</span>
+              </>
+            ) : (
+              <>
+                <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
+                <span>Contact organizer support for inquiries</span>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -1879,6 +1980,81 @@ export default function ApplyForm({
                               />
                               <span>Confirm and Agree</span>
                             </label>
+                          ) : field.type === "textarea" ? (
+                            <textarea
+                              value={(customResponses[field.id] as string) ?? ""}
+                              onChange={(e) =>
+                                setCustomResponses({ ...customResponses, [field.id]: e.target.value })
+                              }
+                              placeholder={field.placeholder || `Enter ${field.label.toLowerCase()}...`}
+                              rows={3}
+                              className={`${inputCls} resize-none text-xs`}
+                            />
+                          ) : field.type === "file_upload" ? (
+                            <div className="space-y-1.5">
+                              {customResponses[field.id] ? (
+                                <div className="flex items-center justify-between p-2.5 bg-violet-50/70 border border-violet-200/90 rounded-xl text-xs">
+                                  <div className="flex items-center gap-2 truncate">
+                                    <BadgeCheck className="w-4 h-4 text-violet-600 shrink-0" />
+                                    <span className="font-semibold text-neutral-800 truncate">
+                                      {typeof customResponses[field.id] === "object"
+                                        ? (customResponses[field.id] as any).fileName || "Document Uploaded"
+                                        : "Document Uploaded"}
+                                    </span>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const next = { ...customResponses };
+                                      delete next[field.id];
+                                      setCustomResponses(next);
+                                    }}
+                                    className="text-[11px] font-semibold text-red-600 hover:text-red-700 ml-2"
+                                  >
+                                    Remove
+                                  </button>
+                                </div>
+                              ) : (
+                                <label className="flex flex-col items-center justify-center p-3.5 border border-dashed border-neutral-300 rounded-xl bg-neutral-50/60 hover:bg-neutral-50 hover:border-violet-400 cursor-pointer transition-colors text-center">
+                                  <div className="flex items-center gap-2 text-xs font-semibold text-neutral-700">
+                                    <Upload className="w-4 h-4 text-violet-600" />
+                                    <span>Upload Document or Photo</span>
+                                  </div>
+                                  <span className="text-[10px] text-neutral-400 mt-0.5">
+                                    PDF, PNG, JPEG or WebP (max 5MB)
+                                  </span>
+                                  <input
+                                    type="file"
+                                    accept="image/png,image/jpeg,image/webp,application/pdf"
+                                    className="hidden"
+                                    onChange={async (e) => {
+                                      const file = e.target.files?.[0];
+                                      if (!file) return;
+                                      const form = new FormData();
+                                      form.append("file", file);
+                                      form.append("eventId", event.id);
+                                      try {
+                                        const res = await fetch("/api/upload/attendee-document", {
+                                          method: "POST",
+                                          body: form,
+                                        });
+                                        const json = await res.json();
+                                        if (json.document) {
+                                          setCustomResponses({
+                                            ...customResponses,
+                                            [field.id]: json.document,
+                                          });
+                                        } else {
+                                          alert(json.error || "Upload failed");
+                                        }
+                                      } catch {
+                                        alert("Upload failed. Please try again.");
+                                      }
+                                    }}
+                                  />
+                                </label>
+                              )}
+                            </div>
                           ) : (
                             <input
                               type={field.type === "number" ? "number" : "text"}

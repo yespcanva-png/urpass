@@ -49,7 +49,7 @@ export type Subscription = {
 
 export type EventStatus = "draft" | "active" | "completed" | "cancelled";
 
-export type CustomFieldType = "text" | "number" | "select" | "checkbox";
+export type CustomFieldType = "text" | "textarea" | "file_upload" | "number" | "select" | "checkbox";
 
 export interface CustomFieldDefinition {
   id: string;
@@ -75,6 +75,7 @@ export type Event = {
   status: EventStatus;
   application_enabled: boolean;
   waitlist_enabled?: boolean;
+  auto_promote_waitlist?: boolean;
   is_paid_event: boolean;
   ticket_price: number;
   custom_fields?: CustomFieldDefinition[];
@@ -140,7 +141,9 @@ export type Attendee = {
   pass_type: string;
   application_status: ApplicationStatus;
   pass_status: PassStatus;
-  custom_responses?: Record<string, any> | null;
+  company?: string | null;
+  cancellation_token?: string | null;
+  custom_responses?: Record<string, unknown> | null;
   created_at: string;
   updated_at: string;
 };
@@ -260,7 +263,17 @@ export type WorkspaceMember = {
   member?: OrganizationMember;
 };
 
-export type VenueType = "physical" | "virtual" | "hybrid";
+export type VenueType =
+  | "physical"
+  | "virtual"
+  | "hybrid"
+  | "auditorium"
+  | "conference_room"
+  | "hall"
+  | "stadium"
+  | "outdoor"
+  | "classroom"
+  | "other";
 
 export type Location = {
   id: string;

@@ -7,7 +7,20 @@ export const locationSchema = z.object({
     .min(2, "Location name must be at least 2 characters")
     .max(100, "Location name must be under 100 characters"),
   workspace_id: z.string().uuid("Invalid workspace ID").nullable().optional(),
-  venue_type: z.enum(["physical", "virtual", "hybrid"]).default("physical"),
+  venue_type: z
+    .enum([
+      "physical",
+      "virtual",
+      "hybrid",
+      "auditorium",
+      "conference_room",
+      "hall",
+      "stadium",
+      "outdoor",
+      "classroom",
+      "other",
+    ])
+    .default("physical"),
   address: z.string().trim().max(300, "Address must be under 300 characters").optional().or(z.literal("")),
   city: z.string().trim().max(100, "City must be under 100 characters").optional().or(z.literal("")),
   state: z.string().trim().max(100, "State must be under 100 characters").optional().or(z.literal("")),

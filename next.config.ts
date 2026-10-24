@@ -19,6 +19,11 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       {
+        source: "/event/new",
+        destination: "/create-event",
+        permanent: false,
+      },
+      {
         source: "/lifetime",
         destination: "/founder-lifetime-deal",
         permanent: true,

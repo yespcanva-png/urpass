@@ -58,6 +58,7 @@ const STATUS_CONFIG: Record<string, { label: string; cls: string; dot: string }>
   draft:     { label: "Draft",     cls: "bg-neutral-100 text-neutral-600 border border-neutral-200",     dot: "bg-neutral-400" },
   completed: { label: "Completed", cls: "bg-blue-50 text-blue-700 border border-blue-200/70",          dot: "bg-blue-500" },
   cancelled: { label: "Cancelled", cls: "bg-red-50 text-red-600 border border-red-200/70",             dot: "bg-red-500" },
+  archived:  { label: "Archived",  cls: "bg-neutral-100 text-neutral-600 border border-neutral-200",     dot: "bg-neutral-400" },
 };
 
 function getGreeting() {
@@ -111,7 +112,7 @@ export default function DashboardContent() {
   const greeting = useSyncExternalStore(emptySubscribe, getGreeting, () => "Welcome");
   const [planSlug, setPlanSlug] = useState("free");
   const [hasGateway, setHasGateway] = useState(false);
-  const [country, setCountry] = useState<"IN" | "GB">("IN");
+  const [country, setCountry] = useState<"IN" | "GB">(() => detectCountryClient());
   const [trialInfo, setTrialInfo] = useState<{
     isEligible: boolean;
     isActiveTrial: boolean;
@@ -130,12 +131,10 @@ export default function DashboardContent() {
   const [currentUser, setCurrentUser] = useState<{ email?: string | null; id?: string | null } | null>(null);
 
   // Table Filters
-  const [filterTab, setFilterTab] = useState<"all" | "upcoming" | "draft" | "past">("all");
+  const [filterTab, setFilterTab] = useState<"all" | "upcoming" | "draft" | "past" | "archived">("all");
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
-    setCountry(detectCountryClient());
-
     async function load() {
       try {
         const supabase = createClient();
@@ -275,6 +274,8 @@ export default function DashboardContent() {
         const matches = ev.name.toLowerCase().includes(q) || (ev.venue || "").toLowerCase().includes(q);
         if (!matches) return false;
       }
+      if (filterTab === "archived") return ev.status === "archived";
+      if (ev.status === "archived") return false;
       if (filterTab === "all") return true;
       if (filterTab === "draft") return ev.status === "draft";
       const isPast = new Date(ev.event_date) < now;
@@ -536,7 +537,7 @@ export default function DashboardContent() {
                   filterTab === "all" ? "bg-white text-neutral-900 shadow-2xs border border-neutral-200/80" : "text-neutral-500 hover:text-neutral-900"
                 }`}
               >
-                All ({events.length})
+                All ({events.filter((e) => e.status !== "archived").length})
               </button>
               <button
                 type="button"
@@ -564,6 +565,15 @@ export default function DashboardContent() {
                 }`}
               >
                 Past
+              </button>
+              <button
+                type="button"
+                onClick={() => setFilterTab("archived")}
+                className={`px-3 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                  filterTab === "archived" ? "bg-white text-neutral-900 shadow-2xs border border-neutral-200/80" : "text-neutral-500 hover:text-neutral-900"
+                }`}
+              >
+                Archived ({events.filter((e) => e.status === "archived").length})
               </button>
             </div>
 
