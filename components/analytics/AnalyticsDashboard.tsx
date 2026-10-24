@@ -31,7 +31,7 @@ import {
   Layers,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import type { AnalyticsData, RecentScan } from "@/app/actions/analytics";
+import { exportFullEventAttendanceAction, type AnalyticsData, type RecentScan } from "@/app/actions/analytics";
 
 interface Props {
   initialData: AnalyticsData;
@@ -200,7 +200,7 @@ export default function AnalyticsDashboard({ initialData, isScopedToEvent = fals
     });
   }
 
-  function handleExportCSV() {
+  async function handleExportCSV() {
     setIsExporting(true);
     try {
       const headers = [
@@ -214,27 +214,43 @@ export default function AnalyticsDashboard({ initialData, isScopedToEvent = fals
         "Check-in Date & Time (IST)",
       ];
 
-      const rows = data.recentScans.map((s) => {
-        const istDate = new Date(s.checkedInAt).toLocaleString("en-IN", {
-          timeZone: "Asia/Kolkata",
-          dateStyle: "medium",
-          timeStyle: "medium",
-        });
-        const seqText = s.scanSequence && s.scanSequence > 1 
-          ? `Re-Entry #${s.scanSequence - 1} (Scan ${s.scanSequence})` 
-          : "1st Entry";
+      let formattedRows: string[] = [];
+      const exportRes = await exportFullEventAttendanceAction(data.eventId);
 
-        return [
+      if (exportRes.success && exportRes.rows && exportRes.rows.length > 0) {
+        formattedRows = exportRes.rows.map((s) => [
           `"${s.name.replace(/"/g, '""')}"`,
           `"${s.email.replace(/"/g, '""')}"`,
           `"${s.passType.replace(/"/g, '""')}"`,
           `"${s.gateName.replace(/"/g, '""')}"`,
-          `"${seqText}"`,
-          `"${s.method.toUpperCase()}"`,
+          `"${s.seqText}"`,
+          `"${s.method}"`,
           `"${s.checkedInAt}"`,
-          `"${istDate}"`,
-        ].join(",");
-      });
+          `"${s.istDate}"`,
+        ].join(","));
+      } else {
+        formattedRows = data.recentScans.map((s) => {
+          const istDate = new Date(s.checkedInAt).toLocaleString("en-IN", {
+            timeZone: "Asia/Kolkata",
+            dateStyle: "medium",
+            timeStyle: "medium",
+          });
+          const seqText = s.scanSequence && s.scanSequence > 1 
+            ? `Re-Entry #${s.scanSequence - 1} (Scan ${s.scanSequence})` 
+            : "1st Entry";
+
+          return [
+            `"${s.name.replace(/"/g, '""')}"`,
+            `"${s.email.replace(/"/g, '""')}"`,
+            `"${s.passType.replace(/"/g, '""')}"`,
+            `"${s.gateName.replace(/"/g, '""')}"`,
+            `"${seqText}"`,
+            `"${s.method.toUpperCase()}"`,
+            `"${s.checkedInAt}"`,
+            `"${istDate}"`,
+          ].join(",");
+        });
+      }
 
       // Summary lines with comprehensive check-in and re-entry telemetry
       const summaryRows = [
@@ -254,7 +270,7 @@ export default function AnalyticsDashboard({ initialData, isScopedToEvent = fals
         `"Peak Velocity:","${data.peakVelocity} scans/hr (${data.peakVelocityTime})"`,
         `""`,
         headers.join(","),
-        ...rows,
+        ...formattedRows,
       ];
 
       const csvContent = "data:text/csv;charset=utf-8," + encodeURIComponent(summaryRows.join("\n"));
@@ -340,7 +356,7 @@ export default function AnalyticsDashboard({ initialData, isScopedToEvent = fals
           {/* Export Report CSV */}
           <button
             onClick={handleExportCSV}
-            disabled={isExporting || data.checkedInCount === 0}
+            disabled={isExporting || (data.checkedInCount === 0 && data.totalRegistrations === 0)}
             className="flex items-center gap-1.5 text-xs font-semibold text-white px-4 py-2.5 rounded-xl transition-all shadow-sm hover:opacity-90 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
             style={{ background: "#6D28D9" }}
           >

@@ -789,7 +789,7 @@ export default function ScanEventPage() {
 
   const verify = useCallback(
     async (rawToken: string, force = false) => {
-      if (!force && !isScannerActive) return;
+      if (!force && (!isScannerActive || scanState !== "READY")) return;
       if (cooldownRef.current) return;
       const now = Date.now();
       if (rawToken === lastTokenRef.current && (now - lastTokenTimeRef.current < SAME_TOKEN_DEBOUNCE_MS)) {

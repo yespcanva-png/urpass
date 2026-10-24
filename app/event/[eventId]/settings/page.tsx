@@ -1548,7 +1548,7 @@ export default function EventSettingsPage() {
 
       {/* Floating Save Bar for unsaved changes */}
       {isDirty && (
-        <div className="fixed bottom-6 inset-x-0 z-50 flex justify-center px-4 pointer-events-none animate-in fade-in slide-in-from-bottom-4 duration-200">
+        <div className="fixed bottom-20 lg:bottom-6 inset-x-0 z-50 flex justify-center px-4 pointer-events-none animate-in fade-in slide-in-from-bottom-4 duration-200">
           <div className="bg-neutral-900 text-white rounded-2xl shadow-2xl px-5 py-3 flex items-center gap-4 border border-neutral-700 pointer-events-auto max-w-lg w-full justify-between">
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />

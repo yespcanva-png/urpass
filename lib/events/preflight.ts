@@ -113,9 +113,12 @@ export async function validateEventPreflightReadiness(
   }
 
   if (datesPassed && event.start_time && event.end_time) {
-    if (event.start_time > event.end_time) {
+    if (event.start_time === event.end_time) {
       datesPassed = false;
-      datesMessage = `Start time (${event.start_time}) cannot be later than end time (${event.end_time}).`;
+      datesMessage = "Start time and end time cannot be identical.";
+    } else if (event.start_time > event.end_time) {
+      // Valid overnight schedule spanning past midnight into the next morning
+      datesMessage = `Overnight schedule configured (${event.start_time} to ${event.end_time} next day).`;
     }
   }
 

@@ -22,7 +22,7 @@ export default async function NewTicketTypePage({
   const [{ data: event }, plan, ticketTypes] = await Promise.all([
     supabase
       .from("events")
-      .select("id, organizer_id, organization_id")
+      .select("id, organizer_id, organization_id, currency")
       .eq("id", eventId)
       .single(),
     getUserPlan(supabase, user.id),
@@ -48,5 +48,5 @@ export default async function NewTicketTypePage({
     redirect(`/event/${eventId}/tickets`);
   }
 
-  return <TicketTypeForm eventId={eventId} />;
+  return <TicketTypeForm eventId={eventId} currency={event.currency || "INR"} />;
 }

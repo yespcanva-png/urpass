@@ -23,7 +23,6 @@ import {
 import {
   BUILT_IN_ROLES,
   getRolePermissions,
-  cloneRoleTemplate,
 } from "@/lib/rbac/roles";
 import InviteMemberModal from "@/components/org/InviteMemberModal";
 
@@ -39,31 +38,13 @@ export default function RbacPermissionEditor({
   userRole?: string;
 }) {
   const [selectedRoleId, setSelectedRoleId] = useState<string>("gate_staff");
-  const [customPermissions, setCustomPermissions] = useState<Record<string, UrPassPermission[]>>({});
   const [copied, setCopied] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [inviteSuccessMsg, setInviteSuccessMsg] = useState("");
 
   const isOwnerOrAdmin = userRole === "owner" || userRole === "admin";
   const activeRole = BUILT_IN_ROLES[selectedRoleId] || BUILT_IN_ROLES.gate_staff;
-
-  // Active permissions for the selected role
-  const effectivePermissions: UrPassPermission[] =
-    customPermissions[selectedRoleId] || [...activeRole.permissions];
-
-  const togglePermission = (permId: UrPassPermission) => {
-    if (selectedRoleId === "owner") return; // Owner always has all permissions
-    const current = new Set(effectivePermissions);
-    if (current.has(permId)) {
-      current.delete(permId);
-    } else {
-      current.add(permId);
-    }
-    setCustomPermissions((prev) => ({
-      ...prev,
-      [selectedRoleId]: Array.from(current),
-    }));
-  };
+  const effectivePermissions: UrPassPermission[] = [...activeRole.permissions];
 
   const handleCopyConfig = () => {
     const payload = {
@@ -79,19 +60,6 @@ export default function RbacPermissionEditor({
     setTimeout(() => setCopied(false), 2500);
   };
 
-  const handleCloneRole = () => {
-    const customRoleName = `${activeRole.name} (Custom)`;
-    const newCustom = cloneRoleTemplate(
-      selectedRoleId,
-      customRoleName,
-      orgId || "org_current",
-      {
-        description: `Custom permission set cloned from ${activeRole.name}`,
-      }
-    );
-    alert(`Cloned ${customRoleName} with ${newCustom.permissions.length} permissions ready for assignment.`);
-  };
-
   const categories = Object.keys(PERMISSION_CATEGORIES) as PermissionCategory[];
 
   return (
@@ -105,11 +73,11 @@ export default function RbacPermissionEditor({
               <KeyRound className="w-4 h-4" />
             </div>
             <h2 className="text-base font-bold text-neutral-900">
-              Role Permissions
+              Role Permissions Matrix
             </h2>
           </div>
           <p className="text-xs text-neutral-500 mt-1">
-            Enterprise RBAC matrix · Configure and preview role-level granular permissions
+            Enterprise RBAC system policy · Built-in permissions for organization team members
           </p>
         </div>
 
@@ -171,16 +139,8 @@ export default function RbacPermissionEditor({
 
         <div className="flex items-center gap-2">
           <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-violet-100 text-violet-800">
-            {effectivePermissions.length} permissions selected
+            {effectivePermissions.length} permissions assigned
           </span>
-          {isOwnerOrAdmin && selectedRoleId !== "owner" && (
-            <button
-              onClick={handleCloneRole}
-              className="text-xs font-bold px-3 py-1 rounded-xl bg-white border border-neutral-200 text-neutral-700 hover:bg-neutral-100 transition-colors shadow-2xs"
-            >
-              + Clone Role
-            </button>
-          )}
           {orgId && (
             <button
               onClick={() => setShowInviteModal(true)}
@@ -225,25 +185,26 @@ export default function RbacPermissionEditor({
                 {catPermissions.map((p) => {
                   const isChecked =
                     selectedRoleId === "owner" || effectivePermissions.includes(p.id);
-                  const isLocked = selectedRoleId === "owner";
 
                   return (
-                    <label
+                    <div
                       key={p.id}
-                      className={`flex items-start gap-2.5 p-2 rounded-xl transition-colors ${
-                        isLocked ? "cursor-default" : "cursor-pointer hover:bg-neutral-50"
-                      }`}
+                      className="flex items-start gap-2.5 p-2 rounded-xl transition-colors hover:bg-neutral-50/80"
                     >
-                      <input
-                        type="checkbox"
-                        checked={isChecked}
-                        disabled={isLocked}
-                        onChange={() => togglePermission(p.id)}
-                        className="mt-0.5 rounded text-violet-600 focus:ring-violet-500 w-4 h-4 rounded border-neutral-300 cursor-pointer disabled:opacity-80"
-                      />
+                      <div className="mt-0.5 shrink-0">
+                        {isChecked ? (
+                          <div className="w-4 h-4 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center">
+                            <Check className="w-2.5 h-2.5 stroke-[3]" />
+                          </div>
+                        ) : (
+                          <div className="w-4 h-4 rounded-full bg-neutral-100 text-neutral-400 flex items-center justify-center text-[10px]">
+                            -
+                          </div>
+                        )}
+                      </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5">
-                          <span className={`text-xs font-semibold ${isChecked ? "text-neutral-900" : "text-neutral-500"}`}>
+                          <span className={`text-xs font-semibold ${isChecked ? "text-neutral-900" : "text-neutral-400"}`}>
                             {p.label}
                           </span>
                           {p.requiredFeature && (
@@ -251,12 +212,21 @@ export default function RbacPermissionEditor({
                               optional module
                             </span>
                           )}
+                          <span
+                            className={`ml-auto text-[10px] font-medium px-1.5 py-0.5 rounded ${
+                              isChecked
+                                ? "bg-emerald-50 text-emerald-700 border border-emerald-200/60"
+                                : "bg-neutral-50 text-neutral-400 border border-neutral-200/40"
+                            }`}
+                          >
+                            {isChecked ? "Granted" : "Restricted"}
+                          </span>
                         </div>
                         <p className="text-[11px] text-neutral-400 mt-0.5">
                           {p.description}
                         </p>
                       </div>
-                    </label>
+                    </div>
                   );
                 })}
               </div>
@@ -265,9 +235,9 @@ export default function RbacPermissionEditor({
         })}
       </div>
 
-      <div className="pt-2 flex items-center justify-between text-[11px] text-neutral-400 border-t border-neutral-100">
-        <span>Illustrative permission editor; custom role modifications apply to authorized tenant scopes.</span>
-        <span className="font-mono text-[10px]">UrPass M13 · RBAC Ready</span>
+      <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between text-[11px] text-neutral-400 border-t border-neutral-100 gap-2">
+        <span>Security policy: Built-in role permissions are managed according to platform security standards.</span>
+        <span className="font-mono text-[10px]">UrPass RBAC System</span>
       </div>
 
       {showInviteModal && orgId && (

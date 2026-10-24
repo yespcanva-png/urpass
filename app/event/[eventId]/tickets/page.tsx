@@ -52,10 +52,7 @@ const STATUS_CONFIG = {
   sold_out: { label: "Sold Out", cls: "bg-amber-50 text-amber-700" },
 };
 
-function formatPrice(paise: number) {
-  if (paise === 0) return "Free";
-  return `₹${(paise / 100).toLocaleString("en-IN")}`;
-}
+import { formatPrice, formatAmount } from "@/lib/currency";
 
 export default async function TicketsPage({
   params,
@@ -73,7 +70,7 @@ export default async function TicketsPage({
   const [{ data: event }, plan, ticketTypes, ticketIdConfigData] = await Promise.all([
     supabase
       .from("events")
-      .select("id, name, organizer_id, organization_id")
+      .select("id, name, organizer_id, organization_id, currency")
       .eq("id", eventId)
       .single(),
     getUserPlan(supabase, user.id),
@@ -98,6 +95,7 @@ export default async function TicketsPage({
   const isFree = plan.slug === "free";
   const maxTicketTypes = isFree ? 1 : Infinity;
   const canAddMore = ticketTypes.length < maxTicketTypes;
+  const currency = event.currency || "INR";
 
   // Summary stats
   const totalSold = ticketTypes.reduce((sum, t) => sum + t.sold_count, 0);
@@ -150,7 +148,7 @@ export default async function TicketsPage({
               Revenue
             </p>
             <p className="text-3xl font-bold tabular-nums text-neutral-900">
-              {totalRevenue === 0 ? "₹0" : `₹${(totalRevenue / 100).toLocaleString("en-IN")}`}
+              {totalRevenue === 0 ? formatPrice(0, currency) : formatPrice(totalRevenue, currency)}
             </p>
             <p className="text-xs text-neutral-400 mt-1">From paid tickets</p>
           </div>
@@ -226,8 +224,8 @@ export default async function TicketsPage({
                       {/* Price */}
                       <span className="text-sm font-bold text-neutral-900">
                         {tt.age_pricing_enabled && tt.age_tiers && tt.age_tiers.length > 0
-                          ? `From ₹${Math.min(...tt.age_tiers.map((a) => a.price / 100))}`
-                          : formatPrice(tt.price)}
+                          ? `From ${formatPrice(Math.min(...tt.age_tiers.map((a) => a.price)), currency)}`
+                          : formatPrice(tt.price, currency)}
                       </span>
 
                       {/* Status */}
@@ -247,14 +245,14 @@ export default async function TicketsPage({
                       {/* Extra Members Pill */}
                       {tt.allow_extra_guests && (
                         <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                          +{tt.extra_guest_price ? `₹${tt.extra_guest_price}` : "Free"}/extra member
+                          +{tt.extra_guest_price ? `${formatAmount(tt.extra_guest_price, currency)}` : "Free"}/extra member
                         </span>
                       )}
 
                       {/* Revenue */}
                       {tt.price > 0 && (
                         <span className="text-xs text-neutral-400">
-                          Revenue: ₹{(revenue / 100).toLocaleString("en-IN")}
+                          Revenue: {formatPrice(revenue, currency)}
                         </span>
                       )}
                     </div>
@@ -271,7 +269,7 @@ export default async function TicketsPage({
                             <span className="font-semibold">{at.label}</span>
                             <span className="text-neutral-400">•</span>
                             <span className={at.is_free || at.price === 0 ? "text-emerald-600 font-bold" : "text-neutral-900 font-bold"}>
-                              {at.is_free || at.price === 0 ? "Free" : `₹${at.price / 100}`}
+                              {at.is_free || at.price === 0 ? "Free" : formatPrice(at.price, currency)}
                             </span>
                           </span>
                         ))}

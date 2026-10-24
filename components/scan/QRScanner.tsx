@@ -40,13 +40,15 @@ export default function QRScanner({
   const mountedRef = useRef(true);
   const activeRef = useRef(active);
   const onScanRef = useRef(onScan);
+  const statusVariantRef = useRef(statusVariant);
   const currentFacingRef = useRef(facingMode);
 
   // Keep activeRef in sync without restarting the camera hardware
   useEffect(() => {
     activeRef.current = active;
     onScanRef.current = onScan;
-  }, [active, onScan]);
+    statusVariantRef.current = statusVariant;
+  }, [active, onScan, statusVariant]);
 
   async function startScanner(targetFacing: "environment" | "user" = facingMode) {
     try {
@@ -71,7 +73,7 @@ export default function QRScanner({
       scannerRef.current = scanner;
 
       const handleScanSuccess = (decodedText: string) => {
-        if (mountedRef.current && activeRef.current) {
+        if (mountedRef.current && activeRef.current && statusVariantRef.current === "READY") {
           onScanRef.current(decodedText.trim());
         }
       };

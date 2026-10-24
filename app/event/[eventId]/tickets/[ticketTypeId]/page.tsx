@@ -20,7 +20,7 @@ export default async function EditTicketTypePage({
 
   const { data: event } = await supabase
     .from("events")
-    .select("id, organizer_id, organization_id")
+    .select("id, organizer_id, organization_id, currency")
     .eq("id", eventId)
     .single();
 
@@ -47,6 +47,7 @@ export default async function EditTicketTypePage({
       eventId={eventId}
       initialData={ticketType}
       ticketTypeId={ticketTypeId}
+      currency={event.currency || "INR"}
     />
   );
 }

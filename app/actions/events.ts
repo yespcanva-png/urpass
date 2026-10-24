@@ -277,6 +277,20 @@ export async function createEvent(data: EventInput, organizationId?: string): Pr
     });
   }
 
+  // If event was created directly as active (published), enforce unified pre-flight readiness checks
+  if (baseFields.status === "active") {
+    const preflight = await validateEventPreflightReadiness(event.id, supabase);
+    if (!preflight.ready && preflight.errors.length > 0) {
+      await supabase.from("events").update({ status: "draft" }).eq("id", event.id);
+      revalidatePath("/dashboard");
+      revalidatePath("/dashboard/events");
+      return {
+        eventId: event.id,
+        error: `Event saved as draft. Direct publication requirements not met:\n• ${preflight.errors.map((e) => e.message).join("\n• ")}`,
+      };
+    }
+  }
+
   // Record trial usage if on free event autopay trial
   if (access.isTrial || access.state === "autopay_trial_active") {
     if (process.env.SUPABASE_SERVICE_ROLE_KEY) {

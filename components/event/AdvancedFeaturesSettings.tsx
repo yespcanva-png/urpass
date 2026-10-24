@@ -249,7 +249,7 @@ const MODULAR_FEATURES: ModuleMeta[] = [
     icon: DoorOpen,
     tag: "GATES & VENUE",
     category: "venue",
-    configUrl: (eventId) => `/event/${eventId}/gates`,
+    configUrl: (eventId) => `/event/${eventId}/operations`,
     defaultConfigTitle: "Gate Operations & Presence Controls",
     configOptions: [
       {
@@ -375,7 +375,7 @@ const MODULAR_FEATURES: ModuleMeta[] = [
     icon: WifiOff,
     tag: "SCANNER OPS",
     category: "venue",
-    configUrl: (eventId) => `/event/${eventId}/scanner`,
+    configUrl: (eventId) => `/scan/${eventId}`,
     defaultConfigTitle: "Offline Scanner Manifest Rules",
     configOptions: [
       {
@@ -723,18 +723,27 @@ export default function AdvancedFeaturesSettings({ eventId }: AdvancedFeaturesSe
   const applyPreset = async (targetKeys: FeatureFlagKey[]) => {
     setErrorMsg("");
     setSuccessMsg("Applying preset configuration…");
+    const originalFlags = { ...flags };
     try {
       for (const mod of MODULAR_FEATURES) {
         const shouldBeEnabled = targetKeys.includes(mod.key);
         if (Boolean(flags[mod.key]) !== shouldBeEnabled) {
-          await updateEventFeatureFlag(eventId, mod.key, shouldBeEnabled);
+          const res = await updateEventFeatureFlag(eventId, mod.key, shouldBeEnabled);
+          if (res?.error) {
+            setFlags(originalFlags);
+            setSuccessMsg("");
+            setErrorMsg(`Failed to update ${mod.name}: ${res.error}`);
+            return;
+          }
           setFlags((prev) => ({ ...prev, [mod.key]: shouldBeEnabled }));
         }
       }
       setSuccessMsg("Preset applied successfully.");
       setTimeout(() => setSuccessMsg(""), 4000);
-    } catch {
-      setErrorMsg("Some features in the preset could not be updated.");
+    } catch (err) {
+      setFlags(originalFlags);
+      setSuccessMsg("");
+      setErrorMsg(err instanceof Error ? err.message : "Some features in the preset could not be updated.");
     }
   };
 

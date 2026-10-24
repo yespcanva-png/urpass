@@ -36,11 +36,13 @@ import {
   deleteTicketType,
 } from "@/app/actions/ticket-types";
 import type { TicketTypeWithStats } from "@/app/actions/ticket-types";
+import { getCurrencySymbol } from "@/lib/currency";
 
 interface Props {
   eventId: string;
   initialData?: TicketTypeWithStats;
   ticketTypeId?: string;
+  currency?: string;
 }
 
 const inputCls =
@@ -93,8 +95,9 @@ function toISOStringOrNull(val?: string | null): string | null {
   return isNaN(d.getTime()) ? null : d.toISOString();
 }
 
-export default function TicketTypeForm({ eventId, initialData, ticketTypeId }: Props) {
+export default function TicketTypeForm({ eventId, initialData, ticketTypeId, currency = "INR" }: Props) {
   const router = useRouter();
+  const currencySymbol = getCurrencySymbol(currency).trim();
   const [serverError, setServerError] = useState("");
   const [isFree, setIsFree] = useState(
     initialData ? initialData.price === 0 && !initialData.age_pricing_enabled : true
@@ -437,11 +440,11 @@ export default function TicketTypeForm({ eventId, initialData, ticketTypeId }: P
           {!agePricingEnabled && !isFree && (
             <div className="flex flex-col gap-1.5 animate-in fade-in duration-150">
               <label className="text-xs font-semibold text-neutral-700">
-                Standard Price per Attendee (₹)
+                Standard Price per Attendee ({currencySymbol})
               </label>
               <div className="relative">
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold text-neutral-400">
-                  ₹
+                  {currencySymbol}
                 </span>
                 <input
                   type="number"
@@ -594,10 +597,10 @@ export default function TicketTypeForm({ eventId, initialData, ticketTypeId }: P
 
                           {/* Price */}
                           <div className="sm:col-span-2 flex flex-col gap-1">
-                            <label className="text-[10px] font-bold text-neutral-500 uppercase">Price (₹)</label>
+                            <label className="text-[10px] font-bold text-neutral-500 uppercase">Price ({currencySymbol})</label>
                             <div className="relative">
                               <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-semibold text-neutral-400">
-                                ₹
+                                {currencySymbol}
                               </span>
                               <input
                                 type="number"
@@ -698,11 +701,11 @@ export default function TicketTypeForm({ eventId, initialData, ticketTypeId }: P
                 {/* Extra Member Price */}
                 <div className="flex flex-col gap-1.5">
                   <label className="text-xs font-semibold text-neutral-700">
-                    Price per Extra Member (₹)
+                    Price per Extra Member ({currencySymbol})
                   </label>
                   <div className="relative">
                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-neutral-400">
-                      ₹
+                      {currencySymbol}
                     </span>
                     <input
                       type="number"
@@ -750,7 +753,7 @@ export default function TicketTypeForm({ eventId, initialData, ticketTypeId }: P
                             : "text-neutral-500 hover:text-neutral-800"
                         }`}
                       >
-                        Flat Fee (₹{watchedExtraPrice}/person)
+                        Flat Fee ({currencySymbol}{watchedExtraPrice}/person)
                       </button>
                       <button
                         type="button"
@@ -800,7 +803,7 @@ export default function TicketTypeForm({ eventId, initialData, ticketTypeId }: P
                   >
                     {watchedAgeTiers.map((t, idx) => (
                       <option key={idx} value={idx}>
-                        {t.label} — {t.is_free ? "Free" : `₹${t.price}`}
+                        {t.label} — {t.is_free ? "Free" : `${currencySymbol}${t.price}`}
                       </option>
                     ))}
                   </select>
@@ -838,13 +841,13 @@ export default function TicketTypeForm({ eventId, initialData, ticketTypeId }: P
                 <div className="flex justify-between">
                   <span>Primary Attendee:</span>
                   <span className="font-semibold text-white">
-                    {simulatedPrimaryPrice === 0 ? "Free (£0 / ₹0)" : `₹${simulatedPrimaryPrice}`}
+                    {simulatedPrimaryPrice === 0 ? "Free" : `${currencySymbol}${simulatedPrimaryPrice}`}
                   </span>
                 </div>
                 {allowExtraGuests && simExtraMembers > 0 && (
                   <div className="flex justify-between text-neutral-400">
                     <span>{simExtraMembers} Extra Member(s):</span>
-                    <span>+₹{simulatedExtraMembersTotal}</span>
+                    <span>+{currencySymbol}{simulatedExtraMembersTotal}</span>
                   </div>
                 )}
               </div>
@@ -852,7 +855,7 @@ export default function TicketTypeForm({ eventId, initialData, ticketTypeId }: P
               <div className="pt-2 mt-2 border-t border-neutral-800 flex items-center justify-between">
                 <span className="text-xs font-bold text-neutral-200">Total Calculated:</span>
                 <span className="text-base font-extrabold text-emerald-400">
-                  {simulatedTotalPayable === 0 ? "FREE" : `₹${simulatedTotalPayable}`}
+                  {simulatedTotalPayable === 0 ? "FREE" : `${currencySymbol}${simulatedTotalPayable}`}
                 </span>
               </div>
             </div>

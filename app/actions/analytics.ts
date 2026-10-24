@@ -383,9 +383,18 @@ export async function getAnalyticsData(targetEventId?: string): Promise<Analytic
   });
 
   // Calculate unique checked in attendees:
-  const uniqueAttendeeIds = new Set(checkins.map((c) => c.attendee_id));
-  const uniqueCheckedInCount = uniqueAttendeeIds.size;
-  const totalScansCount = checkins.length;
+  const authoritativeCheckedInIds = new Set([
+    ...checkins.map((c) => c.attendee_id),
+    ...attendees
+      .filter(
+        (a) =>
+          a.pass_status === "checked_in" ||
+          a.venue_presence_state?.toUpperCase() === "INSIDE"
+      )
+      .map((a) => a.id),
+  ]);
+  const uniqueCheckedInCount = authoritativeCheckedInIds.size;
+  const totalScansCount = Math.max(checkins.length, uniqueCheckedInCount);
 
   let singleScanCount = 0;
   let multiScanCount = 0;
@@ -426,7 +435,10 @@ export async function getAnalyticsData(targetEventId?: string): Promise<Analytic
         : sum,
     0
   );
-  const checkedInCount = uniqueCheckedInCount;
+  const checkedInCount = Array.from(authoritativeCheckedInIds).reduce(
+    (sum, id) => sum + (entitlementUnitsByAttendee.get(id) ?? 1),
+    0
+  );
   const notArrivedCount = Math.max(0, approvedCount - checkedInCount);
 
   const attendanceRate =
@@ -784,4 +796,157 @@ export async function getAnalyticsData(targetEventId?: string): Promise<Analytic
     highFrequencyScanCount,
     currentInsideCount,
   };
+}
+
+export async function exportFullEventAttendanceAction(eventId?: string): Promise<{
+  success: boolean;
+  rows?: Array<{
+    name: string;
+    email: string;
+    passType: string;
+    gateName: string;
+    seqText: string;
+    method: string;
+    checkedInAt: string;
+    istDate: string;
+  }>;
+  summary?: Record<string, any>;
+  error?: string;
+}> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { success: false, error: "Authentication required" };
+  }
+
+  try {
+    const analyticsData = await getAnalyticsData(eventId);
+    let eventIds: string[] = [];
+    if (eventId) {
+      eventIds = [eventId];
+    } else {
+      const { data: userEvents } = await supabase
+        .from("events")
+        .select("id")
+        .eq("organizer_id", user.id);
+      eventIds = (userEvents ?? []).map((e) => e.id);
+    }
+
+    const [att, chk, gts] = await Promise.all([
+      supabase
+        .from("attendees")
+        .select("id, name, email, pass_type, pass_status, venue_presence_state")
+        .in("event_id", eventIds),
+      supabase
+        .from("check_ins")
+        .select("id, attendee_id, checked_in_at, gate_id, check_in_method, gate:scanner_gates(name)")
+        .in("event_id", eventIds)
+        .order("checked_in_at", { ascending: true }),
+      supabase
+        .from("scanner_gates")
+        .select("id, name")
+        .in("event_id", eventIds),
+    ]);
+
+    const attendeesData = att.data || [];
+    const checkinsData = chk.data || [];
+    const gatesData = gts.data || [];
+
+    const attendeeMap = new Map<string, any>();
+    attendeesData.forEach((a) => attendeeMap.set(a.id, a));
+    const gateMap = new Map<string, string>();
+    gatesData.forEach((g) => gateMap.set(g.id, g.name));
+
+    const attendeeScanSeq = new Map<string, number>();
+    const rows: Array<{
+      name: string;
+      email: string;
+      passType: string;
+      gateName: string;
+      seqText: string;
+      method: string;
+      checkedInAt: string;
+      istDate: string;
+    }> = [];
+
+    const recordedAttendeeIds = new Set<string>();
+
+    for (const c of checkinsData) {
+      recordedAttendeeIds.add(c.attendee_id);
+      const seq = (attendeeScanSeq.get(c.attendee_id) ?? 0) + 1;
+      attendeeScanSeq.set(c.attendee_id, seq);
+
+      const a = attendeeMap.get(c.attendee_id);
+      const gateName = resolveGateName(c.gate) || (c.gate_id && gateMap.get(c.gate_id)) || "Main Entrance";
+      const passType = a?.pass_type ? PASS_LABELS[a.pass_type] ?? a.pass_type : "Participant";
+      const seqText = seq > 1 ? `Re-Entry #${seq - 1} (Scan ${seq})` : "1st Entry";
+      const istDate = new Date(c.checked_in_at).toLocaleString("en-IN", {
+        timeZone: "Asia/Kolkata",
+        dateStyle: "medium",
+        timeStyle: "medium",
+      });
+
+      rows.push({
+        name: a?.name ?? "Unknown Attendee",
+        email: a?.email ?? "",
+        passType,
+        gateName,
+        seqText,
+        method: (c.check_in_method ?? "qr").toUpperCase(),
+        checkedInAt: c.checked_in_at,
+        istDate,
+      });
+    }
+
+    // Include attendees marked checked_in who do not have a log in check_ins
+    for (const a of attendeesData) {
+      if (
+        !recordedAttendeeIds.has(a.id) &&
+        (a.pass_status === "checked_in" || a.venue_presence_state?.toUpperCase() === "INSIDE")
+      ) {
+        rows.push({
+          name: a.name ?? "Unknown Attendee",
+          email: a.email ?? "",
+          passType: a.pass_type ? PASS_LABELS[a.pass_type] ?? a.pass_type : "Participant",
+          gateName: "Direct Admission",
+          seqText: "1st Entry",
+          method: "DESK",
+          checkedInAt: new Date().toISOString(),
+          istDate: new Date().toLocaleString("en-IN", {
+            timeZone: "Asia/Kolkata",
+            dateStyle: "medium",
+            timeStyle: "medium",
+          }),
+        });
+      }
+    }
+
+    return {
+      success: true,
+      rows,
+      summary: {
+        eventName: analyticsData.eventName,
+        totalRegistrations: analyticsData.totalRegistrations,
+        approvedCount: analyticsData.approvedCount,
+        passesGeneratedCount: analyticsData.passesGeneratedCount,
+        uniqueCheckedInCount: analyticsData.uniqueCheckedInCount ?? analyticsData.checkedInCount,
+        totalScansCount: analyticsData.totalScansCount ?? analyticsData.checkedInCount,
+        multipleCheckinsCount: analyticsData.multipleCheckinsCount ?? 0,
+        reEntryCount: analyticsData.reEntryCount ?? 0,
+        reEntryRate: analyticsData.reEntryRate ?? 0,
+        avgScansPerAttendee: analyticsData.avgScansPerAttendee ?? 1.0,
+        attendanceRate: analyticsData.attendanceRate,
+        peakVelocity: analyticsData.peakVelocity,
+        peakVelocityTime: analyticsData.peakVelocityTime,
+      },
+    };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Failed to generate comprehensive attendance export",
+    };
+  }
 }
