@@ -178,15 +178,7 @@ function SignupContent() {
 
   function handleGoogleSignup() {
     setGoogleLoading(true);
-    const target = resolvePostAuthRedirect(
-      searchParams,
-      typeof document !== "undefined" ? document.referrer : null
-    );
-    const destination = eventName
-      ? `/create-event?eventName=${encodeURIComponent(eventName)}`
-      : target === "/dashboard"
-      ? "/onboarding/subscription"
-      : target;
+    const destination = "/onboarding/subscription";
     window.location.href = `/api/auth/google/redirect?next=${encodeURIComponent(destination)}`;
   }
 

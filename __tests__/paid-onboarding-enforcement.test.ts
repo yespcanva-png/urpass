@@ -38,6 +38,9 @@ describe("URPASS — Paid Onboarding & Entitlement Enforcement (15 Scenarios)", 
         return {
           select: vi.fn().mockReturnThis(),
           eq: vi.fn().mockReturnThis(),
+          in: vi.fn().mockReturnThis(),
+          gte: vi.fn().mockReturnThis(),
+          lte: vi.fn().mockReturnThis(),
           maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
         };
       }),

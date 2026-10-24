@@ -18,6 +18,8 @@ type SupabaseLike = {
 type UserLike = {
   id: string;
   created_at?: string | null;
+  user_metadata?: Record<string, any> | null;
+  app_metadata?: Record<string, any> | null;
 };
 
 type SubscriptionRow = {
@@ -346,16 +348,79 @@ export async function resolveUserSubscriptionAccess(params: {
 
   const hasOnlyFreeOrNoSubscription = !sub || planSlug === "free" || sub.provider === "free";
   if (hasOnlyFreeOrNoSubscription) {
+    const isPlanExplicitlySelected = Boolean(
+      user.user_metadata?.plan_selected ||
+      user.user_metadata?.onboarded_at ||
+      user.user_metadata?.onboarded ||
+      sub?.billing_cycle === "free"
+    );
+
+    let hasOrganizedEvents = false;
+    try {
+      const { count } = await supabase
+        .from("events")
+        .select("id", { count: "exact", head: true })
+        .eq("organizer_id", user.id);
+      if (typeof count === "number" && count > 0) {
+        hasOrganizedEvents = true;
+      }
+    } catch {
+      // Non-blocking fallback
+    }
+
+    if (isPlanExplicitlySelected || hasOrganizedEvents) {
+      return {
+        state: "free_forever_active",
+        hasOrganizerAccess: true,
+        shouldRedirectToSubscriptionOnboarding: false,
+        shouldRedirectToBilling: false,
+        planSlug: "free",
+        expiresAt: null,
+        isNewUser: false,
+        introOfferEligible: false,
+        reason: "Free Forever plan is active (1 active event, 100 registrations/month).",
+      };
+    }
+
+    if (isNewUser) {
+      return {
+        state: "onboarding_required",
+        hasOrganizerAccess: false,
+        shouldRedirectToSubscriptionOnboarding: true,
+        shouldRedirectToBilling: false,
+        planSlug: "free",
+        expiresAt: null,
+        isNewUser: true,
+        introOfferEligible: true,
+        reason: "New user must choose a subscription plan before accessing organizer dashboard.",
+      };
+    }
+
+    const legacyCutoff = addDays(createdAt, 30);
+    if (isFuture(legacyCutoff.toISOString(), now)) {
+      return {
+        state: "legacy_free_active",
+        hasOrganizerAccess: true,
+        shouldRedirectToSubscriptionOnboarding: false,
+        shouldRedirectToBilling: false,
+        planSlug: "free",
+        expiresAt: legacyCutoff.toISOString(),
+        isNewUser: false,
+        introOfferEligible: false,
+        reason: "Legacy Free tier remains active for 30 days from registration date.",
+      };
+    }
+
     return {
-      state: "free_forever_active",
-      hasOrganizerAccess: true,
+      state: "subscription_expired",
+      hasOrganizerAccess: false,
       shouldRedirectToSubscriptionOnboarding: false,
-      shouldRedirectToBilling: false,
+      shouldRedirectToBilling: true,
       planSlug: "free",
-      expiresAt: null,
+      expiresAt: legacyCutoff.toISOString(),
       isNewUser: false,
       introOfferEligible: false,
-      reason: "Free Forever plan is active (1 active event, 100 registrations/month).",
+      reason: "Legacy Free tier expired 30 days after registration.",
     };
   }
 

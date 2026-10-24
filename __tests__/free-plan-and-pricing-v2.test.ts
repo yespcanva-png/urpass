@@ -14,7 +14,7 @@ describe("UrPass 7-Day Growth & Monetization: Free Forever + Standard SaaS Tiers
   });
 
   describe("Free Forever Subscription Access & Onboarding Exemption", () => {
-    it("grants immediate organizer access on Free Forever to new users without requiring payment details", async () => {
+    it("requires un-onboarded new user to choose a plan before gaining organizer access", async () => {
       const mockSupabase = {
         from: vi.fn().mockReturnThis(),
         select: vi.fn().mockReturnThis(),
@@ -24,7 +24,25 @@ describe("UrPass 7-Day Growth & Monetization: Free Forever + Standard SaaS Tiers
 
       const result = await resolveUserSubscriptionAccess({
         supabase: mockSupabase as any,
-        user: { id: "new-user-123", created_at: new Date().toISOString() },
+        user: { id: "brand-new-user-789", created_at: new Date().toISOString() },
+      });
+
+      expect(result.hasOrganizerAccess).toBe(false);
+      expect(result.shouldRedirectToSubscriptionOnboarding).toBe(true);
+      expect(result.state).toBe("onboarding_required");
+    });
+
+    it("grants immediate organizer access on Free Forever to new users after plan selection without requiring payment details", async () => {
+      const mockSupabase = {
+        from: vi.fn().mockReturnThis(),
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({ data: null }),
+      };
+
+      const result = await resolveUserSubscriptionAccess({
+        supabase: mockSupabase as any,
+        user: { id: "new-user-123", created_at: new Date().toISOString(), user_metadata: { plan_selected: true } },
       });
 
       expect(result.hasOrganizerAccess).toBe(true);
@@ -40,11 +58,12 @@ describe("UrPass 7-Day Growth & Monetization: Free Forever + Standard SaaS Tiers
         from: vi.fn().mockReturnThis(),
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
-        maybeSingle: vi.fn().mockImplementation((table: string) => {
+        maybeSingle: vi.fn().mockImplementation(() => {
           return Promise.resolve({
             data: {
               status: "active",
               provider: "free",
+              billing_cycle: "free",
               plan: { slug: "free" },
             },
           });

@@ -1205,6 +1205,12 @@ export async function duplicateEvent(
     };
   }
 
+  if (access.isTrial || access.state === "autopay_trial_active") {
+    return {
+      error: "Event duplication is not permitted on the 1 free event trial. Please activate a paid subscription to create multiple events.",
+    };
+  }
+
   // Check active event limits on duplicate
   const planSlug = access.planSlug || "free";
   let maxActiveEvents = 1;

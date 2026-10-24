@@ -49,6 +49,60 @@ function periodEnd(cycle: BillingCycle): Date {
   return d;
 }
 
+export async function selectFreePlan(): Promise<ActionResult> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const admin = adminClient();
+
+  let { data: freePlan } = await admin
+    .from("plans")
+    .select("id, slug")
+    .eq("slug", "free")
+    .maybeSingle();
+
+  if (!freePlan) {
+    const { data: anyPlan } = await admin.from("plans").select("id, slug").limit(1).maybeSingle();
+    freePlan = anyPlan;
+  }
+
+  if (freePlan) {
+    const { error: subError } = await admin.from("subscriptions").upsert(
+      {
+        user_id: user.id,
+        plan_id: freePlan.id,
+        status: "active",
+        provider: "free",
+        billing_cycle: "free",
+        current_period_start: new Date().toISOString(),
+        current_period_end: new Date("2125-01-01T00:00:00.000Z").toISOString(),
+        cancel_at_period_end: false,
+        is_trial: false,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "user_id" }
+    );
+    if (subError) return { error: subError.message };
+  }
+
+  try {
+    await admin.auth.admin.updateUserById(user.id, {
+      user_metadata: {
+        ...(user.user_metadata || {}),
+        plan_selected: true,
+        plan_slug: "free",
+        onboarded_at: new Date().toISOString(),
+      },
+    });
+  } catch (err) {
+    console.error("[billing] Error updating user metadata on free plan selection:", err);
+  }
+
+  revalidateBillingPaths();
+  return { success: true };
+}
+
 export async function cancelSubscription(): Promise<ActionResult> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -959,6 +1013,19 @@ export async function activatePaidSubscription(
         billing_cycles_remaining: couponRedemption.billingCyclesRemaining,
       });
     }
+  }
+
+  try {
+    await admin.auth.admin.updateUserById(user.id, {
+      user_metadata: {
+        ...(user.user_metadata || {}),
+        plan_selected: true,
+        plan_slug: normalizedSlug,
+        onboarded_at: new Date().toISOString(),
+      },
+    });
+  } catch (err) {
+    console.error("[billing] Error updating user metadata on paid plan activation:", err);
   }
 
   revalidateBillingPaths();

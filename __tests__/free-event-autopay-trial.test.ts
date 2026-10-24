@@ -46,6 +46,8 @@ describe("1 Free Event AutoPay Trial & Anti-Abuse Enforcement", () => {
           return {
             select: vi.fn().mockReturnThis(),
             eq: vi.fn().mockReturnThis(),
+            in: vi.fn().mockReturnThis(),
+            gte: vi.fn().mockReturnThis(),
             maybeSingle: vi.fn().mockResolvedValue({ data: eventData ?? null, error: null }),
             single: vi.fn().mockResolvedValue({ data: eventData ?? null, error: null }),
           };
@@ -369,7 +371,10 @@ describe("1 Free Event AutoPay Trial & Anti-Abuse Enforcement", () => {
         return {
           select: vi.fn().mockReturnThis(),
           eq: vi.fn().mockReturnThis(),
+          in: vi.fn().mockReturnThis(),
+          gte: vi.fn().mockReturnThis(),
           maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+          single: vi.fn().mockResolvedValue({ data: { id: "evt-original-123", organizer_id: "usr-trial-dup" }, error: null }),
         };
       }),
     } as any);

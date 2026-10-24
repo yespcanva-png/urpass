@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Check, LogOut, ShieldCheck, Ticket, Sparkles, ArrowRight, Loader2 } from "lucide-react";
 import CheckoutButton from "@/components/billing/CheckoutButton";
 import { detectCountryClient, persistCountryPreference } from "@/lib/country-config";
+import { selectFreePlan } from "@/app/actions/billing";
 
 declare global {
   interface Window {
@@ -30,6 +31,24 @@ function loadRazorpay(): Promise<boolean> {
 type Cycle = "monthly" | "annual";
 
 const PLANS = [
+  {
+    slug: "free",
+    name: "Free Forever",
+    renewalInr: 0,
+    annualInr: 0,
+    annualInrPerMo: 0,
+    gbp: 0,
+    annualGbp: 0,
+    annualGbpPerMo: 0,
+    description: "For individuals, student groups, and community meetups.",
+    features: [
+      "1 active event at a time",
+      "Up to 100 registrations per event",
+      "1 organizer seat",
+      "Digital QR passes & scanner",
+      "0% platform commission",
+    ],
+  },
   {
     slug: "starter",
     name: "Starter",
@@ -91,6 +110,8 @@ export default function SubscriptionOnboardingClient({
   const router = useRouter();
   const [trialLoading, setTrialLoading] = useState(false);
   const [trialError, setTrialError] = useState("");
+  const [freeLoading, setFreeLoading] = useState(false);
+  const [freeError, setFreeError] = useState("");
   const [phone, setPhone] = useState("");
   const [billingCycle, setBillingCycle] = useState<Cycle>("monthly");
   const [activeCountry, setActiveCountry] = useState<"IN" | "GB">(() => {
@@ -99,6 +120,24 @@ export default function SubscriptionOnboardingClient({
     }
     return country || "IN";
   });
+
+  async function handleSelectFreePlan() {
+    setFreeLoading(true);
+    setFreeError("");
+    try {
+      const res = await selectFreePlan();
+      if (res?.error) {
+        setFreeError(res.error);
+        setFreeLoading(false);
+        return;
+      }
+      router.push("/dashboard");
+      router.refresh();
+    } catch (err) {
+      setFreeLoading(false);
+      setFreeError(err instanceof Error ? err.message : "Failed to activate Free Forever plan.");
+    }
+  }
 
   useEffect(() => {
     const detected = detectCountryClient();
@@ -367,17 +406,22 @@ export default function SubscriptionOnboardingClient({
           )}
         </div>
 
-        <section className="mt-6 grid gap-4 md:grid-cols-3">
+        <section className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {PLANS.map((plan) => {
-            const todayPrice = isAnnual
+            const isFree = plan.slug === "free";
+            const todayPrice = isFree
+              ? isUk ? "£0" : "₹0"
+              : isAnnual
               ? isUk
                 ? `£${plan.annualGbp}`
                 : `₹${plan.annualInr.toLocaleString("en-IN")}`
               : isUk
                 ? `£${plan.gbp}`
                 : `₹${plan.renewalInr.toLocaleString("en-IN")}`;
-            const period = isAnnual ? "/ year" : "/ month";
-            const renewalText = isAnnual
+            const period = isFree ? "forever" : isAnnual ? "/ year" : "/ month";
+            const renewalText = isFree
+              ? "Zero payment or autopay required"
+              : isAnnual
               ? isUk
                 ? `Equivalent £${plan.annualGbpPerMo}/mo + VAT`
                 : `Equivalent ₹${plan.annualInrPerMo.toLocaleString("en-IN")}/mo + GST`
@@ -421,24 +465,45 @@ export default function SubscriptionOnboardingClient({
                   ))}
                 </ul>
 
-                <CheckoutButton
-                  planSlug={plan.slug}
-                  planName={plan.name}
-                  billingCycle={billingCycle}
-                  userEmail={userEmail}
-                  userName={userName}
-                  userPhone={phone || userPhone}
-                  currency={isUk ? "GBP" : "INR"}
-                  successRedirect="/dashboard"
-                  introOfferEligible={false}
-                  className={`mt-6 w-full rounded-lg px-4 py-3 text-sm font-bold ${
-                    plan.recommended
-                      ? "bg-[#6D28D9] text-white hover:bg-violet-800"
-                      : "border border-neutral-300 bg-white text-neutral-900 hover:bg-neutral-50"
-                  }`}
-                >
-                  Continue with {plan.name}
-                </CheckoutButton>
+                {isFree ? (
+                  <div className="mt-6 flex flex-col gap-1.5">
+                    <button
+                      type="button"
+                      onClick={handleSelectFreePlan}
+                      disabled={freeLoading}
+                      className="w-full rounded-lg border border-neutral-300 bg-white px-4 py-3 text-sm font-bold text-neutral-900 hover:bg-neutral-50 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 shadow-2xs"
+                    >
+                      {freeLoading ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin text-[#6D28D9]" />
+                          <span>Activating Free Plan...</span>
+                        </>
+                      ) : (
+                        <span>Select Free Forever</span>
+                      )}
+                    </button>
+                    {freeError && <p className="text-[11px] text-rose-500 font-medium">{freeError}</p>}
+                  </div>
+                ) : (
+                  <CheckoutButton
+                    planSlug={plan.slug}
+                    planName={plan.name}
+                    billingCycle={billingCycle}
+                    userEmail={userEmail}
+                    userName={userName}
+                    userPhone={phone || userPhone}
+                    currency={isUk ? "GBP" : "INR"}
+                    successRedirect="/dashboard"
+                    introOfferEligible={false}
+                    className={`mt-6 w-full rounded-lg px-4 py-3 text-sm font-bold ${
+                      plan.recommended
+                        ? "bg-[#6D28D9] text-white hover:bg-violet-800"
+                        : "border border-neutral-300 bg-white text-neutral-900 hover:bg-neutral-50"
+                    }`}
+                  >
+                    Continue with {plan.name}
+                  </CheckoutButton>
+                )}
               </article>
             );
           })}

@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import AppShell from "@/components/layouts/AppShell";
 import { getUserPlan } from "@/lib/plan";
+import { resolveUserSubscriptionAccess } from "@/lib/billing/entitlement-resolver";
 import type { CampusContext, CampusRole } from "@/types";
 
 export default async function DashboardLayout({
@@ -15,6 +16,11 @@ export default async function DashboardLayout({
   } = await supabase.auth.getUser();
 
   if (!user) redirect("/login");
+
+  const access = await resolveUserSubscriptionAccess({ supabase, user });
+  if (access.shouldRedirectToSubscriptionOnboarding || !access.hasOrganizerAccess) {
+    redirect("/onboarding/subscription");
+  }
 
   const [
     { data: profile },
