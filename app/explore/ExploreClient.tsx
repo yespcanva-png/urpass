@@ -204,14 +204,14 @@ export default function ExploreClient({ initialResult, initialAds }: ExploreClie
       />
 
       {/* Main Discovery Container */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-12 w-full">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-12 w-full">
         {/* 2. Placement 1 — Hero Promotional Banner (Carousel Slider) */}
         {ads.hero && ads.hero.length > 0 && (
           <HeroPromotionalBanner campaigns={ads.hero} activeCity={city} />
         )}
 
         {/* 3. Category Shortcuts */}
-        <div className="mt-6">
+        <div className="mt-4 sm:mt-6">
           <CategoryShortcuts
             selectedCategory={category}
             onSelectCategory={handleCategoryChange}
@@ -219,20 +219,20 @@ export default function ExploreClient({ initialResult, initialAds }: ExploreClie
         </div>
 
         {/* 5. Full-Width Events Discovery Feed */}
-        <div className="mt-10 w-full">
-          <main className="space-y-10 w-full">
+        <div className="mt-8 sm:mt-10 w-full">
+          <main className="space-y-8 sm:space-y-10 w-full">
             {/* Curated Featured Events (At most 3-4 items) */}
             {result.featuredEvents.length > 0 && !hasActiveFilters && (
-              <section aria-labelledby="featured-events-heading" className="explore-fade-up space-y-5">
+              <section aria-labelledby="featured-events-heading" className="explore-fade-up space-y-4 sm:space-y-5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-xl bg-violet-100 text-violet-700 flex items-center justify-center font-bold shadow-xs">
-                      <Sparkles className="w-4 h-4 fill-violet-700/20 animate-pulse" />
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-violet-100 text-violet-700 flex items-center justify-center font-bold shadow-xs">
+                      <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-violet-700/20 animate-pulse" />
                     </div>
                     <div>
                       <h2
                         id="featured-events-heading"
-                        className="text-lg sm:text-xl font-black text-neutral-950 tracking-tight"
+                        className="text-base sm:text-lg md:text-xl font-black text-neutral-950 tracking-tight"
                       >
                         Featured Events
                       </h2>
@@ -243,7 +243,7 @@ export default function ExploreClient({ initialResult, initialAds }: ExploreClie
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
                   {result.featuredEvents.slice(0, 4).map((evt, idx) => (
                     <EventCard key={`featured-${evt.id}`} event={evt} featured index={idx} />
                   ))}
@@ -262,15 +262,15 @@ export default function ExploreClient({ initialResult, initialAds }: ExploreClie
             )}
 
             {/* ── Trending / Upcoming Events Section ── */}
-            <section aria-labelledby="all-events-heading" className="explore-fade-up space-y-6">
+            <section aria-labelledby="all-events-heading" className="explore-fade-up space-y-5 sm:space-y-6">
               {/* Controls Bar: Filters & Sorting */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-neutral-200">
-                {/* Date & Pricing Filter Pills */}
-                <div className="flex flex-wrap items-center gap-2">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 pb-4 border-b border-neutral-200">
+                {/* Date & Pricing Filter Pills (Horizontal swipe on mobile, wrap on tablet/desktop) */}
+                <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar py-1 overscroll-x-contain touch-pan-x -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap">
                   <button
                     type="button"
                     onClick={() => handleDateFilterChange("all")}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 hover:-translate-y-0.5 active:scale-95 cursor-pointer ${
+                    className={`px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all duration-150 hover:-translate-y-0.5 active:scale-95 cursor-pointer touch-manipulation min-h-[34px] sm:min-h-[36px] shrink-0 ${
                       dateFilter === "all"
                         ? "bg-neutral-900 text-white shadow-xs"
                         : "bg-neutral-100 hover:bg-neutral-200 text-neutral-700"
@@ -281,7 +281,7 @@ export default function ExploreClient({ initialResult, initialAds }: ExploreClie
                   <button
                     type="button"
                     onClick={() => handleDateFilterChange("today")}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 hover:-translate-y-0.5 active:scale-95 cursor-pointer ${
+                    className={`px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all duration-150 hover:-translate-y-0.5 active:scale-95 cursor-pointer touch-manipulation min-h-[34px] sm:min-h-[36px] shrink-0 ${
                       dateFilter === "today"
                         ? "bg-neutral-900 text-white shadow-xs"
                         : "bg-neutral-100 hover:bg-neutral-200 text-neutral-700"
@@ -292,7 +292,7 @@ export default function ExploreClient({ initialResult, initialAds }: ExploreClie
                   <button
                     type="button"
                     onClick={() => handleDateFilterChange("this_weekend")}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 hover:-translate-y-0.5 active:scale-95 cursor-pointer ${
+                    className={`px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all duration-150 hover:-translate-y-0.5 active:scale-95 cursor-pointer touch-manipulation min-h-[34px] sm:min-h-[36px] shrink-0 ${
                       dateFilter === "this_weekend"
                         ? "bg-neutral-900 text-white shadow-xs"
                         : "bg-neutral-100 hover:bg-neutral-200 text-neutral-700"
@@ -303,7 +303,7 @@ export default function ExploreClient({ initialResult, initialAds }: ExploreClie
                   <button
                     type="button"
                     onClick={() => handleDateFilterChange("this_month")}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 hover:-translate-y-0.5 active:scale-95 cursor-pointer ${
+                    className={`px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all duration-150 hover:-translate-y-0.5 active:scale-95 cursor-pointer touch-manipulation min-h-[34px] sm:min-h-[36px] shrink-0 ${
                       dateFilter === "this_month"
                         ? "bg-neutral-900 text-white shadow-xs"
                         : "bg-neutral-100 hover:bg-neutral-200 text-neutral-700"
@@ -312,13 +312,13 @@ export default function ExploreClient({ initialResult, initialAds }: ExploreClie
                     This Month
                   </button>
 
-                  <div className="h-5 w-px bg-neutral-300 mx-0.5 hidden sm:block" />
+                  <div className="h-5 w-px bg-neutral-300 mx-0.5 hidden sm:block shrink-0" />
 
                   {/* Pricing Pills */}
                   <button
                     type="button"
                     onClick={() => handlePricingFilterChange("free")}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 hover:-translate-y-0.5 active:scale-95 cursor-pointer ${
+                    className={`px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all duration-150 hover:-translate-y-0.5 active:scale-95 cursor-pointer touch-manipulation min-h-[34px] sm:min-h-[36px] shrink-0 ${
                       pricingFilter === "free"
                         ? "bg-emerald-600 text-white shadow-xs"
                         : "bg-neutral-100 hover:bg-neutral-200 text-neutral-700"
@@ -329,7 +329,7 @@ export default function ExploreClient({ initialResult, initialAds }: ExploreClie
                   <button
                     type="button"
                     onClick={() => handlePricingFilterChange("paid")}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 hover:-translate-y-0.5 active:scale-95 cursor-pointer ${
+                    className={`px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all duration-150 hover:-translate-y-0.5 active:scale-95 cursor-pointer touch-manipulation min-h-[34px] sm:min-h-[36px] shrink-0 ${
                       pricingFilter === "paid"
                         ? "bg-violet-700 text-white shadow-xs shadow-violet-700/20"
                         : "bg-neutral-100 hover:bg-neutral-200 text-neutral-700"
@@ -342,7 +342,7 @@ export default function ExploreClient({ initialResult, initialAds }: ExploreClie
                     <button
                       type="button"
                       onClick={handleResetFilters}
-                      className="group flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-50 active:scale-95 transition-all duration-150 cursor-pointer"
+                      className="group flex items-center gap-1 px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-50 active:scale-95 transition-all duration-150 cursor-pointer touch-manipulation min-h-[34px] sm:min-h-[36px] shrink-0"
                       aria-label="Reset active filters"
                     >
                       <RotateCcw className="w-3 h-3 group-hover:-rotate-180 transition-transform duration-500" />
@@ -352,7 +352,7 @@ export default function ExploreClient({ initialResult, initialAds }: ExploreClie
                 </div>
 
                 {/* Results Count & Sort Dropdown */}
-                <div className="flex items-center justify-between sm:justify-end gap-3 text-xs">
+                <div className="flex items-center justify-between sm:justify-end gap-3 text-xs w-full sm:w-auto pt-1 sm:pt-0">
                   <span className="font-semibold text-neutral-500 whitespace-nowrap">
                     {isPending ? (
                       <span className="inline-flex items-center gap-1.5 text-violet-700 font-semibold animate-pulse">
@@ -375,7 +375,7 @@ export default function ExploreClient({ initialResult, initialAds }: ExploreClie
                         id="sort-select"
                         value={sort}
                         onChange={(e) => handleSortChange(e.target.value as ExploreSortOrder)}
-                        className="appearance-none pl-3 pr-8 py-1.5 text-xs font-semibold rounded-xl border border-neutral-200 bg-white text-neutral-800 hover:bg-neutral-50 hover:border-violet-300 focus:outline-none focus:ring-2 focus:ring-violet-500/20 cursor-pointer shadow-2xs transition-all duration-150"
+                        className="appearance-none pl-3 pr-8 py-2 text-xs font-semibold rounded-xl border border-neutral-200 bg-white text-neutral-800 hover:bg-neutral-50 hover:border-violet-300 focus:outline-none focus:ring-2 focus:ring-violet-500/20 cursor-pointer shadow-2xs transition-all duration-150 touch-manipulation min-h-[36px]"
                       >
                         <option value="soonest">Soonest</option>
                         <option value="recently_added">Recently Added</option>
@@ -390,11 +390,11 @@ export default function ExploreClient({ initialResult, initialAds }: ExploreClie
 
               {/* Event Cards Grid */}
               {isPending ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {Array.from({ length: 6 }).map((_, i) => (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+                  {Array.from({ length: 4 }).map((_, i) => (
                     <div
                       key={`skeleton-${i}`}
-                      className="rounded-3xl border border-neutral-100 bg-white p-3 space-y-3 shadow-xs overflow-hidden"
+                      className="rounded-2xl sm:rounded-3xl border border-neutral-100 bg-white p-3 space-y-3 shadow-xs overflow-hidden"
                     >
                       <div className="w-full aspect-[16/10] explore-card-skeleton rounded-2xl" />
                       <div className="space-y-2.5 px-2 py-1">
@@ -406,7 +406,7 @@ export default function ExploreClient({ initialResult, initialAds }: ExploreClie
                   ))}
                 </div>
               ) : result.events.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-16 px-4 text-center rounded-3xl border border-dashed border-neutral-200 bg-neutral-50/50">
+                <div className="flex flex-col items-center justify-center py-12 sm:py-16 px-4 text-center rounded-2xl sm:rounded-3xl border border-dashed border-neutral-200 bg-neutral-50/50">
                   <div className="w-12 h-12 rounded-2xl bg-violet-100 text-violet-700 flex items-center justify-center mb-3.5 explore-bounce-subtle shadow-xs">
                     <Compass className="w-6 h-6" />
                   </div>
@@ -419,14 +419,14 @@ export default function ExploreClient({ initialResult, initialAds }: ExploreClie
                   <button
                     type="button"
                     onClick={handleResetFilters}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-violet-600 hover:bg-violet-700 shadow-sm hover:shadow-md hover:shadow-violet-600/20 active:scale-95 transition-all duration-200 cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-violet-600 hover:bg-violet-700 shadow-sm hover:shadow-md hover:shadow-violet-600/20 active:scale-95 transition-all duration-200 cursor-pointer touch-manipulation min-h-[38px]"
                   >
                     <RotateCcw className="w-3.5 h-3.5" />
                     <span>Reset All Filters</span>
                   </button>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
                   {result.events.map((evt, idx) => (
                     <EventCard key={evt.id} event={evt} index={idx} />
                   ))}

@@ -279,7 +279,7 @@ export default function ExploreAuthPopup({
                   autoComplete="email"
                   required
                   autoFocus
-                  className="w-full pl-10 pr-4 py-3 rounded-2xl border border-neutral-200/90 text-sm font-medium text-neutral-900 bg-neutral-50/60 focus:bg-white focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all placeholder:text-neutral-400"
+                  className="w-full pl-10 pr-4 py-3 rounded-2xl border border-neutral-200/90 text-base sm:text-sm font-medium text-neutral-900 bg-neutral-50/60 focus:bg-white focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all placeholder:text-neutral-400"
                 />
               </div>
             </div>
@@ -318,7 +318,7 @@ export default function ExploreAuthPopup({
                       onChange={(e) => setFullName(e.target.value)}
                       placeholder="Jane Doe"
                       required
-                      className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-neutral-200/90 text-sm font-medium text-neutral-900 bg-neutral-50/60 focus:bg-white focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all"
+                      className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-neutral-200/90 text-base sm:text-sm font-medium text-neutral-900 bg-neutral-50/60 focus:bg-white focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all"
                     />
                   </div>
                 </div>
@@ -342,7 +342,7 @@ export default function ExploreAuthPopup({
                     autoComplete={isNewUser ? "new-password" : "current-password"}
                     required
                     autoFocus
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-neutral-200/90 text-sm font-medium text-neutral-900 bg-neutral-50/60 focus:bg-white focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all"
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-neutral-200/90 text-base sm:text-sm font-medium text-neutral-900 bg-neutral-50/60 focus:bg-white focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all"
                   />
                 </div>
               </div>

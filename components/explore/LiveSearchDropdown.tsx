@@ -101,7 +101,7 @@ export default function LiveSearchDropdown({
         </div>
       ) : (
         /* Matching Events List */
-        <div className="max-h-80 overflow-y-auto py-1 space-y-1">
+        <div className="max-h-64 sm:max-h-80 overflow-y-auto py-1 space-y-1 overscroll-y-contain">
           {results.map((event) => {
             const priceLabel =
               event.isFree || event.minPricePaise === 0
@@ -115,7 +115,7 @@ export default function LiveSearchDropdown({
                 key={`live-${event.id}`}
                 href={eventUrl}
                 onClick={() => onSelectEvent?.(event)}
-                className="group flex items-center justify-between p-2 rounded-2xl hover:bg-violet-50/70 transition-colors cursor-pointer"
+                className="group flex items-center justify-between p-2 rounded-2xl hover:bg-violet-50/70 transition-colors cursor-pointer touch-manipulation min-h-[44px]"
               >
                 {/* Left: Thumbnail & Details */}
                 <div className="flex items-center gap-3 min-w-0 pr-2">
@@ -185,7 +185,7 @@ export default function LiveSearchDropdown({
           <button
             type="button"
             onClick={onViewAll}
-            className="w-full py-2 px-3 rounded-xl text-xs font-bold text-violet-700 hover:bg-violet-50 text-center transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+            className="w-full py-2.5 px-3 rounded-xl text-xs font-bold text-violet-700 hover:bg-violet-50 text-center transition-colors cursor-pointer flex items-center justify-center gap-1.5 touch-manipulation min-h-[40px]"
           >
             <span>View all search results for &ldquo;{query}&rdquo;</span>
             <ChevronRight className="w-3.5 h-3.5" />

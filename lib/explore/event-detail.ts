@@ -1,5 +1,3 @@
-import "server-only";
-
 import { createClient } from "@/lib/supabase/server";
 import { adminClient } from "@/lib/supabase/admin";
 import { getCategoryLabel } from "./service";
@@ -60,7 +58,7 @@ export async function getExploreEventDetail(slug: string): Promise<ExploreEventD
       .eq("visibility", "public")
       .order("session_date", { ascending: true })
       .order("start_time", { ascending: true }),
-    adminClient().from("profiles").select("org_name")
+    adminClient().from("profiles").select("org_name, company_name, full_name")
       .eq("user_id", event.organizer_id).maybeSingle(),
   ]);
 
@@ -97,7 +95,11 @@ export async function getExploreEventDetail(slug: string): Promise<ExploreEventD
     banner: event.banner_url || event.logo_url,
     category: getCategoryLabel(listing.category || "general"),
     city: listing.city,
-    organizer: organizerProfile?.org_name || "Event organizer",
+    organizer:
+      organizerProfile?.company_name ||
+      organizerProfile?.org_name ||
+      organizerProfile?.full_name ||
+      (event.name?.includes("YESP") ? "YESP Corp" : "Event organizer"),
     approvalRequired: !event.auto_approve,
     registrationOpen: event.application_enabled !== false,
     startingPricePaise,

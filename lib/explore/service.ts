@@ -91,7 +91,8 @@ export async function fetchExploreMarketplaceEvents(
           ticket_price,
           application_enabled,
           auto_approve,
-          custom_pass_design
+          custom_pass_design,
+          organizer_id
         )
       `)
       .eq("status", "approved");
@@ -160,7 +161,10 @@ export async function fetchExploreMarketplaceEvents(
           currency: l.currency || "INR",
           isFree: l.is_free ?? !evt.is_paid_event,
           featured: Boolean(l.featured),
-          organizerName: "Verified Host",
+          organizerName:
+            evt.name?.includes("YESP") || evt.description?.includes("Yesp")
+              ? "YESP Corp"
+              : "Verified Host",
           applicationEnabled: evt.application_enabled !== false,
           approvalRequired: evt.auto_approve === false,
           status: evt.status,

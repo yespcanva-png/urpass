@@ -79,6 +79,7 @@ export default async function EventSeoSlugPage({
       status,
       apply_slug,
       attendee_limit,
+      organizer_id,
       ticket_types(
         id,
         name,
@@ -140,6 +141,23 @@ export default async function EventSeoSlugPage({
   const city = listing?.city || "Bengaluru";
   const category = listing?.category || "business";
 
+  let organizerName = "YESP Corporation";
+  if (event.organizer_id) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("company_name, org_name, full_name")
+      .eq("id", event.organizer_id)
+      .maybeSingle();
+
+    if (profile) {
+      organizerName =
+        profile.company_name ||
+        profile.org_name ||
+        profile.full_name ||
+        "YESP Corporation";
+    }
+  }
+
   const corporateData: CorporateEventData = {
     id: event.id,
     name: event.name,
@@ -160,7 +178,7 @@ export default async function EventSeoSlugPage({
     categoryLabel: getCategoryLabel(category),
     attendeeLimit: event.attendee_limit || 250,
     slug: event.apply_slug || event.id,
-    organizerName: "UrPass Verified Host",
+    organizerName,
     ticketTypes,
   };
 

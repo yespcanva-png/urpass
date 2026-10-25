@@ -311,12 +311,12 @@ export default function CorporateEventPage({ event }: CorporateEventPageProps) {
 
             <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-neutral-100 text-neutral-700 border border-neutral-200/80">
               <Users className="w-3.5 h-3.5 text-neutral-500" />
-              <span>Closed-Door Executive Mixer</span>
+              <span>Flagship Conference</span>
             </span>
 
             <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/80">
               <Award className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Official UrPass Event</span>
+              <span>{event.organizerName} Official</span>
             </span>
           </div>
 

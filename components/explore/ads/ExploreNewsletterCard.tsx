@@ -112,12 +112,12 @@ export default function ExploreNewsletterCard({
               placeholder="Enter your email"
               disabled={isPending}
               required
-              className="w-full pl-3.5 pr-20 py-2.5 text-xs rounded-xl border border-neutral-200 bg-white text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all shadow-2xs"
+              className="w-full pl-3.5 pr-20 py-2.5 text-base sm:text-xs rounded-xl border border-neutral-200 bg-white text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all shadow-2xs"
             />
             <button
               type="submit"
               disabled={isPending}
-              className="absolute right-1.5 top-1.5 bottom-1.5 px-3 rounded-lg text-xs font-bold bg-violet-600 hover:bg-violet-700 text-white disabled:opacity-50 transition-colors flex items-center gap-1.5 shadow-2xs"
+              className="absolute right-1.5 top-1.5 bottom-1.5 px-3 rounded-lg text-xs font-bold bg-violet-600 hover:bg-violet-700 text-white disabled:opacity-50 transition-colors flex items-center gap-1.5 shadow-2xs touch-manipulation cursor-pointer"
             >
               {isPending ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />

@@ -23,8 +23,13 @@ body {
   box-sizing: border-box;
 }
 
-/* ── Smooth scroll ─────────────────────────────────────────────────────── */
-html { scroll-behavior: smooth; }
+/* ── Smooth scroll & Mobile Browser Optimizations ─────────────────────── */
+html {
+  scroll-behavior: smooth;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
 
 @keyframes exploreAdFade { from { opacity: 0.35; } to { opacity: 1; } }
 .explore-ad-fade { animation: exploreAdFade 350ms ease-out; }
