@@ -70,7 +70,7 @@ export default async function TicketsPage({
   const [{ data: event }, plan, ticketTypes, ticketIdConfigData] = await Promise.all([
     supabase
       .from("events")
-      .select("id, name, organizer_id, organization_id, currency")
+      .select("id, name, organizer_id, organization_id")
       .eq("id", eventId)
       .single(),
     getUserPlan(supabase, user.id),
@@ -95,7 +95,7 @@ export default async function TicketsPage({
   const isFree = plan.slug === "free";
   const maxTicketTypes = isFree ? 1 : Infinity;
   const canAddMore = ticketTypes.length < maxTicketTypes;
-  const currency = event.currency || "INR";
+  const currency = "INR";
 
   // Summary stats
   const totalSold = ticketTypes.reduce((sum, t) => sum + t.sold_count, 0);

@@ -152,8 +152,10 @@ function adminClient() {
 
 export default async function ApplyPage({
   params,
+  exploreMode = false,
 }: {
   params: Promise<{ eventId: string }>;
+  exploreMode?: boolean;
 }) {
   const { eventId: idOrSlug } = await params;
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idOrSlug);
@@ -624,6 +626,7 @@ export default async function ApplyPage({
         eventImages={eventImages}
         activeFeatures={activeFeatures}
         availableSessions={availableSessions}
+        exploreMode={exploreMode}
       />
     </>
   );

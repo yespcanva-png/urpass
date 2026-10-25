@@ -59,6 +59,14 @@ CREATE INDEX IF NOT EXISTS idx_subscriptions_pending_plan
 -- 5. Billing Audit Log Table for tracking all lifecycle transitions and provider operations
 CREATE TABLE IF NOT EXISTS public.billing_audit_logs (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id uuid REFERENCES public.organizations(id) ON DELETE CASCADE,
+  actor_user_id uuid REFERENCES auth.users(id),
+  action text NOT NULL,
+  entity_type text NOT NULL,
+  entity_id text,
+  metadata jsonb DEFAULT '{}'::jsonb,
+  ip_address text,
+  user_agent text,
   user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE,
   subscription_id uuid REFERENCES public.subscriptions(id) ON DELETE SET NULL,
   event_type text NOT NULL,
@@ -67,6 +75,16 @@ CREATE TABLE IF NOT EXISTS public.billing_audit_logs (
   details jsonb DEFAULT '{}'::jsonb,
   created_at timestamptz NOT NULL DEFAULT now()
 );
+
+-- Migration 105 already created billing_audit_logs with the organization audit
+-- columns. CREATE TABLE IF NOT EXISTS above does not add the user audit columns.
+ALTER TABLE public.billing_audit_logs
+  ADD COLUMN IF NOT EXISTS user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE,
+  ADD COLUMN IF NOT EXISTS subscription_id uuid REFERENCES public.subscriptions(id) ON DELETE SET NULL,
+  ADD COLUMN IF NOT EXISTS event_type text,
+  ADD COLUMN IF NOT EXISTS provider text DEFAULT 'razorpay',
+  ADD COLUMN IF NOT EXISTS provider_reference_id text,
+  ADD COLUMN IF NOT EXISTS details jsonb DEFAULT '{}'::jsonb;
 
 CREATE INDEX IF NOT EXISTS idx_billing_audit_logs_user_id
   ON public.billing_audit_logs(user_id, created_at DESC);

@@ -96,6 +96,12 @@ export default function OpsBillingDashboard({ initialData }: Props) {
               SEO Campaigns
             </Link>
             <Link
+              href="/ops/promotions"
+              className="text-xs bg-slate-900 border border-slate-800 text-slate-300 px-3.5 py-2 rounded-lg hover:text-white transition-colors"
+            >
+              Explore Ads
+            </Link>
+            <Link
               href="/pricing"
               target="_blank"
               className="text-xs bg-violet-600 hover:bg-violet-500 text-white font-bold px-3.5 py-2 rounded-lg transition-colors flex items-center gap-1"

@@ -34,6 +34,7 @@ import { createClient } from "@/lib/supabase/client";
 import { detectCountryClient } from "@/lib/country-config";
 import CorporateWhatsNewCard from "@/components/dashboard/CorporateWhatsNewCard";
 import OrganizerOnboardingChecklist from "@/components/dashboard/OrganizerOnboardingChecklist";
+import ExploreMarketplaceBanner from "@/components/dashboard/ExploreMarketplaceBanner";
 
 const emptySubscribe = () => () => {};
 
@@ -295,6 +296,9 @@ export default function DashboardContent() {
           {dateLabel}
         </span>
       </div>
+
+      {/* ── UrPass Explore Marketplace Banner ────────────────────────── */}
+      <ExploreMarketplaceBanner events={events} />
 
       <CorporateWhatsNewCard
         firstEventId={events[0]?.id}

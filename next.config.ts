@@ -7,6 +7,14 @@ if (!process.env.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY) {
 }
 
 const nextConfig: NextConfig = {
+  experimental: { serverActions: { bodySizeLimit: "5mb" } },
+  images: {
+    remotePatterns: [
+      { protocol: "https", hostname: "images.unsplash.com" },
+      { protocol: "https", hostname: "*.supabase.co", pathname: "/storage/v1/object/public/explore-ad-creatives/**" },
+    ],
+    formats: ["image/avif", "image/webp"],
+  },
   env: {
     NEXT_PUBLIC_SUPABASE_URL:
       process.env.NEXT_PUBLIC_SUPABASE_URL ?? "https://kxmxxqyxkoseksfaymqm.supabase.co",

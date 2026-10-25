@@ -26,6 +26,120 @@ body {
 /* ── Smooth scroll ─────────────────────────────────────────────────────── */
 html { scroll-behavior: smooth; }
 
+@keyframes exploreAdFade { from { opacity: 0.35; } to { opacity: 1; } }
+.explore-ad-fade { animation: exploreAdFade 350ms ease-out; }
+
+/* ── Explore Page Animations ─────────────────────────────────────────── */
+@keyframes exploreFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes exploreScaleFade {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes exploreOrbFloat {
+  0%, 100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  33% {
+    transform: translate(24px, -18px) scale(1.08);
+  }
+  66% {
+    transform: translate(-16px, 14px) scale(0.94);
+  }
+}
+
+@keyframes exploreOrbFloatDelayed {
+  0%, 100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  33% {
+    transform: translate(-22px, 16px) scale(1.07);
+  }
+  66% {
+    transform: translate(18px, -14px) scale(0.95);
+  }
+}
+
+@keyframes exploreShimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes exploreBounceSubtle {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+.explore-fade-up {
+  animation: exploreFadeUp 0.65s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.explore-scale-fade {
+  animation: exploreScaleFade 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.explore-delay-1 { animation-delay: 50ms; }
+.explore-delay-2 { animation-delay: 120ms; }
+.explore-delay-3 { animation-delay: 190ms; }
+.explore-delay-4 { animation-delay: 260ms; }
+.explore-delay-5 { animation-delay: 340ms; }
+
+.explore-orb-1 {
+  animation: exploreOrbFloat 14s ease-in-out infinite;
+}
+
+.explore-orb-2 {
+  animation: exploreOrbFloatDelayed 16s ease-in-out 1.5s infinite;
+}
+
+.explore-bounce-subtle {
+  animation: exploreBounceSubtle 3s ease-in-out infinite;
+}
+
+.explore-card-skeleton {
+  background: linear-gradient(90deg, #f4f4f5 20%, #e4e4e7 45%, #f4f4f5 70%);
+  background-size: 200% 100%;
+  animation: exploreShimmer 1.8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .explore-ad-fade,
+  .explore-fade-up,
+  .explore-scale-fade,
+  .explore-orb-1,
+  .explore-orb-2,
+  .explore-bounce-subtle,
+  .explore-card-skeleton {
+    animation: none !important;
+    transition: none !important;
+  }
+  html { scroll-behavior: auto; }
+}
+
 /* ── Float (pass card) ─────────────────────────────────────────────────── */
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
@@ -259,4 +373,76 @@ html { scroll-behavior: smooth; }
     print-color-adjust: exact !important;
   }
 }
+
+/* ── Thermal Printer Pass Animation ───────────────────────────────────── */
+@keyframes thermalPrintFeed {
+  0% {
+    transform: translateY(-98%);
+    opacity: 0.92;
+  }
+  18% {
+    transform: translateY(-80%);
+  }
+  38% {
+    transform: translateY(-56%);
+  }
+  62% {
+    transform: translateY(-28%);
+  }
+  84% {
+    transform: translateY(-8%);
+  }
+  95% {
+    transform: translateY(-1.5%);
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes thermalSlotGlow {
+  0%, 100% {
+    opacity: 0.55;
+    transform: scaleX(0.92);
+  }
+  50% {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+}
+
+@keyframes thermalLedPulse {
+  0%, 100% {
+    opacity: 0.65;
+    transform: scale(0.95);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
+
+.thermal-feed-animate {
+  animation: thermalPrintFeed 1.35s cubic-bezier(0.2, 0.85, 0.25, 1) forwards;
+  will-change: transform;
+}
+
+.thermal-slot-glow {
+  animation: thermalSlotGlow 1.2s ease-in-out infinite;
+}
+
+.thermal-led-pulse {
+  animation: thermalLedPulse 0.9s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .thermal-feed-animate,
+  .thermal-slot-glow,
+  .thermal-led-pulse {
+    animation: none !important;
+    transform: none !important;
+  }
+}
+
 

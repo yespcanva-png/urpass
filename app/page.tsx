@@ -22,6 +22,7 @@ import {
   Mic,
   ArrowRight,
   Sparkles,
+  Compass,
 } from "lucide-react";
 
 export const metadata: Metadata = {
@@ -316,6 +317,19 @@ export default async function LandingPage() {
 
           {/* Left: text — CSS animations (always above fold, no observer) */}
           <div>
+            {/* UrPass Explore Announcement Banner Pill */}
+            <Link
+              href="/explore"
+              className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full border border-violet-200/90 bg-violet-50/80 hover:bg-violet-100/80 hover:border-violet-300 transition-all text-xs mb-5 shadow-2xs group"
+            >
+              <span className="inline-flex items-center gap-1 text-[10px] font-extrabold tracking-wide uppercase px-2 py-0.5 rounded-full bg-violet-600 text-white shadow-2xs">
+                <Sparkles className="w-2.5 h-2.5 animate-pulse" />
+                Now Live
+              </span>
+              <span className="text-neutral-700 font-medium">Now publish your event on <strong className="text-neutral-900 font-semibold">UrPass Explore</strong></span>
+              <span className="text-violet-600 font-semibold group-hover:translate-x-0.5 transition-transform">&rarr;</span>
+            </Link>
+
             <div className="flex flex-wrap items-center gap-2.5 mb-6 sm:mb-8">
               <span className="hero-badge inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold tracking-widest uppercase bg-brand/10 text-brand border border-brand/20 shadow-2xs">
                 URPASS · EVENT MANAGEMENT PLATFORM
@@ -364,35 +378,126 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* ── MCP BANNER CALLOUT ─────────────────────────────────────────── */}
-      <div className="py-4 px-4 sm:px-8 bg-neutral-50/60 border-y border-neutral-200/80">
-        <div className="max-w-5xl mx-auto bg-gradient-to-r from-violet-50/90 via-white to-purple-50/80 border border-violet-200/80 rounded-2xl p-4 sm:p-5 shadow-xs hover:shadow-md transition-all duration-300 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex items-start sm:items-center gap-3.5">
-            <div className="w-10 h-10 rounded-xl bg-violet-600 text-white flex items-center justify-center shrink-0 shadow-xs">
-              <span className="font-mono font-bold text-xs">MCP</span>
-            </div>
-            <div>
-              <div className="flex flex-wrap items-center gap-2 mb-1">
-                <span className="text-xs font-bold text-neutral-950 tracking-tight">Model Context Protocol</span>
-                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  Official Standard
-                </span>
+      {/* ── 02 EXTENSION: URPASS EXPLORE & MCP SHOWCASE GRID ─────────── */}
+      <section className="py-8 sm:py-14 px-4 sm:px-8 bg-neutral-50/70 border-y border-neutral-200/70">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6 items-stretch">
+            {/* Card 1: UrPass Explore Marketplace */}
+            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-violet-950 via-purple-950 to-neutral-950 p-6 sm:p-8 text-white border border-violet-800/40 shadow-xl shadow-violet-950/10 flex flex-col justify-between group hover:border-violet-700/60 transition-all duration-300">
+              {/* Decorative radial lighting */}
+              <div className="absolute -top-16 -right-16 w-56 h-56 bg-violet-500/20 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute -bottom-16 left-1/4 w-40 h-40 bg-fuchsia-500/15 rounded-full blur-2xl pointer-events-none" />
+
+              <div className="relative z-10">
+                {/* Header row */}
+                <div className="flex items-center justify-between gap-3 mb-5">
+                  <div className="relative shrink-0">
+                    <div className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white shadow-inner">
+                      <Compass className="w-6 h-6 text-violet-300" />
+                    </div>
+                    <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-violet-400 ring-2 ring-violet-950" />
+                    </span>
+                  </div>
+
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase bg-violet-500/30 text-violet-200 border border-violet-400/30 backdrop-blur-sm">
+                    <Sparkles className="w-3 h-3 text-violet-300 animate-pulse" />
+                    Now Live · Marketplace
+                  </span>
+                </div>
+
+                {/* Title & Description */}
+                <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-white mb-2.5">
+                  UrPass Explore
+                </h3>
+                <p className="text-xs sm:text-sm text-violet-200/90 leading-relaxed mb-6">
+                  Discover curated conferences, creative workshops, concerts, and mixers across India — or publish your event to reach thousands of verified attendees with direct QR pass booking.
+                </p>
+
+                {/* City tags */}
+                <div className="flex flex-wrap items-center gap-1.5 mb-7 text-[11px] text-violet-300/80">
+                  <span className="px-2.5 py-1 rounded-lg bg-white/10 border border-white/10 font-medium">Bengaluru</span>
+                  <span className="px-2.5 py-1 rounded-lg bg-white/10 border border-white/10 font-medium">Mumbai</span>
+                  <span className="px-2.5 py-1 rounded-lg bg-white/10 border border-white/10 font-medium">Delhi NCR</span>
+                  <span className="px-2.5 py-1 rounded-lg bg-white/10 border border-white/10 font-medium">London</span>
+                  <span className="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-violet-300/60">+More Cities</span>
+                </div>
               </div>
-              <p className="text-xs sm:text-sm text-neutral-600 leading-relaxed">
-                Native Model Context Protocol support — control tickets, registrations, and check-ins directly inside Claude Desktop &amp; Cursor.
-              </p>
+
+              {/* Action buttons */}
+              <div className="flex flex-wrap items-center gap-2.5 relative z-10 pt-4 border-t border-white/10">
+                <Link
+                  href="/explore"
+                  className="inline-flex items-center justify-center gap-1.5 text-xs font-bold text-violet-950 bg-white hover:bg-neutral-100 px-4 py-2.5 rounded-xl transition-all shadow-sm"
+                >
+                  <span>Explore Events</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+                <Link
+                  href="/dashboard"
+                  className="inline-flex items-center justify-center gap-1.5 text-xs font-semibold text-white hover:text-white bg-white/10 hover:bg-white/15 border border-white/20 px-3.5 py-2.5 rounded-xl transition-all backdrop-blur-sm"
+                >
+                  <span>Publish Event</span>
+                </Link>
+              </div>
+            </div>
+
+            {/* Card 2: Model Context Protocol (MCP) */}
+            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-neutral-900 via-neutral-950 to-neutral-900 p-6 sm:p-8 text-white border border-neutral-800 shadow-xl shadow-neutral-950/10 flex flex-col justify-between group hover:border-neutral-700 transition-all duration-300">
+              {/* Decorative radial lighting */}
+              <div className="absolute -top-16 -right-16 w-56 h-56 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+
+              <div className="relative z-10">
+                {/* Header row */}
+                <div className="flex items-center justify-between gap-3 mb-5">
+                  <div className="w-12 h-12 rounded-2xl bg-neutral-800 border border-neutral-700 flex items-center justify-center font-mono font-bold text-xs text-white shadow-inner">
+                    MCP
+                  </div>
+
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase bg-emerald-950/70 text-emerald-400 border border-emerald-500/30">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    Official Standard
+                  </span>
+                </div>
+
+                {/* Title & Description */}
+                <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-white mb-2.5">
+                  Model Context Protocol
+                </h3>
+                <p className="text-xs sm:text-sm text-neutral-400 leading-relaxed mb-6">
+                  Native Model Context Protocol support — control tickets, registrations, and check-ins directly inside Claude Desktop, Cursor, and autonomous AI agents.
+                </p>
+
+                {/* Integration highlights */}
+                <div className="flex flex-wrap items-center gap-1.5 mb-7 text-[11px] text-neutral-300">
+                  <span className="px-2.5 py-1 rounded-lg bg-neutral-800/80 border border-neutral-700/80 font-mono">Claude Desktop</span>
+                  <span className="px-2.5 py-1 rounded-lg bg-neutral-800/80 border border-neutral-700/80 font-mono">Cursor</span>
+                  <span className="px-2.5 py-1 rounded-lg bg-neutral-800/80 border border-neutral-700/80 font-mono">urpass-mcp</span>
+                  <span className="px-2.5 py-1 rounded-lg bg-neutral-800/40 border border-neutral-700/40 text-neutral-400">Zero Latency</span>
+                </div>
+              </div>
+
+              {/* Action buttons */}
+              <div className="flex flex-wrap items-center gap-2.5 relative z-10 pt-4 border-t border-neutral-800">
+                <Link
+                  href="/mcp-event-management"
+                  className="inline-flex items-center justify-center gap-1.5 text-xs font-bold text-white bg-violet-600 hover:bg-violet-500 px-4 py-2.5 rounded-xl transition-all shadow-sm"
+                >
+                  <span>Explore MCP</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+                <Link
+                  href="/mcp-event-management#quickstart"
+                  className="inline-flex items-center justify-center gap-1.5 text-xs font-semibold text-neutral-300 hover:text-white bg-neutral-800/60 hover:bg-neutral-800 border border-neutral-700/60 px-3.5 py-2.5 rounded-xl transition-all"
+                >
+                  <span>Setup Guide</span>
+                </Link>
+              </div>
             </div>
           </div>
-          <Link
-            href="/mcp-event-management"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-violet-700 hover:text-white bg-white hover:bg-violet-600 border border-violet-200 hover:border-violet-600 px-4 py-2 rounded-xl transition-all shadow-2xs shrink-0 group self-stretch sm:self-auto justify-center"
-          >
-            <span>Explore MCP</span>
-            <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-          </Link>
         </div>
-      </div>
+      </section>
 
       {/* ── 02 FEATURES ─────────────────────────────────────────────────── */}
       <FeaturesSection />

@@ -28,6 +28,7 @@ import CopyLinkButton from "@/components/event/CopyLinkButton";
 import { createClient } from "@/lib/supabase/client";
 import { updateEventStatus, duplicateEvent } from "@/app/actions/events";
 import EventCommunicationsCard from "@/components/event/EventCommunicationsCard";
+import EventExploreMarketplaceCard from "@/components/event/EventExploreMarketplaceCard";
 import EventAttendeeFeedbackCard from "@/components/event/EventAttendeeFeedbackCard";
 import SessionAttendanceSection from "@/components/conference/SessionAttendanceSection";
 
@@ -987,6 +988,13 @@ export default function EventOverview({ event, initialAttendees = [] }: Props) {
           )}
         </div>
       </div>
+
+      {/* ── Post on UrPass Explore Marketplace ──────────────────── */}
+      <EventExploreMarketplaceCard
+        eventId={event.id}
+        eventName={event.name}
+        applySlug={event.apply_slug}
+      />
 
       {/* ── Attendee Engagement & Communications ─────────────────── */}
       <EventCommunicationsCard

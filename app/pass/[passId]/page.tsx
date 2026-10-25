@@ -28,6 +28,7 @@ import TicketCutDivider from "@/components/pass/TicketCutDivider";
 import { isStudioDesign } from "@/lib/studio/resolver";
 import { getHardenedPublicPass, cleanPassToken } from "@/lib/passes/public-pass";
 import { resolveEventOgImage } from "@/lib/seo/og-images";
+import ThermalTicketPrinter from "@/components/pass/ThermalTicketPrinter";
 
 export async function generateMetadata({
   params,
@@ -249,21 +250,26 @@ export default async function PassPage({
       )}
 
       {/* Visual Ticket Pass Card: Studio Design or Standard Template */}
-      {isStudio ? (
-        <div className="w-full max-w-sm flex justify-center mb-6 relative z-10 printable-pass-container">
-          <StudioPassRenderer
-            design={rawCustomDesign}
-            attendee={attendee}
-            event={{ ...event, venue: event.venue ?? undefined }}
-            passToken={pass.pass_token}
-            ticketId={`#${shortCode.toUpperCase()}`}
-          />
-        </div>
-      ) : (
-        <div
-          id="printable-ticket-card"
-          className={`w-full max-w-[360px] printable-pass-container ${shapeRadius} border ${cardBorder} ${cardBg} overflow-hidden shadow-[0_20px_50px_-10px_rgba(0,0,0,0.12),0_4px_16px_-2px_rgba(0,0,0,0.06)] relative select-none transition-all duration-150 z-10`}
-        >
+      <ThermalTicketPrinter
+        passToken={pass.pass_token}
+        isDark={isDark}
+        accentColor={activeColor}
+      >
+        {isStudio ? (
+          <div className="w-full max-w-sm flex justify-center mb-6 relative z-10 printable-pass-container">
+            <StudioPassRenderer
+              design={rawCustomDesign}
+              attendee={attendee}
+              event={{ ...event, venue: event.venue ?? undefined }}
+              passToken={pass.pass_token}
+              ticketId={`#${shortCode.toUpperCase()}`}
+            />
+          </div>
+        ) : (
+          <div
+            id="printable-ticket-card"
+            className={`w-full max-w-[360px] printable-pass-container ${shapeRadius} border ${cardBorder} ${cardBg} overflow-hidden shadow-[0_20px_50px_-10px_rgba(0,0,0,0.12),0_4px_16px_-2px_rgba(0,0,0,0.06)] relative select-none transition-all duration-150 z-10`}
+          >
           {/* Optional background image with contrast-preserving overlay */}
           {design.backgroundImageUrl && (
             <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
@@ -619,6 +625,7 @@ export default async function PassPage({
           </div>
         </div>
       )}
+      </ThermalTicketPrinter>
 
       {/* Group & Bulk Passes Member Hub — Only accessible to Primary Purchaser */}
       {groupInfo && groupInfo.isPrimary && groupInfo.members.length > 1 && (

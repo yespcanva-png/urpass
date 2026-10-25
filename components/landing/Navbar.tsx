@@ -72,6 +72,7 @@ export default function Navbar({ isAuthenticated: initialAuth }: NavbarProps = {
   }, []);
 
   const navLinks = [
+    { href: "/explore", label: "Explore" },
     { href: "/features", label: "Features" },
     { href: "/#how-it-works", label: "How it works" },
     { href: "/ticket-templates", label: "Templates", badge: "New" },

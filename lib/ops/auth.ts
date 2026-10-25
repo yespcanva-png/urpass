@@ -5,11 +5,9 @@ export const OPS_COOKIE_NAME = "urpass_ops_session";
 const SESSION_DURATION_HOURS = 8;
 
 function getOpsSecret(): string {
-  return (
-    process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    process.env.RAZORPAY_KEY_SECRET ||
-    "urpass_ops_super_secret_system_key_2026"
-  );
+  const secret = process.env.OPS_SESSION_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!secret) throw new Error("OPS_SESSION_SECRET or SUPABASE_SERVICE_ROLE_KEY is required");
+  return secret;
 }
 
 export function signOpsSessionToken(): string {
@@ -33,7 +31,8 @@ export function verifyOpsSessionToken(token?: string | null): boolean {
   if (parts.length !== 2) return false;
 
   const [payloadB64, signature] = parts;
-  const secret = getOpsSecret();
+  let secret: string;
+  try { secret = getOpsSecret(); } catch { return false; }
 
   const expectedSignature = crypto
     .createHmac("sha256", secret)
@@ -52,7 +51,7 @@ export function verifyOpsSessionToken(token?: string | null): boolean {
     const raw = Buffer.from(payloadB64, "base64url").toString("utf-8");
     const parsed = JSON.parse(raw);
     if (!parsed || typeof parsed.exp !== "number") return false;
-    return parsed.exp > Date.now();
+    return parsed.role === "ops_admin" && parsed.exp > Date.now();
   } catch {
     return false;
   }

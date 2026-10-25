@@ -141,6 +141,7 @@ export default function ApplyForm({
   eventImages = [],
   activeFeatures = {},
   availableSessions = [],
+  exploreMode = false,
 }: {
   event: EventInfo;
   branding: Branding;
@@ -150,6 +151,7 @@ export default function ApplyForm({
   eventImages?: string[];
   activeFeatures?: ActiveEventFeatures;
   availableSessions?: AvailableSession[];
+  exploreMode?: boolean;
 }) {
   const router = useRouter();
   const [success, setSuccess] = useState<SuccessState | null>(null);
@@ -501,6 +503,9 @@ export default function ApplyForm({
                 ...finalResponses,
                 guest_count: peopleCount,
                 group_members: groupMembers,
+                ...(exploreMode || (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("ref") === "explore")
+                  ? { referral_source: "explore" }
+                  : {}),
               }
             );
             setPaymentPending(false);
@@ -509,7 +514,7 @@ export default function ApplyForm({
               return;
             }
             if (result?.passToken) {
-              router.push(`/pass/${result.passToken}`);
+              router.push(exploreMode ? `/explore/booking/${encodeURIComponent(result.passToken)}/success` : `/pass/${result.passToken}`);
             } else if (result?.waitlisted) {
               setSuccess({ type: "waitlisted", attendeeName: data.name });
             } else {
@@ -648,6 +653,9 @@ export default function ApplyForm({
           ...finalResponses,
           guest_count: peopleCount,
           group_members: groupMembers,
+          ...(exploreMode || (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("ref") === "explore")
+            ? { referral_source: "explore" }
+            : {}),
         }
       );
 
@@ -656,7 +664,7 @@ export default function ApplyForm({
         return;
       }
       if (result?.passToken) {
-        router.push(`/pass/${result.passToken}`);
+        router.push(exploreMode ? `/explore/booking/${encodeURIComponent(result.passToken)}/success` : `/pass/${result.passToken}`);
       } else if (result?.waitlisted) {
         setSuccess({ type: "waitlisted", attendeeName: data.name });
       } else {
@@ -821,7 +829,7 @@ export default function ApplyForm({
       }}
     >
       {/* ── Top Mobile & Desktop Navigation Bar ── */}
-      <nav className="sticky top-0 z-40 bg-white/90 backdrop-blur-xl border-b border-neutral-200/80 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
+      <nav className={`${exploreMode ? "hidden" : "sticky top-0 z-40"} bg-white/90 backdrop-blur-xl border-b border-neutral-200/80 shadow-[0_1px_3px_rgba(0,0,0,0.02)]`}>
         <div className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
             {branding.orgLogoUrl ? (
@@ -861,7 +869,7 @@ export default function ApplyForm({
       </nav>
 
       {/* ── Corporate Hero Showcase Section (Optimized for Mobile & Desktop) ── */}
-      <section className="relative overflow-hidden border-b border-neutral-200/80 bg-white/60 backdrop-blur-md">
+      <section className={`${exploreMode ? "hidden" : "relative overflow-hidden"} border-b border-neutral-200/80 bg-white/60 backdrop-blur-md`}>
         <div className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 py-5 sm:py-10 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-8 lg:gap-12 items-center">
             
@@ -977,11 +985,11 @@ export default function ApplyForm({
       </section>
 
       {/* ── Main Two-Column Layout (Optimized for Small & Large Screens) ── */}
-      <main className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 py-6 sm:py-10">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-start">
+      <main className={`${exploreMode ? "max-w-3xl" : "max-w-7xl"} mx-auto px-3.5 sm:px-6 lg:px-8 py-6 sm:py-10`}>
+        <div className={`${exploreMode ? "block" : "grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-start"}`}>
           
           {/* Left Column (7 cols on Desktop): Tabs & Content */}
-          <div className="lg:col-span-7 space-y-5 sm:space-y-6">
+          <div className={`${exploreMode ? "hidden" : "lg:col-span-7"} space-y-5 sm:space-y-6`}>
             
             {/* Sleek Segmented Tab Bar with Touch Horizontal Scroll */}
             <div className="flex p-1 bg-neutral-100/90 rounded-2xl border border-neutral-200/80 gap-1 overflow-x-auto max-w-full scrollbar-none">
@@ -1260,14 +1268,14 @@ export default function ApplyForm({
           </div>
 
           {/* Right Column: Sleek Corporate Pass Selector & Checkout Terminal */}
-          <div id="tickets-booking-section" className="lg:col-span-5 scroll-mt-16 sm:scroll-mt-20">
+          <div id="tickets-booking-section" className={`${exploreMode ? "w-full" : "lg:col-span-5"} scroll-mt-16 sm:scroll-mt-20`}>
             <div className="bg-white border border-neutral-200/90 rounded-3xl p-4 sm:p-7 shadow-[0_10px_35px_-8px_rgba(0,0,0,0.05)] sticky top-16 sm:top-20">
               
               {/* Step 1 Header */}
               <div className="flex items-center justify-between mb-4 sm:mb-5">
                 <div>
                   <span className="text-[10px] font-bold uppercase tracking-[0.08em] text-brand block mb-0.5">
-                    Step 1 of 2
+                    Step 1 of {exploreMode ? "3" : "2"}
                   </span>
                   <h2 className="text-sm sm:text-base font-extrabold tracking-tight text-neutral-900">Select Your Pass</h2>
                 </div>
@@ -2115,18 +2123,19 @@ export default function ApplyForm({
                       </div>
                     )}
 
-                    <div className="flex justify-between text-emerald-700 font-medium">
+                    {!exploreMode && <div className="flex justify-between text-emerald-700 font-medium">
                       <span>Convenience & Booking Fee</span>
                       <span>₹0 (Waived)</span>
-                    </div>
+                    </div>}
 
                     <div className="pt-2 border-t border-neutral-200 flex justify-between items-baseline font-bold">
-                      <span className="text-xs sm:text-sm text-neutral-900 font-bold">Total Amount</span>
+                      <span className="text-xs sm:text-sm text-neutral-900 font-bold">{exploreMode && effectivelyPaid ? "Estimated ticket subtotal" : "Total Amount"}</span>
                       <span className="text-lg sm:text-xl font-black text-neutral-900 tabular-nums">
                         {effectiveTicketPrice === 0 ? "Free" : `₹${effectiveTicketPrice.toLocaleString("en-IN")}`}
                       </span>
                     </div>
                   </div>
+                  {exploreMode && effectivelyPaid && <p className="text-[11px] leading-relaxed text-neutral-500">Taxes and payment fees, if applicable, are calculated by UrPass before payment. Review the final amount in Razorpay checkout.</p>}
 
                   {serverError && (
                     <div className="flex items-start gap-2 text-xs text-red-600 bg-red-50 border border-red-200 rounded-xl p-3 font-medium">
@@ -2155,7 +2164,7 @@ export default function ApplyForm({
                       : isSubmitting
                       ? "Confirming Registration…"
                       : effectivelyPaid
-                      ? `Proceed to Pay ₹${effectiveTicketPrice.toLocaleString("en-IN")}`
+                      ? exploreMode ? "Continue to secure payment" : `Proceed to Pay ₹${effectiveTicketPrice.toLocaleString("en-IN")}`
                       : "Claim Free Pass Now"}
                     {!isSubmitting && !paymentPending && <ArrowRight className="w-4 h-4" />}
                   </button>
@@ -2166,7 +2175,7 @@ export default function ApplyForm({
                     </span>
                     <span>·</span>
                     <span className="inline-flex items-center gap-1 font-medium">
-                      <ShieldCheck className="w-3 h-3 text-brand" /> Instant QR Pass
+                      <ShieldCheck className="w-3 h-3 text-brand" /> {exploreMode && !event.auto_approve ? "Pass after approval" : "Instant QR Pass"}
                     </span>
                   </div>
                 </form>
@@ -2221,7 +2230,7 @@ export default function ApplyForm({
                 </>
               ) : (
                 <>
-                  <span>{effectivelyPaid ? `Book · ₹${effectiveTicketPrice.toLocaleString("en-IN")}` : "Get Pass"}</span>
+                  <span>{effectivelyPaid ? exploreMode ? "Continue to payment" : `Book · ₹${effectiveTicketPrice.toLocaleString("en-IN")}` : "Get Pass"}</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </>
               )}
