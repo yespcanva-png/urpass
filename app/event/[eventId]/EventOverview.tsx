@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Users,
   QrCode,
@@ -23,6 +23,8 @@ import {
   AlertCircle,
   Copy,
   Sparkles,
+  Compass,
+  ArrowRight,
 } from "lucide-react";
 import CopyLinkButton from "@/components/event/CopyLinkButton";
 import { createClient } from "@/lib/supabase/client";
@@ -126,6 +128,24 @@ export default function EventOverview({ event, initialAttendees = [] }: Props) {
   const [isExporting, setIsExporting] = useState(false);
   const [ticketTypes, setTicketTypes] = useState<{id: string; name: string; price: number; status: string}[]>([]);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isNewlyCreated = searchParams?.get("created") === "1" || searchParams?.get("openExplore") === "1";
+  const shouldOpenExplore = searchParams?.get("openExplore") === "1";
+
+  useEffect(() => {
+    if (shouldOpenExplore || (typeof window !== "undefined" && window.location.hash === "#explore-marketplace")) {
+      const timer = setTimeout(() => {
+        const el = document.getElementById("explore-marketplace");
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "start" });
+          el.classList.add("ring-4", "ring-violet-500", "shadow-xl");
+          setTimeout(() => el.classList.remove("ring-4", "ring-violet-500", "shadow-xl"), 3000);
+        }
+      }, 350);
+      return () => clearTimeout(timer);
+    }
+  }, [shouldOpenExplore]);
+
   const [currentStatus, setCurrentStatus] = useState<string>(event.status);
   const [isPublishing, setIsPublishing] = useState(false);
   const [publishError, setPublishError] = useState("");
@@ -416,6 +436,49 @@ export default function EventOverview({ event, initialAttendees = [] }: Props) {
         <div className="mb-6 p-4 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-900 flex items-center gap-2.5 text-xs font-semibold shadow-2xs">
           <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
           <span>Event published successfully! Your registration link is now live and accepting applications.</span>
+        </div>
+      )}
+
+      {/* ── Newly Created Event: Explore Marketplace Suggestion Banner ── */}
+      {isNewlyCreated && (
+        <div className="mb-6 p-4 sm:p-5 rounded-2xl border border-violet-300 bg-gradient-to-r from-violet-600 via-indigo-600 to-purple-700 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg shadow-violet-500/15 animate-in fade-in slide-in-from-top-3 duration-300 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-32 bg-white/10 rounded-full blur-2xl pointer-events-none" />
+          <div className="flex items-start sm:items-center gap-3.5 relative z-10">
+            <div className="w-11 h-11 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center shrink-0 border border-white/30 shadow-inner">
+              <Compass className="w-6 h-6 text-white animate-pulse" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <p className="text-sm font-bold text-white tracking-tight">
+                  Event created! Ready to publish on UrPass Explore?
+                </p>
+                <span className="px-2 py-0.5 rounded-full bg-emerald-400 text-neutral-950 text-[10px] font-extrabold uppercase tracking-wider">
+                  Recommended
+                </span>
+              </div>
+              <p className="text-xs text-violet-100 mt-1 leading-relaxed">
+                List your event on the public <strong>/explore</strong> marketplace to get discovered by thousands of verified event attendees across India with 0% commission.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 w-full sm:w-auto shrink-0 relative z-10">
+            <button
+              type="button"
+              onClick={() => {
+                const el = document.getElementById("explore-marketplace");
+                if (el) {
+                  el.scrollIntoView({ behavior: "smooth", block: "start" });
+                  el.classList.add("ring-4", "ring-violet-500", "shadow-xl");
+                  setTimeout(() => el.classList.remove("ring-4", "ring-violet-500", "shadow-xl"), 3000);
+                }
+              }}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-violet-950 bg-white hover:bg-violet-50 transition-all shadow-md active:scale-95 cursor-pointer"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-violet-600" />
+              <span>Publish on Explore Now</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
       )}
 

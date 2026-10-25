@@ -209,7 +209,10 @@ export default function EventExploreMarketplaceCard({
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm p-6 mb-3 border border-violet-100/80 relative overflow-hidden ring-1 ring-violet-500/10">
+    <div
+      id="explore-marketplace"
+      className="bg-white rounded-2xl shadow-sm p-6 mb-3 border border-violet-100/80 relative overflow-hidden ring-1 ring-violet-500/10 scroll-mt-24 transition-all duration-300"
+    >
       {/* Background decoration */}
       <div className="absolute top-0 right-0 w-80 h-36 bg-gradient-to-bl from-violet-500/10 via-purple-500/5 to-transparent pointer-events-none rounded-tr-2xl" />
 

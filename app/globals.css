@@ -31,6 +31,24 @@ html {
   text-size-adjust: 100%;
 }
 
+/* ── Prevent Mobile Browser / iOS Safari Auto-Zoom on Input Focus ── */
+@media screen and (max-width: 768px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* ── Prevent Double-Tap Zoom & Tap Delay on Interactive Controls ──── */
+input,
+select,
+textarea,
+button,
+a {
+  touch-action: manipulation;
+}
+
 @keyframes exploreAdFade { from { opacity: 0.35; } to { opacity: 1; } }
 .explore-ad-fade { animation: exploreAdFade 350ms ease-out; }
 

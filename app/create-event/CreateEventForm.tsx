@@ -5,7 +5,22 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, Loader2, Lock, Building2, MapPin, Wifi, LayoutGrid, Link2, AlertCircle, CheckCircle2, Globe } from "lucide-react";
+import {
+  ArrowLeft,
+  Loader2,
+  Lock,
+  Building2,
+  MapPin,
+  Wifi,
+  LayoutGrid,
+  Link2,
+  AlertCircle,
+  CheckCircle2,
+  Globe,
+  Compass,
+  Sparkles,
+  ArrowRight,
+} from "lucide-react";
 import { eventSchema, type EventInput } from "@/lib/validations/event";
 import { createEvent } from "@/app/actions/events";
 import { detectCountryClient } from "@/lib/country-config";
@@ -51,7 +66,7 @@ function Field({
 }
 
 const inputCls =
-  "border border-neutral-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-neutral-900 transition-colors bg-white placeholder:text-neutral-300";
+  "border border-neutral-200 rounded-xl px-3 py-2.5 text-base sm:text-sm outline-none focus:border-neutral-900 transition-colors bg-white placeholder:text-neutral-300";
 
 const EVENT_TYPES = [
   {
@@ -101,6 +116,11 @@ export default function CreateEventForm({
   const [country, setCountry] = useState<"IN" | "GB">("IN");
   const [eventImages, setEventImages] = useState<string[]>([]);
   const [showCustomSlug, setShowCustomSlug] = useState(false);
+  const [createdEventModal, setCreatedEventModal] = useState<{
+    id: string;
+    name: string;
+    isDraft: boolean;
+  } | null>(null);
 
   const atLimit = !unlimited && activeEventCount >= maxEvents;
 
@@ -302,9 +322,13 @@ export default function CreateEventForm({
       }
       if (result?.eventId) {
         const actionLabel = submitMode === "active" ? "Event published and live!" : "Event saved as draft!";
-        setSuccessMessage(`${actionLabel} Opening your event dashboard...`);
-        setIsNavigating(true);
-        router.push(`/event/${result.eventId}`);
+        setSuccessMessage(actionLabel);
+        setCreatedEventModal({
+          id: result.eventId,
+          name: data.name,
+          isDraft: submitMode === "draft",
+        });
+        window.scrollTo({ top: 0, behavior: "smooth" });
       } else {
         setServerError("Could not create event: Server did not return an event ID.");
         window.scrollTo({ top: 0, behavior: "smooth" });
@@ -501,7 +525,7 @@ export default function CreateEventForm({
                         <input
                           type="text"
                           placeholder="custom-event-slug"
-                          className={`${inputCls} font-mono text-xs py-2`}
+                          className={`${inputCls} font-mono text-base sm:text-xs py-2`}
                           {...register("custom_slug", {
                             onChange: (e) => {
                               const val = slugify(e.target.value);
@@ -867,6 +891,40 @@ export default function CreateEventForm({
             </div>
           </fieldset>
 
+          {/* ── UrPass Explore Marketplace Recommendation Callout ── */}
+          <div className="bg-gradient-to-br from-violet-50/90 via-purple-50/50 to-white border border-violet-200/90 rounded-2xl p-5 shadow-2xs relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-48 h-24 bg-gradient-to-bl from-violet-500/10 to-transparent pointer-events-none rounded-tr-2xl" />
+            <div className="flex items-start gap-3.5 relative z-10">
+              <div className="w-10 h-10 rounded-xl bg-violet-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                <Compass className="w-5 h-5" />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-sm font-bold text-neutral-950">
+                    Publish on UrPass Explore Marketplace
+                  </span>
+                  <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                    Suggested Next Step
+                  </span>
+                </div>
+                <p className="text-xs text-neutral-600 mt-1 leading-relaxed">
+                  Get discovered on the public <strong className="text-violet-700">/explore</strong> directory by thousands of verified event attendees across India. After creating your event, you can publish it in 1 click with 0% platform fee.
+                </p>
+                <div className="mt-3 flex items-center gap-4 flex-wrap text-xs font-semibold text-neutral-600">
+                  <span className="flex items-center gap-1.5 text-violet-700">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Free Public Discovery
+                  </span>
+                  <span className="flex items-center gap-1.5 text-violet-700">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Instant 0.3s QR Passes
+                  </span>
+                  <span className="flex items-center gap-1.5 text-violet-700">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> 0% Commission
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {serverError && (
             <div className="flex items-start gap-3 bg-red-50 border-2 border-red-300 rounded-xl p-4 text-red-900 shadow-sm animate-shake">
               <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
@@ -927,6 +985,86 @@ export default function CreateEventForm({
           </div>
         </form>
       </div>
+
+      {/* ── Post-Creation Celebration & Explore Suggestion Modal ── */}
+      {createdEventModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-neutral-950/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-7 shadow-2xl border border-neutral-100 animate-in zoom-in-95 duration-200 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-64 h-32 bg-gradient-to-bl from-violet-500/15 via-purple-500/10 to-transparent pointer-events-none rounded-tr-3xl" />
+            <div className="relative z-10">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold mb-3 shadow-2xs">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                <span>{createdEventModal.isDraft ? "Event Saved as Draft!" : "Event Published & Live!"}</span>
+              </div>
+
+              <h2 className="text-xl sm:text-2xl font-extrabold text-neutral-950 tracking-tight">
+                {createdEventModal.name}
+              </h2>
+              <p className="text-xs sm:text-sm text-neutral-500 mt-1">
+                Your direct event registration link is active. Ready to get more attendees on UrPass Explore?
+              </p>
+
+              <div className="my-5 p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-violet-50 via-purple-50/50 to-white border border-violet-200/90 shadow-2xs">
+                <div className="flex items-start gap-3.5">
+                  <div className="w-11 h-11 rounded-2xl bg-violet-600 text-white flex items-center justify-center shrink-0 shadow-md shadow-violet-500/25">
+                    <Compass className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-bold text-neutral-950">
+                        Publish on UrPass Explore
+                      </h3>
+                      <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-violet-600 text-white shadow-2xs">
+                        Recommended
+                      </span>
+                    </div>
+                    <p className="text-xs text-neutral-600 mt-1 leading-relaxed">
+                      List your event on the public <strong>/explore</strong> marketplace to reach thousands of verified attendees, tech builders, and cultural festival goers across India.
+                    </p>
+                    <div className="mt-3 space-y-1.5 text-xs text-neutral-600">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                        <span>Featured in city discovery (Bengaluru, Mumbai, Delhi & more)</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                        <span>0% platform fee & instant 0.3s QR passes</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                        <span>Takes less than 30 seconds to review and submit</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-col-reverse sm:flex-row items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    router.push(`/event/${createdEventModal.id}?created=1`);
+                  }}
+                  className="w-full sm:w-auto px-5 py-3 rounded-xl border border-neutral-200 text-neutral-700 font-semibold text-xs hover:bg-neutral-50 transition-colors cursor-pointer text-center"
+                >
+                  Go to Event Overview
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    router.push(`/event/${createdEventModal.id}?created=1&openExplore=1#explore-marketplace`);
+                  }}
+                  className="w-full sm:flex-1 inline-flex items-center justify-center gap-2 py-3 px-5 rounded-xl bg-violet-600 hover:bg-violet-700 active:scale-95 text-white font-bold text-xs transition-all shadow-md shadow-violet-500/20 cursor-pointer"
+                >
+                  <Compass className="w-4 h-4" />
+                  <span>Publish on Explore Now</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

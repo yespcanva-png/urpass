@@ -3,7 +3,20 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X } from "lucide-react";
+import {
+  Menu,
+  X,
+  Compass,
+  Sparkles,
+  Workflow,
+  LayoutTemplate,
+  CreditCard,
+  Mail,
+  QrCode,
+  ArrowRight,
+  ChevronRight,
+  CheckCircle2,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { detectCountryClient } from "@/lib/country-config";
 import FreeTrialTopBanner from "@/components/landing/FreeTrialTopBanner";
@@ -13,6 +26,15 @@ import { createClient } from "@/lib/supabase/client";
 
 interface NavbarProps {
   isAuthenticated?: boolean;
+}
+
+interface NavItem {
+  href: string;
+  label: string;
+  description: string;
+  badge?: string;
+  badgeTone?: "emerald" | "violet";
+  icon: React.ComponentType<{ className?: string }>;
 }
 
 export default function Navbar({ isAuthenticated: initialAuth }: NavbarProps = {}) {
@@ -31,6 +53,44 @@ export default function Navbar({ isAuthenticated: initialAuth }: NavbarProps = {
   const [scrolled, setScrolled] = useState(false);
   const [isUk, setIsUk] = useState(isUkRoute);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(Boolean(initialAuth));
+
+  // Lock body scroll and handle Escape key when mobile menu is open
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [open]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  // Close mobile drawer on route change
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
+
+  // Close mobile drawer on window resize to desktop
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) {
+        setOpen(false);
+      }
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     if (initialAuth !== undefined) {
@@ -71,13 +131,47 @@ export default function Navbar({ isAuthenticated: initialAuth }: NavbarProps = {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const navLinks = [
-    { href: "/explore", label: "Explore" },
-    { href: "/features", label: "Features" },
-    { href: "/#how-it-works", label: "How it works" },
-    { href: "/ticket-templates", label: "Templates", badge: "New" },
-    { href: "/pricing", label: "Pricing" },
-    { href: "/contact", label: "Contact" },
+  const navLinks: NavItem[] = [
+    {
+      href: "/explore",
+      label: "Explore",
+      description: "Discover curated live events & mixers",
+      badge: "Now Live",
+      badgeTone: "emerald",
+      icon: Compass,
+    },
+    {
+      href: "/features",
+      label: "Features",
+      description: "Pass designer, forms & lightning check-in",
+      icon: Sparkles,
+    },
+    {
+      href: "/ticket-templates",
+      label: "Templates",
+      description: "Ready-to-use digital & thermal passes",
+      badge: "New",
+      badgeTone: "violet",
+      icon: LayoutTemplate,
+    },
+    {
+      href: "/#how-it-works",
+      label: "How it works",
+      description: "Setup to check-in in 3 simple steps",
+      icon: Workflow,
+    },
+    {
+      href: "/pricing",
+      label: "Pricing",
+      description: "0% commission transparent platform fee",
+      icon: CreditCard,
+    },
+    {
+      href: "/contact",
+      label: "Contact",
+      description: "Support, custom setup & partnerships",
+      icon: Mail,
+    },
   ];
 
   return (
@@ -98,7 +192,7 @@ export default function Navbar({ isAuthenticated: initialAuth }: NavbarProps = {
               : "bg-white/80 backdrop-blur-md border-neutral-200/50"
           )}
         >
-          <div className="max-w-6xl mx-auto px-5 sm:px-8 h-16 flex items-center justify-between">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             {/* Logo */}
             <Link
               href="/"
@@ -126,7 +220,14 @@ export default function Navbar({ isAuthenticated: initialAuth }: NavbarProps = {
                   >
                     <span>{item.label}</span>
                     {item.badge && (
-                      <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-violet-100 text-violet-700 leading-none">
+                      <span
+                        className={cn(
+                          "px-1.5 py-0.5 rounded text-[10px] font-bold leading-none",
+                          item.badgeTone === "emerald"
+                            ? "bg-emerald-100 text-emerald-800"
+                            : "bg-violet-100 text-violet-700"
+                        )}
+                      >
                         {item.badge}
                       </span>
                     )}
@@ -172,74 +273,179 @@ export default function Navbar({ isAuthenticated: initialAuth }: NavbarProps = {
               )}
             </div>
 
-            {/* Mobile Toggle */}
-            <button
-              onClick={() => setOpen(!open)}
-              className="lg:hidden p-2 rounded-lg hover:bg-neutral-100/80 transition-colors text-neutral-700"
-              aria-label="Toggle menu"
-            >
-              {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </button>
+            {/* Mobile Actions: Direct 1-tap CTA & Hamburger Button */}
+            <div className="flex lg:hidden items-center gap-2">
+              {isLoggedIn ? (
+                <Link
+                  href={pathname === "/pricing" ? "/dashboard/billing" : "/dashboard"}
+                  className="text-xs font-semibold text-white bg-neutral-950 active:bg-neutral-800 px-3.5 py-2 rounded-xl transition-all shadow-xs touch-manipulation"
+                >
+                  Dashboard
+                </Link>
+              ) : (
+                <Link
+                  href={signupHref}
+                  className="text-xs font-semibold text-white bg-neutral-950 active:bg-neutral-800 px-3.5 py-2 rounded-xl transition-all shadow-xs touch-manipulation"
+                >
+                  Get Started
+                </Link>
+              )}
+
+              <button
+                type="button"
+                onClick={() => setOpen((prev) => !prev)}
+                className="p-2 rounded-xl border border-neutral-200/80 hover:bg-neutral-100/80 active:bg-neutral-200 transition-colors text-neutral-900 touch-manipulation min-w-[40px] min-h-[40px] flex items-center justify-center cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
+                aria-label={open ? "Close navigation menu" : "Open navigation menu"}
+                aria-expanded={open}
+              >
+                {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              </button>
+            </div>
           </div>
 
-          {/* Mobile Drawer */}
+          {/* Mobile Drawer and Backdrop */}
           {open && (
-            <div className="lg:hidden bg-white border-b border-neutral-200/80 px-5 py-5 flex flex-col gap-2 shadow-lg animate-in slide-in-from-top-2 duration-200">
-              {navLinks.map((item) => {
-                const isActive = pathname === item.href;
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setOpen(false)}
-                    className={cn(
-                      "text-sm py-2 px-3 rounded-lg transition-colors flex items-center justify-between",
-                      isActive
-                        ? "font-semibold text-neutral-950 bg-neutral-100"
-                        : "font-medium text-neutral-700 hover:bg-neutral-50"
-                    )}
-                  >
-                    <span>{item.label}</span>
-                    {item.badge && (
-                      <span className="px-2 py-0.5 rounded-md bg-violet-100 text-violet-700 text-[10px] font-bold">
-                        {item.badge}
-                      </span>
-                    )}
-                  </Link>
-                );
-              })}
+            <>
+              {/* Tap-outside Backdrop */}
+              <div
+                className="fixed inset-0 bg-neutral-950/40 backdrop-blur-xs -z-10 animate-in fade-in duration-200"
+                onClick={() => setOpen(false)}
+                aria-hidden="true"
+              />
 
-              {/* Mobile Action Buttons */}
-              <div className="pt-3 border-t border-neutral-100 flex flex-col gap-2.5">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setOpen(false);
-                    openRequestEventSetupModal();
-                  }}
-                  className="text-sm text-center border border-neutral-200/90 rounded-xl py-2.5 font-medium hover:bg-neutral-50 transition-colors text-neutral-900 bg-white shadow-2xs cursor-pointer w-full"
-                >
-                  Request a Setup
-                </button>
-                {isLoggedIn ? (
+              {/* Drawer Container */}
+              <div className="lg:hidden max-h-[calc(100dvh-4.5rem)] overflow-y-auto bg-white/98 backdrop-blur-2xl border-b border-neutral-200/90 px-4 py-4 sm:px-6 sm:py-5 shadow-2xl animate-in slide-in-from-top-2 duration-200 flex flex-col gap-3.5 overscroll-contain">
+                {/* Nav Links Stack */}
+                <div className="space-y-1">
+                  {navLinks.map((item) => {
+                    const isActive = pathname === item.href;
+                    const Icon = item.icon;
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setOpen(false)}
+                        className={cn(
+                          "w-full flex items-center justify-between p-2.5 rounded-xl transition-all duration-150 touch-manipulation group active:scale-[0.99]",
+                          isActive
+                            ? "bg-neutral-100 text-neutral-950 font-semibold"
+                            : "hover:bg-neutral-50/90 text-neutral-700"
+                        )}
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div
+                            className={cn(
+                              "w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-colors",
+                              isActive
+                                ? "bg-neutral-950 text-white shadow-xs"
+                                : "bg-neutral-100 text-neutral-700 group-hover:bg-neutral-200/80"
+                            )}
+                          >
+                            <Icon className="w-4 h-4" />
+                          </div>
+                          <div className="min-w-0 text-left">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-semibold tracking-tight text-neutral-950">
+                                {item.label}
+                              </span>
+                              {item.badge && (
+                                <span
+                                  className={cn(
+                                    "px-1.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider",
+                                    item.badgeTone === "emerald"
+                                      ? "bg-emerald-100 text-emerald-800"
+                                      : "bg-violet-100 text-violet-700"
+                                  )}
+                                >
+                                  {item.badge}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-neutral-500 font-normal truncate max-w-[240px] sm:max-w-none">
+                              {item.description}
+                            </p>
+                          </div>
+                        </div>
+
+                        <ChevronRight className="w-4 h-4 text-neutral-400 group-hover:text-neutral-700 shrink-0 ml-2" />
+                      </Link>
+                    );
+                  })}
+                </div>
+
+                {/* Organizer Staff Scanner Shortcut */}
+                <div className="pt-2 border-t border-neutral-100">
                   <Link
-                    href={pathname === "/pricing" ? "/dashboard/billing" : "/dashboard"}
+                    href="/scan"
                     onClick={() => setOpen(false)}
-                    className="text-sm text-center bg-neutral-950 text-white rounded-xl py-2.5 font-semibold hover:bg-neutral-800 transition-colors shadow-xs"
+                    className="flex items-center justify-between p-3 rounded-xl bg-violet-50/80 border border-violet-200/60 hover:bg-violet-100/70 transition-all touch-manipulation group active:scale-[0.99]"
                   >
-                    {pathname === "/pricing" ? "Billing Portal" : "Dashboard"}
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-9 h-9 rounded-xl bg-violet-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                        <QrCode className="w-5 h-5" />
+                      </div>
+                      <div className="min-w-0 text-left">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-sm font-bold text-violet-950">
+                            Gate QR Scanner
+                          </span>
+                          <span className="px-1.5 py-0.2 rounded bg-violet-200 text-violet-800 text-[10px] font-extrabold uppercase tracking-wider">
+                            Crew
+                          </span>
+                        </div>
+                        <p className="text-xs text-violet-700 font-medium truncate">
+                          Sub-second 0.3s lightning check-in
+                        </p>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-violet-500 group-hover:translate-x-0.5 transition-transform shrink-0" />
                   </Link>
-                ) : (
-                  <Link
-                    href={signupHref}
-                    onClick={() => setOpen(false)}
-                    className="block text-sm text-center bg-neutral-950 text-white rounded-xl py-2.5 font-semibold hover:bg-neutral-800 transition-colors shadow-xs"
+                </div>
+
+                {/* Mobile Action Buttons */}
+                <div className="pt-2 border-t border-neutral-100 flex flex-col gap-2.5">
+                  {isLoggedIn ? (
+                    <Link
+                      href={pathname === "/pricing" ? "/dashboard/billing" : "/dashboard"}
+                      onClick={() => setOpen(false)}
+                      className="w-full flex items-center justify-center gap-2 bg-neutral-950 hover:bg-neutral-800 text-white rounded-xl py-3 font-semibold text-sm transition-all shadow-sm active:scale-[0.99] touch-manipulation"
+                    >
+                      <span>{pathname === "/pricing" ? "Open Billing Portal" : "Go to Dashboard"}</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </Link>
+                  ) : (
+                    <Link
+                      href={signupHref}
+                      onClick={() => setOpen(false)}
+                      className="w-full flex items-center justify-center gap-2 bg-neutral-950 hover:bg-neutral-800 text-white rounded-xl py-3 font-semibold text-sm transition-all shadow-sm active:scale-[0.99] touch-manipulation"
+                    >
+                      <span>Get Started — Free</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </Link>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setOpen(false);
+                      openRequestEventSetupModal();
+                    }}
+                    className="w-full flex items-center justify-center gap-2 border border-neutral-200 bg-white hover:bg-neutral-50 text-neutral-900 rounded-xl py-2.5 font-medium text-sm transition-all shadow-2xs active:scale-[0.99] cursor-pointer touch-manipulation"
                   >
-                    Get Started
-                  </Link>
-                )}
+                    <span>Request White-Glove Setup</span>
+                  </button>
+                </div>
+
+                {/* Mobile Drawer Footer Status */}
+                <div className="pt-2 border-t border-neutral-100 flex items-center justify-between text-[11px] text-neutral-400 font-medium px-1">
+                  <span>URPASS · By YESP Corporation</span>
+                  <div className="flex items-center gap-1.5 text-emerald-600 font-semibold">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                    <span>Operational</span>
+                  </div>
+                </div>
               </div>
-            </div>
+            </>
           )}
         </div>
       </header>
