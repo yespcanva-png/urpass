@@ -146,17 +146,16 @@ export default function HeroPromotionalBanner({
                           by {camp.advertiserName}
                         </span>
                       )}
-                      {camp.startsAt && (
+                      {(camp.endsAt || camp.startsAt) && (
                         <span className="inline-flex items-center gap-1 sm:gap-1.5 text-[10px] sm:text-xs text-neutral-300/90 font-medium bg-black/40 backdrop-blur-md px-2 py-0.5 rounded-full border border-white/10">
                           <Calendar className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-violet-400 shrink-0" />
                           <span>
-                            {new Date(camp.startsAt).toLocaleDateString("en-IN", {
+                            {new Date(camp.endsAt || camp.startsAt).toLocaleDateString("en-IN", {
                               weekday: "short",
                               month: "short",
                               day: "numeric",
                               year: "numeric",
                             })}
-                            {" • 10:00 AM IST"}
                           </span>
                         </span>
                       )}

@@ -323,46 +323,108 @@ async function main() {
     }
   }
 
-  // 3. Fix Ad Campaign for YESP Keynote:
-  // - Single clean hero banner with "Presented by YESP Corp" (NOT "Sponsored")
-  // - Real event date in starts_at
-  // - Correct canonical destination_url: /explore/event/yesp-corp-keynote-2026
-  // - Remove duplicate in_content banner that showed the exact same event!
-  console.log("Cleaning and updating explore_ad_campaigns...");
+  // 3. Populate Hero Carousel Campaigns for Explore:
+  // - Multiple high-quality slides so the Hero Slider/Carousel activates (arrows, dots, swipe, auto-rotation)
+  // - Active flight date (starts_at <= now) so it is served by the ad placement service
+  // - Real event end dates in ends_at
+  // - Clean badges ("Presented by YESP Corp", "Featured Summit", "Campus Headliner")
+  console.log("Cleaning and updating explore_ad_campaigns for Hero Slider...");
   await supabase.from("explore_ad_campaigns").delete().neq("id", "00000000-0000-0000-0000-000000000000");
 
-  const { data: keynoteEvent } = await supabase
-    .from("events")
-    .select("id")
-    .eq("apply_slug", "yesp-corp-keynote-2026")
-    .single();
+  const [
+    { data: keynoteEvent },
+    { data: aiSummitEvent },
+    { data: navraasEvent },
+  ] = await Promise.all([
+    supabase.from("events").select("id").eq("apply_slug", "yesp-corp-keynote-2026").single(),
+    supabase.from("events").select("id").eq("apply_slug", "developer-ai-builders-summit-2026").single(),
+    supabase.from("events").select("id").eq("apply_slug", "navraas-20-slot-1").single(),
+  ]);
+
+  const nowPast = "2026-10-01T00:00:00.000Z";
+  const heroCampaigns = [];
 
   if (keynoteEvent) {
-    await supabase.from("explore_ad_campaigns").insert([
-      {
-        title: "YESP Corp Keynote 2026 — The Future of Autonomous Event Tech",
-        description:
-          "Unveiling next-gen digital pass design, <0.3s optical QR verification, and native Model Context Protocol tooling. Join engineers, founders, and event leaders.",
-        placement: "hero",
-        campaign_type: "brand_sponsor",
-        advertiser_name: "YESP Corp",
-        event_id: keynoteEvent.id,
-        desktop_image_url:
-          "https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1920&q=80",
-        mobile_image_url:
-          "https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=800&q=80",
-        badge_label: "Presented by YESP Corp",
-        cta_text: "Register Free",
-        destination_url: "/explore/event/yesp-corp-keynote-2026",
-        city_targeting: ["All Cities", "Bengaluru"],
-        starts_at: "2026-11-28T09:30:00.000Z",
-        ends_at: "2026-11-28T18:00:00.000Z",
-        priority: 100,
-        status: "active",
-        approved_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      },
-    ]);
+    heroCampaigns.push({
+      title: "YESP Corp Keynote 2026 — The Future of Autonomous Event Tech",
+      description:
+        "Unveiling next-gen digital pass design, <0.3s optical QR verification, and native Model Context Protocol tooling. Join engineers, founders, and event leaders.",
+      placement: "hero",
+      campaign_type: "brand_sponsor",
+      advertiser_name: "YESP Corp",
+      event_id: keynoteEvent.id,
+      desktop_image_url:
+        "https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1920&q=80",
+      mobile_image_url:
+        "https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=800&q=80",
+      badge_label: "Presented by YESP Corp",
+      cta_text: "Register Free",
+      destination_url: "/explore/event/yesp-corp-keynote-2026",
+      city_targeting: ["All Cities", "Bengaluru"],
+      starts_at: nowPast,
+      ends_at: "2026-11-28T18:00:00.000Z",
+      priority: 100,
+      status: "active",
+      approved_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    });
+  }
+
+  if (aiSummitEvent) {
+    heroCampaigns.push({
+      title: "Developer & AI Builders Summit 2026",
+      description:
+        "India's largest gathering of full-stack engineers and generative AI builders. Keynotes on local LLMs, AI agents, and sub-second web architecture.",
+      placement: "hero",
+      campaign_type: "event_promo",
+      advertiser_name: "DevSphere India",
+      event_id: aiSummitEvent.id,
+      desktop_image_url:
+        "https://images.unsplash.com/photo-1515187029135-18ee286d815b?auto=format&fit=crop&w=1920&q=80",
+      mobile_image_url:
+        "https://images.unsplash.com/photo-1515187029135-18ee286d815b?auto=format&fit=crop&w=800&q=80",
+      badge_label: "Featured Summit",
+      cta_text: "Get Tickets",
+      destination_url: "/explore/event/developer-ai-builders-summit-2026",
+      city_targeting: ["All Cities", "Bengaluru"],
+      starts_at: nowPast,
+      ends_at: "2026-12-05T18:00:00.000Z",
+      priority: 90,
+      status: "active",
+      approved_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    });
+  }
+
+  if (navraasEvent) {
+    heroCampaigns.push({
+      title: "NAVRAAS 2.0 — Inter-College Cultural Fest & Live Concert",
+      description:
+        "The premier student cultural festival featuring live band performances, choreo dance battles, fashion walks, and food stalls in Chennai.",
+      placement: "hero",
+      campaign_type: "event_promo",
+      advertiser_name: "SRM Student Council",
+      event_id: navraasEvent.id,
+      desktop_image_url:
+        "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1920&q=80",
+      mobile_image_url:
+        "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=800&q=80",
+      badge_label: "Campus Headliner",
+      cta_text: "Book Pass",
+      destination_url: "/explore/event/navraas-20-slot-1",
+      city_targeting: ["All Cities", "Chennai"],
+      starts_at: nowPast,
+      ends_at: "2026-11-14T22:00:00.000Z",
+      priority: 80,
+      status: "active",
+      approved_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    });
+  }
+
+  if (heroCampaigns.length > 0) {
+    await supabase.from("explore_ad_campaigns").insert(heroCampaigns);
+    console.log(`Inserted ${heroCampaigns.length} active hero slider campaigns.`);
   }
 
   console.log("=== Seeded 7 high-quality events and unified ad campaign successfully ===");
