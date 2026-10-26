@@ -261,6 +261,41 @@ describe("Unified AutoPay Mandate Creation & Verification Flow", () => {
         })
       );
     });
+
+    it("creates the free-event trial as a UPI mandate order", async () => {
+      const user = { id: "user_trial_upi", email: "trial@example.com", user_metadata: {} };
+      mockedCreateClient.mockResolvedValue({
+        auth: { getUser: vi.fn().mockResolvedValue({ data: { user } }) },
+      } as never);
+      mockedCreateAdminClient.mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+            }),
+          }),
+          update: vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) }),
+          upsert: vi.fn().mockResolvedValue({ error: null }),
+        }),
+      } as never);
+      mockCustomersCreate.mockResolvedValue({ id: "cust_trial_upi", contact: "9876543210" });
+      mockOrdersCreate.mockResolvedValue({ id: "order_trial_upi", amount: 100, currency: "INR" });
+
+      const { POST } = await import("@/app/api/billing/autopay/mandate/route");
+      const response = await POST(new NextRequest("http://localhost/api/billing/autopay/mandate", {
+        method: "POST",
+        body: JSON.stringify({ planSlug: "pro", billingCycle: "monthly", isFreeTrial: true, phone: "9876543210" }),
+      }));
+
+      expect(response.status).toBe(200);
+      expect(mockOrdersCreate).toHaveBeenCalledWith(expect.objectContaining({
+        amount: AUTOPAY_AUTH_AMOUNT_PAISE,
+        currency: "INR",
+        method: "upi",
+        customer_id: "cust_trial_upi",
+        token: expect.objectContaining({ frequency: "monthly", max_amount: 117882 }),
+      }));
+    });
   });
 
   describe("POST /api/billing/autopay/mandate/verify", () => {

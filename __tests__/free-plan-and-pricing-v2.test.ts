@@ -63,7 +63,7 @@ describe("UrPass 7-Day Growth & Monetization: Free Forever + Standard SaaS Tiers
             data: {
               status: "active",
               provider: "free",
-              billing_cycle: "free",
+              billing_cycle: null,
               plan: { slug: "free" },
             },
           });

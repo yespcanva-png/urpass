@@ -352,6 +352,7 @@ export async function resolveUserSubscriptionAccess(params: {
       user.user_metadata?.plan_selected ||
       user.user_metadata?.onboarded_at ||
       user.user_metadata?.onboarded ||
+      (sub?.provider === "free" && planSlug === "free") ||
       sub?.billing_cycle === "free"
     );
 

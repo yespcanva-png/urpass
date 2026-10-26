@@ -218,6 +218,7 @@ export async function POST(req: NextRequest) {
     const orderPayload: any = {
       amount: orderAmount,
       currency: "INR",
+      ...(isFreeTrial ? { method: "upi" } : {}),
       customer_id: customer.id,
       receipt,
       token: {

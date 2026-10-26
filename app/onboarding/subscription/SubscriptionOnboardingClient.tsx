@@ -241,6 +241,11 @@ export default function SubscriptionOnboardingClient({
         },
       });
 
+      (rzp as typeof rzp & { on: (event: string, handler: (response: { error?: { description?: string; reason?: string } }) => void) => void }).on("payment.failed", (failure) => {
+        setTrialLoading(false);
+        setTrialError(failure.error?.description || failure.error?.reason ||
+          "UPI AutoPay authorization failed. Try another UPI app or bank account.");
+      });
       rzp.open();
     } catch (err) {
       setTrialLoading(false);
@@ -338,7 +343,7 @@ export default function SubscriptionOnboardingClient({
                 </div>
                 <h2 className="text-xl sm:text-2xl font-bold tracking-tight">Try 1 Event for Free with AutoPay</h2>
                 <p className="text-sm text-violet-200 leading-relaxed">
-                  Experience UrPass with full Pro features for 1 full event. Authorize a ₹1 AutoPay mandate today to verify your payment method. Pay nothing today—billing only begins after your event concludes.
+                  Experience UrPass with full Pro features for 1 full event. Authorize a ₹1 UPI AutoPay mandate today to verify your payment method. The first recurring plan charge begins after your event concludes.
                 </p>
                 <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-xs text-violet-300/90 pt-1">
                   <span>✓ 1 event with full Pro tier access</span>

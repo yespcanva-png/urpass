@@ -68,35 +68,30 @@ export async function selectFreePlan(): Promise<ActionResult> {
 
   const admin = adminClient();
 
-  let { data: freePlan } = await admin
+  const { data: freePlan, error: planError } = await admin
     .from("plans")
     .select("id, slug")
     .eq("slug", "free")
     .maybeSingle();
 
-  if (!freePlan) {
-    const { data: anyPlan } = await admin.from("plans").select("id, slug").limit(1).maybeSingle();
-    freePlan = anyPlan;
-  }
+  if (planError || !freePlan) return { error: "Free Forever is temporarily unavailable. Please try again later." };
 
-  if (freePlan) {
-    const { error: subError } = await admin.from("subscriptions").upsert(
-      {
-        user_id: user.id,
-        plan_id: freePlan.id,
-        status: "active",
-        provider: "free",
-        billing_cycle: "free",
-        current_period_start: new Date().toISOString(),
-        current_period_end: new Date("2125-01-01T00:00:00.000Z").toISOString(),
-        cancel_at_period_end: false,
-        is_trial: false,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "user_id" }
-    );
-    if (subError) return { error: subError.message };
-  }
+  const { error: subError } = await admin.from("subscriptions").upsert(
+    {
+      user_id: user.id,
+      plan_id: freePlan.id,
+      status: "active",
+      provider: "free",
+      billing_cycle: null,
+      current_period_start: new Date().toISOString(),
+      current_period_end: new Date("2125-01-01T00:00:00.000Z").toISOString(),
+      cancel_at_period_end: false,
+      is_trial: false,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "user_id" }
+  );
+  if (subError) return { error: subError.message };
 
   try {
     await admin.auth.admin.updateUserById(user.id, {
