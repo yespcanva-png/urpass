@@ -5,21 +5,14 @@ import {
   ArrowLeft,
   Compass,
   Sparkles,
-  MapPin,
   Calendar,
-  Ticket,
   ChevronRight,
   HelpCircle,
-  CheckCircle2,
-  Share2,
-  ExternalLink,
-  ShieldCheck,
   TrendingUp,
 } from "lucide-react";
 import {
   getExploreSeoPage,
   getAllExploreSeoSlugs,
-  getAllExploreSeoPages,
   type ExploreSeoPageConfig,
 } from "@/lib/explore/seo-pages";
 import { fetchEventsForSeoPage } from "@/lib/explore/service";

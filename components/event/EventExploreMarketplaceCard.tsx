@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useCallback, useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import {
   Compass,
@@ -19,9 +19,6 @@ import {
   RotateCcw,
   Eye,
   X,
-  IndianRupee,
-  Layers,
-  Calendar,
 } from "lucide-react";
 import {
   getEventExploreListingStatusAction,
@@ -48,7 +45,7 @@ export default function EventExploreMarketplaceCard({
   venueName,
 }: Props) {
   const [loading, setLoading] = useState(true);
-  const [listing, setListing] = useState<any>(null);
+  const [listing, setListing] = useState<Awaited<ReturnType<typeof getEventExploreListingStatusAction>>>({ hasListing: false });
   const [readiness, setReadiness] = useState<{
     ready: boolean;
     issues: string[];
@@ -88,7 +85,7 @@ export default function EventExploreMarketplaceCard({
   const [selectedCategory, setSelectedCategory] = useState<ExploreCategory>("community");
   const [summary, setSummary] = useState("");
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     const [res, readyRes, attrRes] = await Promise.all([
       getEventExploreListingStatusAction(eventId),
@@ -113,11 +110,11 @@ export default function EventExploreMarketplaceCard({
     }
 
     setLoading(false);
-  };
+  }, [eventId]);
 
   useEffect(() => {
-    loadData();
-  }, [eventId]);
+    void Promise.resolve().then(loadData);
+  }, [loadData]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -125,7 +122,7 @@ export default function EventExploreMarketplaceCard({
     setSuccessMsg(null);
 
     startTransition(async () => {
-      const isResubmit = ["rejected", "changes_requested", "unlisted"].includes(listing?.status);
+      const isResubmit = ["rejected", "changes_requested", "unlisted"].includes(listing.status || "");
       const action = isResubmit
         ? organizerResubmitExploreListingAction
         : submitExploreListingApplicationAction;
@@ -176,18 +173,18 @@ export default function EventExploreMarketplaceCard({
     );
   }
 
-  const status = listing?.hasListing ? listing.status : "not_applied";
+  const status = listing.hasListing ? (listing.status || "not_applied") : "not_applied";
   const isChangesRequested = Boolean(
     status === "changes_requested" || (status === "rejected" && listing?.rejectionReason?.toLowerCase().includes("changes requested"))
   );
 
   const publicExploreUrl = applySlug
-    ? `/events/${applySlug}?ref=explore`
-    : `/explore?q=${encodeURIComponent(eventName)}`;
+    ? `/explore/event/${applySlug}`
+    : `/explore/event/${eventId}`;
 
   // Construct item for Explore card preview
   const previewItem: ExploreEventItem = {
-    id: listing?.id || "preview-id",
+    id: eventId,
     eventId,
     slug: applySlug || eventId,
     name: eventName,
@@ -451,7 +448,7 @@ export default function EventExploreMarketplaceCard({
                   {listing.editorialSummary && (
                     <>
                       <span>•</span>
-                      <span className="truncate max-w-xs italic text-neutral-500">"{listing.editorialSummary}"</span>
+                      <span className="truncate max-w-xs italic text-neutral-500">&ldquo;{listing.editorialSummary}&rdquo;</span>
                     </>
                   )}
                 </div>

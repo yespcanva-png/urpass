@@ -1,5 +1,3 @@
-import "server-only";
-
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
 import { adminClient } from "@/lib/supabase/admin";

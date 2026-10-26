@@ -133,7 +133,6 @@ export async function approveAttendee(
       error: approvalRes.error || `Event is at capacity (${event.attendee_limit}). Increase the limit in Settings to approve more.`,
     };
   }
-  await confirmExploreBooking(attendeeId).catch((error) => console.error("[explore] booking attribution:", error));
 
   // Update associated reservation if this was a paid registration
   const { data: order } = await supabase
@@ -162,9 +161,11 @@ export async function approveAttendee(
     }).catch((err: unknown) => console.error("[email]", err));
 
     // Auto-generate pass and dispatch WhatsApp & multi-channel communications upon approval
-    void generatePass(attendeeId, eventId).catch((err) =>
-      console.error("[approveAttendee] generatePass error:", err)
-    );
+    void generatePass(attendeeId, eventId)
+      .then(async (result) => {
+        if (result.passToken) await confirmExploreBooking(attendeeId);
+      })
+      .catch((err) => console.error("[approveAttendee] generatePass error:", err));
   }
 
   if (event.organization_id) {
