@@ -2,8 +2,9 @@ import type { MetadataRoute } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { getPublishedJobs } from "@/lib/careers/service";
 import { getAllPublishedPages } from "@/lib/seo/pages";
-import { getAllExploreSeoPages } from "@/lib/explore/seo-pages";
+import { getAllExploreSeoPages, matchesExploreSeoPage, MIN_EXPLORE_COLLECTION_EVENTS } from "@/lib/explore/seo-pages";
 import { fetchExploreMarketplaceEvents } from "@/lib/explore/service";
+import { isPublicIndexableEvent } from "@/lib/seo/event-indexing";
 
 const BASE = "https://urpass.space";
 
@@ -27,7 +28,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE}/status`, priority: 0.85, changeFrequency: "daily" as const },
     { url: `${BASE}/press`, priority: 0.85, changeFrequency: "weekly" as const },
     { url: `${BASE}/signup`, priority: 0.9, changeFrequency: "monthly" as const },
-    { url: `${BASE}/login`, priority: 0.8, changeFrequency: "monthly" as const },
     { url: `${BASE}/yesp-urpass`, priority: 0.95, changeFrequency: "weekly" as const },
     { url: `${BASE}/global`, priority: 0.9, changeFrequency: "weekly" as const },
     { url: `${BASE}/faq`, priority: 0.85, changeFrequency: "weekly" as const },
@@ -722,26 +722,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const supabase = await createClient();
     const { data: events } = await supabase
       .from("events")
-      .select("id, apply_slug, updated_at")
+      .select("id, apply_slug, updated_at, status, application_enabled, custom_pass_design")
       .eq("status", "active")
+      .eq("application_enabled", true)
       .order("updated_at", { ascending: false })
       .limit(100);
 
     if (events && events.length > 0) {
-      eventEntries = events.flatMap((e) => [
-        {
-          url: `${BASE}/apply/${e.apply_slug || e.id}`,
-          priority: 0.8,
-          changeFrequency: "daily" as const,
-          lastModified: e.updated_at || now,
-        },
-        {
-          url: `${BASE}/feedback/${e.apply_slug || e.id}`,
-          priority: 0.6,
-          changeFrequency: "weekly" as const,
-          lastModified: e.updated_at || now,
-        },
-      ]);
+      eventEntries = events.filter(isPublicIndexableEvent).map((e) => ({
+        url: `${BASE}/apply/${e.apply_slug || e.id}`,
+        priority: 0.8,
+        changeFrequency: "daily" as const,
+        lastModified: e.updated_at || now,
+      }));
     }
   } catch {
     // Silently fall back if Supabase is unavailable at build-time
@@ -992,12 +985,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   let exploreEntries: MetadataRoute.Sitemap = [];
   try {
     const marketplace = await fetchExploreMarketplaceEvents({ limit: 50 });
-    const seoPages = getAllExploreSeoPages().map((page) => ({
+    const seoPages = getAllExploreSeoPages()
+      .filter((page) => marketplace.events.filter((event) => matchesExploreSeoPage(event, page)).length >= MIN_EXPLORE_COLLECTION_EVENTS)
+      .map((page) => ({
       url: `${BASE}/explore/${page.slug}`,
       priority: page.priority === "P1" ? 0.95 : page.priority === "P2" ? 0.9 : 0.85,
       changeFrequency: page.type === "intent" ? ("daily" as const) : ("weekly" as const),
       lastModified: now,
-    }));
+      }));
     exploreEntries = [
       { url: `${BASE}/explore`, priority: 0.9, changeFrequency: "daily", lastModified: now },
       ...marketplace.events.map((event) => ({

@@ -7,6 +7,7 @@ import ApplyForm from "./ApplyForm";
 import { getSupabaseUrl } from "@/lib/supabase/config";
 import { TICKET_OG_IMAGE, TICKET_OG_IMAGE_META, resolveEventOgImage } from "@/lib/seo/og-images";
 import { isFeatureEnabled } from "@/lib/feature-flags";
+import { isPublicIndexableEvent } from "@/lib/seo/event-indexing";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +21,7 @@ export async function generateMetadata({
   const supabase = await createClient();
   const query = supabase
     .from("events")
-    .select("id, name, venue, event_date, start_time, description, apply_slug, status, banner_url, logo_url, custom_pass_design")
+    .select("id, name, venue, event_date, start_time, description, apply_slug, status, application_enabled, banner_url, logo_url, custom_pass_design")
     .eq("status", "active");
 
   const { data: event } = await (isUuid
@@ -28,7 +29,10 @@ export async function generateMetadata({
     : query.eq("apply_slug", idOrSlug)
   ).maybeSingle();
 
-  if (!event) return { title: "Register for Event — URPASS" };
+  if (!event) return { title: "Register for Event — URPASS", robots: { index: false, follow: false } };
+  if (!isPublicIndexableEvent(event)) {
+    return { title: `Register for ${event.name} — UrPass`, robots: { index: false, follow: false } };
+  }
   const date = new Date(event.event_date).toLocaleDateString("en-IN", {
     weekday: "long",
     day: "numeric",

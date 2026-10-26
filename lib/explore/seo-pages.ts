@@ -1,7 +1,8 @@
-import type { ExploreCategory, ExploreDateFilter, ExplorePricingFilter } from "./types";
+import type { ExploreCategory, ExploreDateFilter, ExploreEventItem, ExplorePricingFilter } from "./types";
 
 export type ExploreSeoPageType = "city" | "category" | "seasonal" | "intent";
 export type ExploreSeoPriority = "P1" | "P2" | "P3";
+export const MIN_EXPLORE_COLLECTION_EVENTS = 3;
 
 export interface ExploreSeoHighlight {
   title: string;
@@ -35,6 +36,33 @@ export interface ExploreSeoPageConfig {
   popularSearchQueries: string[];
   relatedSlugs: string[];
   ctaText: string;
+}
+
+export function matchesExploreSeoPage(event: ExploreEventItem, page: ExploreSeoPageConfig, now = new Date()): boolean {
+  if (page.cityFilter && event.city.toLowerCase() !== page.cityFilter.toLowerCase()) return false;
+  if (page.categoryFilter && page.categoryFilter !== "all" && event.category !== page.categoryFilter) return false;
+  if (page.pricingFilter === "free" && !event.isFree && event.minPricePaise > 0) return false;
+  if (page.pricingFilter === "paid" && (event.isFree || event.minPricePaise === 0)) return false;
+
+  if (page.dateFilter && page.dateFilter !== "all") {
+    const today = now.toISOString().slice(0, 10);
+    if (page.dateFilter === "today" && event.eventDate !== today) return false;
+    if (page.dateFilter === "this_month" && !event.eventDate.startsWith(today.slice(0, 7))) return false;
+    if (page.dateFilter === "this_weekend") {
+      const saturday = new Date(now);
+      saturday.setDate(now.getDate() + ((6 - now.getDay() + 7) % 7));
+      const sunday = new Date(saturday);
+      sunday.setDate(saturday.getDate() + 1);
+      if (![saturday.toISOString().slice(0, 10), sunday.toISOString().slice(0, 10)].includes(event.eventDate)) return false;
+    }
+  }
+
+  if (page.queryKeywords?.length) {
+    const searchable = `${event.name} ${event.description || ""} ${event.venue} ${event.city}`.toLowerCase();
+    if (!page.queryKeywords.some((keyword) => searchable.includes(keyword.toLowerCase()))) return false;
+  }
+
+  return true;
 }
 
 export const EXPLORE_SEO_PAGES: ExploreSeoPageConfig[] = [

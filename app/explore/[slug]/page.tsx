@@ -13,6 +13,7 @@ import {
 import {
   getExploreSeoPage,
   getAllExploreSeoSlugs,
+  MIN_EXPLORE_COLLECTION_EVENTS,
   type ExploreSeoPageConfig,
 } from "@/lib/explore/seo-pages";
 import { fetchEventsForSeoPage } from "@/lib/explore/service";
@@ -41,17 +42,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     };
   }
 
-  // Check live event count to determine indexing eligibility
-  let hasMatchingEvents = false;
+  // Keep thin collections out of search until there is useful live inventory.
+  let isIndexableCollection = false;
   try {
     const { totalMatches } = await fetchEventsForSeoPage(page);
-    hasMatchingEvents = totalMatches > 0;
+    isIndexableCollection = totalMatches >= MIN_EXPLORE_COLLECTION_EVENTS;
   } catch {
-    hasMatchingEvents = false;
+    isIndexableCollection = false;
   }
 
-  // Google indexing rule: Index when active events exist; otherwise keep accessible as noindex,follow
-  const robots = hasMatchingEvents
+  const robots = isIndexableCollection
     ? {
         index: true,
         follow: true,

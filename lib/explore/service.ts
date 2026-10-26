@@ -301,6 +301,10 @@ export async function fetchEventsForSeoPage(pageConfig: import("./seo-pages").Ex
   if (pageConfig.queryKeywords && pageConfig.queryKeywords.length > 0 && matching.length === 0) {
     for (const kw of pageConfig.queryKeywords) {
       const kwResult = await fetchExploreMarketplaceEvents({
+        city: pageConfig.cityFilter,
+        category: pageConfig.categoryFilter,
+        dateFilter: pageConfig.dateFilter,
+        pricing: pageConfig.pricingFilter,
         query: kw,
         limit: 12,
       });

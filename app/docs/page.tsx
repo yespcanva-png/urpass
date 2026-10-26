@@ -46,31 +46,42 @@ import {
   Clock,
   MapPin,
   Sparkles,
+  Compass,
 } from "lucide-react";
 import { CodeBlock } from "@/components/docs/CodeBlock";
 
 export const metadata: Metadata = {
-  title: "Documentation — Complete Developer & Organizer Guide to URPASS",
+  title: "Documentation — Complete Developer & Organizer Guide | UrPass",
   description:
-    "Complete documentation for URPASS. Learn how to create events, issue tiered passes, configure multi-gate check-ins, integrate the REST API, and verify webhooks.",
+    "Complete documentation for UrPass. Learn how to create events, publish on Explore marketplace, issue tiered passes, configure offline & multi-gate check-ins, integrate the REST API, and use MCP AI agents.",
   keywords: [
-    "URPASS documentation",
+    "UrPass documentation",
     "event pass API",
     "QR check-in tutorial",
     "digital pass API",
     "webhooks documentation",
     "event management guide India",
     "multi gate check-in",
+    "offline QR check-in",
     "event ticketing API",
-    "URPASS how to use",
+    "UrPass how to use",
+    "UrPass Explore marketplace",
   ],
   alternates: { canonical: "https://urpass.space/docs" },
   openGraph: {
-    title: "URPASS Documentation — Developer & Organizer Guide",
+    title: "UrPass Documentation — Developer & Organizer Guide",
     description:
-      "Full guide to creating digital passes, managing attendees, running multi-gate QR check-in, and integrating with the URPASS REST API and Webhooks.",
+      "Full guide to creating digital passes, managing attendees, running offline & multi-gate QR check-in, publishing to UrPass Explore, and integrating the REST API and Webhooks.",
     url: "https://urpass.space/docs",
     type: "article",
+    images: [{ url: "https://urpass.space/og-image.png", width: 1200, height: 630, alt: "UrPass Documentation" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "UrPass Documentation — Developer & Organizer Guide",
+    description:
+      "Full guide to creating digital passes, managing attendees, running multi-gate QR check-in, and integrating the UrPass REST API and Webhooks.",
+    images: ["https://urpass.space/og-image.png"],
   },
   other: {
     "geo.region": "IN",
@@ -95,10 +106,18 @@ const faqSchema = {
   mainEntity: [
     {
       "@type": "Question",
-      name: "What is URPASS?",
+      name: "What is UrPass?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "URPASS is a modern digital event pass, ticketing, conference scheduling, and verification platform designed for organizers, colleges, tech conferences, and enterprise teams.",
+        text: "UrPass is a modern digital event pass, ticketing, conference scheduling, and verification platform designed for organizers, colleges, tech conferences, and enterprise teams.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "How do I publish an event on UrPass Explore?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "In your event dashboard, toggle 'Publish to UrPass Explore', assign your city and category, and submit. Once verified by moderation, your event is publicly discoverable with direct attendee booking, structured event schema, and 0% platform commission.",
       },
     },
     {
@@ -107,6 +126,14 @@ const faqSchema = {
       acceptedAnswer: {
         "@type": "Answer",
         text: "No app is required. Attendees receive a responsive web pass that opens on any device, with optional Apple Wallet (.pkpass) export. Organizers and staff can scan QR passes using any phone browser at urpass.space/scan.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "How does Offline Check-In Mode work if internet connectivity drops?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "UrPass pre-caches the event pass manifest (/api/scan/manifest). Scanners decode and validate passes locally in under 0.3s using WebAssembly, queue scans in IndexedDB, and automatically batch sync with duplicate prevention once Wi-Fi or cellular service resumes.",
       },
     },
     {
@@ -122,7 +149,7 @@ const faqSchema = {
       name: "How does physical event badge printing and zone headcount tracking work?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "URPASS Physical Ops features an onsite reception desk for rapid search and check-in, real-time zone occupancy tracking, staff roaming device pairing with 6-digit PINs, and a badge print engine supporting ESC/POS, Zebra, and Brother thermal printers alongside CR80 lanyard badges.",
+        text: "UrPass Physical Ops features an onsite reception desk for rapid search and check-in, real-time zone occupancy tracking, staff roaming device pairing with 6-digit PINs, and a badge print engine supporting ESC/POS, Zebra, and Brother thermal printers alongside CR80 lanyard badges.",
       },
     },
     {
@@ -138,15 +165,15 @@ const faqSchema = {
       name: "How do zero-commission split payouts and GST invoicing work?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "URPASS charges 0% per-ticket platform commission. Organizers can configure Route Split Payouts to automatically distribute percentage shares to co-organizers or partners on direct T+2 settlement cycles with automated 18% GST tax invoices.",
+        text: "UrPass charges 0% per-ticket platform commission. Organizers can configure Route Split Payouts to automatically distribute percentage shares to co-organizers or partners on direct T+2 settlement cycles with automated 18% GST tax invoices.",
       },
     },
     {
       "@type": "Question",
-      name: "Does URPASS support virtual and hybrid events?",
+      name: "Does UrPass support virtual and hybrid events?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Yes. URPASS natively supports in-person, online, and hybrid formats. For online and hybrid events, approved attendees can access verified direct-join redirects (/api/join/[passToken]) to Zoom, Google Meet, Microsoft Teams, or custom links.",
+        text: "Yes. UrPass natively supports in-person, online, and hybrid formats. For online and hybrid events, approved attendees can access verified direct-join redirects (/api/join/[passToken]) to Zoom, Google Meet, Microsoft Teams, or custom links.",
       },
     },
     {
@@ -178,7 +205,7 @@ const faqSchema = {
       name: "What team roles are supported in Organizations?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "URPASS provides role-based access control with 5 distinct roles: Owner, Admin, Event Manager, Check-in Staff, and Viewer.",
+        text: "UrPass provides role-based access control with 5 distinct roles: Owner, Admin, Event Manager, Check-in Staff, and Viewer.",
       },
     },
   ],
@@ -187,18 +214,19 @@ const faqSchema = {
 const docSchema = {
   "@context": "https://schema.org",
   "@type": "TechArticle",
-  headline: "URPASS Complete Documentation — Developer & Organizer Guide",
+  headline: "UrPass Complete Documentation — Developer & Organizer Guide",
   description:
-    "Full reference for creating digital event passes, managing multi-track conference programs, physical operations & badge printing, commercial exhibitor hubs, split payouts, and integrating the URPASS REST API and Webhooks.",
-  author: { "@type": "Organization", name: "URPASS", url: "https://urpass.space" },
-  publisher: { "@type": "Organization", name: "URPASS", url: "https://urpass.space" },
+    "Full reference for creating digital event passes, managing multi-track conference programs, UrPass Explore marketplace, physical operations & badge printing, commercial exhibitor hubs, split payouts, and integrating the UrPass REST API and Webhooks.",
+  author: { "@type": "Organization", name: "UrPass", url: "https://urpass.space" },
+  publisher: { "@type": "Organization", name: "UrPass", url: "https://urpass.space" },
   inLanguage: "en-IN",
-  about: { "@type": "SoftwareApplication", name: "URPASS" },
+  about: { "@type": "SoftwareApplication", name: "UrPass" },
 };
 
 const SECTIONS = [
   { id: "getting-started", label: "Getting started" },
   { id: "events", label: "Events & formats" },
+  { id: "explore", label: "UrPass Explore" },
   { id: "program", label: "Multi-track program" },
   { id: "attendees", label: "Attendees & import" },
   { id: "tickets-passes", label: "Tickets & passes" },
@@ -290,7 +318,7 @@ export default function DocsPage() {
               >
                 <Ticket className="w-3.5 h-3.5 text-white" />
               </div>
-              <span className="text-sm font-bold tracking-widest uppercase text-neutral-900">URPASS</span>
+              <span className="text-sm font-bold tracking-widest uppercase text-neutral-900">UrPass</span>
               <span className="text-xs text-neutral-400 font-normal ml-1 hidden sm:inline">
                 / Documentation
               </span>
@@ -387,11 +415,11 @@ export default function DocsPage() {
                 <span>Production platform · Indian Rupee (₹) · REST API v1 · Outbound Webhooks</span>
               </div>
               <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-neutral-900 mb-4">
-                URPASS Documentation
+                UrPass Documentation
               </h1>
               <p className="text-base text-neutral-600 leading-relaxed">
-                Everything you need to create events, issue tiered digital passes, run high-speed multi-gate
-                QR check-ins, and integrate with the URPASS developer platform.
+                Everything you need to create events, publish on the Explore marketplace, issue tiered digital passes,
+                run offline &amp; multi-gate QR check-ins, and integrate with the UrPass developer platform.
               </p>
               <div className="flex flex-wrap gap-3 mt-6">
                 <Link
@@ -425,9 +453,9 @@ export default function DocsPage() {
               </div>
 
               <div className="bg-white border border-neutral-200 rounded-2xl p-6 mb-6 shadow-2xs">
-                <h3 className="text-sm font-semibold text-neutral-900 mb-2">What is URPASS?</h3>
+                <h3 className="text-sm font-semibold text-neutral-900 mb-2">What is UrPass?</h3>
                 <p className="text-sm text-neutral-600 leading-relaxed">
-                  URPASS is a modern digital pass and check-in platform engineered for conferences,
+                  UrPass is a modern digital pass, ticketing, and check-in platform engineered for conferences,
                   college festivals, exhibitions, corporate summits, and community events. It eliminates
                   cumbersome physical badges, costly dedicated scanner hardware, and proprietary mobile app
                   downloads. Both organizers and attendees interact through responsive, secure web links.
@@ -541,9 +569,108 @@ export default function DocsPage() {
                   and <strong>checkbox</strong>.
                 </p>
                 <div className="bg-neutral-50 border border-neutral-200 rounded-xl p-3.5 text-xs text-neutral-600">
-                  <strong className="text-neutral-900">Plan Quotas:</strong> Free plans support up to 3 custom fields, Starter supports 10,
-                  and Pro / Business plans allow unlimited custom registration fields.
+                  <strong className="text-neutral-900">Plan Quotas:</strong> Free plans support 1 active event with standard fields, Starter supports 3 active events and 10 custom fields, Pro supports 10 active events, and Business plans allow unlimited active events* and unlimited custom registration fields.
                 </div>
+              </div>
+            </section>
+
+            {/* ── Section: UrPass Explore Marketplace ───────────────── */}
+            <section id="explore" className="mb-14 scroll-mt-20">
+              <div className="flex items-center gap-2.5 mb-6">
+                <div className="w-8 h-8 rounded-xl bg-violet-50 border border-violet-100 flex items-center justify-center shrink-0">
+                  <Compass className="w-4 h-4 text-violet-600" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-xl font-bold text-neutral-900">UrPass Explore marketplace</h2>
+                    <span className="text-[10px] font-bold tracking-widest uppercase px-2 py-0.5 rounded-full bg-violet-50 text-violet-700 border border-violet-200">
+                      Discovery &amp; Ticketing
+                    </span>
+                  </div>
+                  <p className="text-xs text-neutral-500">Public event directory, city hub discovery, 0% platform fee, and SEO distribution</p>
+                </div>
+              </div>
+
+              {/* Explore Overview */}
+              <div className="bg-white border border-neutral-200 rounded-2xl p-6 mb-6 shadow-2xs">
+                <h3 className="text-sm font-semibold text-neutral-900 mb-2">Consumer discovery meets zero-commission ticketing</h3>
+                <p className="text-sm text-neutral-600 leading-relaxed mb-4">
+                  <Link href="/explore" className="text-brand font-medium hover:underline">UrPass Explore</Link> is our
+                  public event marketplace where attendees discover verified tech conferences, college festivals, hackathons,
+                  creative workshops, and cultural experiences across India. Unlike legacy aggregators that charge 5% to 15% on ticket sales,
+                  UrPass operates with <strong>0% platform commission</strong> (only standard payment gateway processing fees apply).
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                  <div className="p-3 bg-neutral-50 rounded-xl border border-neutral-100">
+                    <p className="font-semibold text-neutral-900 mb-1 flex items-center gap-1.5">
+                      <Globe className="w-3.5 h-3.5 text-violet-600" />
+                      15+ Indian Hubs
+                    </p>
+                    <p className="text-neutral-500">Dedicated city exploration across Bengaluru, Chennai, Mumbai, Delhi NCR, Hyderabad, and more.</p>
+                  </div>
+                  <div className="p-3 bg-neutral-50 rounded-xl border border-neutral-100">
+                    <p className="font-semibold text-neutral-900 mb-1 flex items-center gap-1.5">
+                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                      Verified Organizers
+                    </p>
+                    <p className="text-neutral-500">Every published listing undergoes moderation review before public marketplace indexing.</p>
+                  </div>
+                  <div className="p-3 bg-neutral-50 rounded-xl border border-neutral-100">
+                    <p className="font-semibold text-neutral-900 mb-1 flex items-center gap-1.5">
+                      <Zap className="w-3.5 h-3.5 text-amber-600" />
+                      Guest-First Checkout
+                    </p>
+                    <p className="text-neutral-500">No mandatory app downloads. Passes delivered immediately to Email, SMS, and Apple Wallet.</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* How to Publish */}
+              <div className="bg-white border border-neutral-200 rounded-2xl p-6 mb-6 shadow-2xs">
+                <h3 className="text-sm font-semibold text-neutral-900 mb-4">How to publish your event on Explore</h3>
+                <div className="space-y-4">
+                  <div className="flex gap-3 text-xs text-neutral-600">
+                    <span className="w-5 h-5 rounded-full bg-violet-100 text-violet-700 font-bold flex items-center justify-center shrink-0">1</span>
+                    <div>
+                      <strong className="text-neutral-900 font-semibold block mb-0.5">Toggle Marketplace Listing in Event Dashboard</strong>
+                      Open your event in <strong>Dashboard → Event Settings</strong> and enable <strong>“Publish to UrPass Explore”</strong>.
+                    </div>
+                  </div>
+                  <div className="flex gap-3 text-xs text-neutral-600">
+                    <span className="w-5 h-5 rounded-full bg-violet-100 text-violet-700 font-bold flex items-center justify-center shrink-0">2</span>
+                    <div>
+                      <strong className="text-neutral-900 font-semibold block mb-0.5">Categorization &amp; City Targeting</strong>
+                      Assign your primary category (Tech &amp; Business, Workshops, Festivals, Cultural, Sports, Food &amp; Drink) and target city.
+                    </div>
+                  </div>
+                  <div className="flex gap-3 text-xs text-neutral-600">
+                    <span className="w-5 h-5 rounded-full bg-violet-100 text-violet-700 font-bold flex items-center justify-center shrink-0">3</span>
+                    <div>
+                      <strong className="text-neutral-900 font-semibold block mb-0.5">Editorial Review &amp; Instant Indexing</strong>
+                      Once submitted, our moderation team approves the listing. Your event receives structured Schema.org/Event markup,
+                      canonical SEO URLs at <code className="bg-neutral-100 px-1 py-0.5 rounded font-mono">/explore/event/[slug]</code>, and featured placement eligibility.
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Direct Booking & Ticketing */}
+              <div className="bg-white border border-neutral-200 rounded-2xl px-6 py-2 shadow-2xs">
+                <FeatureRow
+                  icon={Ticket}
+                  title="Direct Booking Flow (/explore/event/[slug]/book)"
+                  description="Frictionless attendee ticket purchasing with native UPI, Credit/Debit cards, NetBanking, and instant QR pass issuance."
+                />
+                <FeatureRow
+                  icon={Sparkles}
+                  title="Promotional Banners & Spotlight Placements"
+                  description="High-visibility Hero Carousel slides and In-Content feature spotlights targeting specific cities and category searches."
+                />
+                <FeatureRow
+                  icon={Code2}
+                  title="Public Explore API (/api/explore)"
+                  description="Query approved marketplace events by city, category, date, or query string to embed listings into external portals or mobile apps."
+                />
               </div>
             </section>
 
@@ -563,7 +690,7 @@ export default function DocsPage() {
               <div className="bg-white border border-neutral-200 rounded-2xl p-6 mb-6 shadow-2xs">
                 <h3 className="text-sm font-semibold text-neutral-900 mb-2">Conference &amp; summit agenda engine</h3>
                 <p className="text-sm text-neutral-600 leading-relaxed mb-4">
-                  For complex multi-stage summits, hackathons, and academic symposiums, URPASS provides an integrated
+                  For complex multi-stage summits, hackathons, and academic symposiums, UrPass provides an integrated
                   multi-track program engine. Organizers can configure multiple parallel tracks (e.g., &ldquo;Main Stage&rdquo;,
                   &ldquo;Track A — AI &amp; Cloud&rdquo;, &ldquo;Hands-on Workshop Lab&rdquo;), schedule sessions across multiple days,
                   and publish an interactive live agenda.
@@ -600,7 +727,7 @@ export default function DocsPage() {
                   <h3 className="text-sm font-semibold text-neutral-900">Real-time schedule conflict detection</h3>
                 </div>
                 <p className="text-sm text-neutral-600 leading-relaxed mb-4">
-                  As organizers drag, edit, or adjust session timings, URPASS runs automated background collision validation:
+                  As organizers drag, edit, or adjust session timings, UrPass runs automated background collision validation:
                 </p>
                 <div className="space-y-2 text-xs">
                   <div className="p-3 bg-amber-50/60 border border-amber-200/80 rounded-xl text-amber-950">
@@ -714,7 +841,7 @@ export default function DocsPage() {
                   Each tier configures its own pricing, quota limit, sale window, and assigned zone access.
                 </p>
                 <div className="bg-amber-50/80 border border-amber-200/80 rounded-xl p-3.5 text-xs text-amber-900">
-                  <strong className="text-amber-950">Currency &amp; Paise Denomination:</strong> In the URPASS database and API,
+                  <strong className="text-amber-950">Currency &amp; Paise Denomination:</strong> In the UrPass database and API,
                   all monetary values are stored in <strong>paise</strong> (1 INR = 100 paise).
                   For example, a ticket priced at ₹499 is represented in API responses and orders as <code className="bg-amber-100/80 px-1 py-0.5 rounded font-mono font-semibold">49900</code>.
                 </div>
@@ -729,7 +856,7 @@ export default function DocsPage() {
                     ["Apple Wallet (.pkpass)", "Attendees on iOS can tap 'Add to Apple Wallet' for quick access from the lock screen."],
                     ["Live Check-in Status", "Pass display updates live from 'Approved' to 'Checked In' with entry timestamp."],
                     ["Color-Coded Badges", "Distinct visual colors for Participant (Purple), VIP (Gold), Speaker (Blue), and Organizer (Green)."],
-                    ["White-Label / Custom Branding", "Pro and Business tiers remove 'Powered by URPASS' watermarks for a pure brand experience."],
+                    ["White-Label / Custom Branding", "Pro and Business tiers remove 'Powered by UrPass' watermarks for a pure brand experience."],
                     ["Virtual Join Link", "For online events, an integrated verified join button safely redirects to Zoom/Meet."],
                   ].map(([title, desc]) => (
                     <div key={title} className="p-3.5 rounded-xl bg-neutral-50 border border-neutral-200/70">
@@ -752,7 +879,7 @@ export default function DocsPage() {
                 <div className="px-6 py-5">
                   <p className="text-sm text-neutral-600 leading-relaxed mb-4">
                     Instead of sharing open Zoom/Meet links on social media (which leads to uninvited attendees),
-                    URPASS provides a verified redirect endpoint. When an approved attendee opens the link:
+                    UrPass provides a verified redirect endpoint. When an approved attendee opens the link:
                   </p>
                   <ol className="flex flex-col gap-2 text-xs text-neutral-600 mb-4">
                     <li className="flex items-start gap-2">
@@ -809,6 +936,38 @@ export default function DocsPage() {
                     <p className="font-semibold text-neutral-900 mb-1">Sub-second Latency</p>
                     <p className="text-neutral-500">Fast edge verification with immediate visual feedback.</p>
                   </div>
+                </div>
+              </div>
+
+              {/* Offline Check-in Mode */}
+              <div className="bg-white border border-neutral-200 rounded-2xl p-6 mb-6 shadow-2xs">
+                <div className="flex items-center gap-2 mb-2">
+                  <HardDriveDownload className="w-4 h-4 text-emerald-600" />
+                  <h3 className="text-sm font-semibold text-neutral-900">Offline check-in mode &amp; manifest sync</h3>
+                  <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full">
+                    Resilient Venues
+                  </span>
+                </div>
+                <p className="text-sm text-neutral-600 leading-relaxed mb-4">
+                  College auditoriums, stadium gates, and basement halls often experience spotty cellular service.
+                  UrPass features a resilient offline optical scanner that checks in guests in &lt;0.3s without an active internet connection.
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs mb-4">
+                  <div className="p-3 bg-neutral-50 rounded-xl border border-neutral-100">
+                    <p className="font-semibold text-neutral-900 mb-1">1. Pre-Cache Manifest</p>
+                    <p className="text-neutral-500">Scanner downloads the encrypted pass roster (<code className="font-mono">/api/scan/manifest</code>) over Wi-Fi prior to gate opening.</p>
+                  </div>
+                  <div className="p-3 bg-neutral-50 rounded-xl border border-neutral-100">
+                    <p className="font-semibold text-neutral-900 mb-1">2. Local Validation</p>
+                    <p className="text-neutral-500">QR tokens decode via WebAssembly and validate against IndexedDB browser storage with instant audio/visual cues.</p>
+                  </div>
+                  <div className="p-3 bg-neutral-50 rounded-xl border border-neutral-100">
+                    <p className="font-semibold text-neutral-900 mb-1">3. Automated Sync</p>
+                    <p className="text-neutral-500">When network reconnects, scans auto-sync via <code className="font-mono">/api/scan/sync</code> with atomic duplicate detection.</p>
+                  </div>
+                </div>
+                <div className="bg-emerald-50/70 border border-emerald-200/80 rounded-xl p-3.5 text-xs text-emerald-950">
+                  <strong>Zero Lost Entries:</strong> Even if staff close the browser tab or switch phones, queued offline scans persist securely until confirmed by cloud sync.
                 </div>
               </div>
 
@@ -925,7 +1084,7 @@ if (result.success) {
               <div className="bg-white border border-neutral-200 rounded-2xl p-6 mb-6 shadow-2xs">
                 <h3 className="text-sm font-semibold text-neutral-900 mb-2">Onsite reception &amp; desk management</h3>
                 <p className="text-sm text-neutral-600 leading-relaxed mb-4">
-                  For large-scale physical summits and expos, URPASS Physical Ops provides reception staff with an optimized,
+                  For large-scale physical summits and expos, UrPass Physical Ops provides reception staff with an optimized,
                   keyboard-first terminal to search attendees, process walk-in registrations, print physical badges, and monitor zone headcounts.
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
@@ -964,7 +1123,7 @@ if (result.success) {
                 </div>
                 <div className="px-6 py-5">
                   <p className="text-sm text-neutral-600 leading-relaxed mb-4">
-                    When attendees check in at reception, URPASS automatically dispatches badge print jobs to connected network
+                    When attendees check in at reception, UrPass automatically dispatches badge print jobs to connected network
                     thermal printers or desktop queues. Print templates support high-contrast QR tokens, attendee company/designation,
                     and tier-specific color coding.
                   </p>
@@ -1064,7 +1223,7 @@ if (result.success) {
               <div className="bg-white border border-neutral-200 rounded-2xl p-6 mb-6 shadow-2xs">
                 <h3 className="text-sm font-semibold text-neutral-900 mb-2">0% Platform commission ticketing</h3>
                 <p className="text-sm text-neutral-600 leading-relaxed mb-4">
-                  Unlike traditional ticketing aggregators that deduct 3% to 10% per ticket, URPASS operates on a strict <strong>0% ticket commission</strong> model.
+                  Unlike traditional ticketing aggregators that deduct 3% to 10% per ticket, UrPass operates on a strict <strong>0% ticket commission</strong> model.
                   100% of ticket revenues flow directly to the event organizer, settling on standard T+2 business day cycles.
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
@@ -1190,7 +1349,7 @@ if (result.success) {
                   1. SAML 2.0 &amp; OpenID Connect (OIDC) Single Sign-On
                 </h3>
                 <p className="text-xs text-neutral-600 leading-relaxed mb-4">
-                  URPASS supports federated identity with all major enterprise Identity Providers (IdPs) including <strong>Okta, Microsoft Entra ID (Azure AD), Google Workspace, OneLogin, and JumpCloud</strong>.
+                  UrPass supports federated identity with all major enterprise Identity Providers (IdPs) including <strong>Okta, Microsoft Entra ID (Azure AD), Google Workspace, OneLogin, and JumpCloud</strong>.
                   Both SP-Initiated and IdP-Initiated SSO are supported with X.509 certificate validation and SHA-256 signatures.
                 </p>
 
@@ -1222,7 +1381,7 @@ if (result.success) {
                   2. Automated Directory Sync &amp; Deprovisioning (SCIM 2.0)
                 </h3>
                 <p className="text-xs text-neutral-600 leading-relaxed mb-3">
-                  URPASS implements an RFC 7643 and RFC 7644 compliant SCIM 2.0 server. Whenever an employee is onboarded or departs your company, Okta or Entra ID automatically updates URPASS in real time.
+                  UrPass implements an RFC 7643 and RFC 7644 compliant SCIM 2.0 server. Whenever an employee is onboarded or departs your company, Okta or Entra ID automatically updates UrPass in real time.
                   Deactivated users immediately have all active browser and scanner check-in sessions revoked.
                 </p>
 
@@ -1390,7 +1549,7 @@ if (result.success) {
               {/* Base URL */}
               <div className="bg-white border border-neutral-200 rounded-2xl p-6 mb-6 shadow-2xs">
                 <p className="text-sm text-neutral-600 leading-relaxed mb-4">
-                  The URPASS REST API follows standard REST principles. All responses return JSON payloads with
+                  The UrPass REST API follows standard REST principles. All responses return JSON payloads with
                   consistent top-level <code className="bg-neutral-100 px-1 py-0.5 rounded font-mono">data</code> and{" "}
                   <code className="bg-neutral-100 px-1 py-0.5 rounded font-mono">meta</code> pagination envelopes.
                 </p>
@@ -1613,6 +1772,266 @@ events = response.json().get("data", [])`,
                 </div>
               </div>
 
+              {/* Endpoint 4: POST /passes/issue */}
+              <div className="bg-white border border-neutral-200 rounded-2xl overflow-hidden mb-6 shadow-2xs">
+                <div className="px-6 py-4 border-b border-neutral-100 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded font-mono">
+                      POST
+                    </span>
+                    <code className="text-sm font-mono font-semibold text-neutral-900">/passes/issue</code>
+                  </div>
+                  <span className="text-xs text-neutral-500">Issue cryptographic pass</span>
+                </div>
+                <div className="px-6 py-5">
+                  <p className="text-sm text-neutral-600 mb-4">
+                    Generates a tamper-evident cryptographic attendee pass with QR token and direct access URL.
+                    Ideal for custom ticketing checkouts, automated invite funnels, and enterprise CRM sync.
+                  </p>
+
+                  <p className="text-xs font-semibold text-neutral-700 mb-2">Request Body (JSON)</p>
+                  <div className="space-y-1.5 mb-4 text-xs">
+                    <div className="grid grid-cols-[100px_80px_1fr] gap-2 p-2 rounded-lg bg-neutral-50 font-mono">
+                      <span className="text-brand font-semibold">eventId</span>
+                      <span className="text-neutral-400">string (UUID)</span>
+                      <span className="font-sans text-neutral-600">Required. Target event identifier</span>
+                    </div>
+                    <div className="grid grid-cols-[100px_80px_1fr] gap-2 p-2 rounded-lg bg-neutral-50 font-mono">
+                      <span className="text-brand font-semibold">name</span>
+                      <span className="text-neutral-400">string</span>
+                      <span className="font-sans text-neutral-600">Required. Attendee full legal name</span>
+                    </div>
+                    <div className="grid grid-cols-[100px_80px_1fr] gap-2 p-2 rounded-lg bg-neutral-50 font-mono">
+                      <span className="text-brand font-semibold">email</span>
+                      <span className="text-neutral-400">string</span>
+                      <span className="font-sans text-neutral-600">Required. Valid attendee email address</span>
+                    </div>
+                    <div className="grid grid-cols-[100px_80px_1fr] gap-2 p-2 rounded-lg bg-neutral-50 font-mono">
+                      <span className="text-brand font-semibold">phone</span>
+                      <span className="text-neutral-400">string</span>
+                      <span className="font-sans text-neutral-600">Optional. Attendee contact phone number</span>
+                    </div>
+                    <div className="grid grid-cols-[100px_80px_1fr] gap-2 p-2 rounded-lg bg-neutral-50 font-mono">
+                      <span className="text-brand font-semibold">passType</span>
+                      <span className="text-neutral-400">string</span>
+                      <span className="font-sans text-neutral-600">Optional. Category tier (e.g. <code>vip</code>, <code>participant</code>, <code>speaker</code>)</span>
+                    </div>
+                  </div>
+
+                  <p className="text-xs font-semibold text-neutral-700 mb-2">cURL Request &amp; Response</p>
+                  <CodeBlock
+                    tabs={[
+                      {
+                        label: "cURL",
+                        language: "bash",
+                        code: `curl -X POST https://urpass.space/api/v1/passes/issue \\
+  -H "Authorization: Bearer urp_live_9a7b5c3d2e1f40..." \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "eventId": "e4210d65-3d84-4828-b997-c25f48719230",
+    "name": "Karthik Raja",
+    "email": "karthik@example.com",
+    "phone": "+919876543210",
+    "passType": "vip"
+  }'`,
+                      },
+                      {
+                        label: "Response",
+                        language: "json",
+                        code: `{
+  "success": true,
+  "data": {
+    "passToken": "urp_pass_7bf318901c5e49b29d33",
+    "passUrl": "https://urpass.space/pass/urp_pass_7bf318901c5e49b29d33",
+    "qrCodeUrl": "https://urpass.space/pass/urp_pass_7bf318901c5e49b29d33",
+    "attendeeId": "att_8fa0129bc34",
+    "passType": "vip",
+    "status": "generated"
+  },
+  "meta": {
+    "latencyMs": 38,
+    "environment": "authenticated"
+  }
+}`,
+                      },
+                    ]}
+                  />
+                </div>
+              </div>
+
+              {/* Endpoint 5: POST /passes/verify */}
+              <div className="bg-white border border-neutral-200 rounded-2xl overflow-hidden mb-6 shadow-2xs">
+                <div className="px-6 py-4 border-b border-neutral-100 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-purple-700 bg-purple-50 border border-purple-200 px-2 py-0.5 rounded font-mono">
+                      POST
+                    </span>
+                    <code className="text-sm font-mono font-semibold text-neutral-900">/passes/verify</code>
+                  </div>
+                  <span className="text-xs text-neutral-500">Programmatic gate check-in</span>
+                </div>
+                <div className="px-6 py-5">
+                  <p className="text-sm text-neutral-600 mb-4">
+                    Programmatically verify an attendee pass QR token and record admission. Designed for automated physical turnstiles,
+                    hardware barcode scanners, and custom gate entry systems.
+                  </p>
+
+                  <p className="text-xs font-semibold text-neutral-700 mb-2">Request Body (JSON)</p>
+                  <div className="space-y-1.5 mb-4 text-xs">
+                    <div className="grid grid-cols-[100px_80px_1fr] gap-2 p-2 rounded-lg bg-neutral-50 font-mono">
+                      <span className="text-brand font-semibold">passToken</span>
+                      <span className="text-neutral-400">string</span>
+                      <span className="font-sans text-neutral-600">Required. Cryptographic token read from QR code</span>
+                    </div>
+                    <div className="grid grid-cols-[100px_80px_1fr] gap-2 p-2 rounded-lg bg-neutral-50 font-mono">
+                      <span className="text-brand font-semibold">eventId</span>
+                      <span className="text-neutral-400">string (UUID)</span>
+                      <span className="font-sans text-neutral-600">Required. Target event identifier</span>
+                    </div>
+                    <div className="grid grid-cols-[100px_80px_1fr] gap-2 p-2 rounded-lg bg-neutral-50 font-mono">
+                      <span className="text-brand font-semibold">gateId</span>
+                      <span className="text-neutral-400">string</span>
+                      <span className="font-sans text-neutral-600">Optional. Check-in portal or scanner station tag</span>
+                    </div>
+                  </div>
+
+                  <p className="text-xs font-semibold text-neutral-700 mb-2">cURL Request &amp; Response</p>
+                  <CodeBlock
+                    tabs={[
+                      {
+                        label: "cURL",
+                        language: "bash",
+                        code: `curl -X POST https://urpass.space/api/v1/passes/verify \\
+  -H "Authorization: Bearer urp_live_9a7b5c3d2e1f40..." \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "passToken": "urp_pass_7bf318901c5e49b29d33",
+    "eventId": "e4210d65-3d84-4828-b997-c25f48719230",
+    "gateId": "main-entrance-1"
+  }'`,
+                      },
+                      {
+                        label: "Response (Valid)",
+                        language: "json",
+                        code: `{
+  "success": true,
+  "status": "VALID",
+  "message": "Access Granted",
+  "attendee": {
+    "id": "att_8fa0129bc34",
+    "name": "Karthik Raja",
+    "email": "karthik@example.com"
+  },
+  "passType": "vip",
+  "checkedInAt": "2026-11-20T09:45:12.381Z",
+  "latencyMs": 28
+}`,
+                      },
+                      {
+                        label: "Response (Duplicate)",
+                        language: "json",
+                        code: `{
+  "success": false,
+  "status": "DUPLICATE",
+  "message": "Access Denied: Pass has already been checked in.",
+  "attendee": {
+    "id": "att_8fa0129bc34",
+    "name": "Karthik Raja",
+    "email": "karthik@example.com"
+  },
+  "passType": "vip",
+  "latencyMs": 19
+}`,
+                      },
+                    ]}
+                  />
+                </div>
+              </div>
+
+              {/* Endpoint 6: GET /api/explore */}
+              <div className="bg-white border border-neutral-200 rounded-2xl overflow-hidden mb-6 shadow-2xs">
+                <div className="px-6 py-4 border-b border-neutral-100 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded font-mono">
+                      GET
+                    </span>
+                    <code className="text-sm font-mono font-semibold text-neutral-900">/api/explore</code>
+                  </div>
+                  <span className="text-xs text-neutral-500">UrPass Explore public feed</span>
+                </div>
+                <div className="px-6 py-5">
+                  <p className="text-sm text-neutral-600 mb-4">
+                    Public, unauthenticated API querying verified UrPass Explore marketplace listings. Filter by city, category, dates, and ticket pricing.
+                  </p>
+
+                  <p className="text-xs font-semibold text-neutral-700 mb-2">Query Parameters</p>
+                  <div className="space-y-1.5 mb-4 text-xs">
+                    <div className="grid grid-cols-[100px_80px_1fr] gap-2 p-2 rounded-lg bg-neutral-50 font-mono">
+                      <span className="text-brand font-semibold">city</span>
+                      <span className="text-neutral-400">string</span>
+                      <span className="font-sans text-neutral-600">City slug (e.g., <code>bangalore</code>, <code>chennai</code>, <code>mumbai</code>, <code>hyderabad</code>, <code>delhi-ncr</code>)</span>
+                    </div>
+                    <div className="grid grid-cols-[100px_80px_1fr] gap-2 p-2 rounded-lg bg-neutral-50 font-mono">
+                      <span className="text-brand font-semibold">category</span>
+                      <span className="text-neutral-400">string</span>
+                      <span className="font-sans text-neutral-600">Category slug (e.g., <code>music-concerts</code>, <code>standup-comedy</code>, <code>workshops</code>, <code>tech-conferences</code>)</span>
+                    </div>
+                    <div className="grid grid-cols-[100px_80px_1fr] gap-2 p-2 rounded-lg bg-neutral-50 font-mono">
+                      <span className="text-brand font-semibold">date</span>
+                      <span className="text-neutral-400">string</span>
+                      <span className="font-sans text-neutral-600"><code>today</code>, <code>tomorrow</code>, <code>this-weekend</code>, <code>this-month</code></span>
+                    </div>
+                    <div className="grid grid-cols-[100px_80px_1fr] gap-2 p-2 rounded-lg bg-neutral-50 font-mono">
+                      <span className="text-brand font-semibold">pricing</span>
+                      <span className="text-neutral-400">string</span>
+                      <span className="font-sans text-neutral-600"><code>free</code> or <code>paid</code></span>
+                    </div>
+                    <div className="grid grid-cols-[100px_80px_1fr] gap-2 p-2 rounded-lg bg-neutral-50 font-mono">
+                      <span className="text-brand font-semibold">sort</span>
+                      <span className="text-neutral-400">string</span>
+                      <span className="font-sans text-neutral-600"><code>date_asc</code>, <code>date_desc</code>, <code>price_asc</code>, <code>price_desc</code></span>
+                    </div>
+                  </div>
+
+                  <p className="text-xs font-semibold text-neutral-700 mb-2">Example Request</p>
+                  <CodeBlock
+                    tabs={[
+                      {
+                        label: "cURL",
+                        language: "bash",
+                        code: `curl -X GET "https://urpass.space/api/explore?city=bangalore&category=tech-conferences"`,
+                      },
+                      {
+                        label: "Response",
+                        language: "json",
+                        code: `{
+  "success": true,
+  "events": [
+    {
+      "id": "e4210d65-3d84-4828-b997-c25f48719230",
+      "title": "DevCon India 2026",
+      "slug": "devcon-india-2026",
+      "city": "bangalore",
+      "category": "tech-conferences",
+      "startAt": "2026-11-20T09:30:00.000Z",
+      "venue": "Bengaluru International Exhibition Centre",
+      "isFree": false,
+      "startingPrice": 79900,
+      "currency": "INR",
+      "organizerName": "UrPass Community",
+      "isVerifiedHost": true
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "totalPages": 1
+}`,
+                      },
+                    ]}
+                  />
+                </div>
+              </div>
+
               {/* Error Codes */}
               <div className="bg-white border border-neutral-200 rounded-2xl overflow-hidden shadow-2xs">
                 <div className="px-6 py-4 border-b border-neutral-100">
@@ -1626,7 +2045,7 @@ events = response.json().get("data", [])`,
                     ["404", "Not Found", "The requested event or attendee record does not exist or is not owned by your account."],
                     ["422", "Unprocessable Entity", "Attendee is not in 'approved' status for pass operations."],
                     ["429", "Too Many Requests", "Rate limit exceeded (standard limit is 120 req/minute). Back off and retry."],
-                    ["500", "Internal Server Error", "Unexpected server error. Check URPASS status or reach out to support."],
+                    ["500", "Internal Server Error", "Unexpected server error. Check UrPass status or reach out to support."],
                   ].map(([code, title, desc]) => (
                     <div key={code} className="flex items-start gap-4 px-6 py-3.5 text-xs">
                       <code className="font-mono font-bold text-rose-600 shrink-0 w-10">{code}</code>
@@ -1658,7 +2077,7 @@ events = response.json().get("data", [])`,
               {/* Webhooks Overview */}
               <div className="bg-white border border-neutral-200 rounded-2xl p-6 mb-6 shadow-2xs">
                 <p className="text-sm text-neutral-600 leading-relaxed mb-4">
-                  URPASS outbound webhooks notify your server in real time when attendees register, complete payments,
+                  UrPass outbound webhooks notify your server in real time when attendees register, complete payments,
                   or scan their passes at venue gates. Configure webhook endpoints from{" "}
                   <Link href="/dashboard/developer" className="text-brand font-medium hover:underline">
                     Dashboard → Developer → Webhooks
@@ -1707,7 +2126,7 @@ events = response.json().get("data", [])`,
                 </div>
                 <div className="px-6 py-5">
                   <p className="text-sm text-neutral-600 leading-relaxed mb-4">
-                    Every webhook request sent from URPASS includes an <code className="bg-neutral-100 px-1 py-0.5 rounded font-mono text-xs">X-UrPass-Signature</code> header
+                    Every webhook request sent from UrPass includes an <code className="bg-neutral-100 px-1 py-0.5 rounded font-mono text-xs">X-UrPass-Signature</code> header
                     in the format <code className="bg-neutral-100 px-1 py-0.5 rounded font-mono text-xs">sha256=&lt;hash&gt;</code> and an{" "}
                     <code className="bg-neutral-100 px-1 py-0.5 rounded font-mono text-xs">X-UrPass-Event</code> header.
                     Compute the HMAC-SHA256 hash of the raw request payload using your webhook endpoint secret and compare it using a constant-time check.
@@ -1845,7 +2264,7 @@ async def handle_urpass_webhook(request: Request):
                 <p className="text-sm text-neutral-600 leading-relaxed mb-4">
                   The <a href="https://modelcontextprotocol.io" target="_blank" rel="noopener noreferrer" className="text-brand font-medium hover:underline">Model Context Protocol (MCP)</a> is
                   an open standard that enables Large Language Models (Claude, Cursor, Antigravity) to safely interact with external systems.
-                  URPASS provides an official MCP server exposing 10 production tools for querying events, issuing cryptographic passes,
+                  UrPass provides an official MCP server exposing 10 production tools for querying events, issuing cryptographic passes,
                   screening applicants, and executing gate check-ins.
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
@@ -1995,20 +2414,21 @@ curl -X POST https://urpass.space/api/mcp \\
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              {/* 4 Subscription Plans Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                 {[
                   {
                     name: "Free",
                     price: "₹0",
                     period: "forever",
+                    description: "For testing and small single-session events",
                     features: [
-                      "2 events / month",
+                      "1 active event",
                       "100 registrations / month",
                       "1 organizer seat",
-                      "3 custom form fields",
-                      "Responsive digital passes",
-                      "Mobile web scanner",
-                      "URPASS branding",
+                      "Standard registration forms",
+                      "Basic QR pass & camera scanner",
+                      "UrPass pass watermark",
                     ],
                     highlight: false,
                     cta: "Start free",
@@ -2017,14 +2437,16 @@ curl -X POST https://urpass.space/api/mcp \\
                   {
                     name: "Starter",
                     price: "₹499",
+                    ukPrice: "£15",
                     period: "/month",
+                    description: "For small workshops, meetups & single sessions",
                     features: [
-                      "10 events / month",
+                      "3 active events",
                       "500 registrations / month",
                       "2 organizer seats",
-                      "10 custom form fields",
-                      "CSV bulk import & export",
-                      "Standard analytics",
+                      "Custom registration form fields",
+                      "CSV bulk attendee import & export",
+                      "Standard attendance analytics",
                       "Paid ticket support",
                     ],
                     highlight: false,
@@ -2034,19 +2456,41 @@ curl -X POST https://urpass.space/api/mcp \\
                   {
                     name: "Pro",
                     price: "₹999",
+                    ukPrice: "£35",
                     period: "/month",
+                    description: "For college fests, hackathons & conferences",
                     features: [
-                      "Unlimited events",
+                      "10 active events",
                       "2,500 registrations / month",
                       "5 organizer seats",
-                      "Unlimited custom fields",
-                      "Remove URPASS branding",
-                      "Full REST API access",
-                      "Outbound Webhooks",
-                      "Priority email support",
+                      "Session attendance tracking",
+                      "Custom branded pass design & logo",
+                      "Multi-gate scanner synchronization",
+                      "Advanced attendance analytics",
+                      "Priority support",
                     ],
                     highlight: true,
                     cta: "Choose Pro",
+                    href: "/signup",
+                  },
+                  {
+                    name: "Business",
+                    price: "₹2,499",
+                    ukPrice: "£79",
+                    period: "/month",
+                    description: "For multi-stage summits & enterprise teams",
+                    features: [
+                      "Unlimited active events*",
+                      "10,000 registrations / month",
+                      "15 organizer seats",
+                      "Developer REST API & Webhooks",
+                      "Multi-track conference program engine",
+                      "Physical ops & badge printing",
+                      "Exhibitor B2B matchmaking hub",
+                      "Dedicated account manager",
+                    ],
+                    highlight: false,
+                    cta: "Choose Business",
                     href: "/signup",
                   },
                 ].map((p) => (
@@ -2054,33 +2498,41 @@ curl -X POST https://urpass.space/api/mcp \\
                     key={p.name}
                     className={`rounded-2xl p-5 flex flex-col justify-between ${
                       p.highlight
-                        ? "bg-neutral-900 text-white shadow-md ring-2 ring-brand-500/20"
+                        ? "bg-neutral-900 text-white shadow-md ring-2 ring-violet-500/30"
                         : "bg-white border border-neutral-200 shadow-2xs"
                     }`}
                   >
                     <div>
                       <div className="flex items-center justify-between mb-1">
-                        <p className={`text-[10px] font-bold tracking-widest uppercase ${p.highlight ? "text-brand-300" : "text-neutral-400"}`}>
+                        <p className={`text-[10px] font-bold tracking-widest uppercase ${p.highlight ? "text-violet-300" : "text-neutral-400"}`}>
                           {p.name}
                         </p>
                         {p.highlight && (
-                          <span className="text-[10px] bg-brand font-bold text-white px-2 py-0.5 rounded-full">
+                          <span className="text-[10px] bg-violet-600 font-bold text-white px-2 py-0.5 rounded-full">
                             Popular
                           </span>
                         )}
                       </div>
-                      <div className="flex items-baseline gap-1 mb-4">
-                        <span className={`text-2xl font-bold ${p.highlight ? "text-white" : "text-neutral-900"}`}>
+                      <div className="flex items-baseline gap-1 mb-1">
+                        <span className={`text-2xl font-bold tracking-tight ${p.highlight ? "text-white" : "text-neutral-900"}`}>
                           {p.price}
                         </span>
                         <span className={`text-xs ${p.highlight ? "text-neutral-400" : "text-neutral-500"}`}>
                           {p.period}
                         </span>
                       </div>
+                      {p.ukPrice && (
+                        <p className={`text-[11px] mb-3 ${p.highlight ? "text-neutral-400" : "text-neutral-400"}`}>
+                          or {p.ukPrice}/mo in UK
+                        </p>
+                      )}
+                      <p className={`text-xs mb-4 leading-relaxed ${p.highlight ? "text-neutral-300" : "text-neutral-500"}`}>
+                        {p.description}
+                      </p>
                       <ul className="flex flex-col gap-2 mb-6">
                         {p.features.map((f) => (
-                          <li key={f} className="flex items-center gap-2 text-xs">
-                            <CheckCircle className={`w-3.5 h-3.5 shrink-0 ${p.highlight ? "text-brand-400" : "text-brand"}`} />
+                          <li key={f} className="flex items-start gap-2 text-xs">
+                            <CheckCircle className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${p.highlight ? "text-violet-400" : "text-violet-600"}`} />
                             <span className={p.highlight ? "text-neutral-300" : "text-neutral-600"}>{f}</span>
                           </li>
                         ))}
@@ -2100,17 +2552,51 @@ curl -X POST https://urpass.space/api/mcp \\
                 ))}
               </div>
 
-              {/* Invoicing notes */}
+              {/* Single Event Passes & Lifetime Deal */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div className="bg-white border border-neutral-200 rounded-2xl p-5 shadow-2xs">
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-violet-50 text-[10px] font-bold text-violet-700 uppercase tracking-wider mb-2">
+                    Pay As You Go
+                  </div>
+                  <h4 className="text-sm font-semibold text-neutral-900 mb-1">Single Event Passes</h4>
+                  <p className="text-xs text-neutral-600 leading-relaxed mb-3">
+                    Don&apos;t run events every month? Buy a standalone event pass with zero recurring renewals:
+                  </p>
+                  <ul className="space-y-1 text-xs text-neutral-600 mb-4">
+                    <li>• <strong>Event Pass:</strong> ₹299 (£8) · Up to 250 registrations</li>
+                    <li>• <strong>Event Plus:</strong> ₹499 (£10) · Up to 750 registrations</li>
+                    <li>• <strong>Event Pro:</strong> ₹899 (£19) · Up to 2,000 registrations</li>
+                  </ul>
+                  <Link href="/pricing#single-event" className="text-xs font-semibold text-brand hover:underline">
+                    View Single Event Passes →
+                  </Link>
+                </div>
+
+                <div className="bg-neutral-950 text-white rounded-2xl p-5 border border-neutral-800 shadow-2xs">
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-emerald-950/80 border border-emerald-500/30 text-[10px] font-bold text-emerald-300 uppercase tracking-wider mb-2">
+                    Founder Lifetime Deal · Limited Slots
+                  </div>
+                  <h4 className="text-sm font-semibold text-white mb-1">Lifetime Platform Access</h4>
+                  <p className="text-xs text-neutral-300 leading-relaxed mb-3">
+                    One-time payment of ₹14,999 (or £149 in UK) for permanent access to all currently available Pro and Business features. Zero renewal fees forever.
+                  </p>
+                  <Link href="/founder-lifetime-deal" className="text-xs font-semibold text-violet-300 hover:text-white hover:underline">
+                    Explore Founder Deal →
+                  </Link>
+                </div>
+              </div>
+
+              {/* Invoicing notes & FUP */}
               <div className="bg-white border border-neutral-200 rounded-2xl p-5 text-sm text-neutral-600 shadow-2xs">
                 <div className="flex items-center gap-2 mb-2">
                   <Shield className="w-4 h-4 text-brand shrink-0" />
-                  <p className="font-semibold text-neutral-900">Billing &amp; Tax Compliance</p>
+                  <p className="font-semibold text-neutral-900">Billing, Tax Compliance &amp; 0% Platform Fee</p>
                 </div>
                 <ul className="flex flex-col gap-1.5 ml-6 text-xs text-neutral-500">
-                  <li>• Secure payments processed via Razorpay supporting UPI, Cards, NetBanking, and Corporate Cards.</li>
-                  <li>• Subscription invoices include 18% GST with your organization&apos;s GSTIN and state tax breakdown.</li>
-                  <li>• Download PDF tax invoices anytime from <strong>Dashboard → Billing → Invoices</strong>.</li>
-                  <li>• Upgrades, downgrades, and cancellations are managed directly from the billing portal.</li>
+                  <li>• <strong>0% UrPass Commission:</strong> UrPass charges 0% platform fee on all ticket sales. Standard payment gateway processing fees apply (e.g. Razorpay ~2%).</li>
+                  <li>• <strong>Fair Usage Policy:</strong> *Business tier includes unlimited active events subject to our Fair Usage Policy (up to 50 concurrent active events).</li>
+                  <li>• <strong>GST Invoicing:</strong> Invoices include 18% GST with your company&apos;s GSTIN and state tax breakdown. Download PDF tax invoices anytime from Dashboard → Billing.</li>
+                  <li>• <strong>Currency Support:</strong> Subscriptions and ticket checkouts support Indian Rupee (₹) and British Pound (£).</li>
                 </ul>
               </div>
             </section>
@@ -2130,16 +2616,28 @@ curl -X POST https://urpass.space/api/mcp \\
               <div className="flex flex-col gap-3">
                 {[
                   {
+                    q: "How do I list and publish my event on UrPass Explore?",
+                    a: "In your event dashboard, enable 'Publish to UrPass Explore', pick your city and primary category, and submit. Following quick moderation, your event is publicly listed across our 15+ city hubs and searchable on Google with 0% platform commission.",
+                  },
+                  {
+                    q: "How does Offline Check-In work when venue Wi-Fi drops?",
+                    a: "Staff pre-cache the encrypted attendance roster at /scan before gates open. QR passes validate locally in under 0.3s without an active internet connection. All queued scans auto-sync atomically as soon as cellular or Wi-Fi reconnects.",
+                  },
+                  {
                     q: "Do attendees need to install an app to present their QR pass?",
-                    a: "No. The attendee pass is rendered as a lightweight, responsive web pass accessible on any smartphone browser. On iOS devices, attendees can also add the pass directly to Apple Wallet.",
+                    a: "No. The attendee pass is rendered as a lightweight, responsive web pass accessible on any smartphone browser. On iOS devices, attendees can also add the pass directly to Apple Wallet (.pkpass).",
                   },
                   {
                     q: "Can multiple check-in staff scan at different gates simultaneously?",
                     a: "Yes. Multiple staff members can scan at the same time using their own mobile phones. All check-in attempts are validated atomically against the central database to guarantee zero duplicate admissions.",
                   },
                   {
+                    q: "What is the difference between Subscriptions and Single Event Passes?",
+                    a: "Monthly subscriptions (Free, Starter, Pro, Business) are designed for organizers running recurring events throughout the year. Single Event Passes (from ₹299 / £8) allow organizers to pay once for an upcoming event without recurring renewal charges.",
+                  },
+                  {
                     q: "How are ticket prices handled in the API and payment checkout?",
-                    a: "All ticket prices and order amounts in URPASS are denominated in paise (1 INR = 100 paise), matching standard Indian payment systems. For example, a ₹499 ticket is passed as 49900 in the API.",
+                    a: "All ticket prices and order amounts in UrPass are denominated in paise (1 INR = 100 paise), matching standard Indian payment systems. For example, a ₹499 ticket is passed as 49900 in the API.",
                   },
                   {
                     q: "What happens if a scanned attendee tries to enter a restricted zone or wrong gate?",
@@ -2150,12 +2648,12 @@ curl -X POST https://urpass.space/api/mcp \\
                     a: "When you configure an event as 'Online' or 'Hybrid' with a meeting link (Zoom, Google Meet, Teams, or Custom), the attendee's digital pass includes a verified join button that resolves via /api/join/[passToken]. Only approved attendees can access the redirect.",
                   },
                   {
-                    q: "Can I remove the URPASS watermark and branding from passes?",
-                    a: "Yes. Pro and Business tier plans provide white-label passes with all URPASS branding and footers removed.",
+                    q: "Can I remove the UrPass watermark and branding from passes?",
+                    a: "Yes. Pro and Business tier plans provide white-label passes with all UrPass branding and footers removed.",
                   },
                   {
                     q: "How secure is attendee data?",
-                    a: "URPASS is built on Supabase PostgreSQL with rigorous Row-Level Security (RLS) policies. Attendee records and event data can only be accessed by authenticated organizers and team members with appropriate role permissions.",
+                    a: "UrPass is built on Supabase PostgreSQL with rigorous Row-Level Security (RLS) policies. Attendee records and event data can only be accessed by authenticated organizers and team members with appropriate role permissions.",
                   },
                 ].map(({ q, a }) => (
                   <div key={q} className="bg-white border border-neutral-200 rounded-2xl p-5 shadow-2xs">
