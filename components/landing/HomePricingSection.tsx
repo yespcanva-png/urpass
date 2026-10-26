@@ -39,13 +39,13 @@ export default function HomePricingSection({ initialCountry = "IN" }: Props) {
           target: "Run your first real event with zero software cost",
           price: "£0",
           period: "forever",
-          renewalNotice: "No card required · Upgrade anytime",
+          renewalNotice: "Free forever · No credit card required",
           recommended: false,
           cta: "Start Free",
           href: "/signup?from=home-pricing&plan=free",
           features: [
             "1 active event",
-            "100 attendees per month",
+            "100 registrations per month",
             "1 organizer team seat",
             "Basic QR pass & camera scanner",
             "Standard registration forms",
@@ -121,13 +121,13 @@ export default function HomePricingSection({ initialCountry = "IN" }: Props) {
           target: "Run your first real event with zero software cost",
           price: "₹0",
           period: "forever",
-          renewalNotice: "No credit card required · Upgrade anytime",
+          renewalNotice: "Free forever · No credit card required",
           recommended: false,
           cta: "Start Free",
           href: "/signup?from=home-pricing&plan=free",
           features: [
             "1 active event",
-            "100 attendees per month",
+            "100 registrations per month",
             "1 organizer team seat",
             "Basic QR pass & camera scanner",
             "Standard registration forms",
@@ -198,8 +198,8 @@ export default function HomePricingSection({ initialCountry = "IN" }: Props) {
       ];
 
   const founderPriceTitle = isUk
-    ? "URPASS Founder Lifetime Access — £249 One-Time"
-    : "URPASS Founder Lifetime Access — ₹19,999 One-Time";
+    ? "UrPass Founder Lifetime Access — £249 One-Time"
+    : "UrPass Founder Lifetime Access — ₹19,999 One-Time";
 
   const founderDealHref = isUk ? "/founder-lifetime-deal?country=GB" : "/founder-lifetime-deal";
 
@@ -208,16 +208,44 @@ export default function HomePricingSection({ initialCountry = "IN" }: Props) {
       <div className="max-w-6xl mx-auto">
         <AnimateIn>
           <div className="text-center mb-12 sm:mb-16">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white border border-neutral-200/90 text-neutral-800 text-xs font-semibold tracking-wide shadow-2xs mb-4">
-              <span className="w-2 h-2 rounded-full bg-brand" />
-              <span>{isUk ? "TRANSPARENT UK PRICING" : "FREE FOREVER + TRANSPARENT SAAS"}</span>
+            {/* Interactive Currency Switcher */}
+            <div className="inline-flex items-center p-1 rounded-xl bg-neutral-200/80 border border-neutral-300/80 mb-4 shadow-2xs">
+              <button
+                type="button"
+                onClick={() => {
+                  setCountry("IN");
+                  persistCountryPreference("IN");
+                }}
+                className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all ${
+                  country === "IN"
+                    ? "bg-white text-neutral-900 shadow-xs"
+                    : "text-neutral-600 hover:text-neutral-900"
+                }`}
+              >
+                🇮🇳 India (₹)
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setCountry("GB");
+                  persistCountryPreference("GB");
+                }}
+                className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all ${
+                  country === "GB"
+                    ? "bg-white text-neutral-900 shadow-xs"
+                    : "text-neutral-600 hover:text-neutral-900"
+                }`}
+              >
+                🇬🇧 UK (£)
+              </button>
             </div>
+
             <h2 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-neutral-950">
               Predictable pricing for modern event teams
             </h2>
             <p className="mt-3.5 text-neutral-600 text-sm sm:text-base max-w-2xl mx-auto leading-relaxed">
               {isUk
-                ? "Start free with 1 event and 100 attendees, or choose flat-rate monthly subscriptions with 0% platform commission on ticket sales."
+                ? "Start free with 1 event and 100 registrations, or choose flat-rate monthly subscriptions with 0% platform fee on ticket sales."
                 : "Start free with 1 active event and 100 registrations. Upgrade to Starter, Pro, or Business as your events and team scale."}
             </p>
 
@@ -225,7 +253,7 @@ export default function HomePricingSection({ initialCountry = "IN" }: Props) {
             <div className="mt-6 flex flex-wrap items-center justify-center gap-2.5 sm:gap-4 text-xs text-neutral-600 font-medium">
               <span className="inline-flex items-center gap-1.5 bg-white border border-neutral-200/80 px-3 py-1 rounded-full shadow-2xs">
                 <CreditCard className="w-3.5 h-3.5 text-brand" />
-                0% Per-Ticket Platform Commission
+                0% UrPass Platform Fee (standard gateway charges apply)
               </span>
               <span className="inline-flex items-center gap-1.5 bg-white border border-neutral-200/80 px-3 py-1 rounded-full shadow-2xs">
                 <Zap className="w-3.5 h-3.5 text-brand" />
@@ -246,13 +274,13 @@ export default function HomePricingSection({ initialCountry = "IN" }: Props) {
               <div className="space-y-1.5">
                 <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-950/80 border border-emerald-500/30 text-emerald-300">
                   <ShieldCheck className="w-3 h-3 text-emerald-400" />
-                  <span>FOUNDER DEAL · LIMITED TO 20 ACCOUNTS ONLY</span>
+                  <span>FOUNDER DEAL · 7 OF 20 SLOTS REMAINING</span>
                 </div>
                 <h3 className="text-lg sm:text-xl font-bold tracking-tight text-white">
                   {founderPriceTitle}
                 </h3>
                 <p className="text-xs sm:text-sm text-neutral-400 max-w-2xl leading-relaxed">
-                  Permanent access to all currently available URPASS features for a one-time payment. Zero renewal fees forever. Valid for the lifetime of the URPASS platform.
+                  Permanent access to all currently available UrPass Pro and Business features for a one-time payment. Zero renewal fees forever. Valid for the lifetime of the UrPass platform.
                 </p>
               </div>
 
@@ -374,12 +402,29 @@ export default function HomePricingSection({ initialCountry = "IN" }: Props) {
                       plan.recommended ? "text-neutral-500" : "text-neutral-400"
                     }`}
                   >
-                    Instant account activation · Cancel renewal anytime
+                    {plan.id === "free"
+                      ? "No credit card required · Free forever"
+                      : "Instant account activation · Cancel renewal anytime"}
                   </p>
                 </div>
               </div>
             </AnimateIn>
           ))}
+        </div>
+
+        {/* ── Footnote & Value Comparisons ── */}
+        <div className="mb-10 text-center space-y-3 max-w-3xl mx-auto">
+          <p className="text-xs text-neutral-500">
+            <span className="font-semibold text-neutral-700">*Unlimited active events:</span> Business tier includes unlimited active events subject to our Fair Usage Policy (up to 50 concurrent active events). Need more concurrency? Contact enterprise.
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-2.5 pt-1 text-xs">
+            <span className="px-3 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 font-medium">
+              ⚡ Annual billing available: Save 20% on Starter, Pro, and Business plans
+            </span>
+            <span className="px-3 py-1 rounded-lg bg-white border border-neutral-200 text-neutral-700 font-medium shadow-2xs">
+              💡 Why UrPass vs. Eventbrite / Townscript? 0% ticket commission (vs. 5–10% per ticket fee)
+            </span>
+          </div>
         </div>
 
         {/* ── Enterprise / Custom Inquiry Card ── */}

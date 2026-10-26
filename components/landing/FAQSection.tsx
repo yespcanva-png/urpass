@@ -61,7 +61,7 @@ export default function FAQSection({ initialCountry = "IN" }: Props) {
     },
     {
       q: "Does UrPass take a cut of my ticket sales?",
-      a: "No. UrPass charges zero per-ticket commission fees. You connect your own Razorpay account (or Stripe for UK) and receive 100% of your ticket revenue directly into your bank account.",
+      a: "No. UrPass charges 0% platform commission on ticket sales. Standard payment gateway processing fees apply (e.g. ~2% for Razorpay / UPI in India or Stripe in the UK), and you receive 100% of your ticket revenue directly into your bank account.",
     },
   ];
 
@@ -80,10 +80,14 @@ export default function FAQSection({ initialCountry = "IN" }: Props) {
 
         <div className="flex flex-col divide-y divide-neutral-100 border-y border-neutral-100">
           {faqs.map((faq, i) => (
-            <div key={i}>
+            <div key={i} className="py-1">
               <button
+                id={`faq-question-${i}`}
+                type="button"
+                aria-expanded={open === i}
+                aria-controls={`faq-answer-${i}`}
                 onClick={() => setOpen(open === i ? null : i)}
-                className="w-full flex items-center justify-between py-5 text-left gap-4 hover:text-brand transition-colors"
+                className="w-full flex items-center justify-between py-5 text-left gap-4 hover:text-brand transition-colors cursor-pointer"
               >
                 <span className="text-sm sm:text-base font-semibold text-neutral-900">
                   {faq.q}
@@ -96,11 +100,16 @@ export default function FAQSection({ initialCountry = "IN" }: Props) {
                   )}
                 </span>
               </button>
-              {open === i && (
-                <p className="pb-5 text-xs sm:text-sm text-neutral-600 leading-relaxed">
+              <div
+                id={`faq-answer-${i}`}
+                role="region"
+                aria-labelledby={`faq-question-${i}`}
+                className={open === i ? "block pb-5" : "hidden"}
+              >
+                <p className="text-xs sm:text-sm text-neutral-600 leading-relaxed">
                   {faq.a}
                 </p>
-              )}
+              </div>
             </div>
           ))}
         </div>

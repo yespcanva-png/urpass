@@ -1,6 +1,7 @@
 "use client";
 
-import { CheckCircle2, Star, Quote, Building2, GraduationCap, Laptop, Sparkles } from "lucide-react";
+import Link from "next/link";
+import { CheckCircle2, Star, Quote, Building2, GraduationCap, Laptop, Sparkles, ShieldCheck, Lock, ExternalLink } from "lucide-react";
 import AnimateIn from "@/components/ui/AnimateIn";
 
 const testimonials = [
@@ -43,10 +44,10 @@ const testimonials = [
 ];
 
 const stats = [
-  { value: "50,000+", label: "Passes Scanned", desc: "Across colleges & conferences" },
+  { value: "50,000+", label: "Passes Scanned", desc: "Across colleges & conferences", href: "/explore" },
   { value: "<0.3s", label: "Check-In Speed", desc: "Instant camera QR decode" },
-  { value: "99.9%", label: "Uptime Reliability", desc: "Engineered for high concurrency" },
-  { value: "0%", label: "Per-Ticket Fee", desc: "Direct payout to organizer accounts" },
+  { value: "99.9%", label: "Uptime Reliability", desc: "Live service status verified", href: "/status" },
+  { value: "0%", label: "UrPass Platform Fee", desc: "Standard gateway fees apply (~2%)" },
 ];
 
 export default function TestimonialsSection() {
@@ -68,17 +69,57 @@ export default function TestimonialsSection() {
         </AnimateIn>
 
         {/* Proof Metrics */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12 sm:mb-16">
-          {stats.map((s, i) => (
-            <AnimateIn key={s.label} delay={i * 60} from="up">
-              <div className="bg-white rounded-2xl border border-neutral-200/80 p-5 sm:p-6 text-center shadow-xs">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 sm:mb-10">
+          {stats.map((s, i) => {
+            const Content = (
+              <div className="bg-white rounded-2xl border border-neutral-200/80 p-5 sm:p-6 text-center shadow-xs hover:border-neutral-300 transition-all h-full">
                 <p className="text-2xl sm:text-4xl font-extrabold text-neutral-950 tracking-tight">{s.value}</p>
-                <p className="text-xs sm:text-sm font-semibold text-neutral-900 mt-1">{s.label}</p>
+                <p className="text-xs sm:text-sm font-semibold text-neutral-900 mt-1 flex items-center justify-center gap-1">
+                  <span>{s.label}</span>
+                  {s.href && <ExternalLink className="w-3 h-3 text-neutral-400 inline" />}
+                </p>
                 <p className="text-[11px] text-neutral-500 mt-0.5">{s.desc}</p>
               </div>
-            </AnimateIn>
-          ))}
+            );
+
+            return (
+              <AnimateIn key={s.label} delay={i * 60} from="up">
+                {s.href ? (
+                  <Link href={s.href} className="block h-full group" title={`View ${s.label}`}>
+                    {Content}
+                  </Link>
+                ) : (
+                  Content
+                )}
+              </AnimateIn>
+            );
+          })}
         </div>
+
+        {/* Trust Signals & Compliance Bar */}
+        <AnimateIn delay={100} from="up">
+          <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 py-3 px-4 bg-white rounded-xl border border-neutral-200/70 text-xs text-neutral-600 mb-12 sm:mb-16 shadow-2xs">
+            <span className="flex items-center gap-1.5 font-medium">
+              <ShieldCheck className="w-4 h-4 text-emerald-600" />
+              <span>DPDP Act 2023 Compliant</span>
+            </span>
+            <span className="hidden sm:inline text-neutral-300">•</span>
+            <span className="flex items-center gap-1.5 font-medium">
+              <Lock className="w-4 h-4 text-brand" />
+              <span>256-Bit SSL Data Encryption</span>
+            </span>
+            <span className="hidden sm:inline text-neutral-300">•</span>
+            <span className="flex items-center gap-1.5 font-medium">
+              <CheckCircle2 className="w-4 h-4 text-violet-600" />
+              <span>Razorpay &amp; UPI Verified Checkout</span>
+            </span>
+            <span className="hidden sm:inline text-neutral-300">•</span>
+            <Link href="/security" className="text-brand hover:underline font-semibold flex items-center gap-1">
+              <span>Security Center</span>
+              <span>&rarr;</span>
+            </Link>
+          </div>
+        </AnimateIn>
 
         {/* Real Event Story Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">

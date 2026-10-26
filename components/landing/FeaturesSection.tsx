@@ -24,18 +24,18 @@ const steps = [
     highlights: [
       "Tiered pricing & discount codes",
       "Direct UPI & card checkouts",
-      "Zero platform commission",
+      "0% UrPass platform fee",
     ],
   },
   {
     phase: "QR Entry",
     title: "Scan & Check In",
-    desc: "Scan QR passes using smartphones, prevent duplicate entries, and manage multiple gates.",
+    desc: "Scan QR passes using smartphones, prevent duplicate entries, and keep scanning with offline sync if venue WiFi dips.",
     icon: QrCode,
     highlights: [
       "0.3s camera scan check-in",
       "Anti-passback duplicate block",
-      "Multi-gate real-time sync",
+      "Offline sync & multi-gate support",
     ],
   },
   {
@@ -143,7 +143,7 @@ export default function FeaturesSection() {
               <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
             </Link>
             <p className="mt-3 text-xs text-neutral-400">
-              Free setup · Plans from ₹499/mo · Zero commission fees
+              Free forever plan available · 0% UrPass platform fee (standard gateway fees apply) · Cancel anytime
             </p>
           </div>
         </AnimateIn>

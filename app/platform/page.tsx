@@ -106,12 +106,12 @@ function PassCard() {
       <div className="absolute inset-0 translate-x-1.5 translate-y-1.5 sm:translate-x-2.5 sm:translate-y-2.5 bg-brand-200 rounded-3xl" />
       <div className="relative bg-white rounded-3xl border border-neutral-150 shadow-2xl overflow-hidden animate-float">
         <div className="bg-neutral-900 px-5 sm:px-6 py-3.5 sm:py-4 flex items-center justify-between">
-          <span className="text-xs font-semibold tracking-widest text-white/60">URPASS</span>
+          <span className="text-xs font-semibold tracking-widest text-white/60">UrPass</span>
           <span className="text-[11px] sm:text-xs font-semibold tracking-wide text-white bg-white/10 px-2.5 py-1 rounded-full">VALID</span>
         </div>
         <div className="px-5 sm:px-6 pt-4 sm:pt-5 pb-5 sm:pb-6">
           <p className="text-[10px] font-semibold tracking-widest text-neutral-400 mb-1">EVENT</p>
-          <h3 className="font-semibold text-base sm:text-lg leading-snug text-neutral-900 mb-4 sm:mb-5">Tech Workshop 2026</h3>
+          <h3 className="font-semibold text-base sm:text-lg leading-snug text-neutral-900 mb-4 sm:mb-5">AI Tech Workshop 2026</h3>
           <div className="flex items-center gap-0 mb-4 sm:mb-5">
             <div className="w-4 sm:w-5 h-4 sm:h-5 rounded-full bg-neutral-100 -ml-7 sm:-ml-9 shrink-0" />
             <div className="flex-1 border-t border-dashed border-neutral-200 mx-1" />
@@ -129,7 +129,7 @@ function PassCard() {
             <p className="mt-2 text-[10px] text-neutral-400 tracking-widest font-mono">SCAN TO VERIFY</p>
           </div>
           <div className="mt-4 sm:mt-5 flex items-center justify-between text-[10px] sm:text-[11px] text-neutral-400 font-medium">
-            <span>29 AUG 2026</span>
+            <span>15 NOV 2026</span>
             <span>CHENNAI</span>
           </div>
         </div>
@@ -154,7 +154,7 @@ function DashboardMockup() {
         <div className="w-2.5 h-2.5 rounded-full bg-neutral-200" />
       </div>
       <div className="p-4 sm:p-5">
-        <h4 className="font-semibold text-xs sm:text-sm text-neutral-900 mb-3 sm:mb-4">AI Workshop 2026</h4>
+        <h4 className="font-semibold text-xs sm:text-sm text-neutral-900 mb-3 sm:mb-4">AI Tech Workshop 2026</h4>
         <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-4 sm:mb-5">
           {[{ label: "Applications", value: "250" }, { label: "Passes", value: "180" }, { label: "Checked In", value: "127" }].map((s) => (
             <div key={s.label} className="bg-neutral-50 rounded-xl p-2.5 sm:p-3 text-center">

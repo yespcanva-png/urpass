@@ -23,14 +23,19 @@ import {
   ArrowRight,
   Sparkles,
   Compass,
+  Wrench,
+  Headphones,
+  ShieldCheck,
+  CheckCircle2,
 } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "UrPass — Event Management Platform | Your event. Your way.",
+  title: "UrPass — Digital Event Passes & Lightning QR Check-In Platform",
   description:
-    "Manage registrations, digital QR passes, ticketing, and attendee check-ins with UrPass. High-speed check-ins, custom passes, and zero platform commission.",
+    "Registration to QR check-in in one place. 0% platform fee, sub-second smartphone check-ins, and free forever plan for colleges, hackathons, and conferences.",
   keywords: [
-    "URPASS",
+    "UrPass",
+    "urpass",
     "event management platform",
     "event registration software",
     "QR check-in software",
@@ -40,14 +45,33 @@ export const metadata: Metadata = {
     "hackathon check in",
     "Razorpay event ticketing",
     "conference session check in",
+    "offline event check-in",
   ],
   alternates: { canonical: "https://urpass.space" },
   openGraph: {
-    title: "UrPass — Event Management Platform | Your event. Your way.",
+    title: "UrPass — Digital Event Passes & Lightning QR Check-In Platform",
     description:
-      "Manage registrations, digital QR passes, ticketing, and attendee check-ins with UrPass. Choose the software or let our team help you set up.",
+      "Registration to QR check-in in one place. 0% platform fee, sub-second smartphone check-ins, and free forever plan for colleges, hackathons, and conferences.",
     url: "https://urpass.space",
     type: "website",
+    images: [
+      {
+        url: "https://urpass.space/og-image.png",
+        width: 1200,
+        height: 630,
+        type: "image/png",
+        alt: "UrPass — Digital Event Passes & Lightning QR Check-In Platform",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    site: "@urpass",
+    creator: "@urpass",
+    title: "UrPass — Digital Event Passes & Lightning QR Check-In Platform",
+    description:
+      "Registration to QR check-in in one place. 0% platform fee, sub-second smartphone check-ins, and free forever plan for colleges, hackathons, and conferences.",
+    images: ["https://urpass.space/og-image.png"],
   },
 };
 
@@ -78,12 +102,12 @@ function PassCard() {
     <div className="relative w-64 sm:w-72 max-w-full mx-auto select-none">
       <div className="relative bg-white rounded-2xl border border-neutral-200 shadow-[0_20px_50px_rgba(0,0,0,0.08)] overflow-hidden">
         <div className="bg-neutral-900 px-5 sm:px-6 py-3.5 sm:py-4 flex items-center justify-between">
-          <span className="text-xs font-bold tracking-widest text-white/80">URPASS</span>
+          <span className="text-xs font-bold tracking-widest text-white/80">UrPass</span>
           <span className="text-[10px] sm:text-[11px] font-semibold tracking-wide text-emerald-300 bg-emerald-950/60 border border-emerald-500/30 px-2 py-0.5 rounded-md">VALID PASS</span>
         </div>
         <div className="px-5 sm:px-6 pt-4 sm:pt-5 pb-5 sm:pb-6">
           <p className="text-[10px] font-semibold tracking-widest text-neutral-400 mb-1">EVENT</p>
-          <h3 className="font-semibold text-base sm:text-lg leading-snug text-neutral-900 mb-4 sm:mb-5">Tech Workshop 2026</h3>
+          <h3 className="font-semibold text-base sm:text-lg leading-snug text-neutral-900 mb-4 sm:mb-5">AI Tech Workshop 2026</h3>
           <div className="flex items-center gap-0 mb-4 sm:mb-5">
             <div className="w-4 sm:w-5 h-4 sm:w-5 rounded-full bg-neutral-100 -ml-7 sm:-ml-9 shrink-0 border-r border-neutral-200" />
             <div className="flex-1 border-t border-dashed border-neutral-200 mx-1" />
@@ -101,7 +125,7 @@ function PassCard() {
             <p className="mt-2 text-[10px] text-neutral-400 tracking-widest font-mono">SCAN TO VERIFY</p>
           </div>
           <div className="mt-4 sm:mt-5 flex items-center justify-between text-[10px] sm:text-[11px] text-neutral-400 font-medium">
-            <span>29 AUG 2026</span>
+            <span>15 NOV 2026</span>
             <span>CHENNAI</span>
           </div>
         </div>
@@ -131,7 +155,7 @@ function DashboardMockup() {
         <div className="w-10" />
       </div>
       <div className="p-4 sm:p-5">
-        <h4 className="font-semibold text-xs sm:text-sm text-neutral-900 mb-3 sm:mb-4">AI Workshop 2026</h4>
+        <h4 className="font-semibold text-xs sm:text-sm text-neutral-900 mb-3 sm:mb-4">AI Tech Workshop 2026</h4>
         <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-4 sm:mb-5">
           {[{ label: "Applications", value: "250" }, { label: "Passes", value: "180" }, { label: "Checked In", value: "127" }].map((s) => (
             <div key={s.label} className="bg-neutral-50 border border-neutral-100 rounded-lg p-2.5 sm:p-3 text-center">
@@ -214,10 +238,10 @@ export default async function LandingPage() {
               {
                 "@type": "SoftwareApplication",
                 "@id": "https://urpass.space/#urpass",
-                "name": "URPASS",
+                "name": "UrPass",
                 "alternateName": [
-                  "URPASS by Yesp",
-                  "Yesp URPASS"
+                  "UrPass by Yesp",
+                  "Yesp UrPass"
                 ],
                 "url": "https://urpass.space",
                 "applicationCategory": "BusinessApplication",
@@ -225,11 +249,11 @@ export default async function LandingPage() {
                 "publisher": {
                   "@id": "https://urpass.space/#yesp"
                 },
-                "description": "URPASS by Yesp Corporation is an event registration, ticketing, digital QR pass and event check-in platform for colleges, universities, conferences, hackathons, workshops, corporate events and communities."
+                "description": "UrPass by Yesp Corporation is an event registration, ticketing, digital QR pass and event check-in platform for colleges, universities, conferences, hackathons, workshops, corporate events and communities."
               },
               {
                 "@type": "WebApplication",
-                name: "URPASS",
+                name: "UrPass",
                 applicationCategory: "BusinessApplication",
                 applicationSubCategory: "Event Ticketing & Check-In Platform",
                 operatingSystem: "Web, iOS, Android",
@@ -239,15 +263,17 @@ export default async function LandingPage() {
                     ? "Digital event registration, QR pass and check-in platform for universities, conferences, hackathons, workshops and corporate events in the UK."
                     : "An India-focused digital event registration, QR pass and check-in platform for colleges, conferences, hackathons, workshops and corporate events.",
                 offers: country === "GB" ? [
-                  { "@type": "Offer", name: "Starter Tier", price: "15", priceCurrency: "GBP", description: "10 events/month, 500 registrations/month" },
-                  { "@type": "Offer", name: "Pro Tier", price: "35", priceCurrency: "GBP", description: "Unlimited events, 2,500 registrations/month" },
-                  { "@type": "Offer", name: "Business Tier", price: "79", priceCurrency: "GBP", description: "Unlimited events, 10,000 registrations/month" },
-                  { "@type": "Offer", name: "Founder Lifetime Deal", price: "249", priceCurrency: "GBP", description: "Lifetime access to all URPASS features, zero platform fees" },
+                  { "@type": "Offer", name: "Free Tier", price: "0", priceCurrency: "GBP", description: "1 active event, 100 registrations/month, free forever" },
+                  { "@type": "Offer", name: "Starter Tier", price: "15", priceCurrency: "GBP", description: "3 active events, 500 registrations/month" },
+                  { "@type": "Offer", name: "Pro Tier", price: "35", priceCurrency: "GBP", description: "10 active events, 2,500 registrations/month" },
+                  { "@type": "Offer", name: "Business Tier", price: "79", priceCurrency: "GBP", description: "Unlimited active events, 10,000 registrations/month" },
+                  { "@type": "Offer", name: "Founder Lifetime Deal", price: "249", priceCurrency: "GBP", description: "Lifetime access to UrPass features, zero platform fees" },
                 ] : [
-                  { "@type": "Offer", name: "Starter Tier Intro", price: "29", priceCurrency: "INR", description: "Introductory offer for first 2 months. Then ₹499/month +GST. 10 events/month, 500 registrations/month" },
-                  { "@type": "Offer", name: "Pro Tier Intro", price: "29", priceCurrency: "INR", description: "Introductory offer for first 2 months. Then ₹999/month +GST. Unlimited events, 2,500 registrations/month" },
-                  { "@type": "Offer", name: "Business Tier Intro", price: "29", priceCurrency: "INR", description: "Introductory offer for first 2 months. Then ₹2,499/month +GST. Unlimited events, 10,000 registrations/month" },
-                  { "@type": "Offer", name: "Founder Lifetime Deal", price: "19999", priceCurrency: "INR", description: "Lifetime access to all URPASS features, zero platform fees" },
+                  { "@type": "Offer", name: "Free Tier", price: "0", priceCurrency: "INR", description: "1 active event, 100 registrations/month, free forever" },
+                  { "@type": "Offer", name: "Starter Tier", price: "499", priceCurrency: "INR", description: "3 active events, 500 registrations/month" },
+                  { "@type": "Offer", name: "Pro Tier", price: "999", priceCurrency: "INR", description: "10 active events, 2,500 registrations/month" },
+                  { "@type": "Offer", name: "Business Tier", price: "2499", priceCurrency: "INR", description: "Unlimited active events, 10,000 registrations/month" },
+                  { "@type": "Offer", name: "Founder Lifetime Deal", price: "19999", priceCurrency: "INR", description: "Lifetime access to UrPass features, zero platform fees" },
                 ],
               },
               {
@@ -255,23 +281,23 @@ export default async function LandingPage() {
                 mainEntity: [
                   {
                     "@type": "Question",
-                    name: "Do attendees need an account?",
+                    name: "Do attendees need an account or app?",
                     acceptedAnswer: {
                       "@type": "Answer",
-                      text: "No. Attendees apply through a public link and receive their pass without creating an account.",
+                      text: "No. Attendees register through a public link and receive their pass directly in any mobile browser without creating an account or downloading an app.",
                     },
                   },
                   {
                     "@type": "Question",
-                    name: "Do attendees need an app?",
+                    name: "Does UrPass work offline if venue WiFi dips?",
                     acceptedAnswer: {
                       "@type": "Answer",
-                      text: "No. Their digital pass works directly in any mobile browser. No app download required.",
+                      text: "Yes. The scanner caches guest manifest data locally in the browser and automatically syncs check-in timestamps back to the cloud as soon as internet connectivity is restored.",
                     },
                   },
                   {
                     "@type": "Question",
-                    name: "Can I use URPASS for college events?",
+                    name: "Can I use UrPass for college events?",
                     acceptedAnswer: {
                       "@type": "Answer",
                       text: "Yes — it's designed exactly for this. Workshops, hackathons, seminars, fests, community meetups.",
@@ -282,7 +308,7 @@ export default async function LandingPage() {
                     name: "How does check-in work?",
                     acceptedAnswer: {
                       "@type": "Answer",
-                      text: "Each approved attendee gets a unique QR pass. Staff opens the scanner on any device, scans the QR, and URPASS instantly validates and records the check-in in under 0.3s.",
+                      text: "Each approved attendee gets a unique QR pass. Gate staff opens the scanner on any smartphone browser, scans the QR code, and UrPass instantly validates entry in under 0.3s.",
                     },
                   },
                   {
@@ -290,17 +316,25 @@ export default async function LandingPage() {
                     name: "Can one pass be scanned twice?",
                     acceptedAnswer: {
                       "@type": "Answer",
-                      text: "No. Each pass can only be checked in once. If a second scan is attempted, URPASS shows an 'Already Checked In' result with the original timestamp.",
+                      text: "No. Each pass can only be checked in once. If a duplicate scan is attempted, UrPass shows an 'Already Checked In' result with the original timestamp.",
                     },
                   },
                   {
                     "@type": "Question",
-                    name: "How does URPASS pricing work?",
+                    name: "Does UrPass charge commission on ticket sales?",
+                    acceptedAnswer: {
+                      "@type": "Answer",
+                      text: "No. UrPass charges 0% platform fee on ticket sales. Standard banking/gateway processing fees apply (e.g. ~2% Razorpay/UPI in India, Stripe in UK).",
+                    },
+                  },
+                  {
+                    "@type": "Question",
+                    name: "How does UrPass pricing work?",
                     acceptedAnswer: {
                       "@type": "Answer",
                       text: country === "GB"
-                        ? "UK pricing is available as Starter £15/month, Pro £35/month, and Business £79/month, with direct activation and cancel-anytime renewal."
-                        : "India pricing offers Starter at ₹499/month, Pro at ₹999/month, and Business at ₹2,499/month (+GST) with transparent cancel-anytime renewal.",
+                        ? "UK pricing includes a Free forever tier, Starter at £15/month, Pro at £35/month, and Business at £79/month with transparent cancel-anytime renewal."
+                        : "India pricing includes a Free forever tier, Starter at ₹499/month, Pro at ₹999/month, and Business at ₹2,499/month (+GST) with transparent cancel-anytime renewal.",
                     },
                   },
                 ],
@@ -332,7 +366,7 @@ export default async function LandingPage() {
 
             <div className="flex flex-wrap items-center gap-2.5 mb-6 sm:mb-8">
               <span className="hero-badge inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold tracking-widest uppercase bg-brand/10 text-brand border border-brand/20 shadow-2xs">
-                URPASS · EVENT MANAGEMENT PLATFORM
+                UrPass · EVENT MANAGEMENT PLATFORM
               </span>
               <Link
                 href="/mcp-event-management"
@@ -345,26 +379,42 @@ export default async function LandingPage() {
             </div>
 
             <h1 className="hero-line-1 text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-neutral-950 leading-[1.08] mb-4 sm:mb-6">
-              Your event. Your way.
+              Registration to QR check-in in one place.
             </h1>
 
             <p className="hero-sub text-base sm:text-xl text-neutral-600 leading-relaxed max-w-xl mb-8 sm:mb-10">
-              Manage registrations, digital QR passes, ticketing, and attendee check-ins with UrPass. High-speed smartphone check-ins with zero platform commission.
+              Create custom passes, accept registrations, and scan attendee QR codes in under 0.3s. 0% platform fee, built for colleges, hackathons, conferences, and corporate meetups.
             </p>
 
+            {/* Streamlined Hero CTAs: 1 Primary, 1 Secondary, 1 Tertiary */}
             <div className="hero-ctas flex flex-col sm:flex-row items-stretch sm:items-center flex-wrap gap-3">
-              <a href="#pricing" className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-neutral-900 text-white px-5 py-3.5 rounded-xl text-sm font-semibold hover:bg-neutral-800 transition-colors text-center shadow-xs">
-                Explore Plans
+              <Link
+                href="/signup"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-neutral-900 text-white px-6 py-3.5 rounded-xl text-sm font-semibold hover:bg-neutral-800 transition-colors text-center shadow-xs"
+              >
+                <span>Start Free</span>
                 <ArrowRight className="w-4 h-4" />
-              </a>
-              <RequestEventSetupButton />
-              <Link href="/contact?subject=Book%20a%20Demo" className="w-full sm:w-auto inline-flex items-center justify-center gap-2 border border-neutral-200 bg-white px-5 py-3.5 rounded-xl text-sm font-semibold text-neutral-800 hover:bg-neutral-50 hover:border-neutral-300 transition-colors text-center shadow-2xs">
+              </Link>
+              <Link
+                href="/contact?subject=Book%20a%20Demo"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 border border-neutral-200 bg-white px-5 py-3.5 rounded-xl text-sm font-semibold text-neutral-800 hover:bg-neutral-50 hover:border-neutral-300 transition-colors text-center shadow-2xs"
+              >
                 Book a Demo
               </Link>
+              <a
+                href="#pricing"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 text-xs font-semibold text-neutral-600 hover:text-neutral-900 py-3.5 px-3 transition-colors text-center"
+              >
+                <span>Explore Plans</span>
+                <span>&rarr;</span>
+              </a>
             </div>
 
             <p className="hero-meta mt-6 sm:mt-8 text-xs text-neutral-500">
-              {country === "GB" ? "Plans from £15/month · Direct UK activation" : "Plans from ₹499/mo · Autopay required"} ·{" "}
+              {country === "GB"
+                ? "Free forever plan available · Paid plans from £15/mo · Cancel anytime"
+                : "Free forever plan available · Paid plans from ₹499/mo · Cancel anytime"}{" "}
+              · 0% UrPass platform fee ·{" "}
               <Link href="/mcp-event-management" className="text-neutral-700 hover:text-brand hover:underline font-medium">
                 Model Context Protocol (MCP) supported
               </Link>
@@ -378,128 +428,7 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* ── 02 EXTENSION: URPASS EXPLORE & MCP SHOWCASE GRID ─────────── */}
-      <section className="py-8 sm:py-14 px-4 sm:px-8 bg-neutral-50/70 border-y border-neutral-200/70">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6 items-stretch">
-            {/* Card 1: UrPass Explore Marketplace */}
-            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-violet-950 via-purple-950 to-neutral-950 p-6 sm:p-8 text-white border border-violet-800/40 shadow-xl shadow-violet-950/10 flex flex-col justify-between group hover:border-violet-700/60 transition-all duration-300">
-              {/* Decorative radial lighting */}
-              <div className="absolute -top-16 -right-16 w-56 h-56 bg-violet-500/20 rounded-full blur-3xl pointer-events-none" />
-              <div className="absolute -bottom-16 left-1/4 w-40 h-40 bg-fuchsia-500/15 rounded-full blur-2xl pointer-events-none" />
-
-              <div className="relative z-10">
-                {/* Header row */}
-                <div className="flex items-center justify-between gap-3 mb-5">
-                  <div className="relative shrink-0">
-                    <div className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white shadow-inner">
-                      <Compass className="w-6 h-6 text-violet-300" />
-                    </div>
-                    <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75" />
-                      <span className="relative inline-flex rounded-full h-3 w-3 bg-violet-400 ring-2 ring-violet-950" />
-                    </span>
-                  </div>
-
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase bg-violet-500/30 text-violet-200 border border-violet-400/30 backdrop-blur-sm">
-                    <Sparkles className="w-3 h-3 text-violet-300 animate-pulse" />
-                    Now Live · Marketplace
-                  </span>
-                </div>
-
-                {/* Title & Description */}
-                <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-white mb-2.5">
-                  UrPass Explore
-                </h3>
-                <p className="text-xs sm:text-sm text-violet-200/90 leading-relaxed mb-6">
-                  Discover curated conferences, creative workshops, concerts, and mixers across India — or publish your event to reach thousands of verified attendees with direct QR pass booking.
-                </p>
-
-                {/* City tags */}
-                <div className="flex flex-wrap items-center gap-1.5 mb-7 text-[11px] text-violet-300/80">
-                  <span className="px-2.5 py-1 rounded-lg bg-white/10 border border-white/10 font-medium">Bengaluru</span>
-                  <span className="px-2.5 py-1 rounded-lg bg-white/10 border border-white/10 font-medium">Mumbai</span>
-                  <span className="px-2.5 py-1 rounded-lg bg-white/10 border border-white/10 font-medium">Delhi NCR</span>
-                  <span className="px-2.5 py-1 rounded-lg bg-white/10 border border-white/10 font-medium">London</span>
-                  <span className="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-violet-300/60">+More Cities</span>
-                </div>
-              </div>
-
-              {/* Action buttons */}
-              <div className="flex flex-wrap items-center gap-2.5 relative z-10 pt-4 border-t border-white/10">
-                <Link
-                  href="/explore"
-                  className="inline-flex items-center justify-center gap-1.5 text-xs font-bold text-violet-950 bg-white hover:bg-neutral-100 px-4 py-2.5 rounded-xl transition-all shadow-sm"
-                >
-                  <span>Explore Events</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
-                <Link
-                  href="/dashboard"
-                  className="inline-flex items-center justify-center gap-1.5 text-xs font-semibold text-white hover:text-white bg-white/10 hover:bg-white/15 border border-white/20 px-3.5 py-2.5 rounded-xl transition-all backdrop-blur-sm"
-                >
-                  <span>Publish Event</span>
-                </Link>
-              </div>
-            </div>
-
-            {/* Card 2: Model Context Protocol (MCP) */}
-            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-neutral-900 via-neutral-950 to-neutral-900 p-6 sm:p-8 text-white border border-neutral-800 shadow-xl shadow-neutral-950/10 flex flex-col justify-between group hover:border-neutral-700 transition-all duration-300">
-              {/* Decorative radial lighting */}
-              <div className="absolute -top-16 -right-16 w-56 h-56 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-
-              <div className="relative z-10">
-                {/* Header row */}
-                <div className="flex items-center justify-between gap-3 mb-5">
-                  <div className="w-12 h-12 rounded-2xl bg-neutral-800 border border-neutral-700 flex items-center justify-center font-mono font-bold text-xs text-white shadow-inner">
-                    MCP
-                  </div>
-
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase bg-emerald-950/70 text-emerald-400 border border-emerald-500/30">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    Official Standard
-                  </span>
-                </div>
-
-                {/* Title & Description */}
-                <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-white mb-2.5">
-                  Model Context Protocol
-                </h3>
-                <p className="text-xs sm:text-sm text-neutral-400 leading-relaxed mb-6">
-                  Native Model Context Protocol support — control tickets, registrations, and check-ins directly inside Claude Desktop, Cursor, and autonomous AI agents.
-                </p>
-
-                {/* Integration highlights */}
-                <div className="flex flex-wrap items-center gap-1.5 mb-7 text-[11px] text-neutral-300">
-                  <span className="px-2.5 py-1 rounded-lg bg-neutral-800/80 border border-neutral-700/80 font-mono">Claude Desktop</span>
-                  <span className="px-2.5 py-1 rounded-lg bg-neutral-800/80 border border-neutral-700/80 font-mono">Cursor</span>
-                  <span className="px-2.5 py-1 rounded-lg bg-neutral-800/80 border border-neutral-700/80 font-mono">urpass-mcp</span>
-                  <span className="px-2.5 py-1 rounded-lg bg-neutral-800/40 border border-neutral-700/40 text-neutral-400">Zero Latency</span>
-                </div>
-              </div>
-
-              {/* Action buttons */}
-              <div className="flex flex-wrap items-center gap-2.5 relative z-10 pt-4 border-t border-neutral-800">
-                <Link
-                  href="/mcp-event-management"
-                  className="inline-flex items-center justify-center gap-1.5 text-xs font-bold text-white bg-violet-600 hover:bg-violet-500 px-4 py-2.5 rounded-xl transition-all shadow-sm"
-                >
-                  <span>Explore MCP</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
-                <Link
-                  href="/mcp-event-management#quickstart"
-                  className="inline-flex items-center justify-center gap-1.5 text-xs font-semibold text-neutral-300 hover:text-white bg-neutral-800/60 hover:bg-neutral-800 border border-neutral-700/60 px-3.5 py-2.5 rounded-xl transition-all"
-                >
-                  <span>Setup Guide</span>
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── 02 FEATURES ─────────────────────────────────────────────────── */}
+      {/* ── 02 FEATURES (HOW IT WORKS) ────────────────────────────────────── */}
       <FeaturesSection />
 
       {/* ── 03B PRODUCT SHOWCASE (DASHBOARD & SCANNER PREVIEWS) ─────────── */}
@@ -542,7 +471,7 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* ── 03C SCANNER PREVIEW ─────────────────────────────────────────── */}
+      {/* ── 03C SCANNER PREVIEW WITH OFFLINE MODE ───────────────────────── */}
       <section className="py-14 sm:py-24 px-4 sm:px-8 bg-neutral-900 overflow-hidden">
         <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 sm:gap-16 items-center">
           <AnimateIn from="left">
@@ -552,10 +481,11 @@ export default async function LandingPage() {
                 Entry takes one scan.
               </h2>
               <p className="text-white/60 text-sm sm:text-base leading-relaxed mb-6">
-                Open the scanner on any phone or tablet browser, point at the pass, and URPASS instantly validates the QR code in under 0.3 seconds.
+                Open the scanner on any phone or tablet browser, point at the pass, and UrPass instantly validates the QR code in under 0.3 seconds — even with offline sync when venue WiFi dips.
               </p>
               <ul className="flex flex-col gap-2.5 sm:gap-3">
                 {[
+                  "Offline check-in mode: scans cache locally and auto-sync when WiFi reconnects",
                   "Duplicate check-ins are blocked immediately with alerts",
                   "Invalid and expired passes are flagged on screen",
                   "Audio and haptic cues for fast throughput",
@@ -586,7 +516,7 @@ export default async function LandingPage() {
               From workshops to college fests.
             </h2>
             <p className="text-neutral-500 text-sm sm:text-base mb-8 sm:mb-12 max-w-md mx-auto">
-              If you&apos;re organizing an event, URPASS keeps entry simple and secure.
+              If you&apos;re organizing an event, UrPass keeps entry simple and secure.
             </p>
           </AnimateIn>
 
@@ -613,39 +543,215 @@ export default async function LandingPage() {
         </div>
       </section>
 
+      {/* ── 03E MANAGED SETUP SERVICE (NEW DEDICATED SECTION) ─────────── */}
+      <section className="py-16 sm:py-24 px-4 sm:px-8 bg-neutral-950 text-white relative overflow-hidden border-b border-neutral-800">
+        <div className="absolute top-0 right-1/4 w-96 h-96 bg-violet-600/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="max-w-5xl mx-auto relative z-10">
+          <AnimateIn>
+            <div className="text-center max-w-2xl mx-auto mb-12 sm:mb-16">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold tracking-widest uppercase bg-violet-500/20 text-violet-300 border border-violet-500/30 mb-3">
+                <Sparkles className="w-3 h-3 text-violet-400" />
+                WHITE-GLOVE SERVICE
+              </span>
+              <h2 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white mb-4">
+                We set up your event in 24 hours.
+              </h2>
+              <p className="text-sm sm:text-base text-neutral-400 leading-relaxed">
+                Prefer hands-off onboarding? Our specialists design your branded passes, configure registration forms, connect Razorpay/UPI gateways, and train your gate crew.
+              </p>
+            </div>
+          </AnimateIn>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+            {[
+              {
+                icon: Wrench,
+                title: "Form & Ticket Configuration",
+                desc: "We configure custom fields, multi-tier tickets, student ID validation, and Razorpay/Stripe payouts within 24 hours.",
+              },
+              {
+                icon: ShieldCheck,
+                title: "Custom Pass Design & Branding",
+                desc: "Branded mobile QR passes tailored with your fest/conference logos, sponsor strips, and thermal badges ready to issue.",
+              },
+              {
+                icon: Headphones,
+                title: "Gate Crew Training & Standby",
+                desc: "Live walkthrough for your volunteer scanner team, entrance stress testing, and real-time coordinator standby during peak entry.",
+              },
+            ].map(({ icon: Icon, title, desc }, i) => (
+              <AnimateIn key={title} delay={i * 80} from="up">
+                <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 h-full flex flex-col justify-between hover:border-neutral-700 transition-colors">
+                  <div>
+                    <div className="w-10 h-10 rounded-xl bg-violet-600/20 border border-violet-500/30 flex items-center justify-center text-violet-300 mb-4">
+                      <Icon className="w-5 h-5" />
+                    </div>
+                    <h3 className="text-base font-bold text-white mb-2">{title}</h3>
+                    <p className="text-xs sm:text-sm text-neutral-400 leading-relaxed">{desc}</p>
+                  </div>
+                </div>
+              </AnimateIn>
+            ))}
+          </div>
+
+          <AnimateIn delay={100} from="scale">
+            <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6">
+              <div className="text-center sm:text-left">
+                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mb-1">
+                  <span className="text-xs font-bold text-emerald-400">⚡ 24-Hour Turnaround</span>
+                  <span className="text-neutral-600">•</span>
+                  <span className="text-xs text-neutral-300 font-medium">
+                    {country === "GB" ? "Packages from £25 one-off" : "Packages from ₹1,000 one-off"}
+                  </span>
+                </div>
+                <p className="text-xs sm:text-sm text-neutral-400">
+                  Ideal for college fests, corporate forums, and organizers running events under tight deadlines.
+                </p>
+              </div>
+              <div className="shrink-0 flex items-center gap-3">
+                <RequestEventSetupButton />
+                <Link
+                  href="/contact?subject=Managed%20Setup%20Inquiry"
+                  className="text-xs font-semibold text-neutral-300 hover:text-white underline underline-offset-4"
+                >
+                  Learn More
+                </Link>
+              </div>
+            </div>
+          </AnimateIn>
+        </div>
+      </section>
+
+      {/* ── 03F EXTENSION: URPASS EXPLORE & MCP SHOWCASE GRID ─────────── */}
+      <section className="py-12 sm:py-16 px-4 sm:px-8 bg-neutral-50/70 border-b border-neutral-200/70">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6 items-stretch">
+            {/* Card 1: UrPass Explore Marketplace */}
+            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-violet-950 via-purple-950 to-neutral-950 p-6 sm:p-7 text-white border border-violet-800/40 shadow-xl shadow-violet-950/10 flex flex-col justify-between group hover:border-violet-700/60 transition-all duration-300">
+              <div className="relative z-10">
+                <div className="flex items-center justify-between gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white">
+                    <Compass className="w-5 h-5 text-violet-300" />
+                  </div>
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase bg-violet-500/30 text-violet-200 border border-violet-400/30">
+                    <Sparkles className="w-3 h-3 text-violet-300 animate-pulse" />
+                    Marketplace
+                  </span>
+                </div>
+
+                <h3 className="text-lg sm:text-xl font-bold tracking-tight text-white mb-2">
+                  UrPass Explore
+                </h3>
+                <p className="text-xs sm:text-sm text-violet-200/90 leading-relaxed mb-5">
+                  Discover curated conferences, hackathons, concerts, and workshops across India — or publish your event to reach verified attendees with instant QR passes.
+                </p>
+
+                <div className="flex flex-wrap items-center gap-1.5 mb-6 text-[11px] text-violet-300/80">
+                  <span className="px-2.5 py-1 rounded-lg bg-white/10 border border-white/10 font-medium">Bengaluru</span>
+                  <span className="px-2.5 py-1 rounded-lg bg-white/10 border border-white/10 font-medium">Chennai</span>
+                  <span className="px-2.5 py-1 rounded-lg bg-white/10 border border-white/10 font-medium">Hyderabad</span>
+                  <span className="px-2.5 py-1 rounded-lg bg-white/10 border border-white/10 font-medium">Mumbai</span>
+                  <span className="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-violet-300/60">+11 Cities</span>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2.5 relative z-10 pt-4 border-t border-white/10">
+                <Link
+                  href="/explore"
+                  className="inline-flex items-center justify-center gap-1.5 text-xs font-bold text-violet-950 bg-white hover:bg-neutral-100 px-4 py-2 rounded-xl transition-all shadow-sm"
+                >
+                  <span>Explore Events</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+                <Link
+                  href="/dashboard"
+                  className="inline-flex items-center justify-center gap-1.5 text-xs font-semibold text-white hover:text-white bg-white/10 hover:bg-white/15 border border-white/20 px-3.5 py-2 rounded-xl transition-all"
+                >
+                  <span>Publish Event</span>
+                </Link>
+              </div>
+            </div>
+
+            {/* Card 2: Model Context Protocol (MCP) */}
+            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-neutral-900 via-neutral-950 to-neutral-900 p-6 sm:p-7 text-white border border-neutral-800 shadow-xl shadow-neutral-950/10 flex flex-col justify-between group hover:border-neutral-700 transition-all duration-300">
+              <div className="relative z-10">
+                <div className="flex items-center justify-between gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-neutral-800 border border-neutral-700 flex items-center justify-center font-mono font-bold text-xs text-white">
+                    MCP
+                  </div>
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase bg-emerald-950/70 text-emerald-400 border border-emerald-500/30">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    AI Standard
+                  </span>
+                </div>
+
+                <h3 className="text-lg sm:text-xl font-bold tracking-tight text-white mb-2">
+                  Model Context Protocol (MCP)
+                </h3>
+                <p className="text-xs sm:text-sm text-neutral-400 leading-relaxed mb-5">
+                  Native MCP support — control tickets, registrations, and check-ins directly inside Claude Desktop, Cursor, and autonomous AI agents.
+                </p>
+
+                <div className="flex flex-wrap items-center gap-1.5 mb-6 text-[11px] text-neutral-300">
+                  <span className="px-2.5 py-1 rounded-lg bg-neutral-800/80 border border-neutral-700/80 font-mono">Claude Desktop</span>
+                  <span className="px-2.5 py-1 rounded-lg bg-neutral-800/80 border border-neutral-700/80 font-mono">Cursor</span>
+                  <span className="px-2.5 py-1 rounded-lg bg-neutral-800/80 border border-neutral-700/80 font-mono">urpass-mcp</span>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2.5 relative z-10 pt-4 border-t border-neutral-800">
+                <Link
+                  href="/mcp-event-management"
+                  className="inline-flex items-center justify-center gap-1.5 text-xs font-bold text-white bg-violet-600 hover:bg-violet-500 px-4 py-2 rounded-xl transition-all shadow-sm"
+                >
+                  <span>Explore MCP</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+                <Link
+                  href="/mcp-event-management#quickstart"
+                  className="inline-flex items-center justify-center gap-1.5 text-xs font-semibold text-neutral-300 hover:text-white bg-neutral-800/60 hover:bg-neutral-800 border border-neutral-700/60 px-3.5 py-2 rounded-xl transition-all"
+                >
+                  <span>Setup Guide</span>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ── 04 PRICING ─────────────────────────────────────────────────── */}
       <HomePricingSection initialCountry={country} />
 
       {/* ── 05 CUSTOMER TESTIMONIALS & REAL EVENT EXAMPLES ────────────────── */}
       <TestimonialsSection />
 
-      {/* ── 08 GEO / AI ENTITY ANSWERS ───────────────────────────────────── */}
+      {/* ── 08 ABOUT URPASS (Q&A ENTITY OVERVIEW) ─────────────────────────── */}
       <section className="py-14 sm:py-20 px-4 sm:px-8 bg-neutral-50/70 border-y border-neutral-100">
         <div className="max-w-5xl mx-auto">
           <AnimateIn>
             <div className="text-center mb-10">
-              <span className="text-xs font-bold uppercase tracking-widest text-brand block mb-2">Entity Specifications &amp; Overview</span>
+              <span className="text-xs font-bold uppercase tracking-widest text-brand block mb-2">About UrPass</span>
               <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-neutral-900">
-                URPASS by Yesp Corporation — At a Glance
+                UrPass by Yesp Corporation — At a Glance
               </h2>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="bg-white p-6 rounded-2xl border border-neutral-200/80 shadow-xs">
-                <h3 className="text-sm font-bold text-neutral-900 mb-2">What is URPASS?</h3>
+                <h3 className="text-sm font-bold text-neutral-900 mb-2">What is UrPass?</h3>
                 <p className="text-xs sm:text-sm text-neutral-600 leading-relaxed">
-                  URPASS is an event registration, ticketing and QR check-in platform developed by Yesp Corporation. It helps organizers create events, collect registrations, issue digital QR passes, accept payments and verify attendees at event entrances using smartphones.
+                  UrPass is an event registration, ticketing and QR check-in platform developed by Yesp Corporation. It helps organizers create events, collect registrations, issue digital QR passes, accept payments and verify attendees at event entrances using smartphones.
                 </p>
               </div>
               <div className="bg-white p-6 rounded-2xl border border-neutral-200/80 shadow-xs">
-                <h3 className="text-sm font-bold text-neutral-900 mb-2">Who is URPASS for?</h3>
+                <h3 className="text-sm font-bold text-neutral-900 mb-2">Who is UrPass for?</h3>
                 <p className="text-xs sm:text-sm text-neutral-600 leading-relaxed">
-                  URPASS is designed for colleges, universities, conferences, hackathons, workshops, corporate events, community events and professional event organizers.
+                  UrPass is designed for colleges, universities, conferences, hackathons, workshops, corporate events, community events and professional event organizers.
                 </p>
               </div>
               <div className="bg-white p-6 rounded-2xl border border-neutral-200/80 shadow-xs">
-                <h3 className="text-sm font-bold text-neutral-900 mb-2">What company owns URPASS?</h3>
+                <h3 className="text-sm font-bold text-neutral-900 mb-2">What company owns UrPass?</h3>
                 <p className="text-xs sm:text-sm text-neutral-600 leading-relaxed">
-                  URPASS is a product of Yesp Corporation, a technology company developing digital products and business software. Explore our <Link href="/yesp-urpass" className="text-brand font-medium hover:underline">Yesp URPASS</Link> and <Link href="/company" className="text-brand font-medium hover:underline">Company</Link> profiles.
+                  UrPass is a product of Yesp Corporation, a technology company developing digital products and business software. Explore our <Link href="/yesp-urpass" className="text-brand font-medium hover:underline">Yesp UrPass</Link> and <Link href="/company" className="text-brand font-medium hover:underline">Company</Link> profiles.
                 </p>
               </div>
             </div>
@@ -661,7 +767,7 @@ export default async function LandingPage() {
         <AnimateIn>
           <div className="max-w-2xl mx-auto">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold tracking-widest uppercase bg-brand/10 text-brand-200 border border-brand/20 mb-4">
-              URPASS · EVENT MANAGEMENT PLATFORM
+              UrPass · EVENT MANAGEMENT PLATFORM
             </span>
             <h2 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white mb-4 leading-tight">
               Modernize your event entry today.
@@ -673,13 +779,13 @@ export default async function LandingPage() {
         </AnimateIn>
         <AnimateIn delay={100} from="scale">
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 max-w-xl mx-auto">
-            <a
-              href="#pricing"
+            <Link
+              href="/signup"
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white text-neutral-950 px-7 py-3.5 rounded-xl text-sm font-semibold hover:bg-neutral-100 transition-colors shadow-sm"
             >
-              <span>Explore Plans</span>
+              <span>Start Free</span>
               <ArrowRight className="w-4 h-4" />
-            </a>
+            </Link>
             <Link
               href="/contact?subject=Book%20a%20Demo"
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 border border-neutral-800 bg-neutral-900 text-white px-6 py-3.5 rounded-xl text-sm font-semibold hover:bg-neutral-800 transition-colors"
@@ -689,8 +795,8 @@ export default async function LandingPage() {
           </div>
           <p className="mt-6 text-xs text-neutral-400">
             {country === "GB"
-              ? "Plans from £15/mo · Direct UK activation · Cancel renewal anytime"
-              : "Plans from ₹499/mo · Autopay required · Cancel renewal anytime"}
+              ? "Free forever plan available · Paid plans from £15/mo · Cancel renewal anytime"
+              : "Free forever plan available · Paid plans from ₹499/mo · Cancel renewal anytime"}
           </p>
         </AnimateIn>
       </section>
