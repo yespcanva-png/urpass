@@ -40,7 +40,7 @@ export default function InContentPromotionalBanner({
               <div className="max-w-xl text-white">
                 <div className="flex flex-wrap items-center gap-2 mb-2">
                   <span className="px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase bg-white/20 backdrop-blur-md text-white border border-white/20">
-                    Sponsored
+                    {campaign.badgeLabel || "Featured"}
                   </span>
                   <span className="text-xs text-neutral-300">
                     Presented by {campaign.advertiserName}

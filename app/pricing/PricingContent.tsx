@@ -1107,7 +1107,7 @@ export default function PricingContent({
         <p className="mt-6 text-xs text-neutral-400">
           {country === "GB"
             ? "Plans from £15/mo · Direct UK activation · Cancel renewal anytime"
-            : "Plans from ₹499/mo · Autopay required · Cancel renewal anytime"}
+            : "Plans from ₹499/mo · Cancel renewal anytime"}
         </p>
       </section>
 

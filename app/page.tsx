@@ -358,9 +358,9 @@ export default async function LandingPage() {
             >
               <span className="inline-flex items-center gap-1 text-[10px] font-extrabold tracking-wide uppercase px-2 py-0.5 rounded-full bg-violet-600 text-white shadow-2xs">
                 <Sparkles className="w-2.5 h-2.5 animate-pulse" />
-                Now Live
+                Early Access
               </span>
-              <span className="text-neutral-700 font-medium">Now publish your event on <strong className="text-neutral-900 font-semibold">UrPass Explore</strong></span>
+              <span className="text-neutral-700 font-medium">Discover &amp; publish on <strong className="text-neutral-900 font-semibold">UrPass Explore</strong></span>
               <span className="text-violet-600 font-semibold group-hover:translate-x-0.5 transition-transform">&rarr;</span>
             </Link>
 

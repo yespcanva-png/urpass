@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useTransition, useEffect, useCallback } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import ExploreHeader from "@/components/explore/ExploreHeader";
 import CategoryShortcuts from "@/components/explore/CategoryShortcuts";
 import OrganizerCallout from "@/components/explore/OrganizerCallout";
-import Footer from "@/components/landing/Footer";
+import ExploreFooter from "@/components/explore/ExploreFooter";
 import EventCard from "@/components/explore/EventCard";
 
 // Ad Placement Components
@@ -30,6 +31,7 @@ import {
   ChevronDown,
   Loader2,
   Compass,
+  ArrowRight,
 } from "lucide-react";
 
 interface ExploreClientProps {
@@ -193,6 +195,17 @@ export default function ExploreClient({ initialResult, initialAds }: ExploreClie
 
   const hasActiveFilters = dateFilter !== "all" || pricingFilter !== "all";
 
+  // De-duplicate: Only show a dedicated Featured section when there are more total events than featured ones
+  const featuredIds = new Set(result.featuredEvents.map((e) => e.id));
+  const showFeaturedSection =
+    result.featuredEvents.length > 0 &&
+    result.events.length > result.featuredEvents.length &&
+    !hasActiveFilters;
+
+  const displayedEvents = showFeaturedSection
+    ? result.events.filter((e) => !featuredIds.has(e.id))
+    : result.events;
+
   return (
     <div className="min-h-screen flex flex-col bg-white text-neutral-900 antialiased selection:bg-violet-100 selection:text-violet-900">
       {/* 1. Header with Explore Logo, Search Bar & Location Selector Only */}
@@ -205,6 +218,23 @@ export default function ExploreClient({ initialResult, initialAds }: ExploreClie
 
       {/* Main Discovery Container */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-12 w-full">
+        {/* Early Access Host Callout Strip */}
+        <div className="mb-4 sm:mb-5 flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-neutral-950 via-neutral-900 to-violet-950/80 text-white text-xs shadow-xs border border-neutral-800">
+          <div className="flex items-center gap-2.5">
+            <span className="w-2 h-2 rounded-full bg-violet-400 animate-pulse shrink-0" />
+            <p className="text-neutral-200 text-xs font-medium">
+              <span className="font-bold text-white">Hosting an event?</span> Publish on UrPass Explore with <span className="text-violet-300 font-semibold">0% platform fee</span> &amp; sub-0.3s QR gate check-in.
+            </p>
+          </div>
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-bold text-xs transition-all shadow-xs hover:shadow-violet-600/30 shrink-0 touch-manipulation"
+          >
+            <span>List Event</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+
         {/* 2. Placement 1 — Hero Promotional Banner (Carousel Slider) */}
         {ads.hero && ads.hero.length > 0 && (
           <HeroPromotionalBanner campaigns={ads.hero} activeCity={city} />
@@ -221,8 +251,8 @@ export default function ExploreClient({ initialResult, initialAds }: ExploreClie
         {/* 5. Full-Width Events Discovery Feed */}
         <div className="mt-8 sm:mt-10 w-full">
           <main className="space-y-8 sm:space-y-10 w-full">
-            {/* Curated Featured Events (At most 3-4 items) */}
-            {result.featuredEvents.length > 0 && !hasActiveFilters && (
+            {/* Curated Featured Events (Only if not already duplicating all events) */}
+            {showFeaturedSection && (
               <section aria-labelledby="featured-events-heading" className="explore-fade-up space-y-4 sm:space-y-5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
@@ -405,29 +435,40 @@ export default function ExploreClient({ initialResult, initialAds }: ExploreClie
                     </div>
                   ))}
                 </div>
-              ) : result.events.length === 0 ? (
+              ) : displayedEvents.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 sm:py-16 px-4 text-center rounded-2xl sm:rounded-3xl border border-dashed border-neutral-200 bg-neutral-50/50">
                   <div className="w-12 h-12 rounded-2xl bg-violet-100 text-violet-700 flex items-center justify-center mb-3.5 explore-bounce-subtle shadow-xs">
                     <Compass className="w-6 h-6" />
                   </div>
                   <h3 className="text-base font-bold text-neutral-900 mb-1">
-                    No matching events found
+                    {category !== "all"
+                      ? `No ${category.replace("_", " & ")} events in ${city} yet`
+                      : `No upcoming events in ${city} yet`}
                   </h3>
-                  <p className="text-xs text-neutral-500 max-w-sm mb-5">
-                    We couldn&apos;t find events matching your exact criteria in {city}. Try broadening your search or resetting filters.
+                  <p className="text-xs text-neutral-500 max-w-md mb-5 leading-relaxed">
+                    Be the first organizer to list an event here, or reset your filters to explore events across other categories and cities.
                   </p>
-                  <button
-                    type="button"
-                    onClick={handleResetFilters}
-                    className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-violet-600 hover:bg-violet-700 shadow-sm hover:shadow-md hover:shadow-violet-600/20 active:scale-95 transition-all duration-200 cursor-pointer touch-manipulation min-h-[38px]"
-                  >
-                    <RotateCcw className="w-3.5 h-3.5" />
-                    <span>Reset All Filters</span>
-                  </button>
+                  <div className="flex flex-wrap items-center justify-center gap-3">
+                    <Link
+                      href="/dashboard"
+                      className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-violet-600 hover:bg-violet-700 shadow-sm active:scale-95 transition-all touch-manipulation min-h-[38px]"
+                    >
+                      <span>Publish an Event</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={handleResetFilters}
+                      className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold text-neutral-700 bg-neutral-200/80 hover:bg-neutral-300/80 active:scale-95 transition-all cursor-pointer touch-manipulation min-h-[38px]"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      <span>View All Events</span>
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-                  {result.events.map((evt, idx) => (
+                  {displayedEvents.map((evt, idx) => (
                     <EventCard key={evt.id} event={evt} index={idx} />
                   ))}
                 </div>
@@ -445,8 +486,8 @@ export default function ExploreClient({ initialResult, initialAds }: ExploreClie
       {/* 6. Organizer Callout */}
       <OrganizerCallout />
 
-      {/* 7. Standard Footer */}
-      <Footer />
+      {/* 7. Dedicated Attendee Footer */}
+      <ExploreFooter />
     </div>
   );
 }

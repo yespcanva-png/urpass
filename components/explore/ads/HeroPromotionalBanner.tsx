@@ -139,22 +139,24 @@ export default function HeroPromotionalBanner({
                     <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3">
                       <span className="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full text-[10px] sm:text-[11px] font-bold tracking-wide uppercase bg-violet-600/90 backdrop-blur-md text-white border border-violet-400/30 shadow-xs">
                         <Sparkles className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-                        <span>Sponsored</span>
+                        <span>{camp.badgeLabel || "Featured"}</span>
                       </span>
-                      {camp.badgeLabel && camp.badgeLabel.toLowerCase() !== "sponsored" && (
-                        <span className="inline-flex items-center px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[9px] sm:text-[10px] font-semibold tracking-wide uppercase bg-white/20 backdrop-blur-md text-white border border-white/20">
-                          {camp.badgeLabel}
+                      {camp.advertiserName && (
+                        <span className="text-[11px] sm:text-xs font-medium text-neutral-300/90">
+                          by {camp.advertiserName}
                         </span>
                       )}
-                      <span className="text-[11px] sm:text-xs font-medium text-neutral-300/90">
-                        by {camp.advertiserName}
-                      </span>
                       {camp.startsAt && (
                         <span className="inline-flex items-center gap-1 sm:gap-1.5 text-[10px] sm:text-xs text-neutral-300/90 font-medium bg-black/40 backdrop-blur-md px-2 py-0.5 rounded-full border border-white/10">
                           <Calendar className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-violet-400 shrink-0" />
                           <span>
-                            {new Date(camp.startsAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                            {camp.endsAt ? ` – ${new Date(camp.endsAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}` : ""}
+                            {new Date(camp.startsAt).toLocaleDateString("en-IN", {
+                              weekday: "short",
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                            })}
+                            {" • 10:00 AM IST"}
                           </span>
                         </span>
                       )}

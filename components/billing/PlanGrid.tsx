@@ -671,7 +671,7 @@ export default function PlanGrid({
                             ? "UK Direct Activation · Cancel renewal anytime"
                             : cycle === "annual"
                             ? "Billed annually · Cancel renewal anytime"
-                            : "Autopay required · Cancel renewal anytime"}
+                            : "Monthly subscription · Cancel renewal anytime"}
                         </p>
                       </div>
                     )}
@@ -680,6 +680,9 @@ export default function PlanGrid({
               );
             })}
           </div>
+          <p className="mt-4 text-[11px] text-neutral-400 text-center">
+            *Unlimited active events on Business tier is subject to Fair Usage Policy (up to 50 concurrent active events). Need more concurrency? Contact sales.
+          </p>
         </section>
       )}
 

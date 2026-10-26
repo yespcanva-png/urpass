@@ -10,6 +10,8 @@ import {
   ShieldCheck,
   Ticket,
   ArrowRight,
+  Share2,
+  Check,
 } from "lucide-react";
 import type { ExploreEventItem } from "@/lib/explore/types";
 import { formatPrice } from "@/lib/currency";
@@ -31,14 +33,15 @@ function formatEventDisplayDate(dateStr: string, timeStr?: string): string {
     const dayName = d.toLocaleDateString("en-US", { weekday: "short" });
     const monthName = d.toLocaleDateString("en-US", { month: "short" });
     const dayNum = d.getDate();
-    let display = `${dayName}, ${monthName} ${dayNum}`;
+    const year = d.getFullYear();
+    let display = `${dayName}, ${monthName} ${dayNum}, ${year}`;
 
     if (timeStr) {
       const [hours, minutes] = timeStr.split(":");
       const h = parseInt(hours, 10);
       const ampm = h >= 12 ? "PM" : "AM";
       const formattedHours = h % 12 || 12;
-      display += ` • ${formattedHours}:${minutes} ${ampm}`;
+      display += ` • ${formattedHours}:${minutes} ${ampm} IST`;
     }
 
     return display;
@@ -54,6 +57,7 @@ export default function EventCard({
   onActionClick,
 }: EventCardProps) {
   const [imageError, setImageError] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const priceLabel =
     event.isFree || event.minPricePaise === 0
@@ -61,10 +65,18 @@ export default function EventCard({
       : `From ${formatPrice(event.minPricePaise, event.currency)}`;
 
   const eventUrl = `/explore/event/${encodeURIComponent(event.slug)}`;
-  const actionLabel = event.approvalRequired ? "Request to Attend" : "Get Tickets";
+  const actionLabel = event.approvalRequired
+    ? "Request to Attend"
+    : event.isFree || event.minPricePaise === 0
+      ? "Register Free"
+      : "Get Tickets";
+
   const actionType: "get_tickets" | "apply" = event.approvalRequired
     ? "apply"
     : "get_tickets";
+
+  const availabilityHint =
+    event.isFree || event.minPricePaise === 0 ? "Free Entry" : "Instant QR Pass";
 
   const handleCardClick = () => {
     trackExploreEvent("event_card_opened", {
@@ -84,6 +96,31 @@ export default function EventCard({
       onActionClick(event, actionType);
     } else {
       window.location.href = eventUrl;
+    }
+  };
+
+  const handleShare = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const fullUrl = typeof window !== "undefined" ? `${window.location.origin}${eventUrl}` : eventUrl;
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share({
+          title: event.name,
+          text: `Check out ${event.name} on UrPass Explore:`,
+          url: fullUrl,
+        });
+        return;
+      } catch {
+        // Fallback to clipboard
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(fullUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy link", err);
     }
   };
 
@@ -113,7 +150,6 @@ export default function EventCard({
             src={event.bannerUrl}
             alt={event.name}
             fill
-            unoptimized
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
             className="object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
             onError={() => setImageError(true)}
@@ -143,15 +179,36 @@ export default function EventCard({
           </span>
         </div>
 
-        {/* Featured Badge (Top Right) */}
-        {featured && (
-          <div className="absolute top-2.5 right-2.5 sm:top-3 sm:right-3 z-10">
+        {/* Top Right: Featured Badge + Share Button */}
+        <div className="absolute top-2.5 right-2.5 sm:top-3 sm:right-3 z-20 flex items-center gap-1.5">
+          {featured && (
             <span className="inline-flex items-center gap-1 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-[11px] font-bold bg-amber-400 text-neutral-950 shadow-sm">
               <Sparkles className="w-3 h-3 fill-current" />
               <span>Featured</span>
             </span>
-          </div>
-        )}
+          )}
+          <button
+            type="button"
+            onClick={handleShare}
+            aria-label="Share this event"
+            title="Share this event"
+            className="w-7 h-7 rounded-full bg-neutral-900/80 hover:bg-neutral-900 backdrop-blur-md text-white flex items-center justify-center border border-white/20 transition-all cursor-pointer shadow-sm active:scale-90"
+          >
+            {copied ? (
+              <Check className="w-3.5 h-3.5 text-emerald-400" />
+            ) : (
+              <Share2 className="w-3.5 h-3.5 text-neutral-200" />
+            )}
+          </button>
+        </div>
+
+        {/* Availability Hint (Bottom Left over Image) */}
+        <div className="absolute bottom-2.5 left-2.5 sm:bottom-3 sm:left-3 z-10">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-black/60 backdrop-blur-md text-white/90 border border-white/10 shadow-xs">
+            <Ticket className="w-2.5 h-2.5 text-violet-300" />
+            <span>{availabilityHint}</span>
+          </span>
+        </div>
 
         {/* Price Pill (Bottom Right over Image) */}
         <div className="absolute bottom-2.5 right-2.5 sm:bottom-3 sm:right-3 z-10">
@@ -181,6 +238,12 @@ export default function EventCard({
             {event.name}
           </h3>
 
+          {/* Organizer Attribution */}
+          <p className="text-[11px] font-medium text-neutral-500 flex items-center gap-1">
+            <span>By {event.organizerName || "Verified Host"}</span>
+            <ShieldCheck className="w-3 h-3 text-violet-600 inline shrink-0" />
+          </p>
+
           {/* Description snippet */}
           {event.description && (
             <p className="text-xs text-neutral-500 line-clamp-2 leading-relaxed">
@@ -189,14 +252,14 @@ export default function EventCard({
           )}
         </div>
 
-        {/* Footer: Venue & Action Button (Get Tickets / Apply) */}
+        {/* Footer: Venue & Action Button (Register Free / Get Tickets / Apply) */}
         <div className="pt-3 border-t border-neutral-100 flex items-center justify-between gap-2 text-xs text-neutral-500">
           <div className="flex items-center gap-1.5 min-w-0 pr-1">
             <MapPin className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
             <span className="truncate font-medium">{event.venue || event.city}</span>
           </div>
 
-          {/* Clear Get Tickets or Apply Button with 36px touch height */}
+          {/* Clear Register Free or Get Tickets Button with 36px touch height */}
           <button
             type="button"
             onClick={handleAction}

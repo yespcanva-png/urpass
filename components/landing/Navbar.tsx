@@ -136,7 +136,7 @@ export default function Navbar({ isAuthenticated: initialAuth }: NavbarProps = {
       href: "/explore",
       label: "Explore",
       description: "Discover curated live events & mixers",
-      badge: "Now Live",
+      badge: "Early Access",
       badgeTone: "emerald",
       icon: Compass,
     },

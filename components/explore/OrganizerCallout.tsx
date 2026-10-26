@@ -22,11 +22,11 @@ export default function OrganizerCallout() {
 
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0 w-full md:w-auto">
             <Link
-              href="/create-event"
+              href="/dashboard"
               className="group inline-flex items-center justify-center gap-2 text-xs font-bold text-white px-5 py-3 rounded-xl sm:rounded-2xl transition-all duration-200 shadow-md hover:shadow-lg hover:shadow-violet-600/30 hover:-translate-y-0.5 active:scale-95 touch-manipulation min-h-[44px]"
               style={{ background: "linear-gradient(135deg, #6D28D9 0%, #5B21B6 100%)" }}
             >
-              <span>Create Event</span>
+              <span>Publish Event</span>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" />
             </Link>
 

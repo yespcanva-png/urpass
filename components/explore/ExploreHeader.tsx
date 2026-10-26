@@ -45,6 +45,14 @@ export default function ExploreHeader({
   const [liveResults, setLiveResults] = useState<ExploreEventItem[]>([]);
   const [isLiveLoading, setIsLiveLoading] = useState(false);
   const [showLiveDropdown, setShowLiveDropdown] = useState(false);
+  const [isMac, setIsMac] = useState(true);
+
+  // Detect OS for keyboard shortcuts (⌘K on Mac, Ctrl K on Windows/Linux)
+  useEffect(() => {
+    if (typeof navigator !== "undefined") {
+      setIsMac(/(Mac|iPhone|iPod|iPad)/i.test(navigator.userAgent || navigator.platform));
+    }
+  }, []);
 
   // Auth state
   const [user, setUser] = useState<User | null>(null);
@@ -358,7 +366,7 @@ export default function ExploreHeader({
                     </button>
                   ) : (
                     <kbd className="hidden lg:inline-flex items-center px-1.5 py-0.5 text-[10px] font-semibold text-neutral-400 bg-white border border-neutral-200/80 rounded-md shrink-0 ml-1.5 shadow-2xs">
-                      ⌘K
+                      {isMac ? "⌘K" : "Ctrl K"}
                     </kbd>
                   )}
                 </form>

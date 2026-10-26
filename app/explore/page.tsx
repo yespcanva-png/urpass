@@ -11,7 +11,7 @@ import type {
 } from "@/lib/explore/types";
 
 export const metadata: Metadata = {
-  title: "Explore Events Online – Discover & Book Tickets | UrPass",
+  title: "Explore Events in India | UrPass",
   description:
     "Discover verified live music, tech conferences, creative workshops, food festivals, and community gatherings. Book official tickets with instant UrPass QR check-in.",
   keywords: [
@@ -28,19 +28,28 @@ export const metadata: Metadata = {
     canonical: "https://urpass.space/explore",
   },
   openGraph: {
-    title: "UrPass Explore — Find Events You'll Love",
+    title: "Explore Events in India | UrPass",
     description:
-      "Explore curated, verified events across India and beyond. Instant booking, guest-first checkout, and seamless QR passes.",
+      "Explore curated, verified events across India. Instant booking, guest-first checkout, and seamless QR passes.",
     url: "https://urpass.space/explore",
     siteName: "UrPass",
     locale: "en_IN",
     type: "website",
+    images: [
+      {
+        url: "https://urpass.space/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "UrPass Explore Events in India",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "UrPass Explore — Find Events You'll Love",
+    title: "Explore Events in India | UrPass",
     description:
       "Discover verified events across music, tech, workshops, and sports. Effortless browsing and instant guest booking.",
+    images: ["https://urpass.space/og-image.png"],
   },
 };
 
