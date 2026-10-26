@@ -2,6 +2,8 @@ import type { MetadataRoute } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { getPublishedJobs } from "@/lib/careers/service";
 import { getAllPublishedPages } from "@/lib/seo/pages";
+import { getAllExploreSeoPages } from "@/lib/explore/seo-pages";
+import { fetchExploreMarketplaceEvents } from "@/lib/explore/service";
 
 const BASE = "https://urpass.space";
 
@@ -987,5 +989,27 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Silently fall back if careers service is unavailable at build-time
   }
 
-  return [...staticEntries, ...eventEntries, ...jobEntries];
+  let exploreEntries: MetadataRoute.Sitemap = [];
+  try {
+    const marketplace = await fetchExploreMarketplaceEvents({ limit: 50 });
+    const seoPages = getAllExploreSeoPages().map((page) => ({
+      url: `${BASE}/explore/${page.slug}`,
+      priority: page.priority === "P1" ? 0.95 : page.priority === "P2" ? 0.9 : 0.85,
+      changeFrequency: page.type === "intent" ? ("daily" as const) : ("weekly" as const),
+      lastModified: now,
+    }));
+    exploreEntries = [
+      { url: `${BASE}/explore`, priority: 0.9, changeFrequency: "daily", lastModified: now },
+      ...marketplace.events.map((event) => ({
+        url: `${BASE}/explore/event/${event.slug}`,
+        priority: 0.8,
+        changeFrequency: "daily" as const,
+        lastModified: now,
+      })),
+      ...seoPages,
+    ];
+  } catch {
+    /* Marketplace metadata can be retried on the next sitemap request. */
+  }
+  return [...staticEntries, ...eventEntries, ...jobEntries, ...exploreEntries];
 }

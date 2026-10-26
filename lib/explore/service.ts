@@ -9,6 +9,7 @@ import type {
   ExploreSortOrder,
 } from "./types";
 import { EXPLORE_CATEGORIES, EXPLORE_CITIES } from "./types";
+import { getExploreEligibility } from "./eligibility";
 import { eventLocalNow } from "./eligibility";
 
 export function getCategoryLabel(catKey: string): string {
@@ -25,8 +26,16 @@ function resolveCityFromVenue(venue?: string | null): string {
   if (v.includes("delhi") || v.includes("noida") || v.includes("gurugram") || v.includes("gurgaon")) return "Delhi NCR";
   if (v.includes("hyderabad")) return "Hyderabad";
   if (v.includes("chennai") || v.includes("madras")) return "Chennai";
+  if (v.includes("coimbatore")) return "Coimbatore";
   if (v.includes("pune")) return "Pune";
+  if (v.includes("kochi") || v.includes("cochin")) return "Kochi";
+  if (v.includes("thiruvananthapuram") || v.includes("trivandrum")) return "Thiruvananthapuram";
+  if (v.includes("madurai")) return "Madurai";
+  if (v.includes("erode")) return "Erode";
+  if (v.includes("tiruppur") || v.includes("tirupur")) return "Tiruppur";
   if (v.includes("kolkata") || v.includes("calcutta")) return "Kolkata";
+  if (v.includes("ahmedabad")) return "Ahmedabad";
+  if (v.includes("jaipur")) return "Jaipur";
   if (v.includes("london") || v.includes("uk")) return "London";
   return "Bengaluru";
 }
@@ -58,6 +67,8 @@ export async function fetchExploreMarketplaceEvents(
   const limit = Math.max(1, Math.min(50, Number(params.limit) || 12));
 
   // 1. Fetch approved listings from explore_marketplace_listings table
+  // Supabase nested event joins are not represented in the generated DB types.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let rawListings: any[] = [];
 
   try {
@@ -95,7 +106,8 @@ export async function fetchExploreMarketplaceEvents(
           organizer_id
         )
       `)
-      .eq("status", "approved");
+      .eq("status", "approved")
+      .not("approved_at", "is", null);
 
     if (!listingError && listings && listings.length > 0) {
       rawListings = listings;
@@ -108,7 +120,15 @@ export async function fetchExploreMarketplaceEvents(
   let items: ExploreEventItem[] = [];
 
   if (rawListings.length > 0) {
+    const assessments = await Promise.all(rawListings.map(async (listing) => {
+      try {
+        return await getExploreEligibility(listing.event_id, {
+          city: listing.city, category: listing.category, editorialSummary: listing.editorial_summary,
+        });
+      } catch { return null; }
+    }));
     items = rawListings
+      .filter((_, index) => assessments[index]?.ready)
       .filter((l) => {
         if (!l.event || l.event.status !== "active" || l.event.application_enabled === false) {
           return false;
@@ -157,9 +177,9 @@ export async function fetchExploreMarketplaceEvents(
           categoryLabel: getCategoryLabel(resolvedCategory),
           bannerUrl,
           logoUrl: evt.logo_url,
-          minPricePaise: l.min_price_paise ?? (evt.is_paid_event ? Math.round((evt.ticket_price || 0) * 100) : 0),
+          minPricePaise: assessments[rawListings.indexOf(l)]?.minPricePaise ?? 0,
           currency: l.currency || "INR",
-          isFree: l.is_free ?? !evt.is_paid_event,
+          isFree: assessments[rawListings.indexOf(l)]?.isFree ?? true,
           featured: Boolean(l.featured),
           organizerName:
             evt.name?.includes("YESP") || evt.description?.includes("Yesp")
@@ -257,5 +277,54 @@ export async function fetchExploreMarketplaceEvents(
     totalPages,
     activeCity: city || "All Cities",
     availableCities: Array.from(EXPLORE_CITIES),
+  };
+}
+
+export async function fetchEventsForSeoPage(pageConfig: import("./seo-pages").ExploreSeoPageConfig): Promise<{
+  matchingEvents: ExploreEventItem[];
+  fallbackEvents: ExploreEventItem[];
+  totalMatches: number;
+}> {
+  // Query matching events
+  const result = await fetchExploreMarketplaceEvents({
+    city: pageConfig.cityFilter,
+    category: pageConfig.categoryFilter,
+    dateFilter: pageConfig.dateFilter,
+    pricing: pageConfig.pricingFilter,
+    query: pageConfig.queryKeywords?.[0],
+    limit: 18,
+  });
+
+  let matching = result.events;
+
+  // If query keywords were provided (e.g. for seasonal or niche searches) and direct query was empty, test keywords
+  if (pageConfig.queryKeywords && pageConfig.queryKeywords.length > 0 && matching.length === 0) {
+    for (const kw of pageConfig.queryKeywords) {
+      const kwResult = await fetchExploreMarketplaceEvents({
+        query: kw,
+        limit: 12,
+      });
+      if (kwResult.events.length > 0) {
+        matching = kwResult.events;
+        break;
+      }
+    }
+  }
+
+  // Fetch trending fallback events across India if matching count is low
+  let fallbackEvents: ExploreEventItem[] = [];
+  if (matching.length < 3) {
+    const fallbackRes = await fetchExploreMarketplaceEvents({
+      limit: 6,
+      sort: "soonest",
+    });
+    const matchingIds = new Set(matching.map((e) => e.id));
+    fallbackEvents = fallbackRes.events.filter((e) => !matchingIds.has(e.id)).slice(0, 4);
+  }
+
+  return {
+    matchingEvents: matching,
+    fallbackEvents,
+    totalMatches: matching.length,
   };
 }

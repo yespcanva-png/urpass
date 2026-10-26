@@ -4,6 +4,8 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowRight, CalendarDays, Clock3, MapPin, Ticket, UserRound } from "lucide-react";
 import { getExploreEventDetail } from "@/lib/explore/event-detail";
+import ExploreJourneyTracker from "@/components/explore/ExploreJourneyTracker";
+import ExploreBookLink from "@/components/explore/ExploreBookLink";
 
 export const dynamic = "force-dynamic";
 
@@ -36,9 +38,28 @@ export default async function ExploreEventPage({ params }: { params: Promise<{ s
   const bookingUrl = `/explore/event/${encodeURIComponent(event.slug)}/book`;
   const bookable = event.registrationOpen && (event.ticketTypes.length === 0 || event.ticketTypes.some((ticket) => ticket.available));
   const actionLabel = event.approvalRequired ? "Request to Attend" : "Get Tickets";
+  const structuredData = {
+    "@context": "https://schema.org", "@type": "Event",
+    name: event.name, description: event.description || undefined,
+    startDate: `${event.date}T${event.startTime}`,
+    ...(event.endTime ? { endDate: `${event.date}T${event.endTime}` } : {}),
+    eventStatus: "https://schema.org/EventScheduled",
+    eventAttendanceMode: event.city === "Online" ? "https://schema.org/OnlineEventAttendanceMode" : "https://schema.org/OfflineEventAttendanceMode",
+    image: event.banner ? [event.banner] : undefined,
+    location: event.city === "Online"
+      ? { "@type": "VirtualLocation", url: `https://urpass.space/explore/event/${event.slug}` }
+      : { "@type": "Place", name: event.venue, address: event.address || `${event.city || ""}, ${event.city === "London" ? "United Kingdom" : "India"}` },
+    organizer: { "@type": "Organization", name: event.organizer },
+    url: `https://urpass.space/explore/event/${event.slug}`,
+    offers: bookable ? { "@type": "Offer", url: `https://urpass.space${bookingUrl}`,
+      price: (event.startingPricePaise / 100).toFixed(2), priceCurrency: event.currency,
+      availability: "https://schema.org/InStock" } : undefined,
+  };
 
   return (
     <main className="min-h-screen bg-white pb-28 text-neutral-950 sm:pb-16">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, "\\u003c") }} />
+      <ExploreJourneyTracker eventId={event.id} stage="detail_view" />
       <header className="border-b border-neutral-200 bg-white">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5 sm:px-8">
           <Link href="/explore" className="inline-flex items-center gap-2 text-sm font-semibold text-neutral-600 hover:text-violet-700"><ArrowLeft className="h-4 w-4" /> Explore</Link>
@@ -75,7 +96,7 @@ export default async function ExploreEventPage({ params }: { params: Promise<{ s
             <p className="text-xs font-bold uppercase tracking-widest text-neutral-400">{event.approvalRequired ? "Registration" : "Tickets from"}</p>
             <p className="mt-2 text-3xl font-extrabold">{event.approvalRequired ? "Approval required" : price}</p>
             {event.approvalRequired && <p className="mt-2 text-sm text-neutral-500">The organizer will review your request before issuing a pass.{event.startingPricePaise > 0 ? " Payment is collected when you submit; declined requests are refunded." : ""}</p>}
-            {bookable ? <Link href={bookingUrl} className="mt-6 flex min-h-12 items-center justify-center gap-2 rounded-full bg-violet-700 px-5 text-sm font-bold text-white hover:bg-violet-800">{actionLabel}<ArrowRight className="h-4 w-4" /></Link> : <p className="mt-6 rounded-xl bg-neutral-100 p-3 text-sm font-semibold text-neutral-600">Registration is currently unavailable.</p>}
+            {bookable ? <ExploreBookLink eventId={event.id} href={bookingUrl} className="mt-6 flex min-h-12 items-center justify-center gap-2 rounded-full bg-violet-700 px-5 text-sm font-bold text-white hover:bg-violet-800">{actionLabel}<ArrowRight className="h-4 w-4" /></ExploreBookLink> : <p className="mt-6 rounded-xl bg-neutral-100 p-3 text-sm font-semibold text-neutral-600">Registration is currently unavailable.</p>}
             <p className="mt-4 flex items-center gap-2 text-xs text-neutral-500"><Clock3 className="h-4 w-4" /> Secure booking through UrPass</p>
           </aside>
         </div>
@@ -83,7 +104,7 @@ export default async function ExploreEventPage({ params }: { params: Promise<{ s
 
       <div className="fixed inset-x-0 bottom-0 z-40 flex items-center justify-between gap-4 border-t border-neutral-200 bg-white/95 px-5 py-3 backdrop-blur-lg lg:hidden">
         <div><p className="text-[11px] font-semibold text-neutral-500">{event.approvalRequired ? "Registration" : "Tickets from"}</p><p className="text-lg font-extrabold">{event.approvalRequired ? "Request" : price}</p></div>
-        {bookable ? <Link href={bookingUrl} className="flex min-h-12 items-center justify-center gap-2 rounded-full bg-violet-700 px-5 text-sm font-bold text-white">{actionLabel}<ArrowRight className="h-4 w-4" /></Link> : <span className="text-sm font-semibold text-neutral-500">Unavailable</span>}
+        {bookable ? <ExploreBookLink eventId={event.id} href={bookingUrl} className="flex min-h-12 items-center justify-center gap-2 rounded-full bg-violet-700 px-5 text-sm font-bold text-white">{actionLabel}<ArrowRight className="h-4 w-4" /></ExploreBookLink> : <span className="text-sm font-semibold text-neutral-500">Unavailable</span>}
       </div>
     </main>
   );

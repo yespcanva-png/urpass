@@ -9,12 +9,20 @@ interface CityCoordinates {
 // Known coordinates for supported explore cities
 export const CITY_COORDINATES: CityCoordinates[] = [
   { city: "Bengaluru", lat: 12.9716, lng: 77.5946 },
+  { city: "Chennai", lat: 13.0827, lng: 80.2707 },
+  { city: "Hyderabad", lat: 17.3850, lng: 78.4867 },
+  { city: "Coimbatore", lat: 11.0168, lng: 76.9558 },
   { city: "Mumbai", lat: 19.0760, lng: 72.8777 },
   { city: "Delhi NCR", lat: 28.6139, lng: 77.2090 },
-  { city: "Hyderabad", lat: 17.3850, lng: 78.4867 },
-  { city: "Chennai", lat: 13.0827, lng: 80.2707 },
   { city: "Pune", lat: 18.5204, lng: 73.8567 },
+  { city: "Kochi", lat: 9.9312, lng: 76.2673 },
+  { city: "Thiruvananthapuram", lat: 8.5241, lng: 76.9366 },
+  { city: "Madurai", lat: 9.9252, lng: 78.1198 },
+  { city: "Erode", lat: 11.3410, lng: 77.7172 },
+  { city: "Tiruppur", lat: 11.1085, lng: 77.3411 },
   { city: "Kolkata", lat: 22.5726, lng: 88.3639 },
+  { city: "Ahmedabad", lat: 23.0225, lng: 72.5714 },
+  { city: "Jaipur", lat: 26.9124, lng: 75.7873 },
   { city: "London", lat: 51.5074, lng: -0.1278 },
 ];
 

@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, CalendarDays, MapPin, Ticket } from "lucide-react";
 import ApplyPage from "@/app/apply/[eventId]/page";
 import { getExploreEventDetail } from "@/lib/explore/event-detail";
+import ExploreJourneyTracker from "@/components/explore/ExploreJourneyTracker";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Book tickets — UrPass Explore", robots: { index: false, follow: false } };
@@ -17,6 +18,7 @@ export default async function ExploreBookingPage({ params }: { params: Promise<{
   const date = new Date(`${event.date}T12:00:00`).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
   return (
     <div className="min-h-screen bg-[#faf9fc]">
+      <ExploreJourneyTracker eventId={event.id} stage="ticket_selection" />
       <header className="border-b border-neutral-200 bg-white">
         <div className="mx-auto flex h-16 max-w-3xl items-center justify-between px-5 sm:px-8">
           <Link href={`/explore/event/${encodeURIComponent(event.slug)}`} className="inline-flex items-center gap-2 text-sm font-semibold text-neutral-600 hover:text-violet-700"><ArrowLeft className="h-4 w-4" /> Event details</Link>

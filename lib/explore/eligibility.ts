@@ -45,8 +45,10 @@ export type EligibilityTier = {
   reserved: number;
 };
 
-export function eventLocalNow(now: Date, city?: string | null): { date: string; time: string } {
-  const timeZone = city?.toLowerCase() === "london" ? "Europe/London" : "Asia/Kolkata";
+export function eventLocalNow(now: Date, city?: string | null, configuredTimezone?: string | null): { date: string; time: string } {
+  const fallback = city?.toLowerCase() === "london" ? "Europe/London" : "Asia/Kolkata";
+  let timeZone = configuredTimezone || fallback;
+  try { new Intl.DateTimeFormat("en-GB", { timeZone }); } catch { timeZone = fallback; }
   const parts = new Intl.DateTimeFormat("en-GB", {
     timeZone,
     year: "numeric",
@@ -134,7 +136,8 @@ export function assessExploreEligibility(input: {
   }
 
   // 10. Date and Time boundaries
-  const localNow = eventLocalNow(input.now || new Date(), metadata.city);
+  const localNow = eventLocalNow(input.now || new Date(), metadata.city,
+    typeof design.timezone === "string" ? design.timezone : null);
   if (!event.event_date) {
     issues.push("Event date must be specified.");
   } else if (event.event_date < localNow.date || (event.event_date === localNow.date && (event.start_time || "00:00") < localNow.time)) {
@@ -165,6 +168,9 @@ export function assessExploreEligibility(input: {
     : tiers.length === 0 && event.is_paid_event
     ? Math.max(0, Math.round(Number(event.ticket_price || 0) * 100))
     : 0;
+  if (tiers.length === 0 && event.is_paid_event && minPricePaise === 0) {
+    issues.push("Set a valid base ticket price or add an available ticket tier.");
+  }
 
   return {
     ready: issues.length === 0,

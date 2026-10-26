@@ -75,6 +75,7 @@ export default function EventExploreMarketplaceCard({
     views: null,
     clicks: null,
   });
+  const [metricsAvailable, setMetricsAvailable] = useState(false);
 
   const [isPending, startTransition] = useTransition();
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -94,6 +95,7 @@ export default function EventExploreMarketplaceCard({
       checkEventExploreReadinessAction(eventId),
       getExploreListingAttributionAction(eventId),
     ]);
+    if (res.error) setErrorMsg(res.error);
 
     if (res.hasListing) {
       setListing(res);
@@ -105,6 +107,7 @@ export default function EventExploreMarketplaceCard({
     }
 
     setReadiness(readyRes);
+    setMetricsAvailable(attrRes.success);
     if (attrRes.success) {
       setAttribution(attrRes);
     }
@@ -122,7 +125,7 @@ export default function EventExploreMarketplaceCard({
     setSuccessMsg(null);
 
     startTransition(async () => {
-      const isResubmit = listing?.status === "rejected" || listing?.status === "suspended";
+      const isResubmit = ["rejected", "changes_requested", "unlisted"].includes(listing?.status);
       const action = isResubmit
         ? organizerResubmitExploreListingAction
         : submitExploreListingApplicationAction;
@@ -175,7 +178,7 @@ export default function EventExploreMarketplaceCard({
 
   const status = listing?.hasListing ? listing.status : "not_applied";
   const isChangesRequested = Boolean(
-    status === "rejected" && listing?.rejectionReason?.toLowerCase().includes("changes requested")
+    status === "changes_requested" || (status === "rejected" && listing?.rejectionReason?.toLowerCase().includes("changes requested"))
   );
 
   const publicExploreUrl = applySlug
@@ -267,7 +270,7 @@ export default function EventExploreMarketplaceCard({
                 Pending Review
               </span>
             )}
-            {status === "rejected" && (
+            {(status === "rejected" || status === "changes_requested") && (
               <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border shadow-2xs ${
                 isChangesRequested
                   ? "bg-amber-50 text-amber-700 border-amber-200"
@@ -280,9 +283,10 @@ export default function EventExploreMarketplaceCard({
             {status === "suspended" && (
               <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200 shadow-2xs">
                 <RotateCcw className="w-3.5 h-3.5" />
-                Unlisted from Explore
+                Suspended
               </span>
             )}
+            {status === "unlisted" && <span className="rounded-full border border-slate-200 bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700">Unlisted</span>}
             {status === "not_applied" && (
               <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full bg-violet-100/90 text-violet-800 border border-violet-200/80">
                 <Sparkles className="w-3 h-3 text-violet-600" />
@@ -394,7 +398,7 @@ export default function EventExploreMarketplaceCard({
               <div className="p-3 rounded-xl bg-neutral-50 border border-neutral-100">
                 <span className="text-[11px] font-medium text-neutral-500">Explore Bookings</span>
                 <p className="text-lg font-bold text-neutral-900 mt-0.5">
-                  {attribution.exploreBookings.toLocaleString()}
+                  {metricsAvailable ? attribution.exploreBookings.toLocaleString() : "—"}
                 </p>
                 <p className="text-[10px] text-neutral-400 mt-0.5">
                   {attribution.totalBookings > 0
@@ -406,7 +410,7 @@ export default function EventExploreMarketplaceCard({
               <div className="p-3 rounded-xl bg-neutral-50 border border-neutral-100">
                 <span className="text-[11px] font-medium text-neutral-500">Attributed Revenue</span>
                 <p className="text-lg font-bold text-neutral-900 mt-0.5">
-                  {attribution.exploreRevenuePaise > 0
+                  {!metricsAvailable ? "—" : attribution.exploreRevenuePaise > 0
                     ? `₹${(attribution.exploreRevenuePaise / 100).toLocaleString("en-IN")}`
                     : readiness.isFree
                     ? "Free"
@@ -416,13 +420,11 @@ export default function EventExploreMarketplaceCard({
               </div>
 
               <div className="p-3 rounded-xl bg-neutral-50 border border-neutral-100">
-                <span className="text-[11px] font-medium text-neutral-500">Conversion Share</span>
+                <span className="text-[11px] font-medium text-neutral-500">Event Detail Clicks</span>
                 <p className="text-lg font-bold text-neutral-900 mt-0.5">
-                  {attribution.totalBookings > 0
-                    ? `${Math.round((attribution.exploreBookings / attribution.totalBookings) * 100)}%`
-                    : "0%"}
+                  {metricsAvailable && attribution.clicks !== null ? attribution.clicks.toLocaleString() : "—"}
                 </p>
-                <p className="text-[10px] text-neutral-400 mt-0.5">Marketplace lift</p>
+                <p className="text-[10px] text-neutral-400 mt-0.5">Unique visits</p>
               </div>
             </div>
           </div>
@@ -479,18 +481,19 @@ export default function EventExploreMarketplaceCard({
       )}
 
       {/* ── State 3: Suspended / Unlisted ── */}
-      {status === "suspended" && (
+      {(status === "suspended" || status === "unlisted") && (
         <div className="rounded-xl bg-slate-50 border border-slate-200 p-4 space-y-3">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-start gap-3">
               <RotateCcw className="w-4 h-4 text-slate-500 mt-0.5 shrink-0" />
               <div className="text-xs">
                 <p className="font-semibold text-neutral-900">
-                  Event currently unlisted from UrPass Explore
+                  {status === "suspended" ? "Listing suspended by UrPass" : "Event currently unlisted from UrPass Explore"}
                 </p>
                 <p className="text-slate-600 mt-1 leading-relaxed">
                   This event is hidden from public Explore search and category feeds. Your direct registration URL and existing attendee tickets remain fully active and functional.
                 </p>
+                {listing?.rejectionReason && status === "suspended" && <p className="mt-2 text-slate-700">Admin feedback: {listing.rejectionReason}</p>}
               </div>
             </div>
             <button
@@ -506,7 +509,7 @@ export default function EventExploreMarketplaceCard({
       )}
 
       {/* ── State 4: Rejected / Changes Requested or Not Applied ── */}
-      {(status === "not_applied" || status === "rejected" || status === "suspended") && (
+      {(status === "not_applied" || status === "rejected" || status === "changes_requested" || status === "unlisted") && (
         <div className="space-y-4 pt-1">
           {/* Eligibility Checklist / Issues Banner */}
           {!readiness.ready ? (
@@ -534,7 +537,7 @@ export default function EventExploreMarketplaceCard({
           )}
 
           {/* Admin Feedback Box */}
-          {status === "rejected" && listing?.rejectionReason && (
+          {(status === "rejected" || status === "changes_requested") && listing?.rejectionReason && (
             <div className={`p-3.5 rounded-xl border text-xs space-y-1 ${
               isChangesRequested
                 ? "bg-amber-50/80 border-amber-200 text-amber-900"
@@ -634,9 +637,9 @@ export default function EventExploreMarketplaceCard({
                   <>
                     <Sparkles className="w-3.5 h-3.5" />
                     <span>
-                      {status === "rejected"
+                      {status === "rejected" || status === "changes_requested"
                         ? "Resubmit for Review"
-                        : status === "suspended"
+                        : status === "unlisted"
                         ? "Reactivate on Explore"
                         : "Apply for Explore"}
                     </span>
@@ -680,7 +683,7 @@ export default function EventExploreMarketplaceCard({
             </div>
 
             {/* Rendered Live Event Card */}
-            <div className="max-w-sm mx-auto mb-5">
+            <div className="max-w-sm mx-auto mb-5 pointer-events-none" aria-label="Non-interactive listing preview">
               <EventCard event={previewItem} />
             </div>
 

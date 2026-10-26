@@ -147,9 +147,9 @@ describe("UrPass Explore — EventExploreMarketplaceCard Component", () => {
     // Attribution stats
     expect(screen.getByText("25")).toBeDefined();
     expect(screen.getByText("₹12,500")).toBeDefined();
-    expect(screen.getByText("25%")).toBeDefined();
-    // Empty state for unconfigured views
-    expect(screen.getByText("—")).toBeDefined();
+    expect(screen.getByText("Event Detail Clicks")).toBeDefined();
+    // Empty states for unconfigured views and detail-click telemetry
+    expect(screen.getAllByText("—")).toHaveLength(2);
   });
 
   it("renders pending state with cancel application action", async () => {
@@ -230,7 +230,7 @@ describe("UrPass Explore — EventExploreMarketplaceCard Component", () => {
     expect(screen.getByText("Resubmit for Review")).toBeDefined();
   });
 
-  it("renders suspended / unlisted state and allows reactivation", async () => {
+  it("shows suspension without offering an organizer bypass", async () => {
     vi.mocked(exploreActions.getEventExploreListingStatusAction).mockResolvedValue({
       hasListing: true,
       status: "suspended",
@@ -261,11 +261,11 @@ describe("UrPass Explore — EventExploreMarketplaceCard Component", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText("Unlisted from Explore")).toBeDefined();
+      expect(screen.getByText("Suspended")).toBeDefined();
     });
 
-    expect(screen.getByText(/Event currently unlisted from UrPass Explore/i)).toBeDefined();
-    expect(screen.getByText("Reactivate on Explore")).toBeDefined();
+    expect(screen.getByText(/Listing suspended by UrPass/i)).toBeDefined();
+    expect(screen.queryByText("Reactivate on Explore")).toBeNull();
   });
 
   it("opens and closes private Explore preview modal", async () => {

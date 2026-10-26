@@ -36,6 +36,7 @@ import { notifyEventTeamOnApplication } from "@/lib/notifications/event-team-not
 import { generatePass } from "./passes";
 import { reconcileEventTicketOrders } from "@/lib/payments/reconcile-event-orders";
 import crypto from "crypto";
+import { recordExploreInteraction, recordExploreBooking, confirmExploreBooking } from "@/lib/explore/attribution";
 
 function adminClient() {
   return createAdminClient(
@@ -132,6 +133,7 @@ export async function approveAttendee(
       error: approvalRes.error || `Event is at capacity (${event.attendee_limit}). Increase the limit in Settings to approve more.`,
     };
   }
+  await confirmExploreBooking(attendeeId).catch((error) => console.error("[explore] booking attribution:", error));
 
   // Update associated reservation if this was a paid registration
   const { data: order } = await supabase
@@ -733,6 +735,7 @@ export async function submitApplication(
   }
 
   if (!event) return { error: "Applications are not open for this event." };
+  await recordExploreInteraction(event.id, "registration_start").catch(() => {});
 
   const canonicalEventId = event.id;
 
@@ -1358,6 +1361,7 @@ export async function submitApplication(
         }
       }
 
+      await recordExploreBooking(canonicalEventId, attendee.id, payment?.orderId).catch((error) => console.error("[explore] booking attribution:", error));
       return { passToken: pass.pass_token };
     }
 
@@ -1588,6 +1592,8 @@ export async function submitApplication(
     customFields: (event.custom_fields as Array<{ id: string; label: string; type?: string }>) ?? null,
   }).catch((err) => console.error("[submitApplication] notifyEventTeam error:", err));
 
+  if (newAttendee?.id) await recordExploreBooking(event.id, newAttendee.id, payment?.orderId, false)
+    .catch((error) => console.error("[explore] pending attribution:", error));
   return {
     passPending: true,
     attendeeId: newAttendee?.id,

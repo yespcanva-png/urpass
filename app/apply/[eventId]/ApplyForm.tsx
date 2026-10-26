@@ -503,9 +503,6 @@ export default function ApplyForm({
                 ...finalResponses,
                 guest_count: peopleCount,
                 group_members: groupMembers,
-                ...(exploreMode || (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("ref") === "explore")
-                  ? { referral_source: "explore" }
-                  : {}),
               }
             );
             setPaymentPending(false);
@@ -653,9 +650,6 @@ export default function ApplyForm({
           ...finalResponses,
           guest_count: peopleCount,
           group_members: groupMembers,
-          ...(exploreMode || (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("ref") === "explore")
-            ? { referral_source: "explore" }
-            : {}),
         }
       );
 

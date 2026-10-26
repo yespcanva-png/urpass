@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { adminClient } from "@/lib/supabase/admin";
 import { getCategoryLabel } from "./service";
+import { getExploreEligibility } from "./eligibility";
 
 export type ExploreEventDetail = {
   id: string;
@@ -44,6 +45,10 @@ export async function getExploreEventDetail(slug: string): Promise<ExploreEventD
     .not("approved_at", "is", null)
     .maybeSingle();
   if (!listing) return null;
+  const eligibility = await getExploreEligibility(event.id, {
+    city: listing.city, category: listing.category, editorialSummary: listing.editorial_summary,
+  });
+  if (!eligibility.ready) return null;
 
   const [{ data: ticketRows }, { data: sessions }, { data: organizerProfile }] = await Promise.all([
     supabase.from("ticket_types")
@@ -77,10 +82,7 @@ export async function getExploreEventDetail(slug: string): Promise<ExploreEventD
       && (!ticket.sales_start || new Date(ticket.sales_start).getTime() <= now)
       && (!ticket.sales_end || new Date(ticket.sales_end).getTime() >= now),
   }));
-  const availableTickets = ticketTypes.filter((ticket) => ticket.available);
-  const startingPricePaise = availableTickets.length
-    ? Math.min(...availableTickets.map((ticket) => ticket.price))
-    : event.is_paid_event ? Math.round(Number(event.ticket_price || 0) * 100) : 0;
+  const startingPricePaise = eligibility.minPricePaise;
 
   return {
     id: event.id,

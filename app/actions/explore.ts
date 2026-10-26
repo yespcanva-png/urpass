@@ -49,7 +49,7 @@ export async function getExploreEventsAction(
 
 export async function getEventExploreListingStatusAction(eventId: string): Promise<{
   hasListing: boolean;
-  status?: "pending" | "approved" | "rejected" | "suspended";
+  status?: "pending" | "approved" | "rejected" | "changes_requested" | "suspended" | "unlisted";
   featured?: boolean;
   category?: string;
   city?: string;
@@ -65,9 +65,10 @@ export async function getEventExploreListingStatusAction(eventId: string): Promi
   venue?: string | null;
   bannerUrl?: string | null;
   logoUrl?: string | null;
+  error?: string;
 }> {
   try {
-    if (!/^[0-9a-f-]{36}$/i.test(eventId)) return { hasListing: false };
+    await requireOrganizer(eventId);
     const admin = adminClient();
 
     const [listingRes, eventRes] = await Promise.all([
@@ -101,7 +102,7 @@ export async function getEventExploreListingStatusAction(eventId: string): Promi
 
     return {
       hasListing: true,
-      status: listing.status as "pending" | "approved" | "rejected" | "suspended",
+      status: listing.status as "pending" | "approved" | "rejected" | "changes_requested" | "suspended" | "unlisted",
       featured: listing.featured,
       category: listing.category,
       city: listing.city,
@@ -118,8 +119,8 @@ export async function getEventExploreListingStatusAction(eventId: string): Promi
       bannerUrl: event?.banner_url,
       logoUrl: event?.logo_url,
     };
-  } catch {
-    return { hasListing: false };
+  } catch (error) {
+    return { hasListing: false, error: error instanceof Error ? error.message : "Unable to load listing." };
   }
 }
 
@@ -130,11 +131,12 @@ export async function checkEventExploreReadinessAction(eventId: string): Promise
   isFree: boolean;
 }> {
   try {
-    const { user, event } = await requireOrganizer(eventId);
+    await requireOrganizer(eventId);
+    const { data: listing } = await adminClient().from("explore_marketplace_listings")
+      .select("city, category, editorial_summary").eq("event_id", eventId).maybeSingle();
     const eligibility = await getExploreEligibility(
       eventId,
-      { city: "Bengaluru", category: "community" },
-      user.id
+      { city: listing?.city || "Bengaluru", category: listing?.category || "community", editorialSummary: listing?.editorial_summary }
     );
 
     return {
@@ -163,6 +165,12 @@ export async function submitExploreListingApplicationAction(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const { user, event, admin } = await requireOrganizer(eventId);
+    const { data: existing, error: existingError } = await admin.from("explore_marketplace_listings")
+      .select("status").eq("event_id", eventId).maybeSingle();
+    if (existingError) throw new Error(existingError.message);
+    if (existing && !["rejected", "changes_requested", "unlisted"].includes(existing.status)) {
+      return { success: false, error: `This listing is ${existing.status}. Refresh its status before applying again.` };
+    }
 
     // Full server-side eligibility validation
     const eligibility = await getExploreEligibility(
@@ -171,8 +179,7 @@ export async function submitExploreListingApplicationAction(
         city: payload.city,
         category: payload.category,
         editorialSummary: payload.editorialSummary,
-      },
-      user.id
+      }
     );
 
     if (!eligibility.ready) {
@@ -182,26 +189,31 @@ export async function submitExploreListingApplicationAction(
       };
     }
 
-    const { error: upsertErr } = await admin.from("explore_marketplace_listings").upsert(
-      {
-        event_id: eventId,
+    const values = {
         status: "pending",
-        category: payload.category || "community",
-        city: payload.city || "Bengaluru",
+        category: payload.category,
+        city: payload.city,
         venue_address: event.venue,
-        editorial_summary: payload.editorialSummary?.trim() || null,
+        editorial_summary: payload.editorialSummary?.trim().slice(0, 140) || null,
         min_price_paise: eligibility.minPricePaise,
         currency: "INR",
         is_free: eligibility.isFree,
         rejection_reason: null,
+        approved_at: null,
+        featured: false,
+        last_actor_id: user.id,
         updated_at: new Date().toISOString(),
-      },
-      { onConflict: "event_id" }
-    );
+      };
+    const result = existing
+      ? await admin.from("explore_marketplace_listings").update(values)
+          .eq("event_id", eventId).eq("status", existing.status).select("id").maybeSingle()
+      : await admin.from("explore_marketplace_listings").insert({ event_id: eventId, ...values }).select("id").maybeSingle();
+    const upsertErr = result.error;
 
     if (upsertErr) {
-      return { success: false, error: upsertErr.message };
+      return { success: false, error: upsertErr.code === "23505" ? "An application already exists. Refresh its status." : upsertErr.message };
     }
+    if (!result.data) return { success: false, error: "Listing changed. Refresh and try again." };
 
     return { success: true };
   } catch (err) {
@@ -227,19 +239,23 @@ export async function unlistExploreListingAction(
   eventId: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const { admin } = await requireOrganizer(eventId);
+    const { admin, user } = await requireOrganizer(eventId);
 
-    const { error: updateErr } = await admin
+    const { data, error: updateErr } = await admin
       .from("explore_marketplace_listings")
       .update({
-        status: "suspended",
+        status: "unlisted",
+        featured: false,
+        last_actor_id: user.id,
         updated_at: new Date().toISOString(),
       })
-      .eq("event_id", eventId);
+      .eq("event_id", eventId).in("status", ["approved", "pending", "rejected", "changes_requested"])
+      .select("id").maybeSingle();
 
     if (updateErr) {
       return { success: false, error: updateErr.message };
     }
+    if (!data) return { success: false, error: "There is no listing you can remove." };
 
     return { success: true };
   } catch (err) {
@@ -264,55 +280,32 @@ export async function getExploreListingAttributionAction(eventId: string): Promi
     await requireOrganizer(eventId);
     const admin = adminClient();
 
-    // Query attendees and paid ticket orders
-    const [{ data: attendees, error: attError }, { data: orders, error: ordError }] = await Promise.all([
-      admin
-        .from("attendees")
-        .select("id, custom_responses, application_status")
-        .eq("event_id", eventId)
-        .neq("application_status", "rejected"),
-      admin
-        .from("ticket_orders")
-        .select("id, attendee_id, amount, status")
-        .eq("event_id", eventId)
-        .eq("status", "paid"),
+    const [{ count: totalBookings, error: attError }, { data: orders, error: ordError },
+      { data: attributed, error: attrError }, { data: interactions, error: interactionsError }] = await Promise.all([
+      admin.from("attendees").select("*", { count: "exact", head: true })
+        .eq("event_id", eventId).eq("application_status", "approved"),
+      admin.from("ticket_orders").select("attendee_id, amount")
+        .eq("event_id", eventId).eq("status", "paid"),
+      admin.from("explore_booking_attributions").select("attendee_id")
+        .eq("event_id", eventId).not("confirmed_at", "is", null),
+      admin.from("explore_interactions").select("event_type").eq("event_id", eventId),
     ]);
-
-    if (attError) throw new Error(attError.message);
-
-    const activeAttendees = attendees || [];
-    const paidOrders = orders || [];
-
-    const exploreAttendeeIds = new Set<string>();
-    let exploreCount = 0;
-
-    for (const a of activeAttendees) {
-      const cr = a.custom_responses as Record<string, unknown> | null;
-      if (cr?.referral_source === "explore") {
-        exploreCount++;
-        exploreAttendeeIds.add(a.id);
-      }
+    if (attError || ordError || attrError || interactionsError) {
+      throw new Error((attError || ordError || attrError || interactionsError)?.message);
     }
-
-    let exploreRevenue = 0;
-    let totalRevenue = 0;
-
-    for (const order of paidOrders) {
-      const amt = Number(order.amount) || 0;
-      totalRevenue += amt;
-      if (order.attendee_id && exploreAttendeeIds.has(order.attendee_id)) {
-        exploreRevenue += amt;
-      }
-    }
+    const attributedIds = new Set((attributed || []).map((item) => item.attendee_id));
+    const exploreRevenue = (orders || []).filter((order) => attributedIds.has(order.attendee_id))
+      .reduce((sum, order) => sum + Number(order.amount || 0), 0);
+    const totalRevenue = (orders || []).reduce((sum, order) => sum + Number(order.amount || 0), 0);
 
     return {
       success: true,
-      exploreBookings: exploreCount,
-      totalBookings: activeAttendees.length,
+      exploreBookings: attributedIds.size,
+      totalBookings: totalBookings || 0,
       exploreRevenuePaise: exploreRevenue,
       totalRevenuePaise: totalRevenue,
-      views: null, // View tracking unconfigured (empty state)
-      clicks: null,
+      views: null,
+      clicks: (interactions || []).filter((item) => item.event_type === "detail_view").length,
     };
   } catch (err) {
     return {
@@ -335,17 +328,19 @@ export async function adminRejectExploreListingAction(
   if (!(await isOpsAuthenticated())) return { success: false, error: "Administrator access required." };
   try {
     if (!/^[0-9a-f-]{36}$/i.test(eventId)) return { success: false, error: "Invalid event ID." };
+    if (!reason.trim()) return { success: false, error: "Provide a reason for rejection." };
     const admin = adminClient();
-    const { error } = await admin
+    const { data, error } = await admin
       .from("explore_marketplace_listings")
       .update({
         status: "rejected",
-        rejection_reason: reason.trim() || "Event does not meet current curation guidelines.",
+        rejection_reason: reason.trim(),
         updated_at: new Date().toISOString(),
       })
-      .eq("event_id", eventId);
+      .eq("event_id", eventId).eq("status", "pending").select("id").maybeSingle();
 
     if (error) return { success: false, error: error.message };
+    if (!data) return { success: false, error: "Pending listing not found." };
     return { success: true };
   } catch (err) {
     return {
@@ -363,17 +358,18 @@ export async function adminRequestChangesExploreListingAction(
   try {
     if (!/^[0-9a-f-]{36}$/i.test(eventId)) return { success: false, error: "Invalid event ID." };
     const admin = adminClient();
-    const formattedReason = `[Changes Requested] ${feedback.trim() || "Please update event details."}`;
-    const { error } = await admin
+    if (!feedback.trim()) return { success: false, error: "Provide the requested changes." };
+    const { data, error } = await admin
       .from("explore_marketplace_listings")
       .update({
-        status: "rejected",
-        rejection_reason: formattedReason,
+        status: "changes_requested",
+        rejection_reason: feedback.trim(),
         updated_at: new Date().toISOString(),
       })
-      .eq("event_id", eventId);
+      .eq("event_id", eventId).eq("status", "pending").select("id").maybeSingle();
 
     if (error) return { success: false, error: error.message };
+    if (!data) return { success: false, error: "Pending listing not found." };
     return { success: true };
   } catch (err) {
     return {
@@ -427,6 +423,7 @@ export async function adminApproveExploreListingAction(
         updated_at: new Date().toISOString(),
       })
       .eq("event_id", eventId)
+      .eq("status", "pending")
       .select("id")
       .maybeSingle();
 
@@ -440,4 +437,15 @@ export async function adminApproveExploreListingAction(
       error: err instanceof Error ? err.message : "Failed to approve listing.",
     };
   }
+}
+
+export async function adminSuspendExploreListingAction(eventId: string, reason: string): Promise<{ success: boolean; error?: string }> {
+  if (!(await isOpsAuthenticated())) return { success: false, error: "Administrator access required." };
+  if (!reason.trim()) return { success: false, error: "Provide a suspension reason." };
+  if (!/^[0-9a-f-]{36}$/i.test(eventId)) return { success: false, error: "Invalid event ID." };
+  const { data, error } = await adminClient().from("explore_marketplace_listings")
+    .update({ status: "suspended", featured: false, rejection_reason: reason.trim(), updated_at: new Date().toISOString() })
+    .eq("event_id", eventId).eq("status", "approved").select("id").maybeSingle();
+  if (error) return { success: false, error: error.message };
+  return data ? { success: true } : { success: false, error: "Approved listing not found." };
 }

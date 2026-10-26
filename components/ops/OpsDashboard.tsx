@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import {
   Activity,
   Users,
@@ -605,6 +606,7 @@ export default function OpsDashboard({ onLogout }: Props) {
 
           {/* System Health Indicators */}
           <div className="flex items-center gap-3">
+            <Link href="/ops/explore" className="rounded-lg border border-violet-400/30 bg-violet-500/10 px-3 py-2 text-xs font-bold text-violet-200 hover:bg-violet-500/20">Explore review</Link>
             <div className="hidden md:flex items-center gap-3 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-xs font-mono">
               <div className="flex items-center gap-1.5">
                 <Server className="w-3.5 h-3.5 text-white/50" />

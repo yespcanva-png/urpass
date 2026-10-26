@@ -11,7 +11,7 @@ import type {
 } from "@/lib/explore/types";
 
 export const metadata: Metadata = {
-  title: "Explore Events — UrPass Marketplace",
+  title: "Explore Events Online – Discover & Book Tickets | UrPass",
   description:
     "Discover verified live music, tech conferences, creative workshops, food festivals, and community gatherings. Book official tickets with instant UrPass QR check-in.",
   keywords: [

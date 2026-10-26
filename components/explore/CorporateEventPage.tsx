@@ -196,11 +196,6 @@ export default function CorporateEventPage({ event }: CorporateEventPageProps) {
 
     setIsSubmitting(true);
     try {
-      const refParam =
-        typeof window !== "undefined"
-          ? new URLSearchParams(window.location.search).get("ref")
-          : null;
-
       const res = await submitApplication(
         event.id,
         {
@@ -215,7 +210,6 @@ export default function CorporateEventPage({ event }: CorporateEventPageProps) {
         {
           organization: organization.trim(),
           designation: designation.trim(),
-          referral_source: refParam || "explore",
         }
       );
 
