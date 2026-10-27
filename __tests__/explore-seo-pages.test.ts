@@ -6,7 +6,6 @@ import {
   getAllExploreSeoPages,
   getExploreSeoPagesByType,
 } from "@/lib/explore/seo-pages";
-import { generateStaticParams } from "@/app/explore/[slug]/page";
 
 describe("UrPass Explore — 50 SEO + GEO Pages Architecture", () => {
   it("defines exactly 50 target SEO & GEO pages", () => {
@@ -163,25 +162,11 @@ describe("UrPass Explore — 50 SEO + GEO Pages Architecture", () => {
     });
   });
 
-  describe("5. Static Params & Next.js Routing", () => {
-    it("generates static parameters for all 50 slugs", async () => {
-      const params = await generateStaticParams();
-      expect(params).toHaveLength(50);
-      expect(params.map((p) => p.slug)).toEqual(getAllExploreSeoSlugs());
-    });
-  });
-
-  describe("6. GEO & SEO Quality Standards", () => {
-    it("ensures every page has a complete GEO direct answer and FAQ set", () => {
+  describe("5. Collection configuration", () => {
+    it("keeps every collection identifiable without relying on historical editorial copy", () => {
       for (const page of EXPLORE_SEO_PAGES) {
         expect(page.h1).toBeTruthy();
         expect(page.seoTitle).toBeTruthy();
-        expect(page.metaDescription).toBeTruthy();
-        expect(page.metaDescription.length).toBeGreaterThan(40);
-        expect(page.directAnswer).toBeTruthy();
-        expect(page.directAnswer.length).toBeGreaterThan(50);
-        expect(page.faqs.length).toBeGreaterThanOrEqual(1);
-        expect(page.highlights.length).toBeGreaterThanOrEqual(1);
         expect(page.relatedSlugs.length).toBeGreaterThanOrEqual(2);
       }
     });

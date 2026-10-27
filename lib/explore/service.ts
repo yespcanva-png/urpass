@@ -296,6 +296,7 @@ export async function fetchEventsForSeoPage(pageConfig: import("./seo-pages").Ex
   });
 
   let matching = result.events;
+  let totalMatches = result.totalCount;
 
   // If query keywords were provided (e.g. for seasonal or niche searches) and direct query was empty, test keywords
   if (pageConfig.queryKeywords && pageConfig.queryKeywords.length > 0 && matching.length === 0) {
@@ -310,6 +311,7 @@ export async function fetchEventsForSeoPage(pageConfig: import("./seo-pages").Ex
       });
       if (kwResult.events.length > 0) {
         matching = kwResult.events;
+        totalMatches = kwResult.totalCount;
         break;
       }
     }
@@ -329,6 +331,6 @@ export async function fetchEventsForSeoPage(pageConfig: import("./seo-pages").Ex
   return {
     matchingEvents: matching,
     fallbackEvents,
-    totalMatches: matching.length,
+    totalMatches,
   };
 }

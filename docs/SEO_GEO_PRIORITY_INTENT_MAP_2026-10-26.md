@@ -17,7 +17,7 @@ Date: 26 October 2026. This map uses current repository routes. It does not clai
 | --- | --- | --- |
 | Event discovery | `/explore` | Public marketplace homepage. |
 | Bengaluru events | `/explore/bangalore` | The current collection slug uses `bangalore`; do not create a competing `/explore/bengaluru` page. |
-| Chennai, Hyderabad, Coimbatore | `/explore/chennai`, `/explore/hyderabad`, `/explore/coimbatore` | Code requires three matching approved events. Editorial review of collection copy remains pending. |
+| Chennai, Hyderabad, Coimbatore | `/explore/chennai`, `/explore/hyderabad`, `/explore/coimbatore` | Code requires three matching approved events. Public summaries and venue details now come from live listings; historical registry copy remains unpublished. |
 | Music, workshops, business | `/explore/music-concerts`, `/explore/workshops`, `/explore/business-networking` | Keep existing collection slugs; review claim accuracy and unique content before indexing. |
 | Individual approved event | `/explore/event/[slug]` | Use the existing eligible listing and event detail flow. |
 

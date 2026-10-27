@@ -38,6 +38,16 @@ export interface ExploreSeoPageConfig {
   ctaText: string;
 }
 
+// Historical editorial copy remains in this registry for review. Public collection pages
+// derive visible summaries, highlights, and booking answers from approved event listings.
+
+export function buildExploreCollectionSummary(page: ExploreSeoPageConfig, events: ExploreEventItem[]): string {
+  const topic = page.cityFilter ? `events in ${page.cityFilter}` : page.h1.replace(/^(Explore|Discover)\s+/i, "").toLowerCase();
+  if (events.length === 0) return `There are no matching approved upcoming ${topic} right now. Browse other events on UrPass Explore.`;
+  const examples = events.slice(0, 3).map((event) => event.name).join(", ");
+  return `Browse approved upcoming ${topic} on UrPass Explore. Current listings include ${examples}. Open an event to confirm its date, venue, ticket options, and availability before booking.`;
+}
+
 export function matchesExploreSeoPage(event: ExploreEventItem, page: ExploreSeoPageConfig, now = new Date()): boolean {
   if (page.cityFilter && event.city.toLowerCase() !== page.cityFilter.toLowerCase()) return false;
   if (page.categoryFilter && page.categoryFilter !== "all" && event.category !== page.categoryFilter) return false;

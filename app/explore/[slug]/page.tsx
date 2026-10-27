@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import {
   getExploreSeoPage,
-  getAllExploreSeoSlugs,
+  buildExploreCollectionSummary,
   MIN_EXPLORE_COLLECTION_EVENTS,
   type ExploreSeoPageConfig,
 } from "@/lib/explore/seo-pages";
@@ -23,13 +23,7 @@ interface Props {
   params: Promise<{ slug: string }>;
 }
 
-export const dynamic = "force-static";
-export const revalidate = 3600; // 1 hour ISR
-
-export async function generateStaticParams() {
-  const slugs = getAllExploreSeoSlugs();
-  return slugs.map((slug) => ({ slug }));
-}
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
@@ -43,13 +37,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   // Keep thin collections out of search until there is useful live inventory.
-  let isIndexableCollection = false;
+  let matchingEvents = [] as Awaited<ReturnType<typeof fetchEventsForSeoPage>>["matchingEvents"];
   try {
-    const { totalMatches } = await fetchEventsForSeoPage(page);
-    isIndexableCollection = totalMatches >= MIN_EXPLORE_COLLECTION_EVENTS;
+    ({ matchingEvents } = await fetchEventsForSeoPage(page));
   } catch {
-    isIndexableCollection = false;
+    matchingEvents = [];
   }
+  const isIndexableCollection = matchingEvents.length >= MIN_EXPLORE_COLLECTION_EVENTS;
+  const description = buildExploreCollectionSummary(page, matchingEvents);
 
   const robots = isIndexableCollection
     ? {
@@ -72,24 +67,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   return {
     title: page.seoTitle,
-    description: page.metaDescription,
+    description,
     alternates: {
       canonical: canonicalUrl,
     },
     robots,
-    keywords: [
-      page.h1,
-      page.badgeText,
-      page.cityFilter ? `events in ${page.cityFilter}` : "",
-      ...page.popularSearchQueries,
-      "UrPass explore",
-      "buy event tickets online",
-      "zero commission ticketing",
-      "instant qr pass",
-    ].filter(Boolean),
     openGraph: {
       title: page.seoTitle,
-      description: page.metaDescription,
+      description,
       url: canonicalUrl,
       siteName: "UrPass Explore",
       locale: "en_IN",
@@ -98,7 +83,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     twitter: {
       card: "summary_large_image",
       title: page.seoTitle,
-      description: page.metaDescription,
+      description,
     },
   };
 }
@@ -112,6 +97,22 @@ export default async function ExploreSeoCollectionPage({ params }: Props) {
   }
 
   const { matchingEvents, fallbackEvents, totalMatches } = await fetchEventsForSeoPage(page);
+  const summary = buildExploreCollectionSummary(page, matchingEvents);
+  const highlights = matchingEvents.slice(0, 4).map((event) => ({
+    title: event.name,
+    desc: `${event.eventDate} · ${event.venue} · ${event.city}`,
+    tag: event.categoryLabel,
+  }));
+  const faqs = [
+    {
+      q: `How do I book an event from ${page.h1}?`,
+      a: "Open an event above, check its date, venue, ticket options, and organizer policies, then complete the existing UrPass registration and payment steps if required.",
+    },
+    {
+      q: "Are the tickets and dates on this page current?",
+      a: "This page shows approved upcoming Explore listings. Event details and availability can change, so confirm them on the event page before booking.",
+    },
+  ];
 
   // Structured Data Schemas for SEO & GEO Answer Engines
   const breadcrumbSchema = {
@@ -139,24 +140,11 @@ export default async function ExploreSeoCollectionPage({ params }: Props) {
     ],
   };
 
-  const faqSchema = {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    mainEntity: page.faqs.map((f) => ({
-      "@type": "Question",
-      name: f.q,
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: f.a,
-      },
-    })),
-  };
-
   const itemListSchema = {
     "@context": "https://schema.org",
     "@type": "ItemList",
     name: page.h1,
-    description: page.metaDescription,
+    description: summary,
     itemListElement: matchingEvents.map((evt, idx) => ({
       "@type": "ListItem",
       position: idx + 1,
@@ -176,10 +164,6 @@ export default async function ExploreSeoCollectionPage({ params }: Props) {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema).replace(/</g, "\\u003c") }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema).replace(/</g, "\\u003c") }}
       />
       {matchingEvents.length > 0 && (
         <script
@@ -257,7 +241,7 @@ export default async function ExploreSeoCollectionPage({ params }: Props) {
               <span>{page.badgeText}</span>
               <span className="text-violet-400">·</span>
               <span className="text-[11px] font-medium text-violet-600 uppercase tracking-wide">
-                Verified Discovery
+                Approved Listings
               </span>
             </div>
 
@@ -268,7 +252,7 @@ export default async function ExploreSeoCollectionPage({ params }: Props) {
 
             {/* Content Synopsis */}
             <p className="mt-4 text-sm sm:text-base text-neutral-600 leading-relaxed max-w-3xl">
-              {page.contentSynopsis}
+              {summary}
             </p>
 
             {/* GEO Direct Answer Box (For AI Search Engines & Attendees) */}
@@ -280,11 +264,13 @@ export default async function ExploreSeoCollectionPage({ params }: Props) {
                 <p className="text-xs font-bold text-neutral-900 uppercase tracking-wider mb-1 flex items-center gap-1.5">
                   <span>Quick Summary</span>
                   <span className="text-[10px] font-medium text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200">
-                    Live Verified
+                    From Current Listings
                   </span>
                 </p>
                 <p className="text-xs sm:text-sm text-neutral-700 leading-relaxed font-medium">
-                  {page.directAnswer}
+                  {totalMatches > 0
+                    ? `There ${totalMatches === 1 ? "is" : "are"} ${totalMatches} approved upcoming ${totalMatches === 1 ? "event" : "events"} matching this collection. Select an event for its organizer-provided details and booking options.`
+                    : "No approved upcoming events match this collection right now. Browse the wider Explore marketplace for other events."}
                 </p>
               </div>
             </div>
@@ -304,13 +290,13 @@ export default async function ExploreSeoCollectionPage({ params }: Props) {
                 href="#highlights"
                 className="px-3 py-1.5 rounded-full text-xs font-semibold bg-neutral-100 hover:bg-neutral-200 text-neutral-800 transition-colors"
               >
-                {page.type === "city" ? "Neighbourhoods & Venues" : "Overview & Highlights"}
+                Event Details
               </a>
               <a
                 href="#faqs"
                 className="px-3 py-1.5 rounded-full text-xs font-semibold bg-neutral-100 hover:bg-neutral-200 text-neutral-800 transition-colors"
               >
-                FAQs & Guide
+                Booking Help
               </a>
             </div>
           </div>
@@ -330,7 +316,7 @@ export default async function ExploreSeoCollectionPage({ params }: Props) {
               </span>
             </div>
             <p className="text-xs sm:text-sm text-neutral-500 mt-1">
-              Every event features direct organizer booking, guaranteed anti-counterfeit QR passes, and zero platform fees.
+              Review each organizer&apos;s event page for current ticket options, policies, and availability.
             </p>
           </div>
 
@@ -362,7 +348,7 @@ export default async function ExploreSeoCollectionPage({ params }: Props) {
               No scheduled events matching this exact search right now
             </h3>
             <p className="mt-2 text-sm text-neutral-500 max-w-lg mx-auto leading-relaxed">
-              We only display confirmed, marketplace-approved listings. Expired and speculative events are never shown. Check back soon as organizers post new dates regularly.
+              This collection currently has no approved upcoming matches. Browse the wider Explore marketplace for other events.
             </p>
 
             <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -386,7 +372,7 @@ export default async function ExploreSeoCollectionPage({ params }: Props) {
                 <div className="flex items-center gap-2 mb-4">
                   <TrendingUp className="w-4 h-4 text-violet-600" />
                   <h4 className="text-sm font-bold text-neutral-900 uppercase tracking-wider">
-                    Trending Experiences You Might Like
+                    More Upcoming Events on Explore
                   </h4>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -405,17 +391,15 @@ export default async function ExploreSeoCollectionPage({ params }: Props) {
         <div className="bg-white rounded-3xl border border-neutral-200/80 p-6 sm:p-10 shadow-sm">
           <div className="mb-6">
             <span className="text-xs font-bold text-violet-600 uppercase tracking-wider">
-              {page.type === "city" ? "Local Directory" : "Key Formats"}
+              Current Listings
             </span>
             <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-neutral-950 mt-1">
-              {page.type === "city"
-                ? `Key Venues & Neighbourhoods in ${page.cityFilter || page.h1}`
-                : `What to Expect from ${page.h1}`}
+              Event Details from Approved Listings
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-            {page.highlights.map((h, i) => (
+          {highlights.length > 0 ? <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+            {highlights.map((h, i) => (
               <div
                 key={i}
                 className="p-5 rounded-2xl bg-neutral-50 border border-neutral-200/70 hover:border-neutral-300 transition-colors"
@@ -435,7 +419,7 @@ export default async function ExploreSeoCollectionPage({ params }: Props) {
                 </p>
               </div>
             ))}
-          </div>
+          </div> : <p className="text-sm text-neutral-600">Details will appear when an approved upcoming event matches this collection.</p>}
         </div>
       </section>
 
@@ -450,12 +434,12 @@ export default async function ExploreSeoCollectionPage({ params }: Props) {
               Answers & Booking Information
             </h2>
             <p className="text-xs sm:text-sm text-neutral-500 mt-1">
-              Factually verified details for event goers and search engines.
+              Review the organizer&apos;s event page before making a booking.
             </p>
           </div>
 
           <div className="space-y-3">
-            {page.faqs.map((faq, idx) => (
+            {faqs.map((faq, idx) => (
               <details
                 key={idx}
                 className="group rounded-2xl border border-neutral-200/80 bg-neutral-50/50 p-5 [&_summary::-webkit-details-marker]:hidden cursor-pointer open:bg-white open:shadow-xs transition-colors"
@@ -517,7 +501,7 @@ export default async function ExploreSeoCollectionPage({ params }: Props) {
               Hosting an event in India?
             </h3>
             <p className="text-xs sm:text-sm text-violet-100 mt-1 leading-relaxed">
-              Publish your listing on UrPass Explore to get discovered by thousands of verified attendees with 0% platform commission and sub-second 0.3s lightning QR passes.
+              Apply to list an eligible public event on UrPass Explore. Approved listings link to the existing UrPass registration and QR pass flow.
             </p>
           </div>
           <div className="shrink-0 flex items-center gap-3">

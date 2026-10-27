@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { isPublicIndexableEvent } from "@/lib/seo/event-indexing";
-import { matchesExploreSeoPage, MIN_EXPLORE_COLLECTION_EVENTS, type ExploreSeoPageConfig } from "@/lib/explore/seo-pages";
+import { buildExploreCollectionSummary, matchesExploreSeoPage, MIN_EXPLORE_COLLECTION_EVENTS, type ExploreSeoPageConfig } from "@/lib/explore/seo-pages";
 import type { ExploreEventItem } from "@/lib/explore/types";
 
 describe("public event indexing", () => {
@@ -35,6 +35,14 @@ describe("Explore collection sitemap eligibility", () => {
     expect(matchesExploreSeoPage(event, { ...page, categoryFilter: "workshops" })).toBe(false);
     expect(matchesExploreSeoPage(event, { ...page, queryKeywords: ["workshop"] })).toBe(false);
     expect(matchesExploreSeoPage(event, { ...page, pricingFilter: "free" })).toBe(false);
+  });
+
+  it("builds public copy from approved event data instead of historical editorial claims", () => {
+    const collection = { ...page, h1: "Discover Events in Bangalore", directAnswer: "Unsupported venue claim" };
+    const summary = buildExploreCollectionSummary(collection, [event]);
+    expect(summary).toContain("Music Night");
+    expect(summary).toContain("events in Bengaluru");
+    expect(summary).not.toContain("Unsupported venue claim");
   });
 
   it("checks date-based collections against the event date", () => {
