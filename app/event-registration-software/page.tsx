@@ -1,24 +1,18 @@
 import type { Metadata } from "next";
 import {
   ClipboardList,
-  CheckCircle2,
   Users,
   QrCode,
-  ShieldCheck,
-  Zap,
   BarChart3,
   Sliders,
-  FileSpreadsheet,
   Clock,
-  Layers,
-  Sparkles,
 } from "lucide-react";
 import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
-  title: "Event Registration Software — Custom Forms, QR Passes & Approval Queues",
+  title: "Event Registration Software — Forms, QR Passes & Approvals | UrPass",
   description:
-    "Modern event registration software for conferences, college fests, and workshops. Create custom forms, manage attendee approvals, reserve capacity atomically, and issue digital QR passes automatically.",
+    "Create event registration forms, manage attendee approvals and ticket availability, and issue digital QR passes for conferences, college fests, and workshops.",
   keywords: [
     "event registration software",
     "online event registration system",
@@ -33,7 +27,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Event Registration Software with Instant QR Passes | URPASS",
     description:
-      "Create branded registration pages, screen attendees with approval workflows, enforce capacity limits, and issue instant digital QR passes.",
+      "Create event registration pages, review attendee applications, manage capacity, and issue digital QR passes.",
     url: "https://urpass.space/event-registration-software",
     locale: "en_IN",
     type: "website",
@@ -46,21 +40,23 @@ export default function EventRegistrationSoftwarePage() {
       config={{
         canonicalUrl: "https://urpass.space/event-registration-software",
         badge: "MODERN EVENT REGISTRATION SOFTWARE",
-        h1: "Event Registration Software with Automated Pass Issuance",
+        h1: "Event Registration Software with QR Passes and Approvals",
         description:
-          "Launch branded registration forms in under 5 minutes, screen attendees with custom questions, enforce atomic capacity limits, and issue digital QR passes automatically—without spreadsheet chaos.",
+          "Create an event registration page, collect custom attendee answers, manage approvals and capacity, and issue digital QR passes from UrPass.",
         ctaLabel: "Start registrations free",
+        secondaryCtaLabel: "Explore Remote Managed Setup",
+        secondaryCtaHref: "/managed-event-setup",
 
         // 10-Point Standard: Direct Answer at the Top (40-80 words)
         directAnswer: {
           title: "What is Event Registration Software?",
           summary:
-            "Event registration software is an online application that enables organizers to build customized signup forms, process ticket payments or attendee applications, manage strict capacity limits, and automatically issue entry credentials. URPASS unifies the entire attendee lifecycle—from mobile-responsive registration forms and automated approval workflows to instant digital QR pass delivery and phone camera gate check-in, eliminating the need for disconnected Google Forms and manual spreadsheets.",
+            "Event registration software helps organizers collect attendee information, manage ticket choices and capacity, review applications, and issue entry passes. UrPass connects those steps to digital QR passes and a phone-based check-in workflow. Organizers can run free registrations or configure paid tickets where supported, then manage attendee records in the existing event dashboard.",
           keyPoints: [
             "Custom form builder collecting text, dropdown, file, and attendee demographics",
-            "Atomic capacity reservation: 10-minute hold window prevents overbooking",
+            "Capacity checks and reservation controls for limited ticket inventory",
             "Flexible approval workflows: instant auto-issuance or manual organizer screening",
-            "Automatic digital QR pass generation delivered via mobile link and WhatsApp",
+            "Digital QR pass access by link and email; WhatsApp where enabled",
           ],
         },
 
@@ -77,12 +73,12 @@ export default function EventRegistrationSoftwarePage() {
             },
             {
               col1: "Capacity Limits & Overbooking",
-              col2: "Atomic DB locks with real-time seat decrementing and 10-min hold",
+              col2: "Capacity controls and reservation checks",
               col3: "No native capacity control; forms must be manually turned off",
             },
             {
               col1: "Entrance Gate Validation",
-              col2: "Built-in phone camera scanner with sub-second check-in (<0.3s)",
+              col2: "Built-in phone camera scanner for gate check-in",
               col3: "Requires printing paper sheets and manual pen check-offs",
             },
             {
@@ -102,7 +98,7 @@ export default function EventRegistrationSoftwarePage() {
             },
             {
               col1: "Attendee Invoicing",
-              col2: "Automatic GST-compliant tax invoices for corporate attendees",
+              col2: "Payment and invoice records for supported paid flows",
               col3: "Manual invoice creation required",
             },
           ],
@@ -123,7 +119,7 @@ export default function EventRegistrationSoftwarePage() {
           {
             icon: Clock,
             title: "Atomic Capacity Locks",
-            desc: "When an attendee enters checkout or registration, their seat is held atomically for 10 minutes to prevent overbooking.",
+            desc: "Check ticket availability and reserve limited capacity through the existing booking flow.",
           },
           {
             icon: QrCode,
@@ -189,7 +185,7 @@ export default function EventRegistrationSoftwarePage() {
             {
               title: "Transparent Flat Pricing",
               description:
-                "Host up to 2 events per month with 100 registrations completely free with no credit card required.",
+                "Start with one active event and up to 100 registrations on the Free Forever plan, subject to current plan limits.",
               badge: "0% Fee",
             },
           ],
@@ -201,85 +197,36 @@ export default function EventRegistrationSoftwarePage() {
             badge: "PROCESS AUTOMATION",
             title: "Why Generic Forms Break Down on Event Day",
             paragraphs: [
-              "Every year, thousands of organizers use Google Forms to collect registrations because it is free and familiar. However, Google Forms is merely a data collection form—it has no awareness of event operations. When 500 people submit the form, organizers are left with a 500-row spreadsheet.",
-              "To get attendees through the door, the organizer must manually generate QR codes using third-party add-ons, send emails that frequently land in spam, and print out 20-page paper guest lists for gate volunteers to manually cross off with a pen. When entrance lines swell to 200 people, manual name lookups cause 45-minute gate delays.",
-              "URPASS provides a closed-loop system: the registration form automatically creates an attendee profile, reserves capacity, generates an encrypted QR pass, and equips gate volunteers with a sub-second smartphone scanner. What used to take hours of manual work happens automatically in milliseconds.",
+              "A general-purpose form can collect attendee responses, but event organizers also need to manage capacity, approvals, passes, and arrival records.",
+              "Without a connected workflow, organizers may need to export responses, send separate pass emails, and prepare another list for gate staff.",
+              "UrPass connects the registration form to attendee records, ticket availability, QR pass issuance, and a phone-based scanner so these steps can be managed in one place.",
             ],
             bullets: [
               "Automates pass generation without third-party mail-merge plugins",
-              "Sub-second camera scanning replaces paper check-off clipboards",
+              "Phone camera scanning can replace paper check-off lists",
               "Real-time attendance dashboard shows exact arrival percentages",
-              "Eliminates duplicate submissions and typo-filled email databases",
+              "Keeps registration and check-in records together",
             ],
             takeaway:
-              "Switching from Google Forms to URPASS saves organizers 15+ hours of administrative work and cuts door check-in queues from 45 minutes to under 5 minutes.",
+              "A connected registration and check-in workflow reduces manual handoffs; results depend on the event and gate setup.",
           },
           {
             badge: "CAPACITY MANAGEMENT",
             title: "Preventing Overbooking with Atomic Capacity Reservations",
             paragraphs: [
               "When organizing high-demand workshops, hackathons, or VIP sessions with limited seats (e.g., 60 seats in a computer lab), multiple attendees often attempt to register at the exact same moment. Standard database forms register both users simultaneously, resulting in embarrassing overbooking.",
-              "URPASS implements atomic capacity locks. When an attendee starts their registration or reaches checkout, the system places a 10-minute temporary reservation hold on the seat. If the transaction completes, the seat is permanently decremented; if abandoned or expired, the seat releases back into the available pool automatically.",
+              "UrPass uses the existing ticket availability and reservation flow to check capacity during registration and checkout. Organizers can set limits for ticket tiers and review the resulting attendee records in the dashboard.",
             ],
             bullets: [
-              "Atomic database locks eliminate seat collision race conditions",
-              "10-minute hold timer gives attendees time to complete payment or form fields",
+              "Capacity checks during registration and paid checkout",
+              "Ticket inventory limits configured by the organizer",
               "Automatic waitlist queuing when maximum event capacity is reached",
-              "Real-time capacity counter updates dynamically without page reloads",
+              "Availability reflected in the booking flow",
             ],
             takeaway:
               "Precise capacity control ensures venue compliance, prevents embarrassing seat shortages, and creates genuine urgency for attendees.",
           },
         ],
-
-        // 10-Point Standard: Competitor Comparison Table
-        competitorComparison: {
-          title: "URPASS vs. Google Forms & Traditional Registration Tools",
-          subtitle: "Compare form building, pass issuance, gate validation, and attendee screening.",
-          competitorName: "Google Forms / Typeform",
-          sourceCitations: [
-            "Google Forms feature documentation",
-            "Typeform standard event template specifications",
-          ],
-          rows: [
-            {
-              criteria: "Digital QR Pass Issuance",
-              urpass: "Automated branded pass generated upon registration",
-              competitor: "None (requires complex mail-merge plugins)",
-              urpassAdvantage: true,
-            },
-            {
-              criteria: "Entrance Gate Scanning",
-              urpass: "In-browser camera scanner (<0.3s validation)",
-              competitor: "Manual paper list checking with a pen",
-              urpassAdvantage: true,
-            },
-            {
-              criteria: "Capacity Reservation Hold",
-              urpass: "Atomic 10-minute hold prevents overbooking",
-              competitor: "No capacity control (forms must be closed manually)",
-              urpassAdvantage: true,
-            },
-            {
-              criteria: "Approval Workflows",
-              urpass: "1-click Approve/Reject with instant pass issuance",
-              competitor: "Manual spreadsheet editing; no attendee updates",
-              urpassAdvantage: true,
-            },
-            {
-              criteria: "Paid Registration (UPI & Cards)",
-              urpass: "Integrated Razorpay with 0% ticket commission",
-              competitor: "Requires external payment links & manual reconciliation",
-              urpassAdvantage: true,
-            },
-            {
-              criteria: "Anti-Duplicate Entry",
-              urpass: "Atomic database enforcement stops pass sharing",
-              competitor: "Zero verification; anyone can share ticket text",
-              urpassAdvantage: true,
-            },
-          ],
-        },
 
         // Event-Specific Use Cases
         useCases: [
@@ -351,7 +298,7 @@ export default function EventRegistrationSoftwarePage() {
         faqs: [
           {
             q: "What makes URPASS better than Google Forms for event registration?",
-            a: "While Google Forms only collects text into a spreadsheet, URPASS manages the full operational lifecycle: custom registration forms, atomic capacity enforcement, 1-click attendee approval queues, automated digital QR pass issuance, and sub-second smartphone gate check-ins.",
+            a: "UrPass connects custom registration forms to capacity controls, attendee approvals, digital QR passes, and phone-based check-in. A general-purpose form may require additional tools for those event operations.",
           },
           {
             q: "Can I review and screen attendees before issuing an entry pass?",
@@ -359,7 +306,7 @@ export default function EventRegistrationSoftwarePage() {
           },
           {
             q: "How do attendees receive their registration passes?",
-            a: "Upon approval or payment confirmation, attendees are directed to their unique digital pass page. They also receive their pass link via email and WhatsApp, allowing them to present the QR code directly on their smartphone at the venue entrance.",
+            a: "After approval or confirmed payment, attendees can open their digital pass. Email delivery is available by default; WhatsApp delivery depends on the organizer's settings and consent.",
           },
           {
             q: "Can I charge a registration fee using UPI or credit cards?",
@@ -367,7 +314,7 @@ export default function EventRegistrationSoftwarePage() {
           },
           {
             q: "Is there a free plan for non-profit and community events?",
-            a: "Yes. URPASS offers plans starting from ₹499/month allowing up to 2 events per month and 100 registrations per month at ₹0 forever with full QR pass generation and gate scanning features included.",
+            a: "Yes. Free Forever has no payment or AutoPay requirement and includes one active event at a time with up to 100 registrations per event. See the pricing page for current limits and paid options.",
           },
           {
             q: "Can I collect custom questions like College Name or T-Shirt Size?",
@@ -377,7 +324,7 @@ export default function EventRegistrationSoftwarePage() {
 
         ctaTitle: "Create your event registration form in minutes",
         ctaDescription:
-          "Free tier available · Custom form builder · Instant QR passes · Sub-second phone check-in",
+          "Free Forever available · Custom forms · Digital QR passes · Phone-based check-in",
       }}
     />
   );

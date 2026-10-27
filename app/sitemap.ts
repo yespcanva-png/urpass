@@ -9,7 +9,6 @@ import { isPublicIndexableEvent } from "@/lib/seo/event-indexing";
 const BASE = "https://urpass.space";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const now = new Date().toISOString();
 
   const core = [
     { url: BASE, priority: 1.0, changeFrequency: "daily" as const },
@@ -733,7 +732,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         url: `${BASE}/apply/${e.apply_slug || e.id}`,
         priority: 0.8,
         changeFrequency: "daily" as const,
-        lastModified: e.updated_at || now,
+          lastModified: e.updated_at || undefined,
       }));
     }
   } catch {
@@ -936,6 +935,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     url: `${BASE}/${page.slug}`,
     priority: page.cluster === "evergreen" ? 0.95 : 0.9,
     changeFrequency: "weekly" as const,
+    lastModified: page.updatedAt,
   }));
 
   const rawStaticEntries = [
@@ -956,15 +956,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...mcpPages,
   ];
 
-    // Deduplicate entries by URL, giving preference to earlier entries (so bofuMoneyPages keeps 0.95 priority)
+  // Deduplicate entries by URL, giving preference to earlier entries.
   const seenUrls = new Set<string>();
   const staticEntries = rawStaticEntries
     .filter((item) => {
       if (seenUrls.has(item.url)) return false;
       seenUrls.add(item.url);
       return true;
-    })
-    .map((item) => ({ ...item, lastModified: now }));
+    });
 
   // Query published careers jobs so open job descriptions are indexed
   let jobEntries: MetadataRoute.Sitemap = [];
@@ -975,7 +974,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         url: `${BASE}/careers/${j.slug}`,
         priority: 0.85,
         changeFrequency: "weekly" as const,
-        lastModified: j.updated_at || now,
+        lastModified: j.updated_at || undefined,
       }));
     }
   } catch {
@@ -991,15 +990,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       url: `${BASE}/explore/${page.slug}`,
       priority: page.priority === "P1" ? 0.95 : page.priority === "P2" ? 0.9 : 0.85,
       changeFrequency: page.type === "intent" ? ("daily" as const) : ("weekly" as const),
-      lastModified: now,
       }));
     exploreEntries = [
-      { url: `${BASE}/explore`, priority: 0.9, changeFrequency: "daily", lastModified: now },
+      { url: `${BASE}/explore`, priority: 0.9, changeFrequency: "daily" },
       ...marketplace.events.map((event) => ({
         url: `${BASE}/explore/event/${event.slug}`,
         priority: 0.8,
         changeFrequency: "daily" as const,
-        lastModified: now,
       })),
       ...seoPages,
     ];

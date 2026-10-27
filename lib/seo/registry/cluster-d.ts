@@ -117,8 +117,8 @@ export const CLUSTER_D_PAGES: MarketingPageConfig[] = [
     status: "published",
     updatedAt: "2026-10-24T12:00:00Z",
     hero: {
-      valueProposition: "Sell event tickets online with 0% platform commission, direct Razorpay settlement, multi-tier pricing, and high-speed QR door scanning.",
-      openingAnswer: "UrPass gives Indian event organizers a high-margin alternative to commercial ticketing aggregators. Stop giving away 5% to 10% of your gross ticket sales. Connect your own verified Razorpay account, publish mobile-optimized ticket checkout pages, accept UPI (GPay, PhonePe, Paytm) and cards, and scan attendees in sub-0.3 seconds at the door.",
+      valueProposition: "Sell event tickets online with no UrPass platform commission, organizer-defined ticket tiers, Razorpay checkout, and QR pass check-in.",
+      openingAnswer: "UrPass lets Indian organizers create ticket tiers, publish a registration page, accept supported payment methods through their configured Razorpay account, and issue digital QR passes after successful booking. Staff can scan those passes at the venue using the existing UrPass scanner. Payment gateway charges and applicable taxes may still apply.",
     },
     workflow: {
       title: "Ticket Setup to Door Admission Workflow",
@@ -126,53 +126,53 @@ export const CLUSTER_D_PAGES: MarketingPageConfig[] = [
         {
           step: 1,
           title: "Configure Ticket Tiers & Pricing",
-          desc: "Create Early Bird, General Admission, VIP, Student, and Group passes with individual pricing, tax rules, and inventory limits.",
+          desc: "Create ticket types such as Early Bird, General Admission, VIP, or Student with prices and inventory limits configured for your event.",
         },
         {
           step: 2,
-          title: "Direct UPI & Card Payment Settlement",
-          desc: "Buyers complete checkout in 3 taps via UPI or cards. Revenue settles directly into your bank account on rolling T+2 days with 0% platform fee.",
+          title: "Checkout with Supported Payment Methods",
+          desc: "Buyers complete the existing Razorpay checkout using payment methods available to the organizer's merchant account. Settlement timing follows the payment provider's terms.",
         },
         {
           step: 3,
           title: "Multi-Gate QR Door Verification",
-          desc: "Staff scan digital passes on smartphone cameras in 0.3s. Instant visual checks confirm ticket tier and prevent duplicate screenshot reuse.",
+          desc: "Authorized staff scan digital passes on supported smartphones and review the result, including duplicate-scan warnings.",
         },
       ],
     },
     features: [
       {
         icon: "card",
-        title: "0% Commission Direct Settlement",
-        desc: "Save lakhs in aggregator commission fees. Ticket revenues flow directly into your own Razorpay account with zero platform commission from UrPass.",
-        bullets: ["Direct merchant bank settlement", "No 10-day post-event payment hold", "Sub-5s frictionless UPI checkout"],
+        title: "No UrPass Ticket Commission",
+        desc: "UrPass does not add a platform commission to ticket sales. Payment gateway fees, taxes, and merchant settlement terms remain applicable.",
+        bullets: ["Organizer-configured payment account", "Current fees shown in the applicable payment flow", "Supported UPI and card methods depend on the gateway"],
       },
       {
         icon: "shield",
-        title: "Cryptographic Anti-Duplicate Scanning",
-        desc: "Prevent ticket forwarding across WhatsApp groups with single-redemption cryptographic verification backed by PostgreSQL row locks.",
-        bullets: ["Instant duplicate scan warning", "Timestamped gate admission log", "Sub-0.3s camera scan on standard phones"],
+        title: "Duplicate Scan Detection",
+        desc: "Each issued pass has a unique token. Once checked in, later scans can be flagged as duplicates; organizers can add identity checks where needed.",
+        bullets: ["Duplicate scan warning", "Gate admission record", "Browser-based scanning on supported phones"],
       },
       {
         icon: "chart",
-        title: "Live Box Office Telemetry",
-        desc: "Monitor real-time sales velocity, discount code redemptions, and gate arrival rates from your organizer dashboard.",
-        bullets: ["Real-time sales velocity graphs", "Discount and promo code tracking", "Automated GST-compliant invoices"],
+        title: "Booking and Attendance Records",
+        desc: "Review ticket bookings, attendee records, and check-ins from the organizer dashboard.",
+        bullets: ["Ticket and attendee records", "Check-in visibility", "Payment records for supported paid flows"],
       },
     ],
     practicalScenario: {
-      title: "Commercial Business Summit with ₹15 Lakhs in Ticket Sales",
-      problem: "A conference producer lost ₹1.5 lakhs in aggregator commissions in previous years and faced cash flow shortages when waiting 2 weeks for payouts.",
-      solution: "The producer switched to UrPass on a flat ₹999/month Pro subscription, processing all ticket payments directly through their corporate Razorpay.",
-      outcome: "Saved over ₹1.4 lakhs in net fees. Funds settled daily on rolling T+2 days, providing immediate liquidity to pay venue advances.",
+      title: "Example: Business Summit Ticket Setup",
+      problem: "An organizer needs separate General Admission and VIP tiers with clear inventory limits and a gate check-in process.",
+      solution: "The organizer configures the tiers and registration page in UrPass, connects an eligible payment account, and tests the QR pass and scanner workflow before sales open.",
+      outcome: "The event team can review confirmed bookings and use issued UrPass passes for entry. This is an illustrative workflow, not a customer result.",
     },
     serviceComparison: {
       headline: "Promoter Self-Service vs. Remote Managed Ticketing Setup",
       selfServicePoints: [
-        "Connect Razorpay and launch ticket sales in 10 minutes",
+        "Connect a supported payment account and configure ticket sales",
         "Create promo codes and tiered ticket inventories directly",
         "Deploy door scanners using simple 4-digit PINs",
-        "Keep 100% of ticket sales revenue with flat monthly pricing",
+        "Review subscription, gateway, and tax charges before selling tickets",
       ],
       managedServicePoints: [
         "UrPass team configures payment webhooks, ticket tiers, and capacity rules",
@@ -184,16 +184,16 @@ export const CLUSTER_D_PAGES: MarketingPageConfig[] = [
     },
     faqs: [
       {
-        q: "How does UrPass 0% commission work compared to BookMyShow or Townscript?",
-        a: "Traditional aggregators charge 5% to 10% commission on every ticket sold and hold funds for 7 to 15 days. UrPass charges 0% commission on ticket sales; you only pay standard payment gateway fees (~2%) and a flat, predictable monthly software subscription.",
+        q: "Does UrPass charge a platform commission on tickets?",
+        a: "UrPass does not charge a platform commission on ticket sales. Subscription fees, payment gateway fees, and applicable taxes may still apply. Check the current pricing and gateway terms before opening sales.",
       },
       {
         q: "When do organizers receive ticket funds?",
-        a: "Funds flow directly into your verified Razorpay merchant account and settle into your bank account on standard T+2 rolling business days.",
+        a: "Settlement follows the terms of the organizer's configured payment gateway and merchant account. Check the provider dashboard for the actual schedule.",
       },
       {
         q: "What payment methods are supported for attendees?",
-        a: "Attendees can pay using all UPI apps (Google Pay, PhonePe, Paytm, Cred, BHIM), all major Credit/Debit Cards, Net Banking, and digital wallets.",
+        a: "Attendees can use the payment methods enabled for the organizer's configured Razorpay account. Availability can vary by account, bank, and checkout configuration.",
       },
       {
         q: "Can we create promo codes and early-bird discounts?",
@@ -201,7 +201,7 @@ export const CLUSTER_D_PAGES: MarketingPageConfig[] = [
       },
       {
         q: "Can we issue refunds if an attendee requests cancellation?",
-        a: "Yes. You can process refunds directly from your Razorpay dashboard or UrPass console, which automatically revokes the customer's QR entry pass.",
+        a: "Refund handling follows the organizer's payment provider and the event's configured policy. Organizers should review the booking and pass status after a refund is processed.",
       },
     ],
     relatedSlugs: ["event-registration-software-india", "qr-event-check-in-software", "remote-managed-event-services", "event-management-for-agencies"],

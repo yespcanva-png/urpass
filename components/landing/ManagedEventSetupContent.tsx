@@ -207,7 +207,7 @@ const faqs = [
   },
   {
     q: "Is onsite event support included?",
-    a: "Not automatically. Managed setup primarily covers platform configuration, branded design, and pre-launch preparation. Onsite staff, dedicated hardware, and event-day coordinators require separate scope confirmation.",
+    a: "No. UrPass managed setup is remote-only. Your organization supplies on-site staff, hardware, and venue coordinators and remains responsible for physical gate operations.",
   },
   {
     q: "How long does managed event setup take?",
@@ -320,7 +320,7 @@ export default function ManagedEventSetupContent({
         "Session-level QR permissions & tracking",
         "Attendee list data cleansing & bulk CSV import",
         "Pre-event entrance simulation & gate test",
-        "Live event-day coordinator on active standby",
+        "Remote event-day technical support on standby",
         "Comprehensive post-event attendance report",
       ],
       cta: "Request Event Setup",
@@ -337,7 +337,7 @@ export default function ManagedEventSetupContent({
       features: [
         "Annual or multi-event operational roadmap",
         "Dedicated UrPass technical account manager",
-        "On-ground technical supervision at venue (select cities)",
+        "Remote technical account support for event setup",
         "Custom API, CRM & university ERP integration",
         "Tailored contract, GST compliance & billing",
         "Dedicated 24/7 emergency entrance hotline",
@@ -423,7 +423,7 @@ export default function ManagedEventSetupContent({
             </h1>
 
             <p className="text-base sm:text-lg text-neutral-600 leading-relaxed mb-8 max-w-2xl mx-auto font-normal">
-              Eliminate setup friction and operational risk. The UrPass engineering team configures, tests, and delivers your branded registration portal, ticketing tiers, payment routing, and sub-second QR entrance gates — with zero platform ticket commissions.
+              UrPass configures and tests your registration portal, ticketing tiers, payment workflow, and QR check-in setup remotely. Your team manages venue staffing and physical gate operations.
             </p>
 
             {/* Primary CTA Buttons */}
@@ -445,7 +445,7 @@ export default function ManagedEventSetupContent({
             </div>
 
             <p className="text-xs text-neutral-500 font-medium">
-              One-time package fee · Zero platform ticket commission · 100% Attendee data ownership
+              One-time package fee · No UrPass ticket commission · Organizer controls event data
             </p>
           </AnimateIn>
         </section>
@@ -498,7 +498,7 @@ export default function ManagedEventSetupContent({
                       You Retain Complete Control
                     </h3>
                     <p className="text-xs sm:text-sm text-neutral-600 leading-relaxed mb-4">
-                      All event data, attendee lists, ticket revenue, and credentials belong 100% to your organization. You retain full administrative access to your dashboard throughout and after the event.
+                      Your organization controls its event setup, attendee records, and payment account. Authorized staff can access the UrPass dashboard throughout the event.
                     </p>
                   </div>
                   <div className="pt-4 border-t border-neutral-100 text-xs font-semibold text-violet-700 flex items-center gap-1.5">
@@ -714,7 +714,7 @@ export default function ManagedEventSetupContent({
                 Choose Your Managed Setup Plan
               </h2>
               <p className="text-sm sm:text-base text-neutral-600 max-w-2xl mx-auto leading-relaxed mb-8">
-                Done-for-you technical onboarding and event configuration by UrPass engineers. Zero platform ticket commission — 100% of your ticket sales settle directly into your bank.
+                Remote technical onboarding and event configuration by UrPass. UrPass does not add a ticket commission; payment gateway fees, taxes, and settlement terms still apply.
               </p>
 
               {/* Currency & Region Switcher */}
@@ -854,7 +854,7 @@ export default function ManagedEventSetupContent({
             <div className="flex-1">
               <p className="font-semibold text-neutral-950 mb-0.5">Fee Separation &amp; Terms Disclosure</p>
               <p className="text-xs text-neutral-600">
-                Managed-service pricing is separate from software subscriptions, payment processing fees, and applicable taxes. 100% of attendee ticket revenue settles directly into your payment gateway or bank account with 0% platform commission taken by UrPass.
+                Managed-service pricing is separate from software subscriptions, payment processing fees, and applicable taxes. Ticket payments follow your configured payment provider&apos;s settlement terms. UrPass does not add a platform ticket commission.
               </p>
             </div>
           </div>
@@ -870,7 +870,7 @@ export default function ManagedEventSetupContent({
                   0% Ticket Commission
                 </h4>
                 <p className="text-xs text-neutral-600 mt-0.5 leading-relaxed">
-                  100% of your ticket revenue settles directly into your payment gateway or bank account. UrPass never takes a platform cut.
+                  UrPass does not add a platform ticket commission. Payment gateway charges, taxes, and settlement terms still apply.
                 </p>
               </div>
             </div>
@@ -942,8 +942,8 @@ export default function ManagedEventSetupContent({
                   desc: "Your team can continue managing registrations, tickets, and attendee information directly from UrPass.",
                 },
                 {
-                  title: "Sub-Second Gate Operations",
-                  desc: "Validate attendees in under 0.3 seconds on any smartphone camera with instant duplicate prevention.",
+                  title: "QR Gate Check-In",
+                  desc: "Prepare authorized staff to validate passes on supported smartphones and review duplicate-scan warnings.",
                 },
               ].map((item, idx) => (
                 <AnimateIn key={item.title} delay={idx * 60}>
