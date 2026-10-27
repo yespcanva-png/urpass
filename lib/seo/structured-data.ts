@@ -12,9 +12,14 @@ function sanitizeJsonString(raw: string): string {
 }
 
 export function generateStructuredData(page: MarketingPageConfig) {
-  const isManagedService = page.slug === "remote-managed-event-services" || page.slug === "self-service-vs-managed-events";
   const baseUrl = "https://urpass.space";
-  const pageUrl = `${baseUrl}/${page.slug}`;
+  const pageUrl = page.canonicalUrl || `${baseUrl}/${page.slug}`;
+  const isManagedService =
+    page.slug === "remote-managed-event-services" ||
+    page.slug === "self-service-vs-managed-events" ||
+    page.canonicalUrl?.includes("/services/") ||
+    page.slug.startsWith("managed-") ||
+    page.slug.startsWith("services/");
 
   const graph: any[] = [
     // 1. BreadcrumbList
@@ -87,26 +92,26 @@ export function generateStructuredData(page: MarketingPageConfig) {
         name: "India",
       },
       description:
-        "Remote technical configuration for event registration, ticketing categories, branded QR passes, and gate scanner orientation.",
+        "Remote technical configuration for event registration, ticketing categories, branded QR passes, and gate scanner orientation. Note: Remote setup and cloud support only; no on-site personnel.",
       offers: [
         {
           "@type": "Offer",
           name: "Essential Managed Setup",
-          price: "1000",
+          price: "2999",
           priceCurrency: "INR",
           description: "Technical configuration for events up to 1,000 attendees with basic registration form and standard digital passes.",
         },
         {
           "@type": "Offer",
           name: "Pro Managed Setup",
-          price: "5000",
+          price: "7999",
           priceCurrency: "INR",
           description: "Technical configuration for events up to 5,000 attendees with custom pass design, tiered ticketing, and scanner orientation.",
         },
         {
           "@type": "Offer",
           name: "Premium Managed Setup",
-          price: "15000",
+          price: "14999",
           priceCurrency: "INR",
           description: "Advanced technical setup for up to 15,000 attendees with multi-gate scanner routing and live remote standby.",
         },
@@ -128,11 +133,18 @@ export function generateStructuredData(page: MarketingPageConfig) {
       offers: [
         {
           "@type": "Offer",
+          name: "Free Forever Plan",
+          price: "0",
+          priceCurrency: "INR",
+          description: "1 active event, up to 100 registrations/month, 0% ticket commission, no credit card required.",
+        },
+        {
+          "@type": "Offer",
           name: "Starter Plan",
           price: "499",
           priceCurrency: "INR",
           billingIncrement: "P1M",
-          description: "10 events/month, 500 registrations, CSV exports, 0% ticket commission.",
+          description: "3 active events, 500 registrations/month, CSV exports, 0% ticket commission.",
         },
         {
           "@type": "Offer",
@@ -140,7 +152,15 @@ export function generateStructuredData(page: MarketingPageConfig) {
           price: "999",
           priceCurrency: "INR",
           billingIncrement: "P1M",
-          description: "Unlimited events, 2,500 registrations, custom pass designer, priority support.",
+          description: "10 active events, 2,500 registrations/month, custom pass designer, priority support.",
+        },
+        {
+          "@type": "Offer",
+          name: "Business Plan",
+          price: "2499",
+          priceCurrency: "INR",
+          billingIncrement: "P1M",
+          description: "Unlimited active events*, 10,000 registrations/month, custom domain, API & webhooks.",
         },
       ],
     });

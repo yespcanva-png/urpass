@@ -4,7 +4,7 @@ export const CLUSTER_D_PAGES: MarketingPageConfig[] = [
   // 35. /event-registration-software-india
   {
     slug: "event-registration-software-india",
-    canonicalUrl: "https://urpass.space/event-registration-software-india",
+    canonicalUrl: "https://urpass.space/solutions/event-registration-india",
     title: "Event Registration Software in India | UrPass",
     description: "Create online event registrations, custom forms, QR passes and attendance reports with UrPass event registration software.",
     h1: "Event Registration Software for Organizers in India",
@@ -107,7 +107,7 @@ export const CLUSTER_D_PAGES: MarketingPageConfig[] = [
   // 36. /event-ticketing-software-india
   {
     slug: "event-ticketing-software-india",
-    canonicalUrl: "https://urpass.space/event-ticketing-software-india",
+    canonicalUrl: "https://urpass.space/solutions/event-ticketing-india",
     title: "Online Event Ticketing Software India | UrPass",
     description: "Manage paid event tickets, pricing tiers, digital passes and QR entry with UrPass. Explore self-service or remote setup.",
     h1: "Event Ticketing Software for Indian Organizers",
@@ -210,7 +210,7 @@ export const CLUSTER_D_PAGES: MarketingPageConfig[] = [
   // 37. /qr-event-check-in-software
   {
     slug: "qr-event-check-in-software",
-    canonicalUrl: "https://urpass.space/qr-event-check-in-software",
+    canonicalUrl: "https://urpass.space/solutions/qr-event-check-in",
     title: "QR Code Event Check-in & Scanning Software | UrPass",
     description: "Scan event QR passes, manage guest entry, prevent duplicate scans and monitor live attendance using UrPass.",
     h1: "QR Event Check-in and Guest Entry Software",
@@ -313,7 +313,7 @@ export const CLUSTER_D_PAGES: MarketingPageConfig[] = [
   // 38. /remote-managed-event-services
   {
     slug: "remote-managed-event-services",
-    canonicalUrl: "https://urpass.space/remote-managed-event-services",
+    canonicalUrl: "https://urpass.space/services/managed-event-registration",
     title: "Remote Managed Event Registration & Ticketing | UrPass",
     description: "Let UrPass remotely configure event registrations, tickets, QR passes, invitations and scanner setup for your event.",
     h1: "Remote Managed Event Registration and Ticketing Services",

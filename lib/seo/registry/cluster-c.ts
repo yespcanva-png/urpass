@@ -4,7 +4,7 @@ export const CLUSTER_C_PAGES: MarketingPageConfig[] = [
   // 23. /college-cultural-fest-registration
   {
     slug: "college-cultural-fest-registration",
-    canonicalUrl: "https://urpass.space/college-cultural-fest-registration",
+    canonicalUrl: "https://urpass.space/solutions/college-fest-registration",
     title: "College Cultural Fest Registration Platform | UrPass",
     description: "Manage college cultural fest registrations, attendee passes, ticket categories and check-in with UrPass.",
     h1: "College Cultural Fest Registration and Ticketing",
@@ -313,7 +313,7 @@ export const CLUSTER_C_PAGES: MarketingPageConfig[] = [
   // 26. /hackathon-registration-platform
   {
     slug: "hackathon-registration-platform",
-    canonicalUrl: "https://urpass.space/hackathon-registration-platform",
+    canonicalUrl: "https://urpass.space/solutions/hackathon-registration",
     title: "Hackathon Registration & Participant Management | UrPass",
     description: "Collect hackathon registrations, manage participant groups and track event attendance with UrPass.",
     h1: "Hackathon Registration and Team Check-in",

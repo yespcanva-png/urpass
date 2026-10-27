@@ -1468,10 +1468,19 @@ export const EXPLORE_SEO_PAGES: ExploreSeoPageConfig[] = [
   },
 ];
 
+// Slug Aliases Map for variations (e.g. Bengaluru vs Bangalore, holiday events)
+const EXPLORE_SLUG_ALIASES: Record<string, string> = {
+  bengaluru: "bangalore",
+  "holiday-events-2026": "christmas-events-2026",
+  "new-year-events-2026": "new-years-eve-2026",
+  "holiday-events": "christmas-events-2026",
+};
+
 // Helper Lookups
 export function getExploreSeoPage(slug: string): ExploreSeoPageConfig | undefined {
   const normalized = slug.trim().toLowerCase();
-  return EXPLORE_SEO_PAGES.find((p) => p.slug === normalized);
+  const targetSlug = EXPLORE_SLUG_ALIASES[normalized] || normalized;
+  return EXPLORE_SEO_PAGES.find((p) => p.slug === targetSlug);
 }
 
 export function getAllExploreSeoPages(): ExploreSeoPageConfig[] {

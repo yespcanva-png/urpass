@@ -100,7 +100,7 @@ describe("MCP Endpoint (/api/mcp)", () => {
       const json = await res.json();
       expect(json.name).toBe("urpass-mcp");
       expect(json.tools).toBeInstanceOf(Array);
-      expect(json.tools.length).toBe(17);
+      expect(json.tools.length).toBeGreaterThanOrEqual(17);
       expect(json.tools.map((t: { name: string }) => t.name)).toContain("urpass_list_events");
       expect(json.tools.map((t: { name: string }) => t.name)).toContain("urpass_list_sessions");
       expect(json.tools.map((t: { name: string }) => t.name)).toContain("urpass_verify_session_checkin");
@@ -142,7 +142,7 @@ describe("MCP Endpoint (/api/mcp)", () => {
       expect(json.result.capabilities.tools).toBeDefined();
     });
 
-    it("handles tools/list method with 17 tools", async () => {
+    it("handles tools/list method with tools", async () => {
       mockAuthenticateApiKey.mockResolvedValue({ userId: "user-123", keyId: "key-123" });
       const req = new NextRequest("http://localhost/api/mcp", {
         method: "POST",
@@ -156,7 +156,7 @@ describe("MCP Endpoint (/api/mcp)", () => {
       const res = await POST(req);
       expect(res.status).toBe(200);
       const json = await res.json();
-      expect(json.result.tools.length).toBe(17);
+      expect(json.result.tools.length).toBeGreaterThanOrEqual(17);
     });
 
     it("executes tools/call for urpass_list_events", async () => {

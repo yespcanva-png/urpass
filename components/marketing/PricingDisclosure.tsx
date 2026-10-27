@@ -39,8 +39,19 @@ export default function PricingDisclosure() {
               <div className="space-y-4">
                 <div className="bg-white rounded-2xl p-4 border border-neutral-200/80 flex items-center justify-between">
                   <div>
+                    <h4 className="text-sm font-bold text-neutral-900">Free Tier</h4>
+                    <p className="text-xs text-neutral-500">1 active event · 100 registrations/mo · No card required</p>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-lg font-extrabold text-emerald-700">₹0</span>
+                    <span className="text-xs text-neutral-500"> forever</span>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-2xl p-4 border border-neutral-200/80 flex items-center justify-between">
+                  <div>
                     <h4 className="text-sm font-bold text-neutral-900">Starter Tier</h4>
-                    <p className="text-xs text-neutral-500">10 events/mo · 500 registrations/mo · CSV export</p>
+                    <p className="text-xs text-neutral-500">3 active events · 500 registrations/mo · CSV export</p>
                   </div>
                   <div className="text-right">
                     <span className="text-lg font-extrabold text-neutral-900">₹499</span>
@@ -54,7 +65,7 @@ export default function PricingDisclosure() {
                   </div>
                   <div>
                     <h4 className="text-sm font-bold text-neutral-900">Pro Tier</h4>
-                    <p className="text-xs text-neutral-500">Unlimited events · 2,500 reg/mo · Custom pass designer</p>
+                    <p className="text-xs text-neutral-500">10 active events · 2,500 reg/mo · Custom pass designer</p>
                   </div>
                   <div className="text-right">
                     <span className="text-lg font-extrabold text-violet-700">₹999</span>
@@ -65,7 +76,7 @@ export default function PricingDisclosure() {
                 <div className="bg-white rounded-2xl p-4 border border-neutral-200/80 flex items-center justify-between">
                   <div>
                     <h4 className="text-sm font-bold text-neutral-900">Business Tier</h4>
-                    <p className="text-xs text-neutral-500">Unlimited events · 10,000 reg/mo · Custom domain & API</p>
+                    <p className="text-xs text-neutral-500">Unlimited active events* · 10,000 reg/mo · Custom domain & API</p>
                   </div>
                   <div className="text-right">
                     <span className="text-lg font-extrabold text-neutral-900">₹2,499</span>
@@ -108,7 +119,7 @@ export default function PricingDisclosure() {
                     <p className="text-xs text-neutral-500">Up to 1,000 attendees · Basic form & pass setup</p>
                   </div>
                   <div className="text-right">
-                    <span className="text-lg font-extrabold text-neutral-900">₹1,000</span>
+                    <span className="text-lg font-extrabold text-neutral-900">₹2,999</span>
                     <span className="text-xs text-neutral-500">/event</span>
                   </div>
                 </div>
@@ -122,7 +133,7 @@ export default function PricingDisclosure() {
                     <p className="text-xs text-neutral-500">Up to 5,000 attendees · Custom pass design, VIP tiers & staff training</p>
                   </div>
                   <div className="text-right">
-                    <span className="text-lg font-extrabold text-violet-700">₹5,000</span>
+                    <span className="text-lg font-extrabold text-violet-700">₹7,999</span>
                     <span className="text-xs text-neutral-500">/event</span>
                   </div>
                 </div>
@@ -133,7 +144,7 @@ export default function PricingDisclosure() {
                     <p className="text-xs text-neutral-500">Up to 15,000 attendees · Multi-gate routing & active live standby</p>
                   </div>
                   <div className="text-right">
-                    <span className="text-lg font-extrabold text-neutral-900">₹15,000</span>
+                    <span className="text-lg font-extrabold text-neutral-900">₹14,999</span>
                     <span className="text-xs text-neutral-500">/event</span>
                   </div>
                 </div>

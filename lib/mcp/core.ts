@@ -9,6 +9,10 @@ import {
 import { computeConferenceAnalytics, slugify } from "@/lib/conference/helpers";
 import type { EventSession, EventRoom } from "@/types/conference";
 import { resolveUserSubscriptionAccess } from "@/lib/billing/entitlement-resolver";
+import type { McpScope } from "@/lib/mcp/oauth";
+import { validateEventPreflightReadiness } from "@/lib/events/preflight";
+import { getExploreEligibility } from "@/lib/explore/eligibility";
+import { recordEnterpriseAudit } from "@/lib/audit/enterprise-audit";
 
 function adminClient() {
   return createAdminClient(
@@ -19,6 +23,15 @@ function adminClient() {
 
 export interface McpToolContext {
   userId: string;
+  organizationId?: string | null;
+  scopes?: McpScope[];
+  actorEmail?: string | null;
+}
+
+export function assertScope(ctx: McpToolContext, requiredScope: McpScope) {
+  if (ctx.scopes && ctx.scopes.length > 0 && !ctx.scopes.includes(requiredScope)) {
+    throw new Error(`Forbidden: Token lacks required scope '${requiredScope}'`);
+  }
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -28,6 +41,7 @@ export async function mcpListEvents(
   ctx: McpToolContext,
   params: { status?: string; limit?: number; offset?: number } = {}
 ) {
+  assertScope(ctx, "events:read");
   const supabase = adminClient();
   const limit = Math.min(Math.max(params.limit ?? 20, 1), 100);
   const offset = Math.max(params.offset ?? 0, 0);
@@ -35,12 +49,17 @@ export async function mcpListEvents(
   let query = supabase
     .from("events")
     .select(
-      "id, name, description, event_date, start_time, end_time, venue, status, is_paid_event, ticket_price, attendee_limit, apply_slug, created_at",
+      "id, name, description, event_date, start_time, end_time, venue, status, is_paid_event, ticket_price, attendee_limit, apply_slug, organization_id, created_at",
       { count: "exact" }
-    )
-    .eq("organizer_id", ctx.userId)
-    .order("event_date", { ascending: false })
-    .range(offset, offset + limit - 1);
+    );
+
+  if (ctx.organizationId) {
+    query = query.or(`organizer_id.eq.${ctx.userId},organization_id.eq.${ctx.organizationId}`);
+  } else {
+    query = query.eq("organizer_id", ctx.userId);
+  }
+
+  query = query.order("event_date", { ascending: false }).range(offset, offset + limit - 1);
 
   if (params.status) {
     query = query.eq("status", params.status);
@@ -64,13 +83,20 @@ export async function mcpGetEvent(
   ctx: McpToolContext,
   params: { eventId: string }
 ) {
+  assertScope(ctx, "events:read");
   const supabase = adminClient();
-  const { data: event, error } = await supabase
+  let query = supabase
     .from("events")
     .select("*")
-    .eq("id", params.eventId)
-    .eq("organizer_id", ctx.userId)
-    .single();
+    .eq("id", params.eventId);
+
+  if (ctx.organizationId) {
+    query = query.or(`organizer_id.eq.${ctx.userId},organization_id.eq.${ctx.organizationId}`);
+  } else {
+    query = query.eq("organizer_id", ctx.userId);
+  }
+
+  const { data: event, error } = await query.maybeSingle();
 
   if (error || !event) {
     throw new Error(`Event not found or unauthorized: ${params.eventId}`);
@@ -137,8 +163,10 @@ export async function mcpCreateEvent(
     event_type?: "physical" | "online" | "hybrid";
     meeting_url?: string;
     meeting_platform?: "zoom" | "google_meet" | "teams" | "custom";
+    status?: "draft" | "active";
   }
 ) {
+  assertScope(ctx, "events:write");
   const supabase = adminClient();
   const plan = await getUserPlan(supabase, ctx.userId);
 
@@ -164,10 +192,13 @@ export async function mcpCreateEvent(
   const randomSuffix = Math.floor(100 + Math.random() * 900);
   const apply_slug = `${slugBase}-${randomSuffix}`;
 
+  const initialStatus = params.status || "draft";
+
   const { data: event, error } = await supabase
     .from("events")
     .insert({
       organizer_id: ctx.userId,
+      organization_id: ctx.organizationId || null,
       name: params.name.trim(),
       event_date: params.event_date,
       start_time: params.start_time,
@@ -182,7 +213,7 @@ export async function mcpCreateEvent(
       meeting_url: params.meeting_url || null,
       meeting_platform: params.meeting_platform || null,
       apply_slug,
-      status: "active",
+      status: initialStatus,
       application_enabled: true,
     })
     .select("*")
@@ -192,10 +223,23 @@ export async function mcpCreateEvent(
     throw new Error(`Failed to create event: ${error?.message}`);
   }
 
+  void recordEnterpriseAudit({
+    organizationId: event.organization_id || "personal",
+    eventId: event.id,
+    userId: ctx.userId,
+    actorEmail: ctx.actorEmail || "claude-mcp@urpass.space",
+    action: "CREATE_EVENT",
+    resourceType: "event",
+    resourceId: event.id,
+    newValues: event,
+    details: { channel: "mcp" },
+  });
+
   return {
     event,
     applyUrl: `https://urpass.space/apply/${event.apply_slug || event.id}`,
-    message: "Event created successfully",
+    editorUrl: `https://urpass.space/event/${event.id}`,
+    message: `Draft event '${event.name}' created successfully.`,
   };
 }
 
@@ -1054,5 +1098,581 @@ export async function mcpGetConferenceAnalytics(
   return {
     eventId: params.eventId,
     analytics,
+  };
+}
+
+// ─────────────────────────────────────────────────────────────
+// 18. update_event
+// ─────────────────────────────────────────────────────────────
+export async function mcpUpdateEvent(
+  ctx: McpToolContext,
+  params: {
+    eventId: string;
+    name?: string;
+    event_date?: string;
+    start_time?: string;
+    end_time?: string;
+    venue?: string;
+    description?: string;
+    attendee_limit?: number;
+    is_paid_event?: boolean;
+    ticket_price?: number;
+    auto_approve?: boolean;
+    event_type?: "physical" | "online" | "hybrid";
+    meeting_url?: string;
+  }
+) {
+  assertScope(ctx, "events:write");
+  const supabase = adminClient();
+
+  const { data: existing, error: findErr } = await supabase
+    .from("events")
+    .select("*")
+    .eq("id", params.eventId)
+    .single();
+
+  if (findErr || !existing) {
+    throw new Error(`Event not found: ${params.eventId}`);
+  }
+
+  if (existing.organizer_id !== ctx.userId && existing.organization_id !== ctx.organizationId) {
+    throw new Error("Unauthorized to edit this event");
+  }
+
+  const updates: Record<string, unknown> = {
+    updated_at: new Date().toISOString(),
+  };
+
+  if (params.name !== undefined) updates.name = params.name.trim();
+  if (params.event_date !== undefined) updates.event_date = params.event_date;
+  if (params.start_time !== undefined) updates.start_time = params.start_time;
+  if (params.end_time !== undefined) updates.end_time = params.end_time;
+  if (params.venue !== undefined) updates.venue = params.venue.trim();
+  if (params.description !== undefined) updates.description = params.description.trim();
+  if (params.attendee_limit !== undefined) updates.attendee_limit = params.attendee_limit;
+  if (params.is_paid_event !== undefined) updates.is_paid_event = params.is_paid_event;
+  if (params.ticket_price !== undefined) updates.ticket_price = params.ticket_price;
+  if (params.auto_approve !== undefined) updates.auto_approve = params.auto_approve;
+  if (params.event_type !== undefined) updates.event_type = params.event_type;
+  if (params.meeting_url !== undefined) updates.meeting_url = params.meeting_url;
+
+  const { data: updated, error: updateErr } = await supabase
+    .from("events")
+    .update(updates)
+    .eq("id", params.eventId)
+    .select("*")
+    .single();
+
+  if (updateErr || !updated) {
+    throw new Error(`Failed to update event: ${updateErr?.message}`);
+  }
+
+  void recordEnterpriseAudit({
+    organizationId: updated.organization_id || "personal",
+    eventId: updated.id,
+    userId: ctx.userId,
+    actorEmail: ctx.actorEmail || "claude-mcp@urpass.space",
+    action: "UPDATE_EVENT",
+    resourceType: "event",
+    resourceId: updated.id,
+    oldValues: existing,
+    newValues: updated,
+    details: { channel: "mcp" },
+  });
+
+  return {
+    success: true,
+    message: `Event '${updated.name}' updated successfully`,
+    event: updated,
+  };
+}
+
+// ─────────────────────────────────────────────────────────────
+// 19. list_ticket_tiers
+// ─────────────────────────────────────────────────────────────
+export async function mcpListTicketTiers(
+  ctx: McpToolContext,
+  params: { eventId: string }
+) {
+  assertScope(ctx, "tickets:read");
+  const supabase = adminClient();
+
+  const [{ data: tiers, error }, { data: attendees }] = await Promise.all([
+    supabase
+      .from("ticket_types")
+      .select("*")
+      .eq("event_id", params.eventId)
+      .order("created_at", { ascending: true }),
+    supabase
+      .from("attendees")
+      .select("id, ticket_type_id, application_status")
+      .eq("event_id", params.eventId)
+      .eq("application_status", "approved"),
+  ]);
+
+  if (error) throw new Error(`Failed to list ticket tiers: ${error.message}`);
+
+  const soldCountByTier: Record<string, number> = {};
+  for (const a of attendees ?? []) {
+    if (a.ticket_type_id) {
+      soldCountByTier[a.ticket_type_id] = (soldCountByTier[a.ticket_type_id] || 0) + 1;
+    }
+  }
+
+  return {
+    eventId: params.eventId,
+    tiers: (tiers ?? []).map((t) => ({
+      id: t.id,
+      name: t.name,
+      category: t.category || "general",
+      priceINR: (t.price || 0) / 100,
+      pricePaise: t.price || 0,
+      capacity: t.capacity,
+      soldCount: soldCountByTier[t.id] || 0,
+      status: t.status || "active",
+      maxPerPerson: t.max_per_person || 1,
+    })),
+  };
+}
+
+// ─────────────────────────────────────────────────────────────
+// 20. create_ticket_tier
+// ─────────────────────────────────────────────────────────────
+export async function mcpCreateTicketTier(
+  ctx: McpToolContext,
+  params: {
+    eventId: string;
+    name: string;
+    price: number;
+    capacity?: number;
+    category?: string;
+    description?: string;
+    maxPerPerson?: number;
+  }
+) {
+  assertScope(ctx, "tickets:write");
+  const supabase = adminClient();
+
+  const { data: event } = await supabase
+    .from("events")
+    .select("id, organizer_id, organization_id")
+    .eq("id", params.eventId)
+    .single();
+
+  if (!event) throw new Error("Event not found or unauthorized");
+  if (event.organizer_id !== ctx.userId && event.organization_id !== ctx.organizationId) {
+    throw new Error("Unauthorized to create ticket tiers for this event");
+  }
+
+  const pricePaise = Math.round((params.price || 0) * 100);
+  const tierData = {
+    event_id: params.eventId,
+    name: params.name.trim(),
+    price: pricePaise,
+    capacity: params.capacity ?? null,
+    category: params.category || "general",
+    description: params.description?.trim() || null,
+    max_per_person: params.maxPerPerson || 1,
+    status: "active",
+  };
+
+  const { data: created, error } = await supabase
+    .from("ticket_types")
+    .insert(tierData)
+    .select("*")
+    .single();
+
+  if (error || !created) {
+    throw new Error(`Failed to create ticket tier: ${error?.message}`);
+  }
+
+  void recordEnterpriseAudit({
+    organizationId: event.organization_id || "personal",
+    eventId: event.id,
+    userId: ctx.userId,
+    actorEmail: ctx.actorEmail || "claude-mcp@urpass.space",
+    action: "CREATE_TICKET_TIER",
+    resourceType: "ticket_type",
+    resourceId: created.id,
+    newValues: created,
+    details: { channel: "mcp" },
+  });
+
+  return {
+    success: true,
+    message: `Ticket tier '${created.name}' created at ₹${params.price}`,
+    tier: {
+      id: created.id,
+      name: created.name,
+      priceINR: params.price,
+      pricePaise,
+      capacity: created.capacity,
+      status: created.status,
+    },
+  };
+}
+
+// ─────────────────────────────────────────────────────────────
+// 21. get_registrations
+// ─────────────────────────────────────────────────────────────
+export async function mcpGetRegistrations(
+  ctx: McpToolContext,
+  params: {
+    eventId: string;
+    status?: "all" | "pending" | "approved" | "rejected";
+    query?: string;
+    limit?: number;
+    offset?: number;
+    unmaskPII?: boolean;
+  }
+) {
+  assertScope(ctx, "attendees:read");
+  const supabase = adminClient();
+
+  const { data: event } = await supabase
+    .from("events")
+    .select("id, organizer_id, organization_id")
+    .eq("id", params.eventId)
+    .single();
+
+  if (!event) throw new Error("Event not found or unauthorized");
+  if (event.organizer_id !== ctx.userId && event.organization_id !== ctx.organizationId) {
+    throw new Error("Unauthorized to view registrations for this event");
+  }
+
+  const limit = Math.min(Math.max(params.limit ?? 50, 1), 100);
+  const offset = Math.max(params.offset ?? 0, 0);
+
+  let q = supabase
+    .from("attendees")
+    .select("id, name, email, phone, pass_type, application_status, pass_status, created_at", { count: "exact" })
+    .eq("event_id", params.eventId)
+    .order("created_at", { ascending: false })
+    .range(offset, offset + limit - 1);
+
+  if (params.status && params.status !== "all") {
+    q = q.eq("application_status", params.status);
+  }
+
+  if (params.query) {
+    const term = params.query.trim().toLowerCase();
+    q = q.or(`name.ilike.%${term}%,email.ilike.%${term}%`);
+  }
+
+  const { data: attendees, error, count } = await q;
+  if (error) throw new Error(`Failed to list registrations: ${error.message}`);
+
+  const maskEmail = (email: string) => {
+    const [user, domain] = email.split("@");
+    if (!domain) return "***";
+    const maskedUser = user.length > 2 ? `${user[0]}***${user[user.length - 1]}` : `${user[0]}***`;
+    return `${maskedUser}@${domain}`;
+  };
+
+  const maskPhone = (phone?: string | null) => {
+    if (!phone) return null;
+    const clean = phone.trim();
+    if (clean.length < 5) return "***";
+    return `${clean.slice(0, 3)}*****${clean.slice(-2)}`;
+  };
+
+  const records = (attendees ?? []).map((att) => ({
+    id: att.id,
+    name: att.name,
+    email: params.unmaskPII ? att.email : maskEmail(att.email),
+    phone: params.unmaskPII ? att.phone : maskPhone(att.phone),
+    passType: att.pass_type,
+    applicationStatus: att.application_status,
+    passStatus: att.pass_status,
+    registeredAt: att.created_at,
+  }));
+
+  return {
+    eventId: params.eventId,
+    registrations: records,
+    total: count ?? 0,
+    limit,
+    offset,
+    piiProtected: !params.unmaskPII,
+  };
+}
+
+// ─────────────────────────────────────────────────────────────
+// 22. get_event_readiness
+// ─────────────────────────────────────────────────────────────
+export async function mcpGetEventReadiness(
+  ctx: McpToolContext,
+  params: { eventId: string }
+) {
+  assertScope(ctx, "events:read");
+  const supabase = adminClient();
+
+  const { data: event } = await supabase
+    .from("events")
+    .select("id, name, organizer_id, organization_id, status")
+    .eq("id", params.eventId)
+    .single();
+
+  if (!event) throw new Error("Event not found or unauthorized");
+  if (event.organizer_id !== ctx.userId && event.organization_id !== ctx.organizationId) {
+    throw new Error("Unauthorized to inspect readiness for this event");
+  }
+
+  const result = await validateEventPreflightReadiness(params.eventId, supabase);
+
+  return {
+    eventId: event.id,
+    eventName: event.name,
+    status: event.status,
+    readyToPublish: result.ready,
+    errors: result.errors.map((e) => ({ id: e.id, title: e.title, message: e.message })),
+    warnings: result.warnings.map((w) => ({ id: w.id, title: w.title, message: w.message })),
+    checksPassed: result.items.filter((i) => i.passed).length,
+    totalChecks: result.items.length,
+  };
+}
+
+// ─────────────────────────────────────────────────────────────
+// 23. get_scanner_stats
+// ─────────────────────────────────────────────────────────────
+export async function mcpGetScannerStats(
+  ctx: McpToolContext,
+  params: { eventId: string; gateId?: string }
+) {
+  assertScope(ctx, "analytics:read");
+  const supabase = adminClient();
+
+  const { data: event } = await supabase
+    .from("events")
+    .select("id, name, attendee_limit, organizer_id, organization_id")
+    .eq("id", params.eventId)
+    .single();
+
+  if (!event) throw new Error("Event not found or unauthorized");
+  if (event.organizer_id !== ctx.userId && event.organization_id !== ctx.organizationId) {
+    throw new Error("Unauthorized to access scanner telemetry");
+  }
+
+  let checkinQuery = supabase
+    .from("check_ins")
+    .select("id, gate_id, checked_in_at, check_in_method")
+    .eq("event_id", params.eventId);
+
+  if (params.gateId) {
+    checkinQuery = checkinQuery.eq("gate_id", params.gateId);
+  }
+
+  const [{ data: checkIns }, { count: approvedCount }] = await Promise.all([
+    checkinQuery,
+    supabase
+      .from("attendees")
+      .select("*", { count: "exact", head: true })
+      .eq("event_id", params.eventId)
+      .eq("application_status", "approved"),
+  ]);
+
+  const list = checkIns ?? [];
+  const totalCheckedIn = list.length;
+  const totalApproved = approvedCount ?? 0;
+  const remaining = Math.max(0, totalApproved - totalCheckedIn);
+
+  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+  const scansLastHour = list.filter((c) => (c.checked_in_at || "") >= oneHourAgo).length;
+
+  const gateCounts: Record<string, number> = {};
+  for (const c of list) {
+    const gate = c.gate_id || "Main Entrance";
+    gateCounts[gate] = (gateCounts[gate] || 0) + 1;
+  }
+
+  return {
+    eventId: event.id,
+    eventName: event.name,
+    totalApproved,
+    totalCheckedIn,
+    remainingToEnter: remaining,
+    checkInVelocityPerHour: scansLastHour,
+    turnoutRatePct: totalApproved > 0 ? Math.round((totalCheckedIn / totalApproved) * 100) : 0,
+    gateBreakdown: gateCounts,
+  };
+}
+
+// ─────────────────────────────────────────────────────────────
+// 24. publish_event
+// ─────────────────────────────────────────────────────────────
+export async function mcpPublishEvent(
+  ctx: McpToolContext,
+  params: { eventId: string; confirm?: boolean }
+) {
+  assertScope(ctx, "events:write");
+  const supabase = adminClient();
+
+  const { data: event } = await supabase
+    .from("events")
+    .select("*")
+    .eq("id", params.eventId)
+    .single();
+
+  if (!event) throw new Error("Event not found");
+  if (event.organizer_id !== ctx.userId && event.organization_id !== ctx.organizationId) {
+    throw new Error("Unauthorized to publish this event");
+  }
+
+  if (event.status === "active") {
+    return {
+      success: true,
+      alreadyActive: true,
+      message: "Event is already published and active.",
+      liveUrl: `https://urpass.space/apply/${event.apply_slug || event.id}`,
+    };
+  }
+
+  const preflight = await validateEventPreflightReadiness(params.eventId, supabase);
+  if (!preflight.ready) {
+    throw new Error(
+      `Cannot publish: Pre-flight readiness checks failed:\n• ${preflight.errors.map((e) => e.message).join("\n• ")}`
+    );
+  }
+
+  const plan = await getUserPlan(supabase, event.organizer_id);
+  const eventsLimit = plan.getLimit("events_per_month");
+  if (eventsLimit < 999_999) {
+    const periodStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+    const { count: publishedThisMonth } = await supabase
+      .from("events")
+      .select("*", { count: "exact", head: true })
+      .eq("organizer_id", event.organizer_id)
+      .eq("status", "active")
+      .gte("created_at", periodStart.toISOString());
+
+    if ((publishedThisMonth ?? 0) >= eventsLimit) {
+      throw new Error(
+        `Plan monthly event publish limit reached (${eventsLimit} events). Upgrade required.`
+      );
+    }
+  }
+
+  if (!params.confirm) {
+    return {
+      requiresConfirmation: true,
+      message: `Event '${event.name}' is ready to publish. Please pass confirm: true to make it live to attendees.`,
+      preflightPassed: true,
+      projectedUrl: `https://urpass.space/apply/${event.apply_slug || event.id}`,
+    };
+  }
+
+  const { data: published, error } = await supabase
+    .from("events")
+    .update({ status: "active", updated_at: new Date().toISOString() })
+    .eq("id", params.eventId)
+    .select("*")
+    .single();
+
+  if (error || !published) throw new Error(`Failed to publish event: ${error?.message}`);
+
+  void recordEnterpriseAudit({
+    organizationId: published.organization_id || "personal",
+    eventId: published.id,
+    userId: ctx.userId,
+    actorEmail: ctx.actorEmail || "claude-mcp@urpass.space",
+    action: "PUBLISH_EVENT",
+    resourceType: "event",
+    resourceId: published.id,
+    newValues: { status: "active" },
+    details: { channel: "mcp" },
+  });
+
+  return {
+    success: true,
+    message: `Event '${published.name}' has been published successfully!`,
+    liveUrl: `https://urpass.space/apply/${published.apply_slug || published.id}`,
+    event: published,
+  };
+}
+
+// ─────────────────────────────────────────────────────────────
+// 25. submit_to_explore
+// ─────────────────────────────────────────────────────────────
+export async function mcpSubmitToExplore(
+  ctx: McpToolContext,
+  params: {
+    eventId: string;
+    city: string;
+    category: string;
+    editorialSummary?: string;
+    confirm?: boolean;
+  }
+) {
+  assertScope(ctx, "events:write");
+  const supabase = adminClient();
+
+  const { data: event } = await supabase
+    .from("events")
+    .select("*")
+    .eq("id", params.eventId)
+    .single();
+
+  if (!event) throw new Error("Event not found");
+  if (event.organizer_id !== ctx.userId && event.organization_id !== ctx.organizationId) {
+    throw new Error("Unauthorized to submit this event to Explore");
+  }
+
+  const eligibility = await getExploreEligibility(params.eventId, {
+    city: params.city,
+    category: params.category,
+    editorialSummary: params.editorialSummary,
+  });
+
+  if (!eligibility.ready) {
+    throw new Error(`Event is not eligible for Explore: ${eligibility.issues[0] || "Requirements not met."}`);
+  }
+
+  if (!params.confirm) {
+    return {
+      requiresConfirmation: true,
+      message: `Event '${event.name}' is eligible for UrPass Explore. Pass confirm: true to submit for marketplace moderation review.`,
+      eligibility,
+    };
+  }
+
+  const { data: listing, error } = await supabase
+    .from("explore_marketplace_listings")
+    .upsert(
+      {
+        event_id: params.eventId,
+        city: params.city,
+        category: params.category,
+        editorial_summary: params.editorialSummary?.trim() || null,
+        status: "pending",
+        venue_address: event.venue,
+        min_price_paise: eligibility.minPricePaise,
+        currency: "INR",
+        is_free: eligibility.isFree,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "event_id" }
+    )
+    .select("*")
+    .single();
+
+  if (error) throw new Error(`Failed to submit Explore listing: ${error.message}`);
+
+  void recordEnterpriseAudit({
+    organizationId: event.organization_id || "personal",
+    eventId: event.id,
+    userId: ctx.userId,
+    actorEmail: ctx.actorEmail || "claude-mcp@urpass.space",
+    action: "SUBMIT_TO_EXPLORE",
+    resourceType: "explore_listing",
+    resourceId: params.eventId,
+    newValues: listing,
+    details: { channel: "mcp" },
+  });
+
+  return {
+    success: true,
+    message: `Event '${event.name}' submitted to UrPass Explore moderation queue.`,
+    listingStatus: "pending",
+    reviewNotice: "Listing will appear on UrPass Explore city hubs once verified by moderation.",
   };
 }

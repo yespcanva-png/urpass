@@ -24,8 +24,8 @@ export default function DualConversionCTA({
   position = "hero",
   selfServiceLabel = "Create Your Event",
   managedServiceLabel = "Let UrPass Manage It",
-  selfServiceSubtext = "Self-Service · From ₹499/mo · 0% Ticket Commission",
-  managedServiceSubtext = "Remote Managed Service · From ₹1,000/event · Setup by UrPass Engineers",
+  selfServiceSubtext = "Self-Service · Free Forever Plan Available · 0% Ticket Commission",
+  managedServiceSubtext = "Remote Managed Service · From ₹1,000/event · Remote Setup by UrPass Engineers",
   className = "",
   eventTypeName,
 }: DualConversionCTAProps) {

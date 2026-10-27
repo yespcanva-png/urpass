@@ -932,7 +932,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ].map((path) => ({ url: `${BASE}${path}`, priority: 0.95, changeFrequency: "weekly" as const }));
 
   const marketingEntries = getAllPublishedPages().map((page) => ({
-    url: `${BASE}/${page.slug}`,
+    url: page.canonicalUrl || `${BASE}/${page.slug}`,
     priority: page.cluster === "evergreen" ? 0.95 : 0.9,
     changeFrequency: "weekly" as const,
     lastModified: page.updatedAt,

@@ -12,6 +12,7 @@ import PasswordResetButton from "./PasswordResetButton";
 import SignOutButton from "./SignOutButton";
 import RazorpayCard from "./RazorpayCard";
 import PayUCard from "@/components/payments/PayUCard";
+import { ClaudeMcpCard } from "./ClaudeMcpCard";
 import DeveloperDashboard, { type ApiKeyRow } from "@/app/dashboard/developer/DeveloperDashboard";
 import type { ApiUsage } from "@/app/actions/api-usage";
 import type { WebhookEndpoint, WebhookDelivery } from "@/app/actions/webhooks";
@@ -455,10 +456,20 @@ export default function SettingsShell({
             <div>
               <h2 className="text-lg font-bold tracking-tight text-neutral-900">Integrations</h2>
               <p className="text-sm text-neutral-400 mt-0.5">
-                Connect payment gateways to accept ticket sales directly into your merchant accounts.
+                Connect AI assistants and payment gateways directly to your UrPass account.
               </p>
             </div>
+
+            {/* AI Assistants / MCP Section */}
             <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <p className="text-[10px] font-bold tracking-widest uppercase text-neutral-400">AI Assistants &amp; MCP</p>
+                <span className="text-[11px] text-neutral-500 font-medium">Remote Model Context Protocol</span>
+              </div>
+              <ClaudeMcpCard />
+            </div>
+
+            <div className="space-y-4 pt-4 border-t border-neutral-100">
               <div className="flex items-center justify-between">
                 <p className="text-[10px] font-bold tracking-widest uppercase text-neutral-400">Payment gateways</p>
                 <span className="text-[11px] text-neutral-500 font-medium">Direct settlement into your bank account</span>

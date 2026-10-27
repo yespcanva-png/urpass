@@ -4,12 +4,20 @@ import {
   mcpListEvents,
   mcpGetEvent,
   mcpCreateEvent,
+  mcpUpdateEvent,
+  mcpListTicketTiers,
+  mcpCreateTicketTier,
+  mcpGetRegistrations,
   mcpListAttendees,
   mcpApproveAttendee,
   mcpRejectAttendee,
   mcpLookupPass,
   mcpVerifyCheckin,
   mcpGetEventAnalytics,
+  mcpGetEventReadiness,
+  mcpGetScannerStats,
+  mcpPublishEvent,
+  mcpSubmitToExplore,
   mcpIssuePass,
   mcpListSessions,
   mcpCreateSession,
@@ -378,6 +386,247 @@ export function createUrpassMcpServer(ctx: McpToolContext) {
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
         return { isError: true, content: [{ type: "text", text: `Error: ${msg}` }] };
+      }
+    }
+  );
+
+  // ─────────────────────────────────────────────────────────
+  // 12 Claude-Standard MCP Tools (Direct conversational actions)
+  // ─────────────────────────────────────────────────────────
+
+  // list_events
+  server.tool(
+    "list_events",
+    "List all events organized by the user or organization with dates, capacities, and attendee counts.",
+    {
+      status: z.enum(["draft", "active", "completed"]).optional().describe("Filter events by status"),
+      limit: z.number().int().min(1).max(100).optional().describe("Number of events to return"),
+      offset: z.number().int().min(0).optional(),
+    },
+    async (args) => {
+      try {
+        const result = await mcpListEvents(ctx, args);
+        return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+      } catch (err: unknown) {
+        return { isError: true, content: [{ type: "text", text: `Error: ${err instanceof Error ? err.message : String(err)}` }] };
+      }
+    }
+  );
+
+  // get_event
+  server.tool(
+    "get_event",
+    "Get full details for an event including ticket types, capacity, and live attendee statistics.",
+    { eventId: z.string().describe("The unique UUID of the event") },
+    async (args) => {
+      try {
+        const result = await mcpGetEvent(ctx, args);
+        return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+      } catch (err: unknown) {
+        return { isError: true, content: [{ type: "text", text: `Error: ${err instanceof Error ? err.message : String(err)}` }] };
+      }
+    }
+  );
+
+  // create_event
+  server.tool(
+    "create_event",
+    "Create a draft event on UrPass with digital passes, QR check-in, and shareable registration link.",
+    {
+      name: z.string().min(2).describe("Event name/title"),
+      event_date: z.string().describe("Date of the event (YYYY-MM-DD)"),
+      start_time: z.string().describe("Event start time (e.g. 10:00 AM or 18:30)"),
+      end_time: z.string().optional().describe("Event end time"),
+      venue: z.string().min(2).describe("Venue address or physical location"),
+      description: z.string().optional().describe("Event description"),
+      attendee_limit: z.number().int().min(1).optional().describe("Maximum attendee capacity"),
+      auto_approve: z.boolean().optional(),
+      is_paid_event: z.boolean().optional(),
+      ticket_price: z.number().int().min(0).optional(),
+      event_type: z.enum(["physical", "online", "hybrid"]).optional(),
+      meeting_url: z.string().optional(),
+      status: z.enum(["draft", "active"]).optional(),
+    },
+    async (args) => {
+      try {
+        const result = await mcpCreateEvent(ctx, args);
+        return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+      } catch (err: unknown) {
+        return { isError: true, content: [{ type: "text", text: `Error: ${err instanceof Error ? err.message : String(err)}` }] };
+      }
+    }
+  );
+
+  // update_event
+  server.tool(
+    "update_event",
+    "Update event title, dates, hours, venue, description, capacity, or ticket pricing.",
+    {
+      eventId: z.string().describe("Event UUID"),
+      name: z.string().optional(),
+      event_date: z.string().optional(),
+      start_time: z.string().optional(),
+      end_time: z.string().optional(),
+      venue: z.string().optional(),
+      description: z.string().optional(),
+      attendee_limit: z.number().optional(),
+      is_paid_event: z.boolean().optional(),
+      ticket_price: z.number().optional(),
+      auto_approve: z.boolean().optional(),
+    },
+    async (args) => {
+      try {
+        const result = await mcpUpdateEvent(ctx, args);
+        return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+      } catch (err: unknown) {
+        return { isError: true, content: [{ type: "text", text: `Error: ${err instanceof Error ? err.message : String(err)}` }] };
+      }
+    }
+  );
+
+  // list_ticket_tiers
+  server.tool(
+    "list_ticket_tiers",
+    "Retrieve ticket types, prices (INR), capacities, and sold counts for an event.",
+    { eventId: z.string().describe("Event UUID") },
+    async (args) => {
+      try {
+        const result = await mcpListTicketTiers(ctx, args);
+        return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+      } catch (err: unknown) {
+        return { isError: true, content: [{ type: "text", text: `Error: ${err instanceof Error ? err.message : String(err)}` }] };
+      }
+    }
+  );
+
+  // create_ticket_tier
+  server.tool(
+    "create_ticket_tier",
+    "Add a new ticket tier with pricing in INR and capacity limit.",
+    {
+      eventId: z.string().describe("Event UUID"),
+      name: z.string().describe("Ticket tier name"),
+      price: z.number().min(0).describe("Ticket price in INR"),
+      capacity: z.number().optional(),
+      category: z.string().optional(),
+      description: z.string().optional(),
+      maxPerPerson: z.number().optional(),
+    },
+    async (args) => {
+      try {
+        const result = await mcpCreateTicketTier(ctx, args);
+        return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+      } catch (err: unknown) {
+        return { isError: true, content: [{ type: "text", text: `Error: ${err instanceof Error ? err.message : String(err)}` }] };
+      }
+    }
+  );
+
+  // get_registrations
+  server.tool(
+    "get_registrations",
+    "List registered attendees for an event with privacy-preserving PII masking.",
+    {
+      eventId: z.string().describe("Event UUID"),
+      status: z.enum(["all", "pending", "approved", "rejected"]).optional(),
+      query: z.string().optional(),
+      limit: z.number().optional(),
+      offset: z.number().optional(),
+      unmaskPII: z.boolean().optional(),
+    },
+    async (args) => {
+      try {
+        const result = await mcpGetRegistrations(ctx, args);
+        return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+      } catch (err: unknown) {
+        return { isError: true, content: [{ type: "text", text: `Error: ${err instanceof Error ? err.message : String(err)}` }] };
+      }
+    }
+  );
+
+  // get_event_analytics
+  server.tool(
+    "get_event_analytics",
+    "Get live event analytics: registration totals, approval rates, check-in velocity, and ticket revenue.",
+    { eventId: z.string().describe("Event UUID") },
+    async (args) => {
+      try {
+        const result = await mcpGetEventAnalytics(ctx, args);
+        return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+      } catch (err: unknown) {
+        return { isError: true, content: [{ type: "text", text: `Error: ${err instanceof Error ? err.message : String(err)}` }] };
+      }
+    }
+  );
+
+  // get_event_readiness
+  server.tool(
+    "get_event_readiness",
+    "Evaluate 7 pre-flight readiness checks (dates, ticket setup, capacity, payment gateway, venue) before publishing.",
+    { eventId: z.string().describe("Event UUID") },
+    async (args) => {
+      try {
+        const result = await mcpGetEventReadiness(ctx, args);
+        return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+      } catch (err: unknown) {
+        return { isError: true, content: [{ type: "text", text: `Error: ${err instanceof Error ? err.message : String(err)}` }] };
+      }
+    }
+  );
+
+  // get_scanner_stats
+  server.tool(
+    "get_scanner_stats",
+    "Retrieve live venue check-in figures, gate occupancy, and entry velocity per hour.",
+    {
+      eventId: z.string().describe("Event UUID"),
+      gateId: z.string().optional(),
+    },
+    async (args) => {
+      try {
+        const result = await mcpGetScannerStats(ctx, args);
+        return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+      } catch (err: unknown) {
+        return { isError: true, content: [{ type: "text", text: `Error: ${err instanceof Error ? err.message : String(err)}` }] };
+      }
+    }
+  );
+
+  // publish_event
+  server.tool(
+    "publish_event",
+    "Publish an event to live status after pre-flight readiness verification. Requires confirm: true.",
+    {
+      eventId: z.string().describe("Event UUID"),
+      confirm: z.boolean().optional().describe("Explicit user confirmation flag"),
+    },
+    async (args) => {
+      try {
+        const result = await mcpPublishEvent(ctx, args);
+        return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+      } catch (err: unknown) {
+        return { isError: true, content: [{ type: "text", text: `Error: ${err instanceof Error ? err.message : String(err)}` }] };
+      }
+    }
+  );
+
+  // submit_to_explore
+  server.tool(
+    "submit_to_explore",
+    "Submit an event to the UrPass Explore consumer discovery marketplace moderation queue. Requires confirm: true.",
+    {
+      eventId: z.string().describe("Event UUID"),
+      city: z.string().describe("City hub (e.g. Bangalore, Chennai, Mumbai)"),
+      category: z.string().describe("Category slug"),
+      editorialSummary: z.string().optional(),
+      confirm: z.boolean().optional().describe("Explicit user confirmation flag"),
+    },
+    async (args) => {
+      try {
+        const result = await mcpSubmitToExplore(ctx, args);
+        return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+      } catch (err: unknown) {
+        return { isError: true, content: [{ type: "text", text: `Error: ${err instanceof Error ? err.message : String(err)}` }] };
       }
     }
   );

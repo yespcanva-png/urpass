@@ -1,15 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateApiKey } from "@/lib/api-auth";
+import { verifyOAuthToken, ALL_MCP_SCOPES } from "@/lib/mcp/oauth";
 import {
   mcpListEvents,
   mcpGetEvent,
   mcpCreateEvent,
+  mcpUpdateEvent,
+  mcpListTicketTiers,
+  mcpCreateTicketTier,
+  mcpGetRegistrations,
   mcpListAttendees,
   mcpApproveAttendee,
   mcpRejectAttendee,
   mcpLookupPass,
   mcpVerifyCheckin,
   mcpGetEventAnalytics,
+  mcpGetEventReadiness,
+  mcpGetScannerStats,
+  mcpPublishEvent,
+  mcpSubmitToExplore,
   mcpIssuePass,
   mcpListSessions,
   mcpCreateSession,
@@ -23,21 +32,50 @@ import {
 
 export const dynamic = "force-dynamic";
 
-export const MCP_TOOLS_MANIFEST = [
+// ─────────────────────────────────────────────────────────────────────────────
+// Rate Limiter: In-memory sliding window (120 req/min read, 30 req/min write)
+// ─────────────────────────────────────────────────────────────────────────────
+interface RateLimitBucket {
+  count: number;
+  resetAt: number;
+}
+const rateLimitMap = new Map<string, RateLimitBucket>();
+
+function checkRateLimit(key: string, limit: number, windowMs = 60000): { allowed: boolean; retryAfter: number } {
+  const now = Date.now();
+  const bucket = rateLimitMap.get(key);
+
+  if (!bucket || now > bucket.resetAt) {
+    rateLimitMap.set(key, { count: 1, resetAt: now + windowMs });
+    return { allowed: true, retryAfter: 0 };
+  }
+
+  if (bucket.count >= limit) {
+    return { allowed: false, retryAfter: Math.ceil((bucket.resetAt - now) / 1000) };
+  }
+
+  bucket.count++;
+  return { allowed: true, retryAfter: 0 };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 12 Claude-Standard MCP Tools
+// ─────────────────────────────────────────────────────────────────────────────
+export const CLAUDE_MCP_TOOLS = [
   {
-    name: "urpass_list_events",
-    description: "List all events organized by the user with dates, venues, attendee counts, and capacities.",
+    name: "list_events",
+    description: "List all events organized by the user or their authorized organization with dates, venues, attendee counts, and capacities.",
     inputSchema: {
       type: "object",
       properties: {
         status: { type: "string", enum: ["draft", "active", "completed"], description: "Filter by status" },
-        limit: { type: "number", description: "Number of events to return (default 20)" },
-        offset: { type: "number", description: "Pagination offset" },
+        limit: { type: "number", description: "Number of events to return (default 20, max 100)" },
+        offset: { type: "number", description: "Pagination offset index" },
       },
     },
   },
   {
-    name: "urpass_get_event",
+    name: "get_event",
     description: "Get full details for an event including ticket types, capacity, and live attendee statistics.",
     inputSchema: {
       type: "object",
@@ -48,21 +86,199 @@ export const MCP_TOOLS_MANIFEST = [
     },
   },
   {
-    name: "urpass_create_event",
-    description: "Create a new event on URPASS with digital passes, QR check-in, and shareable registration link.",
+    name: "create_event",
+    description: "Create a draft event on UrPass with digital passes, QR check-in, and shareable registration link.",
     inputSchema: {
       type: "object",
       properties: {
         name: { type: "string", description: "Event title" },
         event_date: { type: "string", description: "Event date (YYYY-MM-DD)" },
-        start_time: { type: "string", description: "Event start time (e.g. 10:00 AM)" },
+        start_time: { type: "string", description: "Event start time (e.g. 10:00 AM or 18:30)" },
         end_time: { type: "string", description: "Event end time" },
         venue: { type: "string", description: "Venue name or physical address" },
-        description: { type: "string", description: "Event description" },
+        description: { type: "string", description: "Event description or agenda" },
         attendee_limit: { type: "number", description: "Max attendee capacity" },
         auto_approve: { type: "boolean", description: "Auto-approve registrations immediately" },
         is_paid_event: { type: "boolean", description: "Whether this is a paid event" },
         ticket_price: { type: "number", description: "Ticket price in INR" },
+        event_type: { type: "string", enum: ["physical", "online", "hybrid"] },
+        meeting_url: { type: "string", description: "Online meeting URL if online or hybrid" },
+        status: { type: "string", enum: ["draft", "active"], description: "Initial status (defaults to draft)" },
+      },
+      required: ["name", "event_date", "start_time", "venue"],
+    },
+  },
+  {
+    name: "update_event",
+    description: "Update event details: title, date, operational hours, venue, capacity, or ticket pricing.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        eventId: { type: "string", description: "Event UUID" },
+        name: { type: "string", description: "New event title" },
+        event_date: { type: "string", description: "New date (YYYY-MM-DD)" },
+        start_time: { type: "string", description: "New start time" },
+        end_time: { type: "string", description: "New end time" },
+        venue: { type: "string", description: "New venue address" },
+        description: { type: "string", description: "Updated description" },
+        attendee_limit: { type: "number", description: "Updated capacity limit" },
+        is_paid_event: { type: "boolean" },
+        ticket_price: { type: "number", description: "Updated ticket price in INR" },
+        auto_approve: { type: "boolean" },
+      },
+      required: ["eventId"],
+    },
+  },
+  {
+    name: "list_ticket_tiers",
+    description: "Retrieve all ticket types, pricing (in INR and paise), capacities, and sold counts for an event.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        eventId: { type: "string", description: "Event UUID" },
+      },
+      required: ["eventId"],
+    },
+  },
+  {
+    name: "create_ticket_tier",
+    description: "Add a new ticket tier (e.g. VIP, General Entry, Early Bird) with price in INR and capacity limit.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        eventId: { type: "string", description: "Event UUID" },
+        name: { type: "string", description: "Ticket tier name (e.g. VIP Pass, Early Bird)" },
+        price: { type: "number", description: "Price in INR (e.g. 299 for ₹299)" },
+        capacity: { type: "number", description: "Maximum seats/passes for this tier" },
+        category: { type: "string", description: "Category: general, vip, student, early_bird" },
+        description: { type: "string", description: "Tier benefits and perks description" },
+        maxPerPerson: { type: "number", description: "Max tickets per booking (default 1)" },
+      },
+      required: ["eventId", "name", "price"],
+    },
+  },
+  {
+    name: "get_registrations",
+    description: "List registered attendees for an event with privacy-preserving PII masking.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        eventId: { type: "string", description: "Event UUID" },
+        status: { type: "string", enum: ["all", "pending", "approved", "rejected"], description: "Application status filter" },
+        query: { type: "string", description: "Search by name or email" },
+        limit: { type: "number", description: "Max records (default 50, max 100)" },
+        offset: { type: "number" },
+        unmaskPII: { type: "boolean", description: "Set true only when explicit attendee email/phone reveal is authorized" },
+      },
+      required: ["eventId"],
+    },
+  },
+  {
+    name: "get_event_analytics",
+    description: "Get live event analytics: registration totals, approval rates, check-in velocity, and ticket revenue.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        eventId: { type: "string", description: "Event UUID" },
+      },
+      required: ["eventId"],
+    },
+  },
+  {
+    name: "get_event_readiness",
+    description: "Evaluate 7 pre-flight readiness checks (dates, ticket setup, capacity, payment gateway, venue) before publishing.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        eventId: { type: "string", description: "Event UUID" },
+      },
+      required: ["eventId"],
+    },
+  },
+  {
+    name: "get_scanner_stats",
+    description: "Retrieve live venue check-in figures, gate occupancy, and entry velocity per hour.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        eventId: { type: "string", description: "Event UUID" },
+        gateId: { type: "string", description: "Optional Gate ID filter" },
+      },
+      required: ["eventId"],
+    },
+  },
+  {
+    name: "publish_event",
+    description: "Publish an event to live status after pre-flight readiness verification. Consequential action requiring explicit confirm: true.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        eventId: { type: "string", description: "Event UUID" },
+        confirm: { type: "boolean", description: "Must be true to execute live publishing. If false, returns readiness preview." },
+      },
+      required: ["eventId"],
+    },
+  },
+  {
+    name: "submit_to_explore",
+    description: "Submit an event to the UrPass Explore consumer discovery marketplace moderation queue. Consequential action requiring explicit confirm: true.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        eventId: { type: "string", description: "Event UUID" },
+        city: { type: "string", description: "Target city hub (e.g. Bangalore, Chennai, Mumbai, Hyderabad, Delhi NCR)" },
+        category: { type: "string", description: "Marketplace category (e.g. tech-conferences, workshops, music-concerts, standup-comedy)" },
+        editorialSummary: { type: "string", description: "Short 1-line event summary for Explore card (up to 140 characters)" },
+        confirm: { type: "boolean", description: "Must be true to execute submission. If false, returns eligibility preview." },
+      },
+      required: ["eventId", "city", "category"],
+    },
+  },
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Legacy 17 Tools (preserved for backward compatibility)
+// ─────────────────────────────────────────────────────────────────────────────
+export const LEGACY_MCP_TOOLS = [
+  {
+    name: "urpass_list_events",
+    description: "List all events organized by the user with dates, venues, attendee counts, and capacities.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        status: { type: "string", enum: ["draft", "active", "completed"] },
+        limit: { type: "number" },
+        offset: { type: "number" },
+      },
+    },
+  },
+  {
+    name: "urpass_get_event",
+    description: "Get full details for an event including ticket types, capacity, and live attendee statistics.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        eventId: { type: "string" },
+      },
+      required: ["eventId"],
+    },
+  },
+  {
+    name: "urpass_create_event",
+    description: "Create a new event on UrPass with digital passes, QR check-in, and shareable registration link.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        name: { type: "string" },
+        event_date: { type: "string" },
+        start_time: { type: "string" },
+        end_time: { type: "string" },
+        venue: { type: "string" },
+        description: { type: "string" },
+        attendee_limit: { type: "number" },
+        auto_approve: { type: "boolean" },
+        is_paid_event: { type: "boolean" },
+        ticket_price: { type: "number" },
         event_type: { type: "string", enum: ["physical", "online", "hybrid"] },
       },
       required: ["name", "event_date", "start_time", "venue"],
@@ -74,9 +290,9 @@ export const MCP_TOOLS_MANIFEST = [
     inputSchema: {
       type: "object",
       properties: {
-        eventId: { type: "string", description: "Event UUID" },
+        eventId: { type: "string" },
         status: { type: "string", enum: ["all", "pending", "approved", "rejected"] },
-        query: { type: "string", description: "Search term for name or email" },
+        query: { type: "string" },
         limit: { type: "number" },
         offset: { type: "number" },
       },
@@ -89,8 +305,8 @@ export const MCP_TOOLS_MANIFEST = [
     inputSchema: {
       type: "object",
       properties: {
-        attendeeId: { type: "string", description: "Attendee UUID" },
-        eventId: { type: "string", description: "Event UUID" },
+        attendeeId: { type: "string" },
+        eventId: { type: "string" },
       },
       required: ["attendeeId", "eventId"],
     },
@@ -101,8 +317,8 @@ export const MCP_TOOLS_MANIFEST = [
     inputSchema: {
       type: "object",
       properties: {
-        attendeeId: { type: "string", description: "Attendee UUID" },
-        eventId: { type: "string", description: "Event UUID" },
+        attendeeId: { type: "string" },
+        eventId: { type: "string" },
       },
       required: ["attendeeId", "eventId"],
     },
@@ -113,8 +329,8 @@ export const MCP_TOOLS_MANIFEST = [
     inputSchema: {
       type: "object",
       properties: {
-        passTokenOrEmail: { type: "string", description: "Pass token or attendee email" },
-        eventId: { type: "string", description: "Optional Event UUID" },
+        passTokenOrEmail: { type: "string" },
+        eventId: { type: "string" },
       },
       required: ["passTokenOrEmail"],
     },
@@ -125,9 +341,9 @@ export const MCP_TOOLS_MANIFEST = [
     inputSchema: {
       type: "object",
       properties: {
-        passToken: { type: "string", description: "Pass token or pass URL" },
-        eventId: { type: "string", description: "Event UUID" },
-        gateId: { type: "string", description: "Optional Gate ID" },
+        passToken: { type: "string" },
+        eventId: { type: "string" },
+        gateId: { type: "string" },
       },
       required: ["passToken", "eventId"],
     },
@@ -138,7 +354,7 @@ export const MCP_TOOLS_MANIFEST = [
     inputSchema: {
       type: "object",
       properties: {
-        eventId: { type: "string", description: "Event UUID" },
+        eventId: { type: "string" },
       },
       required: ["eventId"],
     },
@@ -149,11 +365,11 @@ export const MCP_TOOLS_MANIFEST = [
     inputSchema: {
       type: "object",
       properties: {
-        eventId: { type: "string", description: "Event UUID" },
-        name: { type: "string", description: "Attendee name" },
-        email: { type: "string", description: "Attendee email" },
-        phone: { type: "string", description: "Attendee phone" },
-        passType: { type: "string", description: "Pass type (e.g. participant, vip)" },
+        eventId: { type: "string" },
+        name: { type: "string" },
+        email: { type: "string" },
+        phone: { type: "string" },
+        passType: { type: "string" },
       },
       required: ["eventId", "name", "email"],
     },
@@ -164,11 +380,11 @@ export const MCP_TOOLS_MANIFEST = [
     inputSchema: {
       type: "object",
       properties: {
-        eventId: { type: "string", description: "Event UUID" },
-        date: { type: "string", description: "Filter by session date (YYYY-MM-DD)" },
-        roomId: { type: "string", description: "Filter by room UUID" },
-        trackId: { type: "string", description: "Filter by track UUID" },
-        limit: { type: "number", description: "Max sessions to return" },
+        eventId: { type: "string" },
+        date: { type: "string" },
+        roomId: { type: "string" },
+        trackId: { type: "string" },
+        limit: { type: "number" },
       },
       required: ["eventId"],
     },
@@ -179,17 +395,17 @@ export const MCP_TOOLS_MANIFEST = [
     inputSchema: {
       type: "object",
       properties: {
-        eventId: { type: "string", description: "Event UUID" },
-        title: { type: "string", description: "Session title" },
-        session_type: { type: "string", description: "Session type (keynote, presentation, workshop, panel, break, networking)" },
-        session_date: { type: "string", description: "Session date (YYYY-MM-DD)" },
-        start_time: { type: "string", description: "Start time (HH:MM)" },
-        end_time: { type: "string", description: "End time (HH:MM)" },
-        room_id: { type: "string", description: "Room UUID" },
-        track_id: { type: "string", description: "Track UUID" },
-        capacity: { type: "number", description: "Session capacity limit" },
-        registration_required: { type: "boolean", description: "Require prior reservation" },
-        description: { type: "string", description: "Session description" },
+        eventId: { type: "string" },
+        title: { type: "string" },
+        session_type: { type: "string" },
+        session_date: { type: "string" },
+        start_time: { type: "string" },
+        end_time: { type: "string" },
+        room_id: { type: "string" },
+        track_id: { type: "string" },
+        capacity: { type: "number" },
+        registration_required: { type: "boolean" },
+        description: { type: "string" },
       },
       required: ["eventId", "title", "session_date", "start_time", "end_time"],
     },
@@ -200,7 +416,7 @@ export const MCP_TOOLS_MANIFEST = [
     inputSchema: {
       type: "object",
       properties: {
-        eventId: { type: "string", description: "Event UUID" },
+        eventId: { type: "string" },
       },
       required: ["eventId"],
     },
@@ -211,7 +427,7 @@ export const MCP_TOOLS_MANIFEST = [
     inputSchema: {
       type: "object",
       properties: {
-        eventId: { type: "string", description: "Event UUID" },
+        eventId: { type: "string" },
       },
       required: ["eventId"],
     },
@@ -222,9 +438,9 @@ export const MCP_TOOLS_MANIFEST = [
     inputSchema: {
       type: "object",
       properties: {
-        sessionId: { type: "string", description: "Session UUID" },
-        speakerId: { type: "string", description: "Speaker UUID" },
-        role: { type: "string", description: "Role: speaker, moderator, panelist, host, trainer" },
+        sessionId: { type: "string" },
+        speakerId: { type: "string" },
+        role: { type: "string" },
       },
       required: ["sessionId", "speakerId"],
     },
@@ -235,9 +451,9 @@ export const MCP_TOOLS_MANIFEST = [
     inputSchema: {
       type: "object",
       properties: {
-        sessionId: { type: "string", description: "Session UUID" },
-        passToken: { type: "string", description: "Scanned pass token, URL, or attendee UUID" },
-        override: { type: "boolean", description: "Override reservation requirement if full/unreserved" },
+        sessionId: { type: "string" },
+        passToken: { type: "string" },
+        override: { type: "boolean" },
       },
       required: ["sessionId", "passToken"],
     },
@@ -248,17 +464,20 @@ export const MCP_TOOLS_MANIFEST = [
     inputSchema: {
       type: "object",
       properties: {
-        eventId: { type: "string", description: "Event UUID" },
+        eventId: { type: "string" },
       },
       required: ["eventId"],
     },
   },
 ];
 
+// Combined manifest containing both standard Claude names and legacy prefixed names
+export const MCP_TOOLS_MANIFEST = [...LEGACY_MCP_TOOLS, ...CLAUDE_MCP_TOOLS];
+
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Authorization, Content-Type, X-Urpass-Client",
+  "Access-Control-Allow-Headers": "Authorization, Content-Type, X-Urpass-Client, X-Mcp-Client",
 };
 
 export async function OPTIONS() {
@@ -272,9 +491,33 @@ function hasInsecureQueryApiKey(req: NextRequest): boolean {
   return req.nextUrl.searchParams.has("api_key") || req.nextUrl.searchParams.has("apiKey");
 }
 
-async function resolveAuth(req: NextRequest) {
-  // Strict Enterprise Security: Do NOT accept API keys through URL query parameters
-  return authenticateApiKey(req);
+async function resolveAuth(req: NextRequest): Promise<McpToolContext | null> {
+  const authHeader = req.headers.get("authorization");
+  const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7).trim() : null;
+
+  // 1. Check if OAuth access token
+  if (token && token.startsWith("urp_mcp_at_")) {
+    const oauthRecord = verifyOAuthToken(token);
+    if (!oauthRecord) return null;
+
+    return {
+      userId: oauthRecord.userId,
+      organizationId: oauthRecord.organizationId,
+      scopes: oauthRecord.scopes,
+      actorEmail: "claude-mcp@urpass.space",
+    };
+  }
+
+  // 2. Delegate to API Key authenticator
+  const apiAuth = await authenticateApiKey(req);
+  if (!apiAuth) return null;
+
+  return {
+    userId: apiAuth.userId,
+    organizationId: apiAuth.organizationId,
+    scopes: ALL_MCP_SCOPES,
+    actorEmail: "api-key@urpass.space",
+  };
 }
 
 export async function GET(req: NextRequest) {
@@ -282,32 +525,37 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(
       {
         error: "INSECURE_AUTH_METHOD",
-        message: "API keys in URL query parameters are strictly forbidden for security. Pass your API key via the 'Authorization: Bearer <token>' header.",
+        message: "API keys in URL query parameters are strictly forbidden for security. Pass your Bearer token via the 'Authorization: Bearer <token>' header.",
       },
       { status: 400, headers: CORS_HEADERS }
     );
   }
 
-  // If user provides Bearer API Key, authenticate to confirm key validity
   const auth = await resolveAuth(req);
+  const isClaudeClient = req.nextUrl.searchParams.get("client") === "claude" || req.headers.get("x-mcp-client") === "claude";
+  const displayedTools = isClaudeClient ? CLAUDE_MCP_TOOLS : MCP_TOOLS_MANIFEST;
 
   return NextResponse.json(
     {
       name: "urpass-mcp",
-      version: "1.1.0",
+      version: "2.0.0",
       protocolVersion: "2024-11-05",
-      description: "URPASS Model Context Protocol (MCP) Server for AI Assistants & Agents",
+      description: "UrPass Model Context Protocol (MCP) Server for Claude & AI Assistants",
       authenticated: Boolean(auth),
-      toolsCount: MCP_TOOLS_MANIFEST.length,
-      tools: MCP_TOOLS_MANIFEST,
+      toolsCount: displayedTools.length,
+      tools: displayedTools,
+      claudeTools: CLAUDE_MCP_TOOLS,
       usage: {
-        endpoint: "https://urpass.space/api/mcp",
+        endpoint: "https://mcp.urpass.space/mcp",
+        alternativeEndpoint: "https://urpass.space/api/mcp",
+        oauthAuthorizationEndpoint: "https://urpass.space/api/oauth/authorize",
+        oauthTokenEndpoint: "https://urpass.space/api/oauth/token",
         method: "POST",
         headers: {
-          Authorization: "Bearer urp_live_...",
+          Authorization: "Bearer <oauth_token_or_api_key>",
           "Content-Type": "application/json",
         },
-        transport: "JSON-RPC 2.0 / HTTP",
+        transport: "Streamable HTTP / JSON-RPC 2.0",
       },
     },
     { headers: CORS_HEADERS }
@@ -321,7 +569,7 @@ export async function POST(req: NextRequest) {
         jsonrpc: "2.0",
         error: {
           code: -32600,
-          message: "Invalid Request: API keys in URL query parameters are strictly forbidden for security. Provide your API key in the 'Authorization: Bearer <token>' header.",
+          message: "Invalid Request: API keys in URL query parameters are strictly forbidden for security. Provide your token in the 'Authorization: Bearer <token>' header.",
         },
         id: null,
       },
@@ -336,7 +584,7 @@ export async function POST(req: NextRequest) {
         jsonrpc: "2.0",
         error: {
           code: -32000,
-          message: "Unauthorized. Provide a valid URPASS Bearer API key in the 'Authorization: Bearer <token>' header.",
+          message: "Unauthorized. Provide a valid UrPass OAuth Bearer access token or Bearer API key in the Authorization header.",
         },
         id: null,
       },
@@ -344,7 +592,24 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const ctx: McpToolContext = { userId: auth.userId };
+  // Rate Limiting check
+  const isWriteAttempt = req.headers.get("x-mcp-action") === "write";
+  const limitCheck = checkRateLimit(auth.userId, isWriteAttempt ? 30 : 120);
+  if (!limitCheck.allowed) {
+    return NextResponse.json(
+      {
+        jsonrpc: "2.0",
+        error: {
+          code: -32000,
+          message: `Too Many Requests. Rate limit exceeded. Please back off for ${limitCheck.retryAfter}s.`,
+        },
+        id: null,
+      },
+      { status: 429, headers: { ...CORS_HEADERS, "Retry-After": String(limitCheck.retryAfter) } }
+    );
+  }
+
+  const ctx: McpToolContext = auth;
   let body: Record<string, unknown>;
   try {
     body = await req.json();
@@ -374,7 +639,7 @@ export async function POST(req: NextRequest) {
             protocolVersion: "2024-11-05",
             serverInfo: {
               name: "urpass-mcp",
-              version: "1.1.0",
+              version: "2.0.0",
             },
             capabilities: {
               tools: {
@@ -392,17 +657,20 @@ export async function POST(req: NextRequest) {
     case "ping":
       return NextResponse.json({ jsonrpc: "2.0", id: responseId, result: {} }, { headers: CORS_HEADERS });
 
-    case "tools/list":
+    case "tools/list": {
+      const isClaude = req.nextUrl.searchParams.get("client") === "claude" || req.headers.get("x-mcp-client") === "claude";
+      const toolsToReturn = isClaude ? CLAUDE_MCP_TOOLS : MCP_TOOLS_MANIFEST;
       return NextResponse.json(
         {
           jsonrpc: "2.0",
           id: responseId,
           result: {
-            tools: MCP_TOOLS_MANIFEST,
+            tools: toolsToReturn,
           },
         },
         { headers: CORS_HEADERS }
       );
+    }
 
     case "tools/call": {
       const toolName = (params?.name as string) || "";
@@ -412,36 +680,87 @@ export async function POST(req: NextRequest) {
         let resultData: unknown;
 
         switch (toolName) {
+          // ── Events ──────────────────────────────────────────────
+          case "list_events":
           case "urpass_list_events":
             resultData = await mcpListEvents(ctx, args as never);
             break;
+
+          case "get_event":
           case "urpass_get_event":
             resultData = await mcpGetEvent(ctx, args as never);
             break;
+
+          case "create_event":
           case "urpass_create_event":
             resultData = await mcpCreateEvent(ctx, args as never);
             break;
+
+          case "update_event":
+            resultData = await mcpUpdateEvent(ctx, args as never);
+            break;
+
+          case "publish_event":
+            resultData = await mcpPublishEvent(ctx, args as never);
+            break;
+
+          case "get_event_readiness":
+            resultData = await mcpGetEventReadiness(ctx, args as never);
+            break;
+
+          case "submit_to_explore":
+            resultData = await mcpSubmitToExplore(ctx, args as never);
+            break;
+
+          // ── Ticket Tiers ─────────────────────────────────────────
+          case "list_ticket_tiers":
+            resultData = await mcpListTicketTiers(ctx, args as never);
+            break;
+
+          case "create_ticket_tier":
+            resultData = await mcpCreateTicketTier(ctx, args as never);
+            break;
+
+          // ── Registrations & Attendees ────────────────────────────
+          case "get_registrations":
+            resultData = await mcpGetRegistrations(ctx, args as never);
+            break;
+
           case "urpass_list_attendees":
             resultData = await mcpListAttendees(ctx, args as never);
             break;
+
           case "urpass_approve_attendee":
             resultData = await mcpApproveAttendee(ctx, args as never);
             break;
+
           case "urpass_reject_attendee":
             resultData = await mcpRejectAttendee(ctx, args as never);
             break;
+
           case "urpass_lookup_pass":
             resultData = await mcpLookupPass(ctx, args as never);
             break;
+
           case "urpass_verify_checkin":
             resultData = await mcpVerifyCheckin(ctx, args as never);
             break;
-          case "urpass_get_event_analytics":
-            resultData = await mcpGetEventAnalytics(ctx, args as never);
-            break;
+
           case "urpass_issue_pass":
             resultData = await mcpIssuePass(ctx, args as never);
             break;
+
+          // ── Analytics & Scanner Stats ────────────────────────────
+          case "get_event_analytics":
+          case "urpass_get_event_analytics":
+            resultData = await mcpGetEventAnalytics(ctx, args as never);
+            break;
+
+          case "get_scanner_stats":
+            resultData = await mcpGetScannerStats(ctx, args as never);
+            break;
+
+          // ── Conference Tools ─────────────────────────────────────
           case "urpass_list_sessions":
             resultData = await mcpListSessions(ctx, args as never);
             break;
@@ -463,6 +782,7 @@ export async function POST(req: NextRequest) {
           case "urpass_get_conference_analytics":
             resultData = await mcpGetConferenceAnalytics(ctx, args as never);
             break;
+
           default:
             return NextResponse.json(
               {
