@@ -10,6 +10,7 @@ import {
   ShieldCheck,
   CheckCircle2,
   Lock,
+  Clock,
   Users,
   Sparkles,
 } from "lucide-react";
@@ -29,6 +30,8 @@ import { isStudioDesign } from "@/lib/studio/resolver";
 import { getHardenedPublicPass, cleanPassToken } from "@/lib/passes/public-pass";
 import { resolveEventOgImage } from "@/lib/seo/og-images";
 import ThermalTicketPrinter from "@/components/pass/ThermalTicketPrinter";
+import CancelTicketAction from "@/components/pass/CancelTicketAction";
+import { checkTicketCancellationEligibility } from "@/lib/cancellation/service";
 
 export async function generateMetadata({
   params,
@@ -161,9 +164,35 @@ export default async function PassPage({
   const qrSizePx = design.qrSize === "sm" ? 140 : design.qrSize === "lg" ? 200 : 165;
 
   const isCheckedIn = pass.status === "checked_in";
+  const isCancelled = attendee.application_status === "cancelled" || pass.status === "cancelled";
+  const isPendingApproval = attendee.application_status === "cancellation_requested";
   const isOnline = event.event_type === "online";
   const isHybrid = event.event_type === "hybrid";
-  const hasJoinLink = (isOnline || isHybrid) && !!event.meeting_url && attendee.application_status === "approved";
+  const hasJoinLink = (isOnline || isHybrid) && !!event.meeting_url && attendee.application_status === "approved" && !isCancelled;
+
+  // Resolve attendee ticket cancellation eligibility
+  const supabase = await createClient();
+  const attendeeId = attendee.id || pass.attendee_id || "";
+  const { data: paidOrder } = attendeeId
+    ? await supabase
+        .from("ticket_orders")
+        .select("id, status, amount, currency")
+        .eq("event_id", event.id)
+        .eq("attendee_id", attendeeId)
+        .eq("status", "paid")
+        .maybeSingle()
+    : { data: null };
+
+  const cancellationEligibility = checkTicketCancellationEligibility({
+    event,
+    attendee: {
+      id: attendeeId,
+      application_status: attendee.application_status,
+      pass_status: pass.status,
+    },
+    pass,
+    paidOrder,
+  });
 
   const formattedDate = new Date(event.event_date).toLocaleDateString("en-IN", {
     day: "numeric",
@@ -535,7 +564,7 @@ export default async function PassPage({
             {/* ══════════════════════════════════════════════════════════ */}
             <div className="w-full flex flex-col items-center">
               {/* QR Code Container with Scanner Corner Brackets */}
-              {!isOnline && (
+              {!isOnline && !isCancelled && (
                 <div
                   className={`my-1 p-3.5 bg-white rounded-2xl flex flex-col items-center justify-center relative shadow-xs ${
                     design.showQrBorder !== false ? "border border-neutral-200/90" : ""
@@ -555,6 +584,21 @@ export default async function PassPage({
                 </div>
               )}
 
+              {!isOnline && isCancelled && (
+                <div
+                  className="my-2 p-5 bg-rose-50/80 dark:bg-rose-950/30 rounded-2xl flex flex-col items-center justify-center border border-rose-200 dark:border-rose-900/60 text-center"
+                  style={{ width: qrSizePx + 56, maxWidth: "100%" }}
+                >
+                  <ShieldCheck className="w-8 h-8 text-rose-500 mb-2 rotate-180" />
+                  <span className="text-[10px] font-black tracking-widest text-rose-700 dark:text-rose-300 uppercase">
+                    QR ACCESS DEACTIVATED
+                  </span>
+                  <p className="text-[9px] text-rose-600 dark:text-rose-400 mt-1 leading-snug">
+                    Ticket cancelled. Invalid for gate entry.
+                  </p>
+                </div>
+              )}
+
               {/* Executive Cryptographic Verification Tag */}
               <div className="w-full my-2.5 px-3.5 py-2 rounded-xl bg-neutral-100/80 dark:bg-neutral-900/70 border border-neutral-200/80 dark:border-white/10 flex items-center justify-between shadow-2xs">
                 <div className="flex items-center gap-1.5">
@@ -570,7 +614,21 @@ export default async function PassPage({
 
               {/* Real-time Status Strip */}
               <div className="w-full mt-1">
-                {pass.is_group_master ? (
+                {isCancelled ? (
+                  <div className="w-full flex items-center gap-2 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 rounded-xl px-3 py-2.5 justify-center shadow-2xs">
+                    <ShieldCheck className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
+                    <span className="text-xs font-bold text-rose-800 dark:text-rose-300">
+                      TICKET CANCELLED · VOID FOR ADMISSION
+                    </span>
+                  </div>
+                ) : isPendingApproval ? (
+                  <div className="w-full flex items-center gap-2 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 rounded-xl px-3 py-2.5 justify-center shadow-2xs">
+                    <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                    <span className="text-xs font-bold text-amber-800 dark:text-amber-300">
+                      CANCELLATION REQUESTED · PENDING APPROVAL
+                    </span>
+                  </div>
+                ) : pass.is_group_master ? (
                   <div className="w-full flex flex-col gap-1.5 p-3 rounded-xl bg-indigo-50/80 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/60 shadow-2xs">
                     <div className="flex items-center justify-between text-xs font-bold text-indigo-950 dark:text-indigo-200">
                       <span className="flex items-center gap-1.5">
@@ -790,6 +848,14 @@ export default async function PassPage({
         <DownloadPassButton
           passToken={pass.pass_token}
           fileName={`${event.name.replace(/\s+/g, "-").toLowerCase()}-pass.png`}
+        />
+        <CancelTicketAction
+          passToken={pass.pass_token}
+          eventName={event.name}
+          applicationStatus={attendee.application_status}
+          passStatus={pass.status}
+          eligibility={cancellationEligibility}
+          cancellationToken={attendee.cancellation_token || undefined}
         />
       </div>
 

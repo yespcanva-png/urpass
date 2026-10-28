@@ -76,6 +76,7 @@ export default async function AttendeesPage({ params }: Props) {
     { data: ticketOrders },
     { data: checkinsData },
     { data: groupAdmissionsData },
+    { data: cancellationsData },
   ] = await Promise.all([
     supabase
       .from("passes")
@@ -95,6 +96,11 @@ export default async function AttendeesPage({ params }: Props) {
       .select("id, pass_id, order_id, group_booking_reference, admitted_count, total_entitlements, remaining_after, admitted_at, gate:scanner_gates(name)")
       .eq("event_id", canonicalEventId)
       .order("admitted_at", { ascending: false }),
+    supabase
+      .from("ticket_cancellations")
+      .select("id, attendee_id, status, reason, rejection_reason, refund_status, refund_amount, refund_id, created_at, processed_at")
+      .eq("event_id", canonicalEventId)
+      .order("created_at", { ascending: false }),
   ]);
 
   let passes = passesWithGroupColumns;
@@ -250,6 +256,13 @@ export default async function AttendeesPage({ params }: Props) {
     }
   }
 
+  const cancellationsMap: Record<string, any> = {};
+  for (const c of (cancellationsData || []) as any[]) {
+    if (c.attendee_id && !cancellationsMap[c.attendee_id]) {
+      cancellationsMap[c.attendee_id] = c;
+    }
+  }
+
   const regLimit = plan.getLimit("registrations_per_month");
   const currentCount = attendees?.length ?? 0;
   const isNearLimit = regLimit < 999_999 && currentCount >= regLimit * 0.8;
@@ -312,6 +325,7 @@ export default async function AttendeesPage({ params }: Props) {
         payments={payments}
         groupPassMap={groupPassMap}
         checkInInfoMap={checkInInfoMap}
+        cancellations={cancellationsMap}
         canCSV={plan.canCSV}
         canExport={plan.canExport}
         customFields={event.custom_fields ?? []}

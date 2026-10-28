@@ -514,6 +514,32 @@ export async function mcpVerifyCheckin(
     .eq("id", pass.attendee_id)
     .single();
 
+  if (pass.status === "revoked") {
+    return {
+      success: false,
+      accessDenied: true,
+      status: "REVOKED",
+      message: "Pass has been revoked by the organizer.",
+      attendee,
+      passType: pass.pass_type,
+    };
+  }
+
+  if (
+    pass.status === "cancelled" ||
+    attendee?.application_status === "cancelled" ||
+    attendee?.application_status === "cancellation_requested"
+  ) {
+    return {
+      success: false,
+      accessDenied: true,
+      status: "CANCELLED",
+      message: "Ticket has been cancelled. Entry Denied.",
+      attendee,
+      passType: pass.pass_type,
+    };
+  }
+
   if (pass.status === "checked_in") {
     return {
       success: false,

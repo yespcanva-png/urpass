@@ -23,7 +23,8 @@ export type FeatureFlagKey =
   | "google_sheets"
   | "ticket_reassignment"
   | "offline_scanning"
-  | "group_entry";
+  | "group_entry"
+  | "ticket_cancellation";
 
 export type CoreFeatureKey =
   | "public_registration"
@@ -273,6 +274,14 @@ export const FEATURE_FLAG_DEFINITIONS: Record<FeatureFlagKey, FeatureFlagDefinit
     defaultEnabled: true,
     requiredEntitlement: null,
     migrationPolicy: () => true,
+  },
+  ticket_cancellation: {
+    key: "ticket_cancellation",
+    moduleCode: "M15",
+    name: "Ticket Cancellation",
+    description: "Optional attendee self-service ticket cancellations with cutoffs, organizer approval, and refund policies.",
+    defaultEnabled: false,
+    requiredEntitlement: null,
   },
 };
 
@@ -549,6 +558,10 @@ export function extractModuleConfigsFromEvent(
     group_entry: {
       ...((design._groupEntryConfig as Record<string, unknown>) || {}),
       ...(unified.group_entry || {}),
+    },
+    ticket_cancellation: {
+      ...((design._cancellationConfig as Record<string, unknown>) || {}),
+      ...(unified.ticket_cancellation || {}),
     },
     ...unified,
   };

@@ -1038,6 +1038,30 @@ export async function POST(req: NextRequest) {
     .eq("id", pass.attendee_id)
     .single();
 
+  if (attendee?.application_status === "cancelled") {
+    return NextResponse.json(
+      {
+        error: "This ticket has been cancelled or refunded. Entry Denied.",
+        status: "CANCELLED",
+        accessDenied: true,
+        scanOperationId,
+      },
+      { status: 403 }
+    );
+  }
+
+  if (attendee?.application_status === "cancellation_requested") {
+    return NextResponse.json(
+      {
+        error: "This ticket has a pending cancellation request. Entry Denied.",
+        status: "CANCELLED",
+        accessDenied: true,
+        scanOperationId,
+      },
+      { status: 403 }
+    );
+  }
+
   if (!attendee || attendee.application_status !== "approved") {
     return NextResponse.json(
       { error: "Attendee is not approved for this event", status: "NOT_APPROVED", scanOperationId },

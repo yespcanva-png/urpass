@@ -505,6 +505,11 @@ export async function saveEventModuleConfig(
       allow_reset: settings.re_entry === "identity_verified",
       partial_entry: Boolean(settings.partial_entry !== false),
     };
+  } else if (featureKey === "ticket_cancellation") {
+    updatedDesign._cancellationConfig = {
+      ...((existingDesign._cancellationConfig as Record<string, unknown>) || {}),
+      ...settings,
+    };
   }
 
   const { error: updateErr } = await db

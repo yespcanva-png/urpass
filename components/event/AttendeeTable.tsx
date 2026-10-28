@@ -12,6 +12,7 @@ import {
 import { approveAttendee, rejectAttendee, exportAttendeesCSV, promoteNextWaitlistAttendee, reconcileEventPaymentsAction } from "@/app/actions/attendees";
 import { undoCheckIn } from "@/app/actions/manual-checkin";
 import { generatePass, bulkGeneratePasses } from "@/app/actions/passes";
+import { approveTicketCancellationAction, rejectTicketCancellationAction } from "@/app/actions/ticket-cancellation";
 import AddAttendeeModal from "./AddAttendeeModal";
 import ImportAttendeesModal from "./ImportAttendeesModal";
 import BulkBroadcastModal from "./BulkBroadcastModal";
@@ -23,7 +24,7 @@ import AttendeeDeliveryActions from "./AttendeeDeliveryActions";
 import { isVersionSkewError, triggerRecoveryReload } from "@/components/common/VersionSkewHandler";
 import type { CustomFieldDefinition } from "@/types";
 
-type Status    = "pending" | "approved" | "rejected" | "waitlisted";
+type Status    = "pending" | "approved" | "rejected" | "waitlisted" | "cancellation_requested" | "cancelled";
 type FilterTab = "all" | Status;
 
 export interface AttendeePaymentInfo {
@@ -83,6 +84,7 @@ interface Props {
   payments?: Record<string, AttendeePaymentInfo>;
   groupPassMap?: Record<string, GroupPassDetails>;
   checkInInfoMap?: Record<string, CheckInInfo>;
+  cancellations?: Record<string, any>;
   canCSV?: boolean;
   canExport?: boolean;
   customFields?: CustomFieldDefinition[];
@@ -93,6 +95,8 @@ const statusConfig: Record<Status, { label: string; cls: string; icon: React.Com
   approved:   { label: "Approved",   cls: "bg-emerald-50 text-emerald-700 border-emerald-200/80", icon: Check },
   rejected:   { label: "Rejected",   cls: "bg-rose-50 text-rose-700 border-rose-200/80",          icon: X },
   waitlisted: { label: "Waitlisted", cls: "bg-violet-50 text-violet-700 border-violet-200/80", icon: Clock },
+  cancellation_requested: { label: "Cancel Requested", cls: "bg-amber-50 text-amber-700 border-amber-200/80", icon: Clock },
+  cancelled:  { label: "Cancelled",  cls: "bg-rose-50 text-rose-700 border-rose-200/80", icon: X },
 };
 
 function StatusBadge({ status }: { status: Status }) {
@@ -160,6 +164,7 @@ export default function AttendeeTable({
   payments = {},
   groupPassMap = {},
   checkInInfoMap = {},
+  cancellations = {},
   canCSV = false,
   canExport = false,
   customFields = [],
@@ -184,6 +189,10 @@ export default function AttendeeTable({
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedAttendee, setSelectedAttendee] = useState<Attendee | null>(null);
   const [editingAttendee, setEditingAttendee] = useState<Attendee | null>(null);
+  const [reviewingCancellation, setReviewingCancellation] = useState<Attendee | null>(null);
+  const [rejectionReasonInput, setRejectionReasonInput] = useState("");
+  const [processingCancellation, setProcessingCancellation] = useState(false);
+  const [cancellationError, setCancellationError] = useState("");
   const [selectedGroupHistory, setSelectedGroupHistory] = useState<{
     name: string;
     email: string;
@@ -394,11 +403,13 @@ export default function AttendeeTable({
   }).length;
 
   const counts = {
-    all:        attendees.length,
-    pending:    attendees.filter((a) => a.application_status === "pending").length,
-    approved:   approvedCount,
-    rejected:   attendees.filter((a) => a.application_status === "rejected").length,
-    waitlisted: attendees.filter((a) => a.application_status === "waitlisted").length,
+    all:                    attendees.length,
+    pending:                attendees.filter((a) => a.application_status === "pending").length,
+    approved:               approvedCount,
+    rejected:               attendees.filter((a) => a.application_status === "rejected").length,
+    waitlisted:             attendees.filter((a) => a.application_status === "waitlisted").length,
+    cancellation_requested: attendees.filter((a) => a.application_status === "cancellation_requested").length,
+    cancelled:              attendees.filter((a) => a.application_status === "cancelled").length,
   };
 
   const filtered = attendees
@@ -669,13 +680,67 @@ export default function AttendeeTable({
     }
   }
 
+  async function handleApproveCancellation(attendee: Attendee) {
+    const record = cancellations[attendee.id];
+    if (!record?.id) {
+      setCancellationError("Cancellation request record not found.");
+      return;
+    }
+    setProcessingCancellation(true);
+    setCancellationError("");
+    try {
+      const res = await approveTicketCancellationAction(record.id);
+      if (!res.success) {
+        setCancellationError(res.message || "Failed to approve cancellation.");
+      } else {
+        setAttendees((prev) =>
+          prev.map((a) => (a.id === attendee.id ? { ...a, application_status: "cancelled" } : a))
+        );
+        setReviewingCancellation(null);
+        setBulkMsg({ text: "Ticket cancellation approved successfully.", isError: false });
+        setTimeout(() => setBulkMsg(null), 4000);
+      }
+    } catch (err) {
+      setCancellationError(err instanceof Error ? err.message : "Error approving cancellation.");
+    } finally {
+      setProcessingCancellation(false);
+    }
+  }
+
+  async function handleRejectCancellation(attendee: Attendee) {
+    const record = cancellations[attendee.id];
+    if (!record?.id) {
+      setCancellationError("Cancellation request record not found.");
+      return;
+    }
+    setProcessingCancellation(true);
+    setCancellationError("");
+    try {
+      const res = await rejectTicketCancellationAction(record.id, rejectionReasonInput.trim());
+      if (!res.success) {
+        setCancellationError(res.message || "Failed to reject cancellation.");
+      } else {
+        setAttendees((prev) =>
+          prev.map((a) => (a.id === attendee.id ? { ...a, application_status: "approved" } : a))
+        );
+        setReviewingCancellation(null);
+        setBulkMsg({ text: "Cancellation request rejected. Ticket remains valid.", isError: false });
+        setTimeout(() => setBulkMsg(null), 4000);
+      }
+    } catch (err) {
+      setCancellationError(err instanceof Error ? err.message : "Error rejecting cancellation.");
+    } finally {
+      setProcessingCancellation(false);
+    }
+  }
+
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const safePage = Math.min(currentPage, totalPages);
   const startIndex = (safePage - 1) * pageSize;
   const endIndex = Math.min(startIndex + pageSize, filtered.length);
   const paginatedList = filtered.slice(startIndex, endIndex);
 
-  const tabs: FilterTab[] = ["all", "pending", "approved", "rejected", "waitlisted"];
+  const tabs: FilterTab[] = ["all", "pending", "approved", "rejected", "waitlisted", "cancellation_requested", "cancelled"];
   const statCards = [
     { label: "Total attendees", value: attendees.length, note: `${filtered.length} visible`, icon: Users, tone: "text-slate-700 bg-slate-50 border-slate-200" },
     { label: "Approved capacity", value: attendeeLimit > 0 ? `${approvedCount}/${attendeeLimit}` : approvedCount, note: `${capacityPct}% filled`, icon: ClipboardList, tone: atCapacity ? "text-red-700 bg-red-50 border-red-200" : "text-blue-700 bg-blue-50 border-blue-200" },
@@ -888,6 +953,27 @@ export default function AttendeeTable({
             </Btn>
           </>
         )}
+
+        {a.application_status === "cancellation_requested" && (
+          <button
+            type="button"
+            onClick={() => {
+              setReviewingCancellation(a);
+              setRejectionReasonInput("");
+              setCancellationError("");
+            }}
+            className="inline-flex min-h-8 items-center gap-1.5 rounded-md border border-amber-300 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-800 transition-colors hover:bg-amber-100 shadow-xs"
+          >
+            <Clock className="w-3 h-3 text-amber-600" />
+            Review Cancellation
+          </button>
+        )}
+
+        {a.application_status === "cancelled" && (
+          <span className="inline-flex items-center gap-1 rounded-md bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-700 border border-rose-200/80">
+            Cancelled {cancellations[a.id]?.refund_status === "completed" ? "· Refunded" : ""}
+          </span>
+        )}
       </div>
     );
   }
@@ -1084,7 +1170,7 @@ export default function AttendeeTable({
                 className={`whitespace-nowrap rounded px-3 py-1.5 text-xs font-semibold capitalize transition-all ${
                   activeTab === tab ? "bg-white text-slate-950 shadow-xs" : "text-slate-500 hover:text-slate-700"
                 }`}>
-                {tab === "all" ? "All" : tab}
+                {tab === "all" ? "All" : tab === "cancellation_requested" ? "Cancel Requests" : tab === "cancelled" ? "Cancelled" : tab}
                 <span className={`ml-1.5 text-xs ${activeTab === tab ? "text-slate-600" : "text-slate-400"}`}>
                   {counts[tab]}
                 </span>
@@ -1916,6 +2002,135 @@ export default function AttendeeTable({
             </div>
           </div>
         </div>,
+        document.body
+      )}
+
+      {mounted && reviewingCancellation && createPortal(
+        (() => {
+          const record = cancellations[reviewingCancellation.id];
+          const payment = getPayment(reviewingCancellation);
+          return (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-md animate-in fade-in duration-200">
+              <div className="fixed inset-0" onClick={() => !processingCancellation && setReviewingCancellation(null)} aria-hidden="true" />
+              <div className="relative flex max-h-[90vh] w-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl animate-in zoom-in-95 duration-200 sm:max-w-lg">
+                <div className="flex items-start justify-between gap-3 border-b border-slate-200 px-5 py-4">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="truncate text-base font-bold text-slate-950">Review Cancellation Request</h3>
+                      <span className="rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-bold text-amber-800">
+                        Pending Decision
+                      </span>
+                    </div>
+                    <p className="mt-1 truncate text-xs text-slate-500">
+                      Attendee requested self-service cancellation for their ticket
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={processingCancellation}
+                    onClick={() => setReviewingCancellation(null)}
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-950 disabled:opacity-50"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+
+                <div className="overflow-y-auto px-5 py-4 space-y-4">
+                  {cancellationError && (
+                    <div className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700">
+                      {cancellationError}
+                    </div>
+                  )}
+
+                  {/* Attendee details */}
+                  <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3 space-y-1.5">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-semibold text-slate-900">{reviewingCancellation.name}</span>
+                      <span className="text-slate-500">{reviewingCancellation.email}</span>
+                    </div>
+                    {reviewingCancellation.phone && (
+                      <p className="text-[11px] text-slate-500">Phone: {reviewingCancellation.phone}</p>
+                    )}
+                    {record?.created_at && (
+                      <p className="text-[11px] text-slate-500">
+                        Requested: {new Date(record.created_at).toLocaleString([], { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Cancellation Reason */}
+                  <div>
+                    <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                      Reason provided by attendee
+                    </span>
+                    <div className="rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-700">
+                      {record?.reason ? record.reason : <span className="italic text-slate-400">No specific reason provided</span>}
+                    </div>
+                  </div>
+
+                  {/* Payment and refund status */}
+                  {payment && payment.amount > 0 && (
+                    <div className="rounded-xl border border-emerald-200/80 bg-emerald-50/50 p-3 text-xs space-y-1">
+                      <div className="flex justify-between font-semibold text-slate-900">
+                        <span>Paid Order</span>
+                        <span>₹{(payment.amount / 100).toFixed(2)}</span>
+                      </div>
+                      <p className="text-[11px] text-slate-600">
+                        Refund status: <span className="font-semibold capitalize">{record?.refund_status || "Pending Approval"}</span>
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Optional Rejection Reason */}
+                  <div>
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                      Rejection note (if declining request)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Cutoff exceeded or special event guidelines apply"
+                      value={rejectionReasonInput}
+                      onChange={(e) => setRejectionReasonInput(e.target.value)}
+                      disabled={processingCancellation}
+                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 disabled:opacity-50"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50/80 px-5 py-3.5">
+                  <button
+                    type="button"
+                    disabled={processingCancellation}
+                    onClick={() => setReviewingCancellation(null)}
+                    className="rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-2xs transition-colors hover:bg-slate-100 disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      disabled={processingCancellation}
+                      onClick={() => handleRejectCancellation(reviewingCancellation)}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 bg-white px-3.5 py-2 text-xs font-semibold text-rose-700 shadow-2xs transition-colors hover:bg-rose-50 disabled:opacity-50"
+                    >
+                      {processingCancellation ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <X className="h-3.5 w-3.5" />}
+                      Decline Request
+                    </button>
+                    <button
+                      type="button"
+                      disabled={processingCancellation}
+                      onClick={() => handleApproveCancellation(reviewingCancellation)}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-600 bg-emerald-600 px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700 disabled:opacity-50"
+                    >
+                      {processingCancellation ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+                      Approve & Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })(),
         document.body
       )}
 

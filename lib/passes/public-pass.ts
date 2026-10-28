@@ -51,6 +51,8 @@ export function maskEmail(email?: string | null): string {
 
 export interface HardenedPublicPass {
   pass: {
+    id?: string;
+    attendee_id?: string;
     pass_token: string;
     pass_type: string;
     status: string;
@@ -61,12 +63,14 @@ export interface HardenedPublicPass {
     checked_in_guests?: number;
   };
   attendee: {
+    id?: string;
     name: string;
     email: string;
     phone: string;
     application_status: string;
     custom_ticket_id?: string | null;
     isPlaceholder?: boolean;
+    cancellation_token?: string | null;
   };
   event: {
     id: string;
@@ -126,14 +130,14 @@ export async function getHardenedPublicPass(
   // 1. Fetch pass by pass_token with strictly bounded columns
   const { data: pass, error: passErr } = await admin
     .from("passes")
-    .select("pass_token, pass_type, status, attendee_id, event_id, is_group_master, total_guests, checked_in_guests")
+    .select("id, pass_token, pass_type, status, attendee_id, event_id, is_group_master, total_guests, checked_in_guests")
     .or(`pass_token.eq.${sanitizedToken},pass_token.eq.${passToken}`)
     .maybeSingle();
 
   if (passErr || !pass) return null;
 
   // Reject revoked or expired passes
-  if (["revoked", "cancelled", "expired"].includes(pass.status?.toLowerCase())) {
+  if (["revoked", "expired"].includes(pass.status?.toLowerCase())) {
     return null;
   }
 
@@ -141,7 +145,7 @@ export async function getHardenedPublicPass(
   const [{ data: attendee }, { data: event }] = await Promise.all([
     admin
       .from("attendees")
-      .select("name, email, phone, application_status, custom_responses")
+      .select("id, name, email, phone, application_status, custom_responses, cancellation_token")
       .eq("id", pass.attendee_id)
       .single(),
     admin
@@ -228,6 +232,8 @@ export async function getHardenedPublicPass(
 
   return {
     pass: {
+      id: pass.id,
+      attendee_id: pass.attendee_id,
       pass_token: pass.pass_token,
       pass_type: pass.pass_type || "participant",
       status: pass.status || "generated",
@@ -237,12 +243,14 @@ export async function getHardenedPublicPass(
       checked_in_guests: Number((pass as any).checked_in_guests || 0),
     },
     attendee: {
+      id: attendee.id,
       name: attendee.name,
       email: maskEmail(attendee.email),
       phone: maskPhone(attendee.phone),
       application_status: attendee.application_status,
       custom_ticket_id: customTicketId,
       isPlaceholder,
+      cancellation_token: (attendee as any).cancellation_token || null,
     },
     event: {
       id: event.id,

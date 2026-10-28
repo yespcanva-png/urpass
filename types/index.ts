@@ -129,8 +129,54 @@ export type ApiKey = {
   updated_at: string;
 };
 
-export type ApplicationStatus = "pending" | "approved" | "rejected" | "waitlisted";
-export type PassStatus = "not_generated" | "generated" | "checked_in";
+export type ApplicationStatus =
+  | "pending"
+  | "approved"
+  | "rejected"
+  | "waitlisted"
+  | "cancellation_requested"
+  | "cancelled";
+export type PassStatus =
+  | "not_generated"
+  | "generated"
+  | "checked_in"
+  | "cancelled"
+  | "revoked";
+
+export interface TicketCancellationPolicy {
+  enabled: boolean;
+  cutoff: "before_start" | "24h" | "48h" | "custom";
+  customCutoffHours?: number;
+  requireReason: boolean;
+  requireOrganizerApproval: boolean;
+  sendNotifications: boolean;
+  capacityReleasePolicy: "immediate" | "on_approval" | "never";
+  paidTicketPolicy: "no_refund" | "full_refund" | "manual_review";
+}
+
+export type CancellationStatus = "PENDING" | "APPROVED" | "REJECTED" | "COMPLETED";
+export type CancellationRefundStatus = "NONE" | "PENDING" | "PROCESSED" | "FAILED" | "MANUAL_REVIEW";
+
+export interface TicketCancellationRecord {
+  id: string;
+  event_id: string;
+  attendee_id: string;
+  pass_id?: string | null;
+  order_id?: string | null;
+  requested_by: "ATTENDEE" | "ORGANIZER" | "SYSTEM";
+  status: CancellationStatus;
+  reason?: string | null;
+  rejection_reason?: string | null;
+  policy_snapshot: Partial<TicketCancellationPolicy>;
+  refund_status: CancellationRefundStatus;
+  refund_amount: number;
+  refund_id?: string | null;
+  metadata?: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+  processed_at?: string | null;
+  processed_by?: string | null;
+}
 
 export type Attendee = {
   id: string;

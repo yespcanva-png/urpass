@@ -181,7 +181,7 @@ export async function POST(req: NextRequest) {
   // =========================================================================
   const results: Array<{
     scanOperationId: string;
-    status: "CHECKED_IN" | "ALREADY_CHECKED_IN" | "INVALID_PASS" | "ACCESS_DENIED" | "ERROR";
+    status: "CHECKED_IN" | "ALREADY_CHECKED_IN" | "INVALID_PASS" | "ACCESS_DENIED" | "CANCELLED" | "ERROR";
     success: boolean;
     conflict?: boolean;
     conflictMessage?: string;
@@ -235,6 +235,17 @@ export async function POST(req: NextRequest) {
         status: "INVALID_PASS",
         success: false,
         conflictMessage: "Pass not found for this event",
+      });
+      errorCount++;
+      continue;
+    }
+
+    if (pass.status === "cancelled" || pass.status === "revoked") {
+      results.push({
+        scanOperationId,
+        status: "CANCELLED",
+        success: false,
+        conflictMessage: pass.status === "revoked" ? "Pass has been revoked" : "Ticket was cancelled",
       });
       errorCount++;
       continue;
