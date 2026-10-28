@@ -7,11 +7,8 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import { getSupabaseUrl } from "@/lib/supabase/config";
 import { createInvoiceForPayment } from "@/lib/invoices";
-import {
-  getIntroOfferDisclosure,
-  isIntroOfferPlan,
-} from "@/lib/billing/razorpay-subscription-offers";
-import type { IntroOfferPlanSlug } from "@/lib/billing/razorpay-subscription-offers";
+import { getIntroOfferDisclosure, getIntroOfferId, isIntroOfferPlan } from "@/lib/billing/razorpay-subscription-offers";
+import { recordFirstEventConversion } from "@/lib/conversion/first-event";
 
 export const dynamic = "force-dynamic";
 
@@ -56,6 +53,14 @@ export async function POST(req: NextRequest) {
   }
 
   const admin = adminClient();
+  const { data: checkoutIntent, error: intentError } = await admin
+    .from("subscription_checkout_intents")
+    .select("id, status, amount_paise")
+    .eq("user_id", user.id).eq("plan_slug", planSlug)
+    .eq("provider_subscription_id", subscriptionId).maybeSingle();
+  if (intentError || !checkoutIntent || !["pending", "authorized"].includes(checkoutIntent.status)) {
+    return NextResponse.json({ error: "This subscription is not linked to your checkout session." }, { status: 403 });
+  }
   const { data: plan } = await admin
     .from("plans")
     .select("id, name, slug")
@@ -69,9 +74,19 @@ export async function POST(req: NextRequest) {
 
   try {
     const razorpay = getRazorpayClient();
+    type ProviderSubscription = { status?: string; notes?: Record<string, string>; offer_id?: string | null;
+      current_start?: number; current_end?: number };
+    type ProviderPayment = { status?: string; amount?: number; currency?: string;
+      subscription_id?: string };
+    const subscriptionsApi = razorpay.subscriptions as unknown as {
+      fetch: (id: string) => Promise<ProviderSubscription> };
+    const paymentsApi = razorpay.payments as unknown as {
+      fetch: (id: string) => Promise<ProviderPayment>;
+      capture: (id: string, amount: number | undefined, currency: string) => Promise<unknown>;
+    };
     const [subscription, payment] = await Promise.all([
-      (razorpay.subscriptions as any).fetch(subscriptionId),
-      (razorpay.payments as any).fetch(paymentId).catch(() => null),
+      subscriptionsApi.fetch(subscriptionId),
+      paymentsApi.fetch(paymentId).catch(() => null),
     ]);
 
     if (!payment) {
@@ -81,7 +96,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const paymentStatus = String(payment.status || "").toLowerCase();
+    let paymentStatus = String(payment.status || "").toLowerCase();
     if (paymentStatus !== "captured" && paymentStatus !== "authorized") {
       return NextResponse.json(
         {
@@ -91,16 +106,39 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (subscription.offer_id && subscription.offer_id !== getIntroOfferId(planSlug)) {
+      return NextResponse.json({ error: "Subscription offer does not match the authorized checkout." }, { status: 400 });
+    }
+    const minimumCharge = subscription.offer_id
+      ? getIntroOfferDisclosure(planSlug).introAmountPaise
+      : Number(checkoutIntent.amount_paise);
+    if (String(payment.currency || "INR").toUpperCase() !== "INR" ||
+        !Number.isFinite(payment.amount) || Number(payment.amount) < minimumCharge) {
+      return NextResponse.json({ error: "First charge differs from the verified subscription offer." }, { status: 400 });
+    }
+
     if (paymentStatus === "authorized") {
       try {
-        await (razorpay.payments as any).capture(paymentId, payment.amount, payment.currency || "INR");
+        await paymentsApi.capture(paymentId, payment.amount, payment.currency || "INR");
       } catch {
         // Auto-capture in progress or handled by subscription
       }
+      const captured = await paymentsApi.fetch(paymentId);
+      paymentStatus = String(captured?.status || "").toLowerCase();
+      if (paymentStatus !== "captured") {
+        return NextResponse.json({ error: "Payment capture is pending. Your access will activate after Razorpay confirms it." }, { status: 202 });
+      }
+    }
+
+    if (String(subscription?.status || "").toLowerCase() !== "active") {
+      return NextResponse.json({ error: "AutoPay authorization is pending. Your plan will activate after Razorpay confirms the subscription." }, { status: 202 });
+    }
+    if (payment.subscription_id && payment.subscription_id !== subscriptionId) {
+      return NextResponse.json({ error: "Payment does not belong to this subscription." }, { status: 403 });
     }
 
     const notes = (subscription?.notes ?? {}) as Record<string, string>;
-    if (notes.user_id && notes.user_id !== user.id) {
+    if (notes.user_id !== user.id || notes.checkout_intent_id !== checkoutIntent.id) {
       return NextResponse.json({ error: "Subscription does not belong to the authenticated user." }, { status: 403 });
     }
     if (notes.plan_slug && notes.plan_slug !== planSlug) {
@@ -114,7 +152,6 @@ export async function POST(req: NextRequest) {
       ? new Date(Number(subscription.current_end) * 1000)
       : oneMonthFromNow();
     const appStatus = "active";
-    const disclosure = getIntroOfferDisclosure(planSlug as IntroOfferPlanSlug);
 
     const { data: existing } = await admin
       .from("subscriptions")
@@ -123,6 +160,7 @@ export async function POST(req: NextRequest) {
       .maybeSingle();
 
     if (existing?.provider_subscription_id === subscriptionId) {
+      await admin.from("subscription_checkout_intents").update({ status: "authorized", updated_at: new Date().toISOString() }).eq("id", checkoutIntent.id);
       return NextResponse.json({ success: true, subscriptionId, idempotent: true });
     }
 
@@ -158,11 +196,23 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    await admin.from("subscription_checkout_intents").update({ status: "authorized", updated_at: new Date().toISOString() }).eq("id", checkoutIntent.id);
+    const { data: onboardingDraft } = await admin.from("events").select("id")
+      .eq("organizer_id", user.id).eq("is_onboarding_draft", true).eq("status", "draft")
+      .limit(1).maybeSingle();
+    if (onboardingDraft) {
+      await recordFirstEventConversion({ userId: user.id, eventId: onboardingDraft.id,
+        eventName: "autopay_authorized", idempotencyKey: `autopay:${subscriptionId}`,
+        planSlug, billingCycle: "monthly" });
+      await recordFirstEventConversion({ userId: user.id, eventId: onboardingDraft.id,
+        eventName: "subscription_activated", idempotencyKey: `subscription-active:${subscriptionId}`,
+        planSlug, billingCycle: "monthly" });
+    }
+
     const regularPlanPaise = planSlug === "starter" ? 49900 : planSlug === "pro" ? 99900 : 249900;
     const paymentAmount = Number(payment?.amount ?? regularPlanPaise);
     const paymentCurrency = String(payment?.currency || "INR").toUpperCase() as "INR" | "GBP";
     const baseAmountPaise = paymentAmount ? Math.round(paymentAmount / 1.18) : regularPlanPaise;
-    const discountPaise = notes.expected_discount ? Number(notes.expected_discount) : 0;
 
     await createInvoiceForPayment({
       userId: user.id,

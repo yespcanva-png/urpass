@@ -13,6 +13,7 @@ vi.mock("@/lib/email", () => ({
   getFromEmail: vi.fn().mockReturnValue("URPASS <urpass.space@yespstudio.com>"),
   getOwnerEmail: vi.fn().mockReturnValue("srinithin@yespstudio.com"),
 }));
+vi.mock("@/lib/conversion/first-event", () => ({ recordFirstEventConversion: vi.fn().mockResolvedValue(undefined) }));
 
 // Mock Supabase
 const mockVerifyOtp = vi.fn().mockResolvedValue({ data: { user: { id: "user-123", email: "user@example.com", created_at: new Date().toISOString() }, session: { access_token: "tok" } }, error: null });
@@ -138,7 +139,7 @@ describe("Auth Flows, Logout, and Password Reset Hardening", () => {
       const req = new Request("http://localhost:3000/auth/callback?code=valid-code");
       const res = await authCallbackGET(req);
       expect(res.status).toBe(307);
-      expect(res.headers.get("location")).toBe("http://localhost:3000/dashboard");
+      expect(res.headers.get("location")).toBe("http://localhost:3000/onboarding/subscription");
       expect(mockExchangeCode).toHaveBeenCalledWith("valid-code");
     });
   });

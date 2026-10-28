@@ -100,6 +100,32 @@ export async function POST(req: NextRequest) {
       // Even if table migration hasn't run yet in dev, we log and proceed to email
     }
 
+    // Record conversion event for managed service lead
+    try {
+      const sessionId = req.cookies.get("urpass_anon_session")?.value || `lead_${data.businessEmail}`;
+      const { recordServerConversion } = await import("@/lib/conversion/server");
+      await recordServerConversion({
+        eventName: "managed_service_enquiry",
+        sessionId,
+        pageSlug: data.pageSlug || "/contact",
+        contentCluster: data.contentCluster || null,
+        visitorSegment: "managed_service",
+        utmSource: data.utmSource || null,
+        utmMedium: data.utmMedium || null,
+        utmCampaign: data.utmCampaign || null,
+        utmContent: data.utmContent || null,
+        referrer: data.referrer || null,
+        idempotencyKey: `inq:${record?.id || data.businessEmail}:${Math.floor(Date.now() / 60000)}`,
+        metadata: {
+          organizerName: data.organizerName,
+          package: data.preferredPackage,
+          eventType: data.eventType,
+        },
+      });
+    } catch {
+      // Non-blocking
+    }
+
     // 2. Email dispatch to Ops Team
     const inquiryId = record?.id || `INQ-${Date.now()}`;
     const subject = `[UrPass Managed Inquiry] ${data.eventType} (${data.preferredPackage.toUpperCase()}) — ${data.organizerName}`;

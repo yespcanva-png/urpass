@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -23,6 +23,10 @@ import { createClient } from "@/lib/supabase/client";
 import { sendSignupNotifications } from "@/app/actions/notifications";
 import { lookupSSOByEmail } from "@/app/actions/sso";
 import { resolvePostAuthRedirect } from "@/lib/auth-redirect";
+import { trackConversionEvent } from "@/lib/conversion/tracker";
+import { recordSignupCompletion } from "@/app/actions/first-event";
+import SignupAssistanceModal from "@/components/conversion/SignupAssistanceModal";
+import { VisitorSegment } from "@/lib/conversion/types";
 
 const schema = z.object({
   full_name: z.string().min(2, "Name must be at least 2 characters"),
@@ -82,6 +86,29 @@ function SignupContent() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [ssoLoading, setSsoLoading] = useState(false);
   const [ssoSuccessMsg, setSsoSuccessMsg] = useState("");
+  const [hasStartedForm, setHasStartedForm] = useState(false);
+
+  const segment = (searchParams.get("segment") || "general") as VisitorSegment;
+  const fromPage = searchParams.get("from") || "/signup";
+
+  useEffect(() => {
+    trackConversionEvent("landing_page_view", {
+      pageSlug: "/signup",
+      visitorSegment: segment,
+      metadata: { from: fromPage },
+    });
+  }, [segment, fromPage]);
+
+  const markFormStarted = () => {
+    if (!hasStartedForm) {
+      setHasStartedForm(true);
+      trackConversionEvent("signup_started", {
+        pageSlug: "/signup",
+        visitorSegment: segment,
+        metadata: { from: fromPage },
+      });
+    }
+  };
 
   const {
     register,
@@ -98,6 +125,7 @@ function SignupContent() {
   async function onSubmit(data: FormData) {
     setServerError("");
     setEnforcedSSORedirect(null);
+    trackConversionEvent("signup_started", { pageSlug: "/signup" });
 
     // Check if domain enforces Enterprise SSO
     try {
@@ -140,11 +168,20 @@ function SignupContent() {
       return;
     }
 
+    trackConversionEvent("signup_completed", {
+      pageSlug: "/signup",
+      visitorSegment: segment,
+      metadata: { method: "email", userId: signUpData.user?.id },
+    });
+    await recordSignupCompletion().catch(() => {});
+
     const target = resolvePostAuthRedirect(
       searchParams,
       typeof document !== "undefined" ? document.referrer : null
     );
-    const destination = "/onboarding/subscription";
+    const destination = (target === "/dashboard" || target === "/onboarding/subscription") && process.env.NEXT_PUBLIC_FIRST_EVENT_CONVERSION_ENABLED === "true"
+      ? "/onboarding/first-event"
+      : target;
     setSuccess(true);
     setTimeout(() => router.push(destination), 1200);
   }
@@ -176,10 +213,18 @@ function SignupContent() {
     }
   }
 
-  function handleGoogleSignup() {
+  async function handleGoogleSignup() {
     setGoogleLoading(true);
-    const destination = "/onboarding/subscription";
-    window.location.href = `/api/auth/google/redirect?next=${encodeURIComponent(destination)}`;
+    trackConversionEvent("signup_started", {
+      pageSlug: "/signup",
+      visitorSegment: segment,
+      metadata: { method: "google", from: fromPage },
+    });
+    const destination = process.env.NEXT_PUBLIC_FIRST_EVENT_CONVERSION_ENABLED === "true"
+      ? "/onboarding/first-event"
+      : "/onboarding/subscription";
+    const redirectUrl = `/api/auth/google/redirect?next=${encodeURIComponent(destination)}&segment=${encodeURIComponent(segment)}&from=${encodeURIComponent(fromPage)}`;
+    window.location.href = redirectUrl;
   }
 
   const BG = {
@@ -201,7 +246,7 @@ function SignupContent() {
             We sent a verification link to <span className="font-semibold text-neutral-900">{submittedEmail}</span>. Click the link in the email to activate your account and start creating events.
           </p>
           <div className="mt-6 p-4 rounded-xl bg-neutral-50 border border-neutral-200/80 text-xs text-neutral-500 text-left space-y-1.5">
-            <p className="font-medium text-neutral-700">Didn't see the email?</p>
+            <p className="font-medium text-neutral-700">Didn&apos;t see the email?</p>
             <p>• Check your spam or promotions folder</p>
             <p>• Make sure <span className="font-mono text-neutral-700">{submittedEmail}</span> was typed correctly</p>
           </div>
@@ -325,7 +370,7 @@ function SignupContent() {
               <div className="flex-1 h-px bg-neutral-100" />
             </div>
 
-            <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+            <form onSubmit={handleSubmit(onSubmit)} onChangeCapture={markFormStarted} className="flex flex-col gap-4">
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-semibold text-neutral-500 uppercase tracking-wide">
                   Full name
@@ -518,6 +563,8 @@ function SignupContent() {
       <p className="text-xs text-neutral-400 mt-6 apply-in-3">
         Enterprise SSO · SAML 2.0 &amp; OpenID Connect compliant
       </p>
+
+      <SignupAssistanceModal segment={segment} hasStartedForm={hasStartedForm} />
     </div>
   );
 }

@@ -14,6 +14,7 @@ import {
   getMonthlyRazorpayPlanId,
   isIntroOfferPlan,
 } from "@/lib/billing/razorpay-subscription-offers";
+import { recordFirstEventConversion } from "@/lib/conversion/first-event";
 
 export const dynamic = "force-dynamic";
 
@@ -36,6 +37,8 @@ type ExistingSubscription = {
   trial_ends_at?: string | null;
   plan?: { slug?: string | null } | Array<{ slug?: string | null }> | null;
 };
+
+type ProviderSubscription = { id: string; status?: string; offer_id?: string | null; current_end?: number | null };
 
 function adminClient() {
   return createAdminClient(
@@ -162,8 +165,24 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  const { data: catalogPlan, error: catalogError } = await admin.from("billing_plans")
+    .select("id").eq("slug", planSlug).eq("is_active", true).maybeSingle();
+  if (catalogError || !catalogPlan) return NextResponse.json({ error: "Billing catalog is unavailable." }, { status: 503 });
+  const { data: prices, error: priceError } = await admin.from("billing_plan_prices")
+    .select("price_paise, tax_inclusive, tax_rate_percent, version")
+    .eq("plan_id", catalogPlan.id).eq("currency", "INR")
+    .eq("billing_cycle", "monthly").eq("is_active", true)
+    .order("version", { ascending: false }).limit(1);
+  const currentPrice = prices?.[0];
+  if (priceError || !currentPrice || currentPrice.tax_inclusive || Number(currentPrice.tax_rate_percent) !== 18) {
+    return NextResponse.json({ error: "Monthly plan pricing needs verification before checkout." }, { status: 503 });
+  }
+
   const configuredOfferId = getIntroOfferId(planSlug);
   const isValidOffer = Boolean(configuredOfferId && configuredOfferId.startsWith("offer_"));
+  if (body?.requireStandardPricing === true && isValidOffer) {
+    return NextResponse.json({ error: "A configured promotion needs a verified checkout quote before this onboarding checkout can continue." }, { status: 503 });
+  }
   const introDisclosure = isValidOffer ? getIntroOfferDisclosure(planSlug) : null;
 
   let keyId: string;
@@ -178,11 +197,60 @@ export async function POST(req: NextRequest) {
 
   try {
     const razorpay = getRazorpayClient();
+    const plansApi = razorpay.plans as unknown as { fetch: (id: string) => Promise<{
+      item?: { amount?: number }; period?: string; interval?: number }> };
+    const subscriptionsApi = razorpay.subscriptions as unknown as {
+      create: (payload: Record<string, unknown>) => Promise<ProviderSubscription>;
+      fetch: (id: string) => Promise<ProviderSubscription>;
+      cancel: (id: string, payload: { cancel_at_cycle_end: number }) => Promise<unknown>;
+    };
+    const providerPlan = await plansApi.fetch(razorpayPlanId);
+    if (Number(providerPlan?.item?.amount) !== Number(currentPrice.price_paise) ||
+        providerPlan?.period !== "monthly" || Number(providerPlan?.interval) !== 1) {
+      return NextResponse.json({ error: "Razorpay plan price differs from the billing catalog. Checkout is paused." }, { status: 503 });
+    }
+    const regularAmountPaise = Number(currentPrice.price_paise);
+    const monthlyWithGst = Math.round(regularAmountPaise * 1.18) / 100;
+    const { data: pending, error: pendingError } = await admin.from("subscription_checkout_intents")
+      .select("id, plan_slug, provider_subscription_id, amount_paise")
+      .eq("user_id", user.id).eq("status", "pending").maybeSingle();
+    if (pendingError) return NextResponse.json({ error: "Checkout session storage is unavailable." }, { status: 503 });
+    if (pending && (pending.plan_slug !== planSlug || Number(pending.amount_paise) !== regularAmountPaise)) {
+      return NextResponse.json({ error: "Finish or cancel your existing pending subscription authorization before choosing another plan." }, { status: 409 });
+    }
+    if (pending && !pending.provider_subscription_id) {
+      return NextResponse.json({ error: "Your checkout is being prepared. Please retry shortly; no new subscription was created." }, { status: 409 });
+    }
+    if (pending?.provider_subscription_id) {
+      const previous = await subscriptionsApi.fetch(pending.provider_subscription_id);
+      if (!["created", "authenticated", "pending", "halted"].includes(String(previous?.status || ""))) {
+        return NextResponse.json({ error: `Existing checkout is ${previous?.status || "unavailable"}. Contact support before starting another mandate.` }, { status: 409 });
+      }
+      return NextResponse.json({ subscriptionId: pending.provider_subscription_id, keyId,
+        planName: plan.name, planSlug, billingCycle: "monthly", currency: "INR",
+        regularAmountPaise, firstChargePaise: regularAmountPaise,
+        estimatedTotalWithGst: monthlyWithGst, taxRatePercent: 18,
+        nextBillingDate: previous?.current_end ? new Date(Number(previous.current_end) * 1000).toISOString() : null,
+        reused: true });
+    }
+    const { data: intent, error: intentError } = await admin.from("subscription_checkout_intents")
+      .insert({ user_id: user.id, plan_slug: planSlug, billing_cycle: "monthly",
+        currency: "INR", amount_paise: regularAmountPaise, status: "pending" })
+      .select("id").single();
+    if (intentError || !intent) return NextResponse.json({ error: "A checkout already exists or could not be reserved. Retry to resume it." }, { status: 409 });
+    const { data: onboardingDraft } = await admin.from("events").select("id")
+      .eq("organizer_id", user.id).eq("is_onboarding_draft", true).eq("status", "draft")
+      .limit(1).maybeSingle();
+    if (onboardingDraft) {
+      await recordFirstEventConversion({ userId: user.id, eventId: onboardingDraft.id,
+        eventName: "subscription_plan_selected", idempotencyKey: `plan-selected:${intent.id}`,
+        planSlug, billingCycle: "monthly" });
+      await recordFirstEventConversion({ userId: user.id, eventId: onboardingDraft.id,
+        eventName: "checkout_started", idempotencyKey: `checkout:${intent.id}`,
+        planSlug, billingCycle: "monthly" });
+    }
     // Default to 36 billing cycles (3 years) instead of 120 (10 years)
     const totalCount = Number(process.env.RAZORPAY_SUBSCRIPTION_TOTAL_COUNT || 36);
-    const regularAmountPaise = planSlug === "starter" ? 49900 : planSlug === "pro" ? 99900 : 249900;
-    const baseRupees = regularAmountPaise / 100;
-    const monthlyWithGst = Math.round(baseRupees * 1.18 * 100) / 100;
 
     const subscriptionPayload: Record<string, unknown> = {
       plan_id: razorpayPlanId,
@@ -195,6 +263,7 @@ export async function POST(req: NextRequest) {
         plan_slug: String(planSlug),
         billing_cycle: "monthly",
         regular_plan_id: String(razorpayPlanId),
+        checkout_intent_id: intent.id,
         billing_address: billingAddress,
         billing_state: billingState,
         billing_state_code: billingStateCode,
@@ -207,10 +276,21 @@ export async function POST(req: NextRequest) {
       subscriptionPayload.offer_id = configuredOfferId;
     }
 
-    const subscription = await (razorpay.subscriptions as any).create(subscriptionPayload);
+    const subscription = await subscriptionsApi.create(subscriptionPayload);
+    const { error: saveIntentError } = await admin.from("subscription_checkout_intents")
+      .update({ provider_subscription_id: subscription.id, updated_at: new Date().toISOString() })
+      .eq("id", intent.id).eq("status", "pending");
+    if (saveIntentError) {
+      const cancelled = await subscriptionsApi.cancel(subscription.id, { cancel_at_cycle_end: 0 }).then(() => true).catch(() => false);
+      if (cancelled) await admin.from("subscription_checkout_intents")
+        .update({ status: "cancelled", updated_at: new Date().toISOString() }).eq("id", intent.id);
+      return NextResponse.json({ error: "Checkout could not be saved. Contact support before retrying authorization." }, { status: 503 });
+    }
     if (isValidOffer && configuredOfferId && subscription?.offer_id !== configuredOfferId) {
       if (subscription?.id) {
-        await (razorpay.subscriptions as any).cancel(subscription.id, { cancel_at_cycle_end: 0 }).catch(() => null);
+        const cancelled = await subscriptionsApi.cancel(subscription.id, { cancel_at_cycle_end: 0 }).then(() => true).catch(() => false);
+        if (cancelled) await admin.from("subscription_checkout_intents")
+          .update({ status: "cancelled", updated_at: new Date().toISOString() }).eq("id", intent.id);
       }
       return NextResponse.json(
         {
@@ -243,6 +323,8 @@ export async function POST(req: NextRequest) {
       expectedIntroAmountPaise: introDisclosure ? introDisclosure.introAmountPaise : regularAmountPaise,
       expectedDiscountPaise: introDisclosure ? introDisclosure.discountPaise : 0,
       regularAmountPaise: introDisclosure ? introDisclosure.regularAmountPaise : regularAmountPaise,
+      firstChargePaise: introDisclosure ? introDisclosure.introAmountPaise : regularAmountPaise,
+      nextBillingDate: subscription?.current_end ? new Date(Number(subscription.current_end) * 1000).toISOString() : null,
       todayAmountWithGst: introDisclosure ? introDisclosure.todayAmountWithGst : monthlyWithGst,
       month2AmountWithGst: introDisclosure ? introDisclosure.month2AmountWithGst : monthlyWithGst,
       month3OnwardAmountWithGst: introDisclosure ? introDisclosure.month3OnwardAmountWithGst : monthlyWithGst,

@@ -277,6 +277,27 @@ export async function createEvent(data: EventInput, organizationId?: string): Pr
     });
   }
 
+  // Record conversion for first event created
+  try {
+    const { count: priorCreatedCount } = await supabase
+      .from("events")
+      .select("id", { count: "exact", head: true })
+      .eq("organizer_id", user.id);
+
+    if ((priorCreatedCount || 0) <= 1) {
+      const { recordServerConversion } = await import("@/lib/conversion/server");
+      await recordServerConversion({
+        eventName: "first_event_created",
+        userId: user.id,
+        pageSlug: "/create-event",
+        idempotencyKey: `first_event_created:${event.id}`,
+        metadata: { event_id: event.id, name: baseFields.name },
+      });
+    }
+  } catch {
+    // Non-blocking
+  }
+
   // If event was created directly as active (published), enforce unified pre-flight readiness checks
   if (baseFields.status === "active") {
     const preflight = await validateEventPreflightReadiness(event.id, supabase);

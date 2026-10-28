@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Check, LogOut, ShieldCheck, Ticket, Sparkles, ArrowRight, Loader2 } from "lucide-react";
@@ -96,6 +96,7 @@ interface Props {
   accessState: string;
   introOfferEligible: boolean;
   freeTrialEligible?: boolean;
+  draftId?: string;
 }
 
 export default function SubscriptionOnboardingClient({
@@ -104,8 +105,8 @@ export default function SubscriptionOnboardingClient({
   userName,
   userPhone,
   accessState,
-  introOfferEligible,
   freeTrialEligible = false,
+  draftId,
 }: Props) {
   const router = useRouter();
   const [trialLoading, setTrialLoading] = useState(false);
@@ -131,18 +132,13 @@ export default function SubscriptionOnboardingClient({
         setFreeLoading(false);
         return;
       }
-      router.push("/dashboard");
+      router.push(draftId ? `/event/${draftId}/settings` : "/dashboard");
       router.refresh();
     } catch (err) {
       setFreeLoading(false);
       setFreeError(err instanceof Error ? err.message : "Failed to activate Free Forever plan.");
     }
   }
-
-  useEffect(() => {
-    const detected = detectCountryClient();
-    if (detected && detected !== activeCountry) setActiveCountry(detected);
-  }, [activeCountry]);
 
   function switchCountry(next: "IN" | "GB") {
     setActiveCountry(next);
@@ -232,7 +228,7 @@ export default function SubscriptionOnboardingClient({
               return;
             }
 
-            router.push(verifyData.redirect || "/create-event");
+            router.push(draftId ? `/event/${draftId}/settings` : (verifyData.redirect || "/create-event"));
             router.refresh();
           } catch (err) {
             setTrialLoading(false);
@@ -255,7 +251,6 @@ export default function SubscriptionOnboardingClient({
 
   const isUk = activeCountry === "GB";
   const isAnnual = billingCycle === "annual";
-  const showIntroOffer = false;
 
   return (
     <div className="min-h-screen bg-[#f7f7fb] text-neutral-950">
@@ -270,6 +265,8 @@ export default function SubscriptionOnboardingClient({
 
           <div className="flex items-center gap-2">
             <div className="hidden text-xs text-neutral-500 md:block">{userEmail}</div>
+            {/* A sign-out GET must not be prefetched by Next.js Link. */}
+            {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
             <a
               href="/auth/signout"
               className="inline-flex h-9 items-center gap-2 rounded-lg border border-neutral-200 bg-white px-3 text-xs font-semibold text-neutral-700 hover:bg-neutral-50"
@@ -498,7 +495,7 @@ export default function SubscriptionOnboardingClient({
                     userName={userName}
                     userPhone={phone || userPhone}
                     currency={isUk ? "GBP" : "INR"}
-                    successRedirect="/dashboard"
+                    successRedirect={draftId ? `/event/${draftId}/settings` : "/dashboard"}
                     introOfferEligible={false}
                     className={`mt-6 w-full rounded-lg px-4 py-3 text-sm font-bold ${
                       plan.recommended

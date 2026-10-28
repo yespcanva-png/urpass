@@ -167,7 +167,7 @@ export default async function ApplyPage({
 
   const query = supabase
     .from("events")
-    .select("id, name, description, event_date, start_time, end_time, venue, auto_approve, is_paid_event, ticket_price, attendee_limit, organizer_id, organization_id, event_type, apply_slug, custom_fields, custom_pass_design")
+    .select("id, name, description, event_date, start_time, end_time, venue, auto_approve, is_paid_event, ticket_price, attendee_limit, organizer_id, organization_id, event_type, apply_slug, custom_fields, custom_pass_design, registration_opens_at, registration_closes_at")
     .eq("status", "active")
     .eq("application_enabled", true);
 
@@ -258,6 +258,18 @@ export default async function ApplyPage({
         </div>
       </div>
     );
+  }
+
+  const registrationNow = Date.now();
+  const registrationClosed = event.registration_closes_at && new Date(event.registration_closes_at).getTime() <= registrationNow;
+  const registrationNotOpen = event.registration_opens_at && new Date(event.registration_opens_at).getTime() > registrationNow;
+  if (registrationClosed || registrationNotOpen) {
+    return <main className="flex min-h-screen items-center justify-center bg-neutral-50 p-6 text-center text-neutral-900">
+      <div className="max-w-md rounded-2xl bg-white p-8 shadow-sm">
+        <h1 className="text-2xl font-bold">{event.name}</h1>
+        <p className="mt-3 text-neutral-600">{registrationClosed ? "Registration has closed." : "Registration has not opened yet."}</p>
+      </div>
+    </main>;
   }
 
   // Fetch organizer branding — must use admin client because subscriptions and profiles

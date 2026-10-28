@@ -35,6 +35,7 @@ interface Props {
   style?: React.CSSProperties;
   successRedirect?: string;
   introOfferEligible?: boolean;
+  priceMonthlyOverride?: number;
 }
 
 export default function CheckoutButton({
@@ -42,14 +43,14 @@ export default function CheckoutButton({
   billingCycle = "monthly",
   userEmail, userName, userPhone,
   currency = "INR",
-  children, className = "", style, successRedirect, introOfferEligible = false,
+  children, className = "", style, successRedirect, introOfferEligible = false, priceMonthlyOverride,
 }: Props) {
   const [open, setOpen] = useState(false);
   const isUk = (currency || "").toUpperCase() === "GBP";
   const isNiveditha = (userEmail || "").toLowerCase() === "niveditha@client.urpass.space";
   const priceMap = isUk ? PLAN_PRICES_GBP : PLAN_PRICES_INR;
   const prices = priceMap[planSlug] ?? { priceMonthly: 0, annualTotal: 0 };
-  const effectivePriceMonthly = isNiveditha && planSlug === "business" ? 2999 : prices.priceMonthly;
+  const effectivePriceMonthly = priceMonthlyOverride ?? (isNiveditha && planSlug === "business" ? 2999 : prices.priceMonthly);
 
   return (
     <>

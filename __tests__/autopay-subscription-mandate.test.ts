@@ -425,13 +425,13 @@ describe("Unified AutoPay Mandate Creation & Verification Flow", () => {
         expect.anything()
       );
 
-      // Verify tax invoice created for ₹588.82 (₹499 base + ₹89.82 GST)
+      // Verify tax invoice reflects the captured ₹34.22 introductory charge.
       expect(mockedCreateInvoice).toHaveBeenCalledWith(
         expect.objectContaining({
           userId: user.id,
           subscriptionId: "sub_db_row_123",
           paymentId,
-          baseAmountRupees: 499,
+          baseAmountRupees: 29,
           currency: "INR",
           customerName: "Summit Events",
           customerAddress: "78 MG Road, Bengaluru",

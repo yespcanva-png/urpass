@@ -5,6 +5,9 @@ import { getSupabaseUrl, getSupabaseAnonKey, getSupabaseServiceRoleKey, getAppOr
 import { notifyOwnerNewUser, notifyOwnerUserLogin, sendUserWelcomeEmail } from "@/lib/email";
 import { resolvePostAuthRedirect } from "@/lib/auth-redirect";
 import { logAuth, logAuthWarn, logAuthError } from "@/lib/auth/logger";
+import { ANON_SESSION_COOKIE } from "@/lib/conversion/attribution";
+import { linkSessionToUserId } from "@/lib/conversion/server";
+import { recordFirstEventConversion } from "@/lib/conversion/first-event";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -118,6 +121,9 @@ export async function GET(req: NextRequest) {
     // Resolve state & exact redirect_uri used during the initial authorization redirect
     let redirectUri = `${origin}/auth/google/callback`;
     let targetPath = "/dashboard";
+    let stateSegment = "general";
+    let stateFrom: string | null = null;
+    let stateSessionId: string | null = null;
     if (state) {
       try {
         const decodedStr = Buffer.from(state, "base64url").toString("utf8");
@@ -128,6 +134,9 @@ export async function GET(req: NextRequest) {
             if (parsed.redirect_uri && typeof parsed.redirect_uri === "string") {
               redirectUri = parsed.redirect_uri;
             }
+            if (parsed.segment) stateSegment = String(parsed.segment);
+            if (parsed.from) stateFrom = String(parsed.from);
+            if (parsed.sessionId) stateSessionId = String(parsed.sessionId);
           }
         } else {
           targetPath = state;
@@ -142,6 +151,9 @@ export async function GET(req: NextRequest) {
               if (parsed.redirect_uri && typeof parsed.redirect_uri === "string") {
                 redirectUri = parsed.redirect_uri;
               }
+              if (parsed.segment) stateSegment = String(parsed.segment);
+              if (parsed.from) stateFrom = String(parsed.from);
+              if (parsed.sessionId) stateSessionId = String(parsed.sessionId);
             }
           } else {
             targetPath = state;
@@ -414,13 +426,20 @@ export async function GET(req: NextRequest) {
       return NextResponse.redirect(`${origin}/login?error=google_auth_failed&step=token_gen`);
     }
 
+    const conversionSessionId = stateSessionId || req.cookies.get(ANON_SESSION_COOKIE)?.value;
+    if (userId && conversionSessionId) await linkSessionToUserId(conversionSessionId, userId);
+    if (userId && isNewUser) await recordFirstEventConversion({ userId,
+      eventName: "signup_completed", idempotencyKey: `signup:${userId}`, pageSlug: "/signup" });
+
     const tokenHash = linkRes.data.properties.hashed_token;
     const verificationType = (linkRes.data.properties.verification_type as "magiclink" | "signup" | "email") || "magiclink";
 
     // 5. Determine post-login redirect destination
     const destination = target !== "/dashboard"
       ? target
-      : (isNewUser ? "/onboarding/subscription" : "/dashboard");
+      : (isNewUser
+        ? (process.env.NEXT_PUBLIC_FIRST_EVENT_CONVERSION_ENABLED === "true" ? "/onboarding/first-event" : "/onboarding/subscription")
+        : "/dashboard");
 
     // Cache the code -> destination mapping to immediately satisfy any repeat browser/prefetch requests
     recentExchangedCodes.set(code, { destination, ts: Date.now() });
@@ -566,6 +585,7 @@ export async function GET(req: NextRequest) {
           email: normalizedEmail,
           isNewUser,
         });
+
       } catch (e) {
         logAuthWarn("notifications", "Background sync warning", { error: String(e) });
       }

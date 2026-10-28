@@ -4,6 +4,9 @@ import { cookies } from "next/headers";
 import { getSupabaseUrl, getSupabaseAnonKey } from "@/lib/supabase/config";
 import { resolvePostAuthRedirect } from "@/lib/auth-redirect";
 import { notifyOwnerNewUser, notifyOwnerUserLogin, sendUserWelcomeEmail } from "@/lib/email";
+import { ANON_SESSION_COOKIE } from "@/lib/conversion/attribution";
+import { linkSessionToUserId } from "@/lib/conversion/server";
+import { recordFirstEventConversion } from "@/lib/conversion/first-event";
 
 export const dynamic = "force-dynamic";
 
@@ -55,7 +58,7 @@ export async function GET(request: Request) {
     const verificationType = type || "recovery";
     const { data, error } = await supabase.auth.verifyOtp({
       token_hash: tokenHash,
-      type: verificationType as any,
+      type: verificationType,
     });
     if (!error && data?.user) {
       user = data.user;
@@ -63,6 +66,8 @@ export async function GET(request: Request) {
   }
 
   if (user) {
+    const conversionSessionId = cookieStore.getAll().find((cookie) => cookie.name === ANON_SESSION_COOKIE)?.value;
+    if (conversionSessionId) await linkSessionToUserId(conversionSessionId, user.id);
     if (isRecovery) {
       return response;
     }
@@ -71,6 +76,8 @@ export async function GET(request: Request) {
     const createdAt = new Date(user.created_at).getTime();
     const isNew = Date.now() - createdAt < 15 * 60 * 1000;
     if (isNew) {
+      await recordFirstEventConversion({ userId: user.id, eventName: "signup_completed",
+        idempotencyKey: `signup:${user.id}`, pageSlug: "/signup" });
       try {
         await Promise.allSettled([
           notifyOwnerNewUser({
@@ -103,7 +110,10 @@ export async function GET(request: Request) {
     }
 
     if (isNew && target === "/dashboard") {
-      const onboardingResponse = NextResponse.redirect(`${origin}/onboarding/subscription`);
+      const nextOnboarding = process.env.NEXT_PUBLIC_FIRST_EVENT_CONVERSION_ENABLED === "true"
+        ? "/onboarding/first-event"
+        : "/onboarding/subscription";
+      const onboardingResponse = NextResponse.redirect(`${origin}${nextOnboarding}`);
       response.cookies.getAll().forEach((c) => {
         onboardingResponse.cookies.set(c);
       });

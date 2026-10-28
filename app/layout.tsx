@@ -342,6 +342,13 @@ export default function RootLayout({
                     'analytics_storage': 'denied',
                     'ad_storage': 'denied'
                   });
+                  try {
+                    if (typeof localStorage !== 'undefined' && localStorage.getItem('urpass_cookie_consent') === 'all') {
+                      gtag('consent', 'update', {
+                        'analytics_storage': 'granted'
+                      });
+                    }
+                  } catch (e) {}
                   gtag('js', new Date());
                   gtag('config', '${GA_ID}', {
                     page_path: window.location.pathname,

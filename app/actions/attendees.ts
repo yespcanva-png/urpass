@@ -715,7 +715,7 @@ export async function submitApplication(
   // Look up event by id first (compatible with unit-test mocks), fall back to apply_slug
   const idQuery = admin
     .from("events")
-    .select("id, status, application_enabled, auto_approve, attendee_limit, waitlist_enabled, name, event_date, venue, is_paid_event, ticket_price, organizer_id, organization_id, custom_fields, custom_pass_design")
+    .select("id, status, application_enabled, auto_approve, attendee_limit, waitlist_enabled, name, event_date, venue, is_paid_event, ticket_price, organizer_id, organization_id, custom_fields, custom_pass_design, registration_opens_at, registration_closes_at")
     .eq("id", eventId)
     .eq("status", "active")
     .eq("application_enabled", true);
@@ -726,7 +726,7 @@ export async function submitApplication(
   if (!event) {
     const slugQuery = admin
       .from("events")
-      .select("id, status, application_enabled, auto_approve, attendee_limit, waitlist_enabled, name, event_date, venue, is_paid_event, ticket_price, organizer_id, organization_id, custom_fields, custom_pass_design")
+      .select("id, status, application_enabled, auto_approve, attendee_limit, waitlist_enabled, name, event_date, venue, is_paid_event, ticket_price, organizer_id, organization_id, custom_fields, custom_pass_design, registration_opens_at, registration_closes_at")
       .eq("apply_slug", eventId)
       .eq("status", "active")
       .eq("application_enabled", true);
@@ -736,6 +736,13 @@ export async function submitApplication(
   }
 
   if (!event) return { error: "Applications are not open for this event." };
+  const registrationNow = Date.now();
+  if (event.registration_opens_at && new Date(event.registration_opens_at).getTime() > registrationNow) {
+    return { error: "Registration has not opened yet." };
+  }
+  if (event.registration_closes_at && new Date(event.registration_closes_at).getTime() <= registrationNow) {
+    return { error: "Registration has closed." };
+  }
   await recordExploreInteraction(event.id, "registration_start").catch(() => {});
 
   const canonicalEventId = event.id;

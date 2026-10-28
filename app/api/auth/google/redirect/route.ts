@@ -27,12 +27,19 @@ export async function GET(req: NextRequest) {
     clientIp,
   });
 
+  const segment = req.nextUrl.searchParams.get("segment") || "general";
+  const fromPage = req.nextUrl.searchParams.get("from") || null;
+  const anonSessionId = req.cookies.get("urpass_anon_session")?.value || null;
+
   const nonce = crypto.randomBytes(16).toString("hex");
   const redirectUri = `${origin}/auth/google/callback`;
   const statePayload = {
     next: target,
     nonce,
     redirect_uri: redirectUri,
+    segment,
+    from: fromPage,
+    sessionId: anonSessionId,
     ts: Date.now(),
   };
   const encodedState = Buffer.from(JSON.stringify(statePayload)).toString("base64url");

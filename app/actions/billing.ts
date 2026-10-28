@@ -12,6 +12,7 @@ import {
 } from "@/lib/razorpay";
 import { createInvoiceForPayment } from "@/lib/invoices";
 import { getSupabaseUrl } from "@/lib/supabase/config";
+import { recordFirstEventConversion } from "@/lib/conversion/first-event";
 import {
   notifyOwnerPaymentSuccess,
   notifyOwnerTrialActivated,
@@ -68,6 +69,23 @@ export async function selectFreePlan(): Promise<ActionResult> {
 
   const admin = adminClient();
 
+  const { data: pendingCheckout } = await admin.from("subscription_checkout_intents")
+    .select("id").eq("user_id", user.id).eq("status", "pending").limit(1).maybeSingle();
+  if (pendingCheckout) return { error: "Cancel your pending paid checkout before selecting Free." };
+
+  const { data: currentSubscription, error: currentSubscriptionError } = await admin
+    .from("subscriptions")
+    .select("status, provider, current_period_end, has_lifetime_access")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (currentSubscriptionError) return { error: "Could not verify your current plan. Please try again." };
+  if (currentSubscription?.has_lifetime_access ||
+      (currentSubscription?.provider !== "free" && currentSubscription?.provider !== "none" &&
+       currentSubscription?.status === "active" &&
+       new Date(currentSubscription.current_period_end || 0).getTime() > Date.now())) {
+    return { error: "An active paid plan already covers this account. Manage it from Billing." };
+  }
+
   const { data: freePlan, error: planError } = await admin
     .from("plans")
     .select("id, slug")
@@ -92,6 +110,13 @@ export async function selectFreePlan(): Promise<ActionResult> {
     { onConflict: "user_id" }
   );
   if (subError) return { error: subError.message };
+
+  const { data: onboardingDraft } = await admin.from("events")
+    .select("id").eq("organizer_id", user.id).eq("is_onboarding_draft", true)
+    .eq("status", "draft").limit(1).maybeSingle();
+  if (onboardingDraft) await recordFirstEventConversion({ userId: user.id,
+    eventId: onboardingDraft.id, eventName: "free_plan_activated",
+    idempotencyKey: `free-plan:${onboardingDraft.id}`, planSlug: "free" });
 
   try {
     await admin.auth.admin.updateUserById(user.id, {

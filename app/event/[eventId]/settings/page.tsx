@@ -173,7 +173,18 @@ type EventRow = {
   sms_provider?: string | null;
   custom_fields?: CustomFieldDefinition[];
   apply_slug?: string | null;
+  is_onboarding_draft?: boolean;
+  registration_opens_at?: string | null;
+  registration_closes_at?: string | null;
 };
+
+function toLocalDateTime(value: string | null | undefined) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
+  return local.toISOString().slice(0, 16);
+}
 
 export default function EventSettingsPage() {
   const params  = useParams<{ eventId: string }>();
@@ -393,7 +404,7 @@ export default function EventSettingsPage() {
       const supabase = createClient();
       const [{ data }, { data: { user } }] = await Promise.all([
         supabase.from("events")
-          .select("id,name,description,event_date,start_time,end_time,venue,attendee_limit,status,application_enabled,auto_approve,auto_promote_waitlist,is_paid_event,ticket_price,event_type,meeting_url,meeting_platform,sms_enabled,whatsapp_enabled,email_enabled,sms_fallback_enabled,sms_sender_id,sms_dlt_entity_id,sms_dlt_template_id,sms_provider,custom_fields,custom_pass_design,apply_slug")
+          .select("id,name,description,event_date,start_time,end_time,venue,attendee_limit,status,application_enabled,auto_approve,auto_promote_waitlist,is_paid_event,ticket_price,event_type,meeting_url,meeting_platform,sms_enabled,whatsapp_enabled,email_enabled,sms_fallback_enabled,sms_sender_id,sms_dlt_entity_id,sms_dlt_template_id,sms_provider,custom_fields,custom_pass_design,apply_slug,is_onboarding_draft,registration_opens_at,registration_closes_at")
           .eq("id", eventId).single(),
         supabase.auth.getUser(),
       ]);
@@ -406,9 +417,11 @@ export default function EventSettingsPage() {
         }
         reset({
           name: data.name, description: data.description ?? "",
-          event_date: data.event_date,
+          event_date: data.event_date ?? "",
           end_date: (design.end_date as string | null) ?? null,
-          start_time: data.start_time, end_time: data.end_time,
+          registration_opens_at: toLocalDateTime(data.registration_opens_at),
+          registration_closes_at: toLocalDateTime(data.registration_closes_at),
+          start_time: data.start_time ?? "", end_time: data.end_time ?? "",
           venue: data.venue ?? "", attendee_limit: data.attendee_limit,
           status: data.status as "draft" | "active",
           application_enabled: data.application_enabled, auto_approve: data.auto_approve,
@@ -546,12 +559,18 @@ export default function EventSettingsPage() {
   }, [isDirty]);
 
   async function handleStatusChange(newStatus: "draft" | "active" | "completed" | "cancelled" | "archived") {
+    if (newStatus === "active" && event?.is_onboarding_draft &&
+        !window.confirm(`Publish ${event.name}? Registrations will become public at your event link.`)) return;
     setStatusLoading(true);
     setSaveError("");
     const result = await updateEventStatus(eventId, newStatus);
     if (result?.error) {
       setSaveError(result.error);
     } else {
+      if (newStatus === "active" && event?.is_onboarding_draft) {
+        router.push(`/onboarding/first-event/published?event=${eventId}`);
+        return;
+      }
       router.refresh();
       setEvent((e) => (e ? { ...e, status: newStatus } : e));
     }
@@ -619,6 +638,16 @@ export default function EventSettingsPage() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 lg:px-0 py-6 pb-28">
+      {event.is_onboarding_draft && event.status === "draft" && <div className="mb-5 rounded-2xl border border-violet-200 bg-violet-50 p-5 text-sm text-violet-950">
+        <p className="font-bold">Step 4 of 5 · Configure registrations</p>
+        <p className="mt-1">Add the event date, time, venue, capacity and registration fields. Review your QR pass, invitations and confirmation messages before publishing.</p>
+        <div className="mt-3 flex flex-wrap gap-3 font-semibold underline">
+          <Link href={`/event/${eventId}/tickets`}>Registration tickets</Link>
+          <Link href={`/event/${eventId}/pass-design`}>QR pass</Link>
+          <Link href={`/event/${eventId}/communications`}>Confirmations</Link>
+          <Link href={`/onboarding/first-event/preview/${eventId}`}>Event preview</Link>
+        </div>
+      </div>}
       <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="flex flex-col gap-5">
 
         {/* ── Event details ── */}
@@ -1143,6 +1172,12 @@ export default function EventSettingsPage() {
 
         {/* ── Capacity & settings ── */}
         <SectionCard icon={Users} title="Capacity & registrations" subtitle="Control who can attend and how">
+          <Field label="Registration opens" error={errors.registration_opens_at?.message} hint="Optional. Leave blank to accept registrations as soon as you publish.">
+            <input type="datetime-local" className={inputCls} {...register("registration_opens_at")} />
+          </Field>
+          <Field label="Registration closes" error={errors.registration_closes_at?.message} hint="Optional. Leave blank to keep registrations open while the event is active.">
+            <input type="datetime-local" className={inputCls} {...register("registration_closes_at")} />
+          </Field>
           <Field label="Attendee limit" error={errors.attendee_limit?.message} hint="Maximum number of approved attendees">
             <input type="number" min={1} className={inputCls} {...register("attendee_limit", { valueAsNumber: true })} />
           </Field>

@@ -8,7 +8,8 @@ export interface PreflightItem {
     | "payment_gateway"
     | "venue_or_meeting_url"
     | "pass_design"
-    | "communication_setup";
+    | "communication_setup"
+    | "registration_window";
   title: string;
   passed: boolean;
   severity: "error" | "warning";
@@ -37,6 +38,8 @@ export async function validateEventPreflightReadiness(
       name,
       description,
       event_date,
+      registration_opens_at,
+      registration_closes_at,
       start_time,
       end_time,
       venue,
@@ -112,6 +115,11 @@ export async function validateEventPreflightReadiness(
     }
   }
 
+  if (datesPassed && (!event.start_time || !event.end_time)) {
+    datesPassed = false;
+    datesMessage = "Set both start and end times before publishing.";
+  }
+
   if (datesPassed && event.start_time && event.end_time) {
     if (event.start_time === event.end_time) {
       datesPassed = false;
@@ -128,6 +136,22 @@ export async function validateEventPreflightReadiness(
     passed: datesPassed,
     severity: "error",
     message: datesMessage,
+  });
+
+  const opensAt = event.registration_opens_at ? new Date(event.registration_opens_at).getTime() : null;
+  const closesAt = event.registration_closes_at ? new Date(event.registration_closes_at).getTime() : null;
+  const registrationWindowPassed =
+    (opensAt === null || Number.isFinite(opensAt)) &&
+    (closesAt === null || (Number.isFinite(closesAt) && closesAt > Date.now())) &&
+    (opensAt === null || closesAt === null || closesAt > opensAt);
+  items.push({
+    id: "registration_window",
+    title: "Registration Window",
+    passed: registrationWindowPassed,
+    severity: "error",
+    message: registrationWindowPassed
+      ? "Registration opening and closing times are valid."
+      : "Registration closes in the past or before it opens. Adjust the registration window.",
   });
 
   // =========================================================================

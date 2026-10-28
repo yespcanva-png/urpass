@@ -11,7 +11,11 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default async function SubscriptionOnboardingPage() {
+export default async function SubscriptionOnboardingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ draft?: string }>;
+}) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -19,9 +23,16 @@ export default async function SubscriptionOnboardingPage() {
 
   if (!user) redirect("/login?next=/onboarding/subscription");
 
+  const requestedDraftId = (await searchParams).draft;
+  const { data: ownedDraft } = requestedDraftId
+    ? await supabase.from("events").select("id, status, is_onboarding_draft")
+        .eq("id", requestedDraftId).eq("organizer_id", user.id).maybeSingle()
+    : { data: null };
+  const draftId = ownedDraft?.is_onboarding_draft && ownedDraft.status === "draft" ? ownedDraft.id : undefined;
+
   const access = await resolveUserSubscriptionAccess({ supabase, user });
   if (access.hasOrganizerAccess) {
-    redirect("/dashboard");
+    redirect(draftId ? `/event/${draftId}/settings` : "/dashboard");
   }
 
   const [{ data: profile }, { data: trialEvent }, reqHeaders, cookieStore] = await Promise.all([
@@ -49,6 +60,7 @@ export default async function SubscriptionOnboardingPage() {
       accessState={access.state}
       introOfferEligible={access.introOfferEligible}
       freeTrialEligible={freeTrialEligible}
+      draftId={draftId}
     />
   );
 }

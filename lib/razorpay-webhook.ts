@@ -15,6 +15,7 @@ import {
 import { communicationService, formatTicketId, buildTicketUrl } from "@/lib/communications";
 import { recordLiveOpsEvent } from "@/lib/ops/events";
 import { reconcileEventTicketOrders } from "@/lib/payments/reconcile-event-orders";
+import { recordFirstEventConversion } from "@/lib/conversion/first-event";
 
 // Use service-role client — webhook runs outside user session
 function adminClient() {
@@ -204,12 +205,25 @@ export async function handleRazorpayWebhook(req: NextRequest): Promise<NextRespo
           insertError.message?.toLowerCase().includes("duplicate") ||
           insertError.message?.toLowerCase().includes("unique")
         ) {
+          const { data: prior } = await supabase.from("processed_webhook_events")
+            .select("status, payload_hash").eq("provider", "razorpay").eq("event_id", eventId).maybeSingle();
+          if (prior?.status === "failed" && prior.payload_hash === payloadHash) {
+            const { data: resumed, error: resumeError } = await supabase.from("processed_webhook_events")
+              .update({ status: "processing", error_message: null })
+              .eq("provider", "razorpay").eq("event_id", eventId).eq("status", "failed")
+              .select("id").maybeSingle();
+            if (resumeError || !resumed) return NextResponse.json({ error: "Webhook retry could not be reserved" }, { status: 503 });
+          } else {
           processedWebhookEvents.add(eventId);
           return NextResponse.json({ received: true, duplicate: true }, { status: 200 });
+          }
         }
+        console.error("[razorpay-webhook] Could not reserve webhook event:", insertError);
+        return NextResponse.json({ error: "Webhook processing temporarily unavailable" }, { status: 503 });
       }
     } catch (dbErr) {
-      console.warn("[razorpay-webhook] Warning during idempotency insert:", dbErr);
+      console.error("[razorpay-webhook] Could not reserve webhook event:", dbErr);
+      return NextResponse.json({ error: "Webhook processing temporarily unavailable" }, { status: 503 });
     }
 
     processedWebhookEvents.add(eventId);
@@ -242,6 +256,15 @@ export async function handleRazorpayWebhook(req: NextRequest): Promise<NextRespo
       const notes = subscription.notes ?? {};
       const userId = notes.user_id;
       const planSlug = (notes.tier || notes.plan_slug || notes.plan_key || "pro").toString().toLowerCase();
+      if (notes.checkout_intent_id) {
+        const { data: linkedIntent } = await supabase.from("subscription_checkout_intents")
+          .select("id, user_id, plan_slug")
+          .eq("id", notes.checkout_intent_id)
+          .eq("provider_subscription_id", subscription.id).maybeSingle();
+        if (!linkedIntent || linkedIntent.user_id !== userId || linkedIntent.plan_slug !== planSlug) {
+          return respondSuccess({ received: true, ignored: true, reason: "Checkout identity mismatch" });
+        }
+      }
 
       // Look up plan
       let planId = null;
@@ -257,18 +280,23 @@ export async function handleRazorpayWebhook(req: NextRequest): Promise<NextRespo
       }
 
       if (eventType === "subscription.authenticated") {
-        // AutoPay authorization confirmed for a paid subscription.
+        // Mandate authentication alone does not prove a captured first payment.
         const now = new Date();
         const currentEnd = subscription.current_end
           ? new Date(subscription.current_end * 1000)
           : new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
 
         if (userId) {
+          const { data: currentEntitlement } = await supabase.from("subscriptions")
+            .select("status, provider").eq("user_id", userId).maybeSingle();
+          const preserveFree = Boolean(notes.checkout_intent_id &&
+            currentEntitlement?.status === "active" && currentEntitlement?.provider === "free");
+          if (!preserveFree) {
           await supabase.from("subscriptions").upsert(
             {
               user_id: userId,
               plan_id: planId,
-              status: "active",
+              status: "pending",
               provider: "razorpay",
               billing_cycle: subscription.period || "monthly",
               provider_subscription_id: subscription.id,
@@ -277,11 +305,12 @@ export async function handleRazorpayWebhook(req: NextRequest): Promise<NextRespo
               cancel_at_period_end: false,
               is_trial: false,
               autopay_mandate_id: subscription.id,
-              autopay_status: "active",
+              autopay_status: "pending",
               updated_at: now.toISOString(),
             },
             { onConflict: "user_id" }
           );
+          }
 
           recordLiveOpsEvent({
             level: "SUCCESS",
@@ -294,7 +323,7 @@ export async function handleRazorpayWebhook(req: NextRequest): Promise<NextRespo
       }
 
       if (eventType === "subscription.activated") {
-        if (userId) {
+        if (userId && !notes.checkout_intent_id) {
           await supabase
             .from("subscriptions")
             .update({
@@ -310,6 +339,11 @@ export async function handleRazorpayWebhook(req: NextRequest): Promise<NextRespo
       if (eventType === "subscription.charged") {
         // Renewal charge or first cycle after auth
         const payment = event.payload?.payment?.entity;
+        if (!payment || String(payment.status).toLowerCase() !== "captured" ||
+            String(subscription.status).toLowerCase() !== "active") {
+          throw new Error("Subscription charge has not been confirmed by Razorpay");
+        }
+        if (!userId || !planId) throw new Error("Charged subscription has no verified user or plan");
         const currentStart = subscription.current_start
           ? new Date(subscription.current_start * 1000).toISOString()
           : new Date().toISOString();
@@ -331,7 +365,12 @@ export async function handleRazorpayWebhook(req: NextRequest): Promise<NextRespo
           }
 
           const updateData: Record<string, any> = {
+            user_id: userId,
             status: "active",
+            provider: "razorpay",
+            billing_cycle: subscription.period || "monthly",
+            provider_subscription_id: subscription.id,
+            autopay_mandate_id: subscription.id,
             is_trial: false,
             autopay_status: "active",
             cancellation_state: "none",
@@ -348,10 +387,43 @@ export async function handleRazorpayWebhook(req: NextRequest): Promise<NextRespo
             updateData.plan_id = resolvedPlanId;
           }
 
-          await supabase
+          const { error: activationError } = await supabase
             .from("subscriptions")
-            .update(updateData)
-            .eq("user_id", userId);
+            .upsert(updateData, { onConflict: "user_id" });
+          if (activationError) throw activationError;
+
+          try {
+            const { recordServerConversion } = await import("@/lib/conversion/server");
+            await recordServerConversion({
+              eventName: "subscription_started",
+              userId,
+              pageSlug: "/billing",
+              idempotencyKey: `sub_started:${subscription.id}`,
+              metadata: {
+                provider_subscription_id: subscription.id,
+                plan_slug: planSlug,
+                billing_cycle: subscription.period || "monthly",
+              },
+            });
+          } catch {}
+
+          if (notes.checkout_intent_id) {
+            await supabase.from("subscription_checkout_intents")
+              .update({ status: "authorized", updated_at: new Date().toISOString() })
+              .eq("id", notes.checkout_intent_id).eq("user_id", userId)
+              .eq("provider_subscription_id", subscription.id);
+            const { data: onboardingDraft } = await supabase.from("events").select("id")
+              .eq("organizer_id", userId).eq("is_onboarding_draft", true)
+              .eq("status", "draft").limit(1).maybeSingle();
+            if (onboardingDraft) {
+              await recordFirstEventConversion({ userId, eventId: onboardingDraft.id,
+                eventName: "autopay_authorized", idempotencyKey: `autopay:${subscription.id}`,
+                planSlug, billingCycle: subscription.period || "monthly" });
+              await recordFirstEventConversion({ userId, eventId: onboardingDraft.id,
+                eventName: "subscription_activated", idempotencyKey: `subscription-active:${subscription.id}`,
+                planSlug, billingCycle: subscription.period || "monthly" });
+            }
+          }
 
           if (payment) {
             // Generate renewal tax invoice
@@ -424,6 +496,13 @@ export async function handleRazorpayWebhook(req: NextRequest): Promise<NextRespo
       if (eventType === "subscription.pending") {
         // Payment failed — enter grace period without deleting customer data
         if (userId) {
+          if (notes.checkout_intent_id) {
+            const { data: current } = await supabase.from("subscriptions")
+              .select("provider_subscription_id").eq("user_id", userId).maybeSingle();
+            if (current?.provider_subscription_id !== subscription.id) {
+              return respondSuccess({ received: true, event: eventType, existingAccessPreserved: true });
+            }
+          }
           await supabase
             .from("subscriptions")
             .update({
@@ -452,6 +531,13 @@ export async function handleRazorpayWebhook(req: NextRequest): Promise<NextRespo
 
       if (eventType === "subscription.halted") {
         if (userId) {
+          if (notes.checkout_intent_id) {
+            const { data: current } = await supabase.from("subscriptions")
+              .select("provider_subscription_id").eq("user_id", userId).maybeSingle();
+            if (current?.provider_subscription_id !== subscription.id) {
+              return respondSuccess({ received: true, event: eventType, existingAccessPreserved: true });
+            }
+          }
           await supabase
             .from("subscriptions")
             .update({
@@ -465,12 +551,21 @@ export async function handleRazorpayWebhook(req: NextRequest): Promise<NextRespo
       }
 
       if (eventType === "subscription.cancelled") {
+        if (notes.checkout_intent_id && userId) {
+          await supabase.from("subscription_checkout_intents")
+            .update({ status: "cancelled", updated_at: new Date().toISOString() })
+            .eq("id", notes.checkout_intent_id).eq("user_id", userId)
+            .eq("provider_subscription_id", subscription.id);
+        }
         if (userId) {
           const { data: currentSub } = await supabase
             .from("subscriptions")
-            .select("is_trial, trial_ends_at, current_period_end")
+            .select("is_trial, trial_ends_at, current_period_end, provider_subscription_id")
             .eq("user_id", userId)
             .maybeSingle();
+          if (notes.checkout_intent_id && currentSub?.provider_subscription_id !== subscription.id) {
+            return respondSuccess({ received: true, event: eventType, existingAccessPreserved: true });
+          }
 
           const inTrial = Boolean(
             currentSub?.is_trial &&
@@ -795,7 +890,7 @@ export async function handleRazorpayWebhook(req: NextRequest): Promise<NextRespo
           .eq("event_id", currentEventId);
       } catch {}
     }
-    // Always acknowledge 200 to Razorpay so it does not disable the webhook
-    return NextResponse.json({ received: true, error: "Internal processing error logged" }, { status: 200 });
+    if (currentEventId) processedWebhookEvents.delete(currentEventId);
+    return NextResponse.json({ error: "Webhook processing failed; retry required" }, { status: 503 });
   }
 }

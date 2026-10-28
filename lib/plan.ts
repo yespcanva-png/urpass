@@ -359,6 +359,11 @@ function fromSlug(slug: PlanSlug): PlanLimits {
 
 const FREE_PLAN = fromSlug("free");
 
+/** Public plan limits used by the event activation flow and publish checks. */
+export function getPlanLimitsBySlug(slug: "free" | "starter" | "pro" | "business"): PlanLimits {
+  return fromSlug(slug);
+}
+
 function getAdminClientSafe() {
   if (typeof process === "undefined" || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
     return null;

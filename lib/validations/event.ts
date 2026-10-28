@@ -7,6 +7,8 @@ export const eventSchema = z
     description: z.string().optional().nullable().transform((val) => val || null),
     event_date: z.string().min(1, "Event date is required"),
     end_date: z.string().optional().nullable(),
+    registration_opens_at: z.string().optional().nullable(),
+    registration_closes_at: z.string().optional().nullable(),
     start_time: z.string().min(1, "Start time is required"),
     end_time: z.string().min(1, "End time is required"),
     venue: z.string().max(500),
@@ -60,6 +62,14 @@ export const eventSchema = z
     auto_promote_waitlist: z.boolean().optional(),
   })
   .superRefine((data, ctx) => {
+    const opens = data.registration_opens_at ? new Date(data.registration_opens_at).getTime() : null;
+    const closes = data.registration_closes_at ? new Date(data.registration_closes_at).getTime() : null;
+    if ((opens !== null && Number.isNaN(opens)) || (closes !== null && Number.isNaN(closes)) ||
+        (opens !== null && closes !== null && closes <= opens)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom,
+        message: "Registration closing time must be after the opening time.",
+        path: ["registration_closes_at"] });
+    }
     // 1. Date & Time validation (supports multi-day and overnight / past-midnight schedules)
     if (data.event_date && data.end_date) {
       if (data.end_date < data.event_date) {
