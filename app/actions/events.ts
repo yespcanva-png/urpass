@@ -573,6 +573,21 @@ export async function updateEvent(
     // Ops log non-blocking
   }
 
+  if (event.organizer_id) {
+    try {
+      const { recordFirstEventConversion } = await import("@/lib/conversion/first-event");
+      await recordFirstEventConversion({
+        userId: event.organizer_id,
+        eventId,
+        eventName: "registration_setup_completed",
+        idempotencyKey: `reg-setup:${eventId}`,
+        metadata: { event_id: eventId, name: baseUpdateFields.name },
+      });
+    } catch {
+      // Non-blocking conversion tracking
+    }
+  }
+
   revalidatePath(`/event/${eventId}`);
   revalidatePath(`/event/${eventId}/settings`);
   revalidatePath("/dashboard/events");
@@ -586,6 +601,7 @@ export async function updateEvent(
     revalidatePath(`/apply/${event.apply_slug}`);
     revalidatePath(`/e/${event.apply_slug}`);
   }
+  return { eventId };
 }
 
 export async function updateEventImagesAction(
@@ -998,6 +1014,9 @@ export async function updateEventStatus(
   } else if (status === "draft" || status === "active") {
     updatePayload.archived_at = null;
   }
+  if (status === "active") {
+    updatePayload.is_onboarding_draft = false;
+  }
 
   let { error } = await supabase
     .from("events")
@@ -1013,6 +1032,22 @@ export async function updateEventStatus(
   }
 
   if (error) return { error: error.message };
+
+  if (status === "active") {
+    try {
+      const { recordFirstEventConversion } = await import("@/lib/conversion/first-event");
+      const organizerUserId = event.organizer_id || user.id;
+      await recordFirstEventConversion({
+        userId: organizerUserId,
+        eventId,
+        eventName: "first_event_published",
+        idempotencyKey: `first-publish:${organizerUserId}`,
+        metadata: { event_id: eventId, event_name: event.name },
+      });
+    } catch {
+      // Non-blocking conversion tracking
+    }
+  }
 
   // Close ticket types if event was cancelled or archived
   if (status === "cancelled" || status === "archived") {

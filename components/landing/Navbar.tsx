@@ -196,11 +196,11 @@ export default function Navbar({ isAuthenticated: initialAuth }: NavbarProps = {
             {/* Logo */}
             <Link
               href="/"
-              title="UrPass — Official Website"
-              aria-label="UrPass Official Website"
+              title="URPASS — Official Website"
+              aria-label="URPASS Official Website"
               className="font-extrabold tracking-tight text-lg text-neutral-950 hover:text-neutral-700 transition-colors flex items-center gap-2"
             >
-              <span>UrPass</span>
+              <span>URPASS</span>
             </Link>
 
             {/* Desktop Nav */}

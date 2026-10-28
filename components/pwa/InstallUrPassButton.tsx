@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import {
   Download,
   MonitorDown,
@@ -40,6 +41,9 @@ function isStandaloneDisplay() {
 }
 
 function isOrganizerInstallPath(pathname: string) {
+  // Never show on the landing page or home page
+  if (!pathname || pathname === "/") return false;
+
   return (
     pathname.startsWith("/dashboard") ||
     pathname.startsWith("/event") ||
@@ -48,12 +52,12 @@ function isOrganizerInstallPath(pathname: string) {
     pathname.startsWith("/onboarding") ||
     pathname.startsWith("/studio") ||
     pathname.startsWith("/checkins") ||
-    pathname.startsWith("/managed-setup") ||
-    pathname === "/"
+    pathname.startsWith("/managed-setup")
   );
 }
 
 export default function InstallUrPassButton() {
+  const pathname = usePathname();
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [visible, setVisible] = useState(false);
   const [installed, setInstalled] = useState(false);
@@ -76,18 +80,21 @@ export default function InstallUrPassButton() {
     setPlatform(detectedPlatform);
     setInstalled(isStandaloneDisplay());
 
-    if (!isOrganizerInstallPath(window.location.pathname) || recentlyDismissed() || isStandaloneDisplay()) {
+    if (!isOrganizerInstallPath(pathname) || recentlyDismissed() || isStandaloneDisplay()) {
+      setVisible(false);
       return;
     }
 
     const fallbackTimer = window.setTimeout(() => {
-      if (!isStandaloneDisplay()) setVisible(true);
+      if (!isStandaloneDisplay() && isOrganizerInstallPath(pathname)) setVisible(true);
     }, 800);
 
     function handleBeforeInstallPrompt(event: Event) {
       event.preventDefault();
       setDeferredPrompt(event as BeforeInstallPromptEvent);
-      setVisible(true);
+      if (isOrganizerInstallPath(pathname)) {
+        setVisible(true);
+      }
     }
 
     function handleInstalled() {
@@ -104,13 +111,13 @@ export default function InstallUrPassButton() {
       window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
       window.removeEventListener("appinstalled", handleInstalled);
     };
-  }, []);
+  }, [pathname]);
 
   // Dynamically set CSS custom property so fixed navbar and headers offset smoothly without collision
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    if (!visible || installed) {
+    if (!visible || installed || !isOrganizerInstallPath(pathname)) {
       document.documentElement.style.setProperty("--pwa-top-bar-height", "0px");
       return;
     }
@@ -130,7 +137,7 @@ export default function InstallUrPassButton() {
       ro?.disconnect();
       document.documentElement.style.setProperty("--pwa-top-bar-height", "0px");
     };
-  }, [visible, installed]);
+  }, [visible, installed, pathname]);
 
   async function handleShareOrBookmark() {
     if (typeof window === "undefined") return;
@@ -205,7 +212,7 @@ export default function InstallUrPassButton() {
     }
   }
 
-  if (!visible || installed) return null;
+  if (!visible || installed || !isOrganizerInstallPath(pathname)) return null;
 
   return (
     <>
