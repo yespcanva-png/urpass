@@ -7,6 +7,8 @@ if (!process.env.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY) {
 }
 
 const nextConfig: NextConfig = {
+  compress: true,
+  productionBrowserSourceMaps: false,
   experimental: { serverActions: { bodySizeLimit: "5mb" } },
   images: {
     remotePatterns: [
@@ -26,6 +28,18 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
+      // Canonical WWW to apex domain redirect
+      {
+        source: "/:path*",
+        has: [
+          {
+            type: "host",
+            value: "www.urpass.space",
+          },
+        ],
+        destination: "https://urpass.space/:path*",
+        permanent: true,
+      },
       {
         source: "/event/new",
         destination: "/create-event",

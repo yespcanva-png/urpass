@@ -48,6 +48,13 @@ export async function updateSession(request: NextRequest) {
     url.protocol = "https:";
   }
 
+  // Canonical WWW to apex domain 301 redirect
+  if (!isLocal && (host === "www.urpass.space" || host.startsWith("www."))) {
+    url.host = host.replace(/^www\./, "");
+    url.protocol = "https:";
+    return NextResponse.redirect(url, { status: 301 });
+  }
+
   const pathname = url.pathname;
 
   // Custom Domain edge rewrite: Map external CNAME domains to their registered event or conference route

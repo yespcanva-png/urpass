@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { headers, cookies } from "next/headers";
 import Navbar from "@/components/landing/Navbar";
 import FAQSection from "@/components/landing/FAQSection";
@@ -32,7 +33,7 @@ import {
 export const metadata: Metadata = {
   title: "UrPass — Digital Event Passes & Lightning QR Check-In Platform",
   description:
-    "Registration to QR check-in in one place. 0% platform fee, sub-second smartphone check-ins, and free forever plan for colleges, hackathons, and conferences.",
+    "UrPass is the all-in-one digital event passes & QR check-in platform. Fast attendee registration, 0% platform fee, sub-second mobile scanning, and free forever plan.",
   keywords: [
     "UrPass",
     "urpass",
@@ -51,7 +52,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "UrPass — Digital Event Passes & Lightning QR Check-In Platform",
     description:
-      "Registration to QR check-in in one place. 0% platform fee, sub-second smartphone check-ins, and free forever plan for colleges, hackathons, and conferences.",
+      "UrPass is the all-in-one digital event passes & QR check-in platform. Fast attendee registration, 0% platform fee, sub-second mobile scanning, and free forever plan.",
     url: "https://urpass.space",
     type: "website",
     images: [
@@ -70,7 +71,7 @@ export const metadata: Metadata = {
     creator: "@urpass",
     title: "UrPass — Digital Event Passes & Lightning QR Check-In Platform",
     description:
-      "Registration to QR check-in in one place. 0% platform fee, sub-second smartphone check-ins, and free forever plan for colleges, hackathons, and conferences.",
+      "UrPass is the all-in-one digital event passes & QR check-in platform. Fast attendee registration, 0% platform fee, sub-second mobile scanning, and free forever plan.",
     images: ["https://urpass.space/og-image.png"],
   },
 };
@@ -102,7 +103,10 @@ function PassCard() {
     <div className="relative w-64 sm:w-72 max-w-full mx-auto select-none">
       <div className="relative bg-white rounded-2xl border border-neutral-200 shadow-[0_20px_50px_rgba(0,0,0,0.08)] overflow-hidden">
         <div className="bg-neutral-900 px-5 sm:px-6 py-3.5 sm:py-4 flex items-center justify-between">
-          <span className="text-xs font-bold tracking-widest text-white/80">UrPass</span>
+          <div className="flex items-center gap-2">
+            <Image src="/icon.png" alt="UrPass digital event pass generator" width={18} height={18} className="rounded" />
+            <span className="text-xs font-bold tracking-widest text-white/80">UrPass</span>
+          </div>
           <span className="text-[10px] sm:text-[11px] font-semibold tracking-wide text-emerald-300 bg-emerald-950/60 border border-emerald-500/30 px-2 py-0.5 rounded-md">VALID PASS</span>
         </div>
         <div className="px-5 sm:px-6 pt-4 sm:pt-5 pb-5 sm:pb-6">
@@ -464,7 +468,14 @@ export default async function LandingPage() {
           </AnimateIn>
 
           <AnimateIn from="right" delay={80}>
-            <div className="flex justify-center lg:justify-end">
+            <div className="flex flex-col items-center lg:items-end gap-5">
+              <Image
+                src="/og-events-your-way.png"
+                alt="UrPass organizer dashboard showing real-time event registrations, attendee list, and instant QR check-in status"
+                width={560}
+                height={290}
+                className="rounded-2xl border border-neutral-200/90 shadow-md object-cover"
+              />
               <DashboardMockup />
             </div>
           </AnimateIn>
