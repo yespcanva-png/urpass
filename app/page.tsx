@@ -57,11 +57,11 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "https://urpass.space/og-image.png",
+        url: "https://urpass.space/og-events-your-way.png",
         width: 1200,
         height: 630,
         type: "image/png",
-        alt: "UrPass — Digital Event Passes & Lightning QR Check-In Platform",
+        alt: "UrPass: Your Events, Your Way — Digital Event Passes & Lightning QR Check-In",
       },
     ],
   },
@@ -72,7 +72,7 @@ export const metadata: Metadata = {
     title: "UrPass — Digital Event Passes & Lightning QR Check-In Platform",
     description:
       "UrPass is the all-in-one digital event passes & QR check-in platform. Fast attendee registration, 0% platform fee, sub-second mobile scanning, and free forever plan.",
-    images: ["https://urpass.space/og-image.png"],
+    images: ["https://urpass.space/og-events-your-way.png"],
   },
 };
 
@@ -468,14 +468,7 @@ export default async function LandingPage() {
           </AnimateIn>
 
           <AnimateIn from="right" delay={80}>
-            <div className="flex flex-col items-center lg:items-end gap-5">
-              <Image
-                src="/og-events-your-way.png"
-                alt="UrPass organizer dashboard showing real-time event registrations, attendee list, and instant QR check-in status"
-                width={560}
-                height={290}
-                className="rounded-2xl border border-neutral-200/90 shadow-md object-cover"
-              />
+            <div className="flex flex-col items-center lg:items-end">
               <DashboardMockup />
             </div>
           </AnimateIn>

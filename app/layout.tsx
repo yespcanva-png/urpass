@@ -104,12 +104,12 @@ export const metadata: Metadata = {
     alternateLocale: ["en_GB", "en_US"],
     images: [
       {
-        url: `${BASE_URL}/og-image.png`,
-        secureUrl: `${BASE_URL}/og-image.png`,
+        url: `${BASE_URL}/og-events-your-way.png`,
+        secureUrl: `${BASE_URL}/og-events-your-way.png`,
         width: 1200,
         height: 630,
         type: "image/png",
-        alt: "UrPass — Digital Event Passes & Lightning QR Check-In Platform",
+        alt: "UrPass: Your Events, Your Way — Digital Event Passes & Lightning QR Check-In",
       },
     ],
   },
@@ -120,7 +120,7 @@ export const metadata: Metadata = {
     title: "UrPass — Digital Event Passes & Lightning QR Check-In Platform",
     description:
       "UrPass (urpass.space) by Yesp Corporation is the all-in-one digital event pass and lightning QR check-in platform. Create custom passes, manage attendees, and scan entry QR codes in under 0.3s with 0% platform commission.",
-    images: [`${BASE_URL}/og-image.png`],
+    images: [`${BASE_URL}/og-events-your-way.png`],
   },
   icons: {
     icon: [
