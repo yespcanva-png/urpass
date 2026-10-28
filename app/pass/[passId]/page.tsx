@@ -173,18 +173,42 @@ export default async function PassPage({
   // Resolve attendee ticket cancellation eligibility
   const supabase = await createClient();
   const attendeeId = attendee.id || pass.attendee_id || "";
-  const { data: paidOrder } = attendeeId
-    ? await supabase
-        .from("ticket_orders")
-        .select("id, status, amount, currency")
-        .eq("event_id", event.id)
-        .eq("attendee_id", attendeeId)
-        .eq("status", "paid")
-        .maybeSingle()
-    : { data: null };
+  const [{ data: paidOrder }, { data: featureSetting }] = await Promise.all([
+    attendeeId
+      ? supabase
+          .from("ticket_orders")
+          .select("id, status, amount, currency")
+          .eq("event_id", event.id)
+          .eq("attendee_id", attendeeId)
+          .eq("status", "paid")
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+    supabase
+      .from("event_feature_settings")
+      .select("enabled, config")
+      .eq("event_id", event.id)
+      .eq("feature_key", "ticket_cancellation")
+      .maybeSingle(),
+  ]);
+
+  const effectiveEvent = {
+    ...event,
+    custom_pass_design: {
+      ...(event.custom_pass_design && typeof event.custom_pass_design === "object" ? event.custom_pass_design : {}),
+      ...(featureSetting?.enabled
+        ? {
+            _cancellationConfig: {
+              enabled: true,
+              self_service_enabled: true,
+              ...(featureSetting.config && typeof featureSetting.config === "object" ? featureSetting.config : {}),
+            },
+          }
+        : {}),
+    },
+  };
 
   const cancellationEligibility = checkTicketCancellationEligibility({
-    event,
+    event: effectiveEvent,
     attendee: {
       id: attendeeId,
       application_status: attendee.application_status,

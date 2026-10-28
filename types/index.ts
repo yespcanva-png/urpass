@@ -145,7 +145,7 @@ export type PassStatus =
 
 export interface TicketCancellationPolicy {
   enabled: boolean;
-  cutoff: "before_start" | "24h" | "48h" | "custom";
+  cutoff: "anytime" | "before_start" | "24h" | "48h" | "custom";
   customCutoffHours?: number;
   requireReason: boolean;
   requireOrganizerApproval: boolean;

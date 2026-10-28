@@ -549,7 +549,7 @@ const MODULAR_FEATURES: ModuleMeta[] = [
         label: "Enable Attendee Self-Service Cancellation",
         description: "Allow attendees to request cancellation directly from their digital entry pass.",
         type: "toggle",
-        defaultValue: false,
+        defaultValue: true,
       },
       {
         id: "cutoff_rule",
@@ -557,12 +557,13 @@ const MODULAR_FEATURES: ModuleMeta[] = [
         description: "Latest time an attendee can submit a cancellation request.",
         type: "select",
         options: [
+          { label: "Anytime before gate check-in (Flexible)", value: "anytime" },
           { label: "Up until event start time", value: "before_start" },
           { label: "24 Hours Before Start", value: "24h" },
           { label: "48 Hours Before Start", value: "48h" },
           { label: "Custom Cutoff Hours", value: "custom" },
         ],
-        defaultValue: "before_start",
+        defaultValue: "anytime",
       },
       {
         id: "custom_cutoff_hours",

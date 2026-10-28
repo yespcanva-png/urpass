@@ -36,58 +36,62 @@ export function getEventCancellationPolicy(event?: {
   }
 
   const design = event.custom_pass_design as Record<string, unknown>;
-  const raw =
-    (design._cancellationConfig as Partial<TicketCancellationPolicy>) ||
-    (design._moduleConfigs as Record<string, unknown>)?.ticket_cancellation ||
-    {};
+  const cancellationConfig = (design._cancellationConfig as Record<string, unknown>) || {};
+  const moduleConfig = ((design._moduleConfigs as Record<string, unknown>)?.ticket_cancellation as Record<string, unknown>) || {};
+  const featureFlags = ((design._featureFlags as Record<string, unknown>)?.features as Record<string, unknown>) || {};
 
-  const rawObj = raw as Record<string, unknown>;
+  const merged = {
+    ...moduleConfig,
+    ...cancellationConfig,
+  };
 
   const enabled =
-    rawObj.self_service_enabled !== undefined
-      ? Boolean(rawObj.self_service_enabled)
-      : rawObj.enabled !== undefined
-      ? Boolean(rawObj.enabled)
+    merged.self_service_enabled !== undefined
+      ? Boolean(merged.self_service_enabled)
+      : merged.enabled !== undefined
+      ? Boolean(merged.enabled)
+      : featureFlags.ticket_cancellation !== undefined
+      ? Boolean(featureFlags.ticket_cancellation)
       : DEFAULT_CANCELLATION_POLICY.enabled;
 
   const cutoff =
-    (rawObj.cutoff_rule as TicketCancellationPolicy["cutoff"]) ||
-    (rawObj.cutoff as TicketCancellationPolicy["cutoff"]) ||
+    (merged.cutoff_rule as TicketCancellationPolicy["cutoff"]) ||
+    (merged.cutoff as TicketCancellationPolicy["cutoff"]) ||
     DEFAULT_CANCELLATION_POLICY.cutoff;
 
   const customCutoffHours =
-    Number(rawObj.custom_cutoff_hours || rawObj.customCutoffHours) ||
+    Number(merged.custom_cutoff_hours || merged.customCutoffHours) ||
     DEFAULT_CANCELLATION_POLICY.customCutoffHours;
 
   const requireReason =
-    rawObj.require_reason !== undefined
-      ? Boolean(rawObj.require_reason)
-      : rawObj.requireReason !== undefined
-      ? Boolean(rawObj.requireReason)
+    merged.require_reason !== undefined
+      ? Boolean(merged.require_reason)
+      : merged.requireReason !== undefined
+      ? Boolean(merged.requireReason)
       : DEFAULT_CANCELLATION_POLICY.requireReason;
 
   const requireOrganizerApproval =
-    rawObj.require_organizer_approval !== undefined
-      ? Boolean(rawObj.require_organizer_approval)
-      : rawObj.requireOrganizerApproval !== undefined
-      ? Boolean(rawObj.requireOrganizerApproval)
+    merged.require_organizer_approval !== undefined
+      ? Boolean(merged.require_organizer_approval)
+      : merged.requireOrganizerApproval !== undefined
+      ? Boolean(merged.requireOrganizerApproval)
       : DEFAULT_CANCELLATION_POLICY.requireOrganizerApproval;
 
   const sendNotifications =
-    rawObj.send_notifications !== undefined
-      ? Boolean(rawObj.send_notifications)
-      : rawObj.sendNotifications !== undefined
-      ? Boolean(rawObj.sendNotifications)
+    merged.send_notifications !== undefined
+      ? Boolean(merged.send_notifications)
+      : merged.sendNotifications !== undefined
+      ? Boolean(merged.sendNotifications)
       : DEFAULT_CANCELLATION_POLICY.sendNotifications;
 
   const capacityReleasePolicy =
-    (rawObj.capacity_release_policy as TicketCancellationPolicy["capacityReleasePolicy"]) ||
-    (rawObj.capacityReleasePolicy as TicketCancellationPolicy["capacityReleasePolicy"]) ||
+    (merged.capacity_release_policy as TicketCancellationPolicy["capacityReleasePolicy"]) ||
+    (merged.capacityReleasePolicy as TicketCancellationPolicy["capacityReleasePolicy"]) ||
     DEFAULT_CANCELLATION_POLICY.capacityReleasePolicy;
 
   const paidTicketPolicy =
-    (rawObj.paid_ticket_policy as TicketCancellationPolicy["paidTicketPolicy"]) ||
-    (rawObj.paidTicketPolicy as TicketCancellationPolicy["paidTicketPolicy"]) ||
+    (merged.paid_ticket_policy as TicketCancellationPolicy["paidTicketPolicy"]) ||
+    (merged.paidTicketPolicy as TicketCancellationPolicy["paidTicketPolicy"]) ||
     DEFAULT_CANCELLATION_POLICY.paidTicketPolicy;
 
   return {
@@ -112,8 +116,13 @@ export function calculateCancellationDeadline(
   },
   policy: TicketCancellationPolicy
 ): Date {
+  if (policy.cutoff === "anytime") {
+    // Allows cancellation anytime until after event concludes or gate check-in
+    return new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
+  }
+
   const dateStr = event.event_date.split("T")[0];
-  const timeStr = event.start_time && event.start_time.trim() ? event.start_time.trim() : "00:00";
+  const timeStr = event.start_time && event.start_time.trim() ? event.start_time.trim() : "23:59:59";
   
   // Combine date and time in ISO format
   const isoTime = timeStr.length === 5 ? `${timeStr}:00` : timeStr;

@@ -80,8 +80,8 @@ export default function CancelTicketAction({
     );
   }
 
-  // If not eligible (e.g. self-service disabled, checked in, or deadline passed), do not disturb pass layout
-  if (!eligibility.eligible) {
+  // Only hide the action if the organizer has disabled ticket cancellation completely
+  if (!eligibility.policy.enabled) {
     return null;
   }
 
@@ -129,7 +129,7 @@ export default function CancelTicketAction({
             setResultMessage(null);
             setModalOpen(true);
           }}
-          className="inline-flex items-center gap-1.5 text-xs font-medium text-neutral-500 dark:text-neutral-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors py-1.5 px-3 rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-800"
+          className="inline-flex items-center gap-1.5 text-xs font-medium text-neutral-500 dark:text-neutral-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors py-1.5 px-3 rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer"
         >
           <RotateCcw className="w-3.5 h-3.5" />
           <span>Unable to attend? Cancel ticket</span>
@@ -176,7 +176,26 @@ export default function CancelTicketAction({
               </button>
             </div>
 
-            {resultMessage ? (
+            {!eligibility.eligible ? (
+              <div className="py-6 space-y-4">
+                <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 text-xs text-amber-800 dark:text-amber-200 space-y-1.5">
+                  <div className="flex items-center gap-2 font-bold text-amber-900 dark:text-amber-100">
+                    <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                    Cancellation Currently Unavailable
+                  </div>
+                  <p className="text-xs text-amber-800 dark:text-amber-200/90 leading-relaxed">
+                    {eligibility.reason || "The cancellation cutoff deadline for this event has passed or your ticket is not eligible for cancellation."}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setModalOpen(false)}
+                  className="w-full py-2.5 px-4 rounded-xl border border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-200 text-xs font-semibold hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+                >
+                  Close
+                </button>
+              </div>
+            ) : resultMessage ? (
               <div className="py-8 text-center space-y-4">
                 <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto border border-emerald-200 dark:border-emerald-800">
                   <CheckCircle2 className="w-6 h-6" />
@@ -256,8 +275,11 @@ export default function CancelTicketAction({
                   <input
                     type="checkbox"
                     checked={confirmChecked}
-                    onChange={(e) => setConfirmChecked(e.target.checked)}
-                    className="mt-0.5 h-4 w-4 rounded border-neutral-300 text-rose-600 focus:ring-rose-500"
+                    onChange={(e) => {
+                      setConfirmChecked(e.target.checked);
+                      if (e.target.checked) setError("");
+                    }}
+                    className="mt-0.5 h-4 w-4 rounded border-neutral-300 text-rose-600 focus:ring-rose-500 cursor-pointer"
                   />
                   <span>
                     I understand that cancelling my ticket deactivates my QR pass and releases my reserved seat.
@@ -276,15 +298,15 @@ export default function CancelTicketAction({
                     type="button"
                     onClick={() => setModalOpen(false)}
                     disabled={submitting}
-                    className="flex-1 py-2.5 px-4 rounded-xl border border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-200 text-xs font-semibold hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors"
+                    className="flex-1 py-2.5 px-4 rounded-xl border border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-200 text-xs font-semibold hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
                   >
                     Keep Ticket
                   </button>
                   <button
                     type="button"
                     onClick={handleConfirmCancellation}
-                    disabled={submitting || !confirmChecked}
-                    className="flex-1 py-2.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold shadow-xs disabled:opacity-50 transition-colors flex items-center justify-center gap-1.5"
+                    disabled={submitting}
+                    className="flex-1 py-2.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold shadow-xs disabled:opacity-50 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
                   >
                     {submitting ? (
                       <>

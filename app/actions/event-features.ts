@@ -125,9 +125,21 @@ function toLegacyFeatureDesign(
     ? event.custom_pass_design
     : {};
 
+  const existingCancellation = (existingDesign._cancellationConfig as Record<string, unknown>) || {};
+  const isCancellationFlag = config.features.ticket_cancellation !== undefined;
+
   return {
     ...existingDesign,
     _featureFlags: config,
+    ...(isCancellationFlag
+      ? {
+          _cancellationConfig: {
+            ...existingCancellation,
+            enabled: Boolean(config.features.ticket_cancellation),
+            self_service_enabled: Boolean(config.features.ticket_cancellation),
+          },
+        }
+      : {}),
   };
 }
 
