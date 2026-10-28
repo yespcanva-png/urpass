@@ -226,7 +226,7 @@ export async function updateEventFeatureFlag(
       .upsert(
         {
           feature_key: featureKey,
-          module_code: flagDef?.moduleCode || null,
+          module_code: flagDef?.moduleCode || `MOD_${featureKey.toUpperCase()}`,
           name: flagDef?.name || featureKey,
           platform_available: true,
         },

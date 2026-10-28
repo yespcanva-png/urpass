@@ -104,6 +104,7 @@ export const CORE_FEATURES: Record<CoreFeatureKey, { name: string; description: 
 export const FEATURE_FLAG_DEFINITIONS: Record<FeatureFlagKey, FeatureFlagDefinition> = {
   ai_agenda: {
     key: "ai_agenda",
+    moduleCode: "M12",
     name: "AI Agenda & Schedule Optimizer",
     description: "AI-assisted multi-track conference agenda builder.",
     defaultEnabled: false,
@@ -111,6 +112,7 @@ export const FEATURE_FLAG_DEFINITIONS: Record<FeatureFlagKey, FeatureFlagDefinit
   },
   face_checkin: {
     key: "face_checkin",
+    moduleCode: "M13",
     name: "Facial Recognition Check-in",
     description: "Biometric zero-touch check-in at physical gates.",
     defaultEnabled: false,
@@ -118,6 +120,7 @@ export const FEATURE_FLAG_DEFINITIONS: Record<FeatureFlagKey, FeatureFlagDefinit
   },
   sponsor_deliverables: {
     key: "sponsor_deliverables",
+    moduleCode: "M16",
     name: "Sponsor Deliverables & ROI Tracker",
     description: "Sponsor booth management, branding assets, and lead tracking.",
     defaultEnabled: false,
@@ -125,6 +128,7 @@ export const FEATURE_FLAG_DEFINITIONS: Record<FeatureFlagKey, FeatureFlagDefinit
   },
   b2b_matchmaking: {
     key: "b2b_matchmaking",
+    moduleCode: "M17",
     name: "B2B Matchmaking & 1:1 Meetings",
     description: "Attendee matchmaking and meeting slot booking.",
     defaultEnabled: false,
@@ -132,6 +136,7 @@ export const FEATURE_FLAG_DEFINITIONS: Record<FeatureFlagKey, FeatureFlagDefinit
   },
   custom_domain: {
     key: "custom_domain",
+    moduleCode: "M18",
     name: "Custom Event Domain",
     description: "Host event portals under your organization custom domain.",
     defaultEnabled: false,
@@ -139,6 +144,7 @@ export const FEATURE_FLAG_DEFINITIONS: Record<FeatureFlagKey, FeatureFlagDefinit
   },
   advanced_analytics: {
     key: "advanced_analytics",
+    moduleCode: "M11",
     name: "Advanced Operational Analytics",
     description: "Cross-gate velocity curves, dwell time, and cohort heatmaps.",
     defaultEnabled: false,
@@ -146,6 +152,7 @@ export const FEATURE_FLAG_DEFINITIONS: Record<FeatureFlagKey, FeatureFlagDefinit
   },
   webhooks: {
     key: "webhooks",
+    moduleCode: "M19",
     name: "Real-time Event Webhooks",
     description: "Dispatch webhooks on registration and gate check-in events.",
     defaultEnabled: false,
@@ -153,6 +160,7 @@ export const FEATURE_FLAG_DEFINITIONS: Record<FeatureFlagKey, FeatureFlagDefinit
   },
   sms_reminders: {
     key: "sms_reminders",
+    moduleCode: "M20",
     name: "SMS Alerts & Reminders",
     description: "Automated DLT-compliant SMS notifications for attendees.",
     defaultEnabled: false,
@@ -160,6 +168,7 @@ export const FEATURE_FLAG_DEFINITIONS: Record<FeatureFlagKey, FeatureFlagDefinit
   },
   custom_pass_design: {
     key: "custom_pass_design",
+    moduleCode: "M21",
     name: "Custom Pass Designer",
     description: "Visual pass styling, category badges, and custom branding.",
     defaultEnabled: false,
@@ -167,6 +176,7 @@ export const FEATURE_FLAG_DEFINITIONS: Record<FeatureFlagKey, FeatureFlagDefinit
   },
   white_label_portal: {
     key: "white_label_portal",
+    moduleCode: "M22",
     name: "White-Label Attendee Portal",
     description: "Remove UrPass branding and apply custom theme styles.",
     defaultEnabled: false,
@@ -174,6 +184,7 @@ export const FEATURE_FLAG_DEFINITIONS: Record<FeatureFlagKey, FeatureFlagDefinit
   },
   offline_mesh_sync: {
     key: "offline_mesh_sync",
+    moduleCode: "M23",
     name: "Offline Multi-Gate Mesh Sync",
     description: "Peer-to-peer scanner synchronization in zero-connectivity venues.",
     defaultEnabled: false,
@@ -181,6 +192,7 @@ export const FEATURE_FLAG_DEFINITIONS: Record<FeatureFlagKey, FeatureFlagDefinit
   },
   waitlist_priority_queue: {
     key: "waitlist_priority_queue",
+    moduleCode: "M24",
     name: "Automated Waitlist Priority Queue",
     description: "Auto-promotes waitlisted attendees when capacity opens up.",
     defaultEnabled: false,
