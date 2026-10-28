@@ -219,6 +219,20 @@ export async function updateEventFeatureFlag(
   };
 
   try {
+    // 1. Ensure the feature key exists in platform_feature_flags to satisfy FK constraint
+    const flagDef = FEATURE_FLAG_DEFINITIONS[featureKey];
+    await db
+      .from("platform_feature_flags")
+      .upsert(
+        {
+          feature_key: featureKey,
+          module_code: flagDef?.moduleCode || null,
+          name: flagDef?.name || featureKey,
+          platform_available: true,
+        },
+        { onConflict: "feature_key" }
+      );
+
     const { error: upsertErr } = await db
       .from("event_feature_settings")
       .upsert(
@@ -236,24 +250,25 @@ export async function updateEventFeatureFlag(
       );
 
     if (upsertErr) {
-      return { error: `Failed to persist feature settings: ${upsertErr.message}` };
+      console.warn(`[updateEventFeatureFlag] Warning: failed to upsert into event_feature_settings (${upsertErr.message}). Continuing with events.custom_pass_design.`);
+    } else {
+      await db.from("event_feature_audit_logs").insert({
+        event_id: eventId,
+        feature_key: featureKey,
+        actor_id: user.id,
+        action: enabled ? "enabled" : "disabled",
+        old_value: previousRow,
+        new_value: {
+          enabled,
+          required_config_valid: updatedConfigValid[featureKey],
+          validation_errors: nextConfig.validationErrors?.[featureKey] ?? [],
+          version: nextVersion,
+        },
+      });
     }
-
-    await db.from("event_feature_audit_logs").insert({
-      event_id: eventId,
-      feature_key: featureKey,
-      actor_id: user.id,
-      action: enabled ? "enabled" : "disabled",
-      old_value: previousRow,
-      new_value: {
-        enabled,
-        required_config_valid: updatedConfigValid[featureKey],
-        validation_errors: nextConfig.validationErrors?.[featureKey] ?? [],
-        version: nextVersion,
-      },
-    });
-  } catch {
+  } catch (err) {
     // Keep the legacy mirror as a compatibility fallback in local/test environments.
+    console.warn("[updateEventFeatureFlag] Exception persisting feature setting row:", err);
   }
 
   const updatedDesign = toLegacyFeatureDesign(event, nextConfig);

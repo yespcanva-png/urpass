@@ -107,3 +107,13 @@ CREATE POLICY "Public can view own cancellation status"
   ON public.ticket_cancellations
   FOR SELECT
   USING (true);
+
+-- 7. Register ticket_cancellation in platform_feature_flags
+INSERT INTO public.platform_feature_flags (feature_key, module_code, name, platform_available)
+VALUES
+  ('ticket_cancellation', 'M15', 'Self-Service Ticket Cancellation', TRUE)
+ON CONFLICT (feature_key) DO UPDATE SET
+  module_code = EXCLUDED.module_code,
+  name = EXCLUDED.name,
+  platform_available = EXCLUDED.platform_available,
+  updated_at = now();
