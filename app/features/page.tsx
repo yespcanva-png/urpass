@@ -3,6 +3,7 @@ import Link from "next/link";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 import AnimateIn from "@/components/ui/AnimateIn";
+import { HIGH_INTENT_30 } from "@/lib/seo/high-intent-30";
 import {
   ScanLine,
   Ticket,
@@ -12,12 +13,7 @@ import {
   Bot,
   Palette,
   ShieldCheck,
-  CheckCircle2,
   ArrowRight,
-  Zap,
-  Globe2,
-  Lock,
-  Smartphone,
   Layers,
   FileSpreadsheet,
 } from "lucide-react";
@@ -244,6 +240,18 @@ export default function FeaturesPage() {
                   </AnimateIn>
                 );
               })}
+            </div>
+          </div>
+        </section>
+
+        <section className="border-t border-neutral-200 bg-neutral-50 px-5 py-20 sm:px-8" aria-labelledby="solutions-heading">
+          <div className="mx-auto max-w-6xl">
+            <p className="text-sm font-semibold uppercase tracking-widest text-violet-700">By event and location</p>
+            <h2 id="solutions-heading" className="mt-2 text-3xl font-bold text-neutral-900">Explore registration solutions</h2>
+            <p className="mt-3 max-w-2xl text-neutral-600">Find a practical setup guide for your event type or city. Each guide covers registration, entry planning and the decisions to make before launch.</p>
+            <div className="mt-9 grid gap-10 md:grid-cols-2">
+              <div><h3 className="text-lg font-semibold">Event workflows</h3><ul className="mt-4 grid gap-3">{HIGH_INTENT_30.filter((page) => !page.city).map((page) => <li key={page.slug}><Link className="text-violet-700 hover:underline" href={`/solutions/${page.slug}`}>{page.h1}</Link></li>)}</ul></div>
+              <div><h3 className="text-lg font-semibold">City guides</h3><ul className="mt-4 grid gap-3">{HIGH_INTENT_30.filter((page) => page.city).map((page) => <li key={page.slug}><Link className="text-violet-700 hover:underline" href={`/solutions/${page.slug}`}>{page.h1}</Link></li>)}</ul></div>
             </div>
           </div>
         </section>

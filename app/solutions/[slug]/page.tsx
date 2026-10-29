@@ -4,6 +4,8 @@ import { getMarketingPage, MARKETING_PAGES_BY_SLUG, ALL_MARKETING_PAGES } from "
 import { generatePageMetadata } from "@/lib/seo/metadata";
 import { getRelatedPages } from "@/lib/seo/linking";
 import MarketingPage from "@/components/marketing/MarketingPage";
+import HighIntentPage from "@/components/marketing/HighIntentPage";
+import { HIGH_INTENT_30, HIGH_INTENT_30_BY_SLUG } from "@/lib/seo/high-intent-30";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -19,6 +21,9 @@ export async function generateStaticParams() {
       }
     }
   }
+  for (const page of HIGH_INTENT_30) {
+    if (!matchingSlugs.includes(page.slug)) matchingSlugs.push(page.slug);
+  }
   return matchingSlugs.map((slug) => ({ slug }));
 }
 
@@ -32,6 +37,11 @@ function resolvePage(slug: string) {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
+  const highIntentPage = HIGH_INTENT_30_BY_SLUG.get(slug);
+  if (highIntentPage) {
+    const canonical = `https://urpass.space/solutions/${slug}`;
+    return { title: highIntentPage.title, description: highIntentPage.description, alternates: { canonical }, openGraph: { title: highIntentPage.title, description: highIntentPage.description, url: canonical, type: "website" }, robots: { index: true, follow: true } };
+  }
   const page = resolvePage(slug);
   if (!page || page.status !== "published") {
     return { title: "Page Not Found | UrPass" };
@@ -41,6 +51,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function SolutionsPage({ params }: PageProps) {
   const { slug } = await params;
+  const highIntentPage = HIGH_INTENT_30_BY_SLUG.get(slug);
+  if (highIntentPage) return <HighIntentPage page={highIntentPage} />;
   const page = resolvePage(slug);
   if (!page || page.status !== "published") {
     notFound();

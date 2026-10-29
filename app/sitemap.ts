@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { getPublishedJobs } from "@/lib/careers/service";
 import { getAllPublishedPages } from "@/lib/seo/pages";
+import { HIGH_INTENT_30 } from "@/lib/seo/high-intent-30";
 import { getAllExploreSeoPages, matchesExploreSeoPage, MIN_EXPLORE_COLLECTION_EVENTS } from "@/lib/explore/seo-pages";
 import { fetchExploreMarketplaceEvents } from "@/lib/explore/service";
 import { isPublicIndexableEvent } from "@/lib/seo/event-indexing";
@@ -938,8 +939,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     lastModified: page.updatedAt,
   }));
 
+  const highIntentEntries = HIGH_INTENT_30.map((page) => ({
+    url: `${BASE}/solutions/${page.slug}`,
+    priority: 0.85,
+    changeFrequency: "monthly" as const,
+  }));
+
   const rawStaticEntries = [
     ...marketingEntries,
+    ...highIntentEntries,
     ...bengaluruBatch2Pages,
     ...bengaluruBatch30Pages,
     ...growthBatch25Pages,
