@@ -44,7 +44,11 @@ export async function POST(req: NextRequest) {
     if (!body.metadata) body.metadata = {};
     body.metadata.ip_country = country;
 
-    await recordServerConversion(body);
+    const result = await recordServerConversion(body);
+    if (result.error) {
+      console.error("[api/conversion/track] Conversion recording failed:", result.error);
+      return NextResponse.json({ error: "Conversion tracking unavailable" }, { status: 503 });
+    }
 
     const response = NextResponse.json({ ok: true, sessionId });
 
@@ -61,6 +65,6 @@ export async function POST(req: NextRequest) {
     return response;
   } catch (err) {
     console.warn("[api/conversion/track] Error handling conversion tracking:", err);
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ error: "Conversion tracking unavailable" }, { status: 503 });
   }
 }

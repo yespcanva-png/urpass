@@ -80,10 +80,10 @@ export async function recordServerConversion(payload: TrackConversionPayload) {
       utm_source: payload.utmSource || null,
       utm_medium: payload.utmMedium || null,
       utm_campaign: payload.utmCampaign || null,
-      utm_content: payload.utmContent || null,
       referrer: payload.referrer || null,
       idempotency_key: payload.idempotencyKey || null,
-      metadata: payload.metadata || {},
+      // Some deployed databases predate the utm_content column on conversion_events.
+      metadata: { ...(payload.metadata || {}), ...(payload.utmContent ? { utm_content: payload.utmContent } : {}) },
     });
 
     if (insertError && insertError.code !== "23505") {
