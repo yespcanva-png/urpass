@@ -2,7 +2,6 @@ import {
   ConversionEventName,
   TrackConversionPayload,
   VisitorSegment,
-  DeviceCategory,
 } from "./types";
 import {
   getOrCreateClientSessionId,
@@ -99,7 +98,7 @@ function sendToGA4(eventName: ConversionEventName, payload: TrackConversionPaylo
  * 1. Checks deduplication
  * 2. Emits GA4 event if consented
  * 3. Dispatches DOM custom event for UI reactivity
- * 4. Transmits event via beacon or fetch to /api/conversion/track
+ * 4. Transmits event via fetch to /api/conversion/track
  */
 export function trackConversionEvent(
   eventName: ConversionEventName,
@@ -162,31 +161,26 @@ export function trackConversionEvent(
     );
   } catch {}
 
-  // 3. First-party database persistence via Beacon or Fetch
+  // 3. First-party database persistence. Fetch lets us detect server failures;
+  // keepalive allows the request to finish when navigation follows the event.
   const body = JSON.stringify(payload);
   const endpoint = "/api/conversion/track";
 
-  try {
-    if (navigator.sendBeacon) {
-      const blob = new Blob([body], { type: "application/json" });
-      const sent = navigator.sendBeacon(endpoint, blob);
-      if (!sent) {
-        fetch(endpoint, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body,
-          keepalive: true,
-        }).catch(() => {});
-      }
-    } else {
-      fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body,
-        keepalive: true,
-      }).catch(() => {});
+  void fetch(endpoint, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body,
+    keepalive: true,
+  }).then((response) => {
+    if (!response.ok) console.warn("[conversion-tracker] Event was not recorded:", response.status);
+  }).catch(() => {
+    // A network failure can happen during navigation. Queue one last attempt.
+    let queued = false;
+    try {
+      queued = navigator.sendBeacon?.(endpoint, new Blob([body], { type: "application/json" })) ?? false;
+    } catch {
+      // The browser may reject a beacon during shutdown.
     }
-  } catch {
-    // Non-blocking fallback
-  }
+    if (!queued) console.warn("[conversion-tracker] Event delivery failed");
+  });
 }
