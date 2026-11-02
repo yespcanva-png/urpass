@@ -160,7 +160,7 @@ export default function DashboardContent() {
             .eq("organizer_id", user.id).order("created_at", { ascending: false }),
           supabase
             .from("subscriptions")
-            .select("status, is_trial, trial_used, trial_plan, trial_starts_at, trial_ends_at, plan:plans(name, slug)")
+            .select("status, is_trial, trial_used, trial_plan, trial_starts_at, trial_ends_at, plan:plans!subscriptions_plan_id_fkey(name, slug)")
             .eq("user_id", user.id)
             .in("status", ["active", "trialing"])
             .maybeSingle(),

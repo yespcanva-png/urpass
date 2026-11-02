@@ -15,7 +15,7 @@ export async function getOpsBillingData() {
   // 1. Fetch recent customer subscriptions
   const { data: subscriptions } = await admin
     .from("subscriptions")
-    .select("id, user_id, status, provider, billing_cycle, current_period_end, cancel_at_period_end, autopay_status, updated_at, plans(name, slug)")
+    .select("id, user_id, status, provider, billing_cycle, current_period_end, cancel_at_period_end, autopay_status, updated_at, plans!subscriptions_plan_id_fkey(name, slug)")
     .order("updated_at", { ascending: false })
     .limit(50);
 

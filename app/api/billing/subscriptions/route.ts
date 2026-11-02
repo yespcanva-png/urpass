@@ -128,7 +128,7 @@ export async function POST(req: NextRequest) {
   const admin = adminClient();
   const { data: existingSub } = await admin
     .from("subscriptions")
-    .select("status, provider, current_period_end, has_lifetime_access, lifetime_plan_slug, is_trial, trial_used, trial_ends_at, plan:plans(slug)")
+    .select("status, provider, current_period_end, has_lifetime_access, lifetime_plan_slug, is_trial, trial_used, trial_ends_at, plan:plans!subscriptions_plan_id_fkey(slug)")
     .eq("user_id", user.id)
     .maybeSingle();
 

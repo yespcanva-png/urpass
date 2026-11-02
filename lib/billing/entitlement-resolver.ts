@@ -110,7 +110,7 @@ export async function resolveUserSubscriptionAccess(params: {
     const { data } = await supabase
       .from("subscriptions")
       .select(
-        "status, provider, billing_cycle, current_period_end, cancel_at_period_end, trial_used, is_trial, trial_ends_at, autopay_status, has_lifetime_access, lifetime_plan_slug, free_event_trial_active, free_event_trial_consumed, free_event_trial_id, plan:plans(slug)"
+        "status, provider, billing_cycle, current_period_end, cancel_at_period_end, trial_used, is_trial, trial_ends_at, autopay_status, has_lifetime_access, lifetime_plan_slug, free_event_trial_active, free_event_trial_consumed, free_event_trial_id, plan:plans!subscriptions_plan_id_fkey(slug)"
       )
       .eq("user_id", user.id)
       .maybeSingle();

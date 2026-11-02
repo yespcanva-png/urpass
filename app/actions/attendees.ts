@@ -785,7 +785,7 @@ export async function submitApplication(
     // Subscription-based limit
     let orgSubQuery = admin
       .from("subscriptions")
-      .select("registrations_used, current_period_start, plan:plans(slug)")
+      .select("registrations_used, current_period_start, plan:plans!subscriptions_plan_id_fkey(slug)")
       .eq("user_id", event.organizer_id);
     if (typeof orgSubQuery.in === "function") {
       orgSubQuery = orgSubQuery.in("status", ["active", "trialing"]);

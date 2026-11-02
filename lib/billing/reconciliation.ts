@@ -67,7 +67,7 @@ export async function runBillingReconciliation(): Promise<ReconciliationReport> 
       provider_customer_id,
       has_lifetime_access,
       is_trial,
-      plan:plans(id, name, slug)
+      plan:plans!subscriptions_plan_id_fkey(id, name, slug)
     `);
 
   if (error || !allSubscriptions) {

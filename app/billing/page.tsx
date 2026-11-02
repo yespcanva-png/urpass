@@ -184,7 +184,7 @@ export default async function BillingPage(props: {
       supabase
         .from("subscriptions")
         .select(
-          "status, provider, billing_cycle, current_period_start, current_period_end, cancel_at_period_end, registrations_used, trial_used, trial_plan, trial_starts_at, trial_ends_at, is_trial, autopay_mandate_id, autopay_status, has_lifetime_access, lifetime_plan_slug, free_event_trial_active, free_event_trial_consumed, free_event_trial_id, cancellation_state, cancellation_error, cancellation_confirmed_at, pending_plan_slug, pending_plan_effective_at, plan:plans(slug)"
+          "status, provider, billing_cycle, current_period_start, current_period_end, cancel_at_period_end, registrations_used, trial_used, trial_plan, trial_starts_at, trial_ends_at, is_trial, autopay_mandate_id, autopay_status, has_lifetime_access, lifetime_plan_slug, free_event_trial_active, free_event_trial_consumed, free_event_trial_id, cancellation_state, cancellation_error, cancellation_confirmed_at, pending_plan_slug, pending_plan_effective_at, plan:plans!subscriptions_plan_id_fkey(slug)"
         )
         .eq("user_id", user.id)
         .maybeSingle(),

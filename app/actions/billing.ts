@@ -158,7 +158,7 @@ export async function cancelSubscription(): Promise<ActionResult> {
       provider_subscription_id,
       provider_customer_id,
       cancellation_state,
-      plan:plans(id, name, slug)
+      plan:plans!subscriptions_plan_id_fkey(id, name, slug)
     `)
     .eq("user_id", user.id)
     .maybeSingle();
@@ -377,7 +377,7 @@ export async function reactivateSubscription(): Promise<ActionResult> {
       cancellation_state,
       provider_subscription_id,
       autopay_mandate_id,
-      plan:plans(name)
+      plan:plans!subscriptions_plan_id_fkey(name)
     `)
     .eq("user_id", user.id)
     .maybeSingle();
@@ -490,7 +490,7 @@ export async function schedulePlanDowngrade(targetSlug: string): Promise<ActionR
       id,
       status,
       current_period_end,
-      plan:plans(id, name, slug)
+      plan:plans!subscriptions_plan_id_fkey(id, name, slug)
     `)
     .eq("user_id", user.id)
     .maybeSingle();

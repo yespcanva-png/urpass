@@ -278,7 +278,7 @@ export default async function ApplyPage({
   const [{ data: sub }, { data: orgProfileRaw }] = await Promise.all([
     adminForBranding
       .from("subscriptions")
-      .select("plan:plans(slug), is_trial, trial_ends_at")
+      .select("plan:plans!subscriptions_plan_id_fkey(slug), is_trial, trial_ends_at")
       .eq("user_id", event.organizer_id)
       .in("status", ["active", "trialing"])
       .maybeSingle(),

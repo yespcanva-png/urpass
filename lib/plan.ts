@@ -435,7 +435,7 @@ export async function getUserPlan(supabase: any, userId: string): Promise<PlanLi
     try {
       const query = supabase
         .from("subscriptions")
-        .select("plan_id, plan:plans(slug), status, is_trial, trial_plan, trial_ends_at, current_period_end, has_lifetime_access, lifetime_plan_slug")
+        .select("plan_id, plan:plans!subscriptions_plan_id_fkey(slug), status, is_trial, trial_plan, trial_ends_at, current_period_end, has_lifetime_access, lifetime_plan_slug")
         .eq("user_id", userId);
 
       // Support mock clients with or without .in()
@@ -465,7 +465,7 @@ export async function getUserPlan(supabase: any, userId: string): Promise<PlanLi
     try {
       const { data: adminSub } = await admin
         .from("subscriptions")
-        .select("plan_id, plan:plans(slug), status, is_trial, trial_plan, trial_ends_at, current_period_end, has_lifetime_access, lifetime_plan_slug")
+        .select("plan_id, plan:plans!subscriptions_plan_id_fkey(slug), status, is_trial, trial_plan, trial_ends_at, current_period_end, has_lifetime_access, lifetime_plan_slug")
         .eq("user_id", userId)
         .maybeSingle();
 
@@ -535,7 +535,7 @@ export async function getUserPlan(supabase: any, userId: string): Promise<PlanLi
           if (orgOwnerId && orgOwnerId !== userId) {
             const { data: ownerSub } = await admin
               .from("subscriptions")
-              .select("plan_id, plan:plans(slug), status, is_trial, trial_plan, trial_ends_at, current_period_end, has_lifetime_access, lifetime_plan_slug")
+              .select("plan_id, plan:plans!subscriptions_plan_id_fkey(slug), status, is_trial, trial_plan, trial_ends_at, current_period_end, has_lifetime_access, lifetime_plan_slug")
               .eq("user_id", orgOwnerId)
               .maybeSingle();
 

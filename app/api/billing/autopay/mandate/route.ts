@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
   const admin = adminClient();
   const { data: sub } = await admin
     .from("subscriptions")
-    .select("id, status, billing_cycle, current_period_end, autopay_status, provider_customer_id, trial_used, free_event_trial_consumed, plan:plans(slug)")
+    .select("id, status, billing_cycle, current_period_end, autopay_status, provider_customer_id, trial_used, free_event_trial_consumed, plan:plans!subscriptions_plan_id_fkey(slug)")
     .eq("user_id", user.id)
     .maybeSingle();
 

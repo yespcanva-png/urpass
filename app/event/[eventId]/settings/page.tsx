@@ -439,7 +439,7 @@ export default function EventSettingsPage() {
           supabase.from("payment_settings").select("razorpay_key_id").eq("user_id", user.id).single(),
           supabase
             .from("subscriptions")
-            .select("plan:plans(slug), status, is_trial, trial_plan, trial_ends_at")
+            .select("plan:plans!subscriptions_plan_id_fkey(slug), status, is_trial, trial_plan, trial_ends_at")
             .eq("user_id", user.id)
             .in("status", ["active", "trialing"])
             .maybeSingle(),

@@ -105,7 +105,7 @@ export async function validateCoupon(
   if (coupon.new_customers_only) {
     const { data: existingSub } = await supabase
       .from("subscriptions")
-      .select("plan:plans(slug)")
+      .select("plan:plans!subscriptions_plan_id_fkey(slug)")
       .eq("user_id", user.id)
       .eq("status", "active")
       .single();

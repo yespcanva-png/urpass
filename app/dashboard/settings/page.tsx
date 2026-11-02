@@ -30,7 +30,7 @@ export default async function SettingsPage() {
     getUserPlan(supabase, user.id),
     supabase
       .from("subscriptions")
-      .select("billing_cycle, current_period_start, current_period_end, cancel_at_period_end, registrations_used, is_trial, trial_plan, trial_ends_at, status, plan:plans(name, price_monthly, slug)")
+      .select("billing_cycle, current_period_start, current_period_end, cancel_at_period_end, registrations_used, is_trial, trial_plan, trial_ends_at, status, plan:plans!subscriptions_plan_id_fkey(name, price_monthly, slug)")
       .eq("user_id", user.id)
       .in("status", ["active", "trialing"])
       .maybeSingle(),

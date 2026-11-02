@@ -109,7 +109,7 @@ export async function GET(req: NextRequest) {
   let trialRemindersSent = 0;
   const { data: trialSubs } = await supabase
     .from("subscriptions")
-    .select("id, user_id, trial_plan, trial_ends_at, is_trial, status, reminded_7_days, reminded_3_days, reminded_1_day, autopay_status, cancel_at_period_end, plan:plans(name, slug)")
+    .select("id, user_id, trial_plan, trial_ends_at, is_trial, status, reminded_7_days, reminded_3_days, reminded_1_day, autopay_status, cancel_at_period_end, plan:plans!subscriptions_plan_id_fkey(name, slug)")
     .eq("is_trial", true)
     .in("status", ["trialing", "active"])
     .not("trial_ends_at", "is", null);

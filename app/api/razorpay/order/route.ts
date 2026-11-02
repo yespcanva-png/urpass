@@ -103,7 +103,7 @@ export async function POST(req: NextRequest) {
   // Check if account already has an active, uncancelled subscription for this identical plan
   const { data: existingSub } = await supabase
     .from("subscriptions")
-    .select("status, current_period_end, cancel_at_period_end, autopay_status, plan:plans(slug)")
+    .select("status, current_period_end, cancel_at_period_end, autopay_status, plan:plans!subscriptions_plan_id_fkey(slug)")
     .eq("user_id", user.id)
     .maybeSingle();
 

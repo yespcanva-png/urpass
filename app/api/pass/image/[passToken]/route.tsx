@@ -57,7 +57,7 @@ export async function GET(
     const [{ data: sub }, { data: orgProfile }] = await Promise.all([
       supabase
         .from("subscriptions")
-        .select("plan:plans(slug), is_trial, trial_ends_at")
+        .select("plan:plans!subscriptions_plan_id_fkey(slug), is_trial, trial_ends_at")
         .eq("user_id", organizerId)
         .in("status", ["active", "trialing"])
         .maybeSingle(),

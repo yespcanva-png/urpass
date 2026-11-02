@@ -180,7 +180,7 @@ export async function canUseFeature(
     // Fallback: check legacy subscriptions by user_id
     const { data: userSub } = await admin
       .from("subscriptions")
-      .select("status, has_lifetime_access, is_trial, trial_ends_at, plan:plans(slug)")
+      .select("status, has_lifetime_access, is_trial, trial_ends_at, plan:plans!subscriptions_plan_id_fkey(slug)")
       .eq("user_id", organizationIdOrUserId)
       .maybeSingle();
 

@@ -21,7 +21,7 @@ export async function getAccountEntitlementContext(
   // 1. Fetch user subscription
   const { data: sub } = await admin
     .from("subscriptions")
-    .select("status, is_trial, current_period_end, plans(slug)")
+    .select("status, is_trial, current_period_end, plans!subscriptions_plan_id_fkey(slug)")
     .eq("user_id", userId)
     .maybeSingle();
 
