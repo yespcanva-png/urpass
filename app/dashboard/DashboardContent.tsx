@@ -151,7 +151,7 @@ export default function DashboardContent() {
         const [
           { data: profile },
           { data: eventRows },
-          { data: sub },
+          { data: subData, error: subError },
           { data: paySettings },
           memberships,
         ] = await Promise.all([
@@ -171,6 +171,34 @@ export default function DashboardContent() {
             .maybeSingle(),
           getUserOrganizations(),
         ]);
+
+        let sub = subData;
+        if (subError || (subData && !subData.plan)) {
+          console.error("[dashboard] Subscription plan lookup failed; retrying without the plan relationship", {
+            code: subError?.code,
+            message: subError?.message,
+          });
+          const { data: directSub, error: directError } = await supabase
+            .from("subscriptions")
+            .select("plan_id, status, is_trial, trial_used, trial_plan, trial_starts_at, trial_ends_at")
+            .eq("user_id", user.id)
+            .in("status", ["active", "trialing"])
+            .maybeSingle();
+          if (directError) {
+            console.error("[dashboard] Direct subscription lookup failed", { code: directError.code, message: directError.message });
+          } else if (directSub?.plan_id) {
+            const { data: directPlan, error: planError } = await supabase
+              .from("plans")
+              .select("name, slug")
+              .eq("id", directSub.plan_id)
+              .maybeSingle();
+            if (planError) {
+              console.error("[dashboard] Direct plan lookup failed", { code: planError.code, message: planError.message });
+            } else {
+              sub = { ...directSub, plan: directPlan } as unknown as typeof subData;
+            }
+          }
+        }
 
         setHasGateway(Boolean(paySettings?.razorpay_key_id));
 

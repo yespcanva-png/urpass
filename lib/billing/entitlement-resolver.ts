@@ -23,6 +23,7 @@ type UserLike = {
 };
 
 type SubscriptionRow = {
+  plan_id?: string | null;
   status?: string | null;
   provider?: string | null;
   billing_cycle?: string | null;
@@ -106,17 +107,61 @@ export async function resolveUserSubscriptionAccess(params: {
   const isNewUser = appIdentityMissing || createdAt.getTime() >= effectiveAt.getTime();
 
   let sub: SubscriptionRow | null = null;
+  let subscriptionLookupFailed = false;
   try {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("subscriptions")
       .select(
         "status, provider, billing_cycle, current_period_end, cancel_at_period_end, trial_used, is_trial, trial_ends_at, autopay_status, has_lifetime_access, lifetime_plan_slug, free_event_trial_active, free_event_trial_consumed, free_event_trial_id, plan:plans!subscriptions_plan_id_fkey(slug)"
       )
       .eq("user_id", user.id)
       .maybeSingle();
-    sub = (data as SubscriptionRow | null) ?? null;
-  } catch {
-    sub = null;
+    if (error) {
+      subscriptionLookupFailed = true;
+      console.error("[billing] Subscription plan lookup failed; retrying without the plan relationship", {
+        userId: user.id,
+        code: error.code,
+        message: error.message,
+      });
+    } else {
+      sub = (data as SubscriptionRow | null) ?? null;
+    }
+  } catch (error) {
+    subscriptionLookupFailed = true;
+    console.error("[billing] Subscription plan lookup threw; retrying without the plan relationship", {
+      userId: user.id,
+      error,
+    });
+  }
+
+  // A broken PostgREST relationship must not turn an existing paid subscription into Free.
+  if (subscriptionLookupFailed || (sub && !sub.plan)) {
+    try {
+      const { data, error } = await supabase
+        .from("subscriptions")
+        .select("plan_id, status, provider, billing_cycle, current_period_end, cancel_at_period_end, trial_used, is_trial, trial_ends_at, autopay_status, has_lifetime_access, lifetime_plan_slug, free_event_trial_active, free_event_trial_consumed, free_event_trial_id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (error) {
+        console.error("[billing] Direct subscription lookup failed", { userId: user.id, code: error.code, message: error.message });
+      } else if (data) {
+        sub = data as SubscriptionRow;
+        if (sub.plan_id) {
+          const { data: plan, error: planError } = await supabase
+            .from("plans")
+            .select("slug")
+            .eq("id", sub.plan_id)
+            .maybeSingle();
+          if (planError) {
+            console.error("[billing] Direct plan lookup failed", { userId: user.id, code: planError.code, message: planError.message });
+          } else {
+            sub.plan = plan;
+          }
+        }
+      }
+    } catch (error) {
+      console.error("[billing] Direct subscription lookup threw", { userId: user.id, error });
+    }
   }
 
   const planSlug = planSlugFromSub(sub);

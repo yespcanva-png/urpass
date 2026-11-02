@@ -447,9 +447,42 @@ export async function getUserPlan(supabase: any, userId: string): Promise<PlanLi
         ? await queryWithIn.maybeSingle()
         : await queryWithIn.single();
 
+      if (res?.error) {
+        console.error("[plan] Subscription plan lookup failed; retrying without the plan relationship", {
+          userId,
+          code: res.error.code,
+          message: res.error.message,
+        });
+      }
       sub = (res?.data as Record<string, unknown>) ?? null;
     } catch {
       sub = null;
+    }
+  }
+
+  if ((!sub || !sub.plan) && supabase && typeof supabase.from === "function") {
+    try {
+      const { data: directSub, error: directError } = await supabase
+        .from("subscriptions")
+        .select("plan_id, status, is_trial, trial_plan, trial_ends_at, current_period_end, has_lifetime_access, lifetime_plan_slug")
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (directError) {
+        console.error("[plan] Direct subscription lookup failed", { userId, code: directError.code, message: directError.message });
+      } else if (directSub?.plan_id) {
+        const { data: directPlan, error: planError } = await supabase
+          .from("plans")
+          .select("slug")
+          .eq("id", directSub.plan_id)
+          .maybeSingle();
+        if (planError) {
+          console.error("[plan] Direct plan lookup failed", { userId, code: planError.code, message: planError.message });
+        } else {
+          sub = { ...directSub, plan: directPlan };
+        }
+      }
+    } catch (error) {
+      console.error("[plan] Direct subscription lookup threw", { userId, error });
     }
   }
 

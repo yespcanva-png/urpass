@@ -40,6 +40,31 @@ describe("getUserPlan", () => {
     expect(plan.canUse("api_access")).toBe(false);
   });
 
+  it("resolves Starter from plan_id when the relationship lookup fails", async () => {
+    let subscriptionQueries = 0;
+    const mockSupabase = {
+      from: vi.fn((table: string) => ({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        in: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockImplementation(async () => {
+          if (table === "subscriptions") {
+            subscriptionQueries++;
+            if (subscriptionQueries === 1) return { data: null, error: { code: "PGRST201", message: "Ambiguous plans relationship" } };
+            return { data: { plan_id: "starter-plan-id", status: "active", current_period_end: new Date(Date.now() + 86400000).toISOString() } };
+          }
+          if (table === "plans") return { data: { slug: "starter" } };
+          return { data: null };
+        }),
+      })),
+    };
+
+    const plan = await getUserPlan(mockSupabase, "paid-user");
+    expect(subscriptionQueries).toBe(2);
+    expect(plan.slug).toBe("starter");
+    expect(plan.canUse("csv_import")).toBe(true);
+  });
+
   it("resolves pro plan from trial_plan when status is trialing and trial is active", async () => {
     const futureDate = new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString();
     const mockSupabase = {

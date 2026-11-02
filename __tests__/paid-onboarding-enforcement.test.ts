@@ -139,6 +139,45 @@ describe("URPASS — Paid Onboarding & Entitlement Enforcement (15 Scenarios)", 
     expect(access.planSlug).toBe("pro");
   });
 
+  it("keeps paid access when an embedded plan lookup fails", async () => {
+    let subscriptionQueries = 0;
+    const mockSupabase = {
+      from: vi.fn((table: string) => ({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockImplementation(async () => {
+          if (table === "subscriptions") {
+            subscriptionQueries++;
+            if (subscriptionQueries === 1) {
+              return { data: null, error: { code: "PGRST201", message: "Ambiguous plans relationship" } };
+            }
+            return {
+              data: {
+                plan_id: "starter-plan-id",
+                status: "active",
+                provider: "razorpay",
+                current_period_end: "2026-12-02T06:22:11.448Z",
+              },
+              error: null,
+            };
+          }
+          if (table === "plans") return { data: { slug: "starter" }, error: null };
+          return { data: null, error: null };
+        }),
+      })),
+    };
+
+    const access = await resolveUserSubscriptionAccess({
+      supabase: mockSupabase as any,
+      user: { id: "paid-user", created_at: "2026-10-14T00:00:00.000Z" },
+      now: new Date("2026-11-02T10:37:47.000Z"),
+    });
+
+    expect(subscriptionQueries).toBe(2);
+    expect(access.state).toBe("subscription_active");
+    expect(access.planSlug).toBe("starter");
+  });
+
   // ── Scenario 5: Failed payment → recovery and retry ────────────────────────
   it("Scenario 5: Failed payment -> payment_failed state prompts billing recovery", async () => {
     const failedUser = {
