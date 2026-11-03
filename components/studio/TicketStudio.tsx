@@ -49,6 +49,8 @@ import StudioUpgradeModal from "./StudioUpgradeModal";
 import AiTicketMagicModal from "./AiTicketMagicModal";
 import { getStudioPlanLimits } from "@/lib/studio/limits";
 import type { PlanSlug } from "@/lib/plan";
+import TicketCutDivider from "@/components/pass/TicketCutDivider";
+import TicketBarcode from "@/components/pass/TicketBarcode";
 
 interface TicketStudioProps {
   initialConfig?: unknown;
@@ -223,7 +225,9 @@ export default function TicketStudio({
   };
 
   // 3. Preview Controls State
-  const [activeFormat, setActiveFormat] = useState<TicketOutputFormat>("mobile");
+  const [activeFormat, setActiveFormat] = useState<TicketOutputFormat>(
+    () => (config?.format as TicketOutputFormat) || "mobile"
+  );
   const [zoomLevel, setZoomLevel] = useState<number>(100);
   const [activeAttendeeIndex, setActiveAttendeeIndex] = useState<number>(0);
   const sampleAttendee = SAMPLE_ATTENDEES[activeAttendeeIndex];
@@ -1928,7 +1932,10 @@ export default function TicketStudio({
             <div className="inline-flex items-center p-0.5 bg-neutral-100 rounded-lg border border-neutral-200 text-xs font-medium">
               <button
                 type="button"
-                onClick={() => setActiveFormat("mobile")}
+                onClick={() => {
+                  setActiveFormat("mobile");
+                  updateConfig((c) => ({ ...c, format: "mobile" }));
+                }}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-all cursor-pointer ${
                   activeFormat === "mobile"
                     ? "bg-white text-neutral-900 shadow-2xs font-semibold"
@@ -1940,7 +1947,10 @@ export default function TicketStudio({
               </button>
               <button
                 type="button"
-                onClick={() => setActiveFormat("badge")}
+                onClick={() => {
+                  setActiveFormat("badge");
+                  updateConfig((c) => ({ ...c, format: "badge" }));
+                }}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-all cursor-pointer ${
                   activeFormat === "badge"
                     ? "bg-white text-neutral-900 shadow-2xs font-semibold"
@@ -1952,7 +1962,10 @@ export default function TicketStudio({
               </button>
               <button
                 type="button"
-                onClick={() => setActiveFormat("print")}
+                onClick={() => {
+                  setActiveFormat("print");
+                  updateConfig((c) => ({ ...c, format: "print" }));
+                }}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-all cursor-pointer ${
                   activeFormat === "print"
                     ? "bg-white text-neutral-900 shadow-2xs font-semibold"
@@ -2074,44 +2087,54 @@ export default function TicketStudio({
                   )}
 
                   {/* Accent Top Strip for Event & Modern */}
-                  {(config.template === "event" || isModern) && (
+                  {(config.template === "event" || isModern || isDark) && (
                     <div
-                      className="h-2 w-full relative z-10"
-                      style={{ backgroundColor: activeColor }}
+                      className="h-2.5 w-full relative z-10"
+                      style={{
+                        background: `linear-gradient(90deg, ${activeColor} 0%, #a855f7 35%, ${activeColor} 70%, #ec4899 100%)`,
+                      }}
                     />
                   )}
 
                   {/* Card Interior */}
                   <div className="relative z-10 p-6 flex flex-col items-center text-center">
-                    {/* Event Logo & Sponsor */}
-                    <div className="mb-3 flex items-center justify-center gap-3">
-                      {config.logoUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={config.logoUrl}
-                          alt="Logo"
-                          className="h-8 max-w-[130px] object-contain"
-                        />
-                      ) : (
-                        <span
-                          className="text-[11px] font-bold tracking-widest uppercase"
-                          style={{ color: isDark ? "#ffffff" : "#111827" }}
-                        >
-                          URPASS
-                        </span>
-                      )}
-
-                      {config.sponsorLogoUrl && (
-                        <>
-                          <span className="text-neutral-300 text-xs">×</span>
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                    {/* Header: Organization & Official Badge */}
+                    <div className="w-full flex items-center justify-between gap-2 mb-3 pb-2 border-b border-dashed border-neutral-200/80 dark:border-neutral-800">
+                      <div className="flex items-center gap-2 min-w-0">
+                        {config.logoUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
                           <img
-                            src={config.sponsorLogoUrl}
-                            alt="Sponsor"
-                            className="h-6 max-w-[100px] object-contain opacity-80"
+                            src={config.logoUrl}
+                            alt="Logo"
+                            className="h-6 max-w-[110px] object-contain"
                           />
-                        </>
-                      )}
+                        ) : (
+                          <span
+                            className="text-[10px] font-black tracking-widest uppercase truncate"
+                            style={{ color: isDark ? "#ffffff" : "#111827" }}
+                          >
+                            URPASS
+                          </span>
+                        )}
+
+                        {config.sponsorLogoUrl && (
+                          <>
+                            <span className="text-neutral-300 text-xs">×</span>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={config.sponsorLogoUrl}
+                              alt="Sponsor Logo"
+                              className="h-5 max-w-[80px] object-contain opacity-80"
+                            />
+                          </>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-1 shrink-0">
+                        <span className="text-[9px] font-mono font-bold px-2 py-0.5 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 border border-neutral-200/80 dark:border-neutral-700">
+                          {sampleAttendee.ticketId}
+                        </span>
+                      </div>
                     </div>
 
                     {/* Event Title */}
@@ -2235,43 +2258,6 @@ export default function TicketStudio({
                       })}
                     </div>
 
-                    {/* Bottom QR Code (If QR position is set to 'bottom') */}
-                    {config.qrPosition === "bottom" && (
-                      <div
-                        className={`my-3 p-3.5 bg-white rounded-xl flex flex-col items-center justify-center ${
-                          config.showQrBorder !== false ? "border border-neutral-200/90 shadow-2xs" : ""
-                        }`}
-                        style={{ width: qrSizePx + 28, height: qrSizePx + 44 }}
-                      >
-                        <div
-                          className="flex flex-col justify-between"
-                          style={{ width: qrSizePx, height: qrSizePx }}
-                        >
-                          {QR_MATRIX.map((row, rIdx) => (
-                            <div
-                              key={rIdx}
-                              className="flex justify-between w-full"
-                              style={{ height: `${qrCellSizePx}px` }}
-                            >
-                              {row.map((cell, cIdx) => (
-                                <div
-                                  key={cIdx}
-                                  style={{
-                                    width: `${qrCellSizePx}px`,
-                                    height: `${qrCellSizePx}px`,
-                                  }}
-                                  className={cell === 1 ? "bg-black" : "bg-white"}
-                                />
-                              ))}
-                            </div>
-                          ))}
-                        </div>
-                        <span className="text-[8px] font-bold tracking-widest text-neutral-400 uppercase mt-2">
-                          SCAN FOR ENTRY
-                        </span>
-                      </div>
-                    )}
-
                     {/* Date & Venue Footer */}
                     {(config.showEventDate !== false || (config.showVenue && venue)) && (
                       <div
@@ -2316,6 +2302,93 @@ export default function TicketStudio({
                         )}
                       </div>
                     )}
+
+                    {/* ✂ REAL TICKET CUT: Semicircular Punch Notches + Perforated Rip Line */}
+                    <TicketCutDivider
+                      isDark={isDark}
+                      label="✦ ADMIT ONE · VERIFIED ENTRY ✦"
+                      cutoutColor={isDark ? "#111317" : "#F5F6F7"}
+                      negativeMarginCls="-mx-6"
+                    />
+
+                    {/* SCANNABLE ADMISSION STUB */}
+                    <div className="w-full flex flex-col items-center">
+                      {config.qrPosition === "bottom" ? (
+                        <div
+                          className={`my-1 p-3.5 bg-white rounded-2xl flex flex-col items-center justify-center relative shadow-xs ${
+                            config.showQrBorder !== false ? "border border-neutral-200/90" : ""
+                          }`}
+                          style={{ width: qrSizePx + 56, maxWidth: "100%" }}
+                        >
+                          <div className="absolute top-2 left-2 w-3.5 h-3.5 border-t-2 border-l-2 border-brand/70 rounded-tl-xs pointer-events-none" />
+                          <div className="absolute top-2 right-2 w-3.5 h-3.5 border-t-2 border-r-2 border-brand/70 rounded-tr-xs pointer-events-none" />
+                          <div className="absolute bottom-2 left-2 w-3.5 h-3.5 border-b-2 border-l-2 border-brand/70 rounded-bl-xs pointer-events-none" />
+                          <div className="absolute bottom-2 right-2 w-3.5 h-3.5 border-b-2 border-r-2 border-brand/70 rounded-br-xs pointer-events-none" />
+
+                          <div
+                            className="flex flex-col justify-between"
+                            style={{ width: qrSizePx, height: qrSizePx }}
+                          >
+                            {QR_MATRIX.map((row, rIdx) => (
+                              <div
+                                key={rIdx}
+                                className="flex justify-between w-full"
+                                style={{ height: `${qrCellSizePx}px` }}
+                              >
+                                {row.map((cell, cIdx) => (
+                                  <div
+                                    key={cIdx}
+                                    style={{
+                                      width: `${qrCellSizePx}px`,
+                                      height: `${qrCellSizePx}px`,
+                                    }}
+                                    className={cell === 1 ? "bg-black" : "bg-white"}
+                                  />
+                                ))}
+                              </div>
+                            ))}
+                          </div>
+                          <span className="text-[8px] font-black tracking-widest text-neutral-400 uppercase mt-2">
+                            SCAN FOR ENTRY
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="w-full flex flex-col items-center py-2">
+                          <TicketBarcode code={sampleAttendee.ticketId.replace(/[^A-Z0-9-]/gi, "")} isDark={isDark} showText={true} />
+                        </div>
+                      )}
+
+                      {/* Security Credential Tag */}
+                      <div className="w-full my-2.5 px-3.5 py-2 rounded-xl bg-neutral-100/80 dark:bg-neutral-900/70 border border-neutral-200/80 dark:border-white/10 flex items-center justify-between shadow-2xs">
+                        <div className="flex items-center gap-1.5">
+                          <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                          <span className="text-[9px] font-mono font-bold tracking-widest uppercase text-neutral-500 dark:text-neutral-400">
+                            PASS CREDENTIAL
+                          </span>
+                        </div>
+                        <span className="text-[10px] font-mono font-extrabold tracking-wider text-neutral-900 dark:text-neutral-100">
+                          {sampleAttendee.ticketId}
+                        </span>
+                      </div>
+
+                      {/* Real-time Status Strip */}
+                      <div
+                        className="w-full flex items-center gap-2 rounded-xl px-3 py-2.5 justify-center text-xs font-bold shadow-2xs"
+                        style={{
+                          backgroundColor: `${activeColor}12`,
+                          color: activeColor,
+                          border: `1px solid ${activeColor}25`,
+                        }}
+                      >
+                        <ShieldCheck className="w-4 h-4 shrink-0" />
+                        <span>AUTHENTICATED PASS · READY FOR SCAN</span>
+                      </div>
+
+                      {/* Security Microprint Disclaimer */}
+                      <p className="text-[8px] font-mono tracking-wider uppercase text-neutral-400 dark:text-neutral-500 text-center mt-2">
+                        OFFICIAL ADMISSION PASS · NON-TRANSFERABLE · PRESENT AT GATE
+                      </p>
+                    </div>
                   </div>
                 </div>
               )}

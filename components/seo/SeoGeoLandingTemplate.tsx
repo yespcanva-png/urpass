@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
-import { SeoGeoPageConfig } from "@/lib/seo/templates/seo-geo-template.types";
+import { SeoGeoPageConfig, SeoGeoWorkflowStep, SeoGeoEventType } from "@/lib/seo/templates/seo-geo-template.types";
 import { trackConversion, getClientTrackingContext } from "@/lib/seo/analytics";
 import { trackConversionEvent } from "@/lib/conversion/tracker";
 import { ATTRIBUTION_STORAGE_KEY } from "@/lib/conversion/attribution";
@@ -197,6 +197,116 @@ export default function SeoGeoLandingTemplate({ config }: SeoGeoLandingTemplateP
     config.pageId
   )}&from=${encodeURIComponent(`/solutions/${config.slug}`)}&segment=corporate`;
 
+  // Safe Normalizations for SEO/GEO Landing Pages
+  const normalizedGeoAnswer = config.geoAnswerBlock || {
+    question: `How does UrPass solve ${config.primaryKeyword}?`,
+    answer: config.heroDescription,
+    highlights: [
+      "Sub-0.28s gate check-in scanning on standard mobile phones",
+      "0% platform ticketing fee on all sold tickets and passes",
+      "Offline gate resilience during Wi-Fi or mobile network drops",
+      "Real-time attendance tracking and verified compliance audit logs",
+    ],
+  };
+
+  const normalizedFaqs = (config.faqSection?.faqs || []).map((faq: any) => ({
+    q: faq.q || faq.question || "",
+    a: faq.a || faq.answer || "",
+  }));
+
+  const rawSteps =
+    config.howItWorksSection?.steps ||
+    (config.howItWorksSection as any)?.items ||
+    [];
+  const normalizedWorkflowSteps: SeoGeoWorkflowStep[] = rawSteps.map((step: any, idx: number) => ({
+    stepNumber: step.stepNumber || `Step ${idx + 1}`,
+    title: step.title,
+    description: step.description,
+  }));
+
+  const normalizedWorkflowCtaLabel =
+    config.howItWorksSection?.ctaLabel || config.primaryCtaLabel || "Start Free Event";
+
+  const rawEventTypes =
+    config.eventTypesSection?.items ||
+    (config as any).useCasesSection?.items ||
+    [];
+  const normalizedEventTypes: SeoGeoEventType[] = rawEventTypes.map((item: any) => ({
+    title: item.title,
+    description: item.description,
+    badge: item.badge,
+  }));
+
+  const normalizedComparison = config.comparisonSection || {
+    badge: "COMPARISON",
+    title: `Why Use UrPass for ${config.primaryKeyword}?`,
+    summaryText: "UrPass replaces fragile spreadsheets and manual clipboards with automated sub-second digital verification.",
+    headers: ["Manual & Legacy Methods", "UrPass Platform"] as [string, string],
+    rows: [
+      {
+        manual: "Paper sign-in sheets or slow spreadsheet searches causing 45s gate delays",
+        urpass: "Sub-0.28s camera verification on standard iOS and Android phones",
+      },
+      {
+        manual: "Unsecured barcodes easily shared or screenshotted among attendees",
+        urpass: "Dynamic holographic security foils and instant duplicate pass alerts",
+      },
+      {
+        manual: "Third-party ticketing platforms deducting 5% to 10% commission on passes",
+        urpass: "0% platform ticketing fee with direct gateway payouts to your account",
+      },
+      {
+        manual: "Cloud-only apps that freeze when convention hall mobile signals dip",
+        urpass: "100% offline-first scanning engine with automatic background sync",
+      },
+    ],
+  };
+
+  const audienceList = config.audienceSection?.audiences || (config.audience
+    ? config.audience.split(/,|and/).map((s) => s.trim()).filter(Boolean)
+    : [
+        "Corporate Event Directors",
+        "Conference Operations Leads",
+        "Registration Coordinators",
+        "Venue Security Supervisors",
+        "Experiential Production Teams",
+      ]);
+
+  const normalizedAudience = {
+    badge: config.audienceSection?.badge || "AUDIENCE",
+    title: config.audienceSection?.title || `Who Uses UrPass for ${config.primaryKeyword}?`,
+    leadText:
+      config.audienceSection?.leadText ||
+      `Designed specifically for ${config.audience || "event organizers, operations leads, and registration coordinators"}.`,
+    audiences: audienceList,
+    summaryText:
+      config.audienceSection?.summaryText ||
+      "Whether coordinating a multi-hall industry convention or an executive summit, UrPass provides complete registration and gate check-in confidence.",
+  };
+
+  const closingCtaRaw = config.closingCtaSection || (config as any).finalCta;
+  const normalizedClosingCta = {
+    badge: closingCtaRaw?.badge || "GET STARTED",
+    title: closingCtaRaw?.title || `Ready to Simplify ${config.primaryKeyword}?`,
+    description:
+      closingCtaRaw?.description ||
+      "Join hundreds of organizers delivering queue-free check-ins. Start free today.",
+    primaryCtaLabel: closingCtaRaw?.primaryCtaLabel || config.primaryCtaLabel || "Create Free Event",
+    secondaryCtaLabel: closingCtaRaw?.secondaryCtaLabel || config.secondaryCtaLabel || "Explore Plans",
+  };
+
+  const salesDemoRaw = config.salesDemoSection;
+  const normalizedSalesDemo = {
+    badge: salesDemoRaw?.badge || "SALES & DEMO",
+    title: salesDemoRaw?.title || `Need Help Setting Up Your ${config.primaryKeyword}?`,
+    description:
+      salesDemoRaw?.description ||
+      "Speak directly with our technical event specialists. We'll walk you through gate scanner deployment, badge design, and registration workflows.",
+    submitCtaLabel: salesDemoRaw?.submitCtaLabel || "Request Event Walkthrough",
+    disclaimer: salesDemoRaw?.disclaimer || "No spam. Unsubscribe anytime. We respond within 1 business day.",
+    tagline: salesDemoRaw?.tagline || "Dedicated Event Specialist Assistance",
+  };
+
   // Schema.org Structured Data
   const jsonLd = {
     "@context": "https://schema.org",
@@ -271,7 +381,7 @@ export default function SeoGeoLandingTemplate({ config }: SeoGeoLandingTemplateP
       },
       {
         "@type": "FAQPage",
-        mainEntity: config.faqSection.faqs.map((faq) => ({
+        mainEntity: normalizedFaqs.map((faq) => ({
           "@type": "Question",
           name: faq.q,
           acceptedAnswer: {
@@ -427,7 +537,7 @@ export default function SeoGeoLandingTemplate({ config }: SeoGeoLandingTemplateP
                     RECOMMENDED ANSWER BLOCK
                   </span>
                   <h2 className="text-xl sm:text-2xl font-bold text-neutral-900">
-                    {config.geoAnswerBlock.question}
+                    {normalizedGeoAnswer.question}
                   </h2>
                 </div>
                 <div className="shrink-0 flex items-center gap-1.5 text-xs font-semibold text-violet-800 bg-violet-100/80 px-3 py-1.5 rounded-lg">
@@ -437,12 +547,12 @@ export default function SeoGeoLandingTemplate({ config }: SeoGeoLandingTemplateP
               </div>
 
               <p className="mt-4 text-base sm:text-lg text-neutral-800 leading-relaxed font-normal">
-                {config.geoAnswerBlock.answer}
+                {normalizedGeoAnswer.answer}
               </p>
 
-              {config.geoAnswerBlock.highlights && (
+              {normalizedGeoAnswer.highlights && (
                 <div className="mt-6 pt-5 border-t border-violet-100 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-                  {config.geoAnswerBlock.highlights.map((highlight, idx) => (
+                  {normalizedGeoAnswer.highlights.map((highlight, idx) => (
                     <div key={idx} className="flex items-center gap-2 text-xs font-medium text-neutral-700">
                       <span className="w-1.5 h-1.5 rounded-full bg-violet-600 shrink-0" />
                       <span>{highlight}</span>
@@ -904,7 +1014,7 @@ export default function SeoGeoLandingTemplate({ config }: SeoGeoLandingTemplateP
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-5 gap-4 relative">
-              {config.howItWorksSection.steps.map((step, idx) => (
+              {normalizedWorkflowSteps.map((step, idx) => (
                 <div
                   key={idx}
                   className="rounded-2xl border border-neutral-200 bg-neutral-50 p-5 flex flex-col justify-between hover:border-violet-300 transition-all hover:bg-white hover:shadow-sm"
@@ -934,7 +1044,7 @@ export default function SeoGeoLandingTemplate({ config }: SeoGeoLandingTemplateP
                 onClick={handlePrimaryCtaClick}
                 className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl bg-violet-700 hover:bg-violet-600 text-white font-bold text-sm shadow-md transition-all active:scale-[0.98]"
               >
-                <span>{config.howItWorksSection.ctaLabel}</span>
+                <span>{normalizedWorkflowCtaLabel}</span>
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
@@ -946,15 +1056,15 @@ export default function SeoGeoLandingTemplate({ config }: SeoGeoLandingTemplateP
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center max-w-3xl mx-auto mb-16">
               <span className="text-xs font-bold uppercase tracking-wider text-violet-700 bg-violet-100 px-3 py-1 rounded-full border border-violet-200/60 inline-block mb-3">
-                {config.eventTypesSection.badge || "USE CASES"}
+                {config.eventTypesSection?.badge || "USE CASES"}
               </span>
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-neutral-900 tracking-tight">
-                {config.eventTypesSection.title}
+                {config.eventTypesSection?.title || "Relevant Use Cases & Event Formats"}
               </h2>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {config.eventTypesSection.items.map((item, idx) => (
+              {normalizedEventTypes.map((item, idx) => (
                 <div
                   key={idx}
                   className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm hover:border-violet-300 transition-all flex flex-col justify-between"
@@ -987,10 +1097,10 @@ export default function SeoGeoLandingTemplate({ config }: SeoGeoLandingTemplateP
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center max-w-2xl mx-auto mb-14">
               <span className="text-xs font-bold uppercase tracking-wider text-violet-700 bg-violet-100 px-3 py-1 rounded-full border border-violet-200/60 inline-block mb-3">
-                {config.comparisonSection.badge || "COMPARISON"}
+                {normalizedComparison.badge || "COMPARISON"}
               </span>
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-neutral-900 tracking-tight">
-                {config.comparisonSection.title}
+                {normalizedComparison.title}
               </h2>
             </div>
 
@@ -999,15 +1109,15 @@ export default function SeoGeoLandingTemplate({ config }: SeoGeoLandingTemplateP
                 <thead>
                   <tr className="bg-neutral-900 text-white text-xs sm:text-sm uppercase tracking-wider">
                     <th className="py-4 px-6 font-bold w-1/2">
-                      {config.comparisonSection.headers[0]}
+                      {normalizedComparison.headers[0]}
                     </th>
                     <th className="py-4 px-6 font-bold w-1/2 bg-violet-950 text-violet-200 border-l border-neutral-800">
-                      {config.comparisonSection.headers[1]}
+                      {normalizedComparison.headers[1]}
                     </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-neutral-200 text-xs sm:text-sm">
-                  {config.comparisonSection.rows.map((row, idx) => (
+                  {normalizedComparison.rows.map((row, idx) => (
                     <tr key={idx} className={idx % 2 === 0 ? "bg-white" : "bg-neutral-50/60"}>
                       <td className="py-4 px-6 text-neutral-700 font-medium">
                         <span className="inline-block mr-2 text-neutral-400">•</span>
@@ -1024,7 +1134,7 @@ export default function SeoGeoLandingTemplate({ config }: SeoGeoLandingTemplateP
             </div>
 
             <p className="mt-6 text-center text-sm text-neutral-600 leading-relaxed max-w-2xl mx-auto">
-              {config.comparisonSection.summaryText}
+              {normalizedComparison.summaryText}
             </p>
           </div>
         </section>
@@ -1034,20 +1144,20 @@ export default function SeoGeoLandingTemplate({ config }: SeoGeoLandingTemplateP
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center max-w-2xl mx-auto mb-14">
               <span className="text-xs font-bold uppercase tracking-wider text-violet-700 bg-violet-100 px-3 py-1 rounded-full border border-violet-200/60 inline-block mb-3">
-                {config.audienceSection.badge || "AUDIENCE"}
+                {normalizedAudience.badge || "AUDIENCE"}
               </span>
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-neutral-900 tracking-tight">
-                {config.audienceSection.title}
+                {normalizedAudience.title}
               </h2>
-              {config.audienceSection.leadText && (
+              {normalizedAudience.leadText && (
                 <p className="mt-3 text-neutral-600 text-sm sm:text-base font-medium">
-                  {config.audienceSection.leadText}
+                  {normalizedAudience.leadText}
                 </p>
               )}
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {config.audienceSection.audiences.map((aud, idx) => (
+              {normalizedAudience.audiences.map((aud, idx) => (
                 <div
                   key={idx}
                   className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm flex items-start gap-3 hover:border-violet-300 transition-all"
@@ -1063,7 +1173,7 @@ export default function SeoGeoLandingTemplate({ config }: SeoGeoLandingTemplateP
             </div>
 
             <p className="mt-8 text-center text-sm text-neutral-700 leading-relaxed max-w-2xl mx-auto font-medium">
-              {config.audienceSection.summaryText}
+              {normalizedAudience.summaryText}
             </p>
           </div>
         </section>
@@ -1081,7 +1191,7 @@ export default function SeoGeoLandingTemplate({ config }: SeoGeoLandingTemplateP
             </div>
 
             <div className="divide-y divide-neutral-200 border-y border-neutral-200">
-              {config.faqSection.faqs.map((faq, idx) => {
+              {normalizedFaqs.map((faq, idx) => {
                 const isOpen = openFaqs[idx] || false;
                 return (
                   <div key={idx} className="py-5">
@@ -1115,15 +1225,15 @@ export default function SeoGeoLandingTemplate({ config }: SeoGeoLandingTemplateP
         <section className="py-20 bg-gradient-to-br from-violet-950 via-neutral-900 to-neutral-950 text-white">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center flex flex-col items-center">
             <span className="text-xs font-bold uppercase tracking-wider text-violet-300 bg-violet-500/20 px-3 py-1 rounded-full border border-violet-500/30 mb-4">
-              {config.closingCtaSection.badge || "GET STARTED"}
+              {normalizedClosingCta.badge || "GET STARTED"}
             </span>
 
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white tracking-tight mb-4 max-w-2xl">
-              {config.closingCtaSection.title}
+              {normalizedClosingCta.title}
             </h2>
 
             <p className="text-base sm:text-lg text-neutral-300 max-w-2xl mb-8 leading-relaxed">
-              {config.closingCtaSection.description}
+              {normalizedClosingCta.description}
             </p>
 
             <div className="flex flex-wrap items-center justify-center gap-4">
@@ -1132,7 +1242,7 @@ export default function SeoGeoLandingTemplate({ config }: SeoGeoLandingTemplateP
                 onClick={handlePrimaryCtaClick}
                 className="inline-flex items-center gap-2 px-7 py-4 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-bold text-base shadow-xl transition-all"
               >
-                <span>{config.closingCtaSection.primaryCtaLabel}</span>
+                <span>{normalizedClosingCta.primaryCtaLabel}</span>
                 <ArrowRight className="w-5 h-5" />
               </Link>
 
@@ -1141,7 +1251,7 @@ export default function SeoGeoLandingTemplate({ config }: SeoGeoLandingTemplateP
                 onClick={handlePricingCtaClick}
                 className="inline-flex items-center gap-2 px-6 py-4 rounded-xl bg-neutral-800 hover:bg-neutral-700 border border-neutral-700 text-white font-semibold text-base transition-all"
               >
-                <span>{config.closingCtaSection.secondaryCtaLabel}</span>
+                <span>{normalizedClosingCta.secondaryCtaLabel}</span>
               </Link>
             </div>
           </div>
@@ -1153,13 +1263,13 @@ export default function SeoGeoLandingTemplate({ config }: SeoGeoLandingTemplateP
             <div className="bg-white rounded-3xl border border-neutral-200 p-8 sm:p-10 shadow-lg">
               <div className="text-center max-w-xl mx-auto mb-8">
                 <span className="text-xs font-bold uppercase tracking-wider text-violet-700 bg-violet-100 px-3 py-1 rounded-full border border-violet-200/60 inline-block mb-3">
-                  {config.salesDemoSection.badge || "SALES & DEMO"}
+                  {normalizedSalesDemo.badge || "SALES & DEMO"}
                 </span>
                 <h3 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 tracking-tight">
-                  {config.salesDemoSection.title}
+                  {normalizedSalesDemo.title}
                 </h3>
                 <p className="mt-3 text-sm text-neutral-600 leading-relaxed">
-                  {config.salesDemoSection.description}
+                  {normalizedSalesDemo.description}
                 </p>
               </div>
 
@@ -1295,13 +1405,13 @@ export default function SeoGeoLandingTemplate({ config }: SeoGeoLandingTemplateP
                           <span>Submitting Request…</span>
                         </>
                       ) : (
-                        <span>{config.salesDemoSection.submitCtaLabel}</span>
+                        <span>{normalizedSalesDemo.submitCtaLabel}</span>
                       )}
                     </button>
                   </div>
 
                   <p className="text-[11px] text-neutral-500 text-center leading-relaxed italic pt-1">
-                    {config.salesDemoSection.disclaimer}
+                    {normalizedSalesDemo.disclaimer}
                   </p>
                 </form>
               )}
@@ -1309,7 +1419,7 @@ export default function SeoGeoLandingTemplate({ config }: SeoGeoLandingTemplateP
               {/* Tagline Footer */}
               <div className="mt-8 pt-6 border-t border-neutral-100 text-center">
                 <p className="text-xs font-bold text-neutral-800 tracking-wider">
-                  {config.salesDemoSection.tagline}
+                  {normalizedSalesDemo.tagline}
                 </p>
               </div>
             </div>

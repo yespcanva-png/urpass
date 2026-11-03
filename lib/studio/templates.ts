@@ -947,6 +947,7 @@ export function convertStudioTemplateToTicketDesign(
     template: templateTheme,
     primaryColor,
     shape,
+    format: tpl.format === "badge" ? "badge" : (tpl.format === "printable" || (tpl.format as string) === "print") ? "print" : "mobile",
     logoUrl: null,
     sponsorLogoUrl: null,
     backgroundImageUrl: null,

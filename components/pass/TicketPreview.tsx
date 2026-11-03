@@ -236,6 +236,11 @@ export default function TicketPreview({
                   {attendeeOrganization}
                 </p>
               )}
+              {config.showPhone && attendeePhone && (
+                <p className="text-[10px] font-mono text-neutral-500 dark:text-neutral-400 truncate mt-0.5">
+                  {attendeePhone}
+                </p>
+              )}
             </div>
           )}
 

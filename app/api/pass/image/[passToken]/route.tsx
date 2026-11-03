@@ -164,7 +164,7 @@ export async function GET(
         }}
       >
         {/* Accent Top Strip for Event & Modern */}
-        {(design.template === "event" || isModern) && (
+        {(design.template === "event" || isModern || isDark) && (
           <div
             style={{
               height: 8,
@@ -185,48 +185,67 @@ export async function GET(
             flex: 1,
           }}
         >
-          {/* Logo & Sponsor */}
+          {/* Logo & Sponsor Header with Serial Badge */}
           <div
             style={{
               display: "flex",
               alignItems: "center",
-              justifyContent: "center",
-              gap: 10,
+              justifyContent: "space-between",
+              width: "100%",
               marginBottom: 10,
+              paddingBottom: 8,
+              borderBottom: `1px dashed ${isDark ? "#27272a" : "#e5e7eb"}`,
             }}
           >
-            {logoToDisplay ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={logoToDisplay}
-                alt="Logo"
-                style={{ height: 32, maxWidth: 130, objectFit: "contain" }}
-              />
-            ) : (
-              <span
-                style={{
-                  fontSize: 11,
-                  fontWeight: 800,
-                  letterSpacing: 3,
-                  textTransform: "uppercase",
-                  color: isDark ? "#ffffff" : "#111827",
-                }}
-              >
-                {orgName || "URPASS"}
-              </span>
-            )}
-
-            {design.sponsorLogoUrl && (
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={{ fontSize: 11, color: "#9ca3af" }}>×</span>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              {logoToDisplay ? (
+                // eslint-disable-next-line @next/next/no-img-element
                 <img
-                  src={design.sponsorLogoUrl}
-                  alt="Sponsor Logo"
-                  style={{ height: 24, maxWidth: 90, objectFit: "contain", opacity: 0.85 }}
+                  src={logoToDisplay}
+                  alt="Logo"
+                  style={{ height: 26, maxWidth: 110, objectFit: "contain" }}
                 />
-              </div>
-            )}
+              ) : (
+                <span
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 800,
+                    letterSpacing: 2,
+                    textTransform: "uppercase",
+                    color: isDark ? "#ffffff" : "#111827",
+                  }}
+                >
+                  {orgName || "URPASS"}
+                </span>
+              )}
+
+              {design.sponsorLogoUrl && (
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <span style={{ fontSize: 11, color: "#9ca3af" }}>×</span>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={design.sponsorLogoUrl}
+                    alt="Sponsor Logo"
+                    style={{ height: 20, maxWidth: 70, objectFit: "contain", opacity: 0.85 }}
+                  />
+                </div>
+              )}
+            </div>
+
+            <span
+              style={{
+                fontSize: 9,
+                fontFamily: "monospace",
+                fontWeight: 700,
+                padding: "2px 8px",
+                borderRadius: 99,
+                backgroundColor: isDark ? "#27272a" : "#f4f4f5",
+                color: isDark ? "#d4d4d8" : "#52525b",
+                border: `1px solid ${borderColor}`,
+              }}
+            >
+              #{shortCode}
+            </span>
           </div>
 
           {/* Event Title */}

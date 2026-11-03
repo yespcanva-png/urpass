@@ -9,6 +9,7 @@ if (typeof window === "undefined") {
   const win = dom.window;
 
   (globalThis as any).window = win;
+  (globalThis as any).self = win;
   (globalThis as any).document = win.document;
   try {
     Object.defineProperty(globalThis, "navigator", {
@@ -19,6 +20,9 @@ if (typeof window === "undefined") {
   } catch {
     // navigator already exists
   }
+  (globalThis as any).sessionStorage = win.sessionStorage;
+  (globalThis as any).localStorage = win.localStorage;
+  (globalThis as any).HTMLCanvasElement = win.HTMLCanvasElement;
   (globalThis as any).HTMLElement = win.HTMLElement;
   (globalThis as any).HTMLInputElement = win.HTMLInputElement;
   (globalThis as any).HTMLButtonElement = win.HTMLButtonElement;

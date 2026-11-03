@@ -1,6 +1,8 @@
 export interface SeoGeoFaq {
-  q: string;
-  a: string;
+  q?: string;
+  a?: string;
+  question?: string;
+  answer?: string;
 }
 
 export interface SeoGeoCapability {
@@ -8,6 +10,7 @@ export interface SeoGeoCapability {
   title: string;
   description: string;
   bestFor?: string;
+  technicalProof?: string;
   icon?: "file-text" | "sliders" | "qr-code" | "scan-line" | "bar-chart-3" | "shield" | "users" | "zap";
 }
 
@@ -55,7 +58,7 @@ export interface SeoGeoPageConfig {
   secondaryKeywords: string[];
   market: string;
   audience: string;
-  searchIntent: "Commercial" | "Informational" | "Transactional" | "Navigational";
+  searchIntent: "Commercial" | "Informational" | "Transactional" | "Navigational" | string;
   conversionGoal: string;
   
   // SEO Metadata
@@ -89,19 +92,37 @@ export interface SeoGeoPageConfig {
   howItWorksSection: {
     badge?: string;
     title: string;
-    steps: SeoGeoWorkflowStep[];
-    ctaLabel: string;
+    subtitle?: string;
+    steps?: SeoGeoWorkflowStep[];
+    items?: SeoGeoWorkflowStep[];
+    ctaLabel?: string;
   };
 
   // Event Types / Use Cases
-  eventTypesSection: {
+  eventTypesSection?: {
     badge?: string;
     title: string;
+    subtitle?: string;
     items: SeoGeoEventType[];
   };
 
+  useCasesSection?: {
+    badge?: string;
+    title: string;
+    subtitle?: string;
+    items: SeoGeoEventType[];
+  };
+
+  // Pricing Section
+  pricingSection?: {
+    badge?: string;
+    title: string;
+    subtitle?: string;
+    features: string[];
+  };
+
   // Comparison Table
-  comparisonSection: {
+  comparisonSection?: {
     badge?: string;
     title: string;
     summaryText: string;
@@ -110,7 +131,7 @@ export interface SeoGeoPageConfig {
   };
 
   // Audience / Personas
-  audienceSection: {
+  audienceSection?: {
     badge?: string;
     title: string;
     leadText?: string;
@@ -119,7 +140,7 @@ export interface SeoGeoPageConfig {
   };
 
   // GEO-Ready Answer Block
-  geoAnswerBlock: SeoGeoAnswerBlock;
+  geoAnswerBlock?: SeoGeoAnswerBlock;
 
   // Real Product Proof Section (Google People-First Content Guidance)
   productProofSection?: {
@@ -136,7 +157,7 @@ export interface SeoGeoPageConfig {
   };
 
   // Closing Call to Action
-  closingCtaSection: {
+  closingCtaSection?: {
     badge?: string;
     title: string;
     description: string;
@@ -144,8 +165,18 @@ export interface SeoGeoPageConfig {
     secondaryCtaLabel: string;
   };
 
+  finalCta?: {
+    badge?: string;
+    title: string;
+    description: string;
+    primaryCtaLabel: string;
+    primaryCtaUrl?: string;
+    secondaryCtaLabel: string;
+    secondaryCtaUrl?: string;
+  };
+
   // Sales Lead Capture Form
-  salesDemoSection: {
+  salesDemoSection?: {
     badge?: string;
     title: string;
     description: string;

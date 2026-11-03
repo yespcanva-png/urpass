@@ -1,10 +1,12 @@
 export type TicketTemplate = "minimal" | "event" | "dark" | "modern";
 export type TicketShape = "standard" | "rounded" | "compact";
+export type TicketOutputFormat = "mobile" | "badge" | "print";
 
 export interface TicketDesignConfig {
   template: TicketTemplate;
   primaryColor: string;
   shape?: TicketShape;
+  format?: TicketOutputFormat;
   logoUrl?: string | null;
   sponsorLogoUrl?: string | null;
   backgroundImageUrl?: string | null;
@@ -48,6 +50,7 @@ export const DEFAULT_TICKET_DESIGN: TicketDesignConfig = {
   template: "event",
   primaryColor: "#635BFF",
   shape: "standard",
+  format: "mobile",
   logoUrl: null,
   sponsorLogoUrl: null,
   backgroundImageUrl: null,
@@ -123,6 +126,10 @@ export function sanitizeTicketDesign(input: unknown): TicketDesignConfig {
   const shape: TicketShape = ["standard", "rounded", "compact"].includes(String(raw.shape))
     ? (raw.shape as TicketShape)
     : DEFAULT_TICKET_DESIGN.shape || "standard";
+
+  const format: TicketOutputFormat = ["mobile", "badge", "print"].includes(String(raw.format))
+    ? (raw.format as TicketOutputFormat)
+    : DEFAULT_TICKET_DESIGN.format || "mobile";
 
   const primaryColor =
     typeof raw.primaryColor === "string" && HEX_REGEX.test(raw.primaryColor)
@@ -236,6 +243,7 @@ export function sanitizeTicketDesign(input: unknown): TicketDesignConfig {
     template,
     primaryColor,
     shape,
+    format,
     logoUrl,
     sponsorLogoUrl,
     backgroundImageUrl,

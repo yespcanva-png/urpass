@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getPublishedJobs } from "@/lib/careers/service";
 import { getAllPublishedPages } from "@/lib/seo/pages";
 import { HIGH_INTENT_30 } from "@/lib/seo/high-intent-30";
+import { HIGH_INTENT_25_PAGES } from "@/lib/seo/templates/high-intent-25";
 import { getAllExploreSeoPages, matchesExploreSeoPage, MIN_EXPLORE_COLLECTION_EVENTS } from "@/lib/explore/seo-pages";
 import { fetchExploreMarketplaceEvents } from "@/lib/explore/service";
 import { isPublicIndexableEvent } from "@/lib/seo/event-indexing";
@@ -945,6 +946,27 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     changeFrequency: "monthly" as const,
   }));
 
+  const highIntent25Entries = HIGH_INTENT_25_PAGES.map((page) => ({
+    url: page.canonicalUrl,
+    priority: page.conversionGoal === "Book demo" || page.searchIntent.includes("P1") ? 0.95 : 0.9,
+    changeFrequency: "weekly" as const,
+  }));
+
+  const dedicatedRegionalEntries = [
+    // 5 UK pages
+    { url: `${BASE}/uk/conference-registration-software`, priority: 0.95, changeFrequency: "weekly" as const },
+    { url: `${BASE}/uk/qr-code-event-check-in-software`, priority: 0.95, changeFrequency: "weekly" as const },
+    { url: `${BASE}/uk/event-registration-platform-for-universities`, priority: 0.9, changeFrequency: "weekly" as const },
+    { url: `${BASE}/uk/corporate-event-guest-management-software`, priority: 0.95, changeFrequency: "weekly" as const },
+    { url: `${BASE}/uk/event-ticketing-software-for-workshops`, priority: 0.9, changeFrequency: "weekly" as const },
+    // 5 City pages
+    { url: `${BASE}/in/bangalore-corporate-event-registration-software`, priority: 0.95, changeFrequency: "weekly" as const },
+    { url: `${BASE}/in/chennai-conference-qr-check-in-software`, priority: 0.9, changeFrequency: "weekly" as const },
+    { url: `${BASE}/in/hyderabad-college-fest-ticketing-software`, priority: 0.9, changeFrequency: "weekly" as const },
+    { url: `${BASE}/in/mumbai-event-agency-registration-software`, priority: 0.95, changeFrequency: "weekly" as const },
+    { url: `${BASE}/in/pune-corporate-event-attendee-check-in`, priority: 0.9, changeFrequency: "weekly" as const },
+  ];
+
   const seoGeoPageEntries = [
     {
       url: `${BASE}/solutions`,
@@ -1034,6 +1056,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   const rawStaticEntries = [
+    ...highIntent25Entries,
+    ...dedicatedRegionalEntries,
     ...seoGeoPageEntries,
     ...marketingEntries,
     ...highIntentEntries,

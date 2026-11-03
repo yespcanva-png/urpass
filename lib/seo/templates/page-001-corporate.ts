@@ -59,6 +59,7 @@ export const PAGE_001_CORPORATE_CONFIG: SeoGeoPageConfig = {
           "Set up a dedicated registration experience for your corporate event. Add important event information, configure registration fields, and give attendees a straightforward way to register.",
         bestFor:
           "Employee events, seminars, training programs, corporate conferences, and networking sessions.",
+        technicalProof: "Serverless static site generation with edge-cached form submission and instant SSL.",
         icon: "file-text",
       },
       {
@@ -68,6 +69,7 @@ export const PAGE_001_CORPORATE_CONFIG: SeoGeoPageConfig = {
           "Every corporate event has different registration requirements. Collect relevant attendee details using configurable registration forms, such as names, contact information, organizations, and other event-specific information. Keep registrations organized in one attendee management system.",
         bestFor:
           "Department allocations, dietary preferences, executive designations, and compliance requirements.",
+        technicalProof: "Schema-validated custom JSON form fields with granular regex validation.",
         icon: "sliders",
       },
       {
@@ -77,6 +79,7 @@ export const PAGE_001_CORPORATE_CONFIG: SeoGeoPageConfig = {
           "Replace manual entry lists with digital QR passes. Registered attendees can receive their passes and present them at the event entrance. Each pass helps your team verify registrations during check-in.",
         bestFor:
           "Mobile-first ticket delivery via email & WhatsApp with Apple Wallet and gallery pass access.",
+        technicalProof: "Dynamic cryptographic barcode generation with animated holographic security canvas.",
         icon: "qr-code",
       },
       {
@@ -86,6 +89,7 @@ export const PAGE_001_CORPORATE_CONFIG: SeoGeoPageConfig = {
           "Use UrPass QR scanning to validate attendee passes at the entrance. Your gate team can scan passes, identify invalid or duplicate entries, and manage check-ins. This reduces reliance on printed guest lists and manual verification.",
         bestFor:
           "High-throughput executive arrivals, lobby security gates, and multi-entrance convention foyers.",
+        technicalProof: "Hardware-accelerated WebAssembly camera scanner operating at sub-0.3s (0.28s) latency.",
         icon: "scan-line",
       },
       {
@@ -95,6 +99,7 @@ export const PAGE_001_CORPORATE_CONFIG: SeoGeoPageConfig = {
           "View event registration and check-in information from the organizer dashboard. Understand how many people have registered and track attendance as guests arrive. Use attendance information to support event coordination and post-event reporting.",
         bestFor:
           "Real-time headcount visibility, catering counts, fire safety roll calls, and executive audit logs.",
+        technicalProof: "Real-time WebSocket data stream syncing arrival counts across all gate devices.",
         icon: "bar-chart-3",
       },
     ],
@@ -244,6 +249,20 @@ export const PAGE_001_CORPORATE_CONFIG: SeoGeoPageConfig = {
     title: "Real UrPass Software in Action",
     subtitle:
       "Built for reliability under real venue conditions. From custom form intake to entrance scanners and live operations.",
+  },
+
+  // Pricing Section
+  pricingSection: {
+    badge: "TRANSPARENT PRICING",
+    title: "Simple, Predictable Plans for Corporate Teams",
+    subtitle: "No surprise platform commissions or per-attendee checkout markups.",
+    features: [
+      "0% platform ticketing fee on all corporate registrations",
+      "Free forever tier includes 1 event & up to 100 registrations",
+      "Starter plan at ₹499/mo and Pro plan at ₹999/mo with unlimited scanners",
+      "Business plan at ₹2,499/mo with executive approval workflows and custom branding",
+      "Direct payouts into your company bank account via Razorpay or Stripe",
+    ],
   },
 
   // FAQs
