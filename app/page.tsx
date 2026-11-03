@@ -8,7 +8,6 @@ import AnimateIn from "@/components/ui/AnimateIn";
 import Footer from "@/components/landing/Footer";
 import HomePricingSection from "@/components/landing/HomePricingSection";
 import FeaturesSection from "@/components/landing/FeaturesSection";
-import ProductTourSection from "@/components/landing/ProductTourSection";
 import TestimonialsSection from "@/components/landing/TestimonialsSection";
 import { RequestEventSetupButton } from "@/components/landing/RequestEventSetupModal";
 import { detectCountryFromHeaders } from "@/lib/country-config";
@@ -362,9 +361,6 @@ export default async function LandingPage() {
 
       {/* ── 02 FEATURES (HOW IT WORKS) ────────────────────────────────────── */}
       <FeaturesSection />
-
-      {/* ── 03 REALISTIC PRODUCT TOUR & HOW TO USE ─────────────────────────── */}
-      <ProductTourSection />
 
       {/* ── 03D EVENT TYPES ──────────────────────────────────────────────── */}
       <section className="py-14 sm:py-20 px-4 sm:px-8 bg-white border-b border-neutral-100">
