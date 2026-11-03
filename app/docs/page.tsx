@@ -47,18 +47,28 @@ import {
   MapPin,
   Sparkles,
   Compass,
+  Palette,
+  Scissors,
+  Smartphone,
+  Barcode,
+  Maximize2,
 } from "lucide-react";
 import { CodeBlock } from "@/components/docs/CodeBlock";
 
 export const metadata: Metadata = {
   title: "Documentation — Complete Developer & Organizer Guide | UrPass",
   description:
-    "Complete documentation for UrPass. Learn how to create events, publish on Explore marketplace, issue tiered passes, configure offline & multi-gate check-ins, integrate the REST API, and use MCP AI agents.",
+    "Complete documentation for UrPass. Learn how to create events, design custom passes in Ticket Studio, publish on Explore marketplace, issue tiered passes, configure offline & multi-gate check-ins, integrate the REST API, and use MCP AI agents.",
   keywords: [
     "UrPass documentation",
     "event pass API",
+    "ticket studio",
+    "custom pass design",
     "QR check-in tutorial",
     "digital pass API",
+    "apple wallet pkpass",
+    "tear-off ticket stub",
+    "badge printing",
     "webhooks documentation",
     "event management guide India",
     "multi gate check-in",
@@ -208,6 +218,22 @@ const faqSchema = {
         text: "UrPass provides role-based access control with 5 distinct roles: Owner, Admin, Event Manager, Check-in Staff, and Viewer.",
       },
     },
+    {
+      "@type": "Question",
+      name: "What is Ticket Studio and how do I customize my event passes?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Ticket Studio is UrPass's visual pass designer located at /events/[eventId]/studio. It lets organizers choose from 4 pre-built templates, switch between 3 output formats (Mobile Digital Pass, Lanyard Badge, and Printable Horizontal Tear-off Stub), customize colors, foil accents, QR positioning, and toggle attendee fields with automatic WCAG contrast validation.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "What pass formats are supported for physical badge printing and tear-off stubs?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "UrPass supports 3 distinct pass formats: Mobile Digital Pass (optimized for smartphones and Apple Wallet), Lanyard Conference Badge (440x680 px with punch slot for badge holders), and Printable Tear-Off Ticket (800x320 px authentic horizontal stub with die-cut punch notches, perforated rip line, and linear Code-128 barcodes).",
+      },
+    },
   ],
 };
 
@@ -216,7 +242,7 @@ const docSchema = {
   "@type": "TechArticle",
   headline: "UrPass Complete Documentation — Developer & Organizer Guide",
   description:
-    "Full reference for creating digital event passes, managing multi-track conference programs, UrPass Explore marketplace, physical operations & badge printing, commercial exhibitor hubs, split payouts, and integrating the UrPass REST API and Webhooks.",
+    "Full reference for creating digital event passes, designing passes in Ticket Studio, managing multi-track conference programs, UrPass Explore marketplace, physical operations & badge printing, commercial exhibitor hubs, split payouts, and integrating the UrPass REST API and Webhooks.",
   author: { "@type": "Organization", name: "UrPass", url: "https://urpass.space" },
   publisher: { "@type": "Organization", name: "UrPass", url: "https://urpass.space" },
   inLanguage: "en-IN",
@@ -229,7 +255,7 @@ const SECTIONS = [
   { id: "explore", label: "UrPass Explore" },
   { id: "program", label: "Multi-track program" },
   { id: "attendees", label: "Attendees & import" },
-  { id: "tickets-passes", label: "Tickets & passes" },
+  { id: "tickets-passes", label: "Tickets & Ticket Studio" },
   { id: "gates-checkin", label: "Gates & check-in" },
   { id: "physical-ops", label: "Physical ops & badges" },
   { id: "commercial-hub", label: "Exhibitors & sponsors" },
@@ -477,10 +503,8 @@ export default function DocsPage() {
                     Share your public application link (<code className="text-xs bg-neutral-100 px-1 py-0.5 rounded font-mono">/apply/your-event</code>)
                     with custom form fields, or bulk-import existing guest lists via CSV.
                   </Step>
-                  <Step n={4} title="Issue Digital Passes">
-                    Approved attendees instantly receive an email containing their digital pass link and QR code,
-                    with direct Apple Wallet (<code className="text-xs bg-neutral-100 px-1 py-0.5 rounded font-mono">.pkpass</code>)
-                    export.
+                  <Step n={4} title="Design & Issue Passes">
+                    Customize ticket branding in <strong>Ticket Studio</strong> with 4 templates and 3 output formats (Mobile Digital Pass, Lanyard Badge, or Printable Tear-off Stub). Approved attendees instantly receive their pass link, dynamic QR code, and Apple Wallet (<code className="text-xs bg-neutral-100 px-1 py-0.5 rounded font-mono">.pkpass</code>) export.
                   </Step>
                   <Step n={5} title="Run Check-In at the Entrance">
                     Open <Link href="/scan" className="text-brand font-medium hover:underline">urpass.space/scan</Link> on
@@ -825,11 +849,11 @@ export default function DocsPage() {
             <section id="tickets-passes" className="mb-14 scroll-mt-20">
               <div className="flex items-center gap-2.5 mb-6">
                 <div className="w-8 h-8 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center shrink-0">
-                  <QrCode className="w-4 h-4 text-brand" />
+                  <Ticket className="w-4 h-4 text-brand" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-neutral-900">Tickets &amp; passes</h2>
-                  <p className="text-xs text-neutral-500">Tiered ticketing, dynamic QR tokens, Apple Wallet, and online redirects</p>
+                  <h2 className="text-xl font-bold text-neutral-900">Tickets, passes &amp; Ticket Studio</h2>
+                  <p className="text-xs text-neutral-500">Tiered ticketing, visual WYSIWYG pass designer, physical ticket anatomy, and export endpoints</p>
                 </div>
               </div>
 
@@ -838,7 +862,7 @@ export default function DocsPage() {
                 <h3 className="text-sm font-semibold text-neutral-900 mb-2">Multi-tier ticketing</h3>
                 <p className="text-sm text-neutral-600 leading-relaxed mb-4">
                   Events can offer multiple ticket tiers (e.g. Early Bird, General Admission, VIP Pass, Student Pass).
-                  Each tier configures its own pricing, quota limit, sale window, and assigned zone access.
+                  Each tier configures its own pricing, quota limit, sale window, and assigned zone access privileges.
                 </p>
                 <div className="bg-amber-50/80 border border-amber-200/80 rounded-xl p-3.5 text-xs text-amber-900">
                   <strong className="text-amber-950">Currency &amp; Paise Denomination:</strong> In the UrPass database and API,
@@ -847,27 +871,222 @@ export default function DocsPage() {
                 </div>
               </div>
 
-              {/* Pass Anatomy */}
+              {/* Ticket Studio Overview */}
               <div className="bg-white border border-neutral-200 rounded-2xl p-6 mb-6 shadow-2xs">
-                <h3 className="text-sm font-semibold text-neutral-900 mb-4">Pass features</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {[
-                    ["Dynamic QR Code", "Secure, tamper-evident pass token rendered on high-contrast retina canvas."],
-                    ["Apple Wallet (.pkpass)", "Attendees on iOS can tap 'Add to Apple Wallet' for quick access from the lock screen."],
-                    ["Live Check-in Status", "Pass display updates live from 'Approved' to 'Checked In' with entry timestamp."],
-                    ["Color-Coded Badges", "Distinct visual colors for Participant (Purple), VIP (Gold), Speaker (Blue), and Organizer (Green)."],
-                    ["White-Label / Custom Branding", "Pro and Business tiers remove 'Powered by UrPass' watermarks for a pure brand experience."],
-                    ["Virtual Join Link", "For online events, an integrated verified join button safely redirects to Zoom/Meet."],
-                  ].map(([title, desc]) => (
-                    <div key={title} className="p-3.5 rounded-xl bg-neutral-50 border border-neutral-200/70">
-                      <p className="text-xs font-semibold text-neutral-900 mb-1">{title}</p>
-                      <p className="text-xs text-neutral-500 leading-relaxed">{desc}</p>
+                <div className="flex items-center gap-2 mb-3">
+                  <Palette className="w-4 h-4 text-purple-600" />
+                  <h3 className="text-sm font-semibold text-neutral-900">Ticket Studio — Visual pass designer</h3>
+                  <span className="text-[10px] font-bold tracking-wider uppercase bg-purple-50 text-purple-700 border border-purple-200 px-2 py-0.5 rounded-full">
+                    WYSIWYG Canvas
+                  </span>
+                </div>
+                <p className="text-sm text-neutral-600 leading-relaxed mb-4">
+                  Accessible directly from <strong>Event Dashboard → Ticket Studio</strong> (<code className="bg-neutral-100 px-1 py-0.5 rounded font-mono text-xs">/events/[eventId]/studio</code>),
+                  Ticket Studio empowers organizers to visually brand attendee passes with zero graphic design software required.
+                  Every adjustment updates instantly on the live preview canvas and maintains exact 1:1 visual parity across the
+                  public attendee web pass, high-resolution raster images, and Apple Wallet bundles.
+                </p>
+
+                {/* 4 Core Design Templates */}
+                <h4 className="text-xs font-bold text-neutral-900 uppercase tracking-wider mb-3">4 Core Designer Presets</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+                  <div className="p-4 rounded-xl bg-neutral-50 border border-neutral-200/80">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <div className="w-3 h-3 rounded-full bg-neutral-900" />
+                      <p className="text-xs font-semibold text-neutral-900">Minimal Monochrome</p>
                     </div>
-                  ))}
+                    <p className="text-xs text-neutral-500 leading-relaxed">
+                      Clean black &amp; white high-contrast styling with subtle dotted borders. Ideal for developer meetups, technical conferences, and minimalist branding.
+                    </p>
+                  </div>
+                  <div className="p-4 rounded-xl bg-neutral-50 border border-neutral-200/80">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <div className="w-3 h-3 rounded-full bg-purple-600" />
+                      <p className="text-xs font-semibold text-neutral-900">Event Classic</p>
+                    </div>
+                    <p className="text-xs text-neutral-500 leading-relaxed">
+                      Deep purple velvet card with luxury golden foil accent strips and traditional typography. Suitable for college symposiums, summits, and festivals.
+                    </p>
+                  </div>
+                  <div className="p-4 rounded-xl bg-neutral-50 border border-neutral-200/80">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <div className="w-3 h-3 rounded-full bg-amber-500" />
+                      <p className="text-xs font-semibold text-neutral-900">Dark Obsidian Luxury</p>
+                    </div>
+                    <p className="text-xs text-neutral-500 leading-relaxed">
+                      Midnight obsidian finish with metallic gold foil and sleek dark surface. Crafted for VIP passes, gala dinners, and executive summits.
+                    </p>
+                  </div>
+                  <div className="p-4 rounded-xl bg-neutral-50 border border-neutral-200/80">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <div className="w-3 h-3 rounded-full bg-indigo-500" />
+                      <p className="text-xs font-semibold text-neutral-900">Modern Gradient</p>
+                    </div>
+                    <p className="text-xs text-neutral-500 leading-relaxed">
+                      Vibrant diagonal gradient from indigo to purple with crisp badge borders. Engineered for hackathons, design conferences, and tech expos.
+                    </p>
+                  </div>
+                </div>
+
+                {/* 3 Output Pass Formats */}
+                <h4 className="text-xs font-bold text-neutral-900 uppercase tracking-wider mb-3">3 Output Pass Formats</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+                  <div className="p-3.5 rounded-xl bg-neutral-50 border border-neutral-200/80">
+                    <div className="flex items-center gap-1.5 mb-1 text-purple-700 font-semibold text-xs">
+                      <Smartphone className="w-3.5 h-3.5" />
+                      Mobile Digital Pass
+                    </div>
+                    <p className="text-[11px] font-mono text-neutral-400 mb-1.5">format: &quot;mobile&quot; · 360×640 px</p>
+                    <p className="text-xs text-neutral-500 leading-relaxed">
+                      Vertical smartphone layout optimized for iOS/Android browsers, home screen bookmarks, and native wallets.
+                    </p>
+                  </div>
+                  <div className="p-3.5 rounded-xl bg-neutral-50 border border-neutral-200/80">
+                    <div className="flex items-center gap-1.5 mb-1 text-blue-700 font-semibold text-xs">
+                      <Maximize2 className="w-3.5 h-3.5" />
+                      Lanyard Badge
+                    </div>
+                    <p className="text-[11px] font-mono text-neutral-400 mb-1.5">format: &quot;badge&quot; · 440×680 px</p>
+                    <p className="text-xs text-neutral-500 leading-relaxed">
+                      Vertical conference credential with lanyard punch-hole slot, hero attendee name, company/designation, and tier badge.
+                    </p>
+                  </div>
+                  <div className="p-3.5 rounded-xl bg-neutral-50 border border-neutral-200/80">
+                    <div className="flex items-center gap-1.5 mb-1 text-emerald-700 font-semibold text-xs">
+                      <Scissors className="w-3.5 h-3.5" />
+                      Printable Stub Ticket
+                    </div>
+                    <p className="text-[11px] font-mono text-neutral-400 mb-1.5">format: &quot;print&quot; · 800×320 px</p>
+                    <p className="text-xs text-neutral-500 leading-relaxed">
+                      Authentic horizontal admission stub featuring die-cut semicircular notches, perforated rip line, and linear barcode counterfoil.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Authentic Physical Ticket Anatomy */}
+                <h4 className="text-xs font-bold text-neutral-900 uppercase tracking-wider mb-3">Authentic Physical Ticket Anatomy</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+                  <div className="p-3.5 rounded-xl bg-neutral-50 border border-neutral-200/80">
+                    <p className="text-xs font-semibold text-neutral-900 mb-1 flex items-center gap-1.5">
+                      <Scissors className="w-3.5 h-3.5 text-brand" />
+                      Die-cut Semicircular Notches &amp; Tear Line
+                    </p>
+                    <p className="text-xs text-neutral-500 leading-relaxed">
+                      Precision top and bottom circular punch cutouts joined by a dashed rip perforation line separating the main event body from the admission stub.
+                    </p>
+                  </div>
+                  <div className="p-3.5 rounded-xl bg-neutral-50 border border-neutral-200/80">
+                    <p className="text-xs font-semibold text-neutral-900 mb-1 flex items-center gap-1.5">
+                      <Barcode className="w-3.5 h-3.5 text-indigo-600" />
+                      Dual Scannable Barcodes (2D QR + Code-128)
+                    </p>
+                    <p className="text-xs text-neutral-500 leading-relaxed">
+                      High-density 2D QR token paired with an authentic Code-128 linear barcode and human-readable ticket serial (<code className="font-mono text-[10px] bg-neutral-200/80 px-1 py-0.5 rounded">#URP-XXXX</code>) for optical laser scanners.
+                    </p>
+                  </div>
+                  <div className="p-3.5 rounded-xl bg-neutral-50 border border-neutral-200/80">
+                    <p className="text-xs font-semibold text-neutral-900 mb-1 flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                      Top Luxury Foil Accent Strip
+                    </p>
+                    <p className="text-xs text-neutral-500 leading-relaxed">
+                      Metallic decorative foil band running across the top edge of the ticket, color-matched to the selected theme or customized hex value.
+                    </p>
+                  </div>
+                  <div className="p-3.5 rounded-xl bg-neutral-50 border border-neutral-200/80">
+                    <p className="text-xs font-semibold text-neutral-900 mb-1 flex items-center gap-1.5">
+                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                      Scannable Stub Counterfoil
+                    </p>
+                    <p className="text-xs text-neutral-500 leading-relaxed">
+                      Admission counterfoil displaying the attendee credential tier tag, entry shortcode, live admission status, and gate clearance.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Controls & Scanner Safety */}
+                <h4 className="text-xs font-bold text-neutral-900 uppercase tracking-wider mb-3">Controls &amp; Scanner Safety Guardrails</h4>
+                <div className="space-y-2 text-xs text-neutral-600">
+                  <div className="flex items-start gap-2">
+                    <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                    <span><strong>Dynamic QR Positioning:</strong> Switch between <code className="bg-neutral-100 px-1 py-0.5 rounded font-mono">center</code> (hero center placement with scanner crosshairs and linear barcode stub) and <code className="bg-neutral-100 px-1 py-0.5 rounded font-mono">bottom</code> (classic admission stub QR placement).</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                    <span><strong>Dynamic Attendee Fields:</strong> Toggle attendee name, phone number (<code className="bg-neutral-100 px-1 py-0.5 rounded font-mono">showPhone</code>), organization/company, designation, and custom instructions.</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                    <span><strong>Automated Contrast Safety Checks:</strong> Real-time WCAG AA contrast ratio validation prevents low-contrast unreadable tickets that could fail hardware scanner decodes in dark venue lighting.</span>
+                  </div>
                 </div>
               </div>
 
-              {/* Online Join Endpoint */}
+              {/* Pass Delivery & Generation Endpoints */}
+              <div className="bg-white border border-neutral-200 rounded-2xl p-6 mb-6 shadow-2xs">
+                <h3 className="text-sm font-semibold text-neutral-900 mb-4">Pass delivery channels &amp; generation endpoints</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+                  <div className="p-3.5 rounded-xl bg-neutral-50 border border-neutral-200/80">
+                    <div className="flex items-center justify-between mb-1">
+                      <p className="text-xs font-semibold text-neutral-900">Interactive Web Pass</p>
+                      <span className="text-[10px] font-mono text-brand font-medium">/pass/[passId]</span>
+                    </div>
+                    <p className="text-xs text-neutral-500 leading-relaxed">
+                      Lightweight responsive HTML5 pass. Updates in real-time from &quot;Approved&quot; to &quot;Checked In&quot; with entry timestamp and scanner gate ID.
+                    </p>
+                  </div>
+                  <div className="p-3.5 rounded-xl bg-neutral-50 border border-neutral-200/80">
+                    <div className="flex items-center justify-between mb-1">
+                      <p className="text-xs font-semibold text-neutral-900">Apple Wallet (.pkpass)</p>
+                      <span className="text-[10px] font-mono text-neutral-400">GET /api/wallet/[token]</span>
+                    </div>
+                    <p className="text-xs text-neutral-500 leading-relaxed">
+                      Signed Apple Wallet bundle with real-time push update tokens and venue lock-screen location triggers for iOS users.
+                    </p>
+                  </div>
+                  <div className="p-3.5 rounded-xl bg-neutral-50 border border-neutral-200/80">
+                    <div className="flex items-center justify-between mb-1">
+                      <p className="text-xs font-semibold text-neutral-900">High-Res Image API</p>
+                      <span className="text-[10px] font-mono text-neutral-400">GET /api/pass/image/[token]</span>
+                    </div>
+                    <p className="text-xs text-neutral-500 leading-relaxed">
+                      On-the-fly 1200×630 retina image generation via Edge Satori. Formatted for direct download, thermal printing, and PDF embedding.
+                    </p>
+                  </div>
+                  <div className="p-3.5 rounded-xl bg-neutral-50 border border-neutral-200/80">
+                    <div className="flex items-center justify-between mb-1">
+                      <p className="text-xs font-semibold text-neutral-900">Verified Virtual Join</p>
+                      <span className="text-[10px] font-mono text-neutral-400">GET /api/join/[token]</span>
+                    </div>
+                    <p className="text-xs text-neutral-500 leading-relaxed">
+                      Cryptographically verified 307 redirect protecting Zoom, Google Meet, and Teams sessions against uninvited link forwarding.
+                    </p>
+                  </div>
+                </div>
+
+                <p className="text-xs font-semibold text-neutral-700 mb-2">Ticket Design Configuration Schema</p>
+                <p className="text-xs text-neutral-500 mb-3">
+                  Custom pass styling is saved in the event record as a serialized <code className="font-mono text-neutral-700 bg-neutral-100 px-1 py-0.5 rounded">TicketDesignConfig</code> JSON object:
+                </p>
+                <CodeBlock
+                  title="TicketDesignConfig JSON Schema"
+                  singleLanguage="json"
+                  singleCode={`{
+  "templateId": "obsidian",
+  "format": "mobile",            // "mobile" | "badge" | "print"
+  "backgroundColor": "#09090b",
+  "textColor": "#ffffff",
+  "accentColor": "#f59e0b",
+  "borderColor": "#27272a",
+  "qrPosition": "center",         // "center" | "bottom"
+  "showPhone": true,
+  "showCompany": true,
+  "showDesignation": true
+}`}
+                />
+              </div>
+
+              {/* Online Join Endpoint Detail */}
               <div className="bg-white border border-neutral-200 rounded-2xl overflow-hidden shadow-2xs">
                 <div className="px-6 py-4 border-b border-neutral-100 flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -2032,6 +2251,114 @@ events = response.json().get("data", [])`,
                 </div>
               </div>
 
+              {/* Endpoint 7: GET /api/pass/image/:passToken */}
+              <div className="bg-white border border-neutral-200 rounded-2xl overflow-hidden mb-6 shadow-2xs">
+                <div className="px-6 py-4 border-b border-neutral-100 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded font-mono">
+                      GET
+                    </span>
+                    <code className="text-sm font-mono font-semibold text-neutral-900">/api/pass/image/:passToken</code>
+                  </div>
+                  <span className="text-xs text-neutral-500">High-res pass image generator</span>
+                </div>
+                <div className="px-6 py-5">
+                  <p className="text-sm text-neutral-600 mb-4">
+                    Dynamically generates high-resolution PNG pass graphics rendered via Edge Satori. Reflects the event&apos;s custom
+                    Ticket Studio styling, selected output format (Mobile Pass, Lanyard Badge, or Printable Stub), QR position, foil accents, and live admission status.
+                  </p>
+                  <p className="text-xs font-semibold text-neutral-700 mb-2">cURL Example</p>
+                  <CodeBlock
+                    tabs={[
+                      {
+                        label: "cURL",
+                        language: "bash",
+                        code: `curl -X GET "https://urpass.space/api/pass/image/urp_pass_7bf318901c5e49b29d33" \\
+  --output pass_ticket.png`,
+                      },
+                      {
+                        label: "HTTP Headers",
+                        language: "http",
+                        code: `HTTP/2 200 OK
+Content-Type: image/png
+Cache-Control: public, max-age=31536000, immutable
+Content-Disposition: inline; filename="pass-urp_pass_7bf31890.png"`,
+                      },
+                    ]}
+                  />
+                </div>
+              </div>
+
+              {/* Endpoint 8: GET /api/wallet/:passToken */}
+              <div className="bg-white border border-neutral-200 rounded-2xl overflow-hidden mb-6 shadow-2xs">
+                <div className="px-6 py-4 border-b border-neutral-100 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded font-mono">
+                      GET
+                    </span>
+                    <code className="text-sm font-mono font-semibold text-neutral-900">/api/wallet/:passToken</code>
+                  </div>
+                  <span className="text-xs text-neutral-500">Apple Wallet (.pkpass) bundle</span>
+                </div>
+                <div className="px-6 py-5">
+                  <p className="text-sm text-neutral-600 mb-4">
+                    Serves a cryptographically signed Apple Wallet pass bundle (<code className="bg-neutral-100 px-1 py-0.5 rounded font-mono text-xs">.pkpass</code>).
+                    iOS attendees can tap once to store their credential in Apple Wallet with lock-screen location triggers and push notification updates.
+                  </p>
+                  <CodeBlock
+                    tabs={[
+                      {
+                        label: "cURL",
+                        language: "bash",
+                        code: `curl -X GET "https://urpass.space/api/wallet/urp_pass_7bf318901c5e49b29d33" \\
+  --output event_pass.pkpass`,
+                      },
+                      {
+                        label: "HTTP Headers",
+                        language: "http",
+                        code: `HTTP/2 200 OK
+Content-Type: application/vnd.apple.pkpass
+Content-Disposition: attachment; filename="pass.pkpass"`,
+                      },
+                    ]}
+                  />
+                </div>
+              </div>
+
+              {/* Endpoint 9: GET /api/join/:passToken */}
+              <div className="bg-white border border-neutral-200 rounded-2xl overflow-hidden mb-6 shadow-2xs">
+                <div className="px-6 py-4 border-b border-neutral-100 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded font-mono">
+                      GET
+                    </span>
+                    <code className="text-sm font-mono font-semibold text-neutral-900">/api/join/:passToken</code>
+                  </div>
+                  <span className="text-xs text-neutral-500">Virtual verified join redirect</span>
+                </div>
+                <div className="px-6 py-5">
+                  <p className="text-sm text-neutral-600 mb-4">
+                    Verifies attendee status for online/hybrid events and executes a secure 307 temporary redirect to the target meeting URL (Zoom, Google Meet, Teams).
+                  </p>
+                  <CodeBlock
+                    tabs={[
+                      {
+                        label: "cURL",
+                        language: "bash",
+                        code: `curl -I -X GET "https://urpass.space/api/join/urp_pass_7bf318901c5e49b29d33"`,
+                      },
+                      {
+                        label: "HTTP Response",
+                        language: "http",
+                        code: `HTTP/2 307 Temporary Redirect
+Location: https://zoom.us/j/9876543210?pwd=...
+Cache-Control: no-store, private`,
+                      },
+                    ]}
+                  />
+                </div>
+              </div>
+
               {/* Error Codes */}
               <div className="bg-white border border-neutral-200 rounded-2xl overflow-hidden shadow-2xs">
                 <div className="px-6 py-4 border-b border-neutral-100">
@@ -2646,6 +2973,18 @@ curl -X POST https://urpass.space/api/mcp \\
                   {
                     q: "How do virtual / online event passes work?",
                     a: "When you configure an event as 'Online' or 'Hybrid' with a meeting link (Zoom, Google Meet, Teams, or Custom), the attendee's digital pass includes a verified join button that resolves via /api/join/[passToken]. Only approved attendees can access the redirect.",
+                  },
+                  {
+                    q: "What is Ticket Studio and how do I customize my event passes?",
+                    a: "Ticket Studio is UrPass's visual WYSIWYG pass designer (/events/[eventId]/studio). Choose from 4 pre-built templates (Minimal Monochrome, Event Classic, Dark Obsidian, Modern Gradient), switch between 3 output formats (Mobile Digital Pass, Lanyard Badge, and Printable Stub), customize brand colors and foil accent strips, configure QR positioning, and toggle attendee fields with real-time WCAG contrast safety checks.",
+                  },
+                  {
+                    q: "What pass formats are supported for physical badge printing and tear-off tickets?",
+                    a: "UrPass natively supports 3 pass formats: Mobile Digital Pass (optimized for iOS/Android smartphones and Apple Wallet), Lanyard Conference Badge (440×680 px with lanyard punch hole slot), and Printable Tear-off Ticket (800×320 px authentic horizontal stub with die-cut punch notches, perforated rip line, and linear Code-128 barcodes alongside 2D QR codes).",
+                  },
+                  {
+                    q: "How do I download high-resolution pass images or Apple Wallet passes?",
+                    a: "Organizers and attendees can download passes in multiple formats. The public web pass provides direct 'Add to Apple Wallet' (.pkpass) and PNG image download buttons. Developers can programmatically generate 1200×630 retina pass graphics via GET /api/pass/image/[passToken] or fetch Apple Wallet bundles via GET /api/wallet/[passToken].",
                   },
                   {
                     q: "Can I remove the UrPass watermark and branding from passes?",
