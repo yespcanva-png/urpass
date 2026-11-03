@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { getSupabaseUrl } from "@/lib/supabase/config";
 import {
@@ -142,6 +143,17 @@ export async function GET(req: NextRequest) {
   }
 
   const finalResponse = NextResponse.redirect(`${appUrl}${provisionResult.redirectUrl}`);
+  const cookieStore = await cookies();
+  for (const c of cookieStore.getAll()) {
+    if (c.name.startsWith("sb-") || c.name.includes("auth-token")) {
+      finalResponse.cookies.set(c.name, c.value, {
+        path: "/",
+        maxAge: 60 * 60 * 24 * 30,
+        sameSite: "lax",
+        secure: appUrl.startsWith("https://"),
+      });
+    }
+  }
   finalResponse.cookies.delete("urpass_oidc_state");
   return finalResponse;
 }

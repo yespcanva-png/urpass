@@ -92,6 +92,7 @@ function decodeGoogleIdToken(idToken: string): GoogleTokenInfo | null {
 
 export async function GET(req: NextRequest) {
   const origin = getAppOrigin(req);
+  const isSecure = process.env.NODE_ENV === "production" || origin.startsWith("https://");
 
   try {
     const { searchParams } = new URL(req.url);
@@ -118,6 +119,7 @@ export async function GET(req: NextRequest) {
     let stateSegment = "general";
     let stateFrom: string | null = null;
     let stateSessionId: string | null = null;
+    let stateNonce: string | null = null;
     if (state) {
       try {
         const decodedStr = Buffer.from(state, "base64url").toString("utf8");
@@ -131,6 +133,7 @@ export async function GET(req: NextRequest) {
             if (parsed.segment) stateSegment = String(parsed.segment);
             if (parsed.from) stateFrom = String(parsed.from);
             if (parsed.sessionId) stateSessionId = String(parsed.sessionId);
+            if (parsed.nonce) stateNonce = String(parsed.nonce);
           }
         } else {
           targetPath = state;
@@ -148,6 +151,7 @@ export async function GET(req: NextRequest) {
               if (parsed.segment) stateSegment = String(parsed.segment);
               if (parsed.from) stateFrom = String(parsed.from);
               if (parsed.sessionId) stateSessionId = String(parsed.sessionId);
+              if (parsed.nonce) stateNonce = String(parsed.nonce);
             }
           } else {
             targetPath = state;
@@ -155,6 +159,18 @@ export async function GET(req: NextRequest) {
         } catch {
           targetPath = state;
         }
+      }
+    }
+
+    // Verify OAuth CSRF state nonce if present in state payload
+    if (stateNonce) {
+      const cookieNonce = req.cookies.get("oauth_state_nonce")?.value;
+      if (!cookieNonce || cookieNonce !== stateNonce) {
+        logAuthWarn("google_callback", "CSRF state nonce verification failed", {
+          hasCookieNonce: !!cookieNonce,
+          matched: cookieNonce === stateNonce,
+        });
+        return NextResponse.redirect(`${origin}/login?error=csrf_detected`);
       }
     }
 
@@ -186,12 +202,21 @@ export async function GET(req: NextRequest) {
     cleanupExchangedCodes();
     const cachedExchange = recentExchangedCodes.get(code);
     if (cachedExchange) {
-      logAuth("google_callback", "Duplicate code detected in cache, reusing destination", {
+      logAuth("google_callback", "Duplicate code detected in cache, reusing destination and session", {
         destination: cachedExchange.destination,
       });
       const res = NextResponse.redirect(`${origin}${cachedExchange.destination}`);
       res.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, private, max-age=0");
       res.headers.set("Pragma", "no-cache");
+      if (cachedExchange.cookieName && cachedExchange.cookieValue) {
+        res.cookies.set(cachedExchange.cookieName, cachedExchange.cookieValue, {
+          path: "/",
+          maxAge: cachedExchange.maxAge || 60 * 60 * 24 * 30,
+          sameSite: "lax",
+          secure: isSecure,
+          httpOnly: false,
+        });
+      }
       return res;
     }
 
@@ -326,7 +351,6 @@ export async function GET(req: NextRequest) {
       { get: (k: string) => (k === "next" ? targetPath : null) },
       null
     );
-    const isSecure = process.env.NODE_ENV === "production" || origin.startsWith("https://");
 
     // 4. User Resolution & Supabase Auth Link Generation.
     // The Google authorization code is exchanged with Google above. Supabase
@@ -435,9 +459,6 @@ export async function GET(req: NextRequest) {
         ? (process.env.NEXT_PUBLIC_FIRST_EVENT_CONVERSION_ENABLED === "true" ? "/onboarding/first-event" : "/onboarding/subscription")
         : "/dashboard");
 
-    // Cache the code -> destination mapping to immediately satisfy any repeat browser/prefetch requests
-    recentExchangedCodes.set(code, { destination, ts: Date.now() });
-
     const response = NextResponse.redirect(`${origin}${destination}`);
 
     // Set cache control headers to prevent browser bfcache replay
@@ -502,18 +523,29 @@ export async function GET(req: NextRequest) {
     };
 
     const compactCookieValue = "base64-" + Buffer.from(JSON.stringify(compactSession)).toString("base64");
-    let supabaseProjectRef = "kxmxxqyxkoseksfaymqm";
+    let supabaseProjectRef = "urpass";
     try {
-      supabaseProjectRef = new URL(getSupabaseUrl()).hostname.split(".")[0];
+      const hostname = new URL(getSupabaseUrl()).hostname;
+      supabaseProjectRef = hostname.split(".")[0] || "urpass";
     } catch {
       // fallback to project ref
     }
     const baseCookieName = `sb-${supabaseProjectRef}-auth-token`;
+    const sessionCookieMaxAge = 60 * 60 * 24 * 30; // 30 days session persistence
+
+    // Cache the code -> destination + session cookie to satisfy duplicate/prefetch requests
+    recentExchangedCodes.set(code, {
+      destination,
+      cookieName: baseCookieName,
+      cookieValue: compactCookieValue,
+      maxAge: sessionCookieMaxAge,
+      ts: Date.now(),
+    });
 
     // Set single compact cookie (2.0 KB)
     response.cookies.set(baseCookieName, compactCookieValue, {
       path: "/",
-      maxAge: typeof session.expires_in === "number" ? session.expires_in : 60 * 60 * 24 * 7,
+      maxAge: sessionCookieMaxAge,
       sameSite: "lax",
       secure: isSecure,
       httpOnly: false,

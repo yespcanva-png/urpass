@@ -832,6 +832,11 @@ export function convertStudioTemplateToTicketDesign(
       shape = "standard";
       primaryColor = "#18181B";
       break;
+    case "cinema-ticket":
+      templateTheme = "event";
+      shape = "rounded";
+      primaryColor = "#F84464";
+      break;
     case "executive-blue":
       templateTheme = "modern";
       shape = "standard";
@@ -943,11 +948,20 @@ export function convertStudioTemplateToTicketDesign(
       primaryColor = "#18181B";
   }
 
+  const qrPosition: "center" | "bottom" =
+    tpl.id === "cinema-ticket" ||
+    tpl.id === "marathon-pass" ||
+    tpl.id === "sports-arena" ||
+    tpl.id === "concert-music-fest"
+      ? "bottom"
+      : "center";
+
   return {
     template: templateTheme,
     primaryColor,
     shape,
-    format: tpl.format === "badge" ? "badge" : (tpl.format === "printable" || (tpl.format as string) === "print") ? "print" : "mobile",
+    format: tpl.id === "cinema-ticket" ? "print" : tpl.format === "badge" ? "badge" : (tpl.format === "printable" || (tpl.format as string) === "print") ? "print" : "mobile",
+    qrPosition,
     logoUrl: null,
     sponsorLogoUrl: null,
     backgroundImageUrl: null,

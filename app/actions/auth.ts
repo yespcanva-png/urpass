@@ -14,7 +14,7 @@ type ActionResult = { success?: boolean; error?: string };
 export async function signOutAction(): Promise<{ success: boolean }> {
   try {
     const supabase = await createClient();
-    await supabase.auth.signOut({ scope: "local" });
+    await supabase.auth.signOut({ scope: "global" });
   } catch (err) {
     console.warn("[auth] signOutAction warning:", err);
   }

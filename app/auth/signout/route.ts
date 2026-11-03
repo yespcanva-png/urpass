@@ -27,7 +27,7 @@ async function handleSignOut(req: NextRequest) {
   );
 
   try {
-    await supabase.auth.signOut({ scope: "local" });
+    await supabase.auth.signOut({ scope: "global" });
   } catch (err) {
     console.warn("[signout-route] signOut error:", err);
   }

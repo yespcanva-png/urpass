@@ -373,6 +373,7 @@ export async function lookupSSOByEmail(email: string): Promise<{
   protocol?: "SAML" | "OIDC";
   loginUrl?: string;
   allowEmergencyLogin?: boolean;
+  isOwner?: boolean;
 }> {
   if (!email || typeof email !== "string") {
     return { ssoAvailable: false, enforced: false };
@@ -384,6 +385,7 @@ export async function lookupSSOByEmail(email: string): Promise<{
   }
 
   const domain = parts[1].trim();
+  const normalizedEmail = email.trim().toLowerCase();
   const admin = adminClient();
 
   // 1. Look up verified domain
@@ -398,11 +400,18 @@ export async function lookupSSOByEmail(email: string): Promise<{
     return { ssoAvailable: false, enforced: false };
   }
 
-  // 2. Look up organization & SSO connection
-  const [orgRes, ssoRes, settingsRes] = await Promise.all([
+  // 2. Look up organization, SSO connection, settings, and verify owner membership
+  const [orgRes, ssoRes, settingsRes, ownerRes] = await Promise.all([
     admin.from("organizations").select("id, slug, name").eq("id", verifiedDomain.organization_id).maybeSingle(),
     admin.from("enterprise_sso_connections").select("*").eq("organization_id", verifiedDomain.organization_id).maybeSingle(),
     admin.from("organization_settings").select("enforce_sso, allow_emergency_owner_login").eq("organization_id", verifiedDomain.organization_id).maybeSingle(),
+    admin
+      .from("organization_members")
+      .select("id, role")
+      .eq("organization_id", verifiedDomain.organization_id)
+      .ilike("invited_email", normalizedEmail)
+      .eq("role", "owner")
+      .maybeSingle(),
   ]);
 
   if (!orgRes.data || !ssoRes.data || ssoRes.data.status !== "active") {
@@ -414,7 +423,7 @@ export async function lookupSSOByEmail(email: string): Promise<{
   const settings = settingsRes.data;
 
   const isEnforced = sso.enforce_sso || settings?.enforce_sso || false;
-  const allowEmergency = settings?.allow_emergency_owner_login ?? true;
+  const allowEmergency = (settings?.allow_emergency_owner_login ?? true) && !!ownerRes.data;
 
   const loginUrl =
     sso.protocol === "SAML"
@@ -430,5 +439,6 @@ export async function lookupSSOByEmail(email: string): Promise<{
     protocol: sso.protocol,
     loginUrl,
     allowEmergencyLogin: allowEmergency,
+    isOwner: !!ownerRes.data,
   };
 }

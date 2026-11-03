@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import { getSupabaseUrl, getSupabaseAnonKey } from "@/lib/supabase/config";
+import { getSupabaseUrl, getSupabaseAnonKey, getAppOrigin } from "@/lib/supabase/config";
 import { resolvePostAuthRedirect } from "@/lib/auth-redirect";
 import { notifyOwnerNewUser, notifyOwnerUserLogin, sendUserWelcomeEmail } from "@/lib/email";
 import { ANON_SESSION_COOKIE } from "@/lib/conversion/attribution";
@@ -11,7 +11,8 @@ import { recordFirstEventConversion } from "@/lib/conversion/first-event";
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
-  const { searchParams, origin } = new URL(request.url);
+  const { searchParams } = new URL(request.url);
+  const origin = getAppOrigin(request);
   const code = searchParams.get("code");
   const tokenHash = searchParams.get("token_hash");
   const type = searchParams.get("type") as "recovery" | "signup" | "magiclink" | "email" | null;

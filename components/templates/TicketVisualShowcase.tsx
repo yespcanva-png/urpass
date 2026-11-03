@@ -223,6 +223,7 @@ export default function TicketVisualShowcase({
   const attendeeName = customAttendeeName || "Aarav Mehta";
   const eventName = customEventName || (
     id === "corporate-minimal" ? "Annual Business Summit" :
+    id === "cinema-ticket" ? "Festivals for Joy '26" :
     id === "executive-blue" ? "World Leadership Congress" :
     id === "minimal-monochrome" ? "Global Architecture Forum" :
     id === "networking-pro" ? "Founders & Leaders Mixer" :
@@ -235,9 +236,11 @@ export default function TicketVisualShowcase({
     id === "workshop-clean" ? "Executive AI Masterclass" :
     id === "speaker-badge" ? "URPASS Summit 2026" :
     id === "festival-neon" ? "Neon Sounds Festival" :
+    id === "concert-music-fest" ? "Electric Horizon Music Fest" :
     id === "urban-festival" ? "Urban Arts Festival '26" :
     id === "sports-arena" ? "National Championship Cup" :
     id === "marathon-pass" ? "Metro City Marathon 2026" :
+    id === "vip-all-access" ? "Global Leaders VIP Gala" :
     id === "vip-midnight" ? "Private Evening Gala" :
     id === "premium-ivory" ? "The Annual Gala Dinner" :
     id === "elegant-rsvp" ? "Private Reception & Dinner" :
@@ -277,6 +280,45 @@ export default function TicketVisualShowcase({
             VIP DELEGATE
           </span>
           <span className="text-[6.5px] font-mono text-neutral-400 uppercase">ACCESS ALL HALLS</span>
+        </div>
+      </div>
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════════════
+  // 1B. CINEMA TICKET (BookMyShow-inspired rose header & ticket stub)
+  // ══════════════════════════════════════════════════════════════════
+  if (id === "cinema-ticket") {
+    return (
+      <div className={`relative overflow-hidden select-none flex flex-col justify-between bg-white text-neutral-900 border border-neutral-200 shadow-sm ${cardDims}`}>
+        {/* Top Rose Cinema Strip */}
+        <div className="bg-[#F84464] text-white -mx-3 sm:-mx-5 -mt-3 sm:-mt-5 px-3 sm:px-5 py-2 sm:py-2.5 flex items-center justify-between mb-2">
+          <span className="text-[7.5px] sm:text-[9px] font-black tracking-widest uppercase">URPASS / LIVE</span>
+          <span className="text-[7px] sm:text-[8px] font-mono font-bold bg-white/20 px-1.5 py-0.5 rounded">E-TICKET</span>
+        </div>
+
+        <div className="my-0.5">
+          <span className="text-[6.5px] font-bold text-[#F84464] uppercase tracking-wider block mb-0.5">EXPERIENCE LIVE</span>
+          <h4 className="font-black text-xs text-neutral-900 uppercase line-clamp-1">{eventName}</h4>
+          <div className="inline-block mt-1 px-2 py-0.5 rounded-full bg-[#FFF0F3] text-[#BD2444] text-[7px] font-bold uppercase tracking-wide">
+            AUDITORIUM 02 · ROW D · SEAT 14
+          </div>
+          <p className="text-[8px] font-semibold text-neutral-800 mt-1">{attendeeName}</p>
+          <p className="text-[6.5px] font-mono text-neutral-500 mt-0.5">{eventDate} · {venueName}</p>
+        </div>
+
+        {/* Die-cut perforated stub with circular notches */}
+        <div className="relative my-1 border-t-2 border-dashed border-neutral-300 py-1">
+          <div className="absolute -left-3 sm:-left-5 -top-[6px] w-3 h-3 rounded-full bg-[#F5F6F7] border-r border-neutral-300" />
+          <div className="absolute -right-3 sm:-right-5 -top-[6px] w-3 h-3 rounded-full bg-[#F5F6F7] border-l border-neutral-300" />
+          <div className="flex justify-center">
+            <CorporateQrCode size={isCard ? 85 : 125} fgColor="#15151B" borderColor="#F84464" />
+          </div>
+        </div>
+
+        <div className="pt-1 border-t border-neutral-100 flex items-center justify-between text-[6.5px] font-mono">
+          <span className="font-bold text-neutral-800">{ticketId}</span>
+          <span className="font-semibold text-[#F84464]">SCAN AT GATE</span>
         </div>
       </div>
     );
@@ -498,6 +540,44 @@ export default function TicketVisualShowcase({
   }
 
   // ══════════════════════════════════════════════════════════════════
+  // 9B. VIP ALL-ACCESS (Gold laminated executive credential badge)
+  // ══════════════════════════════════════════════════════════════════
+  if (id === "vip-all-access") {
+    return (
+      <div className={`relative overflow-hidden select-none flex flex-col justify-between bg-[#0F172A] text-white border-2 border-amber-500/60 shadow-lg ${cardDims}`}>
+        {/* Luxury Gold Foil Top Bar */}
+        <div className="h-2 bg-gradient-to-r from-amber-400 via-amber-200 to-amber-500 -mx-3 sm:-mx-5 -mt-3 sm:-mt-5 mb-2 shadow-xs" />
+
+        <div className="flex items-center justify-between pb-1 border-b border-amber-500/30">
+          <div className="flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+            <span className="text-[7.5px] font-mono font-black tracking-widest text-amber-400 uppercase">★ VIP ALL-ACCESS ★</span>
+          </div>
+          <span className="text-[7px] font-mono font-bold text-neutral-400">{ticketId}</span>
+        </div>
+
+        <div className="my-1">
+          <h4 className="font-black text-xs text-white uppercase tracking-tight line-clamp-1">{eventName}</h4>
+          <p className="text-[9px] font-bold text-amber-200 mt-0.5">{attendeeName}</p>
+          <span className="text-[6.5px] font-mono text-neutral-400 block mt-0.5">EXECUTIVE CREDENTIAL · ALL ZONES</span>
+          <p className="text-[6.5px] font-mono text-neutral-400 mt-0.5">{eventDate} · {venueName}</p>
+        </div>
+
+        <div className="my-1 flex justify-center">
+          <CorporateQrCode size={isCard ? 88 : 130} fgColor="#0F172A" bgColor="#FFFFFF" borderColor="#F59E0B" />
+        </div>
+
+        <div className="pt-1.5 border-t border-amber-500/30 flex items-center justify-between text-[7px] font-mono">
+          <span className="font-bold px-2 py-0.5 rounded bg-amber-400/20 text-amber-300 border border-amber-400/40">
+            STAGE · BACKSTAGE · LOUNGE
+          </span>
+          <span className="text-amber-400 font-bold">PRIORITY PASS</span>
+        </div>
+      </div>
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════════════
   // 10. VIP MIDNIGHT (Matte black, gold accents, luxury spacing)
   // ══════════════════════════════════════════════════════════════════
   if (id === "vip-midnight") {
@@ -593,6 +673,41 @@ export default function TicketVisualShowcase({
             VIP PIT ACCESS
           </span>
           <span className="text-pink-400">MAIN STAGE</span>
+        </div>
+      </div>
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════════════
+  // 13B. CONCERT MUSIC FEST (Electric neon ticket with stub & pit access)
+  // ══════════════════════════════════════════════════════════════════
+  if (id === "concert-music-fest") {
+    return (
+      <div className={`relative overflow-hidden select-none flex flex-col justify-between bg-[#111827] text-white border border-pink-500/50 shadow-md ${cardDims}`}>
+        {/* Neon Gradient Header Strip */}
+        <div className="h-1.5 bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 -mx-3 sm:-mx-5 -mt-3 sm:-mt-5 mb-2" />
+
+        <div className="flex items-center justify-between pb-1 border-b border-neutral-800">
+          <span className="text-[7.5px] font-mono font-bold tracking-wider text-pink-400 uppercase">LIVE CONCERT PASS</span>
+          <span className="text-[7px] font-mono text-neutral-400">{ticketId}</span>
+        </div>
+
+        <div className="my-1">
+          <h4 className="font-black text-xs text-white uppercase tracking-wider line-clamp-1">{eventName}</h4>
+          <p className="text-[8.5px] font-bold text-pink-200 mt-0.5">{attendeeName}</p>
+          <span className="text-[6.5px] font-mono text-purple-300 block">MAIN STAGE · GENERAL ADMISSION</span>
+          <p className="text-[6.5px] font-mono text-neutral-400 mt-0.5">{eventDate} · {venueName}</p>
+        </div>
+
+        <div className="my-1 flex justify-center">
+          <CorporateQrCode size={isCard ? 88 : 130} fgColor="#111827" bgColor="#FFFFFF" borderColor="#EC4899" />
+        </div>
+
+        <div className="pt-1.5 border-t border-neutral-800 flex items-center justify-between text-[7px] font-mono">
+          <span className="px-2 py-0.5 rounded bg-pink-950 text-pink-300 border border-pink-800 font-bold uppercase">
+            GA FAN PIT
+          </span>
+          <span className="text-pink-400 font-bold">GATE A // ADMIT 1</span>
         </div>
       </div>
     );

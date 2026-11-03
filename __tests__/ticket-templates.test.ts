@@ -5,6 +5,7 @@ import {
   isTemplateFree,
   SINGLE_TEMPLATE_PRICE_INR,
   ALL_ACCESS_BUNDLE_PRICE_INR,
+  convertStudioTemplateToTicketDesign,
 } from "@/lib/studio/templates";
 import {
   isTemplateUnlocked,
@@ -74,6 +75,25 @@ describe("Ticket Template Directory & Tier Rules", () => {
     expect(formats.has("printable")).toBe(true);
     expect(formats.has("badge")).toBe(true);
     expect(STUDIO_TEMPLATES.length).toBeGreaterThanOrEqual(12);
+  });
+
+  it("converts all studio templates to valid TicketDesignConfig objects", () => {
+    for (const tpl of STUDIO_TEMPLATES) {
+      const design = convertStudioTemplateToTicketDesign(tpl);
+      expect(design.primaryColor).toMatch(/^#[0-9a-fA-F]{6}$/);
+      expect(["minimal", "event", "dark", "modern"]).toContain(design.template);
+      expect(["mobile", "badge", "print"]).toContain(design.format);
+      expect(["center", "bottom"]).toContain(design.qrPosition);
+    }
+  });
+
+  it("correctly converts cinema-ticket to rose print ticket with stub QR", () => {
+    const cinemaTpl = STUDIO_TEMPLATES.find((t) => t.id === "cinema-ticket");
+    expect(cinemaTpl).toBeDefined();
+    const design = convertStudioTemplateToTicketDesign(cinemaTpl!);
+    expect(design.primaryColor).toBe("#F84464");
+    expect(design.format).toBe("print");
+    expect(design.qrPosition).toBe("bottom");
   });
 });
 
@@ -227,5 +247,39 @@ describe("Ticket Mockup Canvas Exporter", () => {
       HTMLCanvasElement.prototype.getContext = originalGetContext;
       global.Image = originalImage;
     }
+  });
+});
+
+describe("TicketVisualShowcase Component", () => {
+  it("renders dedicated designs for cinema-ticket, vip-all-access, and concert-music-fest", async () => {
+    const React = await import("react");
+    const { render, screen } = await import("@testing-library/react");
+    const { default: TicketVisualShowcase } = await import("@/components/templates/TicketVisualShowcase");
+
+    const cinemaTpl = STUDIO_TEMPLATES.find((t) => t.id === "cinema-ticket")!;
+    const vipTpl = STUDIO_TEMPLATES.find((t) => t.id === "vip-all-access")!;
+    const concertTpl = STUDIO_TEMPLATES.find((t) => t.id === "concert-music-fest")!;
+
+    // 1. Cinema Ticket
+    const { unmount: unmountCinema } = render(
+      React.createElement(TicketVisualShowcase, { template: cinemaTpl, mode: "showcase", format: "mobile" })
+    );
+    expect(screen.getByText("URPASS / LIVE")).toBeDefined();
+    expect(screen.getByText("E-TICKET")).toBeDefined();
+    unmountCinema();
+
+    // 2. VIP All-Access
+    const { unmount: unmountVip } = render(
+      React.createElement(TicketVisualShowcase, { template: vipTpl, mode: "showcase", format: "badge" })
+    );
+    expect(screen.getByText("★ VIP ALL-ACCESS ★")).toBeDefined();
+    unmountVip();
+
+    // 3. Concert Music Fest
+    const { unmount: unmountConcert } = render(
+      React.createElement(TicketVisualShowcase, { template: concertTpl, mode: "showcase", format: "print" })
+    );
+    expect(screen.getByText("LIVE CONCERT PASS")).toBeDefined();
+    unmountConcert();
   });
 });

@@ -142,10 +142,14 @@ function SignupContent() {
     }
 
     const supabase = createClient();
+    const appOrigin = typeof window !== "undefined" ? window.location.origin : "https://urpass.space";
     const { data: signUpData, error } = await supabase.auth.signUp({
       email: data.email,
       password: data.password,
-      options: { data: { full_name: data.full_name } },
+      options: {
+        data: { full_name: data.full_name },
+        emailRedirectTo: `${appOrigin}/auth/callback`,
+      },
     });
     if (error) {
       setServerError(error.message);

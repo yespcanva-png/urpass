@@ -1,12 +1,17 @@
-const FALLBACK_SUPABASE_URL = "https://kxmxxqyxkoseksfaymqm.supabase.co";
-const FALLBACK_SUPABASE_ANON_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt4bXh4cXl4a29zZWtzZmF5bXFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk0ODc1MjAsImV4cCI6MjEwNTA2MzUyMH0.NRLQbKKbvwJJajxcfwO0O717ttW2tJ5YhFbTGWa_5Zw";
 export function getSupabaseUrl(): string {
-  return process.env.NEXT_PUBLIC_SUPABASE_URL || FALLBACK_SUPABASE_URL;
+  const url = (process.env.NEXT_PUBLIC_SUPABASE_URL || "").trim();
+  if (!url && process.env.NODE_ENV === "production") {
+    console.error("[supabase/config] Missing NEXT_PUBLIC_SUPABASE_URL environment variable.");
+  }
+  return url;
 }
 
 export function getSupabaseAnonKey(): string {
-  return process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || FALLBACK_SUPABASE_ANON_KEY;
+  const key = (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "").trim();
+  if (!key && process.env.NODE_ENV === "production") {
+    console.error("[supabase/config] Missing NEXT_PUBLIC_SUPABASE_ANON_KEY environment variable.");
+  }
+  return key;
 }
 
 export function getSupabaseServiceRoleKey(): string {

@@ -6,9 +6,9 @@ import { logAuth, logAuthWarn } from "@/lib/auth/logger";
 import { resolveUserSubscriptionAccess } from "@/lib/billing/entitlement-resolver";
 import { resolveCustomDomainTarget } from "@/lib/dns/custom-domain-router";
 
-const PROTECTED = ["/dashboard", "/event", "/create-event", "/scan", "/billing", "/org"];
+const PROTECTED = ["/dashboard", "/event", "/create-event", "/scan", "/billing", "/org", "/studio"];
 const AUTH_PAGES = ["/login", "/signup"];
-const ENTITLEMENT_REQUIRED = ["/dashboard", "/event", "/create-event", "/scan", "/org"];
+const ENTITLEMENT_REQUIRED = ["/dashboard", "/event", "/create-event", "/scan", "/org", "/studio"];
 const ENTITLEMENT_ALLOWED = ["/billing", "/onboarding/subscription", "/support", "/contact"];
 
 function matchesPathSegment(pathname: string, route: string) {

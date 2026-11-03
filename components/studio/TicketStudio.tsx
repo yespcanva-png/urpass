@@ -51,6 +51,8 @@ import { getStudioPlanLimits } from "@/lib/studio/limits";
 import type { PlanSlug } from "@/lib/plan";
 import TicketCutDivider from "@/components/pass/TicketCutDivider";
 import TicketBarcode from "@/components/pass/TicketBarcode";
+import TicketSecurityPattern from "@/components/pass/TicketSecurityPattern";
+import TicketAdmissionMatrix from "@/components/pass/TicketAdmissionMatrix";
 
 interface TicketStudioProps {
   initialConfig?: unknown;
@@ -2066,8 +2068,10 @@ export default function TicketStudio({
               {activeFormat === "mobile" && (
                 <div
                   id="printable-ticket-card"
-                  className={`w-[350px] sm:w-[360px] ${shapeRadius} border ${cardBorder} ${cardBg} overflow-hidden shadow-[0_12px_36px_-6px_rgba(0,0,0,0.08),0_4px_12px_-2px_rgba(0,0,0,0.04)] relative transition-all duration-150`}
+                  className={`w-[350px] sm:w-[360px] ${shapeRadius} border ${cardBorder} ${cardBg} overflow-hidden shadow-[0_16px_40px_-6px_rgba(0,0,0,0.12),0_4px_16px_-2px_rgba(0,0,0,0.06)] relative transition-all duration-150`}
                 >
+                  <TicketSecurityPattern isDark={isDark} opacity={0.045} />
+
                   {config.backgroundImageUrl && (
                     <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -2086,20 +2090,24 @@ export default function TicketStudio({
                     </div>
                   )}
 
-                  {/* Accent Top Strip for Event & Modern */}
-                  {(config.template === "event" || isModern || isDark) && (
-                    <div
-                      className="h-2.5 w-full relative z-10"
-                      style={{
-                        background: `linear-gradient(90deg, ${activeColor} 0%, #a855f7 35%, ${activeColor} 70%, #ec4899 100%)`,
-                      }}
-                    />
-                  )}
+                  {/* Holographic / Metallic Security Strip with Microprint */}
+                  <div
+                    className="w-full relative z-10 py-1 px-3.5 flex items-center justify-between text-[7.5px] font-mono font-bold tracking-widest uppercase overflow-hidden shadow-xs"
+                    style={{
+                      background: isDark
+                        ? "linear-gradient(90deg, #b45309 0%, #d4af37 30%, #fef08a 50%, #d4af37 70%, #b45309 100%)"
+                        : `linear-gradient(90deg, ${activeColor} 0%, #a855f7 35%, ${activeColor} 70%, #ec4899 100%)`,
+                      color: isDark ? "#451a03" : "#ffffff",
+                    }}
+                  >
+                    <span className="truncate">★ OFFICIAL ADMISSION PASS</span>
+                    <span className="font-extrabold tracking-[0.2em] shrink-0">SECURE QR • URPASS</span>
+                  </div>
 
                   {/* Card Interior */}
                   <div className="relative z-10 p-6 flex flex-col items-center text-center">
                     {/* Header: Organization & Official Badge */}
-                    <div className="w-full flex items-center justify-between gap-2 mb-3 pb-2 border-b border-dashed border-neutral-200/80 dark:border-neutral-800">
+                    <div className="w-full flex items-center justify-between gap-2 mb-2 pb-2 border-b border-dashed border-neutral-200/80 dark:border-neutral-800">
                       <div className="flex items-center gap-2 min-w-0">
                         {config.logoUrl ? (
                           // eslint-disable-next-line @next/next/no-img-element
@@ -2109,12 +2117,17 @@ export default function TicketStudio({
                             className="h-6 max-w-[110px] object-contain"
                           />
                         ) : (
-                          <span
-                            className="text-[10px] font-black tracking-widest uppercase truncate"
-                            style={{ color: isDark ? "#ffffff" : "#111827" }}
-                          >
-                            URPASS
-                          </span>
+                          <div className="flex flex-col text-left">
+                            <span className="text-[7.5px] font-mono uppercase tracking-widest text-neutral-400 dark:text-neutral-500 font-bold">
+                              OFFICIAL ISSUER
+                            </span>
+                            <span
+                              className="text-[10px] font-black tracking-widest uppercase truncate"
+                              style={{ color: isDark ? "#ffffff" : "#111827" }}
+                            >
+                              URPASS LIVE
+                            </span>
+                          </div>
                         )}
 
                         {config.sponsorLogoUrl && (
@@ -2130,34 +2143,46 @@ export default function TicketStudio({
                         )}
                       </div>
 
-                      <div className="flex items-center gap-1 shrink-0">
-                        <span className="text-[9px] font-mono font-bold px-2 py-0.5 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 border border-neutral-200/80 dark:border-neutral-700">
+                      <div className="flex flex-col items-end">
+                        <span className="text-[7.5px] font-mono uppercase tracking-widest text-neutral-400 dark:text-neutral-500 font-bold">
+                          SERIAL NO.
+                        </span>
+                        <span className="text-[9px] font-mono font-extrabold px-2 py-0.5 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 border border-neutral-200/80 dark:border-neutral-700">
                           {sampleAttendee.ticketId}
                         </span>
                       </div>
                     </div>
 
                     {/* Event Title */}
-                    <h2 className="text-lg font-bold tracking-tight mb-2 uppercase leading-snug max-w-xs">
+                    <h2 className="text-lg font-black tracking-tight mb-2 uppercase leading-snug max-w-xs">
                       {eventName}
                     </h2>
 
                     {/* Ticket Type Pill */}
                     {config.showTicketType && (
-                      <div className="mb-2.5">
+                      <div className="mb-2">
                         <span
-                          className="inline-flex items-center gap-1 text-[11px] font-semibold tracking-wider uppercase px-3 py-0.5 rounded-full border"
+                          className="inline-flex items-center gap-1.5 text-[11px] font-extrabold tracking-wider uppercase px-3 py-0.5 rounded-full border shadow-2xs"
                           style={{
-                            borderColor: `${activeColor}35`,
+                            borderColor: `${activeColor}40`,
                             color: activeColor,
-                            backgroundColor: `${activeColor}12`,
+                            backgroundColor: `${activeColor}15`,
                           }}
                         >
-                          <TicketIcon className="w-3 h-3" />
+                          <TicketIcon className="w-3.5 h-3.5" />
                           {sampleAttendee.ticketType}
                         </span>
                       </div>
                     )}
+
+                    {/* 4-Compartment Physical Ticket Seating & Admission Matrix */}
+                    <TicketAdmissionMatrix
+                      gate="01"
+                      section={sampleAttendee.ticketType.replace(/pass|ticket/gi, "").trim() || "VIP"}
+                      row="A"
+                      seat="14"
+                      isDark={isDark}
+                    />
 
                     {/* QR Code Matrix (Positioned according to config.qrPosition) */}
                     {config.qrPosition !== "bottom" && (
@@ -2312,7 +2337,15 @@ export default function TicketStudio({
                     />
 
                     {/* SCANNABLE ADMISSION STUB */}
-                    <div className="w-full flex flex-col items-center">
+                    <div className="w-full flex flex-col items-center pt-0.5">
+                      <div className="w-full flex items-center justify-between mb-1.5 px-0.5 text-[7.5px] font-mono">
+                        <span className="font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest">
+                          ADMISSION COUNTERFOIL
+                        </span>
+                        <span className="font-bold text-rose-600 dark:text-rose-400 tracking-wider uppercase">
+                          KEEP THIS COUPON
+                        </span>
+                      </div>
                       {config.qrPosition === "bottom" ? (
                         <div
                           className={`my-1 p-3.5 bg-white rounded-2xl flex flex-col items-center justify-center relative shadow-xs ${
@@ -2397,15 +2430,19 @@ export default function TicketStudio({
               {activeFormat === "badge" && (
                 <div
                   id="printable-ticket-card"
-                  className="w-[330px] sm:w-[340px] bg-white rounded-2xl border border-neutral-200 overflow-hidden shadow-[0_12px_36px_-6px_rgba(0,0,0,0.08),0_4px_12px_-2px_rgba(0,0,0,0.04)] flex flex-col transition-all duration-150"
+                  className="w-[330px] sm:w-[340px] bg-white rounded-2xl border border-neutral-200 overflow-hidden shadow-[0_16px_40px_-6px_rgba(0,0,0,0.12)] flex flex-col transition-all duration-150 relative"
                 >
+                  <TicketSecurityPattern isDark={false} opacity={0.035} />
+
                   {/* Lanyard punch-hole simulation */}
-                  <div className="w-full pt-4 pb-2 flex flex-col items-center">
-                    <div className="w-12 h-2.5 rounded-full bg-neutral-200 border border-neutral-300 shadow-inner" />
+                  <div className="w-full pt-4 pb-2 flex flex-col items-center relative z-10">
+                    <div className="w-14 h-3 rounded-full bg-neutral-200 border border-neutral-300 shadow-inner flex items-center justify-center">
+                      <div className="w-10 h-1 rounded-full bg-neutral-400" />
+                    </div>
                   </div>
 
                   {/* Top Branding */}
-                  <div className="px-6 py-3 flex flex-col items-center text-center">
+                  <div className="px-6 py-2.5 flex flex-col items-center text-center relative z-10">
                     {config.logoUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
@@ -2414,43 +2451,50 @@ export default function TicketStudio({
                         className="h-7 max-w-[120px] object-contain mb-1"
                       />
                     ) : (
-                      <span className="text-[10px] font-bold tracking-widest text-neutral-400 uppercase mb-1">
-                        URPASS CONFERENCE
+                      <span className="text-[9px] font-mono font-bold tracking-widest text-neutral-400 uppercase mb-0.5">
+                        ★ OFFICIAL CREDENTIAL ★
                       </span>
                     )}
-                    <h3 className="text-sm font-semibold text-neutral-800 uppercase tracking-tight line-clamp-1">
+                    <h3 className="text-xs font-black text-neutral-800 uppercase tracking-tight line-clamp-1">
                       {eventName}
                     </h3>
                   </div>
 
                   {/* Large Attendee Name Centerpiece */}
-                  <div className="py-6 px-6 text-center border-t border-b border-neutral-100 bg-neutral-50/50">
-                    <h1 className="text-2xl font-bold text-neutral-900 tracking-tight leading-snug">
+                  <div className="py-5 px-6 text-center border-t border-b border-neutral-100 bg-neutral-50/60 relative z-10">
+                    <span className="text-[8px] font-mono uppercase tracking-widest text-neutral-400 block mb-1">
+                      ATTENDEE CREDENTIAL
+                    </span>
+                    <h1 className="text-2xl font-black text-neutral-900 tracking-tight leading-snug">
                       {sampleAttendee.name.toUpperCase()}
                     </h1>
                     {config.showOrganization && sampleAttendee.organization && (
-                      <p className="text-sm font-medium text-neutral-600 mt-1">
+                      <p className="text-xs font-bold text-neutral-600 mt-1">
                         {sampleAttendee.organization}
                       </p>
                     )}
-                    <p className="text-xs text-neutral-400 mt-0.5">
+                    <p className="text-[11px] text-neutral-400 mt-0.5 font-medium">
                       {sampleAttendee.designation}
                     </p>
                   </div>
 
                   {/* Ticket Category Full-Width Block */}
                   <div
-                    className="py-2.5 px-4 text-center"
+                    className="py-2.5 px-4 text-center relative z-10 shadow-xs"
                     style={{ backgroundColor: activeColor }}
                   >
-                    <span className="text-xs font-bold text-white tracking-widest uppercase">
-                      {sampleAttendee.ticketType}
+                    <span className="text-xs font-black text-white tracking-[0.2em] uppercase">
+                      ★ {sampleAttendee.ticketType} ★
                     </span>
                   </div>
 
                   {/* Bottom Gate QR Section */}
-                  <div className="p-5 flex flex-col items-center text-center space-y-2 bg-white">
-                    <div className="p-2.5 bg-white border border-neutral-200 rounded-xl shadow-2xs">
+                  <div className="p-5 flex flex-col items-center text-center space-y-2 bg-white relative z-10">
+                    <div className="p-3 bg-white border border-neutral-200 rounded-2xl shadow-2xs relative">
+                      <div className="absolute top-1.5 left-1.5 w-3 h-3 border-t-2 border-l-2 border-brand" />
+                      <div className="absolute top-1.5 right-1.5 w-3 h-3 border-t-2 border-r-2 border-brand" />
+                      <div className="absolute bottom-1.5 left-1.5 w-3 h-3 border-b-2 border-l-2 border-brand" />
+                      <div className="absolute bottom-1.5 right-1.5 w-3 h-3 border-b-2 border-r-2 border-brand" />
                       <div className="w-24 h-24 flex flex-col justify-between">
                         {QR_MATRIX.map((row, rIdx) => (
                           <div key={rIdx} className="flex justify-between w-full h-[4.5px]">
@@ -2467,12 +2511,15 @@ export default function TicketStudio({
                       </div>
                     </div>
 
-                    <p className="text-[10px] font-mono text-neutral-400">
+                    <p className="text-[10px] font-mono font-bold tracking-wider text-neutral-900">
                       {sampleAttendee.ticketId}
                     </p>
-                    <p className="text-[10px] text-neutral-500">
+                    <p className="text-[9px] font-medium text-neutral-500">
                       {venue} • {eventDate}
                     </p>
+                    <span className="text-[8px] font-mono uppercase tracking-widest text-emerald-600 font-bold">
+                      ● ALL HALLS CLEARANCE
+                    </span>
                   </div>
                 </div>
               )}
@@ -2481,46 +2528,62 @@ export default function TicketStudio({
               {activeFormat === "print" && (
                 <div
                   id="printable-ticket-card"
-                  className={`w-[500px] min-h-[230px] ${cardBg} ${shapeRadius} border ${cardBorder} shadow-[0_12px_36px_-6px_rgba(0,0,0,0.12)] flex overflow-hidden transition-all duration-150 relative`}
+                  className={`w-[520px] min-h-[250px] ${cardBg} ${shapeRadius} border ${cardBorder} shadow-[0_16px_40px_-6px_rgba(0,0,0,0.12)] flex overflow-hidden transition-all duration-150 relative`}
                 >
-                  <div className="absolute inset-y-0 left-0 w-1.5" style={{ backgroundColor: activeColor }} aria-hidden="true" />
-                  {/* Main ticket and detachable gate stub share the same live fields. */}
-                  <div className="w-[68%] min-w-0 pl-6 pr-5 py-5 flex flex-col justify-between gap-3">
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between gap-2">
-                        {config.logoUrl ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={config.logoUrl} alt="Event logo" className="h-6 max-w-[110px] object-contain" />
-                        ) : (
-                          <span className={`text-[9px] font-bold tracking-[0.2em] uppercase ${subtextCls}`}>OFFICIAL ADMISSION</span>
-                        )}
+                  <TicketSecurityPattern isDark={isDark} opacity={0.05} />
+                  <div className="absolute inset-y-0 left-0 w-2" style={{ backgroundColor: activeColor }} aria-hidden="true" />
+
+                  {/* Main ticket body (68%) */}
+                  <div className="w-[68%] min-w-0 pl-7 pr-5 py-4 flex flex-col justify-between gap-2 relative z-10">
+                    <div>
+                      <div className="flex items-center justify-between gap-2 mb-1">
+                        <span className={`text-[8px] font-mono font-bold tracking-[0.2em] uppercase ${subtextCls}`}>
+                          OFFICIAL ADMISSION
+                        </span>
                         {config.showTicketType && (
-                          <span className="px-2 py-1 rounded text-[9px] font-bold uppercase tracking-wider truncate" style={{ backgroundColor: `${activeColor}20`, color: activeColor }}>
+                          <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider truncate" style={{ backgroundColor: `${activeColor}20`, color: activeColor }}>
                             {sampleAttendee.ticketType}
                           </span>
                         )}
                       </div>
-                      <h2 className="text-lg font-black uppercase tracking-tight leading-tight line-clamp-2">{eventName}</h2>
-                      {config.showAttendeeName && <p className="text-sm font-semibold truncate">{sampleAttendee.name}</p>}
-                      {config.showOrganization && <p className={`text-[11px] truncate ${subtextCls}`}>{sampleAttendee.organization}</p>}
-                      {config.customMessage && <p className={`text-[10px] line-clamp-2 ${subtextCls}`}>{config.customMessage}</p>}
+                      <h2 className="text-base font-black uppercase tracking-tight leading-tight line-clamp-1">{eventName}</h2>
+                      {config.showAttendeeName && <p className="text-xs font-bold truncate mt-0.5">{sampleAttendee.name}</p>}
                     </div>
-                    <div className={`grid grid-cols-2 gap-2 border-t border-dotted ${dividerCls} pt-2.5`}>
-                      {config.showEventDate !== false && <div><span className={`block text-[8px] uppercase tracking-wider ${subtextCls}`}>Date & time</span><span className="text-[10px] font-semibold">{eventDate}</span></div>}
-                      {config.showVenue && <div><span className={`block text-[8px] uppercase tracking-wider ${subtextCls}`}>Venue</span><span className="text-[10px] font-semibold line-clamp-2">{venue}</span></div>}
-                      {config.showTicketId && <span className={`font-mono text-[9px] ${subtextCls}`}>{sampleAttendee.ticketId}</span>}
-                      <span className={`text-[8px] uppercase tracking-wide ${subtextCls}`}>{isMultiScan ? "Multiple entry" : "Admit one"}</span>
+
+                    {/* 4-Box Matrix on Main Body */}
+                    <TicketAdmissionMatrix
+                      gate="01"
+                      section={sampleAttendee.ticketType.replace(/pass|ticket/gi, "").trim() || "VIP"}
+                      row="A"
+                      seat="14"
+                      isDark={isDark}
+                    />
+
+                    {/* Footer Info & Linear Barcode */}
+                    <div className="space-y-1 border-t border-dotted border-neutral-300 dark:border-neutral-700/80 pt-1.5">
+                      <div className="flex items-center justify-between text-[9px]">
+                        <span className={`font-semibold ${subtextCls} truncate max-w-[180px]`}>{venue}</span>
+                        <span className={`font-mono ${subtextCls}`}>{eventDate}</span>
+                      </div>
+                      {config.showTicketId && (
+                        <TicketBarcode code={sampleAttendee.ticketId.replace(/[^A-Z0-9-]/gi, "")} isDark={isDark} height={24} showText={true} />
+                      )}
                     </div>
                   </div>
 
-                  <div className="absolute top-0 bottom-0 left-[68%] border-l-2 border-dotted border-neutral-400/70" aria-label="Tear along dotted line" />
-                  <div className="absolute -top-3 left-[68%] -translate-x-1/2 w-6 h-6 rounded-full bg-[#F5F6F7] border border-neutral-200" aria-hidden="true" />
-                  <div className="absolute -bottom-3 left-[68%] -translate-x-1/2 w-6 h-6 rounded-full bg-[#F5F6F7] border border-neutral-200" aria-hidden="true" />
+                  {/* Perforated Vertical Divider with Semicircular Punch Cutouts */}
+                  <div className="absolute top-0 bottom-0 left-[68%] border-l-2 border-dashed border-neutral-400/80 dark:border-neutral-600 z-20" aria-label="Tear along dotted line" />
+                  <div className={`absolute -top-3.5 left-[68%] -translate-x-1/2 w-7 h-7 rounded-full ${isDark ? "bg-[#18181B] border-neutral-800" : "bg-[#F5F6F7] border-neutral-300"} border shadow-inner z-30`} aria-hidden="true" />
+                  <div className={`absolute -bottom-3.5 left-[68%] -translate-x-1/2 w-7 h-7 rounded-full ${isDark ? "bg-[#18181B] border-neutral-800" : "bg-[#F5F6F7] border-neutral-300"} border shadow-inner z-30`} aria-hidden="true" />
 
-                  <div className={`w-[32%] min-w-0 p-4 flex flex-col items-center justify-between gap-2 text-center ${isDark ? "bg-white/5" : "bg-neutral-50"}`}>
-                    <span className={`text-[9px] font-bold tracking-widest uppercase ${subtextCls}`}>GATE STUB</span>
+                  {/* Right Detachable Gate Stub (32%) */}
+                  <div className={`w-[32%] min-w-0 p-4 flex flex-col items-center justify-between gap-1.5 text-center relative z-10 ${isDark ? "bg-white/5" : "bg-neutral-50"}`}>
+                    <div className="w-full text-center">
+                      <span className={`text-[8px] font-mono font-bold tracking-widest uppercase block ${subtextCls}`}>GATE STUB</span>
+                      <span className="text-[7px] font-mono text-rose-600 dark:text-rose-400 uppercase font-bold tracking-wider">AUDIT COUPON</span>
+                    </div>
 
-                    <div className="p-1.5 bg-white border border-neutral-200 rounded-lg shadow-2xs">
+                    <div className="p-1.5 bg-white border border-neutral-200 rounded-xl shadow-2xs relative">
                       <div className="w-20 h-20 flex flex-col justify-between">
                         {QR_MATRIX.map((row, rIdx) => (
                           <div key={rIdx} className="flex justify-between w-full h-[3.8px]">
@@ -2538,8 +2601,15 @@ export default function TicketStudio({
                     </div>
 
                     <div className="space-y-0.5">
-                      {config.showTicketId && <p className={`text-[9px] font-mono ${subtextCls}`}>{sampleAttendee.ticketId}</p>}
-                      <span className={`text-[8px] font-bold tracking-wider uppercase ${subtextCls}`}>Scan for entry</span>
+                      <p className="text-[8px] font-mono font-bold text-neutral-900 dark:text-neutral-100 uppercase">
+                        SEC VIP · SEAT 14
+                      </p>
+                      {config.showTicketId && (
+                        <p className={`text-[8px] font-mono ${subtextCls}`}>{sampleAttendee.ticketId}</p>
+                      )}
+                      <span className="text-[7px] font-bold tracking-wider uppercase text-emerald-600 dark:text-emerald-400 block">
+                        ● VERIFIED ENTRY
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -2602,12 +2672,12 @@ export default function TicketStudio({
 
             {/* Category Filter Tabs */}
             <div className="flex items-center gap-1.5 overflow-x-auto pb-1 shrink-0 text-xs">
-              {["All", "Minimal", "Corporate", "Conference", "College", "Concert", "VIP"].map((cat) => (
+              {["All", "Corporate", "Technology", "Campus", "Events & Entertainment", "Premium"].map((cat) => (
                 <button
                   key={cat}
                   type="button"
                   onClick={() => setTemplateFilterCategory(cat)}
-                  className={`px-3 py-1 rounded-md transition-colors cursor-pointer ${
+                  className={`px-3 py-1 rounded-md transition-colors cursor-pointer shrink-0 ${
                     templateFilterCategory === cat
                       ? "bg-neutral-900 text-white font-medium"
                       : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
@@ -2619,9 +2689,11 @@ export default function TicketStudio({
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 overflow-y-auto pr-1">
-              {STUDIO_TEMPLATES.filter(
-                (t) => templateFilterCategory === "All" || t.category === templateFilterCategory
-              ).map((tpl) => {
+              {STUDIO_TEMPLATES.filter((t) => {
+                if (templateFilterCategory === "All") return true;
+                if (t.category === templateFilterCategory) return true;
+                return t.tags?.some((tag) => tag.toLowerCase() === templateFilterCategory.toLowerCase());
+              }).map((tpl) => {
                 const isPaid = tpl.tier === "paid";
                 return (
                   <div
@@ -2637,7 +2709,7 @@ export default function TicketStudio({
                         backgroundImageUrl:
                           prev.backgroundImageUrl || converted.backgroundImageUrl,
                       }));
-                      setActiveFormat(tpl.format === "printable" ? "print" : tpl.format === "badge" ? "badge" : "mobile");
+                      setActiveFormat(converted.format || (tpl.format === "badge" ? "badge" : (tpl.format === "printable" || (tpl.format as string) === "print") ? "print" : "mobile"));
                       setIsTemplateModalOpen(false);
                     }}
                     className="p-3.5 rounded-lg border border-neutral-200 hover:border-neutral-900 hover:shadow-2xs transition-all cursor-pointer bg-white flex flex-col justify-between"

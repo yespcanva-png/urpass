@@ -104,18 +104,19 @@ function LoginContent() {
   async function onPasswordSubmit(data: PasswordFormData) {
     setServerError("");
 
-    if (!isEmergencyOwnerLogin) {
-      try {
-        const lookup = await lookupSSOByEmail(data.email);
-        if (lookup.ssoAvailable && lookup.enforced) {
+    try {
+      const lookup = await lookupSSOByEmail(data.email);
+      if (lookup.ssoAvailable && lookup.enforced) {
+        const canEmergency = isEmergencyOwnerLogin && lookup.allowEmergencyLogin && lookup.isOwner;
+        if (!canEmergency) {
           setServerError(
             `Single Sign-On is enforced for @${data.email.split("@")[1]}. Please use 'Continue with Enterprise SSO' below.`
           );
           return;
         }
-      } catch (err) {
-        console.warn("[login] SSO pre-check error:", err);
       }
+    } catch (err) {
+      console.warn("[login] SSO pre-check error:", err);
     }
 
     const supabase = createClient();

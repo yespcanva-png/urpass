@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { getSupabaseUrl } from "@/lib/supabase/config";
 import { validateSamlResponse, getBaseAppUrl } from "@/lib/sso/saml";
@@ -83,7 +84,19 @@ export async function POST(
       return NextResponse.redirect(`${appUrl}/login?error=provisioning_failed&msg=${err}`);
     }
 
-    return NextResponse.redirect(`${appUrl}${provisionResult.redirectUrl}`);
+    const response = NextResponse.redirect(`${appUrl}${provisionResult.redirectUrl}`);
+    const cookieStore = await cookies();
+    for (const c of cookieStore.getAll()) {
+      if (c.name.startsWith("sb-") || c.name.includes("auth-token")) {
+        response.cookies.set(c.name, c.value, {
+          path: "/",
+          maxAge: 60 * 60 * 24 * 30,
+          sameSite: "lax",
+          secure: appUrl.startsWith("https://"),
+        });
+      }
+    }
+    return response;
   } catch (err: unknown) {
     console.error("[saml-acs] Unhandled POST error:", err);
     return NextResponse.redirect(`${appUrl}/login?error=saml_server_error`);

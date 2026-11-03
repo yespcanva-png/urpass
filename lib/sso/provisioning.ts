@@ -31,6 +31,7 @@ export async function jitProvisionAndSignIn(opts: ProvisioningOptions): Promise<
   isNewUser?: boolean;
   redirectUrl: string;
   error?: string;
+  session?: unknown;
 }> {
   const admin = adminClient();
   const normalizedEmail = opts.email.toLowerCase().trim();
@@ -214,24 +215,32 @@ export async function jitProvisionAndSignIn(opts: ProvisioningOptions): Promise<
     const tokenHash = linkData.properties.hashed_token;
     const verificationType = (linkData.properties?.verification_type as "magiclink" | "email") || "magiclink";
 
-    let { error: otpErr } = await serverClient.auth.verifyOtp({
+    let verifyRes = await serverClient.auth.verifyOtp({
       token_hash: tokenHash,
       type: verificationType,
     });
+    let otpErr = verifyRes.error;
+    let establishedSession = verifyRes.data?.session || null;
 
     if (otpErr && verificationType !== "magiclink") {
       const fb = await serverClient.auth.verifyOtp({
         token_hash: tokenHash,
         type: "magiclink",
       });
-      if (!fb.error) otpErr = null;
+      if (!fb.error) {
+        otpErr = null;
+        establishedSession = fb.data?.session || null;
+      }
     }
     if (otpErr && verificationType !== "email") {
       const fb = await serverClient.auth.verifyOtp({
         token_hash: tokenHash,
         type: "email",
       });
-      if (!fb.error) otpErr = null;
+      if (!fb.error) {
+        otpErr = null;
+        establishedSession = fb.data?.session || null;
+      }
     }
 
     if (otpErr) {
@@ -248,6 +257,7 @@ export async function jitProvisionAndSignIn(opts: ProvisioningOptions): Promise<
       userId,
       isNewUser,
       redirectUrl,
+      session: establishedSession,
     };
   } catch (err: unknown) {
     console.error("[jit-provisioning] Unhandled error:", err);

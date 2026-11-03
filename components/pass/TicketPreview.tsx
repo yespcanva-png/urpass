@@ -4,6 +4,9 @@ import React from "react";
 import { MapPin, Calendar, Scissors, Ticket as TicketIcon, ShieldCheck, CheckCircle2, Sparkles } from "lucide-react";
 import type { TicketDesignConfig } from "@/lib/pass-design";
 import TicketCutDivider from "@/components/pass/TicketCutDivider";
+import TicketSecurityPattern from "@/components/pass/TicketSecurityPattern";
+import TicketAdmissionMatrix from "@/components/pass/TicketAdmissionMatrix";
+import TicketBarcode from "@/components/pass/TicketBarcode";
 
 interface TicketPreviewProps {
   config: TicketDesignConfig;
@@ -104,6 +107,9 @@ export default function TicketPreview({
           : "0 4px 20px -2px rgba(0, 0, 0, 0.05)",
       }}
     >
+      {/* SVG Banknote Guilloche Security Pattern Background */}
+      <TicketSecurityPattern isDark={isDark} opacity={0.045} />
+
       {/* Optional Background Image with contrast-preserving overlay */}
       {config.backgroundImageUrl && (
         <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
@@ -123,13 +129,19 @@ export default function TicketPreview({
         </div>
       )}
 
-      {/* Top Foil Accent Strip */}
+      {/* Holographic / Metallic Security Strip with Microprint */}
       <div
-        className="h-2 w-full relative z-10"
+        className="w-full relative z-10 py-1 px-3.5 flex items-center justify-between text-[7.5px] font-mono font-bold tracking-widest uppercase overflow-hidden shadow-xs"
         style={{
-          background: `linear-gradient(90deg, ${activeColor} 0%, #a855f7 40%, ${activeColor} 70%, #ec4899 100%)`,
+          background: isDark
+            ? "linear-gradient(90deg, #b45309 0%, #d4af37 30%, #fef08a 50%, #d4af37 70%, #b45309 100%)"
+            : `linear-gradient(90deg, ${activeColor} 0%, #a855f7 35%, ${activeColor} 70%, #ec4899 100%)`,
+          color: isDark ? "#451a03" : "#ffffff",
         }}
-      />
+      >
+        <span className="truncate">★ OFFICIAL ADMISSION PASS</span>
+        <span className="font-extrabold tracking-[0.2em] shrink-0">SECURE QR • URPASS</span>
+      </div>
 
       {/* Ticket Body */}
       <div className={`relative z-10 ${paddingCls} flex flex-col items-center text-center`}>
@@ -179,7 +191,7 @@ export default function TicketPreview({
 
         {/* Ticket Type Pill (Toggled) */}
         {config.showTicketType && (
-          <div className="mb-3">
+          <div className="mb-2">
             <span
               className="inline-flex items-center gap-1.5 text-[11px] font-extrabold tracking-wider uppercase px-3 py-1 rounded-full border shadow-2xs"
               style={{
@@ -193,6 +205,15 @@ export default function TicketPreview({
             </span>
           </div>
         )}
+
+        {/* 4-Compartment Authentic Ticket Seating & Admission Matrix */}
+        <TicketAdmissionMatrix
+          gate="01"
+          section={ticketType.replace(/pass|ticket/gi, "").trim() || "VIP"}
+          row="A"
+          seat="12"
+          isDark={isDark}
+        />
 
         {/* Structured Real Ticket Metadata Grid */}
         <div className="w-full grid grid-cols-2 gap-2 text-left my-1 p-3 rounded-2xl bg-neutral-50/90 dark:bg-neutral-900/60 border border-neutral-200/70 dark:border-neutral-800/80 shadow-2xs">
@@ -290,14 +311,23 @@ export default function TicketPreview({
         <TicketCutDivider
           isDark={isDark}
           label="ADMIT ONE · TEAR OR SCAN"
-          cutoutColor={isPdf ? "#f3f4f6" : (isDark ? "#0f131d" : "#f1f5f9")}
+          cutoutColor={isPdf ? "#f3f4f6" : (isDark ? "#121216" : "#f1f5f9")}
           negativeMarginCls="-mx-4 sm:-mx-6"
         />
 
         {/* ══════════════════════════════════════════════════════════ */}
         {/* SCANNABLE ADMISSION STUB (TEAR-OFF SECTION) */}
         {/* ══════════════════════════════════════════════════════════ */}
-        <div className="w-full flex flex-col items-center">
+        <div className="w-full flex flex-col items-center pt-0.5">
+          <div className="w-full flex items-center justify-between mb-1.5 px-0.5 text-[7.5px] font-mono">
+            <span className="font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest">
+              ADMISSION COUNTERFOIL
+            </span>
+            <span className="font-bold text-rose-600 dark:text-rose-400 tracking-wider uppercase">
+              KEEP THIS COUPON
+            </span>
+          </div>
+
           {/* Large Centered QR Code Card with clean contrast and alignment crosshairs */}
           <div className="my-1 flex flex-col items-center">
             <div
@@ -327,6 +357,11 @@ export default function TicketPreview({
                 SCAN FOR ENTRY
               </span>
             </div>
+          </div>
+
+          {/* Code-128 Linear Barcode on Counterfoil Stub */}
+          <div className="w-full py-1">
+            <TicketBarcode code={ticketId.replace(/[^A-Z0-9-]/gi, "")} isDark={isDark} height={26} showText={true} />
           </div>
 
           {/* Executive Security Credential Pill */}
