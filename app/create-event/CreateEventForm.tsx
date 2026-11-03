@@ -27,6 +27,7 @@ import { detectCountryClient } from "@/lib/country-config";
 import { slugify } from "@/lib/utils";
 import EventImageUploader from "@/components/events/EventImageUploader";
 import EventImageCarousel from "@/components/events/EventImageCarousel";
+import ConciergeSetupModal from "@/components/concierge/ConciergeSetupModal";
 
 type OrgOption = { id: string; slug: string; name: string; brand_color: string; role: string };
 
@@ -121,6 +122,7 @@ export default function CreateEventForm({
     name: string;
     isDraft: boolean;
   } | null>(null);
+  const [conciergeModalOpen, setConciergeModalOpen] = useState(false);
 
   const atLimit = !unlimited && activeEventCount >= maxEvents;
 
@@ -369,6 +371,48 @@ export default function CreateEventForm({
             {activeEventCount} / {unlimited ? "∞" : maxEvents} events
           </div>
         </div>
+
+        {/* 24-Hour Concierge Setup Banner */}
+        {activeEventCount === 0 ? (
+          <div className="mb-8 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-purple-50 via-indigo-50/70 to-purple-50 border border-purple-200/90 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs">
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-2">
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-400 text-neutral-950 uppercase tracking-wide">
+                  First Event Privilege
+                </span>
+                <span className="text-xs font-bold text-neutral-900">
+                  Want our team to set this up for you for FREE?
+                </span>
+              </div>
+              <p className="text-xs text-neutral-600 leading-relaxed">
+                Send us your poster or agenda. We&apos;ll configure your registration fields, design custom ticket badges, and set up your QR gates in under 24 hours at ₹0.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setConciergeModalOpen(true)}
+              className="shrink-0 px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-purple-700 hover:bg-purple-800 transition-colors shadow-xs cursor-pointer"
+            >
+              Claim Free 24h Setup
+            </button>
+          </div>
+        ) : (
+          <div className="mb-6 p-3.5 rounded-xl bg-purple-50/60 border border-purple-200/70 flex items-center justify-between text-xs shadow-2xs">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-purple-600 shrink-0" />
+              <span className="text-neutral-700">
+                Short on time? Let our team build this event for you: <strong>VIP 24-Hour Setup (₹999)</strong>.
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setConciergeModalOpen(true)}
+              className="font-bold text-purple-700 hover:underline shrink-0 ml-2 cursor-pointer"
+            >
+              Book Setup →
+            </button>
+          </div>
+        )}
 
         {/* Org context banner */}
         {organizationName && (
@@ -1065,6 +1109,13 @@ export default function CreateEventForm({
           </div>
         </div>
       )}
+
+      {/* 24-Hour VIP Concierge Setup Modal */}
+      <ConciergeSetupModal
+        isOpen={conciergeModalOpen}
+        onClose={() => setConciergeModalOpen(false)}
+        isFirstTime={activeEventCount === 0}
+      />
     </div>
   );
 }

@@ -74,7 +74,21 @@ function getPricingJsonLd(isUk: boolean) {
             price: "0",
             priceCurrency: "INR",
             billingIncrement: "P1M",
-            description: "1 active event, 100 registrations/event, basic QR check-in.",
+            description: "1 active event, 50 registrations/event, basic QR check-in with UrPass watermark.",
+          },
+          {
+            "@type": "Offer",
+            name: "Single Event License",
+            price: "299",
+            priceCurrency: "INR",
+            description: "₹299 one-time. 500 attendees, 0% platform commission, no watermark, custom branding, and sub-second QR entry.",
+          },
+          {
+            "@type": "Offer",
+            name: "VIP Concierge Event Setup",
+            price: "999",
+            priceCurrency: "INR",
+            description: "₹999 one-time (Free for 1st-time organizers). Complete 24-hour done-for-you event setup, ticket branding, and QR gate configuration.",
           },
           {
             "@type": "Offer",

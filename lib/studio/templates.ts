@@ -1,6 +1,6 @@
 import { CINEMA_TICKET_DESIGN } from "./cinema-template";
-import type { StudioDesign, TicketFormat } from "./types";
-import type { TicketDesignConfig, TicketTemplate, TicketShape } from "@/lib/pass-design";
+import type { StudioDesign, TicketFormat, DynamicFieldKey, StudioDynamicTextElement, StudioTextElement } from "./types";
+import type { TicketDesignConfig, TicketTemplate, TicketShape, TicketRealStyle } from "@/lib/pass-design";
 
 export type TemplateTier = "free" | "paid";
 
@@ -19,8 +19,74 @@ export interface StudioTemplateDefinition {
   design: StudioDesign;
 }
 
+function mkText(
+  id: string,
+  content: string,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  fontSize = 10,
+  fontWeight: number | string = 700,
+  color = "#777984",
+  textAlign: "left" | "center" | "right" = "left",
+  letterSpacing = 1.2
+): StudioTextElement {
+  return {
+    id,
+    type: "text",
+    name: content,
+    content,
+    x,
+    y,
+    width,
+    height,
+    zIndex: 3,
+    fontFamily: "sans",
+    fontSize,
+    fontWeight,
+    color,
+    textAlign,
+    letterSpacing,
+  };
+}
+
+function mkField(
+  id: string,
+  fieldKey: DynamicFieldKey,
+  fallbackText: string,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  fontSize = 14,
+  fontWeight: number | string = 700,
+  color = "#18181B",
+  textAlign: "left" | "center" | "right" = "left"
+): StudioDynamicTextElement {
+  return {
+    id,
+    type: "dynamic_text",
+    name: id,
+    fieldKey,
+    fallbackText,
+    x,
+    y,
+    width,
+    height,
+    zIndex: 3,
+    fontFamily: "sans",
+    fontSize,
+    fontWeight,
+    lineHeight: 1.25,
+    color,
+    textAlign,
+  };
+}
+
 /**
- * Generates a valid StudioDesign for a digital mobile pass
+ * Generates an authentic StudioDesign for a digital mobile pass
+ * with real ticket anatomy: header foil, seating matrix, metadata, perforated stub, and dual-scan codes.
  */
 function createDigitalPassDesign(
   name: string,
@@ -28,102 +94,133 @@ function createDigitalPassDesign(
   fgColor = "#18181B",
   accentColor = "#635BFF"
 ): StudioDesign {
+  const isDark = bgColor === "#09090B" || bgColor === "#0F1E36" || bgColor === "#0B0F19" || bgColor === "#18181B" || bgColor === "#0F0B1E" || bgColor === "#0F172A";
+  const stubBg = isDark ? "#14151B" : "#F8FAFC";
+  const notchFill = isDark ? "#09090D" : "#F1F5F9";
+  const labelColor = isDark ? "#94A3B8" : "#64748B";
+
   return {
     version: 2,
     format: "digital",
     width: 380,
-    height: 680,
+    height: 720,
     name,
     isPublished: true,
     background: { type: "color", color: bgColor },
     elements: [
       {
-        id: `shape-accent-${Math.random().toString(36).slice(2, 7)}`,
+        id: `shape-header-${Math.random().toString(36).slice(2, 7)}`,
         type: "shape",
-        name: "Accent Strip",
+        name: "Header Banner",
         shapeType: "rect",
         fillColor: accentColor,
         x: 0,
         y: 0,
         width: 380,
-        height: 6,
+        height: 44,
+        zIndex: 1,
+      },
+      mkText(`lbl-hdr-brand-${Math.random().toString(36).slice(2, 7)}`, "★ OFFICIAL ADMISSION PASS", 20, 14, 220, 18, 9, 800, "#FFFFFF", "left", 1.8),
+      mkText(`lbl-hdr-stub-${Math.random().toString(36).slice(2, 7)}`, "SECURE QR", 260, 14, 100, 18, 9, 800, "#FFFFFF", "right", 1.8),
+      mkField(`field-event-${Math.random().toString(36).slice(2, 7)}`, "event.name", "URPASS ANNUAL EVENT", 20, 60, 340, 52, 21, 800, fgColor, "center"),
+      {
+        id: `shape-cat-bg-${Math.random().toString(36).slice(2, 7)}`,
+        type: "shape",
+        name: "Category Background",
+        shapeType: "pill",
+        fillColor: isDark ? "#1E1E2E" : "#F1F5F9",
+        x: 80,
+        y: 122,
+        width: 220,
+        height: 28,
+        zIndex: 2,
+      },
+      mkField(`field-cat-${Math.random().toString(36).slice(2, 7)}`, "ticket.category", "VIP DELEGATE PASS", 80, 128, 220, 20, 11, 800, accentColor, "center"),
+      mkText(`lbl-sched-${Math.random().toString(36).slice(2, 7)}`, "SCHEDULE", 24, 168, 160, 16, 8, 700, labelColor),
+      mkText(`lbl-venue-${Math.random().toString(36).slice(2, 7)}`, "LOCATION", 196, 168, 160, 16, 8, 700, labelColor),
+      mkField(`field-date-${Math.random().toString(36).slice(2, 7)}`, "event.date", "24 OCT 2026", 24, 188, 160, 22, 13, 700, fgColor),
+      mkField(`field-venue-${Math.random().toString(36).slice(2, 7)}`, "event.venue", "Main Hall, Tech Park", 196, 188, 160, 22, 13, 700, fgColor),
+      mkText(`lbl-holder-${Math.random().toString(36).slice(2, 7)}`, "PASS HOLDER", 24, 228, 332, 16, 8, 700, labelColor),
+      mkField(`field-attendee-${Math.random().toString(36).slice(2, 7)}`, "attendee.name", "Aarav Mehta", 24, 248, 332, 28, 18, 800, fgColor),
+      mkText(`lbl-matrix-${Math.random().toString(36).slice(2, 7)}`, "GATE 01  ·  SEC VIP  ·  ROW A  ·  SEAT 14", 24, 288, 332, 18, 10, 800, accentColor, "center", 1.5),
+      {
+        id: `shape-stub-bg-${Math.random().toString(36).slice(2, 7)}`,
+        type: "shape",
+        name: "Stub Background",
+        shapeType: "rect",
+        fillColor: stubBg,
+        x: 0,
+        y: 330,
+        width: 380,
+        height: 390,
         zIndex: 1,
       },
       {
-        id: `text-event-${Math.random().toString(36).slice(2, 7)}`,
-        type: "dynamic_text",
-        name: "Event Name",
-        fieldKey: "event.name",
-        fallbackText: "EVENT NAME",
-        fontFamily: "sans",
-        fontSize: 18,
-        fontWeight: 800,
-        color: fgColor,
-        textAlign: "center",
-        x: 20,
-        y: 36,
-        width: 340,
-        height: 30,
-        zIndex: 2,
+        id: `div-perforation-${Math.random().toString(36).slice(2, 7)}`,
+        type: "divider",
+        name: "Tear-off Perforation",
+        color: isDark ? "#2D3139" : "#CBD5E1",
+        thickness: 2,
+        style: "dashed",
+        x: 18,
+        y: 330,
+        width: 344,
+        height: 2,
+        zIndex: 3,
       },
+      {
+        id: `shape-left-notch-${Math.random().toString(36).slice(2, 7)}`,
+        type: "shape",
+        name: "Left Notch Cutout",
+        shapeType: "circle",
+        fillColor: notchFill,
+        x: -12,
+        y: 318,
+        width: 24,
+        height: 24,
+        zIndex: 4,
+      },
+      {
+        id: `shape-right-notch-${Math.random().toString(36).slice(2, 7)}`,
+        type: "shape",
+        name: "Right Notch Cutout",
+        shapeType: "circle",
+        fillColor: notchFill,
+        x: 368,
+        y: 318,
+        width: 24,
+        height: 24,
+        zIndex: 4,
+      },
+      mkText(`lbl-counterfoil-${Math.random().toString(36).slice(2, 7)}`, "ADMISSION COUNTERFOIL · AUDIT COUPON", 20, 344, 340, 16, 8, 800, labelColor, "center", 1.5),
       {
         id: `qr-${Math.random().toString(36).slice(2, 7)}`,
         type: "qr",
-        name: "QR Code",
-        size: 180,
+        name: "Scannable QR Code",
+        size: 168,
         fgColor: "#000000",
         bgColor: "#FFFFFF",
         cornerRadius: 12,
         showScanLabel: true,
-        scanLabelText: "SCAN FOR ENTRY",
+        scanLabelText: "SCAN AT GATE",
         contrastSafe: true,
-        x: 100,
-        y: 150,
-        width: 180,
-        height: 180,
+        x: 106,
+        y: 374,
+        width: 168,
+        height: 168,
         locked: true,
         zIndex: 3,
       },
-      {
-        id: `text-attendee-${Math.random().toString(36).slice(2, 7)}`,
-        type: "dynamic_text",
-        name: "Attendee Name",
-        fieldKey: "attendee.name",
-        fallbackText: "ATTENDEE NAME",
-        fontFamily: "sans",
-        fontSize: 20,
-        fontWeight: 800,
-        color: fgColor,
-        textAlign: "center",
-        x: 20,
-        y: 380,
-        width: 340,
-        height: 30,
-        zIndex: 4,
-      },
-      {
-        id: `text-ticket-${Math.random().toString(36).slice(2, 7)}`,
-        type: "dynamic_text",
-        name: "Ticket Category",
-        fieldKey: "ticket.category",
-        fallbackText: "VIP DELEGATE",
-        fontFamily: "sans",
-        fontSize: 12,
-        fontWeight: 700,
-        color: accentColor,
-        textAlign: "center",
-        x: 20,
-        y: 420,
-        width: 340,
-        height: 24,
-        zIndex: 5,
-      },
+      mkText(`lbl-ref-${Math.random().toString(36).slice(2, 7)}`, "TICKET CREDENTIAL", 20, 560, 340, 16, 8, 700, labelColor, "center"),
+      mkField(`field-id-${Math.random().toString(36).slice(2, 7)}`, "ticket.id", "#URP-10284", 20, 580, 340, 22, 13, 800, fgColor, "center"),
+      mkText(`lbl-footer-${Math.random().toString(36).slice(2, 7)}`, "OFFICIAL PASS · VALID FOR ADMISSION · KEEP STUB", 20, 680, 340, 16, 7.5, 700, labelColor, "center", 1.2),
     ],
   };
 }
 
 /**
- * Generates a valid StudioDesign for a printable landscape stub ticket
+ * Generates an authentic StudioDesign for a printable landscape stub ticket
+ * with two-compartment architecture (Main Pass + Tear-off Gate Stub with Notches).
  */
 function createPrintableTicketDesign(
   name: string,
@@ -131,6 +228,11 @@ function createPrintableTicketDesign(
   fgColor = "#18181B",
   accentColor = "#635BFF"
 ): StudioDesign {
+  const isDark = bgColor === "#111827" || bgColor === "#0F1E36" || bgColor === "#09090B";
+  const stubBg = isDark ? "#171F30" : "#F8FAFC";
+  const notchFill = isDark ? "#0B0F19" : "#F1F5F9";
+  const labelColor = isDark ? "#94A3B8" : "#64748B";
+
   return {
     version: 2,
     format: "printable",
@@ -152,45 +254,33 @@ function createPrintableTicketDesign(
         height: 340,
         zIndex: 1,
       },
+      mkText(`lbl-main-hdr-${Math.random().toString(36).slice(2, 7)}`, "★ OFFICIAL EVENT ADMISSION TICKET", 32, 22, 480, 16, 8.5, 800, accentColor, "left", 1.8),
+      mkField(`text-event-${Math.random().toString(36).slice(2, 7)}`, "event.name", "URPASS ANNUAL SUMMIT", 32, 44, 480, 38, 24, 800, fgColor, "left"),
+      mkText(`lbl-holder-${Math.random().toString(36).slice(2, 7)}`, "PASS HOLDER", 32, 98, 240, 16, 8, 700, labelColor),
+      mkField(`text-attendee-${Math.random().toString(36).slice(2, 7)}`, "attendee.name", "Aarav Mehta", 32, 116, 240, 26, 17, 700, fgColor, "left"),
+      mkText(`lbl-venue-${Math.random().toString(36).slice(2, 7)}`, "LOCATION & DATE", 280, 98, 240, 16, 8, 700, labelColor),
+      mkField(`field-date-${Math.random().toString(36).slice(2, 7)}`, "event.date", "24 OCT 2026", 280, 116, 240, 24, 13, 700, fgColor),
+      mkField(`field-venue-${Math.random().toString(36).slice(2, 7)}`, "event.venue", "Convention Center Hall A", 280, 142, 240, 24, 12, 600, fgColor),
+      mkText(`lbl-matrix-${Math.random().toString(36).slice(2, 7)}`, "GATE 01  ·  SEC VIP  ·  ROW A  ·  SEAT 14", 32, 196, 480, 20, 11, 800, accentColor, "left", 1.5),
+      mkText(`lbl-barcode-${Math.random().toString(36).slice(2, 7)}`, "BARCODE // LINEAR ADMISSION CODE", 32, 242, 480, 14, 7.5, 700, labelColor),
+      mkField(`field-barcode-${Math.random().toString(36).slice(2, 7)}`, "ticket.id", "* URPASS-10284 *", 32, 262, 480, 22, 12, 700, fgColor),
       {
-        id: `text-event-${Math.random().toString(36).slice(2, 7)}`,
-        type: "dynamic_text",
-        name: "Event Name",
-        fieldKey: "event.name",
-        fallbackText: "EVENT NAME",
-        fontFamily: "sans",
-        fontSize: 22,
-        fontWeight: 800,
-        color: fgColor,
-        textAlign: "left",
-        x: 32,
-        y: 36,
-        width: 480,
-        height: 34,
-        zIndex: 2,
-      },
-      {
-        id: `text-attendee-${Math.random().toString(36).slice(2, 7)}`,
-        type: "dynamic_text",
-        name: "Attendee Name",
-        fieldKey: "attendee.name",
-        fallbackText: "ATTENDEE NAME",
-        fontFamily: "sans",
-        fontSize: 18,
-        fontWeight: 700,
-        color: fgColor,
-        textAlign: "left",
-        x: 32,
-        y: 110,
-        width: 480,
-        height: 28,
-        zIndex: 3,
+        id: `shape-stub-bg-${Math.random().toString(36).slice(2, 7)}`,
+        type: "shape",
+        name: "Stub Background",
+        shapeType: "rect",
+        fillColor: stubBg,
+        x: 540,
+        y: 0,
+        width: 240,
+        height: 340,
+        zIndex: 1,
       },
       {
         id: `divider-${Math.random().toString(36).slice(2, 7)}`,
         type: "divider",
-        name: "Stub Divider",
-        color: "#E5E7EB",
+        name: "Perforated Divider",
+        color: isDark ? "#374151" : "#CBD5E1",
         thickness: 2,
         style: "dashed",
         x: 540,
@@ -200,23 +290,51 @@ function createPrintableTicketDesign(
         zIndex: 4,
       },
       {
+        id: `shape-top-notch-${Math.random().toString(36).slice(2, 7)}`,
+        type: "shape",
+        name: "Top Punch Notch",
+        shapeType: "circle",
+        fillColor: notchFill,
+        x: 527,
+        y: -13,
+        width: 26,
+        height: 26,
+        zIndex: 5,
+      },
+      {
+        id: `shape-bottom-notch-${Math.random().toString(36).slice(2, 7)}`,
+        type: "shape",
+        name: "Bottom Punch Notch",
+        shapeType: "circle",
+        fillColor: notchFill,
+        x: 527,
+        y: 327,
+        width: 26,
+        height: 26,
+        zIndex: 5,
+      },
+      mkText(`lbl-stub-hdr-${Math.random().toString(36).slice(2, 7)}`, "GATE STUB · ADMISSION", 555, 18, 210, 16, 8, 800, labelColor, "center", 1.5),
+      {
         id: `qr-${Math.random().toString(36).slice(2, 7)}`,
         type: "qr",
         name: "QR Code",
-        size: 160,
+        size: 154,
         fgColor: "#000000",
         bgColor: "#FFFFFF",
         cornerRadius: 8,
         showScanLabel: true,
         scanLabelText: "SCAN AT GATE",
         contrastSafe: true,
-        x: 575,
-        y: 70,
-        width: 160,
-        height: 160,
+        x: 583,
+        y: 48,
+        width: 154,
+        height: 154,
         locked: true,
         zIndex: 5,
       },
+      mkText(`lbl-stub-seat-${Math.random().toString(36).slice(2, 7)}`, "SEC VIP · SEAT 14", 555, 236, 210, 16, 9, 800, fgColor, "center"),
+      mkField(`field-stub-id-${Math.random().toString(36).slice(2, 7)}`, "ticket.id", "#URP-10284", 555, 260, 210, 20, 11, 700, labelColor, "center"),
+      mkText(`lbl-stub-void-${Math.random().toString(36).slice(2, 7)}`, "VOID IF DETACHED", 555, 305, 210, 14, 7.5, 800, isDark ? "#F87171" : "#DC2626", "center", 1.2),
     ],
   };
 }
@@ -825,127 +943,152 @@ export function convertStudioTemplateToTicketDesign(
   let templateTheme: TicketTemplate = "event";
   let shape: TicketShape = "standard";
   let primaryColor = "#635BFF";
+  let ticketStyle: TicketRealStyle = "concert";
 
   switch (tpl.id) {
     case "corporate-minimal":
       templateTheme = "minimal";
       shape = "standard";
       primaryColor = "#18181B";
+      ticketStyle = "executive";
       break;
     case "cinema-ticket":
       templateTheme = "event";
       shape = "rounded";
       primaryColor = "#F84464";
+      ticketStyle = "cinema";
       break;
     case "executive-blue":
       templateTheme = "modern";
       shape = "standard";
       primaryColor = "#2563EB";
+      ticketStyle = "executive";
       break;
     case "minimal-monochrome":
       templateTheme = "minimal";
       shape = "standard";
       primaryColor = "#000000";
+      ticketStyle = "executive";
       break;
     case "networking-pro":
       templateTheme = "modern";
       shape = "rounded";
       primaryColor = "#4F46E5";
+      ticketStyle = "executive";
       break;
     case "tech-pulse":
       templateTheme = "dark";
       shape = "rounded";
       primaryColor = "#8B5CF6";
+      ticketStyle = "cyber";
       break;
     case "future-grid":
       templateTheme = "dark";
       shape = "compact";
       primaryColor = "#10B981";
+      ticketStyle = "cyber";
       break;
     case "product-launch":
       templateTheme = "modern";
       shape = "standard";
       primaryColor = "#09090B";
+      ticketStyle = "cyber";
       break;
     case "ultra-qr":
       templateTheme = "minimal";
       shape = "compact";
       primaryColor = "#18181B";
+      ticketStyle = "concert";
       break;
     case "campus-pop":
       templateTheme = "event";
       shape = "rounded";
       primaryColor = "#F59E0B";
+      ticketStyle = "vintage";
       break;
     case "campus-classic":
       templateTheme = "event";
       shape = "standard";
       primaryColor = "#065F46";
+      ticketStyle = "vintage";
       break;
     case "workshop-clean":
       templateTheme = "minimal";
       shape = "standard";
       primaryColor = "#0D9488";
+      ticketStyle = "executive";
       break;
     case "speaker-badge":
       templateTheme = "modern";
       shape = "rounded";
       primaryColor = "#059669";
+      ticketStyle = "executive";
       break;
     case "festival-neon":
       templateTheme = "dark";
       shape = "rounded";
       primaryColor = "#EC4899";
+      ticketStyle = "concert";
       break;
     case "urban-festival":
       templateTheme = "event";
       shape = "compact";
       primaryColor = "#FF5500";
+      ticketStyle = "concert";
       break;
     case "sports-arena":
       templateTheme = "event";
       shape = "compact";
       primaryColor = "#DC2626";
+      ticketStyle = "stadium";
       break;
     case "marathon-pass":
       templateTheme = "modern";
       shape = "compact";
       primaryColor = "#EA580C";
+      ticketStyle = "stadium";
       break;
     case "vip-midnight":
       templateTheme = "dark";
       shape = "rounded";
       primaryColor = "#D4AF37";
+      ticketStyle = "vip_gold";
       break;
     case "premium-ivory":
       templateTheme = "minimal";
       shape = "standard";
       primaryColor = "#44403C";
+      ticketStyle = "vip_gold";
       break;
     case "elegant-rsvp":
       templateTheme = "minimal";
       shape = "rounded";
       primaryColor = "#57534E";
+      ticketStyle = "vip_gold";
       break;
     case "expo-pro":
       templateTheme = "modern";
       shape = "standard";
       primaryColor = "#1D4ED8";
+      ticketStyle = "executive";
       break;
     case "vip-all-access":
       templateTheme = "dark";
       shape = "rounded";
       primaryColor = "#F59E0B";
+      ticketStyle = "vip_gold";
       break;
     case "concert-music-fest":
       templateTheme = "event";
       shape = "compact";
       primaryColor = "#EC4899";
+      ticketStyle = "concert";
       break;
     default:
       templateTheme = "event";
       shape = "standard";
       primaryColor = "#18181B";
+      ticketStyle = "concert";
   }
 
   const qrPosition: "center" | "bottom" =
@@ -958,6 +1101,7 @@ export function convertStudioTemplateToTicketDesign(
 
   return {
     template: templateTheme,
+    ticketStyle,
     primaryColor,
     shape,
     format: tpl.id === "cinema-ticket" ? "print" : tpl.format === "badge" ? "badge" : (tpl.format === "printable" || (tpl.format as string) === "print") ? "print" : "mobile",

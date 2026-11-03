@@ -4,6 +4,7 @@ import { render, screen } from "@testing-library/react";
 import TicketCutDivider from "@/components/pass/TicketCutDivider";
 import TicketBarcode from "@/components/pass/TicketBarcode";
 import TicketPreview from "@/components/pass/TicketPreview";
+import TicketStamp from "@/components/pass/TicketStamp";
 import { GroupPassCard } from "@/components/pass/GroupPassCard";
 
 describe("TicketCutDivider Component", () => {
@@ -120,5 +121,100 @@ describe("GroupPassCard Ticket Design", () => {
 
     // Check for Scannable Group Token
     expect(screen.getByText("GRP-TOK-1234")).toBeInTheDocument();
+  });
+});
+
+describe("TicketStamp Component", () => {
+  it("renders box office rubber ink stamp with text and subtext", () => {
+    render(<TicketStamp text="BOX OFFICE" subtext="VERIFIED ENTRY" variant="red" />);
+    expect(screen.getByText("BOX OFFICE")).toBeInTheDocument();
+    expect(screen.getByText("VERIFIED ENTRY")).toBeInTheDocument();
+  });
+
+  it("supports different color variants", () => {
+    const { container } = render(<TicketStamp text="VIP GOLD" variant="gold" />);
+    expect(container.firstChild).toHaveClass("border-amber-500/90");
+  });
+});
+
+describe("Real Ticket Archetypes in TicketPreview", () => {
+  it("renders cinema archetype with premiere banner and box office stamp", () => {
+    render(
+      <TicketPreview
+        config={{
+          template: "event",
+          ticketStyle: "cinema",
+          primaryColor: "#F84464",
+          showTicketType: true,
+          showAttendeeName: true,
+          showTicketId: true,
+          showVenue: true,
+        }}
+        eventName="Interstellar 70mm"
+        attendeeName="Christopher"
+      />
+    );
+    expect(screen.getByText(/CINEMA PREMIERE PASS/i)).toBeInTheDocument();
+    expect(screen.getByText("BOX OFFICE")).toBeInTheDocument();
+  });
+
+  it("renders boarding pass archetype with flight express header and gate stamp", () => {
+    render(
+      <TicketPreview
+        config={{
+          template: "modern",
+          ticketStyle: "boarding",
+          primaryColor: "#0284C7",
+          showTicketType: true,
+          showAttendeeName: true,
+          showTicketId: true,
+          showVenue: true,
+        }}
+        eventName="Tech Expo"
+        attendeeName="Captain Jack"
+      />
+    );
+    expect(screen.getByText(/BOARDING PASS · SUMMIT EXPRESS/i)).toBeInTheDocument();
+    expect(screen.getByText("BOARDING APPROVED")).toBeInTheDocument();
+  });
+
+  it("renders VIP gold foil archetype with luxury gala banner and gold seal", () => {
+    render(
+      <TicketPreview
+        config={{
+          template: "dark",
+          ticketStyle: "vip_gold",
+          primaryColor: "#D4AF37",
+          showTicketType: true,
+          showAttendeeName: true,
+          showTicketId: true,
+          showVenue: true,
+        }}
+        eventName="Gala Night"
+        attendeeName="Lord Sterling"
+      />
+    );
+    expect(screen.getByText(/VIP ALL-ACCESS GALA PASS/i)).toBeInTheDocument();
+    expect(screen.getByText("VIP ADMISSION")).toBeInTheDocument();
+  });
+
+  it("renders vintage admit one archetype with retro stamp and series number", () => {
+    render(
+      <TicketPreview
+        config={{
+          template: "event",
+          ticketStyle: "vintage",
+          primaryColor: "#D97706",
+          showTicketType: true,
+          showAttendeeName: true,
+          showTicketId: true,
+          showVenue: true,
+        }}
+        eventName="Vintage Carnival"
+        attendeeName="Oliver Twist"
+      />
+    );
+    expect(screen.getByText(/ADMIT ONE ★ VINTAGE PASS/i)).toBeInTheDocument();
+    expect(screen.getAllByText("ADMIT ONE").length).toBeGreaterThanOrEqual(1);
   });
 });

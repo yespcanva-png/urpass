@@ -23,12 +23,12 @@ const PLANS = [
     priceMonthly: 0,
     annualTotal: 0,
     features: [
-      "2 events/month",
-      "100 registrations/month",
+      "1 event at a time",
+      "50 registrations/month",
       "1 organizer seat",
       "QR passes & check-in",
       "Attendee approval",
-      "Basic analytics",
+      "Mandatory UrPass watermark",
     ],
   },
   {

@@ -35,6 +35,8 @@ import { detectCountryClient } from "@/lib/country-config";
 import CorporateWhatsNewCard from "@/components/dashboard/CorporateWhatsNewCard";
 import OrganizerOnboardingChecklist from "@/components/dashboard/OrganizerOnboardingChecklist";
 import ExploreMarketplaceBanner from "@/components/dashboard/ExploreMarketplaceBanner";
+import ConciergeSetupModal from "@/components/concierge/ConciergeSetupModal";
+import EventPassCheckoutModal from "@/components/billing/EventPassCheckoutModal";
 
 const emptySubscribe = () => () => {};
 
@@ -130,6 +132,9 @@ export default function DashboardContent() {
   const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
   const [whatsNewDismissed, setWhatsNewDismissed] = useState<boolean | null>(null);
   const [currentUser, setCurrentUser] = useState<{ email?: string | null; id?: string | null } | null>(null);
+  const [conciergeModalOpen, setConciergeModalOpen] = useState(false);
+  const [conciergeIsFirstTime, setConciergeIsFirstTime] = useState(false);
+  const [singlePassModalOpen, setSinglePassModalOpen] = useState(false);
 
   // Table Filters
   const [filterTab, setFilterTab] = useState<"all" | "upcoming" | "draft" | "past" | "archived">("all");
@@ -490,15 +495,53 @@ export default function DashboardContent() {
             <p className="text-xs sm:text-sm text-neutral-500 leading-relaxed">
               Create your registration page, design branded digital passes, and scan attendees with sub-second QR recognition.
             </p>
-            <div className="pt-2">
+            <div className="pt-3 flex flex-col sm:flex-row items-center justify-center gap-3">
               <Link
                 href="/create-event"
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold text-white bg-neutral-900 hover:bg-neutral-800 transition-colors shadow-xs"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold text-white bg-neutral-900 hover:bg-neutral-800 transition-colors shadow-xs"
               >
                 <Plus className="w-4 h-4" />
-                <span>Create Your First Event</span>
+                <span>Create Event Yourself</span>
               </Link>
+              <button
+                type="button"
+                onClick={() => {
+                  setConciergeIsFirstTime(true);
+                  setConciergeModalOpen(true);
+                }}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 transition-colors cursor-pointer shadow-2xs"
+              >
+                <Sparkles className="w-4 h-4 text-purple-600" />
+                <span>Claim Free 24h Setup (₹0)</span>
+              </button>
             </div>
+          </div>
+
+          {/* First-Timer Free Setup Callout */}
+          <div className="p-5 rounded-2xl bg-gradient-to-r from-purple-50/80 via-indigo-50/60 to-purple-50/80 border border-purple-200/90 text-left flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 max-w-2xl mx-auto shadow-2xs">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-amber-400 text-neutral-950 uppercase tracking-wide">
+                  First Event Privilege
+                </span>
+                <span className="text-xs font-bold text-neutral-900">
+                  Never ran an event? We&apos;ll set it up for free.
+                </span>
+              </div>
+              <p className="text-xs text-neutral-600 leading-relaxed">
+                Send us your poster or agenda. Our engineers configure your registration page, brand your ticket passes, and set up your gate scanners for <strong>FREE in under 24 hours</strong>.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setConciergeIsFirstTime(true);
+                setConciergeModalOpen(true);
+              }}
+              className="shrink-0 px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-purple-700 hover:bg-purple-800 transition-colors shadow-xs cursor-pointer"
+            >
+              Claim Free Setup
+            </button>
           </div>
 
           {/* 3 Step Workflow Overview */}
@@ -556,8 +599,45 @@ export default function DashboardContent() {
           </div>
         </div>
       ) : (
-        /* ── Zoho Corporate Event Table (When Events Exist) ── */
-        <div className="bg-white rounded-xl border border-neutral-200/80 shadow-2xs overflow-hidden">
+        <div className="space-y-4">
+          {/* Quick service & pass upgrade banner for active organizers */}
+          <div className="p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-amber-50/70 via-purple-50/50 to-indigo-50/40 border border-neutral-200/90 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs shadow-2xs">
+            <div className="flex items-center gap-2.5">
+              <span className="w-8 h-8 rounded-xl bg-white border border-neutral-200/80 flex items-center justify-center text-purple-700 shrink-0 shadow-2xs">
+                <Sparkles className="w-4 h-4 text-purple-600" />
+              </span>
+              <div>
+                <span className="font-bold text-neutral-900">
+                  Running an upcoming event?
+                </span>
+                <span className="text-neutral-500 ml-1.5 hidden md:inline">
+                  Get a Single Event Pass (₹299, no watermark, 500 attendees) or let our team build your event in 24 hours.
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
+              <button
+                type="button"
+                onClick={() => setSinglePassModalOpen(true)}
+                className="flex-1 sm:flex-initial px-3.5 py-1.5 rounded-xl font-bold text-amber-950 bg-amber-300 hover:bg-amber-400 border border-amber-400/80 transition-colors cursor-pointer text-center shadow-2xs"
+              >
+                Single Event Pass (₹299)
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setConciergeIsFirstTime(false);
+                  setConciergeModalOpen(true);
+                }}
+                className="flex-1 sm:flex-initial px-3.5 py-1.5 rounded-xl font-bold text-purple-700 bg-white hover:bg-purple-50 border border-purple-200 transition-colors cursor-pointer text-center shadow-2xs"
+              >
+                VIP 24h Setup (₹999)
+              </button>
+            </div>
+          </div>
+
+          {/* ── Zoho Corporate Event Table (When Events Exist) ── */}
+          <div className="bg-white rounded-xl border border-neutral-200/80 shadow-2xs overflow-hidden">
           {/* Controls Bar */}
           <div className="p-3.5 sm:px-5 sm:py-3 border-b border-neutral-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-neutral-50/40">
             {/* Tabs */}
@@ -772,6 +852,7 @@ export default function DashboardContent() {
             </div>
           )}
         </div>
+        </div>
       )}
 
       {/* ── Organization Teams (Clean Minimalist Strip) ─────────────── */}
@@ -825,6 +906,28 @@ export default function DashboardContent() {
           </Link>
         </div>
       </div>
+
+      {/* 24-Hour VIP Concierge Setup Modal */}
+      <ConciergeSetupModal
+        isOpen={conciergeModalOpen}
+        onClose={() => setConciergeModalOpen(false)}
+        isFirstTime={conciergeIsFirstTime}
+        userEmail={currentUser?.email || ""}
+        userName={firstName}
+      />
+
+      {/* Single Event Pass Checkout Modal */}
+      <EventPassCheckoutModal
+        isOpen={singlePassModalOpen}
+        onClose={() => setSinglePassModalOpen(false)}
+        passType="event"
+        passName="Single Event License"
+        priceRupees={299}
+        registrationLimit={500}
+        userEmail={currentUser?.email || ""}
+        userName={firstName || "Organizer"}
+        currency={country === "GB" ? "GBP" : "INR"}
+      />
     </div>
   );
 }

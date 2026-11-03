@@ -21,6 +21,7 @@ import {
   QrCode,
   Smartphone,
   ExternalLink,
+  Ticket,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -35,6 +36,8 @@ import { persistCountryPreference, detectCountryClient } from "@/lib/country-con
 import LeadCaptureModal from "@/components/marketing/LeadCaptureModal";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
+import ConciergeSetupModal from "@/components/concierge/ConciergeSetupModal";
+import EventPassCheckoutModal from "@/components/billing/EventPassCheckoutModal";
 
 interface Props {
   isAuthenticated?: boolean;
@@ -69,6 +72,8 @@ export default function PricingContent({
   const [serviceModel, setServiceModel] = useState<ServiceModel>("self_service");
   const [cycle, setCycle] = useState<BillingCycle>("monthly");
   const [managedModalOpen, setManagedModalOpen] = useState(false);
+  const [conciergeModalOpen, setConciergeModalOpen] = useState(false);
+  const [passCheckoutOpen, setPassCheckoutOpen] = useState(false);
   const [selectedManagedPackage, setSelectedManagedPackage] = useState<
     "essential" | "pro" | "premium" | "enterprise"
   >("pro");
@@ -292,6 +297,115 @@ export default function PricingContent({
         {/* ── SECTION A: SELF-SERVICE SUBSCRIPTION CARDS ── */}
         {serviceModel === "self_service" && (
           <section className="mb-24">
+            {/* Quick Purchase & Service Highlights: Single-Event Pass (₹299) & 24h Concierge Setup */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+              {/* Card 1: Single Event License */}
+              <div className="relative rounded-3xl p-6 bg-gradient-to-br from-white via-amber-50/30 to-amber-100/20 border border-amber-200/90 shadow-sm flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between mb-2.5">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 uppercase tracking-wide">
+                      <Ticket className="w-3 h-3 text-amber-700" /> Single Event License
+                    </span>
+                    <span className="text-[11px] font-semibold text-neutral-500">No recurring subscription</span>
+                  </div>
+                  <h3 className="text-lg font-bold text-neutral-900">
+                    Single Event Pass — {country === "GB" ? "£5" : "₹299"}
+                  </h3>
+                  <p className="text-xs text-neutral-600 mt-1 leading-relaxed">
+                    Hosting just one event? Don&apos;t get locked into a monthly subscription. Unlock 500 attendees, remove all &ldquo;Powered by UrPass&rdquo; watermarks, and get sub-second QR entry at gates.
+                  </p>
+                  <div className="grid grid-cols-2 gap-x-2 gap-y-1.5 mt-3.5 text-[11px] text-neutral-700 font-medium">
+                    <span className="flex items-center gap-1.5">
+                      <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" /> Up to 500 attendees
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" /> 100% White-label (no watermark)
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" /> 0% platform ticket fee
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" /> Sub-second QR gate scanners
+                    </span>
+                  </div>
+                </div>
+                <div className="pt-4 mt-4 border-t border-amber-200/60 flex items-center justify-between">
+                  <div>
+                    <span className="text-base font-extrabold text-neutral-900">
+                      {country === "GB" ? "£5 flat" : "₹299 flat"}
+                    </span>
+                    <span className="text-[10px] text-neutral-500 block">
+                      {country === "GB" ? "+20% VAT" : "+18% GST (₹352.82 total)"}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!isAuthenticated) {
+                        window.location.href = "/signup?ref=single-event-pass";
+                      } else {
+                        setPassCheckoutOpen(true);
+                      }
+                    }}
+                    className="px-4 py-2.5 rounded-xl text-xs font-bold text-neutral-950 bg-amber-400 hover:bg-amber-300 transition-colors cursor-pointer shadow-xs"
+                  >
+                    Buy Single Event Pass →
+                  </button>
+                </div>
+              </div>
+
+              {/* Card 2: 24-Hour VIP Concierge Setup */}
+              <div className="relative rounded-3xl p-6 bg-gradient-to-br from-purple-50/70 via-indigo-50/40 to-white border border-purple-200 shadow-sm flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between mb-2.5">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-900 uppercase tracking-wide">
+                      <Sparkles className="w-3 h-3 text-purple-700" /> Done-For-You Service
+                    </span>
+                    <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md border border-emerald-200">
+                      FREE for 1st Event
+                    </span>
+                  </div>
+                  <h3 className="text-lg font-bold text-neutral-900">
+                    24-Hour VIP Event Setup — {country === "GB" ? "£25" : "₹999"}
+                  </h3>
+                  <p className="text-xs text-neutral-600 mt-1 leading-relaxed">
+                    Don&apos;t want to learn software? Send us your poster and ticket tiers. Our engineers build your registration page, brand your ticket passes, and configure your QR gates in under 24 hours.
+                  </p>
+                  <div className="grid grid-cols-2 gap-x-2 gap-y-1.5 mt-3.5 text-[11px] text-neutral-700 font-medium">
+                    <span className="flex items-center gap-1.5">
+                      <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" /> Complete 24h turnaround
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" /> Custom ticket badges & QR
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" /> Direct WhatsApp coordination
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" /> 100% Free for first-timers
+                    </span>
+                  </div>
+                </div>
+                <div className="pt-4 mt-4 border-t border-purple-200/60 flex items-center justify-between">
+                  <div>
+                    <span className="text-base font-extrabold text-neutral-900">
+                      {country === "GB" ? "£25" : "₹999"}
+                    </span>
+                    <span className="text-[10px] text-emerald-700 font-semibold block">
+                      or ₹0 if you never ran an event
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setConciergeModalOpen(true)}
+                    className="px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-purple-700 hover:bg-purple-800 transition-colors cursor-pointer shadow-xs"
+                  >
+                    Claim 24h Setup →
+                  </button>
+                </div>
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
               {SELF_SERVICE_PLANS.map((plan) => {
                 const isUk = country === "GB";
@@ -1121,6 +1235,27 @@ export default function PricingContent({
         defaultPackage={selectedManagedPackage}
         pageSlug="pricing"
         contentCluster="pricing"
+      />
+
+      {/* ── 24-Hour VIP Concierge Setup Modal ── */}
+      <ConciergeSetupModal
+        isOpen={conciergeModalOpen}
+        onClose={() => setConciergeModalOpen(false)}
+        isFirstTime={!isAuthenticated}
+        userEmail={userEmail}
+      />
+
+      {/* ── Single Event Pass Checkout Modal ── */}
+      <EventPassCheckoutModal
+        isOpen={passCheckoutOpen}
+        onClose={() => setPassCheckoutOpen(false)}
+        passType="event"
+        passName="Single Event Pass"
+        priceRupees={299}
+        registrationLimit={500}
+        userEmail={userEmail}
+        userName="Organizer"
+        currency={country === "GB" ? "GBP" : "INR"}
       />
     </div>
   );

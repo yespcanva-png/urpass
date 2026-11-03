@@ -35,6 +35,8 @@ import { checkTicketCancellationEligibility } from "@/lib/cancellation/service";
 import TicketBarcode from "@/components/pass/TicketBarcode";
 import TicketSecurityPattern from "@/components/pass/TicketSecurityPattern";
 import TicketAdmissionMatrix from "@/components/pass/TicketAdmissionMatrix";
+import TicketStamp from "@/components/pass/TicketStamp";
+import type { TicketRealStyle } from "@/lib/pass-design";
 
 export async function generateMetadata({
   params,
@@ -130,8 +132,21 @@ export default async function PassPage({
 
   const design = resolveTicketDesign(event.custom_pass_design, branding.customDesign, null);
 
-  const isDark = design.template === "dark";
-  const isMinimal = design.template === "minimal";
+  const effectiveTicketStyle: TicketRealStyle =
+    design.ticketStyle ||
+    (design.template === "dark"
+      ? "vip_gold"
+      : design.template === "minimal"
+      ? "executive"
+      : "concert");
+
+  const isDark =
+    design.template === "dark" ||
+    effectiveTicketStyle === "vip_gold" ||
+    effectiveTicketStyle === "cyber" ||
+    (effectiveTicketStyle === "concert" && design.template !== "minimal");
+
+  const isMinimal = design.template === "minimal" || effectiveTicketStyle === "executive";
   const isModern = design.template === "modern";
 
   const categoryColor = pass.pass_type
@@ -275,6 +290,214 @@ export default async function PassPage({
   }
 
   const statusText = getStatusText();
+
+  function getPassThemeConfig() {
+    switch (effectiveTicketStyle) {
+      case "cinema":
+        return {
+          banner: (
+            <div className="w-full bg-gradient-to-r from-rose-600 via-pink-600 to-rose-700 text-white px-4 py-2 flex items-center justify-between shadow-xs">
+              <span className="text-[8px] font-mono font-bold tracking-widest uppercase">
+                🎬 CINEMA PREMIERE PASS · SCREEN 03
+              </span>
+              <span className="text-[7.5px] font-mono font-bold bg-white/20 px-2 py-0.5 rounded-full">
+                DOLBY ATMOS
+              </span>
+            </div>
+          ),
+          stamp: (
+            <TicketStamp
+              text="BOX OFFICE"
+              subtext="PREMIERE ADMISSION"
+              variant="red"
+              angle={-8}
+              className="absolute top-12 right-3 z-20"
+            />
+          ),
+          matrixVariant: "cinema" as const,
+          cardBg: "bg-white dark:bg-[#121218] text-neutral-900 dark:text-neutral-50",
+          cardBorder: "border-rose-200 dark:border-rose-950",
+          cutoutColor: isDark ? "#0a0a0d" : "#f8fafc",
+        };
+      case "boarding":
+        return {
+          banner: (
+            <div className="w-full bg-gradient-to-r from-sky-600 via-blue-600 to-sky-700 text-white px-4 py-2 flex items-center justify-between shadow-xs">
+              <span className="text-[8px] font-mono font-bold tracking-widest uppercase">
+                ✈️ BOARDING PASS · SUMMIT EXPRESS
+              </span>
+              <span className="text-[7.5px] font-mono font-bold bg-white/20 px-2 py-0.5 rounded-full">
+                PRIORITY
+              </span>
+            </div>
+          ),
+          stamp: (
+            <TicketStamp
+              text="BOARDING APPROVED"
+              subtext="GATE CLEARANCE"
+              variant="blue"
+              angle={-6}
+              className="absolute top-12 right-3 z-20"
+            />
+          ),
+          matrixVariant: "boarding" as const,
+          cardBg: "bg-white dark:bg-[#0c121e] text-neutral-900 dark:text-neutral-50",
+          cardBorder: "border-sky-200 dark:border-sky-950",
+          cutoutColor: isDark ? "#0a0a0d" : "#f8fafc",
+        };
+      case "vip_gold":
+        return {
+          banner: (
+            <div className="w-full bg-gradient-to-r from-amber-600 via-amber-300 to-amber-700 text-neutral-950 px-4 py-1.5 flex items-center justify-between font-bold text-[8px] font-mono tracking-widest uppercase shadow-xs">
+              <span>💎 ★ VIP ALL-ACCESS GALA PASS ★</span>
+              <span className="text-[7px] font-black bg-black/15 px-1.5 py-0.5 rounded">
+                LIMITED EDITION
+              </span>
+            </div>
+          ),
+          stamp: (
+            <TicketStamp
+              text="VIP ADMISSION"
+              subtext="GOLDEN ALL-ACCESS"
+              variant="gold"
+              angle={-6}
+              className="absolute top-12 right-3 z-20"
+            />
+          ),
+          matrixVariant: "vip_gold" as const,
+          cardBg: "bg-[#0c0d12] text-amber-100",
+          cardBorder: "border-amber-500/40",
+          cutoutColor: "#0a0a0d",
+        };
+      case "stadium":
+        return {
+          banner: (
+            <div className="w-full bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 text-white px-4 py-2 flex items-center justify-between shadow-xs">
+              <span className="text-[8px] font-mono font-bold tracking-widest uppercase">
+                ⚽ MATCHDAY ARENA TICKET · TURNSTILE ENTRY
+              </span>
+              <span className="text-[7.5px] font-mono font-bold bg-white/20 px-2 py-0.5 rounded-full">
+                STAND EAST
+              </span>
+            </div>
+          ),
+          stamp: (
+            <TicketStamp
+              text="MATCHDAY ENTRY"
+              subtext="EAST TURNSTILE"
+              variant="emerald"
+              angle={-7}
+              className="absolute top-12 right-3 z-20"
+            />
+          ),
+          matrixVariant: "stadium" as const,
+          cardBg: "bg-white dark:bg-[#0c1613] text-neutral-900 dark:text-neutral-50",
+          cardBorder: "border-emerald-200 dark:border-emerald-950",
+          cutoutColor: isDark ? "#0a0a0d" : "#f8fafc",
+        };
+      case "vintage":
+        return {
+          banner: (
+            <div className="w-full bg-amber-200/90 text-amber-900 border-b border-amber-300 px-4 py-1.5 flex items-center justify-between font-mono font-bold text-[8px] tracking-widest uppercase shadow-2xs">
+              <span>🎟️ ★ ADMIT ONE ★ VINTAGE PASS</span>
+              <span className="font-extrabold text-red-700">№ 049281</span>
+            </div>
+          ),
+          stamp: (
+            <TicketStamp
+              text="ADMIT ONE"
+              subtext="SERIES 2026-A"
+              variant="red"
+              angle={-9}
+              className="absolute top-12 right-3 z-20"
+            />
+          ),
+          matrixVariant: "vintage" as const,
+          cardBg: "bg-[#FFFDF6] text-amber-950",
+          cardBorder: "border-amber-300",
+          cutoutColor: isDark ? "#0a0a0d" : "#f8fafc",
+        };
+      case "cyber":
+        return {
+          banner: (
+            <div className="w-full bg-gradient-to-r from-cyan-950 via-purple-950 to-neutral-950 text-cyan-300 border-b border-cyan-800/60 px-4 py-1.5 flex items-center justify-between font-mono font-bold text-[8px] tracking-widest uppercase shadow-xs">
+              <span className="text-cyan-400">⚡ // CRYPTO_PASS_V2</span>
+              <span className="text-emerald-400">STATUS: VERIFIED</span>
+            </div>
+          ),
+          stamp: (
+            <TicketStamp
+              text="ROOT ACCESS"
+              subtext="0x8F42_VERIFIED"
+              variant="emerald"
+              angle={-5}
+              className="absolute top-12 right-3 z-20"
+            />
+          ),
+          matrixVariant: "cyber" as const,
+          cardBg: "bg-[#09090e] text-cyan-50",
+          cardBorder: "border-cyan-800/70",
+          cutoutColor: "#0a0a0d",
+        };
+      case "executive":
+        return {
+          banner: (
+            <div className="w-full bg-neutral-900 text-white dark:bg-neutral-800 px-4 py-1.5 flex items-center justify-between font-mono font-bold text-[8px] tracking-widest uppercase shadow-xs">
+              <span>👔 ★ OFFICIAL EXECUTIVE PASS</span>
+              <span className="text-neutral-400">#{shortCode.toUpperCase()}</span>
+            </div>
+          ),
+          stamp: (
+            <TicketStamp
+              text="EXECUTIVE CLEARANCE"
+              subtext="DELEGATE 2026"
+              variant="blue"
+              angle={-6}
+              className="absolute top-12 right-3 z-20"
+            />
+          ),
+          matrixVariant: "standard" as const,
+          cardBg: isDark ? "bg-[#111317] text-white" : "bg-white text-neutral-900",
+          cardBorder: isDark ? "border-neutral-800" : "border-neutral-200",
+          cutoutColor: isDark ? "#0a0a0d" : "#f8fafc",
+        };
+      case "concert":
+      default:
+        return {
+          banner: (
+            <div
+              className="w-full relative z-10 py-1.5 px-3.5 flex items-center justify-between text-[7.5px] font-mono font-bold tracking-widest uppercase overflow-hidden shadow-xs"
+              style={{
+                background: isDark
+                  ? "linear-gradient(90deg, #b45309 0%, #d4af37 30%, #fef08a 50%, #d4af37 70%, #b45309 100%)"
+                  : `linear-gradient(90deg, ${activeColor} 0%, #a855f7 35%, ${activeColor} 70%, #ec4899 100%)`,
+                color: isDark ? "#451a03" : "#ffffff",
+              }}
+            >
+              <span className="truncate">🎸 ★ OFFICIAL LIVE ADMISSION PASS</span>
+              <span className="font-extrabold tracking-[0.2em] shrink-0">SECURE QR • URPASS</span>
+            </div>
+          ),
+          stamp: (
+            <TicketStamp
+              text="LIVE CONCERT"
+              subtext="ADMIT ONE · VALIDATED"
+              variant="red"
+              angle={-6}
+              className="absolute top-12 right-3 z-20"
+            />
+          ),
+          matrixVariant: "standard" as const,
+          cardBg: isDark ? "bg-[#111317] text-white" : "bg-white text-neutral-900",
+          cardBorder: isDark ? "border-neutral-800" : "border-neutral-200",
+          cutoutColor: isDark ? "#0a0a0d" : "#f8fafc",
+        };
+    }
+  }
+
+  const passTheme = getPassThemeConfig();
+  const effectiveCardBg = passTheme.cardBg;
+  const effectiveCardBorder = passTheme.cardBorder;
 
   return (
     <div
@@ -478,7 +701,7 @@ export default async function PassPage({
         ) : (
           <div
             id="printable-ticket-card"
-            className={`w-full max-w-[360px] printable-pass-container ${shapeRadius} border ${cardBorder} ${cardBg} overflow-hidden shadow-[0_20px_50px_-10px_rgba(0,0,0,0.12),0_4px_16px_-2px_rgba(0,0,0,0.06)] relative select-none transition-all duration-150 z-10`}
+            className={`w-full max-w-[360px] printable-pass-container ${shapeRadius} border ${effectiveCardBorder} ${effectiveCardBg} overflow-hidden shadow-[0_20px_50px_-10px_rgba(0,0,0,0.12),0_4px_16px_-2px_rgba(0,0,0,0.06)] relative select-none transition-all duration-150 z-10`}
           >
           {/* Banknote Guilloche Security Pattern */}
           <TicketSecurityPattern isDark={isDark} opacity={0.045} />
@@ -502,19 +725,11 @@ export default async function PassPage({
             </div>
           )}
 
-          {/* Holographic / Metallic Security Strip with Microprint */}
-          <div
-            className="w-full relative z-10 py-1 px-3.5 flex items-center justify-between text-[7.5px] font-mono font-bold tracking-widest uppercase overflow-hidden shadow-xs"
-            style={{
-              background: isDark
-                ? "linear-gradient(90deg, #b45309 0%, #d4af37 30%, #fef08a 50%, #d4af37 70%, #b45309 100%)"
-                : `linear-gradient(90deg, ${activeColor} 0%, #a855f7 35%, ${activeColor} 70%, #ec4899 100%)`,
-              color: isDark ? "#451a03" : "#ffffff",
-            }}
-          >
-            <span className="truncate">★ OFFICIAL ADMISSION PASS</span>
-            <span className="font-extrabold tracking-[0.2em] shrink-0">SECURE QR • URPASS</span>
-          </div>
+          {/* Authentic Archetype Header Banner */}
+          {passTheme.banner}
+
+          {/* Box Office Rubber Stamp Watermark */}
+          {passTheme.stamp}
 
           {/* Main Ticket Pass Body */}
           <div className="relative z-10 p-4 sm:p-5 flex flex-col items-center text-center">
@@ -586,6 +801,7 @@ export default async function PassPage({
               row="A"
               seat="14"
               isDark={isDark}
+              variant={passTheme.matrixVariant}
             />
 
             {/* Center Scannable QR Code (when qrPosition is not bottom) */}
@@ -780,7 +996,7 @@ export default async function PassPage({
             <TicketCutDivider
               isDark={isDark}
               label="✂ FOLD & TEAR ALONG PERFORATION · VOID IF DETACHED"
-              cutoutColor={isDark ? "#0a0a0d" : "#f8fafc"}
+              cutoutColor={passTheme.cutoutColor}
               negativeMarginCls="-mx-4 sm:-mx-5"
             />
 

@@ -23,6 +23,7 @@ import CheckoutButton from "./CheckoutButton";
 import CheckoutModal from "./CheckoutModal";
 import EventPassCheckoutModal from "./EventPassCheckoutModal";
 import FounderCheckoutCta from "./FounderCheckoutCta";
+import ConciergeSetupModal from "@/components/concierge/ConciergeSetupModal";
 
 const UK_PLAN_PRICES: Record<string, { monthly: number; annual: number }> = {
   starter: { monthly: 15, annual: 120 },
@@ -95,37 +96,39 @@ const PLAN_ICONS: Record<string, React.ComponentType<{ className?: string }>> = 
 const EVENT_PASSES = [
   {
     slug: "event",
-    name: "Event",
+    name: "Single Event License",
     price: 299,
-    registrationLimit: 250,
-    bestFor: "Small events & meetups",
+    registrationLimit: 500,
+    bestFor: "Best impulse buy · No subscription needed",
     Icon: CalendarCheck,
     features: [
-      "250 registrations",
-      "QR passes & check-in",
-      "Attendee approval",
-      "Basic analytics",
-      "Valid for 1 event",
+      "Up to 500 registrations",
+      "Remove 'Powered by UrPass' watermark",
+      "Fast sub-second QR entry at gates",
+      "Custom branded tickets & forms",
+      "0% platform commission",
+      "Valid for 1 complete event",
     ],
   },
   {
     slug: "event_plus",
-    name: "Event Plus",
+    name: "Event Plus License",
     price: 599,
     registrationLimit: 1000,
-    bestFor: "College events & workshops",
+    bestFor: "College fests & mid-size workshops",
     Icon: ZapIcon,
     features: [
       "1,000 registrations",
-      "QR passes & check-in",
-      "CSV export",
-      "Standard analytics",
-      "Valid for 1 event",
+      "No UrPass watermark",
+      "Multi-gate staff logins",
+      "CSV export & analytics",
+      "0% platform commission",
+      "Valid for 1 complete event",
     ],
   },
   {
     slug: "event_pro",
-    name: "Event Pro",
+    name: "Event Pro License",
     price: 999,
     registrationLimit: 2500,
     bestFor: "Large conferences",
@@ -177,6 +180,7 @@ export default function PlanGrid({
     priceRupees: number;
     registrationLimit: number;
   } | null>(null);
+  const [conciergeModalOpen, setConciergeModalOpen] = useState(false);
   const [activeCheckoutPlan, setActiveCheckoutPlan] = useState<string | null>(() => {
     const p = autoCheckoutPlan || searchParams?.get("plan");
     return p && ["starter", "pro", "business", "founder"].includes(p) ? p : null;
@@ -773,6 +777,35 @@ export default function PlanGrid({
             <ShieldCheck className="w-3.5 h-3.5 text-neutral-400" />
             <span>One-time payment · No recurring renewal charges · Attach to any event after purchase</span>
           </div>
+
+          {/* 24-Hour VIP Done-For-You Setup Service Banner */}
+          <div className="mt-5 p-5 rounded-2xl bg-gradient-to-r from-purple-50/80 via-indigo-50/60 to-purple-50/80 border border-purple-200/90 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-2xs">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-purple-100 text-purple-900 uppercase tracking-wide">
+                  Done-For-You Service
+                </span>
+                <span className="text-xs font-bold text-neutral-900">
+                  Don&apos;t want to build it yourself? 24-Hour VIP Concierge Setup
+                </span>
+              </div>
+              <p className="text-xs text-neutral-600 leading-relaxed max-w-xl">
+                Send us your event poster, schedule, and ticket tiers. Our engineers build your registration forms, design custom ticket badges, and set up your QR entry gates in 24 hours.
+              </p>
+            </div>
+            <div className="flex items-center gap-3 shrink-0">
+              <span className="text-xs font-bold text-neutral-900">
+                ₹999 <span className="font-normal text-emerald-700">(or Free for 1st event)</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => setConciergeModalOpen(true)}
+                className="px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-purple-700 hover:bg-purple-800 transition-colors shadow-xs cursor-pointer"
+              >
+                Claim 24h Setup
+              </button>
+            </div>
+          </div>
         </section>
       )}
 
@@ -890,6 +923,14 @@ export default function PlanGrid({
           introOfferEligible={!trialUsed && country !== "GB" && cycle === "monthly" && ["starter", "pro", "business"].includes(activeCheckoutPlan)}
         />
       )}
+
+      {/* 24-Hour VIP Concierge Setup Modal */}
+      <ConciergeSetupModal
+        isOpen={conciergeModalOpen}
+        onClose={() => setConciergeModalOpen(false)}
+        userEmail={userEmail}
+        userName={userName}
+      />
     </div>
   );
 }

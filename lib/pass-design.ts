@@ -1,9 +1,19 @@
 export type TicketTemplate = "minimal" | "event" | "dark" | "modern";
 export type TicketShape = "standard" | "rounded" | "compact";
 export type TicketOutputFormat = "mobile" | "badge" | "print";
+export type TicketRealStyle =
+  | "concert"
+  | "cinema"
+  | "boarding"
+  | "vip_gold"
+  | "stadium"
+  | "vintage"
+  | "cyber"
+  | "executive";
 
 export interface TicketDesignConfig {
   template: TicketTemplate;
+  ticketStyle?: TicketRealStyle;
   primaryColor: string;
   shape?: TicketShape;
   format?: TicketOutputFormat;
@@ -48,6 +58,7 @@ export interface TicketDesignConfig {
 
 export const DEFAULT_TICKET_DESIGN: TicketDesignConfig = {
   template: "event",
+  ticketStyle: "concert",
   primaryColor: "#635BFF",
   shape: "standard",
   format: "mobile",
@@ -122,6 +133,24 @@ export function sanitizeTicketDesign(input: unknown): TicketDesignConfig {
     : raw.theme === "cyber"
     ? "dark"
     : DEFAULT_TICKET_DESIGN.template;
+
+  const VALID_STYLES: TicketRealStyle[] = [
+    "concert",
+    "cinema",
+    "boarding",
+    "vip_gold",
+    "stadium",
+    "vintage",
+    "cyber",
+    "executive",
+  ];
+  const ticketStyle: TicketRealStyle = VALID_STYLES.includes(raw.ticketStyle as TicketRealStyle)
+    ? (raw.ticketStyle as TicketRealStyle)
+    : raw.template === "dark"
+    ? "vip_gold"
+    : raw.template === "minimal"
+    ? "executive"
+    : "concert";
 
   const shape: TicketShape = ["standard", "rounded", "compact"].includes(String(raw.shape))
     ? (raw.shape as TicketShape)
@@ -241,6 +270,7 @@ export function sanitizeTicketDesign(input: unknown): TicketDesignConfig {
 
   return {
     template,
+    ticketStyle,
     primaryColor,
     shape,
     format,

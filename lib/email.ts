@@ -898,6 +898,52 @@ export async function notifyOwnerOneTimePayment({
   });
 }
 
+export async function notifyOwnerConciergeSetupRequest({
+  organizerName,
+  organizerEmail,
+  whatsappNumber,
+  eventName,
+  eventDate,
+  city,
+  attendeeCount,
+  notes,
+  isFirstTime,
+  amountInr = 0,
+  paymentStatus,
+}: {
+  organizerName: string;
+  organizerEmail: string;
+  whatsappNumber: string;
+  eventName: string;
+  eventDate?: string | null;
+  city?: string | null;
+  attendeeCount?: string | null;
+  notes?: string | null;
+  isFirstTime?: boolean;
+  amountInr?: number;
+  paymentStatus?: string;
+}) {
+  const isFree = isFirstTime || amountInr === 0;
+  const tag = isFree ? "🎁 [FREE 1ST EVENT SETUP]" : "⚡ [PAID ₹999 VIP CONCIERGE SETUP]";
+  await sendOwnerNotification({
+    subject: `${tag} ${eventName} — ${organizerName} (${whatsappNumber})`,
+    title: isFree ? "Free 1st-Time Concierge Setup Request" : "Paid VIP Concierge Setup Request (₹999)",
+    rows: [
+      ["Organizer", organizerName],
+      ["Email", organizerEmail],
+      ["WhatsApp", whatsappNumber],
+      ["Event Name", eventName],
+      ["Date", eventDate || "TBD"],
+      ["City", city || "TBD"],
+      ["Expected Attendees", attendeeCount || "Unspecified"],
+      ["Package", isFree ? "Free 1st-Event Setup (24h)" : `VIP Setup (₹${amountInr})`],
+      ["Payment Status", paymentStatus || (isFree ? "Free" : "Pending")],
+      ["Notes / Requirements", notes || "None"],
+      ["Time", new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })],
+    ],
+  });
+}
+
 export async function sendUserPaymentSuccessEmail({
   to,
   name,
