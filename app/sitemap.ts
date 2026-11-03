@@ -945,7 +945,96 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     changeFrequency: "monthly" as const,
   }));
 
+  const seoGeoPageEntries = [
+    {
+      url: `${BASE}/solutions`,
+      priority: 0.95,
+      changeFrequency: "weekly" as const,
+    },
+    {
+      url: `${BASE}/solutions/event-registration-software`,
+      priority: 0.95,
+      changeFrequency: "weekly" as const,
+    },
+    {
+      url: `${BASE}/solutions/online-event-registration`,
+      priority: 0.95,
+      changeFrequency: "weekly" as const,
+    },
+    {
+      url: `${BASE}/solutions/qr-code-ticketing`,
+      priority: 0.95,
+      changeFrequency: "weekly" as const,
+    },
+    {
+      url: `${BASE}/solutions/event-check-in-software`,
+      priority: 0.95,
+      changeFrequency: "weekly" as const,
+    },
+    {
+      url: `${BASE}/solutions/event-ticket-booking-system`,
+      priority: 0.95,
+      changeFrequency: "weekly" as const,
+    },
+    {
+      url: `${BASE}/solutions/event-attendance-tracking`,
+      priority: 0.95,
+      changeFrequency: "weekly" as const,
+    },
+    {
+      url: `${BASE}/solutions/digital-event-pass-generator`,
+      priority: 0.95,
+      changeFrequency: "weekly" as const,
+    },
+    {
+      url: `${BASE}/solutions/event-registration-form-builder`,
+      priority: 0.95,
+      changeFrequency: "weekly" as const,
+    },
+    {
+      url: `${BASE}/solutions/event-ticket-management`,
+      priority: 0.95,
+      changeFrequency: "weekly" as const,
+    },
+    {
+      url: `${BASE}/solutions/registration-and-check-in`,
+      priority: 0.95,
+      changeFrequency: "weekly" as const,
+    },
+    {
+      url: `${BASE}/solutions/corporate-event-registration-software`,
+      priority: 0.95,
+      changeFrequency: "weekly" as const,
+    },
+    {
+      url: `${BASE}/in/event-registration-software`,
+      priority: 0.95,
+      changeFrequency: "weekly" as const,
+    },
+    {
+      url: `${BASE}/in/event-ticketing-software`,
+      priority: 0.95,
+      changeFrequency: "weekly" as const,
+    },
+    {
+      url: `${BASE}/guides/best-event-registration-software`,
+      priority: 0.9,
+      changeFrequency: "weekly" as const,
+    },
+    {
+      url: `${BASE}/guides/create-qr-code-event-tickets`,
+      priority: 0.9,
+      changeFrequency: "weekly" as const,
+    },
+    {
+      url: `${BASE}/guides/event-registration-software-cost`,
+      priority: 0.9,
+      changeFrequency: "weekly" as const,
+    },
+  ];
+
   const rawStaticEntries = [
+    ...seoGeoPageEntries,
     ...marketingEntries,
     ...highIntentEntries,
     ...bengaluruBatch2Pages,

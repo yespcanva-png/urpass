@@ -1,5 +1,6 @@
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { getSupabaseUrl } from "@/lib/supabase/config";
+import { SELF_SERVICE_PLAN_LIMITS, UNLIMITED_PLAN_LIMIT } from "@/lib/billing/plan-limits";
 
 export type PlanSlug = "free" | "starter" | "pro" | "business" | "campus" | "enterprise" | "founder" | "lifetime" | "managed_enterprise";
 
@@ -169,7 +170,7 @@ interface PlanConfig {
   entitlements: ReadonlySet<EntitlementKey>;
 }
 
-const UNLIMITED = 999_999;
+const UNLIMITED = UNLIMITED_PLAN_LIMIT;
 
 function ent(...keys: EntitlementKey[]): ReadonlySet<EntitlementKey> {
   return new Set(keys);
@@ -177,17 +178,11 @@ function ent(...keys: EntitlementKey[]): ReadonlySet<EntitlementKey> {
 
 const PLAN_CONFIGS: Record<PlanSlug, PlanConfig> = {
   free: {
-    eventsPerMonth: 1,
-    registrationsPerMonth: 100,
-    organizerSeats: 1,
-    customFields: 3,
+    ...SELF_SERVICE_PLAN_LIMITS.free,
     entitlements: ent(),
   },
   starter: {
-    eventsPerMonth: 3,
-    registrationsPerMonth: 500,
-    organizerSeats: 2,
-    customFields: 10,
+    ...SELF_SERVICE_PLAN_LIMITS.starter,
     entitlements: ent(
       "csv_import", "csv_export",
       "email_notifications_full",
@@ -196,10 +191,7 @@ const PLAN_CONFIGS: Record<PlanSlug, PlanConfig> = {
     ),
   },
   pro: {
-    eventsPerMonth: 10,
-    registrationsPerMonth: 2_500,
-    organizerSeats: 5,
-    customFields: UNLIMITED,
+    ...SELF_SERVICE_PLAN_LIMITS.pro,
     entitlements: ent(
       "csv_import", "csv_export",
       "email_notifications_full",
@@ -211,10 +203,7 @@ const PLAN_CONFIGS: Record<PlanSlug, PlanConfig> = {
     ),
   },
   business: {
-    eventsPerMonth: UNLIMITED,
-    registrationsPerMonth: 10_000,
-    organizerSeats: 15,
-    customFields: UNLIMITED,
+    ...SELF_SERVICE_PLAN_LIMITS.business,
     entitlements: ent(
       "csv_import", "csv_export",
       "email_notifications_full",
@@ -411,22 +400,25 @@ export async function getUserPlan(supabase: any, userId: string): Promise<PlanLi
   function isSubscriptionActive(s: Record<string, unknown> | null | undefined): boolean {
     if (!s) return false;
     const status = (s.status as string | undefined)?.toLowerCase();
-    if (status !== "active" && status !== "trialing") return false;
+    const planSlug = extractSlug(s);
+    if (planSlug === "founder" || planSlug === "lifetime") return true;
 
-    // Check trial expiration
+    if (status === "cancelled") {
+      const periodEnds = (s as { current_period_end?: string | number | Date | null }).current_period_end;
+      if (!periodEnds || new Date(periodEnds).getTime() < Date.now()) return false;
+    }
+    if (!["active", "trialing", "cancelled", "payment_pending", "past_due", "halted"].includes(status || "")) return false;
+
     if (s.is_trial || status === "trialing") {
       const trialEnds = (s as { trial_ends_at?: string | number | Date | null }).trial_ends_at;
-      if (trialEnds && new Date(trialEnds) < new Date()) {
-        return false;
-      }
+      return Boolean(trialEnds && new Date(trialEnds).getTime() > Date.now());
     }
 
-    // Check current_period_end for paid non-trial subscriptions
+    if (planSlug === "free") return status === "active";
     const periodEnds = (s as { current_period_end?: string | number | Date | null }).current_period_end;
-    if (periodEnds && new Date(periodEnds) < new Date()) {
+    if (periodEnds && new Date(periodEnds).getTime() < Date.now()) {
       return false;
     }
-
     return true;
   }
 
@@ -440,7 +432,7 @@ export async function getUserPlan(supabase: any, userId: string): Promise<PlanLi
 
       // Support mock clients with or without .in()
       const queryWithIn = typeof query.in === "function"
-        ? query.in("status", ["active", "trialing", "cancelled", "expired"])
+        ? query.in("status", ["active", "trialing", "cancelled", "payment_pending", "past_due", "halted"])
         : query;
 
       const res = typeof queryWithIn.maybeSingle === "function"
@@ -587,31 +579,6 @@ export async function getUserPlan(supabase: any, userId: string): Promise<PlanLi
       }
     } catch {
       // ignore
-    }
-  }
-
-  // 6. ENFORCE LEGACY FREE 30-DAY EXPIRATION POLICY:
-  // Existing Free users are entitled to Free access until 30 days from their signup date.
-  // After 30 days, free access expires and requires checkout at regular pricing.
-  if (slug === "free" && admin) {
-    try {
-      const { data: authUser } = await admin.auth.admin.getUserById(userId);
-      if (authUser?.user?.created_at) {
-        const signupDate = new Date(authUser.user.created_at);
-        const freeExpiresAt = new Date(signupDate.getTime() + 30 * 24 * 60 * 60 * 1000);
-        if (new Date() > freeExpiresAt) {
-          // Free access expired: maintain historical data & event continuity but restrict paid features
-          return {
-            ...FREE_PLAN,
-            maxEvents: 0,
-            maxAttendees: 0,
-            canCreatePaidEvents: false,
-            canCreateOrganizations: false,
-          };
-        }
-      }
-    } catch {
-      // Non-critical fallback
     }
   }
 

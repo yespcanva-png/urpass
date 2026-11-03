@@ -536,7 +536,9 @@ export default function BillingClientShell({
                 ) : currentPlanSlug !== "free" && renewalDate ? (
                   <div className="space-y-0.5">
                     <p className="text-xs text-neutral-500">
-                      {sub?.cancel_at_period_end || sub?.autopay_status === "cancelled"
+                      {sub?.autopay_status === "none"
+                        ? `One-time payment · Paid access valid until ${renewalDate} · No automatic renewal`
+                        : sub?.cancel_at_period_end || sub?.autopay_status === "cancelled"
                         ? `Auto-renewal cancelled · Paid access valid until ${renewalDate} (${sub?.has_lifetime_access ? "reverts to Founder Lifetime" : "reverts to Free"})`
                         : `Renews on ${renewalDate}${sub?.has_lifetime_access ? " · Founder Lifetime protected" : ""}`}
                     </p>
@@ -550,7 +552,7 @@ export default function BillingClientShell({
               </div>
 
               <div className="flex items-center gap-2.5 shrink-0 self-start sm:self-center">
-                {!isFounderPlan && !isManaged && currentPlanSlug !== "free" && sub && (
+                {!isFounderPlan && !isManaged && currentPlanSlug !== "free" && sub && sub.autopay_status !== "none" && (
                   <CancelButton
                     cancellationState={sub.cancellation_state}
                     cancellationError={sub.cancellation_error}

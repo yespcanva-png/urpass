@@ -85,6 +85,21 @@ describe("Email Automation Systems", () => {
       expect(paidEmail.html).toContain("₹4,999");
       expect(paidEmail.html).toContain("Lifetime Access");
     });
+
+    it("labels a one-time paid month without a renewal date", () => {
+      const email = buildSubscriptionEmail({
+        planName: "Starter",
+        amountFormatted: "₹588.82",
+        billingCycle: "monthly",
+        renewalDate: "December 1, 2026",
+        oneTime: true,
+      });
+
+      expect(email.subject).toContain("payment is complete");
+      expect(email.html).toContain("Access Until:");
+      expect(email.html).toContain("does not renew automatically");
+      expect(email.html).not.toContain("Next Renewal:");
+    });
   });
 
   describe("3. Newsletter Welcome & Subscription Email Template", () => {

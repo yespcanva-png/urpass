@@ -61,31 +61,45 @@ export async function POST(req: NextRequest) {
     }
 
     const isFreeTrial = notes.is_free_event_trial === "true";
-    const paymentStatus = String(payment?.status || "").toLowerCase();
-
-    if (!isFreeTrial) {
-      if (paymentStatus !== "captured" && paymentStatus !== "authorized") {
-        const actualAmtFormatted = payment?.amount
-          ? `₹${(Number(payment.amount) / 100).toFixed(2)}`
-          : "the plan subscription amount";
-        return NextResponse.json(
-          {
-            error: `First payment confirmation failed (payment status: ${paymentStatus}). Your subscription can only be activated after successful payment confirmation of ${actualAmtFormatted}.`,
-          },
-          { status: 400 }
-        );
-      }
-
-      if (paymentStatus === "authorized") {
-        try {
-          await (razorpay.payments as any).capture(paymentId, payment.amount, payment.currency || "INR");
-        } catch {
-          // Auto-capture in progress or handled by gateway
-        }
-      }
+    const planSlug = String(notes.plan_slug || "").toLowerCase();
+    const { getRazorpayAutopayDisclosure, AUTOPAY_AUTH_AMOUNT_PAISE, isRazorpayAutopayPlan } =
+      await import("@/lib/billing/razorpay-autopay");
+    if (!isRazorpayAutopayPlan(planSlug) || notes.user_id !== user.id) {
+      return NextResponse.json({ error: "Mandate payment does not match this account and plan." }, { status: 403 });
+    }
+    if (notes.billing_cycle && notes.billing_cycle !== "monthly") {
+      return NextResponse.json({ error: "Mandate payment is not monthly." }, { status: 400 });
+    }
+    if (order?.currency && String(order.currency).toUpperCase() !== "INR") {
+      return NextResponse.json({ error: "Invalid currency." }, { status: 400 });
+    }
+    if (payment?.currency && String(payment.currency).toUpperCase() !== "INR") {
+      return NextResponse.json({ error: "Invalid currency." }, { status: 400 });
+    }
+    if (payment?.order_id && payment.order_id !== orderId) {
+      return NextResponse.json({ error: "Payment order mismatch." }, { status: 400 });
+    }
+    const orderCustomerId = (order as { customer_id?: string } | null)?.customer_id;
+    if (orderCustomerId && String(orderCustomerId) !== customerId) {
+      return NextResponse.json({ error: "Customer mismatch." }, { status: 400 });
     }
 
-    const tokenId = String(payment?.token_id || payment?.token?.id || "");
+    const expectedAmount = isFreeTrial ? AUTOPAY_AUTH_AMOUNT_PAISE : getRazorpayAutopayDisclosure(planSlug).maxAmountPaise;
+    const paymentStatus = String(payment?.status || "").toLowerCase();
+    if (paymentStatus === "authorized") {
+      try {
+        await (razorpay.payments as any).capture(paymentId, payment.amount || expectedAmount, "INR");
+      } catch {
+        // Auto-capture can race the callback; the following fetch is authoritative.
+      }
+    }
+    const confirmedPayment = await (razorpay.payments as any).fetch(paymentId);
+    const confirmedStatus = String(confirmedPayment?.status || paymentStatus).toLowerCase();
+    if (confirmedStatus !== "captured" && confirmedStatus !== "authorized") {
+      return NextResponse.json({ error: "Payment capture is pending; access will activate after confirmation." }, { status: 202 });
+    }
+
+    const tokenId = String(confirmedPayment?.token_id || confirmedPayment?.token?.id || payment?.token_id || payment?.token?.id || "");
     if (!tokenId) {
       await admin
         .from("subscriptions")
@@ -105,9 +119,25 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const maxAmountPaise = notes.max_amount ? Number(notes.max_amount) : null;
+    const maxAmountPaise = getRazorpayAutopayDisclosure(planSlug).maxAmountPaise;
     const now = new Date();
     const periodEnd = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+
+    try {
+      const { data: priorPayment } = await admin.from("token_mandate_payments")
+        .select("user_id, provider_order_id, is_trial")
+        .eq("provider_payment_id", paymentId).maybeSingle();
+      if (priorPayment) {
+        if (priorPayment.user_id !== user.id || priorPayment.provider_order_id !== orderId ||
+            priorPayment.is_trial !== isFreeTrial) {
+          return NextResponse.json({ error: "Payment belongs to another checkout." }, { status: 403 });
+        }
+        return NextResponse.json({ success: true, idempotent: true, tokenId, customerId,
+          maxAmountPaise, isTrial: isFreeTrial, redirect: isFreeTrial ? "/create-event" : "/dashboard" });
+      }
+    } catch {
+      // Table may not exist or mock client doesn't support token_mandate_payments
+    }
 
     let targetPlan: { id: string; name: string; slug: string } | null = null;
     if (isFreeTrial) {
@@ -128,7 +158,6 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      const planSlug = notes.plan_slug || "pro";
       const { data: planData } = await admin
         .from("plans")
         .select("id, name, slug")
@@ -136,7 +165,6 @@ export async function POST(req: NextRequest) {
         .maybeSingle();
       targetPlan = planData;
     } else {
-      const planSlug = String(notes.plan_slug || "starter").toLowerCase();
       const { data: planData } = await admin
         .from("plans")
         .select("id, name, slug")
@@ -149,60 +177,96 @@ export async function POST(req: NextRequest) {
       targetPlan = planData;
     }
 
-    const updatePayload: Record<string, unknown> = {
-      provider_customer_id: customerId,
-      autopay_mandate_id: tokenId,
-      autopay_status: "active",
-      autopay_max_amount_paise: Number.isFinite(maxAmountPaise) ? maxAmountPaise : null,
-      autopay_currency: "INR",
-      autopay_confirmed_at: now.toISOString(),
-      updated_at: now.toISOString(),
-    };
+    if (!targetPlan?.id) return NextResponse.json({ error: "Plan is unavailable." }, { status: 503 });
 
-    if (isFreeTrial) {
-      updatePayload.status = "trialing";
-      updatePayload.provider = "razorpay";
-      updatePayload.billing_cycle = "monthly";
-      if (targetPlan?.id) updatePayload.plan_id = targetPlan.id;
-      updatePayload.free_event_trial_active = true;
-      updatePayload.free_event_trial_consumed = false;
-      updatePayload.trial_events_quota = 1;
-      updatePayload.trial_events_created = 0;
-      updatePayload.is_trial = true;
-      updatePayload.trial_plan = notes.plan_slug || "pro";
-      updatePayload.trial_starts_at = now.toISOString();
-      updatePayload.trial_ends_at = periodEnd.toISOString();
-    } else {
-      updatePayload.status = "active";
-      updatePayload.provider = "razorpay";
-      updatePayload.billing_cycle = "monthly";
-      if (targetPlan?.id) updatePayload.plan_id = targetPlan.id;
-      updatePayload.current_period_start = now.toISOString();
-      updatePayload.current_period_end = periodEnd.toISOString();
-      updatePayload.next_billing_date = periodEnd.toISOString();
-      updatePayload.cancel_at_period_end = false;
-      updatePayload.cancellation_state = "none";
-      updatePayload.cancellation_error = null;
-      updatePayload.registrations_used = 0;
-      updatePayload.is_trial = false;
-      updatePayload.free_event_trial_active = false;
-      updatePayload.free_event_trial_consumed = false;
+    let updatedSub: { id: string } | null = null;
+    let isReplayed = false;
+
+    if (typeof (admin as any).rpc === "function") {
+      try {
+        const { data: activation, error: rpcError } = await admin.rpc("activate_token_mandate_payment", {
+          p_user_id: user.id,
+          p_payment_id: paymentId,
+          p_order_id: orderId,
+          p_customer_id: customerId,
+          p_token_id: tokenId,
+          p_plan_id: targetPlan.id,
+          p_amount_paise: expectedAmount,
+          p_is_trial: isFreeTrial,
+          p_period_start: now.toISOString(),
+          p_period_end: periodEnd.toISOString(),
+        });
+        if (!rpcError && activation?.[0]) {
+          updatedSub = { id: activation[0].subscription_id };
+          isReplayed = Boolean(activation[0].replayed);
+        }
+      } catch {
+        // Fall back to direct table upsert below
+      }
     }
 
-    const { data: updatedSub, error } = await admin
-      .from("subscriptions")
-      .upsert(
-        {
-          user_id: user.id,
-          ...updatePayload,
-        },
-        { onConflict: "user_id" }
-      )
-      .select("id")
-      .single();
+    if (!updatedSub) {
+      const updatePayload: Record<string, unknown> = {
+        provider_customer_id: customerId,
+        autopay_mandate_id: tokenId,
+        autopay_status: "active",
+        autopay_max_amount_paise: Number.isFinite(maxAmountPaise) ? maxAmountPaise : null,
+        autopay_currency: "INR",
+        autopay_confirmed_at: now.toISOString(),
+        updated_at: now.toISOString(),
+      };
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      if (isFreeTrial) {
+        updatePayload.status = "trialing";
+        updatePayload.provider = "razorpay";
+        updatePayload.billing_cycle = "monthly";
+        if (targetPlan?.id) updatePayload.plan_id = targetPlan.id;
+        updatePayload.free_event_trial_active = true;
+        updatePayload.free_event_trial_consumed = false;
+        updatePayload.trial_events_quota = 1;
+        updatePayload.trial_events_created = 0;
+        updatePayload.is_trial = true;
+        updatePayload.trial_plan = notes.plan_slug || "pro";
+        updatePayload.trial_starts_at = now.toISOString();
+        updatePayload.trial_ends_at = periodEnd.toISOString();
+      } else {
+        updatePayload.status = "active";
+        updatePayload.provider = "razorpay";
+        updatePayload.billing_cycle = "monthly";
+        if (targetPlan?.id) updatePayload.plan_id = targetPlan.id;
+        updatePayload.current_period_start = now.toISOString();
+        updatePayload.current_period_end = periodEnd.toISOString();
+        updatePayload.next_billing_date = periodEnd.toISOString();
+        updatePayload.cancel_at_period_end = false;
+        updatePayload.cancellation_state = "none";
+        updatePayload.cancellation_error = null;
+        updatePayload.registrations_used = 0;
+        updatePayload.is_trial = false;
+        updatePayload.free_event_trial_active = false;
+        updatePayload.free_event_trial_consumed = false;
+      }
+
+      const { data: upsertedSub, error: upsertError } = await admin
+        .from("subscriptions")
+        .upsert(
+          {
+            user_id: user.id,
+            ...updatePayload,
+          },
+          { onConflict: "user_id" }
+        )
+        .select("id")
+        .single();
+
+      if (upsertError) {
+        return NextResponse.json({ error: upsertError.message }, { status: 500 });
+      }
+      updatedSub = upsertedSub;
+    }
+
+    if (isReplayed) {
+      return NextResponse.json({ success: true, idempotent: true, tokenId, customerId,
+        maxAmountPaise, isTrial: isFreeTrial, redirect: isFreeTrial ? "/create-event" : "/dashboard" });
     }
 
     if (!isFreeTrial && targetPlan) {

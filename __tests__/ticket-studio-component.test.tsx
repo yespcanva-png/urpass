@@ -213,6 +213,30 @@ describe("URPASS Ticket Studio (Professional 2-Panel Ticket Customization Interf
     expect(screen.getByText("GATE STUB")).toBeInTheDocument();
   });
 
+  it("updates the printable ticket when a field is hidden", async () => {
+    render(<TicketStudio isPro={true} eventId="evt-1" eventName="URPASS Summit 2026" />);
+    await userEvent.click(screen.getByRole("button", { name: /^print$/i }));
+
+    const ticket = document.getElementById("printable-ticket-card");
+    expect(ticket).toHaveTextContent("Aarav Mehta");
+    expect(ticket).toHaveTextContent("#URP-02891");
+    expect(ticket?.querySelector('[aria-label="Tear along dotted line"]')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("checkbox", { name: /attendee name/i }));
+    await userEvent.click(screen.getByRole("checkbox", { name: /ticket id/i }));
+    expect(ticket).not.toHaveTextContent("Aarav Mehta");
+    expect(ticket).not.toHaveTextContent("#URP-02891");
+  });
+
+  it("shows a printable preview after selecting a printable template", async () => {
+    render(<TicketStudio isPro={true} eventId="evt-1" />);
+    await userEvent.click(screen.getByRole("button", { name: /change template/i }));
+    await userEvent.click(screen.getByText("Workshop Clean"));
+
+    expect(screen.getByText("GATE STUB")).toBeInTheDocument();
+    expect(screen.getByText("Printable ticket with tear-off stub")).toBeInTheDocument();
+  });
+
   it("opens Send Test modal and submits test pass to email", async () => {
     render(
       <TicketStudio

@@ -17,6 +17,11 @@ export interface TrackingContext {
 
 export type AnalyticsEventName =
   | "seo_landing_view"
+  | "seo_signup_click"
+  | "seo_demo_click"
+  | "seo_pricing_click"
+  | "seo_lead_submitted"
+  | "seo_first_event_created"
   | "self_service_cta_click"
   | "managed_service_cta_click"
   | "self_service_signup_completed"

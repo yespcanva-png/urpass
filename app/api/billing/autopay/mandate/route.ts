@@ -132,37 +132,36 @@ export async function POST(req: NextRequest) {
 
   if (rawPhone.length < 10) {
     return NextResponse.json(
-      { error: "A valid 10-digit mobile number is required to authorize recurring AutoPay mandates." },
+      { error: "A valid 10-digit mobile number is required to register an AutoPay mandate with Indian banks." },
       { status: 400 }
     );
   }
 
   const contact = rawPhone.slice(-10);
-  void admin.from("profiles").update({ phone: contact }).eq("user_id", user.id);
-  void admin?.auth?.admin?.updateUserById?.(user.id, {
-    user_metadata: { ...user.user_metadata, phone: contact },
-  })?.catch?.(() => {});
+  const billingAddress = String(billingDetails?.billingAddress || billingDetails?.address || "").slice(0, 250);
+  const customerGstin = String(billingDetails?.gstin || "").trim().toUpperCase().slice(0, 15);
+  const billingState = String(billingDetails?.billingState || billingDetails?.state || "").slice(0, 100);
+  const billingStateCode = String(billingDetails?.billingStateCode || billingDetails?.stateCode || "").slice(0, 5);
 
-  const billingAddress = String(billingDetails?.billingAddress || "").slice(0, 200);
-  const customerGstin = String(billingDetails?.gstin || "").slice(0, 20);
-  const billingState = String(billingDetails?.state || "").slice(0, 60);
-  const billingStateCode = String(billingDetails?.stateCode || "").slice(0, 10);
-  const orderAmount = isFreeTrial ? AUTOPAY_AUTH_AMOUNT_PAISE : disclosure.maxAmountPaise;
+  const orderAmount = isFreeTrial ? AUTOPAY_AUTH_AMOUNT_PAISE : Math.round(disclosure.todayAmountWithGst * 100);
 
   try {
     const razorpay = getRazorpayClient();
-    const customerPayload: Record<string, unknown> = {
+
+    const customerPayload = {
       name: companyName,
       email,
       contact,
-      fail_existing: "0",
-      notes: cleanNotes({ user_id: user.id, purpose: "urpass_autopay" }),
+      notes: cleanNotes({
+        user_id: user.id,
+        source: "urpass_billing",
+        initial_plan: planSlug,
+      }),
     };
 
-    const hasContact = (c: any) =>
-      Boolean(c && typeof c.contact === "string" && c.contact.replace(/[^\d]/g, "").length >= 10);
+    const hasContact = (c: any) => Boolean(c && typeof c.contact === "string" && c.contact.replace(/[^\d]/g, "").length >= 10);
 
-    let customer: { id: string; contact?: string | null };
+    let customer: any = { id: sub?.provider_customer_id || null };
     if (sub?.provider_customer_id) {
       try {
         const fetched = await (razorpay.customers as any).fetch(sub.provider_customer_id);
@@ -299,4 +298,3 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: msg }, { status: 502 });
   }
 }
-

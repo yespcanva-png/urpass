@@ -238,16 +238,11 @@ export default function TicketStudio({
   const [templateFilterCategory, setTemplateFilterCategory] = useState("All");
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [upgradeFeatureName, setUpgradeFeatureName] = useState<string | undefined>(undefined);
-  const [isAiMagicOpen, setIsAiMagicOpen] = useState(false);
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.get("magic") === "open" || urlParams.get("ai") === "true") {
-        setIsAiMagicOpen(true);
-      }
-    }
-  }, []);
+  const [isAiMagicOpen, setIsAiMagicOpen] = useState(() => {
+    if (typeof window === "undefined") return false;
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get("magic") === "open" || urlParams.get("ai") === "true";
+  });
 
   function triggerUpgrade(featureName: string) {
     setUpgradeFeatureName(featureName);
@@ -790,7 +785,7 @@ export default function TicketStudio({
 
       {/* ─────────────────────────────────────────────────────────────
           CORE WORKFLOW BAR (Always Visible & Actionable)
-          Template selected → Customize branding → Configure ticket fields → Preview live → Save design → Use for event
+          Choose a template → Edit branding and fields → Check the ticket → Save
       ───────────────────────────────────────────────────────────── */}
       <div className="h-8 bg-neutral-50 border-b border-neutral-200/80 px-4 sm:px-6 flex items-center justify-between text-[11px] text-neutral-500 shrink-0 overflow-x-auto whitespace-nowrap no-print">
         <div className="flex items-center gap-2">
@@ -943,7 +938,7 @@ export default function TicketStudio({
                         {currentTemplateName}
                       </p>
                       <p className="text-[11px] text-neutral-500 mt-0.5 font-normal">
-                        Production pass layout
+                        {activeFormat === "print" ? "Printable ticket with tear-off stub" : activeFormat === "badge" ? "Event badge preview" : "Mobile pass preview"}
                       </p>
                     </div>
 
@@ -1337,6 +1332,7 @@ export default function TicketStudio({
 
               {openSections.content && (
                 <div className="mt-4 space-y-1.5 pt-1">
+                  <p className="text-xs text-neutral-500 pb-2">Choose what appears on the ticket. The preview updates as you edit.</p>
                   {fieldItems.map((field, idx) => {
                     const isChecked =
                       field.key === "showEventDate"
@@ -2412,61 +2408,44 @@ export default function TicketStudio({
               {activeFormat === "print" && (
                 <div
                   id="printable-ticket-card"
-                  className="w-[480px] sm:w-[500px] h-[220px] bg-white rounded-xl border border-neutral-200 shadow-[0_12px_36px_-6px_rgba(0,0,0,0.08),0_4px_12px_-2px_rgba(0,0,0,0.04)] flex overflow-hidden transition-all duration-150 relative"
+                  className={`w-[500px] min-h-[230px] ${cardBg} ${shapeRadius} border ${cardBorder} shadow-[0_12px_36px_-6px_rgba(0,0,0,0.12)] flex overflow-hidden transition-all duration-150 relative`}
                 >
-                  {/* Left Body (68%) */}
-                  <div className="w-[68%] p-5 flex flex-col justify-between border-r-2 border-dashed border-neutral-300 relative">
-                    {/* Semi-circular perforation cutouts */}
-                    <div className="absolute -top-3.5 -right-3.5 w-7 h-7 rounded-full bg-[#F5F6F7] border border-neutral-200" />
-                    <div className="absolute -bottom-3.5 -right-3.5 w-7 h-7 rounded-full bg-[#F5F6F7] border border-neutral-200" />
-
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-[10px] font-bold tracking-widest uppercase text-neutral-400">
-                          OFFICIAL ADMISSION
-                        </span>
-                        <span
-                          className="px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider"
-                          style={{
-                            backgroundColor: `${activeColor}15`,
-                            color: activeColor,
-                          }}
-                        >
-                          {sampleAttendee.ticketType}
-                        </span>
+                  <div className="absolute inset-y-0 left-0 w-1.5" style={{ backgroundColor: activeColor }} aria-hidden="true" />
+                  {/* Main ticket and detachable gate stub share the same live fields. */}
+                  <div className="w-[68%] min-w-0 pl-6 pr-5 py-5 flex flex-col justify-between gap-3">
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between gap-2">
+                        {config.logoUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={config.logoUrl} alt="Event logo" className="h-6 max-w-[110px] object-contain" />
+                        ) : (
+                          <span className={`text-[9px] font-bold tracking-[0.2em] uppercase ${subtextCls}`}>OFFICIAL ADMISSION</span>
+                        )}
+                        {config.showTicketType && (
+                          <span className="px-2 py-1 rounded text-[9px] font-bold uppercase tracking-wider truncate" style={{ backgroundColor: `${activeColor}20`, color: activeColor }}>
+                            {sampleAttendee.ticketType}
+                          </span>
+                        )}
                       </div>
-
-                      <h2 className="text-base font-bold text-neutral-900 uppercase tracking-tight line-clamp-1">
-                        {eventName}
-                      </h2>
-                      <p className="text-sm font-semibold text-neutral-800 mt-1">
-                        {sampleAttendee.name}
-                      </p>
-                      {config.showOrganization && sampleAttendee.organization && (
-                        <p className="text-xs text-neutral-500 font-normal">
-                          {sampleAttendee.organization}
-                        </p>
-                      )}
+                      <h2 className="text-lg font-black uppercase tracking-tight leading-tight line-clamp-2">{eventName}</h2>
+                      {config.showAttendeeName && <p className="text-sm font-semibold truncate">{sampleAttendee.name}</p>}
+                      {config.showOrganization && <p className={`text-[11px] truncate ${subtextCls}`}>{sampleAttendee.organization}</p>}
+                      {config.customMessage && <p className={`text-[10px] line-clamp-2 ${subtextCls}`}>{config.customMessage}</p>}
                     </div>
-
-                    <div className="border-t border-neutral-100 pt-2 flex items-center justify-between text-xs text-neutral-500">
-                      <div>
-                        <p className="text-[11px] font-medium text-neutral-700">
-                          {eventDate}
-                        </p>
-                        <p className="text-[10px] text-neutral-400">{venue}</p>
-                      </div>
-                      <span className="text-[11px] font-mono text-neutral-400">
-                        {sampleAttendee.ticketId}
-                      </span>
+                    <div className={`grid grid-cols-2 gap-2 border-t border-dotted ${dividerCls} pt-2.5`}>
+                      {config.showEventDate !== false && <div><span className={`block text-[8px] uppercase tracking-wider ${subtextCls}`}>Date & time</span><span className="text-[10px] font-semibold">{eventDate}</span></div>}
+                      {config.showVenue && <div><span className={`block text-[8px] uppercase tracking-wider ${subtextCls}`}>Venue</span><span className="text-[10px] font-semibold line-clamp-2">{venue}</span></div>}
+                      {config.showTicketId && <span className={`font-mono text-[9px] ${subtextCls}`}>{sampleAttendee.ticketId}</span>}
+                      <span className={`text-[8px] uppercase tracking-wide ${subtextCls}`}>{isMultiScan ? "Multiple entry" : "Admit one"}</span>
                     </div>
                   </div>
 
-                  {/* Right Stub (32%) */}
-                  <div className="w-[32%] p-4 bg-neutral-50 flex flex-col items-center justify-between text-center">
-                    <span className="text-[9px] font-bold tracking-widest text-neutral-400 uppercase">
-                      GATE STUB
-                    </span>
+                  <div className="absolute top-0 bottom-0 left-[68%] border-l-2 border-dotted border-neutral-400/70" aria-label="Tear along dotted line" />
+                  <div className="absolute -top-3 left-[68%] -translate-x-1/2 w-6 h-6 rounded-full bg-[#F5F6F7] border border-neutral-200" aria-hidden="true" />
+                  <div className="absolute -bottom-3 left-[68%] -translate-x-1/2 w-6 h-6 rounded-full bg-[#F5F6F7] border border-neutral-200" aria-hidden="true" />
+
+                  <div className={`w-[32%] min-w-0 p-4 flex flex-col items-center justify-between gap-2 text-center ${isDark ? "bg-white/5" : "bg-neutral-50"}`}>
+                    <span className={`text-[9px] font-bold tracking-widest uppercase ${subtextCls}`}>GATE STUB</span>
 
                     <div className="p-1.5 bg-white border border-neutral-200 rounded-lg shadow-2xs">
                       <div className="w-20 h-20 flex flex-col justify-between">
@@ -2485,13 +2464,9 @@ export default function TicketStudio({
                       </div>
                     </div>
 
-                    <div>
-                      <p className="text-[9px] font-mono text-neutral-500">
-                        {sampleAttendee.ticketId}
-                      </p>
-                      <span className="text-[8px] font-bold tracking-wider text-neutral-400 uppercase">
-                        ENTRY PASS
-                      </span>
+                    <div className="space-y-0.5">
+                      {config.showTicketId && <p className={`text-[9px] font-mono ${subtextCls}`}>{sampleAttendee.ticketId}</p>}
+                      <span className={`text-[8px] font-bold tracking-wider uppercase ${subtextCls}`}>Scan for entry</span>
                     </div>
                   </div>
                 </div>
@@ -2589,6 +2564,7 @@ export default function TicketStudio({
                         backgroundImageUrl:
                           prev.backgroundImageUrl || converted.backgroundImageUrl,
                       }));
+                      setActiveFormat(tpl.format === "printable" ? "print" : tpl.format === "badge" ? "badge" : "mobile");
                       setIsTemplateModalOpen(false);
                     }}
                     className="p-3.5 rounded-lg border border-neutral-200 hover:border-neutral-900 hover:shadow-2xs transition-all cursor-pointer bg-white flex flex-col justify-between"

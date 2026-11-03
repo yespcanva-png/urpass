@@ -8,15 +8,13 @@ import { logAuth, logAuthWarn, logAuthError } from "@/lib/auth/logger";
 import { ANON_SESSION_COOKIE } from "@/lib/conversion/attribution";
 import { linkSessionToUserId } from "@/lib/conversion/server";
 import { recordFirstEventConversion } from "@/lib/conversion/first-event";
+import { recentExchangedCodes } from "@/lib/auth/recent-exchanged-codes";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
 const EXTERNAL_TIMEOUT_MS = 6_000;
-
-// Short-lived in-memory cache of recently exchanged authorization codes (prevents duplicate token exchange errors on double-click/prefetch)
-const recentExchangedCodes = new Map<string, { destination: string; ts: number }>();
 
 function cleanupExchangedCodes() {
   const now = Date.now();
@@ -25,10 +23,6 @@ function cleanupExchangedCodes() {
       recentExchangedCodes.delete(key);
     }
   }
-}
-
-export function clearRecentExchangedCodes() {
-  recentExchangedCodes.clear();
 }
 
 interface GoogleTokenInfo {

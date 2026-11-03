@@ -41,6 +41,7 @@ export interface SubscriptionEmailData {
   renewalDate?: string | null;
   isTrial?: boolean;
   trialDays?: number;
+  oneTime?: boolean;
 }
 
 export interface PaymentFailedEmailData {
@@ -227,7 +228,7 @@ export function buildSubscriptionEmail(data: SubscriptionEmailData): { subject: 
       </tr>
       <tr>
         <td style="color: #64748b;">Status:</td>
-        <td style="font-weight: 600; color: #16a34a;">${isTrial ? `${data.trialDays || 30}-Day Free Trial Active` : "Active Subscription"}</td>
+        <td style="font-weight: 600; color: #16a34a;">${isTrial ? `${data.trialDays || 30}-Day Free Trial Active` : data.oneTime ? "Paid Access Active" : "Active Subscription"}</td>
       </tr>
       ${data.billingCycle ? `
       <tr>
@@ -241,7 +242,7 @@ export function buildSubscriptionEmail(data: SubscriptionEmailData): { subject: 
       </tr>` : ""}
       ${data.renewalDate ? `
       <tr>
-        <td style="color: #64748b;">${isTrial ? "Trial Ends On:" : "Next Renewal:"}</td>
+        <td style="color: #64748b;">${isTrial ? "Trial Ends On:" : data.oneTime ? "Access Until:" : "Next Renewal:"}</td>
         <td style="color: #0f172a;">${data.renewalDate}</td>
       </tr>` : ""}
     </table>
@@ -249,6 +250,8 @@ export function buildSubscriptionEmail(data: SubscriptionEmailData): { subject: 
 
   const heading = isTrial
     ? `Your ${data.planName} 30-Day Free Trial is Active`
+    : data.oneTime
+    ? `Your ${data.planName} Paid Access is Active`
     : `Your ${data.planName} Subscription is Active`;
 
   const message = isTrial
@@ -258,7 +261,7 @@ export function buildSubscriptionEmail(data: SubscriptionEmailData): { subject: 
   const html = renderCorporateEmailHtml({
     preheader: isTrial
       ? `Your 30-Day Free Trial for ${data.planName} is active.`
-      : `Your ${data.planName} subscription is active on UrPass.`,
+      : data.oneTime ? `Your ${data.planName} one-time payment is complete.` : `Your ${data.planName} subscription is active on UrPass.`,
     heading,
     message,
     cta: {
@@ -268,12 +271,14 @@ export function buildSubscriptionEmail(data: SubscriptionEmailData): { subject: 
     contextContentHtml,
     secondaryInfo: isTrial
       ? "You can cancel or change your plan at any time before the trial ends under Settings &rarr; Plan & Billing."
-      : "You can view your tax invoices and update payment methods at any time under Settings &rarr; Plan & Billing.",
+      : data.oneTime ? "Your access does not renew automatically. You can pay again under Settings &rarr; Plan & Billing." : "You can view your tax invoices and update payment methods at any time under Settings &rarr; Plan & Billing.",
   });
 
   return {
     subject: isTrial
       ? `🚀 URPASS Free Trial Activated: ${data.planName}`
+      : data.oneTime
+      ? `Your UrPass ${data.planName} payment is complete`
       : `Your UrPass ${data.planName} subscription is active`,
     html,
   };

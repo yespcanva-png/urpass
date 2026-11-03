@@ -7,7 +7,7 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import { getSupabaseUrl } from "@/lib/supabase/config";
 import { createInvoiceForPayment } from "@/lib/invoices";
-import { getIntroOfferDisclosure, getIntroOfferId, isIntroOfferPlan } from "@/lib/billing/razorpay-subscription-offers";
+import { getIntroOfferDisclosure, getIntroOfferId, getMonthlyRazorpayPlanId, isIntroOfferPlan } from "@/lib/billing/razorpay-subscription-offers";
 import { recordFirstEventConversion } from "@/lib/conversion/first-event";
 
 export const dynamic = "force-dynamic";
@@ -18,12 +18,6 @@ function adminClient() {
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
     { auth: { autoRefreshToken: false, persistSession: false } }
   );
-}
-
-function oneMonthFromNow() {
-  const d = new Date();
-  d.setMonth(d.getMonth() + 1);
-  return d;
 }
 
 export async function POST(req: NextRequest) {
@@ -75,7 +69,7 @@ export async function POST(req: NextRequest) {
   try {
     const razorpay = getRazorpayClient();
     type ProviderSubscription = { status?: string; notes?: Record<string, string>; offer_id?: string | null;
-      current_start?: number; current_end?: number };
+      plan_id?: string; current_start?: number; current_end?: number };
     type ProviderPayment = { status?: string; amount?: number; currency?: string;
       subscription_id?: string };
     const subscriptionsApi = razorpay.subscriptions as unknown as {
@@ -106,6 +100,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (subscription.plan_id !== getMonthlyRazorpayPlanId(planSlug)) {
+      return NextResponse.json({ error: "Subscription provider plan does not match checkout plan." }, { status: 403 });
+    }
     if (subscription.offer_id && subscription.offer_id !== getIntroOfferId(planSlug)) {
       return NextResponse.json({ error: "Subscription offer does not match the authorized checkout." }, { status: 400 });
     }
@@ -133,7 +130,7 @@ export async function POST(req: NextRequest) {
     if (String(subscription?.status || "").toLowerCase() !== "active") {
       return NextResponse.json({ error: "AutoPay authorization is pending. Your plan will activate after Razorpay confirms the subscription." }, { status: 202 });
     }
-    if (payment.subscription_id && payment.subscription_id !== subscriptionId) {
+    if (payment.subscription_id !== subscriptionId) {
       return NextResponse.json({ error: "Payment does not belong to this subscription." }, { status: 403 });
     }
 
@@ -145,12 +142,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Subscription plan does not match checkout plan." }, { status: 400 });
     }
 
-    const currentStart = subscription?.current_start
-      ? new Date(Number(subscription.current_start) * 1000)
-      : new Date();
-    const currentEnd = subscription?.current_end
-      ? new Date(Number(subscription.current_end) * 1000)
-      : oneMonthFromNow();
+    const currentStart = new Date(Number(subscription.current_start) * 1000);
+    const currentEnd = new Date(Number(subscription.current_end) * 1000);
+    if (!subscription.current_start || !subscription.current_end ||
+        !Number.isFinite(currentStart.getTime()) || !Number.isFinite(currentEnd.getTime()) ||
+        currentEnd.getTime() <= Date.now() || currentEnd.getTime() <= currentStart.getTime()) {
+      return NextResponse.json({ error: "Razorpay has not supplied a valid paid billing period yet." }, { status: 202 });
+    }
     const appStatus = "active";
 
     const { data: existing } = await admin
@@ -159,12 +157,9 @@ export async function POST(req: NextRequest) {
       .eq("user_id", user.id)
       .maybeSingle();
 
-    if (existing?.provider_subscription_id === subscriptionId) {
-      await admin.from("subscription_checkout_intents").update({ status: "authorized", updated_at: new Date().toISOString() }).eq("id", checkoutIntent.id);
-      return NextResponse.json({ success: true, subscriptionId, idempotent: true });
-    }
-
-    const { data: updatedSub, error } = await admin
+    let updatedSubId = existing?.id ?? null;
+    if (existing?.provider_subscription_id !== subscriptionId) {
+      const { data: updatedSub, error } = await admin
       .from("subscriptions")
       .upsert(
         {
@@ -192,8 +187,10 @@ export async function POST(req: NextRequest) {
       .select("id")
       .single();
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      if (error) {
+        return NextResponse.json({ error: error.message }, { status: 500 });
+      }
+      updatedSubId = updatedSub?.id ?? null;
     }
 
     await admin.from("subscription_checkout_intents").update({ status: "authorized", updated_at: new Date().toISOString() }).eq("id", checkoutIntent.id);
@@ -216,7 +213,7 @@ export async function POST(req: NextRequest) {
 
     await createInvoiceForPayment({
       userId: user.id,
-      subscriptionId: updatedSub?.id ?? null,
+      subscriptionId: updatedSubId,
       paymentId,
       description: `${plan.name} Plan — Monthly AutoPay Subscription`,
       baseAmountRupees: baseAmountPaise / 100,
@@ -237,6 +234,7 @@ export async function POST(req: NextRequest) {
       success: true,
       subscriptionId,
       paymentId,
+      idempotent: existing?.provider_subscription_id === subscriptionId,
       status: appStatus,
       currentPeriodEnd: currentEnd.toISOString(),
     });

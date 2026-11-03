@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { NextRequest } from "next/server";
-import { GET as googleCallbackGet, clearRecentExchangedCodes } from "@/app/auth/google/callback/route";
+import { GET as googleCallbackGet } from "@/app/auth/google/callback/route";
+import { clearRecentExchangedCodes } from "@/lib/auth/recent-exchanged-codes";
 import { GET as googleRedirectGet } from "@/app/api/auth/google/redirect/route";
 import { notifyOwnerNewUser, sendUserWelcomeEmail } from "@/lib/email";
 

@@ -41,7 +41,7 @@ describe("Branding & Pro Trial Entitlements", () => {
       expect(plan.canUse("remove_branding")).toBe(true);
       expect(plan.canUse("custom_pass_design")).toBe(true);
       expect(plan.canRemoveBranding).toBe(true);
-      expect(plan.canUse("api_access")).toBe(true);
+      expect(plan.canUse("api_access")).toBe(false);
       expect(plan.canUse("advanced_analytics")).toBe(true);
     });
 

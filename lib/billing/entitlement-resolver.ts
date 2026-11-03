@@ -77,7 +77,7 @@ function planSlugFromSub(sub: SubscriptionRow | null | undefined) {
 function isFuture(value: string | null | undefined, now: Date) {
   if (!value) return false;
   const date = new Date(value);
-  return !Number.isNaN(date.getTime()) && date.getTime() >= now.getTime();
+  return !Number.isNaN(date.getTime()) && date.getTime() > now.getTime();
 }
 
 export async function resolveUserSubscriptionAccess(params: {
@@ -188,8 +188,11 @@ export async function resolveUserSubscriptionAccess(params: {
   }
 
   // 1 Free Event Trial with AutoPay
+  // If trial_ends_at is set, check that it hasn't expired; otherwise the trial is active until consumed and concluded.
+  const trialNotExpired = !sub?.trial_ends_at || new Date(sub.trial_ends_at).getTime() > now.getTime();
   const isAutopayTrial = Boolean(
     sub?.autopay_status === "active" &&
+    trialNotExpired &&
     (sub?.free_event_trial_active || sub?.is_trial || status === "trialing")
   );
 
@@ -348,7 +351,7 @@ export async function resolveUserSubscriptionAccess(params: {
     };
   }
 
-  if (paidPeriodValid && ["active", "trialing"].includes(status)) {
+  if (paidPeriodValid && ["active", "payment_pending", "past_due", "halted"].includes(status) && !sub?.is_trial) {
     return {
       state: "subscription_active",
       hasOrganizerAccess: true,
@@ -359,7 +362,7 @@ export async function resolveUserSubscriptionAccess(params: {
       isNewUser: false,
       introOfferEligible: false,
       isTrial: Boolean(sub?.is_trial),
-      reason: "Paid subscription period is active.",
+      reason: "Paid-through subscription period is active.",
     };
   }
 
@@ -397,7 +400,6 @@ export async function resolveUserSubscriptionAccess(params: {
       user.user_metadata?.plan_selected ||
       user.user_metadata?.onboarded_at ||
       user.user_metadata?.onboarded ||
-      (sub?.provider === "free" && planSlug === "free") ||
       sub?.billing_cycle === "free"
     );
 

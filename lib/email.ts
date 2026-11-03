@@ -573,6 +573,7 @@ export async function sendUserSubscriptionActivatedEmail({
   renewalDate,
   isTrial,
   trialDays,
+  oneTime,
 }: {
   to: string;
   name?: string | null;
@@ -582,6 +583,7 @@ export async function sendUserSubscriptionActivatedEmail({
   renewalDate?: string | null;
   isTrial?: boolean;
   trialDays?: number;
+  oneTime?: boolean;
 }) {
   const { buildSubscriptionEmail } = await import("@/lib/email-engine");
   const { subject, html } = buildSubscriptionEmail({
@@ -592,6 +594,7 @@ export async function sendUserSubscriptionActivatedEmail({
     renewalDate,
     isTrial,
     trialDays,
+    oneTime,
   });
   await sendEmail({
     from: getFromEmail(),

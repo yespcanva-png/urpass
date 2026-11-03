@@ -182,6 +182,33 @@ const nextConfig: NextConfig = {
         destination: "/qr-code-ticketing-system",
         permanent: true,
       },
+      // India Regional & Canonical Consolidation 301 Redirects
+      {
+        source: "/event-registration-software-india",
+        destination: "/in/event-registration-software",
+        permanent: true,
+      },
+      {
+        source: "/event-ticketing-software-india",
+        destination: "/in/event-ticketing-software",
+        permanent: true,
+      },
+      {
+        source: "/solutions/event-registration-india",
+        destination: "/in/event-registration-software",
+        permanent: true,
+      },
+      {
+        source: "/solutions/event-ticketing-india",
+        destination: "/in/event-ticketing-software",
+        permanent: true,
+      },
+      // GEO & Guide Consolidation 301 Redirects
+      {
+        source: "/guides/how-to-create-qr-codes-for-event-attendees",
+        destination: "/guides/create-qr-code-event-tickets",
+        permanent: true,
+      },
       // City flat route consolidation into geo hubs
       {
         source: "/event-registration-software-delhi",

@@ -31,6 +31,7 @@ import {
   saveSSOConnection,
   testSSOConnection,
   toggleSSOStatus,
+  discoverOidcEndpointsForOrg,
 } from "@/app/actions/sso";
 import {
   addDomain,
@@ -53,7 +54,6 @@ import {
   deleteCustomDomain,
 } from "@/app/actions/custom-domains";
 import CustomDomainSetupCard from "@/components/domain/CustomDomainSetupCard";
-import { discoverOidcEndpoints } from "@/lib/sso/oidc";
 import type {
   Organization,
   OrgRole,
@@ -287,7 +287,7 @@ export default function EnterpriseSecurityClient({
     setAutoDiscovering(true);
     setSsoError("");
 
-    const res = await discoverOidcEndpoints(oidcIssuer);
+    const res = await discoverOidcEndpointsForOrg(org.id, oidcIssuer);
     setAutoDiscovering(false);
     if (!res.success || !res.doc) {
       setSsoError(res.error || "Failed to discover endpoints from issuer.");

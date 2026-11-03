@@ -400,6 +400,10 @@ export async function reactivateSubscription(): Promise<ActionResult> {
     (existingSub.provider_subscription_id?.startsWith("sub_") ? existingSub.provider_subscription_id : null) ||
     (existingSub.autopay_mandate_id?.startsWith("sub_") ? existingSub.autopay_mandate_id : null);
 
+  if (!nativeSubId) {
+    return { error: "This mandate cannot be reactivated automatically. Your paid access continues until period end; select a new subscription to resume future billing." };
+  }
+
   if (nativeSubId) {
     try {
       const razorpay = getRazorpayClient();
@@ -410,8 +414,11 @@ export async function reactivateSubscription(): Promise<ActionResult> {
             "Your bank AutoPay mandate has already been finalized as cancelled with Razorpay. Your current paid access remains fully active until the end of this billing cycle. On or before that date, you can choose a plan to restart billing.",
         };
       }
+      if (rzpSub?.status !== "active" || rzpSub?.cancel_at_cycle_end || rzpSub?.end_at) {
+        return { error: "Razorpay has not confirmed renewed billing for this subscription. Your paid access continues until period end; select a new subscription to resume future billing." };
+      }
     } catch {
-      // Proceed if gateway status check is unavailable
+      return { error: "Razorpay renewal state could not be verified. Please retry later." };
     }
   }
 
@@ -1223,16 +1230,37 @@ export async function activatePaidSubscription(
       if (!order) {
         return { error: "Payment verification failed: order not found on gateway." };
       }
+      const paymentsApi = razorpay.payments as unknown as {
+        fetch: (id: string) => Promise<{ status?: string; order_id?: string; amount?: number; currency?: string }>;
+        capture: (id: string, amount: number, currency: string) => Promise<unknown>;
+      };
+      let paid = await paymentsApi.fetch(payment.paymentId);
+      if (paid?.order_id !== payment.orderId ||
+          Number(paid?.amount) !== Number(order.amount) ||
+          String(paid?.currency || "").toUpperCase() !== String(order.currency || "").toUpperCase()) {
+        return { error: "Payment verification failed: gateway payment does not match this order." };
+      }
+      if (paid.status === "authorized") {
+        await paymentsApi.capture(payment.paymentId, Number(paid.amount), String(paid.currency || "INR"));
+        paid = await paymentsApi.fetch(payment.paymentId);
+      }
+      if (paid.status !== "captured") {
+        return { error: "Payment capture is pending. Your plan will activate after Razorpay confirms the payment." };
+      }
       orderAmountPaise = Number(order.amount ?? 0);
       orderCurrency = String(order.currency || "INR").toUpperCase();
       const isUkOrder = orderCurrency === "GBP";
       const taxRate = isUkOrder ? 0.20 : 0.18;
 
       const notes = (order.notes ?? {}) as Record<string, string>;
-      if (notes.user_id && notes.user_id !== user.id) {
+      if (notes.kind && notes.kind !== "urpass_plan_order") {
+        return { error: "Order is not a plan checkout." };
+      }
+      if (notes.user_id !== user.id) {
         return { error: "Order does not belong to the authenticated user." };
       }
-      if (notes.plan_slug && notes.plan_slug !== normalizedSlug && notes.plan_slug !== planSlug) {
+      if (notes.plan_id !== targetPlan.id || notes.plan_slug !== normalizedSlug ||
+          notes.billing_cycle !== effectiveCycle) {
         return { error: "Order plan does not match target subscription plan." };
       }
 
@@ -1296,12 +1324,6 @@ export async function activatePaidSubscription(
   const lifetimePlanSlug = isFounder
     ? "founder"
     : (currentSub?.lifetime_plan_slug || (currentSub?.has_lifetime_access ? "founder" : null));
-  const shouldRequireAutopaySetup =
-    normalizedSlug !== "free" &&
-    !isFounder &&
-    effectiveCycle === "monthly" &&
-    currentSub?.autopay_status !== "active";
-
   const periodStart = new Date();
   const periodEndTime = periodEnd(effectiveCycle);
   const { data: updatedSub, error } = await admin
@@ -1316,7 +1338,7 @@ export async function activatePaidSubscription(
         provider_subscription_id: verifiedPaymentId,
         current_period_start: periodStart.toISOString(),
         current_period_end: periodEndTime.toISOString(),
-        next_billing_date: isFounder ? null : periodEndTime.toISOString(),
+        next_billing_date: null,
         cancel_at_period_end: false,
         cancellation_state: "none",
         cancellation_error: null,
@@ -1328,10 +1350,8 @@ export async function activatePaidSubscription(
         free_event_trial_active: false,
         has_lifetime_access: hasLifetimeAccess,
         lifetime_plan_slug: lifetimePlanSlug,
-        autopay_mandate_id: currentSub?.autopay_mandate_id ?? null,
-        autopay_status: shouldRequireAutopaySetup
-          ? "pending"
-          : (currentSub?.autopay_status || (isFounder ? "none" : "none")),
+        autopay_mandate_id: null,
+        autopay_status: "none",
         updated_at: new Date().toISOString(),
       },
       { onConflict: "user_id" }

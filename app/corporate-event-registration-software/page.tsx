@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   description: "Enterprise corporate event registration software for town halls, AGM meetings, partner summits, and client showcases. Branded passes and audit-ready attendance.",
   keywords: ["corporate event registration software", "enterprise event registration", "corporate town hall check-in", "agm event registration software", "corporate guest pass generator", "employee event check-in system"],
   alternates: {
-    canonical: "https://urpass.space/corporate-event-registration-software",
+    canonical: "https://urpass.space/solutions/corporate-event-registration-software",
   },
   openGraph: {
     title: "Corporate Event Registration & Attendee Check-In | URPASS",

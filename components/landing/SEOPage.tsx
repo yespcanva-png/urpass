@@ -48,11 +48,12 @@ export interface SEODirectAnswer {
 export interface SEOKeyFactsTable {
   title?: string;
   subtitle?: string;
-  headers: [string, string, string?];
+  headers: [string, string, string?, string?];
   rows: Array<{
     col1: string;
     col2: string;
     col3?: string;
+    col4?: string;
   }>;
 }
 
@@ -210,12 +211,14 @@ export default function SEOPage({ config }: { config: SEOPageConfig }) {
         }
       : null;
 
-  const isCityPage = canonical.includes("/in/") && canonical !== "https://urpass.space/in";
+  const isIndiaHubPage = canonical === "https://urpass.space/in" || canonical === "https://urpass.space/india" || canonical === "https://urpass.space/india/event-management-software";
+  const isCityPage = (canonical.includes("/in/") || canonical.includes("/india/")) && !isIndiaHubPage;
   const isUkPage = canonical.includes("/uk");
-  const isUkCityPage = canonical.includes("/uk/") && canonical !== "https://urpass.space/uk";
-  const isUkHubPage = canonical === "https://urpass.space/uk";
+  const isUkCityPage = canonical.includes("/uk/") && canonical !== "https://urpass.space/uk" && canonical !== "https://urpass.space/uk/event-management-software";
+  const isUkHubPage = canonical === "https://urpass.space/uk" || canonical === "https://urpass.space/uk/event-management-software";
   const isGuidePage = canonical.includes("/guides/");
   const isComparePage = canonical.includes("/compare/");
+  const isSolutionPage = canonical.includes("/solutions/") && canonical !== "https://urpass.space/solutions";
 
   const breadcrumbItems = [
     {
@@ -226,12 +229,19 @@ export default function SEOPage({ config }: { config: SEOPageConfig }) {
     },
   ];
 
-  if (isCityPage) {
+  if (isIndiaHubPage) {
     breadcrumbItems.push({
       "@type": "ListItem",
       position: 2,
       name: "Events in India",
-      item: "https://urpass.space/in",
+      item: "https://urpass.space/india/event-management-software",
+    });
+  } else if (isCityPage) {
+    breadcrumbItems.push({
+      "@type": "ListItem",
+      position: 2,
+      name: "Events in India",
+      item: "https://urpass.space/india/event-management-software",
     });
     breadcrumbItems.push({
       "@type": "ListItem",
@@ -244,7 +254,7 @@ export default function SEOPage({ config }: { config: SEOPageConfig }) {
       "@type": "ListItem",
       position: 2,
       name: "Events in the UK",
-      item: "https://urpass.space/uk",
+      item: "https://urpass.space/uk/event-management-software",
     });
     breadcrumbItems.push({
       "@type": "ListItem",
@@ -257,7 +267,7 @@ export default function SEOPage({ config }: { config: SEOPageConfig }) {
       "@type": "ListItem",
       position: 2,
       name: "Events in the UK",
-      item: "https://urpass.space/uk",
+      item: "https://urpass.space/uk/event-management-software",
     });
   } else if (isGuidePage) {
     breadcrumbItems.push({
@@ -278,6 +288,19 @@ export default function SEOPage({ config }: { config: SEOPageConfig }) {
       position: 2,
       name: "Alternatives & Comparisons",
       item: "https://urpass.space/compare",
+    });
+    breadcrumbItems.push({
+      "@type": "ListItem",
+      position: 3,
+      name: config.h1,
+      item: canonical,
+    });
+  } else if (isSolutionPage) {
+    breadcrumbItems.push({
+      "@type": "ListItem",
+      position: 2,
+      name: "Solutions",
+      item: "https://urpass.space/solutions",
     });
     breadcrumbItems.push({
       "@type": "ListItem",
@@ -650,6 +673,9 @@ export default function SEOPage({ config }: { config: SEOPageConfig }) {
                     {config.keyFactsTable.headers[2] && (
                       <th className="p-3.5 sm:p-4 font-bold text-neutral-600">{config.keyFactsTable.headers[2]}</th>
                     )}
+                    {config.keyFactsTable.headers[3] && (
+                      <th className="p-3.5 sm:p-4 font-bold text-neutral-500">{config.keyFactsTable.headers[3]}</th>
+                    )}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-neutral-100 bg-white">
@@ -658,6 +684,7 @@ export default function SEOPage({ config }: { config: SEOPageConfig }) {
                       <td className="p-3.5 sm:p-4 font-semibold text-neutral-800">{r.col1}</td>
                       <td className="p-3.5 sm:p-4 font-medium text-neutral-900">{r.col2}</td>
                       {r.col3 && <td className="p-3.5 sm:p-4 text-neutral-500">{r.col3}</td>}
+                      {r.col4 && <td className="p-3.5 sm:p-4 text-neutral-400">{r.col4}</td>}
                     </tr>
                   ))}
                 </tbody>

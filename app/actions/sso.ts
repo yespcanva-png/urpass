@@ -22,6 +22,36 @@ function adminClient() {
   );
 }
 
+export async function discoverOidcEndpointsForOrg(
+  orgId: string,
+  issuerUrl: string
+): Promise<Awaited<ReturnType<typeof discoverOidcEndpoints>>> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: "Authentication required." };
+
+  const { data: member } = await supabase.from("organization_members")
+    .select("role")
+    .eq("organization_id", orgId)
+    .eq("user_id", user.id)
+    .eq("status", "active")
+    .maybeSingle();
+  if (member?.role !== "owner" && member?.role !== "admin") {
+    return { success: false, error: "Only organization owners and admins can configure Single Sign-On." };
+  }
+
+  try {
+    const url = new URL(issuerUrl);
+    if (url.protocol !== "https:" || url.hostname === "localhost" || /^(127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(url.hostname)) {
+      return { success: false, error: "Enter a public HTTPS issuer URL." };
+    }
+  } catch {
+    return { success: false, error: "Enter a valid HTTPS issuer URL." };
+  }
+
+  return discoverOidcEndpoints(issuerUrl);
+}
+
 export async function getSSOConnection(orgId: string): Promise<EnterpriseSSOConnection | null> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();

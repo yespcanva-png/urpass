@@ -7,6 +7,7 @@ import { Check, LogOut, ShieldCheck, Ticket, Sparkles, ArrowRight, Loader2 } fro
 import CheckoutButton from "@/components/billing/CheckoutButton";
 import { detectCountryClient, persistCountryPreference } from "@/lib/country-config";
 import { selectFreePlan } from "@/app/actions/billing";
+import { SELF_SERVICE_PLAN_LIMITS } from "@/lib/billing/plan-limits";
 
 declare global {
   interface Window {
@@ -59,7 +60,7 @@ const PLANS = [
     annualGbp: 120,
     annualGbpPerMo: 10,
     description: "For small teams starting with QR event operations.",
-    features: ["10 events / month", "500 registrations / month", "2 organizer seats", "QR passes and scanner", "CSV import and export"],
+    features: [`${SELF_SERVICE_PLAN_LIMITS.starter.eventsPerMonth} events / month`, `${SELF_SERVICE_PLAN_LIMITS.starter.registrationsPerMonth} registrations / month`, `${SELF_SERVICE_PLAN_LIMITS.starter.organizerSeats} organizer seats`, "QR passes and scanner", "CSV import and export"],
   },
   {
     slug: "pro",
@@ -72,7 +73,7 @@ const PLANS = [
     annualGbpPerMo: 25,
     description: "For conferences, campuses and active organizer teams.",
     recommended: true,
-    features: ["Unlimited events", "2,500 registrations / month", "5 organizer seats", "Custom pass branding", "Session-wise check-ins", "Live scan analytics"],
+    features: [`${SELF_SERVICE_PLAN_LIMITS.pro.eventsPerMonth} events / month`, `${SELF_SERVICE_PLAN_LIMITS.pro.registrationsPerMonth.toLocaleString("en-IN")} registrations / month`, `${SELF_SERVICE_PLAN_LIMITS.pro.organizerSeats} organizer seats`, "Custom pass branding", "Session-wise check-ins", "Live scan analytics"],
   },
   {
     slug: "business",
@@ -425,11 +426,11 @@ export default function SubscriptionOnboardingClient({
               ? "Zero payment or autopay required"
               : isAnnual
               ? isUk
-                ? `Equivalent £${plan.annualGbpPerMo}/mo + VAT`
-                : `Equivalent ₹${plan.annualInrPerMo.toLocaleString("en-IN")}/mo + GST`
+                ? `One year of access · Equivalent £${plan.annualGbpPerMo}/mo + VAT`
+                : `One year of access · Equivalent ₹${plan.annualInrPerMo.toLocaleString("en-IN")}/mo + GST`
               : isUk
-                ? `Renews at £${plan.gbp}/mo + VAT`
-                : `Renews at ₹${plan.renewalInr.toLocaleString("en-IN")}/mo + GST`;
+                ? `One month of access · £${plan.gbp} + VAT · No automatic renewal`
+                : `One month of access · ₹${plan.renewalInr.toLocaleString("en-IN")} + GST · No automatic renewal`;
 
             return (
               <article

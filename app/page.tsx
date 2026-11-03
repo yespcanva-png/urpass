@@ -8,6 +8,7 @@ import AnimateIn from "@/components/ui/AnimateIn";
 import Footer from "@/components/landing/Footer";
 import HomePricingSection from "@/components/landing/HomePricingSection";
 import FeaturesSection from "@/components/landing/FeaturesSection";
+import ProductTourSection from "@/components/landing/ProductTourSection";
 import TestimonialsSection from "@/components/landing/TestimonialsSection";
 import { RequestEventSetupButton } from "@/components/landing/RequestEventSetupModal";
 import { detectCountryFromHeaders } from "@/lib/country-config";
@@ -133,79 +134,6 @@ function PassCard() {
             <span>CHENNAI</span>
           </div>
         </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Dashboard mockup ─────────────────────────────────────────────────────────
-function DashboardMockup() {
-  const rows = [
-    { name: "Srinithin S", type: "Participant", status: "checked_in" },
-    { name: "Rahul K",     type: "Participant", status: "checked_in" },
-    { name: "Priya M",     type: "VIP",         status: "pending"    },
-    { name: "Arun T",      type: "Participant", status: "checked_in" },
-    { name: "Meena R",     type: "Speaker",     status: "pending"    },
-  ];
-  return (
-    <div className="bg-white rounded-xl border border-neutral-200/80 shadow-md overflow-hidden w-full max-w-lg">
-      <div className="px-4 py-3 border-b border-neutral-100 flex items-center justify-between bg-neutral-50/50">
-        <div className="flex items-center gap-1.5">
-          <div className="w-2.5 h-2.5 rounded-full bg-neutral-300" />
-          <div className="w-2.5 h-2.5 rounded-full bg-neutral-300" />
-          <div className="w-2.5 h-2.5 rounded-full bg-neutral-300" />
-        </div>
-        <span className="text-[11px] font-mono text-neutral-400">app.urpass.space</span>
-        <div className="w-10" />
-      </div>
-      <div className="p-4 sm:p-5">
-        <h4 className="font-semibold text-xs sm:text-sm text-neutral-900 mb-3 sm:mb-4">AI Tech Workshop 2026</h4>
-        <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-4 sm:mb-5">
-          {[{ label: "Applications", value: "250" }, { label: "Passes", value: "180" }, { label: "Checked In", value: "127" }].map((s) => (
-            <div key={s.label} className="bg-neutral-50 border border-neutral-100 rounded-lg p-2.5 sm:p-3 text-center">
-              <p className="text-lg sm:text-xl font-bold tracking-tight text-neutral-900">{s.value}</p>
-              <p className="text-[9px] sm:text-[10px] text-neutral-500 mt-0.5 font-medium">{s.label}</p>
-            </div>
-          ))}
-        </div>
-        <div className="flex flex-col divide-y divide-neutral-100">
-          {rows.map((row, i) => (
-            <div key={i} className="flex items-center justify-between py-2 sm:py-2.5">
-              <div className="flex items-center gap-2 sm:gap-2.5">
-                <div className="w-6 h-6 rounded-full bg-neutral-100 border border-neutral-200 flex items-center justify-center text-[10px] font-semibold text-neutral-600 shrink-0">
-                  {row.name[0]}
-                </div>
-                <div>
-                  <p className="text-xs font-medium text-neutral-900">{row.name}</p>
-                  <p className="text-[10px] text-neutral-400">{row.type}</p>
-                </div>
-              </div>
-              <span className={`text-[10px] font-medium px-2 py-0.5 rounded-md shrink-0 ${row.status === "checked_in" ? "bg-emerald-50 text-emerald-700 border border-emerald-100" : "bg-neutral-100 text-neutral-500 border border-neutral-200"}`}>
-                {row.status === "checked_in" ? "Checked in" : "Pending"}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Scanner result ───────────────────────────────────────────────────────────
-function ScanResult() {
-  return (
-    <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl px-6 py-6 sm:px-8 sm:py-8 text-center w-full max-w-[240px] sm:w-60">
-      <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-emerald-400 flex items-center justify-center mx-auto mb-3 sm:mb-4">
-        <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-        </svg>
-      </div>
-      <p className="text-[11px] sm:text-xs font-bold tracking-widest text-white/60 mb-1">VALID PASS</p>
-      <p className="font-semibold text-white text-base sm:text-lg">Srinithin S</p>
-      <p className="text-xs text-white/60 mt-0.5">Participant</p>
-      <div className="mt-4 pt-4 border-t border-white/10">
-        <p className="text-xs text-white/50">Checked in</p>
-        <p className="text-sm font-semibold text-white mt-0.5">9:42 AM</p>
       </div>
     </div>
   );
@@ -435,82 +363,8 @@ export default async function LandingPage() {
       {/* ── 02 FEATURES (HOW IT WORKS) ────────────────────────────────────── */}
       <FeaturesSection />
 
-      {/* ── 03B PRODUCT SHOWCASE (DASHBOARD & SCANNER PREVIEWS) ─────────── */}
-      <section className="py-14 sm:py-24 px-4 sm:px-8 bg-neutral-50/70 border-t border-neutral-100">
-        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 sm:gap-16 items-center">
-          <AnimateIn from="left">
-            <div>
-              <p className="text-xs font-semibold tracking-widest text-brand mb-3 sm:mb-4">ORGANIZER DASHBOARD</p>
-              <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-neutral-950 mb-4 sm:mb-6">
-                Your event. Your passes.
-              </h2>
-              <p className="text-neutral-600 text-sm sm:text-base leading-relaxed mb-6 sm:mb-8">
-                Manage everything you need from one simple dashboard. Real-time attendee verification, bulk actions, and multi-tier pass controls.
-              </p>
-              <ul className="flex flex-col gap-2.5 sm:gap-3">
-                {[
-                  "See applications as they come in",
-                  "Approve or reject attendees with one click",
-                  "Generate cryptographically verified digital passes",
-                  "Track live check-ins across multiple entrances",
-                ].map((item) => (
-                  <li key={item} className="flex items-center gap-3 text-xs sm:text-sm text-neutral-700">
-                    <span className="w-5 h-5 rounded-full bg-brand/10 border border-brand/20 flex items-center justify-center shrink-0">
-                      <svg className="w-3 h-3 text-brand" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                      </svg>
-                    </span>
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </AnimateIn>
-
-          <AnimateIn from="right" delay={80}>
-            <div className="flex flex-col items-center lg:items-end">
-              <DashboardMockup />
-            </div>
-          </AnimateIn>
-        </div>
-      </section>
-
-      {/* ── 03C SCANNER PREVIEW WITH OFFLINE MODE ───────────────────────── */}
-      <section className="py-14 sm:py-24 px-4 sm:px-8 bg-neutral-900 overflow-hidden">
-        <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 sm:gap-16 items-center">
-          <AnimateIn from="left">
-            <div>
-              <p className="text-xs font-semibold tracking-widest text-brand-200 mb-3 sm:mb-4">QR CHECK-IN</p>
-              <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-white mb-4 sm:mb-6">
-                Entry takes one scan.
-              </h2>
-              <p className="text-white/60 text-sm sm:text-base leading-relaxed mb-6">
-                Open the scanner on any phone or tablet browser, point at the pass, and UrPass instantly validates the QR code in under 0.3 seconds — even with offline sync when venue WiFi dips.
-              </p>
-              <ul className="flex flex-col gap-2.5 sm:gap-3">
-                {[
-                  "Offline check-in mode: scans cache locally and auto-sync when WiFi reconnects",
-                  "Duplicate check-ins are blocked immediately with alerts",
-                  "Invalid and expired passes are flagged on screen",
-                  "Audio and haptic cues for fast throughput",
-                  "Zero app installation required for staff or attendees",
-                ].map((item) => (
-                  <li key={item} className="flex items-center gap-3 text-xs sm:text-sm text-white/70">
-                    <span className="w-1.5 h-1.5 rounded-full bg-violet-400 block shrink-0" />
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </AnimateIn>
-
-          <AnimateIn from="scale" delay={100}>
-            <div className="flex justify-center">
-              <ScanResult />
-            </div>
-          </AnimateIn>
-        </div>
-      </section>
+      {/* ── 03 REALISTIC PRODUCT TOUR & HOW TO USE ─────────────────────────── */}
+      <ProductTourSection />
 
       {/* ── 03D EVENT TYPES ──────────────────────────────────────────────── */}
       <section className="py-14 sm:py-20 px-4 sm:px-8 bg-white border-b border-neutral-100">

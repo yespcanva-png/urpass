@@ -53,7 +53,6 @@ export async function POST(req: NextRequest) {
   const isUk = (requestedCurrency || "").toUpperCase() === "GBP";
   const currencyCode = isUk ? "GBP" : "INR";
   const taxRate = isUk ? 0.20 : 0.18;
-  const taxName = isUk ? "VAT" : "GST";
   const billingAddress = billingDetails?.billingAddress?.trim() || "";
   const billingState = billingDetails?.state?.trim() || "";
   const billingStateCode = billingDetails?.stateCode?.trim() || "";
@@ -95,6 +94,11 @@ export async function POST(req: NextRequest) {
   const isFounder = normalizedSlug === "founder";
   const effectiveBillingCycle = isFounder ? "lifetime" : billingCycle;
 
+  if (!["INR", "GBP"].includes(String(requestedCurrency).toUpperCase()) ||
+      (!isFounder && billingCycle !== "monthly" && billingCycle !== "annual")) {
+    return NextResponse.json({ error: "Unsupported billing currency or cycle." }, { status: 400 });
+  }
+
   const priceMonthlyPaise = V1_PRICES_PAISE[normalizedSlug];
   if (!priceMonthlyPaise) {
     return NextResponse.json({ error: `Plan '${planSlug}' not found or is free` }, { status: 400 });
@@ -110,6 +114,13 @@ export async function POST(req: NextRequest) {
   const planData = existingSub?.plan as any;
   const currentPlanSlug = (Array.isArray(planData) ? planData[0]?.slug : planData?.slug) || "";
   const isPeriodFuture = existingSub?.current_period_end && new Date(existingSub.current_period_end) > new Date();
+
+  if (existingSub?.autopay_status === "active" && !existingSub?.cancel_at_period_end) {
+    return NextResponse.json(
+      { error: "AutoPay is active on this account. Cancel its future renewals in Billing before making a one-time plan payment." },
+      { status: 409 }
+    );
+  }
 
   if (
     existingSub?.status === "active" &&
@@ -237,6 +248,9 @@ export async function POST(req: NextRequest) {
   const discountedBase = Math.max(0, baseAmount - discountAmount);
   const taxAmount = Math.round(discountedBase * taxRate);
   const totalAmount = Math.round(discountedBase + taxAmount);
+  if (!Number.isSafeInteger(totalAmount) || totalAmount < 100) {
+    return NextResponse.json({ error: "This checkout amount cannot be charged by Razorpay." }, { status: 400 });
+  }
 
   let keyId: string;
   try {
@@ -261,17 +275,14 @@ export async function POST(req: NextRequest) {
       currency: currencyCode,
       receipt,
       notes: {
+        kind: "urpass_plan_order",
         user_id: String(user.id),
         plan_id: String(plan.id),
         plan_slug: String(normalizedSlug),
         billing_cycle: String(effectiveBillingCycle),
-        currency: currencyCode,
         base_amount: String(baseAmount),
         discount_amount: String(discountAmount),
-        tax_amount: String(taxAmount),
-        tax_name: taxName,
         coupon_id: String(appliedCouponId ?? ""),
-        coupon_code: String(couponCode ?? ""),
         billing_address: billingAddress,
         billing_state: billingState,
         billing_state_code: billingStateCode,

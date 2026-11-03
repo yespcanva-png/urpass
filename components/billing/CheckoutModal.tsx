@@ -9,10 +9,6 @@ import { useRouter } from "next/navigation";
 import { validateCoupon, type ValidatedCoupon } from "@/app/actions/coupons";
 import { activatePaidSubscription } from "@/app/actions/billing";
 import { validateGstin } from "@/lib/validations/gstin";
-import {
-  INTRO_OFFER_SCHEDULE,
-  type IntroOfferPlanSlug,
-} from "@/lib/billing/razorpay-subscription-offers";
 
 interface Props {
   isOpen: boolean;
@@ -100,7 +96,6 @@ export default function CheckoutModal({
   currency = "INR",
   priceMonthly, annualTotal,
   successRedirect,
-  introOfferEligible = false,
 }: Props) {
   const [couponInput, setCouponInput]       = useState("");
   const [couponLoading, setCouponLoading]   = useState(false);
@@ -109,7 +104,7 @@ export default function CheckoutModal({
   const [payLoading, setPayLoading]         = useState(false);
   const [payError, setPayError]             = useState("");
   const [companyName, setCompanyName]       = useState(userName || "");
-  const [phone, setPhone]                   = useState("");
+  const [phone, setPhone]                   = useState(userPhone || "");
   const [billingAddress, setBillingAddress] = useState("");
   const [billingStateCode, setBillingStateCode] = useState("33");
   const [gstin, setGstin]                   = useState("");
@@ -127,7 +122,7 @@ export default function CheckoutModal({
       setPayError("");
       setPayLoading(false);
       setCompanyName(userName || "");
-      setPhone("");
+      setPhone(userPhone || "");
       setBillingAddress("");
       setBillingStateCode("33");
       setGstin("");
@@ -151,13 +146,6 @@ export default function CheckoutModal({
   const isLifetime = billingCycle === "lifetime" || planSlug === "founder" || planSlug === "lifetime";
   const isSingleEvent = planSlug === "managed_enterprise";
   const defaultFounder = isUk ? 249 : 19999;
-  const isAutopaySubscription =
-    !isNivedithaUser &&
-    !isUk &&
-    !isLifetime &&
-    billingCycle === "monthly" &&
-    ["starter", "pro", "business"].includes(planSlug);
-  const isIntroOffer = false;
   const baseAmount = isNivedithaUser && planSlug === "business"
     ? 2999
     : isLifetime
@@ -168,17 +156,11 @@ export default function CheckoutModal({
   const baseTax    = Math.round(baseAmount * (isUk ? 20 : 18)) / 100;
   const baseTotal  = Math.round((baseAmount + baseTax) * 100) / 100;
 
-  const subtotal    = coupon && !isAutopaySubscription ? coupon.discountedAmountRupees : baseAmount;
-  const taxDisplay  = coupon && !isAutopaySubscription ? coupon.gstRupees              : baseTax;
-  const totalToday  = coupon && !isAutopaySubscription ? coupon.totalRupees            : baseTotal;
-  const regularRenewalTotal = Math.round(priceMonthly * (isUk ? 1.2 : 1.18) * 100) / 100;
-  const month3OnwardTotal = regularRenewalTotal;
+  const subtotal    = coupon ? coupon.discountedAmountRupees : baseAmount;
+  const taxDisplay  = coupon ? coupon.gstRupees              : baseTax;
+  const totalToday  = coupon ? coupon.totalRupees            : baseTotal;
 
   async function applyCoupon() {
-    if (isAutopaySubscription) {
-      setCouponError("Coupon codes cannot be applied to AutoPay subscription activations.");
-      return;
-    }
     const code = couponInput.trim();
     if (!code) return;
     setCouponLoading(true);
@@ -243,100 +225,6 @@ export default function CheckoutModal({
         return;
       }
 
-      if (isAutopaySubscription) {
-        if (coupon) {
-          setPayError("Coupon codes are not supported on AutoPay subscription checkout.");
-          setPayLoading(false);
-          return;
-        }
-
-        const mandateRes = await fetch("/api/billing/autopay/mandate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            planSlug,
-            billingCycle,
-            isFreeTrial: false,
-            phone: cleanPhone,
-            billingDetails: {
-              companyName: trimmedCompany || userName,
-              phone: cleanPhone,
-              contact: cleanPhone,
-              billingAddress: trimmedAddress,
-              gstin: trimmedGstin || null,
-              state: selectedState?.name || "",
-              stateCode: billingStateCode,
-            },
-          }),
-        });
-
-        const mandateData = await mandateRes.json();
-        if (!mandateRes.ok) {
-          setPayError(mandateData.error ?? "Could not create AutoPay mandate.");
-          setPayLoading(false);
-          return;
-        }
-
-        const rzp = new window.Razorpay({
-          key: mandateData.keyId,
-          order_id: mandateData.orderId,
-          customer_id: mandateData.customerId,
-          recurring: "1",
-          amount: mandateData.amount,
-          currency: mandateData.currency || "INR",
-          name: "URPASS",
-          description: `${planName} AutoPay — ₹${(mandateData.maxAmountPaise / 100).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/month`,
-          prefill: { name: userName, email: userEmail, contact: cleanPhone },
-          theme: { color: "#6D28D9" },
-          modal: { ondismiss: () => setPayLoading(false) },
-          handler: async (response: {
-            razorpay_payment_id?: string;
-            razorpay_order_id?: string;
-            razorpay_signature?: string;
-          }) => {
-            if (
-              !response?.razorpay_payment_id ||
-              !response?.razorpay_order_id ||
-              !response?.razorpay_signature
-            ) {
-              setPayError("AutoPay verification details are missing.");
-              setPayLoading(false);
-              return;
-            }
-
-            try {
-              const verifyRes = await fetch("/api/billing/autopay/mandate/verify", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  orderId: response.razorpay_order_id,
-                  paymentId: response.razorpay_payment_id,
-                  signature: response.razorpay_signature,
-                  customerId: mandateData.customerId,
-                }),
-              });
-              const verifyData = await verifyRes.json();
-              setPayLoading(false);
-
-              if (!verifyRes.ok) {
-                setPayError(verifyData.error ?? "Failed to verify AutoPay mandate.");
-                return;
-              }
-
-              onClose();
-              router.push(successRedirect || `/billing?upgraded=true&autopay=active&plan=${encodeURIComponent(planName)}`);
-              router.refresh();
-            } catch (err) {
-              setPayLoading(false);
-              setPayError(err instanceof Error ? err.message : "Failed to verify AutoPay mandate.");
-            }
-          },
-        });
-
-        rzp.open();
-        return;
-      }
-
       const res = await fetch("/api/razorpay/order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -373,7 +261,7 @@ export default function CheckoutModal({
           ? `${planName} — Single Event Pass`
           : isLifetime
           ? `${planName} — Lifetime Access`
-          : `${planName} — ${billingCycle === "annual" ? "Annual" : "Monthly"}`,
+          : `${planName} — ${billingCycle === "annual" ? "one year" : "one month"}, one-time payment`,
         order_id: data.orderId,
         prefill: { name: userName, email: userEmail },
         theme: { color: "#0a0a0a" },
@@ -410,8 +298,7 @@ export default function CheckoutModal({
                     finalAmountRupees: coupon.discountedAmountRupees,
                     billingCyclesRemaining: coupon.durationMonths,
                   }
-                : undefined
-              ,
+                : undefined,
               isUk
                 ? undefined
                 : {
@@ -481,27 +368,8 @@ export default function CheckoutModal({
             </button>
           </div>
 
-          {/* Autopay subscription details */}
-          {isAutopaySubscription && !isUk && (
-            <div className="rounded-xl border border-violet-200 bg-violet-50/80 p-4 space-y-1.5">
-              <h3 className="text-sm font-bold text-violet-950">
-                {planName} Monthly Subscription
-              </h3>
-              <p className="text-xs font-semibold text-violet-900">
-                ₹{priceMonthly.toLocaleString("en-IN")}/month + 18% GST (₹{Math.round(priceMonthly * 1.18 * 100) / 100}/month total).
-              </p>
-              <p className="text-[11px] leading-relaxed text-violet-700">
-                Autopay authorization via UPI Autopay, Cards, or eMandate. Renews automatically on the scheduled billing date. Cancel anytime from Billing Settings.
-              </p>
-            </div>
-          )}
-
           {/* Coupon input */}
-          {isAutopaySubscription ? (
-            <div className="rounded-lg border border-violet-100 bg-violet-50 px-3 py-2 text-xs font-medium text-violet-800">
-              Recurring Autopay plans bill the standard flat monthly price. Coupon codes apply to annual and single-event activations.
-            </div>
-          ) : coupon ? (
+          {coupon ? (
             <div className="flex items-center justify-between gap-2 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2.5">
               <div className="flex items-center gap-2.5">
                 <div className="w-7 h-7 rounded-md bg-emerald-100 flex items-center justify-center shrink-0">
@@ -694,30 +562,17 @@ export default function CheckoutModal({
             <p className="text-[11px] text-emerald-600 font-medium text-center -mt-2">
               One-time payment · Zero renewal fees · Valid for the lifetime of URPASS
             </p>
-          ) : isAutopaySubscription ? (
-            <div className="rounded-lg border border-neutral-200 bg-neutral-50/70 p-3.5 flex flex-col gap-2.5 text-xs">
-              <div className="flex items-center justify-between">
-                <span className="font-semibold text-neutral-900">UrPass AutoPay Recurring Billing</span>
-                <span className="rounded bg-neutral-900 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
-                  Incl. 18% GST
-                </span>
-              </div>
-              <p className="text-[11px] leading-relaxed text-neutral-600">
-                Monthly recurring AutoPay authorization. Renews at ₹{regularRenewalTotal.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/month. Cancel renewal anytime from billing settings.
-              </p>
-            </div>
-          ) : isIntroOffer && isUk ? (
-            <p className="text-[11px] text-brand-700 font-semibold text-center -mt-2">
-              Introductory offer: £2/month for first 2 months. Subsequent regular renewal is £{priceMonthly}/month +VAT. Cancel renewal anytime.
-            </p>
-          ) : coupon?.durationMonths ? (
+          ) : coupon?.durationMonths && billingCycle !== "monthly" ? (
             <p className="text-[11px] text-neutral-400 text-center -mt-2">
-              Renews at {sym}{fmt(coupon.renewalTotalRupees)}/{billingCycle === "annual" ? "yr" : "mo"} after{" "}
-              {coupon.durationMonths} month{coupon.durationMonths === 1 ? "" : "s"}.
+              One-time payment. No automatic renewal.
+            </p>
+          ) : billingCycle === "monthly" ? (
+            <p className="text-[11px] text-neutral-600 text-center -mt-2">
+              One-time payment for one month. No AutoPay mandate or automatic renewal.
             </p>
           ) : billingCycle === "annual" ? (
             <p className="text-[11px] text-neutral-400 text-center -mt-2">
-              Billed annually. Equivalent to {sym}{fmt(Math.round(priceMonthly * 10 / 12))}/mo.
+              One-time payment for one year. No automatic renewal.
             </p>
           ) : null}
 
@@ -731,9 +586,7 @@ export default function CheckoutModal({
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
               <>
-                {isAutopaySubscription
-                  ? `Authorize AutoPay · ₹${regularRenewalTotal.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} today`
-                  : `Pay ${sym}${fmt(totalToday)}`}
+                {`Pay ${sym}${fmt(totalToday)}`}
                 <ChevronRight className="w-4 h-4" />
               </>
             )}

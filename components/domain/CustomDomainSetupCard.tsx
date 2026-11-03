@@ -25,7 +25,7 @@ import {
   getDnsInstructionsForDomain,
   PRIMARY_CNAME_TARGET,
   type DnsDiagnosticResult,
-} from "@/lib/dns/realtime-dns";
+} from "@/lib/dns/domain-instructions";
 import { verifyCustomDomain, deleteCustomDomain } from "@/app/actions/custom-domains";
 
 interface CustomDomainSetupCardProps {

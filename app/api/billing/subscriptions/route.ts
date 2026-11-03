@@ -212,21 +212,35 @@ export async function POST(req: NextRequest) {
     const regularAmountPaise = Number(currentPrice.price_paise);
     const monthlyWithGst = Math.round(regularAmountPaise * 1.18) / 100;
     const { data: pending, error: pendingError } = await admin.from("subscription_checkout_intents")
-      .select("id, plan_slug, provider_subscription_id, amount_paise")
+      .select("id, plan_slug, provider_subscription_id, amount_paise, expires_at")
       .eq("user_id", user.id).eq("status", "pending").maybeSingle();
     if (pendingError) return NextResponse.json({ error: "Checkout session storage is unavailable." }, { status: 503 });
-    if (pending && (pending.plan_slug !== planSlug || Number(pending.amount_paise) !== regularAmountPaise)) {
+    if (pending?.expires_at && new Date(pending.expires_at).getTime() <= Date.now()) {
+      if (pending.provider_subscription_id) {
+        const previous = await subscriptionsApi.fetch(pending.provider_subscription_id);
+        if (!["created", "authenticated", "pending", "halted"].includes(String(previous.status || ""))) {
+          return NextResponse.json({ error: "An earlier checkout has a provider payment or active subscription. Contact support to reconcile it." }, { status: 409 });
+        }
+        await subscriptionsApi.cancel(pending.provider_subscription_id, { cancel_at_cycle_end: 0 });
+      }
+      const { error: expiryError } = await admin.from("subscription_checkout_intents")
+        .update({ status: "cancelled", updated_at: new Date().toISOString() })
+        .eq("id", pending.id).eq("status", "pending");
+      if (expiryError) return NextResponse.json({ error: "Could not release expired checkout." }, { status: 503 });
+    }
+    const activePending = pending?.expires_at && new Date(pending.expires_at).getTime() <= Date.now() ? null : pending;
+    if (activePending && (activePending.plan_slug !== planSlug || Number(activePending.amount_paise) !== regularAmountPaise)) {
       return NextResponse.json({ error: "Finish or cancel your existing pending subscription authorization before choosing another plan." }, { status: 409 });
     }
-    if (pending && !pending.provider_subscription_id) {
+    if (activePending && !activePending.provider_subscription_id) {
       return NextResponse.json({ error: "Your checkout is being prepared. Please retry shortly; no new subscription was created." }, { status: 409 });
     }
-    if (pending?.provider_subscription_id) {
-      const previous = await subscriptionsApi.fetch(pending.provider_subscription_id);
+    if (activePending?.provider_subscription_id) {
+      const previous = await subscriptionsApi.fetch(activePending.provider_subscription_id);
       if (!["created", "authenticated", "pending", "halted"].includes(String(previous?.status || ""))) {
         return NextResponse.json({ error: `Existing checkout is ${previous?.status || "unavailable"}. Contact support before starting another mandate.` }, { status: 409 });
       }
-      return NextResponse.json({ subscriptionId: pending.provider_subscription_id, keyId,
+      return NextResponse.json({ subscriptionId: activePending.provider_subscription_id, keyId,
         planName: plan.name, planSlug, billingCycle: "monthly", currency: "INR",
         regularAmountPaise, firstChargePaise: regularAmountPaise,
         estimatedTotalWithGst: monthlyWithGst, taxRatePercent: 18,
@@ -235,7 +249,9 @@ export async function POST(req: NextRequest) {
     }
     const { data: intent, error: intentError } = await admin.from("subscription_checkout_intents")
       .insert({ user_id: user.id, plan_slug: planSlug, billing_cycle: "monthly",
-        currency: "INR", amount_paise: regularAmountPaise, status: "pending" })
+        currency: "INR", amount_paise: regularAmountPaise, status: "pending",
+        expires_at: new Date(Date.now() + Math.max(5, Math.min(120,
+          Number(process.env.BILLING_CHECKOUT_TIMEOUT_MINUTES) || 30)) * 60_000).toISOString() })
       .select("id").single();
     if (intentError || !intent) return NextResponse.json({ error: "A checkout already exists or could not be reserved. Retry to resume it." }, { status: 409 });
     const { data: onboardingDraft } = await admin.from("events").select("id")
