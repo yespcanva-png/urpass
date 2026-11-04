@@ -8,6 +8,8 @@ import { SeoGeoPageConfig, SeoGeoWorkflowStep, SeoGeoEventType } from "@/lib/seo
 import { trackConversion, getClientTrackingContext } from "@/lib/seo/analytics";
 import { trackConversionEvent } from "@/lib/conversion/tracker";
 import { ATTRIBUTION_STORAGE_KEY } from "@/lib/conversion/attribution";
+import { resolveFunnelIntent } from "@/lib/conversion/intent-resolver";
+import InteractiveConversionCalculator from "@/components/conversion/InteractiveConversionCalculator";
 import {
   CheckCircle2,
   ArrowRight,
@@ -29,6 +31,11 @@ import {
   HelpCircle,
   Clock,
   Compass,
+  RefreshCw,
+  Download,
+  Volume2,
+  ShieldAlert,
+  Palette,
 } from "lucide-react";
 
 interface SeoGeoLandingTemplateProps {
@@ -193,9 +200,54 @@ export default function SeoGeoLandingTemplate({ config }: SeoGeoLandingTemplateP
     });
   };
 
-  const signupUrl = `/signup?source=${encodeURIComponent(config.pageId)}&campaign=${encodeURIComponent(
-    config.pageId
-  )}&from=${encodeURIComponent(`/solutions/${config.slug}`)}&segment=corporate`;
+  const funnelIntent = resolveFunnelIntent(config.slug || config.pageId);
+  const signupUrl = funnelIntent.signupUrl;
+  const primaryCtaLabel = funnelIntent.ctaText || config.primaryCtaLabel || "Start Free Event";
+
+  // Product Proof Interactive Simulation States
+  const [scanSimState, setScanSimState] = useState<"idle" | "scanning" | "success" | "duplicate">("idle");
+  const [scanCount, setScanCount] = useState<number>(412);
+  const [passTheme, setPassTheme] = useState<"corporate" | "luxe" | "neon" | "minimal">("corporate");
+  const [holoShimmer, setHoloShimmer] = useState<boolean>(true);
+  const [instantApproval, setInstantApproval] = useState<boolean>(true);
+  const [simFormValues, setSimFormValues] = useState<Record<string, string>>(() => {
+    const initial: Record<string, string> = {};
+    (funnelIntent.sampleFormFields || []).forEach((f) => {
+      initial[f.label] = f.value;
+    });
+    return initial;
+  });
+  const [simulatingExport, setSimulatingExport] = useState(false);
+  const [exportComplete, setExportComplete] = useState(false);
+
+  const handleSimulateScan = () => {
+    setScanSimState("scanning");
+    setTimeout(() => {
+      setScanSimState("success");
+      setScanCount((prev) => prev + 1);
+    }, 280);
+  };
+
+  const handleSimulateDuplicate = () => {
+    setScanSimState("scanning");
+    setTimeout(() => {
+      setScanSimState("duplicate");
+    }, 280);
+  };
+
+  const handleResetScanner = () => {
+    setScanSimState("idle");
+  };
+
+  const handleSimulateExport = () => {
+    setSimulatingExport(true);
+    setExportComplete(false);
+    setTimeout(() => {
+      setSimulatingExport(false);
+      setExportComplete(true);
+      setTimeout(() => setExportComplete(false), 3000);
+    }, 600);
+  };
 
   // Safe Normalizations for SEO/GEO Landing Pages
   const normalizedGeoAnswer = config.geoAnswerBlock || {
@@ -447,7 +499,7 @@ export default function SeoGeoLandingTemplate({ config }: SeoGeoLandingTemplateP
                 onClick={handlePrimaryCtaClick}
                 className="inline-flex items-center justify-center gap-2.5 px-7 py-4 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-bold text-base shadow-xl shadow-violet-600/25 hover:shadow-violet-600/40 transition-all transform active:scale-[0.98]"
               >
-                <span>{config.primaryCtaLabel}</span>
+                <span>{primaryCtaLabel}</span>
                 <ArrowRight className="w-5 h-5" />
               </Link>
 

@@ -183,11 +183,36 @@ function SignupContent() {
       searchParams,
       typeof document !== "undefined" ? document.referrer : null
     );
-    const destination = (target === "/dashboard" || target === "/onboarding/subscription") && process.env.NEXT_PUBLIC_FIRST_EVENT_CONVERSION_ENABLED === "true"
+    const rawDestination = (target === "/dashboard" || target === "/onboarding/subscription") && process.env.NEXT_PUBLIC_FIRST_EVENT_CONVERSION_ENABLED === "true"
       ? "/onboarding/first-event"
       : target;
+    const destination = getPostAuthDestination(rawDestination);
     setSuccess(true);
     setTimeout(() => router.push(destination), 1200);
+  }
+
+  function getPostAuthDestination(baseTarget: string) {
+    if (!baseTarget.startsWith("/onboarding/first-event")) {
+      return baseTarget;
+    }
+    const params = new URLSearchParams();
+    const forwardKeys = [
+      "template",
+      "eventName",
+      "name",
+      "capacity",
+      "intent",
+      "segment",
+      "from",
+      "source",
+      "campaign",
+    ];
+    for (const key of forwardKeys) {
+      const val = searchParams.get(key);
+      if (val) params.set(key, val);
+    }
+    const qs = params.toString();
+    return qs ? `/onboarding/first-event?${qs}` : "/onboarding/first-event";
   }
 
   async function onSsoSubmit(data: SsoFormData) {
@@ -224,9 +249,10 @@ function SignupContent() {
       visitorSegment: segment,
       metadata: { method: "google", from: fromPage },
     });
-    const destination = process.env.NEXT_PUBLIC_FIRST_EVENT_CONVERSION_ENABLED === "true"
+    const rawDestination = process.env.NEXT_PUBLIC_FIRST_EVENT_CONVERSION_ENABLED === "true"
       ? "/onboarding/first-event"
       : "/onboarding/subscription";
+    const destination = getPostAuthDestination(rawDestination);
     const redirectUrl = `/api/auth/google/redirect?next=${encodeURIComponent(destination)}&segment=${encodeURIComponent(segment)}&from=${encodeURIComponent(fromPage)}`;
     window.location.href = redirectUrl;
   }

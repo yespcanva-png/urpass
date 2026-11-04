@@ -47,6 +47,7 @@ interface EventRow {
   event_date: string;
   status: string;
   apply_slug?: string;
+  is_onboarding_draft?: boolean;
 }
 
 interface OrgRow {
@@ -161,7 +162,7 @@ export default function DashboardContent() {
           memberships,
         ] = await Promise.all([
           supabase.from("profiles").select("full_name").eq("user_id", user.id).single(),
-          supabase.from("events").select("id, name, venue, event_date, status, apply_slug")
+          supabase.from("events").select("id, name, venue, event_date, status, apply_slug, is_onboarding_draft")
             .eq("organizer_id", user.id).order("created_at", { ascending: false }),
           supabase
             .from("subscriptions")
@@ -321,6 +322,10 @@ export default function DashboardContent() {
 
   const checkinRate = stats.passes > 0 ? Math.round((stats.checkedIn / stats.passes) * 100) : 0;
 
+  const unfinishedDraft = useMemo(() => {
+    return events.find((e) => e.is_onboarding_draft && e.status === "draft");
+  }, [events]);
+
   return (
     <div className="max-w-5xl mx-auto space-y-6 pb-12">
       {/* ── Top Date & What's New Announcement ─────────────────────── */}
@@ -401,6 +406,38 @@ export default function DashboardContent() {
         <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50/70 px-4 py-3 text-sm text-red-700">
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
           <p>{loadError}</p>
+        </div>
+      )}
+
+      {/* ── Unfinished Onboarding Draft Recovery ───────────────────────── */}
+      {loaded && unfinishedDraft && (
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-2xl border border-violet-200 bg-gradient-to-r from-violet-50/90 via-purple-50/50 to-white p-4 sm:p-5 shadow-xs">
+          <div className="flex items-start gap-3">
+            <div className="p-2.5 rounded-xl bg-violet-600 text-white shrink-0 mt-0.5">
+              <Sparkles className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-violet-700 bg-violet-100 px-2 py-0.5 rounded">
+                  Incomplete Onboarding
+                </span>
+                <span className="text-xs text-neutral-500 font-medium">Draft Saved</span>
+              </div>
+              <h4 className="text-sm sm:text-base font-bold text-neutral-900 mt-1">
+                Finish setting up &ldquo;{unfinishedDraft.name}&rdquo;
+              </h4>
+              <p className="text-xs text-neutral-600 mt-0.5">
+                Your event draft is saved. Choose a plan, configure registration tickets, and start welcoming attendees.
+              </p>
+            </div>
+          </div>
+          <Link
+            href={`/onboarding/first-event/plans?draft=${unfinishedDraft.id}`}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-violet-700 hover:bg-violet-600 text-white text-xs sm:text-sm font-bold shadow-sm transition-all shrink-0"
+          >
+            <span>Resume Event Setup</span>
+            <ArrowRight className="w-4 h-4" />
+          </Link>
         </div>
       )}
 

@@ -24,6 +24,8 @@ export async function recordSignupCompletion() {
 export async function saveQuickFirstEventDraft(input: {
   name: string;
   expectedRegistrations: number;
+  category?: string;
+  template?: string;
 }): Promise<{ eventId?: string; error?: string }> {
   const name = input.name?.trim();
   const expectedRegistrations = Number(input.expectedRegistrations);
@@ -62,8 +64,8 @@ export async function saveQuickFirstEventDraft(input: {
     venue: null,
     attendee_limit: expectedRegistrations,
     expected_registrations: expectedRegistrations,
-    onboarding_category: "corporate",
-    onboarding_objective: "collect_registrations",
+    onboarding_category: input.category || "corporate",
+    onboarding_objective: input.template || "collect_registrations",
     is_onboarding_draft: true,
     status: "draft",
     application_enabled: true,
@@ -80,9 +82,17 @@ export async function saveQuickFirstEventDraft(input: {
     if (concurrent) return { eventId: concurrent.id };
   }
   if (error || !inserted) return { error: error?.message || "Could not save your event draft." };
-  await recordFirstEventConversion({ userId: user.id, eventId: inserted.id,
-    eventName: "first_event_draft_created", idempotencyKey: `first-draft:${inserted.id}`,
-    metadata: { event_category: "corporate", expected_registrations: expectedRegistrations } });
+  await recordFirstEventConversion({
+    userId: user.id,
+    eventId: inserted.id,
+    eventName: "first_event_draft_created",
+    idempotencyKey: `first-draft:${inserted.id}`,
+    metadata: {
+      event_category: input.category || "corporate",
+      template: input.template || "corporate",
+      expected_registrations: expectedRegistrations,
+    },
+  });
   return { eventId: inserted.id };
 }
 

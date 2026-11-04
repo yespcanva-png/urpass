@@ -400,7 +400,8 @@ export async function resolveUserSubscriptionAccess(params: {
       user.user_metadata?.plan_selected ||
       user.user_metadata?.onboarded_at ||
       user.user_metadata?.onboarded ||
-      sub?.billing_cycle === "free"
+      sub?.billing_cycle === "free" ||
+      sub?.provider === "free"
     );
 
     let hasOrganizedEvents = false;

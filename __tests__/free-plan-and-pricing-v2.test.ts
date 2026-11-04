@@ -83,13 +83,13 @@ describe("UrPass 7-Day Growth & Monetization: Free Forever + Standard SaaS Tiers
   });
 
   describe("Tier Limits & Entitlements Specification", () => {
-    it("enforces Free plan limits: 1 active event, 100 registrations/month, 1 team seat", () => {
+    it("enforces Free plan limits: 1 active event, 50 registrations/month, 1 team seat", () => {
       expect(ENTITLEMENTS.FREE.eventsPerMonth).toBe(1);
-      expect(ENTITLEMENTS.FREE.registrationsPerMonth).toBe(100);
+      expect(ENTITLEMENTS.FREE.registrationsPerMonth).toBe(50);
       expect(ENTITLEMENTS.FREE.organizerSeats).toBe(1);
 
       expect(V2_PLAN_LIMITS.free.eventsPerMonth).toBe(1);
-      expect(V2_PLAN_LIMITS.free.registrationsPerMonth).toBe(100);
+      expect(V2_PLAN_LIMITS.free.registrationsPerMonth).toBe(50);
       expect(V2_PLAN_LIMITS.free.organizerSeats).toBe(1);
 
       // Free plan does not have advanced features
@@ -98,13 +98,13 @@ describe("UrPass 7-Day Growth & Monetization: Free Forever + Standard SaaS Tiers
       expect(canUseFeature("free", "apiAccess")).toBe(false);
     });
 
-    it("enforces Starter plan limits: 3 active events, 500 registrations/month, 2 team seats", () => {
+    it("enforces Starter plan limits: 3 active events, 1,000 registrations/month, 2 team seats", () => {
       expect(ENTITLEMENTS.STARTER.eventsPerMonth).toBe(3);
-      expect(ENTITLEMENTS.STARTER.registrationsPerMonth).toBe(500);
+      expect(ENTITLEMENTS.STARTER.registrationsPerMonth).toBe(1000);
       expect(ENTITLEMENTS.STARTER.organizerSeats).toBe(2);
 
       expect(V2_PLAN_LIMITS.starter.eventsPerMonth).toBe(3);
-      expect(V2_PLAN_LIMITS.starter.registrationsPerMonth).toBe(500);
+      expect(V2_PLAN_LIMITS.starter.registrationsPerMonth).toBe(1000);
       expect(V2_PLAN_LIMITS.starter.organizerSeats).toBe(2);
 
       // Starter has CSV and custom registration, but not API or custom pass design
@@ -114,13 +114,13 @@ describe("UrPass 7-Day Growth & Monetization: Free Forever + Standard SaaS Tiers
       expect(canUseFeature("starter", "apiAccess")).toBe(false);
     });
 
-    it("enforces Pro plan limits: 10 active events, 2,500 registrations/month, 5 team seats, session attendance", () => {
+    it("enforces Pro plan limits: 10 active events, 5,000 registrations/month, 5 team seats, session attendance", () => {
       expect(ENTITLEMENTS.PRO.eventsPerMonth).toBe(10);
-      expect(ENTITLEMENTS.PRO.registrationsPerMonth).toBe(2500);
+      expect(ENTITLEMENTS.PRO.registrationsPerMonth).toBe(5000);
       expect(ENTITLEMENTS.PRO.organizerSeats).toBe(5);
 
       expect(V2_PLAN_LIMITS.pro.eventsPerMonth).toBe(10);
-      expect(V2_PLAN_LIMITS.pro.registrationsPerMonth).toBe(2500);
+      expect(V2_PLAN_LIMITS.pro.registrationsPerMonth).toBe(5000);
       expect(V2_PLAN_LIMITS.pro.organizerSeats).toBe(5);
 
       // Pro has pass design, branding removal, session attendance, but API & webhooks are reserved for Business
@@ -131,11 +131,11 @@ describe("UrPass 7-Day Growth & Monetization: Free Forever + Standard SaaS Tiers
       expect(canUseFeature("pro", "webhooks")).toBe(false);
     });
 
-    it("enforces Business plan limits: Unlimited events, 10,000 registrations/month, 15 seats, API & webhooks", () => {
-      expect(ENTITLEMENTS.BUSINESS.registrationsPerMonth).toBe(10000);
+    it("enforces Business plan limits: Unlimited events, 15,000 registrations/month, 15 seats, API & webhooks", () => {
+      expect(ENTITLEMENTS.BUSINESS.registrationsPerMonth).toBe(15000);
       expect(ENTITLEMENTS.BUSINESS.organizerSeats).toBe(15);
 
-      expect(V2_PLAN_LIMITS.business.registrationsPerMonth).toBe(10000);
+      expect(V2_PLAN_LIMITS.business.registrationsPerMonth).toBe(15000);
       expect(V2_PLAN_LIMITS.business.organizerSeats).toBe(15);
 
       // Business unlocks API, webhooks, cross-event analytics, advanced permissions

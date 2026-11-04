@@ -32,7 +32,7 @@ export const ENTITLEMENTS = {
   },
   STARTER: {
     eventsPerMonth: 3,
-    registrationsPerMonth: 500,
+    registrationsPerMonth: 1000,
     organizerSeats: 2,
     customFields: 10,
     csvImport: true,
@@ -40,7 +40,7 @@ export const ENTITLEMENTS = {
   },
   PRO: {
     eventsPerMonth: 10,
-    registrationsPerMonth: 2500,
+    registrationsPerMonth: 5000,
     organizerSeats: 5,
     customFields: Infinity,
     customPassDesign: true,
@@ -51,7 +51,7 @@ export const ENTITLEMENTS = {
   },
   BUSINESS: {
     eventsPerMonth: Infinity,
-    registrationsPerMonth: 10000,
+    registrationsPerMonth: 15000,
     organizerSeats: 15,
     customFields: Infinity,
     customPassDesign: true,

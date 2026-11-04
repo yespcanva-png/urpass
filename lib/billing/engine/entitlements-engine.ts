@@ -26,7 +26,7 @@ export const V2_PLAN_LIMITS: Record<
 > = {
   starter: {
     eventsPerMonth: 3,
-    registrationsPerMonth: 500,
+    registrationsPerMonth: 1000,
     organizerSeats: 2,
     features: new Set<EntitlementKey>([
       "csv_import",
@@ -38,7 +38,7 @@ export const V2_PLAN_LIMITS: Record<
   },
   pro: {
     eventsPerMonth: 10,
-    registrationsPerMonth: 2500,
+    registrationsPerMonth: 5000,
     organizerSeats: 5,
     features: new Set<EntitlementKey>([
       "csv_import",
@@ -55,7 +55,7 @@ export const V2_PLAN_LIMITS: Record<
   },
   business: {
     eventsPerMonth: 999999, // Unlimited
-    registrationsPerMonth: 10000,
+    registrationsPerMonth: 15000,
     organizerSeats: 15,
     features: new Set<EntitlementKey>([
       "csv_import",
@@ -120,7 +120,7 @@ export const V2_PLAN_LIMITS: Record<
   },
   free: {
     eventsPerMonth: 1,
-    registrationsPerMonth: 100,
+    registrationsPerMonth: 50,
     organizerSeats: 1,
     features: new Set<EntitlementKey>([]),
   },

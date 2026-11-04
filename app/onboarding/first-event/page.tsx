@@ -9,7 +9,11 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default async function FirstEventPage() {
+export default async function FirstEventPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }> | { [key: string]: string | string[] | undefined };
+}) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login?next=/onboarding/first-event");
@@ -29,5 +33,23 @@ export default async function FirstEventPage() {
   if (event?.is_onboarding_draft) redirect(`/onboarding/first-event/plans?draft=${event.id}`);
   if (event) redirect(`/event/${event.id}`);
 
-  return <QuickFirstEventForm />;
+  const resolvedParams = searchParams ? await searchParams : {};
+  const template = typeof resolvedParams.template === "string" ? resolvedParams.template : undefined;
+  const eventName = typeof resolvedParams.eventName === "string"
+    ? resolvedParams.eventName
+    : (typeof resolvedParams.name === "string" ? resolvedParams.name : undefined);
+  const capacityRaw = typeof resolvedParams.capacity === "string" ? parseInt(resolvedParams.capacity, 10) : undefined;
+  const capacity = capacityRaw && !isNaN(capacityRaw) ? capacityRaw : undefined;
+  const intent = typeof resolvedParams.intent === "string" ? resolvedParams.intent : undefined;
+  const segment = typeof resolvedParams.segment === "string" ? resolvedParams.segment : undefined;
+
+  return (
+    <QuickFirstEventForm
+      initialName={eventName}
+      initialCapacity={capacity}
+      initialTemplate={template}
+      initialCategory={segment}
+      initialIntent={intent}
+    />
+  );
 }
