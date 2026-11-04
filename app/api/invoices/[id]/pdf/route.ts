@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { getSupabaseUrl } from "@/lib/supabase/config";
 import { isOpsAuthenticated } from "@/lib/ops/auth";
+import { getOwnerEmail } from "@/lib/email";
 import { generateInvoicePdf, type InvoiceRecord } from "@/lib/invoices";
 
 export const dynamic = "force-dynamic";
@@ -23,24 +24,26 @@ export async function GET(
     return NextResponse.json({ error: "Missing invoice ID" }, { status: 400 });
   }
 
+  const decodedIdentifier = decodeURIComponent(id).trim();
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(decodedIdentifier);
+
   let invoice: InvoiceRecord | null = null;
+  const admin = adminClient();
 
   // 1. Allow Ops admin to access any invoice
   const isOps = await isOpsAuthenticated();
   if (isOps) {
-    const admin = adminClient();
-    const { data } = await admin
-      .from("invoices")
-      .select("*")
-      .eq("id", id)
-      .maybeSingle();
+    const query = admin.from("invoices").select("*");
+    const { data } = isUuid
+      ? await query.eq("id", decodedIdentifier).maybeSingle()
+      : await query.eq("invoice_number", decodedIdentifier).maybeSingle();
 
     if (data) {
       invoice = data as InvoiceRecord;
     }
   }
 
-  // 2. Normal authenticated user scoped to their own invoice
+  // 2. Authenticated user or Platform Owner
   if (!invoice) {
     const supabase = await createClient();
     const {
@@ -51,22 +54,40 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const query = supabase
-      .from("invoices")
-      .select("*")
-      .eq("id", id)
-      .eq("user_id", user.id);
+    const ownerEmail = getOwnerEmail().toLowerCase();
+    const envOwner = (process.env.OWNER_EMAIL || "").toLowerCase();
+    const userEmail = (user.email || "").toLowerCase();
+    const isOwner =
+      userEmail === ownerEmail ||
+      userEmail === envOwner ||
+      userEmail === "srinithinoffl@gmail.com" ||
+      userEmail === "srinithin@yespstudio.com";
 
-    const { data, error } =
-      typeof (query as any).maybeSingle === "function"
-        ? await (query as any).maybeSingle()
-        : await (query as any).single();
+    if (isOwner) {
+      // Platform owner can access any invoice
+      const query = admin.from("invoices").select("*");
+      const { data } = isUuid
+        ? await query.eq("id", decodedIdentifier).maybeSingle()
+        : await query.eq("invoice_number", decodedIdentifier).maybeSingle();
 
-    if (error || !data) {
-      return NextResponse.json({ error: "Invoice not found or unauthorized" }, { status: 404 });
+      if (data) {
+        invoice = data as InvoiceRecord;
+      }
+    } else {
+      // Customer scoped to their own invoice
+      const query = supabase.from("invoices").select("*").eq("user_id", user.id);
+      const { data } = isUuid
+        ? await query.eq("id", decodedIdentifier).maybeSingle()
+        : await query.eq("invoice_number", decodedIdentifier).maybeSingle();
+
+      if (data) {
+        invoice = data as InvoiceRecord;
+      }
     }
 
-    invoice = data as InvoiceRecord;
+    if (!invoice) {
+      return NextResponse.json({ error: "Invoice not found or unauthorized" }, { status: 404 });
+    }
   }
 
   const pdfBytes = await generateInvoicePdf(invoice as InvoiceRecord);
