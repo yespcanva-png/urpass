@@ -18,6 +18,14 @@ export const EXPLORE_CITY_COORDINATES: CityCoordinates[] = [
   { name: "Pune", lat: 18.5204, lon: 73.8567 },
   { name: "Kolkata", lat: 22.5726, lon: 88.3639 },
   { name: "London", lat: 51.5074, lon: -0.1278 },
+  { name: "Manchester", lat: 53.4808, lon: -2.2426 },
+  { name: "Birmingham", lat: 52.4862, lon: -1.8904 },
+  { name: "Edinburgh", lat: 55.9533, lon: -3.1883 },
+  { name: "Bristol", lat: 51.4545, lon: -2.5879 },
+  { name: "Leeds", lat: 53.8008, lon: -1.5491 },
+  { name: "Glasgow", lat: 55.8642, lon: -4.2518 },
+  { name: "Cardiff", lat: 51.4816, lon: -3.1791 },
+  { name: "Belfast", lat: 54.5973, lon: -5.9301 },
 ];
 
 /**

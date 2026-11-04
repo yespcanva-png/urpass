@@ -24,6 +24,14 @@ export const CITY_COORDINATES: CityCoordinates[] = [
   { city: "Ahmedabad", lat: 23.0225, lng: 72.5714 },
   { city: "Jaipur", lat: 26.9124, lng: 75.7873 },
   { city: "London", lat: 51.5074, lng: -0.1278 },
+  { city: "Manchester", lat: 53.4808, lng: -2.2426 },
+  { city: "Birmingham", lat: 52.4862, lng: -1.8904 },
+  { city: "Edinburgh", lat: 55.9533, lng: -3.1883 },
+  { city: "Bristol", lat: 51.4545, lng: -2.5879 },
+  { city: "Leeds", lat: 53.8008, lng: -1.5491 },
+  { city: "Glasgow", lat: 55.8642, lng: -4.2518 },
+  { city: "Cardiff", lat: 51.4816, lng: -3.1791 },
+  { city: "Belfast", lat: 54.5973, lng: -5.9301 },
 ];
 
 /**

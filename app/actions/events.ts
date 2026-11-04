@@ -11,6 +11,8 @@ import { recordApiUsage } from "@/lib/api-usage";
 import { getSupabaseUrl } from "@/lib/supabase/config";
 import { recordLiveOpsEvent } from "@/lib/ops/events";
 import { validateEventPreflightReadiness } from "@/lib/events/preflight";
+import { eventUtcRange } from "@/lib/markets/timezone";
+import { marketForCountry } from "@/lib/markets/config";
 import { resolveUserSubscriptionAccess } from "@/lib/billing/entitlement-resolver";
 import type { CustomFieldDefinition } from "@/types";
 
@@ -70,8 +72,13 @@ export async function createEvent(data: EventInput, organizationId?: string): Pr
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
+  const parsed = eventSchema.safeParse(data);
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+  if (parsed.data.country_code === "US") return { error: "Event country is not supported yet." };
+  const ukFreeEvent = parsed.data.country_code === "GB" && parsed.data.currency === "GBP" && !parsed.data.is_paid_event;
+
   const access = await resolveUserSubscriptionAccess({ supabase, user });
-  if (!access.hasOrganizerAccess) {
+  if (!access.hasOrganizerAccess && !ukFreeEvent) {
     return {
       error:
         access.state === "autopay_trial_completed"
@@ -114,11 +121,6 @@ export async function createEvent(data: EventInput, organizationId?: string): Pr
     }
   }
 
-  const parsed = eventSchema.safeParse(data);
-  if (!parsed.success) {
-    return { error: parsed.error.issues[0].message };
-  }
-
   // If creating under an organization, ensure user is owner, admin, or event_manager
   const targetOrgId: string | undefined = organizationId;
   if (targetOrgId) {
@@ -153,6 +155,19 @@ export async function createEvent(data: EventInput, organizationId?: string): Pr
   }
 
   const { workspace_id, location_id, ...baseFields } = parsed.data;
+  const eventCountry = baseFields.country_code === "GB" ? "GB" : "IN";
+  const eventMarket = marketForCountry(eventCountry);
+  const eventCurrency = baseFields.currency || eventMarket.currency;
+  if (eventCurrency !== "INR" && baseFields.is_paid_event) {
+    return { error: "Paid events in this currency are unavailable until an approved payment provider is connected." };
+  }
+  const eventTimezone = baseFields.timezone || eventMarket.defaultTimezone;
+  let eventInstants;
+  try {
+    eventInstants = eventUtcRange({ ...baseFields, timezone: eventTimezone });
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "Invalid event time." };
+  }
 
   // Auto-generate clean, SEO-friendly event URL slug (or use custom requested slug)
   const desiredSlug = baseFields.custom_slug?.trim() || baseFields.name;
@@ -174,8 +189,12 @@ export async function createEvent(data: EventInput, organizationId?: string): Pr
     auto_approve: !!baseFields.auto_approve,
     is_paid_event: !!baseFields.is_paid_event,
     ticket_price: baseFields.is_paid_event ? baseFields.ticket_price : 0,
-    currency: baseFields.currency || "INR",
-    timezone: baseFields.timezone || "Asia/Kolkata",
+    currency: eventCurrency,
+    timezone: eventTimezone,
+    country_code: eventCountry,
+    locale: baseFields.locale || eventMarket.locale,
+    starts_at_utc: eventInstants.startsAtUtc,
+    ends_at_utc: eventInstants.endsAtUtc,
     organizer_id: user.id,
     apply_slug,
   };
@@ -211,31 +230,13 @@ export async function createEvent(data: EventInput, organizationId?: string): Pr
         delete eventData.workspace_id;
         delete eventData.location_id;
       }
-      if (error.message?.includes("currency") || error.message?.includes("timezone")) {
-        delete eventData.currency;
-        delete eventData.timezone;
-      }
       const { data: adminEvent, error: adminErr } = await admin
         .from("events")
         .insert(eventData)
         .select("id, attendee_limit")
         .single();
       if (adminErr) {
-        if (adminErr.message?.includes("workspace_id") || adminErr.message?.includes("location_id") || adminErr.message?.includes("currency") || adminErr.message?.includes("timezone")) {
-          delete eventData.workspace_id;
-          delete eventData.location_id;
-          delete eventData.currency;
-          delete eventData.timezone;
-          const { data: fallbackEvent, error: fallbackErr } = await admin
-            .from("events")
-            .insert(eventData)
-            .select("id, attendee_limit")
-            .single();
-          if (fallbackErr) return { error: fallbackErr.message };
-          event = fallbackEvent;
-        } else {
-          return { error: adminErr.message };
-        }
+        return { error: adminErr.message };
       } else {
         event = adminEvent;
       }
@@ -367,20 +368,21 @@ export async function updateEvent(
   if (!parsed.success) {
     return { error: parsed.error.issues[0].message };
   }
+  if (parsed.data.country_code === "US") return { error: "Event country is not supported yet." };
 
   const db = process.env.SUPABASE_SERVICE_ROLE_KEY ? adminClient() : supabase;
 
   // Verify access: user is creator or an owner/admin/event_manager in the org
   let { data: event } = await supabase
     .from("events")
-    .select("id, organizer_id, organization_id, apply_slug, custom_pass_design, venue")
+    .select("id, organizer_id, organization_id, apply_slug, custom_pass_design, venue, country_code, currency, timezone, locale")
     .eq("id", eventId)
     .maybeSingle();
 
   if (!event && process.env.SUPABASE_SERVICE_ROLE_KEY) {
     const { data: adminEv } = await db
       .from("events")
-      .select("id, organizer_id, organization_id, apply_slug, custom_pass_design, venue")
+      .select("id, organizer_id, organization_id, apply_slug, custom_pass_design, venue, country_code, currency, timezone, locale")
       .eq("id", eventId)
       .maybeSingle();
     event = adminEv;
@@ -433,6 +435,26 @@ export async function updateEvent(
   }
 
   const { workspace_id, location_id, ...baseUpdateFields } = parsed.data;
+  const updateCountry = (baseUpdateFields.country_code || event.country_code) === "GB" ? "GB" : "IN";
+  const updateMarket = marketForCountry(updateCountry);
+  const updateCurrency = data.currency || event.currency || updateMarket.currency;
+  if (updateCurrency !== "INR" && baseUpdateFields.is_paid_event) {
+    return { error: "Paid events in this currency are unavailable until an approved payment provider is connected." };
+  }
+  if (updateCurrency !== "INR" && baseUpdateFields.status === "active") {
+    const { data: tiers } = await db.from("ticket_types").select("price, extra_guest_price, age_tiers").eq("event_id", eventId);
+    if ((tiers || []).some((tier) => Number(tier.price || 0) > 0 || Number(tier.extra_guest_price || 0) > 0 ||
+      (Array.isArray(tier.age_tiers) && tier.age_tiers.some((ageTier: { price?: number }) => Number(ageTier.price || 0) > 0)))) {
+      return { error: "Paid tickets in this currency cannot be published until an approved provider is connected." };
+    }
+  }
+  const updateTimezone = baseUpdateFields.timezone || event.timezone || updateMarket.defaultTimezone;
+  let updateInstants;
+  try {
+    updateInstants = eventUtcRange({ ...baseUpdateFields, timezone: updateTimezone });
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "Invalid event time." };
+  }
   const resolvedEventType = baseUpdateFields.event_type || "physical";
   const resolvedVenue =
     resolvedEventType === "online"
@@ -454,6 +476,12 @@ export async function updateEvent(
     auto_promote_waitlist: baseUpdateFields.auto_promote_waitlist !== undefined ? Boolean(baseUpdateFields.auto_promote_waitlist) : false,
     is_paid_event: baseUpdateFields.is_paid_event,
     ticket_price: baseUpdateFields.is_paid_event ? baseUpdateFields.ticket_price : 0,
+    currency: updateCurrency,
+    timezone: updateTimezone,
+    country_code: updateCountry,
+    locale: baseUpdateFields.locale || event.locale || updateMarket.locale,
+    starts_at_utc: updateInstants.startsAtUtc,
+    ends_at_utc: updateInstants.endsAtUtc,
   };
 
   if (resolvedEventType === "physical") {
@@ -1358,8 +1386,12 @@ export async function duplicateEvent(
     waitlist_enabled: source.waitlist_enabled ?? true,
     is_paid_event: !!source.is_paid_event,
     ticket_price: source.ticket_price ?? 0,
-    currency: source.currency || "INR",
-    timezone: source.timezone || "Asia/Kolkata",
+    currency: source.country_code === "GB" || source.currency === "GBP" ? "GBP" : (source.currency || "INR"),
+    timezone: source.timezone || (source.country_code === "GB" || source.currency === "GBP" ? "Europe/London" : "Asia/Kolkata"),
+    country_code: source.country_code || (source.currency === "GBP" ? "GB" : "IN"),
+    locale: source.locale || (source.country_code === "GB" || source.currency === "GBP" ? "en-GB" : "en-IN"),
+    starts_at_utc: source.starts_at_utc ?? null,
+    ends_at_utc: source.ends_at_utc ?? null,
     event_type: source.event_type || "physical",
     meeting_url: source.meeting_url ?? null,
     meeting_platform: source.meeting_platform ?? null,

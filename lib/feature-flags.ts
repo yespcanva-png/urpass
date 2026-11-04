@@ -24,7 +24,11 @@ export type FeatureFlagKey =
   | "ticket_reassignment"
   | "offline_scanning"
   | "group_entry"
-  | "ticket_cancellation";
+  | "ticket_cancellation"
+  | "uk_market_enabled"
+  | "uk_free_registration"
+  | "uk_paid_ticketing"
+  | "uk_organizer_mor";
 
 export type CoreFeatureKey =
   | "public_registration"
@@ -292,6 +296,38 @@ export const FEATURE_FLAG_DEFINITIONS: Record<FeatureFlagKey, FeatureFlagDefinit
     moduleCode: "M15",
     name: "Ticket Cancellation",
     description: "Optional attendee self-service ticket cancellations with cutoffs, organizer approval, and refund policies.",
+    defaultEnabled: false,
+    requiredEntitlement: null,
+  },
+  uk_market_enabled: {
+    key: "uk_market_enabled",
+    moduleCode: "UK01",
+    name: "UK Market Expansion",
+    description: "Enables UK (GBP, Europe/London, UK GDPR) event operations.",
+    defaultEnabled: true,
+    requiredEntitlement: null,
+  },
+  uk_free_registration: {
+    key: "uk_free_registration",
+    moduleCode: "UK02",
+    name: "UK Free Registrations",
+    description: "Allows zero-friction UK attendee registration with QR pass issuance.",
+    defaultEnabled: true,
+    requiredEntitlement: null,
+  },
+  uk_paid_ticketing: {
+    key: "uk_paid_ticketing",
+    moduleCode: "UK03",
+    name: "UK Paid Ticketing",
+    description: "Enables GBP ticketing checkout powered by organiser-connected gateways.",
+    defaultEnabled: false,
+    requiredEntitlement: null,
+  },
+  uk_organizer_mor: {
+    key: "uk_organizer_mor",
+    moduleCode: "UK04",
+    name: "Organiser MoR Architecture",
+    description: "UK organisers act as Merchant of Record collecting GBP directly.",
     defaultEnabled: false,
     requiredEntitlement: null,
   },

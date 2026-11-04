@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(eventId);
   const eventQuery = admin
     .from("events")
-    .select("id, name, is_paid_event, ticket_price, status, application_enabled, organizer_id, organization_id");
+    .select("id, name, is_paid_event, ticket_price, currency, status, application_enabled, organizer_id, organization_id");
 
   const { data: event, error: eventFetchError } = await (isUuid
     ? eventQuery.eq("id", eventId)
@@ -103,6 +103,9 @@ export async function POST(req: NextRequest) {
   }
 
   const eventCurrency = ((event as { currency?: string })?.currency || "INR").toUpperCase();
+  if (eventCurrency !== "INR") {
+    return badRequest("Paid checkout is unavailable for this event currency.", "CURRENCY_NOT_SUPPORTED");
+  }
   let amountPaise = 0;
   let ticketName = event.name;
   let totalAttendeeCount = 1;

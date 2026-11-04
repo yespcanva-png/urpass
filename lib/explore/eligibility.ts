@@ -27,10 +27,12 @@ export type EligibilityEvent = {
   apply_slug: string | null;
   event_date: string;
   start_time: string;
+  timezone?: string | null;
   venue: string | null;
   attendee_limit: number | null;
   is_paid_event: boolean;
   ticket_price: number | null;
+  currency?: string | null;
   organizer_id?: string | null;
   organization_id?: string | null;
 };
@@ -39,6 +41,8 @@ export type EligibilityTier = {
   id: string;
   status: string;
   price: number;
+  extra_guest_price?: number | null;
+  age_tiers?: Array<{ price?: number }> | null;
   capacity: number | null;
   sales_start: string | null;
   sales_end: string | null;
@@ -137,7 +141,7 @@ export function assessExploreEligibility(input: {
 
   // 10. Date and Time boundaries
   const localNow = eventLocalNow(input.now || new Date(), metadata.city,
-    typeof design.timezone === "string" ? design.timezone : null);
+    event.timezone || (typeof design.timezone === "string" ? design.timezone : null));
   if (!event.event_date) {
     issues.push("Event date must be specified.");
   } else if (event.event_date < localNow.date || (event.event_date === localNow.date && (event.start_time || "00:00") < localNow.time)) {
@@ -171,6 +175,11 @@ export function assessExploreEligibility(input: {
   if (tiers.length === 0 && event.is_paid_event && minPricePaise === 0) {
     issues.push("Set a valid base ticket price or add an available ticket tier.");
   }
+  if (event.currency !== "INR" && event.currency != null &&
+      (event.is_paid_event || tiers.some((tier) => tier.price > 0 || Number(tier.extra_guest_price || 0) > 0 ||
+        (tier.age_tiers || []).some((ageTier) => Number(ageTier.price || 0) > 0)))) {
+    issues.push("Paid events in this currency require an approved checkout provider before Explore listing.");
+  }
 
   return {
     ready: issues.length === 0,
@@ -190,7 +199,7 @@ export async function getExploreEligibility(
   const { data: event, error: eventError } = await db
     .from("events")
     .select(
-      "id, name, description, banner_url, logo_url, custom_pass_design, status, application_enabled, apply_slug, event_date, start_time, venue, attendee_limit, is_paid_event, ticket_price, organizer_id, organization_id"
+      "id, name, description, banner_url, logo_url, custom_pass_design, status, application_enabled, apply_slug, event_date, start_time, timezone, venue, attendee_limit, is_paid_event, ticket_price, currency, organizer_id, organization_id"
     )
     .eq("id", eventId)
     .maybeSingle();
@@ -230,7 +239,7 @@ export async function getExploreEligibility(
     { count: attendeeCount, error: attendeeError },
     { data: reservations, error: reservationError },
   ] = await Promise.all([
-    db.from("ticket_types").select("id, status, price, capacity, sales_start, sales_end").eq("event_id", eventId),
+    db.from("ticket_types").select("id, status, price, capacity, sales_start, sales_end, age_tiers, extra_guest_price").eq("event_id", eventId),
     db.from("attendees").select("*", { count: "exact", head: true }).eq("event_id", eventId).neq("application_status", "rejected"),
     db.from("ticket_reservations").select("ticket_type_id, quantity").eq("event_id", eventId).eq("status", "RESERVED").gt("expires_at", new Date().toISOString()),
   ]);

@@ -362,6 +362,18 @@ export async function sendEmail(payload: MailPayload): Promise<MailSendResult | 
   }
 }
 
+export function formatEmailTimestamp(date: Date = new Date(), currencyOrTimezone?: string | null): string {
+  const norm = (currencyOrTimezone || "").toUpperCase();
+  const isUk = norm === "GBP" || norm === "GB" || norm.includes("LONDON");
+  const tz = isUk ? "Europe/London" : "Asia/Kolkata";
+  const loc = isUk ? "en-GB" : "en-IN";
+  try {
+    return date.toLocaleString(loc, { timeZone: tz, dateStyle: "medium", timeStyle: "medium" });
+  } catch {
+    return date.toISOString();
+  }
+}
+
 export async function sendOwnerNotification({
   subject,
   title,
@@ -734,7 +746,7 @@ export async function notifyOwnerPaymentAttempt({
       ["Buyer name", buyerName],
       ["Buyer email", buyerEmail],
       ["Razorpay order / sub", orderId || subscriptionId],
-      ["Time", new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })],
+      ["Time", formatEmailTimestamp(new Date(), curr)],
     ],
   });
 }
@@ -773,7 +785,7 @@ export async function notifyOwnerPaymentSuccess({
       ["Buyer email", buyerEmail],
       ["Razorpay payment", paymentId],
       ["Razorpay order", orderId],
-      ["Time", new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })],
+      ["Time", formatEmailTimestamp(new Date(), curr)],
     ],
   });
 }
@@ -815,7 +827,7 @@ export async function notifyOwnerTrialActivated({
       ["Customer Name", buyerName],
       ["Customer Email", buyerEmail],
       ["Reference ID", subscriptionId || paymentId || "Direct Free Trial"],
-      ["Time", new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })],
+      ["Time", formatEmailTimestamp(new Date(), curr)],
     ],
   });
 }
@@ -856,7 +868,7 @@ export async function notifyOwnerPaidSubscription({
       ["Razorpay Payment ID", paymentId],
       ["Razorpay Order ID", orderId],
       ["Razorpay Subscription ID", subscriptionId],
-      ["Time", new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })],
+      ["Time", formatEmailTimestamp(new Date(), curr)],
     ],
   });
 }
@@ -1054,6 +1066,8 @@ export async function sendPassEmail({
   venue,
   passToken,
   passType = "participant",
+  timezone = "Asia/Kolkata",
+  locale = "en-IN",
 }: {
   to: string;
   attendeeName: string;
@@ -1062,11 +1076,13 @@ export async function sendPassEmail({
   venue: string;
   passToken: string;
   passType?: string;
+  timezone?: string;
+  locale?: string;
 }) {
   const passUrl = `${APP_URL}/pass/${passToken}`;
 
-  const formattedDate = new Date(eventDate).toLocaleDateString("en-IN", {
-    weekday: "long", day: "numeric", month: "long", year: "numeric",
+  const formattedDate = new Date(eventDate).toLocaleDateString(locale, {
+    weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: timezone,
   });
 
   const shortCode = passToken.slice(0, 8).match(/.{1,4}/g)?.join("-").toUpperCase()

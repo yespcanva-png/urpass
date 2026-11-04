@@ -39,6 +39,7 @@ interface Props {
   canCreatePaidEvents: boolean;
   organizationId?: string;
   organizationName?: string;
+  organizationCountry?: "IN" | "GB";
   orgs?: OrgOption[];
   workspaces?: import("@/types").Workspace[];
   locations?: import("@/types").Location[];
@@ -105,6 +106,7 @@ export default function CreateEventForm({
   canCreatePaidEvents,
   organizationId,
   organizationName,
+  organizationCountry,
   workspaces = [],
   locations = [],
   isTrial = false,
@@ -146,6 +148,7 @@ export default function CreateEventForm({
       ticket_price: 0,
       currency: "INR",
       timezone: "Asia/Kolkata",
+      country_code: organizationCountry || "IN",
       event_type: "physical",
       meeting_url: null,
       meeting_platform: null,
@@ -157,12 +160,11 @@ export default function CreateEventForm({
   });
 
   useEffect(() => {
-    const detected = detectCountryClient();
+    const detected = organizationCountry || detectCountryClient();
     setCountry(detected);
-    if (detected === "GB") {
-      setValue("currency", "GBP");
-      setValue("timezone", "Europe/London");
-    }
+    setValue("country_code", detected);
+    setValue("currency", detected === "GB" ? "GBP" : "INR");
+    setValue("timezone", detected === "GB" ? "Europe/London" : "Asia/Kolkata");
 
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
@@ -253,7 +255,7 @@ export default function CreateEventForm({
         setValue("venue", paramVenue);
       }
     }
-  }, [setValue]);
+  }, [setValue, organizationCountry]);
 
   const applicationEnabled = watch("application_enabled");
   const autoApprove = watch("auto_approve");
@@ -703,6 +705,18 @@ export default function CreateEventForm({
 
             {/* Date & time */}
             <div className="bg-white border border-neutral-100 rounded-2xl p-6 flex flex-col gap-5">
+              <Field label="Event country" error={errors.country_code?.message} hint="Choose the event location independently of your organisation country.">
+                <select className={inputCls} value={country} onChange={(event) => {
+                  const next = event.target.value as "IN" | "GB";
+                  setCountry(next);
+                  setValue("country_code", next);
+                  setValue("currency", next === "GB" ? "GBP" : "INR");
+                  setValue("timezone", next === "GB" ? "Europe/London" : "Asia/Kolkata");
+                }}>
+                  <option value="IN">India</option>
+                  <option value="GB">United Kingdom</option>
+                </select>
+              </Field>
               <div>
                 <h2 className="text-sm font-semibold text-neutral-800">Date &amp; time</h2>
                 <p className="text-xs text-neutral-400 mt-0.5">

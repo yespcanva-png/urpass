@@ -27,6 +27,7 @@ export function normalizeOrgRoleForStorage(role: unknown) {
 
 export const orgSchema = z.object({
   name: z.string().min(2, "Organization name must be at least 2 characters"),
+  country_code: z.enum(["IN", "GB"]).optional(),
   logo_url: z.string().url().nullable().optional(),
   website: z.string().url("Enter a valid URL").nullable().optional().or(z.literal("")),
   contact_email: z.string().email("Enter a valid email").nullable().optional().or(z.literal("")),

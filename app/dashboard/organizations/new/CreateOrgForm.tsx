@@ -35,7 +35,7 @@ export default function CreateOrgForm() {
     formState: { errors, isSubmitting },
   } = useForm<OrgInput>({
     resolver: zodResolver(orgSchema),
-    defaultValues: { brand_color: "#6D28D9" },
+    defaultValues: { brand_color: "#6D28D9", country_code: "IN" },
   });
 
   async function onSubmit(data: OrgInput) {
@@ -78,6 +78,13 @@ export default function CreateOrgForm() {
             placeholder="ABC Engineering College"
             className={inputCls}
           />
+        </Field>
+
+        <Field label="Country *" error={errors.country_code?.message}>
+          <select {...register("country_code")} className={inputCls}>
+            <option value="IN">India</option>
+            <option value="GB">United Kingdom</option>
+          </select>
         </Field>
 
         <div className="grid grid-cols-2 gap-4">

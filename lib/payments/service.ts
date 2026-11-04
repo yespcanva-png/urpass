@@ -362,16 +362,19 @@ export async function initiateOrderCheckoutService(params: {
   const { data: event, error: eventErr } = await (isUuid
     ? supabase
         .from("events")
-        .select("id, name, organizer_id, organization_id, is_paid_event, attendee_limit")
+        .select("id, name, organizer_id, organization_id, is_paid_event, attendee_limit, currency")
         .eq("id", eventId)
     : supabase
         .from("events")
-        .select("id, name, organizer_id, organization_id, is_paid_event, attendee_limit")
+        .select("id, name, organizer_id, organization_id, is_paid_event, attendee_limit, currency")
         .eq("apply_slug", eventId)
   ).maybeSingle();
 
   if (eventErr || !event) {
     throw new Error("Event not found");
+  }
+  if (event.currency !== "INR" && event.currency != null) {
+    throw new Error("This payment provider does not support the event currency.");
   }
 
   const canonicalEventId = event.id;
@@ -383,11 +386,11 @@ export async function initiateOrderCheckoutService(params: {
       .from("ticket_types")
       .select("id, name, price, capacity")
       .eq("id", ticketTypeId)
+      .eq("event_id", canonicalEventId)
       .single();
 
-    if (ticketType) {
-      baseTicketPrice = Number(ticketType.price || 0);
-    }
+    if (!ticketType) throw new Error("Ticket tier does not belong to this event.");
+    baseTicketPrice = Number(ticketType.price || 0);
   }
 
   // 3. Fetch Event Payment Config with safe fallback

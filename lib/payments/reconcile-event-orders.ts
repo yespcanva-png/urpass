@@ -37,7 +37,7 @@ export async function reconcileEventTicketOrders(
   try {
     const { data: event, error: eventErr } = await admin
       .from("events")
-      .select("id, name, event_date, venue, organizer_id, organization_id, custom_pass_design")
+      .select("id, name, event_date, venue, organizer_id, organization_id, custom_pass_design, timezone, locale, currency, country_code")
       .eq("id", eventId)
       .maybeSingle();
 
@@ -248,6 +248,9 @@ export async function reconcileEventTicketOrders(
             passType: attendee.pass_type,
             ticketUrl: buildTicketUrl(pass.pass_token),
             version: `reconcile_${attendee.id}`,
+            timezone: (event as any).timezone || "Asia/Kolkata",
+            locale: (event as any).locale || "en-IN",
+            currency: (event as any).currency || "INR",
           })
           .catch((commErr) => {
             console.warn(`[reconcile] Communication dispatch failed for ${attendee.email}:`, commErr);
@@ -262,6 +265,8 @@ export async function reconcileEventTicketOrders(
             venue: event.venue,
             passToken: pass.pass_token,
             passType: attendee.pass_type,
+            timezone: (event as any).timezone || "Asia/Kolkata",
+            locale: (event as any).locale || "en-IN",
           }).catch(() => {});
         }
 

@@ -6,6 +6,7 @@ import { ArrowLeft, ArrowRight, CalendarDays, Clock3, MapPin, Ticket, UserRound 
 import { getExploreEventDetail } from "@/lib/explore/event-detail";
 import ExploreJourneyTracker from "@/components/explore/ExploreJourneyTracker";
 import ExploreBookLink from "@/components/explore/ExploreBookLink";
+import { formatPrice } from "@/lib/currency";
 
 export const dynamic = "force-dynamic";
 
@@ -21,10 +22,10 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   };
 }
 
-function dateLabel(date: string, time: string) {
+function dateLabel(date: string, time: string, locale: string) {
   return {
-    date: new Date(`${date}T12:00:00`).toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" }),
-    time: new Date(`2020-01-01T${time}`).toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", hour12: true }),
+    date: new Date(`${date}T12:00:00`).toLocaleDateString(locale, { weekday: "long", day: "numeric", month: "long", year: "numeric" }),
+    time: new Date(`2020-01-01T${time}`).toLocaleTimeString(locale, { hour: "numeric", minute: "2-digit", hour12: true }),
   };
 }
 
@@ -33,22 +34,22 @@ export default async function ExploreEventPage({ params }: { params: Promise<{ s
   const event = await getExploreEventDetail(slug);
   if (!event) notFound();
 
-  const { date, time } = dateLabel(event.date, event.startTime);
-  const price = event.startingPricePaise === 0 ? "Free" : `₹${(event.startingPricePaise / 100).toLocaleString("en-IN")}`;
+  const { date, time } = dateLabel(event.date, event.startTime, event.countryCode === "GB" ? "en-GB" : "en-IN");
+  const price = formatPrice(event.startingPricePaise, event.currency);
   const bookingUrl = `/explore/event/${encodeURIComponent(event.slug)}/book`;
-  const bookable = event.registrationOpen && (event.ticketTypes.length === 0 || event.ticketTypes.some((ticket) => ticket.available));
+  const bookable = event.registrationOpen && !(event.currency !== "INR" && event.startingPricePaise > 0) && (event.ticketTypes.length === 0 || event.ticketTypes.some((ticket) => ticket.available));
   const actionLabel = event.approvalRequired ? "Request to Attend" : "Get Tickets";
   const structuredData = {
     "@context": "https://schema.org", "@type": "Event",
     name: event.name, description: event.description || undefined,
-    startDate: `${event.date}T${event.startTime}`,
-    ...(event.endTime ? { endDate: `${event.date}T${event.endTime}` } : {}),
+    startDate: event.startsAtUtc || `${event.date}T${event.startTime}`,
+    ...(event.endsAtUtc || event.endTime ? { endDate: event.endsAtUtc || `${event.date}T${event.endTime}` } : {}),
     eventStatus: "https://schema.org/EventScheduled",
     eventAttendanceMode: event.city === "Online" ? "https://schema.org/OnlineEventAttendanceMode" : "https://schema.org/OfflineEventAttendanceMode",
     image: event.banner ? [event.banner] : undefined,
     location: event.city === "Online"
       ? { "@type": "VirtualLocation", url: `https://urpass.space/explore/event/${event.slug}` }
-      : { "@type": "Place", name: event.venue, address: event.address || `${event.city || ""}, ${event.city === "London" ? "United Kingdom" : "India"}` },
+      : { "@type": "Place", name: event.venue, address: event.address || `${event.city || ""}, ${event.countryCode === "GB" ? "United Kingdom" : "India"}` },
     organizer: { "@type": "Organization", name: event.organizer },
     url: `https://urpass.space/explore/event/${event.slug}`,
     offers: bookable ? { "@type": "Offer", url: `https://urpass.space${bookingUrl}`,

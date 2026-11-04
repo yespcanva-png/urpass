@@ -210,7 +210,6 @@ export function calculateInvoiceTaxes(input: {
   });
 
   if (currency === "GBP") {
-    const vatAmount = Math.round(taxableAmount * 0.20 * 100) / 100;
     return {
       placeOfSupply: "United Kingdom",
       stateCode: "GB",
@@ -218,9 +217,9 @@ export function calculateInvoiceTaxes(input: {
       cgstAmount: 0,
       sgstRate: 0,
       sgstAmount: 0,
-      igstRate: 20,
-      igstAmount: vatAmount,
-      totalAmount: Math.round((taxableAmount + vatAmount) * 100) / 100,
+      igstRate: 0,
+      igstAmount: 0,
+      totalAmount: taxableAmount,
     };
   }
 
@@ -550,8 +549,8 @@ export async function createInvoiceForPayment(
   const toDateString = (d?: Date | string | null) =>
     d ? (d instanceof Date ? d.toISOString().slice(0, 10) : String(d).slice(0, 10)) : null;
 
-  const sellerName = isUk ? "Yesp Corporation UK" : SELLER.name;
-  const sellerGstin = isUk ? "GB 987 6543 21" : SELLER.gstin;
+  const sellerName = isUk ? "UrPass Platform" : SELLER.name;
+  const sellerGstin = isUk ? "N/A (UK Non-VAT)" : SELLER.gstin;
   const sellerAddress = isUk ? "London, United Kingdom" : SELLER.address;
   const placeOfSupply = taxes.placeOfSupply;
   const stateCode = taxes.stateCode;
@@ -706,8 +705,8 @@ export async function generateInvoicePdf(invoice: InvoiceRecord): Promise<Uint8A
     color: muted,
   });
 
-  // Top-Right: TAX INVOICE / COMMERCIAL INVOICE
-  const titleText = isUkInvoice ? "COMMERCIAL INVOICE" : "TAX INVOICE";
+  // Top-Right: TAX INVOICE / COMMERCIAL RECEIPT
+  const titleText = isUkInvoice ? "COMMERCIAL RECEIPT" : "TAX INVOICE";
   const titleWidth = fontBold.widthOfTextAtSize(titleText, 18);
   page.drawText(titleText, {
     x: rightEdge - titleWidth,
@@ -776,10 +775,10 @@ export async function generateInvoicePdf(invoice: InvoiceRecord): Promise<Uint8A
 
   // FROM (SELLER)
   page.drawText("FROM - SELLER", { x: margin, y: partiesY, size: 8, font: fontBold, color: muted });
-  page.drawText(invoice.seller_name || (isUkInvoice ? "Yesp Corporation UK" : "Yesp Corporation"), { x: margin, y: partiesY - 18, size: 12, font: fontBold, color: dark });
+  page.drawText(invoice.seller_name || (isUkInvoice ? "UrPass Platform" : "Yesp Corporation"), { x: margin, y: partiesY - 18, size: 12, font: fontBold, color: dark });
   page.drawText(
     isUkInvoice
-      ? `VAT Reg: ${invoice.seller_gstin || "GB 987 6543 21"}`
+      ? `Tax ID: ${invoice.seller_gstin || "Not Applicable (Non-VAT Registered)"}`
       : `GSTIN: ${invoice.seller_gstin || "33OPDPS9865F1Z3"}`,
     { x: margin, y: partiesY - 34, size: 9, font: fontBold, color: bodyText }
   );
@@ -989,9 +988,11 @@ export async function generateInvoicePdf(invoice: InvoiceRecord): Promise<Uint8A
   const totalVal = Number(invoice.total_amount || taxableAmountVal + cgstVal + sgstVal + igstVal);
 
   if (isUkInvoice) {
-    const vatVal = Number(invoice.igst_amount || Math.round(subtotalVal * 0.20 * 100) / 100);
     drawTotalLine("Subtotal:", `GBP ${subtotalVal.toFixed(2)}`);
-    drawTotalLine("VAT (20%):", `GBP ${vatVal.toFixed(2)}`);
+    if (Number(invoice.discount || 0) > 0) {
+      drawTotalLine("Discount:", `-GBP ${Number(invoice.discount).toFixed(2)}`);
+    }
+    drawTotalLine("VAT (0% / Non-registered):", "GBP 0.00");
   } else {
     drawTotalLine("Subtotal:", `INR ${subtotalVal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`);
     if (Number(invoice.discount || 0) > 0) {
@@ -1075,21 +1076,21 @@ export async function generateInvoicePdf(invoice: InvoiceRecord): Promise<Uint8A
 
   // Row 1
   page.drawText("URPASS", { x: margin, y: 48, size: 9, font: fontBold, color: dark });
-  page.drawText(isUkInvoice ? "Yesp Corporation UK Ltd" : "A product by Yesp Corporation", { x: margin, y: 36, size: 8, font: fontRegular, color: muted });
+  page.drawText(isUkInvoice ? "UrPass Platform" : "A product by Yesp Corporation", { x: margin, y: 36, size: 8, font: fontRegular, color: muted });
 
   drawTextRight(isUkInvoice ? "Need help? billing@urpass.space • urpass.space" : "Need help? urpass.space@yespstudio.com • urpass.space", 48, 8, fontBold, primary);
-  drawTextRight("Urpass is a product of Yesp Corporation.", 36, 7.5, fontRegular, muted);
+  drawTextRight(isUkInvoice ? "Urpass event technology platform." : "Urpass is a product of Yesp Corporation.", 36, 7.5, fontRegular, muted);
 
   // Row 2 (Legal)
   if (isUkInvoice) {
-    page.drawText("Yesp Corporation UK | VAT Reg: GB 987 6543 21 | London, United Kingdom", {
+    page.drawText("UrPass | London, United Kingdom | Non-VAT Registered Supplier", {
       x: margin,
       y: 20,
       size: 7.5,
       font: fontRegular,
       color: lightMuted,
     });
-    drawTextRight("This is a computer-generated tax invoice issued in compliance with UK VAT Regulations.", 20, 7.5, fontRegular, lightMuted);
+    drawTextRight("This is a computer-generated receipt. No UK VAT charged.", 20, 7.5, fontRegular, lightMuted);
   } else {
     page.drawText("Yesp Corporation | GSTIN: 33OPDPS9865F1Z3 | Tamil Nadu, India", {
       x: margin,

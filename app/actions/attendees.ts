@@ -715,7 +715,7 @@ export async function submitApplication(
   // Look up event by id first (compatible with unit-test mocks), fall back to apply_slug
   const idQuery = admin
     .from("events")
-    .select("id, status, application_enabled, auto_approve, attendee_limit, waitlist_enabled, name, event_date, venue, is_paid_event, ticket_price, organizer_id, organization_id, custom_fields, custom_pass_design, registration_opens_at, registration_closes_at")
+    .select("id, status, application_enabled, auto_approve, attendee_limit, waitlist_enabled, name, event_date, venue, is_paid_event, ticket_price, currency, organizer_id, organization_id, custom_fields, custom_pass_design, registration_opens_at, registration_closes_at")
     .eq("id", eventId)
     .eq("status", "active")
     .eq("application_enabled", true);
@@ -726,7 +726,7 @@ export async function submitApplication(
   if (!event) {
     const slugQuery = admin
       .from("events")
-      .select("id, status, application_enabled, auto_approve, attendee_limit, waitlist_enabled, name, event_date, venue, is_paid_event, ticket_price, organizer_id, organization_id, custom_fields, custom_pass_design, registration_opens_at, registration_closes_at")
+      .select("id, status, application_enabled, auto_approve, attendee_limit, waitlist_enabled, name, event_date, venue, is_paid_event, ticket_price, currency, organizer_id, organization_id, custom_fields, custom_pass_design, registration_opens_at, registration_closes_at")
       .eq("apply_slug", eventId)
       .eq("status", "active")
       .eq("application_enabled", true);
@@ -811,7 +811,7 @@ export async function submitApplication(
   if (ticketTypeId && ticketTypeId !== "default") {
     const { data: ticketType } = await admin
       .from("ticket_types")
-      .select("id, name, price, capacity, status, sales_start, sales_end")
+      .select("id, name, price, capacity, status, sales_start, sales_end, age_tiers, extra_guest_price")
       .eq("id", ticketTypeId)
       .eq("event_id", canonicalEventId)
       .single();
@@ -841,12 +841,17 @@ export async function submitApplication(
     }
 
     selectedTicketType = ticketType;
+    if (event.currency !== "INR" && event.currency != null &&
+        (Number(ticketType.extra_guest_price || 0) > 0 ||
+          (Array.isArray(ticketType.age_tiers) && ticketType.age_tiers.some((tier: { price?: number }) => Number(tier.price || 0) > 0)))) {
+      return { error: "Paid ticket options in this currency are unavailable." };
+    }
     paymentAmountPaise = ticketType.price;
   } else {
     // If ticketTypeId is "default" or omitted, try to resolve to the event's default on-sale ticket type
     const query = admin
       .from("ticket_types")
-      .select("id, name, price, capacity, status, sales_start, sales_end")
+      .select("id, name, price, capacity, status, sales_start, sales_end, age_tiers, extra_guest_price")
       .eq("event_id", canonicalEventId)
       .eq("status", "on_sale");
 
@@ -859,6 +864,11 @@ export async function submitApplication(
     if (defaultTT) {
       const tt = Array.isArray(defaultTT) ? defaultTT[0] : defaultTT;
       if (tt && tt.id) {
+        if (event.currency !== "INR" && event.currency != null &&
+            (Number(tt.extra_guest_price || 0) > 0 ||
+              (Array.isArray(tt.age_tiers) && tt.age_tiers.some((tier: { price?: number }) => Number(tier.price || 0) > 0)))) {
+          return { error: "Paid ticket options in this currency are unavailable." };
+        }
         selectedTicketType = tt;
         paymentAmountPaise = tt.price;
       }
@@ -869,6 +879,7 @@ export async function submitApplication(
   let ticketOrder: { amount?: number; ticket_type_id?: string | null; extra_guests_amount?: number; group_members?: any[] } | null = null;
 
   if (paymentAmountPaise > 0) {
+    if (event.currency !== "INR" && event.currency != null) return { error: "Paid registration in this currency is unavailable until an approved provider is connected." };
     if (!payment?.orderId || !payment?.paymentId || !payment?.signature) {
       return { error: "Payment verification data is missing." };
     }

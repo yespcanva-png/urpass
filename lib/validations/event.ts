@@ -48,7 +48,9 @@ export const eventSchema = z
       .nullable()
       .transform((val) => (val ? val : null)),
     currency: z.enum(["INR", "GBP", "USD"]).default("INR"),
-    timezone: z.string().default("Asia/Kolkata"),
+    timezone: z.string().optional(),
+    country_code: z.enum(["IN", "GB", "US"]).optional(),
+    locale: z.string().optional(),
     event_images: z.array(z.string()).optional(),
     custom_slug: z.string().max(100, "URL slug cannot exceed 100 characters").optional().nullable(),
     apply_slug: z.string().max(100, "URL slug cannot exceed 100 characters").optional().nullable(),

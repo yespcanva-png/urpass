@@ -181,6 +181,10 @@ export async function createTicketType(
 
   const parsed = ticketTypeSchema.safeParse(data);
   if (!parsed.success) return { error: parsed.error.issues[0].message };
+  const { data: marketEvent } = await supabase.from("events").select("currency").eq("id", eventId).single();
+  if (marketEvent?.currency !== "INR" && marketEvent?.currency != null && (parsed.data.price > 0 || parsed.data.extra_guest_price > 0 || (parsed.data.age_tiers || []).some((tier) => tier.price > 0))) {
+    return { error: "Paid tickets in this currency are unavailable until an approved payment provider is connected." };
+  }
 
   const { name, description, category, price, capacity, sales_start, sales_end, max_per_person, status } =
     parsed.data;
@@ -310,6 +314,10 @@ export async function updateTicketType(
 
   const parsed = ticketTypeSchema.safeParse(data);
   if (!parsed.success) return { error: parsed.error.issues[0].message };
+  const { data: marketEvent } = await supabase.from("events").select("currency").eq("id", existing.event_id).single();
+  if (marketEvent?.currency !== "INR" && marketEvent?.currency != null && (parsed.data.price > 0 || parsed.data.extra_guest_price > 0 || (parsed.data.age_tiers || []).some((tier) => tier.price > 0))) {
+    return { error: "Paid tickets in this currency are unavailable until an approved payment provider is connected." };
+  }
 
   const { name, description, category, price, capacity, sales_start, sales_end, max_per_person, status } =
     parsed.data;

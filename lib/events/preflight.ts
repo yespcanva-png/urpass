@@ -49,6 +49,8 @@ export async function validateEventPreflightReadiness(
       application_enabled,
       organizer_id,
       organization_id,
+      currency,
+      is_paid_event,
       event_pass_id,
       custom_pass_design,
       status
@@ -76,8 +78,18 @@ export async function validateEventPreflightReadiness(
   // 2. Fetch Ticket Types
   const { data: ticketTypes } = await supabase
     .from("ticket_types")
-    .select("id, name, price, capacity, status")
+    .select("id, name, price, capacity, status, age_tiers, extra_guest_price")
     .eq("event_id", eventId);
+
+  if (event.currency !== "INR" && event.currency != null && (event.is_paid_event || (ticketTypes || []).some((tier: { price: number; extra_guest_price?: number; age_tiers?: Array<{ price?: number }> }) =>
+    tier.price > 0 || Number(tier.extra_guest_price || 0) > 0 || (tier.age_tiers || []).some((ageTier) => Number(ageTier.price || 0) > 0)))) {
+    return {
+      ready: false,
+      errors: [{ id: "payment_gateway", title: "UK paid checkout unavailable", passed: false, severity: "error", message: "GBP paid events require an approved payment provider and verified organiser account." }],
+      warnings: [],
+      items: [],
+    };
+  }
 
   // 3. Fetch Payment Settings (if applicable)
   const [{ data: userPaymentSettings }, { data: orgPaymentSettings }] = await Promise.all([

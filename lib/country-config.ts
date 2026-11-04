@@ -8,7 +8,7 @@
 
 export type SupportedCountryCode = "IN" | "GB" | "US";
 export type SupportedCurrency = "INR" | "GBP" | "USD";
-export type SupportedPaymentGateway = "razorpay" | "stripe" | "both";
+export type SupportedPaymentGateway = "razorpay" | "stripe" | "both" | "pending";
 
 export interface CampusTerminology {
   readonly institution: string; // "College / Institution" vs "University"
@@ -87,8 +87,8 @@ export const COUNTRIES: Record<SupportedCountryCode, CountryConfig> = {
     taxRate: 0.20,
     taxIdLabel: "VAT Number",
     taxIdRegex: /^(GB)?([0-9]{9}([0-9]{3})?|[A-Z]{2}[0-9]{3})$/i,
-    paymentGateway: "razorpay",
-    supportedGateways: ["razorpay"],
+    paymentGateway: "pending",
+    supportedGateways: ["pending"] as any,
     terminology: {
       institution: "University",
       department: "School / Department",

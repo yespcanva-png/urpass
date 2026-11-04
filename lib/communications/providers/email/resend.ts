@@ -24,6 +24,8 @@ export class EmailProvider {
         venue: payload.venue || "Venue details on ticket",
         passToken: payload.passToken,
         passType: payload.passType || undefined,
+        timezone: payload.timezone || undefined,
+        locale: payload.locale || undefined,
       });
 
       return {

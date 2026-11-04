@@ -27,7 +27,7 @@ interface EventCardProps {
   ) => void;
 }
 
-function formatEventDisplayDate(dateStr: string, timeStr?: string): string {
+function formatEventDisplayDate(dateStr: string, timeStr?: string, currency?: string): string {
   try {
     const d = new Date(dateStr);
     const dayName = d.toLocaleDateString("en-US", { weekday: "short" });
@@ -41,7 +41,8 @@ function formatEventDisplayDate(dateStr: string, timeStr?: string): string {
       const h = parseInt(hours, 10);
       const ampm = h >= 12 ? "PM" : "AM";
       const formattedHours = h % 12 || 12;
-      display += ` • ${formattedHours}:${minutes} ${ampm} IST`;
+      const tzSuffix = currency?.toUpperCase() === "GBP" ? "" : " IST";
+      display += ` • ${formattedHours}:${minutes} ${ampm}${tzSuffix}`;
     }
 
     return display;
@@ -230,7 +231,7 @@ export default function EventCard({
           {/* Schedule Date & Time */}
           <div className="flex items-center gap-1.5 text-xs font-bold text-violet-700">
             <Calendar className="w-3.5 h-3.5 shrink-0" />
-            <span>{formatEventDisplayDate(event.eventDate, event.startTime)}</span>
+            <span>{formatEventDisplayDate(event.eventDate, event.startTime, event.currency)}</span>
           </div>
 
           {/* Event Title */}

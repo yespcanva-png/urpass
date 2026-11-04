@@ -36,7 +36,15 @@ function resolveCityFromVenue(venue?: string | null): string {
   if (v.includes("kolkata") || v.includes("calcutta")) return "Kolkata";
   if (v.includes("ahmedabad")) return "Ahmedabad";
   if (v.includes("jaipur")) return "Jaipur";
-  if (v.includes("london") || v.includes("uk")) return "London";
+  if (v.includes("manchester")) return "Manchester";
+  if (v.includes("birmingham")) return "Birmingham";
+  if (v.includes("edinburgh")) return "Edinburgh";
+  if (v.includes("bristol")) return "Bristol";
+  if (v.includes("leeds")) return "Leeds";
+  if (v.includes("glasgow")) return "Glasgow";
+  if (v.includes("cardiff")) return "Cardiff";
+  if (v.includes("belfast")) return "Belfast";
+  if (v.includes("london")) return "London";
   return "Bengaluru";
 }
 

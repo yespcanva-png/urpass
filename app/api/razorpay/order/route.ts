@@ -47,6 +47,9 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json().catch(() => null);
   const { planSlug, billingCycle = "monthly", couponCode, currency: requestedCurrency = "INR" } = body ?? {};
+  if (String(requestedCurrency).toUpperCase() === "GBP") {
+    return NextResponse.json({ error: "UK subscription checkout is unavailable until an approved provider is integrated." }, { status: 503 });
+  }
   const billingDetails = (body?.billingDetails ?? null) as BillingDetailsInput | null;
   if (!planSlug) return NextResponse.json({ error: "Missing planSlug" }, { status: 400 });
 

@@ -81,11 +81,23 @@ export async function removeOrgPaymentSettings(
   return {};
 }
 
+export async function saveOrgStripeSettings(
+  orgId: string,
+  orgSlug: string,
+  publishableKey: string,
+  restrictedKey: string,
+  webhookSecret?: string
+): Promise<{ error?: string; success?: boolean }> {
+  // Pending provider approval. Never persist UK provider secrets in a client-readable table.
+  void [orgId, orgSlug, publishableKey, restrictedKey, webhookSecret];
+  return { error: "UK payment account onboarding is not available yet." };
+}
+
 export async function getOrgPaymentSettings(orgId: string) {
   const supabase = await createClient();
   const { data } = await supabase
     .from("org_payment_settings")
-    .select("razorpay_key_id")
+    .select("gateway_provider, razorpay_key_id")
     .eq("organization_id", orgId)
     .maybeSingle();
   return data;

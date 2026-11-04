@@ -57,6 +57,9 @@ export interface TicketDeliveryPayload {
   email: string;
   phone?: string | null;
   passType?: string | null;
+  timezone?: string | null;
+  locale?: string | null;
+  currency?: string | null;
   ticketUrl?: string;
   version?: string | null;
   customMessage?: string;

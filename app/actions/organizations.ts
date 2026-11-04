@@ -37,18 +37,18 @@ function generateSlugCandidate(name: string, suffix?: number): string {
   return suffix ? `${base}-${suffix}` : base;
 }
 
-export async function createOrganization(data: OrgInput): Promise<ActionResult | { slug: string }> {
+export async function createOrganization(data: OrgInput): Promise<ActionResult | { slug: string; orgId: string }> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const plan = await getUserPlan(supabase, user.id);
-  if (!plan.canCreateOrganizations) {
-    return { error: "Organizations are available on Starter and Pro plans. Upgrade to create one." };
-  }
-
   const parsed = orgSchema.safeParse(data);
   if (!parsed.success) return { error: parsed.error.issues[0].message };
+  const country = parsed.data.country_code || "IN";
+  const plan = await getUserPlan(supabase, user.id);
+  if (!plan.canCreateOrganizations && country !== "GB") {
+    return { error: "Organizations are available on Starter and Pro plans. Upgrade to create one." };
+  }
 
   // Retry insert with incremented suffix on slug collision (RLS makes pre-checking unreliable)
   let org: { id: string; slug: string } | null = null;
@@ -56,7 +56,7 @@ export async function createOrganization(data: OrgInput): Promise<ActionResult |
     const slug = generateSlugCandidate(parsed.data.name, attempt > 0 ? attempt + 1 : undefined);
     const { data: inserted, error: orgError } = await supabase
       .from("organizations")
-      .insert({ ...parsed.data, slug, created_by: user.id })
+      .insert({ ...parsed.data, country_code: country, billing_currency: country === "GB" ? "GBP" : "INR", billing_timezone: country === "GB" ? "Europe/London" : "Asia/Kolkata", slug, created_by: user.id })
       .select("id, slug")
       .single();
     if (!orgError) { org = inserted; break; }
@@ -93,7 +93,7 @@ export async function createOrganization(data: OrgInput): Promise<ActionResult |
   }
 
   revalidatePath("/dashboard/organizations");
-  return { slug: org.slug };
+  return { slug: org.slug, orgId: org.id };
 }
 
 export async function updateOrganization(orgId: string, data: OrgInput): Promise<ActionResult> {

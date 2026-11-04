@@ -29,3 +29,22 @@ export function getSMSProvider(providerName?: string | null): SMSProvider {
       return new GenericDLTSMSProvider();
   }
 }
+
+/**
+ * Returns the appropriate SMS provider for a recipient.
+ * International / UK numbers (+44 or any non-+91) are routed to Twilio/global gateway
+ * instead of Indian DLT, preventing delivery failures.
+ */
+export function getSMSProviderForRecipient(recipientPhone?: string | null, providerName?: string | null): SMSProvider {
+  if (recipientPhone) {
+    const cleaned = recipientPhone.trim().replace(/[\s\-()]/g, "");
+    const isIndian = cleaned.startsWith("+91") || (!cleaned.startsWith("+") && cleaned.length === 10);
+    if (!isIndian) {
+      if (process.env.NODE_ENV === "test") {
+        return mockSMSProvider;
+      }
+      return new TwilioSMSProvider();
+    }
+  }
+  return getSMSProvider(providerName);
+}

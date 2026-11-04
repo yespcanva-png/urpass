@@ -135,6 +135,10 @@ interface EventInfo {
   custom_fields?: import("@/types").CustomFieldDefinition[];
   event_images?: string[];
   custom_pass_design?: Record<string, unknown> | null;
+  currency?: string | null;
+  timezone?: string | null;
+  country_code?: string | null;
+  locale?: string | null;
 }
 
 interface Branding {
@@ -167,7 +171,7 @@ export default async function ApplyPage({
 
   const query = supabase
     .from("events")
-    .select("id, name, description, event_date, start_time, end_time, venue, auto_approve, is_paid_event, ticket_price, attendee_limit, organizer_id, organization_id, event_type, apply_slug, custom_fields, custom_pass_design, registration_opens_at, registration_closes_at")
+    .select("id, name, description, event_date, start_time, end_time, venue, auto_approve, is_paid_event, ticket_price, attendee_limit, organizer_id, organization_id, event_type, apply_slug, custom_fields, custom_pass_design, registration_opens_at, registration_closes_at, currency, timezone, country_code, locale")
     .eq("status", "active")
     .eq("application_enabled", true);
 
@@ -449,29 +453,35 @@ export default async function ApplyPage({
   const isPaidFlow = event.is_paid_event || hasPaidTicketTypes;
   let hasPaymentGateway = !isPaidFlow; // free events don't need a gateway
   if (isPaidFlow) {
-    if (event.organization_id) {
-      const { data: orgPs } = await admin
-        .from("org_payment_settings")
-        .select("razorpay_key_id")
-        .eq("organization_id", event.organization_id)
-        .maybeSingle();
-      if (orgPs?.razorpay_key_id) {
-        hasPaymentGateway = true;
+    const isUnsupportedCurrency = (event.currency || "INR").toUpperCase() !== "INR";
+    if (isUnsupportedCurrency) {
+      // No approved GBP provider is connected to the ticket checkout yet.
+      hasPaymentGateway = false;
+    } else {
+      if (event.organization_id) {
+        const { data: orgPs } = await admin
+          .from("org_payment_settings")
+          .select("razorpay_key_id")
+          .eq("organization_id", event.organization_id)
+          .maybeSingle();
+        if (orgPs?.razorpay_key_id) {
+          hasPaymentGateway = true;
+        }
       }
-    }
 
-    if (!hasPaymentGateway) {
-      const { data: ps } = await admin
-        .from("payment_settings")
-        .select("razorpay_key_id")
-        .eq("user_id", event.organizer_id)
-        .maybeSingle();
-      hasPaymentGateway = !!(ps?.razorpay_key_id);
-    }
+      if (!hasPaymentGateway) {
+        const { data: ps } = await admin
+          .from("payment_settings")
+          .select("razorpay_key_id")
+          .eq("user_id", event.organizer_id)
+          .maybeSingle();
+        hasPaymentGateway = !!(ps?.razorpay_key_id);
+      }
 
-    // Seamless Fallback: If organizer hasn't connected their own gateway, use UrPass Managed Payments
-    if (!hasPaymentGateway) {
-      hasPaymentGateway = Boolean(process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_ID);
+      // Seamless Fallback: If organizer hasn't connected their own gateway, use UrPass Managed Payments
+      if (!hasPaymentGateway) {
+        hasPaymentGateway = Boolean(process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_ID);
+      }
     }
   }
 

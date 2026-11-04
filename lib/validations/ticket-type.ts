@@ -77,7 +77,8 @@ export const ticketTypeSchema = z
     category: z
       .enum(["general", "vip", "student", "early_bird", "workshop", "staff", "speaker", "custom"])
       .default("general"),
-    price: z.number().min(0, "Price must be 0 or more").default(0), // in rupees in form, converted to paise in action
+    price: z.number().min(0, "Price must be 0 or more").default(0), // in rupees/pounds in form
+    currency: z.string().default("INR"),
     capacity: z.number().int().min(1).nullable().optional(),
     sales_start: z
       .string()

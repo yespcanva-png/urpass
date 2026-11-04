@@ -825,8 +825,17 @@ export async function exportFullEventAttendanceAction(eventId?: string): Promise
   try {
     const analyticsData = await getAnalyticsData(eventId);
     let eventIds: string[] = [];
+    let eventTz = "Asia/Kolkata";
+    let eventLocale = "en-IN";
     if (eventId) {
       eventIds = [eventId];
+      const { data: evRow } = await supabase
+        .from("events")
+        .select("timezone, locale")
+        .eq("id", eventId)
+        .maybeSingle();
+      if (evRow?.timezone) eventTz = evRow.timezone;
+      if (evRow?.locale) eventLocale = evRow.locale;
     } else {
       const { data: userEvents } = await supabase
         .from("events")
@@ -883,8 +892,8 @@ export async function exportFullEventAttendanceAction(eventId?: string): Promise
       const gateName = resolveGateName(c.gate) || (c.gate_id && gateMap.get(c.gate_id)) || "Main Entrance";
       const passType = a?.pass_type ? PASS_LABELS[a.pass_type] ?? a.pass_type : "Participant";
       const seqText = seq > 1 ? `Re-Entry #${seq - 1} (Scan ${seq})` : "1st Entry";
-      const istDate = new Date(c.checked_in_at).toLocaleString("en-IN", {
-        timeZone: "Asia/Kolkata",
+      const istDate = new Date(c.checked_in_at).toLocaleString(eventLocale, {
+        timeZone: eventTz,
         dateStyle: "medium",
         timeStyle: "medium",
       });
@@ -915,8 +924,8 @@ export async function exportFullEventAttendanceAction(eventId?: string): Promise
           seqText: "1st Entry",
           method: "DESK",
           checkedInAt: new Date().toISOString(),
-          istDate: new Date().toLocaleString("en-IN", {
-            timeZone: "Asia/Kolkata",
+          istDate: new Date().toLocaleString(eventLocale, {
+            timeZone: eventTz,
             dateStyle: "medium",
             timeStyle: "medium",
           }),

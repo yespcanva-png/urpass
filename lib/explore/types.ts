@@ -44,6 +44,14 @@ export const EXPLORE_CITIES = [
   "Ahmedabad",
   "Jaipur",
   "London",
+  "Manchester",
+  "Birmingham",
+  "Edinburgh",
+  "Bristol",
+  "Leeds",
+  "Glasgow",
+  "Cardiff",
+  "Belfast",
   "Online",
 ] as const;
 

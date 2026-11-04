@@ -15,6 +15,14 @@ vi.mock("@/lib/plan", () => ({
     getLimit: () => 999999,
   }),
 }));
+vi.mock("@/lib/billing/entitlement-resolver", () => ({
+  resolveUserSubscriptionAccess: vi.fn().mockResolvedValue({
+    hasOrganizerAccess: true,
+    isTrial: false,
+    state: "active",
+    planSlug: "pro",
+  }),
+}));
 
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn(),

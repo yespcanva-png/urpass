@@ -43,6 +43,7 @@ import type { ApplyTicketType } from "./page";
 import type { CustomFieldDefinition } from "@/types";
 import EventImageCarousel from "@/components/events/EventImageCarousel";
 import { getEventDateRange, formatEventTimeWithOvernight } from "@/lib/utils";
+import { formatPrice, formatAmount, getCurrencySymbol } from "@/lib/currency";
 
 export interface ActiveEventFeatures {
   bulkBooking?: boolean;
@@ -78,6 +79,10 @@ interface EventInfo {
   custom_fields?: CustomFieldDefinition[];
   event_images?: string[];
   allow_multiple_scans?: boolean;
+  currency?: string | null;
+  timezone?: string | null;
+  country_code?: string | null;
+  locale?: string | null;
 }
 
 interface Branding {
@@ -164,6 +169,9 @@ export default function ApplyForm({
   const [groupPassMode, setGroupPassMode] = useState<"individual" | "group_qr">("individual");
 
   const brandColor = branding.brandColor || "#6D28D9";
+  const currency = (event.currency || "INR").toUpperCase();
+  const currencySymbol = getCurrencySymbol(currency);
+  const isUk = currency === "GBP" || event.country_code === "GB";
 
   // Available tickets filter
   const available = useMemo(
@@ -288,26 +296,31 @@ export default function ApplyForm({
   };
 
   const formattedSchedule = useMemo(() => {
-    const startDateFormatted = new Date(event.event_date).toLocaleDateString("en-IN", {
+    const locale = event.locale || (isUk ? "en-GB" : "en-IN");
+    const timezone = event.timezone || (isUk ? "Europe/London" : "Asia/Kolkata");
+
+    const startDateFormatted = new Date(event.event_date).toLocaleDateString(locale, {
       weekday: "short",
       day: "numeric",
       month: "short",
       year: "numeric",
+      timeZone: timezone,
     });
 
     let dateText = startDateFormatted;
     if (event.end_date && event.end_date !== event.event_date) {
-      const endDateFormatted = new Date(event.end_date).toLocaleDateString("en-IN", {
+      const endDateFormatted = new Date(event.end_date).toLocaleDateString(locale, {
         day: "numeric",
         month: "short",
         year: "numeric",
+        timeZone: timezone,
       });
-      dateText = `${new Date(event.event_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })} – ${endDateFormatted}`;
+      dateText = `${new Date(event.event_date).toLocaleDateString(locale, { day: "numeric", month: "short", timeZone: timezone })} – ${endDateFormatted}`;
     }
 
     const timeText = formatEventTimeWithOvernight(event.start_time, event.end_time || "");
     return { dateText, timeText };
-  }, [event.event_date, event.end_date, event.start_time, event.end_time]);
+  }, [event.event_date, event.end_date, event.start_time, event.end_time, event.locale, event.timezone, isUk]);
 
   const isOnline = event.event_type === "online";
   const isHybrid = event.event_type === "hybrid";
@@ -373,6 +386,12 @@ export default function ApplyForm({
   async function handlePaidSubmit(data: AttendeeInput) {
     setServerError("");
     setPaymentPending(true);
+
+    if (currency === "GBP" || event.country_code === "GB") {
+      setServerError("Online card payments for UK events are currently being configured. Please contact the organiser for direct admission or free pass options.");
+      setPaymentPending(false);
+      return;
+    }
 
     const loaded = await loadRazorpayScript();
     if (!loaded) {
@@ -956,7 +975,7 @@ export default function ApplyForm({
                 <div>
                   <span className="text-[10px] sm:text-[11px] text-neutral-400 uppercase tracking-[0.08em] block font-bold">Passes From</span>
                   <div className="text-xl sm:text-3xl font-extrabold text-neutral-900 tabular-nums tracking-tight">
-                    {minStartingPrice === 0 ? "Free Entry" : `₹${minStartingPrice.toLocaleString("en-IN")}`}
+                    {minStartingPrice === 0 ? "Free Entry" : formatAmount(minStartingPrice, currency)}
                     {minStartingPrice > 0 && <span className="text-[11px] sm:text-xs font-medium text-neutral-500 ml-1">onwards</span>}
                   </div>
                 </div>
@@ -1144,7 +1163,7 @@ export default function ApplyForm({
 
                         <div className="text-right shrink-0">
                           <div className="text-sm sm:text-base font-extrabold text-neutral-900 tabular-nums">
-                            {tt.price === 0 ? "Free" : `₹${(tt.price / 100).toLocaleString("en-IN")}`}
+                            {tt.price === 0 ? "Free" : formatPrice(tt.price, currency)}
                           </div>
                           <button
                             type="button"
@@ -1395,10 +1414,10 @@ export default function ApplyForm({
                         <div className="text-right shrink-0 flex flex-col items-end">
                           <div className="text-sm sm:text-base font-extrabold text-neutral-900 tabular-nums">
                             {tt.age_pricing_enabled && tt.age_tiers && tt.age_tiers.length > 0
-                              ? `From ₹${Math.min(...tt.age_tiers.map((a) => a.price / 100)).toLocaleString("en-IN")}`
+                              ? `From ${formatPrice(Math.min(...tt.age_tiers.map((a) => a.price)), currency)}`
                               : tt.price === 0
                               ? "Free"
-                              : `₹${(tt.price / 100).toLocaleString("en-IN")}`}
+                              : formatPrice(tt.price, currency)}
                           </div>
                           <span
                             className={`w-4 h-4 rounded-full border-2 mt-1.5 sm:mt-2 flex items-center justify-center transition-colors ${
@@ -1421,7 +1440,7 @@ export default function ApplyForm({
                               key={at.id}
                               className="px-2 py-0.5 rounded-md bg-neutral-100/90 text-neutral-700 text-[10px] font-medium"
                             >
-                              {at.badge_label || at.label.split(" ")[0]}: {at.is_free || at.price === 0 ? "Free" : `₹${(at.price / 100).toLocaleString("en-IN")}`}
+                              {at.badge_label || at.label.split(" ")[0]}: {at.is_free || at.price === 0 ? "Free" : formatPrice(at.price, currency)}
                             </span>
                           ))}
                         </div>
@@ -1468,7 +1487,7 @@ export default function ApplyForm({
                           ? `Includes ${selectedTicket.included_guests ?? 1} member${(selectedTicket.included_guests ?? 1) > 1 ? "s" : ""}. ${
                               selectedTicket.extra_member_pricing_mode === "age_based"
                                 ? "Age-based rate per extra guest."
-                                : `+₹${selectedTicket.extra_guest_price || 0}/extra member.`
+                                : `+${formatAmount(selectedTicket.extra_guest_price || 0, currency)}/extra member.`
                             }`
                           : `Fixed capacity: ${selectedTicket.included_guests ?? 1} attendees.`}
                       </div>
@@ -1716,7 +1735,7 @@ export default function ApplyForm({
                       <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 pointer-events-none" />
                       <input
                         type="tel"
-                        placeholder="+91 98765 43210"
+                        placeholder={isUk ? "+44 7700 900077" : "+91 98765 43210"}
                         className={`${inputCls} pl-10`}
                         autoComplete="tel"
                         inputMode="tel"
@@ -1735,7 +1754,7 @@ export default function ApplyForm({
                         {selectedAgeTier && (
                           <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
                             <Check className="w-3 h-3 text-emerald-600" />
-                            {selectedAgeTier.label} • {selectedAgeTier.is_free || selectedAgeTier.price === 0 ? "Free Entry" : `₹${(selectedAgeTier.price / 100).toLocaleString("en-IN")}`}
+                            {selectedAgeTier.label} • {selectedAgeTier.is_free || selectedAgeTier.price === 0 ? "Free Entry" : formatPrice(selectedAgeTier.price, currency)}
                           </span>
                         )}
                       </div>
@@ -1765,7 +1784,7 @@ export default function ApplyForm({
                           </span>
                         ) : (
                           <span className="text-[10px] font-semibold text-neutral-500">
-                            +₹{extraPrice}/guest
+                            +{formatAmount(extraPrice, currency)}/guest
                           </span>
                         )}
                       </div>
@@ -1791,11 +1810,11 @@ export default function ApplyForm({
                                 </span>
                                 {selectedTicket?.extra_member_pricing_mode === "age_based" && selectedTicket.age_tiers && selectedTicket.age_tiers.length > 0 ? (
                                   <span className="text-xs font-extrabold text-brand tabular-nums">
-                                    {memTier ? (memTier.is_free || memTier.price === 0 ? "Free Entry" : `+₹${(memTier.price || 0) / 100}`) : `+₹${extraPrice}`}
+                                    {memTier ? (memTier.is_free || memTier.price === 0 ? "Free Entry" : `+${formatPrice(memTier.price || 0, currency)}`) : `+${formatAmount(extraPrice, currency)}`}
                                   </span>
                                 ) : (
                                   <span className="text-xs font-extrabold text-neutral-700 tabular-nums">
-                                    +₹{extraPrice}
+                                    +{formatAmount(extraPrice, currency)}
                                   </span>
                                 )}
                               </div>
@@ -2085,7 +2104,7 @@ export default function ApplyForm({
                         {selectedTicket?.duration_label ? `— ${selectedTicket.duration_label}` : ""}
                       </span>
                       <span className="font-bold text-neutral-900 tabular-nums shrink-0">
-                        {baseTicketPrice === 0 ? "Free" : `₹${baseTicketPrice.toLocaleString("en-IN")}`}
+                        {baseTicketPrice === 0 ? "Free" : formatAmount(baseTicketPrice, currency)}
                       </span>
                     </div>
 
@@ -2111,25 +2130,25 @@ export default function ApplyForm({
                       <div className="flex justify-between text-brand font-medium">
                         <span>
                           Extra Members ({extraGuestsCount}{" "}
-                          {selectedTicket?.extra_member_pricing_mode === "age_based" ? "at age rates" : `× ₹${extraPrice}`})
+                          {selectedTicket?.extra_member_pricing_mode === "age_based" ? "at age rates" : `× ${formatAmount(extraPrice, currency)}`})
                         </span>
-                        <span className="tabular-nums">+₹{extraGuestsTotal.toLocaleString("en-IN")}</span>
+                        <span className="tabular-nums">+{formatAmount(extraGuestsTotal, currency)}</span>
                       </div>
                     )}
 
                     {!exploreMode && <div className="flex justify-between text-emerald-700 font-medium">
                       <span>Convenience & Booking Fee</span>
-                      <span>₹0 (Waived)</span>
+                      <span>{currencySymbol}0 (Waived)</span>
                     </div>}
 
                     <div className="pt-2 border-t border-neutral-200 flex justify-between items-baseline font-bold">
                       <span className="text-xs sm:text-sm text-neutral-900 font-bold">{exploreMode && effectivelyPaid ? "Estimated ticket subtotal" : "Total Amount"}</span>
                       <span className="text-lg sm:text-xl font-black text-neutral-900 tabular-nums">
-                        {effectiveTicketPrice === 0 ? "Free" : `₹${effectiveTicketPrice.toLocaleString("en-IN")}`}
+                        {effectiveTicketPrice === 0 ? "Free" : formatAmount(effectiveTicketPrice, currency)}
                       </span>
                     </div>
                   </div>
-                  {exploreMode && effectivelyPaid && <p className="text-[11px] leading-relaxed text-neutral-500">Taxes and payment fees, if applicable, are calculated by UrPass before payment. Review the final amount in Razorpay checkout.</p>}
+                  {exploreMode && effectivelyPaid && <p className="text-[11px] leading-relaxed text-neutral-500">Taxes and payment fees, if applicable, are calculated by UrPass before payment. Review the final amount in secure checkout.</p>}
 
                   {serverError && (
                     <div className="flex items-start gap-2 text-xs text-red-600 bg-red-50 border border-red-200 rounded-xl p-3 font-medium">
@@ -2141,7 +2160,7 @@ export default function ApplyForm({
                   {paymentBlocked && (
                     <div className="flex items-start gap-2 text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-xl p-3 font-medium">
                       <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-amber-600" />
-                      <span>Payment gateway is currently being initialized by the organizer.</span>
+                      <span>{isUk ? "UK GBP payment gateway is currently being configured by the organizer." : "Payment gateway is currently being initialized by the organizer."}</span>
                     </div>
                   )}
 
@@ -2154,11 +2173,11 @@ export default function ApplyForm({
                   >
                     {(isSubmitting || paymentPending) && <Loader2 className="w-4 h-4 animate-spin" />}
                     {paymentPending
-                      ? "Opening Razorpay Checkout…"
+                      ? "Opening Secure Checkout…"
                       : isSubmitting
                       ? "Confirming Registration…"
                       : effectivelyPaid
-                      ? exploreMode ? "Continue to secure payment" : `Proceed to Pay ₹${effectiveTicketPrice.toLocaleString("en-IN")}`
+                      ? exploreMode ? "Continue to secure payment" : `Proceed to Pay ${formatAmount(effectiveTicketPrice, currency)}`
                       : "Claim Free Pass Now"}
                     {!isSubmitting && !paymentPending && <ArrowRight className="w-4 h-4" />}
                   </button>
@@ -2202,7 +2221,7 @@ export default function ApplyForm({
               </div>
               <div className="flex items-center gap-1.5 mt-0.5">
                 <span className="text-sm font-black text-neutral-900 tabular-nums">
-                  {effectiveTicketPrice === 0 ? "Free" : `₹${effectiveTicketPrice.toLocaleString("en-IN")}`}
+                  {effectiveTicketPrice === 0 ? "Free" : formatAmount(effectiveTicketPrice, currency)}
                 </span>
                 <span className="text-[10px] text-neutral-500 font-medium">
                   · {peopleCount} {peopleCount === 1 ? "guest" : "guests"}
@@ -2224,7 +2243,7 @@ export default function ApplyForm({
                 </>
               ) : (
                 <>
-                  <span>{effectivelyPaid ? exploreMode ? "Continue to payment" : `Book · ₹${effectiveTicketPrice.toLocaleString("en-IN")}` : "Get Pass"}</span>
+                  <span>{effectivelyPaid ? exploreMode ? "Continue to payment" : `Book · ${formatAmount(effectiveTicketPrice, currency)}` : "Get Pass"}</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </>
               )}

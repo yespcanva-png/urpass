@@ -12,7 +12,7 @@ type GenerateResult = { passToken?: string; error?: string };
 async function verifyPassOrganizer(supabase: any, user: { id: string }, eventId: string) {
   let { data: event } = await supabase
     .from("events")
-    .select("id, name, event_date, venue, organizer_id, organization_id, custom_pass_design")
+    .select("id, name, event_date, venue, organizer_id, organization_id, custom_pass_design, timezone, locale, currency, country_code")
     .eq("id", eventId)
     .eq("organizer_id", user.id)
     .single();
@@ -22,7 +22,7 @@ async function verifyPassOrganizer(supabase: any, user: { id: string }, eventId:
   try {
     const { data: orgEvent } = await supabase
       .from("events")
-      .select("id, name, event_date, venue, organizer_id, organization_id, custom_pass_design")
+      .select("id, name, event_date, venue, organizer_id, organization_id, custom_pass_design, timezone, locale, currency, country_code")
       .eq("id", eventId)
       .single();
 
@@ -148,7 +148,7 @@ export async function generatePass(
   // Send pass communications (Email, WhatsApp, SMS with DLT and fallback) — fire-and-forget
   const [{ data: attendeeInfo }, { data: eventInfo }] = await Promise.all([
     supabase.from("attendees").select("name, email, phone, pass_type, custom_responses").eq("id", attendeeId).single(),
-    supabase.from("events").select("name, event_date, venue, custom_pass_design").eq("id", eventId).single(),
+    supabase.from("events").select("name, event_date, venue, custom_pass_design, timezone, locale, currency, country_code").eq("id", eventId).single(),
   ]);
 
   let resolvedTicketId = formatTicketId(pass.pass_token);
@@ -183,6 +183,7 @@ export async function generatePass(
   }
 
   if (attendeeInfo && eventInfo) {
+    const rawEvt = eventInfo as Record<string, any>;
     communicationService
       .sendTicketCommunications({
         eventId,
@@ -198,6 +199,9 @@ export async function generatePass(
         passType: attendeeInfo.pass_type,
         ticketUrl: buildTicketUrl(pass.pass_token),
         version: `pass_${pass.pass_token}`,
+        timezone: rawEvt.timezone || (event as any)?.timezone || "Asia/Kolkata",
+        locale: rawEvt.locale || (event as any)?.locale || "en-IN",
+        currency: rawEvt.currency || (event as any)?.currency || "INR",
       })
       .catch((err: unknown) => console.error("[communications]", err));
   }
@@ -348,6 +352,9 @@ export async function bulkGeneratePasses(
           passType: att.pass_type,
           ticketUrl: buildTicketUrl(passToken),
           version: `bulk_${passToken}`,
+          timezone: (event as any)?.timezone || "Asia/Kolkata",
+          locale: (event as any)?.locale || "en-IN",
+          currency: (event as any)?.currency || "INR",
         })
         .catch((err: unknown) => console.error("[bulkGeneratePasses communications]", err));
     }
@@ -410,6 +417,9 @@ export async function bulkBroadcastPasses(
       passType: p.pass_type,
       ticketUrl: buildTicketUrl(p.pass_token),
       version: `broadcast_${Date.now()}`,
+      timezone: (event as any)?.timezone || "Asia/Kolkata",
+      locale: (event as any)?.locale || "en-IN",
+      currency: (event as any)?.currency || "INR",
     };
 
     try {

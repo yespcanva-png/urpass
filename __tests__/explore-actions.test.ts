@@ -18,7 +18,7 @@ const eventId = "11111111-1111-1111-1111-111111111111";
 const owner = "22222222-2222-2222-2222-222222222222";
 const payload = { category: "music", city: "Bengaluru", editorialSummary: "Live music" };
 
-function setup(options: { ownerId?: string; listing?: { status: string }; insertError?: { code: string; message: string } } = {}) {
+function setup(options: { ownerId?: string; listing?: { status: string }; insertError?: { code: string; message: string }; currency?: string } = {}) {
   let current = options.listing || null;
   const changes: Array<{ table: string; action: string; values: Record<string, unknown> }> = [];
   const selections: Array<{ table: string; columns: string }> = [];
@@ -34,7 +34,7 @@ function setup(options: { ownerId?: string; listing?: { status: string }; insert
         update(next: Record<string, unknown>) { operation = "update"; values = next; return query; },
         insert(next: Record<string, unknown>) { operation = "insert"; values = next; return query; },
         async maybeSingle() {
-          if (table === "events") return { data: { id: eventId, organizer_id: options.ownerId || owner, organization_id: null, venue: "City Hall" }, error: null };
+          if (table === "events") return { data: { id: eventId, organizer_id: options.ownerId || owner, organization_id: null, venue: "City Hall", currency: options.currency }, error: null };
           if (table !== "explore_marketplace_listings") return { data: null, error: null };
           if (operation === "select") return { data: current, error: null };
           changes.push({ table, action: operation, values });
@@ -71,12 +71,21 @@ describe("Explore listing actions", () => {
     expect(state.changes).toHaveLength(0);
   });
 
-  it("submits without selecting events.currency and defaults to INR", async () => {
+  it("selects the event currency and defaults legacy events to INR", async () => {
     const state = setup();
     const result = await submitExploreListingApplicationAction(eventId, payload);
     expect(result.success).toBe(true);
     expect(state.changes[0].values).toMatchObject({ status: "pending", currency: "INR", min_price_paise: 0, is_free: true });
-    expect(state.selections.filter((item) => item.table === "events").every((item) => !item.columns.split(",").map((column) => column.trim()).includes("currency"))).toBe(true);
+    expect(state.selections.filter((item) => item.table === "events").some((item) => item.columns.split(",").map((column) => column.trim()).includes("currency"))).toBe(true);
+  });
+
+  it("blocks paid GBP Explore listings before approved checkout exists", async () => {
+    const state = setup({ currency: "GBP" });
+    vi.mocked(getExploreEligibility).mockResolvedValue({ ready: true, issues: [], minPricePaise: 2900, isFree: false, availableTickets: 12 });
+    const result = await submitExploreListingApplicationAction(eventId, { ...payload, city: "London" });
+    expect(result.success).toBe(false);
+    expect(result.error).toMatch(/approved GBP checkout/);
+    expect(state.changes).toHaveLength(0);
   });
 
   it("prevents duplicate pending submissions", async () => {

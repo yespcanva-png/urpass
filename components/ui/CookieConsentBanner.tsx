@@ -28,23 +28,46 @@ export function isPublicEventRoute(pathname?: string | null): boolean {
   return !isLandingPageRoute(pathname);
 }
 
+/**
+ * Determines whether the cookie consent banner should be presented.
+ * In accordance with UK PECR regulations, UK visitors must be presented with consent
+ * choices on public entry points (landing, /uk, /apply, /e/) before setting cookies.
+ */
+export function shouldShowCookieConsent(pathname?: string | null, isUkVisitor: boolean = false): boolean {
+  if (isLandingPageRoute(pathname)) return true;
+  const p = (pathname || "").toLowerCase();
+  const isDashboardRoute = p.startsWith("/dashboard") || p.startsWith("/admin") || p.startsWith("/settings");
+  if (isDashboardRoute) return false;
+
+  if (isUkVisitor) {
+    return (
+      p.startsWith("/apply") ||
+      p.startsWith("/e/") ||
+      p.startsWith("/events") ||
+      p.startsWith("/explore") ||
+      p.startsWith("/solutions") ||
+      p.startsWith("/pricing") ||
+      p.startsWith("/privacy") ||
+      p.startsWith("/terms") ||
+      p.startsWith("/pass/")
+    );
+  }
+  return false;
+}
+
 export function CookieConsentBanner() {
   const pathname = usePathname();
   const [visible, setVisible] = useState(false);
+  const [hasChoice, setHasChoice] = useState(false);
   const [region, setRegion] = useState<RegionMode>("common");
 
-  // Only allow cookie consent on the landing page
   const isLanding = isLandingPageRoute(pathname);
 
   useEffect(() => {
-    if (!isLanding) {
-      setVisible(false);
-      return;
-    }
-
     // 1. Check if consent has already been recorded
     try {
       const stored = localStorage.getItem("urpass_cookie_consent");
+      setHasChoice(stored === "all" || stored === "essential_only");
       if (!stored) {
         setVisible(true);
       }
@@ -87,33 +110,40 @@ export function CookieConsentBanner() {
   const handleAcceptAll = () => {
     try {
       localStorage.setItem("urpass_cookie_consent", "all");
+      localStorage.setItem("urpass_cookie_consent_record", JSON.stringify({ version: 1, analytics: true, decidedAt: new Date().toISOString() }));
       window.dispatchEvent(new CustomEvent("urpass:cookie-consent", { detail: { analytics: true } }));
     } catch {}
     setVisible(false);
+    setHasChoice(true);
   };
 
   const handleRejectNonEssential = () => {
     try {
       localStorage.setItem("urpass_cookie_consent", "essential_only");
+      localStorage.setItem("urpass_cookie_consent_record", JSON.stringify({ version: 1, analytics: false, decidedAt: new Date().toISOString() }));
       window.dispatchEvent(new CustomEvent("urpass:cookie-consent", { detail: { analytics: false } }));
     } catch {}
     setVisible(false);
+    setHasChoice(true);
   };
 
-  if (!isLanding || !visible) return null;
+  const shouldShow = shouldShowCookieConsent(pathname, region === "uk");
+  if (!shouldShow) return null;
+  if (!visible && hasChoice) return <button type="button" onClick={() => setVisible(true)} className="fixed bottom-4 left-4 z-50 rounded-full border border-neutral-200 bg-white px-3 py-2 text-xs font-semibold text-neutral-700 shadow-md">Cookie choices</button>;
+  if (!visible) return null;
 
   const content = {
     uk: {
       title: "Your Privacy & Cookie Choices",
       description:
         "We use strictly necessary cookies to run secure event check-in and optional performance cookies to monitor scanning speed. In accordance with the UK GDPR & PECR, you can choose your preferences.",
-      badge: "UK GDPR & PECR Compliant",
+      badge: "Privacy choices",
     },
     in: {
       title: "Your Privacy & Cookie Choices",
       description:
         "We use strictly necessary cookies to run secure event check-in and digital ticket issuance. In accordance with the Digital Personal Data Protection (DPDP) Act, you can choose your preferences.",
-      badge: "DPDP & ISO 27001 Compliant",
+      badge: "Privacy choices",
     },
     common: {
       title: "Your Privacy & Cookie Choices",

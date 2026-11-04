@@ -57,6 +57,12 @@ export default function FounderCheckoutCta({
     setOpen(true);
   }
 
+  if (isUk) {
+    return <span className={`inline-flex items-center rounded-lg bg-neutral-100 px-5 py-2.5 text-xs font-semibold text-neutral-600 ${className}`}>
+      UK paid plans are coming after provider approval
+    </span>;
+  }
+
   if (!isLoggedIn) {
     const signupHref =
       "/signup?from=founder-lifetime-deal&next=" +

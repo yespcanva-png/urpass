@@ -1,11 +1,11 @@
 import type { Metadata, Viewport } from "next";
-import Script from "next/script";
 import { Geist } from "next/font/google";
 import "./globals.css";
 import SupportWidget from "@/components/support/SupportWidget";
 import VersionSkewHandler from "@/components/common/VersionSkewHandler";
 import AuthRecoveryHandler from "@/components/common/AuthRecoveryHandler";
 import { CookieConsentBanner } from "@/components/ui/CookieConsentBanner";
+import ConsentAnalytics from "@/components/ui/ConsentAnalytics";
 import PwaRuntime from "@/components/pwa/PwaRuntime";
 
 const geist = Geist({
@@ -325,48 +325,9 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(siteNavSchema) }}
         />
-        {GA_ID && (
-          <>
-            <Script
-              strategy="afterInteractive"
-              src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
-            />
-            <Script
-              id="google-analytics"
-              strategy="afterInteractive"
-              dangerouslySetInnerHTML={{
-                __html: `
-                  window.dataLayer = window.dataLayer || [];
-                  function gtag(){dataLayer.push(arguments);}
-                  gtag('consent', 'default', {
-                    'analytics_storage': 'denied',
-                    'ad_storage': 'denied'
-                  });
-                  try {
-                    if (typeof localStorage !== 'undefined' && localStorage.getItem('urpass_cookie_consent') === 'all') {
-                      gtag('consent', 'update', {
-                        'analytics_storage': 'granted'
-                      });
-                    }
-                  } catch (e) {}
-                  gtag('js', new Date());
-                  gtag('config', '${GA_ID}', {
-                    page_path: window.location.pathname,
-                  });
-                  window.addEventListener('urpass:cookie-consent', function(e) {
-                    if (e.detail && e.detail.analytics) {
-                      gtag('consent', 'update', {
-                        'analytics_storage': 'granted'
-                      });
-                    }
-                  });
-                `,
-              }}
-            />
-          </>
-        )}
       </head>
       <body className="h-full font-[family-name:var(--font-geist)] antialiased bg-white text-neutral-900">
+        <ConsentAnalytics measurementId={GA_ID} />
         <VersionSkewHandler />
         <AuthRecoveryHandler />
         <PwaRuntime />

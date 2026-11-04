@@ -18,7 +18,7 @@ async function requireOrganizer(eventId: string) {
   const admin = adminClient();
   const { data: event, error } = await admin
     .from("events")
-    .select("id, name, organizer_id, organization_id, venue, apply_slug, event_date, start_time, banner_url, logo_url, is_paid_event, ticket_price, status")
+    .select("id, name, organizer_id, organization_id, venue, apply_slug, event_date, start_time, banner_url, logo_url, is_paid_event, ticket_price, currency, status")
     .eq("id", eventId)
     .maybeSingle();
 
@@ -188,6 +188,9 @@ export async function submitExploreListingApplicationAction(
         error: eligibility.issues[0] || "Event is not eligible for Explore listing.",
       };
     }
+    if (event.currency !== "INR" && event.currency != null && !eligibility.isFree) {
+      return { success: false, error: "Paid events in this currency cannot be listed until approved GBP checkout is available." };
+    }
 
     const values = {
         status: "pending",
@@ -196,7 +199,7 @@ export async function submitExploreListingApplicationAction(
         venue_address: event.venue,
         editorial_summary: payload.editorialSummary?.trim().slice(0, 140) || null,
         min_price_paise: eligibility.minPricePaise,
-        currency: "INR",
+        currency: event.currency || "INR",
         is_free: eligibility.isFree,
         rejection_reason: null,
         approved_at: null,

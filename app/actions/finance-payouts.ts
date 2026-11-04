@@ -8,7 +8,11 @@ export interface PayoutBankAccount {
   bankName: string;
   beneficiaryName: string;
   accountNumberMasked: string; // e.g. "••••4321"
-  ifscCode: string;
+  ifscCode?: string;
+  sortCode?: string; // UK 6-digit Sort Code
+  iban?: string; // International Bank Account Number
+  country?: string;
+  currency?: string;
   upiId?: string;
   payoutSchedule: "daily_t2" | "weekly" | "manual";
   updatedAt: string;
@@ -60,6 +64,7 @@ export interface FinanceMetrics {
 }
 
 export interface EventFinanceData {
+  currency?: string;
   metrics: FinanceMetrics;
   transactions: FinanceTransaction[];
   settlements: SettlementBatch[];
@@ -84,9 +89,21 @@ export async function getEventFinanceDataAction(
   if (!user) redirect("/login");
 
   // 1. Fetch Real Ticket Orders for this event
+  let eventCurrency = "INR";
+  if (eventId) {
+    const { data: ev } = await supabase
+      .from("events")
+      .select("currency")
+      .eq("id", eventId)
+      .maybeSingle();
+    if (ev?.currency) {
+      eventCurrency = ev.currency;
+    }
+  }
+
   let query = supabase
     .from("ticket_orders")
-    .select("*, ticket_type:ticket_types(name, price)")
+    .select("*, ticket_type:ticket_types(name, price, price_minor)")
     .order("created_at", { ascending: false });
 
   if (eventId) {
@@ -146,14 +163,33 @@ export async function getEventFinanceDataAction(
 
   // 4. Map & Normalize Real Transactions
   const transactions: FinanceTransaction[] = orders.map((o: any) => {
-    // Ticket order amount is stored in paise in Razorpay (e.g. 14900 paise = ₹149.00)
+    const orderCurrency = (o.currency || eventCurrency || "INR").toUpperCase();
+    const isUkOrder = orderCurrency === "GBP";
     const rawAmount = Number(o.amount) || 0;
-    const grossINR = rawAmount > 500 ? rawAmount / 100 : rawAmount;
+
+    let grossAmount: number;
+    const ttPrice = Number(o.ticket_type?.price);
+    const ttPriceMinor = Number(o.ticket_type?.price_minor);
+    if (o.price_minor !== undefined && o.price_minor !== null) {
+      grossAmount = Number(o.price_minor) / 100;
+    } else if (!Number.isNaN(ttPrice) && ttPrice > 0 && Math.abs(rawAmount - ttPrice) < 0.001) {
+      grossAmount = rawAmount;
+    } else if (!Number.isNaN(ttPrice) && ttPrice > 0 && Math.abs(rawAmount - Math.round(ttPrice * 100)) < 0.001) {
+      grossAmount = rawAmount / 100;
+    } else if (!Number.isNaN(ttPriceMinor) && ttPriceMinor > 0 && Math.abs(rawAmount - ttPriceMinor) < 0.001) {
+      grossAmount = rawAmount / 100;
+    } else if (!Number.isInteger(rawAmount)) {
+      grossAmount = rawAmount;
+    } else if (rawAmount >= 100) {
+      grossAmount = rawAmount / 100;
+    } else {
+      grossAmount = rawAmount;
+    }
 
     // Platform fee 2%, Gateway processing fee 2%
-    const platformFee = Number(((grossINR * 2) / 100).toFixed(2));
-    const gatewayFee = Number(((grossINR * 2) / 100).toFixed(2));
-    const organizerShare = Number((grossINR - platformFee - gatewayFee).toFixed(2));
+    const platformFee = Number(((grossAmount * 2) / 100).toFixed(2));
+    const gatewayFee = Number(((grossAmount * 2) / 100).toFixed(2));
+    const organizerShare = Number((grossAmount - platformFee - gatewayFee).toFixed(2));
 
     const status = (
       o.status === "paid" || o.status === "captured"
@@ -165,18 +201,28 @@ export async function getEventFinanceDataAction(
         : "created"
     ) as FinanceTransaction["status"];
 
+    const paymentMethod = o.payment_method
+      ? o.payment_method
+      : o.razorpay_payment_id
+      ? isUkOrder
+        ? "Debit / Credit Card"
+        : "UPI / Card (Razorpay)"
+      : isUkOrder
+      ? "Card Checkout"
+      : "Online Checkout";
+
     return {
       id: o.id,
       order_number: o.razorpay_order_id || `ORD-${o.id.slice(0, 8).toUpperCase()}`,
       customer_name: o.buyer_name || "Guest Attendee",
       customer_email: o.buyer_email || "N/A",
       ticket_type_name: o.ticket_type?.name || "General Admission",
-      subtotal: grossINR,
+      subtotal: grossAmount,
       platform_fee: platformFee,
       gateway_fee: gatewayFee,
       organizer_share: Math.max(0, organizerShare),
-      total_amount: grossINR,
-      payment_method: o.razorpay_payment_id ? "UPI / Card (Razorpay)" : "Online Checkout",
+      total_amount: grossAmount,
+      payment_method: paymentMethod,
       status,
       created_at: o.created_at,
       razorpay_order_id: o.razorpay_order_id,
@@ -220,6 +266,7 @@ export async function getEventFinanceDataAction(
   const availableBalance = Math.max(0, netEarnings - settledAmount);
 
   return {
+    currency: eventCurrency,
     metrics: {
       grossSales: Number(grossSales.toFixed(2)),
       totalRefunds: Number(totalRefunds.toFixed(2)),
@@ -248,7 +295,11 @@ export async function saveOrganizerPayoutAccountAction(params: {
   bankName: string;
   beneficiaryName: string;
   accountNumber: string;
-  ifscCode: string;
+  ifscCode?: string;
+  sortCode?: string;
+  iban?: string;
+  country?: string;
+  currency?: string;
   upiId?: string;
   payoutSchedule?: "daily_t2" | "weekly" | "manual";
 }) {
@@ -261,12 +312,16 @@ export async function saveOrganizerPayoutAccountAction(params: {
   const bankName = params.bankName.trim();
   const beneficiaryName = params.beneficiaryName.trim();
   const accountNumber = params.accountNumber.trim();
-  const ifscCode = params.ifscCode.trim().toUpperCase();
+  const ifscCode = params.ifscCode?.trim().toUpperCase() || "";
+  const sortCode = params.sortCode?.trim() || "";
+  const iban = params.iban?.trim().toUpperCase() || "";
+  const country = params.country?.trim().toUpperCase() || (sortCode ? "GB" : "IN");
+  const currency = params.currency?.trim().toUpperCase() || (country === "GB" ? "GBP" : "INR");
   const upiId = params.upiId?.trim() || "";
   const payoutSchedule = params.payoutSchedule || "daily_t2";
 
-  if (!bankName && !upiId) {
-    return { error: "Please provide either bank account details or a UPI ID." };
+  if (!bankName && !upiId && !iban) {
+    return { error: "Please provide either bank account details, sort code, IBAN, or UPI ID." };
   }
 
   if (accountNumber && accountNumber.length < 4) {
@@ -281,8 +336,12 @@ export async function saveOrganizerPayoutAccountAction(params: {
     bankName,
     beneficiaryName,
     accountNumberMasked,
-    ifscCode,
-    upiId,
+    ifscCode: ifscCode || undefined,
+    sortCode: sortCode || undefined,
+    iban: iban || undefined,
+    country,
+    currency,
+    upiId: upiId || undefined,
     payoutSchedule,
     updatedAt: new Date().toISOString(),
   };
@@ -314,7 +373,9 @@ export async function saveOrganizerPayoutAccountAction(params: {
  */
 export async function requestOrganizerPayoutAction(params: {
   eventId: string;
-  amountINR: number;
+  amountINR?: number;
+  amount?: number;
+  currency?: string;
 }) {
   const supabase = await createClient();
   const {
@@ -322,8 +383,9 @@ export async function requestOrganizerPayoutAction(params: {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { eventId, amountINR } = params;
-  if (!amountINR || amountINR <= 0) {
+  const { eventId } = params;
+  const payoutAmount = params.amount ?? params.amountINR ?? 0;
+  if (!payoutAmount || payoutAmount <= 0) {
     return { error: "Invalid payout amount." };
   }
 
@@ -333,15 +395,21 @@ export async function requestOrganizerPayoutAction(params: {
     return { error: "Please configure your bank account before requesting a payout." };
   }
 
-  if (amountINR > financeData.metrics.availableBalance) {
+  const curr = financeData.currency === "GBP" ? "£" : "₹";
+  if (payoutAmount > financeData.metrics.availableBalance) {
     return {
-      error: `Payout request exceeds available balance (₹${financeData.metrics.availableBalance}).`,
+      error: `Payout request exceeds available balance (${curr}${financeData.metrics.availableBalance}).`,
     };
   }
 
-  const destination = financeData.payoutAccount.bankName
-    ? `${financeData.payoutAccount.bankName} (${financeData.payoutAccount.accountNumberMasked})`
-    : financeData.payoutAccount.upiId || "Registered Account";
+  const acc = financeData.payoutAccount;
+  const destination = acc.sortCode && acc.accountNumberMasked
+    ? `${acc.bankName || "UK Bank"} (Sort: ${acc.sortCode}, Acc: ${acc.accountNumberMasked})`
+    : acc.iban
+    ? `${acc.bankName || "Bank"} (IBAN: ${acc.iban})`
+    : acc.bankName
+    ? `${acc.bankName} (${acc.accountNumberMasked})`
+    : acc.upiId || "Registered Account";
 
   // Expected settlement date: T+2 business days
   const expectedDate = new Date();
@@ -350,7 +418,7 @@ export async function requestOrganizerPayoutAction(params: {
   const newSettlement: SettlementBatch = {
     id: `SETL-${Date.now().toString(36).toUpperCase()}-${Math.floor(100 + Math.random() * 900)}`,
     eventId,
-    amount: Number(amountINR.toFixed(2)),
+    amount: Number(payoutAmount.toFixed(2)),
     destination,
     status: "PROCESSING",
     initiatedAt: new Date().toISOString(),

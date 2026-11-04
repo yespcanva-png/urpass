@@ -78,6 +78,10 @@ export type Event = {
   auto_promote_waitlist?: boolean;
   is_paid_event: boolean;
   ticket_price: number;
+  currency?: string;
+  timezone?: string;
+  country_code?: string;
+  locale?: string;
   custom_fields?: CustomFieldDefinition[];
   organization_id: string | null;
   workspace_id?: string | null;
@@ -279,9 +283,42 @@ export type OrganizationSettings = {
     advancedAnalytics?: boolean;
     customPasses?: boolean;
   };
+  default_country_code?: string;
+  default_currency?: string;
   created_at: string;
   updated_at: string;
 };
+
+export type GatewayProvider = "razorpay" | "stripe" | "payu";
+
+export interface OrganizationPaymentSettings {
+  id?: string;
+  organization_id: string;
+  gateway_provider: GatewayProvider;
+  razorpay_key_id?: string | null;
+  razorpay_key_secret?: string | null;
+  stripe_publishable_key?: string | null;
+  stripe_restricted_key?: string | null;
+  stripe_webhook_secret?: string | null;
+  currency?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export type PrivacyErasureStatus = "PENDING" | "PROCESSING" | "COMPLETED" | "REJECTED";
+
+export interface PrivacyErasureRequest {
+  id: string;
+  reference_id: string;
+  email: string;
+  role: string;
+  event_id?: string | null;
+  status: PrivacyErasureStatus;
+  records_scrubbed: number;
+  requested_at: string;
+  completed_at?: string | null;
+  notes?: string | null;
+}
 
 export type Workspace = {
   id: string;

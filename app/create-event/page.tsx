@@ -16,7 +16,12 @@ export default async function CreateEventPage({
   if (!user) redirect("/login");
 
   const access = await resolveUserSubscriptionAccess({ supabase, user });
-  if (!access.hasOrganizerAccess) {
+  const { data: ukMembership } = await supabase.from("organization_members")
+    .select("organization_id, organization:organizations(country_code)")
+    .eq("user_id", user.id).eq("status", "active")
+    .in("role", ["owner", "admin", "event_manager"]);
+  const hasUkOrg = (ukMembership || []).some((member) => (member.organization as unknown as { country_code?: string } | null)?.country_code === "GB");
+  if (!access.hasOrganizerAccess && !hasUkOrg) {
     if (access.shouldRedirectToSubscriptionOnboarding) {
       redirect("/onboarding/subscription");
     }
@@ -48,15 +53,15 @@ export default async function CreateEventPage({
       .in("status", ["draft", "active"]),
     supabase
       .from("organization_members")
-      .select("role, organization:organizations(id, slug, name, brand_color)")
+      .select("role, organization:organizations(id, slug, name, brand_color, country_code)")
       .eq("user_id", user.id)
       .eq("status", "active")
       .in("role", ["owner", "admin", "event_manager"]),
   ]);
 
   const orgs = (memberships ?? []).map((m) => {
-    const o = m.organization as unknown as { id: string; slug: string; name: string; brand_color: string };
-    return { id: o.id, slug: o.slug, name: o.name, brand_color: o.brand_color, role: m.role };
+    const o = m.organization as unknown as { id: string; slug: string; name: string; brand_color: string; country_code: "IN" | "GB" };
+    return { id: o.id, slug: o.slug, name: o.name, brand_color: o.brand_color, country_code: o.country_code, role: m.role };
   });
 
   const matchedOrg = orgId ? orgs.find((o) => o.id === orgId || o.slug === orgId) : undefined;
@@ -76,6 +81,7 @@ export default async function CreateEventPage({
       canCreatePaidEvents={plan.canCreatePaidEvents}
       organizationId={activeOrgId}
       organizationName={activeOrgName}
+      organizationCountry={matchedOrg?.country_code}
       orgs={orgs}
       workspaces={workspaces}
       locations={locations}

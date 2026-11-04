@@ -4,14 +4,14 @@ import SEOPage from "@/components/landing/SEOPage";
 
 export const metadata: Metadata = {
   title: "Event Registration & QR Check-In Software UK | URPASS",
-  description: "Online event registration, digital QR passes, and sub-second smartphone check-in for UK conferences, universities, and festivals. Flat GBP pricing and UK GDPR compliant.",
+  description: "Online event registration, digital QR passes, and sub-second smartphone check-in for UK conferences, universities, and festivals. Free event registration available; paid GBP checkout is pending provider approval.",
   keywords: ["event registration software UK", "event check-in software UK", "QR check-in software UK", "event ticketing software UK", "UK event registration platform", "QR ticketing system UK", "event attendance tracking software UK", "zero commission event ticketing UK"],
   alternates: {
     canonical: "https://urpass.space/uk",
   },
   openGraph: {
     title: "Event Registration & QR Check-In Software UK | URPASS",
-    description: "Online event registration, digital QR passes, and sub-second smartphone check-in for UK conferences, universities, and festivals. Flat GBP pricing and UK GDPR compliant.",
+    description: "Online event registration, digital QR passes, and sub-second smartphone check-in for UK conferences, universities, and festivals. Free event registration available; paid GBP checkout is pending provider approval.",
     url: "https://urpass.space/uk",
     locale: "en_GB",
     type: "website",
@@ -34,15 +34,15 @@ export default function UkPage() {
   "description": "Create events, issue digital QR tickets, manage multiple gates, and scan attendees in under 300ms — with 0% UrPass ticket commission. Built for UK universities, conferences, and event agencies.",
   "ctaLabel": "Create Your Event Free →",
   "ctaTitle": "Run Your Next UK Event With URPASS",
-  "ctaDescription": "Set up registration in 3 minutes. Issue mobile QR tickets. Scan attendees in under 300ms on any phone. Transparent GBP pricing with 0% ticketing commission.",
+  "ctaDescription": "Set up registration in 3 minutes. Issue mobile QR tickets. Scan attendees in under 300ms on any phone. UK paid checkout is pending payment-provider approval.",
   "directAnswer": {
     "title": "What is URPASS UK Event Registration & QR Check-In Software?",
-    "summary": "URPASS is an event registration and QR check-in platform that lets UK organisers create custom registration pages, issue digital QR passes, manage attendees, and scan tickets at event entrances using standard phones. It supports free and paid events with 0% ticketing commission and provides real-time attendance tracking from the organiser dashboard.",
+    "summary": "URPASS is an event registration and QR check-in platform that lets UK organisers create custom registration pages, issue digital QR passes, manage attendees, and scan tickets at event entrances using standard phones. It supports free event registration and real-time attendance tracking from the organiser dashboard. GBP paid checkout is pending provider approval.",
     "keyPoints": [
       "Custom online registration forms with instant attendee pass generation",
       "Sub-second (<0.3s) camera check-in on volunteer phones with zero app downloads",
-      "Built for UK GDPR and Data Protection Act 2018 compliance",
-      "Zero commission on paid tickets with transparent flat GBP subscription tiers"
+      "Privacy controls are being developed for UK requirements",
+      "Paid GBP ticketing and subscriptions are pending provider approval"
     ]
   },
   "whatIs": {
@@ -61,7 +61,7 @@ export default function UkPage() {
     {
       "n": "01",
       "title": "Create your event",
-      "desc": "Configure event date, venue, custom registration fields, and ticket tiers in GBP."
+      "desc": "Configure event date, venue, custom registration fields, and free ticket tiers."
     },
     {
       "n": "02",
@@ -70,7 +70,7 @@ export default function UkPage() {
     },
     {
       "n": "03",
-      "title": "Attendees register & pay",
+      "title": "Attendees register",
       "desc": "Delegates register in seconds without forced account creation or spam popups."
     },
     {
@@ -120,7 +120,7 @@ export default function UkPage() {
     {
       icon: ShieldCheck,
       "title": "UK GDPR & DPA Compliance",
-      "desc": "Attendee data is stored securely in compliant infrastructure with role-based access and zero third-party data broker ads."
+      "desc": "Attendee data is protected with role-based access controls."
     }
   ],
   "whoShouldUse": {
@@ -182,7 +182,7 @@ export default function UkPage() {
       {
         "col1": "Ticketing Commission",
         "col2": "Up to 6.95% + £0.59 per ticket on Eventbrite",
-        "col3": "0% commission with flat monthly subscriptions"
+        "col3": "Free registration now; GBP payments pending approval"
       },
       {
         "col1": "Entrance Check-In Speed",
@@ -218,7 +218,7 @@ export default function UkPage() {
     },
     {
       "q": "Can URPASS process ticket payments in British Pounds (GBP)?",
-      "a": "Yes. URPASS supports transparent GBP pricing with 0% ticketing commission on paid tickets, connecting directly to your payment gateway so you keep your revenue."
+      "a": "GBP ticket payments are currently unavailable. UK organisers can run free registration while payment-provider eligibility and connected-account onboarding are reviewed."
     },
     {
       "q": "Do UK attendees need to install an app on their phone?",

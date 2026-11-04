@@ -41,6 +41,9 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json().catch(() => null);
   const { passType, currency: requestedCurrency = "INR" } = body ?? {};
+  if (String(requestedCurrency).toUpperCase() === "GBP") {
+    return NextResponse.json({ error: "UK event-pass checkout is unavailable until an approved provider is integrated." }, { status: 503 });
+  }
 
   const isUk = (requestedCurrency || "").toUpperCase() === "GBP";
   const currencyCode = isUk ? "GBP" : "INR";

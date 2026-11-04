@@ -25,6 +25,7 @@ import Link from "next/link";
 import { QRCodeSVG } from "qrcode.react";
 import { createOrganization } from "@/app/actions/organizations";
 import { createEvent } from "@/app/actions/events";
+import { marketForCountry, type CountryCode } from "@/lib/markets/config";
 
 interface Props {
   firstName: string;
@@ -49,8 +50,10 @@ export default function OnboardingClient({ firstName, canCreateOrg }: Props) {
   // Step 1: Org State
   const [orgType, setOrgType] = useState<"personal" | "org">("personal");
   const [orgName, setOrgName] = useState("");
+  const [countryCode, setCountryCode] = useState<CountryCode>("IN");
   const [orgSlug, setOrgSlug] = useState("");
   const [orgBrandColor, setOrgBrandColor] = useState("#6D28D9");
+  const [completionError, setCompletionError] = useState("");
 
   // Step 2: Gateway State
   const [gatewayMode, setGatewayMode] = useState<"free" | "razorpay_managed" | "razorpay_custom">("free");
@@ -80,19 +83,34 @@ export default function OnboardingClient({ firstName, canCreateOrg }: Props) {
   const testPassToken = "TEST-PASS-URPASS-ONBOARDING-SAMPLE";
 
   async function handleCompleteOnboarding() {
+    setCompletionError("");
+    if (countryCode === "GB" && (orgType !== "org" || !orgName.trim())) {
+      setCompletionError("Enter a UK organisation name before creating your first event.");
+      setCurrentStep("org");
+      return;
+    }
+    let organizationId: string | undefined;
     // If organization was chosen, create org
     if (orgType === "org" && orgName.trim()) {
       try {
-        await createOrganization({
+        const created = await createOrganization({
           name: orgName,
           brand_color: orgBrandColor,
+          country_code: countryCode,
         });
-      } catch {}
+        if (created && "error" in created) throw new Error(created.error);
+        organizationId = created?.orgId;
+      } catch (error) {
+        setCompletionError(error instanceof Error ? error.message : "Could not create organisation.");
+        setCurrentStep("org");
+        return;
+      }
     }
 
     // Create the event if a title was provided
     if (eventName.trim()) {
       try {
+        const market = marketForCountry(countryCode);
         const res = await createEvent({
           name: eventName,
           description: null,
@@ -107,18 +125,29 @@ export default function OnboardingClient({ firstName, canCreateOrg }: Props) {
           status: "draft",
           application_enabled: true,
           auto_approve: true,
-          is_paid_event: gatewayMode !== "free",
-          ticket_price: gatewayMode !== "free" ? 499 : 0,
+          is_paid_event: countryCode === "IN" && gatewayMode !== "free",
+          ticket_price: countryCode === "IN" && gatewayMode !== "free" ? 499 : 0,
           workspace_id: null,
           location_id: null,
-          currency: "INR",
-          timezone: "Asia/Kolkata",
-        });
+          currency: market.currency,
+          timezone: market.defaultTimezone,
+          country_code: countryCode,
+          locale: market.locale,
+        }, organizationId);
+        if (res?.error) {
+          setCompletionError(res.error);
+          setCurrentStep("event");
+          return;
+        }
         if (res && res.eventId) {
           router.push(`/event/${res.eventId}`);
           return;
         }
-      } catch {}
+      } catch (error) {
+        setCompletionError(error instanceof Error ? error.message : "Could not create event.");
+        setCurrentStep("event");
+        return;
+      }
     }
 
     router.push("/dashboard");
@@ -186,6 +215,7 @@ export default function OnboardingClient({ firstName, canCreateOrg }: Props) {
       {/* Main Container */}
       <div className="flex-1 flex items-center justify-center px-4 py-8">
         <div className="w-full max-w-2xl bg-white rounded-3xl border border-neutral-200/90 p-6 sm:p-10 shadow-sm space-y-6">
+          {completionError && <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm font-medium text-red-700">{completionError}</p>}
           {/* STEP 1: ORGANIZATION SETUP */}
           {currentStep === "org" && (
             <div className="space-y-6 animate-in fade-in duration-300">
@@ -201,6 +231,14 @@ export default function OnboardingClient({ firstName, canCreateOrg }: Props) {
                   How will you be using UrPass? Choose personal or team organization workspace.
                 </p>
               </div>
+
+              <label className="block text-sm font-semibold text-neutral-800">
+                Country
+                <select value={countryCode} onChange={(event) => { setCountryCode(event.target.value as CountryCode); setGatewayMode("free"); }} className="mt-2 w-full rounded-xl border border-neutral-200 bg-white px-3 py-2.5">
+                  <option value="IN">India</option>
+                  <option value="GB">United Kingdom</option>
+                </select>
+              </label>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <button
@@ -350,7 +388,7 @@ export default function OnboardingClient({ firstName, canCreateOrg }: Props) {
                   </div>
                 </button>
 
-                <button
+                {countryCode === "IN" && <button
                   type="button"
                   onClick={() => setGatewayMode("razorpay_managed")}
                   className={`w-full p-4 rounded-2xl border text-left flex items-start gap-4 transition-all cursor-pointer ${
@@ -373,9 +411,9 @@ export default function OnboardingClient({ firstName, canCreateOrg }: Props) {
                       Start selling paid tickets immediately via UPI, credit/debit cards, and NetBanking with automated payouts.
                     </p>
                   </div>
-                </button>
+                </button>}
 
-                <button
+                {countryCode === "IN" && <button
                   type="button"
                   onClick={() => setGatewayMode("razorpay_custom")}
                   className={`w-full p-4 rounded-2xl border text-left flex items-start gap-4 transition-all cursor-pointer ${
@@ -393,8 +431,10 @@ export default function OnboardingClient({ firstName, canCreateOrg }: Props) {
                       Direct settlements into your own bank account using your Razorpay Key ID and Secret.
                     </p>
                   </div>
-                </button>
+                </button>}
               </div>
+
+              {countryCode === "GB" && <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900">UK free events are available. Paid ticketing requires an approved payment account and is currently unavailable.</p>}
 
               {gatewayMode === "razorpay_custom" && (
                 <div className="pt-2">

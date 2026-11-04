@@ -21,6 +21,10 @@ export type ExploreEventDetail = {
   registrationOpen: boolean;
   startingPricePaise: number;
   currency: string;
+  countryCode: string;
+  timezone: string;
+  startsAtUtc: string | null;
+  endsAtUtc: string | null;
   ticketTypes: { id: string; name: string; description: string | null; price: number; capacity: number | null; soldCount: number; status: string; available: boolean }[];
   sessions: { id: string; title: string; date: string; startTime: string; endTime: string }[];
 };
@@ -29,7 +33,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export async function getExploreEventDetail(slug: string): Promise<ExploreEventDetail | null> {
   const supabase = await createClient();
-  const eventSelect = `id, name, description, event_date, start_time, end_time, venue, banner_url, logo_url, apply_slug, status, application_enabled, auto_approve, organizer_id, ticket_price, is_paid_event`;
+  const eventSelect = `id, name, description, event_date, start_time, end_time, venue, banner_url, logo_url, apply_slug, status, application_enabled, auto_approve, organizer_id, ticket_price, is_paid_event, currency, country_code, timezone, starts_at_utc, ends_at_utc`;
   const { data: event, error: eventError } = await supabase.from("events")
     .select(eventSelect)
     .eq(UUID.test(slug) ? "id" : "apply_slug", slug)
@@ -105,7 +109,11 @@ export async function getExploreEventDetail(slug: string): Promise<ExploreEventD
     approvalRequired: !event.auto_approve,
     registrationOpen: event.application_enabled !== false,
     startingPricePaise,
-    currency: listing.currency || "INR",
+    currency: event.currency || listing.currency || "INR",
+    countryCode: event.country_code || "IN",
+    timezone: event.timezone || "Asia/Kolkata",
+    startsAtUtc: event.starts_at_utc || null,
+    endsAtUtc: event.ends_at_utc || null,
     ticketTypes,
     sessions: (sessions ?? []).map((session) => ({
       id: session.id, title: session.title, date: session.session_date,
