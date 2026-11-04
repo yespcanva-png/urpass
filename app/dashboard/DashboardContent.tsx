@@ -322,6 +322,10 @@ export default function DashboardContent() {
 
   const checkinRate = stats.passes > 0 ? Math.round((stats.checkedIn / stats.passes) * 100) : 0;
 
+  const isPaidPlan = useMemo(() => {
+    return ["pro", "business", "campus", "founder", "lifetime", "enterprise", "managed_enterprise"].includes(planSlug);
+  }, [planSlug]);
+
   const unfinishedDraft = useMemo(() => {
     return events.find((e) => e.is_onboarding_draft && e.status === "draft");
   }, [events]);
@@ -427,12 +431,18 @@ export default function DashboardContent() {
                 Finish setting up &ldquo;{unfinishedDraft.name}&rdquo;
               </h4>
               <p className="text-xs text-neutral-600 mt-0.5">
-                Your event draft is saved. Choose a plan, configure registration tickets, and start welcoming attendees.
+                {isPaidPlan
+                  ? "Your event draft is saved. Configure registration tickets, pass design, and start welcoming attendees."
+                  : "Your event draft is saved. Choose a plan, configure registration tickets, and start welcoming attendees."}
               </p>
             </div>
           </div>
           <Link
-            href={`/onboarding/first-event/plans?draft=${unfinishedDraft.id}`}
+            href={
+              isPaidPlan
+                ? `/create-event?draft=${unfinishedDraft.id}`
+                : `/onboarding/first-event/plans?draft=${unfinishedDraft.id}`
+            }
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-violet-700 hover:bg-violet-600 text-white text-xs sm:text-sm font-bold shadow-sm transition-all shrink-0"
           >
             <span>Resume Event Setup</span>
@@ -637,41 +647,43 @@ export default function DashboardContent() {
         </div>
       ) : (
         <div className="space-y-4">
-          {/* Quick service & pass upgrade banner for active organizers */}
-          <div className="p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-amber-50/70 via-purple-50/50 to-indigo-50/40 border border-neutral-200/90 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs shadow-2xs">
-            <div className="flex items-center gap-2.5">
-              <span className="w-8 h-8 rounded-xl bg-white border border-neutral-200/80 flex items-center justify-center text-purple-700 shrink-0 shadow-2xs">
-                <Sparkles className="w-4 h-4 text-purple-600" />
-              </span>
-              <div>
-                <span className="font-bold text-neutral-900">
-                  Running an upcoming event?
+          {/* Quick service & pass upgrade banner for free/starter organizers only */}
+          {loaded && !isPaidPlan && (
+            <div className="p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-amber-50/70 via-purple-50/50 to-indigo-50/40 border border-neutral-200/90 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs shadow-2xs">
+              <div className="flex items-center gap-2.5">
+                <span className="w-8 h-8 rounded-xl bg-white border border-neutral-200/80 flex items-center justify-center text-purple-700 shrink-0 shadow-2xs">
+                  <Sparkles className="w-4 h-4 text-purple-600" />
                 </span>
-                <span className="text-neutral-500 ml-1.5 hidden md:inline">
-                  Get a Single Event Pass (₹299, no watermark, 500 attendees) or let our team build your event in 24 hours.
-                </span>
+                <div>
+                  <span className="font-bold text-neutral-900">
+                    Running an upcoming event?
+                  </span>
+                  <span className="text-neutral-500 ml-1.5 hidden md:inline">
+                    Get a Single Event Pass (₹299, no watermark, 500 attendees) or let our team build your event in 24 hours.
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
+                <button
+                  type="button"
+                  onClick={() => setSinglePassModalOpen(true)}
+                  className="flex-1 sm:flex-initial px-3.5 py-1.5 rounded-xl font-bold text-amber-950 bg-amber-300 hover:bg-amber-400 border border-amber-400/80 transition-colors cursor-pointer text-center shadow-2xs"
+                >
+                  Single Event Pass (₹299)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setConciergeIsFirstTime(false);
+                    setConciergeModalOpen(true);
+                  }}
+                  className="flex-1 sm:flex-initial px-3.5 py-1.5 rounded-xl font-bold text-purple-700 bg-white hover:bg-purple-50 border border-purple-200 transition-colors cursor-pointer text-center shadow-2xs"
+                >
+                  VIP 24h Setup (₹999)
+                </button>
               </div>
             </div>
-            <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
-              <button
-                type="button"
-                onClick={() => setSinglePassModalOpen(true)}
-                className="flex-1 sm:flex-initial px-3.5 py-1.5 rounded-xl font-bold text-amber-950 bg-amber-300 hover:bg-amber-400 border border-amber-400/80 transition-colors cursor-pointer text-center shadow-2xs"
-              >
-                Single Event Pass (₹299)
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setConciergeIsFirstTime(false);
-                  setConciergeModalOpen(true);
-                }}
-                className="flex-1 sm:flex-initial px-3.5 py-1.5 rounded-xl font-bold text-purple-700 bg-white hover:bg-purple-50 border border-purple-200 transition-colors cursor-pointer text-center shadow-2xs"
-              >
-                VIP 24h Setup (₹999)
-              </button>
-            </div>
-          </div>
+          )}
 
           {/* ── Zoho Corporate Event Table (When Events Exist) ── */}
           <div className="bg-white rounded-xl border border-neutral-200/80 shadow-2xs overflow-hidden">
