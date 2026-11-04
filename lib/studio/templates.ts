@@ -103,7 +103,7 @@ function createDigitalPassDesign(
     version: 2,
     format: "digital",
     width: 380,
-    height: 720,
+    height: 680,
     name,
     isPublished: true,
     background: { type: "color", color: bgColor },
