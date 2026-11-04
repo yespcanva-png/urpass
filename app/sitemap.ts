@@ -4,6 +4,7 @@ import { getPublishedJobs } from "@/lib/careers/service";
 import { getAllPublishedPages } from "@/lib/seo/pages";
 import { HIGH_INTENT_30 } from "@/lib/seo/high-intent-30";
 import { HIGH_INTENT_25_PAGES } from "@/lib/seo/templates/high-intent-25";
+import { HIGH_INTENT_BATCH_2_PAGES } from "@/lib/seo/templates/high-intent-batch-2";
 import { getAllExploreSeoPages, matchesExploreSeoPage, MIN_EXPLORE_COLLECTION_EVENTS } from "@/lib/explore/seo-pages";
 import { fetchExploreMarketplaceEvents } from "@/lib/explore/service";
 import { isPublicIndexableEvent } from "@/lib/seo/event-indexing";
@@ -952,6 +953,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     changeFrequency: "weekly" as const,
   }));
 
+  const highIntentBatch2Entries = HIGH_INTENT_BATCH_2_PAGES.map((page) => {
+    // Top 5 business drivers (#27, #30, #36, #40, #46) and high-priority revenue targets
+    const isTopPriority =
+      page.pageNumber === "Page 027" ||
+      page.pageNumber === "Page 030" ||
+      page.pageNumber === "Page 036" ||
+      page.pageNumber === "Page 040" ||
+      page.pageNumber === "Page 046" ||
+      page.searchIntent.includes("Commercial") ||
+      page.searchIntent.includes("Transactional");
+
+    return {
+      url: page.canonicalUrl,
+      priority: isTopPriority ? 0.95 : 0.9,
+      changeFrequency: "weekly" as const,
+    };
+  });
+
   const dedicatedRegionalEntries = [
     // 5 UK pages
     { url: `${BASE}/uk/conference-registration-software`, priority: 0.95, changeFrequency: "weekly" as const },
@@ -1057,6 +1076,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const rawStaticEntries = [
     ...highIntent25Entries,
+    ...highIntentBatch2Entries,
     ...dedicatedRegionalEntries,
     ...seoGeoPageEntries,
     ...marketingEntries,

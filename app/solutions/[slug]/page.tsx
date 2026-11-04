@@ -12,6 +12,11 @@ import {
   getAllHighIntentSlugs,
   HIGH_INTENT_25_BY_SLUG,
 } from "@/lib/seo/templates/high-intent-25";
+import {
+  getHighIntentBatch2Page,
+  getAllHighIntentBatch2Slugs,
+  HIGH_INTENT_BATCH_2_BY_SLUG,
+} from "@/lib/seo/templates/high-intent-batch-2";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -20,14 +25,25 @@ interface PageProps {
 export async function generateStaticParams() {
   const matchingSlugs: string[] = [];
 
-  // Add 25 High-Intent SEO + GEO Slugs
+  // Add 25 High-Intent SEO + GEO Slugs (Batch 1)
   const highIntent25Slugs = getAllHighIntentSlugs();
   for (const s of highIntent25Slugs) {
     if (!matchingSlugs.includes(s)) matchingSlugs.push(s);
   }
 
-  // Also include aliases
+  // Also include Batch 1 aliases
   Object.keys(HIGH_INTENT_25_BY_SLUG).forEach((alias) => {
+    if (!matchingSlugs.includes(alias)) matchingSlugs.push(alias);
+  });
+
+  // Add 25 High-Intent SEO + GEO Slugs (Batch 2)
+  const highIntentBatch2Slugs = getAllHighIntentBatch2Slugs();
+  for (const s of highIntentBatch2Slugs) {
+    if (!matchingSlugs.includes(s)) matchingSlugs.push(s);
+  }
+
+  // Also include Batch 2 aliases
+  Object.keys(HIGH_INTENT_BATCH_2_BY_SLUG).forEach((alias) => {
     if (!matchingSlugs.includes(alias)) matchingSlugs.push(alias);
   });
 
@@ -60,32 +76,32 @@ function resolvePage(slug: string) {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
 
-  // Check 25 High-Intent SEO + GEO Pages first
-  const highIntent25 = getHighIntent25Page(slug);
-  if (highIntent25) {
+  // Check High-Intent SEO + GEO Pages first (Batch 1 & Batch 2)
+  const highIntentPageConfig = getHighIntent25Page(slug) || getHighIntentBatch2Page(slug);
+  if (highIntentPageConfig) {
     return {
-      title: highIntent25.seoTitle,
-      description: highIntent25.metaDescription,
-      keywords: [highIntent25.primaryKeyword, ...highIntent25.secondaryKeywords],
-      alternates: { canonical: highIntent25.canonicalUrl },
+      title: highIntentPageConfig.seoTitle,
+      description: highIntentPageConfig.metaDescription,
+      keywords: [highIntentPageConfig.primaryKeyword, ...highIntentPageConfig.secondaryKeywords],
+      alternates: { canonical: highIntentPageConfig.canonicalUrl },
       openGraph: {
-        title: highIntent25.seoTitle,
-        description: highIntent25.metaDescription,
-        url: highIntent25.canonicalUrl,
+        title: highIntentPageConfig.seoTitle,
+        description: highIntentPageConfig.metaDescription,
+        url: highIntentPageConfig.canonicalUrl,
         type: "website",
         images: [
           {
             url: "https://urpass.space/og-events-your-way.png",
             width: 1200,
             height: 630,
-            alt: highIntent25.h1,
+            alt: highIntentPageConfig.h1,
           },
         ],
       },
       twitter: {
         card: "summary_large_image",
-        title: highIntent25.seoTitle,
-        description: highIntent25.metaDescription,
+        title: highIntentPageConfig.seoTitle,
+        description: highIntentPageConfig.metaDescription,
         images: ["https://urpass.space/og-events-your-way.png"],
       },
       robots: {
@@ -131,10 +147,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function SolutionsPage({ params }: PageProps) {
   const { slug } = await params;
 
-  // 1. High-Intent 25 SEO + GEO Template
-  const highIntent25 = getHighIntent25Page(slug);
-  if (highIntent25) {
-    return <SeoGeoLandingTemplate config={highIntent25} />;
+  // 1. High-Intent SEO + GEO Template (Batch 1 & Batch 2)
+  const highIntentConfig = getHighIntent25Page(slug) || getHighIntentBatch2Page(slug);
+  if (highIntentConfig) {
+    return <SeoGeoLandingTemplate config={highIntentConfig} />;
   }
 
   // 2. High-Intent 30
