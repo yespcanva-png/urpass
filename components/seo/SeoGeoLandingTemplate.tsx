@@ -277,7 +277,7 @@ export default function SeoGeoLandingTemplate({ config }: SeoGeoLandingTemplateP
   }));
 
   const normalizedWorkflowCtaLabel =
-    config.howItWorksSection?.ctaLabel || config.primaryCtaLabel || "Start Free Event";
+    config.howItWorksSection?.ctaLabel || primaryCtaLabel;
 
   const rawEventTypes =
     config.eventTypesSection?.items ||
@@ -772,23 +772,46 @@ export default function SeoGeoLandingTemplate({ config }: SeoGeoLandingTemplateP
                       CONFIGURATION CANVAS
                     </span>
                     <h3 className="text-2xl font-bold text-white">
-                      Custom Corporate Event Registration
+                      {funnelIntent.suggestedEventName}
                     </h3>
                     <p className="text-sm text-neutral-400 leading-relaxed">
-                      Build dedicated intake experiences for employees, speakers, partners, or VIP clients. Add custom fields, toggle approval workflows, and publish on a private or public link.
+                      Build dedicated intake experiences tailored for your attendees. Carry every custom field directly onto attendee QR passes, issue automatic confirmations, and toggle host approvals.
                     </p>
-                    <ul className="space-y-2 text-xs text-neutral-300 font-medium pt-2">
+                    <div className="p-3.5 rounded-xl bg-neutral-950 border border-neutral-800 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-neutral-300 font-medium">Instant QR Delivery</span>
+                        <button
+                          type="button"
+                          onClick={() => setInstantApproval(!instantApproval)}
+                          className={`relative inline-flex h-5 w-10 items-center rounded-full transition-colors ${
+                            instantApproval ? "bg-violet-600" : "bg-neutral-700"
+                          }`}
+                        >
+                          <span
+                            className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${
+                              instantApproval ? "translate-x-5" : "translate-x-1"
+                            }`}
+                          />
+                        </button>
+                      </div>
+                      <p className="text-[11px] text-neutral-500">
+                        {instantApproval
+                          ? "✓ Passes generate immediately upon form submission."
+                          : "Require organizer review before attendee pass is issued."}
+                      </p>
+                    </div>
+                    <ul className="space-y-2 text-xs text-neutral-300 font-medium pt-1">
                       <li className="flex items-center gap-2">
                         <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                        Custom fields: Employee ID, Department, Meal preference
+                        Zero ads or competitor links on your registration page
                       </li>
                       <li className="flex items-center gap-2">
                         <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                        Instant approval or manual host verification mode
+                        Custom fields pass through to scanner &amp; badge prints
                       </li>
                       <li className="flex items-center gap-2">
                         <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                        Clean, professional interface with zero competitor ads
+                        Capacity cap enforced with atomic transaction locks
                       </li>
                     </ul>
                   </div>
@@ -800,67 +823,57 @@ export default function SeoGeoLandingTemplate({ config }: SeoGeoLandingTemplateP
                         <span className="w-3 h-3 rounded-full bg-red-400" />
                         <span className="w-3 h-3 rounded-full bg-amber-400" />
                         <span className="w-3 h-3 rounded-full bg-emerald-400" />
-                        <span className="text-xs font-mono text-neutral-500 ml-2">urpass.space/e/acme-summit-2026</span>
+                        <span className="text-xs font-mono text-neutral-500 ml-2">urpass.space/e/{config.slug}</span>
                       </div>
                       <span className="text-[10px] uppercase font-bold text-violet-700 bg-violet-50 px-2.5 py-1 rounded-md border border-violet-100">
-                        LIVE FORM
+                        INTERACTIVE PREVIEW
                       </span>
                     </div>
 
                     <div className="space-y-4">
                       <div>
                         <h4 className="text-lg font-bold text-neutral-900">
-                          Annual Tech Leadership Summit 2026
+                          {funnelIntent.suggestedEventName}
                         </h4>
                         <p className="text-xs text-neutral-500 mt-0.5">
-                          Acme Global • Grand Ballroom • Nov 14, 2026
+                          {funnelIntent.badgeSummary}
                         </p>
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                        <div>
-                          <label className="text-xs font-semibold text-neutral-700 block mb-1">Full Name</label>
-                          <div className="rounded-lg bg-neutral-50 border border-neutral-200 px-3 py-2 text-xs text-neutral-900">
-                            Vikram Sengupta
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                        {(funnelIntent.sampleFormFields || []).map((field, idx) => (
+                          <div key={idx}>
+                            <label className="text-xs font-semibold text-neutral-700 block mb-1">
+                              {field.label}
+                            </label>
+                            <input
+                              type="text"
+                              value={simFormValues[field.label] ?? field.value}
+                              onChange={(e) =>
+                                setSimFormValues({ ...simFormValues, [field.label]: e.target.value })
+                              }
+                              placeholder={field.placeholder}
+                              className="w-full rounded-lg bg-neutral-50 border border-neutral-200 px-3 py-2 text-xs text-neutral-900 focus:outline-none focus:border-violet-600 focus:bg-white transition-all"
+                            />
                           </div>
-                        </div>
-                        <div>
-                          <label className="text-xs font-semibold text-neutral-700 block mb-1">Corporate Email</label>
-                          <div className="rounded-lg bg-neutral-50 border border-neutral-200 px-3 py-2 text-xs text-neutral-900">
-                            v.sengupta@acme-corp.com
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div>
-                          <label className="text-xs font-semibold text-neutral-700 block mb-1">Department / Business Unit</label>
-                          <div className="rounded-lg bg-neutral-50 border border-neutral-200 px-3 py-2 text-xs text-neutral-900">
-                            Enterprise Engineering
-                          </div>
-                        </div>
-                        <div>
-                          <label className="text-xs font-semibold text-neutral-700 block mb-1">Pass Category</label>
-                          <div className="rounded-lg bg-violet-50/70 border border-violet-200 px-3 py-2 text-xs text-violet-900 font-semibold">
-                            Delegate • Full Access
-                          </div>
-                        </div>
+                        ))}
                       </div>
 
                       <div className="pt-2">
-                        <button
-                          type="button"
-                          className="w-full py-2.5 rounded-lg bg-violet-700 text-white font-bold text-xs uppercase tracking-wider text-center"
+                        <Link
+                          href={signupUrl}
+                          onClick={handlePrimaryCtaClick}
+                          className="w-full block py-3 rounded-xl bg-violet-700 hover:bg-violet-600 text-white font-bold text-xs uppercase tracking-wider text-center transition-all shadow-sm"
                         >
-                          Complete Registration & Receive QR Pass →
-                        </button>
+                          {primaryCtaLabel} →
+                        </Link>
                       </div>
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* Tab 2: Digital QR Pass */}
+              {/* Tab 2: Digital QR Pass & Badge Designer */}
               {activeProofTab === "pass" && (
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
                   <div className="lg:col-span-6 space-y-4">
@@ -868,55 +881,128 @@ export default function SeoGeoLandingTemplate({ config }: SeoGeoLandingTemplateP
                       ATTENDEE CREDENTIAL
                     </span>
                     <h3 className="text-2xl font-bold text-white">
-                      Digital QR Event Pass
+                      Digital Pass &amp; Badge Simulator
                     </h3>
                     <p className="text-sm text-neutral-400 leading-relaxed">
-                      Attendees receive instantaneous pass delivery directly via email and WhatsApp. No app installation required. Compatible with Apple Wallet, Google Wallet, and smartphone screenshot galleries.
+                      Instant delivery via Email, WhatsApp, and Apple / Google Wallet. Anti-counterfeit holographic foil blocks screenshots and fraudulent duplications.
                     </p>
-                    <div className="flex flex-wrap gap-2 pt-2">
-                      <span className="px-3 py-1 rounded-full bg-neutral-800 text-[11px] font-mono text-neutral-300 border border-neutral-700">
-                        Cryptographic Hash QR
+
+                    {/* Theme Controls */}
+                    <div className="p-4 rounded-xl bg-neutral-950 border border-neutral-800 space-y-3">
+                      <span className="text-xs font-bold uppercase tracking-wider text-neutral-400 block">
+                        Select Ticket Design Theme:
                       </span>
-                      <span className="px-3 py-1 rounded-full bg-neutral-800 text-[11px] font-mono text-neutral-300 border border-neutral-700">
-                        Dynamic Timestamp
-                      </span>
-                      <span className="px-3 py-1 rounded-full bg-neutral-800 text-[11px] font-mono text-neutral-300 border border-neutral-700">
-                        Zone Access Tagging
-                      </span>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setPassTheme("corporate")}
+                          className={`px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
+                            passTheme === "corporate"
+                              ? "bg-violet-600 text-white"
+                              : "bg-neutral-800 text-neutral-400 hover:text-white"
+                          }`}
+                        >
+                          Corporate
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setPassTheme("luxe")}
+                          className={`px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
+                            passTheme === "luxe"
+                              ? "bg-amber-600 text-white"
+                              : "bg-neutral-800 text-neutral-400 hover:text-white"
+                          }`}
+                        >
+                          Luxe Gold
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setPassTheme("neon")}
+                          className={`px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
+                            passTheme === "neon"
+                              ? "bg-purple-600 text-white"
+                              : "bg-neutral-800 text-neutral-400 hover:text-white"
+                          }`}
+                        >
+                          Neon Glow
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setPassTheme("minimal")}
+                          className={`px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
+                            passTheme === "minimal"
+                              ? "bg-neutral-200 text-neutral-900"
+                              : "bg-neutral-800 text-neutral-400 hover:text-white"
+                          }`}
+                        >
+                          Clean Slate
+                        </button>
+                      </div>
+
+                      <div className="flex items-center justify-between pt-2 border-t border-neutral-800">
+                        <span className="text-xs text-neutral-300">Dynamic Holographic Shimmer</span>
+                        <button
+                          type="button"
+                          onClick={() => setHoloShimmer(!holoShimmer)}
+                          className={`relative inline-flex h-5 w-10 items-center rounded-full transition-colors ${
+                            holoShimmer ? "bg-emerald-600" : "bg-neutral-700"
+                          }`}
+                        >
+                          <span
+                            className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${
+                              holoShimmer ? "translate-x-5" : "translate-x-1"
+                            }`}
+                          />
+                        </button>
+                      </div>
                     </div>
                   </div>
 
                   {/* Mobile Pass Mockup */}
                   <div className="lg:col-span-6 flex justify-center">
-                    <div className="w-full max-w-xs bg-white text-neutral-900 rounded-2xl p-5 border-2 border-neutral-800 shadow-2xl">
-                      <div className="flex items-center justify-between border-b border-neutral-100 pb-3 mb-4">
+                    <div
+                      className={`w-full max-w-xs rounded-2xl p-5 border-2 shadow-2xl transition-all relative overflow-hidden ${
+                        passTheme === "corporate"
+                          ? "bg-gradient-to-b from-slate-900 to-indigo-950 text-white border-indigo-500/40"
+                          : passTheme === "luxe"
+                          ? "bg-gradient-to-b from-neutral-950 via-zinc-900 to-neutral-900 text-amber-200 border-amber-500/40"
+                          : passTheme === "neon"
+                          ? "bg-gradient-to-b from-neutral-950 via-purple-950 to-neutral-900 text-purple-200 border-purple-500/50 shadow-purple-900/30"
+                          : "bg-white text-neutral-900 border-neutral-300"
+                      }`}
+                    >
+                      {holoShimmer && (
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full animate-[shimmer_2.5s_infinite] pointer-events-none" />
+                      )}
+
+                      <div className="flex items-center justify-between border-b pb-3 mb-4 border-current/20">
                         <div>
-                          <span className="text-[10px] uppercase font-bold text-violet-700 tracking-wider">
-                            CORPORATE ENTRY PASS
+                          <span className="text-[10px] uppercase font-bold tracking-wider opacity-80 block">
+                            {funnelIntent.sampleTicket.ticketTier}
                           </span>
-                          <h4 className="text-sm font-bold text-neutral-900">Acme Leadership 2026</h4>
+                          <h4 className="text-sm font-bold truncate max-w-[170px]">
+                            {funnelIntent.sampleTicket.eventName}
+                          </h4>
                         </div>
-                        <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 font-bold text-[10px]">
-                          CONFIRMED
+                        <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold text-[10px] border border-emerald-500/30">
+                          VERIFIED
                         </span>
                       </div>
 
                       {/* Mock QR Canvas */}
-                      <div className="bg-neutral-50 p-4 rounded-xl border border-neutral-200 flex flex-col items-center justify-center my-2">
-                        <div className="w-36 h-36 bg-white p-2 rounded-lg border border-neutral-200 flex items-center justify-center shadow-inner">
-                          <QrCode className="w-32 h-32 text-neutral-900" />
-                        </div>
-                        <span className="text-[10px] font-mono text-neutral-400 mt-2">
-                          URPASS-TOKEN-7882-9901
+                      <div className="bg-white p-4 rounded-xl flex flex-col items-center justify-center my-2 shadow-inner">
+                        <QrCode className="w-32 h-32 text-neutral-950" />
+                        <span className="text-[10px] font-mono text-neutral-500 mt-2">
+                          {funnelIntent.sampleTicket.token}
                         </span>
                       </div>
 
-                      <div className="space-y-1.5 pt-2 text-center">
-                        <p className="text-sm font-bold text-neutral-900">Vikram Sengupta</p>
-                        <p className="text-xs text-neutral-500">VP of Engineering • Acme Global</p>
+                      <div className="space-y-1 pt-2 text-center">
+                        <p className="text-sm font-bold">{funnelIntent.sampleTicket.attendeeName}</p>
+                        <p className="text-xs opacity-75">{funnelIntent.sampleTicket.organization}</p>
                         <div className="pt-2">
-                          <span className="inline-block px-3 py-1 rounded-md bg-neutral-900 text-white font-mono text-[10px]">
-                            ZONE: AUDITORIUM + VIP LOUNGE
+                          <span className="inline-block px-3 py-1 rounded-md bg-black/40 text-current font-mono text-[10px] border border-current/20">
+                            {funnelIntent.sampleTicket.zone}
                           </span>
                         </div>
                       </div>
@@ -930,14 +1016,49 @@ export default function SeoGeoLandingTemplate({ config }: SeoGeoLandingTemplateP
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
                   <div className="lg:col-span-5 space-y-4">
                     <span className="text-xs font-mono text-emerald-400 font-bold uppercase tracking-wider">
-                      SUB-0.3s VALIDATION SPEED
+                      SUB-0.28s CAMERA VERIFICATION
                     </span>
                     <h3 className="text-2xl font-bold text-white">
-                      Instant Gate QR Scanning
+                      Instant Gate Check-In Simulator
                     </h3>
                     <p className="text-sm text-neutral-400 leading-relaxed">
-                      Turn any smartphone or iPad into a high-speed verification scanner. Volunteer or security gate staff open a pin-protected link in Chrome or Safari.
+                      Experience the gate staff scanning flow. Click below to test sub-second check-in or test the atomic anti-passback duplicate ticket blocker.
                     </p>
+
+                    {/* Simulator Action Buttons */}
+                    <div className="space-y-2 pt-1">
+                      <button
+                        type="button"
+                        onClick={handleSimulateScan}
+                        disabled={scanSimState === "scanning"}
+                        className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-emerald-600/20"
+                      >
+                        <ScanLine className="w-4 h-4" />
+                        <span>Simulate Camera Scan (0.28s)</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={handleSimulateDuplicate}
+                        disabled={scanSimState === "scanning"}
+                        className="w-full py-2.5 px-4 rounded-xl bg-neutral-800 hover:bg-red-950/60 border border-neutral-700 hover:border-red-500 text-neutral-200 hover:text-red-300 font-bold text-xs tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer"
+                      >
+                        <ShieldAlert className="w-4 h-4 text-red-400" />
+                        <span>Test Duplicate Pass Prevention</span>
+                      </button>
+
+                      {scanSimState !== "idle" && (
+                        <button
+                          type="button"
+                          onClick={handleResetScanner}
+                          className="w-full py-1.5 text-xs text-neutral-400 hover:text-white transition-colors flex items-center justify-center gap-1 cursor-pointer"
+                        >
+                          <RefreshCw className="w-3 h-3" />
+                          <span>Reset Scanner</span>
+                        </button>
+                      )}
+                    </div>
+
                     <div className="p-3.5 rounded-xl bg-neutral-950 border border-neutral-800 space-y-2 text-xs">
                       <div className="flex items-center justify-between text-neutral-300">
                         <span>Duplicate Prevention:</span>
@@ -945,11 +1066,11 @@ export default function SeoGeoLandingTemplate({ config }: SeoGeoLandingTemplateP
                       </div>
                       <div className="flex items-center justify-between text-neutral-300">
                         <span>Scan Latency:</span>
-                        <span className="text-emerald-400 font-bold">&lt; 0.3 seconds</span>
+                        <span className="text-emerald-400 font-bold">&lt; 0.28 seconds</span>
                       </div>
                       <div className="flex items-center justify-between text-neutral-300">
-                        <span>Hardware Required:</span>
-                        <span className="text-neutral-400 font-bold">Standard Phone Camera</span>
+                        <span>Offline Resilience:</span>
+                        <span className="text-emerald-400 font-bold">IndexedDB Cache Active</span>
                       </div>
                     </div>
                   </div>
@@ -958,7 +1079,11 @@ export default function SeoGeoLandingTemplate({ config }: SeoGeoLandingTemplateP
                   <div className="lg:col-span-7 bg-black text-white rounded-2xl p-6 border border-neutral-800 relative overflow-hidden">
                     <div className="flex items-center justify-between mb-4 border-b border-neutral-800 pb-3">
                       <div className="flex items-center gap-2">
-                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
+                        <span
+                          className={`w-2.5 h-2.5 rounded-full ${
+                            scanSimState === "duplicate" ? "bg-red-400" : "bg-emerald-400"
+                          } animate-ping`}
+                        />
                         <span className="text-xs font-mono text-emerald-400 uppercase tracking-widest font-bold">
                           GATE SCANNER ACTIVE
                         </span>
@@ -967,26 +1092,73 @@ export default function SeoGeoLandingTemplate({ config }: SeoGeoLandingTemplateP
                     </div>
 
                     {/* Viewport simulation */}
-                    <div className="h-56 rounded-xl border-2 border-emerald-500/80 bg-neutral-950/80 flex flex-col items-center justify-center relative p-4">
-                      <div className="absolute inset-0 bg-emerald-500/5 pointer-events-none" />
-                      <div className="w-36 h-36 border-2 border-dashed border-emerald-400 rounded-lg flex items-center justify-center mb-3">
-                        <ScanLine className="w-16 h-16 text-emerald-400 animate-pulse" />
+                    <div
+                      className={`h-60 rounded-xl border-2 flex flex-col items-center justify-center relative p-4 transition-all ${
+                        scanSimState === "success"
+                          ? "border-emerald-500 bg-emerald-950/30"
+                          : scanSimState === "duplicate"
+                          ? "border-red-500 bg-red-950/40"
+                          : "border-neutral-700 bg-neutral-950/80"
+                      }`}
+                    >
+                      {scanSimState === "scanning" && (
+                        <div className="absolute inset-x-0 h-1 bg-gradient-to-r from-transparent via-cyan-400 to-transparent animate-[pulse_0.28s_infinite] shadow-lg shadow-cyan-400/50" />
+                      )}
+
+                      <div
+                        className={`w-36 h-36 border-2 border-dashed rounded-lg flex items-center justify-center mb-3 transition-colors ${
+                          scanSimState === "success"
+                            ? "border-emerald-400"
+                            : scanSimState === "duplicate"
+                            ? "border-red-400"
+                            : "border-neutral-600"
+                        }`}
+                      >
+                        {scanSimState === "success" ? (
+                          <Check className="w-16 h-16 text-emerald-400 animate-scale-in" />
+                        ) : scanSimState === "duplicate" ? (
+                          <ShieldAlert className="w-16 h-16 text-red-400 animate-bounce" />
+                        ) : (
+                          <ScanLine className="w-16 h-16 text-neutral-400 animate-pulse" />
+                        )}
                       </div>
-                      <div className="px-4 py-1.5 rounded-full bg-emerald-500/20 border border-emerald-500 text-emerald-300 font-bold text-xs flex items-center gap-1.5">
-                        <Check className="w-4 h-4 text-emerald-400" />
-                        <span>VERIFIED: Vikram Sengupta (Checked In)</span>
-                      </div>
+
+                      {scanSimState === "success" && (
+                        <div className="px-4 py-1.5 rounded-full bg-emerald-500/20 border border-emerald-500 text-emerald-300 font-bold text-xs flex items-center gap-1.5 text-center">
+                          <Check className="w-4 h-4 text-emerald-400" />
+                          <span>VERIFIED: {funnelIntent.sampleTicket.attendeeName} (Checked In)</span>
+                        </div>
+                      )}
+
+                      {scanSimState === "duplicate" && (
+                        <div className="px-4 py-1.5 rounded-full bg-red-500/20 border border-red-500 text-red-300 font-bold text-xs flex items-center gap-1.5 text-center">
+                          <ShieldAlert className="w-4 h-4 text-red-400" />
+                          <span>DUPLICATE BLOCKED: Pass already used 4m ago at Gate 01</span>
+                        </div>
+                      )}
+
+                      {scanSimState === "idle" && (
+                        <span className="text-xs text-neutral-400 font-mono">
+                          Ready for attendee QR code
+                        </span>
+                      )}
+
+                      {scanSimState === "scanning" && (
+                        <span className="text-xs text-cyan-400 font-mono animate-pulse">
+                          Verifying cryptographic signature…
+                        </span>
+                      )}
                     </div>
 
                     <div className="mt-4 flex items-center justify-between text-xs text-neutral-400">
-                      <span>Total Scans: 412 / 500</span>
-                      <span className="text-emerald-400 font-medium">Sub-second audio chime active</span>
+                      <span>Total Scans: {scanCount} / 500</span>
+                      <span className="text-emerald-400 font-medium">Sub-0.28s audio chime active</span>
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* Tab 4: Live Analytics Dashboard */}
+              {/* Tab 4: Live Attendance Dashboard */}
               {activeProofTab === "analytics" && (
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
                   <div className="lg:col-span-5 space-y-4">
@@ -999,7 +1171,7 @@ export default function SeoGeoLandingTemplate({ config }: SeoGeoLandingTemplateP
                     <p className="text-sm text-neutral-400 leading-relaxed">
                       Monitor exact arrival pacing, track checked-in vs registered headcounts, and export comprehensive CSV logs with verified entry timestamps for post-event audit.
                     </p>
-                    <ul className="space-y-2 text-xs text-neutral-300 font-medium pt-2">
+                    <ul className="space-y-2 text-xs text-neutral-300 font-medium pt-1">
                       <li className="flex items-center gap-2">
                         <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
                         Headcount by category, department, or session
@@ -1013,13 +1185,39 @@ export default function SeoGeoLandingTemplate({ config }: SeoGeoLandingTemplateP
                         One-click CSV / Excel attendance log download
                       </li>
                     </ul>
+
+                    <div className="pt-2">
+                      <button
+                        type="button"
+                        onClick={handleSimulateExport}
+                        disabled={simulatingExport}
+                        className="py-2.5 px-4 rounded-xl bg-neutral-800 hover:bg-neutral-700 border border-neutral-700 text-neutral-200 text-xs font-semibold flex items-center gap-2 cursor-pointer transition-colors"
+                      >
+                        {simulatingExport ? (
+                          <>
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            <span>Exporting Verified Audit Log…</span>
+                          </>
+                        ) : exportComplete ? (
+                          <>
+                            <Check className="w-3.5 h-3.5 text-emerald-400" />
+                            <span className="text-emerald-300">✓ attendance-audit-log.csv exported</span>
+                          </>
+                        ) : (
+                          <>
+                            <Download className="w-3.5 h-3.5" />
+                            <span>Simulate Audit CSV Log Export</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
                   </div>
 
                   {/* Dashboard Preview */}
                   <div className="lg:col-span-7 bg-neutral-900 border border-neutral-800 rounded-2xl p-6 text-white">
                     <div className="flex items-center justify-between border-b border-neutral-800 pb-3 mb-5">
                       <span className="text-xs font-mono text-violet-400 font-bold">ORGANIZER CONSOLE</span>
-                      <span className="text-[11px] text-neutral-400">Live Syncing</span>
+                      <span className="text-[11px] text-neutral-400">Live Pacing Active</span>
                     </div>
 
                     <div className="grid grid-cols-3 gap-3 mb-5">
@@ -1029,27 +1227,63 @@ export default function SeoGeoLandingTemplate({ config }: SeoGeoLandingTemplateP
                       </div>
                       <div className="bg-neutral-950 p-3.5 rounded-xl border border-neutral-800">
                         <span className="text-[10px] text-emerald-400 uppercase font-bold block">CHECKED IN</span>
-                        <span className="text-2xl font-extrabold text-emerald-400">412</span>
+                        <span className="text-2xl font-extrabold text-emerald-400">{scanCount}</span>
                       </div>
                       <div className="bg-neutral-950 p-3.5 rounded-xl border border-neutral-800">
                         <span className="text-[10px] text-amber-400 uppercase font-bold block">REMAINING</span>
-                        <span className="text-2xl font-extrabold text-amber-400">88</span>
+                        <span className="text-2xl font-extrabold text-amber-400">{Math.max(0, 500 - scanCount)}</span>
                       </div>
                     </div>
 
                     <div className="bg-neutral-950 p-4 rounded-xl border border-neutral-800">
                       <div className="flex items-center justify-between text-xs mb-2">
                         <span className="text-neutral-400 font-medium">Arrival Velocity Pacing</span>
-                        <span className="text-emerald-400 font-mono">82.4% Admitted</span>
+                        <span className="text-emerald-400 font-mono">
+                          {((scanCount / 500) * 100).toFixed(1)}% Admitted
+                        </span>
                       </div>
                       <div className="w-full bg-neutral-800 h-2.5 rounded-full overflow-hidden">
-                        <div className="bg-gradient-to-r from-violet-500 to-emerald-400 h-full w-[82.4%]" />
+                        <div
+                          className="bg-gradient-to-r from-violet-500 to-emerald-400 h-full transition-all duration-300"
+                          style={{ width: `${Math.min(100, (scanCount / 500) * 100)}%` }}
+                        />
                       </div>
                     </div>
                   </div>
                 </div>
               )}
+
+              {/* Bottom Simulator Conversion Bar */}
+              <div className="mt-8 pt-6 border-t border-neutral-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div>
+                  <p className="text-xs sm:text-sm font-semibold text-white">
+                    Preconfigured for: <span className="text-violet-400">{funnelIntent.suggestedEventName}</span>
+                  </p>
+                  <p className="text-xs text-neutral-400">
+                    Carries your event name, ticket template and scanner configuration directly into onboarding.
+                  </p>
+                </div>
+                <Link
+                  href={signupUrl}
+                  onClick={handlePrimaryCtaClick}
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-bold text-xs sm:text-sm shadow-lg shadow-violet-600/30 transition-all shrink-0 active:scale-[0.98]"
+                >
+                  <span>{primaryCtaLabel}</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
             </div>
+          </div>
+        </section>
+
+        {/* 5.5 INTERACTIVE ACQUISITION CALCULATOR */}
+        <section className="py-16 bg-neutral-900 border-b border-neutral-800">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <InteractiveConversionCalculator
+              ctaUrl={signupUrl}
+              ctaText={primaryCtaLabel}
+              className="border-neutral-800 bg-neutral-950 text-white"
+            />
           </div>
         </section>
 

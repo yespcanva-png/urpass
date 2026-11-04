@@ -6,6 +6,8 @@ export const SELF_SERVICE_PLAN_LIMITS = {
   business: { eventsPerMonth: 999_999, registrationsPerMonth: 15_000, organizerSeats: 15, customFields: 999_999 },
 } as const;
 
+export const PLAN_LIMITS = SELF_SERVICE_PLAN_LIMITS;
+
 export const UNLIMITED_PLAN_LIMIT = 999_999;
 
 export function formatPlanLimit(value: number): string {
