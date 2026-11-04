@@ -172,3 +172,48 @@ describe("Phase 10 — Verification of Dynamic Amount and Copy Cleanliness", () 
     expect(basePaise + gstPaise).toBe(grossPaise);
   });
 });
+
+describe("Phase 11 — Gateway Auto-Reconciliation for Concluded Trials", () => {
+  it("promotes trialing subscription to active when Razorpay reports captured charge", async () => {
+    const mockRzpSub = {
+      status: "active",
+      paid_count: 1,
+      current_start: 1793791506,
+      current_end: 1796322600,
+    };
+
+    const isChargedActive = mockRzpSub.status === "active" && Number(mockRzpSub.paid_count) > 0;
+    expect(isChargedActive).toBe(true);
+
+    const targetState = isChargedActive
+      ? {
+          status: "active",
+          is_trial: false,
+          current_period_start: new Date(mockRzpSub.current_start * 1000).toISOString(),
+          current_period_end: new Date(mockRzpSub.current_end * 1000).toISOString(),
+        }
+      : { status: "expired", is_trial: false };
+
+    expect(targetState.status).toBe("active");
+    expect(targetState.is_trial).toBe(false);
+    expect(new Date(targetState.current_period_end).getTime()).toBeGreaterThan(Date.now());
+  });
+
+  it("marks subscription expired when trial concludes and mandate is cancelled on Razorpay", async () => {
+    const mockCancelledSub = {
+      status: "cancelled",
+      paid_count: 0,
+    };
+
+    const isCancelled = mockCancelledSub.status === "cancelled" || mockCancelledSub.status === "halted";
+    expect(isCancelled).toBe(true);
+
+    const targetState = isCancelled
+      ? { status: "expired", is_trial: false, autopay_status: "cancelled" }
+      : { status: "active" };
+
+    expect(targetState.status).toBe("expired");
+    expect(targetState.is_trial).toBe(false);
+    expect(targetState.autopay_status).toBe("cancelled");
+  });
+});

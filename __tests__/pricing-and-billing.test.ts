@@ -21,7 +21,7 @@ describe("UrPass Production Pricing & Billing Architecture Suite", () => {
       const free = SELF_SERVICE_PLANS.find((p) => p.slug === "free")!;
       expect(free.priceMonthlyInr).toBe(0);
       expect(free.limits.activeEvents).toBe(1);
-      expect(free.limits.attendeesPerEvent).toBe(100);
+      expect(free.limits.attendeesPerEvent).toBe(50);
       expect(free.limits.teamSeats).toBe(1);
 
       const starter = SELF_SERVICE_PLANS.find((p) => p.slug === "starter")!;

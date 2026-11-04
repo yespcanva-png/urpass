@@ -129,6 +129,32 @@ export async function runBillingReconciliation(): Promise<ReconciliationReport> 
       } else {
         activeCount++;
       }
+    } else if ((status === "trialing" || sub.is_trial) && isPastPeriodEnd) {
+      expiredCount++;
+      const nativeId = sub.provider_subscription_id?.startsWith("sub_")
+        ? sub.provider_subscription_id
+        : sub.autopay_mandate_id?.startsWith("sub_")
+        ? sub.autopay_mandate_id
+        : null;
+
+      if (nativeId && razorpay) {
+        try {
+          const rzpSub = await (razorpay.subscriptions as any).fetch(nativeId);
+          if (rzpSub?.status === "active" && Number(rzpSub?.paid_count) > 0) {
+            discrepancies.push({
+              userId: sub.user_id,
+              subscriptionId: sub.id,
+              category: "PROVIDER_DISCREPANCY",
+              severity: "CRITICAL",
+              description: `User trial concluded but Razorpay subscription ${nativeId} is ACTIVE with ${rzpSub.paid_count} successful payment(s). Supabase is desynced.`,
+              recommendedAction: "Execute reconcileSubscriptionWithRazorpay to sync active status and generate GST invoice.",
+              details: { providerId: nativeId, razorpayStatus: rzpSub?.status, paidCount: rzpSub?.paid_count },
+            });
+          }
+        } catch (fetchErr: any) {
+          console.warn("[reconciliation] Could not fetch Razorpay trial sub:", nativeId, fetchErr?.message);
+        }
+      }
     }
 
     if (isCancelledAtEnd || sub.cancellation_state === "cancellation_scheduled") {
@@ -199,4 +225,150 @@ export async function runBillingReconciliation(): Promise<ReconciliationReport> 
     discrepanciesCount: discrepancies.length,
     discrepancies,
   };
+}
+
+/**
+ * Automatically reconciles a subscription with its live Razorpay gateway state.
+ * If the subscription on Razorpay is active and has captured payment(s), updates the Supabase record
+ * and creates any missing official tax invoice.
+ */
+export async function reconcileSubscriptionWithRazorpay(subscriptionIdOrUserId: string): Promise<{
+  success: boolean;
+  actionTaken: string;
+  subscription?: any;
+}> {
+  const admin = adminClient();
+  const razorpay = isRazorpayConfigured() ? getRazorpayClient() : null;
+  if (!razorpay) {
+    return { success: false, actionTaken: "Razorpay client not configured" };
+  }
+
+  // Find subscription by primary key or user_id
+  const { data: sub, error } = await admin
+    .from("subscriptions")
+    .select("*, plans!subscriptions_plan_id_fkey(id, name, slug)")
+    .or(`id.eq.${subscriptionIdOrUserId},user_id.eq.${subscriptionIdOrUserId}`)
+    .maybeSingle();
+
+  if (error || !sub) {
+    return { success: false, actionTaken: `Subscription not found for identifier: ${subscriptionIdOrUserId}` };
+  }
+
+  const nativeId = sub.provider_subscription_id?.startsWith("sub_")
+    ? sub.provider_subscription_id
+    : sub.autopay_mandate_id?.startsWith("sub_")
+    ? sub.autopay_mandate_id
+    : null;
+
+  if (!nativeId) {
+    return { success: false, actionTaken: "No native Razorpay subscription identifier (sub_*) found" };
+  }
+
+  try {
+    const rzpSub = await (razorpay.subscriptions as any).fetch(nativeId);
+    if (!rzpSub) {
+      return { success: false, actionTaken: `Failed to fetch subscription ${nativeId} from Razorpay` };
+    }
+
+    if (rzpSub.status === "active" && Number(rzpSub.paid_count) > 0) {
+      const currentStart = rzpSub.current_start
+        ? new Date(rzpSub.current_start * 1000).toISOString()
+        : new Date().toISOString();
+      const currentEnd = rzpSub.current_end
+        ? new Date(rzpSub.current_end * 1000).toISOString()
+        : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+
+      const updateData: Record<string, any> = {
+        status: "active",
+        is_trial: false,
+        autopay_status: "active",
+        cancellation_state: "none",
+        cancellation_error: null,
+        current_period_start: currentStart,
+        current_period_end: currentEnd,
+        next_billing_date: currentEnd,
+        updated_at: new Date().toISOString(),
+        last_reconciled_at: new Date().toISOString(),
+      };
+
+      if (sub.current_period_start !== currentStart) {
+        updateData.registrations_used = 0;
+      }
+
+      const { data: updatedSub, error: updateErr } = await admin
+        .from("subscriptions")
+        .update(updateData)
+        .eq("id", sub.id)
+        .select("*")
+        .single();
+
+      if (updateErr) throw updateErr;
+
+      // Check invoices
+      const invoices = await (razorpay.invoices as any).all({ subscription_id: nativeId });
+      const latestPaidInvoice = invoices?.items?.find((inv: any) => inv.status === "paid" && inv.payment_id);
+
+      if (latestPaidInvoice?.payment_id) {
+        const { data: existingInv } = await admin
+          .from("invoices")
+          .select("id")
+          .eq("payment_id", latestPaidInvoice.payment_id)
+          .maybeSingle();
+
+        if (!existingInv) {
+          try {
+            const { createInvoiceForPayment } = await import("@/lib/invoices");
+            const planData = sub.plans as any;
+            const planSlug = (Array.isArray(planData) ? planData[0]?.slug : planData?.slug) || "pro";
+            const basePaise = latestPaidInvoice.amount ? Math.round(latestPaidInvoice.amount / 1.18) : 0;
+            await createInvoiceForPayment({
+              userId: sub.user_id,
+              subscriptionId: sub.id,
+              paymentId: latestPaidInvoice.payment_id,
+              description: `${planSlug.toUpperCase()} Plan (Renewal)`,
+              baseAmountRupees: basePaise / 100,
+              discountRupees: 0,
+              currency: (latestPaidInvoice.currency || "INR").toUpperCase() as "INR" | "GBP",
+              docType: "SUB",
+              customerEmail: latestPaidInvoice.customer_details?.email || undefined,
+              customerName: latestPaidInvoice.customer_details?.name || undefined,
+              billingPeriodStart: currentStart,
+              billingPeriodEnd: currentEnd,
+            });
+          } catch (invErr) {
+            console.error("[reconcileSubscriptionWithRazorpay] Invoice generation error:", invErr);
+          }
+        }
+      }
+
+      return {
+        success: true,
+        actionTaken: `Subscription promoted to active (period: ${currentStart} to ${currentEnd})`,
+        subscription: updatedSub,
+      };
+    } else if (rzpSub.status === "cancelled" || rzpSub.status === "halted") {
+      await admin
+        .from("subscriptions")
+        .update({
+          status: "expired",
+          is_trial: false,
+          autopay_status: "cancelled",
+          updated_at: new Date().toISOString(),
+          last_reconciled_at: new Date().toISOString(),
+        })
+        .eq("id", sub.id);
+
+      return {
+        success: true,
+        actionTaken: `Subscription transitioned to expired; Razorpay status is ${rzpSub.status}`,
+      };
+    }
+
+    return {
+      success: true,
+      actionTaken: `No sync required. Razorpay status: ${rzpSub.status}, paid_count: ${rzpSub.paid_count}`,
+    };
+  } catch (err: any) {
+    return { success: false, actionTaken: `Razorpay fetch/sync failed: ${err?.message}` };
+  }
 }

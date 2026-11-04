@@ -109,7 +109,7 @@ export async function GET(req: NextRequest) {
   let trialRemindersSent = 0;
   const { data: trialSubs } = await supabase
     .from("subscriptions")
-    .select("id, user_id, trial_plan, trial_ends_at, is_trial, status, reminded_7_days, reminded_3_days, reminded_1_day, autopay_status, cancel_at_period_end, plan:plans!subscriptions_plan_id_fkey(name, slug)")
+    .select("id, user_id, trial_plan, trial_ends_at, is_trial, status, reminded_7_days, reminded_3_days, reminded_1_day, autopay_status, cancel_at_period_end, provider_subscription_id, autopay_mandate_id, plan:plans!subscriptions_plan_id_fkey(name, slug)")
     .eq("is_trial", true)
     .in("status", ["trialing", "active"])
     .not("trial_ends_at", "is", null);
@@ -120,13 +120,20 @@ export async function GET(req: NextRequest) {
     const msRemaining = endsAt.getTime() - now.getTime();
     const daysRemaining = Math.ceil(msRemaining / (1000 * 60 * 60 * 24));
 
-    // If trial has expired and user cancelled AutoPay, mark expired
+    // If trial has concluded, verify mandate payment or transition
     if (msRemaining <= 0) {
       if (sub.cancel_at_period_end || sub.autopay_status === "cancelled") {
         await supabase
           .from("subscriptions")
           .update({ status: "expired", is_trial: false })
           .eq("id", sub.id);
+      } else {
+        try {
+          const { reconcileSubscriptionWithRazorpay } = await import("@/lib/billing/reconciliation");
+          await reconcileSubscriptionWithRazorpay(sub.id);
+        } catch (reconcileErr) {
+          console.error(`[cron/trial-reconciliation] Failed reconciling sub ${sub.id}:`, reconcileErr);
+        }
       }
       continue;
     }
