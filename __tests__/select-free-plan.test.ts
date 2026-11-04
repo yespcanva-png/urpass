@@ -19,7 +19,38 @@ describe("selectFreePlan", () => {
     if (table === "plans") {
       return { select: () => ({ eq: () => ({ maybeSingle }) }) };
     }
-    if (table === "subscriptions") return { upsert };
+    if (table === "subscriptions") {
+      return {
+        upsert,
+        select: () => ({
+          eq: () => ({
+            maybeSingle: () => Promise.resolve({ data: null, error: null }),
+          }),
+        }),
+      };
+    }
+    if (table === "subscription_checkout_intents") {
+      return {
+        select: () => ({
+          eq: () => ({
+            eq: () => ({
+              limit: () => ({
+                maybeSingle: () => Promise.resolve({ data: null }),
+              }),
+            }),
+          }),
+        }),
+      };
+    }
+    if (table === "events") {
+      const chain: any = {};
+      chain.eq = () => chain;
+      chain.limit = () => chain;
+      chain.maybeSingle = () => Promise.resolve({ data: null, error: null });
+      return {
+        select: () => chain,
+      };
+    }
     throw new Error(`Unexpected table: ${table}`);
   });
 

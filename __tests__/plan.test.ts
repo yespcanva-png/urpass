@@ -37,7 +37,7 @@ describe("getUserPlan", () => {
     expect(plan.canUse("custom_pass_design")).toBe(true);
     expect(plan.canUse("remove_branding")).toBe(true);
     expect(plan.canUse("advanced_analytics")).toBe(true);
-    expect(plan.canUse("api_access")).toBe(false);
+    expect(plan.canUse("api_access")).toBe(true);
   });
 
   it("resolves Starter from plan_id when the relationship lookup fails", async () => {

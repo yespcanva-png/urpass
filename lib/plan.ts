@@ -199,6 +199,7 @@ const PLAN_CONFIGS: Record<PlanSlug, PlanConfig> = {
       "custom_pass_design", "remove_branding",
       "team_permissions_basic",
       "advanced_analytics",
+      "api_access", "webhooks",
       "priority_support", "paid_events",
     ),
   },

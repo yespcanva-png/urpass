@@ -43,3 +43,4 @@ export interface MarketConfig {
   readonly privacyFramework: PrivacyFrameworkType;
   readonly terminology: CampusTerminology;
 }
+

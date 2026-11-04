@@ -49,6 +49,8 @@ export const V2_PLAN_LIMITS: Record<
       "remove_branding",
       "team_permissions_basic",
       "advanced_analytics",
+      "api_access",
+      "webhooks",
       "priority_support",
       "paid_events",
     ]),

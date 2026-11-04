@@ -158,6 +158,7 @@ export const SELF_SERVICE_PLANS: SelfServicePlan[] = [
       "Bulk CSV attendee uploads & invite links",
       "5 team member seats with granular access",
       "Multi-gate scanning configuration",
+      "REST API access & developer webhooks",
       "Priority customer email support",
     ],
     ctaText: "Select Pro Plan",
